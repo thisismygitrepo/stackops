@@ -1,0 +1,21 @@
+[metadata]
+name = "dnf-packages"
+description = "List and manage installed DNF packages"
+requirements = ["rpm", "dnf"]
+
+[source]
+command = "rpm -qa --queryformat '%{NAME} %{VERSION}-%{RELEASE}.%{ARCH}\\n' | sort"
+output = "{split: :0}"
+
+[preview]
+command = "dnf info '{split: :0}'"
+
+[actions.remove]
+description = "Remove the selected package"
+command = "sudo dnf remove -y '{split: :0}'"
+mode = "execute"
+
+[actions.reinstall]
+description = "Reinstall the selected package"
+command = "sudo dnf reinstall -y '{split: :0}'"
+mode = "execute"

@@ -270,7 +270,7 @@
           "$ref": "#/definitions/InstallerPatternValue"
         },
         "linux": {
-          "$ref": "#/definitions/InstallerPatternValue"
+          "$ref": "#/definitions/LinuxInstallerPattern"
         },
         "darwin": {
           "$ref": "#/definitions/InstallerPatternValue"
@@ -288,6 +288,74 @@
         "null"
       ],
       "description": "Filename pattern, direct URL, command, local script name, package-manager command, or null when unsupported."
+    },
+    "LinuxInstallerPattern": {
+      "description": "A portable Linux installer pattern or native patterns selected by package manager.",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/PortableLinuxInstallerPattern"
+        },
+        {
+          "$ref": "#/definitions/LinuxPackageManagerInstallerPattern"
+        }
+      ]
+    },
+    "PortableLinuxInstallerPattern": {
+      "description": "A Linux installer usable across package-manager ecosystems. Native commands and package artifacts must use LinuxPackageManagerInstallerPattern.",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "(^|[\\s;&|()])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)([\\s]|$)|[.]([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
+          }
+        }
+      ]
+    },
+    "LinuxPackageManagerInstallerPattern": {
+      "type": "object",
+      "description": "Native Linux installer patterns keyed by the canonical package manager.",
+      "additionalProperties": false,
+      "properties": {
+        "apt": {
+          "$ref": "#/definitions/AptInstallerPatternValue"
+        },
+        "dnf": {
+          "$ref": "#/definitions/DnfInstallerPatternValue"
+        }
+      },
+      "required": [
+        "apt",
+        "dnf"
+      ]
+    },
+    "AptInstallerPatternValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "(^|[\\s;&|()])((/[A-Za-z0-9_.+-]+)+/)?(dnf|yum)([\\s]|$)|[.][rR][pP][mM]($|[^A-Za-z0-9])"
+          }
+        }
+      ]
+    },
+    "DnfInstallerPatternValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "(^|[\\s;&|()])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|yum)([\\s]|$)|[.][dD][eE][bB]($|[^A-Za-z0-9])"
+          }
+        }
+      ]
     },
     "InstallerCategoryLabels": {
       "type": "array",

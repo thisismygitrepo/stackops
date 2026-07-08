@@ -1,5 +1,14 @@
-from pathlib import Path
+import shlex
 import subprocess
+from pathlib import Path
+from typing import assert_never
+
+from stackops.utils.installer_utils.linux_package_manager import (
+    LinuxPackageManager,
+    build_metadata_refresh_command,
+    build_package_install_command,
+    detect_current_linux_distribution,
+)
 
 
 def run_cmd(cmd: list[str]) -> tuple[bool, str]:
@@ -21,15 +30,13 @@ def check_sshd_installed() -> tuple[bool, str]:
     return False, ""
 
 
-def detect_package_manager() -> tuple[str, str]:
-    if Path("/usr/bin/apt").exists() or Path("/usr/bin/apt-get").exists():
-        return "apt", "sudo apt update && sudo apt install -y openssh-server"
-    if Path("/usr/bin/dnf").exists():
-        return "dnf", "sudo dnf install -y openssh-server"
-    if Path("/usr/bin/yum").exists():
-        return "yum", "sudo yum install -y openssh-server"
-    if Path("/usr/bin/pacman").exists():
-        return "pacman", "sudo pacman -S --noconfirm openssh"
-    if Path("/usr/bin/zypper").exists():
-        return "zypper", "sudo zypper install -y openssh"
-    return "unknown", "# Install openssh-server using your package manager"
+def detect_package_manager() -> tuple[LinuxPackageManager, str]:
+    package_manager = detect_current_linux_distribution().package_manager
+    install_command = shlex.join(("sudo", *build_package_install_command(package_manager, ("openssh-server",))))
+    match package_manager:
+        case "apt":
+            refresh_command = shlex.join(("sudo", *build_metadata_refresh_command(package_manager)))
+            return package_manager, f"{refresh_command} && {install_command}"
+        case "dnf":
+            return package_manager, install_command
+    assert_never(package_manager)

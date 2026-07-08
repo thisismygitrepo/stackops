@@ -5,8 +5,9 @@ import platform
 import shlex
 import shutil
 import subprocess
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 
 import stackops.utils.path_core as path_core
 from rich.console import Console
@@ -15,6 +16,7 @@ from rich.panel import Panel
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
+from stackops.utils.installer_utils.linux_package_manager import LinuxPackageManager, build_package_install_command, detect_current_linux_distribution
 from stackops.utils.path_core import delete_path
 from stackops.utils.schemas.installer.installer_types import InstallerData, get_os_name
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
@@ -33,22 +35,18 @@ TERMUSIC_INSTALLER_DATA: InstallerData = {
             "darwin": "termusic-{version}-x86_64-macos.tar.xz",
             "windows": "termusic-{version}-x86_64-windows.zip",
         },
-        "arm64": {
-            "linux": "termusic-{version}-aarch64-linux.tar.xz",
-            "darwin": "termusic-{version}-aarch64-macos.tar.xz",
-            "windows": None,
-        },
+        "arm64": {"linux": "termusic-{version}-aarch64-linux.tar.xz", "darwin": "termusic-{version}-aarch64-macos.tar.xz", "windows": None},
     },
 }
 
-DEBIAN_REQUIRED_PACKAGE_GROUPS = [
-    ["libasound2t64", "libasound2", "libasound2-dev"],
-    ["libdbus-1-3", "libdbus-1-dev"],
-    ["libstdc++6"],
-    ["libgstreamer1.0-0"],
-    ["libmpv2", "mpv"],
-]
-DEBIAN_OPTIONAL_PACKAGES = [
+APT_REQUIRED_PACKAGE_GROUPS = (
+    ("libasound2t64", "libasound2", "libasound2-dev"),
+    ("libdbus-1-3", "libdbus-1-dev"),
+    ("libstdc++6",),
+    ("libgstreamer1.0-0",),
+    ("libmpv2", "mpv"),
+)
+APT_OPTIONAL_PACKAGES = (
     "yt-dlp",
     "ffmpeg",
     "mpv",
@@ -61,42 +59,25 @@ DEBIAN_OPTIONAL_PACKAGES = [
     "libopus0",
     "libsixel-bin",
     "ueberzugpp",
-]
-ARCH_REQUIRED_PACKAGES = [
-    "alsa-lib",
-    "dbus",
-    "gcc-libs",
-    "gstreamer",
-    "mpv",
-]
-ARCH_OPTIONAL_PACKAGES = [
+)
+DNF_REQUIRED_PACKAGE_GROUPS = (("alsa-lib",), ("dbus-libs",), ("libstdc++",), ("gstreamer1",), ("mpv-libs", "mpv"))
+DNF_OPTIONAL_PACKAGES = (
     "yt-dlp",
-    "ffmpeg",
-    "gst-plugins-base",
-    "gst-plugins-good",
-    "gst-plugins-bad",
-    "gst-plugins-ugly",
-    "gst-libav",
+    "ffmpeg-free",
+    "mpv",
+    "gstreamer1-plugins-base",
+    "gstreamer1-plugins-good",
+    "gstreamer1-plugins-bad-free",
+    "gstreamer1-plugins-ugly-free",
+    "gstreamer1-plugin-libav",
     "opus",
     "libsixel",
     "ueberzugpp",
-]
-BREW_REQUIRED_PACKAGES = [
-    "mpv",
-    "gstreamer",
-    "yt-dlp",
-    "ffmpeg",
-]
-BREW_OPTIONAL_PACKAGES = [
-    "opus",
-    "libsixel",
-    "ueberzugpp",
-]
-WINGET_OPTIONAL_PACKAGE_IDS = [
-    "yt-dlp.yt-dlp",
-    "Gyan.FFmpeg",
-]
-TERMUSIC_BINARIES = ["termusic", "termusic-server"]
+)
+BREW_REQUIRED_PACKAGES = ("mpv", "gstreamer", "yt-dlp", "ffmpeg")
+BREW_OPTIONAL_PACKAGES = ("opus", "libsixel", "ueberzugpp")
+WINGET_OPTIONAL_PACKAGE_IDS = ("yt-dlp.yt-dlp", "Gyan.FFmpeg")
+TERMUSIC_BINARIES = ("termusic", "termusic-server")
 
 
 def _sudo_prefix() -> list[str]:
@@ -121,26 +102,14 @@ def _run_command(command: list[str], console: Console, description: str, *, requ
     return False
 
 
-def _install_debian_package(package: str, console: Console, *, required: bool) -> bool:
-    manager = "nala" if shutil.which("nala") is not None else None
-    if manager is None and shutil.which("apt-get") is not None:
-        manager = "apt-get"
-    if manager is None and shutil.which("apt") is not None:
-        manager = "apt"
-    if manager is None:
-        console.print("WARNING: nala/apt-get/apt not found; skipping Debian dependency installation.")
-        return False
-    return _run_command(
-        [*_sudo_prefix(), manager, "install", "-y", package],
-        console,
-        f"Install termusic dependency: {package}",
-        required=required,
-    )
+def _install_linux_package(package_manager: LinuxPackageManager, package: str, console: Console, *, required: bool) -> bool:
+    command = build_package_install_command(package_manager=package_manager, packages=(package,))
+    return _run_command([*_sudo_prefix(), *command], console, f"Install termusic dependency: {package}", required=required)
 
 
-def _install_debian_package_options(packages: list[str], console: Console, *, required: bool) -> bool:
+def _install_linux_package_options(package_manager: LinuxPackageManager, packages: Sequence[str], console: Console, *, required: bool) -> bool:
     for package in packages:
-        if _install_debian_package(package, console, required=False):
+        if _install_linux_package(package_manager=package_manager, package=package, console=console, required=False):
             return True
     if required:
         package_options = ", ".join(packages)
@@ -148,36 +117,13 @@ def _install_debian_package_options(packages: list[str], console: Console, *, re
     return False
 
 
-def _install_arch_package(package: str, console: Console, *, required: bool) -> bool:
-    return _run_command(
-        [*_sudo_prefix(), "pacman", "-S", "--needed", "--noconfirm", package],
-        console,
-        f"Install termusic dependency: {package}",
-        required=required,
-    )
-
-
 def _install_brew_package(package: str, console: Console, *, required: bool) -> bool:
-    return _run_command(
-        ["brew", "install", package],
-        console,
-        f"Install termusic dependency: {package}",
-        required=required,
-    )
+    return _run_command(["brew", "install", package], console, f"Install termusic dependency: {package}", required=required)
 
 
 def _install_winget_package(package_id: str, console: Console, *, required: bool) -> bool:
     return _run_command(
-        [
-            "winget",
-            "install",
-            "--id",
-            package_id,
-            "--exact",
-            "--silent",
-            "--accept-package-agreements",
-            "--accept-source-agreements",
-        ],
+        ["winget", "install", "--id", package_id, "--exact", "--silent", "--accept-package-agreements", "--accept-source-agreements"],
         console,
         f"Install termusic companion package: {package_id}",
         required=required,
@@ -185,21 +131,26 @@ def _install_winget_package(package_id: str, console: Console, *, required: bool
 
 
 def _install_linux_dependencies(console: Console) -> None:
-    if shutil.which("pacman") is not None:
-        for package in ARCH_REQUIRED_PACKAGES:
-            _install_arch_package(package, console, required=True)
-        for package in ARCH_OPTIONAL_PACKAGES:
-            _install_arch_package(package, console, required=False)
-        return
+    distribution = detect_current_linux_distribution()
+    match distribution.package_manager:
+        case "apt":
+            required_package_groups = APT_REQUIRED_PACKAGE_GROUPS
+            optional_packages = APT_OPTIONAL_PACKAGES
+        case "dnf":
+            if distribution.distribution_id != "fedora":
+                raise NotImplementedError(
+                    "termusic's mpv dependencies are not available in the default repositories for "
+                    f"{distribution.distribution_id}; automated EPEL/CRB changes are intentionally unsupported."
+                )
+            required_package_groups = DNF_REQUIRED_PACKAGE_GROUPS
+            optional_packages = DNF_OPTIONAL_PACKAGES
+        case _:
+            assert_never(distribution.package_manager)
 
-    if shutil.which("nala") is None and shutil.which("apt-get") is None and shutil.which("apt") is None:
-        console.print("WARNING: No supported Linux package manager found; installing binaries only.")
-        return
-
-    for packages in DEBIAN_REQUIRED_PACKAGE_GROUPS:
-        _install_debian_package_options(packages, console, required=True)
-    for package in DEBIAN_OPTIONAL_PACKAGES:
-        _install_debian_package(package, console, required=False)
+    for packages in required_package_groups:
+        _install_linux_package_options(package_manager=distribution.package_manager, packages=packages, console=console, required=True)
+    for package in optional_packages:
+        _install_linux_package(package_manager=distribution.package_manager, package=package, console=console, required=False)
 
 
 def _install_macos_dependencies(console: Console) -> None:
@@ -282,13 +233,7 @@ def _warn_missing_linux_libraries(installed_server: Path, console: Console) -> N
     missing_lines = [line.strip() for line in result.stdout.splitlines() if "not found" in line]
     if len(missing_lines) == 0:
         return
-    console.print(
-        Panel(
-            "\n".join(missing_lines),
-            title="WARNING: termusic-server has missing shared libraries",
-            border_style="yellow",
-        )
-    )
+    console.print(Panel("\n".join(missing_lines), title="WARNING: termusic-server has missing shared libraries", border_style="yellow"))
 
 
 def _write_installed_version(version_to_be_installed: str) -> None:
@@ -338,12 +283,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 
     _install_dependencies(console=console)
     _install_termusic_binaries(version=version, console=console)
-    console.print(
-        Panel.fit(
-            "termusic and termusic-server are installed.",
-            title="termusic post-install",
-        )
-    )
+    console.print(Panel.fit("termusic and termusic-server are installed.", title="termusic post-install"))
 
 
 if __name__ == "__main__":

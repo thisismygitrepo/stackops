@@ -6,81 +6,41 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Sequence, assert_never
 
 from rich.console import Console
 from rich.panel import Panel
 
-from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
-from stackops.utils.installer_utils.installer_cli import install_if_missing
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
-from stackops.utils.source_of_truth import LINUX_INSTALL_PATH
+from stackops.utils.installer_utils.installer_cli import install_if_missing
+from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
+from stackops.utils.installer_utils.linux_package_manager import (
+    LinuxPackageManager,
+    build_metadata_refresh_command,
+    build_package_install_command,
+    detect_current_linux_distribution,
+)
 from stackops.utils.schemas.installer.installer_types import InstallerData, get_os_name
+from stackops.utils.source_of_truth import LINUX_INSTALL_PATH
 
 
 YOUTUBE_TUI_REPO_URL = "https://github.com/Siriusmart/youtube-tui"
 CRATE_NAME = "youtube-tui"
-LINUX_REQUIRED_PACKAGES: dict[str, list[str]] = {
-    "debian": [
-        "curl",
-        "build-essential",
-        "pkg-config",
-        "libssl-dev",
-        "libmpv-dev",
-        "libsixel-dev",
-        "libxcb1-dev",
-        "libxcb-render0-dev",
-        "libxcb-shape0-dev",
-        "libxcb-xfixes0-dev",
-    ],
-    "fedora": [
-        "curl",
-        "gcc",
-        "gcc-c++",
-        "make",
-        "pkgconf-pkg-config",
-        "openssl-devel",
-        "mpv-devel",
-        "libsixel-devel",
-        "libxcb-devel",
-    ],
-    "arch": [
-        "curl",
-        "base-devel",
-        "pkgconf",
-        "openssl",
-        "mpv",
-        "libsixel",
-        "libxcb",
-    ],
-    "suse": [
-        "curl",
-        "gcc",
-        "gcc-c++",
-        "make",
-        "pkg-config",
-        "libopenssl-devel",
-        "mpv-devel",
-        "libsixel-devel",
-        "libxcb-devel",
-    ],
-    "alpine": [
-        "curl",
-        "build-base",
-        "pkgconf",
-        "openssl-dev",
-        "mpv-dev",
-        "libsixel-dev",
-        "libxcb-dev",
-    ],
-}
-LINUX_OPTIONAL_PACKAGES: dict[str, list[str]] = {
-    "debian": ["mpv", "yt-dlp"],
-    "fedora": ["mpv", "yt-dlp"],
-    "arch": ["yt-dlp"],
-    "suse": ["mpv", "yt-dlp"],
-    "alpine": ["mpv", "yt-dlp"],
-}
+DEBIAN_REQUIRED_PACKAGES = (
+    "curl",
+    "build-essential",
+    "pkg-config",
+    "libssl-dev",
+    "libmpv-dev",
+    "libsixel-dev",
+    "libxcb1-dev",
+    "libxcb-render0-dev",
+    "libxcb-shape0-dev",
+    "libxcb-xfixes0-dev",
+)
+FEDORA_REQUIRED_PACKAGES = ("curl", "gcc", "gcc-c++", "make", "pkgconf-pkg-config", "openssl-devel", "mpv-devel", "libsixel-devel", "libxcb-devel")
+DEBIAN_OPTIONAL_PACKAGES = ("mpv", "yt-dlp")
+FEDORA_OPTIONAL_PACKAGES = ("mpv", "yt-dlp")
 MACOS_REQUIRED_PACKAGES = ["pkg-config", "openssl", "mpv", "libsixel"]
 MACOS_OPTIONAL_PACKAGES = ["yt-dlp"]
 
@@ -92,13 +52,7 @@ def _format_command(command: Sequence[str] | str) -> str:
 
 
 def _run(
-    command: Sequence[str] | str,
-    console: Console,
-    description: str,
-    *,
-    required: bool,
-    env: dict[str, str] | None = None,
-    shell: bool = False,
+    command: Sequence[str] | str, console: Console, description: str, *, required: bool, env: dict[str, str] | None = None, shell: bool = False
 ) -> bool:
     console.print(Panel(_format_command(command), title=description, expand=False))
     result = subprocess.run(command, shell=shell, text=True, check=False, env=env)
@@ -120,14 +74,7 @@ def _sudo_prefix() -> list[str]:
     return []
 
 
-def _install_package_set(
-    console: Console,
-    *,
-    family: str,
-    package_manager: str,
-    packages: list[str],
-    required: bool,
-) -> bool:
+def _install_package_set(console: Console, *, family: str, package_manager: LinuxPackageManager, packages: Sequence[str], required: bool) -> bool:
     if len(packages) == 0:
         return True
 
@@ -135,70 +82,37 @@ def _install_package_set(
     env = os.environ.copy()
     env.setdefault("DEBIAN_FRONTEND", "noninteractive")
 
-    if package_manager == "nala":
-        return _run([*sudo, "nala", "install", "-y", *packages], console, f"Install {family} packages", required=required, env=env)
-    if package_manager == "apt-get":
-        if required:
-            _run([*sudo, "apt-get", "update"], console, "Update apt package index", required=False, env=env)
-        return _run([*sudo, "apt-get", "install", "-y", *packages], console, f"Install {family} packages", required=required, env=env)
-    if package_manager == "apt":
-        if required:
-            _run([*sudo, "apt", "update"], console, "Update apt package index", required=False, env=env)
-        return _run([*sudo, "apt", "install", "-y", *packages], console, f"Install {family} packages", required=required, env=env)
-    if package_manager == "dnf":
-        return _run([*sudo, "dnf", "install", "-y", *packages], console, f"Install {family} packages", required=required, env=env)
-    if package_manager == "yum":
-        return _run([*sudo, "yum", "install", "-y", *packages], console, f"Install {family} packages", required=required, env=env)
-    if package_manager == "pacman":
-        return _run([*sudo, "pacman", "-S", "--needed", "--noconfirm", *packages], console, f"Install {family} packages", required=required, env=env)
-    if package_manager == "zypper":
-        return _run([*sudo, "zypper", "--non-interactive", "install", *packages], console, f"Install {family} packages", required=required, env=env)
-    if package_manager == "apk":
-        return _run([*sudo, "apk", "add", *packages], console, f"Install {family} packages", required=required, env=env)
-
-    console.print(f"WARNING: unsupported package manager for {family} packages: {package_manager}")
-    return False
-
-
-def _detect_linux_package_manager() -> tuple[str, str] | None:
-    for package_manager, family in [
-        ("nala", "debian"),
-        ("apt-get", "debian"),
-        ("apt", "debian"),
-        ("dnf", "fedora"),
-        ("yum", "fedora"),
-        ("pacman", "arch"),
-        ("zypper", "suse"),
-        ("apk", "alpine"),
-    ]:
-        if shutil.which(package_manager) is not None:
-            return package_manager, family
-    return None
+    if required and package_manager == "apt":
+        refresh_command = build_metadata_refresh_command(package_manager)
+        _run([*sudo, *refresh_command], console, "Update apt package index", required=False, env=env)
+    install_command = build_package_install_command(package_manager, packages)
+    return _run([*sudo, *install_command], console, f"Install {family} packages", required=required, env=env)
 
 
 def _install_linux_dependencies(console: Console) -> None:
-    detected = _detect_linux_package_manager()
-    if detected is None:
-        console.print(
-            "WARNING: no supported Linux package manager found; skipping native dependency installation."
-        )
-        return
-
-    package_manager, family = detected
-    required_packages = LINUX_REQUIRED_PACKAGES[family]
-    optional_packages = LINUX_OPTIONAL_PACKAGES[family]
+    distribution = detect_current_linux_distribution()
+    match distribution.package_manager:
+        case "apt":
+            required_packages = DEBIAN_REQUIRED_PACKAGES
+            optional_packages = DEBIAN_OPTIONAL_PACKAGES
+        case "dnf":
+            if distribution.distribution_id != "fedora":
+                raise NotImplementedError(
+                    "youtube-tui's native dependencies are not available in the default repositories for "
+                    f"{distribution.distribution_id}; automated EPEL/CRB changes are intentionally unsupported."
+                )
+            required_packages = FEDORA_REQUIRED_PACKAGES
+            optional_packages = FEDORA_OPTIONAL_PACKAGES
+        case _:
+            assert_never(distribution.package_manager)
     _install_package_set(
-        console,
-        family="youtube-tui build/runtime",
-        package_manager=package_manager,
-        packages=required_packages,
-        required=True,
+        console, family="youtube-tui build/runtime", package_manager=distribution.package_manager, packages=required_packages, required=True
     )
     for package_name in optional_packages:
         _install_package_set(
             console,
             family=f"optional youtube-tui companion: {package_name}",
-            package_manager=package_manager,
+            package_manager=distribution.package_manager,
             packages=[package_name],
             required=False,
         )
@@ -214,27 +128,15 @@ def _install_macos_dependencies(console: Console) -> None:
 
 def _build_install_env() -> dict[str, str]:
     env = os.environ.copy()
-    path_parts = [
-        str(Path.home().joinpath(".cargo", "bin")),
-        LINUX_INSTALL_PATH,
-        env.get("PATH", ""),
-    ]
+    path_parts = [str(Path.home().joinpath(".cargo", "bin")), LINUX_INSTALL_PATH, env.get("PATH", "")]
     env["PATH"] = os.pathsep.join(part for part in path_parts if part != "")
 
     if platform.system() == "Darwin" and shutil.which("brew", path=env["PATH"]) is not None:
-        openssl_prefix = subprocess.run(
-            ["brew", "--prefix", "openssl@3"],
-            capture_output=True,
-            text=True,
-            check=False,
-            env=env,
-        )
+        openssl_prefix = subprocess.run(["brew", "--prefix", "openssl@3"], capture_output=True, text=True, check=False, env=env)
         if openssl_prefix.returncode == 0:
             pkg_config_path = str(Path(openssl_prefix.stdout.strip()).joinpath("lib", "pkgconfig"))
             existing_pkg_config_path = env.get("PKG_CONFIG_PATH", "")
-            env["PKG_CONFIG_PATH"] = os.pathsep.join(
-                part for part in [pkg_config_path, existing_pkg_config_path] if part != ""
-            )
+            env["PKG_CONFIG_PATH"] = os.pathsep.join(part for part in [pkg_config_path, existing_pkg_config_path] if part != "")
     return env
 
 
@@ -287,12 +189,7 @@ def _verify_native_pkg_config(console: Console, env: dict[str, str]) -> None:
         console.print("WARNING: pkg-config is not available; native dependency verification skipped.")
         return
     for module_name in ["mpv", "libsixel", "xcb"]:
-        result = subprocess.run(
-            ["pkg-config", "--exists", module_name],
-            text=True,
-            check=False,
-            env=env,
-        )
+        result = subprocess.run(["pkg-config", "--exists", module_name], text=True, check=False, env=env)
         if result.returncode != 0:
             console.print(f"WARNING: pkg-config could not resolve {module_name}; cargo may fail to build default features.")
 
@@ -344,12 +241,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     _cargo_install_youtube_tui(console=console, env=env, version=version, update=update)
     _ensure_runtime_tools(console=console, env=env)
 
-    console.print(
-        Panel.fit(
-            f"youtube-tui installed to {Path(LINUX_INSTALL_PATH).joinpath(CRATE_NAME)}",
-            title="youtube-tui post-install",
-        )
-    )
+    console.print(Panel.fit(f"youtube-tui installed to {Path(LINUX_INSTALL_PATH).joinpath(CRATE_NAME)}", title="youtube-tui post-install"))
 
 
 if __name__ == "__main__":

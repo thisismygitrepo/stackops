@@ -1,16 +1,16 @@
 import stackops.utils.path_core as path_core
-from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_deb_package, install_msi_package
+from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_msi_package
+from stackops.utils.installer_utils.linux_package_file import install_linux_package_file
 from stackops.utils.installer_utils.install_request_logic import (
-    get_unsupported_apt_family_command_reason,
     InstallTarget,
     build_install_target,
+    is_package_manager_command,
+    resolve_installer_pattern,
     resolve_installer_value,
     should_skip_install,
     validate_install_request,
 )
-from stackops.utils.installer_utils.installer_main_protocol import (
-    load_installer_python_script_main,
-)
+from stackops.utils.installer_utils.installer_main_protocol import load_installer_python_script_main
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT, LIBRARY_ROOT
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
@@ -25,17 +25,13 @@ from stackops.utils.schemas.installer.installer_types import (
     get_normalized_arch,
     get_os_name,
 )
-from stackops.utils.installer_utils.github_release_bulk import (
-    get_repo_name_from_url,
-    get_release_info,
-)
+from stackops.utils.installer_utils.github_release_bulk import get_repo_name_from_url, get_release_info
 
 import platform
 from pathlib import Path
 import subprocess
 
 
-PACAKGE_MANAGERS = ["bun", "npm", "pip", "uv", "winget", "powershell", "irm", "brew", "curl", "sudo", "cargo"]
 ALIASED_EXE_NAMES: dict[str, str] = {
     "antigravity": "agy",
     "beads": "bd",
@@ -45,12 +41,6 @@ ALIASED_EXE_NAMES: dict[str, str] = {
     "powershellgithub": "pwsh",
     "superfile": "spf",
 }
-
-
-class InstallerSkippedGracefully(Exception):
-    def __init__(self, detail: str):
-        super().__init__(detail)
-        self.detail = detail
 
 
 class Installer:
@@ -64,12 +54,12 @@ class Installer:
 
     def get_description(self) -> str:
         exe_name = self._get_exe_name()
-        
+
         old_version_cli: bool = check_tool_exists(tool_name=exe_name)
         old_version_cli_str = "✅" if old_version_cli else "❌"
         doc = self.installer_data["doc"]
         return f"{exe_name:<12} {old_version_cli_str} {doc}"
-    
+
     def _get_exe_name(self) -> str:
         """Derive executable name from app name by converting to lowercase and removing spaces."""
         normalized_app_name = self.installer_data["appName"].lower().replace(" ", "")
@@ -78,7 +68,7 @@ class Installer:
     def _get_installer_value(self) -> str:
         os_name = get_os_name()
         arch = get_normalized_arch()
-        installer_value = self.installer_data["fileNamePattern"][arch][os_name]
+        installer_value = resolve_installer_pattern(installer_data=self.installer_data, operating_system=os_name, architecture=arch)
         if installer_value is None:
             exe_name = self._get_exe_name()
             raise ValueError(f"No installation pattern for {exe_name} on {os_name} {arch}")
@@ -100,57 +90,33 @@ class Installer:
         return install_target, install_request_resolution.install_request
 
     def _build_skipped_result(self, exe_name: str, detail: str = "already installed, skipped") -> InstallationResultSkipped:
-        return InstallationResultSkipped(
-            kind="skipped",
-            appName=self.installer_data["appName"],
-            exeName=exe_name,
-            emoji="⏭️",
-            detail=detail,
-        )
+        return InstallationResultSkipped(kind="skipped", appName=self.installer_data["appName"], exeName=exe_name, emoji="⏭️", detail=detail)
 
     def _build_same_version_result(self, exe_name: str, version: str) -> InstallationResultSameVersion:
         return InstallationResultSameVersion(
-            kind="same_version",
-            appName=self.installer_data["appName"],
-            exeName=exe_name,
-            emoji="😑",
-            version=version,
+            kind="same_version", appName=self.installer_data["appName"], exeName=exe_name, emoji="😑", version=version
         )
 
     def _build_updated_result(self, exe_name: str, old_version: str, new_version: str) -> InstallationResultUpdated:
         return InstallationResultUpdated(
-            kind="updated",
-            appName=self.installer_data["appName"],
-            exeName=exe_name,
-            emoji="🤩",
-            oldVersion=old_version,
-            newVersion=new_version,
+            kind="updated", appName=self.installer_data["appName"], exeName=exe_name, emoji="🤩", oldVersion=old_version, newVersion=new_version
         )
 
     def _build_failed_result(self, exe_name: str, error: str) -> InstallationResultFailed:
-        return InstallationResultFailed(
-            kind="failed",
-            appName=self.installer_data["appName"],
-            exeName=exe_name,
-            emoji="❌",
-            error=error,
-        )
+        return InstallationResultFailed(kind="failed", appName=self.installer_data["appName"], exeName=exe_name, emoji="❌", error=error)
 
     def _install_requested_with_target(self, install_target: InstallTarget, install_request: InstallRequest) -> None:
         effective_installer_value = resolve_installer_value(install_target=install_target, install_request=install_request)
-        version = install_request.version if install_target.installer_kind == "github_release" or effective_installer_value.strip().startswith("winget install ") else None
-        self._install_from_value(
-            installer_arch_os=effective_installer_value,
-            version=version,
-            update=install_request.update,
+        version = (
+            install_request.version
+            if install_target.installer_kind == "github_release" or effective_installer_value.strip().startswith("winget install ")
+            else None
         )
+        self._install_from_value(installer_arch_os=effective_installer_value, version=version, update=install_request.update)
 
     def install_requested(self, install_request: InstallRequest) -> None:
         install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
-        try:
-            self._install_requested_with_target(install_target=install_target, install_request=effective_install_request)
-        except InstallerSkippedGracefully:
-            return
+        self._install_requested_with_target(install_target=install_target, install_request=effective_install_request)
 
     def install_robust(self, install_request: InstallRequest) -> InstallationResult:
         try:
@@ -165,35 +131,20 @@ class Installer:
             if old_version_cli == new_version_cli:
                 return self._build_same_version_result(exe_name=exe_name, version=old_version_cli)
             return self._build_updated_result(exe_name=exe_name, old_version=old_version_cli, new_version=new_version_cli)
-        except InstallerSkippedGracefully as skipped:
-            exe_name = self._get_exe_name()
-            return self._build_skipped_result(exe_name=exe_name, detail=skipped.detail)
         except Exception as ex:
             exe_name = self._get_exe_name()
             print(f"❌ ERROR: Installation failed for {exe_name}: {ex}")
             return self._build_failed_result(exe_name=exe_name, error=str(ex))
 
     def install(self, version: str | None) -> None:
-        try:
-            self._install_from_value(
-                installer_arch_os=self._get_installer_value(),
-                version=version,
-                update=False,
-            )
-        except InstallerSkippedGracefully:
-            return
+        self._install_from_value(installer_arch_os=self._get_installer_value(), version=version, update=False)
 
-    def _install_from_value(
-        self,
-        installer_arch_os: str,
-        version: str | None,
-        update: bool,
-    ) -> None:
+    def _install_from_value(self, installer_arch_os: str, version: str | None, update: bool) -> None:
         exe_name = self._get_exe_name()
         repo_url = self.installer_data["repoURL"]
         version_to_be_installed: str = "unknown"  # Initialize to ensure it's always bound
 
-        package_manager_installer = any(pm in installer_arch_os.split() for pm in PACAKGE_MANAGERS)
+        package_manager_installer = is_package_manager_command(installer_arch_os)
         script_installer = installer_arch_os.endswith((".sh", ".py", ".ps1"))
         binary_download_link = installer_arch_os.startswith("https://") or installer_arch_os.startswith("http://")
 
@@ -202,10 +153,7 @@ class Installer:
                 from rich import print as rprint
                 from rich.panel import Panel
                 from rich.console import Group
-                unsupported_apt_reason = get_unsupported_apt_family_command_reason(installer_arch_os)
-                if unsupported_apt_reason is not None:
-                    print(f"⏭️ {unsupported_apt_reason}")
-                    raise InstallerSkippedGracefully(unsupported_apt_reason)
+
                 package_manager = installer_arch_os.split(" ", maxsplit=1)[0]
                 print(f"📦 Using package manager: {installer_arch_os}")
                 desc = package_manager + " installation"
@@ -237,11 +185,9 @@ class Installer:
                     version_to_be_installed = "scripted_installation"
                 elif installer_arch_os.endswith(".py"):
                     import runpy
+
                     script_module = runpy.run_path(str(installer_path), run_name=None)
-                    script_main = load_installer_python_script_main(
-                        module_globals=script_module,
-                        installer_path=installer_path,
-                    )
+                    script_main = load_installer_python_script_main(module_globals=script_module, installer_path=installer_path)
                     script_main(self.installer_data, version=version, update=update)
                     version_to_be_installed = str(version)
             elif binary_download_link:
@@ -249,7 +195,9 @@ class Installer:
                 downloaded_suffix = downloaded_object.suffix.lower()
                 if downloaded_suffix in [".exe", ""]:  # likely an executable
                     if platform.system() == "Windows":
-                        exe = find_move_delete_windows(downloaded_file_path=downloaded_object, tool_name=exe_name, delete=True, rename_to=exe_name.replace(".exe", "") + ".exe")
+                        exe = find_move_delete_windows(
+                            downloaded_file_path=downloaded_object, tool_name=exe_name, delete=True, rename_to=exe_name.replace(".exe", "") + ".exe"
+                        )
                     elif platform.system() in ["Linux", "Darwin"]:
                         system_name = "Linux" if platform.system() == "Linux" else "macOS"
                         print(f"🐧 Installing on {system_name}...")
@@ -262,15 +210,22 @@ class Installer:
                     if exe.name.replace(".exe", "") != exe_name.replace(".exe", ""):
                         from rich import print as pprint
                         from rich.panel import Panel
+
                         print("⚠️  Warning: Executable name mismatch")
-                        pprint(Panel(f"Expected exe name: [red]{exe_name}[/red] \nAttained name: [red]{exe.name.replace('.exe', '')}[/red]", title="exe name mismatch", subtitle=repo_url))
+                        pprint(
+                            Panel(
+                                f"Expected exe name: [red]{exe_name}[/red] \nAttained name: [red]{exe.name.replace('.exe', '')}[/red]",
+                                title="exe name mismatch",
+                                subtitle=repo_url,
+                            )
+                        )
                         new_exe_name = exe_name + ".exe" if platform.system() == "Windows" else exe_name
                         print(f"🔄 Renaming to correct name: {new_exe_name}")
                         path_core.with_name(exe, name=new_exe_name, inplace=True, overwrite=True)
                     version_to_be_installed = "downloaded_binary"
-                elif downloaded_suffix == ".deb":
-                    install_deb_package(downloaded_object)
-                    version_to_be_installed = "downloaded_deb"
+                elif downloaded_suffix in {".deb", ".rpm"}:
+                    install_linux_package_file(downloaded_object)
+                    version_to_be_installed = f"downloaded_{downloaded_suffix.removeprefix('.')}"
                 elif downloaded_suffix == ".msi":
                     install_msi_package(downloaded_object)
                     version_to_be_installed = "downloaded_msi"
@@ -282,13 +237,15 @@ class Installer:
             assert repo_url.startswith("https://github.com/"), f"repoURL must be a GitHub URL, got {repo_url}"
             downloaded, version_to_be_installed = self.binary_download(version=version)
             downloaded_suffix = downloaded.suffix.lower()
-            if downloaded_suffix == ".deb":
-                install_deb_package(downloaded)
+            if downloaded_suffix in {".deb", ".rpm"}:
+                install_linux_package_file(downloaded)
             elif downloaded_suffix == ".msi":
                 install_msi_package(downloaded)
             else:
                 if platform.system() == "Windows":
-                    exe = find_move_delete_windows(downloaded_file_path=downloaded, tool_name=exe_name, delete=True, rename_to=exe_name.replace(".exe", "") + ".exe")
+                    exe = find_move_delete_windows(
+                        downloaded_file_path=downloaded, tool_name=exe_name, delete=True, rename_to=exe_name.replace(".exe", "") + ".exe"
+                    )
                 elif platform.system() in ["Linux", "Darwin"]:
                     system_name = "Linux" if platform.system() == "Linux" else "macOS"
                     print(f"🐧 Installing on {system_name}...")
@@ -301,13 +258,21 @@ class Installer:
                 if exe.name.replace(".exe", "") != exe_name.replace(".exe", ""):
                     from rich import print as pprint
                     from rich.panel import Panel
+
                     print("⚠️  Warning: Executable name mismatch")
-                    pprint(Panel(f"Expected exe name: [red]{exe_name}[/red] \nAttained name: [red]{exe.name.replace('.exe', '')}[/red]", title="exe name mismatch", subtitle=repo_url))
+                    pprint(
+                        Panel(
+                            f"Expected exe name: [red]{exe_name}[/red] \nAttained name: [red]{exe.name.replace('.exe', '')}[/red]",
+                            title="exe name mismatch",
+                            subtitle=repo_url,
+                        )
+                    )
                     new_exe_name = exe_name + ".exe" if platform.system() == "Windows" else exe_name
                     print(f"🔄 Renaming to correct name: {new_exe_name}")
                     path_core.with_name(exe, name=new_exe_name, inplace=True, overwrite=True)
         INSTALL_VERSION_ROOT.joinpath(exe_name).parent.mkdir(parents=True, exist_ok=True)
         INSTALL_VERSION_ROOT.joinpath(exe_name).write_text(version_to_be_installed or "unknown", encoding="utf-8")
+
     def binary_download(self, version: str | None) -> tuple[Path, str]:
         exe_name = self._get_exe_name()
         repo_url = self.installer_data["repoURL"]
@@ -346,7 +311,7 @@ class Installer:
         """
         arch = get_normalized_arch()
         os_name = get_os_name()
-        filename_pattern = self.installer_data["fileNamePattern"][arch][os_name]
+        filename_pattern = resolve_installer_pattern(installer_data=self.installer_data, operating_system=os_name, architecture=arch)
         if filename_pattern is None:
             raise ValueError(f"No fileNamePattern for {self._get_exe_name()} on {os_name} {arch}")
         repo_info = get_repo_name_from_url(repo_url)
@@ -356,18 +321,14 @@ class Installer:
         username, repository = repo_info
         release_info = get_release_info(username, repository, version)
         if not release_info:
-            return None, None        
+            return None, None
         actual_version = release_info.get("tag_name", "unknown") or "unknown"
         filename = filename_pattern.format(version=actual_version)
 
         assets_by_filename = {asset["name"]: asset for asset in release_info["assets"]}
         selected_asset = assets_by_filename.get(filename)
         if selected_asset is None:
-            candidates = [
-                filename,
-                filename_pattern.format(version=actual_version),
-                filename_pattern.format(version=actual_version.replace("v", "")),
-            ]
+            candidates = [filename, filename_pattern.format(version=actual_version), filename_pattern.format(version=actual_version.replace("v", ""))]
 
             # Include hyphen/underscore variants
             variants: list[str] = []
@@ -398,12 +359,7 @@ class Installer:
                     table.add_row(tried_name, available_name)
 
                 console.print(
-                    Panel(
-                        table,
-                        title="❌ Filename not found in assets",
-                        subtitle=f"{username}/{repository} • {actual_version}",
-                        border_style="red",
-                    )
+                    Panel(table, title="❌ Filename not found in assets", subtitle=f"{username}/{repository} • {actual_version}", border_style="red")
                 )
                 return None, None
         browser_download_url = selected_asset["browser_download_url"]

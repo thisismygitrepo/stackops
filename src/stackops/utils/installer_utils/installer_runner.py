@@ -6,6 +6,7 @@ from pathlib import Path
 import stackops.utils.schemas.installer as installer_schema_assets
 from stackops.utils.installer_utils.installer_locator_utils import check_if_installed_already
 from stackops.utils.installer_utils.installer_class import Installer
+from stackops.utils.installer_utils.install_request_logic import resolve_installer_pattern
 from stackops.utils.installer_utils.installer_summary import render_installation_summary
 from stackops.utils.schemas.installer.installer_types import (
     CPU_ARCHITECTURES,
@@ -95,11 +96,7 @@ def get_installed_cli_apps():
         if platform.system() == "Linux":
             apps = list(Path(LINUX_INSTALL_PATH).glob("*")) + list(Path("/usr/local/bin").glob("*"))
         else:  # Darwin/macOS
-            apps = (
-                list(Path(LINUX_INSTALL_PATH).glob("*"))
-                + list(Path("/usr/local/bin").glob("*"))
-                + list(Path("/opt/homebrew/bin").glob("*"))
-            )
+            apps = list(Path(LINUX_INSTALL_PATH).glob("*")) + list(Path("/usr/local/bin").glob("*")) + list(Path("/opt/homebrew/bin").glob("*"))
     else:
         error_msg = f"❌ ERROR: System {platform.system()} not supported"
         print(error_msg)
@@ -111,10 +108,7 @@ def get_installed_cli_apps():
 
 def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: list[PACKAGE_NAME] | None) -> list[InstallerData]:
     res_raw: InstallerDataFiles = read_json(
-        get_path_reference_path(
-            module=installer_schema_assets,
-            path_reference=installer_schema_assets.INSTALLER_DATA_PATH_REFERENCE,
-        )
+        get_path_reference_path(module=installer_schema_assets, path_reference=installer_schema_assets.INSTALLER_DATA_PATH_REFERENCE)
     )
     res_all: list[InstallerData] = res_raw["installers"]
 
@@ -131,7 +125,7 @@ def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: l
             if installer_data["appName"] not in acceptable_apps_names:
                 continue
         try:
-            if installer_data["fileNamePattern"][arch][os] is None:
+            if resolve_installer_pattern(installer_data=installer_data, operating_system=os, architecture=arch) is None:
                 continue
         except KeyError as ke:
             print(f"❌ ERROR: Missing key in installer data: {ke}")
@@ -146,11 +140,7 @@ def _install_single_installer(installer_data: InstallerData, install_request: In
 
 
 def install_bulk(
-    installers_data: list[InstallerData],
-    install_request: InstallRequest,
-    safe: bool = False,
-    jobs: int = 10,
-    fresh: bool = False,
+    installers_data: list[InstallerData], install_request: InstallRequest, safe: bool = False, jobs: int = 10, fresh: bool = False
 ) -> None:
     print("🚀 BULK INSTALLATION PROCESS 🚀")
     if jobs < 1:

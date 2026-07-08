@@ -1,7 +1,8 @@
 """Wifi connect
 
 Linux requirements:
-- sudo apt-get install network-manager
+- Debian/Ubuntu: sudo apt-get install network-manager
+- RHEL/Fedora: sudo dnf install NetworkManager
 
 Windows requirements:
 - Run as Administrator for netsh commands
@@ -22,11 +23,7 @@ from typing import Protocol, cast
 
 from rich.prompt import Prompt
 
-from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import (
-    WifiNetwork,
-    console,
-    render_networks_table,
-)
+from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import WifiNetwork, console, render_networks_table
 
 
 class WifiPlatformModule(Protocol):
@@ -106,22 +103,13 @@ def try_config_connection(config_ssid: str) -> bool:
         from stackops.secrets.paths import SECRETS_DOFILE
         from stackops.secrets.models import Login
         from stackops.secrets.search import search_logins
+
         secrets = search_logins(path=SECRETS_DOFILE, login_name=config_ssid, tags=("wifi",), keys=("ssid", "password"))
         if not secrets:
             expected_entry: Login = {
                 "name": config_ssid,
                 "tags": ["wifi"],
-                "secrets": [
-                    {
-                        "name": "credentials",
-                        "tags": [],
-                        "scopes": [],
-                        "keyValues": {
-                            "ssid": config_ssid,
-                            "password": "<wifi-password>",
-                        },
-                    }
-                ],
+                "secrets": [{"name": "credentials", "tags": [], "scopes": [], "keyValues": {"ssid": config_ssid, "password": "<wifi-password>"}}],
             }
             console.print(f"[yellow]⚠️ No configuration found for SSID '{config_ssid}'[/yellow]")
             console.print(f"Expected {SECRETS_DOFILE} to contain a login entry shaped like:", markup=False)

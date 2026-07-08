@@ -6,7 +6,7 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Sequence, assert_never
 
 from rich.console import Console
 from rich.panel import Panel
@@ -14,13 +14,12 @@ from rich.panel import Panel
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH
-from stackops.utils.schemas.installer.installer_types import (
-    CPU_ARCHITECTURES,
-    OPERATING_SYSTEMS,
-    InstallerData,
-    get_normalized_arch,
-    get_os_name,
+from stackops.utils.installer_utils.linux_package_manager import (
+    build_metadata_refresh_command,
+    build_package_install_command,
+    detect_current_linux_distribution,
 )
+from stackops.utils.schemas.installer.installer_types import InstallerFileNamePatterns, InstallerData, get_normalized_arch, get_os_name
 
 
 YTUI_MUSIC_REPO_URL = "https://github.com/sudipghimire533/ytui-music"
@@ -29,11 +28,8 @@ YTUI_MUSIC_BINARY_NAME = "ytui_music"
 YTUI_MUSIC_ALIAS_NAME = "ytui-music"
 YOUTUBE_DL_SHIM_MARKER = "Managed by stackops ytui_music installer"
 
-APT_REQUIRED_PACKAGES = ("mpv", "libmpv1", "libssl3", "ffmpeg", "ca-certificates")
-APT_OPTIONAL_PACKAGES = ("libmpv-dev",)
-DNF_REQUIRED_PACKAGES = ("mpv", "mpv-libs", "openssl-libs", "ffmpeg", "ca-certificates")
-PACMAN_REQUIRED_PACKAGES = ("mpv", "openssl", "ffmpeg", "ca-certificates")
-ZYPPER_REQUIRED_PACKAGES = ("mpv", "libmpv1", "libopenssl3", "ffmpeg", "ca-certificates")
+DEBIAN_REQUIRED_PACKAGES = ("mpv", "libmpv1", "libssl3", "ffmpeg", "ca-certificates")
+DEBIAN_OPTIONAL_PACKAGES = ("libmpv-dev",)
 
 DEFAULT_MPV_OPTIONS = (
     "video=no",
@@ -47,19 +43,8 @@ DEFAULT_MPV_OPTIONS = (
 )
 
 
-def _empty_file_name_pattern() -> dict[CPU_ARCHITECTURES, dict[OPERATING_SYSTEMS, str | None]]:
-    return {
-        "amd64": {
-            "linux": None,
-            "darwin": None,
-            "windows": None,
-        },
-        "arm64": {
-            "linux": None,
-            "darwin": None,
-            "windows": None,
-        },
-    }
+def _empty_file_name_pattern() -> InstallerFileNamePatterns:
+    return {"amd64": {"linux": None, "darwin": None, "windows": None}, "arm64": {"linux": None, "darwin": None, "windows": None}}
 
 
 def _build_binary_installer_data(base_installer_data: InstallerData) -> InstallerData:
@@ -109,11 +94,7 @@ def _run_capture(command: Sequence[str]) -> subprocess.CompletedProcess[str]:
 
 
 def _resolve_executable(name: str) -> Path | None:
-    candidate_paths = (
-        Path(LINUX_INSTALL_PATH).joinpath(name),
-        Path("/usr/local/bin").joinpath(name),
-        Path("/usr/bin").joinpath(name),
-    )
+    candidate_paths = (Path(LINUX_INSTALL_PATH).joinpath(name), Path("/usr/local/bin").joinpath(name), Path("/usr/bin").joinpath(name))
     for candidate_path in candidate_paths:
         if candidate_path.is_file():
             return candidate_path
@@ -165,49 +146,32 @@ def _missing_system_requirements() -> list[str]:
     return missing
 
 
-def _package_manager() -> str | None:
-    for command in ("nala", "apt-get", "dnf", "pacman", "zypper"):
-        if shutil.which(command) is not None:
-            return command
-    return None
-
-
 def _install_linux_packages(console: Console) -> None:
-    manager = _package_manager()
-    if manager is None:
-        raise RuntimeError("Could not find nala, apt-get, dnf, pacman, or zypper to install ytui-music dependencies.")
+    distribution = detect_current_linux_distribution()
+    package_manager = distribution.package_manager
+    match package_manager:
+        case "apt":
+            required_packages = DEBIAN_REQUIRED_PACKAGES
+            optional_packages = DEBIAN_OPTIONAL_PACKAGES
+        case "dnf":
+            raise NotImplementedError("ytui-music requires libmpv.so.1, which current Fedora and EPEL packages do not provide.")
+        case _:
+            assert_never(package_manager)
+    if package_manager == "apt":
+        refresh_command = build_metadata_refresh_command(package_manager)
+        _run(_with_sudo(refresh_command), console, "Refresh package metadata", required=False)
 
-    if manager == "nala":
-        _run(_with_sudo(["nala", "update"]), console, "Refresh package metadata", required=False)
-        _run(_with_sudo(["nala", "install", "-y", *APT_REQUIRED_PACKAGES]), console, "Install ytui-music runtime packages", required=True)
-        _run(_with_sudo(["nala", "install", "-y", *APT_OPTIONAL_PACKAGES]), console, "Install optional ytui-music build headers", required=False)
+    required_command = build_package_install_command(package_manager, required_packages)
+    if package_manager == "apt":
+        required_command = ("env", "DEBIAN_FRONTEND=noninteractive", *required_command)
+    _run(_with_sudo(required_command), console, "Install ytui-music runtime packages", required=True)
+
+    if len(optional_packages) == 0:
         return
-
-    if manager == "apt-get":
-        _run(_with_sudo(["apt-get", "update"]), console, "Refresh package metadata", required=False)
-        _run(
-            _with_sudo(["env", "DEBIAN_FRONTEND=noninteractive", "apt-get", "install", "-y", *APT_REQUIRED_PACKAGES]),
-            console,
-            "Install ytui-music runtime packages",
-            required=True,
-        )
-        _run(
-            _with_sudo(["env", "DEBIAN_FRONTEND=noninteractive", "apt-get", "install", "-y", *APT_OPTIONAL_PACKAGES]),
-            console,
-            "Install optional ytui-music build headers",
-            required=False,
-        )
-        return
-
-    if manager == "dnf":
-        _run(_with_sudo(["dnf", "install", "-y", *DNF_REQUIRED_PACKAGES]), console, "Install ytui-music runtime packages", required=True)
-        return
-
-    if manager == "pacman":
-        _run(_with_sudo(["pacman", "-Sy", "--needed", "--noconfirm", *PACMAN_REQUIRED_PACKAGES]), console, "Install ytui-music runtime packages", required=True)
-        return
-
-    _run(_with_sudo(["zypper", "--non-interactive", "install", *ZYPPER_REQUIRED_PACKAGES]), console, "Install ytui-music runtime packages", required=True)
+    optional_command = build_package_install_command(package_manager, optional_packages)
+    if package_manager == "apt":
+        optional_command = ("env", "DEBIAN_FRONTEND=noninteractive", *optional_command)
+    _run(_with_sudo(optional_command), console, "Install optional ytui-music build headers", required=False)
 
 
 def _ensure_system_dependencies(console: Console) -> None:
@@ -220,10 +184,7 @@ def _ensure_system_dependencies(console: Console) -> None:
     _install_linux_packages(console=console)
     missing_after_install = _missing_system_requirements()
     if len(missing_after_install) > 0:
-        raise RuntimeError(
-            "ytui-music runtime dependencies are still missing after package installation: "
-            + ", ".join(missing_after_install)
-        )
+        raise RuntimeError("ytui-music runtime dependencies are still missing after package installation: " + ", ".join(missing_after_install))
 
 
 def _install_stackops_tool(which: str, binary_name: str | None, console: Console) -> bool:
@@ -240,14 +201,7 @@ def _write_youtube_dl_shim(ytdlp_path: Path, console: Console) -> Path:
     local_bin = Path(LINUX_INSTALL_PATH)
     local_bin.mkdir(parents=True, exist_ok=True)
     shim_path = local_bin.joinpath("youtube-dl")
-    shim_content = "\n".join(
-        [
-            "#!/bin/sh",
-            f"# {YOUTUBE_DL_SHIM_MARKER}",
-            f"exec {shlex.quote(str(ytdlp_path))} \"$@\"",
-            "",
-        ]
-    )
+    shim_content = "\n".join(["#!/bin/sh", f"# {YOUTUBE_DL_SHIM_MARKER}", f'exec {shlex.quote(str(ytdlp_path))} "$@"', ""])
 
     if shim_path.exists() or shim_path.is_symlink():
         if shim_path.is_symlink() or YOUTUBE_DL_SHIM_MARKER in shim_path.read_text(encoding="utf-8", errors="ignore"):
@@ -342,10 +296,7 @@ def _ensure_hyphen_alias(console: Console) -> None:
     try:
         alias_path.symlink_to(binary_path.name)
     except OSError:
-        alias_path.write_text(
-            "\n".join(["#!/bin/sh", f'exec "$(dirname "$0")/{YTUI_MUSIC_BINARY_NAME}" "$@"', ""]),
-            encoding="utf-8",
-        )
+        alias_path.write_text("\n".join(["#!/bin/sh", f'exec "$(dirname "$0")/{YTUI_MUSIC_BINARY_NAME}" "$@"', ""]), encoding="utf-8")
         alias_path.chmod(0o755)
     console.print(f"Installed ytui-music compatibility alias: {alias_path}")
 

@@ -11,12 +11,11 @@ from rich import box
 from rich.console import Console
 from rich.panel import Panel
 
-from stackops.utils.installer_utils.installer_main_protocol import (
-    InstallerPythonScriptMain,
-)
+from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.schemas.installer.installer_types import (
     CPU_ARCHITECTURES,
+    InstallerFileNamePatterns,
     OPERATING_SYSTEMS,
     InstallerData,
     get_normalized_arch,
@@ -29,19 +28,8 @@ ESPANSO_WINDOWS_PORTABLE_ASSET = "Espanso-Win-Portable-x86_64.zip"
 ESPANSO_MACOS_UNIVERSAL_ASSET = "Espanso-Mac-Universal.zip"
 
 
-def _empty_file_name_pattern() -> dict[CPU_ARCHITECTURES, dict[OPERATING_SYSTEMS, str | None]]:
-    return {
-        "amd64": {
-            "linux": None,
-            "windows": None,
-            "darwin": None,
-        },
-        "arm64": {
-            "linux": None,
-            "windows": None,
-            "darwin": None,
-        },
-    }
+def _empty_file_name_pattern() -> InstallerFileNamePatterns:
+    return {"amd64": {"linux": None, "windows": None, "darwin": None}, "arm64": {"linux": None, "windows": None, "darwin": None}}
 
 
 def _resolve_linux_asset_name(current_arch: CPU_ARCHITECTURES, xdg_session_type: str) -> str:
@@ -53,10 +41,7 @@ def _resolve_linux_asset_name(current_arch: CPU_ARCHITECTURES, xdg_session_type:
 
 
 def _build_espanso_installer_data(
-    base_installer_data: InstallerData,
-    os_name: OPERATING_SYSTEMS,
-    arch: CPU_ARCHITECTURES,
-    xdg_session_type: str | None,
+    base_installer_data: InstallerData, os_name: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, xdg_session_type: str | None
 ) -> InstallerData:
     file_name_pattern = _empty_file_name_pattern()
     match os_name:
@@ -67,10 +52,7 @@ def _build_espanso_installer_data(
         case "linux":
             if xdg_session_type is None:
                 raise RuntimeError("XDG_SESSION_TYPE must be set for Linux Espanso installations.")
-            file_name_pattern[arch]["linux"] = _resolve_linux_asset_name(
-                current_arch=arch,
-                xdg_session_type=xdg_session_type,
-            )
+            file_name_pattern[arch]["linux"] = {"apt": _resolve_linux_asset_name(current_arch=arch, xdg_session_type=xdg_session_type), "dnf": None}
         case "darwin":
             file_name_pattern["amd64"]["darwin"] = ESPANSO_MACOS_UNIVERSAL_ASSET
             file_name_pattern["arm64"]["darwin"] = ESPANSO_MACOS_UNIVERSAL_ASSET
@@ -91,19 +73,11 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     arch = get_normalized_arch()
     xdg_session_type = os.environ["XDG_SESSION_TYPE"] if os_name == "linux" else None
     resolved_installer_data = _build_espanso_installer_data(
-        base_installer_data=installer_data,
-        os_name=os_name,
-        arch=arch,
-        xdg_session_type=xdg_session_type,
+        base_installer_data=installer_data, os_name=os_name, arch=arch, xdg_session_type=xdg_session_type
     )
     console.print(
         Panel.fit(
-            "\n".join(
-                [
-                    f"🔄 Version: {'latest' if version is None else version}",
-                    f"🔗 Source: {ESPANSO_REPO_URL}",
-                ]
-            ),
+            "\n".join([f"🔄 Version: {'latest' if version is None else version}", f"🔗 Source: {ESPANSO_REPO_URL}"]),
             title="⚡ Espanso Installer",
             border_style="yellow",
             box=box.ROUNDED,
@@ -125,10 +99,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         else:
             console.print(
                 Panel.fit(
-                    "\n".join(["X11 detected", "📦 Using X11-specific package"]),
-                    title="🖥️  Display Server",
-                    border_style="cyan",
-                    box=box.ROUNDED,
+                    "\n".join(["X11 detected", "📦 Using X11-specific package"]), title="🖥️  Display Server", border_style="cyan", box=box.ROUNDED
                 )
             )
     else:
@@ -147,12 +118,7 @@ espanso install actually-all-emojis
     console.print(
         Panel.fit(
             "\n".join(
-                [
-                    "📋 Post-installation steps:",
-                    "1️⃣  Register Espanso as a service",
-                    "2️⃣  Start the Espanso service",
-                    "3️⃣  Install the emoji package",
-                ]
+                ["📋 Post-installation steps:", "1️⃣  Register Espanso as a service", "2️⃣  Start the Espanso service", "3️⃣  Install the emoji package"]
             ),
             title="✅ Espanso Installation Completed",
             border_style="green",

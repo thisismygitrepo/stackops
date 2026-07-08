@@ -2,79 +2,104 @@
 
 import platform
 import subprocess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
+
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
-import stackops.jobs.installer.linux_scripts as linux_scripts
+
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
-from stackops.utils.path_reference import get_path_reference_path
+from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution, detect_current_linux_distribution
 from stackops.utils.schemas.installer.installer_types import InstallerData
 
-# config_dict: InstallerData = {"appName": "Redis", "repoURL": "CMD", "doc": "submillisecond fast key-value db"}
+
+def _build_linux_install_script(distribution: LinuxDistribution) -> str:
+    match distribution.package_manager:
+        case "apt":
+            repository_setup = """
+echo "📥 Installing APT repository prerequisites..."
+sudo apt-get update
+sudo apt-get install -y lsb-release curl gpg
+
+echo "🔐 Adding Redis's official signing key..."
+curl -fsSL https://packages.redis.io/gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+sudo chmod 644 /usr/share/keyrings/redis-archive-keyring.gpg
+
+echo "📝 Adding Redis's official APT repository..."
+echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list > /dev/null
+sudo apt-get update
+"""
+            install_command = "sudo apt-get install -y redis"
+            service_name = "redis-server"
+        case "dnf":
+            repository_setup = """
+echo "🔄 Refreshing DNF package metadata..."
+sudo dnf makecache --refresh
+"""
+            install_command = "sudo dnf install -y redis"
+            service_name = "redis"
+        case _:
+            assert_never(distribution.package_manager)
+
+    return f"""#!/usr/bin/env bash
+set -euo pipefail
+
+echo "🗃️ Installing Redis on {distribution.distribution_id} with {distribution.package_manager}"
+{repository_setup}
+
+echo "📦 Installing Redis..."
+{install_command}
+
+echo "⚙️ Enabling and starting {service_name}..."
+sudo systemctl enable --now {service_name}
+
+echo "🧪 Testing Redis..."
+redis-cli ping
+
+echo "✅ Redis installation completed"
+"""
 
 
 def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
     console = Console()
     _ = installer_data, update
+    system = platform.system()
     console.print(
         Panel.fit(
-            "\n".join([f"💻 Platform: {platform.system()}", f"🔄 Version: {'latest' if version is None else version}"]),
+            "\n".join([f"💻 Platform: {system}", f"🔄 Version: {'latest' if version is None else version}"]),
             title="🗃️  Redis Installer",
             border_style="red",
             box=box.ROUNDED,
         )
     )
 
-    _ = version
-    if platform.system() == "Windows":
-        error_msg = "Redis installation not supported on Windows through this installer"
-        console.print(
-            Panel.fit(
-                "\n".join([error_msg, "💡 Consider using WSL2 or Docker to run Redis on Windows"]),
-                title="❌ Error",
-                subtitle="⚠️ Unsupported platform",
-                border_style="red",
-                box=box.ROUNDED,
+    match system:
+        case "Windows":
+            error_msg = "Redis installation not supported on Windows through this installer"
+            console.print(
+                Panel.fit(
+                    "\n".join([error_msg, "💡 Consider using WSL2 or Docker to run Redis on Windows"]),
+                    title="❌ Error",
+                    subtitle="⚠️ Unsupported platform",
+                    border_style="red",
+                    box=box.ROUNDED,
+                )
             )
-        )
-        raise NotImplementedError(error_msg)
-    elif platform.system() in ["Linux", "Darwin"]:
-        system_name = "Linux" if platform.system() == "Linux" else "macOS"
-        console.print(f"🐧 Installing Redis on {system_name} using installation script...", style="bold")
-        if platform.system() == "Linux":
-            program = get_path_reference_path(module=linux_scripts, path_reference=linux_scripts.REDIS_PATH_REFERENCE).read_text(encoding="utf-8")
-        else:  # Darwin/macOS
+            raise NotImplementedError(error_msg)
+        case "Linux":
+            distribution = detect_current_linux_distribution()
+            console.print(f"🐧 Installing Redis on {distribution.distribution_id} with {distribution.package_manager}...", style="bold")
+            program = _build_linux_install_script(distribution)
+        case "Darwin":
+            console.print("🍎 Installing Redis on macOS using Homebrew...", style="bold")
             program = "brew install redis"
-    else:
-        error_msg = f"Unsupported platform: {platform.system()}"
-        console.print(Panel.fit("\n".join([error_msg]), title="❌ Error", subtitle="⚠️ Unsupported platform", border_style="red", box=box.ROUNDED))
-        raise NotImplementedError(error_msg)
+        case _:
+            error_msg = f"Unsupported platform: {system}"
+            console.print(Panel.fit(error_msg, title="❌ Error", subtitle="⚠️ Unsupported platform", border_style="red", box=box.ROUNDED))
+            raise NotImplementedError(error_msg)
 
-    console.print(
-        Panel.fit(
-            "\n".join(
-                [
-                    "⚡ In-memory data structure store",
-                    "🔑 Key-value database with optional persistence",
-                    "🚀 Sub-millisecond response times",
-                    "💾 Supports strings, lists, sets, sorted sets, hashes",
-                    "🔄 Built-in replication and Lua scripting",
-                ]
-            ),
-            title="ℹ️  Redis Features",
-            border_style="magenta",
-            box=box.ROUNDED,
-        )
-    )
-
-    console.print("🔄 EXECUTING | Running Redis installation...", style="bold yellow")
-    try:
-        subprocess.run(program, shell=True, text=True, check=True)
-        console.print("✅ Redis installation completed successfully", style="bold green")
-    except subprocess.CalledProcessError as e:
-        console.print(f"❌ Installation failed with exit code {e.returncode}", style="bold red")
-        raise
+    subprocess.run(["bash", "-c", program], text=True, check=True)
+    console.print("✅ Redis installation completed successfully", style="bold green")
 
 
 if __name__ == "__main__":

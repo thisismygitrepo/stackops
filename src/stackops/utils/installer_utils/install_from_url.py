@@ -1,37 +1,19 @@
-
-
 import platform
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, TypedDict
 
-from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_deb_package, install_msi_package
+from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_msi_package
+from stackops.utils.installer_utils.linux_package_file import install_linux_package_file
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
-from stackops.utils.installer_utils.github_release_bulk import (
-    get_repo_name_from_url,
-    fetch_github_release_data,
-    extract_release_info,
-    AssetInfo,
-)
+from stackops.utils.installer_utils.github_release_bulk import get_repo_name_from_url, fetch_github_release_data, extract_release_info, AssetInfo
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
 
 if TYPE_CHECKING:
     from rich.console import Console
 
 SUPPORTED_GITHUB_HOSTS = {"github.com", "www.github.com"}
-_ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (
-    ".tar.gz",
-    ".tar.xz",
-    ".tar.bz2",
-    ".tgz",
-    ".zip",
-    ".gz",
-    ".xz",
-    ".bz2",
-    ".deb",
-    ".msi",
-    ".exe",
-)
+_ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (".tar.gz", ".tar.xz", ".tar.bz2", ".tgz", ".zip", ".gz", ".xz", ".bz2", ".deb", ".rpm", ".msi", ".exe")
 _ASSET_MARKER_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"""(?ix)
     [._-]
@@ -43,7 +25,7 @@ _ASSET_MARKER_PATTERN: Final[re.Pattern[str]] = re.compile(
         amd64|x86_64|x64|arm64|aarch64|armv7|armv6|i386|i686|386
     )
     (?=[._-]|$)
-    """,
+    """
 )
 
 
@@ -113,14 +95,15 @@ def _derive_tool_name(repo_name: str, asset_name: str | None) -> str | None:
 
 def _finalize_install(repo_name: str, asset_name: str | None, version: str, extracted_path: Path, console: "Console") -> None:
     from rich.panel import Panel
+
     extracted_suffix = extracted_path.suffix.lower()
-    if extracted_suffix == ".deb":
-        install_deb_package(extracted_path)
-        tool_name_deb = _derive_tool_name(repo_name, asset_name)
-        if tool_name_deb is not None:
-            INSTALL_VERSION_ROOT.joinpath(tool_name_deb).parent.mkdir(parents=True, exist_ok=True)
-            INSTALL_VERSION_ROOT.joinpath(tool_name_deb).write_text(version, encoding="utf-8")
-        console.print(Panel(f"Installed Debian package for [green]{tool_name_deb}[/green]", title="✅ Complete", border_style="green"))
+    if extracted_suffix in {".deb", ".rpm"}:
+        install_linux_package_file(extracted_path)
+        tool_name_linux_package = _derive_tool_name(repo_name, asset_name)
+        if tool_name_linux_package is not None:
+            INSTALL_VERSION_ROOT.joinpath(tool_name_linux_package).parent.mkdir(parents=True, exist_ok=True)
+            INSTALL_VERSION_ROOT.joinpath(tool_name_linux_package).write_text(version, encoding="utf-8")
+        console.print(Panel(f"Installed Linux package for [green]{tool_name_linux_package}[/green]", title="✅ Complete", border_style="green"))
         return
     if extracted_suffix == ".msi":
         install_msi_package(extracted_path)
@@ -171,12 +154,12 @@ def install_from_github_url(github_url: str) -> None:
     if not release_raw:
         console.print(Panel("No releases available for this repository.", title="❌ Error", border_style="red"))
         return None
-    
+
     release_info = extract_release_info(release_raw)
     if not release_info:
         console.print(Panel("Failed to parse release information.", title="❌ Error", border_style="red"))
         return None
-    
+
     assets = release_info["assets"]
     if not assets:
         console.print(Panel("No downloadable assets found in the latest release.", title="❌ Error", border_style="red"))
@@ -186,7 +169,7 @@ def install_from_github_url(github_url: str) -> None:
     if not selection_pool:
         console.print(Panel("No assets available for installation.", title="❌ Error", border_style="red"))
         return None
-    
+
     # First pass: collect all formatted data and calculate column widths
     asset_data: list[AssetDisplayRow] = []
     for asset in selection_pool:
@@ -197,39 +180,35 @@ def install_from_github_url(github_url: str) -> None:
         size = asset["size"]
         download_count = asset.get("download_count", 0)
         created_at = asset.get("created_at", "")
-        
+
         # Format each field
         size_str = f"[{_format_size(size)}]"
         downloads_str = f"{download_count:,}"
         date_str = created_at.split("T")[0] if created_at else "N/A"
-        
-        asset_data.append({
-            "name": name,
-            "size_str": size_str,
-            "downloads_str": downloads_str,
-            "date_str": date_str,
-            "asset": asset
-        })
-    
+
+        asset_data.append({"name": name, "size_str": size_str, "downloads_str": downloads_str, "date_str": date_str, "asset": asset})
+
     # Calculate maximum widths for alignment
     max_name_len = max(len(item["name"]) for item in asset_data) if asset_data else 0
     max_size_len = max(len(item["size_str"]) for item in asset_data) if asset_data else 0
     max_downloads_len = max(len(item["downloads_str"]) for item in asset_data) if asset_data else 0
-    
+
     # Second pass: build aligned labels
     options_map: dict[str, AssetInfo] = {}
     for item in asset_data:
         name_padded = item["name"].ljust(max_name_len)
         size_padded = item["size_str"].ljust(max_size_len)
         downloads_padded = item["downloads_str"].rjust(max_downloads_len)
-        
+
         label = f"{name_padded} {size_padded} | #🔽 {downloads_padded} | 📅 {item['date_str']}"
         options_map[label] = item["asset"]
-    
+
     if not options_map:
         console.print(Panel("Release assets lack download URLs.", title="❌ Error", border_style="red"))
         return None
-    selection_label = choose_from_options(options=list(options_map.keys()), msg="Select a release asset", multi=False, header="📦 GitHub Release Assets", tv=True)
+    selection_label = choose_from_options(
+        options=list(options_map.keys()), msg="Select a release asset", multi=False, header="📦 GitHub Release Assets", tv=True
+    )
     if selection_label is None:
         console.print(Panel("❓ Asset selection cancelled.", title="Cancelled", border_style="yellow"))
         return None
@@ -248,6 +227,7 @@ def install_from_github_url(github_url: str) -> None:
 
 def install_from_binary_url(binary_url: str) -> None:
     from rich.console import Console
+
     # from rich.panel import Panel
     console = Console()
     # parsed = urlparse(binary_url)

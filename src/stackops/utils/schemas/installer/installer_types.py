@@ -41,27 +41,35 @@ InstallerCategoryLabel: TypeAlias = Literal[
 ]
 
 
-InstallerData = TypedDict(
-    "InstallerData",
-    {
-        "appName": str,
-        "license": str,
-        "doc": str,
-        "repoURL": str,
-        "categoryLabels": list[InstallerCategoryLabel],
-        "fileNamePattern": dict[CPU_ARCHITECTURES, dict[OPERATING_SYSTEMS, str | None]],
-    },
-)
+class LinuxPackageManagerInstallerPattern(TypedDict):
+    apt: str | None
+    dnf: str | None
 
 
-InstallerDataFiles = TypedDict(
-    "InstallerDataFiles",
-    {
-        "$schema": NotRequired[str],
-        "version": str,
-        "installers": list[InstallerData],
-    },
-)
+LinuxInstallerPattern: TypeAlias = str | None | LinuxPackageManagerInstallerPattern
+
+
+class ArchitectureInstallerPattern(TypedDict):
+    windows: str | None
+    linux: LinuxInstallerPattern
+    darwin: str | None
+
+
+class InstallerFileNamePatterns(TypedDict):
+    amd64: ArchitectureInstallerPattern
+    arm64: ArchitectureInstallerPattern
+
+
+class InstallerData(TypedDict):
+    appName: str
+    license: str
+    doc: str
+    repoURL: str
+    categoryLabels: list[InstallerCategoryLabel]
+    fileNamePattern: InstallerFileNamePatterns
+
+
+InstallerDataFiles = TypedDict("InstallerDataFiles", {"$schema": NotRequired[str], "version": str, "installers": list[InstallerData]})
 
 
 class InstallationResultSkipped(TypedDict):
@@ -97,12 +105,7 @@ class InstallationResultFailed(TypedDict):
     error: str
 
 
-InstallationResult: TypeAlias = (
-    InstallationResultSkipped
-    | InstallationResultSameVersion
-    | InstallationResultUpdated
-    | InstallationResultFailed
-)
+InstallationResult: TypeAlias = InstallationResultSkipped | InstallationResultSameVersion | InstallationResultUpdated | InstallationResultFailed
 
 
 class InstallationResultBuckets(TypedDict):

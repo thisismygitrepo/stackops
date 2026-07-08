@@ -1,5 +1,3 @@
-"""docker installer"""
-
 import platform
 from typing import TYPE_CHECKING
 
@@ -7,96 +5,87 @@ from rich import box
 from rich.console import Console
 from rich.panel import Panel
 
-from stackops.utils.installer_utils.installer_main_protocol import (
-    InstallerPythonScriptMain,
-)
 from stackops.utils.code import run_shell_script
+from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
+from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution, detect_current_linux_distribution
 from stackops.utils.meta import print_code
 from stackops.utils.schemas.installer.installer_types import InstallerData
 
 
-def _get_linux_install_script() -> str:
-    return """
+def _get_linux_install_script(distribution: LinuxDistribution) -> str:
+    match (distribution.distribution_id, distribution.package_manager):
+        case (("ubuntu" | "debian") as distribution_id, "apt"):
+            match distribution_id:
+                case "ubuntu":
+                    suite_expression = "${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+                case "debian":
+                    suite_expression = "$VERSION_CODENAME"
+            repository_url = f"https://download.docker.com/linux/{distribution_id}"
+            repository_setup = f"""
+echo "📥 Installing APT repository prerequisites..."
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl
+
+echo "🔐 Adding Docker's official signing key..."
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL "{repository_url}/gpg" -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo "📝 Adding Docker's official {distribution_id} repository..."
+sudo tee /etc/apt/sources.list.d/docker.sources > /dev/null <<EOF
+Types: deb
+URIs: {repository_url}
+Suites: $(. /etc/os-release && echo "{suite_expression}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+sudo apt-get update
+"""
+            install_command = "sudo apt-get install -y"
+        case (("rhel" | "centos") as distribution_id, "dnf"):
+            repository_url = f"https://download.docker.com/linux/{distribution_id}/docker-ce.repo"
+            repository_setup = f"""
+echo "📥 Installing DNF repository prerequisites..."
+sudo dnf -y install dnf-plugins-core
+
+echo "📝 Adding Docker's official {distribution_id} repository..."
+sudo dnf config-manager --add-repo "{repository_url}"
+"""
+            install_command = "sudo dnf install -y"
+        case ("fedora", "dnf"):
+            repository_setup = """
+echo "📝 Adding Docker's official fedora repository..."
+sudo dnf config-manager addrepo --from-repofile "https://download.docker.com/linux/fedora/docker-ce.repo"
+"""
+            install_command = "sudo dnf install -y"
+        case ("ubuntu" | "debian" | "rhel" | "fedora" | "centos", _):
+            raise ValueError(
+                f"Invalid package-manager metadata for Linux distribution '{distribution.distribution_id}': manager={distribution.package_manager}"
+            )
+        case (unsupported_distribution_id, _):
+            raise NotImplementedError(
+                "Docker Engine's official repositories do not support Linux distribution "
+                f"'{unsupported_distribution_id}'. Supported distributions: ubuntu, debian, rhel, fedora, centos."
+            )
+
+    return f"""
 set -euo pipefail
 
-echo "🔍 DETECTING SYSTEM | Identifying OS distribution and version"
-
-get_os_type() {
-    if [[ -f "/etc/ubuntu_version" || -f "/etc/lsb-release" ]]; then
-        echo "ubuntu"
-        return
-    fi
-    if [[ -f "/etc/debian_version" ]]; then
-        echo "debian"
-        return
-    fi
-    echo "unsupported"
-}
-
-get_linux_codename() {
-    local os_type
-    os_type="$(get_os_type)"
-    local distro_codename
-    distro_codename="$(lsb_release -cs)"
-    if [[ "$os_type" == "ubuntu" ]]; then
-        case "$distro_codename" in
-            wilma)
-                echo "noble"
-                ;;
-            virginia)
-                echo "jammy"
-                ;;
-            *)
-                echo "$distro_codename"
-                ;;
-        esac
-        return
-    fi
-    echo "$distro_codename"
-}
-
-OS_TYPE="$(get_os_type)"
-if [[ "$OS_TYPE" == "unsupported" ]]; then
-    echo "❌ Unsupported Linux distribution. Expected Debian/Ubuntu family."
-    exit 1
-fi
-
-DISTRO_VERSION="$(get_linux_codename)"
-
-echo "🖥️ Detected OS: $OS_TYPE"
-echo "📋 Distribution version: $DISTRO_VERSION"
-
-echo "📥 Installing prerequisites..."
-sudo nala update
-sudo nala install ca-certificates curl gnupg lsb-release -y
-
-echo "🔐 Adding Docker's official GPG key..."
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL "https://download.docker.com/linux/$OS_TYPE/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-echo "📝 Adding Docker repository to sources list..."
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$OS_TYPE \
-  $DISTRO_VERSION stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo "🐧 Installing Docker Engine for {distribution.distribution_id} with {distribution.package_manager}"
+{repository_setup}
 
 echo "📦 INSTALLATION | Installing Docker packages"
-sudo nala update
-sudo nala install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+{install_command} docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-echo "⚙️ Enabling Docker system service..."
-sudo systemctl enable docker || echo "⚠️ Could not enable Docker service (may be WSL or systemd not available)"
-
-echo "▶️ Starting Docker system service..."
-sudo systemctl start docker || echo "⚠️ Could not start Docker service automatically"
+echo "⚙️ Enabling and starting Docker system service..."
+sudo systemctl enable --now docker
 
 echo "👥 Adding current user to docker group..."
-sudo groupadd docker 2>/dev/null || echo "ℹ️ Docker group already exists"
-sudo usermod -aG docker "$(id -un)" || echo "⚠️ Failed to add user to docker group"
+sudo usermod -aG docker "$(id -un)"
 
 echo "🧪 Testing Docker installation with hello-world..."
-sudo docker run hello-world || docker run hello-world || echo "⚠️ Docker hello-world test failed (you may need to re-login or start the Docker daemon manually)"
+sudo docker run hello-world
 
 echo "✅ Docker installation completed"
 echo "ℹ️ Log out and back in, or run 'newgrp docker', before using Docker without sudo."
@@ -132,23 +121,18 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     _ = installer_data, update
     console.print(
         Panel.fit(
-            "\n".join(
-                [
-                    f"💻 Platform: {platform.system()}",
-                    f"🔄 Version: {'latest' if version is None else version}",
-                ]
-            ),
+            "\n".join([f"💻 Platform: {platform.system()}", f"🔄 Version: {'latest' if version is None else version}"]),
             title="🐳 Docker Installer",
             border_style="blue",
             box=box.ROUNDED,
         )
     )
 
-    _ = version
     match platform.system():
         case "Linux":
-            console.print("🐧 Installing Docker on Linux with Docker's official apt repository...", style="bold")
-            program = _get_linux_install_script()
+            distribution = detect_current_linux_distribution()
+            console.print(f"🐧 Installing Docker on {distribution.distribution_id} with Docker's official repository...", style="bold")
+            program = _get_linux_install_script(distribution=distribution)
         case "Darwin":
             console.print("🍎 Installing Docker CLI on macOS with Homebrew...", style="bold")
             program = _get_darwin_install_script()
@@ -166,15 +150,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
             raise NotImplementedError(error_msg)
         case _:
             error_msg = f"Unsupported platform: {platform.system()}"
-            console.print(
-                Panel.fit(
-                    error_msg,
-                    title="❌ Error",
-                    subtitle="⚠️ Unsupported platform",
-                    border_style="red",
-                    box=box.ROUNDED,
-                )
-            )
+            console.print(Panel.fit(error_msg, title="❌ Error", subtitle="⚠️ Unsupported platform", border_style="red", box=box.ROUNDED))
             raise NotImplementedError(error_msg)
 
     print_code(code=program, lexer="shell", desc="Installation Script Preview")

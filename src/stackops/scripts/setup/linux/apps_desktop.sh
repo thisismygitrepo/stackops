@@ -1,5 +1,18 @@
 #!/usr/bin/bash
 
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+STACKOPS_REPO_DIR="$(cd -- "$SCRIPT_DIR/../../../../.." && pwd)"
+read -r DISTRIBUTION_ID PACKAGE_MANAGER < <(
+    cd "$STACKOPS_REPO_DIR"
+    PYTHONPATH="$STACKOPS_REPO_DIR/src" uv run --no-project python -m stackops.utils.installer_utils.linux_package_manager
+)
+if [[ "$PACKAGE_MANAGER" == "dnf" && "$DISTRIBUTION_ID" != "fedora" ]]; then
+    echo "Desktop package installation on $DISTRIBUTION_ID requires explicit EPEL/CRB repository configuration." >&2
+    exit 1
+fi
+
 
 echo """📧 EMAIL CLIENT | Installing Thunderbird"""
 echo "📥 Installing Thunderbird via Flatpak..."
@@ -16,7 +29,12 @@ flatpak install flathub com.github.hluk.copyq --noninteractive
 
 echo """🔗 REMOTE DESKTOP | Installing Remmina"""
 echo "📥 Installing Remmina and RDP plugin..."
-sudo nala install remmina remmina-plugin-rdp -y
+if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
+    sudo apt-get update
+    sudo apt-get install -y remmina remmina-plugin-rdp
+else
+    sudo dnf install -y remmina remmina-plugins-rdp
+fi
 
 # Alternative Remmina installation via flatpak (reference)
 # echo "📥 Setting up Flatpak repositories..."
@@ -29,7 +47,11 @@ sudo nala install remmina remmina-plugin-rdp -y
 echo """🚀 APPLICATION LAUNCHER | Installing Rofi
 """
 echo "📥 Installing Rofi application launcher..."
-sudo nala install rofi -y
+if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
+    sudo apt-get install -y rofi
+else
+    sudo dnf install -y rofi
+fi
 
 echo """📎 CLIPBOARD HISTORY | Installing Greenclip
 """
@@ -37,10 +59,10 @@ echo """📎 CLIPBOARD HISTORY | Installing Greenclip
 # session_type=$(echo $XDG_SESSION_TYPE)
 # if [ "$session_type" == "x11" ]; then
 #     echo "Detected X11 session. Installing X11-related packages and tools..."
-#     sudo nala install xdotool xsel xclip -y
+#     sudo apt-get install -y xdotool xsel xclip
 # elif [ "$session_type" == "wayland" ]; then
 #     echo "Detected Wayland session. Installing Wayland-related packages and tools..."
-#     sudo nala install wl-copy wtype -y
+#     sudo apt-get install -y wl-clipboard wtype
 # else
 #     echo "Unknown session type: $session_type"
 #     exit 1
@@ -72,23 +94,27 @@ echo """📦 INSTALLING GUI COMPONENTS | Setting up desktop environment
 """
 
 # echo "📥 Installing Nautilus file manager..."
-# sudo nala install nautilus -y  # 📂 graphical file manager
-# sudo nala install x11-apps  # 🎨 few graphical test apps like xeyes
+# sudo apt-get install -y nautilus  # 📂 graphical file manager
+# sudo apt-get install -y x11-apps  # 🎨 few graphical test apps like xeyes
 
 echo "📥 Installing XRDP - Remote Desktop Protocol server..."
-sudo nala install xrdp -y  # 🔌 remote desktop protocol
+if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
+    sudo apt-get install -y xrdp
+else
+    sudo dnf install -y xrdp
+fi
 
 # echo "📥 Installing X.Org server and components..."
-# sudo nala install xorg -y  # 🎯 xorg server
-# sudo nala install xinit -y  # 🚀 xorg init
-# sudo nala install xserver-xorg -y  # 🖼️ xorg server
+# sudo apt-get install -y xorg  # 🎯 xorg server
+# sudo apt-get install -y xinit  # 🚀 xorg init
+# sudo apt-get install -y xserver-xorg  # 🖼️ xorg server
 
 echo "📥 Installing XFCE4 desktop environment..."
-sudo nala install xfce4 -y  # 🏠 xfce4 desktop environment
-
-echo "📥 Installing XFCE4 additional components..."
-sudo nala install xfce4-goodies -y  # ✨ xfce4 desktop environment extras
+if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
+    sudo apt-get install -y xfce4 xfce4-goodies
+else
+    sudo dnf install -y @xfce-desktop-environment
+fi
 
 echo """🔧 CONFIGURING XRDP | Setting up Remote Desktop service
 """
-

@@ -1,4 +1,4 @@
-"""Install rmpc and its common MPD/media companion tools using nala or brew."""
+"""Install rmpc and its common MPD/media companion tools."""
 
 import json
 import os
@@ -7,8 +7,9 @@ import re
 import shlex
 import shutil
 import subprocess
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 
 from rich.console import Console
 from rich.panel import Panel
@@ -16,6 +17,12 @@ from rich.panel import Panel
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH
+from stackops.utils.installer_utils.linux_package_manager import (
+    LinuxDistribution,
+    LinuxPackageManager,
+    build_package_install_command,
+    detect_current_linux_distribution,
+)
 from stackops.utils.schemas.installer.installer_types import InstallerData, get_os_name
 
 
@@ -27,11 +34,7 @@ RMPC_INSTALLER_DATA: InstallerData = {
     "doc": "A modern, configurable terminal based MPD client.",
     "categoryLabels": ["media-audio-video"],
     "fileNamePattern": {
-        "amd64": {
-            "linux": "rmpc-{version}-x86_64-unknown-linux-gnu.tar.gz",
-            "darwin": "rmpc-{version}-x86_64-apple-darwin.tar.gz",
-            "windows": None,
-        },
+        "amd64": {"linux": "rmpc-{version}-x86_64-unknown-linux-gnu.tar.gz", "darwin": "rmpc-{version}-x86_64-apple-darwin.tar.gz", "windows": None},
         "arm64": {
             "linux": "rmpc-{version}-aarch64-unknown-linux-gnu.tar.gz",
             "darwin": "rmpc-{version}-aarch64-apple-darwin.tar.gz",
@@ -40,10 +43,12 @@ RMPC_INSTALLER_DATA: InstallerData = {
     },
 }
 
-NALA_REQUIRED_PACKAGES = ["mpd", "mpc"]
-NALA_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "python3", "python3-pip", "python3-mutagen", "yt-dlp", "ueberzugpp"]
-BREW_REQUIRED_PACKAGES = ["mpd", "mpc"]
-BREW_OPTIONAL_PACKAGES = ["ffmpeg", "cava", "python-mutagen", "yt-dlp", "ueberzugpp"]
+APT_REQUIRED_PACKAGES = ("mpd", "mpc")
+APT_OPTIONAL_PACKAGES = ("ffmpeg", "cava", "python3", "python3-pip", "python3-mutagen", "yt-dlp", "ueberzugpp")
+FEDORA_REQUIRED_PACKAGES = ("mpd", "mpc")
+FEDORA_OPTIONAL_PACKAGES = ("ffmpeg-free", "cava", "python3", "python3-pip", "python3-mutagen", "yt-dlp", "ueberzugpp")
+BREW_REQUIRED_PACKAGES = ("mpd", "mpc")
+BREW_OPTIONAL_PACKAGES = ("ffmpeg", "cava", "python-mutagen", "yt-dlp", "ueberzugpp")
 DEFAULT_MPD_ADDRESS = "127.0.0.1:6600"
 YT_DLP_REMOTE_COMPONENT_ARGS = ["--remote-components", "ejs:github"]
 LINUX_MPD_SOCKET = "/run/mpd/socket"
@@ -74,23 +79,35 @@ def _run_shell(command: str, console: Console, description: str, *, required: bo
     return False
 
 
-def _nala_install_command(packages: list[str]) -> str:
-    package_args = " ".join(packages)
-    return f"{_sudo()}nala install -y {package_args}"
+def _linux_install_command(package_manager: LinuxPackageManager, packages: Sequence[str]) -> str:
+    command = build_package_install_command(package_manager=package_manager, packages=packages)
+    return f"{_sudo()}{shlex.join(command)}"
 
 
-def _brew_install_command(packages: list[str]) -> str:
-    package_args = " ".join(packages)
+def _brew_install_command(packages: Sequence[str]) -> str:
+    package_args = shlex.join(packages)
     return f"brew install {package_args}"
 
 
-def _install_nala_companions(console: Console) -> None:
-    command = _nala_install_command(packages=NALA_REQUIRED_PACKAGES)
+def _install_linux_companions(console: Console, distribution: LinuxDistribution) -> None:
+    match distribution.package_manager:
+        case "apt":
+            required_packages = APT_REQUIRED_PACKAGES
+            optional_packages = APT_OPTIONAL_PACKAGES
+        case "dnf":
+            if distribution.distribution_id != "fedora":
+                raise NotImplementedError(f"rmpc's required MPD packages are not available in EPEL for {distribution.distribution_id}.")
+            required_packages = FEDORA_REQUIRED_PACKAGES
+            optional_packages = FEDORA_OPTIONAL_PACKAGES
+        case _:
+            assert_never(distribution.package_manager)
+
+    command = _linux_install_command(package_manager=distribution.package_manager, packages=required_packages)
     _run_shell(command, console, "Install MPD companion packages", required=True)
 
-    for optional_package in NALA_OPTIONAL_PACKAGES:
+    for optional_package in optional_packages:
         _run_shell(
-            _nala_install_command(packages=[optional_package]),
+            _linux_install_command(package_manager=distribution.package_manager, packages=(optional_package,)),
             console,
             f"Install optional rmpc companion package: {optional_package}",
             required=False,
@@ -126,14 +143,10 @@ def _choose_rmpc_mpd_address(console: Console, socket_path: str) -> str:
     if _mpd_endpoint_available(socket_path):
         return socket_path
     if _mpd_endpoint_available(DEFAULT_MPD_ADDRESS):
-        console.print(
-            f"WARNING: MPD socket {socket_path} is unavailable; configuring rmpc for {DEFAULT_MPD_ADDRESS} instead."
-        )
+        console.print(f"WARNING: MPD socket {socket_path} is unavailable; configuring rmpc for {DEFAULT_MPD_ADDRESS} instead.")
         console.print("WARNING: rmpc YouTube commands require an MPD Unix socket to add downloaded files.")
         return DEFAULT_MPD_ADDRESS
-    console.print(
-        f"WARNING: MPD did not answer on {socket_path} or {DEFAULT_MPD_ADDRESS}; using rmpc default address."
-    )
+    console.print(f"WARNING: MPD did not answer on {socket_path} or {DEFAULT_MPD_ADDRESS}; using rmpc default address.")
     return DEFAULT_MPD_ADDRESS
 
 
@@ -202,16 +215,10 @@ def _ensure_python3_mutagen(console: Console) -> None:
 
     yt_dlp_python_executable = _yt_dlp_python_executable()
     if yt_dlp_python_executable is not None and not _python_executable_has_mutagen(yt_dlp_python_executable):
-        _install_mutagen_for_python(
-            console,
-            yt_dlp_python_executable,
-            "Install mutagen for the yt-dlp Python environment used by rmpc",
-        )
+        _install_mutagen_for_python(console, yt_dlp_python_executable, "Install mutagen for the yt-dlp Python environment used by rmpc")
 
     if not _python3_has_mutagen():
-        console.print(
-            "WARNING: python3 still cannot import mutagen; rmpc YouTube support may warn about python-mutagen."
-        )
+        console.print("WARNING: python3 still cannot import mutagen; rmpc YouTube support may warn about python-mutagen.")
     if yt_dlp_python_executable is not None and not _python_executable_has_mutagen(yt_dlp_python_executable):
         console.print("WARNING: yt-dlp still cannot import mutagen; rmpc YouTube downloads may fail.")
 
@@ -254,20 +261,10 @@ def _write_rmpc_youtube_config(console: Console, mpd_address: str, cache_dir: Pa
         if config_text == "":
             config_text = "(\n)\n"
 
+    config_text = _upsert_ron_field(config_text=config_text, field_name="address", value_literal=_ron_string(mpd_address))
+    config_text = _upsert_ron_field(config_text=config_text, field_name="cache_dir", value_literal=_ron_string(str(resolved_cache_dir)))
     config_text = _upsert_ron_field(
-        config_text=config_text,
-        field_name="address",
-        value_literal=_ron_string(mpd_address),
-    )
-    config_text = _upsert_ron_field(
-        config_text=config_text,
-        field_name="cache_dir",
-        value_literal=_ron_string(str(resolved_cache_dir)),
-    )
-    config_text = _upsert_ron_field(
-        config_text=config_text,
-        field_name="extra_yt_dlp_args",
-        value_literal=_ron_string_list(YT_DLP_REMOTE_COMPONENT_ARGS),
+        config_text=config_text, field_name="extra_yt_dlp_args", value_literal=_ron_string_list(YT_DLP_REMOTE_COMPONENT_ARGS)
     )
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -317,8 +314,7 @@ def _configure_linux_user_mpd_socket(console: Console) -> str | None:
         config_text = config_path.read_text(encoding="utf-8")
         if f'bind_to_address "{LINUX_USER_MPD_SOCKET}"' not in config_text:
             config_path.write_text(
-                config_text
-                + f'\n# Added by stackops rmpc installer for local rmpc YouTube playback.\nbind_to_address "{LINUX_USER_MPD_SOCKET}"\n',
+                config_text + f'\n# Added by stackops rmpc installer for local rmpc YouTube playback.\nbind_to_address "{LINUX_USER_MPD_SOCKET}"\n',
                 encoding="utf-8",
             )
     else:
@@ -356,12 +352,7 @@ if ! grep -Eq '^[[:space:]]*bind_to_address[[:space:]]+"{re.escape(LINUX_MPD_SOC
 fi
 """
     _run_shell(f"{_sudo()}sh -c {json.dumps(script)}", console, "Configure MPD local socket", required=False)
-    _run_shell(
-        f"{_sudo()}systemctl restart mpd || {_sudo()}service mpd restart",
-        console,
-        "Restart MPD after socket configuration",
-        required=False,
-    )
+    _run_shell(f"{_sudo()}systemctl restart mpd || {_sudo()}service mpd restart", console, "Restart MPD after socket configuration", required=False)
 
 
 def _configure_macos_mpd_socket(console: Console) -> None:
@@ -385,8 +376,7 @@ def _configure_macos_mpd_socket(console: Console) -> None:
         if not backup_path.exists():
             backup_path.write_text(config_text, encoding="utf-8")
         mpd_conf.write_text(
-            config_text
-            + f'\n# Added by stackops rmpc installer for local rmpc YouTube playback.\nbind_to_address "{MACOS_MPD_SOCKET}"\n',
+            config_text + f'\n# Added by stackops rmpc installer for local rmpc YouTube playback.\nbind_to_address "{MACOS_MPD_SOCKET}"\n',
             encoding="utf-8",
         )
     _run_shell("brew services restart mpd", console, "Restart Homebrew MPD after socket configuration", required=False)
@@ -410,12 +400,14 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     os_name = get_os_name()
     release_version = _normalize_release_version(version)
 
+    distribution: LinuxDistribution | None = None
     if os_name == "linux":
-        package_manager = "nala"
-        if shutil.which("nala") is None:
-            raise RuntimeError("This rmpc Linux installer requires nala.")
+        distribution = detect_current_linux_distribution()
+        package_manager = distribution.package_manager
+        platform_description = distribution.distribution_id
     elif os_name == "darwin":
         package_manager = "brew"
+        platform_description = "macOS"
         if shutil.which("brew") is None:
             raise RuntimeError("This rmpc macOS installer requires brew.")
     else:
@@ -425,6 +417,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         Panel.fit(
             "\n".join(
                 [
+                    f"Platform: {platform_description}",
                     f"Version: {'latest' if release_version is None else release_version}",
                     f"Source: {RMPC_REPO_URL}",
                     "Installer: upstream precompiled release archive",
@@ -439,7 +432,9 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 
     cache_dir = DEFAULT_RMPC_CACHE_DIR
     if os_name == "linux":
-        _install_nala_companions(console=console)
+        if distribution is None:
+            raise AssertionError("Linux distribution detection did not run.")
+        _install_linux_companions(console=console, distribution=distribution)
         user_socket_path = _configure_linux_user_mpd_socket(console=console)
         if user_socket_path is None:
             _configure_linux_mpd_socket(console=console)

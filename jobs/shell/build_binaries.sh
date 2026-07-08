@@ -1,7 +1,24 @@
+#!/usr/bin/env bash
 
-sudo nala install ccache patchelf -y
+set -euo pipefail
 
-STACKOPS_REPO_DIR="$HOME/code/stackops"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+STACKOPS_REPO_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
+read -r DISTRIBUTION_ID PACKAGE_MANAGER < <(
+  cd "$STACKOPS_REPO_DIR"
+  PYTHONPATH="$STACKOPS_REPO_DIR/src" uv run --no-project python -m stackops.utils.installer_utils.linux_package_manager
+)
+echo "Installing build dependencies on $DISTRIBUTION_ID with $PACKAGE_MANAGER"
+
+if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
+  sudo apt-get update
+  sudo apt-get install -y ccache patchelf
+elif [[ "$DISTRIBUTION_ID" == "fedora" ]]; then
+  sudo dnf install -y ccache patchelf
+else
+  echo "Build dependencies on $DISTRIBUTION_ID require explicit EPEL/CRB repository configuration." >&2
+  exit 1
+fi
 
 mkdir -p $HOME/data/binaries/stackops
 cd "$STACKOPS_REPO_DIR"

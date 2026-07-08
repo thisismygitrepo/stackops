@@ -22,6 +22,7 @@ def get_group_name_to_repr() -> dict[str, str]:
 def handle_installer_not_found(search_term: str, app_apps: list[InstallerData]) -> list[str]:
     """Handle installer not found with friendly suggestions using fuzzy matching."""
     from difflib import get_close_matches
+
     all_names = sorted([inst["appName"] for inst in app_apps])
     name_to_doc = {inst["appName"]: inst["doc"] for inst in app_apps}
     all_descriptions = {f"{inst['appName']}: {inst['doc']}": inst["appName"] for inst in app_apps}
@@ -30,28 +31,17 @@ def handle_installer_not_found(search_term: str, app_apps: list[InstallerData]) 
     close_description_matches = get_close_matches(search_term, list(all_descriptions.keys()), n=5, cutoff=0.4)
 
     search_lower = search_term.lower()
-    substring_matches = [
-        inst["appName"]
-        for inst in app_apps
-        if search_lower in inst["appName"].lower() or search_lower in inst["doc"].lower()
-    ]
+    substring_matches = [inst["appName"] for inst in app_apps if search_lower in inst["appName"].lower() or search_lower in inst["doc"].lower()]
 
     ordered_matches: list[str] = list(
-        dict.fromkeys(
-            close_name_matches
-            + [all_descriptions[desc] for desc in close_description_matches]
-            + substring_matches
-        )
+        dict.fromkeys(close_name_matches + [all_descriptions[desc] for desc in close_description_matches] + substring_matches)
     )
 
     order_matches_with_docs = [f"{app_name:<20} : " + name_to_doc.get(app_name, "") for app_name in ordered_matches]
     from stackops.utils.options_utils.options import choose_from_options
 
     chosen = choose_from_options(
-        options=order_matches_with_docs,
-        msg=f"🔍 No installer found for '[red]{search_term}[/red]'. Did you mean one of these?",
-        multi=True,
-        tv=True
+        options=order_matches_with_docs, msg=f"🔍 No installer found for '[red]{search_term}[/red]'. Did you mean one of these?", multi=True, tv=True
     )
     if chosen is None or len(chosen) == 0:
         print("\n❌ Selection cancelled by user.")
@@ -95,33 +85,6 @@ def handle_installer_not_found(search_term: str, app_apps: list[InstallerData]) 
     # console.print(panel)
 
 
-def install_deb_package(downloaded: Path) -> None:
-    from rich import print as rprint
-    from rich.panel import Panel
-    print(f"📦 Installing .deb package: {downloaded}")
-    import platform
-    import subprocess
-    assert platform.system() == "Linux"
-    result = subprocess.run(f"sudo nala install -y {downloaded}", shell=True, capture_output=True, text=True)
-    success = result.returncode == 0 and result.stderr == ""
-    if not success:
-        from rich.console import Group
-        desc = "Installing .deb"
-        sub_panels = []
-        if result.stdout:
-            sub_panels.append(Panel(result.stdout, title="STDOUT", style="blue"))
-        if result.stderr:
-            sub_panels.append(Panel(result.stderr, title="STDERR", style="red"))
-        group_content = Group(f"❌ {desc} failed\nReturn code: {result.returncode}", *sub_panels)
-        rprint(Panel(group_content, title=desc, style="red"))
-    print("🗑️  Cleaning up .deb package...")
-    if downloaded.is_file():
-        downloaded.unlink(missing_ok=True)
-    elif downloaded.is_dir():
-        import shutil
-        shutil.rmtree(downloaded, ignore_errors=True)
-
-
 def install_msi_package(downloaded: Path) -> None:
     from rich import print as rprint
     from rich.console import Group
@@ -131,12 +94,7 @@ def install_msi_package(downloaded: Path) -> None:
 
     assert platform.system() == "Windows"
     print(f"📦 Installing .msi package: {downloaded}")
-    result = subprocess.run(
-        ["msiexec.exe", "/i", str(downloaded), "/qn", "/norestart"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = subprocess.run(["msiexec.exe", "/i", str(downloaded), "/qn", "/norestart"], capture_output=True, text=True, check=False)
     if result.returncode not in {0, 3010}:
         sub_panels = []
         if result.stdout:
@@ -152,6 +110,7 @@ def install_msi_package(downloaded: Path) -> None:
 
 def download_and_prepare(download_url: str) -> Path:
     from stackops.utils.files.download import download
+
     downloaded_object = download(download_url, output_dir=str(INSTALL_TMP_DIR))
     if downloaded_object is None:
         raise ValueError(f"Failed to download from URL: {download_url}")

@@ -1,6 +1,6 @@
 {
   "$schema": "./installer_type.schema.json",
-  "version": "1",
+  "version": "2",
   "installers": [
     {
       "appName": "sysabc",
@@ -33,12 +33,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install unzip -y; curl -fsSL https://bun.com/install | bash; . ~/.bashrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
+            "dnf": "sudo dnf install -y unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
+          },
           "windows": "powershell -c \"irm bun.sh/install.ps1|iex\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\node.exe' -Target (Get-Command bun).Source\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\bunx.cmd' -Target (Get-Command bunx).Source\"",
           "darwin": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx"
         },
         "arm64": {
-          "linux": "sudo nala install unzip -y; curl -fsSL https://bun.com/install | bash; . ~/.bashrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
+            "dnf": "sudo dnf install -y unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
+          },
           "windows": "powershell -c \"irm bun.sh/install.ps1|iex\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\node.exe' -Target (Get-Command bun).Source\"; powershell -c \"New-Item -ItemType SymbolicLink -Path 'C:\\\\Windows\\\\System32\\\\bunx.cmd' -Target (Get-Command bunx).Source\"",
           "darwin": "curl -fsSL https://bun.com/install | bash; . ~/.zshrc || true; sudo ln -s $(which bun) /usr/local/bin/node; sudo ln -s $(which bunx) /usr/local/bin/bunx"
         }
@@ -161,12 +167,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install git -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y git",
+            "dnf": "sudo dnf install -y git"
+          },
           "windows": "winget install --no-upgrade --name \"Git\" --Id \"Git.Git\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install git"
         },
         "arm64": {
-          "linux": "sudo nala install git -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y git",
+            "dnf": "sudo dnf install -y git"
+          },
           "windows": "winget install --no-upgrade --name \"Git\" --Id \"Git.Git\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install git"
         }
@@ -457,12 +469,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install tmux -y; cd ~; git clone --single-branch https://github.com/gpakosz/.tmux.git; ln -s -f .tmux/.tmux.conf; cp .tmux/.tmux.conf.local .",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
+            "dnf": "sudo dnf install -y tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
+          },
           "windows": null,
           "darwin": "brew install tmux"
         },
         "arm64": {
-          "linux": "sudo nala install tmux -y; cd ~; git clone --single-branch https://github.com/gpakosz/.tmux.git; ln -s -f .tmux/.tmux.conf; cp .tmux/.tmux.conf.local .",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
+            "dnf": "sudo dnf install -y tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
+          },
           "windows": null,
           "darwin": "brew install tmux"
         }
@@ -479,12 +497,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install tmux git -y; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local .",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
+            "dnf": "sudo dnf install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi"
+          },
           "windows": null,
           "darwin": "brew install tmux; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local ."
         },
         "arm64": {
-          "linux": "sudo nala install tmux git -y; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local .",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
+            "dnf": "sudo dnf install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi"
+          },
           "windows": null,
           "darwin": "brew install tmux; cd ~; if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi; ln -s -f .tmux/.tmux.conf; [ -f .tmux.conf.local ] || cp .tmux/.tmux.conf.local ."
         }
@@ -501,11 +525,17 @@
       "fileNamePattern": {
         "amd64": {
           "windows": "boxes.py",
-          "linux": "sudo nala install boxes -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y boxes",
+            "dnf": null
+          },
           "darwin": "brew install boxes"
         },
         "arm64": {
-          "linux": "sudo nala install boxes -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y boxes",
+            "dnf": null
+          },
           "darwin": "brew install boxes",
           "windows": "boxes.py"
         }
@@ -1228,12 +1258,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "aptui_{version}_linux_amd64.tar.gz",
+          "linux": {
+            "apt": "aptui_{version}_linux_amd64.tar.gz",
+            "dnf": null
+          },
           "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": "aptui_{version}_linux_arm64.tar.gz",
+          "linux": {
+            "apt": "aptui_{version}_linux_arm64.tar.gz",
+            "dnf": null
+          },
           "darwin": null,
           "windows": null
         }
@@ -1743,12 +1779,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo apt install timg",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y timg",
+            "dnf": null
+          },
           "windows": null,
           "darwin": "brew install timg"
         },
         "arm64": {
-          "linux": "sudo apt install timg",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y timg",
+            "dnf": null
+          },
           "windows": null,
           "darwin": "brew install timg"
         }
@@ -1765,12 +1807,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install chafa -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y chafa",
+            "dnf": null
+          },
           "windows": "winget install --no-upgrade --name \"Chafa\" --Id \"hpjansson.Chafa\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install chafa"
         },
         "arm64": {
-          "linux": "sudo nala install chafa -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y chafa",
+            "dnf": null
+          },
           "windows": "winget install --no-upgrade --name \"Chafa\" --Id \"hpjansson.Chafa\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install chafa"
         }
@@ -1788,12 +1836,18 @@
       "fileNamePattern": {
         "amd64": {
           "windows": "poppler.py",
-          "linux": "sudo nala install poppler-utils -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y poppler-utils",
+            "dnf": "sudo dnf install -y poppler-utils"
+          },
           "darwin": "brew install poppler"
         },
         "arm64": {
           "windows": "poppler.py",
-          "linux": "sudo nala install poppler-utils -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y poppler-utils",
+            "dnf": "sudo dnf install -y poppler-utils"
+          },
           "darwin": "brew install poppler"
         }
       }
@@ -2254,12 +2308,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install redis-tools -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y redis-tools",
+            "dnf": "sudo dnf install -y redis"
+          },
           "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": null,
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y redis-tools",
+            "dnf": "sudo dnf install -y redis"
+          },
           "darwin": null,
           "windows": null
         }
@@ -2276,12 +2336,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install sqlite3 -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y sqlite3",
+            "dnf": "sudo dnf install -y sqlite"
+          },
           "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": null,
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y sqlite3",
+            "dnf": "sudo dnf install -y sqlite"
+          },
           "darwin": null,
           "windows": null
         }
@@ -2297,12 +2363,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install postgresql-client -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y postgresql-client",
+            "dnf": "sudo dnf install -y postgresql"
+          },
           "darwin": null,
           "windows": null
         },
         "arm64": {
-          "linux": null,
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y postgresql-client",
+            "dnf": "sudo dnf install -y postgresql"
+          },
           "darwin": null,
           "windows": null
         }
@@ -2807,7 +2879,10 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "obs-backgroundremoval-{version}-x86_64-linux-gnu.deb",
+          "linux": {
+            "apt": "obs-backgroundremoval-{version}-x86_64-linux-gnu.deb",
+            "dnf": null
+          },
           "windows": "obs-backgroundremoval-{version}-windows-x64.zip",
           "darwin": "obs-backgroundremoval-{version}-macos-universal.pkg"
         },
@@ -2833,7 +2908,10 @@
           "darwin": "rustdesk-{version}-x86_64.dmg"
         },
         "arm64": {
-          "linux": "rustdesk-{version}-aarch64.deb",
+          "linux": {
+            "apt": "rustdesk-{version}-aarch64.deb",
+            "dnf": null
+          },
           "windows": null,
           "darwin": "rustdesk-{version}-aarch64.dmg"
         }
@@ -3960,12 +4038,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "ngrok.sh",
+          "linux": {
+            "apt": "ngrok.sh",
+            "dnf": null
+          },
           "windows": "winget install ngrok --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install ngrok"
         },
         "arm64": {
-          "linux": "ngrok.sh",
+          "linux": {
+            "apt": "ngrok.sh",
+            "dnf": null
+          },
           "windows": "winget install ngrok --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install ngrok"
         }
@@ -4448,7 +4532,10 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "orca-ide_{version}_amd64.deb",
+          "linux": {
+            "apt": "orca-ide_{version}_amd64.deb",
+            "dnf": null
+          },
           "darwin": "Orca-{version}-mac.zip",
           "windows": "orca.py"
         },
@@ -4682,12 +4769,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "https://app.warp.dev/get_warp?package=deb",
+          "linux": {
+            "apt": "https://app.warp.dev/get_warp?package=deb",
+            "dnf": "https://app.warp.dev/get_warp?package=rpm"
+          },
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask warp"
         },
         "arm64": {
-          "linux": "https://app.warp.dev/get_warp?package=deb_arm64",
+          "linux": {
+            "apt": "https://app.warp.dev/get_warp?package=deb_arm64",
+            "dnf": "https://app.warp.dev/get_warp?package=rpm_arm64"
+          },
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask warp"
         }
@@ -4726,12 +4819,12 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "oz.sh",
+          "linux": "oz.py",
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew tap warpdotdev/warp; brew update; brew install --cask oz"
         },
         "arm64": {
-          "linux": "oz.sh",
+          "linux": "oz.py",
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew tap warpdotdev/warp; brew update; brew install --cask oz"
         }
@@ -5108,12 +5201,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install file -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y file",
+            "dnf": "sudo dnf install -y file"
+          },
           "windows": "winget install --no-upgrade --name \"File\" --Id \"GnuWin32.File\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install file"
         },
         "arm64": {
-          "linux": "sudo nala install file -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y file",
+            "dnf": "sudo dnf install -y file"
+          },
           "windows": "winget install --no-upgrade --name \"File\" --Id \"GnuWin32.File\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install file"
         }
@@ -5236,12 +5335,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install gnupg -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y gnupg",
+            "dnf": "sudo dnf install -y gnupg2"
+          },
           "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install gnupg"
         },
         "arm64": {
-          "linux": "sudo nala install gnupg -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y gnupg",
+            "dnf": "sudo dnf install -y gnupg2"
+          },
           "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install gnupg"
         }
@@ -5258,12 +5363,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install graphviz -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y graphviz",
+            "dnf": "sudo dnf install -y graphviz"
+          },
           "windows": "winget install --no-upgrade --name \"graphviz\" --Id \"Graphviz.Graphviz\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install graphviz"
         },
         "arm64": {
-          "linux": "sudo nala install graphviz -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y graphviz",
+            "dnf": "sudo dnf install -y graphviz"
+          },
           "windows": "winget install --no-upgrade --name \"graphviz\" --Id \"Graphviz.Graphviz\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install graphviz"
         }
@@ -5301,12 +5412,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install sshfs -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y sshfs",
+            "dnf": null
+          },
           "windows": "winget install --no-upgrade --name \"SSHFS-win\" --Id \"SSHFS-Win.SSHFS-Win\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install sshfs"
         },
         "arm64": {
-          "linux": "sudo nala install sshfs -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y sshfs",
+            "dnf": null
+          },
           "windows": "winget install --no-upgrade --name \"SSHFS-win\" --Id \"SSHFS-Win.SSHFS-Win\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install sshfs"
         }
@@ -5408,12 +5525,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; sudo apt install -y ./google-chrome-stable_current_amd64.deb; rm google-chrome-stable_current_amd64.deb",
+          "linux": {
+            "apt": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt-get install -y ./google-chrome-stable_current_amd64.deb && rm google-chrome-stable_current_amd64.deb",
+            "dnf": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && sudo dnf install -y ./google-chrome-stable_current_x86_64.rpm && rm google-chrome-stable_current_x86_64.rpm"
+          },
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask google-chrome"
         },
         "arm64": {
-          "linux": "wget https://dl.google.com/linux/direct/google-chrome-stable_current_arm64.deb; sudo apt install -y ./google-chrome-stable_current_arm64.deb; rm google-chrome-stable_current_arm64.deb",
+          "linux": {
+            "apt": null,
+            "dnf": null
+          },
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask google-chrome"
         }
@@ -5473,12 +5596,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install p7zip-full -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
+            "dnf": null
+          },
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install p7zip"
         },
         "arm64": {
-          "linux": "sudo nala install p7zip-full -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
+            "dnf": null
+          },
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install p7zip"
         }
@@ -5601,12 +5730,18 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "sudo nala install texlive -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y texlive",
+            "dnf": "sudo dnf install -y texlive"
+          },
           "windows": "texlive.ps1",
           "darwin": "brew install texlive"
         },
         "arm64": {
-          "linux": "sudo nala install texlive -y",
+          "linux": {
+            "apt": "sudo apt-get update && sudo apt-get install -y texlive",
+            "dnf": "sudo dnf install -y texlive"
+          },
           "windows": "texlive.ps1",
           "darwin": "brew install texlive"
         }

@@ -8,6 +8,7 @@ import typer
 
 def get_gource_install_dir() -> Path:
     import platform
+
     if platform.system() == "Windows":
         appdata = Path.home() / "AppData" / "Local"
         return appdata / "gource"
@@ -16,12 +17,10 @@ def get_gource_install_dir() -> Path:
 
 def get_gource_executable() -> Path:
     import platform
+
     install_dir = get_gource_install_dir()
     if platform.system() == "Windows":
-        possible_paths = [
-            install_dir / "gource.exe",
-            install_dir / f"gource-{get_default_version()}.win64" / "gource.exe",
-        ]
+        possible_paths = [install_dir / "gource.exe", install_dir / f"gource-{get_default_version()}.win64" / "gource.exe"]
         for path in possible_paths:
             if path.exists():
                 return path
@@ -59,7 +58,7 @@ def install_gource_windows(version: str | None = None) -> None:
     install_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        with zipfile.ZipFile(downloaded_zip, 'r') as zip_ref:
+        with zipfile.ZipFile(downloaded_zip, "r") as zip_ref:
             zip_ref.extractall(install_dir)
         print(f"✅ Extracted successfully to: {install_dir}")
         print(f"   (The zip contains gource-{version_str}.win64/ directory with exe and DLL dependencies)")
@@ -98,12 +97,17 @@ def install_gource_windows(version: str | None = None) -> None:
 
 def visualize(
     repo: Annotated[str, typer.Option("--repo", "-r", help="Path to git repository to visualize")] = ".",
-    output_file: Annotated[Path | None, typer.Option("--output", "-o", help="Output video file (e.g., output.mp4). If specified, gource will render to video.")] = None,
+    output_file: Annotated[
+        Path | None, typer.Option("--output", "-o", help="Output video file (e.g., output.mp4). If specified, gource will render to video.")
+    ] = None,
     resolution: Annotated[str, typer.Option("--resolution", "-R", help="Video resolution (e.g., 1920x1080, 1280x720)")] = "1920x1080",
     seconds_per_day: Annotated[float, typer.Option("--seconds-per-day", "-D", help="Speed of simulation (lower = faster)")] = 0.1,
     auto_skip_seconds: Annotated[float, typer.Option("--auto-skip-seconds", "-A", help="Skip to next entry if nothing happens for X seconds")] = 1.0,
     title: Annotated[str | None, typer.Option("--title", "-t", help="Title for the visualization")] = None,
-    hide_items: Annotated[list[str] | None, typer.Option("--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames")] = None,
+    hide_items: Annotated[
+        list[str] | None,
+        typer.Option("--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames"),
+    ] = None,
     key_items: Annotated[bool, typer.Option("--key", "-k", help="Show file extension key")] = False,
     fullscreen: Annotated[bool, typer.Option("--fullscreen", "-f", help="Run in fullscreen mode")] = False,
     viewport: Annotated[str | None, typer.Option("--viewport", "-v", help="Camera viewport (e.g., '1000x1000')")] = None,
@@ -174,7 +178,7 @@ def visualize(
     elif not title and not output_file:
         cmd.extend(["--title", repo_path.name])
 
-    for hide_item in (hide_items or []):
+    for hide_item in hide_items or []:
         cmd.extend(["--hide", hide_item])
 
     if key_items:
@@ -214,14 +218,22 @@ def visualize(
             ffmpeg_cmd: list[str] = [
                 "ffmpeg",
                 "-y",
-                "-r", str(framerate),
-                "-f", "image2pipe",
-                "-vcodec", "ppm",
-                "-i", "-",
-                "-vcodec", "libx264",
-                "-preset", "medium",
-                "-pix_fmt", "yuv420p",
-                "-crf", "23",
+                "-r",
+                str(framerate),
+                "-f",
+                "image2pipe",
+                "-vcodec",
+                "ppm",
+                "-i",
+                "-",
+                "-vcodec",
+                "libx264",
+                "-preset",
+                "medium",
+                "-pix_fmt",
+                "yuv420p",
+                "-crf",
+                "23",
                 str(output_file),
             ]
             print("🎥 Rendering video...")
@@ -246,14 +258,22 @@ def visualize(
             ffmpeg_cmd = [
                 "ffmpeg",
                 "-y",
-                "-r", str(framerate),
-                "-f", "image2pipe",
-                "-vcodec", "ppm",
-                "-i", "-",
-                "-vcodec", "libx264",
-                "-preset", "medium",
-                "-pix_fmt", "yuv420p",
-                "-crf", "23",
+                "-r",
+                str(framerate),
+                "-f",
+                "image2pipe",
+                "-vcodec",
+                "ppm",
+                "-i",
+                "-",
+                "-vcodec",
+                "libx264",
+                "-preset",
+                "medium",
+                "-pix_fmt",
+                "yuv420p",
+                "-crf",
+                "23",
                 str(output_file),
             ]
             print("🎥 Rendering video...")
@@ -287,9 +307,9 @@ def visualize(
                 print("   Run: uv run python src/stackops/scripts/python/grource.py install")
             else:
                 print("   For Linux/Mac, use your package manager:")
-                print("     - Ubuntu/Debian: sudo apt install gource")
+                print("     - Ubuntu/Debian: sudo apt-get install gource")
                 print("     - macOS: brew install gource")
-                print("     - Fedora: sudo dinstall gource")
+                print("     - Fedora/RHEL: sudo dnf install gource")
             raise typer.Exit(1) from e
 
     print("\n" + "=" * 80)
@@ -297,18 +317,17 @@ def visualize(
     print("=" * 80)
 
 
-def install(
-    version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Gource version to install")] = "0.53",
-) -> None:
+def install(version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Gource version to install")] = "0.53") -> None:
     import platform
+
     if platform.system() == "Windows":
         install_gource_windows(version=version)
     else:
         print(f"❌ Portable installer currently supports Windows only. Current OS: {platform.system()}")
         print("For Linux/Mac, please use your package manager:")
-        print("  - Ubuntu/Debian: sudo apt install gource")
+        print("  - Ubuntu/Debian: sudo apt-get install gource")
         print("  - macOS: brew install gource")
-        print("  - Fedora: sudo dinstall gource")
+        print("  - Fedora/RHEL: sudo dnf install gource")
         raise typer.Exit(1)
 
 
