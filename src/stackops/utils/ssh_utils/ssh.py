@@ -252,11 +252,24 @@ print("SSH key added successfully")
         stdout_channel = getattr(raw[1], "channel", None)
         if stdout_channel is not None:
             res.output.returncode = stdout_channel.recv_exit_status()
+        is_successful = res.is_successful(strict_returcode=strict_return_code, strict_err=strict_stderr)
         if verbose_output:
             res.print(capture=False)
         else:
             res.print_if_unsuccessful(
                 desc=description, strict_err=strict_stderr, strict_returncode=strict_return_code, assert_success=False
+            )
+        if not is_successful:
+            command_description = description or "remote command"
+            stdout = res.op or "<empty>"
+            stderr = res.err or "<empty>"
+            raise RuntimeError(
+                f"""Remote command failed: {command_description}
+Return code: {res.returncode}
+stdout:
+{stdout}
+stderr:
+{stderr}"""
             )
         return res
 
@@ -315,7 +328,7 @@ print("SSH key added successfully")
             command=uv_cmd_modified,
             verbose_output=True,
             description=f"run_py_func {self._callable_name(func)} on {self.get_remote_repr(add_machine=False)}",
-            strict_stderr=True,
+            strict_stderr=False,
             strict_return_code=True,
         )
 
@@ -329,6 +342,11 @@ print("SSH key added successfully")
         if self.remote_specs["system"] == "Windows":
             return str(PureWindowsPath(home_dir) / rel_path)
         return str(PurePosixPath(home_dir) / PurePosixPath(rel_path.replace("\\", "/")))
+
+    def _build_remote_json_output_path(self) -> str:
+        output_filename = f"return_{randstr()}.json"
+        output_relative_path = f"{DEFAULT_PICKLE_SUBDIR}/{output_filename}"
+        return self._build_remote_path(self.remote_specs["home_dir"], output_relative_path)
 
     def _normalize_rel_path_for_remote(self, rel_path: str) -> str:
         if self.remote_specs["system"] == "Windows":
@@ -369,7 +387,7 @@ print("SSH key added successfully")
             command=f"""{get_uv_command(platform=self.remote_specs['system'])} run python {tmp_remote_path}""",
             verbose_output=False,
             description=f"Creating target dir {path_rel2home}",
-            strict_stderr=True,
+            strict_stderr=False,
             strict_return_code=True,
         )
         resp.print(desc=f"Created target dir {path_rel2home}")
@@ -385,7 +403,7 @@ print("SSH key added successfully")
             print(json_result_path.as_posix())
             return is_directory
 
-        remote_json_output = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/return_{randstr()}.json").as_posix()
+        remote_json_output = self._build_remote_json_output_path()
         command = lambda_to_python_script(
             lambda: check_is_dir(path_to_check=str(source_path), json_output_path=remote_json_output),
             in_global=True, import_module=False,
@@ -397,7 +415,7 @@ print("SSH key added successfully")
             description=f"Check if source `{source_path}` is a dir",
             verbose_output=False,
             strict_stderr=False,
-            strict_return_code=False,
+            strict_return_code=True,
         )
         remote_json_path = response.op.strip()
         if not remote_json_path:
@@ -538,7 +556,7 @@ print("SSH key added successfully")
                 command=f"""{get_uv_command(platform=self.remote_specs["system"])} run python {remote_tmp_py}""",
                 verbose_output=False,
                 description=f"UNZIPPING {target_rel2home}",
-                strict_stderr=True,
+                strict_stderr=False,
                 strict_return_code=True,
             )
             source_obj.unlink()
@@ -580,7 +598,7 @@ print("SSH key added successfully")
                     print(json_result_path.as_posix())
                     return file_paths_list
 
-                remote_json_output = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/return_{randstr()}.json").as_posix()
+                remote_json_output = self._build_remote_json_output_path()
                 command = lambda_to_python_script(
                     lambda: search_files(directory_path=expanded_source, json_output_path=remote_json_output),
                     in_global=True, import_module=False,
@@ -592,7 +610,7 @@ print("SSH key added successfully")
                     description="Searching for files in source",
                     verbose_output=False,
                     strict_stderr=False,
-                    strict_return_code=False,
+                    strict_return_code=True,
                 )
                 remote_json_path = response.op.strip()
                 if not remote_json_path:
@@ -625,7 +643,7 @@ print("SSH key added successfully")
                         except ValueError:
                             raise RuntimeError(f"Source path must be relative to home directory: {source_absolute_path}")
 
-                    remote_json_output = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/return_{randstr()}.json").as_posix()
+                    remote_json_output = self._build_remote_json_output_path()
                     command = lambda_to_python_script(
                         lambda: collapse_to_home_dir(absolute_path=expanded_source, json_output_path=remote_json_output),
                         in_global=True, import_module=False,
@@ -637,7 +655,7 @@ print("SSH key added successfully")
                         description="Finding default target via relative source path",
                         verbose_output=False,
                         strict_stderr=False,
-                        strict_return_code=False,
+                        strict_return_code=True,
                     )
                     remote_json_path_dir = response.op.strip()
                     if not remote_json_path_dir:
@@ -680,7 +698,7 @@ print("SSH key added successfully")
                 print(json_result_path.as_posix())
                 return zip_file_path
 
-            remote_json_output = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/return_{randstr()}.json").as_posix()
+            remote_json_output = self._build_remote_json_output_path()
             command = lambda_to_python_script(
                 lambda: zip_source(path_to_zip=expanded_source, json_output_path=remote_json_output),
                 in_global=True, import_module=False,
@@ -692,7 +710,7 @@ print("SSH key added successfully")
                 description=f"Zipping source file {source}",
                 verbose_output=False,
                 strict_stderr=False,
-                strict_return_code=False,
+                strict_return_code=True,
             )
             remote_json_path = response.op.strip()
             if not remote_json_path:
@@ -726,7 +744,7 @@ print("SSH key added successfully")
                 except ValueError:
                     raise RuntimeError(f"Source path must be relative to home directory: {source_absolute_path}")
 
-            remote_json_output = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/return_{randstr()}.json").as_posix()
+            remote_json_output = self._build_remote_json_output_path()
             command = lambda_to_python_script(
                 lambda: collapse_to_home(absolute_path=expanded_source, json_output_path=remote_json_output),
                 in_global=True, import_module=False,
@@ -738,7 +756,7 @@ print("SSH key added successfully")
                 description="Finding default target via relative source path",
                 verbose_output=False,
                 strict_stderr=False,
-                strict_return_code=False,
+                strict_return_code=True,
             )
             remote_json_path = response.op.strip()
             if not remote_json_path:
@@ -796,7 +814,7 @@ print("SSH key added successfully")
                 uv_project_dir=None,
                 description="Cleaning temp zip files @ remote.",
                 verbose_output=False,
-                strict_stderr=True,
+                strict_stderr=False,
                 strict_return_code=True,
             )
         print("\n")

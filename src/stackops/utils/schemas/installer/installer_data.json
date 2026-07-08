@@ -5043,6 +5043,37 @@
       }
     },
     {
+      "appName": "ghostty",
+      "license": "MIT License",
+      "repoURL": "CMD",
+      "doc": "Fast, native, feature-rich terminal emulator",
+      "categoryLabels": [
+        "terminals-shells"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "windows": null,
+          "linux": {
+            "apk": "sudo apk add --no-cache ghostty",
+            "apt": null,
+            "dnf": null,
+            "pacman": "sudo pacman -S --needed --noconfirm ghostty"
+          },
+          "darwin": "brew install --cask ghostty"
+        },
+        "arm64": {
+          "windows": null,
+          "linux": {
+            "apk": "sudo apk add --no-cache ghostty",
+            "apt": null,
+            "dnf": null,
+            "pacman": null
+          },
+          "darwin": "brew install --cask ghostty"
+        }
+      }
+    },
+    {
       "appName": "brave",
       "license": "MPL-2.0",
       "repoURL": "CMD",

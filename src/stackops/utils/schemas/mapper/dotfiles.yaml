@@ -529,18 +529,31 @@ wezterminal:
     - linux
     - darwin
     - windows
+iterm2:
+  bootstrap:
+    original: ~/Library/Preferences/com.googlecode.iterm2.plist
+    self_managed: CONFIG_ROOT/settings/shells/iterm2/bootstrap/com.googlecode.iterm2.plist
+    copy: true
+    os:
+    - darwin
+  dynamic_profile:
+    original: ~/Library/Application Support/iTerm2/DynamicProfiles/stackops.json
+    self_managed: CONFIG_ROOT/settings/shells/iterm2/DynamicProfiles/stackops.json
+    os:
+    - darwin
 ghostty:
-  config_linux:
-    original: ~/.config/ghostty/config
-    self_managed: CONFIG_ROOT/settings/shells/ghostty/config
+  config:
+    original: ~/.config/ghostty/config.ghostty
+    self_managed: CONFIG_ROOT/settings/shells/ghostty/config.ghostty
     os:
     - linux
     - darwin
-  config_windows:
-    original: ~/AppData/Roaming/ghostty/config
-    self_managed: CONFIG_ROOT/settings/shells/ghostty/config
+  wezterm_default_theme:
+    original: ~/.config/ghostty/themes/wezterm-default
+    self_managed: CONFIG_ROOT/settings/shells/ghostty/themes/wezterm-default
     os:
-    - windows
+    - linux
+    - darwin
 vtm_windows:
   settings:
     original: ~/.config/vtm/settings.xml

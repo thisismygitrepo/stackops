@@ -45,6 +45,7 @@ AGENTS = [
 # Terminal Emulators & Shells - Terminal applications, emulators, and shell environments
 PACKAGES_TERMINAL_EMULATORS = [
     "alacritty",
+    "ghostty",
     "wezterm",
     "warp",
     "vtm",

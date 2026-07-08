@@ -5,7 +5,13 @@ import pytest
 
 from stackops.utils.installer_utils import install_request_logic, installer_runner
 from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution, LinuxDistributionId
-from stackops.utils.schemas.installer.installer_types import CPU_ARCHITECTURES, InstallerData, InstallerDataFiles, LinuxInstallerPattern
+from stackops.utils.schemas.installer.installer_types import (
+    CPU_ARCHITECTURES,
+    OPERATING_SYSTEMS,
+    InstallerData,
+    InstallerDataFiles,
+    LinuxInstallerPattern,
+)
 
 
 def _build_installer_data(app_name: str, linux_pattern: LinuxInstallerPattern) -> InstallerData:
@@ -50,6 +56,45 @@ def test_installer_catalog_resolves_for_supported_package_managers(
     installers = installer_runner.get_installers(os="linux", arch=architecture, which_cats=None)
 
     assert len(installers) > 0
+
+
+@pytest.mark.parametrize(
+    ("operating_system", "architecture", "distribution_id", "expected_pattern"),
+    [
+        pytest.param("darwin", "amd64", "ubuntu", "brew install --cask ghostty", id="macos-amd64"),
+        pytest.param("darwin", "arm64", "ubuntu", "brew install --cask ghostty", id="macos-arm64"),
+        pytest.param("linux", "amd64", "alpine", "sudo apk add --no-cache ghostty", id="alpine-amd64"),
+        pytest.param("linux", "arm64", "alpine", "sudo apk add --no-cache ghostty", id="alpine-arm64"),
+        pytest.param("linux", "amd64", "arch", "sudo pacman -S --needed --noconfirm ghostty", id="arch-amd64"),
+        pytest.param("linux", "arm64", "arch", None, id="arch-arm64"),
+        pytest.param("linux", "amd64", "ubuntu", None, id="ubuntu-amd64"),
+        pytest.param("linux", "amd64", "rhel", None, id="rhel-amd64"),
+        pytest.param("windows", "amd64", "ubuntu", None, id="windows-amd64"),
+        pytest.param("windows", "arm64", "ubuntu", None, id="windows-arm64"),
+    ],
+)
+def test_ghostty_catalog_supports_documented_platform_packages(
+    monkeypatch: pytest.MonkeyPatch,
+    operating_system: OPERATING_SYSTEMS,
+    architecture: CPU_ARCHITECTURES,
+    distribution_id: LinuxDistributionId,
+    expected_pattern: str | None,
+) -> None:
+    monkeypatch.setattr(install_request_logic, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id=distribution_id))
+
+    installers = installer_runner.get_installers(os=operating_system, arch=architecture, which_cats=["terminal"])
+    ghostty_installers = [installer for installer in installers if installer["appName"] == "ghostty"]
+
+    if expected_pattern is None:
+        assert ghostty_installers == []
+        return
+    assert len(ghostty_installers) == 1
+    assert (
+        install_request_logic.resolve_installer_pattern(
+            installer_data=ghostty_installers[0], operating_system=operating_system, architecture=architecture
+        )
+        == expected_pattern
+    )
 
 
 def test_arch_catalog_filters_installers_without_a_pacman_path(monkeypatch: pytest.MonkeyPatch) -> None:

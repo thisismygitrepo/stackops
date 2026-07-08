@@ -1,1 +1,1 @@
-CONFIG_PATH_REFERENCE = "config"
+CONFIG_PATH_REFERENCE = "config.ghostty"

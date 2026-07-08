@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Bidi</key>
+	<true/>
+	<key>Default Bookmark Guid</key>
+	<string>C1735EAA-F490-45E1-80C1-74DBEE9BF62D</string>
+	<key>DimBackgroundWindows</key>
+	<false/>
+	<key>DimInactiveSplitPanes</key>
+	<true/>
+	<key>DimOnlyText</key>
+	<false/>
+	<key>DisableFullscreenTransparency</key>
+	<false/>
+	<key>EnableDivisionView</key>
+	<true/>
+	<key>FlashTabBarInFullscreen</key>
+	<false/>
+	<key>FocusFollowsMouse</key>
+	<true/>
+	<key>HideMenuBarInFullscreen</key>
+	<true/>
+	<key>HideScrollbar</key>
+	<false/>
+	<key>HideTab</key>
+	<true/>
+	<key>LanguageAgnosticKeyBindings</key>
+	<true/>
+	<key>ShowFullScreenTabBar</key>
+	<false/>
+	<key>ShowPaneTitles</key>
+	<false/>
+	<key>ShowPaneTitlesEvenIfOnlyOnePane</key>
+	<false/>
+	<key>SplitPaneDimmingAmount</key>
+	<real>0.4</real>
+	<key>TerminalMargin</key>
+	<integer>7</integer>
+	<key>TerminalVMargin</key>
+	<integer>7</integer>
+	<key>TimeBetweenBlinks</key>
+	<real>1.0</real>
+	<key>UseLionStyleFullscreen</key>
+	<false/>
+</dict>
+</plist>

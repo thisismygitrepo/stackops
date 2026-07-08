@@ -1,0 +1,25 @@
+foreground = b2b2b2
+background = 000000
+cursor-color = 52ad70
+cursor-text = 000000
+selection-foreground = cell-foreground
+selection-background = 40334d
+split-divider-color = 444444
+bold-color = bright
+
+palette = 0=000000
+palette = 1=cc5555
+palette = 2=55cc55
+palette = 3=cdcd55
+palette = 4=5455cb
+palette = 5=cc55cc
+palette = 6=7acaca
+palette = 7=cccccc
+palette = 8=555555
+palette = 9=ff5555
+palette = 10=55ff55
+palette = 11=ffff55
+palette = 12=5555ff
+palette = 13=ff55ff
+palette = 14=55ffff
+palette = 15=ffffff

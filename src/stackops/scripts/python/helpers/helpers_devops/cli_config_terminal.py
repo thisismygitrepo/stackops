@@ -96,7 +96,9 @@ def configure_ghostty_theme() -> None:
     import platform
     import subprocess
 
-    ghostty_config_path = Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")).expanduser() / "ghostty" / "config"
+    from stackops.settings.shells.ghostty import CONFIG_PATH_REFERENCE as GHOSTTY_CONFIG_PATH_REFERENCE
+
+    ghostty_config_path = Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")).expanduser() / "ghostty" / GHOSTTY_CONFIG_PATH_REFERENCE
     auto_theme_include = "config-file = ?auto/theme.ghostty"
     existing_lines = ghostty_config_path.read_text(encoding="utf-8").splitlines() if ghostty_config_path.exists() else []
     existing_lines_stripped = [line.strip() for line in existing_lines]
