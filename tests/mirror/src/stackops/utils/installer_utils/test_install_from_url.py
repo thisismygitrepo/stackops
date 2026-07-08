@@ -7,8 +7,9 @@ from rich.console import Console
 from stackops.utils.installer_utils import install_from_url
 
 
-def test_finalize_install_dispatches_arch_package(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    package_path = tmp_path.joinpath("tool-1.0.0-1-x86_64.pkg.tar.zst")
+@pytest.mark.parametrize("package_name", ["tool-1.0.0-r0.apk", "tool-1.0.0-1-x86_64.pkg.tar.zst"])
+def test_finalize_install_dispatches_linux_package(package_name: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    package_path = tmp_path.joinpath(package_name)
     package_path.touch()
     version_root = tmp_path.joinpath("versions")
     installed_packages: list[Path] = []

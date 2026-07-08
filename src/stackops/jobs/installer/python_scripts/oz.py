@@ -18,6 +18,8 @@ from stackops.utils.schemas.installer.installer_types import InstallerData
 
 def _build_linux_install_script(distribution: LinuxDistribution) -> str:
     match distribution.package_manager:
+        case "apk":
+            raise NotImplementedError("Oz does not publish an Alpine Linux APK repository or package.")
         case "apt":
             dependency_packages = ("ca-certificates", "wget", "gpg")
             repository_setup = """

@@ -9,6 +9,7 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
 @pytest.mark.parametrize(
     ("distribution", "expected_install_command"),
     [
+        (LinuxDistribution(distribution_id="alpine"), ("sudo", "apk", "add", "openssh")),
         (LinuxDistribution(distribution_id="debian"), ("sudo", "apt-get", "install", "-y", "openssh-server")),
         (LinuxDistribution(distribution_id="rocky"), ("sudo", "dnf", "install", "-y", "openssh-server")),
         (LinuxDistribution(distribution_id="arch"), ("sudo", "pacman", "-S", "--needed", "--noconfirm", "openssh")),

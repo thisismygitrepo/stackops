@@ -94,6 +94,11 @@ def _install_package_set(console: Console, *, family: str, package_manager: Linu
 def _install_linux_dependencies(console: Console) -> None:
     distribution = detect_current_linux_distribution()
     match distribution.package_manager:
+        case "apk":
+            raise NotImplementedError(
+                "youtube-tui on Alpine Linux is installed by the native installer catalog route: apk add --no-cache youtube-tui. "
+                "The cargo-build Python installer is intentionally disabled on Alpine."
+            )
         case "apt":
             required_packages = DEBIAN_REQUIRED_PACKAGES
             optional_packages = DEBIAN_OPTIONAL_PACKAGES

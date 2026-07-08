@@ -1,6 +1,6 @@
 {
   "$schema": "./installer_type.schema.json",
-  "version": "3",
+  "version": "4",
   "installers": [
     {
       "appName": "sysabc",
@@ -34,6 +34,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache bash curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
             "apt": "sudo apt-get update && sudo apt-get install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
             "dnf": "sudo dnf install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
             "pacman": "sudo pacman -S --needed --noconfirm curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
@@ -43,6 +44,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache bash curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
             "apt": "sudo apt-get update && sudo apt-get install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
             "dnf": "sudo dnf install -y curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx",
             "pacman": "sudo pacman -S --needed --noconfirm curl unzip && curl -fsSL https://bun.com/install | bash && sudo ln -sf \"$HOME/.bun/bin/bun\" /usr/local/bin/node && sudo ln -sf \"$HOME/.bun/bin/bunx\" /usr/local/bin/bunx"
@@ -170,6 +172,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache git",
             "apt": "sudo apt-get update && sudo apt-get install -y git",
             "dnf": "sudo dnf install -y git",
             "pacman": "sudo pacman -S --needed --noconfirm git"
@@ -179,6 +182,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache git",
             "apt": "sudo apt-get update && sudo apt-get install -y git",
             "dnf": "sudo dnf install -y git",
             "pacman": "sudo pacman -S --needed --noconfirm git"
@@ -474,6 +478,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
             "apt": "sudo apt-get update && sudo apt-get install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
             "dnf": "sudo dnf install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
             "pacman": "sudo pacman -S --needed --noconfirm git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
@@ -483,6 +488,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
             "apt": "sudo apt-get update && sudo apt-get install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
             "dnf": "sudo dnf install -y git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local .",
             "pacman": "sudo pacman -S --needed --noconfirm git tmux && cd ~ && git clone --single-branch https://github.com/gpakosz/.tmux.git && ln -s -f .tmux/.tmux.conf && cp .tmux/.tmux.conf.local ."
@@ -504,6 +510,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache git tmux && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
             "apt": "sudo apt-get update && sudo apt-get install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
             "dnf": "sudo dnf install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
             "pacman": "sudo pacman -S --needed --noconfirm git tmux && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi"
@@ -513,6 +520,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache git tmux && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
             "apt": "sudo apt-get update && sudo apt-get install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
             "dnf": "sudo dnf install -y tmux git && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi",
             "pacman": "sudo pacman -S --needed --noconfirm git tmux && cd ~ && if [ -d .tmux/.git ]; then git -C .tmux pull --ff-only; else git clone --single-branch https://github.com/gpakosz/.tmux.git; fi && ln -s -f .tmux/.tmux.conf && if [ ! -f .tmux.conf.local ]; then cp .tmux/.tmux.conf.local .; fi"
@@ -534,6 +542,7 @@
         "amd64": {
           "windows": "boxes.py",
           "linux": {
+            "apk": null,
             "apt": "sudo apt-get update && sudo apt-get install -y boxes",
             "dnf": null,
             "pacman": null
@@ -542,6 +551,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "sudo apt-get update && sudo apt-get install -y boxes",
             "dnf": null,
             "pacman": null
@@ -991,6 +1001,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "cloudflare_warp_cli.py",
             "dnf": "cloudflare_warp_cli.py",
             "pacman": null
@@ -1000,6 +1011,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "cloudflare_warp_cli.py",
             "dnf": "cloudflare_warp_cli.py",
             "pacman": null
@@ -1277,6 +1289,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "aptui_{version}_linux_amd64.tar.gz",
             "dnf": null,
             "pacman": null
@@ -1286,6 +1299,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "aptui_{version}_linux_arm64.tar.gz",
             "dnf": null,
             "pacman": null
@@ -1800,6 +1814,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache timg",
             "apt": "sudo apt-get update && sudo apt-get install -y timg",
             "dnf": null,
             "pacman": null
@@ -1809,6 +1824,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache timg",
             "apt": "sudo apt-get update && sudo apt-get install -y timg",
             "dnf": null,
             "pacman": null
@@ -1830,6 +1846,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache chafa",
             "apt": "sudo apt-get update && sudo apt-get install -y chafa",
             "dnf": null,
             "pacman": "sudo pacman -S --needed --noconfirm chafa"
@@ -1839,6 +1856,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache chafa",
             "apt": "sudo apt-get update && sudo apt-get install -y chafa",
             "dnf": null,
             "pacman": "sudo pacman -S --needed --noconfirm chafa"
@@ -1861,6 +1879,7 @@
         "amd64": {
           "windows": "poppler.py",
           "linux": {
+            "apk": "sudo apk add --no-cache poppler-utils",
             "apt": "sudo apt-get update && sudo apt-get install -y poppler-utils",
             "dnf": "sudo dnf install -y poppler-utils",
             "pacman": "sudo pacman -S --needed --noconfirm poppler"
@@ -1870,6 +1889,7 @@
         "arm64": {
           "windows": "poppler.py",
           "linux": {
+            "apk": "sudo apk add --no-cache poppler-utils",
             "apt": "sudo apt-get update && sudo apt-get install -y poppler-utils",
             "dnf": "sudo dnf install -y poppler-utils",
             "pacman": "sudo pacman -S --needed --noconfirm poppler"
@@ -1974,6 +1994,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "ytui_music.py",
             "dnf": null,
             "pacman": null
@@ -1998,12 +2019,22 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "youtube_tui.py",
+          "linux": {
+            "apk": "sudo apk add --no-cache youtube-tui",
+            "apt": "youtube_tui.py",
+            "dnf": "youtube_tui.py",
+            "pacman": "youtube_tui.py"
+          },
           "darwin": "youtube_tui.py",
           "windows": null
         },
         "arm64": {
-          "linux": "youtube_tui.py",
+          "linux": {
+            "apk": "sudo apk add --no-cache youtube-tui",
+            "apt": "youtube_tui.py",
+            "dnf": "youtube_tui.py",
+            "pacman": "youtube_tui.py"
+          },
           "darwin": "youtube_tui.py",
           "windows": null
         }
@@ -2084,6 +2115,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache rmpc",
             "apt": "rmpc.py",
             "dnf": null,
             "pacman": "rmpc.py"
@@ -2093,6 +2125,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache rmpc",
             "apt": "rmpc.py",
             "dnf": null,
             "pacman": "rmpc.py"
@@ -2112,12 +2145,22 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "termusic.py",
+          "linux": {
+            "apk": null,
+            "apt": "termusic.py",
+            "dnf": "termusic.py",
+            "pacman": "termusic.py"
+          },
           "darwin": "termusic.py",
           "windows": "termusic.py"
         },
         "arm64": {
-          "linux": "termusic.py",
+          "linux": {
+            "apk": null,
+            "apt": "termusic.py",
+            "dnf": "termusic.py",
+            "pacman": "termusic.py"
+          },
           "darwin": "termusic.py",
           "windows": null
         }
@@ -2347,6 +2390,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache valkey-compat",
             "apt": "sudo apt-get update && sudo apt-get install -y redis-tools",
             "dnf": "sudo dnf install -y redis",
             "pacman": "sudo pacman -S --needed --noconfirm valkey"
@@ -2356,6 +2400,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache valkey-compat",
             "apt": "sudo apt-get update && sudo apt-get install -y redis-tools",
             "dnf": "sudo dnf install -y redis",
             "pacman": "sudo pacman -S --needed --noconfirm valkey"
@@ -2377,6 +2422,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache sqlite",
             "apt": "sudo apt-get update && sudo apt-get install -y sqlite3",
             "dnf": "sudo dnf install -y sqlite",
             "pacman": "sudo pacman -S --needed --noconfirm sqlite"
@@ -2386,6 +2432,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache sqlite",
             "apt": "sudo apt-get update && sudo apt-get install -y sqlite3",
             "dnf": "sudo dnf install -y sqlite",
             "pacman": "sudo pacman -S --needed --noconfirm sqlite"
@@ -2406,6 +2453,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache cmd:psql",
             "apt": "sudo apt-get update && sudo apt-get install -y postgresql-client",
             "dnf": "sudo dnf install -y postgresql",
             "pacman": "sudo pacman -S --needed --noconfirm postgresql-libs"
@@ -2415,6 +2463,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache cmd:psql",
             "apt": "sudo apt-get update && sudo apt-get install -y postgresql-client",
             "dnf": "sudo dnf install -y postgresql",
             "pacman": "sudo pacman -S --needed --noconfirm postgresql-libs"
@@ -2924,6 +2973,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "obs-backgroundremoval-{version}-x86_64-linux-gnu.deb",
             "dnf": null,
             "pacman": null
@@ -2954,6 +3004,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "rustdesk-{version}-aarch64.deb",
             "dnf": null,
             "pacman": null
@@ -4085,6 +4136,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "ngrok.sh",
             "dnf": null,
             "pacman": null
@@ -4094,6 +4146,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "ngrok.sh",
             "dnf": null,
             "pacman": null
@@ -4114,6 +4167,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "code.py",
             "dnf": "code.py",
             "pacman": null
@@ -4123,6 +4177,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "code.py",
             "dnf": "code.py",
             "pacman": null
@@ -4589,6 +4644,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "orca-ide_{version}_amd64.deb",
             "dnf": null,
             "pacman": null
@@ -4827,6 +4883,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "https://app.warp.dev/get_warp?package=deb",
             "dnf": "https://app.warp.dev/get_warp?package=rpm",
             "pacman": "https://app.warp.dev/download?package=pacman"
@@ -4836,6 +4893,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "https://app.warp.dev/get_warp?package=deb_arm64",
             "dnf": "https://app.warp.dev/get_warp?package=rpm_arm64",
             "pacman": "https://app.warp.dev/download?package=pacman_arm64"
@@ -4878,12 +4936,22 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "oz.py",
+          "linux": {
+            "apk": null,
+            "apt": "oz.py",
+            "dnf": "oz.py",
+            "pacman": "oz.py"
+          },
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew tap warpdotdev/warp; brew update; brew install --cask oz"
         },
         "arm64": {
-          "linux": "oz.py",
+          "linux": {
+            "apk": null,
+            "apt": "oz.py",
+            "dnf": "oz.py",
+            "pacman": "oz.py"
+          },
           "windows": "winget install Warp.Warp --source winget --scope user --accept-package-agreements --accept-source-agreements",
           "darwin": "brew tap warpdotdev/warp; brew update; brew install --cask oz"
         }
@@ -4986,6 +5054,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "brave.py",
             "dnf": "brave.py",
             "pacman": null
@@ -4995,6 +5064,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "brave.py",
             "dnf": "brave.py",
             "pacman": null
@@ -5058,6 +5128,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "espanso.py",
             "dnf": null,
             "pacman": null
@@ -5067,6 +5138,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": "espanso.py",
             "dnf": null,
             "pacman": null
@@ -5277,6 +5349,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache file",
             "apt": "sudo apt-get update && sudo apt-get install -y file",
             "dnf": "sudo dnf install -y file",
             "pacman": "sudo pacman -S --needed --noconfirm file"
@@ -5286,6 +5359,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache file",
             "apt": "sudo apt-get update && sudo apt-get install -y file",
             "dnf": "sudo dnf install -y file",
             "pacman": "sudo pacman -S --needed --noconfirm file"
@@ -5413,6 +5487,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache gnupg",
             "apt": "sudo apt-get update && sudo apt-get install -y gnupg",
             "dnf": "sudo dnf install -y gnupg2",
             "pacman": "sudo pacman -S --needed --noconfirm gnupg"
@@ -5422,6 +5497,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache gnupg",
             "apt": "sudo apt-get update && sudo apt-get install -y gnupg",
             "dnf": "sudo dnf install -y gnupg2",
             "pacman": "sudo pacman -S --needed --noconfirm gnupg"
@@ -5443,6 +5519,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache graphviz",
             "apt": "sudo apt-get update && sudo apt-get install -y graphviz",
             "dnf": "sudo dnf install -y graphviz",
             "pacman": "sudo pacman -S --needed --noconfirm graphviz"
@@ -5452,6 +5529,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache graphviz",
             "apt": "sudo apt-get update && sudo apt-get install -y graphviz",
             "dnf": "sudo dnf install -y graphviz",
             "pacman": "sudo pacman -S --needed --noconfirm graphviz"
@@ -5494,6 +5572,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache sshfs",
             "apt": "sudo apt-get update && sudo apt-get install -y sshfs",
             "dnf": null,
             "pacman": "sudo pacman -S --needed --noconfirm sshfs"
@@ -5503,6 +5582,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache sshfs",
             "apt": "sudo apt-get update && sudo apt-get install -y sshfs",
             "dnf": null,
             "pacman": "sudo pacman -S --needed --noconfirm sshfs"
@@ -5609,6 +5689,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": null,
             "apt": "sudo apt-get update && sudo apt-get install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt-get install -y ./google-chrome-stable_current_amd64.deb && rm google-chrome-stable_current_amd64.deb",
             "dnf": "sudo dnf install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && sudo dnf install -y ./google-chrome-stable_current_x86_64.rpm && rm google-chrome-stable_current_x86_64.rpm",
             "pacman": null
@@ -5618,6 +5699,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": null,
             "apt": null,
             "dnf": null,
             "pacman": null
@@ -5682,6 +5764,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache 7zip",
             "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
             "dnf": null,
             "pacman": "sudo pacman -S --needed --noconfirm 7zip"
@@ -5691,6 +5774,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache 7zip",
             "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
             "dnf": null,
             "pacman": "sudo pacman -S --needed --noconfirm 7zip"
@@ -5818,6 +5902,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": {
+            "apk": "sudo apk add --no-cache texlive",
             "apt": "sudo apt-get update && sudo apt-get install -y texlive",
             "dnf": "sudo dnf install -y texlive",
             "pacman": "sudo pacman -S --needed --noconfirm texlive-meta"
@@ -5827,6 +5912,7 @@
         },
         "arm64": {
           "linux": {
+            "apk": "sudo apk add --no-cache texlive",
             "apt": "sudo apt-get update && sudo apt-get install -y texlive",
             "dnf": "sudo dnf install -y texlive",
             "pacman": "sudo pacman -S --needed --noconfirm texlive-meta"

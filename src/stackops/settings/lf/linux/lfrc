@@ -5,46 +5,48 @@ set ifs "\n"
 set hidden
 set icons
 set preview
-set preload
 set watch
 set mouse
 set incsearch
 set incfilter
+set ignorecase
+set noignoredia
 set dirfirst
 set mergeindicators
-set drawbox
-set roundbox
-set scrolloff 10
-set info size
-set sortby natural
+set scrolloff 5
+set sortby name
 set sizeunits binary
+set tabstop 2
 set ratios 1:3:5
 
 set previewer ~/.config/stackops/settings/lf/linux/exe/previewer.sh
 
-set borderfmt "\033[38;2;98;114;164m"
-set copyfmt "\033[38;2;241;250;140m"
+set copyfmt "\033[38;2;80;250;123m"
 set cursoractivefmt "\033[38;2;248;248;242;48;2;68;71;90m"
 set cursorparentfmt "\033[38;2;248;248;242;48;2;68;71;90m"
 set cursorpreviewfmt "\033[38;2;189;147;249m"
 set cutfmt "\033[38;2;255;85;85m"
 set errorfmt "\033[38;2;248;248;242;48;2;255;85;85m"
 set promptfmt "\033[38;2;189;147;249m%u@%h\033[0m:\033[38;2;139;233;253m%d\033[0m\033[1m%f\033[0m"
-set selectfmt "\033[38;2;255;121;198m"
-set statfmt "\033[38;2;139;233;253m%p\033[0m| %c| \033[38;2;255;121;198m%u:%g\033[0m| %S| %t| -> %l"
-set tagfmt "\033[38;2;255;184;108m"
+set selectfmt "\033[38;2;241;250;140m"
+set tagfmt "\033[38;2;139;233;253m"
 set visualfmt "\033[38;2;139;233;253m"
+
+cmd edit-selected ${{
+    set -f
+    hx $fx
+}}
 
 cmd open &{{
     set -f
     case "$f" in
         *.py|*.rs|*.toml|*.yaml|*.yml|*.json|*.js|*.ts|*.tsx|*.jsx|*.html|*.css|*.md|*.txt|*.sh|*.bash|*.zsh|*.ps1)
-            lf -remote "send $id \$hx \$fx"
+            lf -remote "send $id edit-selected"
             ;;
         *)
             case "$(file --mime-type -Lb -- "$f")" in
                 text/*)
-                    lf -remote "send $id \$hx \$fx"
+                    lf -remote "send $id edit-selected"
                     ;;
                 *)
                     for path in $fx; do
@@ -57,16 +59,25 @@ cmd open &{{
 }}
 
 cmd toggle-preview-max &{{
-    if [ "$lf_ratios" = "1" ]; then
-        lf -remote "send $id set ratios 1:3:5"
+    if [ "$lf_ratios" = "1:999" ]; then
+        lf -remote "send $id :set ratios 1:3:5; set preview"
     else
-        lf -remote "send $id :set preview; set ratios 1"
+        lf -remote "send $id :set preview; set ratios 1:999"
     fi
 }}
 
 cmd repo-root &{{
     root="$(git rev-parse --show-toplevel)"
-    lf -remote "send $id cd \"$root\""
+    escaped_root="$(printf '%s' "$root" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+    lf -remote "send $id cd \"$escaped_root\""
+}}
+
+cmd quick-look &{{
+    if [ "$(uname -s)" != "Darwin" ]; then
+        exit 0
+    fi
+    set -f
+    qlmanage -p $fx >/dev/null 2>&1
 }}
 
 cmd fullscreen-preview ${{
@@ -126,6 +137,7 @@ map v fullscreen-preview
 map V interactive-view
 map n $nano "$f"
 map gr repo-root
+map <c-p> quick-look
 
 map Rv &code "$f"
 map Ro open-default
@@ -135,6 +147,7 @@ map Rf $~/.config/stackops/scripts/wrap_stackops fire "$f"
 map RF $~/.config/stackops/scripts/wrap_stackops fire -i "$f"
 map Rc $code "$f"
 
+map o
 map oc compress-selected
 map od $ouch decompress "$f"
 map os $gpg --output "$f.gpg" --symmetric "$f"
@@ -145,10 +158,12 @@ map oA decrypt
 map go $uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/stackops/settings/yazi/scripts/open_db_readonly.py" "$f"
 map gu $uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/stackops/settings/yazi/scripts/open_db_readonly.py" --ui "$f"
 
-map y :copy; copy-paths
+map y :copy-paths; copy
 map ct $uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/stackops/settings/yazi/scripts/copy_file_content.py" "$f"
 
 map x cut
-map o open
+map c
+map cc clear
+map oo open
 map <enter> open
 map . set hidden!

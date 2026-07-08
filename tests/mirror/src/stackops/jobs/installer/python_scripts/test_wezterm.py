@@ -7,6 +7,13 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
 @pytest.mark.parametrize(
     ("distribution", "expected_repository_command", "expected_install_command", "forbidden_tokens"),
     [
+        pytest.param(
+            LinuxDistribution(distribution_id="alpine"),
+            "Using Alpine Linux's official repositories",
+            "sudo apk add --no-cache wezterm",
+            ("apt-get", "dnf", "pacman", "yum", "copr"),
+            id="apk",
+        ),
         pytest.param(LinuxDistribution(distribution_id="ubuntu"), "https://apt.fury.io/wez/", "sudo apt-get install -y wezterm", ("dnf",), id="apt"),
         pytest.param(
             LinuxDistribution(distribution_id="rhel"),

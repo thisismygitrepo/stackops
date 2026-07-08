@@ -51,6 +51,8 @@ Fields:
 | `categoryLabels` | Searchable category labels used by `devops install --explore` |
 | `fileNamePattern` | `arch -> os -> installer value` mapping |
 
+Linux installer values may be portable strings or native mappings with the exact keys `apk`, `apt`, `dnf`, and `pacman`. A `null` value marks an installer as unsupported by that package manager.
+
 ### Other types
 
 | Type | Purpose |
@@ -105,7 +107,7 @@ installers = get_installers(
 
 ### 1. Package-manager commands
 
-If the resolved installer value contains a whitespace-separated package-manager token such as `bun`, `npm`, `pip`, `uv`, `winget`, `powershell`, `irm`, `brew`, `curl`, `sudo`, or `cargo`, the installer executes that shell command directly.
+If the resolved installer value contains a whitespace-separated package-manager token such as `apk`, `apt`, `dnf`, `pacman`, `bun`, `npm`, `pip`, `uv`, `winget`, `brew`, or `cargo`, the installer executes that shell command directly.
 
 This is also the path used for entries whose `repoURL` is `"CMD"` and whose platform value is a raw command string.
 
@@ -129,7 +131,7 @@ Extra parameters are allowed only if they are optional.
 
 ### 3. Direct binary or archive URLs
 
-If the resolved installer value is an `http://` or `https://` URL, the installer downloads it to `~/tmp_results/tmp_installers`, decompresses supported archives, and then moves the resulting executable or `.deb` package into place.
+If the resolved installer value is an `http://` or `https://` URL, the installer downloads it to `~/tmp_results/tmp_installers`, decompresses supported archives, and then installs the resulting executable or native `.apk`, `.deb`, `.rpm`, or `.pkg.tar.zst` package.
 
 ### 4. GitHub releases
 

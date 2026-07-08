@@ -22,15 +22,21 @@ $ErrorActionPreference = "Stop"
 
 if ($extension -in ".md", ".markdown") {
     $Env:CLICOLOR_FORCE = "1"
-    & glow --width $Width --style dark -- $LiteralPath
+    [string[]]$glowArguments = @("--width", $Width.ToString(), "--style", "dark", "--", $LiteralPath)
+    & glow @glowArguments
     exit $LASTEXITCODE
 }
 if ($extension -eq ".csv") {
-    & uvx --from rich-cli rich --force-terminal --csv --head $Height --width $Width $LiteralPath
+    [string[]]$richArguments = @(
+        "--from", "rich-cli", "rich", "--force-terminal", "--csv",
+        "--head", $Height.ToString(), "--width", $Width.ToString(), $LiteralPath
+    )
+    & uvx @richArguments
     exit $LASTEXITCODE
 }
 if ($extension -eq ".json") {
-    & jq --color-output . -- $LiteralPath
+    [string[]]$jqArguments = @("--color-output", ".", "--", $LiteralPath)
+    & jq @jqArguments
     exit $LASTEXITCODE
 }
 
@@ -39,7 +45,8 @@ if ($extension -eq ".json") {
     ".tar.xz", ".tar.zst", ".tgz", ".txz", ".xz", ".zip", ".zst"
 )
 if ($null -ne ($archiveSuffixes | Where-Object { $lowerPath.EndsWith($_) } | Select-Object -First 1)) {
-    & ouch list -- $LiteralPath
+    [string[]]$ouchArguments = @("list", "--", $LiteralPath)
+    & ouch @ouchArguments
     exit $LASTEXITCODE
 }
 
@@ -48,13 +55,19 @@ if ($null -ne ($archiveSuffixes | Where-Object { $lowerPath.EndsWith($_) } | Sel
     ".png", ".tif", ".tiff", ".webp"
 )
 if ($extension -in $imageExtensions) {
-    & chafa --size "${Width}x${Height}" -- $LiteralPath
+    [string[]]$chafaArguments = @("--size", "${Width}x${Height}", "--", $LiteralPath)
+    & chafa @chafaArguments
     exit $LASTEXITCODE
 }
 if ($extension -eq ".pdf") {
-    & pdftotext -layout -nopgbrk -q -- $LiteralPath -
+    [string[]]$pdfArguments = @("-layout", "-nopgbrk", "-q", "--", $LiteralPath, "-")
+    & pdftotext @pdfArguments
     exit $LASTEXITCODE
 }
 
-& bat --color=always --style=plain --paging=never --terminal-width $Width --line-range "1:$Height" -- $LiteralPath
+[string[]]$batArguments = @(
+    "--color=always", "--style=plain", "--paging=never", "--tabs", "2",
+    "--terminal-width", $Width.ToString(), "--line-range", "1:$Height", "--", $LiteralPath
+)
+& bat @batArguments
 exit $LASTEXITCODE

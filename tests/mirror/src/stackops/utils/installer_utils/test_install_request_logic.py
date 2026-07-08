@@ -24,8 +24,8 @@ def _build_installer_data(linux_pattern: LinuxInstallerPattern) -> InstallerData
     )
 
 
-def _build_native_pattern(*, apt: str | None, dnf: str | None, pacman: str | None) -> LinuxPackageManagerInstallerPattern:
-    return {"apt": apt, "dnf": dnf, "pacman": pacman}
+def _build_native_pattern(*, apk: str | None, apt: str | None, dnf: str | None, pacman: str | None) -> LinuxPackageManagerInstallerPattern:
+    return {"apk": apk, "apt": apt, "dnf": dnf, "pacman": pacman}
 
 
 def test_portable_linux_pattern_is_returned_without_distribution_detection(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -44,6 +44,7 @@ def test_portable_linux_pattern_is_returned_without_distribution_detection(monke
 @pytest.mark.parametrize(
     ("distribution_id", "expected_pattern"),
     [
+        ("alpine", "sudo apk add native-tool"),
         ("ubuntu", "sudo apt-get install -y native-tool"),
         ("fedora", "sudo dnf install -y native-tool"),
         ("rhel", "sudo dnf install -y native-tool"),
@@ -58,6 +59,7 @@ def test_native_linux_pattern_uses_detected_package_manager(
     resolved_pattern = install_request_logic.resolve_installer_pattern(
         installer_data=_build_installer_data(
             _build_native_pattern(
+                apk="sudo apk add native-tool",
                 apt="sudo apt-get install -y native-tool",
                 dnf="sudo dnf install -y native-tool",
                 pacman="sudo pacman -S --needed --noconfirm native-tool",
@@ -75,7 +77,12 @@ def test_null_pattern_for_detected_package_manager_is_unsupported(monkeypatch: p
 
     resolved_pattern = install_request_logic.resolve_installer_pattern(
         installer_data=_build_installer_data(
-            _build_native_pattern(apt="sudo apt-get install -y native-tool", dnf=None, pacman="sudo pacman -S --needed --noconfirm native-tool")
+            _build_native_pattern(
+                apk="sudo apk add native-tool",
+                apt="sudo apt-get install -y native-tool",
+                dnf=None,
+                pacman="sudo pacman -S --needed --noconfirm native-tool",
+            )
         ),
         operating_system="linux",
         architecture="amd64",
@@ -87,6 +94,8 @@ def test_null_pattern_for_detected_package_manager_is_unsupported(monkeypatch: p
 @pytest.mark.parametrize(
     "portable_pattern",
     [
+        "sudo apk add native-tool",
+        "/sbin/apk add --allow-untrusted native-tool.apk",
         "sudo apt-get install -y native-tool",
         "sudo dnf install -y native-tool",
         "env DEBIAN_FRONTEND=noninteractive apt-get install -y native-tool",
@@ -94,12 +103,13 @@ def test_null_pattern_for_detected_package_manager_is_unsupported(monkeypatch: p
         "sudo pacman -S --needed --noconfirm native-tool",
         "/usr/bin/pacman -U --noconfirm native-tool.pkg.tar.zst",
         "native-tool-{version}.deb",
+        "native-tool-{version}.apk",
         "native-tool-{version}.rpm",
         "native-tool-{version}.pkg.tar.zst",
     ],
 )
 def test_native_linux_pattern_cannot_masquerade_as_portable(portable_pattern: str) -> None:
-    with pytest.raises(ValueError, match="declare it in the required apt/dnf/pacman mapping"):
+    with pytest.raises(ValueError, match="declare it in the required apk/apt/dnf/pacman mapping"):
         install_request_logic.resolve_installer_pattern(
             installer_data=_build_installer_data(portable_pattern), operating_system="linux", architecture="amd64"
         )
@@ -112,6 +122,7 @@ def test_incompatible_native_command_cannot_execute_on_selected_package_manager(
         install_request_logic.resolve_installer_pattern(
             installer_data=_build_installer_data(
                 _build_native_pattern(
+                    apk="sudo apk add native-tool",
                     apt="sudo apt-get install -y native-tool",
                     dnf="sudo apt-get install -y native-tool",
                     pacman="sudo pacman -S --needed --noconfirm native-tool",
@@ -129,6 +140,7 @@ def test_incompatible_unselected_native_command_is_also_rejected(monkeypatch: py
         install_request_logic.resolve_installer_pattern(
             installer_data=_build_installer_data(
                 _build_native_pattern(
+                    apk="sudo apk add native-tool",
                     apt="sudo apt-get install -y native-tool",
                     dnf="sudo apt-get install -y native-tool",
                     pacman="sudo pacman -S --needed --noconfirm native-tool",
@@ -142,8 +154,10 @@ def test_incompatible_unselected_native_command_is_also_rejected(monkeypatch: py
 @pytest.mark.parametrize(
     ("pacman_pattern", "expected_reason"),
     [
+        ("sudo apk add native-tool", "APK command"),
         ("sudo apt-get install -y native-tool", "APT/Nala command"),
         ("sudo dnf install -y native-tool", "DNF/YUM command"),
+        ("native-tool.apk", "APK artifact"),
         ("native-tool.deb", "DEB artifact"),
         ("native-tool.rpm", "RPM artifact"),
     ],
@@ -152,7 +166,57 @@ def test_pacman_mapping_rejects_other_native_ecosystems(pacman_pattern: str, exp
     with pytest.raises(ValueError, match=expected_reason):
         install_request_logic.resolve_installer_pattern(
             installer_data=_build_installer_data(
-                _build_native_pattern(apt="sudo apt-get install -y native-tool", dnf="sudo dnf install -y native-tool", pacman=pacman_pattern)
+                _build_native_pattern(
+                    apk="sudo apk add native-tool",
+                    apt="sudo apt-get install -y native-tool",
+                    dnf="sudo dnf install -y native-tool",
+                    pacman=pacman_pattern,
+                )
+            ),
+            operating_system="linux",
+            architecture="amd64",
+        )
+
+
+@pytest.mark.parametrize(
+    ("apk_pattern", "expected_reason"),
+    [
+        ("sudo apt-get install -y native-tool", "APT/Nala command"),
+        ("sudo dnf install -y native-tool", "DNF/YUM command"),
+        ("sudo pacman -S --needed --noconfirm native-tool", "pacman command"),
+        ("native-tool.deb", "DEB artifact"),
+        ("native-tool.rpm", "RPM artifact"),
+        ("native-tool.pkg.tar.zst", "pacman package artifact"),
+    ],
+)
+def test_apk_mapping_rejects_other_native_ecosystems(apk_pattern: str, expected_reason: str) -> None:
+    with pytest.raises(ValueError, match=expected_reason):
+        install_request_logic.resolve_installer_pattern(
+            installer_data=_build_installer_data(
+                _build_native_pattern(
+                    apk=apk_pattern,
+                    apt="sudo apt-get install -y native-tool",
+                    dnf="sudo dnf install -y native-tool",
+                    pacman="sudo pacman -S --needed --noconfirm native-tool",
+                )
+            ),
+            operating_system="linux",
+            architecture="amd64",
+        )
+
+
+@pytest.mark.parametrize(("incompatible_pattern", "expected_reason"), [("sudo apk add native-tool", "APK command"), ("native-tool.apk", "APK artifact")])
+@pytest.mark.parametrize("package_manager", ["apt", "dnf", "pacman"])
+def test_non_apk_mappings_reject_apk_ecosystem(package_manager: str, incompatible_pattern: str, expected_reason: str) -> None:
+    with pytest.raises(ValueError, match=expected_reason):
+        install_request_logic.resolve_installer_pattern(
+            installer_data=_build_installer_data(
+                _build_native_pattern(
+                    apk="sudo apk add native-tool",
+                    apt=incompatible_pattern if package_manager == "apt" else "sudo apt-get install -y native-tool",
+                    dnf=incompatible_pattern if package_manager == "dnf" else "sudo dnf install -y native-tool",
+                    pacman=incompatible_pattern if package_manager == "pacman" else "sudo pacman -S --needed --noconfirm native-tool",
+                )
             ),
             operating_system="linux",
             architecture="amd64",
@@ -164,6 +228,7 @@ def test_legacy_yum_command_is_rejected_from_dnf_mapping() -> None:
         install_request_logic.resolve_installer_pattern(
             installer_data=_build_installer_data(
                 _build_native_pattern(
+                    apk="sudo apk add native-tool",
                     apt="sudo apt-get install -y native-tool",
                     dnf="sudo yum install -y native-tool",
                     pacman="sudo pacman -S --needed --noconfirm native-tool",
@@ -182,7 +247,10 @@ def test_prefixed_incompatible_commands_are_rejected(dnf_pattern: str) -> None:
         install_request_logic.resolve_installer_pattern(
             installer_data=_build_installer_data(
                 _build_native_pattern(
-                    apt="sudo apt-get install -y native-tool", dnf=dnf_pattern, pacman="sudo pacman -S --needed --noconfirm native-tool"
+                    apk="sudo apk add native-tool",
+                    apt="sudo apt-get install -y native-tool",
+                    dnf=dnf_pattern,
+                    pacman="sudo pacman -S --needed --noconfirm native-tool",
                 )
             ),
             operating_system="linux",
@@ -193,12 +261,13 @@ def test_prefixed_incompatible_commands_are_rejected(dnf_pattern: str) -> None:
 def test_native_mapping_requires_exact_package_manager_keys() -> None:
     malformed_installer_data = _build_installer_data(cast(LinuxInstallerPattern, {"apt": "sudo apt-get install -y native-tool"}))
 
-    with pytest.raises(ValueError, match="must contain exactly apt, dnf, pacman"):
+    with pytest.raises(ValueError, match="must contain exactly apk, apt, dnf, pacman"):
         install_request_logic.resolve_installer_pattern(installer_data=malformed_installer_data, operating_system="linux", architecture="amd64")
 
 
 @pytest.mark.parametrize(
-    "installer_value", ["apt-get install -y native-tool", "dnf install -y native-tool", "pacman -S --needed --noconfirm native-tool"]
+    "installer_value",
+    ["apk add native-tool", "apt-get install -y native-tool", "dnf install -y native-tool", "pacman -S --needed --noconfirm native-tool"],
 )
 def test_native_linux_command_without_sudo_is_a_package_manager_installer(installer_value: str) -> None:
     install_target = install_request_logic.build_install_target(repo_url="CMD", installer_value=installer_value)
@@ -206,7 +275,9 @@ def test_native_linux_command_without_sudo_is_a_package_manager_installer(instal
     assert install_target.installer_kind == "package_manager"
 
 
-@pytest.mark.parametrize("installer_value", ["/usr/bin/dnf install -y native-tool", "/usr/bin/pacman -S --needed --noconfirm native-tool"])
+@pytest.mark.parametrize(
+    "installer_value", ["/sbin/apk add native-tool", "/usr/bin/dnf install -y native-tool", "/usr/bin/pacman -S --needed --noconfirm native-tool"]
+)
 def test_path_prefixed_native_command_is_a_package_manager_installer(installer_value: str) -> None:
     install_target = install_request_logic.build_install_target(repo_url="CMD", installer_value=installer_value)
 
@@ -215,5 +286,11 @@ def test_path_prefixed_native_command_is_a_package_manager_installer(installer_v
 
 def test_pacman_package_download_url_remains_a_binary_url() -> None:
     install_target = install_request_logic.build_install_target(repo_url="CMD", installer_value="https://app.warp.dev/download?package=pacman")
+
+    assert install_target.installer_kind == "binary_url"
+
+
+def test_apk_package_download_url_remains_a_binary_url() -> None:
+    install_target = install_request_logic.build_install_target(repo_url="CMD", installer_value="https://example.com/download?package=apk")
 
     assert install_target.installer_kind == "binary_url"

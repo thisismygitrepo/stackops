@@ -78,3 +78,8 @@ def test_enterprise_linux_requires_explicit_epel_setup(distribution_id: str) -> 
 def test_arch_linux_is_rejected_without_an_official_cloudflare_repository() -> None:
     with pytest.raises(NotImplementedError, match="does not support Linux distribution 'arch'"):
         cloudflare_warp_cli._build_linux_install_script(LinuxDistribution(distribution_id="arch"))
+
+
+def test_alpine_is_rejected_without_an_official_cloudflare_apk_repository() -> None:
+    with pytest.raises(NotImplementedError, match="Alpine Linux APK"):
+        cloudflare_warp_cli._build_linux_install_script(LinuxDistribution(distribution_id="alpine"))

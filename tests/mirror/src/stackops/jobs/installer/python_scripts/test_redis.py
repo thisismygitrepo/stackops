@@ -8,6 +8,14 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
     ("distribution", "expected_repository", "expected_install_command", "expected_service", "forbidden_tokens"),
     [
         pytest.param(
+            LinuxDistribution(distribution_id="alpine"),
+            None,
+            "sudo apk add --no-cache redis",
+            "sudo rc-update add redis default\nsudo rc-service redis start",
+            ("apt-get", "dnf", "pacman", "systemctl"),
+            id="apk",
+        ),
+        pytest.param(
             LinuxDistribution(distribution_id="debian"),
             "https://packages.redis.io/deb",
             "sudo apt-get install -y redis",
@@ -48,5 +56,11 @@ def test_builds_native_redis_script(
     assert "redis-cli ping" in script
     if expected_repository is not None:
         assert expected_repository in script
+    if distribution.package_manager == "apk":
+        assert "rc-update" in script
+        assert "rc-service" in script
+    else:
+        assert "rc-update" not in script
+        assert "rc-service" not in script
     for forbidden_token in forbidden_tokens:
         assert forbidden_token not in script.lower()

@@ -11,8 +11,8 @@ from stackops.utils.schemas.installer.installer_types import LinuxPackageManager
 
 
 _NATIVE_LINUX_PATTERN = re.compile(
-    r"(^|[\s;&|()'\x22])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum|pacman)(\s|$)"
-    r"|\.([dD][eE][bB]|[rR][pP][mM]|[pP][kK][gG]\.[tT][aA][rR]\.[zZ][sS][tT])($|[^A-Za-z0-9])"
+    r"(^|[\s;&|()'\x22])((/[A-Za-z0-9_.+-]+)+/)?(apk|apt|apt-get|nala|dnf|yum|pacman)(\s|$)"
+    r"|\.([aA][pP][kK]|[dD][eE][bB]|[rR][pP][mM]|[pP][kK][gG]\.[tT][aA][rR]\.[zZ][sS][tT])($|[^A-Za-z0-9])"
 )
 
 
@@ -26,7 +26,7 @@ def test_installer_catalog_uses_explicit_native_package_mappings() -> None:
     Draft7Validator.check_schema(schema)
     Draft7Validator(schema).validate(catalog)
     installers = cast(list[dict[str, object]], catalog["installers"])
-    pacman_pattern_count = 0
+    native_pattern_counts = {package_manager: 0 for package_manager in LINUX_PACKAGE_MANAGERS}
     for installer in installers:
         file_name_patterns = cast(dict[str, dict[str, object]], installer["fileNamePattern"])
         assert set(file_name_patterns) == {"amd64", "arm64"}
@@ -36,13 +36,14 @@ def test_installer_catalog_uses_explicit_native_package_mappings() -> None:
             if isinstance(linux_pattern, dict):
                 assert set(linux_pattern) == set(LINUX_PACKAGE_MANAGERS)
                 assert all(pattern is None or isinstance(pattern, str) for pattern in linux_pattern.values())
-                if linux_pattern["pacman"] is not None:
-                    pacman_pattern_count += 1
+                for package_manager in LINUX_PACKAGE_MANAGERS:
+                    if linux_pattern[package_manager] is not None:
+                        native_pattern_counts[package_manager] += 1
                 continue
             assert linux_pattern is None or isinstance(linux_pattern, str)
             if isinstance(linux_pattern, str):
                 assert _NATIVE_LINUX_PATTERN.search(linux_pattern) is None
-    assert pacman_pattern_count > 0
+    assert all(pattern_count > 0 for pattern_count in native_pattern_counts.values())
 
 
 def test_linux_manager_axes_stay_synchronized() -> None:

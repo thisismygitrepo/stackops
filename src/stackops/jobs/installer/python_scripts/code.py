@@ -15,6 +15,8 @@ from stackops.utils.schemas.installer.installer_types import InstallerData
 
 def _build_linux_install_script(distribution: LinuxDistribution) -> str:
     match distribution.package_manager:
+        case "apk":
+            raise NotImplementedError("Microsoft Visual Studio Code does not publish an Alpine Linux APK repository or package.")
         case "apt":
             repository_setup = """
 echo "📥 Installing APT repository prerequisites..."

@@ -150,6 +150,8 @@ def _install_linux_packages(console: Console) -> None:
     distribution = detect_current_linux_distribution()
     package_manager = distribution.package_manager
     match package_manager:
+        case "apk":
+            raise NotImplementedError("ytui-music does not publish an Alpine-compatible musl release binary or APK package.")
         case "apt":
             required_packages = DEBIAN_REQUIRED_PACKAGES
             optional_packages = DEBIAN_OPTIONAL_PACKAGES
@@ -323,6 +325,9 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 
     if os_name != "linux" or arch != "amd64":
         raise NotImplementedError(f"ytui-music only publishes a Linux amd64 release binary; detected {system} {arch}.")
+    distribution = detect_current_linux_distribution()
+    if distribution.package_manager == "apk":
+        raise NotImplementedError("ytui-music does not publish an Alpine-compatible musl release binary or APK package.")
 
     console.print(
         Panel.fit(

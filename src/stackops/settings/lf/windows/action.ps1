@@ -26,11 +26,11 @@ if (-not [string]::IsNullOrEmpty($Env:fs)) {
 
 switch ($Action) {
     "toggle-preview-max" {
-        [string]$remoteCommand = if ($Env:lf_ratios -eq "1") {
-            "set ratios 1:3:5"
+        [string]$remoteCommand = if ($Env:lf_ratios -eq "1:999") {
+            ":set ratios 1:3:5; set preview"
         }
         else {
-            ":set preview; set ratios 1"
+            ":set preview; set ratios 1:999"
         }
         & $Env:lf -remote "send $Env:id $remoteCommand"
         exit $LASTEXITCODE

@@ -23,3 +23,8 @@ def test_builds_native_oz_repository_script(
 
     assert all(token in program for token in expected_tokens)
     assert all(token not in program for token in forbidden_tokens)
+
+
+def test_rejects_alpine_without_an_official_oz_apk_repository() -> None:
+    with pytest.raises(NotImplementedError, match="Alpine Linux APK"):
+        oz._build_linux_install_script(distribution=LinuxDistribution(distribution_id="alpine"))

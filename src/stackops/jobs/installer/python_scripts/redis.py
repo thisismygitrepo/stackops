@@ -2,7 +2,7 @@
 
 import platform
 import subprocess
-from typing import TYPE_CHECKING, assert_never
+from typing import TYPE_CHECKING
 
 from rich import box
 from rich.console import Console
@@ -15,6 +15,13 @@ from stackops.utils.schemas.installer.installer_types import InstallerData
 
 def _build_linux_install_script(distribution: LinuxDistribution) -> str:
     match distribution.package_manager:
+        case "apk":
+            repository_setup = """
+echo "📦 Using Alpine Linux's official repositories..."
+""".strip()
+            install_command = "sudo apk add --no-cache redis"
+            service_setup = """sudo rc-update add redis default
+sudo rc-service redis start"""
         case "apt":
             repository_setup = """
 echo "📥 Installing APT repository prerequisites..."
@@ -30,22 +37,20 @@ echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://pack
 sudo apt-get update
 """
             install_command = "sudo apt-get install -y redis"
-            service_name = "redis-server"
+            service_setup = "sudo systemctl enable --now redis-server"
         case "dnf":
             repository_setup = """
 echo "🔄 Refreshing DNF package metadata..."
 sudo dnf makecache --refresh
 """
             install_command = "sudo dnf install -y redis"
-            service_name = "redis"
+            service_setup = "sudo systemctl enable --now redis"
         case "pacman":
             repository_setup = """
 echo "📦 Using Arch Linux's official repositories..."
 """.strip()
             install_command = "sudo pacman -S --needed --noconfirm valkey"
-            service_name = "redis"
-        case _:
-            assert_never(distribution.package_manager)
+            service_setup = "sudo systemctl enable --now redis"
 
     return f"""#!/usr/bin/env bash
 set -euo pipefail
@@ -56,8 +61,8 @@ echo "🗃️ Installing Redis on {distribution.distribution_id} with {distribut
 echo "📦 Installing Redis..."
 {install_command}
 
-echo "⚙️ Enabling and starting {service_name}..."
-sudo systemctl enable --now {service_name}
+echo "⚙️ Enabling and starting Redis..."
+{service_setup}
 
 echo "🧪 Testing Redis..."
 redis-cli ping

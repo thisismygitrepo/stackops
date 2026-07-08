@@ -33,3 +33,10 @@ def test_rejects_arch_without_using_an_aur_helper() -> None:
 
     with pytest.raises(NotImplementedError, match="only available through the AUR"):
         code._build_linux_install_script(distribution)
+
+
+def test_rejects_alpine_without_an_official_apk_repository() -> None:
+    distribution = LinuxDistribution(distribution_id="alpine")
+
+    with pytest.raises(NotImplementedError, match="Alpine Linux APK"):
+        code._build_linux_install_script(distribution)

@@ -7,7 +7,12 @@ from rich import box
 import os
 import re
 
-from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux_utils import check_sshd_installed, detect_package_manager, run_cmd
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux_utils import (
+    check_sshd_installed,
+    detect_package_manager,
+    get_ssh_service_commands,
+    run_cmd,
+)
 from stackops.utils.installer_utils.linux_package_manager import get_openssh_service_name
 
 
@@ -36,6 +41,7 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
     sshd_installed, sshd_path = check_sshd_installed()
     package_manager, install_cmd = detect_package_manager()
     service_name = get_openssh_service_name(package_manager)
+    service_commands = get_ssh_service_commands(package_manager=package_manager, service_name=service_name)
     if not sshd_installed:
         results["installation"] = {"status": "error", "message": "OpenSSH Server not installed"}
         issues.append(("sshd not installed", "Cannot accept incoming SSH connections", install_cmd))
@@ -103,15 +109,13 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
     console.print(Panel("\n".join(perm_info), title="[bold]Permissions[/bold]", border_style="blue"))
 
     svc_info: list[str] = []
-    ssh_ok, _ = run_cmd(["systemctl", "is-active", "ssh"])
-    sshd_ok, _ = run_cmd(["systemctl", "is-active", "sshd"])
-    if ssh_ok or sshd_ok:
-        svc_name = "ssh" if ssh_ok else "sshd"
-        results["ssh_service"] = {"status": "ok", "message": f"{svc_name} running"}
-        svc_info.append(f"✅ Service: [green]{svc_name} running[/green]")
+    service_ok, _ = run_cmd(list(service_commands.status))
+    if service_ok:
+        results["ssh_service"] = {"status": "ok", "message": f"{service_name} running"}
+        svc_info.append(f"✅ Service: [green]{service_name} running[/green]")
     else:
         results["ssh_service"] = {"status": "error", "message": "sshd not running"}
-        issues.append(("sshd not running", "No SSH daemon = no connections", f"sudo systemctl enable --now {service_name}"))
+        issues.append(("sshd not running", "No SSH daemon = no connections", service_commands.enable_and_start))
         svc_info.append("❌ Service: [red]not running[/red]")
 
     console.print(Panel("\n".join(svc_info), title="[bold]Service[/bold]", border_style="blue"))
@@ -185,7 +189,7 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
                     (
                         "PubkeyAuthentication disabled",
                         "Key-based login won't work",
-                        f"Edit {fix_target}: set PubkeyAuthentication yes, then sudo systemctl restart {service_name}",
+                        f"Edit {fix_target}: set PubkeyAuthentication yes, then {service_commands.restart}",
                     )
                 )
                 override_note = f" (overridden in {pubkey_override_file.name})" if pubkey_override_file else ""
@@ -219,7 +223,7 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
                             (
                                 f"PasswordAuth disabled by {password_override_file.name}",
                                 "Password login blocked by cloud-init config",
-                                f"Edit {password_override_file}: set PasswordAuthentication yes, then sudo systemctl restart {service_name}",
+                                f"Edit {password_override_file}: set PasswordAuthentication yes, then {service_commands.restart}",
                             )
                         )
             else:
@@ -238,7 +242,7 @@ def ssh_debug_linux() -> dict[str, dict[str, str | bool]]:
         listening = [line for line in ss_out.split("\n") if f":{ssh_port}" in line]
         if not listening:
             results["ssh_listening"] = {"status": "error", "message": f"Not listening on {ssh_port}"}
-            issues.append((f"Not listening on port {ssh_port}", "No connections possible", f"sudo systemctl restart {service_name}"))
+            issues.append((f"Not listening on port {ssh_port}", "No connections possible", service_commands.restart))
             net_info.append(f"❌ Listening: [red]NOT on port {ssh_port}[/red]")
         elif all("127.0.0.1" in line or "[::1]" in line for line in listening):
             results["ssh_listening"] = {"status": "error", "message": "Localhost only"}

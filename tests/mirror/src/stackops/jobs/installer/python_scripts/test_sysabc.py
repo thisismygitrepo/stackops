@@ -10,6 +10,32 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
     ("distribution", "expected_refresh_command", "expected_install_prefix", "expected_packages"),
     [
         (
+            LinuxDistribution(distribution_id="alpine"),
+            ("sudo", "apk", "update"),
+            ("sudo", "apk", "add"),
+            (
+                "bash",
+                "ca-certificates",
+                "curl",
+                "wget",
+                "gnupg",
+                "lsb-release-minimal",
+                "samba",
+                "fuse3",
+                "nfs-utils",
+                "git",
+                "net-tools",
+                "htop",
+                "nano",
+                "build-base",
+                "python3-dev",
+                "unzip",
+                "pkgconf",
+                "openssl-dev",
+                "libstdc++",
+            ),
+        ),
+        (
             LinuxDistribution(distribution_id="ubuntu"),
             ("sudo", "apt-get", "update"),
             ("sudo", "apt-get", "install", "-y"),
@@ -93,3 +119,7 @@ def test_builds_linux_install_script_for_package_manager(
     assert tuple(shlex.split(script_lines[2])) == expected_refresh_command
     assert tuple(shlex.split(script_lines[3])) == (*expected_install_prefix, *expected_packages)
     assert script_lines[4:] == ["curl -fsSL https://bun.com/install | bash", 'sudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node']
+    selected_package_manager = expected_refresh_command[1]
+    forbidden_package_managers = {"apk", "apt-get", "dnf", "pacman"} - {selected_package_manager}
+    assert forbidden_package_managers.isdisjoint(script_lines[2].split())
+    assert forbidden_package_managers.isdisjoint(script_lines[3].split())

@@ -42,6 +42,7 @@ InstallerCategoryLabel: TypeAlias = Literal[
 
 
 class LinuxPackageManagerInstallerPattern(TypedDict):
+    apk: str | None
     apt: str | None
     dnf: str | None
     pacman: str | None

@@ -1,11 +1,13 @@
 import shlex
 from io import StringIO
+from typing import cast
 
 import pytest
 from rich.console import Console
 
 from stackops.jobs.installer.python_scripts import rmpc
 from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution
+from stackops.utils.schemas.installer.installer_types import InstallerData
 
 
 @pytest.mark.parametrize(
@@ -59,3 +61,20 @@ def test_dnf_companions_fail_before_running_commands(monkeypatch: pytest.MonkeyP
 
     with pytest.raises(NotImplementedError, match="not consistently available"):
         rmpc._install_linux_companions(console=Console(file=StringIO()), distribution=LinuxDistribution(distribution_id=distribution_id))
+
+
+def test_alpine_companions_redirect_to_native_catalog_before_running_commands(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rmpc, "_run_shell", lambda *_args, **_kwargs: pytest.fail("No package command may run"))
+
+    with pytest.raises(NotImplementedError, match=r"native installer catalog route: apk add --no-cache rmpc"):
+        rmpc._install_linux_companions(console=Console(file=StringIO()), distribution=LinuxDistribution(distribution_id="alpine"))
+
+
+def test_alpine_main_rejects_before_downloading_release_archive(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rmpc, "get_os_name", lambda: "linux")
+    monkeypatch.setattr(rmpc.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(rmpc, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="alpine"))
+    monkeypatch.setattr(rmpc, "Installer", lambda *_args, **_kwargs: pytest.fail("Release installer may not run"))
+
+    with pytest.raises(NotImplementedError, match=r"apk add --no-cache rmpc"):
+        rmpc.main(installer_data=cast(InstallerData, {}), version=None, update=False)

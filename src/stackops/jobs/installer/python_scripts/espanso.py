@@ -53,6 +53,7 @@ def _build_espanso_installer_data(
             if xdg_session_type is None:
                 raise RuntimeError("XDG_SESSION_TYPE must be set for Linux Espanso installations.")
             file_name_pattern[arch]["linux"] = {
+                "apk": None,
                 "apt": _resolve_linux_asset_name(current_arch=arch, xdg_session_type=xdg_session_type),
                 "dnf": None,
                 "pacman": None,

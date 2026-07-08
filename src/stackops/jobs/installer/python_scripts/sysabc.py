@@ -38,6 +38,27 @@ APT_PACKAGES: Final[tuple[str, ...]] = (
     "pkg-config",
     "libssl-dev",
 )
+APK_PACKAGES: Final[tuple[str, ...]] = (
+    "bash",
+    "ca-certificates",
+    "curl",
+    "wget",
+    "gnupg",
+    "lsb-release-minimal",
+    "samba",
+    "fuse3",
+    "nfs-utils",
+    "git",
+    "net-tools",
+    "htop",
+    "nano",
+    "build-base",
+    "python3-dev",
+    "unzip",
+    "pkgconf",
+    "openssl-dev",
+    "libstdc++",
+)
 DNF_PACKAGES: Final[tuple[str, ...]] = (
     "curl",
     "wget",
@@ -78,6 +99,8 @@ PACMAN_PACKAGES: Final[tuple[str, ...]] = (
 
 def _build_linux_install_script(distribution: LinuxDistribution) -> str:
     match distribution.package_manager:
+        case "apk":
+            packages = APK_PACKAGES
         case "apt":
             packages = APT_PACKAGES
         case "dnf":

@@ -12,6 +12,20 @@ StackOps supports Python 3.13+ and is easiest to install with [uv](https://docs.
     curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
 
+=== "Alpine Linux"
+
+    On a fresh Alpine system, enable the `community` repository and run this as root first:
+
+    ```sh
+    apk add --no-cache bash ca-certificates curl sudo
+    ```
+
+    Then install uv:
+
+    ```sh
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
 === "Windows"
 
     ```powershell
@@ -30,6 +44,8 @@ You can verify with, e.g.:
 ```bash
 devops --help
 ```
+
+Alpine support covers native APK package-manager paths. Portable Linux assets built for glibc and offline bundles produced on another Linux libc are not guaranteed to run on Alpine.
 
 ## Upgrade or remove
 

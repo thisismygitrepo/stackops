@@ -6,6 +6,7 @@ from typing import Final, Literal, assert_never
 
 type LinuxDistributionId = Literal[
     "almalinux",
+    "alpine",
     "arch",
     "centos",
     "debian",
@@ -28,8 +29,8 @@ type LinuxDistributionId = Literal[
     "ubuntu",
     "zorin",
 ]
-type LinuxPackageManager = Literal["apt", "dnf", "pacman"]
-LINUX_PACKAGE_MANAGERS: Final[tuple[LinuxPackageManager, ...]] = ("apt", "dnf", "pacman")
+type LinuxPackageManager = Literal["apk", "apt", "dnf", "pacman"]
+LINUX_PACKAGE_MANAGERS: Final[tuple[LinuxPackageManager, ...]] = ("apk", "apt", "dnf", "pacman")
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +43,7 @@ class LinuxDistribution:
 
 
 _LINUX_DISTRIBUTION_PACKAGE_MANAGERS: Final[dict[LinuxDistributionId, LinuxPackageManager]] = {
+    "alpine": "apk",
     "arch": "pacman",
     "debian": "apt",
     "deepin": "apt",
@@ -96,7 +98,7 @@ class UnsupportedLinuxVariantError(ValueError):
     def __init__(self, *, distribution_id: str, variant_id: str) -> None:
         super().__init__(
             f"Linux distribution {distribution_id!r} variant {variant_id!r} uses an immutable "
-            "host package workflow; native APT/DNF/pacman installation is unsupported."
+            "host package workflow; native APK/APT/DNF/pacman installation is unsupported."
         )
 
 
@@ -135,6 +137,8 @@ def detect_current_linux_distribution() -> LinuxDistribution:
 
 def build_metadata_refresh_command(package_manager: LinuxPackageManager) -> tuple[str, ...]:
     match package_manager:
+        case "apk":
+            return ("apk", "update")
         case "apt":
             return ("apt-get", "update")
         case "dnf":
@@ -149,6 +153,8 @@ def build_package_install_command(package_manager: LinuxPackageManager, packages
         raise ValueError("At least one package is required")
     package_arguments = tuple(packages)
     match package_manager:
+        case "apk":
+            return ("apk", "add", *package_arguments)
         case "apt":
             return ("apt-get", "install", "-y", *package_arguments)
         case "dnf":
@@ -162,7 +168,7 @@ def get_openssh_server_package(package_manager: LinuxPackageManager) -> str:
     match package_manager:
         case "apt" | "dnf":
             return "openssh-server"
-        case "pacman":
+        case "apk" | "pacman":
             return "openssh"
     assert_never(package_manager)
 
@@ -171,7 +177,7 @@ def get_openssh_service_name(package_manager: LinuxPackageManager) -> Literal["s
     match package_manager:
         case "apt":
             return "ssh"
-        case "dnf" | "pacman":
+        case "apk" | "dnf" | "pacman":
             return "sshd"
     assert_never(package_manager)
 

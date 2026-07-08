@@ -1,10 +1,12 @@
 from io import StringIO
+from typing import cast
 
 import pytest
 from rich.console import Console
 
 from stackops.jobs.installer.python_scripts import termusic
 from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution
+from stackops.utils.schemas.installer.installer_types import InstallerData
 
 
 @pytest.mark.parametrize(
@@ -68,3 +70,20 @@ def test_enterprise_linux_dependencies_fail_before_running_commands(monkeypatch:
 
     with pytest.raises(NotImplementedError, match="EPEL/CRB"):
         termusic._install_linux_dependencies(console=Console(file=StringIO()))
+
+
+def test_alpine_dependencies_fail_before_downloading_glibc_release(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(termusic, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="alpine"))
+    monkeypatch.setattr(termusic, "_run_command", lambda *_args, **_kwargs: pytest.fail("No package command may run"))
+
+    with pytest.raises(NotImplementedError, match="musl-linked Alpine Linux"):
+        termusic._install_linux_dependencies(console=Console(file=StringIO()))
+
+
+def test_alpine_main_rejects_before_downloading_release_archive(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(termusic, "get_os_name", lambda: "linux")
+    monkeypatch.setattr(termusic, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="alpine"))
+    monkeypatch.setattr(termusic, "_install_termusic_binaries", lambda *_args, **_kwargs: pytest.fail("Release download may not run"))
+
+    with pytest.raises(NotImplementedError, match="musl-linked Alpine Linux"):
+        termusic.main(installer_data=cast(InstallerData, {}), version=None, update=False)

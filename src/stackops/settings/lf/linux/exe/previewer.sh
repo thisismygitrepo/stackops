@@ -24,7 +24,7 @@ mime_type=$(file --mime-type -Lb -- "$path")
 case "$mime_type" in
     text/*)
         exec bat --color=always --style=plain --paging=never \
-            --terminal-width "$width" --line-range "1:$height" -- "$path"
+            --tabs 2 --terminal-width "$width" --line-range "1:$height" -- "$path"
         ;;
     image/*)
         exec chafa --size "${width}x${height}" -- "$path"

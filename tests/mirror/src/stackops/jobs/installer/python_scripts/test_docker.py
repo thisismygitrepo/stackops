@@ -80,6 +80,29 @@ def test_arch_script_uses_official_repository_packages() -> None:
     assert "sudo docker run hello-world" in script
 
 
+def test_alpine_script_uses_native_packages_and_openrc() -> None:
+    distribution = LinuxDistribution(distribution_id="alpine")
+
+    script = docker._get_linux_install_script(distribution=distribution)
+
+    assert "sudo apk add --no-cache docker docker-cli-compose" in script
+    assert "sudo rc-update add docker default" in script
+    assert "sudo rc-service docker start" in script
+    assert 'sudo addgroup "$(id -un)" docker' in script
+    assert "sudo docker run hello-world" in script
+    for forbidden_token in (
+        "apt-get",
+        "dnf",
+        "pacman",
+        "docker-ce",
+        "containerd.io",
+        "download.docker.com",
+        "systemctl",
+        "usermod",
+    ):
+        assert forbidden_token not in script.lower()
+
+
 @pytest.mark.parametrize(
     "distribution",
     [
@@ -97,6 +120,9 @@ def test_linux_scripts_share_strict_installation_tail(distribution: LinuxDistrib
     assert "docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin" in script
     assert "sudo systemctl enable --now docker" in script
     assert 'sudo usermod -aG docker "$(id -un)"' in script
+    assert "rc-update" not in script
+    assert "rc-service" not in script
+    assert "addgroup" not in script
     assert "sudo docker run hello-world" in script
     assert "||" not in script
 

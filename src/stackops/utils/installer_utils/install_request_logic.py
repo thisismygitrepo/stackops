@@ -14,6 +14,7 @@ from stackops.utils.schemas.installer.installer_types import (
 
 INSTALLER_KIND = Literal["binary_url", "cmd_raw", "github_release", "package_manager", "script"]
 PACKAGE_MANAGERS: tuple[str, ...] = (
+    "apk",
     "apt",
     "apt-get",
     "brew",
@@ -33,10 +34,12 @@ PACKAGE_MANAGERS: tuple[str, ...] = (
 )
 _SHELL_COMMAND_BOUNDARY = r"(?:^|[\s;&|()'\x22])"
 _SHELL_EXECUTABLE_PATH = r"(?:(?:/[A-Za-z0-9_.+-]+)+/)?"
+_APK_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}apk(?=\s|$)")
 _APT_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}(?:apt(?:-get)?|nala)(?=\s|$)")
 _DNF_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}(?:dnf|yum)(?=\s|$)")
 _PACMAN_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}pacman(?=\s|$)")
 _YUM_COMMAND_PATTERN = re.compile(rf"{_SHELL_COMMAND_BOUNDARY}{_SHELL_EXECUTABLE_PATH}yum(?=\s|$)")
+_APK_ARTIFACT_PATTERN = re.compile(r"\.apk(?:$|[^A-Za-z0-9])", flags=re.IGNORECASE)
 _DEB_ARTIFACT_PATTERN = re.compile(r"\.deb(?:$|[^A-Za-z0-9])", flags=re.IGNORECASE)
 _RPM_ARTIFACT_PATTERN = re.compile(r"\.rpm(?:$|[^A-Za-z0-9])", flags=re.IGNORECASE)
 _PACMAN_ARTIFACT_PATTERN = re.compile(r"\.pkg\.tar\.zst(?:$|[^A-Za-z0-9])", flags=re.IGNORECASE)
@@ -81,6 +84,8 @@ def resolve_installer_pattern(installer_data: InstallerData, operating_system: O
     distribution = detect_current_linux_distribution()
     package_manager = distribution.package_manager
     match package_manager:
+        case "apk":
+            resolved_pattern = linux_pattern["apk"]
         case "apt":
             resolved_pattern = linux_pattern["apt"]
         case "dnf":
@@ -124,49 +129,77 @@ def _validate_linux_package_manager_mapping(installer_pattern: LinuxPackageManag
 
 
 def _get_incompatible_linux_pattern_reason(installer_pattern: str, package_manager: LinuxPackageManager | None) -> str | None:
+    contains_apk_command = _APK_COMMAND_PATTERN.search(installer_pattern) is not None
     contains_apt_command = _APT_COMMAND_PATTERN.search(installer_pattern) is not None
     contains_dnf_command = _DNF_COMMAND_PATTERN.search(installer_pattern) is not None
     contains_pacman_command = _PACMAN_COMMAND_PATTERN.search(installer_pattern) is not None
     contains_yum_command = _YUM_COMMAND_PATTERN.search(installer_pattern) is not None
+    contains_apk_artifact = _APK_ARTIFACT_PATTERN.search(installer_pattern) is not None
     contains_deb_artifact = _DEB_ARTIFACT_PATTERN.search(installer_pattern) is not None
     contains_rpm_artifact = _RPM_ARTIFACT_PATTERN.search(installer_pattern) is not None
     contains_pacman_artifact = _PACMAN_ARTIFACT_PATTERN.search(installer_pattern) is not None
 
     if package_manager is None:
-        if contains_apt_command or contains_dnf_command or contains_pacman_command:
+        if contains_apk_command or contains_apt_command or contains_dnf_command or contains_pacman_command:
             return "native package-manager command"
-        if contains_deb_artifact or contains_rpm_artifact or contains_pacman_artifact:
+        if contains_apk_artifact or contains_deb_artifact or contains_rpm_artifact or contains_pacman_artifact:
             return "native package artifact"
         return None
 
     match package_manager:
-        case "apt":
+        case "apk":
+            if contains_apt_command:
+                return "APT/Nala command"
             if contains_dnf_command:
                 return "DNF/YUM command"
             if contains_pacman_command:
                 return "pacman command"
+            if contains_deb_artifact:
+                return "DEB artifact"
+            if contains_rpm_artifact:
+                return "RPM artifact"
+            if contains_pacman_artifact:
+                return "pacman package artifact"
+            return None
+        case "apt":
+            if contains_apk_command:
+                return "APK command"
+            if contains_dnf_command:
+                return "DNF/YUM command"
+            if contains_pacman_command:
+                return "pacman command"
+            if contains_apk_artifact:
+                return "APK artifact"
             if contains_rpm_artifact:
                 return "RPM artifact"
             if contains_pacman_artifact:
                 return "pacman package artifact"
             return None
         case "dnf":
+            if contains_apk_command:
+                return "APK command"
             if contains_apt_command:
                 return "APT/Nala command"
             if contains_pacman_command:
                 return "pacman command"
             if contains_yum_command:
                 return "legacy YUM command"
+            if contains_apk_artifact:
+                return "APK artifact"
             if contains_deb_artifact:
                 return "DEB artifact"
             if contains_pacman_artifact:
                 return "pacman package artifact"
             return None
         case "pacman":
+            if contains_apk_command:
+                return "APK command"
             if contains_apt_command:
                 return "APT/Nala command"
             if contains_dnf_command:
                 return "DNF/YUM command"
+            if contains_apk_artifact:
+                return "APK artifact"
             if contains_deb_artifact:
                 return "DEB artifact"
             if contains_rpm_artifact:
@@ -194,7 +227,8 @@ def build_install_target(repo_url: str, installer_value: str) -> InstallTarget:
 
 def is_package_manager_command(installer_value: str) -> bool:
     contains_native_linux_manager = (
-        _APT_COMMAND_PATTERN.search(installer_value) is not None
+        _APK_COMMAND_PATTERN.search(installer_value) is not None
+        or _APT_COMMAND_PATTERN.search(installer_value) is not None
         or _DNF_COMMAND_PATTERN.search(installer_value) is not None
         or _PACMAN_COMMAND_PATTERN.search(installer_value) is not None
     )

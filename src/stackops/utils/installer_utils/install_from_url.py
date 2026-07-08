@@ -23,6 +23,7 @@ _ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (
     ".gz",
     ".xz",
     ".bz2",
+    ".apk",
     ".deb",
     ".rpm",
     ".msi",

@@ -1,12 +1,13 @@
 from collections.abc import Sequence
 from io import StringIO
-from typing import Literal
+from typing import Literal, cast
 
 import pytest
 from rich.console import Console
 
 from stackops.jobs.installer.python_scripts import youtube_tui
 from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution
+from stackops.utils.schemas.installer.installer_types import InstallerData
 
 
 type PackageExecutable = Literal["apt-get", "dnf", "pacman"]
@@ -63,3 +64,20 @@ def test_enterprise_linux_dependencies_fail_before_running_commands(monkeypatch:
 
     with pytest.raises(NotImplementedError, match="EPEL/CRB"):
         youtube_tui._install_linux_dependencies(console=Console(file=StringIO()))
+
+
+def test_alpine_redirects_to_native_catalog_before_cargo_build(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(youtube_tui, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="alpine"))
+    monkeypatch.setattr(youtube_tui, "_run", lambda *_args, **_kwargs: pytest.fail("No build or package command may run"))
+
+    with pytest.raises(NotImplementedError, match=r"native installer catalog route: apk add --no-cache youtube-tui"):
+        youtube_tui._install_linux_dependencies(console=Console(file=StringIO()))
+
+
+def test_alpine_main_rejects_before_bootstrapping_rust(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(youtube_tui, "get_os_name", lambda: "linux")
+    monkeypatch.setattr(youtube_tui, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="alpine"))
+    monkeypatch.setattr(youtube_tui, "_ensure_rust_toolchain", lambda *_args, **_kwargs: pytest.fail("Rust bootstrap may not run"))
+
+    with pytest.raises(NotImplementedError, match=r"apk add --no-cache youtube-tui"):
+        youtube_tui.main(installer_data=cast(InstallerData, {}), version=None, update=False)

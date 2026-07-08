@@ -16,6 +16,11 @@ console = Console()
 
 def _build_linux_install_script(distribution: LinuxDistribution) -> str:
     match distribution.package_manager:
+        case "apk":
+            repository_setup = """
+echo "📦 Using Alpine Linux's official repositories..."
+""".strip()
+            install_command = "sudo apk add --no-cache wezterm"
         case "apt":
             repository_setup = """
 echo "📥 Installing APT repository prerequisites..."

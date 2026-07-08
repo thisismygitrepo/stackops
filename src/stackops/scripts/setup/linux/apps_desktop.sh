@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -11,6 +11,10 @@ read -r DISTRIBUTION_ID PACKAGE_MANAGER < <(
 if [[ "$PACKAGE_MANAGER" == "dnf" && "$DISTRIBUTION_ID" != "fedora" ]]; then
     echo "Desktop package installation on $DISTRIBUTION_ID requires explicit EPEL/CRB repository configuration." >&2
     exit 1
+fi
+if [[ "$PACKAGE_MANAGER" == "apk" ]]; then
+    sudo apk add --no-cache flatpak
+    sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 fi
 
 
@@ -40,6 +44,13 @@ case "$PACKAGE_MANAGER" in
     pacman)
         sudo pacman -S --needed --noconfirm remmina
         ;;
+    apk)
+        sudo apk add --no-cache remmina
+        ;;
+    *)
+        echo "Unsupported package manager for Remmina: $PACKAGE_MANAGER" >&2
+        exit 1
+        ;;
 esac
 
 # Alternative Remmina installation via flatpak (reference)
@@ -62,6 +73,13 @@ case "$PACKAGE_MANAGER" in
         ;;
     pacman)
         sudo pacman -S --needed --noconfirm rofi
+        ;;
+    apk)
+        sudo apk add --no-cache rofi
+        ;;
+    *)
+        echo "Unsupported package manager for Rofi: $PACKAGE_MANAGER" >&2
+        exit 1
         ;;
 esac
 
@@ -120,6 +138,13 @@ case "$PACKAGE_MANAGER" in
     pacman)
         echo "Skipping XRDP: it is only available through the AUR on Arch Linux, and this setup uses pacman only."
         ;;
+    apk)
+        sudo apk add --no-cache xrdp
+        ;;
+    *)
+        echo "Unsupported package manager for XRDP: $PACKAGE_MANAGER" >&2
+        exit 1
+        ;;
 esac
 
 # echo "📥 Installing X.Org server and components..."
@@ -137,6 +162,13 @@ case "$PACKAGE_MANAGER" in
         ;;
     pacman)
         sudo pacman -S --needed --noconfirm xfce4 xfce4-goodies
+        ;;
+    apk)
+        sudo apk add --no-cache xfce4
+        ;;
+    *)
+        echo "Unsupported package manager for XFCE4: $PACKAGE_MANAGER" >&2
+        exit 1
         ;;
 esac
 

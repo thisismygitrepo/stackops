@@ -10,6 +10,7 @@ from stackops.utils.installer_utils.linux_package_manager import LinuxDistributi
 @pytest.mark.parametrize(
     ("package_manager", "package_name", "expected_command"),
     [
+        ("apk", "tool.apk", ("sudo", "apk", "add", "--allow-untrusted", "/tmp/tool.apk")),
         ("apt", "tool.deb", ("sudo", "apt-get", "install", "-y", "/tmp/tool.deb")),
         ("dnf", "tool.rpm", ("sudo", "dnf", "install", "-y", "/tmp/tool.rpm")),
         ("pacman", "tool.pkg.tar.zst", ("sudo", "pacman", "-U", "--needed", "--noconfirm", "/tmp/tool.pkg.tar.zst")),
@@ -26,10 +27,16 @@ def test_builds_native_package_file_command(package_manager: LinuxPackageManager
 @pytest.mark.parametrize(
     ("package_manager", "package_name"),
     [
+        ("apk", "tool.deb"),
+        ("apk", "tool.rpm"),
+        ("apk", "tool.pkg.tar.zst"),
+        ("apt", "tool.apk"),
         ("apt", "tool.rpm"),
         ("apt", "tool.pkg.tar.zst"),
+        ("dnf", "tool.apk"),
         ("dnf", "tool.deb"),
         ("dnf", "tool.pkg.tar.zst"),
+        ("pacman", "tool.apk"),
         ("pacman", "tool.deb"),
         ("pacman", "tool.rpm"),
     ],
@@ -41,9 +48,32 @@ def test_rejects_package_from_another_ecosystem(package_manager: LinuxPackageMan
         )
 
 
-@pytest.mark.parametrize(("package_name", "expected_is_package"), [("tool.pkg.tar.zst", True), ("tool.PKG.TAR.ZST", True), ("tool.tar.zst", False)])
+@pytest.mark.parametrize(
+    ("package_name", "expected_is_package"),
+    [("tool.apk", True), ("tool.APK", True), ("tool.pkg.tar.zst", True), ("tool.PKG.TAR.ZST", True), ("tool.tar.zst", False)],
+)
 def test_recognizes_only_complete_linux_package_suffixes(package_name: str, expected_is_package: bool) -> None:
     assert linux_package_file.is_linux_package_file(Path(package_name)) is expected_is_package
+
+
+def test_installs_matching_apk_package_and_removes_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    package_path = tmp_path.joinpath("tool.apk")
+    package_path.touch()
+    commands: list[tuple[str, ...]] = []
+    monkeypatch.setattr(linux_package_file, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="alpine"))
+    monkeypatch.setattr(linux_package_file.os, "geteuid", lambda: 0)
+
+    def run_command(command: tuple[str, ...], *, capture_output: bool, text: bool, check: bool) -> subprocess.CompletedProcess[str]:
+        _ = capture_output, text, check
+        commands.append(command)
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(linux_package_file.subprocess, "run", run_command)
+
+    linux_package_file.install_linux_package_file(package_path)
+
+    assert commands == [("apk", "add", "--allow-untrusted", str(package_path))]
+    assert not package_path.exists()
 
 
 def test_installs_matching_pacman_package_and_removes_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

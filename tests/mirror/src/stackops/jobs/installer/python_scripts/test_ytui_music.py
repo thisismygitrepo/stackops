@@ -1,10 +1,13 @@
 from collections.abc import Sequence
 from io import StringIO
+from typing import cast
+
 import pytest
 from rich.console import Console
 
 from stackops.jobs.installer.python_scripts import ytui_music
 from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution
+from stackops.utils.schemas.installer.installer_types import InstallerData
 
 
 def test_linux_packages_use_apt_on_debian(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -47,3 +50,22 @@ def test_arch_fails_before_running_commands(monkeypatch: pytest.MonkeyPatch) -> 
 
     with pytest.raises(NotImplementedError, match=r"Arch Linux provides libmpv[.]so[.]2"):
         ytui_music._install_linux_packages(console=Console(file=StringIO()))
+
+
+def test_alpine_fails_before_running_commands(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ytui_music, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="alpine"))
+    monkeypatch.setattr(ytui_music, "_run", lambda *_args, **_kwargs: pytest.fail("No package command may run"))
+
+    with pytest.raises(NotImplementedError, match="Alpine-compatible musl"):
+        ytui_music._install_linux_packages(console=Console(file=StringIO()))
+
+
+def test_alpine_main_rejects_before_downloading_release_binary(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ytui_music, "get_os_name", lambda: "linux")
+    monkeypatch.setattr(ytui_music, "get_normalized_arch", lambda: "amd64")
+    monkeypatch.setattr(ytui_music.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(ytui_music, "detect_current_linux_distribution", lambda: LinuxDistribution(distribution_id="alpine"))
+    monkeypatch.setattr(ytui_music, "Installer", lambda *_args, **_kwargs: pytest.fail("Release installer may not run"))
+
+    with pytest.raises(NotImplementedError, match="Alpine-compatible musl"):
+        ytui_music.main(installer_data=cast(InstallerData, {}), version=None, update=False)

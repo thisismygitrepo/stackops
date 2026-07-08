@@ -7,7 +7,7 @@ from typing import Final, assert_never
 from stackops.utils.installer_utils.linux_package_manager import LinuxPackageManager, detect_current_linux_distribution
 
 
-LINUX_PACKAGE_FILE_SUFFIXES: Final[tuple[str, ...]] = (".deb", ".rpm", ".pkg.tar.zst")
+LINUX_PACKAGE_FILE_SUFFIXES: Final[tuple[str, ...]] = (".apk", ".deb", ".rpm", ".pkg.tar.zst")
 
 
 class IncompatibleLinuxPackageError(ValueError):
@@ -20,6 +20,10 @@ def build_linux_package_file_install_command(
 ) -> tuple[str, ...]:
     package_suffix = get_linux_package_file_suffix(package_path)
     match package_manager:
+        case "apk":
+            if package_suffix != ".apk":
+                raise IncompatibleLinuxPackageError(package_manager=package_manager, package_suffix=package_suffix)
+            package_command = ("apk", "add", "--allow-untrusted", str(package_path))
         case "apt":
             if package_suffix != ".deb":
                 raise IncompatibleLinuxPackageError(package_manager=package_manager, package_suffix=package_suffix)

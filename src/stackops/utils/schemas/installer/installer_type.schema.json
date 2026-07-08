@@ -309,7 +309,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum|pacman)([\\s]|$)|[.]([dD][eE][bB]|[rR][pP][mM]|[pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apk|apt|apt-get|nala|dnf|yum|pacman)([\\s]|$)|[.]([aA][pP][kK]|[dD][eE][bB]|[rR][pP][mM]|[pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
           }
         }
       ]
@@ -319,6 +319,9 @@
       "description": "Native Linux installer patterns keyed by the canonical package manager.",
       "additionalProperties": false,
       "properties": {
+        "apk": {
+          "$ref": "#/definitions/ApkInstallerPatternValue"
+        },
         "apt": {
           "$ref": "#/definitions/AptInstallerPatternValue"
         },
@@ -330,9 +333,23 @@
         }
       },
       "required": [
+        "apk",
         "apt",
         "dnf",
         "pacman"
+      ]
+    },
+    "ApkInstallerPatternValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum|pacman)([\\s]|$)|([.][dD][eE][bB]|[.][rR][pP][mM]|[.][pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
+          }
+        }
       ]
     },
     "AptInstallerPatternValue": {
@@ -343,7 +360,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(dnf|yum|pacman)([\\s]|$)|([.][rR][pP][mM]|[.][pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apk|dnf|yum|pacman)([\\s]|$)|([.][aA][pP][kK]|[.][rR][pP][mM]|[.][pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
           }
         }
       ]
@@ -356,7 +373,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|yum|pacman)([\\s]|$)|([.][dD][eE][bB]|[.][pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apk|apt|apt-get|nala|yum|pacman)([\\s]|$)|([.][aA][pP][kK]|[.][dD][eE][bB]|[.][pP][kK][gG][.][tT][aA][rR][.][zZ][sS][tT])($|[^A-Za-z0-9])"
           }
         }
       ]
@@ -369,7 +386,7 @@
         {
           "type": "string",
           "not": {
-            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apt|apt-get|nala|dnf|yum)([\\s]|$)|[.]([dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
+            "pattern": "(^|[\\s;&|()'\\u0022])((/[A-Za-z0-9_.+-]+)+/)?(apk|apt|apt-get|nala|dnf|yum)([\\s]|$)|[.]([aA][pP][kK]|[dD][eE][bB]|[rR][pP][mM])($|[^A-Za-z0-9])"
           }
         }
       ]

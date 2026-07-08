@@ -13,6 +13,8 @@ echo "Installing build dependencies on $DISTRIBUTION_ID with $PACKAGE_MANAGER"
 if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
   sudo apt-get update
   sudo apt-get install -y ccache patchelf
+elif [[ "$PACKAGE_MANAGER" == "apk" ]]; then
+  sudo apk add --no-cache ccache patchelf
 elif [[ "$PACKAGE_MANAGER" == "pacman" ]]; then
   sudo pacman -S --needed --noconfirm ccache patchelf
 elif [[ "$DISTRIBUTION_ID" == "fedora" ]]; then

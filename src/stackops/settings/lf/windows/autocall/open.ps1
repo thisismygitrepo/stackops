@@ -47,13 +47,22 @@ function Test-TextPath {
     ".md", ".ps1", ".py", ".rs", ".sh", ".toml", ".ts", ".tsx",
     ".txt", ".yaml", ".yml", ".zsh"
 )
+[string[]]$defaultExtensions = @(
+    ".aac", ".avif", ".avi", ".bmp", ".flac", ".gif", ".heic", ".heif",
+    ".ico", ".jpeg", ".jpg", ".m4a", ".mkv", ".mov", ".mp3", ".mp4",
+    ".ogg", ".opus", ".pdf", ".png", ".svg", ".tif", ".tiff", ".wav",
+    ".webm", ".webp"
+)
 [string[]]$targets = @($Env:fx -split "`n")
 $textTargets = [Collections.Generic.List[string]]::new()
 $defaultTargets = [Collections.Generic.List[string]]::new()
 
 foreach ($target in $targets) {
     [string]$extension = [IO.Path]::GetExtension($target)
-    if ($textExtensions -contains $extension -or (Test-TextPath $target)) {
+    if ($defaultExtensions -contains $extension) {
+        $defaultTargets.Add($target)
+    }
+    elseif ($textExtensions -contains $extension -or (Test-TextPath $target)) {
         $textTargets.Add($target)
     }
     else {

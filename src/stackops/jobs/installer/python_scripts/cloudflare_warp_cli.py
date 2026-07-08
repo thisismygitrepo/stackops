@@ -9,6 +9,8 @@ from stackops.utils.schemas.installer.installer_types import InstallerData
 
 def _build_linux_install_script(distribution: LinuxDistribution) -> str:
     match (distribution.distribution_id, distribution.package_manager):
+        case ("alpine", "apk"):
+            raise NotImplementedError("Cloudflare WARP does not publish an Alpine Linux APK repository or package.")
         case ("ubuntu" | "debian", "apt"):
             repository_setup = """
 echo "📥 Installing APT repository prerequisites..."

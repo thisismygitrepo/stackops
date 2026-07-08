@@ -14,6 +14,12 @@ from stackops.utils.schemas.installer.installer_types import InstallerData
 
 def _get_linux_install_script(distribution: LinuxDistribution) -> str:
     match (distribution.distribution_id, distribution.package_manager):
+        case ("alpine", "apk"):
+            repository_setup = """
+echo "📦 Using Alpine Linux's official repositories..."
+""".strip()
+            install_command = "sudo apk add --no-cache"
+            package_names = "docker docker-cli-compose"
         case (("ubuntu" | "debian") as distribution_id, "apt"):
             match distribution_id:
                 case "ubuntu":
@@ -69,15 +75,24 @@ echo "📦 Using Arch Linux's official repositories..."
 """.strip()
             install_command = "sudo pacman -S --needed --noconfirm"
             package_names = "docker docker-buildx docker-compose"
-        case ("arch" | "ubuntu" | "debian" | "rhel" | "fedora" | "centos" | "ol", _):
+        case ("alpine" | "arch" | "ubuntu" | "debian" | "rhel" | "fedora" | "centos" | "ol", _):
             raise ValueError(
                 f"Invalid package-manager metadata for Linux distribution '{distribution.distribution_id}': manager={distribution.package_manager}"
             )
         case (unsupported_distribution_id, _):
             raise NotImplementedError(
                 "Docker Engine's official repositories do not support Linux distribution "
-                f"'{unsupported_distribution_id}'. Supported distributions: arch, ubuntu, debian, rhel, fedora, centos, ol."
+                f"'{unsupported_distribution_id}'. Supported distributions: alpine, arch, ubuntu, debian, rhel, fedora, centos, ol."
             )
+
+    match distribution.package_manager:
+        case "apk":
+            service_setup = """sudo rc-update add docker default
+sudo rc-service docker start"""
+            add_user_to_group = 'sudo addgroup "$(id -un)" docker'
+        case "apt" | "dnf" | "pacman":
+            service_setup = "sudo systemctl enable --now docker"
+            add_user_to_group = 'sudo usermod -aG docker "$(id -un)"'
 
     return f"""
 set -euo pipefail
@@ -89,10 +104,10 @@ echo "📦 INSTALLATION | Installing Docker packages"
 {install_command} {package_names}
 
 echo "⚙️ Enabling and starting Docker system service..."
-sudo systemctl enable --now docker
+{service_setup}
 
 echo "👥 Adding current user to docker group..."
-sudo usermod -aG docker "$(id -un)"
+{add_user_to_group}
 
 echo "🧪 Testing Docker installation with hello-world..."
 sudo docker run hello-world

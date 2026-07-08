@@ -147,6 +147,8 @@ def _install_winget_package(package_id: str, console: Console, *, required: bool
 def _install_linux_dependencies(console: Console) -> None:
     distribution = detect_current_linux_distribution()
     match distribution.package_manager:
+        case "apk":
+            raise NotImplementedError("Termusic does not publish a musl-linked Alpine Linux release archive or supported APK package.")
         case "apt":
             required_package_groups = APT_REQUIRED_PACKAGE_GROUPS
             optional_packages = APT_OPTIONAL_PACKAGES

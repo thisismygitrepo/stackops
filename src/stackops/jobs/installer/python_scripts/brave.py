@@ -16,6 +16,10 @@ from stackops.utils.schemas.installer.installer_types import InstallerData
 
 def _build_linux_install_script(distribution: LinuxDistribution) -> str:
     match (distribution.distribution_id, distribution.package_manager):
+        case ("alpine", "apk"):
+            raise NotImplementedError("Brave Browser does not publish an Alpine Linux APK package.")
+        case (unsupported_distribution_id, "apk"):
+            raise ValueError(f"Invalid package-manager metadata for Linux distribution '{unsupported_distribution_id}': manager=apk")
         case (_, "apt"):
             repository_setup = """
 echo "📥 Installing APT repository prerequisites..."
