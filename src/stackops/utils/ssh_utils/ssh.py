@@ -9,6 +9,8 @@ from stackops.utils.cli_utils.terminal import Response
 from stackops.utils.accessories import pprint, randstr
 from stackops.utils.meta import lambda_to_python_script
 from stackops.utils.ssh_utils.abc import DEFAULT_PICKLE_SUBDIR, STACKOPS_REQUIREMENT
+from stackops.utils.ssh_utils.connection_target import resolve_ssh_connection_target
+from stackops.utils.ssh_utils.open_ssh_config import lookup_open_ssh_config
 
 
 class SSH:
@@ -43,48 +45,24 @@ class SSH:
         self.proxycommand: str | None = None
         import paramiko
         import getpass
-        if isinstance(host, str):
-            try:
-                import paramiko.config as pconfig
 
-                config = pconfig.SSHConfig.from_path(str(Path.home().joinpath(".ssh/config")))
-                config_dict = config.lookup(host)
-                self.hostname = config_dict["hostname"]
-                self.username = config_dict["user"]
-                self.host = host
-                self.port = int(config_dict.get("port", port))
-                identity_file_value = config_dict.get("identityfile", ssh_key_path)
-                if isinstance(identity_file_value, list):
-                    ssh_key_path = identity_file_value[0]
-                else:
-                    ssh_key_path = identity_file_value
-                self.proxycommand = config_dict.get("proxycommand", None)
-                if ssh_key_path is not None:
-                    wildcard_identity_file = config.lookup("*").get("identityfile", ssh_key_path)
-                    if isinstance(wildcard_identity_file, list):
-                        ssh_key_path = wildcard_identity_file[0]
-                    else:
-                        ssh_key_path = wildcard_identity_file
-            except (FileNotFoundError, KeyError):
-                assert "@" in host or ":" in host, (
-                    f"Host must be in the form of `username@hostname:port` or `username@hostname` or `hostname:port`, but it is: {host}"
-                )
-                if "@" in host:
-                    self.username, self.hostname = host.split("@")
-                else:
-                    self.username = username or getpass.getuser()
-                    self.hostname = host
-                if ":" in self.hostname:
-                    self.hostname, port_ = self.hostname.split(":")
-                    self.port = int(port_)
-        elif username is not None and hostname is not None:
-            self.username, self.hostname = username, hostname
-            self.proxycommand = None
-        else:
-            print(f"Provided values: host={host}, username={username}, hostname={hostname}")
-            raise ValueError("Either host or username and hostname must be provided.")
-
-        self.ssh_key_path = str(Path(ssh_key_path).expanduser().absolute()) if ssh_key_path is not None else None
+        connection_target = resolve_ssh_connection_target(
+            host=host,
+            username=username,
+            hostname=hostname,
+            ssh_key_path=ssh_key_path,
+            port=port,
+            local_username=getpass.getuser(),
+            ssh_config_lookup=lookup_open_ssh_config,
+        )
+        self.host = connection_target.host
+        self.hostname = connection_target.hostname
+        self.username = connection_target.username
+        self.port = connection_target.port
+        self.proxycommand = connection_target.proxy_command
+        self.ssh_key_path = (
+            str(Path(connection_target.ssh_key_path).expanduser().absolute()) if connection_target.ssh_key_path is not None else None
+        )
         self.ssh = paramiko.SSHClient()
         self.ssh.load_system_host_keys()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -93,77 +71,18 @@ class SSH:
             title="SSHing To",
         )
         sock = paramiko.ProxyCommand(self.proxycommand) if self.proxycommand is not None else None
-        try:
-            if password is None:
-                allow_agent = True
-                look_for_keys = True
-            else:
-                allow_agent = False
-                look_for_keys = False
-            self.ssh.connect(
-                hostname=self.hostname,
-                username=self.username,
-                password=self.password,
-                port=self.port,
-                key_filename=self.ssh_key_path,
-                compress=self.enable_compression,
-                sock=sock,
-                allow_agent=allow_agent,
-                look_for_keys=look_for_keys,
-            )
-        except Exception as _err:
-            console = rich.console.Console()
-            console.print_exception(show_locals=False, max_frames=3, width=None, word_wrap=True, suppress=[])
-
-            if "getaddrinfo failed" in str(_err) or "Name or service not known" in str(_err):
-                console.print("\n[yellow] Hostname Resolution Failed[/yellow]")
-                console.print(f"   Target hostname: [cyan]{self.hostname}[/cyan]")
-                if self.host and self.host != self.hostname:
-                    console.print(f"   SSH config alias: [cyan]{self.host}[/cyan]")
-                console.print("\n[yellow] Troubleshooting tips:[/yellow]")
-                console.print(f"   1. Check if hostname resolves: [green]ping {self.hostname}[/green]")
-                console.print(f"   2. Check SSH config: [green]cat ~/.ssh/config | grep -A5 '{self.host or self.hostname}'[/green]")
-                console.print(f"   3. Add to /etc/hosts: [green]echo '192.168.x.x {self.hostname}' | sudo tee -a /etc/hosts[/green]")
-                console.print("   4. Check if machine is online and accessible on network\n")
-
-            import sys
-
-            old_settings = None
-            if sys.stdin.isatty() and platform.system() != "Windows":
-                try:
-                    import termios
-                    old_settings = termios.tcgetattr(sys.stdin)
-                except (ImportError, OSError):
-                    pass
-            try:
-                self.password = getpass.getpass(f"Enter password for {self.username}@{self.hostname}: ")
-                self.ssh.connect(
-                    hostname=self.hostname,
-                    username=self.username,
-                    password=self.password,
-                    port=self.port,
-                    key_filename=self.ssh_key_path,
-                    compress=self.enable_compression,
-                    sock=sock,
-                    allow_agent=False,
-                    look_for_keys=False,
-                )
-            except Exception:
-                if old_settings is not None:
-                    import termios
-                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-                if sys.stdin.isatty():
-                    sys.stdout.write("\033[?25h")
-                    sys.stdout.flush()
-                raise
-            finally:
-                if old_settings is not None:
-                    import termios
-                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-                if sys.stdin.isatty():
-                    sys.stdout.write("\033[?25h")
-                    sys.stdout.write("\033[?1049l")
-                    sys.stdout.flush()
+        use_automatic_authentication = password is None
+        self.ssh.connect(
+            hostname=self.hostname,
+            username=self.username,
+            password=self.password,
+            port=self.port,
+            key_filename=self.ssh_key_path,
+            compress=self.enable_compression,
+            sock=sock,
+            allow_agent=use_automatic_authentication,
+            look_for_keys=use_automatic_authentication,
+        )
         try:
             self.sftp: paramiko.SFTPClient | None = self.ssh.open_sftp()
         except Exception as err:
