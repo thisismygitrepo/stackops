@@ -831,6 +831,14 @@
                   "raw_lines": [
                     "def subset(",
                     "    output_path: Annotated[Path, typer.Argument(help=\"Output data YAML path. Default mode creates a new file and refuses existing paths.\")],",
+                    "    which: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(",
+                    "            \"--which\",",
+                    "            \"-w\",",
+                    "            help=\"Comma-separated group or group.item selectors, or 'all'. A group selects all its entries; omit to choose interactively.\",",
+                    "        ),",
+                    "    ] = None,",
                     "    source: Annotated[",
                     "        CONFIG_FILE_SOURCE_LOOSE,",
                     "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Source backup configuration file to read: user/u or library/l.\"),",
@@ -853,6 +861,7 @@
                     "        source_path=source_path,",
                     "        output_path=resolve_subset_output_path(output_path),",
                     "        on_conflict=SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict],",
+                    "        which=which,",
                     "    )"
                   ],
                   "name": "subset",
@@ -870,6 +879,28 @@
                         "long_flags": [],
                         "short_flags": [],
                         "help": "Output data YAML path. Default mode creates a new file and refuses existing paths."
+                      }
+                    },
+                    {
+                      "name": "which",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"Comma-separated group or group.item selectors, or 'all'. A group selects all its entries; omit to choose interactively.\")]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--which",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--which"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Comma-separated group or group.item selectors, or 'all'. A group selects all its entries; omit to choose interactively."
                       }
                     },
                     {
@@ -6944,18 +6975,24 @@
                         "def install_ssh_server() -> None:",
                         "    \"\"\"📡 Install SSH server\"\"\"",
                         "    import platform",
+                        "",
                         "    system = platform.system()",
                         "    if system == \"Windows\":",
                         "        script = _get_windows_ssh_server_install_script(use_winget=True)",
                         "    elif system == \"Linux\":",
-                        "        script = _get_linux_ssh_server_install_script()",
+                        "        distribution = detect_current_linux_distribution()",
+                        "        print(f\"🐧 Installing OpenSSH server on {distribution.distribution_id} using {distribution.package_manager}.\")",
+                        "        script = _get_linux_ssh_server_install_script(distribution)",
                         "    elif system == \"Darwin\":",
                         "        script = _get_macos_ssh_server_install_script()",
                         "    else:",
                         "        print(f\"❌ Error: Platform {system} is not supported.\")",
                         "        raise typer.Exit(code=1)",
                         "    from stackops.utils.code import run_shell_script",
-                        "    run_shell_script(script=script, display_script=True, clean_env=False)"
+                        "",
+                        "    result = run_shell_script(script=script, display_script=True, clean_env=False)",
+                        "    if result.returncode != 0:",
+                        "        raise RuntimeError(f\"SSH server installation failed with exit code {result.returncode}\")"
                       ],
                       "name": "install_ssh_server",
                       "parameters": [],
@@ -6983,15 +7020,15 @@
                     },
                     "signature": {
                       "raw_lines": [
-                        "def change_ssh_port(",
-                        "    port: Annotated[int, typer.Option(\"--port\", \"-p\", help=\"SSH port to use\", min=1, max=65535)] = 2222,",
-                        ") -> None:",
+                        "def change_ssh_port(port: Annotated[int, typer.Option(\"--port\", \"-p\", help=\"SSH port to use\", min=1, max=65535)] = 2222) -> None:",
                         "    \"\"\"🔌 Change SSH port (Linux/WSL only, default: 2222)\"\"\"",
                         "    import platform",
+                        "",
                         "    if platform.system() != \"Linux\":",
                         "        print(\"❌ Error: change_ssh_port requires Linux environment\")",
                         "        raise typer.Exit(code=1)",
                         "    from stackops.utils.ssh_utils.wsl import change_ssh_port as _change_ssh_port",
+                        "",
                         "    _change_ssh_port(port=port)"
                       ],
                       "name": "change_ssh_port",
@@ -7063,13 +7100,7 @@
                         "        from stackops.utils.optional_dependencies import PARAMIKO_UV_WITH",
                         "",
                         "        proc = run_lambda_function(",
-                        "            lambda: _run_add_ssh_key_with_paramiko(",
-                        "                pub_path=path,",
-                        "                pub_choose=choose,",
-                        "                pub_val=value,",
-                        "                from_github=github,",
-                        "                remote=remote,",
-                        "            ),",
+                        "            lambda: _run_add_ssh_key_with_paramiko(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote),",
                         "            uv_with=list(PARAMIKO_UV_WITH),",
                         "            uv_project_dir=None,",
                         "        )",
@@ -7229,6 +7260,7 @@
                         "def debug_ssh() -> None:",
                         "    \"\"\"🐛 Debug SSH connection\"\"\"",
                         "    from platform import system",
+                        "",
                         "    if system() == \"Linux\" or system() == \"Darwin\":",
                         "        import stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux",
                         "",
@@ -7412,11 +7444,7 @@
                         "    from rich.panel import Panel",
                         "    from rich.prompt import Confirm",
                         "",
-                        "    from stackops.scripts.python.helpers.helpers_network.wifi_conn import (",
-                        "        display_available_networks,",
-                        "        manual_network_selection,",
-                        "        try_config_connection,",
-                        "    )",
+                        "    from stackops.scripts.python.helpers.helpers_network.wifi_conn import display_available_networks, manual_network_selection, try_config_connection",
                         "",
                         "    console = Console()",
                         "    console.print(Panel(\"📶 Welcome to the WiFi Connector Tool\", title=\"[bold blue]WiFi Connection[/bold blue]\", border_style=\"blue\"))",
@@ -7870,7 +7898,9 @@
                     },
                     "signature": {
                       "raw_lines": [
-                        "def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., \"--ip\", \"-i\", help=\"IP address(es) to exclude from WARP (Comma separated)\")]) -> None:",
+                        "def add_ip_exclusion_to_warp(",
+                        "    ip: Annotated[str, typer.Option(..., \"--ip\", \"-i\", help=\"IP address(es) to exclude from WARP (Comma separated)\")],",
+                        ") -> None:",
                         "    from ipaddress import IPv4Address, IPv6Address, ip_address",
                         "",
                         "    ips: list[IPv4Address | IPv6Address] = []",
@@ -10650,6 +10680,7 @@
                 "def copy(",
                 "    source: Annotated[str, typer.Argument(help=\"📂 file/folder path to be taken from here.\")],",
                 "    target: Annotated[str, typer.Argument(help=\"🎯 file/folder path to be be sent to here.\")],",
+                "    transfers: Annotated[int, typer.Option(\"--transfers\", help=\"🔀 Number of concurrent file transfers.\")] = 32,",
                 "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-o\", help=\"📝 Overwrite existing file.\")] = defaults[\"overwrite\"],",
                 "    share_scope: Annotated[ShareScopeChoice | None, typer.Option(\"--share-scope\", \"-s\", help=\"🔗 Share link scope: anonymous/a or organization/o.\")] = None,",
                 "    share_type: Annotated[ShareLinkTypeChoice | None, typer.Option(\"--share-type\", \"-t\", help=\"🔗 Share link type: view/v, edit/e, or embed/m.\")] = None,",
@@ -10676,6 +10707,7 @@
                 "    copy_main(",
                 "        source=source,",
                 "        target=target,",
+                "        transfers=transfers,",
                 "        overwrite=overwrite,",
                 "        share_scope=share_scope,",
                 "        share_type=share_type,",
@@ -10721,6 +10753,25 @@
                     "long_flags": [],
                     "short_flags": [],
                     "help": "🎯 file/folder path to be be sent to here."
+                  }
+                },
+                {
+                  "name": "transfers",
+                  "kind": "positional_or_keyword",
+                  "type": "int",
+                  "default": 32,
+                  "required": false,
+                  "annotation_raw": "Annotated[int, typer.Option('--transfers', help='🔀 Number of concurrent file transfers.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--transfers"
+                    ],
+                    "long_flags": [
+                      "--transfers"
+                    ],
+                    "short_flags": [],
+                    "help": "🔀 Number of concurrent file transfers."
                   }
                 },
                 {
@@ -12064,6 +12115,7 @@
                 "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to attach to. If not provided, a list will be shown to choose from.\")] = None,",
                 "        new_session: Annotated[bool, typer.Option(\"--new-session\", \"-n\", help=\"Create a new session instead of attaching to an existing one.\", show_default=True)] = False,",
                 "        kill_all: Annotated[bool, typer.Option(\"--kill-all\", \"-k\", help=\"Kill all existing sessions before creating a new one.\", show_default=True)] = False,",
+                "        first: Annotated[bool, typer.Option(\"--first\", \"-f\", help=\"Attach non-interactively to the first available tmux session.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Choose a window/tab or pane target instead of only choosing from sessions.\", show_default=True)] = False,",
                 "        backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"aoe\", \"e\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use: tmux, herdr, aoe, or auto\")] = \"tmux\",",
                 "        ) -> None:",
@@ -12077,10 +12129,25 @@
                 "    if name is not None and window:",
                 "        typer.echo(\"Error: NAME cannot be used together with --window.\", err=True, color=True)",
                 "        raise typer.Exit(code=1)",
+                "    if name is not None and first:",
+                "        typer.echo(\"Error: NAME cannot be used together with --first.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
+                "    if first and new_session:",
+                "        typer.echo(\"Error: --first cannot be used together with --new-session.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
+                "    if first and kill_all:",
+                "        typer.echo(\"Error: --first cannot be used together with --kill-all.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
+                "    if first and window:",
+                "        typer.echo(\"Error: --first cannot be used together with --window.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
                 "    from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import resolve_session_backend",
                 "    backend_resolved = resolve_session_backend(backend)",
+                "    if first and backend_resolved != \"tmux\":",
+                "        typer.echo(\"Error: --first is only supported by the tmux backend.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
                 "    from stackops.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl",
-                "    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, window=window)",
+                "    action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, first=first, window=window)",
                 "    if action == \"error\":",
                 "        typer.echo(payload, err=True, color=True)",
                 "        raise typer.Exit(code=1)",
@@ -12154,6 +12221,28 @@
                       "-k"
                     ],
                     "help": "Kill all existing sessions before creating a new one."
+                  }
+                },
+                {
+                  "name": "first",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--first', '-f', help='Attach non-interactively to the first available tmux session.', show_default=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--first",
+                      "-f"
+                    ],
+                    "long_flags": [
+                      "--first"
+                    ],
+                    "short_flags": [
+                      "-f"
+                    ],
+                    "help": "Attach non-interactively to the first available tmux session."
                   }
                 },
                 {
@@ -12667,7 +12756,7 @@
             "name": "trace",
             "fullPath": "terminal trace",
             "shortPath": "t t",
-            "help": "Trace a terminal backend session until every target matches a strict stop criterion.",
+            "help": "Trace terminal backend sessions until every selected target is finalized.",
             "source": {
               "file": "src/stackops/scripts/python/terminal.py",
               "module": "stackops.scripts.python.terminal",
@@ -12676,17 +12765,22 @@
             "signature": {
               "raw_lines": [
                 "def trace(",
-                "    session_name: Annotated[str | None, typer.Argument(help=\"Name of the tmux session, Herdr workspace, or AoE session to trace. Required unless --interactive is set.\")] = None,",
+                "    session_names: Annotated[str | None, typer.Argument(help=\"Comma-separated tmux sessions, Herdr workspaces, or AoE sessions to trace. Supports * and ? selectors. Required unless --interactive is set.\")] = None,",
                 "    every: Annotated[float, typer.Option(\"--every\", \"-e\", help=\"Polling interval in seconds between backend checks\")] = 10.0,",
                 "    until: Annotated[Literal[\"idle-shell\", \"all-exited\", \"exit-code\", \"session-missing\"], typer.Option(\"--until\", \"-u\", help=\"Stop only when the selected criterion is satisfied\")] = \"idle-shell\",",
                 "    exit_code: Annotated[int | None, typer.Option(\"--exit-code\", \"-c\", help=\"Required pane exit code when `--until exit-code` is selected\")] = None,",
                 "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose an existing backend session/workspace interactively\")] = False,",
+                "    kill: Annotated[bool, typer.Option(\"--kill\", \"-k\", help=\"Kill finalized panes, windows, and sessions as they satisfy the selected criterion\")] = False,",
                 "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"aoe\", \"a\", \"e\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to trace: tmux/t, herdr/h, or aoe/a/e\")] = \"tmux\",",
                 ") -> None:",
-                "    \"\"\"Trace a terminal backend session until every target matches a strict stop criterion.\"\"\"",
+                "    \"\"\"Trace terminal backend sessions until every selected target is finalized.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import (",
                 "        resolve_trace_backend,",
-                "        trace_session_for_backend as impl,",
+                "        trace_sessions_for_backend as impl,",
+                "    )",
+                "    from stackops.scripts.python.helpers.helpers_sessions.session_trace_selection import (",
+                "        choose_trace_session_names,",
+                "        resolve_trace_session_names,",
                 "    )",
                 "",
                 "    backend_resolved = resolve_trace_backend(backend)",
@@ -12700,57 +12794,56 @@
                 "    if until != \"exit-code\" and exit_code is not None:",
                 "        typer.echo(\"Error: --exit-code can only be used with --until exit-code.\", err=True, color=True)",
                 "        raise typer.Exit(code=1)",
-                "    if session_name is not None and interactive:",
-                "        typer.echo(\"Error: SESSION_NAME cannot be used together with --interactive.\", err=True, color=True)",
+                "    if session_names is not None and interactive:",
+                "        typer.echo(\"Error: SESSION_NAMES cannot be used together with --interactive.\", err=True, color=True)",
                 "        raise typer.Exit(code=1)",
-                "    if session_name is None:",
+                "    if session_names is None:",
                 "        if not interactive:",
-                "            typer.echo(\"Error: SESSION_NAME is required unless --interactive is set.\", err=True, color=True)",
+                "            typer.echo(\"Error: SESSION_NAMES is required unless --interactive is set.\", err=True, color=True)",
                 "            raise typer.Exit(code=1)",
-                "        if backend_resolved == \"tmux\":",
-                "            from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_existing_session_name",
-                "",
-                "            action, payload = choose_existing_session_name(msg=\"Choose a tmux session to trace:\")",
-                "        elif backend_resolved == \"herdr\":",
-                "            from stackops.scripts.python.helpers.helpers_sessions.session_trace_herdr import (",
-                "                choose_existing_workspace_name,",
+                "        action, payload = choose_trace_session_names(backend=backend_resolved)",
+                "        match action:",
+                "            case \"error\":",
+                "                typer.echo(f\"Error: {payload}\", err=True, color=True)",
+                "                raise typer.Exit(code=1)",
+                "            case \"session_names\":",
+                "                if not isinstance(payload, list):",
+                "                    raise RuntimeError(\"Trace session picker returned an invalid selection payload.\")",
+                "                selected_session_names = payload",
+                "    else:",
+                "        try:",
+                "            selected_session_names = resolve_trace_session_names(",
+                "                backend=backend_resolved,",
+                "                session_selectors=session_names,",
                 "            )",
-                "",
-                "            action, payload = choose_existing_workspace_name(msg=\"Choose a Herdr workspace to trace:\")",
-                "        else:",
-                "            from stackops.scripts.python.helpers.helpers_sessions.session_trace_aoe import (",
-                "                choose_existing_session_name,",
-                "            )",
-                "",
-                "            action, payload = choose_existing_session_name(msg=\"Choose an AoE session to trace:\")",
-                "        if action == \"error\":",
-                "            typer.echo(f\"Error: {payload}\", err=True, color=True)",
-                "            raise typer.Exit(code=1)",
-                "        session_name = payload",
+                "        except ValueError as error:",
+                "            typer.echo(f\"Error: {error}\", err=True, color=True)",
+                "            raise typer.Exit(code=1) from error",
                 "",
                 "    impl(",
                 "        backend=backend_resolved,",
-                "        session_name=session_name,",
+                "        session_names=selected_session_names,",
                 "        until=until,",
                 "        every_seconds=every,",
                 "        exit_code=exit_code,",
+                "        kill=kill,",
                 "    )"
               ],
               "name": "trace",
               "parameters": [
                 {
-                  "name": "session_name",
+                  "name": "session_names",
                   "kind": "positional_or_keyword",
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the tmux session, Herdr workspace, or AoE session to trace. Required unless --interactive is set.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Comma-separated tmux sessions, Herdr workspaces, or AoE sessions to trace. Supports * and ? selectors. Required unless --interactive is set.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of the tmux session, Herdr workspace, or AoE session to trace. Required unless --interactive is set."
+                    "help": "Comma-separated tmux sessions, Herdr workspaces, or AoE sessions to trace. Supports * and ? selectors. Required unless --interactive is set."
                   }
                 },
                 {
@@ -12842,6 +12935,28 @@
                   }
                 },
                 {
+                  "name": "kill",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--kill', '-k', help='Kill finalized panes, windows, and sessions as they satisfy the selected criterion')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--kill",
+                      "-k"
+                    ],
+                    "long_flags": [
+                      "--kill"
+                    ],
+                    "short_flags": [
+                      "-k"
+                    ],
+                    "help": "Kill finalized panes, windows, and sessions as they satisfy the selected criterion"
+                  }
+                },
+                {
                   "name": "backend",
                   "kind": "positional_or_keyword",
                   "type": "Literal['tmux', 't', 'herdr', 'h', 'aoe', 'a', 'e']",
@@ -12870,12 +12985,12 @@
             "typer": {
               "no_args_is_help": true
             },
-            "doc": "Trace a terminal backend session until every target matches a strict stop criterion.",
+            "doc": "Trace terminal backend sessions until every selected target is finalized.",
             "aliases": [
               {
                 "name": "t",
                 "hidden": true,
-                "help": "Trace a terminal backend session until every target matches a strict stop criterion."
+                "help": "Trace terminal backend sessions until every selected target is finalized."
               }
             ]
           },
@@ -16822,6 +16937,218 @@
                 "name": "c",
                 "hidden": true,
                 "help": "Initialize AI configurations in the current repository."
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "account",
+            "fullPath": "agents account",
+            "shortPath": "a A",
+            "help": "account",
+            "source": {
+              "file": "src/stackops/scripts/python/ai_account.py",
+              "module": "stackops.scripts.python.ai_account",
+              "callable": "main"
+            },
+            "signature": {
+              "raw_lines": [
+                "def main(",
+                "    client: Annotated[str, typer.Argument(help=f\"Agent profile source. Supported agents: {SUPPORTED_AGENT_HELP}.\")],",
+                "    destination: Annotated[",
+                "        Path | None,",
+                "        typer.Option(\"--destination\", \"-d\", help=\"Override the agent-specific active credential file.\"),",
+                "    ] = None,",
+                "    profile: Annotated[",
+                "        str | None,",
+                "        typer.Option(",
+                "            \"--profile\",",
+                "            \"-p\",",
+                "            help=\"Select a profile without the picker; with --refresh, select the backup target explicitly.\",",
+                "        ),",
+                "    ] = None,",
+                "    refresh: Annotated[",
+                "        bool,",
+                "        typer.Option(",
+                "            \"--refresh\",",
+                "            \"-r\",",
+                "            help=\"Copy the active credential into a backup profile; omit --profile only when safe identity matching is available.\",",
+                "        ),",
+                "    ] = False,",
+                ") -> None:",
+                "    try:",
+                "        agent_support = resolve_agent_support(selector=client)",
+                "    except ValueError as error:",
+                "        console.print(f\"[red]{error}[/red]\")",
+                "        raise typer.Exit(code=2) from error",
+                "",
+                "    match agent_support:",
+                "        case ManagedLoginAgentSupport():",
+                "            console.print(f\"[red]{agent_support.display_name} is not file-profile-backed.[/red]\")",
+                "            console.print(agent_support.reason)",
+                "            console.print(f\"[yellow]{agent_support.guidance}[/yellow]\")",
+                "            raise typer.Exit(code=1)",
+                "        case FileAgentSupport():",
+                "            support = agent_support",
+                "",
+                "    context = _runtime_context()",
+                "    source_root = expand_path(profile_root(support=support, context=context))",
+                "    try:",
+                "        resolved_active_credential = support.resolve_active_credential(context)",
+                "        active_credential = expand_path(resolved_active_credential if destination is None else destination)",
+                "        profile_directories = list_profile_directories(source_root=source_root)",
+                "    except (OSError, ValueError) as error:",
+                "        console.print(f\"[red]{error}[/red]\")",
+                "        raise typer.Exit(code=1) from error",
+                "",
+                "    if len(profile_directories) == 0:",
+                "        console.print(f\"[red]No profile directories found under {source_root}[/red]\")",
+                "        raise typer.Exit(code=1)",
+                "",
+                "    if refresh:",
+                "        if not active_credential.is_file():",
+                "            console.print(f\"[red]Active credential file does not exist: {active_credential}[/red]\")",
+                "            raise typer.Exit(code=1)",
+                "",
+                "        try:",
+                "            selected_directory = (",
+                "                select_named_profile(profile_directories=profile_directories, profile_name=profile)",
+                "                if profile is not None",
+                "                else find_refresh_profile(",
+                "                    support=support,",
+                "                    profile_directories=profile_directories,",
+                "                    active_credential=active_credential,",
+                "                )",
+                "            )",
+                "            backup_credential = profile_credential(profile_directory=selected_directory, support=support)",
+                "            copy_private_credential(source=active_credential, destination=backup_credential)",
+                "        except (OSError, ValueError) as error:",
+                "            console.print(f\"[red]Failed to refresh backup: {error}[/red]\")",
+                "            raise typer.Exit(code=1) from error",
+                "",
+                "        console.print(f\"[green]Refreshed {support.display_name} auth backup:[/green] {selected_directory.name}\")",
+                "        console.print(f\"[green]Wrote:[/green] {backup_credential}\")",
+                "        if support.warning is not None:",
+                "            console.print(f\"[yellow]{support.warning}[/yellow]\")",
+                "        return",
+                "",
+                "    if profile is None:",
+                "        selected_directory = _choose_profile(profile_directories=profile_directories, support=support)",
+                "        if selected_directory is None:",
+                "            console.print(\"[yellow]Cancelled.[/yellow]\")",
+                "            raise typer.Exit(code=130)",
+                "    else:",
+                "        try:",
+                "            selected_directory = select_named_profile(profile_directories=profile_directories, profile_name=profile)",
+                "        except ValueError as error:",
+                "            console.print(f\"[red]{error}[/red]\")",
+                "            raise typer.Exit(code=1) from error",
+                "",
+                "    source_credential = profile_credential(profile_directory=selected_directory, support=support)",
+                "    try:",
+                "        copy_private_credential(source=source_credential, destination=active_credential)",
+                "    except OSError as error:",
+                "        console.print(f\"[red]Failed to copy credential: {error}[/red]\")",
+                "        raise typer.Exit(code=1) from error",
+                "",
+                "    console.print(f\"[green]Installed {support.display_name} auth from profile:[/green] {selected_directory.name}\")",
+                "    console.print(f\"[green]Wrote:[/green] {active_credential}\")",
+                "    if support.warning is not None:",
+                "        console.print(f\"[yellow]{support.warning}[/yellow]\")"
+              ],
+              "name": "main",
+              "parameters": [
+                {
+                  "name": "client",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "Annotated[str, typer.Argument(help=f'Agent profile source. Supported agents: {SUPPORTED_AGENT_HELP}.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": []
+                  }
+                },
+                {
+                  "name": "destination",
+                  "kind": "positional_or_keyword",
+                  "type": "Path | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--destination', '-d', help='Override the agent-specific active credential file.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--destination",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--destination"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Override the agent-specific active credential file."
+                  }
+                },
+                {
+                  "name": "profile",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--profile', '-p', help='Select a profile without the picker; with --refresh, select the backup target explicitly.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--profile",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--profile"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Select a profile without the picker; with --refresh, select the backup target explicitly."
+                  }
+                },
+                {
+                  "name": "refresh",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--refresh', '-r', help='Copy the active credential into a backup profile; omit --profile only when safe identity matching is available.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--refresh",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--refresh"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Copy the active credential into a backup profile; omit --profile only when safe identity matching is available."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<A> Switch or refresh an AI agent account profile",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "aliases": [
+              {
+                "name": "A",
+                "hidden": true
               }
             ]
           },
@@ -21635,7 +21962,7 @@
             "    path: Annotated[str, typer.Argument(help=\"path of file to read.\")] = \".\",",
             "    project_path: Annotated[str | None, typer.Option(\"--project\", \"-p\", help=\"specify uv project to use\")] = None,",
             "    uv_with: Annotated[str | None, typer.Option(\"--uv-with\", \"-w\", help=\"specify uv with packages to use\")] = None,",
-            "    backend: Annotated[BACKENDS_LOOSE, typer.Option(\"--backend\", \"-b\", help=\"specify the backend to use\")] = \"ipython\",",
+            "    backend: Annotated[BACKENDS_LOOSE | None, typer.Option(\"--backend\", \"-b\", help=\"specify the backend to use\")] = None,",
             "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"select the backend interactively\")] = False,",
             "    profile: Annotated[str | None, typer.Option(\"--profile\", \"-r\", help=\"ipython profile to use, defaults to default profile.\")] = None,",
             "    stackops_project: Annotated[bool, typer.Option(\"--self\", \"-s\", help=\"specify stackops project to use.\")] = False,",
@@ -21718,10 +22045,10 @@
             {
               "name": "backend",
               "kind": "positional_or_keyword",
-              "type": "BACKENDS_LOOSE",
-              "default": "ipython",
+              "type": "BACKENDS_LOOSE | None",
+              "default": null,
               "required": false,
-              "annotation_raw": "Annotated[BACKENDS_LOOSE, typer.Option('--backend', '-b', help='specify the backend to use')]",
+              "annotation_raw": "Annotated[BACKENDS_LOOSE | None, typer.Option('--backend', '-b', help='specify the backend to use')]",
               "typer": {
                 "kind": "option",
                 "param_decls": [

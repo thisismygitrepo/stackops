@@ -79,11 +79,7 @@ def wifi_select(
     from rich.panel import Panel
     from rich.prompt import Confirm
 
-    from stackops.scripts.python.helpers.helpers_network.wifi_conn import (
-        display_available_networks,
-        manual_network_selection,
-        try_config_connection,
-    )
+    from stackops.scripts.python.helpers.helpers_network.wifi_conn import display_available_networks, manual_network_selection, try_config_connection
 
     console = Console()
     console.print(Panel("📶 Welcome to the WiFi Connector Tool", title="[bold blue]WiFi Connection[/bold blue]", border_style="blue"))
@@ -173,7 +169,9 @@ sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service instal
         exit_then_run_shell_script(code)
 
 
-def add_ip_exclusion_to_warp(ip: Annotated[str, typer.Option(..., "--ip", "-i", help="IP address(es) to exclude from WARP (Comma separated)")]) -> None:
+def add_ip_exclusion_to_warp(
+    ip: Annotated[str, typer.Option(..., "--ip", "-i", help="IP address(es) to exclude from WARP (Comma separated)")],
+) -> None:
     from ipaddress import IPv4Address, IPv6Address, ip_address
 
     ips: list[IPv4Address | IPv6Address] = []
@@ -208,6 +206,8 @@ sudo warp-cli connect
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops import cli_device_cloudflare
+
     device_app = typer.Typer(help="🖥 <d> Device subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     device_app.command(name="switch-public-ip", help="🔁 <s> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
     device_app.command(name="s", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
@@ -231,4 +231,5 @@ def get_app() -> typer.Typer:
 
     device_app.command(name="add-ip-exclusion-to-warp", help="🚫 <p> Add IP exclusion to WARP")(add_ip_exclusion_to_warp)
     device_app.command(name="p", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
+    cli_device_cloudflare.register_commands(device_app)
     return device_app
