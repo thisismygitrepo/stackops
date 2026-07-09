@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_ai_account.constants import DOTFILES_LLM_CREDENTIALS_RELATIVE_PATH, PRIVATE_CREDENTIAL_FILE_MODE
-from stackops.scripts.python.helpers.helpers_ai_account.models import AutoRefreshUnavailableError, FileAgentSupport, RuntimeContext
+from stackops.scripts.python.helpers.helpers_ai_account.models import AutomaticProfileSelectionUnavailableError, FileAgentSupport, RuntimeContext
 
 
 def expand_path(path: Path) -> Path:
@@ -59,19 +59,19 @@ def copy_private_credential(source: Path, destination: Path) -> None:
         temporary_path.unlink(missing_ok=True)
 
 
-def find_refresh_profile(
+def find_backup_profile(
     support: FileAgentSupport,
     profile_directories: list[Path],
     active_credential: Path,
 ) -> Path:
     identity_reader = support.read_identity
     if identity_reader is None:
-        raise AutoRefreshUnavailableError(f"{support.display_name} requires --profile with --refresh")
+        raise AutomaticProfileSelectionUnavailableError(f"{support.display_name} requires --profile for backup")
 
     active_identity = identity_reader(active_credential)
     if active_identity is None:
-        raise AutoRefreshUnavailableError(
-            f"The active {support.display_name} credential has no safe automatic profile identity; pass --profile"
+        raise AutomaticProfileSelectionUnavailableError(
+            f"The active {support.display_name} credential has no safe automatic profile identity; pass --profile for backup"
         )
 
     matching_profiles: list[Path] = []

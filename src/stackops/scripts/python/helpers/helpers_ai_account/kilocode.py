@@ -19,7 +19,7 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     resolve_active_credential=_resolve_active_credential,
     read_identity=None,
     warning=(
-        "A Kilo Code profile replaces every persisted provider credential in auth.json; "
-        "environment-backed credentials are unchanged, and automatic refresh requires --profile."
+        "Kilo Code profiles cover every persisted provider credential in auth.json; "
+        "environment-backed credentials are unchanged."
     ),
 )

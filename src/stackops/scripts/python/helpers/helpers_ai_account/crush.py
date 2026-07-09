@@ -34,7 +34,7 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     resolve_active_credential=_resolve_active_credential,
     read_identity=None,
     warning=(
-        "A Crush profile replaces its aggregate global data file; environment-, cloud-SDK-, and project-config-backed "
-        "credentials are unchanged, and automatic refresh requires --profile."
+        "Crush profiles cover the aggregate global data file; environment-, cloud-SDK-, and project-config-backed "
+        "credentials are unchanged."
     ),
 )

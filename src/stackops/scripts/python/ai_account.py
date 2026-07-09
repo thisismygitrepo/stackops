@@ -1,5 +1,6 @@
 import os
 import platform
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
 
@@ -10,7 +11,7 @@ from stackops.scripts.python.helpers.helpers_ai_account.models import FileAgentS
 from stackops.scripts.python.helpers.helpers_ai_account.profiles import (
     copy_private_credential,
     expand_path,
-    find_refresh_profile,
+    find_backup_profile,
     list_profile_directories,
     profile_credential,
     profile_root,
@@ -19,8 +20,14 @@ from stackops.scripts.python.helpers.helpers_ai_account.profiles import (
 from stackops.scripts.python.helpers.helpers_ai_account.registry import SUPPORTED_AGENT_HELP, resolve_agent_support
 
 
-app = typer.Typer(add_completion=False, no_args_is_help=False)
 console = Console()
+
+
+@dataclass(frozen=True, slots=True)
+class AccountProfileStore:
+    support: FileAgentSupport
+    active_credential: Path
+    profile_directories: list[Path]
 
 
 def _runtime_context() -> RuntimeContext:
@@ -29,7 +36,7 @@ def _runtime_context() -> RuntimeContext:
     return RuntimeContext(home=home_directory, environment=os.environ, system=system_name)
 
 
-def _choose_profile(profile_directories: list[Path], support: FileAgentSupport) -> Path | None:
+def _choose_retrieve_profile(profile_directories: list[Path], support: FileAgentSupport) -> Path | None:
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     profiles_by_name = {path.name: path for path in profile_directories}
@@ -37,8 +44,8 @@ def _choose_profile(profile_directories: list[Path], support: FileAgentSupport) 
         path.name: (
             f"Profile: {path.name}\n"
             f"Agent: {support.display_name}\n"
-            f"Source directory: {path}\n"
-            f"Source file: {profile_credential(profile_directory=path, support=support)}"
+            f"Profile directory: {path}\n"
+            f"Credential file: {profile_credential(profile_directory=path, support=support)}"
         )
         for path in profile_directories
     }
@@ -48,32 +55,9 @@ def _choose_profile(profile_directories: list[Path], support: FileAgentSupport) 
     return profiles_by_name[choice]
 
 
-@app.command()
-def main(
-    client: Annotated[str, typer.Argument(help=f"Agent profile source. Supported agents: {SUPPORTED_AGENT_HELP}.")],
-    destination: Annotated[
-        Path | None,
-        typer.Option("--destination", "-d", help="Override the agent-specific active credential file."),
-    ] = None,
-    profile: Annotated[
-        str | None,
-        typer.Option(
-            "--profile",
-            "-p",
-            help="Select a profile without the picker; with --refresh, select the backup target explicitly.",
-        ),
-    ] = None,
-    refresh: Annotated[
-        bool,
-        typer.Option(
-            "--refresh",
-            "-r",
-            help="Copy the active credential into a backup profile; omit --profile only when safe identity matching is available.",
-        ),
-    ] = False,
-) -> None:
+def _resolve_profile_store(agent: str, active_credential_override: Path | None) -> AccountProfileStore:
     try:
-        agent_support = resolve_agent_support(selector=client)
+        agent_support = resolve_agent_support(selector=agent)
     except ValueError as error:
         console.print(f"[red]{error}[/red]")
         raise typer.Exit(code=2) from error
@@ -88,69 +72,103 @@ def main(
             support = agent_support
 
     context = _runtime_context()
-    source_root = expand_path(profile_root(support=support, context=context))
+    profiles_root = expand_path(profile_root(support=support, context=context))
     try:
-        resolved_active_credential = support.resolve_active_credential(context)
-        active_credential = expand_path(resolved_active_credential if destination is None else destination)
-        profile_directories = list_profile_directories(source_root=source_root)
+        resolved_active_credential = (
+            support.resolve_active_credential(context)
+            if active_credential_override is None
+            else active_credential_override
+        )
+        active_credential = expand_path(resolved_active_credential)
+        profile_directories = list_profile_directories(source_root=profiles_root)
     except (OSError, ValueError) as error:
         console.print(f"[red]{error}[/red]")
         raise typer.Exit(code=1) from error
 
     if len(profile_directories) == 0:
-        console.print(f"[red]No profile directories found under {source_root}[/red]")
+        console.print(f"[red]No profiles found under {profiles_root}[/red]")
         raise typer.Exit(code=1)
 
-    if refresh:
-        if not active_credential.is_file():
-            console.print(f"[red]Active credential file does not exist: {active_credential}[/red]")
-            raise typer.Exit(code=1)
+    return AccountProfileStore(support=support, active_credential=active_credential, profile_directories=profile_directories)
 
-        try:
-            selected_directory = (
-                select_named_profile(profile_directories=profile_directories, profile_name=profile)
-                if profile is not None
-                else find_refresh_profile(
-                    support=support,
-                    profile_directories=profile_directories,
-                    active_credential=active_credential,
-                )
-            )
-            backup_credential = profile_credential(profile_directory=selected_directory, support=support)
-            copy_private_credential(source=active_credential, destination=backup_credential)
-        except (OSError, ValueError) as error:
-            console.print(f"[red]Failed to refresh backup: {error}[/red]")
-            raise typer.Exit(code=1) from error
 
-        console.print(f"[green]Refreshed {support.display_name} auth backup:[/green] {selected_directory.name}")
-        console.print(f"[green]Wrote:[/green] {backup_credential}")
-        if support.warning is not None:
-            console.print(f"[yellow]{support.warning}[/yellow]")
-        return
+def backup(
+    agent: Annotated[str, typer.Argument(help=f"Agent whose active credential to back up. Supported agents: {SUPPORTED_AGENT_HELP}.")],
+    profile: Annotated[
+        str | None, typer.Option("--profile", "-p", help="Target profile; omit only when the active credential has a safe, unique profile match.")
+    ] = None,
+    active_credential: Annotated[
+        Path | None, typer.Option("--active-credential", "-c", help="Override the agent-specific active credential file to back up.")
+    ] = None,
+) -> None:
+    store = _resolve_profile_store(agent=agent, active_credential_override=active_credential)
+    if not store.active_credential.is_file():
+        console.print(f"[red]Active credential file does not exist: {store.active_credential}[/red]")
+        raise typer.Exit(code=1)
 
+    try:
+        selected_directory = (
+            select_named_profile(profile_directories=store.profile_directories, profile_name=profile)
+            if profile is not None
+            else find_backup_profile(support=store.support, profile_directories=store.profile_directories, active_credential=store.active_credential)
+        )
+        backup_credential = profile_credential(profile_directory=selected_directory, support=store.support)
+        copy_private_credential(source=store.active_credential, destination=backup_credential)
+    except (OSError, ValueError) as error:
+        console.print(f"[red]Failed to back up credential: {error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    console.print(f"[green]Backed up {store.support.display_name} credential to profile:[/green] {selected_directory.name}")
+    console.print(f"[green]Wrote:[/green] {backup_credential}")
+    if store.support.warning is not None:
+        console.print(f"[yellow]{store.support.warning}[/yellow]")
+
+
+def retrieve(
+    agent: Annotated[str, typer.Argument(help=f"Agent whose saved credential to retrieve. Supported agents: {SUPPORTED_AGENT_HELP}.")],
+    profile: Annotated[str | None, typer.Option("--profile", "-p", help="Source profile; omit to select one interactively.")] = None,
+    active_credential: Annotated[
+        Path | None, typer.Option("--active-credential", "-c", help="Override the agent-specific active credential file to replace.")
+    ] = None,
+) -> None:
+    store = _resolve_profile_store(agent=agent, active_credential_override=active_credential)
     if profile is None:
-        selected_directory = _choose_profile(profile_directories=profile_directories, support=support)
+        selected_directory = _choose_retrieve_profile(profile_directories=store.profile_directories, support=store.support)
         if selected_directory is None:
             console.print("[yellow]Cancelled.[/yellow]")
             raise typer.Exit(code=130)
     else:
         try:
-            selected_directory = select_named_profile(profile_directories=profile_directories, profile_name=profile)
+            selected_directory = select_named_profile(profile_directories=store.profile_directories, profile_name=profile)
         except ValueError as error:
             console.print(f"[red]{error}[/red]")
             raise typer.Exit(code=1) from error
 
-    source_credential = profile_credential(profile_directory=selected_directory, support=support)
+    saved_credential = profile_credential(profile_directory=selected_directory, support=store.support)
     try:
-        copy_private_credential(source=source_credential, destination=active_credential)
+        copy_private_credential(source=saved_credential, destination=store.active_credential)
     except OSError as error:
-        console.print(f"[red]Failed to copy credential: {error}[/red]")
+        console.print(f"[red]Failed to retrieve credential: {error}[/red]")
         raise typer.Exit(code=1) from error
 
-    console.print(f"[green]Installed {support.display_name} auth from profile:[/green] {selected_directory.name}")
-    console.print(f"[green]Wrote:[/green] {active_credential}")
-    if support.warning is not None:
-        console.print(f"[yellow]{support.warning}[/yellow]")
+    console.print(f"[green]Retrieved {store.support.display_name} credential from profile:[/green] {selected_directory.name}")
+    console.print(f"[green]Wrote:[/green] {store.active_credential}")
+    if store.support.warning is not None:
+        console.print(f"[yellow]{store.support.warning}[/yellow]")
+
+
+def get_app() -> typer.Typer:
+    account_app = typer.Typer(
+        help="Back up active AI agent credentials or retrieve saved profiles.", no_args_is_help=True, add_help_option=True, add_completion=False
+    )
+    account_app.command(name="backup", no_args_is_help=True, short_help="Save an active credential to a profile")(backup)
+    account_app.command(name="b", no_args_is_help=True, hidden=True)(backup)
+    account_app.command(name="retrieve", no_args_is_help=True, short_help="Retrieve a saved profile as the active credential")(retrieve)
+    account_app.command(name="r", no_args_is_help=True, hidden=True)(retrieve)
+    return account_app
+
+
+app = get_app()
 
 
 if __name__ == "__main__":

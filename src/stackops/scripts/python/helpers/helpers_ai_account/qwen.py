@@ -25,8 +25,5 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     profile_file_name=Path("settings.json"),
     resolve_active_credential=resolve_active_credential,
     read_identity=None,
-    warning=(
-        "Qwen Code credentials may be overridden by CLI flags, environment variables, .env files, or trusted-workspace settings; "
-        "automatic refresh requires --profile because settings.json has no safe account identity."
-    ),
+    warning="Qwen Code credentials may be overridden by CLI flags, environment variables, .env files, or trusted-workspace settings.",
 )

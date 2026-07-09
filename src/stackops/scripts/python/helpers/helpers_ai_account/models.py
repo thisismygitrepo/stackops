@@ -43,7 +43,7 @@ class ManagedLoginAgentSupport:
 type AgentSupport = FileAgentSupport | ManagedLoginAgentSupport
 
 
-class AutoRefreshUnavailableError(ValueError):
+class AutomaticProfileSelectionUnavailableError(ValueError):
     pass
 
 

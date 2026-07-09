@@ -33,7 +33,7 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     resolve_active_credential=_resolve_active_credential,
     read_identity=None,
     warning=(
-        "Amazon Q stores credentials in a mixed-state SQLite database; stop q before installing or refreshing because "
-        "the entire database, including conversations and persistent state, is replaced."
+        "Amazon Q stores credentials in a mixed-state SQLite database; stop q before backing up or retrieving because "
+        "the complete database includes conversations and persistent state."
     ),
 )

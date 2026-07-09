@@ -27,5 +27,5 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     profile_file_name=Path("auth.json"),
     resolve_active_credential=_resolve_active_credential,
     read_identity=None,
-    warning="Pi profiles replace the complete multi-provider credential store; automatic refresh requires --profile.",
+    warning="Pi profiles cover the complete multi-provider credential store.",
 )

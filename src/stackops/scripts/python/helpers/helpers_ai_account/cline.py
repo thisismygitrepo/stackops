@@ -70,5 +70,5 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     profile_file_name=Path("providers.json"),
     resolve_active_credential=_resolve_active_credential,
     read_identity=_read_identity,
-    warning="Automatic refresh matching is available only for Cline OAuth profiles.",
+    warning=None,
 )

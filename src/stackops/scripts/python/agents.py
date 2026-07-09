@@ -386,7 +386,7 @@ def add_skill(
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.ai_account import main as account
+    from stackops.scripts.python.ai_account import get_app as get_account_app
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
     from stackops.scripts.python.agents_iter import get_app as get_iter_app
     from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
@@ -412,10 +412,13 @@ def get_app() -> typer.Typer:
     )(init_config)
     agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
 
-    agents_app.command(
-        name="account", no_args_is_help=False, short_help="<A> Switch or refresh an AI agent account profile"
-    )(account)
-    agents_app.command(name="A", no_args_is_help=False, hidden=True)(account)
+    agents_app.add_typer(
+        get_account_app(),
+        name="account",
+        help="Back up active AI agent credentials or retrieve saved profiles.",
+        short_help="<A> Back up or retrieve an AI agent credential",
+    )
+    agents_app.add_typer(get_account_app(), name="A", hidden=True)
 
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)

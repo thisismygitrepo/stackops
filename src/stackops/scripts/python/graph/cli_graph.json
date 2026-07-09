@@ -16941,210 +16941,261 @@
             ]
           },
           {
-            "kind": "command",
+            "kind": "group",
             "name": "account",
             "fullPath": "agents account",
             "shortPath": "a A",
-            "help": "account",
+            "help": "Back up active AI agent credentials or retrieve saved profiles.",
             "source": {
-              "file": "src/stackops/scripts/python/ai_account.py",
-              "module": "stackops.scripts.python.ai_account",
-              "callable": "main"
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "dispatches_to": "stackops.scripts.python.ai_account.get_app"
             },
-            "signature": {
-              "raw_lines": [
-                "def main(",
-                "    client: Annotated[str, typer.Argument(help=f\"Agent profile source. Supported agents: {SUPPORTED_AGENT_HELP}.\")],",
-                "    destination: Annotated[",
-                "        Path | None,",
-                "        typer.Option(\"--destination\", \"-d\", help=\"Override the agent-specific active credential file.\"),",
-                "    ] = None,",
-                "    profile: Annotated[",
-                "        str | None,",
-                "        typer.Option(",
-                "            \"--profile\",",
-                "            \"-p\",",
-                "            help=\"Select a profile without the picker; with --refresh, select the backup target explicitly.\",",
-                "        ),",
-                "    ] = None,",
-                "    refresh: Annotated[",
-                "        bool,",
-                "        typer.Option(",
-                "            \"--refresh\",",
-                "            \"-r\",",
-                "            help=\"Copy the active credential into a backup profile; omit --profile only when safe identity matching is available.\",",
-                "        ),",
-                "    ] = False,",
-                ") -> None:",
-                "    try:",
-                "        agent_support = resolve_agent_support(selector=client)",
-                "    except ValueError as error:",
-                "        console.print(f\"[red]{error}[/red]\")",
-                "        raise typer.Exit(code=2) from error",
-                "",
-                "    match agent_support:",
-                "        case ManagedLoginAgentSupport():",
-                "            console.print(f\"[red]{agent_support.display_name} is not file-profile-backed.[/red]\")",
-                "            console.print(agent_support.reason)",
-                "            console.print(f\"[yellow]{agent_support.guidance}[/yellow]\")",
-                "            raise typer.Exit(code=1)",
-                "        case FileAgentSupport():",
-                "            support = agent_support",
-                "",
-                "    context = _runtime_context()",
-                "    source_root = expand_path(profile_root(support=support, context=context))",
-                "    try:",
-                "        resolved_active_credential = support.resolve_active_credential(context)",
-                "        active_credential = expand_path(resolved_active_credential if destination is None else destination)",
-                "        profile_directories = list_profile_directories(source_root=source_root)",
-                "    except (OSError, ValueError) as error:",
-                "        console.print(f\"[red]{error}[/red]\")",
-                "        raise typer.Exit(code=1) from error",
-                "",
-                "    if len(profile_directories) == 0:",
-                "        console.print(f\"[red]No profile directories found under {source_root}[/red]\")",
-                "        raise typer.Exit(code=1)",
-                "",
-                "    if refresh:",
-                "        if not active_credential.is_file():",
-                "            console.print(f\"[red]Active credential file does not exist: {active_credential}[/red]\")",
-                "            raise typer.Exit(code=1)",
-                "",
-                "        try:",
-                "            selected_directory = (",
-                "                select_named_profile(profile_directories=profile_directories, profile_name=profile)",
-                "                if profile is not None",
-                "                else find_refresh_profile(",
-                "                    support=support,",
-                "                    profile_directories=profile_directories,",
-                "                    active_credential=active_credential,",
-                "                )",
-                "            )",
-                "            backup_credential = profile_credential(profile_directory=selected_directory, support=support)",
-                "            copy_private_credential(source=active_credential, destination=backup_credential)",
-                "        except (OSError, ValueError) as error:",
-                "            console.print(f\"[red]Failed to refresh backup: {error}[/red]\")",
-                "            raise typer.Exit(code=1) from error",
-                "",
-                "        console.print(f\"[green]Refreshed {support.display_name} auth backup:[/green] {selected_directory.name}\")",
-                "        console.print(f\"[green]Wrote:[/green] {backup_credential}\")",
-                "        if support.warning is not None:",
-                "            console.print(f\"[yellow]{support.warning}[/yellow]\")",
-                "        return",
-                "",
-                "    if profile is None:",
-                "        selected_directory = _choose_profile(profile_directories=profile_directories, support=support)",
-                "        if selected_directory is None:",
-                "            console.print(\"[yellow]Cancelled.[/yellow]\")",
-                "            raise typer.Exit(code=130)",
-                "    else:",
-                "        try:",
-                "            selected_directory = select_named_profile(profile_directories=profile_directories, profile_name=profile)",
-                "        except ValueError as error:",
-                "            console.print(f\"[red]{error}[/red]\")",
-                "            raise typer.Exit(code=1) from error",
-                "",
-                "    source_credential = profile_credential(profile_directory=selected_directory, support=support)",
-                "    try:",
-                "        copy_private_credential(source=source_credential, destination=active_credential)",
-                "    except OSError as error:",
-                "        console.print(f\"[red]Failed to copy credential: {error}[/red]\")",
-                "        raise typer.Exit(code=1) from error",
-                "",
-                "    console.print(f\"[green]Installed {support.display_name} auth from profile:[/green] {selected_directory.name}\")",
-                "    console.print(f\"[green]Wrote:[/green] {active_credential}\")",
-                "    if support.warning is not None:",
-                "        console.print(f\"[yellow]{support.warning}[/yellow]\")"
-              ],
-              "name": "main",
-              "parameters": [
-                {
-                  "name": "client",
-                  "kind": "positional_or_keyword",
-                  "type": "str",
-                  "default": null,
-                  "required": true,
-                  "annotation_raw": "Annotated[str, typer.Argument(help=f'Agent profile source. Supported agents: {SUPPORTED_AGENT_HELP}.')]",
-                  "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": []
-                  }
-                },
-                {
-                  "name": "destination",
-                  "kind": "positional_or_keyword",
-                  "type": "Path | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--destination', '-d', help='Override the agent-specific active credential file.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--destination",
-                      "-d"
-                    ],
-                    "long_flags": [
-                      "--destination"
-                    ],
-                    "short_flags": [
-                      "-d"
-                    ],
-                    "help": "Override the agent-specific active credential file."
-                  }
-                },
-                {
-                  "name": "profile",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--profile', '-p', help='Select a profile without the picker; with --refresh, select the backup target explicitly.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--profile",
-                      "-p"
-                    ],
-                    "long_flags": [
-                      "--profile"
-                    ],
-                    "short_flags": [
-                      "-p"
-                    ],
-                    "help": "Select a profile without the picker; with --refresh, select the backup target explicitly."
-                  }
-                },
-                {
-                  "name": "refresh",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--refresh', '-r', help='Copy the active credential into a backup profile; omit --profile only when safe identity matching is available.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--refresh",
-                      "-r"
-                    ],
-                    "long_flags": [
-                      "--refresh"
-                    ],
-                    "short_flags": [
-                      "-r"
-                    ],
-                    "help": "Copy the active credential into a backup profile; omit --profile only when safe identity matching is available."
-                  }
-                }
-              ],
-              "return": "None"
+            "app": {
+              "help": "Back up active AI agent credentials or retrieve saved profiles.",
+              "no_args_is_help": true,
+              "add_help_option": true,
+              "add_completion": false
             },
-            "short_help": "<A> Switch or refresh an AI agent account profile",
-            "typer": {
-              "no_args_is_help": false
-            },
+            "children": [
+              {
+                "kind": "command",
+                "name": "backup",
+                "fullPath": "agents account backup",
+                "shortPath": "a A b",
+                "help": "backup",
+                "source": {
+                  "file": "src/stackops/scripts/python/ai_account.py",
+                  "module": "stackops.scripts.python.ai_account",
+                  "callable": "backup"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def backup(",
+                    "    agent: Annotated[str, typer.Argument(help=f\"Agent whose active credential to back up. Supported agents: {SUPPORTED_AGENT_HELP}.\")],",
+                    "    profile: Annotated[",
+                    "        str | None, typer.Option(\"--profile\", \"-p\", help=\"Target profile; omit only when the active credential has a safe, unique profile match.\")",
+                    "    ] = None,",
+                    "    active_credential: Annotated[",
+                    "        Path | None, typer.Option(\"--active-credential\", \"-c\", help=\"Override the agent-specific active credential file to back up.\")",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    store = _resolve_profile_store(agent=agent, active_credential_override=active_credential)",
+                    "    if not store.active_credential.is_file():",
+                    "        console.print(f\"[red]Active credential file does not exist: {store.active_credential}[/red]\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    try:",
+                    "        selected_directory = (",
+                    "            select_named_profile(profile_directories=store.profile_directories, profile_name=profile)",
+                    "            if profile is not None",
+                    "            else find_backup_profile(support=store.support, profile_directories=store.profile_directories, active_credential=store.active_credential)",
+                    "        )",
+                    "        backup_credential = profile_credential(profile_directory=selected_directory, support=store.support)",
+                    "        copy_private_credential(source=store.active_credential, destination=backup_credential)",
+                    "    except (OSError, ValueError) as error:",
+                    "        console.print(f\"[red]Failed to back up credential: {error}[/red]\")",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    console.print(f\"[green]Backed up {store.support.display_name} credential to profile:[/green] {selected_directory.name}\")",
+                    "    console.print(f\"[green]Wrote:[/green] {backup_credential}\")",
+                    "    if store.support.warning is not None:",
+                    "        console.print(f\"[yellow]{store.support.warning}[/yellow]\")"
+                  ],
+                  "name": "backup",
+                  "parameters": [
+                    {
+                      "name": "agent",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help=f'Agent whose active credential to back up. Supported agents: {SUPPORTED_AGENT_HELP}.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": []
+                      }
+                    },
+                    {
+                      "name": "profile",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--profile', '-p', help='Target profile; omit only when the active credential has a safe, unique profile match.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--profile",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--profile"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Target profile; omit only when the active credential has a safe, unique profile match."
+                      }
+                    },
+                    {
+                      "name": "active_credential",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--active-credential', '-c', help='Override the agent-specific active credential file to back up.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--active-credential",
+                          "-c"
+                        ],
+                        "long_flags": [
+                          "--active-credential"
+                        ],
+                        "short_flags": [
+                          "-c"
+                        ],
+                        "help": "Override the agent-specific active credential file to back up."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Save an active credential to a profile",
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "b",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "retrieve",
+                "fullPath": "agents account retrieve",
+                "shortPath": "a A r",
+                "help": "retrieve",
+                "source": {
+                  "file": "src/stackops/scripts/python/ai_account.py",
+                  "module": "stackops.scripts.python.ai_account",
+                  "callable": "retrieve"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def retrieve(",
+                    "    agent: Annotated[str, typer.Argument(help=f\"Agent whose saved credential to retrieve. Supported agents: {SUPPORTED_AGENT_HELP}.\")],",
+                    "    profile: Annotated[str | None, typer.Option(\"--profile\", \"-p\", help=\"Source profile; omit to select one interactively.\")] = None,",
+                    "    active_credential: Annotated[",
+                    "        Path | None, typer.Option(\"--active-credential\", \"-c\", help=\"Override the agent-specific active credential file to replace.\")",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    store = _resolve_profile_store(agent=agent, active_credential_override=active_credential)",
+                    "    if profile is None:",
+                    "        selected_directory = _choose_retrieve_profile(profile_directories=store.profile_directories, support=store.support)",
+                    "        if selected_directory is None:",
+                    "            console.print(\"[yellow]Cancelled.[/yellow]\")",
+                    "            raise typer.Exit(code=130)",
+                    "    else:",
+                    "        try:",
+                    "            selected_directory = select_named_profile(profile_directories=store.profile_directories, profile_name=profile)",
+                    "        except ValueError as error:",
+                    "            console.print(f\"[red]{error}[/red]\")",
+                    "            raise typer.Exit(code=1) from error",
+                    "",
+                    "    saved_credential = profile_credential(profile_directory=selected_directory, support=store.support)",
+                    "    try:",
+                    "        copy_private_credential(source=saved_credential, destination=store.active_credential)",
+                    "    except OSError as error:",
+                    "        console.print(f\"[red]Failed to retrieve credential: {error}[/red]\")",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    console.print(f\"[green]Retrieved {store.support.display_name} credential from profile:[/green] {selected_directory.name}\")",
+                    "    console.print(f\"[green]Wrote:[/green] {store.active_credential}\")",
+                    "    if store.support.warning is not None:",
+                    "        console.print(f\"[yellow]{store.support.warning}[/yellow]\")"
+                  ],
+                  "name": "retrieve",
+                  "parameters": [
+                    {
+                      "name": "agent",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help=f'Agent whose saved credential to retrieve. Supported agents: {SUPPORTED_AGENT_HELP}.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": []
+                      }
+                    },
+                    {
+                      "name": "profile",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--profile', '-p', help='Source profile; omit to select one interactively.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--profile",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--profile"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Source profile; omit to select one interactively."
+                      }
+                    },
+                    {
+                      "name": "active_credential",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--active-credential', '-c', help='Override the agent-specific active credential file to replace.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--active-credential",
+                          "-c"
+                        ],
+                        "long_flags": [
+                          "--active-credential"
+                        ],
+                        "short_flags": [
+                          "-c"
+                        ],
+                        "help": "Override the agent-specific active credential file to replace."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Retrieve a saved profile as the active credential",
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "r",
+                    "hidden": true
+                  }
+                ]
+              }
+            ],
             "aliases": [
               {
                 "name": "A",

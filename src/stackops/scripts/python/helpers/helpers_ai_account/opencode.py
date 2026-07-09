@@ -19,7 +19,7 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     resolve_active_credential=_resolve_active_credential,
     read_identity=None,
     warning=(
-        "An OpenCode profile replaces every persisted provider credential in auth.json; "
-        "environment-backed credentials are unchanged, and automatic refresh requires --profile."
+        "OpenCode profiles cover every persisted provider credential in auth.json; "
+        "environment-backed credentials are unchanged."
     ),
 )

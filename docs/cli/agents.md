@@ -16,12 +16,33 @@ agents [OPTIONS] COMMAND [ARGS]...
 | --- | --- |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
 | `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
+| `account` | Back up active agent credentials to saved profiles or retrieve a profile as active |
 | `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
 | `run-prompt` | Run one prompt through a selected agent, with inline, file, or YAML-backed context |
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
 | `add-skill` | Add a supported skill into an agent directory |
+
+---
+
+## `account`
+
+Account transfers always state their direction explicitly:
+
+```bash
+agents account backup codex --profile work
+agents account retrieve codex --profile work
+```
+
+`backup` copies the agent's active credential into the target profile. The profile may be omitted only for agents whose active credential contains a safe identity that uniquely matches one saved profile. `retrieve` copies the source profile into the agent's active credential file; omitting `--profile` opens the profile picker.
+
+Use `--active-credential`/`-c` to override the agent-specific active file in either direction. `account` provides hidden `b` and `r` aliases for `backup` and `retrieve`; the hidden `A` alias supports the same subcommands:
+
+```bash
+agents account b codex
+agents A r codex
+```
 
 ---
 
@@ -231,6 +252,9 @@ agents add-skill caveman --agent github-copilot --scope global
 
 ```bash
 agents --help
+agents account --help
+agents account backup --help
+agents account retrieve --help
 agents parallel --help
 agents add-config --help
 agents add-mcp --help

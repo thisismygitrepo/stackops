@@ -16,5 +16,5 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     profile_file_name=Path("session.json"),
     resolve_active_credential=resolve_active_credential,
     read_identity=None,
-    warning="AUGMENT_SESSION_AUTH overrides the session file; automatic refresh requires --profile.",
+    warning="AUGMENT_SESSION_AUTH overrides the active session file.",
 )

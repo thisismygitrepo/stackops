@@ -31,5 +31,5 @@ SUPPORT: Final[FileAgentSupport] = FileAgentSupport(
     profile_file_name=Path(".credentials.json"),
     resolve_active_credential=resolve_active_credential,
     read_identity=None,
-    warning="Automatic refresh requires --profile because Claude Code credentials have no verified safe account identity.",
+    warning=None,
 )
