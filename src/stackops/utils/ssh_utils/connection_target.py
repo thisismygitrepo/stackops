@@ -17,7 +17,7 @@ class SSHConnectionTarget:
 
 
 @dataclass(frozen=True, slots=True)
-class SSHDestination:
+class _ParsedSSHHost:
     hostname: str
     username: str | None
     port: int | None
@@ -40,7 +40,7 @@ def resolve_ssh_connection_target(
             host=None, hostname=hostname, username=username, port=validated_default_port, ssh_key_path=ssh_key_path, proxy_command=None
         )
 
-    parsed_host = parse_ssh_destination(destination=host)
+    parsed_host = _parse_ssh_host(host=host)
     requested_username = parsed_host.username or username
     config_options = ssh_config_lookup(parsed_host.hostname, requested_username, parsed_host.port)
     configured_hostname = _optional_config_text(config_options=config_options, key="hostname")
@@ -71,16 +71,16 @@ def resolve_ssh_connection_target(
     )
 
 
-def parse_ssh_destination(destination: str) -> SSHDestination:
-    if not destination:
+def _parse_ssh_host(host: str) -> _ParsedSSHHost:
+    if not host:
         raise ValueError("SSH host must not be empty.")
 
-    inline_username, username_separator, address = destination.rpartition("@")
+    inline_username, username_separator, address = host.rpartition("@")
     if not username_separator:
         inline_username = ""
-        address = destination
+        address = host
     elif not inline_username or not address:
-        raise ValueError(f"Invalid SSH destination: {destination!r}.")
+        raise ValueError(f"Invalid SSH destination: {host!r}.")
 
     inline_port: int | None = None
     if address.startswith("["):
@@ -92,16 +92,16 @@ def parse_ssh_destination(destination: str) -> SSHDestination:
         if port_suffix:
             if not port_suffix.startswith(":"):
                 raise ValueError(f"Invalid bracketed SSH destination: {address!r}.")
-            inline_port = _parse_port(port_text=port_suffix[1:], source=destination)
+            inline_port = _parse_port(port_text=port_suffix[1:], source=host)
     elif address.count(":") == 1:
         parsed_hostname, port_text = address.rsplit(":", maxsplit=1)
-        inline_port = _parse_port(port_text=port_text, source=destination)
+        inline_port = _parse_port(port_text=port_text, source=host)
     else:
         parsed_hostname = address
 
     if not parsed_hostname:
-        raise ValueError(f"SSH hostname must not be empty: {destination!r}.")
-    return SSHDestination(hostname=parsed_hostname, username=inline_username or None, port=inline_port)
+        raise ValueError(f"SSH hostname must not be empty: {host!r}.")
+    return _ParsedSSHHost(hostname=parsed_hostname, username=inline_username or None, port=inline_port)
 
 
 def _optional_config_text(config_options: Mapping[str, object], key: str) -> str | None:
@@ -150,7 +150,7 @@ def _resolve_proxy_command(
     jump_hosts = expanded_proxy_jump.split(",")
     if any(not jump_host for jump_host in jump_hosts):
         raise ValueError(f"Invalid ProxyJump value: {proxy_jump!r}.")
-    final_jump = parse_ssh_destination(destination=jump_hosts[-1])
+    final_jump = _parse_ssh_host(host=jump_hosts[-1])
     command = ["ssh", "-T"]
     if len(jump_hosts) > 1:
         command.extend(["-J", ",".join(jump_hosts[:-1])])

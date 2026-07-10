@@ -231,6 +231,11 @@ def get_app() -> typer.Typer:
 
     device_app.command(name="add-ip-exclusion-to-warp", help="🚫 <p> Add IP exclusion to WARP")(add_ip_exclusion_to_warp)
     device_app.command(name="p", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
-    cli_device_port.register_commands(device_app)
+    device_app.command(name="map-port", help="🔀 <m> Map a remote TCP port to local loopback over SSH", no_args_is_help=True)(
+        cli_device_port.map_port
+    )
+    device_app.command(name="m", help="Map a remote TCP port to local loopback over SSH", hidden=True, no_args_is_help=True)(
+        cli_device_port.map_port
+    )
     cli_device_cloudflare.register_commands(device_app)
     return device_app

@@ -7968,6 +7968,115 @@
                         "help": "Add IP exclusion to WARP"
                       }
                     ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "map-port",
+                    "fullPath": "devops network device map-port",
+                    "shortPath": "d n d m",
+                    "help": "🔀 <m> Map a remote TCP port to local loopback over SSH",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_device_port.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_device_port",
+                      "callable": "map_port"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def map_port(",
+                        "    destination: Annotated[",
+                        "        str,",
+                        "        typer.Argument(help=\"SSH config name or destination (host, user@host, or either form with an SSH port).\"),",
+                        "    ],",
+                        "    remote_port: Annotated[int, typer.Argument(min=1, max=65_535, help=\"TCP port on the remote machine.\")],",
+                        "    local_port: Annotated[",
+                        "        int | None,",
+                        "        typer.Option(\"--local-port\", \"-l\", min=1, max=65_535, help=\"Local TCP port; defaults to REMOTE_PORT.\"),",
+                        "    ] = None,",
+                        ") -> None:",
+                        "    selected_local_port = remote_port if local_port is None else local_port",
+                        "    try:",
+                        "        ssh_destination = resolve_map_port_destination(destination=destination)",
+                        "    except (TypeError, ValueError) as error:",
+                        "        raise typer.BadParameter(str(error), param_hint=\"DESTINATION\") from error",
+                        "    command = build_map_port_command(",
+                        "        ssh_destination=ssh_destination,",
+                        "        remote_port=remote_port,",
+                        "        local_port=selected_local_port,",
+                        "    )",
+                        "    typer.echo(",
+                        "        f\"Mapping 127.0.0.1:{selected_local_port} to 127.0.0.1:{remote_port} through {destination}. Press Ctrl-C to stop.\"",
+                        "    )",
+                        "    completed_process = subprocess.run(command, check=False)",
+                        "    if completed_process.returncode != 0:",
+                        "        raise typer.Exit(code=completed_process.returncode)"
+                      ],
+                      "name": "map_port",
+                      "parameters": [
+                        {
+                          "name": "destination",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[str, typer.Argument(help='SSH config name or destination (host, user@host, or either form with an SSH port).')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "SSH config name or destination (host, user@host, or either form with an SSH port)."
+                          }
+                        },
+                        {
+                          "name": "remote_port",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[int, typer.Argument(min=1, max=65535, help='TCP port on the remote machine.')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "TCP port on the remote machine."
+                          }
+                        },
+                        {
+                          "name": "local_port",
+                          "kind": "positional_or_keyword",
+                          "type": "int | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[int | None, typer.Option('--local-port', '-l', min=1, max=65535, help='Local TCP port; defaults to REMOTE_PORT.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--local-port",
+                              "-l"
+                            ],
+                            "long_flags": [
+                              "--local-port"
+                            ],
+                            "short_flags": [
+                              "-l"
+                            ],
+                            "help": "Local TCP port; defaults to REMOTE_PORT."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true
+                    },
+                    "aliases": [
+                      {
+                        "name": "m",
+                        "hidden": true,
+                        "help": "Map a remote TCP port to local loopback over SSH"
+                      }
+                    ]
                   }
                 ],
                 "aliases": [
