@@ -232,11 +232,12 @@ def test_device_map_port_reports_malformed_destination() -> None:
 
 
 def test_device_map_port_reports_destination_rejected_by_openssh(monkeypatch: pytest.MonkeyPatch) -> None:
-    def reject_destination(_destination: str) -> SSHConnectionTarget:
-        raise subprocess.CalledProcessError(
+    def reject_destination(destination: str) -> SSHConnectionTarget:
+        assert destination == "bad host"
+        raise cli_device_port.subprocess.CalledProcessError(
             returncode=255,
             cmd=("ssh", "-G", "bad host"),
-            stderr="hostname contains invalid characters",
+            stderr="invalid SSH host",
         )
 
     monkeypatch.setattr(cli_device_port, "resolve_map_port_destination", reject_destination)
@@ -245,4 +246,4 @@ def test_device_map_port_reports_destination_rejected_by_openssh(monkeypatch: py
 
     assert result.exit_code == 2
     assert "Invalid value for DESTINATION" in result.output
-    assert "hostname contains invalid characters" in result.output
+    assert "invalid SSH host" in result.output

@@ -7992,12 +7992,22 @@
                         "        int | None,",
                         "        typer.Option(\"--local-port\", \"-l\", min=1, max=65_535, help=\"Local TCP port; defaults to REMOTE_PORT.\"),",
                         "    ] = None,",
+                        "    open_browser: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--open-browser\", \"-b\", help=\"Open the mapped local address in the default browser.\"),",
+                        "    ] = False,",
                         ") -> None:",
                         "    selected_local_port = remote_port if local_port is None else local_port",
                         "    try:",
                         "        ssh_destination = resolve_map_port_destination(destination=destination)",
+                        "    except subprocess.CalledProcessError as error:",
+                        "        error_detail = error.stderr.strip() if isinstance(error.stderr, str) and error.stderr.strip() else f\"OpenSSH exited with code {error.returncode}.\"",
+                        "        raise typer.BadParameter(error_detail, param_hint=\"DESTINATION\") from error",
                         "    except (TypeError, ValueError) as error:",
                         "        raise typer.BadParameter(str(error), param_hint=\"DESTINATION\") from error",
+                        "    except OSError as error:",
+                        "        typer.echo(f\"Unable to start OpenSSH: {error}\", err=True)",
+                        "        raise typer.Exit(code=1) from error",
                         "    command = build_map_port_command(",
                         "        ssh_destination=ssh_destination,",
                         "        remote_port=remote_port,",
@@ -8006,9 +8016,16 @@
                         "    typer.echo(",
                         "        f\"Mapping 127.0.0.1:{selected_local_port} to 127.0.0.1:{remote_port} through {destination}. Press Ctrl-C to stop.\"",
                         "    )",
-                        "    completed_process = subprocess.run(command, check=False)",
-                        "    if completed_process.returncode != 0:",
-                        "        raise typer.Exit(code=completed_process.returncode)"
+                        "    try:",
+                        "        ssh_process = subprocess.Popen(command)",
+                        "    except OSError as error:",
+                        "        typer.echo(f\"Unable to start OpenSSH: {error}\", err=True)",
+                        "        raise typer.Exit(code=1) from error",
+                        "    if open_browser:",
+                        "        webbrowser.open_new_tab(f\"http://127.0.0.1:{selected_local_port}\")",
+                        "    exit_code = ssh_process.wait()",
+                        "    if exit_code != 0:",
+                        "        raise typer.Exit(code=exit_code)"
                       ],
                       "name": "map_port",
                       "parameters": [
@@ -8062,6 +8079,28 @@
                               "-l"
                             ],
                             "help": "Local TCP port; defaults to REMOTE_PORT."
+                          }
+                        },
+                        {
+                          "name": "open_browser",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--open-browser', '-b', help='Open the mapped local address in the default browser.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--open-browser",
+                              "-b"
+                            ],
+                            "long_flags": [
+                              "--open-browser"
+                            ],
+                            "short_flags": [
+                              "-b"
+                            ],
+                            "help": "Open the mapped local address in the default browser."
                           }
                         }
                       ],
