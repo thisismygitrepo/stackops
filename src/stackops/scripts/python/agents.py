@@ -390,6 +390,7 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
     from stackops.scripts.python.agents_iter import get_app as get_iter_app
     from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
+    from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_VERSION
 
     agents_app = typer.Typer(help="🤖 AI Agents management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     agents_app.add_typer(
@@ -400,8 +401,10 @@ def get_app() -> typer.Typer:
         get_browser_app(), name="browser", help="🌐 <b> Browser automation for agent CLIs and MCP", short_help="<b> Browser automation for agent CLIs/MCP"
     )
     agents_app.add_typer(get_browser_app(), name="b", help="Browser automation for agent CLIs and MCP", hidden=True)
-    agents_app.add_typer(get_iter_app(), name="iter", help="🔁 <I> Iter workflow maintenance commands", short_help="<I> Iter workflow maintenance")
-    agents_app.add_typer(get_iter_app(), name="I", help="Iter workflow maintenance commands", hidden=True)
+    agents_app.add_typer(
+        get_iter_app(), name="iter", help=f"🔁 <I> Iter maintenance for Herdr {HERDR_VERSION}", short_help="<I> Current Herdr iter maintenance"
+    )
+    agents_app.add_typer(get_iter_app(), name="I", help=f"Iter maintenance for Herdr {HERDR_VERSION}", hidden=True)
 
     agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries or supported skills")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)

@@ -23,31 +23,31 @@ Within one iteration, use the agent's own internal sub-agent mechanism when the 
 1. Identify objective, evaluation criteria, and constraints. Ask only if the objective is missing; otherwise write a concrete working interpretation into the records.
 2. Select mode: interactive by default, non-interactive only when requested or required.
 3. Inspect `herdr --help` and relevant workspace/tab/pane/agent help. For non-interactive mode, inspect the target CLI help for one-shot invocation.
-4. Determine the external iteration budget. If the user did not mention a budget, use 100.
-5. Capture cwd, repo root, branch, commit, status, changed files, relevant commands already run, project rules, and blockers.
-6. Create records under:
+4. Capture cwd, repo root, branch, commit, status, changed files, relevant commands already run, project rules, and blockers.
+5. Create records under:
 
 ```text
 .ai/agentops/iterations/<descriptive-slug>/
 ```
 
-7. Write the root records and `iter-001/task.md` before launch.
-8. Launch `iter-001` in a dedicated Herdr workspace with one tab and one pane.
-9. Create a second Herdr tab/window in that same workspace named `iter-<slug>-tracker`, start `agents iter track iter-<slug> <iteration-budget>` in it, and leave it running. The tracker checks every 60 seconds by default and closes the Herdr workspace after the latest numbered iteration exceeds the budget.
-10. Send only a short Herdr bootstrap prompt pointing to `iter-001/task.md`.
-11. Report slug, records path, Herdr workspace, tracker tab, first agent target, visible status, mode, and iteration budget.
+6. Write the Markdown root records and `iter-001/task.md` before launch.
+7. Create a dedicated Herdr workspace, rename its returned root tab for `iter-001`, write `run.json` from the returned stable IDs, and launch the agent in that tab. Do not create a second initial tab.
+8. Send only a short Herdr bootstrap prompt pointing to `iter-001/task.md`.
+9. Report slug, records path, Herdr workspace, first agent target, visible status, and mode.
 
 ## Records
 
 Keep durable context under `.ai/agentops/iterations/<slug>/`:
 
-- `run.md`: stable contract with objective, evaluation criteria, mode, Herdr workspace, tracker command, iteration budget, controller command, autonomous argv, workdir boundaries, project rules, and continuation rules.
+- `run.md`: stable contract with objective, evaluation criteria, mode, Herdr workspace, controller command, autonomous argv, workdir boundaries, project rules, and continuation rules.
+- `run.json`: exact current Herdr version/protocol plus the stable workspace ID and label used by maintenance commands.
 - `state.md`: bounded rolling state with current best result, active risks, blockers, and anti-repeat notes. Rewrite or compact this file only when those shared facts change; do not append indefinitely.
 - `index.md`: one compact row per iteration with Herdr target, task path, result path, recommendation path, files touched, validation, and short outcome.
 - `iter-001/task.md`: the task packet addressed to that iteration.
 - `iter-001/notes.md`: optional local notes for that iteration; not required reading for later iterations.
 - `iter-001/result.md`: files changed, commands run, validation evidence, criteria status, risks, and state/index updates made.
 - `iter-001/recommendation.md`: the compact recommendation from this iteration to the next one. It must point to relevant records only when the next iteration may need detail.
+- `iter-001/handoff.json`: stable Herdr identifiers proving the successor prompt was accepted; written only after `iter-002` is visibly working.
 
 Do not maintain a growing prompt transcript in Markdown. Do not paste prior recommendations into the next prompt. The Markdown packet is the source of truth; the Herdr prompt points to it.
 
@@ -74,11 +74,9 @@ Interactive command shape:
 
 ```bash
 herdr workspace create --cwd '<cwd>' --label 'iter-<slug>' --no-focus
-herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label 'iter-<slug>-001' --no-focus
-herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label 'iter-<slug>-tracker' --no-focus
-herdr pane list --workspace '<workspace_id>'
-herdr pane run '<tracker_pane_id>' 'agents iter track iter-<slug> <iteration-budget>'
-herdr agent start 'iter-<slug>-001' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>
+herdr tab rename '<returned_root_tab_id>' 'iter-<slug>-001'
+herdr agent rename '<returned_root_pane_id>' 'iter-<slug>-001'
+herdr pane run '<returned_root_pane_id>' '<shell-joined autonomous agent argv>'
 herdr agent send 'iter-<slug>-001' 'Read <records>/iter-001/task.md and follow it. Do not assume access to prior conversation.'
 herdr pane send-keys '<pane_id>' Enter
 herdr agent list
@@ -87,6 +85,18 @@ herdr pane list --workspace '<workspace_id>'
 ```
 
 For non-interactive mode, run the target CLI's documented one-shot invocation through Herdr. If the one-shot agent cannot launch the next generation itself, the controller that reads its written recommendation must launch the next agent from the packet path.
+
+Write `run.json` with exactly this schema immediately after workspace creation:
+
+```json
+{
+  "schema_version": 1,
+  "herdr_version": "0.7.3",
+  "herdr_protocol": 16,
+  "workspace_id": "w1",
+  "workspace_label": "iter-<slug>"
+}
+```
 
 ## Task Packet
 
@@ -122,14 +132,37 @@ Hard rules:
 - Write iter-<NNN>/result.md and iter-<NNN>/recommendation.md.
 - Update index.md with one compact row. Update state.md only when shared best state, risks, blockers, or anti-repeat notes changed.
 - Create iter-<NNN+1>/task.md before launching the next agent, and copy the recommendation into it inline.
-- Start iter-<NNN+1> in the same Herdr workspace and submit only a short prompt pointing to its task packet.
+- Create iter-<NNN+1>'s tab in the same Herdr workspace, rename its returned root pane as the agent, run the shell-joined autonomous argv in that pane, and submit only a short prompt pointing to its task packet.
+- Confirm the successor is working, query both agents with `herdr agent get`, then write the current iteration's exact `handoff.json` receipt.
 - Never stop because criteria look satisfied or no obvious idea remains.
-- Do not self-stop at the iteration budget; the external tracker tab enforces the budget by closing the Herdr workspace after the latest numbered iteration exceeds it.
 - Stop only for explicit external stop/pause, launch failure, concrete blocker, or scope/safety violation.
 
 Expected final report:
 <changes made, validation run, next Herdr target/status, blockers if any>
 ```
+
+## Handoff Receipt
+
+After the successor prompt is visibly accepted, write `iter-<NNN>/handoff.json` with exactly this schema using values from `herdr api snapshot` and `herdr agent get`:
+
+```json
+{
+  "schema_version": 1,
+  "herdr_version": "0.7.3",
+  "herdr_protocol": 16,
+  "workspace_id": "w1",
+  "source_iteration": 1,
+  "source_tab_id": "w1:t1",
+  "successor_iteration": 2,
+  "successor_tab_id": "w1:t2",
+  "successor_pane_id": "w1:p2",
+  "successor_terminal_id": "term_...",
+  "successor_agent_name": "iter-<slug>-002",
+  "accepted_revision": 42
+}
+```
+
+Use the successor revision observed after its status becomes `working`. Never pre-create, infer, copy, or repair a receipt. The maintenance close command treats a receipt as authorization only while every identifier still matches a fresh atomic Herdr snapshot.
 
 ## Recommendation Packet
 
@@ -155,4 +188,4 @@ Before launching `iter-<NNN+1>`, write `iter-<NNN+1>/task.md` that points to `ru
 Read <records>/iter-<NNN+1>/task.md and follow it. Do not assume access to prior conversation.
 ```
 
-When starting the next iteration, prompt text in a terminal is not enough. Send explicit `Enter`, confirm Herdr status/recent output shows acceptance, and only then finish the current pass.
+When starting the next iteration, prompt text in a terminal is not enough. Send explicit `Enter`, confirm Herdr status/recent output shows acceptance, write `handoff.json`, and only then finish the current pass.

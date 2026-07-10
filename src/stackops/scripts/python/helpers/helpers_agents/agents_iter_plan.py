@@ -1,68 +1,55 @@
+from collections.abc import Mapping
 from typing import Final
 
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_contract import (
+    handoff_matches_snapshot,
+    inventory_is_incomplete,
+    mutation_veto_tab_ids,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     HerdrAgent,
     HerdrSnapshot,
-    HerdrStatus,
     HerdrTab,
     HerdrWorkspace,
     IterWorkspaceClosePlan,
     IterWorkspaceStatus,
     KeepReason,
     ProtectedTab,
-    TabId,
+    WorkspaceId,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import IterationHandoff
 
 
 _ITER_PREFIX: Final[str] = "iter-"
-_CLOSED_STATUSES: Final[frozenset[HerdrStatus]] = frozenset(("done", "idle"))
 
 
-def iter_workspace_labels(*, snapshot: HerdrSnapshot) -> tuple[str, ...]:
-    return tuple(workspace.label for workspace in _iter_workspaces(snapshot=snapshot))
+def resolve_iter_workspace(*, snapshot: HerdrSnapshot, workspace_id: str) -> HerdrWorkspace:
+    if workspace_id.strip() == "":
+        raise ValueError("Workspace ID must not be empty.")
+    matches = tuple(workspace for workspace in _iter_workspaces(snapshot=snapshot) if str(workspace.workspace_id) == workspace_id)
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) == 0:
+        raise RuntimeError(f"No Herdr iter workspace with ID {workspace_id!r} was found.")
+    raise RuntimeError(f"Herdr returned duplicate workspace ID {workspace_id!r}.")
 
 
-def resolve_iter_workspace(*, snapshot: HerdrSnapshot, workspace_name: str) -> HerdrWorkspace:
-    if workspace_name.strip() == "":
-        raise ValueError("Workspace name must not be empty.")
-    workspaces = _iter_workspaces(snapshot=snapshot)
-    id_matches = tuple(workspace for workspace in workspaces if str(workspace.workspace_id) == workspace_name)
-    if len(id_matches) == 1:
-        return id_matches[0]
-    if len(id_matches) > 1:
-        raise RuntimeError(f"Multiple Herdr workspaces use ID {workspace_name!r}.")
-    label_matches = tuple(workspace for workspace in workspaces if workspace.label == workspace_name)
-    if len(label_matches) == 1:
-        return label_matches[0]
-    if len(label_matches) == 0:
-        raise RuntimeError(f"No Herdr iter workspace named {workspace_name!r} was found.")
-    raise RuntimeError(f"Multiple Herdr workspaces named {workspace_name!r} were found; use a workspace ID.")
-
-
-def select_iter_workspace_close_plans(
-    *, snapshot: HerdrSnapshot, workspace_name: str | None, all_workspaces: bool, retain_previous: int
-) -> tuple[IterWorkspaceClosePlan, ...]:
-    _validate_retain_previous(retain_previous=retain_previous)
-    _validate_scope(workspace_name=workspace_name, all_workspaces=all_workspaces)
-    if all_workspaces:
-        workspaces = _iter_workspaces(snapshot=snapshot)
-    else:
-        if workspace_name is None:
-            raise AssertionError("Validated single-workspace scope did not include a workspace name.")
-        workspaces = (resolve_iter_workspace(snapshot=snapshot, workspace_name=workspace_name),)
-    return tuple(build_workspace_close_plan(snapshot=snapshot, workspace=workspace, retain_previous=retain_previous) for workspace in workspaces)
-
-
-def build_iter_workspace_statuses(*, snapshot: HerdrSnapshot, retain_previous: int) -> tuple[IterWorkspaceStatus, ...]:
+def build_iter_workspace_statuses(
+    *, snapshot: HerdrSnapshot, retain_previous: int, handoffs_by_workspace: Mapping[WorkspaceId, Mapping[int, IterationHandoff]]
+) -> tuple[IterWorkspaceStatus, ...]:
     _validate_retain_previous(retain_previous=retain_previous)
     return tuple(
-        build_iter_workspace_status(snapshot=snapshot, workspace=workspace, retain_previous=retain_previous)
+        build_iter_workspace_status(
+            snapshot=snapshot, workspace=workspace, retain_previous=retain_previous, handoffs=handoffs_by_workspace.get(workspace.workspace_id, {})
+        )
         for workspace in _iter_workspaces(snapshot=snapshot)
     )
 
 
-def build_iter_workspace_status(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, retain_previous: int) -> IterWorkspaceStatus:
-    plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, retain_previous=retain_previous)
+def build_iter_workspace_status(
+    *, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, retain_previous: int, handoffs: Mapping[int, IterationHandoff]
+) -> IterWorkspaceStatus:
+    plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, retain_previous=retain_previous, handoffs=handoffs)
     numbered_tabs = tuple((tab, iteration) for tab in plan.tabs if (iteration := _iteration_from_tab(workspace=workspace, tab=tab)) is not None)
     latest_iteration = max((iteration for _tab, iteration in numbered_tabs), default=None)
     latest_agent: HerdrAgent | None = None
@@ -70,63 +57,57 @@ def build_iter_workspace_status(*, snapshot: HerdrSnapshot, workspace: HerdrWork
     if latest_iteration is not None:
         latest_tabs = tuple(tab for tab, iteration in numbered_tabs if iteration == latest_iteration)
         if len(latest_tabs) == 1:
-            candidate_tab = latest_tabs[0]
+            latest_agent_tab = latest_tabs[0]
             candidates = tuple(
                 agent
                 for agent in snapshot.agents
-                if agent.workspace_id == workspace.workspace_id and agent.tab_id == candidate_tab.tab_id and agent.name == candidate_tab.label
+                if agent.workspace_id == workspace.workspace_id and agent.tab_id == latest_agent_tab.tab_id and agent.name == latest_agent_tab.label
             )
             if len(candidates) == 1:
                 latest_agent = candidates[0]
-                latest_agent_tab = candidate_tab
     return IterWorkspaceStatus(
         workspace=workspace, plan=plan, latest_iteration=latest_iteration, latest_agent=latest_agent, latest_agent_tab=latest_agent_tab
     )
 
 
-def build_workspace_close_plan(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, retain_previous: int) -> IterWorkspaceClosePlan:
+def build_workspace_close_plan(
+    *, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, retain_previous: int, handoffs: Mapping[int, IterationHandoff]
+) -> IterWorkspaceClosePlan:
     _validate_retain_previous(retain_previous=retain_previous)
     if not _is_iter_workspace(workspace=workspace):
         raise ValueError(f"Herdr workspace {workspace.label!r} is not an iter workspace.")
     tabs = tuple(sorted((tab for tab in snapshot.tabs if tab.workspace_id == workspace.workspace_id), key=lambda tab: (tab.number, str(tab.tab_id))))
-    if len({tab.tab_id for tab in tabs}) != len(tabs):
-        raise ValueError(f"Herdr workspace {workspace.label!r} contains duplicate tab IDs.")
     numbered = {tab.tab_id: iteration for tab in tabs if (iteration := _iteration_from_tab(workspace=workspace, tab=tab)) is not None}
+    duplicate_iterations = len(numbered) != len(set(numbered.values()))
+    workspace_has_unmanaged_tabs = len(numbered) != len(tabs)
+    incomplete = duplicate_iterations or inventory_is_incomplete(snapshot=snapshot, workspace=workspace, tabs=tabs, numbered=numbered)
     latest_iteration = max(numbered.values(), default=None)
-    incomplete = _inventory_is_incomplete(snapshot=snapshot, workspace=workspace, tabs=tabs)
-    duplicate_iterations = {iteration for iteration in numbered.values() if sum(candidate == iteration for candidate in numbered.values()) > 1}
-    active_tab_ids = _active_tab_ids(snapshot=snapshot, workspace=workspace, tabs=tabs)
-    launch_successor_ids: set[TabId] = set()
-    for source in tabs:
-        source_iteration = numbered.get(source.tab_id)
-        if source.tab_id not in active_tab_ids or source_iteration is None:
-            continue
-        later_iterations = tuple(iteration for iteration in numbered.values() if iteration > source_iteration)
-        if len(later_iterations) == 0:
-            continue
-        successor_iteration = min(later_iterations)
-        launch_successor_ids.update(tab.tab_id for tab in tabs if numbered.get(tab.tab_id) == successor_iteration)
+    active_tab_ids = mutation_veto_tab_ids(snapshot=snapshot, workspace=workspace, tabs=tabs)
+
     retained_tabs: list[HerdrTab] = []
     protected_tabs: list[ProtectedTab] = []
     closable_tabs: list[HerdrTab] = []
     for tab in tabs:
-        reason = _protection_reason(
-            workspace=workspace,
-            tab=tab,
-            iteration=numbered.get(tab.tab_id),
-            incomplete=incomplete,
-            duplicate_iterations=duplicate_iterations,
-            active_tab_ids=active_tab_ids,
-            launch_successor_ids=launch_successor_ids,
-        )
+        iteration = numbered.get(tab.tab_id)
+        reason = _protection_reason(tab=tab, iteration=iteration, incomplete=incomplete, workspace_has_unmanaged_tabs=workspace_has_unmanaged_tabs)
         if reason is not None:
             protected_tabs.append(ProtectedTab(tab=tab, reason=reason))
             continue
-        iteration = numbered[tab.tab_id]
-        if latest_iteration is not None and iteration >= latest_iteration - retain_previous:
+        if latest_iteration is not None and iteration is not None and iteration >= latest_iteration - retain_previous:
             retained_tabs.append(tab)
-        else:
-            closable_tabs.append(tab)
+            continue
+        if tab.tab_id in active_tab_ids:
+            protected_tabs.append(ProtectedTab(tab=tab, reason="active"))
+            continue
+        if tab.focused:
+            protected_tabs.append(ProtectedTab(tab=tab, reason="selected"))
+            continue
+        if iteration is None or not handoff_matches_snapshot(
+            snapshot=snapshot, workspace=workspace, source_tab=tab, source_iteration=iteration, handoff=handoffs.get(iteration)
+        ):
+            protected_tabs.append(ProtectedTab(tab=tab, reason="handoff_unverified"))
+            continue
+        closable_tabs.append(tab)
     return IterWorkspaceClosePlan(
         workspace=workspace,
         tabs=tabs,
@@ -137,74 +118,12 @@ def build_workspace_close_plan(*, snapshot: HerdrSnapshot, workspace: HerdrWorks
     )
 
 
-def _protection_reason(
-    *,
-    workspace: HerdrWorkspace,
-    tab: HerdrTab,
-    iteration: int | None,
-    incomplete: bool,
-    duplicate_iterations: set[int],
-    active_tab_ids: set[TabId],
-    launch_successor_ids: set[TabId],
-) -> KeepReason | None:
-    if incomplete:
-        return "incomplete_snapshot"
-    if tab.label == f"{workspace.label}-tracker":
-        return "tracker"
+def _protection_reason(*, tab: HerdrTab, iteration: int | None, incomplete: bool, workspace_has_unmanaged_tabs: bool) -> KeepReason | None:
     if iteration is None:
         return "unmanaged"
-    if iteration in duplicate_iterations:
+    if incomplete or workspace_has_unmanaged_tabs:
         return "incomplete_snapshot"
-    if tab.tab_id in active_tab_ids:
-        return "active"
-    if tab.tab_id in launch_successor_ids:
-        return "launch_successor"
     return None
-
-
-def _active_tab_ids(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...]) -> set[TabId]:
-    tab_ids = {tab.tab_id for tab in tabs}
-    active_ids: set[TabId] = {workspace.active_tab_id} & tab_ids
-    active_ids.update(tab.tab_id for tab in tabs if tab.focused or tab.agent_status not in _CLOSED_STATUSES)
-    active_ids.update(
-        pane.tab_id
-        for pane in snapshot.panes
-        if pane.workspace_id == workspace.workspace_id and pane.tab_id in tab_ids and pane.agent_status not in _CLOSED_STATUSES
-    )
-    active_ids.update(
-        agent.tab_id
-        for agent in snapshot.agents
-        if agent.workspace_id == workspace.workspace_id and agent.tab_id in tab_ids and (agent.focused or agent.agent_status not in _CLOSED_STATUSES)
-    )
-    return active_ids
-
-
-def _inventory_is_incomplete(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, tabs: tuple[HerdrTab, ...]) -> bool:
-    tab_ids = {tab.tab_id for tab in tabs}
-    panes = tuple(pane for pane in snapshot.panes if pane.workspace_id == workspace.workspace_id)
-    if (
-        workspace.tab_count != len(tabs)
-        or workspace.pane_count != len(panes)
-        or sum(tab.pane_count for tab in tabs) != workspace.pane_count
-        or workspace.active_tab_id not in tab_ids
-    ):
-        return True
-    if len({pane.pane_id for pane in panes}) != len(panes):
-        return True
-    for tab in tabs:
-        attached_panes = tuple(pane for pane in panes if pane.tab_id == tab.tab_id)
-        if len(attached_panes) == 0 or tab.pane_count != len(attached_panes):
-            return True
-    valid_panes = {pane.pane_id: pane for pane in panes if pane.tab_id in tab_ids}
-    if any(pane.tab_id not in tab_ids for pane in panes):
-        return True
-    for agent in snapshot.agents:
-        if agent.workspace_id != workspace.workspace_id or agent.agent_status in _CLOSED_STATUSES and not agent.focused:
-            continue
-        pane = valid_panes.get(agent.pane_id)
-        if agent.tab_id not in tab_ids or pane is None or pane.tab_id != agent.tab_id:
-            return True
-    return False
 
 
 def _iteration_from_tab(*, workspace: HerdrWorkspace, tab: HerdrTab) -> int | None:
@@ -212,12 +131,10 @@ def _iteration_from_tab(*, workspace: HerdrWorkspace, tab: HerdrTab) -> int | No
     if not tab.label.startswith(prefix):
         return None
     digits = tab.label.removeprefix(prefix)
-    if len(digits) < 3 or any(character < "0" or character > "9" for character in digits):
+    if len(digits) < 3 or not digits.isascii() or not digits.isdecimal():
         return None
     iteration = int(digits)
-    if iteration == 0:
-        return None
-    return iteration
+    return iteration if iteration > 0 else None
 
 
 def _iter_workspaces(*, snapshot: HerdrSnapshot) -> tuple[HerdrWorkspace, ...]:
@@ -230,16 +147,9 @@ def _iter_workspaces(*, snapshot: HerdrSnapshot) -> tuple[HerdrWorkspace, ...]:
 
 
 def _is_iter_workspace(*, workspace: HerdrWorkspace) -> bool:
-    return workspace.label.startswith(_ITER_PREFIX) and workspace.label.removeprefix(_ITER_PREFIX).strip() != ""
+    return workspace.label.startswith(_ITER_PREFIX) and workspace.label.removeprefix(_ITER_PREFIX) != ""
 
 
 def _validate_retain_previous(*, retain_previous: int) -> None:
     if retain_previous < 0:
         raise ValueError("Retained previous iterations must not be negative.")
-
-
-def _validate_scope(*, workspace_name: str | None, all_workspaces: bool) -> None:
-    if workspace_name is not None and workspace_name.strip() == "":
-        raise ValueError("Workspace name must not be empty.")
-    if (workspace_name is None) == (not all_workspaces):
-        raise ValueError("Pass exactly one workspace name or --all.")

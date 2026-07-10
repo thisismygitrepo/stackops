@@ -16,6 +16,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 | --- | --- |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
 | `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
+| `iter` | Inspect and maintain current-format AgentOps iteration workspaces through Herdr 0.7.3 |
 | `account` | Back up active agent credentials to saved profiles or retrieve a profile as active |
 | `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
@@ -23,6 +24,18 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
 | `add-skill` | Add a supported skill into an agent directory |
+
+---
+
+## `iter`
+
+`iter` supports Herdr 0.7.3/protocol 16 only. `status` reads one atomic Herdr snapshot, `close WORKSPACE_ID` closes only quiet old tabs whose current `handoff.json` receipt still matches every stable Herdr identifier, and `clean` removes only inactive runs with a current `run.json` manifest. The obsolete polling budget tracker was removed because it could terminate a working successor.
+
+```bash
+agents iter status
+agents iter close w1 --dry-run
+agents iter clean --dry-run
+```
 
 ---
 

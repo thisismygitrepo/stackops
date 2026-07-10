@@ -14,7 +14,6 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     IterWorkspaceClose,
     IterWorkspaceClosePlan,
     IterWorkspaceStatus,
-    IterWorkspaceTrackResult,
     ProtectedTab,
     SkippedTabClose,
 )
@@ -107,44 +106,23 @@ def build_iter_status_table(*, statuses: tuple[IterWorkspaceStatus, ...]) -> Tab
     table.add_column("Tabs", no_wrap=True)
     for status in statuses:
         plan = status.plan
+        agent_label = "-"
+        if status.latest_agent is not None:
+            agent_label = status.latest_agent.display_agent or status.latest_agent.agent or status.latest_agent.name or "-"
+        latest_status = "-"
+        if status.latest_agent is not None:
+            latest_status = status.latest_agent.agent_status
+        elif status.latest_agent_tab is not None:
+            latest_status = status.latest_agent_tab.agent_status
         table.add_row(
-            status.workspace.label,
+            escape(status.workspace.label),
             _format_iteration(iteration=status.latest_iteration),
-            status.latest_agent.agent if status.latest_agent is not None else "-",
-            status.latest_agent.agent_status if status.latest_agent is not None else status.workspace.agent_status,
+            escape(agent_label),
+            escape(latest_status),
             _format_agent_where(tab=status.latest_agent_tab, agent=status.latest_agent),
-            f"{len(plan.tabs)} total {len(plan.closable_tabs)} close "
-            f"{len(plan.retained_tabs)} retain {len(plan.protected_tabs)} protect",
+            f"{len(plan.tabs)} total {len(plan.closable_tabs)} close {len(plan.retained_tabs)} retain {len(plan.protected_tabs)} protect",
         )
     return table
-
-
-def build_iter_track_start_panel(
-    *, workspace_name: str, max_iterations: int, interval_seconds: int, retain_previous: int
-) -> Panel:
-    table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
-    table.add_column("Field", style="bold cyan", no_wrap=True)
-    table.add_column("Value", overflow="fold")
-    table.add_row("Workspace", escape(workspace_name))
-    table.add_row("Budget", f"{max_iterations:03d}")
-    table.add_row("Interval", f"{interval_seconds} second(s)")
-    table.add_row("Retention", f"latest + {retain_previous} previous")
-    return Panel(table, title="Iter Tracker", border_style="blue")
-
-
-def build_iter_track_result_panel(*, result: IterWorkspaceTrackResult) -> Panel:
-    table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
-    table.add_column("Field", style="bold cyan", no_wrap=True)
-    table.add_column("Value", overflow="fold")
-    workspace_label = result.workspace.label if result.workspace is not None else str(result.workspace_id)
-    table.add_row("Workspace", escape(workspace_label))
-    table.add_row("Latest", _format_iteration(iteration=result.latest_iteration))
-    table.add_row("Budget", f"{result.max_iterations:03d}")
-    table.add_row("Phase", escape(result.phase))
-    if result.message is not None:
-        table.add_row("Detail", escape(result.message))
-    border_style = "red" if result.phase == "failed" else "green"
-    return Panel(table, title="Budget Check", border_style=border_style)
 
 
 def _repo_relative_path(*, path: Path, repo_root: Path) -> str:
@@ -191,10 +169,11 @@ def _format_iteration(*, iteration: int | None) -> str:
 
 
 def _format_agent_where(*, tab: HerdrTab | None, agent: HerdrAgent | None) -> str:
+    agent_cwd = "-" if agent is None else agent.foreground_cwd or agent.cwd or "-"
     if tab is not None and agent is not None:
-        return f"tab #{tab.number} {tab.tab_id}\n{agent.foreground_cwd}"
+        return f"tab #{tab.number} {escape(str(tab.tab_id))}\n{escape(agent_cwd)}"
     if tab is not None:
-        return f"tab #{tab.number} {tab.tab_id}"
+        return f"tab #{tab.number} {escape(str(tab.tab_id))}"
     if agent is not None:
-        return f"{agent.tab_id}\n{agent.foreground_cwd}"
+        return f"{escape(str(agent.tab_id))}\n{escape(agent_cwd)}"
     return "-"

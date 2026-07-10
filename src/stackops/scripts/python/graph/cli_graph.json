@@ -16679,14 +16679,14 @@
             "name": "iter",
             "fullPath": "agents iter",
             "shortPath": "a I",
-            "help": "🔁 <I> Iter workflow maintenance commands",
+            "help": "f'🔁 <I> Iter maintenance for Herdr {HERDR_VERSION}'",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
               "dispatches_to": "stackops.scripts.python.agents_iter.get_app"
             },
             "app": {
-              "help": "🔁 <I> Iter workflow maintenance commands",
+              "help": "🔁 <I> Iter maintenance for Herdr 0.7.3",
               "no_args_is_help": true,
               "add_help_option": true,
               "add_completion": false
@@ -16705,9 +16705,7 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def clean(",
-                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show stale iteration records without removing them.\")] = False,",
-                    ") -> None:",
+                    "def clean(dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show stale iteration records without removing them.\")] = False) -> None:",
                     "    \"\"\"Remove stale iteration records while preserving live and unrelated AgentOps records.\"\"\"",
                     "    try:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agentops_cache",
@@ -16758,7 +16756,7 @@
                 "name": "close",
                 "fullPath": "agents iter close",
                 "shortPath": "a I x",
-                "help": "Safely close old idle iteration tabs after revalidating their live state.",
+                "help": "Close handed-off iteration tabs after exact receipt and live-state validation.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_iter.py",
                   "module": "stackops.scripts.python.agents_iter",
@@ -16767,37 +16765,23 @@
                 "signature": {
                   "raw_lines": [
                     "def close(",
-                    "    space_name: Annotated[",
-                    "        str | None,",
-                    "        typer.Argument(help=\"Herdr iter workspace label or stable ID to close. Use --all for every iter workspace.\"),",
-                    "    ] = None,",
+                    "    workspace_id: Annotated[str, typer.Argument(help=\"Stable Herdr iter workspace ID to prune.\")],",
                     "    continuous: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Repeat close passes until interrupted.\")] = False,",
-                    "    all_workspaces: Annotated[",
-                    "        bool,",
-                    "        typer.Option(\"--all\", \"-a\", help=\"Close old idle tabs in all iter workspaces.\"),",
-                    "    ] = False,",
                     "    retain_previous: Annotated[",
-                    "        int,",
-                    "        typer.Option(",
-                    "            \"--retain-previous\",",
-                    "            \"-k\",",
-                    "            min=0,",
-                    "            help=\"Retain the latest iteration plus this many previous iterations.\",",
-                    "        ),",
+                    "        int, typer.Option(\"--retain-previous\", \"-k\", min=0, help=\"Retain the latest iteration plus this many previous iterations.\")",
                     "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
                     "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show the close plan without closing tabs.\")] = False,",
                     "    interval_seconds: Annotated[",
-                    "        int,",
-                    "        typer.Option(\"--interval\", \"-i\", min=1, help=\"Seconds between close passes when --loop is used.\"),",
+                    "        int, typer.Option(\"--interval\", \"-i\", min=1, help=\"Seconds between close passes when --loop is used.\")",
                     "    ] = CLOSE_LOOP_INTERVAL_SECONDS,",
                     ") -> None:",
-                    "    \"\"\"Safely close old idle iteration tabs after revalidating their live state.\"\"\"",
+                    "    \"\"\"Close handed-off iteration tabs after exact receipt and live-state validation.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspaces_loop",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspace_loop",
                     "",
-                    "        show_close_iter_workspaces_loop(",
-                    "            workspace_name=space_name,",
-                    "            all_workspaces=all_workspaces,",
+                    "        show_close_iter_workspace_loop(",
+                    "            cwd=Path.cwd(),",
+                    "            workspace_id=workspace_id,",
                     "            continuous=continuous,",
                     "            retain_previous=retain_previous,",
                     "            dry_run=dry_run,",
@@ -16812,18 +16796,18 @@
                   "name": "close",
                   "parameters": [
                     {
-                      "name": "space_name",
+                      "name": "workspace_id",
                       "kind": "positional_or_keyword",
-                      "type": "str | None",
+                      "type": "str",
                       "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Herdr iter workspace label or stable ID to close. Use --all for every iter workspace.')]",
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Stable Herdr iter workspace ID to prune.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Herdr iter workspace label or stable ID to close. Use --all for every iter workspace."
+                        "help": "Stable Herdr iter workspace ID to prune."
                       }
                     },
                     {
@@ -16846,28 +16830,6 @@
                           "-l"
                         ],
                         "help": "Repeat close passes until interrupted."
-                      }
-                    },
-                    {
-                      "name": "all_workspaces",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--all', '-a', help='Close old idle tabs in all iter workspaces.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--all",
-                          "-a"
-                        ],
-                        "long_flags": [
-                          "--all"
-                        ],
-                        "short_flags": [
-                          "-a"
-                        ],
-                        "help": "Close old idle tabs in all iter workspaces."
                       }
                     },
                     {
@@ -16936,151 +16898,14 @@
                   ],
                   "return": "None"
                 },
-                "short_help": "<x> Revalidate and close old idle iter tabs",
+                "short_help": "<x> Close verified handed-off iter tabs",
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Safely close old idle iteration tabs after revalidating their live state.",
+                "doc": "Close handed-off iteration tabs after exact receipt and live-state validation.",
                 "aliases": [
                   {
                     "name": "x",
-                    "hidden": true
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "track",
-                "fullPath": "agents iter track",
-                "shortPath": "a I t",
-                "help": "Track an iter Herdr workspace status, close old iteration tabs, and close after budget.",
-                "source": {
-                  "file": "src/stackops/scripts/python/agents_iter.py",
-                  "module": "stackops.scripts.python.agents_iter",
-                  "callable": "track"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def track(",
-                    "    space_name: Annotated[str, typer.Argument(help=\"Herdr iter workspace label or stable ID to track.\")],",
-                    "    max_iterations: Annotated[int, typer.Argument(help=\"Maximum allowed iteration number before the workspace is closed.\")] = DEFAULT_TRACK_MAX_ITERATIONS,",
-                    "    interval_seconds: Annotated[",
-                    "        int,",
-                    "        typer.Option(\"--interval\", \"-i\", min=1, help=\"Seconds to sleep between iteration-budget checks.\"),",
-                    "    ] = TRACK_INTERVAL_SECONDS,",
-                    "    retain_previous: Annotated[",
-                    "        int,",
-                    "        typer.Option(",
-                    "            \"--retain-previous\",",
-                    "            \"-k\",",
-                    "            min=0,",
-                    "            help=\"Retain the latest iteration plus this many previous iterations.\",",
-                    "        ),",
-                    "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
-                    ") -> None:",
-                    "    \"\"\"Track an iter Herdr workspace status, close old iteration tabs, and close after budget.\"\"\"",
-                    "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_track_iter_workspace_loop",
-                    "",
-                    "        show_track_iter_workspace_loop(",
-                    "            workspace_name=space_name,",
-                    "            max_iterations=max_iterations,",
-                    "            interval_seconds=interval_seconds,",
-                    "            retain_previous=retain_previous,",
-                    "        )",
-                    "    except ValueError as error:",
-                    "        raise typer.BadParameter(str(error)) from error",
-                    "    except RuntimeError as error:",
-                    "        typer.echo(str(error), err=True)",
-                    "        raise typer.Exit(code=1) from error"
-                  ],
-                  "name": "track",
-                  "parameters": [
-                    {
-                      "name": "space_name",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='Herdr iter workspace label or stable ID to track.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Herdr iter workspace label or stable ID to track."
-                      }
-                    },
-                    {
-                      "name": "max_iterations",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": "DEFAULT_TRACK_MAX_ITERATIONS",
-                      "required": false,
-                      "annotation_raw": "Annotated[int, typer.Argument(help='Maximum allowed iteration number before the workspace is closed.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Maximum allowed iteration number before the workspace is closed."
-                      }
-                    },
-                    {
-                      "name": "interval_seconds",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": "TRACK_INTERVAL_SECONDS",
-                      "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option('--interval', '-i', min=1, help='Seconds to sleep between iteration-budget checks.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--interval",
-                          "-i"
-                        ],
-                        "long_flags": [
-                          "--interval"
-                        ],
-                        "short_flags": [
-                          "-i"
-                        ],
-                        "help": "Seconds to sleep between iteration-budget checks."
-                      }
-                    },
-                    {
-                      "name": "retain_previous",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": "DEFAULT_RETAIN_PREVIOUS_ITERATIONS",
-                      "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option('--retain-previous', '-k', min=0, help='Retain the latest iteration plus this many previous iterations.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--retain-previous",
-                          "-k"
-                        ],
-                        "long_flags": [
-                          "--retain-previous"
-                        ],
-                        "short_flags": [
-                          "-k"
-                        ],
-                        "help": "Retain the latest iteration plus this many previous iterations."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "short_help": "<t> Track, prune old tabs, and enforce budget",
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "doc": "Track an iter Herdr workspace status, close old iteration tabs, and close after budget.",
-                "aliases": [
-                  {
-                    "name": "t",
                     "hidden": true
                   }
                 ]
@@ -17100,20 +16925,14 @@
                   "raw_lines": [
                     "def status(",
                     "    retain_previous: Annotated[",
-                    "        int,",
-                    "        typer.Option(",
-                    "            \"--retain-previous\",",
-                    "            \"-k\",",
-                    "            min=0,",
-                    "            help=\"Evaluate closable tabs while retaining this many previous iterations.\",",
-                    "        ),",
+                    "        int, typer.Option(\"--retain-previous\", \"-k\", min=0, help=\"Evaluate closable tabs while retaining this many previous iterations.\")",
                     "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
                     ") -> None:",
                     "    \"\"\"Show each iter loop's latest iteration agent and live Herdr status.\"\"\"",
                     "    try:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_iter_status",
                     "",
-                    "        show_iter_status(retain_previous=retain_previous)",
+                    "        show_iter_status(cwd=Path.cwd(), retain_previous=retain_previous)",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error"
@@ -17145,7 +16964,7 @@
                   ],
                   "return": "None"
                 },
-                "short_help": "<s> Show live iter state and safe close counts",
+                "short_help": "<s> Show live state and verified close counts",
                 "typer": {
                   "no_args_is_help": false
                 },
@@ -17162,7 +16981,7 @@
               {
                 "name": "I",
                 "hidden": true,
-                "help": "Iter workflow maintenance commands"
+                "help": "f'Iter maintenance for Herdr {HERDR_VERSION}'"
               }
             ]
           },
@@ -17363,10 +17182,7 @@
                 "        _SKILL_INSTALL_BACKEND,",
                 "        typer.Option(\"--backend\", \"-b\", help=\"Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally.\"),",
                 "    ] = \"stackops\",",
-                "    yes: Annotated[",
-                "        bool,",
-                "        typer.Option(\"--yes\", \"-y\", help=\"Pass --yes to the upstream skills CLI.\"),",
-                "    ] = False,",
+                "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Pass --yes to the upstream skills CLI.\")] = False,",
                 ") -> None:",
                 "    \"\"\"Add a skill through an installer backend.\"\"\"",
                 "    try:",
@@ -17532,21 +17348,12 @@
             "signature": {
               "raw_lines": [
                 "def init_config(",
-                "    agents: Annotated[",
-                "        str, typer.Option(..., \"--agent\", \"-a\", help=_INIT_CONFIG_AGENT_HELP)",
-                "    ],",
+                "    agents: Annotated[str, typer.Option(..., \"--agent\", \"-a\", help=_INIT_CONFIG_AGENT_HELP)],",
                 "    root: Annotated[",
-                "        str | None,",
-                "        typer.Option(\"--root\", \"-r\", help=\"Root directory of the repository to initialize AI configs in. Defaults to current directory.\"),",
+                "        str | None, typer.Option(\"--root\", \"-r\", help=\"Root directory of the repository to initialize AI configs in. Defaults to current directory.\")",
                 "    ] = None,",
-                "    add_config: Annotated[",
-                "        bool,",
-                "        typer.Option(\"--no-add-config\", \"-C\", help=\"Skip private agent config files/directories\"),",
-                "    ] = True,",
-                "    add_instructions: Annotated[",
-                "        bool,",
-                "        typer.Option(\"--no-add-instructions\", \"-I\", help=\"Skip agent instruction files (e.g. AGENTS.md)\"),",
-                "    ] = True,",
+                "    add_config: Annotated[bool, typer.Option(\"--no-add-config\", \"-C\", help=\"Skip private agent config files/directories\")] = True,",
+                "    add_instructions: Annotated[bool, typer.Option(\"--no-add-instructions\", \"-I\", help=\"Skip agent instruction files (e.g. AGENTS.md)\")] = True,",
                 "    add_scripts: Annotated[bool, typer.Option(\"--include-scripts\", \"-s\", help=\"Create shared .ai and scripts/type_checking scaffold\")] = False,",
                 "    add_vscode_tasks: Annotated[bool, typer.Option(\"--add-vscode-tasks\", \"-l\", help=\"Add VS Code lint/type-check task only\")] = False,",
                 "    add_to_gitignore: Annotated[",
@@ -18039,20 +17846,13 @@
               "raw_lines": [
                 "def run_prompt(",
                 "    prompt: Annotated[",
-                "        list[str],",
-                "        typer.Argument(",
-                "            default_factory=list,",
-                "            help=\"Prompt text. Use -- before the prompt to pass option-looking text as prompt content.\",",
-                "        ),",
+                "        list[str], typer.Argument(default_factory=list, help=\"Prompt text. Use -- before the prompt to pass option-looking text as prompt content.\")",
                 "    ],",
                 "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = DEFAULT_AGENT,",
                 "    reasoning_effort: Annotated[",
                 "        ReasoningEffort | None,",
                 "        typer.Option(",
-                "            ...,",
-                "            \"--reasoning\",",
-                "            \"-r\",",
-                "            help=\"Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.\",",
+                "            ..., \"--reasoning\", \"-r\", help=\"Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.\"",
                 "        ),",
                 "    ] = None,",
                 "    context: Annotated[str | None, typer.Option(..., \"--context\", \"-c\", help=\"Context string. Mutually exclusive with --context-path.\")] = None,",
@@ -18078,8 +17878,7 @@
                 "        ),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        _PROMPTS_SOURCE,",
-                "        typer.Option(..., \"--source\", \"-s\", help=\"Source to look for context YAML files when --context-yaml-path is not provided.\"),",
+                "        _PROMPTS_SOURCE, typer.Option(..., \"--source\", \"-s\", help=\"Source to look for context YAML files when --context-yaml-path is not provided.\")",
                 "    ] = \"all\",",
                 "    show_prompts_yaml_format: Annotated[",
                 "        bool,",
@@ -18372,27 +18171,18 @@
             "signature": {
               "raw_lines": [
                 "def run_interactive(",
-                "    agent: Annotated[",
-                "        INTERACTIVE_AGENT,",
-                "        typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch: codex/x, copilot/c, pi/p, or omp/o.\"),",
-                "    ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),",
-                "    caveman: Annotated[",
-                "        bool,",
-                "        typer.Option(..., \"--caveman\", \"-c\", help=\"Start the session with the caveman wenyan-full prompt.\"),",
-                "    ] = False,",
-                "    headroom: Annotated[",
-                "        bool,",
-                "        typer.Option(..., \"--headroom\", \"-h\", help=\"Launch the session through headroom.\"),",
-                "    ] = False,",
+                "    agent: Annotated[INTERACTIVE_AGENT, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch: codex/x, copilot/c, pi/p, or omp/o.\")] = cast(",
+                "        INTERACTIVE_AGENT, DEFAULT_AGENT",
+                "    ),",
+                "    caveman: Annotated[bool, typer.Option(..., \"--caveman\", \"-c\", help=\"Start the session with the caveman wenyan-full prompt.\")] = False,",
+                "    headroom: Annotated[bool, typer.Option(..., \"--headroom\", \"-h\", help=\"Launch the session through headroom.\")] = False,",
                 ") -> None:",
                 "    \"\"\"Launch an agent with reasonable defaults.\"\"\"",
                 "    import shlex",
                 "",
                 "    resolved_agent = _resolve_interactive_agent(agent=agent)",
                 "    try:",
-                "        command = _apply_headroom(",
-                "            command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom",
-                "        )",
+                "        command = _apply_headroom(command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom)",
                 "    except ValueError as error:",
                 "        raise typer.BadParameter(str(error)) from error",
                 "    from stackops.utils.code import exit_then_run_shell_script",
@@ -18649,12 +18439,7 @@
             "signature": {
               "raw_lines": [
                 "def plan(",
-                "    prompt: Annotated[",
-                "        list[str],",
-                "        typer.Argument(",
-                "            help=\"Plan objective. Use -- before the objective to pass option-looking text as prompt content.\",",
-                "        ),",
-                "    ],",
+                "    prompt: Annotated[list[str], typer.Argument(help=\"Plan objective. Use -- before the objective to pass option-looking text as prompt content.\")],",
                 "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to generate the plan.\")] = DEFAULT_AGENT,",
                 ") -> None:",
                 "    \"\"\"Generate an agentops plan JSON file via selected agent.\"\"\"",
@@ -18735,8 +18520,7 @@
               "raw_lines": [
                 "def execute(",
                 "    plan_json: Annotated[",
-                "        Path | None,",
-                "        typer.Argument(help=\"Plan JSON file generated by `agents plan`. If omitted, execute the only .ai/plans/*.plan.json file.\"),",
+                "        Path | None, typer.Argument(help=\"Plan JSON file generated by `agents plan`. If omitted, execute the only .ai/plans/*.plan.json file.\")",
                 "    ] = None,",
                 "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent used to check whether the active phase is finished.\")] = DEFAULT_AGENT,",
                 "    interval_seconds: Annotated[int, typer.Option(\"--interval\", \"-i\", help=\"Seconds to sleep between executor passes.\")] = 300,",

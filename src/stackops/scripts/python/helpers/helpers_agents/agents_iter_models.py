@@ -5,25 +5,11 @@ from typing import Literal, NewType
 WorkspaceId = NewType("WorkspaceId", str)
 TabId = NewType("TabId", str)
 PaneId = NewType("PaneId", str)
+TerminalId = NewType("TerminalId", str)
 
 type HerdrStatus = Literal["blocked", "done", "idle", "unknown", "working"]
-type KeepReason = Literal[
-    "recent",
-    "active",
-    "launch_successor",
-    "tracker",
-    "unmanaged",
-    "incomplete_snapshot",
-]
-type CloseSkipReason = Literal["already_absent", "state_changed", "workspace_absent"]
-type IterWorkspaceTrackPhase = Literal[
-    "within_budget",
-    "stop_requested",
-    "draining",
-    "ready_to_close",
-    "closed",
-    "failed",
-]
+type KeepReason = Literal["active", "selected", "handoff_unverified", "unmanaged", "incomplete_snapshot"]
+type CloseSkipReason = Literal["state_changed", "workspace_absent"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,25 +37,28 @@ class HerdrTab:
 
 @dataclass(frozen=True, slots=True)
 class HerdrAgent:
-    agent: str
+    terminal_id: TerminalId
+    agent: str | None
     agent_status: HerdrStatus
     workspace_id: WorkspaceId
     tab_id: TabId
     pane_id: PaneId
-    cwd: str
-    foreground_cwd: str
+    cwd: str | None
+    foreground_cwd: str | None
     focused: bool
     name: str | None
+    display_agent: str | None
+    revision: int
 
 
 @dataclass(frozen=True, slots=True)
 class HerdrPane:
     pane_id: PaneId
+    terminal_id: TerminalId
     workspace_id: WorkspaceId
     tab_id: TabId
     agent_status: HerdrStatus
-    agent: str | None
-    label: str | None
+    revision: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,20 +141,3 @@ class IterWorkspaceStatus:
     latest_iteration: int | None
     latest_agent: HerdrAgent | None
     latest_agent_tab: HerdrTab | None
-
-
-@dataclass(frozen=True, slots=True)
-class IterWorkspaceTrackResult:
-    workspace_id: WorkspaceId
-    workspace: HerdrWorkspace | None
-    latest_iteration: int | None
-    max_iterations: int
-    phase: IterWorkspaceTrackPhase
-    message: str | None
-
-
-@dataclass(frozen=True, slots=True)
-class IterWorkspaceTrackCheck:
-    status: IterWorkspaceStatus | None
-    track_result: IterWorkspaceTrackResult
-    close_result: IterWorkspaceClose | None
