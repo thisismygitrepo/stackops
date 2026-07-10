@@ -72,6 +72,7 @@ def _snapshot(*, source_status: HerdrStatus, include_unmanaged_tab: bool) -> tup
 
 def _handoff(*, accepted_revision: int) -> IterationHandoff:
     return IterationHandoff(
+        herdr_session="default",
         workspace_id=WorkspaceId("w1"),
         source_iteration=1,
         source_tab_id=TabId("w1:t1"),
@@ -127,16 +128,27 @@ def test_stale_revision_and_legacy_tracker_are_rejected() -> None:
 
 
 def test_current_handoff_file_is_strictly_parsed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("HERDR_SESSION", raising=False)
     run_path = tmp_path.joinpath(".ai", "agentops", "iterations", "alpha", "iter-001")
     run_path.mkdir(parents=True)
     run_path.parent.joinpath("run.json").write_text(
-        json.dumps({"schema_version": 1, "herdr_version": "0.7.3", "herdr_protocol": 16, "workspace_id": "w1", "workspace_label": "iter-alpha"}),
+        json.dumps(
+            {
+                "schema_version": 1,
+                "herdr_version": "0.7.3",
+                "herdr_protocol": 16,
+                "herdr_session": "default",
+                "workspace_id": "w1",
+                "workspace_label": "iter-alpha",
+            }
+        ),
         encoding="utf-8",
     )
     receipt = {
         "schema_version": 1,
         "herdr_version": "0.7.3",
         "herdr_protocol": 16,
+        "herdr_session": "default",
         "workspace_id": "w1",
         "source_iteration": 1,
         "source_tab_id": "w1:t1",

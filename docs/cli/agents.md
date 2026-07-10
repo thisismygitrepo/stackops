@@ -29,7 +29,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 
 ## `iter`
 
-`iter` supports Herdr 0.7.3/protocol 16 only. `status` reads one atomic Herdr snapshot, `close WORKSPACE_ID` closes only quiet old tabs whose current `handoff.json` receipt still matches every stable Herdr identifier, and `clean` removes only inactive runs with a current `run.json` manifest. The obsolete polling budget tracker was removed because it could terminate a working successor.
+`iter` supports Herdr 0.7.3/protocol 16 only. Within the active `HERDR_SESSION`, `status` reads one atomic Herdr snapshot, `close WORKSPACE_ID` closes only quiet old tabs whose current `handoff.json` receipt still matches every stable Herdr identifier, and `clean` removes only inactive runs with a current `run.json` manifest. The obsolete polling budget tracker was removed because it could terminate a working successor.
 
 ```bash
 agents iter status

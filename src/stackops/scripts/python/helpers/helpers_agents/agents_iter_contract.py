@@ -2,7 +2,7 @@ from collections.abc import Mapping
 from typing import Final
 
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import HerdrSnapshot, HerdrStatus, HerdrTab, HerdrWorkspace, TabId
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import IterationHandoff, current_herdr_session
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import IterationHandoff
 
 
 _MUTATION_VETO_STATUSES: Final[frozenset[HerdrStatus]] = frozenset(("blocked", "unknown", "working"))
@@ -54,8 +54,7 @@ def handoff_matches_snapshot(
     if handoff is None:
         return False
     if (
-        handoff.herdr_session != current_herdr_session()
-        or handoff.workspace_id != workspace.workspace_id
+        handoff.workspace_id != workspace.workspace_id
         or handoff.source_iteration != source_iteration
         or handoff.source_tab_id != source_tab.tab_id
         or handoff.successor_iteration != source_iteration + 1

@@ -5,7 +5,6 @@ CC
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_cloud.cloud_copy_artifacts import (
-    prepared_upload_path,
     restore_staged_download,
     staged_download,
 )
@@ -22,7 +21,7 @@ from stackops.utils.cloud.rclone import (
     parse_share_scope,
 )
 from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
-from stackops.utils.cloud.target_conflict import TargetConflictAction, TargetConflictError, apply_target_conflict_action
+from stackops.utils.cloud.target_conflict import TargetConflictAction, apply_target_conflict_action
 
 
 defaults = read_default_cloud_config()

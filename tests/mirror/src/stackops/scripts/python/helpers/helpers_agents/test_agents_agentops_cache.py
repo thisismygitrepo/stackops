@@ -8,19 +8,27 @@ from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import WorkspaceId
 
 
-def _write_run_manifest(*, run_path: Path, workspace_id: str, workspace_label: str) -> None:
+def _write_run_manifest(*, run_path: Path, herdr_session: str, workspace_id: str, workspace_label: str) -> None:
     run_path.mkdir(parents=True)
     run_path.joinpath("run.json").write_text(
         json.dumps(
-            {"schema_version": 1, "herdr_version": "0.7.3", "herdr_protocol": 16, "workspace_id": workspace_id, "workspace_label": workspace_label}
+            {
+                "schema_version": 1,
+                "herdr_version": "0.7.3",
+                "herdr_protocol": 16,
+                "herdr_session": herdr_session,
+                "workspace_id": workspace_id,
+                "workspace_label": workspace_label,
+            }
         ),
         encoding="utf-8",
     )
 
 
 def test_clean_protects_current_run_by_stable_workspace_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("HERDR_SESSION", raising=False)
     run_path = tmp_path.joinpath(".ai", "agentops", "iterations", "alpha")
-    _write_run_manifest(run_path=run_path, workspace_id="w1", workspace_label="iter-renamed")
+    _write_run_manifest(run_path=run_path, herdr_session="default", workspace_id="w1", workspace_label="iter-renamed")
 
     def fake_repo_root(_cwd: Path) -> Path:
         return tmp_path
@@ -38,10 +46,13 @@ def test_clean_protects_current_run_by_stable_workspace_id(tmp_path: Path, monke
 
 
 def test_clean_removes_only_inactive_current_records(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("HERDR_SESSION", raising=False)
     iterations_path = tmp_path.joinpath(".ai", "agentops", "iterations")
     current_path = iterations_path.joinpath("current")
     legacy_path = iterations_path.joinpath("legacy")
-    _write_run_manifest(run_path=current_path, workspace_id="w2", workspace_label="iter-current")
+    named_session_path = iterations_path.joinpath("named-session")
+    _write_run_manifest(run_path=current_path, herdr_session="default", workspace_id="w2", workspace_label="iter-current")
+    _write_run_manifest(run_path=named_session_path, herdr_session="work", workspace_id="w3", workspace_label="iter-named")
     legacy_path.mkdir(parents=True)
 
     def fake_repo_root(_cwd: Path) -> Path:
@@ -55,6 +66,7 @@ def test_clean_removes_only_inactive_current_records(tmp_path: Path, monkeypatch
     result = clean_agentops_cache(cwd=tmp_path, dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None)
 
     assert result.removed_runs == (current_path,)
-    assert result.unmanaged_entries == (legacy_path,)
+    assert result.unmanaged_entries == (legacy_path, named_session_path)
     assert not current_path.exists()
     assert legacy_path.exists()
+    assert named_session_path.exists()

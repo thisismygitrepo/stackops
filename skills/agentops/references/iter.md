@@ -22,7 +22,7 @@ Within one iteration, use the agent's own internal sub-agent mechanism when the 
 
 1. Identify objective, evaluation criteria, and constraints. Ask only if the objective is missing; otherwise write a concrete working interpretation into the records.
 2. Select mode: interactive by default, non-interactive only when requested or required.
-3. Inspect `herdr --help` and relevant workspace/tab/pane/agent help. For non-interactive mode, inspect the target CLI help for one-shot invocation.
+3. Inspect `herdr --help` and relevant workspace/tab/pane/agent help. Require Herdr 0.7.3/protocol 16 from `herdr --version` and `herdr api snapshot`; stop on any other contract. Record `HERDR_SESSION`, using `default` only when it is unset. For non-interactive mode, inspect the target CLI help for one-shot invocation.
 4. Capture cwd, repo root, branch, commit, status, changed files, relevant commands already run, project rules, and blockers.
 5. Create records under:
 
@@ -86,13 +86,14 @@ herdr pane list --workspace '<workspace_id>'
 
 For non-interactive mode, run the target CLI's documented one-shot invocation through Herdr. If the one-shot agent cannot launch the next generation itself, the controller that reads its written recommendation must launch the next agent from the packet path.
 
-Write `run.json` with exactly this schema immediately after workspace creation:
+Write `run.json` with exactly this schema immediately after workspace creation, replacing `default` with the active named session when `HERDR_SESSION` is set:
 
 ```json
 {
   "schema_version": 1,
   "herdr_version": "0.7.3",
   "herdr_protocol": 16,
+  "herdr_session": "default",
   "workspace_id": "w1",
   "workspace_label": "iter-<slug>"
 }
@@ -143,13 +144,14 @@ Expected final report:
 
 ## Handoff Receipt
 
-After the successor prompt is visibly accepted, write `iter-<NNN>/handoff.json` with exactly this schema using values from `herdr api snapshot` and `herdr agent get`:
+After the successor prompt is visibly accepted, write `iter-<NNN>/handoff.json` with exactly this schema using the active Herdr session plus values from `herdr api snapshot` and `herdr agent get`:
 
 ```json
 {
   "schema_version": 1,
   "herdr_version": "0.7.3",
   "herdr_protocol": 16,
+  "herdr_session": "default",
   "workspace_id": "w1",
   "source_iteration": 1,
   "source_tab_id": "w1:t1",

@@ -84,8 +84,7 @@ def load_iteration_handoffs(*, cwd: Path, workspace_label: str) -> dict[int, Ite
     active_session = current_herdr_session()
     if manifest.herdr_session != active_session:
         raise RuntimeError(
-            f"AgentOps run belongs to Herdr session {manifest.herdr_session!r}, not {active_session!r}: "
-            f"{run_path.joinpath('run.json')}"
+            f"AgentOps run belongs to Herdr session {manifest.herdr_session!r}, not {active_session!r}: {run_path.joinpath('run.json')}"
         )
     if manifest.workspace_label != workspace_label:
         raise RuntimeError(f"AgentOps run manifest label does not match {workspace_label!r}: {run_path.joinpath('run.json')}")
