@@ -128,6 +128,7 @@ Hard rules:
 - Treat the previous recommendation as a starting hypothesis, not a command; inspect enough to confirm it is still the best next move.
 - Read optional detail pointers, state.md, index.md, or older iteration records only when they help confirm facts, understand a blocker, or avoid repeating work.
 - Dynamically size the next iteration: broaden it if this pass was too small to matter, narrow it if this pass was too broad, risky, slow, or left too much unfinished.
+- Before recommending the next pass, briefly reassess the overall objective: if the current direction is yielding diminishing returns while larger gaps remain, redirect the next iteration toward a higher-impact gap instead of continuing by inertia.
 - When substantial work inside this pass is clearly parallelizable, use bounded internal sub-agents, then merge their findings before writing result.md.
 - Validate with the strongest practical evidence.
 - Write iter-<NNN>/result.md and iter-<NNN>/recommendation.md.
@@ -170,7 +171,7 @@ Use the successor revision observed after its status becomes `working`. Never pr
 
 The recommendation to the next agent is a compact file, not a large Herdr prompt. `iter-<NNN>/recommendation.md` must include:
 
-- one recommended next move, or instruction to independently inspect for marginal improvements
+- one recommended next move, or instruction to independently inspect for the highest-impact remaining gap
 - why that move is credible
 - workload calibration for the next iteration: broader, narrower, or same scope, with one short reason
 - parallelization opportunity for non-communicating internal sub-agents, if one exists and is substantial enough to justify splitting work
