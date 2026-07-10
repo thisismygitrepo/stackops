@@ -1,6 +1,6 @@
 # StackOps Source Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-14.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-07-10.
 
 Use this map to jump from a command path to the file that registers or implements it. For signatures, options, aliases, and full node metadata, inspect `src/stackops/scripts/python/graph/cli_graph.json`.
 
@@ -28,6 +28,7 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops vault` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_vault.get_app` via `vault`
 - `devops network` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_nw.get_app` via `network`
 - `devops network ssh` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_ssh.get_app` via `ssh`
+- `devops network cloudflare` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_cloudflare.get_app` via `cloudflare`
 - `devops network device` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_device.get_app` via `device`
 - `devops self` -> `src/stackops/scripts/python/devops.py` -> `stackops.scripts.python.helpers.helpers_devops.cli_self.get_app` via `self`
 - `devops self security` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_self.py` -> `stackops.jobs.installer.checks.security_cli.get_app` via `security`
@@ -97,13 +98,17 @@ Use this map to jump from a command path to the file that registers or implement
 - `devops network ssh change-port` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_ssh.py` -> `change_ssh_port`
 - `devops network ssh add-key` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_ssh.py` -> `add_ssh_key`
 - `devops network ssh debug` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_ssh.py` -> `debug_ssh`
-- `devops network device switch-public-ip` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_device.py` -> `switch_public_ip_address`
+- `devops network ssh map-port` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_ssh_port.py` -> `map_port`
+- `devops network cloudflare switch-public-ip` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_cloudflare.py` -> `switch_public_ip_address`
+- `devops network cloudflare reset-cloudflare-tunnel` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_cloudflare.py` -> `reset_cloudflare_tunnel`
+- `devops network cloudflare add-ip-exclusion-to-warp` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_cloudflare.py` -> `add_ip_exclusion_to_warp`
+- `devops network cloudflare cloudflare-tunnel-status` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_cloudflare_tunnel.py` -> `cloudflare_tunnel_status`
+- `devops network cloudflare update-cloudflare-connectors` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_cloudflare_tunnel.py` -> `update_cloudflare_connectors`
+- `devops network cloudflare sync-cloudflare-routes` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_cloudflare_tunnel.py` -> `sync_cloudflare_routes`
 - `devops network device wifi-select` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_device.py` -> `wifi_select`
 - `devops network device bind-wsl-port` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_device.py` -> `bind_wsl_port`
 - `devops network device open-wsl-port` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_device.py` -> `open_wsl_port`
 - `devops network device link-wsl-windows` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_device.py` -> `link_wsl_and_windows_home`
-- `devops network device reset-cloudflare-tunnel` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_device.py` -> `reset_cloudflare_tunnel`
-- `devops network device add-ip-exclusion-to-warp` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_device.py` -> `add_ip_exclusion_to_warp`
 - `devops network show-address` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `show_address`
 - `devops network vscode-share` -> `src/stackops/scripts/python/helpers/helpers_devops/cli_nw.py` -> `vscode_share`
 - `devops execute` -> `src/stackops/scripts/python/devops.py` -> `execute`

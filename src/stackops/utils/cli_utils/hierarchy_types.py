@@ -717,6 +717,16 @@ StackOpsDevopsNetworkSSHDebugCommand = TypedDict(
     {"command_name": Literal["debug"], "short_name": Literal["d"], "help": Literal["🐛 <d> Debug SSH connection"], "subcommands": EmptySubcommands},
 )
 
+StackOpsDevopsNetworkSSHMapPortCommand = TypedDict(
+    "StackOpsDevopsNetworkSSHMapPortCommand",
+    {
+        "command_name": Literal["map-port"],
+        "short_name": Literal["m"],
+        "help": Literal["🔀 <m> Map a remote TCP port to local loopback over SSH"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
 StackOpsDevopsNetworkSSHSubcommands = TypedDict(
     "StackOpsDevopsNetworkSSHSubcommands",
     {
@@ -724,6 +734,7 @@ StackOpsDevopsNetworkSSHSubcommands = TypedDict(
         "change-port": StackOpsDevopsNetworkSSHChangePortCommand,
         "add-key": StackOpsDevopsNetworkSSHAddKeyCommand,
         "debug": StackOpsDevopsNetworkSSHDebugCommand,
+        "map-port": StackOpsDevopsNetworkSSHMapPortCommand,
     },
 )
 
@@ -737,8 +748,8 @@ StackOpsDevopsNetworkSSHCommand = TypedDict(
     },
 )
 
-StackOpsDevopsNetworkDeviceSwitchPublicIpCommand = TypedDict(
-    "StackOpsDevopsNetworkDeviceSwitchPublicIpCommand",
+StackOpsDevopsNetworkCloudflareSwitchPublicIpCommand = TypedDict(
+    "StackOpsDevopsNetworkCloudflareSwitchPublicIpCommand",
     {
         "command_name": Literal["switch-public-ip"],
         "short_name": Literal["s"],
@@ -787,8 +798,8 @@ StackOpsDevopsNetworkDeviceLinkWSLWindowsCommand = TypedDict(
     },
 )
 
-StackOpsDevopsNetworkDeviceResetCloudflareTunnelCommand = TypedDict(
-    "StackOpsDevopsNetworkDeviceResetCloudflareTunnelCommand",
+StackOpsDevopsNetworkCloudflareResetCloudflareTunnelCommand = TypedDict(
+    "StackOpsDevopsNetworkCloudflareResetCloudflareTunnelCommand",
     {
         "command_name": Literal["reset-cloudflare-tunnel"],
         "short_name": Literal["r"],
@@ -797,8 +808,8 @@ StackOpsDevopsNetworkDeviceResetCloudflareTunnelCommand = TypedDict(
     },
 )
 
-StackOpsDevopsNetworkDeviceAddIpExclusionToWarpCommand = TypedDict(
-    "StackOpsDevopsNetworkDeviceAddIpExclusionToWarpCommand",
+StackOpsDevopsNetworkCloudflareAddIpExclusionToWarpCommand = TypedDict(
+    "StackOpsDevopsNetworkCloudflareAddIpExclusionToWarpCommand",
     {
         "command_name": Literal["add-ip-exclusion-to-warp"],
         "short_name": Literal["p"],
@@ -807,16 +818,65 @@ StackOpsDevopsNetworkDeviceAddIpExclusionToWarpCommand = TypedDict(
     },
 )
 
+StackOpsDevopsNetworkCloudflareTunnelStatusCommand = TypedDict(
+    "StackOpsDevopsNetworkCloudflareTunnelStatusCommand",
+    {
+        "command_name": Literal["cloudflare-tunnel-status"],
+        "short_name": Literal["t"],
+        "help": Literal["☁ <t> Show tunnel redundancy, versions, services, and routes"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsDevopsNetworkCloudflareUpdateConnectorsCommand = TypedDict(
+    "StackOpsDevopsNetworkCloudflareUpdateConnectorsCommand",
+    {
+        "command_name": Literal["update-cloudflare-connectors"],
+        "short_name": Literal["u"],
+        "help": Literal["⬆ <u> Rolling-update Cloudflare Tunnel connectors"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsDevopsNetworkCloudflareSyncRoutesCommand = TypedDict(
+    "StackOpsDevopsNetworkCloudflareSyncRoutesCommand",
+    {
+        "command_name": Literal["sync-cloudflare-routes"],
+        "short_name": Literal["y"],
+        "help": Literal["🔀 <y> Copy selected ingress routes without tunnel credentials"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsDevopsNetworkCloudflareSubcommands = TypedDict(
+    "StackOpsDevopsNetworkCloudflareSubcommands",
+    {
+        "switch-public-ip": StackOpsDevopsNetworkCloudflareSwitchPublicIpCommand,
+        "reset-cloudflare-tunnel": StackOpsDevopsNetworkCloudflareResetCloudflareTunnelCommand,
+        "add-ip-exclusion-to-warp": StackOpsDevopsNetworkCloudflareAddIpExclusionToWarpCommand,
+        "cloudflare-tunnel-status": StackOpsDevopsNetworkCloudflareTunnelStatusCommand,
+        "update-cloudflare-connectors": StackOpsDevopsNetworkCloudflareUpdateConnectorsCommand,
+        "sync-cloudflare-routes": StackOpsDevopsNetworkCloudflareSyncRoutesCommand,
+    },
+)
+
+StackOpsDevopsNetworkCloudflareCommand = TypedDict(
+    "StackOpsDevopsNetworkCloudflareCommand",
+    {
+        "command_name": Literal["cloudflare"],
+        "short_name": Literal["c"],
+        "help": Literal["☁ <c> Cloudflare subcommands"],
+        "subcommands": StackOpsDevopsNetworkCloudflareSubcommands,
+    },
+)
+
 StackOpsDevopsNetworkDeviceSubcommands = TypedDict(
     "StackOpsDevopsNetworkDeviceSubcommands",
     {
-        "switch-public-ip": StackOpsDevopsNetworkDeviceSwitchPublicIpCommand,
         "wifi-select": StackOpsDevopsNetworkDeviceWifiSelectCommand,
         "bind-wsl-port": StackOpsDevopsNetworkDeviceBindWSLPortCommand,
         "open-wsl-port": StackOpsDevopsNetworkDeviceOpenWSLPortCommand,
         "link-wsl-windows": StackOpsDevopsNetworkDeviceLinkWSLWindowsCommand,
-        "reset-cloudflare-tunnel": StackOpsDevopsNetworkDeviceResetCloudflareTunnelCommand,
-        "add-ip-exclusion-to-warp": StackOpsDevopsNetworkDeviceAddIpExclusionToWarpCommand,
     },
 )
 
@@ -859,6 +919,7 @@ StackOpsDevopsNetworkSubcommands = TypedDict(
         "receive": StackOpsDevopsNetworkReceiveCommand,
         "share-temp-file": StackOpsDevopsNetworkShareTempFileCommand,
         "ssh": StackOpsDevopsNetworkSSHCommand,
+        "cloudflare": StackOpsDevopsNetworkCloudflareCommand,
         "device": StackOpsDevopsNetworkDeviceCommand,
         "show-address": StackOpsDevopsNetworkShowAddressCommand,
         "vscode-share": StackOpsDevopsNetworkVscodeShareCommand,

@@ -209,6 +209,8 @@ def debug_ssh() -> None:
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops import cli_ssh_port
+
     ssh_app = typer.Typer(help="🔐 SSH subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     ssh_app.command(name="install-server", help="📡 <i> Install SSH server")(install_ssh_server)
     ssh_app.command(name="i", help="Install SSH server", hidden=True)(install_ssh_server)
@@ -219,4 +221,6 @@ def get_app() -> typer.Typer:
 
     ssh_app.command(name="debug", help="🐛 <d> Debug SSH connection")(debug_ssh)
     ssh_app.command(name="d", help="Debug SSH connection", hidden=True)(debug_ssh)
+    ssh_app.command(name="map-port", help="🔀 <m> Map a remote TCP port to local loopback over SSH", no_args_is_help=True)(cli_ssh_port.map_port)
+    ssh_app.command(name="m", help="Map a remote TCP port to local loopback over SSH", hidden=True, no_args_is_help=True)(cli_ssh_port.map_port)
     return ssh_app

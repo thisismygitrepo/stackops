@@ -54,39 +54,26 @@ def build_map_port_command(ssh_destination: SSHConnectionTarget, remote_port: in
 
 
 def map_port(
-    destination: Annotated[
-        str,
-        typer.Argument(help="SSH config name or destination (host, user@host, or either form with an SSH port)."),
-    ],
+    destination: Annotated[str, typer.Argument(help="SSH config name or destination (host, user@host, or either form with an SSH port).")],
     remote_port: Annotated[int, typer.Argument(min=1, max=65_535, help="TCP port on the remote machine.")],
-    local_port: Annotated[
-        int | None,
-        typer.Option("--local-port", "-l", min=1, max=65_535, help="Local TCP port; defaults to REMOTE_PORT."),
-    ] = None,
-    open_browser: Annotated[
-        bool,
-        typer.Option("--open-browser", "-b", help="Open the mapped local address in the default browser."),
-    ] = False,
+    local_port: Annotated[int | None, typer.Option("--local-port", "-l", min=1, max=65_535, help="Local TCP port; defaults to REMOTE_PORT.")] = None,
+    open_browser: Annotated[bool, typer.Option("--open-browser", "-b", help="Open the mapped local address in the default browser.")] = False,
 ) -> None:
     selected_local_port = remote_port if local_port is None else local_port
     try:
         ssh_destination = resolve_map_port_destination(destination=destination)
     except subprocess.CalledProcessError as error:
-        error_detail = error.stderr.strip() if isinstance(error.stderr, str) and error.stderr.strip() else f"OpenSSH exited with code {error.returncode}."
+        error_detail = (
+            error.stderr.strip() if isinstance(error.stderr, str) and error.stderr.strip() else f"OpenSSH exited with code {error.returncode}."
+        )
         raise typer.BadParameter(error_detail, param_hint="DESTINATION") from error
     except (TypeError, ValueError) as error:
         raise typer.BadParameter(str(error), param_hint="DESTINATION") from error
     except OSError as error:
         typer.echo(f"Unable to start OpenSSH: {error}", err=True)
         raise typer.Exit(code=1) from error
-    command = build_map_port_command(
-        ssh_destination=ssh_destination,
-        remote_port=remote_port,
-        local_port=selected_local_port,
-    )
-    typer.echo(
-        f"Mapping 127.0.0.1:{selected_local_port} to 127.0.0.1:{remote_port} through {destination}. Press Ctrl-C to stop."
-    )
+    command = build_map_port_command(ssh_destination=ssh_destination, remote_port=remote_port, local_port=selected_local_port)
+    typer.echo(f"Mapping 127.0.0.1:{selected_local_port} to 127.0.0.1:{remote_port} through {destination}. Press Ctrl-C to stop.")
     try:
         ssh_process = subprocess.Popen(command)
     except OSError as error:

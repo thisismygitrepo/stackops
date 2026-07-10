@@ -85,10 +85,7 @@ def vscode_share(
             cmd = f"code tunnel service uninstall {extra}".strip()
             desc = "Uninstall code tunnel service"
         case "share-local" | "l":
-            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import (
-                ensure_without_connection_token,
-                resolve_share_local_folder,
-            )
+            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder
 
             host_part = f"--host {shlex.quote(host)}" if host else ""
             server_base_path_part = f"--server-base-path {shlex.quote(path)}" if path else ""
@@ -115,6 +112,7 @@ def vscode_share(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import (
+        cli_cloudflare,
         cli_device,
         cli_share_file,
         cli_share_server,
@@ -147,6 +145,8 @@ def get_app() -> typer.Typer:
 
     nw_apps.add_typer(cli_ssh.get_app(), name="ssh", help="🔐 <S> SSH subcommands")
     nw_apps.add_typer(cli_ssh.get_app(), name="S", help="SSH subcommands", hidden=True)
+    nw_apps.add_typer(cli_cloudflare.get_app(), name="cloudflare", help="☁ <c> Cloudflare subcommands")
+    nw_apps.add_typer(cli_cloudflare.get_app(), name="c", help="Cloudflare subcommands", hidden=True)
     nw_apps.add_typer(cli_device.get_app(), name="device", help="🖥 <d> Device subcommands")
     nw_apps.add_typer(cli_device.get_app(), name="d", help="Device subcommands", hidden=True)
 

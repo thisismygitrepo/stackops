@@ -128,12 +128,3 @@ def sync_cloudflare_routes(
     except (OSError, RuntimeError, ValueError) as error:
         Console().print(f"[red]{error}[/red]")
         raise typer.Exit(code=1) from error
-
-
-def register_commands(device_app: typer.Typer) -> None:
-    device_app.command(name="cloudflare-tunnel-status", help="☁ <t> Show tunnel redundancy, versions, services, and routes")(cloudflare_tunnel_status)
-    device_app.command(name="t", help="Show Cloudflare Tunnel status", hidden=True)(cloudflare_tunnel_status)
-    device_app.command(name="update-cloudflare-connectors", help="⬆ <u> Rolling-update Cloudflare Tunnel connectors")(update_cloudflare_connectors)
-    device_app.command(name="u", help="Rolling-update Cloudflare Tunnel connectors", hidden=True)(update_cloudflare_connectors)
-    device_app.command(name="sync-cloudflare-routes", help="🔀 <y> Copy selected ingress routes without tunnel credentials")(sync_cloudflare_routes)
-    device_app.command(name="y", help="Copy selected Cloudflare Tunnel ingress routes", hidden=True)(sync_cloudflare_routes)

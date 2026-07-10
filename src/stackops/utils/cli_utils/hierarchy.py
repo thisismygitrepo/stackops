@@ -75,15 +75,21 @@ if TYPE_CHECKING:
         StackOpsDevopsNetworkSSHChangePortCommand,
         StackOpsDevopsNetworkSSHAddKeyCommand,
         StackOpsDevopsNetworkSSHDebugCommand,
+        StackOpsDevopsNetworkSSHMapPortCommand,
         StackOpsDevopsNetworkSSHSubcommands,
         StackOpsDevopsNetworkSSHCommand,
-        StackOpsDevopsNetworkDeviceSwitchPublicIpCommand,
+        StackOpsDevopsNetworkCloudflareSwitchPublicIpCommand,
+        StackOpsDevopsNetworkCloudflareResetCloudflareTunnelCommand,
+        StackOpsDevopsNetworkCloudflareAddIpExclusionToWarpCommand,
+        StackOpsDevopsNetworkCloudflareTunnelStatusCommand,
+        StackOpsDevopsNetworkCloudflareUpdateConnectorsCommand,
+        StackOpsDevopsNetworkCloudflareSyncRoutesCommand,
+        StackOpsDevopsNetworkCloudflareSubcommands,
+        StackOpsDevopsNetworkCloudflareCommand,
         StackOpsDevopsNetworkDeviceWifiSelectCommand,
         StackOpsDevopsNetworkDeviceBindWSLPortCommand,
         StackOpsDevopsNetworkDeviceOpenWSLPortCommand,
         StackOpsDevopsNetworkDeviceLinkWSLWindowsCommand,
-        StackOpsDevopsNetworkDeviceResetCloudflareTunnelCommand,
-        StackOpsDevopsNetworkDeviceAddIpExclusionToWarpCommand,
         StackOpsDevopsNetworkDeviceSubcommands,
         StackOpsDevopsNetworkDeviceCommand,
         StackOpsDevopsNetworkShowAddressCommand,
@@ -687,11 +693,19 @@ STACKOPS_DEVOPS_NETWORK_SSH_DEBUG_COMMAND: "StackOpsDevopsNetworkSSHDebugCommand
     "subcommands": {},
 }
 
+STACKOPS_DEVOPS_NETWORK_SSH_MAP_PORT_COMMAND: "StackOpsDevopsNetworkSSHMapPortCommand" = {
+    "command_name": "map-port",
+    "short_name": "m",
+    "help": "🔀 <m> Map a remote TCP port to local loopback over SSH",
+    "subcommands": {},
+}
+
 STACKOPS_DEVOPS_NETWORK_SSH_SUBCOMMANDS: "StackOpsDevopsNetworkSSHSubcommands" = {
     "install-server": STACKOPS_DEVOPS_NETWORK_SSH_INSTALL_SERVER_COMMAND,
     "change-port": STACKOPS_DEVOPS_NETWORK_SSH_CHANGE_PORT_COMMAND,
     "add-key": STACKOPS_DEVOPS_NETWORK_SSH_ADD_KEY_COMMAND,
     "debug": STACKOPS_DEVOPS_NETWORK_SSH_DEBUG_COMMAND,
+    "map-port": STACKOPS_DEVOPS_NETWORK_SSH_MAP_PORT_COMMAND,
 }
 
 STACKOPS_DEVOPS_NETWORK_SSH_COMMAND: "StackOpsDevopsNetworkSSHCommand" = {
@@ -701,7 +715,7 @@ STACKOPS_DEVOPS_NETWORK_SSH_COMMAND: "StackOpsDevopsNetworkSSHCommand" = {
     "subcommands": STACKOPS_DEVOPS_NETWORK_SSH_SUBCOMMANDS,
 }
 
-STACKOPS_DEVOPS_NETWORK_DEVICE_SWITCH_PUBLIC_IP_COMMAND: "StackOpsDevopsNetworkDeviceSwitchPublicIpCommand" = {
+STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_SWITCH_PUBLIC_IP_COMMAND: "StackOpsDevopsNetworkCloudflareSwitchPublicIpCommand" = {
     "command_name": "switch-public-ip",
     "short_name": "s",
     "help": "🔁 <s> Switch public IP address (Cloudflare WARP)",
@@ -736,28 +750,62 @@ STACKOPS_DEVOPS_NETWORK_DEVICE_LINK_WSL_WINDOWS_COMMAND: "StackOpsDevopsNetworkD
     "subcommands": {},
 }
 
-STACKOPS_DEVOPS_NETWORK_DEVICE_RESET_CLOUDFLARE_TUNNEL_COMMAND: "StackOpsDevopsNetworkDeviceResetCloudflareTunnelCommand" = {
+STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_RESET_CLOUDFLARE_TUNNEL_COMMAND: "StackOpsDevopsNetworkCloudflareResetCloudflareTunnelCommand" = {
     "command_name": "reset-cloudflare-tunnel",
     "short_name": "r",
     "help": "☁ <r> Reset Cloudflare tunnel service",
     "subcommands": {},
 }
 
-STACKOPS_DEVOPS_NETWORK_DEVICE_ADD_IP_EXCLUSION_TO_WARP_COMMAND: "StackOpsDevopsNetworkDeviceAddIpExclusionToWarpCommand" = {
+STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_ADD_IP_EXCLUSION_TO_WARP_COMMAND: "StackOpsDevopsNetworkCloudflareAddIpExclusionToWarpCommand" = {
     "command_name": "add-ip-exclusion-to-warp",
     "short_name": "p",
     "help": "🚫 <p> Add IP exclusion to WARP",
     "subcommands": {},
 }
 
+STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_TUNNEL_STATUS_COMMAND: "StackOpsDevopsNetworkCloudflareTunnelStatusCommand" = {
+    "command_name": "cloudflare-tunnel-status",
+    "short_name": "t",
+    "help": "☁ <t> Show tunnel redundancy, versions, services, and routes",
+    "subcommands": {},
+}
+
+STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_UPDATE_CONNECTORS_COMMAND: "StackOpsDevopsNetworkCloudflareUpdateConnectorsCommand" = {
+    "command_name": "update-cloudflare-connectors",
+    "short_name": "u",
+    "help": "⬆ <u> Rolling-update Cloudflare Tunnel connectors",
+    "subcommands": {},
+}
+
+STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_SYNC_ROUTES_COMMAND: "StackOpsDevopsNetworkCloudflareSyncRoutesCommand" = {
+    "command_name": "sync-cloudflare-routes",
+    "short_name": "y",
+    "help": "🔀 <y> Copy selected ingress routes without tunnel credentials",
+    "subcommands": {},
+}
+
+STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_SUBCOMMANDS: "StackOpsDevopsNetworkCloudflareSubcommands" = {
+    "switch-public-ip": STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_SWITCH_PUBLIC_IP_COMMAND,
+    "reset-cloudflare-tunnel": STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_RESET_CLOUDFLARE_TUNNEL_COMMAND,
+    "add-ip-exclusion-to-warp": STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_ADD_IP_EXCLUSION_TO_WARP_COMMAND,
+    "cloudflare-tunnel-status": STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_TUNNEL_STATUS_COMMAND,
+    "update-cloudflare-connectors": STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_UPDATE_CONNECTORS_COMMAND,
+    "sync-cloudflare-routes": STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_SYNC_ROUTES_COMMAND,
+}
+
+STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_COMMAND: "StackOpsDevopsNetworkCloudflareCommand" = {
+    "command_name": "cloudflare",
+    "short_name": "c",
+    "help": "☁ <c> Cloudflare subcommands",
+    "subcommands": STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_SUBCOMMANDS,
+}
+
 STACKOPS_DEVOPS_NETWORK_DEVICE_SUBCOMMANDS: "StackOpsDevopsNetworkDeviceSubcommands" = {
-    "switch-public-ip": STACKOPS_DEVOPS_NETWORK_DEVICE_SWITCH_PUBLIC_IP_COMMAND,
     "wifi-select": STACKOPS_DEVOPS_NETWORK_DEVICE_WIFI_SELECT_COMMAND,
     "bind-wsl-port": STACKOPS_DEVOPS_NETWORK_DEVICE_BIND_WSL_PORT_COMMAND,
     "open-wsl-port": STACKOPS_DEVOPS_NETWORK_DEVICE_OPEN_WSL_PORT_COMMAND,
     "link-wsl-windows": STACKOPS_DEVOPS_NETWORK_DEVICE_LINK_WSL_WINDOWS_COMMAND,
-    "reset-cloudflare-tunnel": STACKOPS_DEVOPS_NETWORK_DEVICE_RESET_CLOUDFLARE_TUNNEL_COMMAND,
-    "add-ip-exclusion-to-warp": STACKOPS_DEVOPS_NETWORK_DEVICE_ADD_IP_EXCLUSION_TO_WARP_COMMAND,
 }
 
 STACKOPS_DEVOPS_NETWORK_DEVICE_COMMAND: "StackOpsDevopsNetworkDeviceCommand" = {
@@ -788,6 +836,7 @@ STACKOPS_DEVOPS_NETWORK_SUBCOMMANDS: "StackOpsDevopsNetworkSubcommands" = {
     "receive": STACKOPS_DEVOPS_NETWORK_RECEIVE_COMMAND,
     "share-temp-file": STACKOPS_DEVOPS_NETWORK_SHARE_TEMP_FILE_COMMAND,
     "ssh": STACKOPS_DEVOPS_NETWORK_SSH_COMMAND,
+    "cloudflare": STACKOPS_DEVOPS_NETWORK_CLOUDFLARE_COMMAND,
     "device": STACKOPS_DEVOPS_NETWORK_DEVICE_COMMAND,
     "show-address": STACKOPS_DEVOPS_NETWORK_SHOW_ADDRESS_COMMAND,
     "vscode-share": STACKOPS_DEVOPS_NETWORK_VSCODE_SHARE_COMMAND,

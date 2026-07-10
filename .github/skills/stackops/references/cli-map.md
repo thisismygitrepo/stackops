@@ -1,6 +1,6 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-06-14.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-07-10.
 
 This reference intentionally uses:
 - direct commands only
@@ -87,15 +87,20 @@ stackops
 │  │  │  ├─ install-server
 │  │  │  ├─ change-port
 │  │  │  ├─ add-key
-│  │  │  └─ debug
-│  │  ├─ device
+│  │  │  ├─ debug
+│  │  │  └─ map-port
+│  │  ├─ cloudflare
 │  │  │  ├─ switch-public-ip
+│  │  │  ├─ reset-cloudflare-tunnel
+│  │  │  ├─ add-ip-exclusion-to-warp
+│  │  │  ├─ cloudflare-tunnel-status
+│  │  │  ├─ update-cloudflare-connectors
+│  │  │  └─ sync-cloudflare-routes
+│  │  ├─ device
 │  │  │  ├─ wifi-select
 │  │  │  ├─ bind-wsl-port
 │  │  │  ├─ open-wsl-port
-│  │  │  ├─ link-wsl-windows
-│  │  │  ├─ reset-cloudflare-tunnel
-│  │  │  └─ add-ip-exclusion-to-warp
+│  │  │  └─ link-wsl-windows
 │  │  ├─ show-address
 │  │  └─ vscode-share
 │  ├─ execute

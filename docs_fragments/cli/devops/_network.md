@@ -6,7 +6,7 @@ Network management.
 devops network [SUBCOMMAND] [ARGS]...
 ```
 
-Network configuration, sharing, SSH setup, device-focused WiFi/WARP/WSL helpers, and VS Code tunneling.
+Network configuration, sharing, SSH setup, Cloudflare/WARP operations, device-focused WiFi/WSL helpers, and VS Code tunneling.
 
 Current `devops network --help` exposes:
 
@@ -17,8 +17,9 @@ Current `devops network --help` exposes:
 | `send` | Send files or text from the current machine |
 | `receive` | Receive files or text using a transfer code |
 | `share-temp-file` | Upload one file to `temp.sh` |
-| `ssh` | SSH server, key, and debugging subcommands |
-| `device` | Device-oriented WiFi, WARP, and WSL subcommands |
+| `ssh` | SSH server, key, debugging, and port-mapping subcommands |
+| `cloudflare` | Cloudflare Tunnel and WARP subcommands |
+| `device` | Device-oriented WiFi and WSL subcommands |
 | `show-address` | Show local and public addresses |
 | `vscode-share` | Share a workspace with VS Code Tunnels or serve-web |
 
@@ -151,6 +152,7 @@ devops network ssh [SUBCOMMAND] [ARGS]...
 | `change-port` | Change the SSH port on Linux or WSL |
 | `add-key` | Add an SSH public key locally or remotely |
 | `debug` | Run SSH diagnostics |
+| `map-port` | Map a remote TCP port to local loopback over SSH |
 
 #### install-server
 
@@ -204,46 +206,52 @@ devops network ssh debug
 
 Runs platform-specific SSH debugging helpers.
 
-### device
+#### map-port
 
-Device-specific network actions now live under a nested Typer app:
-
-```bash
-devops network device [SUBCOMMAND] [ARGS]...
-```
-
-`devops network device --help` currently exposes:
-
-| Command | Description |
-|---------|-------------|
-| `switch-public-ip` | Switch the public IP through Cloudflare WARP |
-| `wifi-select` | Connect using configured or manually selected WiFi |
-| `bind-wsl-port` | Bind a WSL port onto the Windows host |
-| `open-wsl-port` | Open Windows Firewall rules for WSL ports |
-| `link-wsl-windows` | Link WSL home and Windows home directories |
-| `reset-cloudflare-tunnel` | Reconfigure Cloudflare tunnel execution |
-| `add-ip-exclusion-to-warp` | Add WARP tunnel exclusions |
-
-### show-address
-
-Show local interface addresses plus the public IP address when available.
+Map a remote TCP port to a local loopback port through SSH.
 
 ```bash
-devops network show-address
+devops network ssh map-port DESTINATION REMOTE_PORT [OPTIONS]
 ```
+
+Key options:
+
+| Option | Description |
+|--------|-------------|
+| `--local-port`, `-l` | Local TCP port; defaults to the remote port |
+| `--open-browser`, `-b` | Open the mapped local address in the default browser |
 
 Example:
 
 ```bash
-devops network show-address
+devops network ssh map-port workstation 8000 --local-port 9000 --open-browser
 ```
 
-### switch-public-ip
+### cloudflare
+
+Cloudflare Tunnel and WARP actions live under a dedicated Typer app:
+
+```bash
+devops network cloudflare [SUBCOMMAND] [ARGS]...
+```
+
+`devops network cloudflare --help` currently exposes:
+
+| Command | Description |
+|---------|-------------|
+| `switch-public-ip` | Switch the public IP through Cloudflare WARP |
+| `reset-cloudflare-tunnel` | Reconfigure Cloudflare tunnel execution |
+| `add-ip-exclusion-to-warp` | Add WARP tunnel exclusions |
+| `cloudflare-tunnel-status` | Show tunnel redundancy, connector services, versions, and routes |
+| `update-cloudflare-connectors` | Rolling-update Cloudflare Tunnel connectors |
+| `sync-cloudflare-routes` | Copy selected ingress routes without tunnel credentials |
+
+#### switch-public-ip
 
 Switch the public IP through Cloudflare WARP.
 
 ```bash
-devops network device switch-public-ip [OPTIONS]
+devops network cloudflare switch-public-ip [OPTIONS]
 ```
 
 Key options from current help:
@@ -257,10 +265,117 @@ Key options from current help:
 Example:
 
 ```bash
-devops network device switch-public-ip --max-trials 5 --target-ip 203.0.113.10
+devops network cloudflare switch-public-ip --max-trials 5 --target-ip 203.0.113.10
 ```
 
-### wifi-select
+#### reset-cloudflare-tunnel
+
+Print or run the commands needed to reconfigure Cloudflare tunnel execution.
+
+```bash
+devops network cloudflare reset-cloudflare-tunnel [OPTIONS]
+```
+
+Key options from current help:
+
+| Option | Description |
+|--------|-------------|
+| `--task`, `-t` | Required mode: `oneoff-shell-process`, `oneoff-background-process`, or `as-service` |
+| `--tunnel-name`, `-n` | Tunnel name for one-off modes |
+
+Examples:
+
+```bash
+devops network cloudflare reset-cloudflare-tunnel --task oneoff-shell-process --tunnel-name my-tunnel
+devops network cloudflare reset-cloudflare-tunnel --task as-service
+```
+
+#### add-ip-exclusion-to-warp
+
+Add one or more IP exclusions to Cloudflare WARP.
+
+```bash
+devops network cloudflare add-ip-exclusion-to-warp --ip 192.168.20.25,10.0.0.15
+```
+
+#### cloudflare-tunnel-status
+
+Inspect Cloudflare Tunnel redundancy and connector state locally and over SSH.
+
+```bash
+devops network cloudflare cloudflare-tunnel-status TUNNEL_NAME [OPTIONS]
+```
+
+Key options:
+
+| Option | Description |
+|--------|-------------|
+| `--host`, `-H` | SSH connector host; repeat for multiple hosts |
+| `--hostname`, `-n` | Published hostname to verify on each connector |
+| `--local`, `--no-local` | Include or exclude the local connector |
+| `--cloudflared` | Cloudflared executable path on each connector |
+| `--config` | Cloudflared configuration path on each connector |
+| `--service` | Systemd service name on each connector |
+
+#### update-cloudflare-connectors
+
+Update connectors sequentially, waiting for each service to become healthy before continuing.
+
+```bash
+devops network cloudflare update-cloudflare-connectors [OPTIONS]
+```
+
+Key options:
+
+| Option | Description |
+|--------|-------------|
+| `--host`, `-H` | SSH connector host; repeat for a rolling update |
+| `--local`, `--no-local` | Include or exclude the local connector |
+| `--cloudflared` | Cloudflared executable path on each connector |
+| `--service` | Systemd service name on each connector |
+| `--timeout` | Seconds to wait for each restarted service |
+| `--yes`, `-y` | Run without confirmation |
+
+#### sync-cloudflare-routes
+
+Copy selected ingress routes from one connector configuration to another without copying tunnel credentials.
+
+```bash
+devops network cloudflare sync-cloudflare-routes --hostname HOSTNAME [OPTIONS]
+```
+
+Key options:
+
+| Option | Description |
+|--------|-------------|
+| `--hostname`, `-n` | Source hostname route to copy; repeat as needed |
+| `--source-host` | SSH host containing the source configuration |
+| `--source-config` | Source Cloudflared configuration path |
+| `--host`, `-H` | SSH target host; omit for the local machine |
+| `--config` | Target Cloudflared configuration path |
+| `--cloudflared` | Cloudflared executable path on the target |
+| `--service` | Target systemd service name |
+| `--timeout` | Seconds to wait for the restarted service |
+| `--yes`, `-y` | Run without confirmation |
+
+### device
+
+Device-specific WiFi and WSL actions live under a nested Typer app:
+
+```bash
+devops network device [SUBCOMMAND] [ARGS]...
+```
+
+`devops network device --help` currently exposes:
+
+| Command | Description |
+|---------|-------------|
+| `wifi-select` | Connect using configured or manually selected WiFi |
+| `bind-wsl-port` | Bind a WSL port onto the Windows host |
+| `open-wsl-port` | Open Windows Firewall rules for WSL ports |
+| `link-wsl-windows` | Link WSL home and Windows home directories |
+
+#### wifi-select
 
 Connect to WiFi using the configured SSID or an interactive fallback flow.
 
@@ -283,7 +398,7 @@ devops network device wifi-select --list
 devops network device wifi-select --manual
 ```
 
-### bind-wsl-port
+#### bind-wsl-port
 
 Bind a WSL port onto the Windows host using `netsh interface portproxy`.
 
@@ -291,7 +406,7 @@ Bind a WSL port onto the Windows host using `netsh interface portproxy`.
 devops network device bind-wsl-port --port 8080
 ```
 
-### open-wsl-port
+#### open-wsl-port
 
 Open Windows Firewall rules for one or more WSL ports.
 
@@ -299,7 +414,7 @@ Open Windows Firewall rules for one or more WSL ports.
 devops network device open-wsl-port 8080,3000-3005,443
 ```
 
-### link-wsl-windows
+#### link-wsl-windows
 
 Link WSL home and Windows home directories.
 
@@ -313,34 +428,12 @@ Key option:
 |--------|-------------|
 | `--windows-username`, `-u` | Override the auto-detected Windows username |
 
-### reset-cloudflare-tunnel
+### show-address
 
-Print or run the commands needed to reconfigure Cloudflare tunnel execution.
-
-```bash
-devops network device reset-cloudflare-tunnel [OPTIONS]
-```
-
-Key options from current help:
-
-| Option | Description |
-|--------|-------------|
-| `--task`, `-t` | Required mode: `oneoff-shell-process`, `oneoff-background-process`, or `as-service` |
-| `--tunnel-name`, `-n` | Tunnel name for one-off modes |
-
-Examples:
+Show local interface addresses plus the public IP address when available.
 
 ```bash
-devops network device reset-cloudflare-tunnel --task oneoff-shell-process --tunnel-name my-tunnel
-devops network device reset-cloudflare-tunnel --task as-service
-```
-
-### add-ip-exclusion-to-warp
-
-Add one or more IP exclusions to Cloudflare WARP.
-
-```bash
-devops network device add-ip-exclusion-to-warp --ip 192.168.20.25,10.0.0.15
+devops network show-address
 ```
 
 ### vscode-share
@@ -376,6 +469,6 @@ devops network vscode-share install-service --name labbox
 devops network vscode-share share-local --dir . --host 0.0.0.0
 ```
 
-The nested help screens render shortened usage such as `devops share-server ...`, `devops ssh ...`, `devops device ...`, or `devops vscode-share ...`, but the full entrypoints remain under `devops network ...`.
+The nested help screens render shortened usage such as `devops share-server ...`, `devops ssh ...`, `devops cloudflare ...`, `devops device ...`, or `devops vscode-share ...`, but the full entrypoints remain under `devops network ...`.
 
 ---
