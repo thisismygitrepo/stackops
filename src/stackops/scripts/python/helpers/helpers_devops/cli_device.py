@@ -206,7 +206,7 @@ sudo warp-cli connect
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.helpers.helpers_devops import cli_device_cloudflare
+    from stackops.scripts.python.helpers.helpers_devops import cli_device_cloudflare, cli_device_port
 
     device_app = typer.Typer(help="🖥 <d> Device subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
     device_app.command(name="switch-public-ip", help="🔁 <s> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
@@ -231,5 +231,6 @@ def get_app() -> typer.Typer:
 
     device_app.command(name="add-ip-exclusion-to-warp", help="🚫 <p> Add IP exclusion to WARP")(add_ip_exclusion_to_warp)
     device_app.command(name="p", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
+    cli_device_port.register_commands(device_app)
     cli_device_cloudflare.register_commands(device_app)
     return device_app

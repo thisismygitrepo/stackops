@@ -9,9 +9,9 @@ from rich.console import Console
 
 from stackops.scripts.python.helpers.helpers_ai_account.models import FileAgentSupport, ManagedLoginAgentSupport, RuntimeContext
 from stackops.scripts.python.helpers.helpers_ai_account.profiles import (
+    backup_private_credential_automatically,
     copy_private_credential,
     expand_path,
-    find_backup_profile,
     list_profile_directories,
     profile_credential,
     profile_root,
@@ -27,7 +27,7 @@ console = Console()
 class AccountProfileStore:
     support: FileAgentSupport
     active_credential: Path
-    profile_directories: list[Path]
+    profiles_root: Path
 
 
 def _runtime_context() -> RuntimeContext:
@@ -80,22 +80,18 @@ def _resolve_profile_store(agent: str, active_credential_override: Path | None) 
             else active_credential_override
         )
         active_credential = expand_path(resolved_active_credential)
-        profile_directories = list_profile_directories(source_root=profiles_root)
     except (OSError, ValueError) as error:
         console.print(f"[red]{error}[/red]")
         raise typer.Exit(code=1) from error
 
-    if len(profile_directories) == 0:
-        console.print(f"[red]No profiles found under {profiles_root}[/red]")
-        raise typer.Exit(code=1)
-
-    return AccountProfileStore(support=support, active_credential=active_credential, profile_directories=profile_directories)
+    return AccountProfileStore(support=support, active_credential=active_credential, profiles_root=profiles_root)
 
 
 def backup(
     agent: Annotated[str, typer.Argument(help=f"Agent whose active credential to back up. Supported agents: {SUPPORTED_AGENT_HELP}.")],
     profile: Annotated[
-        str | None, typer.Option("--profile", "-p", help="Target profile; omit only when the active credential has a safe, unique profile match.")
+        str | None,
+        typer.Option("--profile", "-p", help="Existing target profile; omit to match or create one from the active credential's safe identity."),
     ] = None,
     active_credential: Annotated[
         Path | None, typer.Option("--active-credential", "-c", help="Override the agent-specific active credential file to back up.")
@@ -107,13 +103,20 @@ def backup(
         raise typer.Exit(code=1)
 
     try:
-        selected_directory = (
-            select_named_profile(profile_directories=store.profile_directories, profile_name=profile)
-            if profile is not None
-            else find_backup_profile(support=store.support, profile_directories=store.profile_directories, active_credential=store.active_credential)
-        )
+        store.profiles_root.mkdir(parents=True, exist_ok=True)
+        profile_directories = list_profile_directories(source_root=store.profiles_root)
+        if profile is None:
+            selected_directory = backup_private_credential_automatically(
+                support=store.support,
+                profiles_root=store.profiles_root,
+                profile_directories=profile_directories,
+                active_credential=store.active_credential,
+            )
+        else:
+            selected_directory = select_named_profile(profile_directories=profile_directories, profile_name=profile)
+            selected_credential = profile_credential(profile_directory=selected_directory, support=store.support)
+            copy_private_credential(source=store.active_credential, destination=selected_credential)
         backup_credential = profile_credential(profile_directory=selected_directory, support=store.support)
-        copy_private_credential(source=store.active_credential, destination=backup_credential)
     except (OSError, ValueError) as error:
         console.print(f"[red]Failed to back up credential: {error}[/red]")
         raise typer.Exit(code=1) from error
@@ -132,14 +135,24 @@ def retrieve(
     ] = None,
 ) -> None:
     store = _resolve_profile_store(agent=agent, active_credential_override=active_credential)
+    try:
+        profile_directories = list_profile_directories(source_root=store.profiles_root)
+    except (OSError, ValueError) as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    if len(profile_directories) == 0:
+        console.print(f"[red]No profiles found under {store.profiles_root}[/red]")
+        raise typer.Exit(code=1)
+
     if profile is None:
-        selected_directory = _choose_retrieve_profile(profile_directories=store.profile_directories, support=store.support)
+        selected_directory = _choose_retrieve_profile(profile_directories=profile_directories, support=store.support)
         if selected_directory is None:
             console.print("[yellow]Cancelled.[/yellow]")
             raise typer.Exit(code=130)
     else:
         try:
-            selected_directory = select_named_profile(profile_directories=store.profile_directories, profile_name=profile)
+            selected_directory = select_named_profile(profile_directories=profile_directories, profile_name=profile)
         except ValueError as error:
             console.print(f"[red]{error}[/red]")
             raise typer.Exit(code=1) from error

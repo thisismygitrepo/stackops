@@ -35,7 +35,7 @@ agents account backup codex --profile work
 agents account retrieve codex --profile work
 ```
 
-`backup` copies the agent's active credential into the target profile. The profile may be omitted only for agents whose active credential contains a safe identity that uniquely matches one saved profile. `retrieve` copies the source profile into the agent's active credential file; omitting `--profile` opens the profile picker.
+`backup` copies the agent's active credential into the target profile. For agents whose active credential contains a safe identity, omitting the profile updates the unique matching profile or creates a new identity-derived profile for a new login. Agents without a safe automatic identity still require `--profile`. `retrieve` copies the source profile into the agent's active credential file; omitting `--profile` opens the profile picker.
 
 Use `--active-credential`/`-c` to override the agent-specific active file in either direction. `account` provides hidden `b` and `r` aliases for `backup` and `retrieve`; the hidden `A` alias supports the same subcommands:
 

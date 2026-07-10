@@ -1,9 +1,21 @@
+import hashlib
+import json
 import shutil
 import tempfile
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_ai_account.constants import DOTFILES_LLM_CREDENTIALS_RELATIVE_PATH, PRIVATE_CREDENTIAL_FILE_MODE
+from stackops.scripts.python.helpers.helpers_ai_account.constants import (
+    AUTOMATIC_PROFILE_FINGERPRINT_LENGTH,
+    AUTOMATIC_PROFILE_NAME_PREFIX,
+    DOTFILES_LLM_CREDENTIALS_RELATIVE_PATH,
+    PRIVATE_CREDENTIAL_FILE_MODE,
+    TEMPORARY_PROFILE_NAME_PREFIX,
+)
 from stackops.scripts.python.helpers.helpers_ai_account.models import AutomaticProfileSelectionUnavailableError, FileAgentSupport, RuntimeContext
+
+
+class ProfilePublicationConflictError(FileExistsError):
+    pass
 
 
 def expand_path(path: Path) -> Path:
@@ -21,7 +33,14 @@ def list_profile_directories(source_root: Path) -> list[Path]:
         raise FileNotFoundError(f"Source directory does not exist: {source_root}")
     if not source_root.is_dir():
         raise NotADirectoryError(f"Source path is not a directory: {source_root}")
-    return sorted((path for path in source_root.iterdir() if path.is_dir()), key=lambda path: path.name.casefold())
+    return sorted(
+        (
+            path
+            for path in source_root.iterdir()
+            if path.is_dir() and not path.name.startswith(TEMPORARY_PROFILE_NAME_PREFIX)
+        ),
+        key=lambda path: path.name.casefold(),
+    )
 
 
 def profile_credential(profile_directory: Path, support: FileAgentSupport) -> Path:
@@ -59,8 +78,33 @@ def copy_private_credential(source: Path, destination: Path) -> None:
         temporary_path.unlink(missing_ok=True)
 
 
-def find_backup_profile(
+def create_private_credential_profile(
+    source: Path,
+    profile_directory: Path,
     support: FileAgentSupport,
+) -> None:
+    if profile_directory.exists():
+        raise ProfilePublicationConflictError(f"Automatic profile destination already exists: {profile_directory}")
+
+    profile_directory.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        dir=profile_directory.parent,
+        prefix=TEMPORARY_PROFILE_NAME_PREFIX,
+    ) as temporary_directory_name:
+        temporary_directory = Path(temporary_directory_name)
+        temporary_credential = profile_credential(profile_directory=temporary_directory, support=support)
+        copy_private_credential(source=source, destination=temporary_credential)
+        try:
+            temporary_directory.replace(profile_directory)
+        except OSError as error:
+            if not profile_directory.exists():
+                raise
+            raise ProfilePublicationConflictError(f"Automatic profile destination was created concurrently: {profile_directory}") from error
+
+
+def backup_private_credential_automatically(
+    support: FileAgentSupport,
+    profiles_root: Path,
     profile_directories: list[Path],
     active_credential: Path,
 ) -> Path:
@@ -83,9 +127,43 @@ def find_backup_profile(
         if backup_identity == active_identity:
             matching_profiles.append(profile_directory)
 
-    if len(matching_profiles) == 0:
-        raise ValueError(f"No {support.agent} backup profile matches the active credential")
     if len(matching_profiles) > 1:
         profile_names = ", ".join(profile.name for profile in matching_profiles)
         raise ValueError(f"Multiple {support.agent} backup profiles match the active credential: {profile_names}")
-    return matching_profiles[0]
+    if len(matching_profiles) == 1:
+        matching_profile = matching_profiles[0]
+        matching_credential = profile_credential(profile_directory=matching_profile, support=support)
+        copy_private_credential(source=active_credential, destination=matching_credential)
+        return matching_profile
+
+    serialized_identity = json.dumps(active_identity, ensure_ascii=True, separators=(",", ":"))
+    identity_fingerprint = hashlib.sha256(serialized_identity.encode("utf-8")).hexdigest()[:AUTOMATIC_PROFILE_FINGERPRINT_LENGTH]
+    automatic_profile_name = f"{AUTOMATIC_PROFILE_NAME_PREFIX}-{identity_fingerprint}"
+    collision_index = 1
+    while True:
+        automatic_profile = (
+            profiles_root / automatic_profile_name
+            if collision_index == 1
+            else profiles_root / f"{automatic_profile_name}-{collision_index}"
+        )
+        collision_index += 1
+        if not automatic_profile.exists():
+            try:
+                create_private_credential_profile(
+                    source=active_credential,
+                    profile_directory=automatic_profile,
+                    support=support,
+                )
+            except ProfilePublicationConflictError:
+                pass
+            else:
+                return automatic_profile
+
+        concurrent_credential = profile_credential(profile_directory=automatic_profile, support=support)
+        if not concurrent_credential.is_file():
+            continue
+        concurrent_identity = identity_reader(concurrent_credential)
+        if concurrent_identity != active_identity:
+            continue
+        copy_private_credential(source=active_credential, destination=concurrent_credential)
+        return automatic_profile
