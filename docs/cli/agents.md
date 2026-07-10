@@ -184,11 +184,12 @@ agents ask --quiet "summarize the current directory"
 
 ## Repository and MCP helpers
 
-`add-config` currently requires `--agent` and can optionally add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `--agent all` to configure every supported agent, or pass a comma-separated list.
+`add-config` requires `--agent` and copies the latest AgentOps skill bundled with StackOps into `.agents/skills/agentops` by default. Pass `--no-agentops-skill` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `--agent all` to configure every supported agent, or pass a comma-separated list.
 
 ```bash
 agents add-config --agent all --root .
 agents add-config --agent codex,copilot,agy,pi --root . --include-scripts --add-gitignore
+agents add-config --agent codex --root . --no-agentops-skill
 ```
 
 `add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:

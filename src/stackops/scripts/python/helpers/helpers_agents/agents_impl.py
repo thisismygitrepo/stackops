@@ -443,6 +443,7 @@ def init_config(
     add_lint_task: bool,
     add_config: bool,
     add_instructions: bool,
+    add_agentops_skill: bool,
 ) -> None:
     """Initialize AI configurations in the current repository."""
     from stackops.scripts.python.ai.initai import add_ai_configs
@@ -471,6 +472,7 @@ def init_config(
         add_vscode_task=add_lint_task,
         add_private_config=add_config,
         add_instructions=add_instructions,
+        add_agentops_skill=add_agentops_skill,
     )
 
 

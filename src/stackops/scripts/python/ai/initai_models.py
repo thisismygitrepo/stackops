@@ -24,6 +24,7 @@ class InitConfigPlan:
     add_vscode_task: bool
     add_private_config: bool
     add_instructions: bool
+    add_agentops_skill: bool
 
 
 @dataclass(frozen=True, slots=True)

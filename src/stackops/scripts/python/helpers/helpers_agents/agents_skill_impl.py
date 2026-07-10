@@ -12,6 +12,7 @@ RESOLVED_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
 STACKOPS_FALLBACK_SKILL_INSTALL_BACKEND: Final[SKILL_INSTALL_COMMAND_BACKEND] = "bunx"
 AGENT_SKILL_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
+AGENTOPS_SKILL_NAME: Final[Literal["agentops"]] = "agentops"
 
 
 @dataclass(frozen=True)
@@ -26,7 +27,7 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "caveman": AgentSkillSource("JuliusBrussee/caveman", skill="caveman"),
     "grill-me": AgentSkillSource("mattpocock/skills/grill-me"),
     "last30days": AgentSkillSource("mvanhorn/last30days-skill"),
-    "agentops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="agentops"),
+    AGENTOPS_SKILL_NAME: AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill=AGENTOPS_SKILL_NAME),
     "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
 }
 
