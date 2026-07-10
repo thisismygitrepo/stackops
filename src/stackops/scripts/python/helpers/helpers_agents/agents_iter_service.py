@@ -32,11 +32,35 @@ def get_iter_workspace_statuses(*, cwd: Path, retain_previous: int) -> tuple[Ite
     return build_iter_workspace_statuses(snapshot=snapshot, retain_previous=retain_previous, handoffs_by_workspace=handoffs_by_workspace)
 
 
-def plan_iter_workspace_close(*, cwd: Path, workspace_id: str, retain_previous: int) -> IterWorkspaceClosePlan:
+def plan_iter_workspace_closes(*, cwd: Path, workspace_id: str | None, retain_previous: int) -> tuple[IterWorkspaceClosePlan, ...]:
     snapshot = capture_herdr_snapshot()
+    if workspace_id is None:
+        handoffs_by_workspace = _load_handoffs_by_workspace(cwd=cwd, snapshot=snapshot)
+        statuses = build_iter_workspace_statuses(
+            snapshot=snapshot,
+            retain_previous=retain_previous,
+            handoffs_by_workspace=handoffs_by_workspace,
+        )
+        return tuple(status.plan for status in statuses)
+
     workspace = resolve_snapshot_iter_workspace(snapshot=snapshot, workspace_id=workspace_id)
     handoffs = load_iteration_handoffs(cwd=cwd, workspace_label=workspace.label)
-    return build_workspace_close_plan(snapshot=snapshot, workspace=workspace, retain_previous=retain_previous, handoffs=handoffs)
+    close_plan = build_workspace_close_plan(
+        snapshot=snapshot,
+        workspace=workspace,
+        retain_previous=retain_previous,
+        handoffs=handoffs,
+    )
+    return (close_plan,)
+
+
+def close_iter_workspace_plans(
+    *, cwd: Path, close_plans: tuple[IterWorkspaceClosePlan, ...], report: Callable[[str], None]
+) -> tuple[IterWorkspaceClose, ...]:
+    results: list[IterWorkspaceClose] = []
+    for close_plan in close_plans:
+        results.append(close_iter_workspace_plan(cwd=cwd, close_plan=close_plan, report=report))
+    return tuple(results)
 
 
 def close_iter_workspace_plan(*, cwd: Path, close_plan: IterWorkspaceClosePlan, report: Callable[[str], None]) -> IterWorkspaceClose:

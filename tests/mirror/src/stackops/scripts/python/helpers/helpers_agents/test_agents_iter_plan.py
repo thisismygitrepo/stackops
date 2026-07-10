@@ -104,6 +104,50 @@ def test_current_handoff_and_quiet_source_authorize_close() -> None:
     assert [tab.tab_id for tab in plan.retained_tabs] == [TabId("w1:t2")]
 
 
+def test_all_workspace_planning_uses_one_snapshot_and_excludes_non_iter_workspaces(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    snapshot, workspace = _snapshot(source_status="done", include_unmanaged_tab=False)
+    non_iter_workspace = HerdrWorkspace(
+        workspace_id=WorkspaceId("w2"),
+        label="notes",
+        number=0,
+        active_tab_id=TabId("w2:t1"),
+        agent_status="idle",
+        focused=False,
+        pane_count=0,
+        tab_count=0,
+    )
+    combined_snapshot = HerdrSnapshot(
+        workspaces=(non_iter_workspace, *snapshot.workspaces),
+        tabs=snapshot.tabs,
+        panes=snapshot.panes,
+        agents=snapshot.agents,
+    )
+    snapshot_calls = 0
+    loaded_labels: list[str] = []
+
+    def current_snapshot() -> HerdrSnapshot:
+        nonlocal snapshot_calls
+        snapshot_calls += 1
+        return combined_snapshot
+
+    def current_handoffs(*, cwd: Path, workspace_label: str) -> dict[int, IterationHandoff]:
+        assert cwd == Path("/repo")
+        loaded_labels.append(workspace_label)
+        return {1: _handoff(accepted_revision=10)}
+
+    monkeypatch.setattr(agents_iter_service, "capture_herdr_snapshot", current_snapshot)
+    monkeypatch.setattr(agents_iter_service, "load_iteration_handoffs", current_handoffs)
+
+    plans = agents_iter_service.plan_iter_workspace_closes(cwd=Path("/repo"), workspace_id=None, retain_previous=0)
+
+    assert snapshot_calls == 1
+    assert loaded_labels == ["iter-alpha"]
+    assert tuple(plan.workspace for plan in plans) == (workspace,)
+    assert tuple(tab.tab_id for tab in plans[0].closable_tabs) == (TabId("w1:t1"),)
+
+
 @pytest.mark.parametrize("source_status", ("working", "blocked", "unknown"))
 def test_live_source_status_vetoes_handoff(source_status: HerdrStatus) -> None:
     snapshot, workspace = _snapshot(source_status=source_status, include_unmanaged_tab=False)

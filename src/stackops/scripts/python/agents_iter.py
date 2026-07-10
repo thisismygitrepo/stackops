@@ -11,8 +11,16 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import
 
 
 def close(
-    workspace_id: Annotated[str, typer.Argument(help="Stable Herdr iter workspace ID to prune.")],
+    workspace_id: Annotated[
+        str | None,
+        typer.Argument(help="Stable Herdr iter workspace ID to prune. Omit when using --all or --interactive."),
+    ] = None,
     continuous: Annotated[bool, typer.Option("--loop", "-l", help="Repeat close passes until interrupted.")] = False,
+    all_workspaces: Annotated[bool, typer.Option("--all", "-a", help="Prune every Herdr iter workspace.")] = False,
+    interactive: Annotated[
+        bool,
+        typer.Option("--interactive", "-I", help="Choose one Herdr iter workspace with a TV preview."),
+    ] = False,
     retain_previous: Annotated[
         int, typer.Option("--retain-previous", "-k", min=0, help="Retain the latest iteration plus this many previous iterations.")
     ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
@@ -23,11 +31,14 @@ def close(
 ) -> None:
     """Close handed-off iteration tabs after exact receipt and live-state validation."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspace_loop
+        _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)
+        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspaces_loop
 
-        show_close_iter_workspace_loop(
+        show_close_iter_workspaces_loop(
             cwd=Path.cwd(),
             workspace_id=workspace_id,
+            all_workspaces=all_workspaces,
+            interactive=interactive,
             continuous=continuous,
             retain_previous=retain_previous,
             dry_run=dry_run,
@@ -40,27 +51,73 @@ def close(
         raise typer.Exit(code=1) from error
 
 
-def clean(dry_run: Annotated[bool, typer.Option("--dry-run", help="Show stale iteration records without removing them.")] = False) -> None:
+def _validate_workspace_scope(*, workspace_id: str | None, all_workspaces: bool, interactive: bool) -> None:
+    selected_scope_count = sum((workspace_id is not None, all_workspaces, interactive))
+    if selected_scope_count != 1:
+        raise ValueError("Pass exactly one WORKSPACE_ID, --all, or --interactive.")
+    if workspace_id is not None and workspace_id.strip() == "":
+        raise ValueError("Workspace ID must not be empty.")
+
+
+def clean(
+    workspace_id: Annotated[
+        str | None,
+        typer.Argument(help="Stable Herdr iter workspace ID whose inactive records should be removed."),
+    ] = None,
+    all_workspaces: Annotated[bool, typer.Option("--all", "-a", help="Clean inactive records for every iter workspace.")] = False,
+    interactive: Annotated[
+        bool,
+        typer.Option("--interactive", "-I", help="Choose one AgentOps iteration run with a TV preview."),
+    ] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Show stale iteration records without removing them.")] = False,
+) -> None:
     """Remove stale iteration records while preserving live and unrelated AgentOps records."""
     try:
+        _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agentops_cache
 
-        show_clean_agentops_cache(cwd=Path.cwd(), dry_run=dry_run)
+        show_clean_agentops_cache(
+            cwd=Path.cwd(),
+            workspace_id=workspace_id,
+            all_workspaces=all_workspaces,
+            interactive=interactive,
+            dry_run=dry_run,
+        )
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
 
 def status(
+    workspace_id: Annotated[
+        str | None,
+        typer.Argument(help="Stable Herdr iter workspace ID to inspect."),
+    ] = None,
+    all_workspaces: Annotated[bool, typer.Option("--all", "-a", help="Show every Herdr iter workspace.")] = False,
+    interactive: Annotated[
+        bool,
+        typer.Option("--interactive", "-I", help="Choose one Herdr iter workspace with a TV preview."),
+    ] = False,
     retain_previous: Annotated[
         int, typer.Option("--retain-previous", "-k", min=0, help="Evaluate closable tabs while retaining this many previous iterations.")
     ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
 ) -> None:
     """Show each iter loop's latest iteration agent and live Herdr status."""
     try:
+        _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_iter_status
 
-        show_iter_status(cwd=Path.cwd(), retain_previous=retain_previous)
+        show_iter_status(
+            cwd=Path.cwd(),
+            workspace_id=workspace_id,
+            all_workspaces=all_workspaces,
+            interactive=interactive,
+            retain_previous=retain_previous,
+        )
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error

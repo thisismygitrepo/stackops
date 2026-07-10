@@ -134,7 +134,7 @@ Hard rules:
 - Write iter-<NNN>/result.md and iter-<NNN>/recommendation.md.
 - Update index.md with one compact row. Update state.md only when shared best state, risks, blockers, or anti-repeat notes changed.
 - Create iter-<NNN+1>/task.md before launching the next agent, and copy the recommendation into it inline.
-- Create iter-<NNN+1>'s tab in the same Herdr workspace, rename its returned root pane as the agent, run the shell-joined autonomous argv in that pane, and submit only a short prompt pointing to its task packet.
+- Before creating iter-<NNN+1>'s tab, close and confirm removal of iter-<NNN-1>'s tab when it exists; then create the successor tab in the same Herdr workspace, rename its returned root pane as the agent, run the shell-joined autonomous argv in that pane, and submit only a short prompt pointing to its task packet.
 - Confirm the successor is working, query both agents with `herdr agent get`, then write the current iteration's exact `handoff.json` receipt.
 - Never stop because criteria look satisfied or no obvious idea remains.
 - Stop only for explicit external stop/pause, launch failure, concrete blocker, or scope/safety violation.
