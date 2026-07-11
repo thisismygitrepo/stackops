@@ -29,14 +29,16 @@ agents [OPTIONS] COMMAND [ARGS]...
 
 ## `iter`
 
-`iter` supports Herdr 0.7.3/protocol 16 only. Within the active `HERDR_SESSION`, `status` reads one atomic Herdr snapshot. `close` accepts one targeting mode: an explicit stable `WORKSPACE_ID`, `--all` for every current iteration workspace, or `--interactive`/`-I` to select one iteration workspace in a TV picker with a close-plan preview. It closes only quiet old tabs whose current `handoff.json` receipt still matches every stable Herdr identifier. `clean` removes only inactive runs with a current `run.json` manifest. The obsolete polling budget tracker was removed because it could terminate a working successor.
+`iter` supports Herdr 0.7.3/protocol 16 only. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands resolve each workspace's repository from Herdr agent cwd data and can be run outside that repository. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is intentionally repository-local because it also handles inactive records that no longer exist in Herdr; run it inside the repository whose `.ai/agentops` records should be cleaned. The obsolete polling budget tracker was removed because it could terminate a working successor.
 
 ```bash
-agents iter status
+agents iter status --all
+agents iter status -I
 agents iter close w1 --dry-run
 agents iter close --all --dry-run
 agents iter close -I
-agents iter clean --dry-run
+agents iter clean --all --dry-run
+agents iter clean -I --dry-run
 ```
 
 ---

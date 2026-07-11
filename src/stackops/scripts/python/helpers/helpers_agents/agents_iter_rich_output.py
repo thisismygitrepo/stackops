@@ -13,50 +13,54 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_render import (
     build_iter_close_summary_table,
     build_iter_status_table,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import WorkspaceId
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_service import (
     close_iter_workspace_plans,
     get_iter_workspace_statuses,
     load_active_workspace_ids,
     plan_iter_workspace_closes,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_selection import choose_iter_workspace_id
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_selection import choose_agentops_cache_workspace_id, choose_iter_workspace_id
 
 
 _CONSOLE: Final[Console] = Console()
 
 
-def show_clean_agentops_cache(*, cwd: Path, dry_run: bool) -> None:
-    result = clean_agentops_cache(cwd=cwd, dry_run=dry_run, load_active_workspace_ids=load_active_workspace_ids, report=_show_progress)
+def show_clean_agentops_cache(*, cwd: Path, workspace_id: str | None, all_workspaces: bool, interactive: bool, dry_run: bool) -> None:
+    selected_workspace_id = WorkspaceId(workspace_id) if workspace_id is not None else None
+    if interactive:
+        inventory = clean_agentops_cache(
+            cwd=cwd, workspace_id=None, dry_run=True, load_active_workspace_ids=load_active_workspace_ids, report=lambda _message: None
+        )
+        selected_workspace_id = choose_agentops_cache_workspace_id(result=inventory)
+    elif not all_workspaces and selected_workspace_id is None:
+        raise AssertionError("Validated clean scope did not identify a workspace.")
+
+    result = clean_agentops_cache(
+        cwd=cwd, workspace_id=selected_workspace_id, dry_run=dry_run, load_active_workspace_ids=load_active_workspace_ids, report=_show_progress
+    )
     _CONSOLE.print(build_agentops_cache_clean_panel(result=result))
 
 
 def show_close_iter_workspaces_loop(
-    *,
-    cwd: Path,
-    workspace_id: str | None,
-    all_workspaces: bool,
-    interactive: bool,
-    continuous: bool,
-    retain_previous: int,
-    dry_run: bool,
-    interval_seconds: int,
+    *, workspace_id: str | None, all_workspaces: bool, interactive: bool, continuous: bool, retain_previous: int, dry_run: bool, interval_seconds: int
 ) -> None:
     if interval_seconds < 1:
         raise ValueError("Close interval must be greater than zero.")
     selected_workspace_id = workspace_id
     if interactive:
-        statuses = get_iter_workspace_statuses(cwd=cwd, retain_previous=retain_previous)
+        statuses = get_iter_workspace_statuses(workspace_id=None, retain_previous=retain_previous)
         selected_workspace_id = choose_iter_workspace_id(statuses=statuses)
     elif not all_workspaces and selected_workspace_id is None:
         raise AssertionError("Validated close scope did not identify a workspace.")
 
     while True:
-        close_plans = plan_iter_workspace_closes(cwd=cwd, workspace_id=selected_workspace_id, retain_previous=retain_previous)
+        close_plans = plan_iter_workspace_closes(workspace_id=selected_workspace_id, retain_previous=retain_previous)
         _CONSOLE.print(build_iter_close_plan_table(close_plans=close_plans))
         if dry_run:
             _CONSOLE.print(Panel("No tabs were closed.", title="Dry Run", border_style="yellow"))
             return
-        results = close_iter_workspace_plans(cwd=cwd, close_plans=close_plans, report=_show_progress)
+        results = close_iter_workspace_plans(close_plans=close_plans, report=_show_progress)
         _CONSOLE.print(build_iter_close_summary_table(results=results))
         failed_count = sum(len(result.failed_tabs) for result in results)
         if failed_count > 0 and not continuous:
@@ -67,8 +71,15 @@ def show_close_iter_workspaces_loop(
         sleep(interval_seconds)
 
 
-def show_iter_status(*, cwd: Path, retain_previous: int) -> None:
-    statuses = get_iter_workspace_statuses(cwd=cwd, retain_previous=retain_previous)
+def show_iter_status(*, workspace_id: str | None, all_workspaces: bool, interactive: bool, retain_previous: int) -> None:
+    selected_workspace_id = workspace_id
+    if interactive:
+        picker_statuses = get_iter_workspace_statuses(workspace_id=None, retain_previous=retain_previous)
+        selected_workspace_id = choose_iter_workspace_id(statuses=picker_statuses)
+    elif not all_workspaces and selected_workspace_id is None:
+        raise AssertionError("Validated status scope did not identify a workspace.")
+
+    statuses = get_iter_workspace_statuses(workspace_id=selected_workspace_id, retain_previous=retain_previous)
     if len(statuses) == 0:
         _CONSOLE.print(Panel("No iter workspaces found.", title="Iter Status", border_style="yellow"))
         return

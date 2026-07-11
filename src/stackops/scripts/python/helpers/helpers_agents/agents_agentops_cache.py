@@ -1,4 +1,5 @@
 import shutil
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,7 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import (
     IterRunManifest,
     current_herdr_session,
     load_iter_run_manifest,
-    resolve_repo_root,
+    resolve_clean_repo_root,
 )
 
 
@@ -28,18 +29,30 @@ class AgentopsCacheCleanResult:
 
 
 def clean_agentops_cache(
-    *, cwd: Path, dry_run: bool, load_active_workspace_ids: Callable[[], frozenset[WorkspaceId]], report: Callable[[str], None]
+    *,
+    cwd: Path,
+    workspace_id: WorkspaceId | None,
+    dry_run: bool,
+    load_active_workspace_ids: Callable[[], frozenset[WorkspaceId]],
+    report: Callable[[str], None],
 ) -> AgentopsCacheCleanResult:
     try:
-        return _clean_agentops_cache(cwd=cwd, dry_run=dry_run, load_active_workspace_ids=load_active_workspace_ids, report=report)
+        return _clean_agentops_cache(
+            cwd=cwd, workspace_id=workspace_id, dry_run=dry_run, load_active_workspace_ids=load_active_workspace_ids, report=report
+        )
     except OSError as error:
         raise RuntimeError(f"Failed to clean AgentOps iteration records: {error}") from error
 
 
 def _clean_agentops_cache(
-    *, cwd: Path, dry_run: bool, load_active_workspace_ids: Callable[[], frozenset[WorkspaceId]], report: Callable[[str], None]
+    *,
+    cwd: Path,
+    workspace_id: WorkspaceId | None,
+    dry_run: bool,
+    load_active_workspace_ids: Callable[[], frozenset[WorkspaceId]],
+    report: Callable[[str], None],
 ) -> AgentopsCacheCleanResult:
-    repo_root = resolve_repo_root(cwd=cwd)
+    repo_root = resolve_clean_repo_root(cwd=cwd)
     ai_path = repo_root.joinpath(".ai")
     agentops_path = ai_path.joinpath("agentops")
     iterations_path = agentops_path.joinpath("iterations")
@@ -69,6 +82,14 @@ def _clean_agentops_cache(
     unmanaged_entries = tuple(unmanaged_paths)
     for unmanaged_entry in unmanaged_entries:
         report(f"Preserved non-current iteration entry {_format_repo_path(path=unmanaged_entry, repo_root=repo_root)}.")
+    workspace_id_counts = Counter(manifest.workspace_id for _run_path, manifest in current_runs)
+    duplicate_workspace_ids = tuple(sorted(workspace for workspace, count in workspace_id_counts.items() if count > 1))
+    if len(duplicate_workspace_ids) > 0:
+        raise RuntimeError(f"AgentOps iteration records contain duplicate workspace IDs: {', '.join(duplicate_workspace_ids)}")
+    if workspace_id is not None:
+        current_runs = [(run_path, manifest) for run_path, manifest in current_runs if manifest.workspace_id == workspace_id]
+        if len(current_runs) == 0:
+            raise RuntimeError(f"No current AgentOps iteration run with workspace ID {workspace_id!r} was found.")
     if len(current_runs) == 0:
         report(f"No inactive current AgentOps iteration runs found at {_format_repo_path(path=iterations_path, repo_root=repo_root)}.")
         return AgentopsCacheCleanResult(repo_root, iterations_path, (), (), unmanaged_entries, 0, dry_run)

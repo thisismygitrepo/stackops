@@ -53,10 +53,10 @@ class IterRunManifest:
     workspace_label: str
 
 
-def resolve_repo_root(*, cwd: Path) -> Path:
+def resolve_clean_repo_root(*, cwd: Path) -> Path:
     repo_root = get_repo_root(cwd)
     if repo_root is None:
-        raise RuntimeError(f"AgentOps iteration commands require a Git repository; none contains {cwd.resolve(strict=False)}.")
+        raise RuntimeError(f"AgentOps clean requires a Git repository; none contains {cwd.resolve(strict=False)}.")
     return repo_root.resolve(strict=True)
 
 
@@ -69,10 +69,9 @@ def current_herdr_session() -> str:
     return session
 
 
-def load_iteration_handoffs(*, cwd: Path, workspace_label: str) -> dict[int, IterationHandoff]:
+def load_iteration_handoffs(*, repo_root: Path, workspace_id: WorkspaceId, workspace_label: str) -> dict[int, IterationHandoff]:
     if not workspace_label.startswith("iter-") or workspace_label.removeprefix("iter-") == "":
         raise ValueError(f"Herdr workspace {workspace_label!r} is not a current AgentOps iteration workspace.")
-    repo_root = resolve_repo_root(cwd=cwd)
     run_path = repo_root.joinpath(".ai", "agentops", "iterations", workspace_label.removeprefix("iter-"))
     if not run_path.exists():
         return {}
@@ -88,6 +87,8 @@ def load_iteration_handoffs(*, cwd: Path, workspace_label: str) -> dict[int, Ite
         )
     if manifest.workspace_label != workspace_label:
         raise RuntimeError(f"AgentOps run manifest label does not match {workspace_label!r}: {run_path.joinpath('run.json')}")
+    if manifest.workspace_id != workspace_id:
+        raise RuntimeError(f"AgentOps run manifest workspace ID does not match {workspace_id!r}: {run_path.joinpath('run.json')}")
 
     handoffs: dict[int, IterationHandoff] = {}
     for iteration_path in sorted(run_path.iterdir(), key=lambda path: path.name):

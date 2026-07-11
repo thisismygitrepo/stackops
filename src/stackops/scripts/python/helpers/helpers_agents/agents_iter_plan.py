@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Final
 
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_contract import (
@@ -35,21 +36,29 @@ def resolve_iter_workspace(*, snapshot: HerdrSnapshot, workspace_id: str) -> Her
 
 
 def build_iter_workspace_statuses(
-    *, snapshot: HerdrSnapshot, retain_previous: int, handoffs_by_workspace: Mapping[WorkspaceId, Mapping[int, IterationHandoff]]
+    *,
+    snapshot: HerdrSnapshot,
+    retain_previous: int,
+    repo_roots_by_workspace: Mapping[WorkspaceId, Path],
+    handoffs_by_workspace: Mapping[WorkspaceId, Mapping[int, IterationHandoff]],
 ) -> tuple[IterWorkspaceStatus, ...]:
     _validate_retain_previous(retain_previous=retain_previous)
     return tuple(
         build_iter_workspace_status(
-            snapshot=snapshot, workspace=workspace, retain_previous=retain_previous, handoffs=handoffs_by_workspace.get(workspace.workspace_id, {})
+            snapshot=snapshot,
+            workspace=workspace,
+            repo_root=repo_roots_by_workspace[workspace.workspace_id],
+            retain_previous=retain_previous,
+            handoffs=handoffs_by_workspace.get(workspace.workspace_id, {}),
         )
         for workspace in _iter_workspaces(snapshot=snapshot)
     )
 
 
 def build_iter_workspace_status(
-    *, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, retain_previous: int, handoffs: Mapping[int, IterationHandoff]
+    *, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, repo_root: Path, retain_previous: int, handoffs: Mapping[int, IterationHandoff]
 ) -> IterWorkspaceStatus:
-    plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, retain_previous=retain_previous, handoffs=handoffs)
+    plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, repo_root=repo_root, retain_previous=retain_previous, handoffs=handoffs)
     numbered_tabs = tuple((tab, iteration) for tab in plan.tabs if (iteration := _iteration_from_tab(workspace=workspace, tab=tab)) is not None)
     latest_iteration = max((iteration for _tab, iteration in numbered_tabs), default=None)
     latest_agent: HerdrAgent | None = None
@@ -71,7 +80,7 @@ def build_iter_workspace_status(
 
 
 def build_workspace_close_plan(
-    *, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, retain_previous: int, handoffs: Mapping[int, IterationHandoff]
+    *, snapshot: HerdrSnapshot, workspace: HerdrWorkspace, repo_root: Path, retain_previous: int, handoffs: Mapping[int, IterationHandoff]
 ) -> IterWorkspaceClosePlan:
     _validate_retain_previous(retain_previous=retain_previous)
     if not _is_iter_workspace(workspace=workspace):
@@ -110,6 +119,7 @@ def build_workspace_close_plan(
         closable_tabs.append(tab)
     return IterWorkspaceClosePlan(
         workspace=workspace,
+        repo_root=repo_root,
         tabs=tabs,
         retained_tabs=tuple(retained_tabs),
         protected_tabs=tuple(protected_tabs),

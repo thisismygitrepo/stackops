@@ -16705,18 +16705,89 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def clean(dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show stale iteration records without removing them.\")] = False) -> None:",
+                    "def clean(",
+                    "    workspace_id: Annotated[",
+                    "        str | None, typer.Argument(help=\"Stable Herdr iter workspace ID whose inactive records should be removed. Omit with --all or --interactive.\")",
+                    "    ] = None,",
+                    "    all_workspaces: Annotated[",
+                    "        bool, typer.Option(\"--all\", \"-a\", help=\"Clean inactive records across every current-session AgentOps iteration run.\")",
+                    "    ] = False,",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-I\", help=\"Choose one AgentOps iteration run with a TV preview.\")] = False,",
+                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show stale iteration records without removing them.\")] = False,",
+                    ") -> None:",
                     "    \"\"\"Remove stale iteration records while preserving live and unrelated AgentOps records.\"\"\"",
                     "    try:",
+                    "        _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agentops_cache",
                     "",
-                    "        show_clean_agentops_cache(cwd=Path.cwd(), dry_run=dry_run)",
+                    "        show_clean_agentops_cache(cwd=Path.cwd(), workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive, dry_run=dry_run)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error"
                   ],
                   "name": "clean",
                   "parameters": [
+                    {
+                      "name": "workspace_id",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Stable Herdr iter workspace ID whose inactive records should be removed. Omit with --all or --interactive.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Stable Herdr iter workspace ID whose inactive records should be removed. Omit with --all or --interactive."
+                      }
+                    },
+                    {
+                      "name": "all_workspaces",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--all', '-a', help='Clean inactive records across every current-session AgentOps iteration run.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--all",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--all"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Clean inactive records across every current-session AgentOps iteration run."
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-I', help='Choose one AgentOps iteration run with a TV preview.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-I"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-I"
+                        ],
+                        "help": "Choose one AgentOps iteration run with a TV preview."
+                      }
+                    },
                     {
                       "name": "dry_run",
                       "kind": "positional_or_keyword",
@@ -16765,8 +16836,12 @@
                 "signature": {
                   "raw_lines": [
                     "def close(",
-                    "    workspace_id: Annotated[str, typer.Argument(help=\"Stable Herdr iter workspace ID to prune.\")],",
+                    "    workspace_id: Annotated[",
+                    "        str | None, typer.Argument(help=\"Stable Herdr iter workspace ID to prune. Omit when using --all or --interactive.\")",
+                    "    ] = None,",
                     "    continuous: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Repeat close passes until interrupted.\")] = False,",
+                    "    all_workspaces: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Prune every Herdr iter workspace.\")] = False,",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-I\", help=\"Choose one Herdr iter workspace with a TV preview.\")] = False,",
                     "    retain_previous: Annotated[",
                     "        int, typer.Option(\"--retain-previous\", \"-k\", min=0, help=\"Retain the latest iteration plus this many previous iterations.\")",
                     "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
@@ -16777,11 +16852,13 @@
                     ") -> None:",
                     "    \"\"\"Close handed-off iteration tabs after exact receipt and live-state validation.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspace_loop",
+                    "        _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspaces_loop",
                     "",
-                    "        show_close_iter_workspace_loop(",
-                    "            cwd=Path.cwd(),",
+                    "        show_close_iter_workspaces_loop(",
                     "            workspace_id=workspace_id,",
+                    "            all_workspaces=all_workspaces,",
+                    "            interactive=interactive,",
                     "            continuous=continuous,",
                     "            retain_previous=retain_previous,",
                     "            dry_run=dry_run,",
@@ -16798,16 +16875,16 @@
                     {
                       "name": "workspace_id",
                       "kind": "positional_or_keyword",
-                      "type": "str",
+                      "type": "str | None",
                       "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='Stable Herdr iter workspace ID to prune.')]",
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Stable Herdr iter workspace ID to prune. Omit when using --all or --interactive.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Stable Herdr iter workspace ID to prune."
+                        "help": "Stable Herdr iter workspace ID to prune. Omit when using --all or --interactive."
                       }
                     },
                     {
@@ -16830,6 +16907,50 @@
                           "-l"
                         ],
                         "help": "Repeat close passes until interrupted."
+                      }
+                    },
+                    {
+                      "name": "all_workspaces",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--all', '-a', help='Prune every Herdr iter workspace.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--all",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--all"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Prune every Herdr iter workspace."
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-I', help='Choose one Herdr iter workspace with a TV preview.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-I"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-I"
+                        ],
+                        "help": "Choose one Herdr iter workspace with a TV preview."
                       }
                     },
                     {
@@ -16924,21 +17045,88 @@
                 "signature": {
                   "raw_lines": [
                     "def status(",
+                    "    workspace_id: Annotated[",
+                    "        str | None, typer.Argument(help=\"Stable Herdr iter workspace ID to inspect. Omit when using --all or --interactive.\")",
+                    "    ] = None,",
+                    "    all_workspaces: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Show every Herdr iter workspace.\")] = False,",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-I\", help=\"Choose one Herdr iter workspace with a TV preview.\")] = False,",
                     "    retain_previous: Annotated[",
                     "        int, typer.Option(\"--retain-previous\", \"-k\", min=0, help=\"Evaluate closable tabs while retaining this many previous iterations.\")",
                     "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
                     ") -> None:",
                     "    \"\"\"Show each iter loop's latest iteration agent and live Herdr status.\"\"\"",
                     "    try:",
+                    "        _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_iter_status",
                     "",
-                    "        show_iter_status(cwd=Path.cwd(), retain_previous=retain_previous)",
+                    "        show_iter_status(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive, retain_previous=retain_previous)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error"
                   ],
                   "name": "status",
                   "parameters": [
+                    {
+                      "name": "workspace_id",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Stable Herdr iter workspace ID to inspect. Omit when using --all or --interactive.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Stable Herdr iter workspace ID to inspect. Omit when using --all or --interactive."
+                      }
+                    },
+                    {
+                      "name": "all_workspaces",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--all', '-a', help='Show every Herdr iter workspace.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--all",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--all"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Show every Herdr iter workspace."
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-I', help='Choose one Herdr iter workspace with a TV preview.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-I"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-I"
+                        ],
+                        "help": "Choose one Herdr iter workspace with a TV preview."
+                      }
+                    },
                     {
                       "name": "retain_previous",
                       "kind": "positional_or_keyword",
