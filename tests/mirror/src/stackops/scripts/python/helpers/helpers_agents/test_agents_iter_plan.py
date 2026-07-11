@@ -22,6 +22,9 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import I
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_workspace_records import IterWorkspaceRecords
 
 
+_RUN_PATH = Path("/repo/.ai/agentops/iterations/alpha")
+
+
 def _snapshot(*, source_status: HerdrStatus, include_unmanaged_tab: bool) -> tuple[HerdrSnapshot, HerdrWorkspace]:
     workspace_id = WorkspaceId("w1")
     iteration_tabs = (
@@ -90,7 +93,7 @@ def test_idle_or_done_without_current_handoff_is_never_closable() -> None:
     for source_status in ("idle", "done"):
         snapshot, workspace = _snapshot(source_status=source_status, include_unmanaged_tab=False)
 
-        plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, repo_root=Path("/repo"), retain_previous=0, handoffs={})
+        plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, run_path=_RUN_PATH, retain_previous=0, handoffs={})
 
         assert plan.closable_tabs == ()
         assert [(item.tab.tab_id, item.reason) for item in plan.protected_tabs] == [(TabId("w1:t1"), "handoff_unverified")]
@@ -100,7 +103,7 @@ def test_current_handoff_and_quiet_source_authorize_close() -> None:
     snapshot, workspace = _snapshot(source_status="done", include_unmanaged_tab=False)
 
     plan = build_workspace_close_plan(
-        snapshot=snapshot, workspace=workspace, repo_root=Path("/repo"), retain_previous=0, handoffs={1: _handoff(accepted_revision=10)}
+        snapshot=snapshot, workspace=workspace, run_path=_RUN_PATH, retain_previous=0, handoffs={1: _handoff(accepted_revision=10)}
     )
 
     assert [tab.tab_id for tab in plan.closable_tabs] == [TabId("w1:t1")]
@@ -133,7 +136,7 @@ def test_all_workspace_planning_uses_one_snapshot_and_excludes_non_iter_workspac
     def current_records(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace) -> IterWorkspaceRecords:
         assert snapshot is combined_snapshot
         loaded_labels.append(workspace.label)
-        return IterWorkspaceRecords(repo_root=Path("/repo"), handoffs={1: _handoff(accepted_revision=10)})
+        return IterWorkspaceRecords(run_path=_RUN_PATH, handoffs={1: _handoff(accepted_revision=10)})
 
     monkeypatch.setattr(agents_iter_service, "capture_herdr_snapshot", current_snapshot)
     monkeypatch.setattr(agents_iter_service, "load_iter_workspace_records", current_records)
@@ -155,7 +158,7 @@ def test_status_for_explicit_workspace_loads_only_its_handoffs(monkeypatch: pyte
 
     def current_records(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace) -> IterWorkspaceRecords:
         loaded_labels.append(workspace.label)
-        return IterWorkspaceRecords(repo_root=Path("/repo"), handoffs={1: _handoff(accepted_revision=10)})
+        return IterWorkspaceRecords(run_path=_RUN_PATH, handoffs={1: _handoff(accepted_revision=10)})
 
     monkeypatch.setattr(agents_iter_service, "capture_herdr_snapshot", current_snapshot)
     monkeypatch.setattr(agents_iter_service, "load_iter_workspace_records", current_records)
@@ -172,7 +175,7 @@ def test_live_source_status_vetoes_handoff(source_status: HerdrStatus) -> None:
     snapshot, workspace = _snapshot(source_status=source_status, include_unmanaged_tab=False)
 
     plan = build_workspace_close_plan(
-        snapshot=snapshot, workspace=workspace, repo_root=Path("/repo"), retain_previous=0, handoffs={1: _handoff(accepted_revision=10)}
+        snapshot=snapshot, workspace=workspace, run_path=_RUN_PATH, retain_previous=0, handoffs={1: _handoff(accepted_revision=10)}
     )
 
     assert plan.closable_tabs == ()
@@ -182,13 +185,13 @@ def test_live_source_status_vetoes_handoff(source_status: HerdrStatus) -> None:
 def test_stale_revision_and_legacy_tracker_are_rejected() -> None:
     snapshot, workspace = _snapshot(source_status="done", include_unmanaged_tab=False)
     stale_plan = build_workspace_close_plan(
-        snapshot=snapshot, workspace=workspace, repo_root=Path("/repo"), retain_previous=0, handoffs={1: _handoff(accepted_revision=21)}
+        snapshot=snapshot, workspace=workspace, run_path=_RUN_PATH, retain_previous=0, handoffs={1: _handoff(accepted_revision=21)}
     )
     assert [(item.tab.tab_id, item.reason) for item in stale_plan.protected_tabs] == [(TabId("w1:t1"), "handoff_unverified")]
 
     legacy_snapshot, legacy_workspace = _snapshot(source_status="done", include_unmanaged_tab=True)
     legacy_plan = build_workspace_close_plan(
-        snapshot=legacy_snapshot, workspace=legacy_workspace, repo_root=Path("/repo"), retain_previous=0, handoffs={1: _handoff(accepted_revision=10)}
+        snapshot=legacy_snapshot, workspace=legacy_workspace, run_path=_RUN_PATH, retain_previous=0, handoffs={1: _handoff(accepted_revision=10)}
     )
     assert legacy_plan.closable_tabs == ()
     assert {item.reason for item in legacy_plan.protected_tabs} == {"incomplete_snapshot", "unmanaged"}
@@ -228,17 +231,19 @@ def test_current_handoff_file_is_strictly_parsed(tmp_path: Path, monkeypatch: py
     }
     run_path.joinpath("handoff.json").write_text(json.dumps(receipt), encoding="utf-8")
 
-    handoffs = agents_iter_records.load_iteration_handoffs(repo_root=tmp_path, workspace_id=WorkspaceId("w1"), workspace_label="iter-alpha")
+    handoffs = agents_iter_records.load_iteration_handoffs(run_path=run_path.parent, workspace_id=WorkspaceId("w1"), workspace_label="iter-alpha")
 
     assert handoffs == {1: _handoff(accepted_revision=10)}
     with pytest.raises(RuntimeError, match="manifest workspace ID"):
-        agents_iter_records.load_iteration_handoffs(repo_root=tmp_path, workspace_id=WorkspaceId("wrong-workspace"), workspace_label="iter-alpha")
+        agents_iter_records.load_iteration_handoffs(
+            run_path=run_path.parent, workspace_id=WorkspaceId("wrong-workspace"), workspace_label="iter-alpha"
+        )
 
 
 def test_close_revalidates_once_and_accepts_only_tab_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
     snapshot, workspace = _snapshot(source_status="done", include_unmanaged_tab=False)
     handoffs = {1: _handoff(accepted_revision=10)}
-    close_plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, repo_root=Path("/repo"), retain_previous=0, handoffs=handoffs)
+    close_plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, run_path=_RUN_PATH, retain_previous=0, handoffs=handoffs)
     snapshot_calls = 0
 
     def current_snapshot() -> HerdrSnapshot:
@@ -247,7 +252,7 @@ def test_close_revalidates_once_and_accepts_only_tab_not_found(monkeypatch: pyte
         return snapshot
 
     def current_records(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace) -> IterWorkspaceRecords:
-        return IterWorkspaceRecords(repo_root=Path("/repo"), handoffs=handoffs)
+        return IterWorkspaceRecords(run_path=_RUN_PATH, handoffs=handoffs)
 
     def concurrently_absent(*, tab_id: TabId) -> None:
         raise HerdrApiError(code="tab_not_found", message=f"{tab_id} is gone")
@@ -264,10 +269,10 @@ def test_close_revalidates_once_and_accepts_only_tab_not_found(monkeypatch: pyte
     assert result.failed_tabs == ()
 
 
-def test_close_skips_candidate_when_workspace_repository_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_close_skips_candidate_when_workspace_run_path_changes(monkeypatch: pytest.MonkeyPatch) -> None:
     snapshot, workspace = _snapshot(source_status="done", include_unmanaged_tab=False)
     handoffs = {1: _handoff(accepted_revision=10)}
-    close_plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, repo_root=Path("/repo"), retain_previous=0, handoffs=handoffs)
+    close_plan = build_workspace_close_plan(snapshot=snapshot, workspace=workspace, run_path=_RUN_PATH, retain_previous=0, handoffs=handoffs)
     close_calls: list[TabId] = []
 
     def current_snapshot() -> HerdrSnapshot:
@@ -276,7 +281,7 @@ def test_close_skips_candidate_when_workspace_repository_changes(monkeypatch: py
     def moved_records(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace) -> IterWorkspaceRecords:
         assert len(snapshot.workspaces) == 1
         assert workspace.workspace_id == WorkspaceId("w1")
-        return IterWorkspaceRecords(repo_root=Path("/other-repo"), handoffs=handoffs)
+        return IterWorkspaceRecords(run_path=Path("/other-project/.ai/agentops/iterations/alpha"), handoffs=handoffs)
 
     def capture_close(*, tab_id: TabId) -> None:
         close_calls.append(tab_id)

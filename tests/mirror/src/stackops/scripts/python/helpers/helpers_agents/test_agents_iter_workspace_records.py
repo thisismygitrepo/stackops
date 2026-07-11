@@ -1,8 +1,10 @@
+import json
 from pathlib import Path
 
 import pytest
 
-from stackops.scripts.python.helpers.helpers_agents import agents_iter_workspace_records
+from stackops.scripts.python.helpers.helpers_agents import agents_iter_records, agents_iter_workspace_records
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_PROTOCOL, HERDR_VERSION
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     HerdrAgent,
     HerdrSnapshot,
@@ -13,6 +15,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     TerminalId,
     WorkspaceId,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import RECORD_SCHEMA_VERSION
 
 
 @pytest.fixture
@@ -56,43 +59,63 @@ def _snapshot(*, workspaces: tuple[HerdrWorkspace, ...], entries: tuple[Snapshot
     return HerdrSnapshot(workspaces=workspaces, tabs=tuple(tab for tab, _agent in entries), panes=(), agents=tuple(agent for _tab, agent in entries))
 
 
-def test_multiple_managed_agent_subdirectories_resolve_one_repo_root(
+def _write_run_manifest(*, project_root: Path, run_slug: str, herdr_session: str, workspace_id: str, workspace_label: str) -> Path:
+    run_path = project_root.joinpath(".ai", "agentops", "iterations", run_slug)
+    run_path.mkdir(parents=True)
+    run_path.joinpath("run.json").write_text(
+        json.dumps(
+            {
+                "schema_version": RECORD_SCHEMA_VERSION,
+                "herdr_version": HERDR_VERSION,
+                "herdr_protocol": HERDR_PROTOCOL,
+                "herdr_session": herdr_session,
+                "workspace_id": workspace_id,
+                "workspace_label": workspace_label,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return run_path
+
+
+def test_multiple_managed_agent_subdirectories_resolve_one_non_git_run(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, iter_workspace: HerdrWorkspace
 ) -> None:
-    repo_root = tmp_path.joinpath("repo")
-    first_subdirectory = repo_root.joinpath("services", "first")
-    second_subdirectory = repo_root.joinpath("services", "second")
+    monkeypatch.delenv("HERDR_SESSION", raising=False)
+    project_root = tmp_path.joinpath("project")
+    first_subdirectory = project_root.joinpath("services", "first")
+    second_subdirectory = project_root.joinpath("services", "second")
     first_subdirectory.mkdir(parents=True)
     second_subdirectory.mkdir(parents=True)
+    run_path = _write_run_manifest(
+        project_root=project_root, run_slug="alpha", herdr_session="default", workspace_id="w1", workspace_label="iter-alpha"
+    )
     first_entry = _entry(workspace=iter_workspace, number=1, label="iter-alpha-001", cwd=str(first_subdirectory), foreground_cwd=None)
     second_entry = _entry(workspace=iter_workspace, number=2, label="iter-alpha-002", cwd=None, foreground_cwd=str(second_subdirectory))
     snapshot = _snapshot(workspaces=(iter_workspace,), entries=(first_entry, second_entry))
-    observed_candidates: list[Path] = []
 
-    def find_repo_root(candidate: Path) -> Path | None:
-        observed_candidates.append(candidate)
-        return repo_root
+    resolved = agents_iter_workspace_records.resolve_iter_workspace_run_path(snapshot=snapshot, workspace=iter_workspace)
 
-    monkeypatch.setattr(agents_iter_workspace_records, "get_repo_root", find_repo_root)
-
-    resolved = agents_iter_workspace_records.resolve_iter_workspace_repo_root(snapshot=snapshot, workspace=iter_workspace)
-
-    assert resolved == repo_root
-    assert observed_candidates == [first_subdirectory, second_subdirectory]
+    assert not project_root.joinpath(".git").exists()
+    assert resolved == run_path
 
 
-def test_other_workspace_and_unusable_paths_are_ignored_when_one_root_is_valid(
+def test_other_workspace_and_unusable_paths_are_ignored_when_one_exact_run_exists(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, iter_workspace: HerdrWorkspace
 ) -> None:
-    repo_root = tmp_path.joinpath("repo")
-    valid_subdirectory = repo_root.joinpath("service")
+    monkeypatch.delenv("HERDR_SESSION", raising=False)
+    project_root = tmp_path.joinpath("project")
+    valid_subdirectory = project_root.joinpath("service")
     valid_subdirectory.mkdir(parents=True)
-    no_repo_directory = tmp_path.joinpath("no-repo")
-    no_repo_directory.mkdir()
+    run_path = _write_run_manifest(
+        project_root=project_root, run_slug="alpha", herdr_session="default", workspace_id="w1", workspace_label="iter-alpha"
+    )
+    no_record_directory = tmp_path.joinpath("no-record")
+    no_record_directory.mkdir()
     file_path = tmp_path.joinpath("not-a-directory")
     file_path.touch()
     missing_path = tmp_path.joinpath("missing")
-    other_workspace_directory = tmp_path.joinpath("other-repo")
+    other_workspace_directory = tmp_path.joinpath("other-project")
     other_workspace_directory.mkdir()
 
     other_workspace = HerdrWorkspace(
@@ -108,67 +131,88 @@ def test_other_workspace_and_unusable_paths_are_ignored_when_one_root_is_valid(
     entries = (
         _entry(workspace=iter_workspace, number=1, label="iter-alpha-001", cwd=str(valid_subdirectory), foreground_cwd="relative/path"),
         _entry(workspace=iter_workspace, number=2, label="iter-alpha-002", cwd=str(missing_path), foreground_cwd=str(file_path)),
-        _entry(workspace=iter_workspace, number=3, label="iter-alpha-003", cwd=str(no_repo_directory), foreground_cwd=None),
+        _entry(workspace=iter_workspace, number=3, label="iter-alpha-003", cwd=str(no_record_directory), foreground_cwd=None),
         _entry(workspace=iter_workspace, number=4, label="iter-alpha-tracker", cwd=str(other_workspace_directory), foreground_cwd=None),
         _entry(workspace=other_workspace, number=1, label="iter-beta-001", cwd=str(other_workspace_directory), foreground_cwd=None),
     )
     snapshot = _snapshot(workspaces=(iter_workspace, other_workspace), entries=entries)
-    observed_candidates: list[Path] = []
 
-    def find_repo_root(candidate: Path) -> Path | None:
-        observed_candidates.append(candidate)
-        if candidate == valid_subdirectory:
-            return repo_root
-        if candidate == no_repo_directory:
-            return None
-        raise AssertionError(f"Unexpected repository lookup for {candidate}")
+    resolved = agents_iter_workspace_records.resolve_iter_workspace_run_path(snapshot=snapshot, workspace=iter_workspace)
 
-    monkeypatch.setattr(agents_iter_workspace_records, "get_repo_root", find_repo_root)
-
-    resolved = agents_iter_workspace_records.resolve_iter_workspace_repo_root(snapshot=snapshot, workspace=iter_workspace)
-
-    assert resolved == repo_root
-    assert observed_candidates == [valid_subdirectory, no_repo_directory]
+    assert resolved == run_path
 
 
-def test_zero_repo_roots_raises_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, iter_workspace: HerdrWorkspace) -> None:
-    no_repo_directory = tmp_path.joinpath("no-repo")
-    no_repo_directory.mkdir()
-    entry = _entry(workspace=iter_workspace, number=1, label="iter-alpha-001", cwd=str(no_repo_directory), foreground_cwd="relative/path")
+def test_no_exact_run_manifest_raises_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, iter_workspace: HerdrWorkspace) -> None:
+    monkeypatch.delenv("HERDR_SESSION", raising=False)
+    no_record_directory = tmp_path.joinpath("no-record")
+    no_record_directory.mkdir()
+    entry = _entry(workspace=iter_workspace, number=1, label="iter-alpha-001", cwd=str(no_record_directory), foreground_cwd="relative/path")
     snapshot = _snapshot(workspaces=(iter_workspace,), entries=(entry,))
 
-    def find_repo_root(candidate: Path) -> Path | None:
-        assert candidate == no_repo_directory
-        return None
+    with pytest.raises(RuntimeError, match="Cannot locate AgentOps records for Herdr iter workspace") as error:
+        agents_iter_workspace_records.resolve_iter_workspace_run_path(snapshot=snapshot, workspace=iter_workspace)
 
-    monkeypatch.setattr(agents_iter_workspace_records, "get_repo_root", find_repo_root)
-
-    with pytest.raises(RuntimeError, match="Cannot resolve the Git repository for Herdr iter workspace") as error:
-        agents_iter_workspace_records.resolve_iter_workspace_repo_root(snapshot=snapshot, workspace=iter_workspace)
-
-    assert "is not in a Git repository" in str(error.value)
+    assert str(no_record_directory) in str(error.value)
     assert "is not absolute" in str(error.value)
 
 
-def test_multiple_repo_roots_raises_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, iter_workspace: HerdrWorkspace) -> None:
-    first_root = tmp_path.joinpath("first-repo")
-    second_root = tmp_path.joinpath("second-repo")
-    first_subdirectory = first_root.joinpath("service")
-    second_subdirectory = second_root.joinpath("service")
+def test_multiple_exact_run_manifests_raise_ambiguity_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, iter_workspace: HerdrWorkspace) -> None:
+    monkeypatch.delenv("HERDR_SESSION", raising=False)
+    first_project = tmp_path.joinpath("first-project")
+    second_project = tmp_path.joinpath("second-project")
+    first_subdirectory = first_project.joinpath("service")
+    second_subdirectory = second_project.joinpath("service")
     first_subdirectory.mkdir(parents=True)
     second_subdirectory.mkdir(parents=True)
+    first_run_path = _write_run_manifest(
+        project_root=first_project, run_slug="alpha", herdr_session="default", workspace_id="w1", workspace_label="iter-alpha"
+    )
+    second_run_path = _write_run_manifest(
+        project_root=second_project, run_slug="alpha", herdr_session="default", workspace_id="w1", workspace_label="iter-alpha"
+    )
     first_entry = _entry(workspace=iter_workspace, number=1, label="iter-alpha-001", cwd=str(first_subdirectory), foreground_cwd=None)
     second_entry = _entry(workspace=iter_workspace, number=2, label="iter-alpha-002", cwd=str(second_subdirectory), foreground_cwd=None)
     snapshot = _snapshot(workspaces=(iter_workspace,), entries=(first_entry, second_entry))
-    roots_by_candidate = {first_subdirectory: first_root, second_subdirectory: second_root}
 
-    def find_repo_root(candidate: Path) -> Path | None:
-        return roots_by_candidate[candidate]
+    with pytest.raises(RuntimeError, match="resolves to multiple AgentOps runs") as error:
+        agents_iter_workspace_records.resolve_iter_workspace_run_path(snapshot=snapshot, workspace=iter_workspace)
 
-    monkeypatch.setattr(agents_iter_workspace_records, "get_repo_root", find_repo_root)
+    assert str(first_run_path) in str(error.value)
+    assert str(second_run_path) in str(error.value)
 
-    with pytest.raises(RuntimeError, match="resolves to multiple Git repositories") as error:
-        agents_iter_workspace_records.resolve_iter_workspace_repo_root(snapshot=snapshot, workspace=iter_workspace)
 
-    assert str(first_root) in str(error.value)
-    assert str(second_root) in str(error.value)
+@pytest.mark.parametrize(
+    ("herdr_session", "workspace_id", "workspace_label", "expected_error"),
+    (
+        ("other", "w1", "iter-alpha", "belongs to Herdr session"),
+        ("default", "other", "iter-alpha", "workspace ID does not match"),
+        ("default", "w1", "iter-beta", "label does not match"),
+    ),
+)
+def test_run_manifest_must_exactly_match_live_workspace_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    iter_workspace: HerdrWorkspace,
+    herdr_session: str,
+    workspace_id: str,
+    workspace_label: str,
+    expected_error: str,
+) -> None:
+    monkeypatch.delenv("HERDR_SESSION", raising=False)
+    project_root = tmp_path.joinpath("project")
+    agent_directory = project_root.joinpath("service")
+    agent_directory.mkdir(parents=True)
+    _write_run_manifest(
+        project_root=project_root, run_slug="alpha", herdr_session=herdr_session, workspace_id=workspace_id, workspace_label=workspace_label
+    )
+    entry = _entry(workspace=iter_workspace, number=1, label="iter-alpha-001", cwd=str(agent_directory), foreground_cwd=None)
+    snapshot = _snapshot(workspaces=(iter_workspace,), entries=(entry,))
+
+    with pytest.raises(RuntimeError, match=expected_error):
+        agents_iter_workspace_records.resolve_iter_workspace_run_path(snapshot=snapshot, workspace=iter_workspace)
+
+
+@pytest.mark.parametrize("workspace_label", ("iter-../escape", "iter-nested/run", "iter-windows\\run"))
+def test_iter_workspace_slug_rejects_path_components(workspace_label: str) -> None:
+    with pytest.raises(ValueError, match="one safe run slug"):
+        agents_iter_records.parse_iter_workspace_slug(workspace_label=workspace_label)

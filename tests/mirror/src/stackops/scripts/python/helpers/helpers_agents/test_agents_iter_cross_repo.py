@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from stackops.scripts.python.helpers.helpers_agents import agents_iter_service, agents_iter_workspace_records
+from stackops.scripts.python.helpers.helpers_agents import agents_iter_service
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_PROTOCOL, HERDR_VERSION
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     HerdrAgent,
@@ -19,7 +19,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import RECORD_SCHEMA_VERSION
 
 
-def _build_workspace_snapshot(*, repo_root: Path, workspace_id: WorkspaceId, workspace_label: str, number: int) -> HerdrSnapshot:
+def _build_workspace_snapshot(*, project_root: Path, workspace_id: WorkspaceId, workspace_label: str, number: int) -> HerdrSnapshot:
     source_tab = HerdrTab(
         tab_id=TabId(f"{workspace_id}:t1"),
         workspace_id=workspace_id,
@@ -54,8 +54,8 @@ def _build_workspace_snapshot(*, repo_root: Path, workspace_id: WorkspaceId, wor
         agent_status="idle",
         revision=20,
     )
-    source_cwd = repo_root.joinpath("nested", "agents", "source")
-    successor_cwd = repo_root.joinpath("nested", "agents", "successor")
+    source_cwd = project_root.joinpath("nested", "agents", "source")
+    successor_cwd = project_root.joinpath("nested", "agents", "successor")
     source_cwd.mkdir(parents=True)
     successor_cwd.mkdir(parents=True)
     source_agent = HerdrAgent(
@@ -101,14 +101,14 @@ def _build_workspace_snapshot(*, repo_root: Path, workspace_id: WorkspaceId, wor
     )
 
 
-def _write_iteration_records(*, repo_root: Path, snapshot: HerdrSnapshot) -> None:
+def _write_iteration_records(*, project_root: Path, snapshot: HerdrSnapshot) -> Path:
     workspace = snapshot.workspaces[0]
     source_tab, successor_tab = snapshot.tabs
     successor_pane = snapshot.panes[1]
     successor_agent = snapshot.agents[1]
     successor_agent_name = successor_agent.name
     assert successor_agent_name is not None
-    run_path = repo_root.joinpath(".ai", "agentops", "iterations", workspace.label.removeprefix("iter-"))
+    run_path = project_root.joinpath(".ai", "agentops", "iterations", workspace.label.removeprefix("iter-"))
     iteration_path = run_path.joinpath("iter-001")
     iteration_path.mkdir(parents=True)
     run_path.joinpath("run.json").write_text(
@@ -144,34 +144,30 @@ def _write_iteration_records(*, repo_root: Path, snapshot: HerdrSnapshot) -> Non
         ),
         encoding="utf-8",
     )
+    return run_path
 
 
-def test_status_and_close_resolve_each_workspace_repository_from_herdr(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_status_and_close_resolve_exact_runs_across_non_git_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HERDR_SESSION", raising=False)
-    repo_alpha = tmp_path.joinpath("repo-alpha")
-    repo_beta = tmp_path.joinpath("repo-beta")
+    project_alpha = tmp_path.joinpath("project-alpha")
+    project_beta = tmp_path.joinpath("project-beta")
     alpha_snapshot = _build_workspace_snapshot(
-        repo_root=repo_alpha, workspace_id=WorkspaceId("workspace-alpha"), workspace_label="iter-alpha", number=1
+        project_root=project_alpha, workspace_id=WorkspaceId("workspace-alpha"), workspace_label="iter-alpha", number=1
     )
-    beta_snapshot = _build_workspace_snapshot(repo_root=repo_beta, workspace_id=WorkspaceId("workspace-beta"), workspace_label="iter-beta", number=2)
-    _write_iteration_records(repo_root=repo_alpha, snapshot=alpha_snapshot)
-    _write_iteration_records(repo_root=repo_beta, snapshot=beta_snapshot)
+    beta_snapshot = _build_workspace_snapshot(
+        project_root=project_beta, workspace_id=WorkspaceId("workspace-beta"), workspace_label="iter-beta", number=2
+    )
+    alpha_run_path = _write_iteration_records(project_root=project_alpha, snapshot=alpha_snapshot)
+    beta_run_path = _write_iteration_records(project_root=project_beta, snapshot=beta_snapshot)
     snapshot = HerdrSnapshot(
         workspaces=(*alpha_snapshot.workspaces, *beta_snapshot.workspaces),
         tabs=(*alpha_snapshot.tabs, *beta_snapshot.tabs),
         panes=(*alpha_snapshot.panes, *beta_snapshot.panes),
         agents=(*alpha_snapshot.agents, *beta_snapshot.agents),
     )
-    outside_git = tmp_path.joinpath("outside-git")
-    outside_git.mkdir()
-    monkeypatch.chdir(outside_git)
-
-    def repo_root_for_agent_path(path: Path) -> Path | None:
-        resolved_path = path.resolve(strict=True)
-        for repo_root in (repo_alpha, repo_beta):
-            if resolved_path.is_relative_to(repo_root):
-                return repo_root
-        return None
+    outside_projects = tmp_path.joinpath("outside-projects")
+    outside_projects.mkdir()
+    monkeypatch.chdir(outside_projects)
 
     def current_snapshot() -> HerdrSnapshot:
         return snapshot
@@ -181,13 +177,15 @@ def test_status_and_close_resolve_each_workspace_repository_from_herdr(tmp_path:
     def record_close(*, tab_id: TabId) -> None:
         closed_tab_ids.append(tab_id)
 
-    monkeypatch.setattr(agents_iter_workspace_records, "get_repo_root", repo_root_for_agent_path)
     monkeypatch.setattr(agents_iter_service, "capture_herdr_snapshot", current_snapshot)
     monkeypatch.setattr(agents_iter_service, "close_tab", record_close)
 
     statuses = agents_iter_service.get_iter_workspace_statuses(workspace_id=None, retain_previous=0)
 
-    assert tuple(status.plan.repo_root for status in statuses) == (repo_alpha, repo_beta)
+    assert not project_alpha.joinpath(".git").exists()
+    assert not project_beta.joinpath(".git").exists()
+    assert not outside_projects.joinpath(".git").exists()
+    assert tuple(status.plan.run_path for status in statuses) == (alpha_run_path, beta_run_path)
     assert tuple(tuple(tab.tab_id for tab in status.plan.closable_tabs) for status in statuses) == (
         (TabId("workspace-alpha:t1"),),
         (TabId("workspace-beta:t1"),),

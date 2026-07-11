@@ -6,7 +6,6 @@ from typing import cast
 
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_PROTOCOL, HERDR_VERSION
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import PaneId, TabId, TerminalId, WorkspaceId
-from stackops.utils.accessories import get_repo_root
 
 
 type JsonObject = dict[str, object]
@@ -53,11 +52,22 @@ class IterRunManifest:
     workspace_label: str
 
 
-def resolve_clean_repo_root(*, cwd: Path) -> Path:
-    repo_root = get_repo_root(cwd)
-    if repo_root is None:
-        raise RuntimeError(f"AgentOps clean requires a Git repository; none contains {cwd.resolve(strict=False)}.")
-    return repo_root.resolve(strict=True)
+def resolve_clean_project_root(*, cwd: Path) -> Path:
+    try:
+        resolved_cwd = cwd.expanduser().resolve(strict=True)
+    except OSError as error:
+        raise RuntimeError(f"AgentOps clean working directory does not exist: {cwd}") from error
+    if not resolved_cwd.is_dir():
+        raise RuntimeError(f"AgentOps clean working directory is not a directory: {resolved_cwd}")
+    for project_root in (resolved_cwd, *resolved_cwd.parents):
+        ai_path = project_root.joinpath(".ai")
+        agentops_path = ai_path.joinpath("agentops")
+        if not agentops_path.exists():
+            continue
+        if ai_path.is_symlink() or agentops_path.is_symlink() or not agentops_path.is_dir():
+            raise RuntimeError(f"AgentOps clean requires a real .ai/agentops directory: {agentops_path}")
+        return project_root
+    raise RuntimeError(f"AgentOps clean found no .ai/agentops records directory in {resolved_cwd} or its ancestors.")
 
 
 def current_herdr_session() -> str:
@@ -69,26 +79,18 @@ def current_herdr_session() -> str:
     return session
 
 
-def load_iteration_handoffs(*, repo_root: Path, workspace_id: WorkspaceId, workspace_label: str) -> dict[int, IterationHandoff]:
-    if not workspace_label.startswith("iter-") or workspace_label.removeprefix("iter-") == "":
-        raise ValueError(f"Herdr workspace {workspace_label!r} is not a current AgentOps iteration workspace.")
-    run_path = repo_root.joinpath(".ai", "agentops", "iterations", workspace_label.removeprefix("iter-"))
+def load_iteration_handoffs(*, run_path: Path, workspace_id: WorkspaceId, workspace_label: str) -> dict[int, IterationHandoff]:
+    parse_iter_workspace_slug(workspace_label=workspace_label)
     if not run_path.exists():
-        return {}
+        raise RuntimeError(f"AgentOps iteration run disappeared before handoff loading: {run_path}")
     if run_path.is_symlink() or not run_path.is_dir():
         raise RuntimeError(f"AgentOps iteration run path must be a real directory: {run_path}")
     manifest = load_iter_run_manifest(run_path=run_path)
     if manifest is None:
-        return {}
-    active_session = current_herdr_session()
-    if manifest.herdr_session != active_session:
-        raise RuntimeError(
-            f"AgentOps run belongs to Herdr session {manifest.herdr_session!r}, not {active_session!r}: {run_path.joinpath('run.json')}"
-        )
-    if manifest.workspace_label != workspace_label:
-        raise RuntimeError(f"AgentOps run manifest label does not match {workspace_label!r}: {run_path.joinpath('run.json')}")
-    if manifest.workspace_id != workspace_id:
-        raise RuntimeError(f"AgentOps run manifest workspace ID does not match {workspace_id!r}: {run_path.joinpath('run.json')}")
+        raise RuntimeError(f"AgentOps iteration run has no run.json manifest: {run_path}")
+    validate_iter_run_manifest(
+        manifest=manifest, manifest_path=run_path.joinpath("run.json"), workspace_id=workspace_id, workspace_label=workspace_label
+    )
 
     handoffs: dict[int, IterationHandoff] = {}
     for iteration_path in sorted(run_path.iterdir(), key=lambda path: path.name):
@@ -109,6 +111,25 @@ def load_iteration_handoffs(*, repo_root: Path, workspace_id: WorkspaceId, works
             raise RuntimeError(f"AgentOps handoff workspace does not match run.json: {receipt_path}")
         handoffs[iteration] = handoff
     return handoffs
+
+
+def parse_iter_workspace_slug(*, workspace_label: str) -> str:
+    if not workspace_label.startswith("iter-"):
+        raise ValueError(f"Herdr workspace {workspace_label!r} is not a current AgentOps iteration workspace.")
+    run_slug = workspace_label.removeprefix("iter-")
+    if run_slug in ("", ".", "..") or "/" in run_slug or "\\" in run_slug:
+        raise ValueError(f"Herdr iter workspace label {workspace_label!r} does not contain one safe run slug.")
+    return run_slug
+
+
+def validate_iter_run_manifest(*, manifest: IterRunManifest, manifest_path: Path, workspace_id: WorkspaceId, workspace_label: str) -> None:
+    active_session = current_herdr_session()
+    if manifest.herdr_session != active_session:
+        raise RuntimeError(f"AgentOps run belongs to Herdr session {manifest.herdr_session!r}, not {active_session!r}: {manifest_path}")
+    if manifest.workspace_label != workspace_label:
+        raise RuntimeError(f"AgentOps run manifest label does not match {workspace_label!r}: {manifest_path}")
+    if manifest.workspace_id != workspace_id:
+        raise RuntimeError(f"AgentOps run manifest workspace ID does not match {workspace_id!r}: {manifest_path}")
 
 
 def load_iter_run_manifest(*, run_path: Path) -> IterRunManifest | None:

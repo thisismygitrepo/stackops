@@ -44,7 +44,7 @@ def choose_agentops_cache_workspace_id(*, result: AgentopsCacheCleanResult) -> W
         workspace_ids.add(manifest.workspace_id)
         manifest_by_label[label] = manifest
         preview_by_label[label] = build_agentops_cache_preview(
-            run_path=run_path, manifest=manifest, active=run_path not in inactive_paths, repo_root=result.repo_root
+            run_path=run_path, manifest=manifest, active=run_path not in inactive_paths, project_root=result.project_root
         )
 
     selected_label = _choose_preview_label(preview_by_label=preview_by_label, selection_name="AgentOps iteration run")
@@ -54,9 +54,9 @@ def choose_agentops_cache_workspace_id(*, result: AgentopsCacheCleanResult) -> W
     return selected_manifest.workspace_id
 
 
-def build_agentops_cache_preview(*, run_path: Path, manifest: IterRunManifest, active: bool, repo_root: Path) -> str:
+def build_agentops_cache_preview(*, run_path: Path, manifest: IterRunManifest, active: bool, project_root: Path) -> str:
     try:
-        display_path = f"./{run_path.relative_to(repo_root).as_posix()}"
+        display_path = f"./{run_path.relative_to(project_root).as_posix()}"
     except ValueError:
         display_path = run_path.as_posix()
     state = "active" if active else "inactive"
@@ -106,7 +106,7 @@ def build_iter_workspace_preview(*, status: IterWorkspaceStatus) -> str:
             f"- Workspace ID: `{workspace.workspace_id}`",
             f"- Workspace number: `{workspace.number}`",
             f"- Workspace status: `{workspace.agent_status}`",
-            f"- Repository: `{plan.repo_root}`",
+            f"- AgentOps run: `{plan.run_path}`",
             f"- Focused: `{str(workspace.focused).lower()}`",
             f"- Tabs: `{workspace.tab_count}`",
             f"- Panes: `{workspace.pane_count}`",

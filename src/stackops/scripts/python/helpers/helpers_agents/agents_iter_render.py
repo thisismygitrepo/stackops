@@ -23,8 +23,8 @@ def build_agentops_cache_clean_panel(*, result: AgentopsCacheCleanResult) -> Pan
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold cyan", no_wrap=True)
     table.add_column("Value", overflow="fold")
-    table.add_row("Repository", escape(str(result.repo_root)))
-    table.add_row("Iteration records", escape(_repo_relative_path(path=result.iterations_path, repo_root=result.repo_root)))
+    table.add_row("Project", escape(str(result.project_root)))
+    table.add_row("Iteration records", escape(_project_relative_path(path=result.iterations_path, project_root=result.project_root)))
     table.add_row("Inactive runs", str(len(result.removed_runs)))
     table.add_row("Protected active", str(len(result.protected_runs)))
     table.add_row("Unmanaged", str(len(result.unmanaged_entries)))
@@ -125,9 +125,9 @@ def build_iter_status_table(*, statuses: tuple[IterWorkspaceStatus, ...]) -> Tab
     return table
 
 
-def _repo_relative_path(*, path: Path, repo_root: Path) -> str:
+def _project_relative_path(*, path: Path, project_root: Path) -> str:
     resolved_path = path.resolve(strict=False)
-    resolved_root = repo_root.resolve(strict=False)
+    resolved_root = project_root.resolve(strict=False)
     try:
         relative_path = resolved_path.relative_to(resolved_root).as_posix()
     except ValueError:

@@ -32,7 +32,7 @@ def get_iter_workspace_statuses(*, workspace_id: str | None, retain_previous: in
         workspace = resolve_snapshot_iter_workspace(snapshot=snapshot, workspace_id=workspace_id)
         records = load_iter_workspace_records(snapshot=snapshot, workspace=workspace)
         status = build_iter_workspace_status(
-            snapshot=snapshot, workspace=workspace, repo_root=records.repo_root, retain_previous=retain_previous, handoffs=records.handoffs
+            snapshot=snapshot, workspace=workspace, run_path=records.run_path, retain_previous=retain_previous, handoffs=records.handoffs
         )
         return (status,)
 
@@ -40,7 +40,7 @@ def get_iter_workspace_statuses(*, workspace_id: str | None, retain_previous: in
     return build_iter_workspace_statuses(
         snapshot=snapshot,
         retain_previous=retain_previous,
-        repo_roots_by_workspace={workspace_id: records.repo_root for workspace_id, records in records_by_workspace.items()},
+        run_paths_by_workspace={workspace_id: records.run_path for workspace_id, records in records_by_workspace.items()},
         handoffs_by_workspace={workspace_id: records.handoffs for workspace_id, records in records_by_workspace.items()},
     )
 
@@ -84,13 +84,13 @@ def close_iter_workspace_plan(*, close_plan: IterWorkspaceClosePlan, report: Cal
                 skipped_tabs.append(SkippedTabClose(tab=candidate, reason="state_changed"))
                 continue
             records = load_iter_workspace_records(snapshot=snapshot, workspace=current_workspace)
-            if records.repo_root != close_plan.repo_root:
+            if records.run_path != close_plan.run_path:
                 skipped_tabs.append(SkippedTabClose(tab=candidate, reason="state_changed"))
                 continue
             current_plan = build_workspace_close_plan(
                 snapshot=snapshot,
                 workspace=current_workspace,
-                repo_root=records.repo_root,
+                run_path=records.run_path,
                 retain_previous=close_plan.retain_previous,
                 handoffs=records.handoffs,
             )

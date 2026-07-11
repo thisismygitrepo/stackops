@@ -15,7 +15,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
 )
 
 
-def _empty_close_plan(*, workspace_id: str, label: str, number: int, repo_root: Path) -> IterWorkspaceClosePlan:
+def _empty_close_plan(*, workspace_id: str, label: str, number: int, run_path: Path) -> IterWorkspaceClosePlan:
     workspace = HerdrWorkspace(
         workspace_id=WorkspaceId(workspace_id),
         label=label,
@@ -27,14 +27,14 @@ def _empty_close_plan(*, workspace_id: str, label: str, number: int, repo_root: 
         tab_count=0,
     )
     return IterWorkspaceClosePlan(
-        workspace=workspace, repo_root=repo_root, tabs=(), retained_tabs=(), protected_tabs=(), closable_tabs=(), retain_previous=3
+        workspace=workspace, run_path=run_path, tabs=(), retained_tabs=(), protected_tabs=(), closable_tabs=(), retain_previous=3
     )
 
 
 def test_close_all_passes_every_planned_workspace_to_bulk_closer(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     close_plans = (
-        _empty_close_plan(workspace_id="w1", label="iter-alpha", number=1, repo_root=tmp_path),
-        _empty_close_plan(workspace_id="w2", label="iter-beta", number=2, repo_root=tmp_path),
+        _empty_close_plan(workspace_id="w1", label="iter-alpha", number=1, run_path=tmp_path.joinpath("alpha")),
+        _empty_close_plan(workspace_id="w2", label="iter-beta", number=2, run_path=tmp_path.joinpath("beta")),
     )
     closed_batches: list[tuple[IterWorkspaceClosePlan, ...]] = []
 
@@ -81,7 +81,7 @@ def test_interactive_status_selects_once_then_refreshes_selected_workspace(monke
 def test_interactive_clean_inventories_then_cleans_selected_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     clean_calls: list[tuple[WorkspaceId | None, bool]] = []
     empty_result = AgentopsCacheCleanResult(
-        repo_root=tmp_path,
+        project_root=tmp_path,
         iterations_path=tmp_path.joinpath(".ai", "agentops", "iterations"),
         removed_runs=(),
         protected_runs=(),

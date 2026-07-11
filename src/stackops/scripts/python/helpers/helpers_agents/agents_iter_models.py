@@ -79,7 +79,7 @@ class ProtectedTab:
 @dataclass(frozen=True, slots=True)
 class IterWorkspaceClosePlan:
     workspace: HerdrWorkspace
-    repo_root: Path
+    run_path: Path
     tabs: tuple[HerdrTab, ...]
     retained_tabs: tuple[HerdrTab, ...]
     protected_tabs: tuple[ProtectedTab, ...]
@@ -87,8 +87,8 @@ class IterWorkspaceClosePlan:
     retain_previous: int
 
     def __post_init__(self) -> None:
-        if not self.repo_root.is_absolute():
-            raise ValueError("Iter workspace close plan repository root must be absolute.")
+        if not self.run_path.is_absolute():
+            raise ValueError("Iter workspace close plan run path must be absolute.")
         tab_ids = tuple(tab.tab_id for tab in self.tabs)
         categorized_ids = (
             *(tab.tab_id for tab in self.retained_tabs),

@@ -39,7 +39,7 @@ def _status() -> IterWorkspaceStatus:
     )
     plan = IterWorkspaceClosePlan(
         workspace=workspace,
-        repo_root=Path("/repo"),
+        run_path=Path("/project/.ai/agentops/iterations/alpha"),
         tabs=(close_tab, retained_tab, protected_tab),
         retained_tabs=(retained_tab,),
         protected_tabs=(ProtectedTab(tab=protected_tab, reason="unmanaged"),),
@@ -114,7 +114,7 @@ def test_agentops_cache_selection_previews_inactive_run_action(tmp_path: Path, m
         encoding="utf-8",
     )
     result = AgentopsCacheCleanResult(
-        repo_root=tmp_path,
+        project_root=tmp_path,
         iterations_path=run_path.parent,
         removed_runs=(run_path,),
         protected_runs=(),
@@ -144,7 +144,7 @@ def test_agentops_cache_selection_previews_inactive_run_action(tmp_path: Path, m
 
 def test_agentops_cache_selection_requires_a_managed_run(tmp_path: Path) -> None:
     result = AgentopsCacheCleanResult(
-        repo_root=tmp_path,
+        project_root=tmp_path,
         iterations_path=tmp_path.joinpath(".ai", "agentops", "iterations"),
         removed_runs=(),
         protected_runs=(),

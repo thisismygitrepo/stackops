@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 
-from stackops.scripts.python.helpers.helpers_agents import agents_iter_records
 from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import clean_agentops_cache
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import WorkspaceId
 
@@ -29,16 +28,15 @@ def test_clean_protects_current_run_by_stable_workspace_id(tmp_path: Path, monke
     monkeypatch.delenv("HERDR_SESSION", raising=False)
     run_path = tmp_path.joinpath(".ai", "agentops", "iterations", "alpha")
     _write_run_manifest(run_path=run_path, herdr_session="default", workspace_id="w1", workspace_label="iter-renamed")
-
-    def fake_repo_root(_cwd: Path) -> Path:
-        return tmp_path
+    nested_cwd = tmp_path.joinpath("nested", "directory")
+    nested_cwd.mkdir(parents=True)
 
     def active_ids() -> frozenset[WorkspaceId]:
         return frozenset((WorkspaceId("w1"),))
 
-    monkeypatch.setattr(agents_iter_records, "get_repo_root", fake_repo_root)
-
-    result = clean_agentops_cache(cwd=tmp_path, workspace_id=None, dry_run=False, load_active_workspace_ids=active_ids, report=lambda _message: None)
+    result = clean_agentops_cache(
+        cwd=nested_cwd, workspace_id=None, dry_run=False, load_active_workspace_ids=active_ids, report=lambda _message: None
+    )
 
     assert result.protected_runs == (run_path,)
     assert result.removed_runs == ()
@@ -55,13 +53,8 @@ def test_clean_removes_only_inactive_current_records(tmp_path: Path, monkeypatch
     _write_run_manifest(run_path=named_session_path, herdr_session="work", workspace_id="w3", workspace_label="iter-named")
     legacy_path.mkdir(parents=True)
 
-    def fake_repo_root(_cwd: Path) -> Path:
-        return tmp_path
-
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
-
-    monkeypatch.setattr(agents_iter_records, "get_repo_root", fake_repo_root)
 
     result = clean_agentops_cache(
         cwd=tmp_path, workspace_id=None, dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None
@@ -82,13 +75,8 @@ def test_clean_scopes_removal_to_one_inactive_workspace(tmp_path: Path, monkeypa
     _write_run_manifest(run_path=selected_path, herdr_session="default", workspace_id="w1", workspace_label="iter-selected")
     _write_run_manifest(run_path=unselected_path, herdr_session="default", workspace_id="w2", workspace_label="iter-unselected")
 
-    def fake_repo_root(_cwd: Path) -> Path:
-        return tmp_path
-
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
-
-    monkeypatch.setattr(agents_iter_records, "get_repo_root", fake_repo_root)
 
     result = clean_agentops_cache(
         cwd=tmp_path, workspace_id=WorkspaceId("w1"), dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None
@@ -104,13 +92,8 @@ def test_clean_rejects_unknown_workspace_id(tmp_path: Path, monkeypatch: pytest.
     run_path = tmp_path.joinpath(".ai", "agentops", "iterations", "alpha")
     _write_run_manifest(run_path=run_path, herdr_session="default", workspace_id="w1", workspace_label="iter-alpha")
 
-    def fake_repo_root(_cwd: Path) -> Path:
-        return tmp_path
-
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
-
-    monkeypatch.setattr(agents_iter_records, "get_repo_root", fake_repo_root)
 
     with pytest.raises(RuntimeError, match="workspace ID 'missing'"):
         clean_agentops_cache(
@@ -118,16 +101,11 @@ def test_clean_rejects_unknown_workspace_id(tmp_path: Path, monkeypatch: pytest.
         )
 
 
-def test_clean_repository_error_is_specific_to_record_cleanup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    def no_repo_root(_cwd: Path) -> None:
-        return None
-
+def test_clean_requires_a_local_agentops_records_tree(tmp_path: Path) -> None:
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
-
-    monkeypatch.setattr(agents_iter_records, "get_repo_root", no_repo_root)
 
     with pytest.raises(RuntimeError) as error:
         clean_agentops_cache(cwd=tmp_path, workspace_id=None, dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None)
 
-    assert str(error.value) == f"AgentOps clean requires a Git repository; none contains {tmp_path.resolve()}."
+    assert str(error.value) == f"AgentOps clean found no .ai/agentops records directory in {tmp_path.resolve()} or its ancestors."
