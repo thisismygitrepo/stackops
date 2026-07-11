@@ -111,6 +111,6 @@ Herdr top-level terminal targets are `tab` resources inside a `workspace`; a pan
 
 Default layout: one agent per Herdr tab, exactly one pane per tab. Use panes only when the user explicitly requests a pane layout. Then split evenly, verify pane count, and keep exactly one agent per pane.
 
-On Herdr 0.7.3, `herdr agent start --tab` adds a split even when `--split` is omitted. For a one-pane tab, create or reuse the tab's root pane, assign its agent name with `herdr agent rename '<pane_id>' '<name>'`, and start the shell-joined autonomous argv with `herdr pane run`.
+For a one-pane tab, create or reuse the tab's root pane, assign its agent name with `herdr agent rename '<pane_id>' '<name>'`, and start the shell-joined autonomous argv with `herdr pane run`.
 
 Avoid `herdr agent start --tab`, `herdr agent start --split`, `herdr pane split`, and any command that adds a pane to an existing tab unless panes were requested.

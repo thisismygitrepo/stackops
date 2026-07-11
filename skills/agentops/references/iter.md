@@ -22,7 +22,7 @@ Within one iteration, use the agent's own internal sub-agent mechanism when the 
 
 1. Identify objective, evaluation criteria, and constraints. Ask only if the objective is missing; otherwise write a concrete working interpretation into the records.
 2. Select mode: interactive by default, non-interactive only when requested or required.
-3. Inspect `herdr --help` and relevant workspace/tab/pane/agent help. Require Herdr 0.7.3/protocol 16 from `herdr --version` and `herdr api snapshot`; stop on any other contract. Record `HERDR_SESSION`, using `default` only when it is unset. For non-interactive mode, inspect the target CLI help for one-shot invocation.
+3. Inspect `herdr --help` and relevant workspace/tab/pane/agent help. Record `HERDR_SESSION`, using `default` only when it is unset. For non-interactive mode, inspect the target CLI help for one-shot invocation.
 4. Capture cwd, repo root, branch, commit, status, changed files, relevant commands already run, project rules, and blockers.
 5. Create records under:
 
@@ -40,7 +40,7 @@ Within one iteration, use the agent's own internal sub-agent mechanism when the 
 Keep durable context under `.ai/agentops/iterations/<slug>/`:
 
 - `run.md`: stable contract with objective, evaluation criteria, mode, Herdr workspace, controller command, autonomous argv, workdir boundaries, project rules, and continuation rules.
-- `run.json`: exact current Herdr version/protocol plus the stable workspace ID and label used by maintenance commands.
+- `run.json`: active Herdr session plus the stable workspace ID and label used by maintenance commands.
 - `state.md`: bounded rolling state with current best result, active risks, blockers, and anti-repeat notes. Rewrite or compact this file only when those shared facts change; do not append indefinitely.
 - `index.md`: one compact row per iteration with Herdr target, task path, result path, recommendation path, files touched, validation, and short outcome.
 - `iter-001/task.md`: the task packet addressed to that iteration.
@@ -91,8 +91,6 @@ Write `run.json` with exactly this schema immediately after workspace creation, 
 ```json
 {
   "schema_version": 1,
-  "herdr_version": "0.7.3",
-  "herdr_protocol": 16,
   "herdr_session": "default",
   "workspace_id": "w1",
   "workspace_label": "iter-<slug>"
@@ -150,8 +148,6 @@ After the successor prompt is visibly accepted, write `iter-<NNN>/handoff.json` 
 ```json
 {
   "schema_version": 1,
-  "herdr_version": "0.7.3",
-  "herdr_protocol": 16,
   "herdr_session": "default",
   "workspace_id": "w1",
   "source_iteration": 1,
