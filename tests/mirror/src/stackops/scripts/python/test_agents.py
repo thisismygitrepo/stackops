@@ -46,7 +46,7 @@ def test_add_config_forwards_agentops_skill_default_and_opt_out(
 
     monkeypatch.setattr(agents_impl, "init_config", capture_init_config)
 
-    result = CliRunner().invoke(agents.get_app(), [command_name, "--agent", "codex", *extra_arguments])
+    result = CliRunner().invoke(agents.get_app(), [command_name, "codex", *extra_arguments])
 
     assert result.exit_code == 0, result.output
     assert forwarded_values == [expected_add_agentops_skill]

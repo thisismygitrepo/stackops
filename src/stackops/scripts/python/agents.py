@@ -63,9 +63,7 @@ def _parse_init_config_agents(*, raw_value: str) -> tuple[AGENTS, ...]:
 
 
 def init_config(
-    agents: Annotated[
-        str, typer.Option(..., "--agent", "-a", help=_INIT_CONFIG_AGENT_HELP)
-    ],
+    agent: Annotated[str, typer.Argument(help=_INIT_CONFIG_AGENT_HELP)],
     root: Annotated[
         str | None,
         typer.Option("--root", "-r", help="Root directory of the repository to initialize AI configs in. Defaults to current directory."),
@@ -92,7 +90,7 @@ def init_config(
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import init_config as impl
 
     try:
-        resolved = _parse_init_config_agents(raw_value=agents)
+        resolved = _parse_init_config_agents(raw_value=agent)
 
         impl(
             root=root,
