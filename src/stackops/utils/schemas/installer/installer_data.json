@@ -4293,6 +4293,27 @@
       }
     },
     {
+      "appName": "tokensave",
+      "license": "MIT License",
+      "repoURL": "https://github.com/aovestdipaperino/tokensave",
+      "doc": "Local semantic code intelligence MCP server for AI coding agents.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "tokensave-{version}-x86_64-linux.tar.gz",
+          "windows": "tokensave-{version}-x86_64-windows.zip",
+          "darwin": null
+        },
+        "arm64": {
+          "linux": "tokensave-{version}-aarch64-linux.tar.gz",
+          "windows": "tokensave-{version}-aarch64-windows.zip",
+          "darwin": "tokensave-{version}-aarch64-macos.tar.gz"
+        }
+      }
+    },
+    {
       "appName": "ai-devkit",
       "license": "MIT",
       "repoURL": "https://github.com/codeaholicguy/ai-devkit",
