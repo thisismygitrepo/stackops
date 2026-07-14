@@ -7,12 +7,12 @@ def cloudflare_tunnel_status(
     tunnel_name: Annotated[str, typer.Argument(..., help="Named Cloudflare tunnel to inspect")],
     hosts: Annotated[list[str] | None, typer.Option("--host", "-H", help="SSH connector host; repeat for multiple hosts")] = None,
     hostnames: Annotated[list[str] | None, typer.Option("--hostname", "-n", help="Published hostname to check on each connector")] = None,
-    include_local: Annotated[bool, typer.Option("--local/--no-local", help="Inspect the local connector service and routes")] = True,
+    include_local: Annotated[bool, typer.Option("--local/--no-local", "-l/-L", help="Inspect the local connector service and routes")] = True,
     cloudflared_binary: Annotated[
-        str, typer.Option("--cloudflared", help="cloudflared executable path on every connector")
+        str, typer.Option("--cloudflared", "-f", help="cloudflared executable path on every connector")
     ] = "~/.local/bin/cloudflared",
-    config_path: Annotated[str, typer.Option("--config", help="cloudflared configuration path on every connector")] = "/etc/cloudflared/config.yml",
-    service_name: Annotated[str, typer.Option("--service", help="systemd service name on every connector")] = "cloudflared",
+    config_path: Annotated[str, typer.Option("--config", "-c", help="cloudflared configuration path on every connector")] = "/etc/cloudflared/config.yml",
+    service_name: Annotated[str, typer.Option("--service", "-s", help="systemd service name on every connector")] = "cloudflared",
 ) -> None:
     """☁ <t> Show tunnel redundancy, versions, services, and route coverage."""
     from rich.console import Console
@@ -63,12 +63,12 @@ def cloudflare_tunnel_status(
 
 def update_cloudflare_connectors(
     hosts: Annotated[list[str] | None, typer.Option("--host", "-H", help="SSH connector host; repeat for rolling updates")] = None,
-    include_local: Annotated[bool, typer.Option("--local/--no-local", help="Include the local connector in the rolling update")] = True,
+    include_local: Annotated[bool, typer.Option("--local/--no-local", "-l/-L", help="Include the local connector in the rolling update")] = True,
     cloudflared_binary: Annotated[
-        str, typer.Option("--cloudflared", help="cloudflared executable path on every connector")
+        str, typer.Option("--cloudflared", "-f", help="cloudflared executable path on every connector")
     ] = "~/.local/bin/cloudflared",
-    service_name: Annotated[str, typer.Option("--service", help="systemd service name on every connector")] = "cloudflared",
-    timeout_seconds: Annotated[int, typer.Option("--timeout", min=1, help="Seconds to wait for each restarted service")] = 60,
+    service_name: Annotated[str, typer.Option("--service", "-s", help="systemd service name on every connector")] = "cloudflared",
+    timeout_seconds: Annotated[int, typer.Option("--timeout", "-t", min=1, help="Seconds to wait for each restarted service")] = 60,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Run without confirmation")] = False,
 ) -> None:
     """⬆ <u> Rolling-update local and SSH Cloudflare Tunnel connectors."""
@@ -97,13 +97,13 @@ def update_cloudflare_connectors(
 
 def sync_cloudflare_routes(
     hostnames: Annotated[list[str], typer.Option(..., "--hostname", "-n", help="Source hostname route to copy; repeat as needed")],
-    source_host: Annotated[str | None, typer.Option("--source-host", help="SSH host containing the source configuration")] = None,
-    source_config: Annotated[str, typer.Option("--source-config", help="Source cloudflared configuration path")] = "/etc/cloudflared/config.yml",
+    source_host: Annotated[str | None, typer.Option("--source-host", "-S", help="SSH host containing the source configuration")] = None,
+    source_config: Annotated[str, typer.Option("--source-config", "-C", help="Source cloudflared configuration path")] = "/etc/cloudflared/config.yml",
     target_host: Annotated[str | None, typer.Option("--host", "-H", help="SSH target host; omit for the local machine")] = None,
-    target_config: Annotated[str, typer.Option("--config", help="Target cloudflared configuration path")] = "/etc/cloudflared/config.yml",
-    cloudflared_binary: Annotated[str, typer.Option("--cloudflared", help="cloudflared executable path on the target")] = "~/.local/bin/cloudflared",
-    service_name: Annotated[str, typer.Option("--service", help="Target systemd service name")] = "cloudflared",
-    timeout_seconds: Annotated[int, typer.Option("--timeout", min=1, help="Seconds to wait for the restarted service")] = 60,
+    target_config: Annotated[str, typer.Option("--config", "-c", help="Target cloudflared configuration path")] = "/etc/cloudflared/config.yml",
+    cloudflared_binary: Annotated[str, typer.Option("--cloudflared", "-f", help="cloudflared executable path on the target")] = "~/.local/bin/cloudflared",
+    service_name: Annotated[str, typer.Option("--service", "-s", help="Target systemd service name")] = "cloudflared",
+    timeout_seconds: Annotated[int, typer.Option("--timeout", "-t", min=1, help="Seconds to wait for the restarted service")] = 60,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Run without confirmation")] = False,
 ) -> None:
     """🔀 <y> Copy selected ingress routes without copying tunnel credentials."""

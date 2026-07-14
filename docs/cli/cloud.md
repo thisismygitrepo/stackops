@@ -77,6 +77,7 @@ Current options from live help:
 
 | Option | Meaning |
 | --- | --- |
+| `--transfers`, `-T` | Number of concurrent file transfers |
 | `--overwrite`, `-o` | Overwrite an existing destination file |
 | `--share-scope`, `-s` | Share link scope: `anonymous`/`a` or `organization`/`o`; implies sharing |
 | `--share-type`, `-t` | Share link type: `view`/`v`, `edit`/`e`, or `embed`/`m`; implies sharing |

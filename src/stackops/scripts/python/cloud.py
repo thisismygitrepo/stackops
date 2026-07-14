@@ -47,7 +47,7 @@ def sync(
 def copy(
     source: Annotated[str, typer.Argument(help="📂 file/folder path to be taken from here.")],
     target: Annotated[str, typer.Argument(help="🎯 file/folder path to be be sent to here.")],
-    transfers: Annotated[int, typer.Option("--transfers", help="🔀 Number of concurrent file transfers.")] = 32,
+    transfers: Annotated[int, typer.Option("--transfers", "-T", help="🔀 Number of concurrent file transfers.")] = 32,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="📝 Overwrite existing file.")] = defaults["overwrite"],
     share_scope: Annotated[ShareScopeChoice | None, typer.Option("--share-scope", "-s", help="🔗 Share link scope: anonymous/a or organization/o.")] = None,
     share_type: Annotated[ShareLinkTypeChoice | None, typer.Option("--share-type", "-t", help="🔗 Share link type: view/v, edit/e, or embed/m.")] = None,

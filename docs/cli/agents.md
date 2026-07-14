@@ -29,7 +29,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 
 ## `iter`
 
-`iter` supports Herdr 0.7.3/protocol 16 only. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agentops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agentops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
+`iter` supports Herdr 0.7.3/protocol 16 only. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agentops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agentops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
 
 ```bash
 agents iter status --all
@@ -38,7 +38,7 @@ agents iter close w1 --dry-run
 agents iter close --all --dry-run
 agents iter close -I
 agents iter clean --all --dry-run
-agents iter clean -I --dry-run
+agents iter clean -I -n
 ```
 
 ---
@@ -188,12 +188,12 @@ agents ask --quiet "summarize the current directory"
 
 ## Repository and MCP helpers
 
-`add-config` requires an agent argument and copies the latest AgentOps skill bundled with StackOps into `.agents/skills/agentops` by default. Pass `--no-agentops-skill` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `all` to configure every supported agent, or pass a comma-separated list.
+`add-config` requires an agent argument and copies the latest AgentOps skill bundled with StackOps into `.agents/skills/agentops` by default. Pass `--no-agentops-skill`/`-A` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `all` to configure every supported agent, or pass a comma-separated list.
 
 ```bash
 agents add-config all --root .
 agents add-config codex,copilot,agy,pi --root . --include-scripts --add-gitignore
-agents add-config codex --root . --no-agentops-skill
+agents add-config codex --root . -A
 ```
 
 `add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:
@@ -234,14 +234,14 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome, Brave, Edge, Firefox, or Safari automation endpoints. Chromium browsers use CDP with an isolated profile; Firefox uses WebDriver BiDi; Safari uses safaridriver. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory for profile-capable browsers; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. By default, StackOps runs browser endpoints in one `stackops-browser` tmux session with qualified windows such as `chrome-profile-agent-browser-p9331-endpoint`; `--lan`/`-l` adds a matching relay window and exposes the requested port through a StackOps relay on `0.0.0.0`. Pass `--detached` to launch background processes instead of tmux windows.
+`agents browser launch-browser` launches Chrome, Brave, Edge, Firefox, or Safari automation endpoints. Chromium browsers use CDP with an isolated profile; Firefox uses WebDriver BiDi; Safari uses safaridriver. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a temp profile under the system temp directory for profile-capable browsers; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. By default, StackOps runs browser endpoints in one `stackops-browser` tmux session with qualified windows such as `chrome-profile-agent-browser-p9331-endpoint`; `--lan`/`-l` adds a matching relay window and exposes the requested port through a StackOps relay on `0.0.0.0`. Pass `--detached`/`-d` to launch background processes instead of tmux windows.
 
 ```bash
 agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
 agents browser launch-browser --browser edge --port 9331 --profile agent-browser
 agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
 agents browser launch-browser --browser chrome --port 9331 --lan
-agents browser launch-browser --browser chrome --port 9331 --profile agent-browser --detached
+agents browser launch-browser --browser chrome --port 9331 --profile agent-browser -d
 agents browser status
 agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```

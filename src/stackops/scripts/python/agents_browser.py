@@ -54,7 +54,7 @@ def launch_browser(
         ),
     ] = None,
     lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoint on 0.0.0.0 through a localhost relay.")] = False,
-    detached: Annotated[bool, typer.Option("--detached", help="Launch as background processes instead of tmux windows.")] = False,
+    detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
     """Launch browser automation endpoint with an isolated profile when supported."""
     try:

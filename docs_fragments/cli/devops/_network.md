@@ -312,10 +312,10 @@ Key options:
 |--------|-------------|
 | `--host`, `-H` | SSH connector host; repeat for multiple hosts |
 | `--hostname`, `-n` | Published hostname to verify on each connector |
-| `--local`, `--no-local` | Include or exclude the local connector |
-| `--cloudflared` | Cloudflared executable path on each connector |
-| `--config` | Cloudflared configuration path on each connector |
-| `--service` | Systemd service name on each connector |
+| `--local`/`--no-local`, `-l`/`-L` | Include or exclude the local connector |
+| `--cloudflared`, `-f` | Cloudflared executable path on each connector |
+| `--config`, `-c` | Cloudflared configuration path on each connector |
+| `--service`, `-s` | Systemd service name on each connector |
 
 #### update-cloudflare-connectors
 
@@ -330,10 +330,10 @@ Key options:
 | Option | Description |
 |--------|-------------|
 | `--host`, `-H` | SSH connector host; repeat for a rolling update |
-| `--local`, `--no-local` | Include or exclude the local connector |
-| `--cloudflared` | Cloudflared executable path on each connector |
-| `--service` | Systemd service name on each connector |
-| `--timeout` | Seconds to wait for each restarted service |
+| `--local`/`--no-local`, `-l`/`-L` | Include or exclude the local connector |
+| `--cloudflared`, `-f` | Cloudflared executable path on each connector |
+| `--service`, `-s` | Systemd service name on each connector |
+| `--timeout`, `-t` | Seconds to wait for each restarted service |
 | `--yes`, `-y` | Run without confirmation |
 
 #### sync-cloudflare-routes
@@ -349,13 +349,13 @@ Key options:
 | Option | Description |
 |--------|-------------|
 | `--hostname`, `-n` | Source hostname route to copy; repeat as needed |
-| `--source-host` | SSH host containing the source configuration |
-| `--source-config` | Source Cloudflared configuration path |
+| `--source-host`, `-S` | SSH host containing the source configuration |
+| `--source-config`, `-C` | Source Cloudflared configuration path |
 | `--host`, `-H` | SSH target host; omit for the local machine |
-| `--config` | Target Cloudflared configuration path |
-| `--cloudflared` | Cloudflared executable path on the target |
-| `--service` | Target systemd service name |
-| `--timeout` | Seconds to wait for the restarted service |
+| `--config`, `-c` | Target Cloudflared configuration path |
+| `--cloudflared`, `-f` | Cloudflared executable path on the target |
+| `--service`, `-s` | Target systemd service name |
+| `--timeout`, `-t` | Seconds to wait for the restarted service |
 | `--yes`, `-y` | Run without confirmation |
 
 ### device

@@ -7783,12 +7783,12 @@
                         "    tunnel_name: Annotated[str, typer.Argument(..., help=\"Named Cloudflare tunnel to inspect\")],",
                         "    hosts: Annotated[list[str] | None, typer.Option(\"--host\", \"-H\", help=\"SSH connector host; repeat for multiple hosts\")] = None,",
                         "    hostnames: Annotated[list[str] | None, typer.Option(\"--hostname\", \"-n\", help=\"Published hostname to check on each connector\")] = None,",
-                        "    include_local: Annotated[bool, typer.Option(\"--local/--no-local\", help=\"Inspect the local connector service and routes\")] = True,",
+                        "    include_local: Annotated[bool, typer.Option(\"--local/--no-local\", \"-l/-L\", help=\"Inspect the local connector service and routes\")] = True,",
                         "    cloudflared_binary: Annotated[",
-                        "        str, typer.Option(\"--cloudflared\", help=\"cloudflared executable path on every connector\")",
+                        "        str, typer.Option(\"--cloudflared\", \"-f\", help=\"cloudflared executable path on every connector\")",
                         "    ] = \"~/.local/bin/cloudflared\",",
-                        "    config_path: Annotated[str, typer.Option(\"--config\", help=\"cloudflared configuration path on every connector\")] = \"/etc/cloudflared/config.yml\",",
-                        "    service_name: Annotated[str, typer.Option(\"--service\", help=\"systemd service name on every connector\")] = \"cloudflared\",",
+                        "    config_path: Annotated[str, typer.Option(\"--config\", \"-c\", help=\"cloudflared configuration path on every connector\")] = \"/etc/cloudflared/config.yml\",",
+                        "    service_name: Annotated[str, typer.Option(\"--service\", \"-s\", help=\"systemd service name on every connector\")] = \"cloudflared\",",
                         ") -> None:",
                         "    \"\"\"☁ <t> Show tunnel redundancy, versions, services, and route coverage.\"\"\"",
                         "    from rich.console import Console",
@@ -7904,17 +7904,21 @@
                           "type": "bool",
                           "default": true,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--local/--no-local', help='Inspect the local connector service and routes')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--local/--no-local', '-l/-L', help='Inspect the local connector service and routes')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--local/--no-local"
+                              "--local/--no-local",
+                              "-l/-L"
                             ],
                             "long_flags": [
                               "--local",
                               "--no-local"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-l",
+                              "-L"
+                            ],
                             "help": "Inspect the local connector service and routes"
                           }
                         },
@@ -7924,16 +7928,19 @@
                           "type": "str",
                           "default": "~/.local/bin/cloudflared",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--cloudflared', help='cloudflared executable path on every connector')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--cloudflared', '-f', help='cloudflared executable path on every connector')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--cloudflared"
+                              "--cloudflared",
+                              "-f"
                             ],
                             "long_flags": [
                               "--cloudflared"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-f"
+                            ],
                             "help": "cloudflared executable path on every connector"
                           }
                         },
@@ -7943,16 +7950,19 @@
                           "type": "str",
                           "default": "/etc/cloudflared/config.yml",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--config', help='cloudflared configuration path on every connector')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--config', '-c', help='cloudflared configuration path on every connector')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--config"
+                              "--config",
+                              "-c"
                             ],
                             "long_flags": [
                               "--config"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-c"
+                            ],
                             "help": "cloudflared configuration path on every connector"
                           }
                         },
@@ -7962,16 +7972,19 @@
                           "type": "str",
                           "default": "cloudflared",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--service', help='systemd service name on every connector')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--service', '-s', help='systemd service name on every connector')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--service"
+                              "--service",
+                              "-s"
                             ],
                             "long_flags": [
                               "--service"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-s"
+                            ],
                             "help": "systemd service name on every connector"
                           }
                         }
@@ -8002,12 +8015,12 @@
                       "raw_lines": [
                         "def update_cloudflare_connectors(",
                         "    hosts: Annotated[list[str] | None, typer.Option(\"--host\", \"-H\", help=\"SSH connector host; repeat for rolling updates\")] = None,",
-                        "    include_local: Annotated[bool, typer.Option(\"--local/--no-local\", help=\"Include the local connector in the rolling update\")] = True,",
+                        "    include_local: Annotated[bool, typer.Option(\"--local/--no-local\", \"-l/-L\", help=\"Include the local connector in the rolling update\")] = True,",
                         "    cloudflared_binary: Annotated[",
-                        "        str, typer.Option(\"--cloudflared\", help=\"cloudflared executable path on every connector\")",
+                        "        str, typer.Option(\"--cloudflared\", \"-f\", help=\"cloudflared executable path on every connector\")",
                         "    ] = \"~/.local/bin/cloudflared\",",
-                        "    service_name: Annotated[str, typer.Option(\"--service\", help=\"systemd service name on every connector\")] = \"cloudflared\",",
-                        "    timeout_seconds: Annotated[int, typer.Option(\"--timeout\", min=1, help=\"Seconds to wait for each restarted service\")] = 60,",
+                        "    service_name: Annotated[str, typer.Option(\"--service\", \"-s\", help=\"systemd service name on every connector\")] = \"cloudflared\",",
+                        "    timeout_seconds: Annotated[int, typer.Option(\"--timeout\", \"-t\", min=1, help=\"Seconds to wait for each restarted service\")] = 60,",
                         "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Run without confirmation\")] = False,",
                         ") -> None:",
                         "    \"\"\"⬆ <u> Rolling-update local and SSH Cloudflare Tunnel connectors.\"\"\"",
@@ -8063,17 +8076,21 @@
                           "type": "bool",
                           "default": true,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--local/--no-local', help='Include the local connector in the rolling update')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--local/--no-local', '-l/-L', help='Include the local connector in the rolling update')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--local/--no-local"
+                              "--local/--no-local",
+                              "-l/-L"
                             ],
                             "long_flags": [
                               "--local",
                               "--no-local"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-l",
+                              "-L"
+                            ],
                             "help": "Include the local connector in the rolling update"
                           }
                         },
@@ -8083,16 +8100,19 @@
                           "type": "str",
                           "default": "~/.local/bin/cloudflared",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--cloudflared', help='cloudflared executable path on every connector')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--cloudflared', '-f', help='cloudflared executable path on every connector')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--cloudflared"
+                              "--cloudflared",
+                              "-f"
                             ],
                             "long_flags": [
                               "--cloudflared"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-f"
+                            ],
                             "help": "cloudflared executable path on every connector"
                           }
                         },
@@ -8102,16 +8122,19 @@
                           "type": "str",
                           "default": "cloudflared",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--service', help='systemd service name on every connector')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--service', '-s', help='systemd service name on every connector')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--service"
+                              "--service",
+                              "-s"
                             ],
                             "long_flags": [
                               "--service"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-s"
+                            ],
                             "help": "systemd service name on every connector"
                           }
                         },
@@ -8121,16 +8144,19 @@
                           "type": "int",
                           "default": 60,
                           "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--timeout', min=1, help='Seconds to wait for each restarted service')]",
+                          "annotation_raw": "Annotated[int, typer.Option('--timeout', '-t', min=1, help='Seconds to wait for each restarted service')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--timeout"
+                              "--timeout",
+                              "-t"
                             ],
                             "long_flags": [
                               "--timeout"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-t"
+                            ],
                             "help": "Seconds to wait for each restarted service"
                           }
                         },
@@ -8183,13 +8209,13 @@
                       "raw_lines": [
                         "def sync_cloudflare_routes(",
                         "    hostnames: Annotated[list[str], typer.Option(..., \"--hostname\", \"-n\", help=\"Source hostname route to copy; repeat as needed\")],",
-                        "    source_host: Annotated[str | None, typer.Option(\"--source-host\", help=\"SSH host containing the source configuration\")] = None,",
-                        "    source_config: Annotated[str, typer.Option(\"--source-config\", help=\"Source cloudflared configuration path\")] = \"/etc/cloudflared/config.yml\",",
+                        "    source_host: Annotated[str | None, typer.Option(\"--source-host\", \"-S\", help=\"SSH host containing the source configuration\")] = None,",
+                        "    source_config: Annotated[str, typer.Option(\"--source-config\", \"-C\", help=\"Source cloudflared configuration path\")] = \"/etc/cloudflared/config.yml\",",
                         "    target_host: Annotated[str | None, typer.Option(\"--host\", \"-H\", help=\"SSH target host; omit for the local machine\")] = None,",
-                        "    target_config: Annotated[str, typer.Option(\"--config\", help=\"Target cloudflared configuration path\")] = \"/etc/cloudflared/config.yml\",",
-                        "    cloudflared_binary: Annotated[str, typer.Option(\"--cloudflared\", help=\"cloudflared executable path on the target\")] = \"~/.local/bin/cloudflared\",",
-                        "    service_name: Annotated[str, typer.Option(\"--service\", help=\"Target systemd service name\")] = \"cloudflared\",",
-                        "    timeout_seconds: Annotated[int, typer.Option(\"--timeout\", min=1, help=\"Seconds to wait for the restarted service\")] = 60,",
+                        "    target_config: Annotated[str, typer.Option(\"--config\", \"-c\", help=\"Target cloudflared configuration path\")] = \"/etc/cloudflared/config.yml\",",
+                        "    cloudflared_binary: Annotated[str, typer.Option(\"--cloudflared\", \"-f\", help=\"cloudflared executable path on the target\")] = \"~/.local/bin/cloudflared\",",
+                        "    service_name: Annotated[str, typer.Option(\"--service\", \"-s\", help=\"Target systemd service name\")] = \"cloudflared\",",
+                        "    timeout_seconds: Annotated[int, typer.Option(\"--timeout\", \"-t\", min=1, help=\"Seconds to wait for the restarted service\")] = 60,",
                         "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Run without confirmation\")] = False,",
                         ") -> None:",
                         "    \"\"\"🔀 <y> Copy selected ingress routes without copying tunnel credentials.\"\"\"",
@@ -8246,16 +8272,19 @@
                           "type": "str | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--source-host', help='SSH host containing the source configuration')]",
+                          "annotation_raw": "Annotated[str | None, typer.Option('--source-host', '-S', help='SSH host containing the source configuration')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--source-host"
+                              "--source-host",
+                              "-S"
                             ],
                             "long_flags": [
                               "--source-host"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-S"
+                            ],
                             "help": "SSH host containing the source configuration"
                           }
                         },
@@ -8265,16 +8294,19 @@
                           "type": "str",
                           "default": "/etc/cloudflared/config.yml",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--source-config', help='Source cloudflared configuration path')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--source-config', '-C', help='Source cloudflared configuration path')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--source-config"
+                              "--source-config",
+                              "-C"
                             ],
                             "long_flags": [
                               "--source-config"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-C"
+                            ],
                             "help": "Source cloudflared configuration path"
                           }
                         },
@@ -8306,16 +8338,19 @@
                           "type": "str",
                           "default": "/etc/cloudflared/config.yml",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--config', help='Target cloudflared configuration path')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--config', '-c', help='Target cloudflared configuration path')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--config"
+                              "--config",
+                              "-c"
                             ],
                             "long_flags": [
                               "--config"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-c"
+                            ],
                             "help": "Target cloudflared configuration path"
                           }
                         },
@@ -8325,16 +8360,19 @@
                           "type": "str",
                           "default": "~/.local/bin/cloudflared",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--cloudflared', help='cloudflared executable path on the target')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--cloudflared', '-f', help='cloudflared executable path on the target')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--cloudflared"
+                              "--cloudflared",
+                              "-f"
                             ],
                             "long_flags": [
                               "--cloudflared"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-f"
+                            ],
                             "help": "cloudflared executable path on the target"
                           }
                         },
@@ -8344,16 +8382,19 @@
                           "type": "str",
                           "default": "cloudflared",
                           "required": false,
-                          "annotation_raw": "Annotated[str, typer.Option('--service', help='Target systemd service name')]",
+                          "annotation_raw": "Annotated[str, typer.Option('--service', '-s', help='Target systemd service name')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--service"
+                              "--service",
+                              "-s"
                             ],
                             "long_flags": [
                               "--service"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-s"
+                            ],
                             "help": "Target systemd service name"
                           }
                         },
@@ -8363,16 +8404,19 @@
                           "type": "int",
                           "default": 60,
                           "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--timeout', min=1, help='Seconds to wait for the restarted service')]",
+                          "annotation_raw": "Annotated[int, typer.Option('--timeout', '-t', min=1, help='Seconds to wait for the restarted service')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--timeout"
+                              "--timeout",
+                              "-t"
                             ],
                             "long_flags": [
                               "--timeout"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-t"
+                            ],
                             "help": "Seconds to wait for the restarted service"
                           }
                         },
@@ -9114,7 +9158,7 @@
                 "    list_scripts: Annotated[bool, typer.Option(..., \"--list\", \"-l\", help=\"List available scripts in all locations\")] = False,",
                 "    run_in_subprocess: Annotated[",
                 "        bool,",
-                "        typer.Option(..., \"--subprocess\", help=\"Run shell scripts in a child shell instead of sourcing them in the caller\"),",
+                "        typer.Option(..., \"--subprocess\", \"-S\", help=\"Run shell scripts in a child shell instead of sourcing them in the caller\"),",
                 "    ] = False,",
                 ") -> None:",
                 "    \"\"\"🚀 Execute python/shell scripts from pre-defined directories or as command.\"\"\"",
@@ -9258,16 +9302,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--subprocess', help='Run shell scripts in a child shell instead of sourcing them in the caller')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--subprocess', '-S', help='Run shell scripts in a child shell instead of sourcing them in the caller')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--subprocess"
+                      "--subprocess",
+                      "-S"
                     ],
                     "long_flags": [
                       "--subprocess"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-S"
+                    ],
                     "help": "Run shell scripts in a child shell instead of sourcing them in the caller",
                     "default": "..."
                   }
@@ -11483,7 +11530,7 @@
                 "def copy(",
                 "    source: Annotated[str, typer.Argument(help=\"📂 file/folder path to be taken from here.\")],",
                 "    target: Annotated[str, typer.Argument(help=\"🎯 file/folder path to be be sent to here.\")],",
-                "    transfers: Annotated[int, typer.Option(\"--transfers\", help=\"🔀 Number of concurrent file transfers.\")] = 32,",
+                "    transfers: Annotated[int, typer.Option(\"--transfers\", \"-T\", help=\"🔀 Number of concurrent file transfers.\")] = 32,",
                 "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-o\", help=\"📝 Overwrite existing file.\")] = defaults[\"overwrite\"],",
                 "    share_scope: Annotated[ShareScopeChoice | None, typer.Option(\"--share-scope\", \"-s\", help=\"🔗 Share link scope: anonymous/a or organization/o.\")] = None,",
                 "    share_type: Annotated[ShareLinkTypeChoice | None, typer.Option(\"--share-type\", \"-t\", help=\"🔗 Share link type: view/v, edit/e, or embed/m.\")] = None,",
@@ -11564,16 +11611,19 @@
                   "type": "int",
                   "default": 32,
                   "required": false,
-                  "annotation_raw": "Annotated[int, typer.Option('--transfers', help='🔀 Number of concurrent file transfers.')]",
+                  "annotation_raw": "Annotated[int, typer.Option('--transfers', '-T', help='🔀 Number of concurrent file transfers.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--transfers"
+                      "--transfers",
+                      "-T"
                     ],
                     "long_flags": [
                       "--transfers"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-T"
+                    ],
                     "help": "🔀 Number of concurrent file transfers."
                   }
                 },
@@ -13127,7 +13177,7 @@
                 "        kill_all: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Kill all sessions. With --idle, inspect all sessions for idle panes/windows.\", show_default=True)] = False,",
                 "        idle: Annotated[bool, typer.Option(\"--idle\", \"-i\", help=\"Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.\", show_default=True)] = False,",
-                "        delete: Annotated[bool, typer.Option(\"--delete\", help=\"Delete stopped Herdr session records instead of killing running sessions.\", show_default=True)] = False,",
+                "        delete: Annotated[bool, typer.Option(\"--delete\", \"-D\", help=\"Delete stopped Herdr session records instead of killing running sessions.\", show_default=True)] = False,",
                 "        backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"aoe\", \"e\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend multiplexer to use: tmux, herdr, aoe, or auto\")] = \"tmux\",",
                 "        ) -> None:",
                 "    \"\"\"Choose one or more session targets to kill.\"\"\"",
@@ -13284,16 +13334,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--delete', help='Delete stopped Herdr session records instead of killing running sessions.', show_default=True)]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--delete', '-D', help='Delete stopped Herdr session records instead of killing running sessions.', show_default=True)]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--delete"
+                      "--delete",
+                      "-D"
                     ],
                     "long_flags": [
                       "--delete"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-D"
+                    ],
                     "help": "Delete stopped Herdr session records instead of killing running sessions."
                   }
                 },
@@ -16414,7 +16467,7 @@
                     "        ),",
                     "    ] = None,",
                     "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Expose endpoint on 0.0.0.0 through a localhost relay.\")] = False,",
-                    "    detached: Annotated[bool, typer.Option(\"--detached\", help=\"Launch as background processes instead of tmux windows.\")] = False,",
+                    "    detached: Annotated[bool, typer.Option(\"--detached\", \"-d\", help=\"Launch as background processes instead of tmux windows.\")] = False,",
                     ") -> None:",
                     "    \"\"\"Launch browser automation endpoint with an isolated profile when supported.\"\"\"",
                     "    try:",
@@ -16550,16 +16603,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--detached', help='Launch as background processes instead of tmux windows.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--detached', '-d', help='Launch as background processes instead of tmux windows.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--detached"
+                          "--detached",
+                          "-d"
                         ],
                         "long_flags": [
                           "--detached"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-d"
+                        ],
                         "help": "Launch as background processes instead of tmux windows."
                       }
                     }
@@ -16713,7 +16769,7 @@
                     "        bool, typer.Option(\"--all\", \"-a\", help=\"Clean inactive records across every current-session AgentOps iteration run.\")",
                     "    ] = False,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-I\", help=\"Choose one AgentOps iteration run with a TV preview.\")] = False,",
-                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show stale iteration records without removing them.\")] = False,",
+                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-n\", help=\"Show stale iteration records without removing them.\")] = False,",
                     ") -> None:",
                     "    \"\"\"Remove stale iteration records while preserving live and unrelated AgentOps records.\"\"\"",
                     "    try:",
@@ -16794,16 +16850,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', help='Show stale iteration records without removing them.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-n', help='Show stale iteration records without removing them.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--dry-run"
+                          "--dry-run",
+                          "-n"
                         ],
                         "long_flags": [
                           "--dry-run"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-n"
+                        ],
                         "help": "Show stale iteration records without removing them."
                       }
                     }
@@ -16845,7 +16904,7 @@
                     "    retain_previous: Annotated[",
                     "        int, typer.Option(\"--retain-previous\", \"-k\", min=0, help=\"Retain the latest iteration plus this many previous iterations.\")",
                     "    ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,",
-                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", help=\"Show the close plan without closing tabs.\")] = False,",
+                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-n\", help=\"Show the close plan without closing tabs.\")] = False,",
                     "    interval_seconds: Annotated[",
                     "        int, typer.Option(\"--interval\", \"-i\", min=1, help=\"Seconds between close passes when --loop is used.\")",
                     "    ] = CLOSE_LOOP_INTERVAL_SECONDS,",
@@ -16981,16 +17040,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', help='Show the close plan without closing tabs.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-n', help='Show the close plan without closing tabs.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--dry-run"
+                          "--dry-run",
+                          "-n"
                         ],
                         "long_flags": [
                           "--dry-run"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-n"
+                        ],
                         "help": "Show the close plan without closing tabs."
                       }
                     },
@@ -17539,9 +17601,7 @@
             "signature": {
               "raw_lines": [
                 "def init_config(",
-                "    agents: Annotated[",
-                "        str, typer.Option(..., \"--agent\", \"-a\", help=_INIT_CONFIG_AGENT_HELP)",
-                "    ],",
+                "    agent: Annotated[str, typer.Argument(help=_INIT_CONFIG_AGENT_HELP)],",
                 "    root: Annotated[",
                 "        str | None,",
                 "        typer.Option(\"--root\", \"-r\", help=\"Root directory of the repository to initialize AI configs in. Defaults to current directory.\"),",
@@ -17556,7 +17616,7 @@
                 "    ] = True,",
                 "    skip_agentops_skill: Annotated[",
                 "        bool,",
-                "        typer.Option(\"--no-agentops-skill\", help=\"Skip copying the latest bundled AgentOps skill\"),",
+                "        typer.Option(\"--no-agentops-skill\", \"-A\", help=\"Skip copying the latest bundled AgentOps skill\"),",
                 "    ] = False,",
                 "    add_scripts: Annotated[bool, typer.Option(\"--include-scripts\", \"-s\", help=\"Create shared .ai and scripts/type_checking scaffold\")] = False,",
                 "    add_vscode_tasks: Annotated[bool, typer.Option(\"--add-vscode-tasks\", \"-l\", help=\"Add VS Code lint/type-check task only\")] = False,",
@@ -17568,7 +17628,7 @@
                 "    from stackops.scripts.python.helpers.helpers_agents.agents_impl import init_config as impl",
                 "",
                 "    try:",
-                "        resolved = _parse_init_config_agents(raw_value=agents)",
+                "        resolved = _parse_init_config_agents(raw_value=agent)",
                 "",
                 "        impl(",
                 "            root=root,",
@@ -17586,25 +17646,17 @@
               "name": "init_config",
               "parameters": [
                 {
-                  "name": "agents",
+                  "name": "agent",
                   "kind": "positional_or_keyword",
                   "type": "str",
                   "default": null,
                   "required": true,
-                  "annotation_raw": "Annotated[str, typer.Option(..., '--agent', '-a', help=_INIT_CONFIG_AGENT_HELP)]",
+                  "annotation_raw": "Annotated[str, typer.Argument(help=_INIT_CONFIG_AGENT_HELP)]",
                   "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--agent",
-                      "-a"
-                    ],
-                    "long_flags": [
-                      "--agent"
-                    ],
-                    "short_flags": [
-                      "-a"
-                    ],
-                    "default": "..."
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": []
                   }
                 },
                 {
@@ -17679,16 +17731,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--no-agentops-skill', help='Skip copying the latest bundled AgentOps skill')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--no-agentops-skill', '-A', help='Skip copying the latest bundled AgentOps skill')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--no-agentops-skill"
+                      "--no-agentops-skill",
+                      "-A"
                     ],
                     "long_flags": [
                       "--no-agentops-skill"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-A"
+                    ],
                     "help": "Skip copying the latest bundled AgentOps skill"
                   }
                 },
@@ -18771,7 +18826,7 @@
                 "    ] = None,",
                 "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent used to check whether the active phase is finished.\")] = DEFAULT_AGENT,",
                 "    interval_seconds: Annotated[int, typer.Option(\"--interval\", \"-i\", help=\"Seconds to sleep between executor passes.\")] = 300,",
-                "    once: Annotated[bool, typer.Option(\"--once\", help=\"Run one executor pass and exit.\")] = False,",
+                "    once: Annotated[bool, typer.Option(\"--once\", \"-o\", help=\"Run one executor pass and exit.\")] = False,",
                 ") -> None:",
                 "    \"\"\"Execute an agentops plan JSON file.\"\"\"",
                 "    import typer as _typer",
@@ -18850,16 +18905,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--once', help='Run one executor pass and exit.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--once', '-o', help='Run one executor pass and exit.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--once"
+                      "--once",
+                      "-o"
                     ],
                     "long_flags": [
                       "--once"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-o"
+                    ],
                     "help": "Run one executor pass and exit."
                   }
                 }
