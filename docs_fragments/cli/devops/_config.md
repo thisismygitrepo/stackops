@@ -153,7 +153,7 @@ devops config copy-assets all
 
 ### secrets
 
-Manage StackOps secrets files and define environment variables from them. The `search` subcommand reads both the current directory's `.stackops/secrets/secrets.json` and the global source-of-truth secrets file by default.
+Manage StackOps secrets files and define environment variables from them. When `search` is run without `--source`, it reads the current directory's `.stackops/secrets/secrets.json` when that file exists and otherwise reads the global source-of-truth secrets file.
 
 ```bash
 devops config secrets search github personal-access-token
@@ -191,7 +191,7 @@ Use `--verbose`, `-v` to print the selected bundle and environment variable keys
 
 For script-stable matching, use exact selectors. `--name`, `-n` matches `entries[].name`; `--tag`, `--tags`, `-t` requires an exact login or secret tag and can be repeated; `--key`, `-k` requires an exact environment variable key. More specific selectors are also available: `--secret-name`, `-N`; `--login-tag`, `-l`; `--secret-tag`, `-T`; and `--scope`, `-S` for values inside `entries[].secrets[].scopes`. Exact selectors are case-sensitive and can be combined with query terms.
 
-Use `search --source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file.
+Use `search --source`, `-s` to explicitly choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to explicitly select another local secrets JSON file; a missing `--path` file is an error rather than a reason to use the global source.
 
 Use `devops config secrets subset OUTPUT_PATH` to choose top-level `entries[]` interactively from one source file and write a `secrets.json`. The picker preview shows labels, tags/scopes, secret bundle names, and environment variable names, but not secret values. By default, the command creates a new file and refuses an existing output path. Use `--on-conflict`, `-o` with `append`/`a` to add selected entries to an existing output file, `overwrite`/`o` to replace the output file, or `throw-error`/`t` to keep the default refusal behavior.
 

@@ -18,11 +18,12 @@ SECRETS_SCHEMA_FILENAME = secret_actions.SECRETS_SCHEMA_FILENAME
 SecretsSource: TypeAlias = Literal["local", "l", "global", "g", "both", "b"]
 WritableSecretsSource: TypeAlias = Literal["local", "l", "global", "g"]
 ResolvedSecretsSource: TypeAlias = Literal["local", "global", "both"]
+SecretsFileSourceName: TypeAlias = Literal["local", "global"]
 
 
 @dataclass(frozen=True)
 class SecretsFileSource:
-    name: str
+    name: SecretsFileSourceName
     path: Path
 
 
@@ -56,9 +57,14 @@ class SecretsFileStats:
     secrets_with_scopes: int = 0
     max_keys_per_secret: int = 0
 
-def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: SecretsSource) -> list[SecretsFileSource]:
-    resolved_source = _resolve_secrets_source_alias(secrets_source)
+def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: SecretsSource | None) -> list[SecretsFileSource]:
     local_source = SecretsFileSource(name="local", path=_resolve_local_secrets_path(secrets_path))
+    if secrets_source is None:
+        if secrets_path is not None or local_source.path.exists():
+            return [local_source]
+        return [SecretsFileSource(name="global", path=_resolve_global_secrets_path())]
+
+    resolved_source = _resolve_secrets_source_alias(secrets_source)
     if resolved_source == "local":
         return [local_source]
 

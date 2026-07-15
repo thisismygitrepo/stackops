@@ -3887,14 +3887,17 @@
                         "        ),",
                         "    ] = None,",
                         "    secrets_source: Annotated[",
-                        "        SecretsSource,",
+                        "        SecretsSource | None,",
                         "        typer.Option(",
                         "            \"--source\",",
                         "            \"-s\",",
                         "            case_sensitive=False,",
-                        "            help=\"Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.\",",
+                        "            help=(",
+                        "                \"Secrets file source to read: local/l, global/g, or both/b. \"",
+                        "                \"When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent.\"",
+                        "            ),",
                         "        ),",
-                        "    ] = \"both\",",
+                        "    ] = None,",
                         "    interactive: Annotated[",
                         "        bool,",
                         "        typer.Option(\"--interactive\", \"-i\", help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\"),",
@@ -4018,10 +4021,10 @@
                         {
                           "name": "secrets_source",
                           "kind": "positional_or_keyword",
-                          "type": "SecretsSource",
-                          "default": "both",
+                          "type": "SecretsSource | None",
+                          "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.')]",
+                          "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local/l, global/g, or both/b. When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -4034,7 +4037,7 @@
                             "short_flags": [
                               "-s"
                             ],
-                            "help": "Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source."
+                            "help": "Secrets file source to read: local/l, global/g, or both/b. When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent."
                           }
                         },
                         {

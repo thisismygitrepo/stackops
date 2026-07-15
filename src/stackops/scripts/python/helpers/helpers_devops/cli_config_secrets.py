@@ -55,7 +55,8 @@ After interactive selection, StackOps prints a jq command for the selected login
 Use search --preview-secrets/-P with --interactive/-i to include secret values in the picker preview.
 Use search --verbose/-v to print the selected bundle and env var keys without secret values.
 Use search --all-matches/-a to define env vars from every matching bundle instead of requiring one unique match.
-Use search --source to choose the local file (local/l), global source-of-truth file (global/g), or both (both/b). Defaults to both.
+When search --source is omitted, StackOps uses --path when provided; otherwise it uses the local file when present and the global file when local is absent.
+Use search --source to explicitly choose the local file (local/l), global source-of-truth file (global/g), or both (both/b).
 With both, missing source files are warned and skipped as long as at least one source exists.
 Exact selectors are case-sensitive and can be combined with terms for script-stable matching. Selector short aliases:
 --secret-name/-N, --login-tag/-l, --secret-tag/-T, --scope/-S.
@@ -79,14 +80,17 @@ def search(
         ),
     ] = None,
     secrets_source: Annotated[
-        SecretsSource,
+        SecretsSource | None,
         typer.Option(
             "--source",
             "-s",
             case_sensitive=False,
-            help="Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.",
+            help=(
+                "Secrets file source to read: local/l, global/g, or both/b. "
+                "When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent."
+            ),
         ),
-    ] = "both",
+    ] = None,
     interactive: Annotated[
         bool,
         typer.Option("--interactive", "-i", help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."),

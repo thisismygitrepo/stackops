@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+import stackops.secrets.paths as secrets_paths
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
 from stackops.secrets.models import SecretsFile, SecretValueMap
@@ -51,6 +52,50 @@ def captured_handoffs(monkeypatch: pytest.MonkeyPatch) -> list[SecretValueMap]:
 
     monkeypatch.setattr(secret_actions, "write_env_handoff", capture_handoff)
     return handoffs
+
+
+@pytest.mark.parametrize(
+    ("local_exists", "expected_email"),
+    ((True, "local@example.com"), (False, "global@example.com")),
+)
+def test_search_without_source_prefers_local_then_global(
+    local_exists: bool,
+    expected_email: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    captured_handoffs: list[SecretValueMap],
+) -> None:
+    local_path = tmp_path / ".stackops" / "secrets" / "secrets.json"
+    if local_exists:
+        local_path.parent.mkdir(parents=True)
+        _write_cloudflare_secrets(local_path, api_email="local@example.com", global_email="local@example.com")
+
+    global_path = tmp_path / "global-secrets.json"
+    _write_cloudflare_secrets(global_path, api_email="global@example.com", global_email="global@example.com")
+    monkeypatch.setattr(secrets_paths, "SECRETS_DOFILE", global_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(cli_config_secrets.get_app(), ["search", "API_TOKEN"])
+
+    assert result.exit_code == 0, result.output
+    assert captured_handoffs == [{"CLOUDFLARE_EMAIL": expected_email, "CLOUDFLARE_API_TOKEN": "api-token-secret"}]
+
+
+def test_search_with_missing_path_does_not_fall_back_to_global(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    captured_handoffs: list[SecretValueMap],
+) -> None:
+    global_path = tmp_path / "global-secrets.json"
+    _write_cloudflare_secrets(global_path, api_email="global@example.com", global_email="global@example.com")
+    monkeypatch.setattr(secrets_paths, "SECRETS_DOFILE", global_path)
+    missing_path = tmp_path / "missing-secrets.json"
+
+    result = CliRunner().invoke(cli_config_secrets.get_app(), ["search", "API_TOKEN", "--path", str(missing_path)])
+
+    assert result.exit_code == 1
+    assert f"Secrets file not found: {missing_path}" in result.output
+    assert captured_handoffs == []
 
 
 @pytest.mark.parametrize("all_matches_option", ("--all-matches", "-a"))
