@@ -3875,7 +3875,7 @@
                         "        list[str] | None,",
                         "        typer.Argument(",
                         "            help=(",
-                        "                \"Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, \"",
+                        "                \"Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, \"",
                         "                \"secret name/tags/scopes, metadata, or env var keys.\"",
                         "            )",
                         "        ),",
@@ -3898,6 +3898,10 @@
                         "    interactive: Annotated[",
                         "        bool,",
                         "        typer.Option(\"--interactive\", \"-i\", help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\"),",
+                        "    ] = False,",
+                        "    all_matches: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--all-matches\", \"-a\", help=\"Define env vars from every matching secret bundle instead of requiring one unique match.\"),",
                         "    ] = False,",
                         "    preview_secrets: Annotated[",
                         "        bool, typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview. Only applies with --interactive/-i.\")",
@@ -3927,6 +3931,8 @@
                         "    ] = None,",
                         ") -> None:",
                         "    \"\"\"🔐 <S> Define env vars from StackOps secrets files.\"\"\"",
+                        "    if all_matches and interactive:",
+                        "        fail(\"--all-matches/-a cannot be combined with --interactive/-i.\")",
                         "    if preview_secrets and not interactive:",
                         "        fail(\"--preview-secrets only applies with --interactive/-i.\")",
                         "",
@@ -3941,17 +3947,29 @@
                         "        scopes=clean_selector_values(scopes),",
                         "        keys=clean_selector_values(keys),",
                         "    )",
-                        "    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive, preview_secrets=preview_secrets)",
-                        "    selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
+                        "    selection_mode: SecretSelectionMode = \"interactive\" if interactive else \"all\" if all_matches else \"unique\"",
+                        "    selection = resolve_secret_selection(",
+                        "        candidates=candidates,",
+                        "        terms=terms,",
+                        "        selectors=selectors,",
+                        "        selection_mode=selection_mode,",
+                        "        preview_secrets=preview_secrets,",
+                        "    )",
                         "    if interactive:",
+                        "        candidate = selection.candidates[0]",
+                        "        selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
                         "        echo_jq_login_entry_hint(candidate=candidate, secrets_path=selected_source_path)",
-                        "    secret_actions.validate_env_names(candidate.key_values)",
-                        "    secret_actions.write_env_handoff(candidate.key_values)",
+                        "    secret_actions.validate_env_names(selection.key_values)",
+                        "    secret_actions.write_env_handoff(selection.key_values)",
                         "    if verbose:",
-                        "        echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)",
+                        "        for candidate in selection.candidates:",
+                        "            selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
+                        "            echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)",
                         "",
-                        "    names = \", \".join(candidate.key_values)",
-                        "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(candidate.key_values)} env variable(s)\"",
+                        "    names = \", \".join(selection.key_values)",
+                        "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(selection.key_values)} env variable(s)\"",
+                        "    if all_matches:",
+                        "        msg += f\" from {len(selection.candidates)} matching secret bundle(s)\"",
                         "    if names:",
                         "        msg += f\": {names}\"",
                         "    else:",
@@ -3966,13 +3984,13 @@
                           "type": "list[str] | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.')]",
+                          "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.')]",
                           "typer": {
                             "kind": "argument",
                             "param_decls": [],
                             "long_flags": [],
                             "short_flags": [],
-                            "help": "Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys."
+                            "help": "Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys."
                           }
                         },
                         {
@@ -4039,6 +4057,28 @@
                               "-i"
                             ],
                             "help": "Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."
+                          }
+                        },
+                        {
+                          "name": "all_matches",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Define env vars from every matching secret bundle instead of requiring one unique match.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--all-matches",
+                              "-a"
+                            ],
+                            "long_flags": [
+                              "--all-matches"
+                            ],
+                            "short_flags": [
+                              "-a"
+                            ],
+                            "help": "Define env vars from every matching secret bundle instead of requiring one unique match."
                           }
                         },
                         {

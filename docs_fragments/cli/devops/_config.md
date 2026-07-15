@@ -166,6 +166,7 @@ devops config secrets search --name aws-dev --tag iam-access-key
 devops config secrets search --name aws-dev --tag session-token
 devops config secrets search -s g bitwarden
 devops config secrets s -s b github token
+devops config secrets s --all-matches -s g cloudf
 devops config secrets s -i -P github
 devops config secrets search --path ~/private/team-secrets.json aws dev
 devops config secrets subset ./secrets.json --path ~/private/team-secrets.json
@@ -176,7 +177,9 @@ devops config secrets add
 devops config secrets a --create
 ```
 
-The query terms must identify exactly one `entries[].secrets[].keyValues` object. Terms are case-insensitive substring matches, and all terms must match somewhere across login name/tags/accountName, secret name/tags/scopes, metadata, or environment variable keys. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
+By default, the query terms must identify exactly one `entries[].secrets[].keyValues` object. Terms are case-insensitive substring matches, and all terms must match somewhere across login name/tags/accountName, secret name/tags/scopes, metadata, or environment variable keys. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
+
+Use `--all-matches`, `-a` to load every matching `keyValues` object. Repeated environment variable names are deduplicated when they resolve to the same environment value; the command fails if matched bundles assign different values to the same name.
 
 Use `devops config secrets search` or its alias `devops config secrets s` to select and load a secret bundle. Use `--interactive`, `-i` to choose a matching secret bundle with the TV fuzzy picker. If terms or exact selectors are provided, they pre-filter the picker list.
 

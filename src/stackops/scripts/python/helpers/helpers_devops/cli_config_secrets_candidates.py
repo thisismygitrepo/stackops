@@ -1,6 +1,6 @@
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import NoReturn
+from typing import Literal, NoReturn
 
 import typer
 
@@ -9,17 +9,22 @@ from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker impor
     choose_interactive_option,
 )
 from stackops.secrets.models import Login, SecretRecord, SecretStringMap, SecretsFile, SecretValueMap
+from stackops.secrets.search import render_secret_value
 
 __all__ = [
     "SecretCandidate",
+    "SecretSelection",
+    "SecretSelectionMode",
     "SecretSelectors",
     "build_secret_candidates",
     "filter_secret_candidates",
     "format_secret_candidate_label",
     "format_secret_selection",
     "load_secret_candidates",
-    "resolve_candidate",
+    "resolve_secret_selection",
 ]
+
+type SecretSelectionMode = Literal["unique", "all", "interactive"]
 
 
 @dataclass(frozen=True)
@@ -35,6 +40,12 @@ class SecretCandidate:
     login_entry: Login | None = None
     source_name: str | None = None
     source_path: Path | None = None
+
+
+@dataclass(frozen=True)
+class SecretSelection:
+    candidates: tuple[SecretCandidate, ...]
+    key_values: SecretValueMap
 
 
 @dataclass(frozen=True)
@@ -82,11 +93,15 @@ def build_secret_candidates(secrets_file: SecretsFile) -> list[SecretCandidate]:
     return candidates
 
 
-def resolve_candidate(
-    candidates: list[SecretCandidate], terms: list[str] | None, selectors: SecretSelectors, interactive: bool, preview_secrets: bool = False
-) -> SecretCandidate:
+def resolve_secret_selection(
+    candidates: list[SecretCandidate],
+    terms: list[str] | None,
+    selectors: SecretSelectors,
+    selection_mode: SecretSelectionMode,
+    preview_secrets: bool,
+) -> SecretSelection:
     normalized_terms = tuple(term.casefold() for term in terms or () if term.strip())
-    if not normalized_terms and not selectors.has_any() and not interactive:
+    if not normalized_terms and not selectors.has_any() and selection_mode != "interactive":
         _fail("Pass at least one term or exact selector to identify a secrets keyValues entry.")
 
     matches = [
@@ -94,28 +109,54 @@ def resolve_candidate(
         for candidate in candidates
         if _candidate_matches(candidate=candidate, terms=normalized_terms) and _candidate_matches_selectors(candidate=candidate, selectors=selectors)
     ]
-    if interactive:
-        if not matches:
-            selection_text = _selection_text(terms=terms, selectors=selectors)
-            typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"No keyValues entry matched selection: {selection_text}")
-            _print_candidate_list("Available keyValues entries:", candidates)
-            raise typer.Exit(code=1)
-        return _choose_candidate_interactively(matches, preview_secrets=preview_secrets)
-
-    if len(matches) == 1:
-        return matches[0]
-
-    selection_text = _selection_text(terms=terms, selectors=selectors)
     if not matches:
+        selection_text = _selection_text(terms=terms, selectors=selectors)
         typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"No keyValues entry matched selection: {selection_text}")
         _print_candidate_list("Available keyValues entries:", candidates)
-    else:
+        raise typer.Exit(code=1)
+
+    match selection_mode:
+        case "interactive":
+            selected_candidates = (_choose_candidate_interactively(matches, preview_secrets=preview_secrets),)
+        case "unique":
+            if len(matches) == 1:
+                selected_candidates = (matches[0],)
+            else:
+                selection_text = _selection_text(terms=terms, selectors=selectors)
+                typer.echo(
+                    typer.style("Error: ", fg=typer.colors.RED)
+                    + f"Selection did not identify a unique keyValues entry: {selection_text} matched {len(matches)} entries."
+                )
+                _print_candidate_list("Matching keyValues entries:", matches)
+                raise typer.Exit(code=1)
+        case "all":
+            selected_candidates = tuple(matches)
+
+    return SecretSelection(candidates=selected_candidates, key_values=_merge_candidate_key_values(selected_candidates))
+
+
+def _merge_candidate_key_values(candidates: tuple[SecretCandidate, ...]) -> SecretValueMap:
+    key_values: SecretValueMap = {}
+    conflicting_names: set[str] = set()
+    for candidate in candidates:
+        for name, value in candidate.key_values.items():
+            if name not in key_values:
+                key_values[name] = value
+            elif render_secret_value(key_values[name]) != render_secret_value(value):
+                conflicting_names.add(name)
+
+    if conflicting_names:
+        names = ", ".join(sorted(conflicting_names))
+        conflicting_candidates = [
+            candidate for candidate in candidates if any(name in candidate.key_values for name in conflicting_names)
+        ]
         typer.echo(
             typer.style("Error: ", fg=typer.colors.RED)
-            + f"Selection did not identify a unique keyValues entry: {selection_text} matched {len(matches)} entries."
+            + f"Matching keyValues entries define conflicting values for environment variable(s): {names}."
         )
-        _print_candidate_list("Matching keyValues entries:", matches)
-    raise typer.Exit(code=1)
+        _print_candidate_list("Conflicting keyValues entries:", conflicting_candidates)
+        raise typer.Exit(code=1)
+    return key_values
 
 
 def filter_secret_candidates(candidates: list[SecretCandidate], selectors: SecretSelectors) -> list[SecretCandidate]:
