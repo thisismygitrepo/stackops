@@ -25,7 +25,6 @@ wrap_in_shell_script() {
   "$command" "$@"
   if [[ -f "$OP_PROGRAM_PATH" ]]; then
     printf "%b\n" "🚀 Taking over from python script @ ${OP_PROGRAM_PATH}${RESET}"
-    bat --style=full --theme=OneHalfDark --paging=never "$OP_PROGRAM_PATH"
     # printf "%b\n" "${GREEN}▶ Running...${RESET}"
     . "$OP_PROGRAM_PATH"
     local exit_code=$?

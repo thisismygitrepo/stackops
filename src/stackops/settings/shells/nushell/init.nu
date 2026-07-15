@@ -32,7 +32,6 @@ export def wrap_in_shell_script [command: string, ...args: string] {
     with-env { OP_PROGRAM_PATH: $op_program_path } { ^$command ...$args }
 
     if ($op_program_path | path exists) {
-        print (open --raw $op_program_path)
         ^bash $op_program_path
     }
 

@@ -47,7 +47,8 @@ def _write_cloudflare_secrets(secrets_path: Path, api_email: str, global_email: 
 def captured_handoffs(monkeypatch: pytest.MonkeyPatch) -> list[SecretValueMap]:
     handoffs: list[SecretValueMap] = []
 
-    def capture_handoff(key_values: Mapping[str, object]) -> None:
+    def capture_handoff(key_values: Mapping[str, object], *, verbose: bool) -> None:
+        _ = verbose
         handoffs.append(dict(key_values))
 
     monkeypatch.setattr(secret_actions, "write_env_handoff", capture_handoff)
@@ -109,7 +110,7 @@ def test_search_all_matches_declares_every_matching_bundle(
 
     result = CliRunner().invoke(
         cli_config_secrets.get_app(),
-        ["search", "cloudf", all_matches_option, "--source", "local", "--path", str(secrets_path)],
+        ["search", "cloudf", all_matches_option, "--verbose", "--source", "local", "--path", str(secrets_path)],
     )
 
     assert result.exit_code == 0, result.output
@@ -121,6 +122,10 @@ def test_search_all_matches_declares_every_matching_bundle(
         }
     ]
     assert "Prepared 3 env variable(s) from 2 matching secret bundle(s)" in result.output
+    assert "Defining env vars:" not in result.output
+    assert "CLOUDFLARE_EMAIL" not in result.output
+    assert "CLOUDFLARE_API_TOKEN" not in result.output
+    assert "GLOBAL_API_KEY" not in result.output
 
 
 def test_search_still_rejects_ambiguous_matches_without_all_matches(

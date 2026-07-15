@@ -455,9 +455,6 @@ def _echo_verbose_selection(*, candidate: SecretCandidate, secrets_path: Path) -
     typer.echo(f"  Login tags: {_join_display(candidate.login_tags)}")
     typer.echo(f"  Secret tags: {_join_display(candidate.secret_tags)}")
     typer.echo(f"  Scopes: {_join_display(candidate.scopes)}")
-    typer.echo("Defining env vars:")
-    for key in candidate.key_values:
-        typer.echo(f"  {key}")
 
 
 def _candidate_verbose_label(candidate: SecretCandidate) -> str:

@@ -156,21 +156,16 @@ def search(
         selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
         echo_jq_login_entry_hint(candidate=candidate, secrets_path=selected_source_path)
     secret_actions.validate_env_names(selection.key_values)
-    secret_actions.write_env_handoff(selection.key_values)
+    secret_actions.write_env_handoff(selection.key_values, verbose=verbose)
     if verbose:
         for candidate in selection.candidates:
             selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
             echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)
 
-    names = ", ".join(selection.key_values)
     msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(selection.key_values)} env variable(s)"
     if all_matches:
         msg += f" from {len(selection.candidates)} matching secret bundle(s)"
-    if names:
-        msg += f": {names}"
-    else:
-        msg += "."
-    typer.echo(msg)
+    typer.echo(msg + ".")
 
 
 def stats(

@@ -100,7 +100,7 @@ def validate_env_names(key_values: Mapping[str, object]) -> None:
         _fail(f"Invalid environment variable name(s) in keyValues: {', '.join(invalid_names)}")
 
 
-def write_env_handoff(key_values: Mapping[str, object]) -> None:
+def write_env_handoff(key_values: Mapping[str, object], *, verbose: bool) -> None:
     import os
     import platform
 
@@ -118,7 +118,9 @@ def write_env_handoff(key_values: Mapping[str, object]) -> None:
         _fail(f"Cannot write secrets env file because it already exists: {env_path}")
     env_path.write_text(_render_env_file(key_values=key_values, powershell=powershell), encoding="utf-8")
     _chmod_private(env_path, 0o600)
-    op_program_path.write_text(_render_loader_file(env_path=env_path, powershell=powershell), encoding="utf-8")
+    op_program_path.write_text(
+        _render_loader_file(env_path=env_path, env_var_names=tuple(key_values), powershell=powershell, verbose=verbose), encoding="utf-8"
+    )
     _chmod_private(op_program_path, 0o700)
 
 
@@ -318,41 +320,53 @@ def _render_env_file(key_values: Mapping[str, object], powershell: bool) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _render_loader_file(env_path: Path, powershell: bool) -> str:
+def _render_loader_file(env_path: Path, env_var_names: tuple[str, ...], powershell: bool, verbose: bool) -> str:
     import shlex
 
     if powershell:
         env_path_quoted = _quote_powershell(str(env_path))
-        return (
-            "# StackOps secrets loader. Secret values live in a private temp file, not here.\n"
-            f"$StackOpsSecretEnvFile = {env_path_quoted}\n"
-            "if (-not (Test-Path -LiteralPath $StackOpsSecretEnvFile)) {\n"
-            '    Write-Error "StackOps secrets env file is missing: $StackOpsSecretEnvFile"\n'
-            "    exit 1\n"
-            "}\n"
-            ". $StackOpsSecretEnvFile\n"
-            "Remove-Item -LiteralPath $StackOpsSecretEnvFile -Force -ErrorAction SilentlyContinue\n"
-            "Remove-Variable -Name StackOpsSecretEnvFile -ErrorAction SilentlyContinue\n"
-        )
+        lines = [
+            "# StackOps secrets loader. Secret values live in a private temp file, not here.",
+            f"$StackOpsSecretEnvFile = {env_path_quoted}",
+            "if (-not (Test-Path -LiteralPath $StackOpsSecretEnvFile)) {",
+            '    Write-Error "StackOps secrets env file is missing: $StackOpsSecretEnvFile"',
+            "    exit 1",
+            "}",
+            ". $StackOpsSecretEnvFile",
+            "Remove-Item -LiteralPath $StackOpsSecretEnvFile -Force -ErrorAction SilentlyContinue",
+        ]
+        if verbose:
+            lines.append('Write-Host "Defined env vars:"')
+            lines.extend(f"Write-Host {_quote_powershell(f'  {env_var_name}')}" for env_var_name in env_var_names)
+        lines.append("Remove-Variable -Name StackOpsSecretEnvFile -ErrorAction SilentlyContinue")
+        return "\n".join(lines) + "\n"
     env_path_quoted = shlex.quote(str(env_path))
-    return (
-        "# StackOps secrets loader. Secret values live in a private temp file, not here.\n"
-        f"_stackops_secret_env_file={env_path_quoted}\n"
-        'if [ ! -f "$_stackops_secret_env_file" ]; then\n'
-        '  echo "StackOps secrets env file is missing: $_stackops_secret_env_file" >&2\n'
-        "  return 1 2>/dev/null || exit 1\n"
-        "fi\n"
-        "case $- in\n"
-        "  *x*) _stackops_restore_xtrace=1; set +x ;;\n"
-        "  *) _stackops_restore_xtrace=0 ;;\n"
-        "esac\n"
-        '. "$_stackops_secret_env_file"\n'
-        'rm -f "$_stackops_secret_env_file"\n'
-        'if [ "$_stackops_restore_xtrace" = "1" ]; then\n'
-        "  set -x\n"
-        "fi\n"
-        "unset _stackops_secret_env_file _stackops_restore_xtrace\n"
+    lines = [
+        "# StackOps secrets loader. Secret values live in a private temp file, not here.",
+        f"_stackops_secret_env_file={env_path_quoted}",
+        'if [ ! -f "$_stackops_secret_env_file" ]; then',
+        '  echo "StackOps secrets env file is missing: $_stackops_secret_env_file" >&2',
+        "  return 1 2>/dev/null || exit 1",
+        "fi",
+        "case $- in",
+        "  *x*) _stackops_restore_xtrace=1; set +x ;;",
+        "  *) _stackops_restore_xtrace=0 ;;",
+        "esac",
+        '. "$_stackops_secret_env_file"',
+        'rm -f "$_stackops_secret_env_file"',
+    ]
+    if verbose:
+        lines.append("printf '%s\\n' 'Defined env vars:'")
+        lines.extend(f"printf '%s\\n' {shlex.quote(f'  {env_var_name}')}" for env_var_name in env_var_names)
+    lines.extend(
+        (
+            'if [ "$_stackops_restore_xtrace" = "1" ]; then',
+            "  set -x",
+            "fi",
+            "unset _stackops_secret_env_file _stackops_restore_xtrace",
+        )
     )
+    return "\n".join(lines) + "\n"
 
 
 def _quote_powershell(value: str) -> str:
