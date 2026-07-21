@@ -11,7 +11,7 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview impo
     build_window_preview,
     collect_session_snapshot,
 )
-from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
+from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 
 
 def new_session_script(kill_all: bool) -> str:

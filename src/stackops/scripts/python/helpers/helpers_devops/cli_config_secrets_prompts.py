@@ -2,6 +2,7 @@ from collections.abc import Mapping
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_validation as secret_validation
 from stackops.secrets.models import Login, SecretRecord, SecretRotation, SecretStringMap, SecretValueMap
 
 
@@ -103,11 +104,9 @@ def _prompt_string_map(label: str) -> SecretStringMap | None:
 
 
 def _prompt_env_key(*, existing_keys: Mapping[str, object]) -> str:
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_actions import is_valid_env_name
-
     while True:
         key = _prompt_required_string("Env var key")
-        if not is_valid_env_name(key):
+        if not secret_validation.is_valid_env_name(key):
             typer.echo("Use a shell-compatible env var key, for example API_TOKEN.")
             continue
         if key in existing_keys:

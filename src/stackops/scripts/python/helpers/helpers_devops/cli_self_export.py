@@ -3,8 +3,8 @@ from typing import Annotated
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 from stackops.utils.installer_utils import installer_offline_constants
-from stackops.scripts.python.helpers.helpers_devops.cli_self import developer_repo_root
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
@@ -37,7 +37,7 @@ def export(
     """📤 export the installation files to get an offline image."""
     output_root = output_root.expanduser()
     if upload_to_cloud:
-        dev_repo_root = developer_repo_root()
+        dev_repo_root = cli_self_repo.developer_repo_root()
         if dev_repo_root is None:
             typer.echo(
                 f"❌ --upload-to-cloud requires the developer checkout at {STACKOPS_REPO_DIR} so the downloader URL map update is written in-repo."

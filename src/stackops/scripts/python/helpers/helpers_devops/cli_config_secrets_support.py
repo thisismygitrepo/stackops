@@ -6,6 +6,7 @@ from typing import Literal, NoReturn, TypeAlias
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_validation as secret_validation
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
     SecretCandidate,
     load_secret_candidates,
@@ -223,7 +224,7 @@ def _build_secret_stats(*, secrets_file: SecretsFile, secret_source: SecretsFile
             env_vars += len(key_values)
             max_keys_per_secret = max(max_keys_per_secret, len(key_values))
             env_key_counts.update(key_values.keys())
-            invalid_env_keys += sum(1 for key in key_values if not secret_actions.is_valid_env_name(key))
+            invalid_env_keys += sum(1 for key in key_values if not secret_validation.is_valid_env_name(key))
 
     duplicate_env_key_occurrences = sum(count - 1 for count in env_key_counts.values() if count > 1)
     return SecretsFileStats(

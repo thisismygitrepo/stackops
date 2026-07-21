@@ -4,6 +4,8 @@ from typing import Mapping, NoReturn
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_prompts as secret_prompts
+from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_validation as secret_validation
 from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import (
     InteractivePickerOption,
     choose_interactive_options,
@@ -13,9 +15,6 @@ from stackops.secrets.models import Login, SecretsFile
 
 SECRETS_SCHEMA_FILENAME = "secrets.schema.json"
 SECRETS_FILE_VERSION = "0.5"
-def is_valid_env_name(name: str) -> bool:
-    import re
-    return re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) is not None
 
 
 def edit_secrets_file(secrets_path: Path, editor: str, *, create: bool = False) -> None:
@@ -44,10 +43,8 @@ def add_secrets_entry(
     create: bool = False,
     prompt_secret_login_entry: Callable[[], Login] | None = None,
 ) -> None:
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_prompts import prompt_secret_login
-
     secrets_file, created_file = _load_or_initialize_add_target(secrets_path=secrets_path, create=create)
-    prompt_entry = prompt_secret_login_entry or prompt_secret_login
+    prompt_entry = prompt_secret_login_entry or secret_prompts.prompt_secret_login
     entry = prompt_entry()
     _secrets_entries(secrets_file).append(entry)
     _write_secrets_file(secrets_path=secrets_path, secrets_file=secrets_file, created_file=created_file)
@@ -95,7 +92,7 @@ def subset_secrets_file(source_path: Path, output_path: Path, *, on_conflict: Su
 
 
 def validate_env_names(key_values: Mapping[str, object]) -> None:
-    invalid_names = [name for name in key_values if not is_valid_env_name(name)]
+    invalid_names = [name for name in key_values if not secret_validation.is_valid_env_name(name)]
     if invalid_names:
         _fail(f"Invalid environment variable name(s) in keyValues: {', '.join(invalid_names)}")
 
