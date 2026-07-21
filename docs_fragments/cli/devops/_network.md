@@ -459,6 +459,7 @@ Key options from current help:
 | `--path`, `-p` | Server base path for `share-local` |
 | `--host`, `-h` | Host for `share-local` |
 | `--dir`, `-d` | Folder to open in `share-local` mode |
+| `--cli-data-dir` | VS Code CLI data directory used by every generated command |
 | `--extra-args`, `-e` | Extra CLI arguments to append |
 
 Examples:
@@ -468,6 +469,8 @@ devops network vscode-share run --name labbox
 devops network vscode-share install-service --name labbox
 devops network vscode-share share-local --dir . --host 0.0.0.0
 ```
+
+Before `run` or `install-service`, StackOps shows whether a VS Code tunnel credential is stored and whether its provider is GitHub or Microsoft. VS Code does not expose the credential's exact username or email. To guarantee which account is used, run `code tunnel user logout`, then `code tunnel user login --provider github` or `code tunnel user login --provider microsoft` before starting the tunnel.
 
 The nested help screens render shortened usage such as `devops share-server ...`, `devops ssh ...`, `devops cloudflare ...`, `devops device ...`, or `devops vscode-share ...`, but the full entrypoints remain under `devops network ...`.
 

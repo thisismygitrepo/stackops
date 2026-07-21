@@ -61,6 +61,7 @@ def vscode_share(
     directory: Annotated[
         str | None, typer.Option("--dir", "-d", help="Folder to open in local web mode (share-local), defaults to the current working directory")
     ] = None,
+    cli_data_dir: Annotated[str | None, typer.Option("--cli-data-dir", help="VS Code CLI data directory to use for every generated command")] = None,
     extra_args: Annotated[str | None, typer.Option("--extra-args", "-e", help="Extra args to append to the generated VS Code command")] = None,
 ) -> None:
     """🧑‍💻 Share workspace using VS Code CLI ("code tunnel" / "code serve-web")
@@ -73,16 +74,21 @@ def vscode_share(
     accept = "--accept-server-license-terms"
     name_part = f"--name {shlex.quote(name)}" if name else ""
     extra = extra_args or ""
+    if any(token == "--cli-data-dir" or token.startswith("--cli-data-dir=") for token in shlex.split(extra)):
+        raise typer.BadParameter("Pass this option directly to vscode-share instead of through --extra-args", param_hint="--cli-data-dir")
+    if cli_data_dir is not None and cli_data_dir.strip() == "":
+        raise typer.BadParameter("Value cannot be empty", param_hint="--cli-data-dir")
+    cli_data_dir_part = f"--cli-data-dir {shlex.quote(cli_data_dir)}" if cli_data_dir is not None else ""
     action_normalized = {"r": "run", "i": "install-service", "u": "uninstall-service", "l": "share-local"}.get(action, action)
     match action_normalized:
         case "run" | "r":
-            cmd = f"code tunnel {name_part} {accept} {extra}".strip()
+            cmd = f"code tunnel {name_part} {accept} {cli_data_dir_part} {extra}".strip()
             desc = "Run a one-off VS Code tunnel (foreground)"
         case "install-service" | "i":
-            cmd = f"code tunnel service install {accept} {name_part} {extra}".strip()
+            cmd = f"code tunnel service install {accept} {name_part} {cli_data_dir_part} {extra}".strip()
             desc = "Install code tunnel as a service"
         case "uninstall-service" | "u":
-            cmd = f"code tunnel service uninstall {extra}".strip()
+            cmd = f"code tunnel service uninstall {cli_data_dir_part} {extra}".strip()
             desc = "Uninstall code tunnel service"
         case "share-local" | "l":
             from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder
@@ -92,7 +98,7 @@ def vscode_share(
             directory = resolve_share_local_folder(directory)
             directory_part = shlex.quote(str(directory))
             extra = ensure_without_connection_token(extra)
-            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {extra} {directory_part}".strip()
+            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {cli_data_dir_part} {extra} {directory_part}".strip()
             desc = "Run local VS Code web server (serve-web)"
         case _:
             print(f"Unknown action: {action_normalized}")
@@ -100,6 +106,10 @@ def vscode_share(
     from stackops.utils.code import exit_then_run_shell_script
     from stackops.utils.meta import print_code
 
+    if action_normalized in {"run", "install-service"}:
+        from stackops.scripts.python.helpers.helpers_devops.vscode_tunnel_auth import print_vscode_tunnel_credential_context
+
+        print_vscode_tunnel_credential_context(cli_data_dir)
     print_code(cmd, lexer="bash", desc=desc)
     if action_normalized == "share-local":
         from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls
