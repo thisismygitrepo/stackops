@@ -1,8 +1,9 @@
 import json
 import uuid
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     AttachSessionChoice,
@@ -20,18 +21,18 @@ from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledT
 JsonObject = dict[str, Any]
 
 
-def _strip_focused_marker(label: str) -> str:
-    if label.endswith(" *"):
-        return label[:-2]
-    return label
+@dataclass(frozen=True, slots=True)
+class _WorkspaceChoiceContext:
+    workspace_id: str
+    space_name: str
 
 
-def _parent_herdr_tab_label(*, selection_label: str, labels_by_normalized_label: dict[str, str]) -> str | None:
-    normalized_label = _strip_focused_marker(selection_label)
-    tab_label, separator, _pane_label = normalized_label.partition(" / ")
-    if separator == "":
-        return None
-    return labels_by_normalized_label.get(tab_label)
+@dataclass(frozen=True, slots=True)
+class _WindowTargetOptions:
+    scripts_by_label: dict[str, str]
+    previews_by_label: dict[str, str]
+    tab_parent_by_pane_label: dict[str, str]
+    session_name_by_target_label: dict[str, str]
 
 
 def _run_json_command(args: list[str]) -> JsonObject | None:
@@ -94,6 +95,13 @@ def list_workspace_entries() -> list[JsonObject] | None:
         )
     )
     return workspaces
+
+
+def _session_workspace_entries(session_name: str) -> list[JsonObject] | None:
+    payload = _run_json_command(["herdr", "--session", session_name, "workspace", "list"])
+    if payload is None:
+        return None
+    return _result_entries(payload, "workspaces")
 
 
 def _session_name(session: JsonObject) -> str | None:
@@ -204,6 +212,38 @@ def entry_text(entry: JsonObject, key: str) -> str | None:
     return _entry_text(entry, key)
 
 
+def _workspace_contexts_by_id(session_name: str) -> dict[str, _WorkspaceChoiceContext]:
+    workspaces = _session_workspace_entries(session_name)
+    if workspaces is None:
+        raise RuntimeError(
+            f"Unable to list workspaces for Herdr session '{session_name}'. Confirm `herdr --session {quote(session_name)} workspace list` works."
+        )
+
+    contexts_by_id: dict[str, _WorkspaceChoiceContext] = {}
+    for workspace in workspaces:
+        workspace_id = _entry_text(workspace, "workspace_id")
+        space_name_value = workspace.get("label")
+        if workspace_id is None or not isinstance(space_name_value, str):
+            raise RuntimeError(f"Herdr session '{session_name}' returned a workspace without a valid workspace_id and label.")
+        if workspace_id in contexts_by_id:
+            raise RuntimeError(f"Herdr session '{session_name}' returned duplicate workspace ID '{workspace_id}'.")
+        space_name = space_name_value if space_name_value != "" else "<unnamed>"
+        contexts_by_id[workspace_id] = _WorkspaceChoiceContext(workspace_id=workspace_id, space_name=space_name)
+    return contexts_by_id
+
+
+def _target_workspace_context(
+    *, target: JsonObject, target_kind: Literal["tab", "pane"], contexts_by_id: dict[str, _WorkspaceChoiceContext], session_name: str
+) -> _WorkspaceChoiceContext:
+    workspace_id = _entry_text(target, "workspace_id")
+    if workspace_id is None:
+        raise RuntimeError(f"Herdr session '{session_name}' returned a {target_kind} without a workspace_id.")
+    workspace_context = contexts_by_id.get(workspace_id)
+    if workspace_context is None:
+        raise RuntimeError(f"Herdr session '{session_name}' returned a {target_kind} for unknown workspace ID '{workspace_id}'.")
+    return workspace_context
+
+
 def _tab_display(tab: JsonObject) -> str:
     tab_id = _entry_text(tab, "tab_id")
     label = _entry_text(tab, "label") or tab_id or "tab"
@@ -237,12 +277,14 @@ def pane_display(pane: JsonObject, tab_display_by_id: dict[str, str]) -> str:
     return _pane_display(pane, tab_display_by_id)
 
 
-def _tab_preview(session_name: str, tab: JsonObject) -> str:
+def _tab_preview(session_name: str, workspace_context: _WorkspaceChoiceContext, tab: JsonObject) -> str:
     lines = [
         "backend: herdr",
         f"session: {session_name}",
+        f"space: {workspace_context.space_name}",
+        f"workspace id: {workspace_context.workspace_id}",
         f"tab: {_tab_display(tab)}",
-        f"id: {_entry_text(tab, 'tab_id') or ''}",
+        f"tab id: {_entry_text(tab, 'tab_id') or ''}",
         f"focused: {'yes' if tab.get('focused') else 'no'}",
     ]
     agent_status = _entry_text(tab, "agent_status")
@@ -254,10 +296,12 @@ def _tab_preview(session_name: str, tab: JsonObject) -> str:
     return "\n".join(lines)
 
 
-def _pane_preview(session_name: str, pane: JsonObject, tab_display_by_id: dict[str, str]) -> str:
+def _pane_preview(session_name: str, workspace_context: _WorkspaceChoiceContext, pane: JsonObject, tab_display_by_id: dict[str, str]) -> str:
     lines = [
         "backend: herdr",
         f"session: {session_name}",
+        f"space: {workspace_context.space_name}",
+        f"workspace id: {workspace_context.workspace_id}",
         f"pane: {_pane_display(pane, tab_display_by_id)}",
         f"pane id: {_entry_text(pane, 'pane_id') or ''}",
         f"terminal id: {_entry_text(pane, 'terminal_id') or ''}",
@@ -322,15 +366,6 @@ def _session_label_for_delete_option(session: JsonObject) -> str | None:
     return label
 
 
-def _session_name_from_target_label(label: str) -> str | None:
-    if not label.startswith("["):
-        return None
-    closing_bracket_index = label.find("]")
-    if closing_bracket_index <= 1:
-        return None
-    return label[1:closing_bracket_index]
-
-
 def _attach_tab_script(session_name: str, tab_id: str) -> str:
     return "\n".join(
         [
@@ -357,51 +392,70 @@ def _close_pane_script(session_name: str, pane_id: str) -> str:
     return f"herdr --session {quote(session_name)} pane close {quote(pane_id)}"
 
 
-def _build_window_target_options(
-    active_sessions: list[str],
-    *,
-    for_kill: bool,
-) -> tuple[dict[str, str], dict[str, str]]:
+def _build_window_target_options(active_sessions: list[str], *, for_kill: bool) -> _WindowTargetOptions:
     options_to_script: dict[str, str] = {}
     options_to_preview: dict[str, str] = {}
+    tab_parent_by_pane_label: dict[str, str] = {}
+    session_name_by_target_label: dict[str, str] = {}
     for session_name in active_sessions:
+        contexts_by_id = _workspace_contexts_by_id(session_name)
         tabs = _tab_entries(session_name)
         panes = _pane_entries(session_name)
-        tab_display_by_id = {
-            tab_id: _tab_display(tab)
-            for tab in tabs
-            if (tab_id := _entry_text(tab, "tab_id")) is not None
-        }
+        tab_display_by_id = {tab_id: _tab_display(tab) for tab in tabs if (tab_id := _entry_text(tab, "tab_id")) is not None}
+        tab_option_label_by_id: dict[str, str] = {}
         for tab in tabs:
             tab_id = _entry_text(tab, "tab_id")
             if tab_id is None:
                 continue
-            label = f"[{session_name}] {_tab_display(tab)}"
+            workspace_context = _target_workspace_context(target=tab, target_kind="tab", contexts_by_id=contexts_by_id, session_name=session_name)
+            label = f"[{session_name}] [space: {workspace_context.space_name} ({workspace_context.workspace_id})] {_tab_display(tab)} [{tab_id}]"
             if tab.get("focused"):
                 label += " *"
+            if label in options_to_script or tab_id in tab_option_label_by_id:
+                raise RuntimeError(f"Herdr session '{session_name}' returned duplicate tab ID '{tab_id}'.")
             options_to_script[label] = (
                 _close_tab_script(session_name, tab_id)
                 if for_kill
                 else _attach_tab_script(session_name, tab_id)
             )
-            options_to_preview[label] = _tab_preview(session_name, tab)
-
+            options_to_preview[label] = _tab_preview(session_name, workspace_context, tab)
+            tab_option_label_by_id[tab_id] = label
+            session_name_by_target_label[label] = session_name
+        pane_identities: set[str] = set()
         for pane in panes:
             pane_id = _entry_text(pane, "pane_id")
             terminal_id = _entry_text(pane, "terminal_id")
             target_id = pane_id if for_kill else terminal_id or pane_id
             if target_id is None:
                 continue
-            label = f"[{session_name}] {_pane_display(pane, tab_display_by_id)}"
+            workspace_context = _target_workspace_context(target=pane, target_kind="pane", contexts_by_id=contexts_by_id, session_name=session_name)
+            pane_identity = pane_id or target_id
+            label = f"[{session_name}] [space: {workspace_context.space_name} ({workspace_context.workspace_id})] {_pane_display(pane, tab_display_by_id)} [{pane_identity}]"
             if pane.get("focused"):
                 label += " *"
+            if label in options_to_script or pane_identity in pane_identities:
+                raise RuntimeError(f"Herdr session '{session_name}' returned duplicate pane ID '{pane_identity}'.")
+            tab_id = _entry_text(pane, "tab_id")
+            if tab_id is None:
+                raise RuntimeError(f"Herdr session '{session_name}' returned a pane without a tab_id.")
+            tab_parent_label = tab_option_label_by_id.get(tab_id)
+            if tab_parent_label is None:
+                raise RuntimeError(f"Herdr session '{session_name}' returned a pane for unknown tab ID '{tab_id}'.")
             options_to_script[label] = (
                 _close_pane_script(session_name, target_id)
                 if for_kill
                 else _attach_pane_script(session_name, target_id)
             )
-            options_to_preview[label] = _pane_preview(session_name, pane, tab_display_by_id)
-    return (options_to_script, options_to_preview)
+            options_to_preview[label] = _pane_preview(session_name, workspace_context, pane, tab_display_by_id)
+            tab_parent_by_pane_label[label] = tab_parent_label
+            session_name_by_target_label[label] = session_name
+            pane_identities.add(pane_identity)
+    return _WindowTargetOptions(
+        scripts_by_label=options_to_script,
+        previews_by_label=options_to_preview,
+        tab_parent_by_pane_label=tab_parent_by_pane_label,
+        session_name_by_target_label=session_name_by_target_label,
+    )
 
 
 def choose_session(
@@ -429,10 +483,15 @@ def choose_session(
         active_sessions = _running_session_names(running_sessions)
         if len(active_sessions) == 0:
             return ("error", "No running Herdr sessions are available for --window selection.")
-        option_to_script, options_to_preview_mapping = _build_window_target_options(
-            active_sessions,
-            for_kill=False,
-        )
+        try:
+            target_options = _build_window_target_options(
+                active_sessions,
+                for_kill=False,
+            )
+        except RuntimeError as error:
+            return ("error", str(error))
+        option_to_script = target_options.scripts_by_label
+        options_to_preview_mapping = target_options.previews_by_label
         if len(option_to_script) == 0:
             return ("error", "No Herdr tabs or panes are available to attach to.")
         if len(option_to_script) == 1:
@@ -593,33 +652,28 @@ def choose_kill_target(
             options_to_preview_mapping[session_label] = _session_preview(session)
             option_parent_labels[session_label] = ()
         active_sessions = _running_session_names(running_sessions)
-        target_scripts, target_previews = _build_window_target_options(
-            active_sessions,
-            for_kill=True,
-        )
-        options_to_script.update(target_scripts)
-        options_to_preview_mapping.update(target_previews)
+        try:
+            target_options = _build_window_target_options(
+                active_sessions,
+                for_kill=True,
+            )
+        except RuntimeError as error:
+            return ("error", str(error), [])
+        options_to_script.update(target_options.scripts_by_label)
+        options_to_preview_mapping.update(target_options.previews_by_label)
         session_label_by_name: dict[str, str] = {}
         for session in running_sessions:
             session_name = _session_name(session)
             session_label = _session_label_for_kill_option(session)
             if session_name is not None and session_label is not None:
                 session_label_by_name[session_name] = session_label
-        labels_by_normalized_label = {
-            _strip_focused_marker(target_label): target_label
-            for target_label in target_scripts
-        }
-        for target_label in target_scripts:
+        for target_label in target_options.scripts_by_label:
             parent_labels: list[str] = []
-            session_name = _session_name_from_target_label(target_label)
-            if session_name is not None:
-                session_parent_label = session_label_by_name.get(session_name)
-                if session_parent_label is not None:
-                    parent_labels.append(session_parent_label)
-            tab_parent_label = _parent_herdr_tab_label(
-                selection_label=target_label,
-                labels_by_normalized_label=labels_by_normalized_label,
-            )
+            session_name = target_options.session_name_by_target_label[target_label]
+            session_parent_label = session_label_by_name.get(session_name)
+            if session_parent_label is not None:
+                parent_labels.append(session_parent_label)
+            tab_parent_label = target_options.tab_parent_by_pane_label.get(target_label)
             if tab_parent_label is not None:
                 parent_labels.append(tab_parent_label)
             option_parent_labels[target_label] = tuple(parent_labels)
