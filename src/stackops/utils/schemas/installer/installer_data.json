@@ -3486,6 +3486,27 @@
       }
     },
     {
+      "appName": "kubectl",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/kubernetes/kubectl",
+      "doc": "Kubernetes command-line tool for controlling Kubernetes clusters.",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "kubectl_tmp=\"$(mktemp)\" && curl -fsSL \"https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl\" -o \"$kubectl_tmp\" && sudo install -o root -g root -m 0755 \"$kubectl_tmp\" /usr/local/bin/kubectl && rm \"$kubectl_tmp\"",
+          "darwin": "brew install kubectl",
+          "windows": "winget install --no-upgrade --exact --id Kubernetes.kubectl --source winget --accept-package-agreements --accept-source-agreements"
+        },
+        "arm64": {
+          "linux": "kubectl_tmp=\"$(mktemp)\" && curl -fsSL \"https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl\" -o \"$kubectl_tmp\" && sudo install -o root -g root -m 0755 \"$kubectl_tmp\" /usr/local/bin/kubectl && rm \"$kubectl_tmp\"",
+          "darwin": "brew install kubectl",
+          "windows": "winget install --no-upgrade --exact --id Kubernetes.kubectl --source winget --accept-package-agreements --accept-source-agreements"
+        }
+      }
+    },
+    {
       "appName": "openpomodoro-cli",
       "license": "MIT License",
       "repoURL": "https://github.com/open-pomodoro/openpomodoro-cli",
