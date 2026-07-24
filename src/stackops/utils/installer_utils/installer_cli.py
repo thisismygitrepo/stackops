@@ -242,22 +242,39 @@ def install_clis(clis_names: list[str], install_request: InstallRequest) -> None
 
 def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bool:
     from stackops.utils.cli_utils.command_lookup import check_tool_exists
+    from stackops.utils.installer_utils.installer_class import Installer
+    from stackops.utils.installer_utils.installer_runner import get_installers
+    from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
+
     if binary_name is None:
         binary_name = which
-    exists = check_tool_exists(binary_name)
-    if exists:
+    if check_tool_exists(binary_name):
         if verbose:
             print(f"✅ {which} is already installed.")
         return True
     if verbose:
         print(f"⏳ {which} not found. Installing...")
-    try:
-        main_installer_cli(which=which, interactive=False, explore=False, update=False, version=None)
-        return True
-    except Exception as e:
+
+    resolved_name = INSTALLER_NAME_ALIASES.get(which.lower(), which)
+    installers = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
+    selected_installer = next(
+        (installer for installer in installers if installer["appName"].lower() == resolved_name.lower()),
+        None,
+    )
+    if selected_installer is None:
         if verbose:
-            print(f"❌ Error installing {which}: {e}")
-    return False
+            print(f"⏭️  No installer is available for {which} on this platform; skipping automatic installation.")
+        return False
+
+    result = Installer(installer_data=selected_installer).install_robust(
+        install_request=InstallRequest(version=None, update=False)
+    )
+    if result["kind"] == "failed":
+        return False
+    installed = check_tool_exists(binary_name)
+    if verbose and not installed:
+        print(f"❌ {which} installation completed without making {binary_name} available in PATH.")
+    return installed
 
 
 _CHECK_GROUP2NAMES: Final[dict[str, tuple[str, ...]]] = {

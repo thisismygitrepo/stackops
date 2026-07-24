@@ -33,6 +33,7 @@ import subprocess
 
 
 ALIASED_EXE_NAMES: dict[str, str] = {
+    "7zip": "7z",
     "antigravity": "agy",
     "beads": "bd",
     "beads_viewer": "bv",

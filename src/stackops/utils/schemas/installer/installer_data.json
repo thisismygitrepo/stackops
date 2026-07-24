@@ -5839,7 +5839,7 @@
           "linux": {
             "apk": "sudo apk add --no-cache 7zip",
             "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
-            "dnf": null,
+            "dnf": "sudo dnf install -y 7zip",
             "pacman": "sudo pacman -S --needed --noconfirm 7zip"
           },
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
@@ -5849,7 +5849,7 @@
           "linux": {
             "apk": "sudo apk add --no-cache 7zip",
             "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
-            "dnf": null,
+            "dnf": "sudo dnf install -y 7zip",
             "pacman": "sudo pacman -S --needed --noconfirm 7zip"
           },
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
