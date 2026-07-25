@@ -1,4 +1,4 @@
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_msi_package
 from stackops.utils.installer_utils.linux_package_file import get_linux_package_file_suffix, install_linux_package_file, is_linux_package_file
 from stackops.utils.installer_utils.install_request_logic import (
@@ -42,6 +42,7 @@ ALIASED_EXE_NAMES: dict[str, str] = {
     "powershellgithub": "pwsh",
     "superfile": "spf",
 }
+PLATFORM_ALIASED_EXE_NAMES: dict[tuple[str, str], str] = {("orca", "Linux"): "orca-ide"}
 
 
 class Installer:
@@ -54,16 +55,19 @@ class Installer:
         return f"Installer of {app_name} @ {repo_url}"
 
     def get_description(self) -> str:
-        exe_name = self._get_exe_name()
+        exe_name = self.get_exe_name()
 
         old_version_cli: bool = check_tool_exists(tool_name=exe_name)
         old_version_cli_str = "✅" if old_version_cli else "❌"
         doc = self.installer_data["doc"]
         return f"{exe_name:<12} {old_version_cli_str} {doc}"
 
-    def _get_exe_name(self) -> str:
+    def get_exe_name(self) -> str:
         """Derive executable name from app name by converting to lowercase and removing spaces."""
         normalized_app_name = self.installer_data["appName"].lower().replace(" ", "")
+        platform_alias = PLATFORM_ALIASED_EXE_NAMES.get((normalized_app_name, platform.system()))
+        if platform_alias is not None:
+            return platform_alias
         return ALIASED_EXE_NAMES.get(normalized_app_name, normalized_app_name)  # .replace("-", "")
 
     def _get_installer_value(self) -> str:
@@ -71,7 +75,7 @@ class Installer:
         arch = get_normalized_arch()
         installer_value = resolve_installer_pattern(installer_data=self.installer_data, operating_system=os_name, architecture=arch)
         if installer_value is None:
-            exe_name = self._get_exe_name()
+            exe_name = self.get_exe_name()
             raise ValueError(f"No installation pattern for {exe_name} on {os_name} {arch}")
         return installer_value
 
@@ -121,7 +125,7 @@ class Installer:
 
     def install_robust(self, install_request: InstallRequest) -> InstallationResult:
         try:
-            exe_name = self._get_exe_name()
+            exe_name = self.get_exe_name()
             install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
             if should_skip_install(exe_name=exe_name, install_request=effective_install_request, tool_exists=check_tool_exists):
                 return self._build_skipped_result(exe_name=exe_name)
@@ -133,7 +137,7 @@ class Installer:
                 return self._build_same_version_result(exe_name=exe_name, version=old_version_cli)
             return self._build_updated_result(exe_name=exe_name, old_version=old_version_cli, new_version=new_version_cli)
         except Exception as ex:
-            exe_name = self._get_exe_name()
+            exe_name = self.get_exe_name()
             print(f"❌ ERROR: Installation failed for {exe_name}: {ex}")
             return self._build_failed_result(exe_name=exe_name, error=str(ex))
 
@@ -141,7 +145,7 @@ class Installer:
         self._install_from_value(installer_arch_os=self._get_installer_value(), version=version, update=False)
 
     def _install_from_value(self, installer_arch_os: str, version: str | None, update: bool) -> None:
-        exe_name = self._get_exe_name()
+        exe_name = self.get_exe_name()
         repo_url = self.installer_data["repoURL"]
         version_to_be_installed: str = "unknown"  # Initialize to ensure it's always bound
 
@@ -170,7 +174,7 @@ class Installer:
                 search_results = list(search_root.rglob(installer_arch_os))
                 if len(search_results) == 0:
                     raise FileNotFoundError(f"Could not find installation script: {installer_arch_os}")
-                elif len(search_results) > 1:
+                if len(search_results) > 1:
                     raise ValueError(f"Multiple installation scripts found for {installer_arch_os}: {search_results}")
                 installer_path = search_results[0]
                 print(f"📄 Found installation script: {installer_path}")
@@ -276,7 +280,7 @@ class Installer:
         INSTALL_VERSION_ROOT.joinpath(exe_name).write_text(version_to_be_installed or "unknown", encoding="utf-8")
 
     def binary_download(self, version: str | None) -> tuple[Path, str]:
-        exe_name = self._get_exe_name()
+        exe_name = self.get_exe_name()
         repo_url = self.installer_data["repoURL"]
         # app_name = self.installer_data["appName"]
         download_link: str | None = None
@@ -315,7 +319,7 @@ class Installer:
         os_name = get_os_name()
         filename_pattern = resolve_installer_pattern(installer_data=self.installer_data, operating_system=os_name, architecture=arch)
         if filename_pattern is None:
-            raise ValueError(f"No fileNamePattern for {self._get_exe_name()} on {os_name} {arch}")
+            raise ValueError(f"No fileNamePattern for {self.get_exe_name()} on {os_name} {arch}")
         repo_info = get_repo_name_from_url(repo_url)
         if not repo_info:
             print(f"❌ Invalid repository URL: {repo_url}")

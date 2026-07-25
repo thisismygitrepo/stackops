@@ -14,6 +14,7 @@ from stackops.utils.source_of_truth import WINDOWS_INSTALL_PATH
 ORCA_WINDOWS_ASSET_NAME = "orca-windows-setup.exe"
 ORCA_WINDOWS_WRAPPER_NAME = "orca.cmd"
 ORCA_STALE_WINDOWS_INSTALLER_NAME = "orca.exe"
+ORCA_MACOS_CASK = "stablyai/orca/orca"
 
 
 def _build_windows_installer_data(base_installer_data: InstallerData) -> InstallerData:
@@ -24,16 +25,8 @@ def _build_windows_installer_data(base_installer_data: InstallerData) -> Install
         repoURL=base_installer_data["repoURL"],
         categoryLabels=base_installer_data["categoryLabels"],
         fileNamePattern={
-            "amd64": {
-                "linux": None,
-                "windows": ORCA_WINDOWS_ASSET_NAME,
-                "darwin": None,
-            },
-            "arm64": {
-                "linux": None,
-                "windows": None,
-                "darwin": None,
-            },
+            "amd64": {"linux": None, "windows": ORCA_WINDOWS_ASSET_NAME, "darwin": None},
+            "arm64": {"linux": None, "windows": None, "darwin": None},
         },
     )
 
@@ -41,10 +34,7 @@ def _build_windows_installer_data(base_installer_data: InstallerData) -> Install
 def _get_windows_orca_search_roots() -> tuple[Path, ...]:
     local_app_data_raw = os.environ.get("LOCALAPPDATA")
     local_app_data = Path(local_app_data_raw) if local_app_data_raw else Path.home().joinpath("AppData", "Local")
-    search_roots: list[Path] = [
-        local_app_data,
-        local_app_data.joinpath("Programs"),
-    ]
+    search_roots: list[Path] = [local_app_data, local_app_data.joinpath("Programs")]
     for env_name in ("ProgramFiles", "ProgramFiles(x86)"):
         search_root_raw = os.environ.get(env_name)
         if not search_root_raw:
@@ -67,7 +57,7 @@ def _iter_orca_install_directories(search_root: Path) -> list[Path]:
     return candidate_dirs
 
 
-def _get_direct_orca_executable(install_dir: Path) -> Path | None:
+def _get_direct_orca_gui_executable(install_dir: Path) -> Path | None:
     for executable_name in ("Orca.exe", "orca.exe"):
         candidate = install_dir.joinpath(executable_name)
         if candidate.is_file():
@@ -75,30 +65,39 @@ def _get_direct_orca_executable(install_dir: Path) -> Path | None:
     return None
 
 
-def _get_nested_orca_executable(install_dir: Path) -> Path | None:
+def _get_nested_orca_gui_executable(install_dir: Path) -> Path | None:
     nested_matches: list[Path] = []
     for executable_name in ("Orca.exe", "orca.exe"):
-        nested_matches.extend(candidate for candidate in install_dir.rglob(executable_name) if candidate.is_file())
+        nested_matches.extend(
+            candidate for candidate in install_dir.rglob(executable_name) if candidate.is_file() and candidate.parent.name.lower() != "bin"
+        )
     if len(nested_matches) == 0:
         return None
     nested_matches.sort(key=lambda candidate: (len(candidate.relative_to(install_dir).parts), candidate.as_posix().lower()))
     return nested_matches[0]
 
 
-def _find_installed_orca_executable(search_roots: tuple[Path, ...]) -> Path:
+def _find_installed_orca_gui_executable(search_roots: tuple[Path, ...]) -> Path:
     nested_matches: list[Path] = []
     for search_root in search_roots:
         for install_dir in _iter_orca_install_directories(search_root=search_root):
-            direct_match = _get_direct_orca_executable(install_dir=install_dir)
+            direct_match = _get_direct_orca_gui_executable(install_dir=install_dir)
             if direct_match is not None:
                 return direct_match
-            nested_match = _get_nested_orca_executable(install_dir=install_dir)
+            nested_match = _get_nested_orca_gui_executable(install_dir=install_dir)
             if nested_match is not None:
                 nested_matches.append(nested_match)
     if len(nested_matches) > 0:
         nested_matches.sort(key=lambda candidate: (len(candidate.parts), candidate.as_posix().lower()))
         return nested_matches[0]
     raise FileNotFoundError("Could not find Orca.exe after running the Windows installer.")
+
+
+def _find_bundled_windows_orca_cli(gui_executable: Path) -> Path:
+    cli_executable = gui_executable.parent.joinpath("resources", "bin", "orca.exe")
+    if not cli_executable.is_file():
+        raise FileNotFoundError(f"Could not find the bundled Orca CLI after installation: {cli_executable}")
+    return cli_executable
 
 
 def _remove_stale_windows_apps_orca_entry() -> None:
@@ -129,20 +128,30 @@ def _install_orca_on_windows(installer_data: InstallerData, version: str | None)
         raise FileNotFoundError(f"Expected Orca Windows installer to be a file, got: {installer_path}")
     try:
         subprocess.run([str(installer_path), "/S"], text=True, check=True)
-        orca_executable = _find_installed_orca_executable(search_roots=_get_windows_orca_search_roots())
-        _write_windows_orca_wrapper(target_executable=orca_executable)
+        gui_executable = _find_installed_orca_gui_executable(search_roots=_get_windows_orca_search_roots())
+        cli_executable = _find_bundled_windows_orca_cli(gui_executable=gui_executable)
+        _write_windows_orca_wrapper(target_executable=cli_executable)
     finally:
         delete_path(installer_path, verbose=False)
 
 
+def _install_orca_on_macos(version: str | None, update: bool) -> None:
+    if version is not None:
+        raise ValueError("Version-pinned Orca installation is not supported on macOS; the official Homebrew cask manages releases.")
+    command = ["brew", "upgrade", "--cask", "--greedy", "orca"] if update else ["brew", "install", "--cask", ORCA_MACOS_CASK]
+    subprocess.run(command, text=True, check=True)
+
+
 def main(installer_data: InstallerData, version: str | None, update: bool) -> None:
-    _ = update
-    if platform.system() != "Windows":
-        raise NotImplementedError("Orca Windows installer script is only supported on Windows.")
-    _install_orca_on_windows(installer_data=installer_data, version=version)
+    match platform.system():
+        case "Darwin":
+            _install_orca_on_macos(version=version, update=update)
+        case "Windows":
+            _install_orca_on_windows(installer_data=installer_data, version=version)
+        case operating_system:
+            raise NotImplementedError(f"Orca installer script is not supported on {operating_system}.")
 
 
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass

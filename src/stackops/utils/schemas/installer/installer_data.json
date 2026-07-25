@@ -4678,7 +4678,7 @@
       "appName": "orca",
       "license": "MIT",
       "repoURL": "https://github.com/stablyai/orca",
-      "doc": "Orca is the next-gen IDE for building with coding agents",
+      "doc": "AI agent IDE with a bundled CLI for worktrees, terminals, automations, and browser control.",
       "categoryLabels": [
         "editors-ides",
         "ai-agents-assistants"
@@ -4688,15 +4688,20 @@
           "linux": {
             "apk": null,
             "apt": "orca-ide_{version}_amd64.deb",
-            "dnf": null,
+            "dnf": "orca-ide-{version}.x86_64.rpm",
             "pacman": null
           },
-          "darwin": "Orca-{version}-mac.zip",
+          "darwin": "orca.py",
           "windows": "orca.py"
         },
         "arm64": {
-          "linux": null,
-          "darwin": "Orca-{version}-arm64-mac.zip",
+          "linux": {
+            "apk": null,
+            "apt": "orca-ide_{version}_arm64.deb",
+            "dnf": "orca-ide-{version}.aarch64.rpm",
+            "pacman": null
+          },
+          "darwin": "orca.py",
           "windows": null
         }
       }
