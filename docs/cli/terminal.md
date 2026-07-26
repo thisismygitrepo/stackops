@@ -158,6 +158,7 @@ terminal kill [OPTIONS] [NAME]
 | `--all` | `-a` | Kill all sessions; with `--idle`, inspect all sessions for idle panes/windows |
 | `--idle` | `-i` | Kill idle-shell panes/windows in `NAME` or a chosen session; combine with `--all` to inspect all sessions |
 | `--window` | `-w` | Include sessions, windows/tabs, and panes in the chooser |
+| `--delete` | `-D` | Delete stopped Herdr session records instead of killing running sessions |
 | `--backend` | `-b` | `tmux`, `herdr`, `aoe`, or `auto` |
 
 Example:

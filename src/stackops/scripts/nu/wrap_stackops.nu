@@ -32,13 +32,6 @@ def wrap-in-shell-script [command: string ...args: string] -> nothing {
 
   if ($op_program_path | path exists) {
     print $"($green)🚀 Taking over from python script @ ($op_program_path)($reset)"
-    
-    if (which bat | is-empty | not) {
-      bat --style=plain --paging=never $op_program_path
-    } else {
-      open $op_program_path
-    }
-    
     print $"($green)▶ Running...($reset)"
     
     let status = (

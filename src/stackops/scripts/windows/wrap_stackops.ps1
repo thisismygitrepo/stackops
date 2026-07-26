@@ -31,12 +31,6 @@ function wrap_in_shell_script {
     # Check if the file exists
     if (Test-Path $env:OP_PROGRAM_PATH) {
         Write-Host "🚀 Taking over from python script @ $env:OP_PROGRAM_PATH"
-        try {
-            bat --style=full --theme=OneHalfDark --paging=never "$env:OP_PROGRAM_PATH"
-        } catch {
-            # Write-Host "⚠️ Warning: Failed to display script content with 'bat'. Proceeding to execute the script."
-            Write-Host " "
-        }
         & $env:OP_PROGRAM_PATH
         # Write-Host "✅ '$Command' execution completed."
 

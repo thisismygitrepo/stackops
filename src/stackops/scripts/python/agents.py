@@ -78,7 +78,7 @@ def init_config(
     ] = True,
     skip_agentops_skill: Annotated[
         bool,
-        typer.Option("--no-agentops-skill", help="Skip copying the latest bundled AgentOps skill"),
+        typer.Option("--no-agentops-skill", "-A", help="Skip copying the latest bundled AgentOps skill"),
     ] = False,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
@@ -336,7 +336,7 @@ def execute(
     ] = None,
     agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent used to check whether the active phase is finished.")] = DEFAULT_AGENT,
     interval_seconds: Annotated[int, typer.Option("--interval", "-i", help="Seconds to sleep between executor passes.")] = 300,
-    once: Annotated[bool, typer.Option("--once", help="Run one executor pass and exit.")] = False,
+    once: Annotated[bool, typer.Option("--once", "-o", help="Run one executor pass and exit.")] = False,
 ) -> None:
     """Execute an agentops plan JSON file."""
     import typer as _typer

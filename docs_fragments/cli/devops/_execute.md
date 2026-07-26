@@ -14,6 +14,7 @@ devops execute [OPTIONS] [NAME]
 | `--interactive` | `-i` | Interactive selection of scripts |
 | `--command` | `-c` | Run as command |
 | `--list` | `-l` | List available scripts |
+| `--subprocess` | `-S` | Run shell scripts in a child process instead of sourcing them |
 
 ### Examples
 

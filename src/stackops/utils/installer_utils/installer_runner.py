@@ -49,7 +49,7 @@ def check_latest():
 
     def func(installer_data: InstallerData) -> tuple[str, str, str, str]:
         inst = Installer(installer_data=installer_data)
-        exe_name = inst.installer_data["appName"].lower().replace(" ", "")
+        exe_name = inst.get_exe_name()
         repo_url = inst.installer_data["repoURL"]
         print(f"🔎 Checking {exe_name}...")
         _release_url, version_to_be_installed = inst.get_github_release(repo_url=repo_url, version=None)
@@ -130,7 +130,7 @@ def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: l
         except KeyError as ke:
             print(f"❌ ERROR: Missing key in installer data: {ke}")
             print(f"Installer data: {installer_data}")
-            raise KeyError(f"Missing key in installer data: {ke}")
+            raise KeyError(f"Missing key in installer data: {ke}") from ke
         all_installers.append(installer_data)
     return all_installers
 

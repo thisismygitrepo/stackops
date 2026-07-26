@@ -1,15 +1,9 @@
-from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
-
-
-def developer_repo_root() -> Path | None:
-    if STACKOPS_REPO_DIR.joinpath("pyproject.toml").is_file():
-        return STACKOPS_REPO_DIR
-    return None
 
 
 def copy_assets_all() -> None:
@@ -62,7 +56,7 @@ def update(
     --link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
     --config-shell       -> devops config terminal config-shell --which default
     """
-    dev_repo_root = developer_repo_root()
+    dev_repo_root = cli_self_repo.developer_repo_root()
     if dev_repo_root is not None:
         shell_script = f"""
 uv self update
@@ -226,7 +220,7 @@ def get_app() -> typer.Typer:
     cli_app.command(name="readme", no_args_is_help=False, help="📚 <r> render readme markdown in terminal.")(readme)
     cli_app.command(name="r", no_args_is_help=False, hidden=True)(readme)
 
-    dev_repo_root = developer_repo_root()
+    dev_repo_root = cli_self_repo.developer_repo_root()
     if dev_repo_root is not None:
         cli_app.command(name="docs", no_args_is_help=False, help="📚 <o> Serve local docs with preview URLs.")(docs)
         cli_app.command(name="o", no_args_is_help=False, hidden=True)(docs)

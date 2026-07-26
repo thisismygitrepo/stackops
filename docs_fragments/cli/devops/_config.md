@@ -153,7 +153,7 @@ devops config copy-assets all
 
 ### secrets
 
-Manage StackOps secrets files and define environment variables from them. The `search` subcommand reads both the current directory's `.stackops/secrets/secrets.json` and the global source-of-truth secrets file by default.
+Manage StackOps secrets files and define environment variables from them. When `search` is run without `--source`, it reads the current directory's `.stackops/secrets/secrets.json` when that file exists and otherwise reads the global source-of-truth secrets file.
 
 ```bash
 devops config secrets search github personal-access-token
@@ -166,6 +166,7 @@ devops config secrets search --name aws-dev --tag iam-access-key
 devops config secrets search --name aws-dev --tag session-token
 devops config secrets search -s g bitwarden
 devops config secrets s -s b github token
+devops config secrets s --all-matches -s g cloudf
 devops config secrets s -i -P github
 devops config secrets search --path ~/private/team-secrets.json aws dev
 devops config secrets subset ./secrets.json --path ~/private/team-secrets.json
@@ -176,7 +177,9 @@ devops config secrets add
 devops config secrets a --create
 ```
 
-The query terms must identify exactly one `entries[].secrets[].keyValues` object. Terms are case-insensitive substring matches, and all terms must match somewhere across login name/tags/accountName, secret name/tags/scopes, metadata, or environment variable keys. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
+By default, the query terms must identify exactly one `entries[].secrets[].keyValues` object. Terms are case-insensitive substring matches, and all terms must match somewhere across login name/tags/accountName, secret name/tags/scopes, metadata, or environment variable keys. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
+
+Use `--all-matches`, `-a` to load every matching `keyValues` object. Repeated environment variable names are deduplicated when they resolve to the same environment value; the command fails if matched bundles assign different values to the same name.
 
 Use `devops config secrets search` or its alias `devops config secrets s` to select and load a secret bundle. Use `--interactive`, `-i` to choose a matching secret bundle with the TV fuzzy picker. If terms or exact selectors are provided, they pre-filter the picker list.
 
@@ -188,7 +191,7 @@ Use `--verbose`, `-v` to print the selected bundle and environment variable keys
 
 For script-stable matching, use exact selectors. `--name`, `-n` matches `entries[].name`; `--tag`, `--tags`, `-t` requires an exact login or secret tag and can be repeated; `--key`, `-k` requires an exact environment variable key. More specific selectors are also available: `--secret-name`, `-N`; `--login-tag`, `-l`; `--secret-tag`, `-T`; and `--scope`, `-S` for values inside `entries[].secrets[].scopes`. Exact selectors are case-sensitive and can be combined with query terms.
 
-Use `search --source`, `-s` to choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to override the local secrets JSON file.
+Use `search --source`, `-s` to explicitly choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to explicitly select another local secrets JSON file; a missing `--path` file is an error rather than a reason to use the global source.
 
 Use `devops config secrets subset OUTPUT_PATH` to choose top-level `entries[]` interactively from one source file and write a `secrets.json`. The picker preview shows labels, tags/scopes, secret bundle names, and environment variable names, but not secret values. By default, the command creates a new file and refuses an existing output path. Use `--on-conflict`, `-o` with `append`/`a` to add selected entries to an existing output file, `overwrite`/`o` to replace the output file, or `throw-error`/`t` to keep the default refusal behavior.
 

@@ -6,6 +6,7 @@ from typing import Literal, NoReturn, TypeAlias
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_validation as secret_validation
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
     SecretCandidate,
     load_secret_candidates,
@@ -18,11 +19,12 @@ SECRETS_SCHEMA_FILENAME = secret_actions.SECRETS_SCHEMA_FILENAME
 SecretsSource: TypeAlias = Literal["local", "l", "global", "g", "both", "b"]
 WritableSecretsSource: TypeAlias = Literal["local", "l", "global", "g"]
 ResolvedSecretsSource: TypeAlias = Literal["local", "global", "both"]
+SecretsFileSourceName: TypeAlias = Literal["local", "global"]
 
 
 @dataclass(frozen=True)
 class SecretsFileSource:
-    name: str
+    name: SecretsFileSourceName
     path: Path
 
 
@@ -56,9 +58,14 @@ class SecretsFileStats:
     secrets_with_scopes: int = 0
     max_keys_per_secret: int = 0
 
-def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: SecretsSource) -> list[SecretsFileSource]:
-    resolved_source = _resolve_secrets_source_alias(secrets_source)
+def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: SecretsSource | None) -> list[SecretsFileSource]:
     local_source = SecretsFileSource(name="local", path=_resolve_local_secrets_path(secrets_path))
+    if secrets_source is None:
+        if secrets_path is not None or local_source.path.exists():
+            return [local_source]
+        return [SecretsFileSource(name="global", path=_resolve_global_secrets_path())]
+
+    resolved_source = _resolve_secrets_source_alias(secrets_source)
     if resolved_source == "local":
         return [local_source]
 
@@ -217,7 +224,7 @@ def _build_secret_stats(*, secrets_file: SecretsFile, secret_source: SecretsFile
             env_vars += len(key_values)
             max_keys_per_secret = max(max_keys_per_secret, len(key_values))
             env_key_counts.update(key_values.keys())
-            invalid_env_keys += sum(1 for key in key_values if not secret_actions.is_valid_env_name(key))
+            invalid_env_keys += sum(1 for key in key_values if not secret_validation.is_valid_env_name(key))
 
     duplicate_env_key_occurrences = sum(count - 1 for count in env_key_counts.values() if count > 1)
     return SecretsFileStats(
@@ -449,9 +456,6 @@ def _echo_verbose_selection(*, candidate: SecretCandidate, secrets_path: Path) -
     typer.echo(f"  Login tags: {_join_display(candidate.login_tags)}")
     typer.echo(f"  Secret tags: {_join_display(candidate.secret_tags)}")
     typer.echo(f"  Scopes: {_join_display(candidate.scopes)}")
-    typer.echo("Defining env vars:")
-    for key in candidate.key_values:
-        typer.echo(f"  {key}")
 
 
 def _candidate_verbose_label(candidate: SecretCandidate) -> str:

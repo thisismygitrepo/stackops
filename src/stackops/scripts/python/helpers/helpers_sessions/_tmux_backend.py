@@ -27,7 +27,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     run_command,
     strip_ansi_codes,
 )
-from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
+from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 
 
 type TraceSessionChoice = tuple[Literal["error"], str] | tuple[Literal["session_names"], list[str]]

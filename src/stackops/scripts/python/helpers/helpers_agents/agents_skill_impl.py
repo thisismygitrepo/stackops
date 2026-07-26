@@ -13,6 +13,7 @@ SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
 STACKOPS_FALLBACK_SKILL_INSTALL_BACKEND: Final[SKILL_INSTALL_COMMAND_BACKEND] = "bunx"
 AGENT_SKILL_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 AGENTOPS_SKILL_NAME: Final[Literal["agentops"]] = "agentops"
+ORCA_SKILL_SOURCE: Final[str] = "https://github.com/stablyai/orca"
 
 
 @dataclass(frozen=True)
@@ -25,8 +26,13 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "agent-browser": AgentSkillSource("vercel-labs/agent-browser"),
     "agent-skills": AgentSkillSource("addyosmani/agent-skills"),
     "caveman": AgentSkillSource("JuliusBrussee/caveman", skill="caveman"),
+    "computer-use": AgentSkillSource(ORCA_SKILL_SOURCE, skill="computer-use"),
     "grill-me": AgentSkillSource("mattpocock/skills/grill-me"),
     "last30days": AgentSkillSource("mvanhorn/last30days-skill"),
+    "orca-cli": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-cli"),
+    "orca-emulator": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-emulator"),
+    "orca-linear": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-linear"),
+    "orchestration": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orchestration"),
     AGENTOPS_SKILL_NAME: AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill=AGENTOPS_SKILL_NAME),
     "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
 }
@@ -56,13 +62,7 @@ def build_agent_skill_preview_mapping() -> dict[str, str]:
     preview_mapping: dict[str, str] = {}
     for skill_name, source in _OPEN_SOURCE_SKILL_SOURCES.items():
         preview_mapping[skill_name] = json.dumps(
-            {
-                "type": "agent-skill",
-                "name": skill_name,
-                "source": source.source,
-                "skill": source.skill,
-            },
-            indent=2,
+            {"type": "agent-skill", "name": skill_name, "source": source.source, "skill": source.skill}, indent=2
         )
     return preview_mapping
 
@@ -123,12 +123,7 @@ def parse_requested_skill_agent_targets(*, raw_value: str | None) -> tuple[str, 
 
 
 def build_agent_skill_install_commands(
-    *,
-    skill_names: Sequence[str],
-    agent_targets: Sequence[str],
-    scope: SKILL_INSTALL_SCOPE,
-    backend: SKILL_INSTALL_COMMAND_BACKEND,
-    yes: bool,
+    *, skill_names: Sequence[str], agent_targets: Sequence[str], scope: SKILL_INSTALL_SCOPE, backend: SKILL_INSTALL_COMMAND_BACKEND, yes: bool
 ) -> tuple[tuple[str, ...], ...]:
     commands: list[tuple[str, ...]] = []
     for skill_name in skill_names:
@@ -178,13 +173,7 @@ def print_stackops_skill_install_fallback(*, error: ValueError, fallback_backend
 
 
 def add_skill(
-    *,
-    skill_name: str | None,
-    agent: str | None,
-    scope: SKILL_INSTALL_SCOPE,
-    directory: str | None,
-    backend: SKILL_INSTALL_BACKEND,
-    yes: bool,
+    *, skill_name: str | None, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None, backend: SKILL_INSTALL_BACKEND, yes: bool
 ) -> int:
     install_root = resolve_agent_skill_install_root(directory=directory)
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
@@ -195,10 +184,7 @@ def add_skill(
 
         try:
             results = agents_skill_stackops_backend.install_stackops_agent_skills(
-                skill_names=resolved_skill_names,
-                skill_folder_names=build_stackops_skill_folder_names(),
-                install_root=install_root,
-                scope=scope,
+                skill_names=resolved_skill_names, skill_folder_names=build_stackops_skill_folder_names(), install_root=install_root, scope=scope
             )
         except agents_skill_stackops_backend.StackopsAgentSkillBackendError as error:
             print_stackops_skill_install_fallback(error=error, fallback_backend=STACKOPS_FALLBACK_SKILL_INSTALL_BACKEND)
@@ -208,10 +194,6 @@ def add_skill(
             return 0
 
     commands = build_agent_skill_install_commands(
-        skill_names=resolved_skill_names,
-        agent_targets=agent_targets,
-        scope=scope,
-        backend=resolved_backend,
-        yes=yes,
+        skill_names=resolved_skill_names, agent_targets=agent_targets, scope=scope, backend=resolved_backend, yes=yes
     )
     return run_agent_skill_install_commands(install_root=install_root, commands=commands)

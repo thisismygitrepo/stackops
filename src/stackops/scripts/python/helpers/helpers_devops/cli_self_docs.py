@@ -5,8 +5,8 @@ from typing import Literal
 import typer
 import stackops.scripts.python.graph as graph_assets
 from stackops.scripts.python.graph import CLI_GRAPH_PATH_REFERENCE
+from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 from stackops.utils.path_reference import get_path_reference_library_relative_path
-from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
 DOCS_BIND_ADDRESS = "0.0.0.0"
@@ -36,16 +36,10 @@ def _build_docs_url(host: str) -> str:
     return f"http://{host}:{DOCS_PORT}{DOCS_SITE_PATH}"
 
 
-def _developer_repo_root() -> Path | None:
-    if STACKOPS_REPO_DIR.joinpath("pyproject.toml").is_file():
-        return STACKOPS_REPO_DIR
-    return None
-
-
 def get_docs_repo_root() -> Path:
     from stackops.utils.source_of_truth import REPO_ROOT
 
-    repo_root = _developer_repo_root()
+    repo_root = cli_self_repo.developer_repo_root()
     if repo_root is None:
         repo_root = REPO_ROOT.resolve()
 

@@ -3486,6 +3486,27 @@
       }
     },
     {
+      "appName": "kubectl",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/kubernetes/kubectl",
+      "doc": "Kubernetes command-line tool for controlling Kubernetes clusters.",
+      "categoryLabels": [
+        "build-devops-containers"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "kubectl_tmp=\"$(mktemp)\" && curl -fsSL \"https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl\" -o \"$kubectl_tmp\" && sudo install -o root -g root -m 0755 \"$kubectl_tmp\" /usr/local/bin/kubectl && rm \"$kubectl_tmp\"",
+          "darwin": "brew install kubectl",
+          "windows": "winget install --no-upgrade --exact --id Kubernetes.kubectl --source winget --accept-package-agreements --accept-source-agreements"
+        },
+        "arm64": {
+          "linux": "kubectl_tmp=\"$(mktemp)\" && curl -fsSL \"https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl\" -o \"$kubectl_tmp\" && sudo install -o root -g root -m 0755 \"$kubectl_tmp\" /usr/local/bin/kubectl && rm \"$kubectl_tmp\"",
+          "darwin": "brew install kubectl",
+          "windows": "winget install --no-upgrade --exact --id Kubernetes.kubectl --source winget --accept-package-agreements --accept-source-agreements"
+        }
+      }
+    },
+    {
       "appName": "openpomodoro-cli",
       "license": "MIT License",
       "repoURL": "https://github.com/open-pomodoro/openpomodoro-cli",
@@ -4209,6 +4230,28 @@
       }
     },
     {
+      "appName": "t3",
+      "license": "MIT",
+      "repoURL": "https://github.com/pingdotgg/t3code",
+      "doc": "Minimal web GUI for coding agents.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "editors-ides"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g t3@latest",
+          "windows": "bun install -g t3@latest",
+          "darwin": "bun install -g t3@latest"
+        },
+        "arm64": {
+          "linux": "bun install -g t3@latest",
+          "windows": "bun install -g t3@latest",
+          "darwin": "bun install -g t3@latest"
+        }
+      }
+    },
+    {
       "appName": "aider",
       "license": "Apache License 2.0",
       "repoURL": "CMD",
@@ -4289,6 +4332,27 @@
           "linux": "rtk-aarch64-unknown-linux-gnu.tar.gz",
           "windows": null,
           "darwin": "rtk-aarch64-apple-darwin.tar.gz"
+        }
+      }
+    },
+    {
+      "appName": "tokensave",
+      "license": "MIT License",
+      "repoURL": "https://github.com/aovestdipaperino/tokensave",
+      "doc": "Local semantic code intelligence MCP server for AI coding agents.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "tokensave-{version}-x86_64-linux.tar.gz",
+          "windows": "tokensave-{version}-x86_64-windows.zip",
+          "darwin": null
+        },
+        "arm64": {
+          "linux": "tokensave-{version}-aarch64-linux.tar.gz",
+          "windows": "tokensave-{version}-aarch64-windows.zip",
+          "darwin": "tokensave-{version}-aarch64-macos.tar.gz"
         }
       }
     },
@@ -4636,7 +4700,7 @@
       "appName": "orca",
       "license": "MIT",
       "repoURL": "https://github.com/stablyai/orca",
-      "doc": "Orca is the next-gen IDE for building with coding agents",
+      "doc": "AI agent IDE with a bundled CLI for worktrees, terminals, automations, and browser control.",
       "categoryLabels": [
         "editors-ides",
         "ai-agents-assistants"
@@ -4646,15 +4710,20 @@
           "linux": {
             "apk": null,
             "apt": "orca-ide_{version}_amd64.deb",
-            "dnf": null,
+            "dnf": "orca-ide-{version}.x86_64.rpm",
             "pacman": null
           },
-          "darwin": "Orca-{version}-mac.zip",
+          "darwin": "orca.py",
           "windows": "orca.py"
         },
         "arm64": {
-          "linux": null,
-          "darwin": "Orca-{version}-arm64-mac.zip",
+          "linux": {
+            "apk": null,
+            "apt": "orca-ide_{version}_arm64.deb",
+            "dnf": "orca-ide-{version}.aarch64.rpm",
+            "pacman": null
+          },
+          "darwin": "orca.py",
           "windows": null
         }
       }
@@ -5797,7 +5866,7 @@
           "linux": {
             "apk": "sudo apk add --no-cache 7zip",
             "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
-            "dnf": null,
+            "dnf": "sudo dnf install -y 7zip",
             "pacman": "sudo pacman -S --needed --noconfirm 7zip"
           },
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",
@@ -5807,7 +5876,7 @@
           "linux": {
             "apk": "sudo apk add --no-cache 7zip",
             "apt": "sudo apt-get update && sudo apt-get install -y p7zip-full",
-            "dnf": null,
+            "dnf": "sudo dnf install -y 7zip",
             "pacman": "sudo pacman -S --needed --noconfirm 7zip"
           },
           "windows": "winget install --no-upgrade --name \"7-zip\" --Id \"7zip.7zip\" --source winget --accept-package-agreements --accept-source-agreements",

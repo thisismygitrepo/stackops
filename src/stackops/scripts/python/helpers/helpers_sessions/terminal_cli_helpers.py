@@ -4,7 +4,7 @@ from typing import Literal
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
+from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 
 
 def parse_tmux_target(target: str) -> tuple[str, str, str]:

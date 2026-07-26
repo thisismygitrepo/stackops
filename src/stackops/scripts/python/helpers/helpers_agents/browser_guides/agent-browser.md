@@ -27,10 +27,10 @@ stackops agents browser launch-browser --browser chrome --port 9331 --profile ag
 agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```
 
-Use the background process launch mode only when you deliberately do not want tmux ownership:
+Use `--detached`/`-d` for the background process launch mode only when you deliberately do not want tmux ownership:
 
 ```bash
-stackops agents browser launch-browser --browser chrome --port 9331 --profile agent-browser --detached
+stackops agents browser launch-browser --browser chrome --port 9331 --profile agent-browser -d
 ```
 
 Inspect active StackOps browser tmux windows:

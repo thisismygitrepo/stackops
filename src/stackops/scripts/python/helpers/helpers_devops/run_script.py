@@ -142,7 +142,7 @@ def run_py_script(ctx: typer.Context,
                   list_scripts: Annotated[bool, typer.Option(..., "--list", "-l", help="List available scripts in all locations")] = False,
                   run_in_subprocess: Annotated[
                       bool,
-                      typer.Option(..., "--subprocess", help="Run shell scripts in a child shell instead of sourcing them in the caller"),
+                      typer.Option(..., "--subprocess", "-S", help="Run shell scripts in a child shell instead of sourcing them in the caller"),
                   ] = False,
                   *,
                   forwarded_args: list[str],

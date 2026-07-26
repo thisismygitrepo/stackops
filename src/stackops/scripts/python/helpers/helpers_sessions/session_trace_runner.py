@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
+from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 from stackops.scripts.python.helpers.helpers_sessions.session_trace_kill import (
     build_trace_kill_plan,
     execute_trace_kill_plan,

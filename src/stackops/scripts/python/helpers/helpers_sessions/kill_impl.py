@@ -1,11 +1,6 @@
-from typing import Literal, TypedDict
+from typing import Literal
 
-
-class KilledTarget(TypedDict):
-    action: Literal["session", "window", "pane"]
-    session: str
-    window: str
-    detail: str
+from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 
 
 def choose_kill_target(

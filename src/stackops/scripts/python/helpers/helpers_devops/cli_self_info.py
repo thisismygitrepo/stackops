@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops.cli_self import developer_repo_root
+from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
@@ -14,7 +14,7 @@ def readme() -> None:
     from rich.console import Console
     from rich.markdown import Markdown
 
-    repo_root = developer_repo_root()
+    repo_root = cli_self_repo.developer_repo_root()
     console = Console()
 
     if repo_root is not None:
@@ -87,7 +87,7 @@ def build_docker(
     """🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`"""
     from stackops.scripts.python.helpers.helpers_devops import cli_self_docker
 
-    repo_root = developer_repo_root()
+    repo_root = cli_self_repo.developer_repo_root()
     if repo_root is None:
         typer.echo(f"❌ Developer repo not found: {STACKOPS_REPO_DIR}")
         raise typer.Exit(code=1)
@@ -143,7 +143,7 @@ def build_graph(
     ] = False,
 ) -> None:
     """🕸 <g> Build the architecture dependency graph."""
-    repo_root = developer_repo_root()
+    repo_root = cli_self_repo.developer_repo_root()
     if repo_root is None:
         typer.echo(f"❌ Developer repo not found: {STACKOPS_REPO_DIR}")
         raise typer.Exit(code=1)

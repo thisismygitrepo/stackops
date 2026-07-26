@@ -312,10 +312,10 @@ Key options:
 |--------|-------------|
 | `--host`, `-H` | SSH connector host; repeat for multiple hosts |
 | `--hostname`, `-n` | Published hostname to verify on each connector |
-| `--local`, `--no-local` | Include or exclude the local connector |
-| `--cloudflared` | Cloudflared executable path on each connector |
-| `--config` | Cloudflared configuration path on each connector |
-| `--service` | Systemd service name on each connector |
+| `--local`/`--no-local`, `-l`/`-L` | Include or exclude the local connector |
+| `--cloudflared`, `-f` | Cloudflared executable path on each connector |
+| `--config`, `-c` | Cloudflared configuration path on each connector |
+| `--service`, `-s` | Systemd service name on each connector |
 
 #### update-cloudflare-connectors
 
@@ -330,10 +330,10 @@ Key options:
 | Option | Description |
 |--------|-------------|
 | `--host`, `-H` | SSH connector host; repeat for a rolling update |
-| `--local`, `--no-local` | Include or exclude the local connector |
-| `--cloudflared` | Cloudflared executable path on each connector |
-| `--service` | Systemd service name on each connector |
-| `--timeout` | Seconds to wait for each restarted service |
+| `--local`/`--no-local`, `-l`/`-L` | Include or exclude the local connector |
+| `--cloudflared`, `-f` | Cloudflared executable path on each connector |
+| `--service`, `-s` | Systemd service name on each connector |
+| `--timeout`, `-t` | Seconds to wait for each restarted service |
 | `--yes`, `-y` | Run without confirmation |
 
 #### sync-cloudflare-routes
@@ -349,13 +349,13 @@ Key options:
 | Option | Description |
 |--------|-------------|
 | `--hostname`, `-n` | Source hostname route to copy; repeat as needed |
-| `--source-host` | SSH host containing the source configuration |
-| `--source-config` | Source Cloudflared configuration path |
+| `--source-host`, `-S` | SSH host containing the source configuration |
+| `--source-config`, `-C` | Source Cloudflared configuration path |
 | `--host`, `-H` | SSH target host; omit for the local machine |
-| `--config` | Target Cloudflared configuration path |
-| `--cloudflared` | Cloudflared executable path on the target |
-| `--service` | Target systemd service name |
-| `--timeout` | Seconds to wait for the restarted service |
+| `--config`, `-c` | Target Cloudflared configuration path |
+| `--cloudflared`, `-f` | Cloudflared executable path on the target |
+| `--service`, `-s` | Target systemd service name |
+| `--timeout`, `-t` | Seconds to wait for the restarted service |
 | `--yes`, `-y` | Run without confirmation |
 
 ### device
@@ -459,6 +459,7 @@ Key options from current help:
 | `--path`, `-p` | Server base path for `share-local` |
 | `--host`, `-h` | Host for `share-local` |
 | `--dir`, `-d` | Folder to open in `share-local` mode |
+| `--cli-data-dir` | VS Code CLI data directory used by every generated command |
 | `--extra-args`, `-e` | Extra CLI arguments to append |
 
 Examples:
@@ -468,6 +469,8 @@ devops network vscode-share run --name labbox
 devops network vscode-share install-service --name labbox
 devops network vscode-share share-local --dir . --host 0.0.0.0
 ```
+
+Before `run` or `install-service`, StackOps shows whether a VS Code tunnel credential is stored and whether its provider is GitHub or Microsoft. VS Code does not expose the credential's exact username or email. To guarantee which account is used, run `code tunnel user logout`, then `code tunnel user login --provider github` or `code tunnel user login --provider microsoft` before starting the tunnel.
 
 The nested help screens render shortened usage such as `devops share-server ...`, `devops ssh ...`, `devops cloudflare ...`, `devops device ...`, or `devops vscode-share ...`, but the full entrypoints remain under `devops network ...`.
 

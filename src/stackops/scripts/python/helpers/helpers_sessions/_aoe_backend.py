@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     quote,
     run_command,
 )
-from stackops.scripts.python.helpers.helpers_sessions.kill_impl import KilledTarget
+from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 
 
 JsonObject = dict[str, Any]

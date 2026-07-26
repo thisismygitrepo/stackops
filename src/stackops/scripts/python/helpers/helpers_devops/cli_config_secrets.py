@@ -6,8 +6,9 @@ import typer
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
 from stackops.scripts.python.helpers.helpers_devops import cli_subset_support
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
+    SecretSelectionMode,
     SecretSelectors,
-    resolve_candidate,
+    resolve_secret_selection,
 )
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import (
     SECRETS_SCHEMA_FILENAME,
@@ -41,6 +42,7 @@ SECRETS_SEARCH_EPILOG = """Examples:
   devops config secrets search --name aws-dev --tag session-token
   devops config secrets search --source global bitwarden
   devops config secrets s --source g bitwarden
+  devops config secrets s --all-matches --source g cloudf
   devops config secrets search --source both github token
   devops config secrets s --source b github token
   devops config secrets s -i -P github
@@ -52,7 +54,9 @@ Use search --interactive/-i to choose from matching logins with the TV fuzzy pic
 After interactive selection, StackOps prints a jq command for the selected login entry.
 Use search --preview-secrets/-P with --interactive/-i to include secret values in the picker preview.
 Use search --verbose/-v to print the selected bundle and env var keys without secret values.
-Use search --source to choose the local file (local/l), global source-of-truth file (global/g), or both (both/b). Defaults to both.
+Use search --all-matches/-a to define env vars from every matching bundle instead of requiring one unique match.
+When search --source is omitted, StackOps uses --path when provided; otherwise it uses the local file when present and the global file when local is absent.
+Use search --source to explicitly choose the local file (local/l), global source-of-truth file (global/g), or both (both/b).
 With both, missing source files are warned and skipped as long as at least one source exists.
 Exact selectors are case-sensitive and can be combined with terms for script-stable matching. Selector short aliases:
 --secret-name/-N, --login-tag/-l, --secret-tag/-T, --scope/-S.
@@ -64,7 +68,7 @@ def search(
         list[str] | None,
         typer.Argument(
             help=(
-                "Case-insensitive terms used to select one secret bundle. All terms must match across login name/tags/accountName, "
+                "Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, "
                 "secret name/tags/scopes, metadata, or env var keys."
             )
         ),
@@ -76,17 +80,24 @@ def search(
         ),
     ] = None,
     secrets_source: Annotated[
-        SecretsSource,
+        SecretsSource | None,
         typer.Option(
             "--source",
             "-s",
             case_sensitive=False,
-            help="Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.",
+            help=(
+                "Secrets file source to read: local/l, global/g, or both/b. "
+                "When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent."
+            ),
         ),
-    ] = "both",
+    ] = None,
     interactive: Annotated[
         bool,
         typer.Option("--interactive", "-i", help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."),
+    ] = False,
+    all_matches: Annotated[
+        bool,
+        typer.Option("--all-matches", "-a", help="Define env vars from every matching secret bundle instead of requiring one unique match."),
     ] = False,
     preview_secrets: Annotated[
         bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview. Only applies with --interactive/-i.")
@@ -116,6 +127,8 @@ def search(
     ] = None,
 ) -> None:
     """🔐 <S> Define env vars from StackOps secrets files."""
+    if all_matches and interactive:
+        fail("--all-matches/-a cannot be combined with --interactive/-i.")
     if preview_secrets and not interactive:
         fail("--preview-secrets only applies with --interactive/-i.")
 
@@ -130,22 +143,29 @@ def search(
         scopes=clean_selector_values(scopes),
         keys=clean_selector_values(keys),
     )
-    candidate = resolve_candidate(candidates=candidates, terms=terms, selectors=selectors, interactive=interactive, preview_secrets=preview_secrets)
-    selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
+    selection_mode: SecretSelectionMode = "interactive" if interactive else "all" if all_matches else "unique"
+    selection = resolve_secret_selection(
+        candidates=candidates,
+        terms=terms,
+        selectors=selectors,
+        selection_mode=selection_mode,
+        preview_secrets=preview_secrets,
+    )
     if interactive:
+        candidate = selection.candidates[0]
+        selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
         echo_jq_login_entry_hint(candidate=candidate, secrets_path=selected_source_path)
-    secret_actions.validate_env_names(candidate.key_values)
-    secret_actions.write_env_handoff(candidate.key_values)
+    secret_actions.validate_env_names(selection.key_values)
+    secret_actions.write_env_handoff(selection.key_values, verbose=verbose)
     if verbose:
-        echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)
+        for candidate in selection.candidates:
+            selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
+            echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)
 
-    names = ", ".join(candidate.key_values)
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(candidate.key_values)} env variable(s)"
-    if names:
-        msg += f": {names}"
-    else:
-        msg += "."
-    typer.echo(msg)
+    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(selection.key_values)} env variable(s)"
+    if all_matches:
+        msg += f" from {len(selection.candidates)} matching secret bundle(s)"
+    typer.echo(msg + ".")
 
 
 def stats(
