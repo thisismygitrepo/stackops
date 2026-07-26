@@ -4230,6 +4230,28 @@
       }
     },
     {
+      "appName": "t3",
+      "license": "MIT",
+      "repoURL": "https://github.com/pingdotgg/t3code",
+      "doc": "Minimal web GUI for coding agents.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "editors-ides"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g t3@latest",
+          "windows": "bun install -g t3@latest",
+          "darwin": "bun install -g t3@latest"
+        },
+        "arm64": {
+          "linux": "bun install -g t3@latest",
+          "windows": "bun install -g t3@latest",
+          "darwin": "bun install -g t3@latest"
+        }
+      }
+    },
+    {
       "appName": "aider",
       "license": "Apache License 2.0",
       "repoURL": "CMD",
