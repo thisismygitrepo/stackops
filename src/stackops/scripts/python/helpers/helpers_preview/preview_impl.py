@@ -236,7 +236,7 @@ def _build_uv_runtime_options(project_path: str | None, backend: BACKENDS) -> tu
     if backend == "visidata":
         return ("--python 3.14", "--no-project")
     if STACKOPS_REPO_DIR.exists():
-        return ("--python 3.14", f"""--project "{str(STACKOPS_REPO_DIR)}" --with cowsay --with "{STACKOPS_PLOT_REQUIREMENT}" """)
+        return ("--python 3.14", f"""--project "{str(STACKOPS_REPO_DIR)}" --extra plot --with cowsay """)
     return ("--python 3.14", f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """)
 
 
