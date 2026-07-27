@@ -1,32 +1,19 @@
 """Procs"""
 
+from datetime import datetime
+from typing import List, TypedDict
+
 import psutil
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from typing import Literal, TypedDict, List
 from rich.console import Console
 from rich.panel import Panel
-from datetime import datetime
+from rich.progress import Progress, SpinnerColumn, TextColumn
+
+from stackops.scripts.python.helpers.helpers_utils.process_models import ProcessInfo, ProcessSelector, SearchField, process_matches_selector
 from stackops.utils.accessories import pprint
 
 console = Console()
 
 BOX_WIDTH = 78  # width for box drawing
-
-
-class ProcessInfo(TypedDict):
-    """TypedDict for process information."""
-    command: str
-    pid: int
-    name: str
-    username: str
-    cpu_percent: float
-    memory_usage_mb: float
-    status: str
-    create_time: datetime
-    ports: list[int]
-
-
-SearchField = Literal["command", "ports", "name", "pid", "username", "status", "memory", "cpu"]
 
 
 class FileAccessInfo(TypedDict):
@@ -141,7 +128,7 @@ class ProcessManager:
             return f"{process['memory_usage_mb']:.2f}"
         return f"{process['cpu_percent']:.2f}"
 
-    def choose_and_kill(self, search_by: SearchField = "command") -> None:
+    def choose_and_kill(self, search_by: SearchField, selector: ProcessSelector | None, kill_all_matches: bool) -> None:
         # # header for interactive process selection
         # title = "🎯  INTERACTIVE PROCESS SELECTION AND TERMINATION"
         # console.print(Panel(title, title="[bold blue]Process Info[/bold blue]", border_style="blue"))
@@ -164,9 +151,19 @@ class ProcessManager:
         # def choose_from_dict_with_preview(options_to_preview_mapping: dict[str, Any], extension: str | None, multi: bool, preview_size_percent: float) -> str | list[str] | None:
 
         import json
+        matching_processes = self.data if selector is None else [process for process in self.data if process_matches_selector(process, selector)]
+        if len(matching_processes) == 0:
+            message = "No processes match the requested selector." if selector is not None else "No processes are available."
+            console.print(Panel(message, title="[bold blue]Process Info[/bold blue]", border_style="blue"))
+            return
+
+        if kill_all_matches:
+            self.kill(pids=[process["pid"] for process in matching_processes])
+            return
+
         option_to_process: dict[str, ProcessInfo] = {}
         options_to_preview_mapping: dict[str, str] = {}
-        for idx, process in enumerate(self.data):
+        for idx, process in enumerate(matching_processes):
             searchable = self._search_value(process=process, search_by=search_by)
             label = f"{searchable} | pid={process['pid']} | name={process['name']} | idx={idx}"
             option_to_process[label] = process

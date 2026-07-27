@@ -19049,7 +19049,38 @@
                     "        ProcessSearchField,",
                     "        typer.Option(..., \"--filter-by\", \"-f\", help=\"Field used to search/filter processes.\"),",
                     "    ] = \"command\",",
+                    "    command: Annotated[str | None, typer.Option(\"--command\", \"-c\", help=\"Match a command substring.\")] = None,",
+                    "    port: Annotated[",
+                    "        int | None,",
+                    "        typer.Option(\"--port\", \"-p\", min=1, max=65535, help=\"Match an exact local port.\"),",
+                    "    ] = None,",
+                    "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Match an exact process name.\")] = None,",
+                    "    pid: Annotated[int | None, typer.Option(\"--pid\", \"-P\", min=1, help=\"Match an exact process ID.\")] = None,",
+                    "    username: Annotated[str | None, typer.Option(\"--username\", \"-u\", help=\"Match an exact username.\")] = None,",
+                    "    status: Annotated[str | None, typer.Option(\"--status\", \"-s\", help=\"Match an exact process status.\")] = None,",
+                    "    memory: Annotated[float | None, typer.Option(\"--memory\", \"-m\", min=0, help=\"Match processes using at least this many MB.\")] = None,",
+                    "    cpu: Annotated[float | None, typer.Option(\"--cpu\", \"-C\", min=0, help=\"Match processes using at least this CPU percentage.\")] = None,",
+                    "    yes: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--yes\", \"-y\", help=\"Non-interactively kill every process matching the direct selector.\"),",
+                    "    ] = False,",
                     ") -> None:",
+                    "    try:",
+                    "        selector = build_process_selector(",
+                    "            command=command,",
+                    "            port=port,",
+                    "            name=name,",
+                    "            pid=pid,",
+                    "            username=username,",
+                    "            status=status,",
+                    "            memory=memory,",
+                    "            cpu=cpu,",
+                    "        )",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    if yes and selector is None:",
+                    "        raise typer.BadParameter(\"--yes requires a direct process selector.\", param_hint=\"--yes\")",
+                    "",
                     "    match search_by:",
                     "        case \"command\" | \"c\":",
                     "            search_field = \"command\"",
@@ -19070,10 +19101,12 @@
                     "        case _:",
                     "            typer.echo(f\"Invalid search_by value: {search_by}\", err=True)",
                     "            raise typer.Exit(code=1)",
+                    "    if selector is not None:",
+                    "        search_field = selector.field",
                     "    from stackops.scripts.python.helpers.helpers_utils.processes import ProcessManager",
                     "",
                     "    proc = ProcessManager()",
-                    "    proc.choose_and_kill(search_by=search_field)"
+                    "    proc.choose_and_kill(search_by=search_field, selector=selector, kill_all_matches=yes)"
                   ],
                   "name": "kill_process",
                   "parameters": [
@@ -19098,6 +19131,204 @@
                         ],
                         "help": "Field used to search/filter processes.",
                         "default": "..."
+                      }
+                    },
+                    {
+                      "name": "command",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--command', '-c', help='Match a command substring.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--command",
+                          "-c"
+                        ],
+                        "long_flags": [
+                          "--command"
+                        ],
+                        "short_flags": [
+                          "-c"
+                        ],
+                        "help": "Match a command substring."
+                      }
+                    },
+                    {
+                      "name": "port",
+                      "kind": "positional_or_keyword",
+                      "type": "int | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[int | None, typer.Option('--port', '-p', min=1, max=65535, help='Match an exact local port.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--port",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--port"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Match an exact local port."
+                      }
+                    },
+                    {
+                      "name": "name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Match an exact process name.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--name",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--name"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Match an exact process name."
+                      }
+                    },
+                    {
+                      "name": "pid",
+                      "kind": "positional_or_keyword",
+                      "type": "int | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[int | None, typer.Option('--pid', '-P', min=1, help='Match an exact process ID.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--pid",
+                          "-P"
+                        ],
+                        "long_flags": [
+                          "--pid"
+                        ],
+                        "short_flags": [
+                          "-P"
+                        ],
+                        "help": "Match an exact process ID."
+                      }
+                    },
+                    {
+                      "name": "username",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--username', '-u', help='Match an exact username.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--username",
+                          "-u"
+                        ],
+                        "long_flags": [
+                          "--username"
+                        ],
+                        "short_flags": [
+                          "-u"
+                        ],
+                        "help": "Match an exact username."
+                      }
+                    },
+                    {
+                      "name": "status",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--status', '-s', help='Match an exact process status.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--status",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--status"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Match an exact process status."
+                      }
+                    },
+                    {
+                      "name": "memory",
+                      "kind": "positional_or_keyword",
+                      "type": "float | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[float | None, typer.Option('--memory', '-m', min=0, help='Match processes using at least this many MB.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--memory",
+                          "-m"
+                        ],
+                        "long_flags": [
+                          "--memory"
+                        ],
+                        "short_flags": [
+                          "-m"
+                        ],
+                        "help": "Match processes using at least this many MB."
+                      }
+                    },
+                    {
+                      "name": "cpu",
+                      "kind": "positional_or_keyword",
+                      "type": "float | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[float | None, typer.Option('--cpu', '-C', min=0, help='Match processes using at least this CPU percentage.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--cpu",
+                          "-C"
+                        ],
+                        "long_flags": [
+                          "--cpu"
+                        ],
+                        "short_flags": [
+                          "-C"
+                        ],
+                        "help": "Match processes using at least this CPU percentage."
+                      }
+                    },
+                    {
+                      "name": "yes",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--yes', '-y', help='Non-interactively kill every process matching the direct selector.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--yes",
+                          "-y"
+                        ],
+                        "long_flags": [
+                          "--yes"
+                        ],
+                        "short_flags": [
+                          "-y"
+                        ],
+                        "help": "Non-interactively kill every process matching the direct selector."
                       }
                     }
                   ],

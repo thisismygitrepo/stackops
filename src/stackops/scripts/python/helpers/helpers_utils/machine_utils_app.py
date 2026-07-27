@@ -2,6 +2,10 @@ from typing import Annotated, Literal, TypeAlias
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_utils.process_models import (
+    build_process_selector,
+)
+
 
 ProcessSearchField: TypeAlias = Literal[
     "command",
@@ -30,7 +34,38 @@ def kill_process(
         ProcessSearchField,
         typer.Option(..., "--filter-by", "-f", help="Field used to search/filter processes."),
     ] = "command",
+    command: Annotated[str | None, typer.Option("--command", "-c", help="Match a command substring.")] = None,
+    port: Annotated[
+        int | None,
+        typer.Option("--port", "-p", min=1, max=65535, help="Match an exact local port."),
+    ] = None,
+    name: Annotated[str | None, typer.Option("--name", "-n", help="Match an exact process name.")] = None,
+    pid: Annotated[int | None, typer.Option("--pid", "-P", min=1, help="Match an exact process ID.")] = None,
+    username: Annotated[str | None, typer.Option("--username", "-u", help="Match an exact username.")] = None,
+    status: Annotated[str | None, typer.Option("--status", "-s", help="Match an exact process status.")] = None,
+    memory: Annotated[float | None, typer.Option("--memory", "-m", min=0, help="Match processes using at least this many MB.")] = None,
+    cpu: Annotated[float | None, typer.Option("--cpu", "-C", min=0, help="Match processes using at least this CPU percentage.")] = None,
+    yes: Annotated[
+        bool,
+        typer.Option("--yes", "-y", help="Non-interactively kill every process matching the direct selector."),
+    ] = False,
 ) -> None:
+    try:
+        selector = build_process_selector(
+            command=command,
+            port=port,
+            name=name,
+            pid=pid,
+            username=username,
+            status=status,
+            memory=memory,
+            cpu=cpu,
+        )
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    if yes and selector is None:
+        raise typer.BadParameter("--yes requires a direct process selector.", param_hint="--yes")
+
     match search_by:
         case "command" | "c":
             search_field = "command"
@@ -51,10 +86,12 @@ def kill_process(
         case _:
             typer.echo(f"Invalid search_by value: {search_by}", err=True)
             raise typer.Exit(code=1)
+    if selector is not None:
+        search_field = selector.field
     from stackops.scripts.python.helpers.helpers_utils.processes import ProcessManager
 
     proc = ProcessManager()
-    proc.choose_and_kill(search_by=search_field)
+    proc.choose_and_kill(search_by=search_field, selector=selector, kill_all_matches=yes)
 
 
 def tui_env(

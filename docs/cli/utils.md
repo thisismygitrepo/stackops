@@ -34,7 +34,7 @@ utils machine [OPTIONS] COMMAND [ARGS]...
 
 Key behavior:
 
-- `kill-process` defaults to interactive mode and supports `--filter-by command|ports|name|pid|username|status|memory|cpu`.
+- `kill-process` defaults to interactive mode and supports `--filter-by command|ports|name|pid|username|status|memory|cpu`. Direct selectors are `--command`/`-c`, `--port`/`-p`, `--name`/`-n`, `--pid`/`-P`, `--username`/`-u`, `--status`/`-s`, `--memory`/`-m`, and `--cpu`/`-C`. Pass exactly one direct selector; add `--yes`/`-y` to kill every match without prompting. Memory and CPU selectors are inclusive minimums; the other selectors are exact except for command substring matching.
 - `environment` defaults to `ENV`; pass `PATH` as the positional argument to browse `PATH` entries instead.
 - `environment --tui` uses the full-screen Textual UI instead of the default fuzzy picker.
 - `get-machine-specs --hardware` includes compute capability details; without `--hardware`, it prints specs and writes `machine_specs.json` under the StackOps config root.
@@ -46,6 +46,9 @@ Examples:
 ```bash
 utils machine environment PATH
 utils machine environment ENV --tui
+utils machine kill-process --port 9221
+utils machine kill-process --name uvicorn --yes
+utils machine kill-process --memory 500 --yes
 utils machine get-machine-specs --hardware
 utils machine mount --interactive
 utils machine mount --device sdb1 --mount-point /mnt/data --read-only
