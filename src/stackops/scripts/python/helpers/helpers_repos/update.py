@@ -1,14 +1,20 @@
-from pathlib import Path
-from typing import TypedDict
+import hashlib
+import os
 import subprocess
+from pathlib import Path
+from typing import Literal, TypedDict
+
 import git
+
+
+RepositoryUpdateStatus = Literal["success", "error", "skipped", "auth_failed"]
 
 
 class RepositoryUpdateResult(TypedDict):
     """Result of updating a single repository."""
 
     repo_path: str
-    status: str  # "success", "error", "skipped", "auth_failed"
+    status: RepositoryUpdateStatus
     had_uncommitted_changes: bool
     uncommitted_files: list[str]
     commit_before: str
@@ -25,7 +31,7 @@ class RepositoryUpdateResult(TypedDict):
     permissions_updated: bool
 
 
-def set_permissions_recursive(path: Path, executable: bool = True) -> None:
+def set_permissions_recursive(path: Path, executable: bool) -> None:
     """Set permissions recursively for a directory."""
     if not path.exists():
         return
@@ -37,22 +43,17 @@ def set_permissions_recursive(path: Path, executable: bool = True) -> None:
     elif path.is_dir():
         path.chmod(0o755)
         for item in path.rglob("*"):
-            set_permissions_recursive(item, executable)
+            set_permissions_recursive(path=item, executable=executable)
 
 
 def run_uv_sync(repo_path: Path) -> bool:
     """Run uv sync in the given repository path. Returns True if successful."""
     try:
-        print(f"🔄 Running uv sync in {repo_path}")
-        # Run uv sync with output directly to terminal (no capture)
-        subprocess.run(["uv", "sync", "--no-dev"], cwd=repo_path, check=True)
-        print("✅ uv sync completed successfully")
+        subprocess.run(["uv", "sync", "--no-dev"], cwd=repo_path, check=True, capture_output=True, text=True)
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ uv sync failed with return code {e.returncode}")
+    except subprocess.CalledProcessError:
         return False
     except FileNotFoundError:
-        print("⚠️  uv command not found. Please install uv first.")
         return False
 
 
@@ -60,15 +61,12 @@ def get_file_hash(file_path: Path) -> str | None:
     """Get SHA256 hash of a file, return None if file doesn't exist."""
     if not file_path.exists():
         return None
-    import hashlib
-
     return hashlib.sha256(file_path.read_bytes()).hexdigest()
 
 
 def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt: bool) -> RepositoryUpdateResult:
     """Update a single repository and return detailed information about what happened."""
     repo_path = Path(repo.working_dir)
-    print(f"🔄 {'Updating ' + str(repo_path):.^80}")
 
     # Initialize result dict
     result: RepositoryUpdateResult = {
@@ -90,8 +88,6 @@ def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt:
         "permissions_updated": False,
     }
 
-    # Check git status first
-    print("📊 Checking git status...")
     if repo.is_dirty():
         # Get the list of modified files
         changed_files_raw = [item.a_path for item in repo.index.diff(None)]
@@ -101,14 +97,11 @@ def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt:
 
         result["had_uncommitted_changes"] = True
         result["uncommitted_files"] = changed_files
-        print(f"⚠️  Repository has uncommitted changes: {', '.join(changed_files)}")
-
-        # Repository has uncommitted changes - cannot update
         result["status"] = "error"
-        result["error_message"] = f"Cannot update repository - there are pending changes in: {', '.join(changed_files)}. Please commit or stash your changes first."
+        result["error_message"] = (
+            f"Cannot update repository - there are pending changes in: {', '.join(changed_files)}. Please commit or stash your changes first."
+        )
         raise RuntimeError(result["error_message"])
-    else:
-        print("✅ Repository is clean")
 
     # Check if this repo has pyproject.toml
     pyproject_path = repo_path / "pyproject.toml"
@@ -120,41 +113,25 @@ def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt:
     result["commit_before"] = repo.head.commit.hexsha
 
     try:
-        # Use subprocess for git pull to get better output control
-
-        # Get list of remotes
         remotes = list(repo.remotes)
         if not remotes:
-            print("⚠️  No remotes configured for this repository")
             result["status"] = "skipped"
             result["error_message"] = "No remotes configured for this repository"
             return result
 
+        remote_errors: list[str] = []
         for remote in remotes:
             try:
-                print(f"📥 Fetching from {remote.name}...")
-
-                # Set up environment for git commands
                 env = None
                 if not allow_password_prompt:
-                    # Disable interactive prompts
-                    import os
-
                     env = os.environ.copy()
                     env["GIT_TERMINAL_PROMPT"] = "0"
-                    env["GIT_ASKPASS"] = "echo"  # Returns empty string for any credential request
+                    env["GIT_ASKPASS"] = "echo"
 
-                # First fetch to see what's available
                 fetch_result = subprocess.run(
-                    ["git", "fetch", remote.name, "--verbose"],
-                    cwd=repo_path,
-                    capture_output=True,
-                    text=True,
-                    env=env,
-                    timeout=30,  # Add timeout to prevent hanging
+                    ["git", "fetch", remote.name, "--verbose"], cwd=repo_path, capture_output=True, text=True, env=env, timeout=30
                 )
 
-                # Check if fetch failed due to authentication
                 if fetch_result.returncode != 0 and not allow_password_prompt:
                     auth_error_indicators = [
                         "Authentication failed",
@@ -169,19 +146,25 @@ def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt:
 
                     error_output = (fetch_result.stderr or "") + (fetch_result.stdout or "")
                     if any(indicator in error_output for indicator in auth_error_indicators):
-                        print(f"⚠️  Skipping {remote.name} - authentication required but password prompts are disabled")
+                        result["remotes_skipped"].append(remote.name)
+                        remote_errors.append(f"{remote.name}: authentication required")
                         continue
 
-                if fetch_result.stdout:
-                    print(f"📡 Fetch output: {fetch_result.stdout.strip()}")
-                if fetch_result.stderr:
-                    print(f"📡 Fetch info: {fetch_result.stderr.strip()}")
+                if fetch_result.returncode != 0:
+                    result["remotes_skipped"].append(remote.name)
+                    fetch_error = (fetch_result.stderr or fetch_result.stdout).strip()
+                    remote_errors.append(f"{remote.name}: {fetch_error or f'fetch exited {fetch_result.returncode}'}")
+                    continue
 
-                # Now pull with verbose output
-                print(f"📥 Pulling from {remote.name}/{repo.active_branch.name}...")
-                pull_result = subprocess.run(["git", "pull", remote.name, repo.active_branch.name, "--verbose"], cwd=repo_path, capture_output=True, text=True, env=env, timeout=30)
+                pull_result = subprocess.run(
+                    ["git", "pull", remote.name, repo.active_branch.name, "--verbose"],
+                    cwd=repo_path,
+                    capture_output=True,
+                    text=True,
+                    env=env,
+                    timeout=30,
+                )
 
-                # Check if pull failed due to authentication
                 if pull_result.returncode != 0 and not allow_password_prompt:
                     auth_error_indicators = [
                         "Authentication failed",
@@ -196,65 +179,57 @@ def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt:
 
                     error_output = (pull_result.stderr or "") + (pull_result.stdout or "")
                     if any(indicator in error_output for indicator in auth_error_indicators):
-                        print(f"⚠️  Skipping pull from {remote.name} - authentication required but password prompts are disabled")
+                        result["remotes_skipped"].append(remote.name)
+                        remote_errors.append(f"{remote.name}: authentication required")
                         continue
 
-                if pull_result.stdout:
-                    print(f"📦 Pull output: {pull_result.stdout.strip()}")
-                if pull_result.stderr:
-                    print(f"📦 Pull info: {pull_result.stderr.strip()}")
-
-                # Check if pull was successful
                 if pull_result.returncode == 0:
                     result["remotes_processed"].append(remote.name)
-                    # Check if commits changed
                     result["commit_after"] = repo.head.commit.hexsha
                     if result["commit_before"] != result["commit_after"]:
                         result["commits_changed"] = True
-                        print(f"✅ Repository updated: {result['commit_before'][:8]} → {result['commit_after'][:8]}")
-                    else:
-                        print("✅ Already up to date")
                 else:
                     result["remotes_skipped"].append(remote.name)
-                    print(f"❌ Pull failed with return code {pull_result.returncode}")
+                    pull_error = (pull_result.stderr or pull_result.stdout).strip()
+                    remote_errors.append(f"{remote.name}: {pull_error or f'pull exited {pull_result.returncode}'}")
 
-            except Exception as e:
+            except Exception as error:
                 result["remotes_skipped"].append(remote.name)
-                print(f"⚠️  Failed to pull from {remote.name}: {e}")
-                continue
+                remote_errors.append(f"{remote.name}: {error}")
+
+        if remote_errors:
+            result["status"] = "error"
+            result["error_message"] = "; ".join(remote_errors)
 
         # Check if pyproject.toml changed after pull
         pyproject_hash_after = get_file_hash(pyproject_path)
 
         if pyproject_hash_before != pyproject_hash_after:
-            print("📋 pyproject.toml has changed")
             result["pyproject_changed"] = True
             result["dependencies_changed"] = True
 
-        # Special handling for stackops repository
         if result["is_stackops_repo"]:
-            print("🛠  Special handling for stackops repository...")
             scripts_path = Path.home() / "scripts"
             if scripts_path.exists():
-                set_permissions_recursive(scripts_path)
+                set_permissions_recursive(path=scripts_path, executable=True)
                 result["permissions_updated"] = True
-                print(f"✅ Set permissions for {scripts_path}")
 
             linux_jobs_path = repo_path / "src" / "stackops" / "jobs" / "linux"
             if linux_jobs_path.exists():
-                set_permissions_recursive(linux_jobs_path)
+                set_permissions_recursive(path=linux_jobs_path, executable=True)
                 result["permissions_updated"] = True
-                print(f"✅ Set permissions for {linux_jobs_path}")
 
         # Run uv sync if dependencies changed and auto_sync is enabled
         if result["dependencies_changed"] and auto_uv_sync:
             result["uv_sync_ran"] = True
             result["uv_sync_success"] = run_uv_sync(repo_path)
+            if not result["uv_sync_success"]:
+                result["status"] = "error"
+                result["error_message"] = "uv sync failed"
 
         return result
 
-    except Exception as e:
+    except Exception as error:
         result["status"] = "error"
-        result["error_message"] = str(e)
-        print(f"❌ Error updating repository {repo_path}: {e}")
+        result["error_message"] = str(error)
         return result

@@ -55,17 +55,47 @@ def action(
     auto_uv_sync: Annotated[bool, typer.Option("--uv-sync", "-u", help="Run uv sync automatically after pulls.")] = False,
     status: Annotated[bool, typer.Option("--status", "-s", help="📋 Show status across repositories.")] = False,
     pull: Annotated[bool, typer.Option("--pull", "-P", help="↓ Pull changes across repositories.")] = False,
-    commit: Annotated[bool, typer.Option("--commit", "-c", help="💾 Commit changes across repositories.")] = False,
+    commit: Annotated[bool, typer.Option("--commit", "-c", help="💾 Commit staged changes across repositories.")] = False,
     push: Annotated[bool, typer.Option("--push", "-p", help="🚀 Push changes across repositories.")] = False,
+    message: Annotated[str | None, typer.Option("--message", "-m", help="Commit message. Required with --commit.")] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Preview mutating actions without changing repositories.")] = False,
 ) -> None:
     """🔄 Run status/pull/commit/push actions across repositories based on flags."""
     if not status and not pull and not commit and not push:
         typer.echo("❌ No action selected. Use at least one of --status, --pull, --commit, or --push.", err=True)
-        raise SystemExit(1)
+        raise typer.Exit(code=1)
+    if status and (pull or commit or push):
+        typer.echo("❌ --status cannot be combined with --pull, --commit, or --push.", err=True)
+        raise typer.Exit(code=1)
+    if auto_uv_sync and not pull:
+        typer.echo("❌ --uv-sync requires --pull.", err=True)
+        raise typer.Exit(code=1)
+    if commit and (message is None or not message.strip()):
+        typer.echo("❌ --commit requires a non-empty --message.", err=True)
+        raise typer.Exit(code=1)
+    if message is not None and not commit:
+        typer.echo("❌ --message can only be used with --commit.", err=True)
+        raise typer.Exit(code=1)
+    if dry_run and status:
+        typer.echo("❌ --dry-run cannot be used with the read-only --status action.", err=True)
+        raise typer.Exit(code=1)
+
     repos_root = _resolve_directory(directory)
     from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations
 
-    perform_git_operations(repos_root=repos_root, status=status, pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)
+    summary = perform_git_operations(
+        repos_root=repos_root,
+        status=status,
+        pull=pull,
+        commit=commit,
+        push=push,
+        recursive=recursive,
+        auto_uv_sync=auto_uv_sync,
+        commit_message=message.strip() if message is not None else None,
+        dry_run=dry_run,
+    )
+    if summary.git_repos_found == 0 or summary.failed_operations:
+        raise typer.Exit(code=1)
 
 
 def capture(
