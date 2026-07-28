@@ -333,7 +333,7 @@ devops self explore-python-api explain-filter
 
 ### build-docker
 
-Build the repo Docker image variants through the checked-in shell wrapper. The command looks up Docker publish credentials with `search_logins`, loads the matched `keyValues` into a private temporary env file, and uses the matched login's `entries[].username` as the image namespace.
+Build the repo Docker image variants through the checked-in shell wrapper. The local image is built first as `stackops-VARIANT:latest` without reading Docker credentials. If registry upload is confirmed after the build, the command looks up Docker publish credentials with `search_logins`, passes the matched `keyValues` only to the publish process, and uses the matched login's `entries[].username` as the remote image namespace.
 
 ```bash
 devops self build-docker [VARIANT]

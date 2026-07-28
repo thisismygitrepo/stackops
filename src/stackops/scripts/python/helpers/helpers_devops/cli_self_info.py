@@ -1,3 +1,5 @@
+import os
+import subprocess
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -53,15 +55,15 @@ def build_docker(
     variant: Annotated[Literal["slim", "ai"], typer.Argument(help="Variant to build: 'slim' or 'ai'")],
     docker_login_name: Annotated[
         str | None,
-        typer.Option("--docker-login-name", "-n", help="Exact StackOps secrets entries[].name for Docker credentials."),
+        typer.Option("--docker-login-name", "-n", help="Exact StackOps secrets entries[].name for Docker publish credentials."),
     ] = "docker",
     docker_account_name: Annotated[
         str | None,
-        typer.Option("--docker-account-name", "-a", help="Exact StackOps secrets entries[].accountName for Docker credentials."),
+        typer.Option("--docker-account-name", "-a", help="Exact StackOps secrets entries[].accountName for Docker publish credentials."),
     ] = None,
     docker_secret_name: Annotated[
         str | None,
-        typer.Option("--docker-secret-name", "-N", help="Exact StackOps secrets entries[].secrets[].name for Docker credentials."),
+        typer.Option("--docker-secret-name", "-N", help="Exact StackOps secrets entries[].secrets[].name for Docker publish credentials."),
     ] = None,
     docker_secret_tags: Annotated[
         list[str] | None,
@@ -81,12 +83,14 @@ def build_docker(
     ] = None,
     docker_secrets_path: Annotated[
         Path | None,
-        typer.Option("--docker-secrets-path", "-p", help="Secrets JSON path for Docker credentials. Defaults to the StackOps source-of-truth secrets file."),
+        typer.Option(
+            "--docker-secrets-path",
+            "-p",
+            help="Secrets JSON path for Docker publish credentials. Read only after registry upload is confirmed.",
+        ),
     ] = None,
 ) -> None:
     """🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`"""
-    from stackops.scripts.python.helpers.helpers_devops import cli_self_docker
-
     repo_root = cli_self_repo.developer_repo_root()
     if repo_root is None:
         typer.echo(f"❌ Developer repo not found: {STACKOPS_REPO_DIR}")
@@ -97,8 +101,20 @@ def build_docker(
         typer.echo(f"❌ Script not found: {str(script_path)}")
         raise typer.Exit(code=1)
 
+    build_environment = os.environ.copy()
+    build_environment.update({"STACKOPS_DOCKER_ACTION": "build", "VARIANT": variant})
+    build_process = subprocess.run(["bash", str(script_path)], cwd=repo_root, env=build_environment, check=False)
+    if build_process.returncode != 0:
+        raise typer.Exit(code=build_process.returncode)
+
+    if not typer.confirm("❓ Do you want to push to the registry?", default=False):
+        typer.echo(f"❌ Registry upload canceled. Local image: stackops-{variant}:latest")
+        return
+
+    from stackops.secrets.search import render_secret_value
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_docker
+
     try:
-        op_program_path = cli_self_docker.fresh_op_program_path()
         credentials = cli_self_docker.resolve_docker_credentials(
             secrets_path=docker_secrets_path,
             login_name=docker_login_name,
@@ -108,10 +124,7 @@ def build_docker(
             scopes=docker_scopes,
             token_key=docker_token_key,
         )
-        credential_env_keys = tuple(credentials.key_values)
         cli_self_docker.validate_env_names(credentials.key_values)
-        secret_env_path = cli_self_docker.docker_secret_env_path(op_program_path)
-        cli_self_docker.write_private_docker_env_file(secret_env_path, credentials.key_values)
     except cli_self_docker.DockerCredentialError as exc:
         typer.echo(typer.style("Error: ", fg=typer.colors.RED) + str(exc))
         raise typer.Exit(code=1)
@@ -121,19 +134,19 @@ def build_docker(
         + f"using login '{credentials.login_name}' / secret '{credentials.secret_name}' "
         + f"as Docker namespace '{credentials.username}' with token env var '{credentials.token_env_key}'."
     )
-
-    shell_cmd = cli_self_docker.render_build_docker_shell_script(
-        variant=variant,
-        repo_root=repo_root,
-        script_path=script_path,
-        secret_env_path=secret_env_path,
-        docker_username=credentials.username,
-        token_env_key=credentials.token_env_key,
-        credential_env_keys=credential_env_keys,
+    publish_environment = os.environ.copy()
+    publish_environment.update({key: render_secret_value(value) for key, value in credentials.key_values.items()})
+    publish_environment.update(
+        {
+            "STACKOPS_DOCKER_ACTION": "publish",
+            "VARIANT": variant,
+            "DOCKER_IMAGE_NAMESPACE": credentials.username,
+            "DOCKER_LOGIN_TOKEN_ENV_VAR": credentials.token_env_key,
+        }
     )
-    from stackops.utils.code import exit_then_run_shell_script
-
-    exit_then_run_shell_script(shell_cmd, strict=True)
+    publish_process = subprocess.run(["bash", str(script_path)], cwd=repo_root, env=publish_environment, check=False)
+    if publish_process.returncode != 0:
+        raise typer.Exit(code=publish_process.returncode)
 
 
 def build_graph(
