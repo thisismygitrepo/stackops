@@ -12,6 +12,7 @@ from stackops.scripts.python.helpers.helpers_repos.action_helper import (
     GitOperationSummary,
     print_git_operations_summary,
 )
+from stackops.scripts.python.helpers.helpers_repos.discovery import repository_candidates
 from stackops.scripts.python.helpers.helpers_repos.git_action import git_action
 
 
@@ -19,28 +20,6 @@ class RepositoryOperationPayload(TypedDict):
     path: Path
     is_git: bool
     results: list[GitOperationResult]
-
-
-def _repository_candidates(repos_root: Path, recursive: bool) -> list[Path]:
-    try:
-        Repo(repos_root, search_parent_directories=False)
-    except InvalidGitRepositoryError:
-        pass
-    else:
-        return [repos_root]
-
-    if not recursive:
-        return sorted(repos_root.glob("*"))
-
-    repository_paths: list[Path] = []
-    for current_root, directory_names, file_names in os.walk(repos_root):
-        current_path = Path(current_root)
-        if ".git" in directory_names or ".git" in file_names:
-            repository_paths.append(current_path)
-            directory_names.clear()
-            continue
-        directory_names[:] = [name for name in directory_names if not name.startswith(".")]
-    return sorted(repository_paths)
 
 
 def _process_repository_path(
@@ -107,7 +86,7 @@ def perform_git_operations(
         for enabled, action in ((status, GitAction.status), (pull, GitAction.pull), (commit, GitAction.commit), (push, GitAction.push))
         if enabled
     )
-    paths = _repository_candidates(repos_root=repos_root, recursive=recursive)
+    paths = repository_candidates(repos_root=repos_root, recursive=recursive)
     summary = GitOperationSummary(dry_run=dry_run)
     max_workers = min(32, (os.cpu_count() or 1) * 5, len(paths) or 1)
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:

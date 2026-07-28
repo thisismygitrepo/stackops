@@ -1146,9 +1146,7 @@
                 "signature": {
                   "raw_lines": [
                     "def clone(",
-                    "    specs_path: Annotated[",
-                    "        str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")",
-                    "    ] = None,",
+                    "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")] = None,",
                     "    checkout_to_commit: Annotated[",
                     "        bool, typer.Option(\"--checkout-to-commit\", \"-c\", help=\"Check out specific commits listed in the specification.\")",
                     "    ] = False,",
@@ -1267,9 +1265,7 @@
                   "raw_lines": [
                     "def capture(",
                     "    directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
-                    "    specs_path: Annotated[",
-                    "        str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")",
-                    "    ] = None,",
+                    "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")] = None,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
                     ") -> None:",
                     "    \"\"\"📝 Record repositories into a repos.json specification.\"\"\"",
@@ -1358,7 +1354,7 @@
                 "name": "action",
                 "fullPath": "devops repos action",
                 "shortPath": "d r a",
-                "help": "🔄 <a> Run pull/commit/push actions across repositories",
+                "help": "🔄 <a> Run status/pull/commit/push actions across repositories",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
@@ -1370,18 +1366,49 @@
                     "    directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
                     "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"🔍 Recurse into nested repositories.\")] = False,",
                     "    auto_uv_sync: Annotated[bool, typer.Option(\"--uv-sync\", \"-u\", help=\"Run uv sync automatically after pulls.\")] = False,",
+                    "    status: Annotated[bool, typer.Option(\"--status\", \"-s\", help=\"📋 Show status across repositories.\")] = False,",
                     "    pull: Annotated[bool, typer.Option(\"--pull\", \"-P\", help=\"↓ Pull changes across repositories.\")] = False,",
-                    "    commit: Annotated[bool, typer.Option(\"--commit\", \"-c\", help=\"💾 Commit changes across repositories.\")] = False,",
+                    "    commit: Annotated[bool, typer.Option(\"--commit\", \"-c\", help=\"💾 Commit staged changes across repositories.\")] = False,",
                     "    push: Annotated[bool, typer.Option(\"--push\", \"-p\", help=\"🚀 Push changes across repositories.\")] = False,",
+                    "    message: Annotated[str | None, typer.Option(\"--message\", \"-m\", help=\"Commit message. Required with --commit.\")] = None,",
+                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-n\", help=\"Preview mutating actions without changing repositories.\")] = False,",
                     ") -> None:",
-                    "    \"\"\"🔄 Run pull/commit/push actions across repositories based on flags.\"\"\"",
-                    "    if not pull and not commit and not push:",
-                    "        typer.echo(\"❌ No action selected. Use at least one of --pull, --commit, or --push.\", err=True)",
-                    "        raise SystemExit(1)",
+                    "    \"\"\"🔄 Run status/pull/commit/push actions across repositories based on flags.\"\"\"",
+                    "    if not status and not pull and not commit and not push:",
+                    "        typer.echo(\"❌ No action selected. Use at least one of --status, --pull, --commit, or --push.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if status and (pull or commit or push):",
+                    "        typer.echo(\"❌ --status cannot be combined with --pull, --commit, or --push.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if auto_uv_sync and not pull:",
+                    "        typer.echo(\"❌ --uv-sync requires --pull.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if commit and (message is None or not message.strip()):",
+                    "        typer.echo(\"❌ --commit requires a non-empty --message.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if message is not None and not commit:",
+                    "        typer.echo(\"❌ --message can only be used with --commit.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if dry_run and status:",
+                    "        typer.echo(\"❌ --dry-run cannot be used with the read-only --status action.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "",
                     "    repos_root = _resolve_directory(directory)",
                     "    from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations",
                     "",
-                    "    perform_git_operations(repos_root=repos_root, pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)"
+                    "    summary = perform_git_operations(",
+                    "        repos_root=repos_root,",
+                    "        status=status,",
+                    "        pull=pull,",
+                    "        commit=commit,",
+                    "        push=push,",
+                    "        recursive=recursive,",
+                    "        auto_uv_sync=auto_uv_sync,",
+                    "        commit_message=message.strip() if message is not None else None,",
+                    "        dry_run=dry_run,",
+                    "    )",
+                    "    if summary.git_repos_found == 0 or summary.failed_operations:",
+                    "        raise typer.Exit(code=1)"
                   ],
                   "name": "action",
                   "parameters": [
@@ -1445,6 +1472,28 @@
                       }
                     },
                     {
+                      "name": "status",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--status', '-s', help='📋 Show status across repositories.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--status",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--status"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "📋 Show status across repositories."
+                      }
+                    },
+                    {
                       "name": "pull",
                       "kind": "positional_or_keyword",
                       "type": "bool",
@@ -1472,7 +1521,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--commit', '-c', help='💾 Commit changes across repositories.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--commit', '-c', help='💾 Commit staged changes across repositories.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -1485,7 +1534,7 @@
                         "short_flags": [
                           "-c"
                         ],
-                        "help": "💾 Commit changes across repositories."
+                        "help": "💾 Commit staged changes across repositories."
                       }
                     },
                     {
@@ -1509,6 +1558,50 @@
                         ],
                         "help": "🚀 Push changes across repositories."
                       }
+                    },
+                    {
+                      "name": "message",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--message', '-m', help='Commit message. Required with --commit.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--message",
+                          "-m"
+                        ],
+                        "long_flags": [
+                          "--message"
+                        ],
+                        "short_flags": [
+                          "-m"
+                        ],
+                        "help": "Commit message. Required with --commit."
+                      }
+                    },
+                    {
+                      "name": "dry_run",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-n', help='Preview mutating actions without changing repositories.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--dry-run",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--dry-run"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Preview mutating actions without changing repositories."
+                      }
                     }
                   ],
                   "return": "None"
@@ -1516,12 +1609,365 @@
                 "typer": {
                   "no_args_is_help": true
                 },
-                "doc": "🔄 Run pull/commit/push actions across repositories based on flags.",
+                "doc": "🔄 Run status/pull/commit/push actions across repositories based on flags.",
                 "aliases": [
                   {
                     "name": "a",
                     "hidden": true,
-                    "help": "Run pull/commit/push actions across repositories"
+                    "help": "Run status/pull/commit/push actions across repositories"
+                  }
+                ]
+              },
+              {
+                "kind": "group",
+                "name": "version",
+                "fullPath": "devops repos version",
+                "shortPath": "d r V",
+                "help": "🏷️ <V> Capture, inspect, and restore repository versions",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
+                  "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_repos_version.get_app"
+                },
+                "app": {
+                  "help": "🏷️ <V> Capture, inspect, and restore repository versions",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "declare",
+                    "fullPath": "devops repos version declare",
+                    "shortPath": "d r V d",
+                    "help": "🏷️ <d> Capture repository states as a named version",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_version.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_version",
+                      "callable": "declare"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def declare(",
+                        "    version: Annotated[str, typer.Argument(help=\"Unique version identifier.\")],",
+                        "    message: Annotated[str, typer.Option(\"--message\", \"-m\", help=\"Message describing this version.\")],",
+                        "    directory: Annotated[str | None, typer.Option(\"--directory\", \"-d\", help=\"Workspace containing repositories.\")] = None,",
+                        "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"Recurse into nested repository directories.\")] = False,",
+                        ") -> None:",
+                        "    try:",
+                        "        repos_root = resolve_workspace(directory=directory)",
+                        "        path = repos_root.joinpath(VERSIONS_FILE_NAME)",
+                        "        versions_file = load_versions_file(path=path, allow_missing=True)",
+                        "        if any(existing[\"version\"] == version.strip() for existing in versions_file[\"versions\"]):",
+                        "            raise VersionStoreError(f\"Version {version.strip()!r} is already declared\")",
+                        "        declared_version = capture_declared_version(repos_root=repos_root, version=version, message=message, recursive=recursive)",
+                        "        updated_file = append_declared_version(versions_file=versions_file, declared_version=declared_version)",
+                        "        save_versions_file(versions_file=updated_file, path=path)",
+                        "    except (ValueError, VersionOperationError) as error:",
+                        "        _abort(error)",
+                        "    dirty_count = sum(snapshot[\"isDirty\"] for snapshot in declared_version[\"repositories\"])",
+                        "    typer.echo(f\"✅ Declared version {declared_version['version']!r} with {len(declared_version['repositories'])} repositories in {path}\")",
+                        "    if dirty_count:",
+                        "        typer.echo(f\"⚠️ {dirty_count} captured repositories were dirty, so this version cannot be checked out exactly.\")"
+                      ],
+                      "name": "declare",
+                      "parameters": [
+                        {
+                          "name": "version",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[str, typer.Argument(help='Unique version identifier.')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Unique version identifier."
+                          }
+                        },
+                        {
+                          "name": "message",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[str, typer.Option('--message', '-m', help='Message describing this version.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--message",
+                              "-m"
+                            ],
+                            "long_flags": [
+                              "--message"
+                            ],
+                            "short_flags": [
+                              "-m"
+                            ],
+                            "help": "Message describing this version."
+                          }
+                        },
+                        {
+                          "name": "directory",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--directory', '-d', help='Workspace containing repositories.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--directory",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--directory"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Workspace containing repositories."
+                          }
+                        },
+                        {
+                          "name": "recursive",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--recursive', '-r', help='Recurse into nested repository directories.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--recursive",
+                              "-r"
+                            ],
+                            "long_flags": [
+                              "--recursive"
+                            ],
+                            "short_flags": [
+                              "-r"
+                            ],
+                            "help": "Recurse into nested repository directories."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "aliases": [
+                      {
+                        "name": "d",
+                        "hidden": true,
+                        "help": "Capture repository states as a named version"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "status",
+                    "fullPath": "devops repos version status",
+                    "shortPath": "d r V s",
+                    "help": "📋 <s> Display declared versions or compare one with current repositories",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_version.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_version",
+                      "callable": "status"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def status(",
+                        "    version: Annotated[str | None, typer.Argument(help=\"Version identifier to compare with current repository state.\")] = None,",
+                        "    directory: Annotated[str | None, typer.Option(\"--directory\", \"-d\", help=\"Workspace containing versions.json.\")] = None,",
+                        ") -> None:",
+                        "    try:",
+                        "        repos_root = resolve_workspace(directory=directory)",
+                        "        path = repos_root.joinpath(VERSIONS_FILE_NAME)",
+                        "        versions_file = load_versions_file(path=path, allow_missing=False)",
+                        "        if version is None:",
+                        "            _print_versions(versions_file=versions_file, path=path)",
+                        "            return",
+                        "        declared_version = find_declared_version(versions_file=versions_file, version=version)",
+                        "        statuses = inspect_declared_version(repos_root=repos_root, declared_version=declared_version)",
+                        "    except (ValueError, VersionOperationError) as error:",
+                        "        _abort(error)",
+                        "    _print_version_status(declared_version=declared_version, statuses=statuses)"
+                      ],
+                      "name": "status",
+                      "parameters": [
+                        {
+                          "name": "version",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Argument(help='Version identifier to compare with current repository state.')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Version identifier to compare with current repository state."
+                          }
+                        },
+                        {
+                          "name": "directory",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--directory', '-d', help='Workspace containing versions.json.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--directory",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--directory"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Workspace containing versions.json."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "aliases": [
+                      {
+                        "name": "s",
+                        "hidden": true,
+                        "help": "Display declared versions or compare one with current repositories"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "checkout",
+                    "fullPath": "devops repos version checkout",
+                    "shortPath": "d r V c",
+                    "help": "🔀 <c> Restore repositories to a declared version",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_version.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_version",
+                      "callable": "checkout"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def checkout(",
+                        "    version: Annotated[str, typer.Argument(help=\"Declared version identifier to restore.\")],",
+                        "    directory: Annotated[str | None, typer.Option(\"--directory\", \"-d\", help=\"Workspace containing versions.json.\")] = None,",
+                        "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-n\", help=\"Preview checkout without changing repositories.\")] = False,",
+                        ") -> None:",
+                        "    try:",
+                        "        repos_root = resolve_workspace(directory=directory)",
+                        "        path = repos_root.joinpath(VERSIONS_FILE_NAME)",
+                        "        versions_file = load_versions_file(path=path, allow_missing=False)",
+                        "        declared_version = find_declared_version(versions_file=versions_file, version=version)",
+                        "        results = checkout_declared_version(repos_root=repos_root, declared_version=declared_version, dry_run=dry_run)",
+                        "    except (ValueError, VersionOperationError) as error:",
+                        "        _abort(error)",
+                        "    table = Table(title=f\"{'Checkout preview' if dry_run else 'Checked out'} · {declared_version['version']}\")",
+                        "    table.add_column(\"Repository\", style=\"cyan\")",
+                        "    table.add_column(\"Target\")",
+                        "    table.add_column(\"Result\")",
+                        "    table.add_column(\"Recovery ref\", overflow=\"fold\")",
+                        "    for result in results:",
+                        "        branch = result[\"branch\"] if result[\"branch\"] is not None else \"detached\"",
+                        "        if not result[\"changed\"]:",
+                        "            result_label = \"✅ Already exact\"",
+                        "        elif dry_run and result[\"needsFetch\"]:",
+                        "            result_label = \"🔎 Would fetch and checkout\"",
+                        "        elif dry_run:",
+                        "            result_label = \"🔎 Would checkout\"",
+                        "        elif result[\"needsFetch\"]:",
+                        "            result_label = \"✅ Fetched and checked out\"",
+                        "        else:",
+                        "            result_label = \"✅ Checked out\"",
+                        "        table.add_row(result[\"path\"], f\"{branch}@{result['commit'][:12]}\", result_label, \", \".join(result[\"backupRefs\"]) or \"—\")",
+                        "    Console().print(table)"
+                      ],
+                      "name": "checkout",
+                      "parameters": [
+                        {
+                          "name": "version",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[str, typer.Argument(help='Declared version identifier to restore.')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Declared version identifier to restore."
+                          }
+                        },
+                        {
+                          "name": "directory",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--directory', '-d', help='Workspace containing versions.json.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--directory",
+                              "-d"
+                            ],
+                            "long_flags": [
+                              "--directory"
+                            ],
+                            "short_flags": [
+                              "-d"
+                            ],
+                            "help": "Workspace containing versions.json."
+                          }
+                        },
+                        {
+                          "name": "dry_run",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-n', help='Preview checkout without changing repositories.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--dry-run",
+                              "-n"
+                            ],
+                            "long_flags": [
+                              "--dry-run"
+                            ],
+                            "short_flags": [
+                              "-n"
+                            ],
+                            "help": "Preview checkout without changing repositories."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "aliases": [
+                      {
+                        "name": "c",
+                        "hidden": true,
+                        "help": "Restore repositories to a declared version"
+                      }
+                    ]
+                  }
+                ],
+                "aliases": [
+                  {
+                    "name": "V",
+                    "hidden": true
                   }
                 ]
               },
@@ -3963,21 +4409,16 @@
                         "        selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
                         "        echo_jq_login_entry_hint(candidate=candidate, secrets_path=selected_source_path)",
                         "    secret_actions.validate_env_names(selection.key_values)",
-                        "    secret_actions.write_env_handoff(selection.key_values)",
+                        "    secret_actions.write_env_handoff(selection.key_values, verbose=verbose)",
                         "    if verbose:",
                         "        for candidate in selection.candidates:",
                         "            selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
                         "            echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)",
                         "",
-                        "    names = \", \".join(selection.key_values)",
                         "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(selection.key_values)} env variable(s)\"",
                         "    if all_matches:",
                         "        msg += f\" from {len(selection.candidates)} matching secret bundle(s)\"",
-                        "    if names:",
-                        "        msg += f\": {names}\"",
-                        "    else:",
-                        "        msg += \".\"",
-                        "    typer.echo(msg)"
+                        "    typer.echo(msg + \".\")"
                       ],
                       "name": "search",
                       "parameters": [
@@ -8967,6 +9408,7 @@
                     "    directory: Annotated[",
                     "        str | None, typer.Option(\"--dir\", \"-d\", help=\"Folder to open in local web mode (share-local), defaults to the current working directory\")",
                     "    ] = None,",
+                    "    cli_data_dir: Annotated[str | None, typer.Option(\"--cli-data-dir\", help=\"VS Code CLI data directory to use for every generated command\")] = None,",
                     "    extra_args: Annotated[str | None, typer.Option(\"--extra-args\", \"-e\", help=\"Extra args to append to the generated VS Code command\")] = None,",
                     ") -> None:",
                     "    \"\"\"🧑‍💻 Share workspace using VS Code CLI (\"code tunnel\" / \"code serve-web\")",
@@ -8979,16 +9421,21 @@
                     "    accept = \"--accept-server-license-terms\"",
                     "    name_part = f\"--name {shlex.quote(name)}\" if name else \"\"",
                     "    extra = extra_args or \"\"",
+                    "    if any(token == \"--cli-data-dir\" or token.startswith(\"--cli-data-dir=\") for token in shlex.split(extra)):",
+                    "        raise typer.BadParameter(\"Pass this option directly to vscode-share instead of through --extra-args\", param_hint=\"--cli-data-dir\")",
+                    "    if cli_data_dir is not None and cli_data_dir.strip() == \"\":",
+                    "        raise typer.BadParameter(\"Value cannot be empty\", param_hint=\"--cli-data-dir\")",
+                    "    cli_data_dir_part = f\"--cli-data-dir {shlex.quote(cli_data_dir)}\" if cli_data_dir is not None else \"\"",
                     "    action_normalized = {\"r\": \"run\", \"i\": \"install-service\", \"u\": \"uninstall-service\", \"l\": \"share-local\"}.get(action, action)",
                     "    match action_normalized:",
                     "        case \"run\" | \"r\":",
-                    "            cmd = f\"code tunnel {name_part} {accept} {extra}\".strip()",
+                    "            cmd = f\"code tunnel {name_part} {accept} {cli_data_dir_part} {extra}\".strip()",
                     "            desc = \"Run a one-off VS Code tunnel (foreground)\"",
                     "        case \"install-service\" | \"i\":",
-                    "            cmd = f\"code tunnel service install {accept} {name_part} {extra}\".strip()",
+                    "            cmd = f\"code tunnel service install {accept} {name_part} {cli_data_dir_part} {extra}\".strip()",
                     "            desc = \"Install code tunnel as a service\"",
                     "        case \"uninstall-service\" | \"u\":",
-                    "            cmd = f\"code tunnel service uninstall {extra}\".strip()",
+                    "            cmd = f\"code tunnel service uninstall {cli_data_dir_part} {extra}\".strip()",
                     "            desc = \"Uninstall code tunnel service\"",
                     "        case \"share-local\" | \"l\":",
                     "            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder",
@@ -8998,7 +9445,7 @@
                     "            directory = resolve_share_local_folder(directory)",
                     "            directory_part = shlex.quote(str(directory))",
                     "            extra = ensure_without_connection_token(extra)",
-                    "            cmd = f\"code serve-web {accept} {host_part} {server_base_path_part} {extra} {directory_part}\".strip()",
+                    "            cmd = f\"code serve-web {accept} {host_part} {server_base_path_part} {cli_data_dir_part} {extra} {directory_part}\".strip()",
                     "            desc = \"Run local VS Code web server (serve-web)\"",
                     "        case _:",
                     "            print(f\"Unknown action: {action_normalized}\")",
@@ -9006,6 +9453,10 @@
                     "    from stackops.utils.code import exit_then_run_shell_script",
                     "    from stackops.utils.meta import print_code",
                     "",
+                    "    if action_normalized in {\"run\", \"install-service\"}:",
+                    "        from stackops.scripts.python.helpers.helpers_devops.vscode_tunnel_auth import print_vscode_tunnel_credential_context",
+                    "",
+                    "        print_vscode_tunnel_credential_context(cli_data_dir)",
                     "    print_code(cmd, lexer=\"bash\", desc=desc)",
                     "    if action_normalized == \"share-local\":",
                     "        from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls",
@@ -9119,6 +9570,25 @@
                           "-d"
                         ],
                         "help": "Folder to open in local web mode (share-local), defaults to the current working directory"
+                      }
+                    },
+                    {
+                      "name": "cli_data_dir",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--cli-data-dir', help='VS Code CLI data directory to use for every generated command')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--cli-data-dir"
+                        ],
+                        "long_flags": [
+                          "--cli-data-dir"
+                        ],
+                        "short_flags": [],
+                        "help": "VS Code CLI data directory to use for every generated command"
                       }
                     },
                     {
@@ -9774,7 +10244,7 @@
                     "    --link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all",
                     "    --config-shell       -> devops config terminal config-shell --which default",
                     "    \"\"\"",
-                    "    dev_repo_root = developer_repo_root()",
+                    "    dev_repo_root = cli_self_repo.developer_repo_root()",
                     "    if dev_repo_root is not None:",
                     "        shell_script = f\"\"\"",
                     "uv self update",
@@ -10288,7 +10758,7 @@
                     "    from rich.console import Console",
                     "    from rich.markdown import Markdown",
                     "",
-                    "    repo_root = developer_repo_root()",
+                    "    repo_root = cli_self_repo.developer_repo_root()",
                     "    console = Console()",
                     "",
                     "    if repo_root is not None:",
@@ -10462,7 +10932,7 @@
                     "    \"\"\"📤 export the installation files to get an offline image.\"\"\"",
                     "    output_root = output_root.expanduser()",
                     "    if upload_to_cloud:",
-                    "        dev_repo_root = developer_repo_root()",
+                    "        dev_repo_root = cli_self_repo.developer_repo_root()",
                     "        if dev_repo_root is None:",
                     "            typer.echo(",
                     "                f\"❌ --upload-to-cloud requires the developer checkout at {STACKOPS_REPO_DIR} so the downloader URL map update is written in-repo.\"",
@@ -10780,7 +11250,7 @@
                     "    \"\"\"🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`\"\"\"",
                     "    from stackops.scripts.python.helpers.helpers_devops import cli_self_docker",
                     "",
-                    "    repo_root = developer_repo_root()",
+                    "    repo_root = cli_self_repo.developer_repo_root()",
                     "    if repo_root is None:",
                     "        typer.echo(f\"❌ Developer repo not found: {STACKOPS_REPO_DIR}\")",
                     "        raise typer.Exit(code=1)",
@@ -11034,7 +11504,7 @@
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"🕸 <g> Build the architecture dependency graph.\"\"\"",
-                    "    repo_root = developer_repo_root()",
+                    "    repo_root = cli_self_repo.developer_repo_root()",
                     "    if repo_root is None:",
                     "        typer.echo(f\"❌ Developer repo not found: {STACKOPS_REPO_DIR}\")",
                     "        raise typer.Exit(code=1)",

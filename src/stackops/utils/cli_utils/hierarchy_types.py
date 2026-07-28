@@ -43,6 +43,55 @@ StackOpsDevopsReposActionCommand = TypedDict(
     },
 )
 
+StackOpsDevopsReposVersionDeclareCommand = TypedDict(
+    "StackOpsDevopsReposVersionDeclareCommand",
+    {
+        "command_name": Literal["declare"],
+        "short_name": Literal["d"],
+        "help": Literal["🏷️ <d> Capture repository states as a named version"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsDevopsReposVersionStatusCommand = TypedDict(
+    "StackOpsDevopsReposVersionStatusCommand",
+    {
+        "command_name": Literal["status"],
+        "short_name": Literal["s"],
+        "help": Literal["📋 <s> Display declared versions or compare one with current repositories"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsDevopsReposVersionCheckoutCommand = TypedDict(
+    "StackOpsDevopsReposVersionCheckoutCommand",
+    {
+        "command_name": Literal["checkout"],
+        "short_name": Literal["c"],
+        "help": Literal["🔀 <c> Restore repositories to a declared version"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsDevopsReposVersionSubcommands = TypedDict(
+    "StackOpsDevopsReposVersionSubcommands",
+    {
+        "declare": StackOpsDevopsReposVersionDeclareCommand,
+        "status": StackOpsDevopsReposVersionStatusCommand,
+        "checkout": StackOpsDevopsReposVersionCheckoutCommand,
+    },
+)
+
+StackOpsDevopsReposVersionCommand = TypedDict(
+    "StackOpsDevopsReposVersionCommand",
+    {
+        "command_name": Literal["version"],
+        "short_name": Literal["V"],
+        "help": Literal["🏷️ <V> Capture, inspect, and restore repository versions"],
+        "subcommands": StackOpsDevopsReposVersionSubcommands,
+    },
+)
+
 StackOpsDevopsReposAnalyzeCommand = TypedDict(
     "StackOpsDevopsReposAnalyzeCommand",
     {
@@ -89,6 +138,7 @@ StackOpsDevopsReposSubcommands = TypedDict(
         "sync": StackOpsDevopsReposSyncCommand,
         "register": StackOpsDevopsReposRegisterCommand,
         "action": StackOpsDevopsReposActionCommand,
+        "version": StackOpsDevopsReposVersionCommand,
         "analyze": StackOpsDevopsReposAnalyzeCommand,
         "guard": StackOpsDevopsReposGuardCommand,
         "viz": StackOpsDevopsReposVizCommand,

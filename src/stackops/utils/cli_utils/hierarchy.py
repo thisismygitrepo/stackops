@@ -7,6 +7,11 @@ if TYPE_CHECKING:
         StackOpsDevopsReposSyncCommand,
         StackOpsDevopsReposRegisterCommand,
         StackOpsDevopsReposActionCommand,
+        StackOpsDevopsReposVersionDeclareCommand,
+        StackOpsDevopsReposVersionStatusCommand,
+        StackOpsDevopsReposVersionCheckoutCommand,
+        StackOpsDevopsReposVersionSubcommands,
+        StackOpsDevopsReposVersionCommand,
         StackOpsDevopsReposAnalyzeCommand,
         StackOpsDevopsReposGuardCommand,
         StackOpsDevopsReposVizCommand,
@@ -199,6 +204,40 @@ STACKOPS_DEVOPS_REPOS_ACTION_COMMAND: "StackOpsDevopsReposActionCommand" = {
     "subcommands": {},
 }
 
+STACKOPS_DEVOPS_REPOS_VERSION_DECLARE_COMMAND: "StackOpsDevopsReposVersionDeclareCommand" = {
+    "command_name": "declare",
+    "short_name": "d",
+    "help": "🏷️ <d> Capture repository states as a named version",
+    "subcommands": {},
+}
+
+STACKOPS_DEVOPS_REPOS_VERSION_STATUS_COMMAND: "StackOpsDevopsReposVersionStatusCommand" = {
+    "command_name": "status",
+    "short_name": "s",
+    "help": "📋 <s> Display declared versions or compare one with current repositories",
+    "subcommands": {},
+}
+
+STACKOPS_DEVOPS_REPOS_VERSION_CHECKOUT_COMMAND: "StackOpsDevopsReposVersionCheckoutCommand" = {
+    "command_name": "checkout",
+    "short_name": "c",
+    "help": "🔀 <c> Restore repositories to a declared version",
+    "subcommands": {},
+}
+
+STACKOPS_DEVOPS_REPOS_VERSION_SUBCOMMANDS: "StackOpsDevopsReposVersionSubcommands" = {
+    "declare": STACKOPS_DEVOPS_REPOS_VERSION_DECLARE_COMMAND,
+    "status": STACKOPS_DEVOPS_REPOS_VERSION_STATUS_COMMAND,
+    "checkout": STACKOPS_DEVOPS_REPOS_VERSION_CHECKOUT_COMMAND,
+}
+
+STACKOPS_DEVOPS_REPOS_VERSION_COMMAND: "StackOpsDevopsReposVersionCommand" = {
+    "command_name": "version",
+    "short_name": "V",
+    "help": "🏷️ <V> Capture, inspect, and restore repository versions",
+    "subcommands": STACKOPS_DEVOPS_REPOS_VERSION_SUBCOMMANDS,
+}
+
 STACKOPS_DEVOPS_REPOS_ANALYZE_COMMAND: "StackOpsDevopsReposAnalyzeCommand" = {
     "command_name": "analyze",
     "short_name": "z",
@@ -231,6 +270,7 @@ STACKOPS_DEVOPS_REPOS_SUBCOMMANDS: "StackOpsDevopsReposSubcommands" = {
     "sync": STACKOPS_DEVOPS_REPOS_SYNC_COMMAND,
     "register": STACKOPS_DEVOPS_REPOS_REGISTER_COMMAND,
     "action": STACKOPS_DEVOPS_REPOS_ACTION_COMMAND,
+    "version": STACKOPS_DEVOPS_REPOS_VERSION_COMMAND,
     "analyze": STACKOPS_DEVOPS_REPOS_ANALYZE_COMMAND,
     "guard": STACKOPS_DEVOPS_REPOS_GUARD_COMMAND,
     "viz": STACKOPS_DEVOPS_REPOS_VIZ_COMMAND,

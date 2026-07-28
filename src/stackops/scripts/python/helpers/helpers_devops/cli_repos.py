@@ -154,6 +154,7 @@ def checkout_to_branch_command(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
+    from stackops.scripts.python.helpers.helpers_devops import cli_repos_version
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_viz import analyze_repo_development, count_lines_in_repo, gource_viz
 
     repos_apps = typer.Typer(help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False)
@@ -166,6 +167,8 @@ def get_app() -> typer.Typer:
 
     repos_apps.command(name="action", help="🔄 <a> Run status/pull/commit/push actions across repositories", no_args_is_help=True)(action)
     repos_apps.command(name="a", help="Run status/pull/commit/push actions across repositories", hidden=True, no_args_is_help=True)(action)
+    repos_apps.add_typer(cli_repos_version.get_app(), name="version", help="🏷️ <V> Capture, inspect, and restore repository versions")
+    repos_apps.add_typer(cli_repos_version.get_app(), name="V", hidden=True)
     repos_apps.command(name="analyze", help="📊 <z> Analyze repository development over time")(analyze_repo_development)
     repos_apps.command(name="z", help="Analyze repository development over time", hidden=True)(analyze_repo_development)
 
