@@ -574,7 +574,7 @@ mprocs_windows:
     - windows
 tmux_linux:
   tmux_local_conf:
-    original: ~/.config/tmux/tmux.conf.local
+    original: ~/.tmux.conf.local
     self_managed: CONFIG_ROOT/settings/tmux/tmux.conf.local
     os:
     - linux
