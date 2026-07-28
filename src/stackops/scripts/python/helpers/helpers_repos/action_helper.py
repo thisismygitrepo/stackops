@@ -1,19 +1,23 @@
-from enum import Enum
+from dataclasses import dataclass, field
+from enum import StrEnum
 from pathlib import Path
-
-
-from dataclasses import dataclass
 
 from rich.columns import Columns
 from rich.panel import Panel
 from rich.table import Table
 
 
-@dataclass
+class GitAction(StrEnum):
+    status = "status"
+    commit = "commit"
+    push = "push"
+    pull = "pull"
+
+
+@dataclass(frozen=True, slots=True)
 class GitOperationResult:
-    """Result of a git operation on a single repository."""
     repo_path: Path
-    action: str
+    action: GitAction
     success: bool
     message: str
     is_git_repo: bool = True
@@ -21,41 +25,31 @@ class GitOperationResult:
     remote_count: int = 0
 
 
-class GitAction(Enum):
-    commit = "commit"
-    push = "push"
-    pull = "pull"
-
-
-@dataclass
+@dataclass(slots=True)
 class GitOperationSummary:
-    """Summary of all git operations performed."""
-
-    # Basic statistics
     total_paths_processed: int = 0
     git_repos_found: int = 0
     non_git_paths: int = 0
-
-    # Per-operation statistics
+    statuses_attempted: int = 0
+    statuses_clean: int = 0
+    statuses_with_changes: int = 0
+    statuses_failed: int = 0
     commits_attempted: int = 0
     commits_successful: int = 0
     commits_no_changes: int = 0
     commits_failed: int = 0
-
     pulls_attempted: int = 0
     pulls_successful: int = 0
     pulls_failed: int = 0
-
     pushes_attempted: int = 0
     pushes_successful: int = 0
     pushes_failed: int = 0
+    status_results: list[GitOperationResult] = field(default_factory=list)
+    failed_operations: list[GitOperationResult] = field(default_factory=list)
+    repos_without_remotes: list[Path] = field(default_factory=list)
 
-    def __post_init__(self):
-        self.failed_operations: list[GitOperationResult] = []
-        self.repos_without_remotes: list[Path] = []
 
-
-def print_git_operations_summary(summary: GitOperationSummary, operations_performed: list[str]) -> None:
+def print_git_operations_summary(summary: GitOperationSummary, operations_performed: list[GitAction]) -> None:
     """Print a detailed summary of git operations with rich formatting and tables."""
     from rich.console import Console
 
@@ -73,7 +67,16 @@ def print_git_operations_summary(summary: GitOperationSummary, operations_perfor
     # Statistics panels in columns
     stat_panels = []
 
-    if "commit" in operations_performed:
+    if GitAction.status in operations_performed:
+        status_stats = [
+            f"Checked: {summary.statuses_attempted}",
+            f"Clean: {summary.statuses_clean}",
+            f"With changes: {summary.statuses_with_changes}",
+            f"Failed: {summary.statuses_failed}",
+        ]
+        stat_panels.append(Panel.fit("\n".join(status_stats), title="[bold blue]📋 Repository Status[/bold blue]", border_style="blue"))
+
+    if GitAction.commit in operations_performed:
         commit_stats = [
             f"Attempted: {summary.commits_attempted}",
             f"Successful: {summary.commits_successful}",
@@ -82,19 +85,29 @@ def print_git_operations_summary(summary: GitOperationSummary, operations_perfor
         ]
         stat_panels.append(Panel.fit("\n".join(commit_stats), title="[bold green]💾 Commit Operations[/bold green]", border_style="green"))
 
-    if "pull" in operations_performed:
+    if GitAction.pull in operations_performed:
         pull_stats = [f"Attempted: {summary.pulls_attempted}", f"Successful: {summary.pulls_successful}", f"Failed: {summary.pulls_failed}"]
         stat_panels.append(Panel.fit("\n".join(pull_stats), title="[bold cyan]⬇️ Pull Operations[/bold cyan]", border_style="cyan"))
 
-    if "push" in operations_performed:
+    if GitAction.push in operations_performed:
         push_stats = [f"Attempted: {summary.pushes_attempted}", f"Successful: {summary.pushes_successful}", f"Failed: {summary.pushes_failed}"]
         stat_panels.append(Panel.fit("\n".join(push_stats), title="[bold magenta]🚀 Push Operations[/bold magenta]", border_style="magenta"))
 
     if stat_panels:
         console.print(Columns(stat_panels, equal=True, expand=True))
 
+    if summary.status_results:
+        status_table = Table(title="[bold blue]📋 Repository Status[/bold blue]")
+        status_table.add_column("Repository", style="cyan", no_wrap=True)
+        status_table.add_column("State", no_wrap=True)
+        status_table.add_column("Git status", style="dim")
+        for result in sorted(summary.status_results, key=lambda item: item.repo_path.as_posix()):
+            state = "❌ Failed" if not result.success else "🟠 Changes" if result.had_changes else "✅ Clean"
+            status_table.add_row(result.repo_path.as_posix(), state, result.message)
+        console.print(status_table)
+
     # Repositories without remotes warning
-    if summary.repos_without_remotes:
+    if summary.repos_without_remotes and GitAction.push in operations_performed:
         repos_table = Table(title="[bold yellow]⚠️ Repositories Without Remotes[/bold yellow]")
         repos_table.add_column("Repository Name", style="cyan", no_wrap=True)
         repos_table.add_column("Full Path", style="dim")
@@ -104,7 +117,7 @@ def print_git_operations_summary(summary: GitOperationSummary, operations_perfor
 
         console.print(repos_table)
         console.print("[yellow]These repositories cannot be pushed to remote servers.[/yellow]")
-    elif "push" in operations_performed:
+    elif GitAction.push in operations_performed:
         console.print("[green]✅ All repositories have remote configurations.[/green]")
 
     # Failed operations table
@@ -115,7 +128,7 @@ def print_git_operations_summary(summary: GitOperationSummary, operations_perfor
         failed_table.add_column("Problem", style="red")
 
         # Group failed operations by type for better organization
-        failed_by_action: dict[str, list[GitOperationResult]] = {}
+        failed_by_action: dict[GitAction, list[GitOperationResult]] = {}
         for failed_op in summary.failed_operations:
             if failed_op.action not in failed_by_action:
                 failed_by_action[failed_op.action] = []
@@ -133,7 +146,7 @@ def print_git_operations_summary(summary: GitOperationSummary, operations_perfor
 
     # Overall success assessment
     total_failed = len(summary.failed_operations)
-    total_operations = summary.commits_attempted + summary.pulls_attempted + summary.pushes_attempted
+    total_operations = summary.statuses_attempted + summary.commits_attempted + summary.pulls_attempted + summary.pushes_attempted
 
     if total_failed == 0 and total_operations > 0:
         console.print(f"\n[bold green]🎉 SUCCESS: All {total_operations} operations completed successfully![/bold green]")

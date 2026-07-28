@@ -38,7 +38,7 @@ StackOpsDevopsReposActionCommand = TypedDict(
     {
         "command_name": Literal["action"],
         "short_name": Literal["a"],
-        "help": Literal["🔄 <a> Run pull/commit/push actions across repositories"],
+        "help": Literal["🔄 <a> Run status/pull/commit/push actions across repositories"],
         "subcommands": EmptySubcommands,
     },
 )

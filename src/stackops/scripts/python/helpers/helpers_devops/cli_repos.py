@@ -53,25 +53,24 @@ def action(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
     auto_uv_sync: Annotated[bool, typer.Option("--uv-sync", "-u", help="Run uv sync automatically after pulls.")] = False,
+    status: Annotated[bool, typer.Option("--status", "-s", help="📋 Show status across repositories.")] = False,
     pull: Annotated[bool, typer.Option("--pull", "-P", help="↓ Pull changes across repositories.")] = False,
     commit: Annotated[bool, typer.Option("--commit", "-c", help="💾 Commit changes across repositories.")] = False,
     push: Annotated[bool, typer.Option("--push", "-p", help="🚀 Push changes across repositories.")] = False,
 ) -> None:
-    """🔄 Run pull/commit/push actions across repositories based on flags."""
-    if not pull and not commit and not push:
-        typer.echo("❌ No action selected. Use at least one of --pull, --commit, or --push.", err=True)
+    """🔄 Run status/pull/commit/push actions across repositories based on flags."""
+    if not status and not pull and not commit and not push:
+        typer.echo("❌ No action selected. Use at least one of --status, --pull, --commit, or --push.", err=True)
         raise SystemExit(1)
     repos_root = _resolve_directory(directory)
     from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations
 
-    perform_git_operations(repos_root=repos_root, pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)
+    perform_git_operations(repos_root=repos_root, status=status, pull=pull, commit=commit, push=push, recursive=recursive, auto_uv_sync=auto_uv_sync)
 
 
 def capture(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
-    specs_path: Annotated[
-        str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")
-    ] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     """📝 Record repositories into a repos.json specification."""
@@ -84,9 +83,7 @@ def capture(
 
 
 def clone(
-    specs_path: Annotated[
-        str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")
-    ] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
     checkout_to_commit: Annotated[
         bool, typer.Option("--checkout-to-commit", "-c", help="Check out specific commits listed in the specification.")
     ] = False,
@@ -112,18 +109,14 @@ def clone(
 
 
 def checkout_command(
-    specs_path: Annotated[
-        str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")
-    ] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
 ) -> None:
     """🔀 Check out specific commits listed in the specification."""
     clone(specs_path=specs_path, checkout_to_commit=True, checkout_to_branch=False)
 
 
 def checkout_to_branch_command(
-    specs_path: Annotated[
-        str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")
-    ] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
 ) -> None:
     """🔀 Check out the branch recorded in the specification."""
     clone(specs_path=specs_path, checkout_to_commit=False, checkout_to_branch=True)
@@ -131,11 +124,7 @@ def checkout_to_branch_command(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
-    from stackops.scripts.python.helpers.helpers_devops.cli_repos_viz import (
-        analyze_repo_development,
-        count_lines_in_repo,
-        gource_viz,
-    )
+    from stackops.scripts.python.helpers.helpers_devops.cli_repos_viz import analyze_repo_development, count_lines_in_repo, gource_viz
 
     repos_apps = typer.Typer(help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False)
 
@@ -145,8 +134,8 @@ def get_app() -> typer.Typer:
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
 
-    repos_apps.command(name="action", help="🔄 <a> Run pull/commit/push actions across repositories", no_args_is_help=True)(action)
-    repos_apps.command(name="a", help="Run pull/commit/push actions across repositories", hidden=True, no_args_is_help=True)(action)
+    repos_apps.command(name="action", help="🔄 <a> Run status/pull/commit/push actions across repositories", no_args_is_help=True)(action)
+    repos_apps.command(name="a", help="Run status/pull/commit/push actions across repositories", hidden=True, no_args_is_help=True)(action)
     repos_apps.command(name="analyze", help="📊 <z> Analyze repository development over time")(analyze_repo_development)
     repos_apps.command(name="z", help="Analyze repository development over time", hidden=True)(analyze_repo_development)
 

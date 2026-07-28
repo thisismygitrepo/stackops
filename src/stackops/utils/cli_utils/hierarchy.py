@@ -195,7 +195,7 @@ STACKOPS_DEVOPS_REPOS_REGISTER_COMMAND: "StackOpsDevopsReposRegisterCommand" = {
 STACKOPS_DEVOPS_REPOS_ACTION_COMMAND: "StackOpsDevopsReposActionCommand" = {
     "command_name": "action",
     "short_name": "a",
-    "help": "🔄 <a> Run pull/commit/push actions across repositories",
+    "help": "🔄 <a> Run status/pull/commit/push actions across repositories",
     "subcommands": {},
 }
 
