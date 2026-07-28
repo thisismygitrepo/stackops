@@ -113,7 +113,7 @@ def print_git_operations_summary(summary: GitOperationSummary, operations_perfor
 
     sorted_results = sorted(summary.operation_results, key=lambda result: (result.repo_path.as_posix(), operations_performed.index(result.action)))
     if operations_performed == (GitAction.status,):
-        status_table = Table(title="[bold blue]📋 Repository Status[/bold blue]")
+        status_table = Table(title="[bold blue]📋 Repository Status[/bold blue]", expand=True)
         status_table.add_column("Repository", style="cyan", overflow="fold", max_width=36)
         status_table.add_column("State", no_wrap=True)
         status_table.add_column("Git status", style="dim", overflow="fold")
@@ -122,7 +122,7 @@ def print_git_operations_summary(summary: GitOperationSummary, operations_perfor
             status_table.add_row(result.repo_path.as_posix(), state, result.message)
         console.print(status_table)
     elif sorted_results:
-        results_table = Table(title="[bold blue]📋 Repository Operation Results[/bold blue]")
+        results_table = Table(title="[bold blue]📋 Repository Operation Results[/bold blue]", expand=True)
         results_table.add_column("Repository", style="cyan", overflow="fold", max_width=36)
         results_table.add_column("Action", style="bold", no_wrap=True)
         results_table.add_column("State", no_wrap=True)
