@@ -1131,6 +1131,27 @@
       }
     },
     {
+      "appName": "tuicr",
+      "license": "MIT License",
+      "repoURL": "https://github.com/agavra/tuicr",
+      "doc": "Code review TUI with vim keybindings and GitHub or GitLab export.",
+      "categoryLabels": [
+        "version-control"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "tuicr-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "tuicr-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "tuicr-{version}-x86_64-pc-windows-msvc.zip"
+        },
+        "arm64": {
+          "linux": "tuicr-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "tuicr-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "diffnav",
       "license": "MIT license",
       "repoURL": "https://github.com/dlvhdr/diffnav",
