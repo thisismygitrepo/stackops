@@ -13,6 +13,9 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BROWSING_ROOT,
     BrowserName,
     BrowserTechName,
+    PINCHTAB_INSTALLER_NAME,
+    PINCHTAB_SKILL_NAME,
+    PINCHTAB_SKILL_REPO,
     PLAYWRIGHT_CLI_COMMAND_NAME,
     PLAYWRIGHT_CLI_PACKAGE_NAME,
     REMOTE_DEBUGGING_LAN,
@@ -67,8 +70,36 @@ def install_agent_browser_skill() -> BrowserSkillInstallResult:
 
     from stackops.utils.installer_utils.installer_cli import main_installer_cli
 
-    main_installer_cli(which=AGENT_BROWSER_INSTALLER_NAME, group=False, interactive=False, update=True, version=None)
+    main_installer_cli(
+        which=AGENT_BROWSER_INSTALLER_NAME,
+        group=False,
+        interactive=False,
+        explore=False,
+        update=True,
+        version=None,
+        ctx=None,
+    )
     command = ("bunx", "skills@latest", "add", AGENT_BROWSER_SKILL_REPO, "--yes")
+    _run_required_command(command=command, cwd=install_root)
+    return BrowserSkillInstallResult(install_root=install_root, command=command)
+
+
+def install_pinchtab_skill() -> BrowserSkillInstallResult:
+    install_root = BROWSER_TECH_ROOT.expanduser().joinpath(PINCHTAB_INSTALLER_NAME)
+    install_root.mkdir(parents=True, exist_ok=True)
+
+    from stackops.utils.installer_utils.installer_cli import main_installer_cli
+
+    main_installer_cli(
+        which=PINCHTAB_INSTALLER_NAME,
+        group=False,
+        interactive=False,
+        explore=False,
+        update=True,
+        version=None,
+        ctx=None,
+    )
+    command = ("bunx", "skills@latest", "add", PINCHTAB_SKILL_REPO, "--skill", PINCHTAB_SKILL_NAME, "--yes")
     _run_required_command(command=command, cwd=install_root)
     return BrowserSkillInstallResult(install_root=install_root, command=command)
 
@@ -87,6 +118,16 @@ def install_browser_tech(*, which: BrowserTechName) -> BrowserTechInstallResult:
     match which:
         case "agent-browser":
             result = install_agent_browser_skill()
+            guide_paths = write_browser_tech_files(which=which, install_root=result.install_root)
+            return BrowserTechInstallResult(
+                which=which,
+                install_root=result.install_root,
+                commands=(result.command,),
+                guide_paths=guide_paths,
+                mcp_servers=(),
+            )
+        case "pinchtab":
+            result = install_pinchtab_skill()
             guide_paths = write_browser_tech_files(which=which, install_root=result.install_root)
             return BrowserTechInstallResult(
                 which=which,

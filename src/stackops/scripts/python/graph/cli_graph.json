@@ -16898,7 +16898,7 @@
                     "        typer.Option(",
                     "            \"--which\",",
                     "            \"-w\",",
-                    "            help=\"Browser automation tech: agent-browser, playwright-cli, chrome-devtools-mcp, or playwright-mcp.\",",
+                    "            help=\"Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, or playwright-mcp.\",",
                     "            case_sensitive=False,",
                     "            show_choices=True,",
                     "        ),",
@@ -16932,7 +16932,7 @@
                       "type": "BrowserTechName",
                       "default": "agent-browser",
                       "required": false,
-                      "annotation_raw": "Annotated[BrowserTechName, typer.Option('--which', '-w', help='Browser automation tech: agent-browser, playwright-cli, chrome-devtools-mcp, or playwright-mcp.', case_sensitive=False, show_choices=True)]",
+                      "annotation_raw": "Annotated[BrowserTechName, typer.Option('--which', '-w', help='Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, or playwright-mcp.', case_sensitive=False, show_choices=True)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -16945,13 +16945,13 @@
                         "short_flags": [
                           "-w"
                         ],
-                        "help": "Browser automation tech: agent-browser, playwright-cli, chrome-devtools-mcp, or playwright-mcp."
+                        "help": "Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, or playwright-mcp."
                       }
                     }
                   ],
                   "return": "None"
                 },
-                "short_help": "<i> Install agent-browser, playwright-cli, or MCP configs",
+                "short_help": "<i> Install browser CLIs, skills, or MCP configs",
                 "typer": {
                   "no_args_is_help": false
                 },

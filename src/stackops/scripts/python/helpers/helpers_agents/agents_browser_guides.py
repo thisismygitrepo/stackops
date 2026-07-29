@@ -6,6 +6,8 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
 import stackops.scripts.python.helpers.helpers_agents.browser_guides as browser_guide_assets
 from stackops.utils.path_reference import get_path_reference_path
 
+PINCHTAB_GUIDE_PATH_REFERENCE: Final[str] = "pinchtab.md"
+
 
 @dataclass(frozen=True)
 class BrowserTechAssetSet:
@@ -16,6 +18,10 @@ class BrowserTechAssetSet:
 _BROWSER_TECH_ASSETS: Final[dict[BrowserTechName, BrowserTechAssetSet]] = {
     "agent-browser": BrowserTechAssetSet(
         path_references=(browser_guide_assets.AGENT_BROWSER_GUIDE_PATH_REFERENCE,),
+        mcp_servers=(),
+    ),
+    "pinchtab": BrowserTechAssetSet(
+        path_references=(PINCHTAB_GUIDE_PATH_REFERENCE,),
         mcp_servers=(),
     ),
     "playwright-cli": BrowserTechAssetSet(

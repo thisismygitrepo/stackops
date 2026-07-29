@@ -3,11 +3,14 @@ from tempfile import gettempdir
 from typing import Final, Literal, TypeAlias
 
 BrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox", "safari"]
-BrowserTechName: TypeAlias = Literal["agent-browser", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
+BrowserTechName: TypeAlias = Literal["agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
 
 DEFAULT_BROWSER_PORT: Final[int] = 9331
 AGENT_BROWSER_INSTALLER_NAME: Final[str] = "agent-browser"
 AGENT_BROWSER_SKILL_REPO: Final[str] = "vercel-labs/agent-browser"
+PINCHTAB_INSTALLER_NAME: Final[str] = "pinchtab"
+PINCHTAB_SKILL_NAME: Final[str] = "pinchtab"
+PINCHTAB_SKILL_REPO: Final[str] = "pinchtab/pinchtab"
 PLAYWRIGHT_CLI_COMMAND_NAME: Final[str] = "playwright-cli"
 PLAYWRIGHT_CLI_PACKAGE_NAME: Final[str] = "@playwright/cli"
 BROWSER_TECH_ROOT: Final[Path] = Path.home().joinpath("code", "agents", "browser")

@@ -12,7 +12,7 @@ def install_tech(
         typer.Option(
             "--which",
             "-w",
-            help="Browser automation tech: agent-browser, playwright-cli, chrome-devtools-mcp, or playwright-mcp.",
+            help="Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, or playwright-mcp.",
             case_sensitive=False,
             show_choices=True,
         ),
@@ -156,7 +156,7 @@ def status() -> None:
 
 def get_app() -> typer.Typer:
     browser_app = typer.Typer(help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False)
-    browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install agent-browser, playwright-cli, or MCP configs")(install_tech)
+    browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, or MCP configs")(install_tech)
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch-browser", no_args_is_help=True, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=True, hidden=True)(launch_browser)

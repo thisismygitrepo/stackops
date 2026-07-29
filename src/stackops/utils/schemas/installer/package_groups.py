@@ -18,6 +18,7 @@ AGENTS = [
     "crush",
     "opencode-ai",
     "chatgpt",
+    "deer-flow",
     "forge",
     "headroom",
     "hermes",

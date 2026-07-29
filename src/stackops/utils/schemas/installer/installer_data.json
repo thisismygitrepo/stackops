@@ -4315,6 +4315,27 @@
       }
     },
     {
+      "appName": "deer-flow",
+      "license": "MIT License",
+      "repoURL": "https://github.com/bytedance/deer-flow",
+      "doc": "Long-horizon super-agent harness with subagents, memory, sandboxes, tools, and skills.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "deer_flow.py",
+          "windows": "deer_flow.py",
+          "darwin": "deer_flow.py"
+        },
+        "arm64": {
+          "linux": "deer_flow.py",
+          "windows": "deer_flow.py",
+          "darwin": "deer_flow.py"
+        }
+      }
+    },
+    {
       "appName": "headroom",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/chopratejas/headroom",
@@ -4587,6 +4608,28 @@
           "linux": "bun install -g agent-browser; bun install -g playwright install-deps chromium",
           "windows": "bun install -g agent-browser; bun install -g playwright install-deps chromium",
           "darwin": "bun install -g agent-browser; bun install -g playwright install-deps chromium"
+        }
+      }
+    },
+    {
+      "appName": "pinchtab",
+      "license": "MIT License",
+      "repoURL": "https://github.com/pinchtab/pinchtab",
+      "doc": "Browser control for AI agents",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "browsers-web-access"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "pinchtab-linux-amd64",
+          "windows": "pinchtab-windows-amd64.exe",
+          "darwin": "pinchtab-darwin-amd64"
+        },
+        "arm64": {
+          "linux": "pinchtab-linux-arm64",
+          "windows": "pinchtab-windows-arm64.exe",
+          "darwin": "pinchtab-darwin-arm64"
         }
       }
     },

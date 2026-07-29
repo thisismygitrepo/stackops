@@ -221,10 +221,11 @@ agents add-mcp --edit -S library
 
 ## Browser Automation
 
-`agents browser install-tech` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. `--which` accepts `agent-browser`, `playwright-cli`, `chrome-devtools-mcp`, or `playwright-mcp`. `playwright-cli` installs the official Playwright agent CLI and skills. The MCP entries write StackOps guide/config files under `~/code/agents/browser/mcp/...`; CDP and extension MCP entries are cataloged too, and must be paired with browsers launched from StackOps custom profiles.
+`agents browser install-tech` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. `--which` accepts `agent-browser`, `pinchtab`, `playwright-cli`, `chrome-devtools-mcp`, or `playwright-mcp`. `pinchtab` installs the current release binary and its official agent skill. `playwright-cli` installs the official Playwright agent CLI and skills. The MCP entries write StackOps guide/config files under `~/code/agents/browser/mcp/...`; CDP and extension MCP entries are cataloged too, and must be paired with browsers launched from StackOps custom profiles.
 
 ```bash
 agents browser install-tech
+agents browser install-tech --which pinchtab
 agents browser install-tech --which playwright-cli
 agents browser install-tech --which chrome-devtools-mcp
 agents browser install-tech --which playwright-mcp
