@@ -52,6 +52,7 @@ def _prompt_capture_options(directory: str | None, specs_path: str | None) -> tu
 def action(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="🔍 Recurse into nested repositories.")] = False,
+    command: Annotated[str | None, typer.Option("--command", "-C", help="Run a quoted shell command in every repository.")] = None,
     auto_uv_sync: Annotated[bool, typer.Option("--uv-sync", "-u", help="Run uv sync automatically after pulls.")] = False,
     status: Annotated[bool, typer.Option("--status", "-s", help="📋 Show status across repositories.")] = False,
     pull: Annotated[bool, typer.Option("--pull", "-P", help="↓ Pull changes across repositories.")] = False,
@@ -60,9 +61,16 @@ def action(
     message: Annotated[str | None, typer.Option("--message", "-m", help="Commit message. Required with --commit.")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Preview mutating actions without changing repositories.")] = False,
 ) -> None:
-    """🔄 Run status/pull/commit/push actions across repositories based on flags."""
-    if not status and not pull and not commit and not push:
-        typer.echo("❌ No action selected. Use at least one of --status, --pull, --commit, or --push.", err=True)
+    """🔄 Run Git actions or a shell command across repositories."""
+    git_action_selected = status or pull or commit or push
+    if command is not None and not command.strip():
+        typer.echo("❌ --command must contain a non-empty shell command.", err=True)
+        raise typer.Exit(code=1)
+    if command is None and not git_action_selected:
+        typer.echo("❌ No action selected. Use --command, --status, --pull, --commit, or --push.", err=True)
+        raise typer.Exit(code=1)
+    if command is not None and git_action_selected:
+        typer.echo("❌ --command cannot be combined with --status, --pull, --commit, or --push.", err=True)
         raise typer.Exit(code=1)
     if status and (pull or commit or push):
         typer.echo("❌ --status cannot be combined with --pull, --commit, or --push.", err=True)
@@ -79,9 +87,22 @@ def action(
     if dry_run and status:
         typer.echo("❌ --dry-run cannot be used with the read-only --status action.", err=True)
         raise typer.Exit(code=1)
+    if dry_run and command is not None:
+        typer.echo("❌ --dry-run cannot be combined with --command.", err=True)
+        raise typer.Exit(code=1)
 
     repos_root = _resolve_directory(directory)
-    from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations
+    from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations, render_repository_command_script
+
+    if command is not None:
+        script = render_repository_command_script(repos_root=repos_root, recursive=recursive, command=command)
+        if script is None:
+            typer.echo(f"❌ No Git repositories found at {repos_root}.", err=True)
+            raise typer.Exit(code=1)
+        from stackops.utils.code import exit_then_run_shell_script
+
+        exit_then_run_shell_script(script=script, strict=False)
+        return
 
     summary = perform_git_operations(
         repos_root=repos_root,
@@ -165,8 +186,8 @@ def get_app() -> typer.Typer:
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
 
-    repos_apps.command(name="action", help="🔄 <a> Run status/pull/commit/push actions across repositories", no_args_is_help=True)(action)
-    repos_apps.command(name="a", help="Run status/pull/commit/push actions across repositories", hidden=True, no_args_is_help=True)(action)
+    repos_apps.command(name="action", help="🔄 <a> Run Git actions or a shell command across repositories", no_args_is_help=True)(action)
+    repos_apps.command(name="a", help="Run Git actions or a shell command across repositories", hidden=True, no_args_is_help=True)(action)
     repos_apps.add_typer(cli_repos_version.get_app(), name="version", help="🏷️ <V> Capture, inspect, and restore repository versions")
     repos_apps.add_typer(cli_repos_version.get_app(), name="V", hidden=True)
     repos_apps.command(name="analyze", help="📊 <z> Analyze repository development over time")(analyze_repo_development)

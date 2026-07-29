@@ -1,9 +1,10 @@
 import concurrent.futures
 import os
 from pathlib import Path
+from shlex import quote
 from typing import TypedDict, assert_never
 
-from git.exc import InvalidGitRepositoryError
+from git.exc import InvalidGitRepositoryError, NoSuchPathError
 from git.repo import Repo
 
 from stackops.scripts.python.helpers.helpers_repos.action_helper import (
@@ -20,6 +21,19 @@ class RepositoryOperationPayload(TypedDict):
     path: Path
     is_git: bool
     results: list[GitOperationResult]
+
+
+def render_repository_command_script(repos_root: Path, recursive: bool, command: str) -> str | None:
+    script_lines: list[str] = []
+    for path in repository_candidates(repos_root=repos_root, recursive=recursive):
+        try:
+            Repo(path, search_parent_directories=False)
+        except (InvalidGitRepositoryError, NoSuchPathError):
+            continue
+        script_lines.extend((f"cd {quote(path.as_posix())}", command))
+    if not script_lines:
+        return None
+    return "\n".join(script_lines) + "\n"
 
 
 def _process_repository_path(
