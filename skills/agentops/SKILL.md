@@ -1,17 +1,17 @@
 ---
 name: agentops
-description: Manage external interactive agent operations through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for recursive iterative improvement, asks for multiple scope-separated iter loops, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
+description: Manage external interactive agent operations through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for goal-directed iterative improvement, asks for multiple scope-separated iter chains, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
 ---
 
 # AgentOps
 
-Use this skill to coordinate external agent operations through `herdr`, including handovers, iterative improvement chains, scope-separated parallel iter loops, parallel agents, and Worktrunk-isolated parallel agents.
+Use this skill to coordinate external agent operations through `herdr`, including handovers, iterative improvement chains, scope-separated parallel iteration chains, parallel agents, and Worktrunk-isolated parallel agents.
 
 This skill provides five commands:
 
 - `handover`: transfer active work to a new interactive agent session.
-- `iter`: run an unbounded improvement chain where each agent performs one pass and starts the next iteration agent in the same Herdr workspace.
-- `parallel-iters`: decompose one final goal into scope-separated lines of work, then launch one iterative agent loop per line in the same working directory so the user can integrate the finished lines later.
+- `iter`: run a goal-directed improvement chain where each agent performs one pass and starts another only while explicit completion criteria remain unmet and material progress remains credible.
+- `parallel-iters`: decompose one final goal into scope-separated lines of work, then launch one goal-directed iteration chain per line in the same working directory so the user can integrate the finished lines later.
 - `parallel-agents`: coordinate the user's external parallel agents.
 - `parallel-isolated-agents`: create `wt`/Worktrunk-managed isolated worktrees and start one Herdr-managed agent per worktree.
 
@@ -41,3 +41,5 @@ Keep the distinction between tabs/windows and panes explicit. Herdr exposes top-
 Use one agent per separate Herdr tab by default, or one named `herdr` session per agent when workspace/tab commands are unavailable. Do not put multiple agents into panes inside one tab/window unless the user explicitly asks for a pane-based layout.
 
 Check `herdr --help` and relevant subcommand help before relying on a command shape. When installed help differs from examples in the references, preserve these invariants and use the installed command surface.
+
+Every iterative operation must define explicit completion criteria before launch. Treat satisfying those criteria as terminal: write the final result and do not create or launch a successor. Also stop for an explicit pause, a concrete blocker, a scope or safety violation, or two consecutive passes without material progress. Never continue merely because further polish is imaginable.

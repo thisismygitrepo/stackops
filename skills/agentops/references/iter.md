@@ -1,10 +1,10 @@
 # Iter
 
-Use `iter` when the user wants an agent chain to keep improving a goal across generations. Good fits: performance, quality, benchmarks, bug reduction, UX polish, coverage, simplification, or any objective where each generation can make one focused pass and hand off. Read [herdr.md](herdr.md) first.
+Use `iter` when the user wants an agent chain to improve a concrete goal across generations. Good fits: performance, quality, benchmarks, bug reduction, UX polish, coverage, simplification, or any objective where each generation can make one focused pass and hand off. Read [herdr.md](herdr.md) first.
 
-`iter` starts normal external agents through Herdr. Each generation owns one numbered pass and must start the next numbered agent in the same Herdr workspace before considering its pass complete.
+`iter` starts normal external agents through Herdr. Each generation owns one numbered pass and decides from validation evidence whether the run is complete. It may start the next numbered agent in the same Herdr workspace only when completion criteria remain unmet and a specific next pass has a credible path to material progress.
 
-Do not let an iteration stop because tests pass, criteria appear satisfied, no obvious idea remains, or the work looks good. Valid stops are only explicit external stop/pause, launch failure, concrete blocker, or scope/safety violation.
+Define observable completion criteria before launch. Stop immediately when all criteria are satisfied; do not create a successor task, tab, or agent. Also stop for an explicit external stop or pause, launch failure, concrete blocker, scope or safety violation, or two consecutive passes without material progress. Never continue merely because further polish is possible, and never weaken the criteria to manufacture completion.
 
 Default mode is interactive. Use non-interactive only when the user asks or the selected agent has no interactive mode. Preserve the chosen mode across generations.
 
@@ -14,13 +14,13 @@ Each generation must leave the project easier for later generations to improve. 
 
 Avoid hidden global state, broad rewrites without stable boundaries, duplication, long functions, magic configuration, tangled imports, implicit data contracts, and speculative abstractions. Prefer modest structural cleanup over a narrow local fix when it unlocks safer later work and can be validated.
 
-Calibrate the next iteration's workload dynamically. If the current pass was too small to make meaningful progress, recommend a broader next pass. If it was too broad, slow, risky, or left too much unfinished, recommend a narrower next pass. The next task should stay reasonable for one focused iteration, not preserve the previous scope by inertia.
+When another pass is justified, calibrate its workload dynamically. If the current pass was too small to make meaningful progress, recommend a broader next pass. If it was too broad, slow, risky, or left too much unfinished, recommend a narrower next pass. The next task should stay reasonable for one focused iteration, not preserve the previous scope by inertia.
 
-Within one iteration, use the agent's own internal sub-agent mechanism when the current agent spots a clearly parallelizable chunk of substantial work, such as independent audits, file families, benchmarks, or implementation alternatives. Keep sub-agent tasks bounded, merge their results before writing the iteration result, and do not let sub-agent coordination replace the required next-iteration launch.
+Within one iteration, use the agent's own internal sub-agent mechanism when the current agent spots a clearly parallelizable chunk of substantial work, such as independent audits, file families, benchmarks, or implementation alternatives. Keep sub-agent tasks bounded, merge their results before writing the iteration result, and do not let sub-agent coordination replace the required completion decision.
 
 ## Startup
 
-1. Identify objective, evaluation criteria, and constraints. Ask only if the objective is missing; otherwise write a concrete working interpretation into the records.
+1. Identify the objective, observable completion criteria, evaluation method, and constraints. Ask only when the objective is missing or cannot be turned into concrete completion criteria; otherwise write a concrete working interpretation into the records.
 2. Select mode: interactive by default, non-interactive only when requested or required.
 3. Inspect `herdr --help` and relevant workspace/tab/pane/agent help. Record `HERDR_SESSION`, using `default` only when it is unset. For non-interactive mode, inspect the target CLI help for one-shot invocation.
 4. Capture cwd, repo root, branch, commit, status, changed files, relevant commands already run, project rules, and blockers.
@@ -39,15 +39,15 @@ Within one iteration, use the agent's own internal sub-agent mechanism when the 
 
 Keep durable context under `.ai/agentops/iterations/<slug>/`:
 
-- `run.md`: stable contract with objective, evaluation criteria, mode, Herdr workspace, controller command, autonomous argv, workdir boundaries, project rules, and continuation rules.
+- `run.md`: stable contract with objective, completion criteria, evaluation method, mode, Herdr workspace, controller command, autonomous argv, workdir boundaries, project rules, and stop/continuation rules.
 - `run.json`: active Herdr session plus the stable workspace ID and label used by maintenance commands.
-- `state.md`: bounded rolling state with current best result, active risks, blockers, and anti-repeat notes. Rewrite or compact this file only when those shared facts change; do not append indefinitely.
+- `state.md`: bounded rolling state with current best result, completion status, active risks, blockers, consecutive no-progress pass count, and anti-repeat notes. Rewrite or compact this file only when those shared facts change; do not append indefinitely.
 - `index.md`: one compact row per iteration with Herdr target, task path, result path, recommendation path, files touched, validation, and short outcome.
 - `iter-001/task.md`: the task packet addressed to that iteration.
 - `iter-001/notes.md`: optional local notes for that iteration; not required reading for later iterations.
 - `iter-001/result.md`: files changed, commands run, validation evidence, criteria status, risks, and state/index updates made.
-- `iter-001/recommendation.md`: the compact recommendation from this iteration to the next one. It must point to relevant records only when the next iteration may need detail.
-- `iter-001/handoff.json`: stable Herdr identifiers proving the successor prompt was accepted; written only after `iter-002` is visibly working.
+- `iter-001/recommendation.md`: the compact completion decision or recommendation from this iteration. It must point to relevant records only when another iteration may need detail.
+- `iter-001/handoff.json`: stable Herdr identifiers proving the successor prompt was accepted; written only when `iter-002` is justified and visibly working.
 
 Do not maintain a growing prompt transcript in Markdown. Do not paste prior recommendations into the next prompt. The Markdown packet is the source of truth; the Herdr prompt points to it.
 
@@ -120,6 +120,9 @@ Optional detail pointers:
 Current focus:
 <one focused improvement direction, or instruction to independently inspect within scope>
 
+Completion criteria:
+<the unchanged observable criteria from run.md>
+
 Hard rules:
 - Do exactly one focused improvement pass.
 - Verify local state before editing.
@@ -129,16 +132,19 @@ Hard rules:
 - Before recommending the next pass, briefly reassess the overall objective: if the current direction is yielding diminishing returns while larger gaps remain, redirect the next iteration toward a higher-impact gap instead of continuing by inertia.
 - When substantial work inside this pass is clearly parallelizable, use bounded internal sub-agents, then merge their findings before writing result.md.
 - Validate with the strongest practical evidence.
-- Write iter-<NNN>/result.md and iter-<NNN>/recommendation.md.
-- Update index.md with one compact row. Update state.md only when shared best state, risks, blockers, or anti-repeat notes changed.
-- Create iter-<NNN+1>/task.md before launching the next agent, and copy the recommendation into it inline.
-- Before creating iter-<NNN+1>'s tab, close and confirm removal of iter-<NNN-1>'s tab when it exists; then create the successor tab in the same Herdr workspace, rename its returned root pane as the agent, run the shell-joined autonomous argv in that pane, and submit only a short prompt pointing to its task packet.
-- Confirm the successor is working, query both agents with `herdr agent get`, then write the current iteration's exact `handoff.json` receipt.
-- Never stop because criteria look satisfied or no obvious idea remains.
-- Stop only for explicit external stop/pause, launch failure, concrete blocker, or scope/safety violation.
+- Evaluate every completion criterion from run.md without weakening or rewriting it.
+- Write iter-<NNN>/result.md and iter-<NNN>/recommendation.md with the completion decision and its evidence.
+- Update index.md with one compact row. Update state.md when completion status, shared best state, risks, blockers, no-progress count, or anti-repeat notes changed.
+- If all completion criteria are satisfied, stop. Do not create a successor task, tab, agent, or handoff receipt.
+- If this and the immediately previous pass both made no material progress, stop and report the run blocked by lack of a credible improvement path.
+- If a stop condition does not apply, identify one specific credible next pass, create iter-<NNN+1>/task.md, and copy the recommendation into it inline.
+- Only then close and confirm removal of iter-<NNN-1>'s tab when it exists, create iter-<NNN+1>'s tab in the same Herdr workspace, rename its returned root pane as the agent, run the shell-joined autonomous argv in that pane, and submit only a short prompt pointing to its task packet.
+- Confirm the justified successor is working, query both agents with `herdr agent get`, then write the current iteration's exact `handoff.json` receipt.
+- Stop for explicit external stop/pause, launch failure, concrete blocker, or scope/safety violation.
+- Never continue merely because further polish is imaginable.
 
 Expected final report:
-<changes made, validation run, next Herdr target/status, blockers if any>
+<changes made, validation run, completion status and evidence, next Herdr target/status only if continuing, blockers if any>
 ```
 
 ## Handoff Receipt
@@ -165,26 +171,28 @@ Use the successor revision observed after its status becomes `working`. Never pr
 
 ## Recommendation Packet
 
-The recommendation to the next agent is a compact file, not a large Herdr prompt. `iter-<NNN>/recommendation.md` must include:
+The completion decision or recommendation is a compact file, not a large Herdr prompt. `iter-<NNN>/recommendation.md` must include:
 
-- one recommended next move, or instruction to independently inspect for the highest-impact remaining gap
-- why that move is credible
-- workload calibration for the next iteration: broader, narrower, or same scope, with one short reason
+- whether the run is complete, stopped, or continuing
+- each completion criterion's status and the decisive evidence
+- one recommended next move only when continuing
+- why that move has a credible path to material progress
+- workload calibration for the next iteration only when continuing: broader, narrower, or same scope, with one short reason
 - parallelization opportunity for non-communicating internal sub-agents, if one exists and is substantial enough to justify splitting work
 - the latest validation signal that matters to the recommendation
 - active risk or blocker only if it changes the next move
 - specific detail paths only when the next agent may need them
 - mode-specific launch differences only when they differ from `run.md`
-- a pointer back to the unbounded continuation protocol in `run.md`
+- a pointer back to the completion and continuation protocol in `run.md`
 
 Keep it short enough to copy into the next task packet without consuming meaningful context; prefer 5-10 lines. Put full files changed, commands run, validation evidence, criteria status, and state/index updates in `iter-<NNN>/result.md`, not in the recommendation.
 
 The recommendation must not include prior recommendations verbatim, full command output, full Herdr transcripts, or a copied list of every previous iteration.
 
-Before launching `iter-<NNN+1>`, write `iter-<NNN+1>/task.md` that points to `run.md`, includes the previous recommendation inline, and lists optional detail paths only when useful. Then submit a short prompt:
+Only when the completion decision is `continuing`, write `iter-<NNN+1>/task.md` that points to `run.md`, includes the previous recommendation inline, and lists optional detail paths only when useful. Then submit a short prompt:
 
 ```text
 Read <records>/iter-<NNN+1>/task.md and follow it. Do not assume access to prior conversation.
 ```
 
-When starting the next iteration, prompt text in a terminal is not enough. Send explicit `Enter`, confirm Herdr status/recent output shows acceptance, write `handoff.json`, and only then finish the current pass.
+When starting a justified next iteration, prompt text in a terminal is not enough. Send explicit `Enter`, confirm Herdr status/recent output shows acceptance, write `handoff.json`, and only then finish the current pass. When stopping, finish the current pass without creating any successor artifacts.
