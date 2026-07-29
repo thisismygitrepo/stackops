@@ -33,7 +33,7 @@ applyTo: "**/*.py"
 * Please prefer to use absolute imports, avoid relatives when possible.
 * Use triple quotes and triple double quotes f-strings for string formatting and avoid when possible all goofy escaping when interpolation.
 * If needed, opt for polars not pandas, whenever possible.
-* when finished, run a linting static analysis check against files you touched, Any fix any mistakes.
+* when finished, run a linting static analysis check against files you touched.
 * Please run `uv run -m pyright $file_touched` and address all issues.
 * For all type checkers and linters, like mypy, pyright, pyrefly and pylint, there are config files at different levels of the repo all the way up to home directory level. You don't need to worry about them, just be mindful that they exist. The tools themselves will respect the configs therein.
 * If you want to run all linters and pycheckers agains the entire project to make sure everything is clean, I prepared a shared type-checking script, you can run it from the repo root as `uv run ./scripts/lint_and_type_check.py`. It will produce markdown files that are you are meant to look at @ ./.ai/linters/*.md
@@ -72,7 +72,7 @@ def example_usage() -> None:
 
 # General Programming Ethos:
 
-* Please be obsessed about one thing: how to write the code in a way, so that if there is any change anywhere that can make something else break, then the static analsyis tools will catch it and point to all the places that need to be changed, so that there is no chance of human error of forgetting to change something somewhere. Every other consideration is subserviant to this overriding requirement.
+* Please be obsessed about one thing: how to write the code in a way, so that if there is any change anywhere that can make something else break, then the static analsyis tools will catch it and point to all the places that need to be changed, so that there is no chance of human/ai error of forgetting to change something somewhere. Every other consideration is subserviant to this overriding requirement.
 * Please never ever write tests, only rely on type hinting and static type checkers analysis, spend your effort on writing functionality instead.
 * Don't write toleratnt code, e.g. try this, no worries, lets try something else, unless user asked for it explicitly.
 * I hate "legacy code", "backward compatilbity", "fallback position", never do this nonsense, when you are asked to fix something, fix it radically and change all the code relevant. There should be only one strict way of doing things.

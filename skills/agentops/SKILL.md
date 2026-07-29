@@ -5,41 +5,30 @@ description: Manage external interactive agent operations through herdr and wt/W
 
 # AgentOps
 
-Use this skill to coordinate external agent operations through `herdr`, including handovers, iterative improvement chains, scope-separated parallel iteration chains, parallel agents, and Worktrunk-isolated parallel agents.
+Coordinate external agents through `herdr`:
 
-This skill provides five commands:
-
-- `handover`: transfer active work to a new interactive agent session.
-- `iter`: run a goal-directed improvement chain where each agent performs one pass and starts another only while explicit completion criteria remain unmet and material progress remains credible.
-- `parallel-iters`: decompose one final goal into scope-separated lines of work, then launch one goal-directed iteration chain per line in the same working directory so the user can integrate the finished lines later.
+- `handover`: transfer active work.
+- `iter`: run a goal-directed chain, one pass per agent.
+- `parallel-iters`: run independent, scope-separated iteration chains.
 - `parallel-agents`: coordinate the user's external parallel agents.
-- `parallel-isolated-agents`: create `wt`/Worktrunk-managed isolated worktrees and start one Herdr-managed agent per worktree.
+- `parallel-isolated-agents`: run agents in `wt`/Worktrunk worktrees.
 
-## Load The Right Reference
+## References
 
-Before acting, read the shared Herdr rules and the specific command reference:
+Before acting, read [Herdr mechanics](references/herdr.md) and the command reference:
 
-- Shared Herdr rules: [references/herdr.md](references/herdr.md)
 - `handover`: [references/handover.md](references/handover.md)
 - `iter`: [references/iter.md](references/iter.md)
 - `parallel-iters`: [references/parallel-iters.md](references/parallel-iters.md)
 - `parallel-agents`: [references/parallel-agents.md](references/parallel-agents.md)
 - `parallel-isolated-agents`: [references/parallel-isolated-agents.md](references/parallel-isolated-agents.md)
 
-Do not start agents, create tabs, split panes, write operation records, or create worktrees until the relevant reference files have been read.
+Do not create workflow state before reading them.
 
-## Shared Invariants
+## Invariants
 
-Use `herdr` as the process and session coordinator. `herdr` is the source of truth for external agent sessions, status, pane output, and live metadata.
-
-Keep project files small and durable. Store stable identifiers, worktree ownership, iteration records, and exceptional notes only where the command reference requires them. Do not mirror Herdr status, full transcripts, message timestamps, result timestamps, or routine activity into local JSON or Markdown.
-
-Use pointer-first cross-agent communication. For any non-trivial delegated context, write a Markdown packet under the operation run directory and send the agent only a short Herdr prompt that points to the packet path. Each agent owns its own record directory; shared files must stay bounded summaries and pointer indexes.
-
-Keep the distinction between tabs/windows and panes explicit. Herdr exposes top-level terminal targets as `tab` resources inside a `workspace`; treat a user request for tabs or windows as one Herdr tab per agent unless the installed CLI exposes a separate window concept. A pane is only a split inside one tab/window.
-
-Use one agent per separate Herdr tab by default, or one named `herdr` session per agent when workspace/tab commands are unavailable. Do not put multiple agents into panes inside one tab/window unless the user explicitly asks for a pane-based layout.
-
-Check `herdr --help` and relevant subcommand help before relying on a command shape. When installed help differs from examples in the references, preserve these invariants and use the installed command surface.
-
-Every iterative operation must define explicit completion criteria before launch. Treat satisfying those criteria as terminal: write the final result and do not create or launch a successor. Also stop for an explicit pause, a concrete blocker, a scope or safety violation, or two consecutive passes without material progress. Never continue merely because further polish is imaginable.
+- Herdr is authoritative for live state. Keep local records to durable contracts, pointers, stable IDs, ownership, decisions, and exceptions; never mirror transcripts or routine status.
+- Put non-trivial context in agent-owned Markdown packets and send only their paths. Keep shared summaries bounded.
+- Default to one agent per tab and one pane per tab. Use panes only when requested.
+- Check installed CLI help before relying on command syntax.
+- Iterative work needs fixed completion criteria. Stop when satisfied, paused, blocked, unsafe, out of scope, or after two no-progress passes; polish alone never justifies continuation.
