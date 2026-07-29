@@ -24,15 +24,18 @@ class RepositoryOperationPayload(TypedDict):
 
 
 def render_repository_command_script(repos_root: Path, recursive: bool, command: str) -> str | None:
-    script_lines: list[str] = []
+    script_lines: list[str] = ['stackops_repos_action_start_directory="$PWD"']
+    git_repository_found = False
     for path in repository_candidates(repos_root=repos_root, recursive=recursive):
         try:
             Repo(path, search_parent_directories=False)
         except (InvalidGitRepositoryError, NoSuchPathError):
             continue
+        git_repository_found = True
         script_lines.extend((f"cd {quote(path.as_posix())}", command))
-    if not script_lines:
+    if not git_repository_found:
         return None
+    script_lines.extend(('cd "$stackops_repos_action_start_directory"', "unset stackops_repos_action_start_directory"))
     return "\n".join(script_lines) + "\n"
 
 
