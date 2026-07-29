@@ -16,42 +16,77 @@ from stackops.scripts.python.ai.solutions.oz import oz
 from stackops.scripts.python.ai.solutions.pi import pi
 from stackops.scripts.python.ai.solutions.q import amazon_q
 from stackops.scripts.python.ai.solutions.qwen_code import qwen_code
+from stackops.scripts.python.ai.initai_models import ArtifactChange
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
-def build_framework_config(*, repo_root: Path, framework: AGENTS, add_private_config: bool, add_instructions: bool) -> None:
+def build_framework_config(
+    *, repo_root: Path, framework: AGENTS, add_private_config: bool, add_instructions: bool
+) -> tuple[ArtifactChange, ...]:
     match framework:
         case "agy":
-            antigravity.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return antigravity.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "copilot":
-            github_copilot.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return github_copilot.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "cursor-agent":
-            cursors.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return cursors.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "claude":
-            claude.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return claude.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "crush":
-            crush.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return crush.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "cline":
-            cline.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return cline.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "qwen":
-            qwen_code.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return qwen_code.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "codex":
-            codex.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return codex.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "forge":
-            forge.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return forge.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "q":
-            amazon_q.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return amazon_q.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "opencode":
-            opencode.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return opencode.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "kilocode":
-            kilocode.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return kilocode.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "auggie":
-            auggie.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return auggie.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "oz":
-            oz.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return oz.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "droid":
-            droid.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return droid.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case "pi":
-            pi.build_configuration(repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions)
+            return pi.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
         case _:
             raise ValueError(f"Unsupported agent configuration target: {framework}")

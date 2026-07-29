@@ -21,6 +21,8 @@ class StackopsAgentSkillInstallResult:
     skill_name: str
     source_path: Path
     target_path: Path
+    created_paths: tuple[Path, ...]
+    written_paths: tuple[Path, ...]
 
 
 class StackopsAgentSkillBackendError(ValueError):
@@ -88,11 +90,21 @@ def resolve_stackops_agent_skill_target_root(*, install_root: Path, scope: STACK
     return resolved_install_root.joinpath(*AGENT_SKILLS_DIRECTORY_PARTS)
 
 
-def _copy_skill_directory(*, source_path: Path, target_path: Path) -> None:
+def _copy_skill_directory(*, source_path: Path, target_path: Path) -> tuple[tuple[Path, ...], tuple[Path, ...]]:
     if target_path.exists() and not target_path.is_dir():
         raise StackopsAgentSkillBackendError(f"Cannot install skill because target exists and is not a directory: {target_path}")
+    source_files = tuple(sorted(path for path in source_path.rglob("*") if path.is_file()))
+    existing_target_paths = {
+        target_path.joinpath(source_file.relative_to(source_path))
+        for source_file in source_files
+        if target_path.joinpath(source_file.relative_to(source_path)).exists()
+    }
     target_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source_path, target_path, dirs_exist_ok=True)
+    installed_paths = tuple(target_path.joinpath(source_file.relative_to(source_path)) for source_file in source_files)
+    created_paths = tuple(path for path in installed_paths if path not in existing_target_paths)
+    written_paths = tuple(path for path in installed_paths if path in existing_target_paths)
+    return created_paths, written_paths
 
 
 def _resolve_stackops_agent_skill_install_plans(
@@ -118,7 +130,15 @@ def _resolve_stackops_agent_skill_install_plans(
         target_path = target_root / skill_folder_name
         if target_path.exists() and not target_path.is_dir():
             raise StackopsAgentSkillBackendError(f"Cannot install skill because target exists and is not a directory: {target_path}")
-        plans.append(StackopsAgentSkillInstallResult(skill_name=skill_name, source_path=source_path, target_path=target_path))
+        plans.append(
+            StackopsAgentSkillInstallResult(
+                skill_name=skill_name,
+                source_path=source_path,
+                target_path=target_path,
+                created_paths=(),
+                written_paths=(),
+            )
+        )
 
     return tuple(plans)
 
@@ -140,10 +160,20 @@ def install_stackops_agent_skills(
         target_root=target_root,
     )
 
+    results: list[StackopsAgentSkillInstallResult] = []
     for plan in plans:
-        _copy_skill_directory(source_path=plan.source_path, target_path=plan.target_path)
+        created_paths, written_paths = _copy_skill_directory(source_path=plan.source_path, target_path=plan.target_path)
+        results.append(
+            StackopsAgentSkillInstallResult(
+                skill_name=plan.skill_name,
+                source_path=plan.source_path,
+                target_path=plan.target_path,
+                created_paths=created_paths,
+                written_paths=written_paths,
+            )
+        )
 
-    return plans
+    return tuple(results)
 
 
 def print_stackops_agent_skill_install_summary(*, results: Sequence[StackopsAgentSkillInstallResult], console: Console | None = None) -> None:

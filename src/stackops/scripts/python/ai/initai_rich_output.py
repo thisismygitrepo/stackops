@@ -63,7 +63,7 @@ def build_init_config_plan_panel(*, plan: InitConfigPlan) -> Panel:
     return Panel(
         table,
         title="[bold bright_cyan]◆ Agent configuration plan[/]",
-        subtitle="[dim]filesystem changes are measured and reported[/]",
+        subtitle="[dim]configuration operations report their file changes[/]",
         border_style="bright_blue",
     )
 

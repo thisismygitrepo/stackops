@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import cast
 
 import stackops.scripts.python.ai.scripts.paths as ai_script_paths
+from stackops.scripts.python.ai.initai_artifacts import write_text_artifact
+from stackops.scripts.python.ai.initai_models import ArtifactChange
 
 POSIX_LINT_AND_TYPE_CHECK_PATH = (
     "./" + ai_script_paths.LINT_AND_TYPE_CHECK_REPO_RELATIVE_PATH.as_posix()
@@ -10,7 +12,7 @@ POSIX_LINT_AND_TYPE_CHECK_PATH = (
 WINDOWS_LINT_AND_TYPE_CHECK_PATH = ".\\" + ai_script_paths.LINT_AND_TYPE_CHECK_REPO_RELATIVE_PATH.as_posix().replace("/", "\\")
 
 
-def add_lint_and_type_check_task(repo_root: Path) -> None:
+def add_lint_and_type_check_task(repo_root: Path) -> ArtifactChange:
     vscode_dir = repo_root / ".vscode"
     vscode_dir.mkdir(parents=True, exist_ok=True)
     tasks_json_path = vscode_dir / "tasks.json"
@@ -43,4 +45,11 @@ def add_lint_and_type_check_task(repo_root: Path) -> None:
     else:
         tasks_config = {"version": "2.0.0", "tasks": [task_to_add]}
 
-    tasks_json_path.write_text(json.dumps(tasks_config, indent="\t"), encoding="utf-8")
+    change = write_text_artifact(
+        repo_root=repo_root,
+        path=tasks_json_path,
+        content=json.dumps(tasks_config, indent="\t"),
+        write_mode="always",
+    )
+    assert change is not None
+    return change

@@ -4,19 +4,39 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import stackops.scripts.python.ai.scripts.paths as ai_script_paths
+from stackops.scripts.python.ai.initai_models import ArtifactAction, ArtifactChange
 from stackops.utils.source_of_truth import LIBRARY_ROOT
 
-def create_dot_scripts(repo_root: Path) -> None:
+
+def create_dot_scripts(repo_root: Path) -> tuple[ArtifactChange, ...]:
     scripts_dir = LIBRARY_ROOT.joinpath("scripts/python/ai/scripts")
     target_dir = repo_root.joinpath(ai_script_paths.TYPE_CHECKING_SCRIPTS_DIRECTORY)
+    existing_files = {
+        path.relative_to(repo_root)
+        for path in target_dir.rglob("*")
+        if path.is_file() or path.is_symlink()
+    }
     shutil.rmtree(target_dir, ignore_errors=True)
     target_dir.mkdir(parents=True, exist_ok=True)
 
+    changes: list[ArtifactChange] = []
+    installed_files: set[Path] = set()
     for script_name in ai_script_paths.TYPE_CHECKING_SCRIPT_PATH_REFERENCES:
         script_path = scripts_dir.joinpath(script_name)
-        target_dir.joinpath(script_path.name).write_text(
+        target_path = target_dir.joinpath(script_path.name)
+        relative_target_path = target_path.relative_to(repo_root)
+        target_path.write_text(
             data=script_path.read_text(encoding="utf-8"), encoding="utf-8"
         )
+        action: ArtifactAction = "written" if relative_target_path in existing_files else "created"
+        changes.append(ArtifactChange(path=relative_target_path, action=action))
+        installed_files.add(relative_target_path)
+
+    changes.extend(
+        ArtifactChange(path=path, action="removed")
+        for path in sorted(existing_files - installed_files)
+    )
+    return tuple(changes)
 
 
 def adjust_for_os(config_path: Path) -> str:
@@ -43,10 +63,10 @@ def adjust_for_os(config_path: Path) -> str:
 
 def adjust_gitignore(
     repo_root: Path, include_default_entries: bool, extra_entries: Sequence[str]
-) -> None:
+) -> bool:
     dot_git_ignore_path = repo_root.joinpath(".gitignore")
     if dot_git_ignore_path.exists() is False:
-        return
+        return False
 
     dot_git_ignore_content = dot_git_ignore_path.read_text(encoding="utf-8")
     existing_entries = {
@@ -69,7 +89,7 @@ def adjust_gitignore(
             entries_to_add.append(entry)
 
     if len(entries_to_add) == 0:
-        return
+        return False
 
     separator = (
         ""
@@ -80,3 +100,4 @@ def adjust_gitignore(
         data=dot_git_ignore_content + separator + "\n".join(entries_to_add) + "\n",
         encoding="utf-8",
     )
+    return True

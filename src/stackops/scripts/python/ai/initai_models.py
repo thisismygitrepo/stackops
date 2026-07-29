@@ -6,9 +6,6 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
 type ArtifactAction = Literal["created", "written", "removed"]
-type FileState = tuple[int, int]
-
-
 @dataclass(frozen=True, slots=True)
 class ArtifactChange:
     path: Path

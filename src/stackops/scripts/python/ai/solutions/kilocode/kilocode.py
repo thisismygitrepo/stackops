@@ -2,22 +2,23 @@ import json
 from pathlib import Path
 
 import stackops.scripts.python.ai.solutions.kilocode as kilocode_assets
+from stackops.scripts.python.ai.initai_artifacts import write_text_artifact
+from stackops.scripts.python.ai.initai_models import ArtifactChange
 from stackops.scripts.python.ai.utils.shared import get_generic_instructions_path
 from stackops.utils.path_reference import get_path_reference_path
 
 
-def _write_json_if_missing(path: Path, content: dict[str, object]) -> None:
-    if path.exists():
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(data=json.dumps(content, indent=2) + "\n", encoding="utf-8")
+def _write_json_if_missing(*, repo_root: Path, path: Path, content: dict[str, object]) -> ArtifactChange | None:
+    return write_text_artifact(
+        repo_root=repo_root,
+        path=path,
+        content=json.dumps(content, indent=2) + "\n",
+        write_mode="if_missing",
+    )
 
 
-def _write_text_if_missing(path: Path, content: str) -> None:
-    if path.exists():
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(data=content, encoding="utf-8")
+def _write_text_if_missing(*, repo_root: Path, path: Path, content: str) -> ArtifactChange | None:
+    return write_text_artifact(repo_root=repo_root, path=path, content=content, write_mode="if_missing")
 
 
 def _default_kilocodeignore() -> str:
@@ -33,20 +34,47 @@ def _default_kilocodeignore() -> str:
     )
 
 
-def build_configuration(repo_root: Path, add_private_config: bool, add_instructions: bool) -> None:
+def build_configuration(repo_root: Path, add_private_config: bool, add_instructions: bool) -> tuple[ArtifactChange, ...]:
+    changes: list[ArtifactChange] = []
     kilo_rules_dir = repo_root.joinpath(".kilocode/rules")
 
     if add_instructions:
         instructions_text = get_generic_instructions_path().read_text(encoding="utf-8")
-        kilo_rules_dir.mkdir(parents=True, exist_ok=True)
-        kilo_rules_dir.joinpath("rules.md").write_text(data=instructions_text, encoding="utf-8")
-        _write_text_if_missing(path=repo_root.joinpath("AGENTS.md"), content=instructions_text)
+        rules_change = write_text_artifact(
+            repo_root=repo_root,
+            path=kilo_rules_dir.joinpath("rules.md"),
+            content=instructions_text,
+            write_mode="always",
+        )
+        agents_change = _write_text_if_missing(
+            repo_root=repo_root,
+            path=repo_root.joinpath("AGENTS.md"),
+            content=instructions_text,
+        )
+        assert rules_change is not None
+        changes.append(rules_change)
+        if agents_change is not None:
+            changes.append(agents_change)
 
     if add_private_config:
-        _write_json_if_missing(path=repo_root.joinpath(".kilocode/mcp.json"), content={"mcpServers": {}})
-        _write_text_if_missing(path=repo_root.joinpath(".kilocodeignore"), content=_default_kilocodeignore())
+        mcp_change = _write_json_if_missing(
+            repo_root=repo_root,
+            path=repo_root.joinpath(".kilocode/mcp.json"),
+            content={"mcpServers": {}},
+        )
+        ignore_change = _write_text_if_missing(
+            repo_root=repo_root,
+            path=repo_root.joinpath(".kilocodeignore"),
+            content=_default_kilocodeignore(),
+        )
         privacy_source = get_path_reference_path(
             module=kilocode_assets,
             path_reference=kilocode_assets.PRIVACY_PATH_REFERENCE,
         )
-        _write_text_if_missing(path=kilo_rules_dir.joinpath("privacy.md"), content=privacy_source.read_text(encoding="utf-8"))
+        privacy_change = _write_text_if_missing(
+            repo_root=repo_root,
+            path=kilo_rules_dir.joinpath("privacy.md"),
+            content=privacy_source.read_text(encoding="utf-8"),
+        )
+        changes.extend(change for change in (mcp_change, ignore_change, privacy_change) if change is not None)
+    return tuple(changes)
