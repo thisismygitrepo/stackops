@@ -17,7 +17,7 @@ def _parse_session_selectors(session_selectors: str) -> list[str]:
     return selectors
 
 
-def _matches_session_pattern(session_name: str, pattern: str) -> bool:
+def matches_session_pattern(session_name: str, pattern: str) -> bool:
     regex_parts: list[str] = []
     for character in pattern:
         match character:
@@ -64,7 +64,7 @@ def resolve_trace_session_names(backend: TraceBackend, session_selectors: str) -
         matched_targets = [
             target
             for target in targets
-            if any(_matches_session_pattern(session_name=match_name, pattern=selector) for match_name in target.match_names)
+            if any(matches_session_pattern(session_name=match_name, pattern=selector) for match_name in target.match_names)
         ]
         if len(matched_targets) == 0:
             raise ValueError(f"Session selector '{selector}' matched no {backend} sessions. Available names: {available_names}")

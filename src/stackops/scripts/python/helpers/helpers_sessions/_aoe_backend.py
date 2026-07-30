@@ -141,6 +141,18 @@ def _session_is_killable(session: JsonObject) -> bool:
     return True
 
 
+def list_killable_session_names() -> list[str] | None:
+    sessions = _session_entries()
+    if sessions is None:
+        return None
+    return [
+        identifier
+        for session in sessions
+        if _session_is_killable(session)
+        if (identifier := _session_identifier(session)) is not None
+    ]
+
+
 def session_preview(session: JsonObject) -> str:
     lines = [
         "backend: aoe",

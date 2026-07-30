@@ -145,6 +145,15 @@ def _stopped_session_names(sessions: Iterable[JsonObject]) -> list[str]:
     return names
 
 
+def list_killable_session_names(delete: bool) -> list[str] | None:
+    sessions = _session_entries()
+    if sessions is None:
+        return None
+    if delete:
+        return _stopped_session_names(sessions)
+    return _running_session_names(sessions)
+
+
 def _session_by_name(sessions: Iterable[JsonObject], name: str) -> JsonObject | None:
     for session in sessions:
         if _session_name(session) == name:
@@ -561,7 +570,51 @@ def choose_kill_target(
     delete: bool,
 ) -> tuple[str, str | None, list[KilledTarget]]:
     if idle:
-        return ("error", "--idle is only supported for the tmux backend because Herdr shell-idle status is not available.", [])
+        if window:
+            return ("error", "--idle cannot be used together with --window.", [])
+        sessions = _session_entries()
+        if sessions is None:
+            return ("error", "Unable to list Herdr sessions. Confirm `herdr session list --json` works.", [])
+        running_sessions = _running_sessions(sessions)
+        if kill_all:
+            selected_session_names = _running_session_names(running_sessions)
+        elif name is not None:
+            selected_session = _session_by_name(running_sessions, name)
+            if selected_session is None:
+                return ("error", f"No running Herdr session named '{name}' is available to inspect.", [])
+            selected_session_names = [name]
+        else:
+            if len(running_sessions) == 0:
+                return ("error", "No running Herdr sessions are available to inspect for idle panes or workspaces.", [])
+            options_to_preview_mapping = {
+                session_name: _session_preview(session)
+                for session in running_sessions
+                if (session_name := _session_name(session)) is not None
+            }
+            selected_session_name = interactive_choose_with_preview(
+                msg="Choose a Herdr session to clean idle panes/workspaces:",
+                options_to_preview_mapping=options_to_preview_mapping,
+            )
+            if selected_session_name is None:
+                return ("error", "No Herdr session selected.", [])
+            selected_session_names = [selected_session_name]
+        if len(selected_session_names) == 0:
+            return ("error", "No running Herdr sessions are available to inspect for idle panes or workspaces.", [])
+        from stackops.scripts.python.helpers.helpers_sessions._herdr_backend_idle import (
+            build_idle_kill_script_for_sessions,
+        )
+
+        try:
+            script, killed_targets = build_idle_kill_script_for_sessions(
+                session_names=selected_session_names,
+                run_command_fn=run_command,
+                quote_fn=quote,
+            )
+        except ValueError as error:
+            return ("error", str(error), [])
+        if script:
+            return ("run_script", script, killed_targets)
+        return ("error", "No idle-shell Herdr panes or workspaces are available to kill.", [])
     sessions = _session_entries()
     if sessions is None:
         return ("error", "Unable to list Herdr sessions. Confirm `herdr session list --json` works.", [])
