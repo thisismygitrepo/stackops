@@ -388,6 +388,42 @@ def add_skill(
     raise typer.Exit(code=return_code)
 
 
+def clean(
+    directory: Annotated[str | None, typer.Argument(help="Directory containing repositories to clean.")] = None,
+    recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recurse into nested repositories.")] = False,
+) -> None:
+    """Delete the .ai directory from each selected repository."""
+    from git.exc import InvalidGitRepositoryError, NoSuchPathError
+    from git.repo import Repo
+
+    from stackops.scripts.python.helpers.helpers_repos.discovery import repository_candidates
+
+    repos_root = Path.cwd() if directory is None else Path(directory).expanduser()
+    repos_root = repos_root.absolute().resolve()
+    repository_paths: list[Path] = []
+    for path in repository_candidates(repos_root=repos_root, recursive=recursive):
+        try:
+            Repo(path, search_parent_directories=False)
+        except (InvalidGitRepositoryError, NoSuchPathError):
+            continue
+        repository_paths.append(path)
+
+    if not repository_paths:
+        typer.echo(f"No Git repositories found at {repos_root}.", err=True)
+        raise typer.Exit(code=1)
+
+    removed_paths: list[Path] = []
+    for repository_path in repository_paths:
+        ai_directory = repository_path / ".ai"
+        if not ai_directory.exists():
+            continue
+        shutil.rmtree(ai_directory)
+        removed_paths.append(ai_directory)
+        typer.echo(f"Removed {ai_directory}")
+
+    typer.echo(f"Cleaned {len(removed_paths)} of {len(repository_paths)} repositories.")
+
+
 def get_app() -> typer.Typer:
     from stackops.scripts.python.ai_account import get_app as get_account_app
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
@@ -417,6 +453,8 @@ def get_app() -> typer.Typer:
         "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<c> Initialize AI configurations in the current repository"
     )(init_config)
     agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
+    agents_app.command(name="clean", no_args_is_help=False, short_help="<C> Delete .ai directories from repositories")(clean)
+    agents_app.command(name="C", no_args_is_help=False, hidden=True)(clean)
 
     agents_app.add_typer(
         get_account_app(),
