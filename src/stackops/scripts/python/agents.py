@@ -393,35 +393,11 @@ def clean(
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recurse into nested repositories.")] = False,
 ) -> None:
     """Delete the .ai directory from each selected repository."""
-    from git.exc import InvalidGitRepositoryError, NoSuchPathError
-    from git.repo import Repo
+    from stackops.scripts.python.helpers.helpers_agents.agents_clean import clean_agent_directories
 
-    from stackops.scripts.python.helpers.helpers_repos.discovery import repository_candidates
-
-    repos_root = Path.cwd() if directory is None else Path(directory).expanduser()
-    repos_root = repos_root.absolute().resolve()
-    repository_paths: list[Path] = []
-    for path in repository_candidates(repos_root=repos_root, recursive=recursive):
-        try:
-            Repo(path, search_parent_directories=False)
-        except (InvalidGitRepositoryError, NoSuchPathError):
-            continue
-        repository_paths.append(path)
-
-    if not repository_paths:
-        typer.echo(f"No Git repositories found at {repos_root}.", err=True)
+    repositories_found = clean_agent_directories(directory=directory, recursive=recursive)
+    if not repositories_found:
         raise typer.Exit(code=1)
-
-    removed_paths: list[Path] = []
-    for repository_path in repository_paths:
-        ai_directory = repository_path / ".ai"
-        if not ai_directory.exists():
-            continue
-        shutil.rmtree(ai_directory)
-        removed_paths.append(ai_directory)
-        typer.echo(f"Removed {ai_directory}")
-
-    typer.echo(f"Cleaned {len(removed_paths)} of {len(repository_paths)} repositories.")
 
 
 def get_app() -> typer.Typer:
