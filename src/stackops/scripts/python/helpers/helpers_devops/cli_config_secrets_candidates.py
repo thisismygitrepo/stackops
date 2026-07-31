@@ -4,16 +4,14 @@ from typing import Literal, NoReturn
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import (
-    InteractivePickerOption,
-    choose_interactive_option,
-)
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import CANDIDATE_DISPLAY_LIMIT
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_errors import fail_conflicting_environment_merge
+from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import InteractivePickerOption, choose_interactive_option
 from stackops.secrets.models import Login, SecretRecord, SecretStringMap, SecretsFile, SecretValueMap
 from stackops.secrets.search import render_secret_value
 
 __all__ = [
     "SecretCandidate",
-    "SecretSelection",
     "SecretSelectionMode",
     "SecretSelectors",
     "build_secret_candidates",
@@ -21,7 +19,8 @@ __all__ = [
     "format_secret_candidate_label",
     "format_secret_selection",
     "load_secret_candidates",
-    "resolve_secret_selection",
+    "merge_candidate_key_values",
+    "resolve_secret_candidates",
 ]
 
 type SecretSelectionMode = Literal["unique", "all", "interactive"]
@@ -29,6 +28,7 @@ type SecretSelectionMode = Literal["unique", "all", "interactive"]
 
 @dataclass(frozen=True)
 class SecretCandidate:
+    entry_index: int
     json_path: str
     login_name: str
     login_tags: tuple[str, ...]
@@ -37,15 +37,10 @@ class SecretCandidate:
     scopes: tuple[str, ...]
     key_values: SecretValueMap
     searchable_values: tuple[str, ...]
-    login_entry: Login | None = None
+    login_entry: Login
+    secrets_file: SecretsFile
     source_name: str | None = None
     source_path: Path | None = None
-
-
-@dataclass(frozen=True)
-class SecretSelection:
-    candidates: tuple[SecretCandidate, ...]
-    key_values: SecretValueMap
 
 
 @dataclass(frozen=True)
@@ -89,17 +84,13 @@ def load_secret_candidates(secrets_path: Path, *, source_name: str | None = None
 def build_secret_candidates(secrets_file: SecretsFile) -> list[SecretCandidate]:
     candidates: list[SecretCandidate] = []
     for entry_index, entry in enumerate(secrets_file["entries"]):
-        candidates.extend(_login_candidates(login=entry, entry_index=entry_index))
+        candidates.extend(_login_candidates(login=entry, entry_index=entry_index, secrets_file=secrets_file))
     return candidates
 
 
-def resolve_secret_selection(
-    candidates: list[SecretCandidate],
-    terms: list[str] | None,
-    selectors: SecretSelectors,
-    selection_mode: SecretSelectionMode,
-    preview_secrets: bool,
-) -> SecretSelection:
+def resolve_secret_candidates(
+    candidates: list[SecretCandidate], terms: list[str] | None, selectors: SecretSelectors, selection_mode: SecretSelectionMode, preview_secrets: bool
+) -> tuple[SecretCandidate, ...]:
     normalized_terms = tuple(term.casefold() for term in terms or () if term.strip())
     if not normalized_terms and not selectors.has_any() and selection_mode != "interactive":
         _fail("Pass at least one term or exact selector to identify a secrets keyValues entry.")
@@ -132,10 +123,10 @@ def resolve_secret_selection(
         case "all":
             selected_candidates = tuple(matches)
 
-    return SecretSelection(candidates=selected_candidates, key_values=_merge_candidate_key_values(selected_candidates))
+    return selected_candidates
 
 
-def _merge_candidate_key_values(candidates: tuple[SecretCandidate, ...]) -> SecretValueMap:
+def merge_candidate_key_values(candidates: tuple[SecretCandidate, ...]) -> SecretValueMap:
     key_values: SecretValueMap = {}
     conflicting_names: set[str] = set()
     for candidate in candidates:
@@ -146,16 +137,17 @@ def _merge_candidate_key_values(candidates: tuple[SecretCandidate, ...]) -> Secr
                 conflicting_names.add(name)
 
     if conflicting_names:
-        names = ", ".join(sorted(conflicting_names))
-        conflicting_candidates = [
-            candidate for candidate in candidates if any(name in candidate.key_values for name in conflicting_names)
-        ]
-        typer.echo(
-            typer.style("Error: ", fg=typer.colors.RED)
-            + f"Matching keyValues entries define conflicting values for environment variable(s): {names}."
+        sorted_conflicting_names = tuple(sorted(conflicting_names))
+        conflicting_bundle_rows = tuple(
+            f"{_candidate_identity_label(candidate)} -> " + ", ".join(name for name in sorted_conflicting_names if name in candidate.key_values)
+            for candidate in candidates
+            if any(name in candidate.key_values for name in sorted_conflicting_names)
         )
-        _print_candidate_list("Conflicting keyValues entries:", conflicting_candidates)
-        raise typer.Exit(code=1)
+        fail_conflicting_environment_merge(
+            selected_bundle_count=len(candidates),
+            conflicting_variable_names=sorted_conflicting_names,
+            conflicting_bundle_rows=conflicting_bundle_rows,
+        )
     return key_values
 
 
@@ -171,7 +163,7 @@ def format_secret_candidate_label(candidate: SecretCandidate) -> str:
     return _candidate_label(candidate)
 
 
-def _login_candidates(login: Login, entry_index: int) -> list[SecretCandidate]:
+def _login_candidates(login: Login, entry_index: int, secrets_file: SecretsFile) -> list[SecretCandidate]:
     login_name = login["name"]
     login_tags = tuple(login.get("tags", ()))
     shared_search_values = _search_values_from_login(login=login, login_name=login_name, login_tags=login_tags)
@@ -187,6 +179,7 @@ def _login_candidates(login: Login, entry_index: int) -> list[SecretCandidate]:
         )
         candidates.append(
             SecretCandidate(
+                entry_index=entry_index,
                 json_path=f"entries[{entry_index}].secrets[{secret_index}].keyValues",
                 login_name=login_name,
                 login_tags=login_tags,
@@ -196,6 +189,7 @@ def _login_candidates(login: Login, entry_index: int) -> list[SecretCandidate]:
                 key_values=key_values,
                 searchable_values=shared_search_values + secret_search_values,
                 login_entry=login,
+                secrets_file=secrets_file,
             )
         )
     return candidates
@@ -280,25 +274,8 @@ def _candidate_preview(candidate: SecretCandidate, *, include_secret_values: boo
     )
     if include_secret_values:
         lines.extend(("", "## Secret values", "```json", json.dumps(candidate.key_values, indent=2, ensure_ascii=False), "```"))
-        lines.extend(("", "## Login entry", "```json", json.dumps(_candidate_login_entry(candidate), indent=2, ensure_ascii=False), "```"))
+        lines.extend(("", "## Login entry", "```json", json.dumps(candidate.login_entry, indent=2, ensure_ascii=False), "```"))
     return "\n".join(lines) + "\n"
-
-
-def _candidate_login_entry(candidate: SecretCandidate) -> Login | dict[str, object]:
-    if candidate.login_entry is not None:
-        return candidate.login_entry
-    return {
-        "name": candidate.login_name,
-        "tags": list(candidate.login_tags),
-        "secrets": [
-            {
-                "name": candidate.secret_name,
-                "tags": list(candidate.secret_tags),
-                "scopes": list(candidate.scopes),
-                "keyValues": candidate.key_values,
-            }
-        ],
-    }
 
 
 def _preview_join(values: tuple[str, ...]) -> str:
@@ -324,16 +301,21 @@ def _selection_text(terms: list[str] | None, selectors: SecretSelectors) -> str:
 
 def _print_candidate_list(title: str, candidates: list[SecretCandidate]) -> None:
     typer.echo(title)
-    for candidate in candidates[:10]:
+    for candidate in candidates[:CANDIDATE_DISPLAY_LIMIT]:
         typer.echo(f"  - {_candidate_label(candidate)}")
-    if len(candidates) > 10:
-        typer.echo(f"  ... {len(candidates) - 10} more")
+    if len(candidates) > CANDIDATE_DISPLAY_LIMIT:
+        typer.echo(f"  ... {len(candidates) - CANDIDATE_DISPLAY_LIMIT} more")
 
 
 def _candidate_label(candidate: SecretCandidate) -> str:
     keys = ", ".join(candidate.key_values) if candidate.key_values else "<no keys>"
     source_prefix = f"[{candidate.source_name}] " if candidate.source_name is not None else ""
     return f"{source_prefix}{candidate.login_name} / {candidate.secret_name} -> {keys}"
+
+
+def _candidate_identity_label(candidate: SecretCandidate) -> str:
+    source_prefix = f"[{candidate.source_name}] " if candidate.source_name is not None else ""
+    return f"{source_prefix}{candidate.login_name} / {candidate.secret_name} @ {candidate.json_path}"
 
 
 def _string_map_terms(value: SecretStringMap | None) -> tuple[str, ...]:

@@ -8,8 +8,10 @@ from stackops.scripts.python.helpers.helpers_devops import cli_subset_support
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
     SecretSelectionMode,
     SecretSelectors,
-    resolve_secret_selection,
+    merge_candidate_key_values,
+    resolve_secret_candidates,
 )
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_json import render_secret_search_json
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import (
     SECRETS_SCHEMA_FILENAME,
     SecretsSource,
@@ -28,7 +30,7 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support i
 )
 
 SECRETS_HELP = "Manage StackOps secrets files and define env vars."
-SECRETS_SEARCH_HELP = "Define env vars from StackOps secrets files."
+SECRETS_SEARCH_HELP = "Select secret bundles for environment variables or JSON output."
 SECRETS_STATS_HELP = "Show aggregate StackOps secrets inventory stats without printing secret values."
 SECRETS_SUBSET_HELP = "Create a StackOps secrets subset and choose output conflicts with --on-conflict."
 SECRETS_SEARCH_EPILOG = """Examples:
@@ -43,6 +45,7 @@ SECRETS_SEARCH_EPILOG = """Examples:
   devops config secrets search --source global bitwarden
   devops config secrets s --source g bitwarden
   devops config secrets s --all-matches --source g cloudf
+  devops config secrets search mail --all-matches --json
   devops config secrets search --source both github token
   devops config secrets s --source b github token
   devops config secrets s -i -P github
@@ -54,7 +57,9 @@ Use search --interactive/-i to choose from matching logins with the TV fuzzy pic
 After interactive selection, StackOps prints a jq command for the selected login entry.
 Use search --preview-secrets/-P with --interactive/-i to include secret values in the picker preview.
 Use search --verbose/-v to print the selected bundle and env var keys without secret values.
-Use search --all-matches/-a to define env vars from every matching bundle instead of requiring one unique match.
+Use search --all-matches/-a to merge env vars from every matching bundle into one environment.
+The merge fails when matching bundles assign different values to the same environment variable.
+Use search --json/-j to print the original secrets JSON structure with only matching entries instead of defining env vars.
 When search --source is omitted, StackOps uses --path when provided; otherwise it uses the local file when present and the global file when local is absent.
 Use search --source to explicitly choose the local file (local/l), global source-of-truth file (global/g), or both (both/b).
 With both, missing source files are warned and skipped as long as at least one source exists.
@@ -97,7 +102,17 @@ def search(
     ] = False,
     all_matches: Annotated[
         bool,
-        typer.Option("--all-matches", "-a", help="Define env vars from every matching secret bundle instead of requiring one unique match."),
+        typer.Option(
+            "--all-matches",
+            "-a",
+            help=("Merge env vars from every matching secret bundle into one environment. Fails when a variable name has different values."),
+        ),
+    ] = False,
+    json_output: Annotated[
+        bool,
+        typer.Option(
+            "--json", "-j", help="Print the original secrets JSON structure with only matching entries instead of defining environment variables."
+        ),
     ] = False,
     preview_secrets: Annotated[
         bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview. Only applies with --interactive/-i.")
@@ -126,11 +141,13 @@ def search(
         list[str] | None, typer.Option("--key", "-k", help="Exact env var key in keyValues to require. Repeat for multiple keys.")
     ] = None,
 ) -> None:
-    """🔐 <S> Define env vars from StackOps secrets files."""
+    """🔐 <S> Select secret bundles for environment variables or JSON output."""
     if all_matches and interactive:
         fail("--all-matches/-a cannot be combined with --interactive/-i.")
     if preview_secrets and not interactive:
         fail("--preview-secrets only applies with --interactive/-i.")
+    if json_output and verbose:
+        fail("--json/-j cannot be combined with --verbose/-v because JSON output must contain only JSON.")
 
     secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
     candidates = load_secret_candidates_from_sources(secret_sources)
@@ -144,28 +161,31 @@ def search(
         keys=clean_selector_values(keys),
     )
     selection_mode: SecretSelectionMode = "interactive" if interactive else "all" if all_matches else "unique"
-    selection = resolve_secret_selection(
-        candidates=candidates,
-        terms=terms,
-        selectors=selectors,
-        selection_mode=selection_mode,
-        preview_secrets=preview_secrets,
+    selected_candidates = resolve_secret_candidates(
+        candidates=candidates, terms=terms, selectors=selectors, selection_mode=selection_mode, preview_secrets=preview_secrets
     )
+    if json_output:
+        typer.echo(render_secret_search_json(selected_candidates), nl=False)
+        return
+
     if interactive:
-        candidate = selection.candidates[0]
+        candidate = selected_candidates[0]
         selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
         echo_jq_login_entry_hint(candidate=candidate, secrets_path=selected_source_path)
-    secret_actions.validate_env_names(selection.key_values)
-    secret_actions.write_env_handoff(selection.key_values, verbose=verbose)
+    key_values = merge_candidate_key_values(selected_candidates)
+    secret_actions.validate_env_names(key_values)
+    secret_actions.write_env_handoff(key_values, verbose=verbose)
     if verbose:
-        for candidate in selection.candidates:
+        for candidate in selected_candidates:
             selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
             echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)
 
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(selection.key_values)} env variable(s)"
+    variable_noun = "variable" if len(key_values) == 1 else "variables"
+    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(key_values)} environment {variable_noun}"
     if all_matches:
-        msg += f" from {len(selection.candidates)} matching secret bundle(s)"
-    typer.echo(msg + ".")
+        bundle_noun = "bundle" if len(selected_candidates) == 1 else "bundles"
+        msg += f" from {len(selected_candidates)} matching secret {bundle_noun}"
+    typer.echo(f"{msg}: {', '.join(key_values)}.")
 
 
 def stats(
@@ -185,17 +205,10 @@ def stats(
         ),
     ] = "both",
     details: Annotated[
-        bool,
-        typer.Option("--details", "-d", help="Show top non-secret labels such as tags and scopes. Secret values are never printed."),
+        bool, typer.Option("--details", "-d", help="Show top non-secret labels such as tags and scopes. Secret values are never printed.")
     ] = False,
-    show_paths: Annotated[
-        bool,
-        typer.Option("--show-paths", "-P", help="Include secrets file paths in the source table."),
-    ] = False,
-    top: Annotated[
-        int,
-        typer.Option("--top", "-t", min=1, max=50, help="Number of tag/scope labels to show with --details."),
-    ] = 8,
+    show_paths: Annotated[bool, typer.Option("--show-paths", "-P", help="Include secrets file paths in the source table.")] = False,
+    top: Annotated[int, typer.Option("--top", "-t", min=1, max=50, help="Number of tag/scope labels to show with --details.")] = 8,
 ) -> None:
     """📊 <t> Show aggregate StackOps secrets inventory stats without printing secret values."""
     secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
@@ -204,48 +217,35 @@ def stats(
 
 
 def subset(
-    output_path: Annotated[
-        Path,
-        typer.Argument(help="Output secrets JSON path. Default mode creates a new file and refuses existing paths."),
-    ],
+    output_path: Annotated[Path, typer.Argument(help="Output secrets JSON path. Default mode creates a new file and refuses existing paths.")],
     secrets_path: Annotated[
         Path | None,
         typer.Option(
-            "--path", "-p", help="Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+            "--path",
+            "-p",
+            help="Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.",
         ),
     ] = None,
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source",
-            "-s",
-            case_sensitive=False,
-            help="Source secrets file to read: local/l or global/g. --path overrides the local source.",
+            "--source", "-s", case_sensitive=False, help="Source secrets file to read: local/l or global/g. --path overrides the local source."
         ),
     ] = "local",
     on_conflict: Annotated[
         cli_subset_support.SubsetOutputConflictOption,
         typer.Option(
-            "--on-conflict",
-            "-o",
-            case_sensitive=False,
-            help="How to handle an existing output path: throw-error/t, overwrite/o, or append/a.",
+            "--on-conflict", "-o", case_sensitive=False, help="How to handle an existing output path: throw-error/t, overwrite/o, or append/a."
         ),
     ] = "throw-error",
-    preview_secrets: Annotated[
-        bool,
-        typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview."),
-    ] = False,
+    preview_secrets: Annotated[bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview.")] = False,
 ) -> None:
     """📦 <u> Create a StackOps secrets subset and choose output conflicts with --on-conflict."""
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
     resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)
     resolved_on_conflict = cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]
     secret_actions.subset_secrets_file(
-        source_path=secret_source.path,
-        output_path=resolved_output_path,
-        on_conflict=resolved_on_conflict,
-        preview_secrets=preview_secrets,
+        source_path=secret_source.path, output_path=resolved_output_path, on_conflict=resolved_on_conflict, preview_secrets=preview_secrets
     )
 
 
@@ -259,15 +259,11 @@ def add(
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source",
-            "-s",
-            case_sensitive=False,
-            help="Secrets file source to update: local/l or global/g. --path overrides the local source.",
+            "--source", "-s", case_sensitive=False, help="Secrets file source to update: local/l or global/g. --path overrides the local source."
         ),
     ] = "local",
     create: Annotated[
-        bool,
-        typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}."),
+        bool, typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.")
     ] = False,
 ) -> None:
     """➕ <a> Append a new login entry to a StackOps secrets file."""
@@ -285,15 +281,11 @@ def edit(
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source",
-            "-s",
-            case_sensitive=False,
-            help="Secrets file source to edit: local/l or global/g. --path overrides the local source.",
+            "--source", "-s", case_sensitive=False, help="Secrets file source to edit: local/l or global/g. --path overrides the local source."
         ),
     ] = "local",
     create: Annotated[
-        bool,
-        typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}."),
+        bool, typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.")
     ] = False,
     editor: Annotated[str, typer.Option("--editor", "-E", help="Editor to use. Defaults to hx.")] = "hx",
 ) -> None:
@@ -303,13 +295,7 @@ def edit(
 
 
 def get_app() -> typer.Typer:
-    app = typer.Typer(
-        name="secrets",
-        help=f"🔐 <S> {SECRETS_HELP}",
-        no_args_is_help=True,
-        add_help_option=True,
-        add_completion=False,
-    )
+    app = typer.Typer(name="secrets", help=f"🔐 <S> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False)
     app.command("search", no_args_is_help=True, help=f"🔎 <s> {SECRETS_SEARCH_HELP}", epilog=SECRETS_SEARCH_EPILOG)(search)
     app.command("s", no_args_is_help=True, help="Alias for search.", epilog=SECRETS_SEARCH_EPILOG, hidden=True)(search)
 

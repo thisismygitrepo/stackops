@@ -116,17 +116,17 @@ def _resolve_global_secrets_path() -> Path:
 
 
 def _load_secret_candidates_from_sources(secret_sources: list[SecretsFileSource]) -> list[SecretCandidate]:
-    include_source_labels = len(secret_sources) > 1
+    allow_missing_sources = len(secret_sources) > 1
     candidates: list[SecretCandidate] = []
     missing_sources: list[SecretsFileSource] = []
     for secret_source in secret_sources:
         if not secret_source.path.exists():
-            if include_source_labels:
+            if allow_missing_sources:
                 missing_sources.append(secret_source)
                 _warn(f"Secrets file not found for {secret_source.name} source: {secret_source.path}")
                 continue
             _fail(f"Secrets file not found: {secret_source.path}")
-        candidates.extend(load_secret_candidates(secret_source.path, source_name=secret_source.name if include_source_labels else None))
+        candidates.extend(load_secret_candidates(secret_source.path, source_name=secret_source.name))
     if not candidates and missing_sources:
         checked_sources = ", ".join(f"{secret_source.name}={secret_source.path}" for secret_source in missing_sources)
         _fail(f"No secrets files found. Checked: {checked_sources}")

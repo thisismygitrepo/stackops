@@ -1354,7 +1354,7 @@
                 "name": "action",
                 "fullPath": "devops repos action",
                 "shortPath": "d r a",
-                "help": "🔄 <a> Run status/pull/commit/push actions across repositories",
+                "help": "🔄 <a> Run Git actions or a shell command across repositories",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
@@ -1365,6 +1365,7 @@
                     "def action(",
                     "    directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
                     "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"🔍 Recurse into nested repositories.\")] = False,",
+                    "    command: Annotated[str | None, typer.Option(\"--command\", \"-C\", help=\"Run a quoted shell command in every repository.\")] = None,",
                     "    auto_uv_sync: Annotated[bool, typer.Option(\"--uv-sync\", \"-u\", help=\"Run uv sync automatically after pulls.\")] = False,",
                     "    status: Annotated[bool, typer.Option(\"--status\", \"-s\", help=\"📋 Show status across repositories.\")] = False,",
                     "    pull: Annotated[bool, typer.Option(\"--pull\", \"-P\", help=\"↓ Pull changes across repositories.\")] = False,",
@@ -1373,9 +1374,16 @@
                     "    message: Annotated[str | None, typer.Option(\"--message\", \"-m\", help=\"Commit message. Required with --commit.\")] = None,",
                     "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-n\", help=\"Preview mutating actions without changing repositories.\")] = False,",
                     ") -> None:",
-                    "    \"\"\"🔄 Run status/pull/commit/push actions across repositories based on flags.\"\"\"",
-                    "    if not status and not pull and not commit and not push:",
-                    "        typer.echo(\"❌ No action selected. Use at least one of --status, --pull, --commit, or --push.\", err=True)",
+                    "    \"\"\"🔄 Run Git actions or a shell command across repositories.\"\"\"",
+                    "    git_action_selected = status or pull or commit or push",
+                    "    if command is not None and not command.strip():",
+                    "        typer.echo(\"❌ --command must contain a non-empty shell command.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if command is None and not git_action_selected:",
+                    "        typer.echo(\"❌ No action selected. Use --command, --status, --pull, --commit, or --push.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if command is not None and git_action_selected:",
+                    "        typer.echo(\"❌ --command cannot be combined with --status, --pull, --commit, or --push.\", err=True)",
                     "        raise typer.Exit(code=1)",
                     "    if status and (pull or commit or push):",
                     "        typer.echo(\"❌ --status cannot be combined with --pull, --commit, or --push.\", err=True)",
@@ -1392,9 +1400,22 @@
                     "    if dry_run and status:",
                     "        typer.echo(\"❌ --dry-run cannot be used with the read-only --status action.\", err=True)",
                     "        raise typer.Exit(code=1)",
+                    "    if dry_run and command is not None:",
+                    "        typer.echo(\"❌ --dry-run cannot be combined with --command.\", err=True)",
+                    "        raise typer.Exit(code=1)",
                     "",
                     "    repos_root = _resolve_directory(directory)",
-                    "    from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations",
+                    "    from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations, render_repository_command_script",
+                    "",
+                    "    if command is not None:",
+                    "        script = render_repository_command_script(repos_root=repos_root, recursive=recursive, command=command)",
+                    "        if script is None:",
+                    "            typer.echo(f\"❌ No Git repositories found at {repos_root}.\", err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        from stackops.utils.code import exit_then_run_shell_script",
+                    "",
+                    "        exit_then_run_shell_script(script=script, strict=False)",
+                    "        return",
                     "",
                     "    summary = perform_git_operations(",
                     "        repos_root=repos_root,",
@@ -1447,6 +1468,28 @@
                           "-r"
                         ],
                         "help": "🔍 Recurse into nested repositories."
+                      }
+                    },
+                    {
+                      "name": "command",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--command', '-C', help='Run a quoted shell command in every repository.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--command",
+                          "-C"
+                        ],
+                        "long_flags": [
+                          "--command"
+                        ],
+                        "short_flags": [
+                          "-C"
+                        ],
+                        "help": "Run a quoted shell command in every repository."
                       }
                     },
                     {
@@ -1609,12 +1652,12 @@
                 "typer": {
                   "no_args_is_help": true
                 },
-                "doc": "🔄 Run status/pull/commit/push actions across repositories based on flags.",
+                "doc": "🔄 Run Git actions or a shell command across repositories.",
                 "aliases": [
                   {
                     "name": "a",
                     "hidden": true,
-                    "help": "Run status/pull/commit/push actions across repositories"
+                    "help": "Run Git actions or a shell command across repositories"
                   }
                 ]
               },
@@ -4350,7 +4393,22 @@
                         "    ] = False,",
                         "    all_matches: Annotated[",
                         "        bool,",
-                        "        typer.Option(\"--all-matches\", \"-a\", help=\"Define env vars from every matching secret bundle instead of requiring one unique match.\"),",
+                        "        typer.Option(",
+                        "            \"--all-matches\",",
+                        "            \"-a\",",
+                        "            help=(",
+                        "                \"Merge env vars from every matching secret bundle into one environment. \"",
+                        "                \"Fails when a variable name has different values.\"",
+                        "            ),",
+                        "        ),",
+                        "    ] = False,",
+                        "    json_output: Annotated[",
+                        "        bool,",
+                        "        typer.Option(",
+                        "            \"--json\",",
+                        "            \"-j\",",
+                        "            help=\"Print the original secrets JSON structure with only matching entries instead of defining environment variables.\",",
+                        "        ),",
                         "    ] = False,",
                         "    preview_secrets: Annotated[",
                         "        bool, typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview. Only applies with --interactive/-i.\")",
@@ -4379,11 +4437,13 @@
                         "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
                         "    ] = None,",
                         ") -> None:",
-                        "    \"\"\"🔐 <S> Define env vars from StackOps secrets files.\"\"\"",
+                        "    \"\"\"🔐 <S> Select secret bundles for environment variables or JSON output.\"\"\"",
                         "    if all_matches and interactive:",
                         "        fail(\"--all-matches/-a cannot be combined with --interactive/-i.\")",
                         "    if preview_secrets and not interactive:",
                         "        fail(\"--preview-secrets only applies with --interactive/-i.\")",
+                        "    if json_output and verbose:",
+                        "        fail(\"--json/-j cannot be combined with --verbose/-v because JSON output must contain only JSON.\")",
                         "",
                         "    secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
                         "    candidates = load_secret_candidates_from_sources(secret_sources)",
@@ -4397,28 +4457,35 @@
                         "        keys=clean_selector_values(keys),",
                         "    )",
                         "    selection_mode: SecretSelectionMode = \"interactive\" if interactive else \"all\" if all_matches else \"unique\"",
-                        "    selection = resolve_secret_selection(",
+                        "    selected_candidates = resolve_secret_candidates(",
                         "        candidates=candidates,",
                         "        terms=terms,",
                         "        selectors=selectors,",
                         "        selection_mode=selection_mode,",
                         "        preview_secrets=preview_secrets,",
                         "    )",
+                        "    if json_output:",
+                        "        typer.echo(render_secret_search_json(selected_candidates), nl=False)",
+                        "        return",
+                        "",
                         "    if interactive:",
-                        "        candidate = selection.candidates[0]",
+                        "        candidate = selected_candidates[0]",
                         "        selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
                         "        echo_jq_login_entry_hint(candidate=candidate, secrets_path=selected_source_path)",
-                        "    secret_actions.validate_env_names(selection.key_values)",
-                        "    secret_actions.write_env_handoff(selection.key_values, verbose=verbose)",
+                        "    key_values = merge_candidate_key_values(selected_candidates)",
+                        "    secret_actions.validate_env_names(key_values)",
+                        "    secret_actions.write_env_handoff(key_values, verbose=verbose)",
                         "    if verbose:",
-                        "        for candidate in selection.candidates:",
+                        "        for candidate in selected_candidates:",
                         "            selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)",
                         "            echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)",
                         "",
-                        "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(selection.key_values)} env variable(s)\"",
+                        "    variable_noun = \"variable\" if len(key_values) == 1 else \"variables\"",
+                        "    msg = typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Prepared {len(key_values)} environment {variable_noun}\"",
                         "    if all_matches:",
-                        "        msg += f\" from {len(selection.candidates)} matching secret bundle(s)\"",
-                        "    typer.echo(msg + \".\")"
+                        "        bundle_noun = \"bundle\" if len(selected_candidates) == 1 else \"bundles\"",
+                        "        msg += f\" from {len(selected_candidates)} matching secret {bundle_noun}\"",
+                        "    typer.echo(f\"{msg}: {', '.join(key_values)}.\")"
                       ],
                       "name": "search",
                       "parameters": [
@@ -4509,7 +4576,7 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Define env vars from every matching secret bundle instead of requiring one unique match.')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Merge env vars from every matching secret bundle into one environment. Fails when a variable name has different values.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -4522,7 +4589,29 @@
                             "short_flags": [
                               "-a"
                             ],
-                            "help": "Define env vars from every matching secret bundle instead of requiring one unique match."
+                            "help": "Merge env vars from every matching secret bundle into one environment. Fails when a variable name has different values."
+                          }
+                        },
+                        {
+                          "name": "json_output",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the original secrets JSON structure with only matching entries instead of defining environment variables.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--json",
+                              "-j"
+                            ],
+                            "long_flags": [
+                              "--json"
+                            ],
+                            "short_flags": [
+                              "-j"
+                            ],
+                            "help": "Print the original secrets JSON structure with only matching entries instead of defining environment variables."
                           }
                         },
                         {
@@ -4732,7 +4821,7 @@
                       "no_args_is_help": true,
                       "epilog": "SECRETS_SEARCH_EPILOG"
                     },
-                    "doc": "🔐 <S> Define env vars from StackOps secrets files.",
+                    "doc": "🔐 <S> Select secret bundles for environment variables or JSON output.",
                     "aliases": [
                       {
                         "name": "s",
@@ -13697,7 +13786,7 @@
             "signature": {
               "raw_lines": [
                 "def kill_session_target(",
-                "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to kill. If not provided, a list will be shown to choose from.\")] = None,",
+                "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.\")] = None,",
                 "        kill_all: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Kill all sessions. With --idle, inspect all sessions for idle panes/windows.\", show_default=True)] = False,",
                 "        idle: Annotated[bool, typer.Option(\"--idle\", \"-i\", help=\"Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.\", show_default=True)] = False,",
@@ -13764,6 +13853,17 @@
                 "        from stackops.utils.code import exit_then_run_shell_script",
                 "",
                 "        print_kill_summary(script=script, killed_targets=killed_targets)",
+                "        if backend_resolved == \"herdr\":",
+                "            from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import (",
+                "                run_detached_shell_script,",
+                "            )",
+                "",
+                "            try:",
+                "                run_detached_shell_script(script)",
+                "                return",
+                "            except OSError as error:",
+                "                typer.echo(f\"Error: unable to start detached Herdr cleanup: {error}\", err=True, color=True)",
+                "                raise typer.Exit(code=1) from error",
                 "        exit_then_run_shell_script(script=script, strict=True)",
                 "        return",
                 "    typer.echo(\"Error: kill operation did not return a final script.\", err=True, color=True)",
@@ -13777,13 +13877,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name of the session to kill. If not provided, a list will be shown to choose from.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help=\"Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.\")]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of the session to kill. If not provided, a list will be shown to choose from."
+                    "help": "Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from."
                   }
                 },
                 {
@@ -18350,6 +18450,84 @@
                 "name": "c",
                 "hidden": true,
                 "help": "Initialize AI configurations in the current repository."
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "clean",
+            "fullPath": "agents clean",
+            "shortPath": "a C",
+            "help": "Delete the .ai directory from each selected repository.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "callable": "clean"
+            },
+            "signature": {
+              "raw_lines": [
+                "def clean(",
+                "    directory: Annotated[str | None, typer.Argument(help=\"Directory containing repositories to clean.\")] = None,",
+                "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"Recurse into nested repositories.\")] = False,",
+                ") -> None:",
+                "    \"\"\"Delete the .ai directory from each selected repository.\"\"\"",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_clean import clean_agent_directories",
+                "",
+                "    repositories_found = clean_agent_directories(directory=directory, recursive=recursive)",
+                "    if not repositories_found:",
+                "        raise typer.Exit(code=1)"
+              ],
+              "name": "clean",
+              "parameters": [
+                {
+                  "name": "directory",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Directory containing repositories to clean.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Directory containing repositories to clean."
+                  }
+                },
+                {
+                  "name": "recursive",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--recursive', '-r', help='Recurse into nested repositories.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--recursive",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--recursive"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Recurse into nested repositories."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<C> Delete .ai directories from repositories",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "Delete the .ai directory from each selected repository.",
+            "aliases": [
+              {
+                "name": "C",
+                "hidden": true
               }
             ]
           },
