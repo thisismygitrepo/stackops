@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -188,65 +189,44 @@ def display_config_files_status(status: dict[str, Any]) -> None:
 
 def display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
     """Display important tools installation status organized by groups."""
-    console.rule("[bold bright_magenta]🛠️  Important Tools[/bold bright_magenta]")
+    unique_tool_status = {tool: installed for tools in grouped_tools.values() for tool, installed in tools.items()}
+    installed_tool_count = sum(unique_tool_status.values())
+    total_tool_count = len(unique_tool_status)
+    overall_percentage = (installed_tool_count / total_tool_count * 100) if total_tool_count else 0
 
-    from rich.columns import Columns
-    from rich.console import Group
+    section_title = Text("🛠️  Important Tools", style="bold bright_magenta")
+    section_title.append(
+        f" · {installed_tool_count}/{total_tool_count} unique installed ({overall_percentage:.0f}%)",
+        style="bright_magenta",
+    )
+    console.rule(section_title)
 
-    all_group_panels = []
-    total_installed = 0
-    total_tools = 0
+    table = Table(box=box.SIMPLE_HEAD, header_style="bold bright_magenta", padding=(0, 1))
+    table.add_column("Group", style="bold cyan", no_wrap=True)
+    table.add_column("Installed", justify="right")
+    table.add_column("Missing", justify="right")
+    table.add_column("Coverage", justify="right")
 
     for group_name, tools in grouped_tools.items():
-        sorted_tools = sorted(tools.keys())
-        installed = [tool for tool, status in tools.items() if status]
-        total_installed += len(installed)
-        total_tools += len(tools)
-
-        num_columns = 8
-        tools_per_column = (len(sorted_tools) + num_columns - 1) // num_columns
-
-        tables = []
-        for col_idx in range(num_columns):
-            table = Table(show_header=False, box=None, padding=(0, 0), collapse_padding=True)
-            table.add_column("Tool", style="cyan", no_wrap=True, width=None)
-            table.add_column("", justify="center", width=2, no_wrap=True)
-
-            start_idx = col_idx * tools_per_column
-            end_idx = min(start_idx + tools_per_column, len(sorted_tools))
-
-            for i in range(start_idx, end_idx):
-                tool = sorted_tools[i]
-                status_icon = "✅" if tools[tool] else "❌"
-                table.add_row(tool, status_icon)
-
-            if start_idx < len(sorted_tools):
-                tables.append(table)
-
-        installed_percentage = (len(installed) / len(tools) * 100) if tools else 0
-        border_style = "green" if installed_percentage > 80 else ("yellow" if installed_percentage > 50 else "red")
-
+        installed_count = sum(tools.values())
+        missing_count = len(tools) - installed_count
+        installed_percentage = (installed_count / len(tools) * 100) if tools else 0
+        coverage_style = "green" if installed_percentage > 80 else ("yellow" if installed_percentage > 50 else "red")
         group_display_name = group_name.replace("_", " ").title()
-        group_panel = Panel(
-            Columns(tables, equal=False, expand=False, padding=(0, 1)),
-            title=f"{group_display_name} ({len(installed)}/{len(tools)})",
-            border_style=border_style,
-            padding=(0, 1),
-            expand=False,
+
+        table.add_row(
+            group_display_name,
+            str(installed_count),
+            str(missing_count),
+            Text(f"{installed_percentage:.0f}%", style=coverage_style),
         )
-        all_group_panels.append(group_panel)
 
-    overall_percentage = (total_installed / total_tools * 100) if total_tools else 0
-    master_border_style = "green" if overall_percentage > 80 else ("yellow" if overall_percentage > 50 else "red")
+    console.print(table)
 
-    master_panel = Panel(
-        Group(*all_group_panels),
-        title=f"🛠️  Tools Overview ({total_installed}/{total_tools} installed - {overall_percentage:.0f}%)",
-        border_style=master_border_style,
-        padding=(1, 2),
-        expand=False,
-    )
-    console.print(master_panel)
+    missing_tool_names = sorted(tool for tool, installed in unique_tool_status.items() if not installed)
+    missing_summary = Text(f"Missing tools ({len(missing_tool_names)}): ", style="bold red")
+    missing_summary.append(", ".join(missing_tool_names) if missing_tool_names else "None", style="red" if missing_tool_names else "green")
+    console.print(missing_summary)
 
 
 def display_backup_status(status: dict[str, Any]) -> None:

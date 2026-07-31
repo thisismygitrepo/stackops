@@ -140,7 +140,7 @@ def _stopped_session_names(sessions: Iterable[JsonObject]) -> list[str]:
     names: list[str] = []
     for session in sessions:
         name = _session_name(session)
-        if name is not None and not bool(session.get("running")):
+        if name is not None and not bool(session.get("running")) and not bool(session.get("default")):
             names.append(name)
     return names
 
@@ -188,6 +188,13 @@ def stop_session_script(name: str) -> str:
 
 def delete_session_script(name: str) -> str:
     return f"herdr session delete {quote(name)} --json"
+
+
+def kill_session_script(name: str, is_default: bool) -> str:
+    stop_script = stop_session_script(name)
+    if is_default:
+        return stop_script
+    return "\n".join((stop_script, delete_session_script(name)))
 
 
 def _tab_entries(session_name: str) -> list[JsonObject]:
@@ -637,15 +644,22 @@ def choose_kill_target(
                 return ("error", f"No Herdr session named '{name}' is available to delete.", [])
             if bool(session.get("running")):
                 return ("error", f"Herdr session '{name}' is running and cannot be deleted.", [])
+            if bool(session.get("default")):
+                return ("error", "Herdr reserves the default session record and does not support deleting it.", [])
             return ("run_script", delete_session_script(name), [])
 
-        if len(stopped_sessions) == 0:
+        deletable_stopped_sessions = [
+            session
+            for session in stopped_sessions
+            if not bool(session.get("default"))
+        ]
+        if len(deletable_stopped_sessions) == 0:
             return ("error", "No stopped Herdr sessions are available to delete.", [])
 
         options_to_script: dict[str, str] = {}
         options_to_preview_mapping: dict[str, str] = {}
         option_parent_labels: dict[str, tuple[str, ...]] = {}
-        for session in stopped_sessions:
+        for session in deletable_stopped_sessions:
             session_name = _session_name(session)
             session_label = _session_label_for_delete_option(session)
             if session_name is None or session_label is None:
@@ -673,7 +687,11 @@ def choose_kill_target(
         return ("run_script", "\n".join(scripts), [])
 
     if kill_all:
-        scripts = [stop_session_script(session_name) for session_name in _running_session_names(running_sessions)]
+        scripts = [
+            kill_session_script(session_name, bool(session.get("default")))
+            for session in running_sessions
+            if (session_name := _session_name(session)) is not None
+        ]
         if len(scripts) == 0:
             return ("error", "No running Herdr sessions are available to kill.", [])
         return ("run_script", "\n".join(scripts), [])
@@ -684,7 +702,7 @@ def choose_kill_target(
             return ("error", f"No Herdr session named '{name}' is available to kill.", [])
         if not bool(session.get("running")):
             return ("error", f"Herdr session '{name}' is stopped and cannot be killed.", [])
-        return ("run_script", stop_session_script(name), [])
+        return ("run_script", kill_session_script(name, bool(session.get("default"))), [])
 
     if len(running_sessions) == 0:
         return ("error", "No running Herdr sessions are available to kill.", [])
@@ -701,7 +719,7 @@ def choose_kill_target(
             session_label = _session_label_for_kill_option(session)
             if session_label is None:
                 continue
-            options_to_script[session_label] = stop_session_script(session_name)
+            options_to_script[session_label] = kill_session_script(session_name, bool(session.get("default")))
             options_to_preview_mapping[session_label] = _session_preview(session)
             option_parent_labels[session_label] = ()
         active_sessions = _running_session_names(running_sessions)
@@ -736,7 +754,7 @@ def choose_kill_target(
             session_name = _session_name(session)
             if session_name is None:
                 continue
-            options_to_script[session_name] = stop_session_script(session_name)
+            options_to_script[session_name] = kill_session_script(session_name, bool(session.get("default")))
             options_to_preview_mapping[session_name] = _session_preview(session)
             option_parent_labels[session_name] = ()
         msg = "Choose a Herdr session to kill:"

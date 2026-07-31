@@ -1,10 +1,23 @@
 """Shared helpers for terminal CLI commands."""
 
+import subprocess
 from typing import Literal
 
 import typer
 
 from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
+
+
+def run_detached_shell_script(script: str) -> None:
+    if script.strip() == "":
+        raise ValueError("Detached shell script must not be empty.")
+    _process = subprocess.Popen(
+        ("sh", "-c", script),
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
 
 
 def parse_tmux_target(target: str) -> tuple[str, str, str]:
