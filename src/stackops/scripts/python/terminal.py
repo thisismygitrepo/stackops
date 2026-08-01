@@ -181,7 +181,7 @@ def attach_to_session(
 
 
 def kill_session_target(
-        name: Annotated[str | None, typer.Argument(help="Name of the session to kill. Supports * and ? selectors. If not provided, a list will be shown to choose from.")] = None,
+        name: Annotated[str | None, typer.Argument(help="Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.")] = None,
         kill_all: Annotated[bool, typer.Option("--all", "-a", help="Kill all sessions. With --idle, inspect all sessions for idle panes/windows.", show_default=True)] = False,
         idle: Annotated[bool, typer.Option("--idle", "-i", help="Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
@@ -248,6 +248,17 @@ def kill_session_target(
         from stackops.utils.code import exit_then_run_shell_script
 
         print_kill_summary(script=script, killed_targets=killed_targets)
+        if backend_resolved == "herdr":
+            from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import (
+                run_detached_shell_script,
+            )
+
+            try:
+                run_detached_shell_script(script)
+                return
+            except OSError as error:
+                typer.echo(f"Error: unable to start detached Herdr cleanup: {error}", err=True, color=True)
+                raise typer.Exit(code=1) from error
         exit_then_run_shell_script(script=script, strict=True)
         return
     typer.echo("Error: kill operation did not return a final script.", err=True, color=True)

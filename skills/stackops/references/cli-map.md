@@ -1,6 +1,6 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-07-11.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-07-31.
 
 Use this as a root index only. Discover command groups, options, defaults, and help text from the live CLI with `--help`.
 
@@ -39,7 +39,7 @@ Defined in `pyproject.toml` `[project.scripts]`:
 
 ## Important Nuances
 
-- Developer-only command groups under `devops self` depend on the developer checkout at `/Users/alex/code/stackops`.
+- Developer-only command groups under `devops self` depend on the developer checkout at `/home/alex/code/stackops`.
 - Callback groups are invoked as the group command itself; confirm the exact behavior with `--help`.
 - The generated graph stores command metadata. Use `src/stackops/scripts/python/graph/cli_graph.json` only when live help or source is insufficient.
 - Docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.

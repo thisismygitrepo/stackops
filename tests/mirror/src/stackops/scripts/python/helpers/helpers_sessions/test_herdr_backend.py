@@ -159,5 +159,65 @@ def test_window_kill_scopes_session_parent_suppression_without_parsing_labels(mo
     action, script, killed_targets = _herdr_backend.choose_kill_target(name=None, kill_all=False, idle=False, window=True, delete=False)
 
     assert action == "run_script"
-    assert script == "herdr session stop 'one]broken' --json\nclose-second-child"
+    assert script == "herdr session stop 'one]broken' --json\nherdr session delete 'one]broken' --json\nclose-second-child"
+    assert killed_targets == []
+
+
+def test_named_session_kill_stops_and_deletes_record(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        _herdr_backend,
+        "_session_entries",
+        lambda: [{"default": False, "name": "demo", "running": True}],
+    )
+
+    action, script, killed_targets = _herdr_backend.choose_kill_target(
+        name="demo",
+        kill_all=False,
+        idle=False,
+        window=False,
+        delete=False,
+    )
+
+    assert action == "run_script"
+    assert script == "herdr session stop demo --json\nherdr session delete demo --json"
+    assert killed_targets == []
+
+
+def test_default_session_kill_only_stops_reserved_record(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        _herdr_backend,
+        "_session_entries",
+        lambda: [{"default": True, "name": "default", "running": True}],
+    )
+
+    action, script, killed_targets = _herdr_backend.choose_kill_target(
+        name="default",
+        kill_all=False,
+        idle=False,
+        window=False,
+        delete=False,
+    )
+
+    assert action == "run_script"
+    assert script == "herdr session stop default --json"
+    assert killed_targets == []
+
+
+def test_default_session_delete_reports_herdr_constraint(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        _herdr_backend,
+        "_session_entries",
+        lambda: [{"default": True, "name": "default", "running": False}],
+    )
+
+    action, message, killed_targets = _herdr_backend.choose_kill_target(
+        name="default",
+        kill_all=False,
+        idle=False,
+        window=False,
+        delete=True,
+    )
+
+    assert action == "error"
+    assert message == "Herdr reserves the default session record and does not support deleting it."
     assert killed_targets == []
