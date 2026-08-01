@@ -107,7 +107,7 @@ Markdown records should preserve decisions, evidence, blockers, and next actions
 
 ## Layout
 
-Herdr top-level terminal targets are `tab` resources inside a `workspace`; a pane is a split inside one tab. Treat user requests for tabs or windows as one Herdr tab per agent unless installed help exposes a separate window concept.
+Use Herdr's persistent `default` session and create workflow workspaces within it. Do not create a named session per workflow as with tmux; use another Herdr session only when the user explicitly requests one. Inside a workspace, top-level terminal targets are `tab` resources; a pane is a split inside one tab. Treat user requests for tabs or windows as one Herdr tab per agent unless installed help exposes a separate window concept.
 
 Default layout: one agent per Herdr tab, exactly one pane per tab. Use panes only when the user explicitly requests a pane layout. Then split evenly, verify pane count, and keep exactly one agent per pane.
 

@@ -17,8 +17,7 @@ Use this skill to move from a StackOps command request to the current Typer surf
 2. Resolve command path progressively.
 - Start with a top-level entrypoint from the list below.
 - Run `<entrypoint> --help`, then repeat with each discovered command segment until you reach the needed leaf.
-- Do not rely on checked-in text for options, defaults, aliases, or child commands when `--help` can answer.
-- Use canonical command names only (no short aliases).
+- Do not rely on checked-in text for options, defaults, or child commands when `--help` can answer.
 - Prefer the shortest direct entrypoint that reaches the command.
 
 3. Use references only when they reduce search.
@@ -67,5 +66,4 @@ Use this skill to move from a StackOps command request to the current Typer surf
 UV_CACHE_DIR=/tmp/uv-cache uv run devops --help
 ```
 - Use long flags in guidance.
-- Do not rely on aliases in examples unless the user explicitly asks about aliases.
 - After changing command behavior, run the narrow command help path and any focused tests or type checks for touched Python files.
