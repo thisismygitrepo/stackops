@@ -6686,6 +6686,28 @@
           "darwin": "uv tool install specify-cli --from git+https://github.com/github/spec-kit.git"
         }
       }
+    },
+    {
+      "appName": "openspec",
+      "license": "MIT",
+      "repoURL": "https://github.com/Fission-AI/openspec",
+      "doc": "Spec-driven development framework for AI coding assistants.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "build-devops-containers"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g @fission-ai/openspec@latest",
+          "windows": "bun install -g @fission-ai/openspec@latest",
+          "darwin": "bun install -g @fission-ai/openspec@latest"
+        },
+        "arm64": {
+          "linux": "bun install -g @fission-ai/openspec@latest",
+          "windows": "bun install -g @fission-ai/openspec@latest",
+          "darwin": "bun install -g @fission-ai/openspec@latest"
+        }
+      }
     }
   ]
 }
