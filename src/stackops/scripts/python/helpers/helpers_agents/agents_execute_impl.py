@@ -6,7 +6,6 @@ from platform import system
 from time import sleep
 from typing import Final
 
-from stackops.scripts.python.helpers.helpers_agents.agents_plan_impl import PLAN_DIRECTORY
 from stackops.scripts.python.helpers.helpers_agents.agents_execute_models import (
     ADVANCE_STATUSES,
     READY_STATUSES,
@@ -21,6 +20,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
 EXECUTE_INTERVAL_SECONDS: Final[int] = 300
+_PLAN_DIRECTORY: Final[Path] = Path(".ai") / "plans"
 _PLAN_GLOB: Final[str] = "*.plan.json"
 
 
@@ -40,7 +40,7 @@ def resolve_execute_plan_path(*, plan_path: Path | None, cwd: Path) -> Path:
     if plan_path is not None:
         return plan_path
 
-    plan_directory = cwd / PLAN_DIRECTORY
+    plan_directory = cwd / _PLAN_DIRECTORY
     if not plan_directory.exists():
         raise ValueError(f"No plan JSON path was provided and plan directory does not exist: {plan_directory}")
     if not plan_directory.is_dir():

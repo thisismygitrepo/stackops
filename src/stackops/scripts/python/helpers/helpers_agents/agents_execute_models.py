@@ -1,9 +1,12 @@
 import json
 from pathlib import Path
-from typing import Final, TypedDict, cast, get_args
+from typing import Final, Literal, TypedDict, cast, get_args
 
-from stackops.scripts.python.helpers.helpers_agents.agents_plan_impl import AgentOpsCommand, PlanPhaseStatus
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+
+
+type PlanPhaseStatus = Literal["pending", "ready", "running", "blocked", "completed", "skipped", "cancelled"]
+type AgentOpsCommand = Literal["handover", "iter", "parallel-agents", "parallel-isolated-agents"]
 
 
 class PlanPhase(TypedDict):

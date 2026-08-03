@@ -1,9 +1,10 @@
-from typing import Annotated
+from typing import Annotated, cast, get_args
 
 import typer
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName, BrowserTechName, DEFAULT_BROWSER_PORT
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import DetachedBrowserLaunchResult, TmuxBrowserLaunchResult
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
 
 
 def install_tech(
@@ -17,26 +18,52 @@ def install_tech(
             show_choices=True,
         ),
     ] = "agent-browser",
+    agent: Annotated[
+        AGENTS | None,
+        typer.Option(
+            "--agent",
+            "-a",
+            help="Agent to receive the browser skill or MCP configuration guidance. Omit to choose interactively.",
+            case_sensitive=False,
+            show_choices=True,
+        ),
+    ] = None,
 ) -> None:
     """Install browser automation CLI or MCP support for agents."""
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech
 
     try:
-        result = install_browser_tech(which=which)
+        resolved_agent = agent
+        if resolved_agent is None:
+            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import (
+                choose_required_option,
+                order_current_first,
+            )
+
+            agent_options = cast(tuple[AGENTS, ...], get_args(AGENTS))
+            resolved_agent = cast(
+                AGENTS,
+                choose_required_option(
+                    options=order_current_first(options=agent_options, current=DEFAULT_AGENT), msg="Choose agent", header="Agent"
+                ),
+            )
+        result = install_browser_tech(which=which, agent=resolved_agent)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
-    typer.echo(f"Prepared {result.which} in: {result.install_root}")
+    typer.echo(f"Prepared {result.which} for {resolved_agent} in: {result.install_root}")
     for command in result.commands:
         typer.echo(f"Ran: {' '.join(command)}")
     for guide_path in result.guide_paths:
         typer.echo(f"Wrote: {guide_path}")
     if len(result.mcp_servers) > 0:
         typer.echo(f"MCP catalog servers: {', '.join(result.mcp_servers)}")
-        typer.echo(f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent codex --scope local")
+        typer.echo(
+            f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local"
+        )
 
 
 def launch_browser(

@@ -2,6 +2,8 @@ from pathlib import Path
 from tempfile import gettempdir
 from typing import Final, Literal, TypeAlias
 
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+
 BrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox", "safari"]
 BrowserTechName: TypeAlias = Literal["agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
 
@@ -20,3 +22,20 @@ BROWSER_PROFILES_ROOT: Final[Path] = Path.home().joinpath("data", "browsers-prof
 TEMP_BROWSER_PROFILES_ROOT: Final[Path] = Path(gettempdir()).joinpath("stackops-browser-profiles")
 REMOTE_DEBUGGING_LOCALHOST: Final[str] = "127.0.0.1"
 REMOTE_DEBUGGING_LAN: Final[str] = "0.0.0.0"
+BROWSER_SKILLS_CLI_AGENT_BY_STACKOPS_AGENT: Final[dict[AGENTS, str]] = {
+    "agy": "antigravity-cli",
+    "cursor-agent": "cursor",
+    "claude": "claude-code",
+    "qwen": "qwen-code",
+    "copilot": "github-copilot",
+    "codex": "codex",
+    "forge": "forgecode",
+    "crush": "crush",
+    "opencode": "opencode",
+    "kilocode": "kilo",
+    "cline": "cline",
+    "auggie": "augment",
+    "oz": "warp",
+    "droid": "droid",
+    "pi": "pi",
+}
