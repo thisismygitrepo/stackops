@@ -1,7 +1,13 @@
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_launch import (
-    attach_or_switch_tmux_session,
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_lifecycle import (
+    attach_or_switch_tmux_window,
+    assert_browser_tmux_window_running,
     build_attach_or_switch_command,
+    close_browser_tmux_launch,
+    prune_dead_browser_tmux_launches,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_launch import (
     launch_browser_tmux,
+    repair_browser_tmux_relay,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models import (
     STACKOPS_BROWSER_TMUX_SESSION_NAME,
@@ -19,8 +25,12 @@ __all__ = [
     "BrowserTmuxLaunch",
     "BrowserTmuxMetadata",
     "BrowserTmuxPaneStatus",
-    "attach_or_switch_tmux_session",
+    "attach_or_switch_tmux_window",
+    "assert_browser_tmux_window_running",
     "build_attach_or_switch_command",
+    "close_browser_tmux_launch",
     "collect_browser_tmux_status",
     "launch_browser_tmux",
+    "prune_dead_browser_tmux_launches",
+    "repair_browser_tmux_relay",
 ]

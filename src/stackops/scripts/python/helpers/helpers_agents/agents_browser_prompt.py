@@ -4,6 +4,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BrowserName,
     REMOTE_DEBUGGING_LOCALHOST,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_identity import browser_launch_id
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
 
@@ -18,7 +19,8 @@ def write_browser_prompt(
     profile_path: Path | None,
 ) -> Path:
     launcher = get_browser_launcher(browser=browser)
-    prompt_path = browsing_root.expanduser().joinpath("prompt.md")
+    launch_id = browser_launch_id(browser=browser, profile_path=profile_path, port=port)
+    prompt_path = browsing_root.expanduser().joinpath("prompts", f"{launch_id}.md")
     prompt_path.parent.mkdir(parents=True, exist_ok=True)
     lan_instructions = (
         f"""If this browser endpoint is on another computer, connect from the agent machine to `http://<LAN-IP>:{port}`.

@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 import re
 
@@ -19,4 +20,7 @@ def browser_launch_id(*, browser: BrowserName, profile_path: Path | None, port: 
     profile_slug = re.sub("[^a-z0-9]+", "-", profile.strip().lower()).strip("-")
     if browser_slug == "" or profile_slug == "":
         raise ValueError("browser launch identity segments must not be empty")
-    return f"{browser_slug}-{profile_slug}-p{port}"
+    if profile_path is None:
+        return f"{browser_slug}-{profile_slug}-p{port}"
+    profile_digest = hashlib.sha256(str(profile_path).encode("utf-8")).hexdigest()[:16]
+    return f"{browser_slug}-{profile_slug}-{profile_digest}-p{port}"

@@ -1,9 +1,18 @@
 from collections.abc import Mapping, Sequence
+import json
 import socket
 import subprocess
 import sys
+import time
+from typing import cast
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
+    BROWSER_CDP_REQUEST_TIMEOUT_SECONDS,
+    BROWSER_ENDPOINT_PROBE_INTERVAL_SECONDS,
+    BROWSER_ENDPOINT_STARTUP_TIMEOUT_SECONDS,
+    BROWSER_PROCESS_TERMINATION_TIMEOUT_SECONDS,
     REMOTE_DEBUGGING_LAN,
     REMOTE_DEBUGGING_LOCALHOST,
 )
@@ -59,6 +68,78 @@ def find_available_localhost_port(*, excluded_port: int) -> int:
         if chosen_port != excluded_port:
             return chosen_port
     raise RuntimeError("Could not find an internal localhost browser endpoint port")
+
+
+def tcp_port_is_open(*, host: str, port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe_socket:
+        probe_socket.settimeout(BROWSER_ENDPOINT_PROBE_INTERVAL_SECONDS)
+        return probe_socket.connect_ex((host, port)) == 0
+
+
+def ensure_cdp_page_target(*, port: int) -> bool:
+    targets_url = f"http://{REMOTE_DEBUGGING_LOCALHOST}:{port}/json/list"
+    try:
+        with urlopen(targets_url, timeout=BROWSER_CDP_REQUEST_TIMEOUT_SECONDS) as response:
+            targets = cast(list[dict[str, object]], json.loads(response.read()))
+        if any(target.get("type") == "page" for target in targets):
+            return False
+        target_url = quote("about:blank", safe="")
+        request = Request(
+            f"http://{REMOTE_DEBUGGING_LOCALHOST}:{port}/json/new?{target_url}",
+            method="PUT",
+        )
+        with urlopen(request, timeout=BROWSER_CDP_REQUEST_TIMEOUT_SECONDS):
+            return True
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"Existing CDP endpoint on port {port} could not open a browser page: {error}") from error
+
+
+def verify_cdp_endpoint(*, port: int) -> None:
+    version_url = f"http://{REMOTE_DEBUGGING_LOCALHOST}:{port}/json/version"
+    try:
+        with urlopen(version_url, timeout=BROWSER_CDP_REQUEST_TIMEOUT_SECONDS) as response:
+            version = cast(dict[str, object], json.loads(response.read()))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"Endpoint on port {port} is not a valid Chrome DevTools Protocol endpoint: {error}") from error
+    web_socket_url = version.get("webSocketDebuggerUrl")
+    if not isinstance(web_socket_url, str) or not web_socket_url.startswith("ws://"):
+        raise RuntimeError(f"Endpoint on port {port} did not provide a Chrome DevTools Protocol WebSocket URL")
+
+
+def wait_for_tcp_endpoint(
+    *,
+    host: str,
+    port: int,
+    process: subprocess.Popen[bytes] | None,
+    process_label: str,
+) -> None:
+    deadline = time.monotonic() + BROWSER_ENDPOINT_STARTUP_TIMEOUT_SECONDS
+    while time.monotonic() < deadline:
+        if process is not None:
+            return_code = process.poll()
+            if return_code is not None:
+                raise RuntimeError(f"{process_label} exited before endpoint {host}:{port} became ready (exit code {return_code})")
+        if tcp_port_is_open(host=host, port=port):
+            if process is not None:
+                time.sleep(BROWSER_ENDPOINT_PROBE_INTERVAL_SECONDS)
+                return_code = process.poll()
+                if return_code is not None:
+                    raise RuntimeError(
+                        f"{process_label} exited while endpoint {host}:{port} became ready (exit code {return_code})"
+                    )
+            return
+        time.sleep(BROWSER_ENDPOINT_PROBE_INTERVAL_SECONDS)
+    raise RuntimeError(f"{process_label} did not open endpoint {host}:{port} within {BROWSER_ENDPOINT_STARTUP_TIMEOUT_SECONDS:g} seconds")
+
+
+def terminate_background_process(*, process: subprocess.Popen[bytes], process_label: str) -> None:
+    if process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=BROWSER_PROCESS_TERMINATION_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(f"{process_label} process {process.pid} did not stop after termination") from error
 
 
 def build_relay_command(*, listen_port: int, target_port: int) -> tuple[str, ...]:

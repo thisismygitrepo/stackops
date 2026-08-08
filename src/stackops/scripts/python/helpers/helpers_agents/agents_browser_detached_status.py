@@ -103,9 +103,8 @@ def collect_detached_browser_status() -> tuple[DetachedBrowserStatus, ...]:
         return ()
     statuses: list[DetachedBrowserStatus] = []
     for record_path in sorted(BROWSER_DETACHED_LAUNCHES_ROOT.glob("*.json")):
-        launch = _read_detached_browser_launch(record_path=record_path)
+        launch = read_detached_browser_launch(record_path=record_path)
         browser_process_id = find_browser_process_id(
-            launch_id=launch.launch_id,
             browser=launch.browser,
             browser_port=launch.browser_port,
             profile_path=launch.profile_path,
@@ -126,7 +125,7 @@ def collect_detached_browser_status() -> tuple[DetachedBrowserStatus, ...]:
     return tuple(statuses)
 
 
-def _read_detached_browser_launch(*, record_path: Path) -> DetachedBrowserLaunchRecord:
+def read_detached_browser_launch(*, record_path: Path) -> DetachedBrowserLaunchRecord:
     try:
         payload = cast(DetachedBrowserLaunchPayload, json.loads(record_path.read_text(encoding="utf-8")))
         if payload["schema_version"] != 1:

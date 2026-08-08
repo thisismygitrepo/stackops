@@ -10,7 +10,6 @@ def show_detached_browser_status() -> None:
     rows = collect_detached_browser_status()
     table = Table(
         title=f"StackOps detached browser status: {len(rows)} tracked launch(es)",
-        caption="Detached browsers launched before status tracking was added must be relaunched.",
         box=box.SIMPLE_HEAVY,
         show_lines=False,
     )
@@ -46,6 +45,12 @@ def show_detached_browser_status() -> None:
 
 def show_tmux_browser_status() -> None:
     rows = collect_browser_tmux_status()
+    active_launch_ids = {
+        row.metadata.launch_id
+        for row in rows
+        if not row.pane_dead
+    }
+    rows = tuple(row for row in rows if row.metadata.launch_id in active_launch_ids)
     launch_count = len({row.metadata.launch_id for row in rows})
     window_count = len({row.window_id for row in rows})
     table = Table(

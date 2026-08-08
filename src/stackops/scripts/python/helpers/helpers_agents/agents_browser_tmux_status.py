@@ -59,7 +59,7 @@ def _read_window_metadata(*, window_id: str) -> BrowserTmuxMetadata:
 
 def _read_window_option(*, window_id: str, option: str) -> str:
     result = subprocess.run(
-        ("tmux", "show-window-options", "-qv", "-t", window_id, option),
+        ("tmux", "show-window-options", "-v", "-t", window_id, option),
         capture_output=True,
         text=True,
         check=False,

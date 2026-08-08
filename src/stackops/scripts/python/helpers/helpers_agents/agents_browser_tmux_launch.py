@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from pathlib import Path
-import os
 import shlex
 import subprocess
 
@@ -12,6 +11,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_common i
     run_optional_tmux_command,
     run_required_tmux_command,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_lifecycle import build_attach_or_switch_command
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models import (
     STACKOPS_BROWSER_TMUX_SESSION_NAME,
     BrowserTmuxLaunch,
@@ -71,21 +71,43 @@ def launch_browser_tmux(
         session_name=STACKOPS_BROWSER_TMUX_SESSION_NAME,
         browser_window_name=browser_window_name,
         relay_window_name=relay_window_name,
-        attach_command=build_attach_or_switch_command(session_name=STACKOPS_BROWSER_TMUX_SESSION_NAME),
+        attach_command=build_attach_or_switch_command(
+            session_name=STACKOPS_BROWSER_TMUX_SESSION_NAME,
+            window_name=browser_window_name,
+        ),
     )
 
 
-def build_attach_or_switch_command(*, session_name: str) -> tuple[str, ...]:
-    if os.environ.get("TMUX"):
-        return ("tmux", "switch-client", "-t", session_name)
-    return ("tmux", "attach-session", "-t", session_name)
-
-
-def attach_or_switch_tmux_session(*, session_name: str) -> None:
-    command = build_attach_or_switch_command(session_name=session_name)
-    result = subprocess.run(command, check=False)
-    if result.returncode != 0:
-        raise RuntimeError(f"""tmux attach/switch failed with exit code {result.returncode}: {shlex.join(command)}""")
+def repair_browser_tmux_relay(
+    *,
+    browser: BrowserName,
+    profile_path: Path | None,
+    port: int,
+    browser_port: int,
+    host: str,
+    relay_command: Sequence[str],
+    prompt_path: Path,
+) -> str:
+    launch_id = browser_launch_id(browser=browser, profile_path=profile_path, port=port)
+    relay_window_name = _start_relay_window(launch_id=launch_id, relay_command=relay_command)
+    if relay_window_name is None:
+        raise RuntimeError("Cannot repair a browser LAN relay without a relay command")
+    _set_window_metadata(
+        window_name=relay_window_name,
+        metadata=BrowserTmuxMetadata(
+            launch_id=launch_id,
+            role="relay",
+            browser=browser,
+            profile=browser_profile_label(browser=browser, profile_path=profile_path, port=port),
+            profile_path="-" if profile_path is None else str(profile_path),
+            host=host,
+            port=str(port),
+            browser_port=str(browser_port),
+            lan="yes",
+            prompt_path=str(prompt_path),
+        ),
+    )
+    return relay_window_name
 
 
 def _allocate_window_name(*, base_window_name: str) -> str:

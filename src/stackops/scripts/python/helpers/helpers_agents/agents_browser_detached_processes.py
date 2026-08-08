@@ -1,9 +1,19 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import assert_never
 
 import psutil
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import DETACHED_BROWSER_LAUNCH_ID_ENV, BrowserName
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
+    BROWSER_PROCESS_TERMINATION_TIMEOUT_SECONDS,
+    BrowserName,
+)
+
+
+@dataclass(frozen=True)
+class RunningBrowserProcess:
+    process_id: int
+    browser_port: int
 
 
 def process_created_at(*, process_id: int, process_label: str) -> float:
@@ -15,7 +25,6 @@ def process_created_at(*, process_id: int, process_label: str) -> float:
 
 def find_browser_process_id(
     *,
-    launch_id: str,
     browser: BrowserName,
     browser_port: int,
     profile_path: Path | None,
@@ -26,7 +35,6 @@ def find_browser_process_id(
         process = psutil.Process(process_id)
         if _browser_process_matches(
             process=process,
-            launch_id=launch_id,
             browser=browser,
             browser_port=browser_port,
             profile_path=profile_path,
@@ -39,7 +47,6 @@ def find_browser_process_id(
         try:
             if _browser_process_matches(
                 process=process,
-                launch_id=launch_id,
                 browser=browser,
                 browser_port=browser_port,
                 profile_path=profile_path,
@@ -51,6 +58,22 @@ def find_browser_process_id(
     return None
 
 
+def find_running_browser_processes(*, browser: BrowserName, profile_path: Path) -> tuple[RunningBrowserProcess, ...]:
+    running_processes: list[RunningBrowserProcess] = []
+    for process in psutil.process_iter():
+        try:
+            command = tuple(process.cmdline())
+            if not _browser_process_matches_profile(process=process, browser=browser, profile_path=profile_path, command=command):
+                continue
+            option_name = "--remote-debugging-port" if browser != "safari" else "--port"
+            port_value = _option_value(command=command, name=option_name)
+            if port_value is not None:
+                running_processes.append(RunningBrowserProcess(process_id=process.pid, browser_port=int(port_value)))
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, ValueError):
+            continue
+    return tuple(running_processes)
+
+
 def registered_process_is_running(*, process_id: int, process_created_at: float) -> bool:
     try:
         process = psutil.Process(process_id)
@@ -59,10 +82,24 @@ def registered_process_is_running(*, process_id: int, process_created_at: float)
         return False
 
 
+def terminate_registered_process(*, process_id: int, process_created_at: float, process_label: str) -> None:
+    try:
+        process = psutil.Process(process_id)
+        if process.create_time() != process_created_at:
+            return
+        process.terminate()
+        process.wait(timeout=BROWSER_PROCESS_TERMINATION_TIMEOUT_SECONDS)
+    except (psutil.NoSuchProcess, psutil.ZombieProcess):
+        return
+    except psutil.AccessDenied as error:
+        raise RuntimeError(f"Could not terminate stale {process_label} process {process_id}: {error}") from error
+    except psutil.TimeoutExpired as error:
+        raise RuntimeError(f"Stale {process_label} process {process_id} did not stop after termination") from error
+
+
 def _browser_process_matches(
     *,
     process: psutil.Process,
-    launch_id: str,
     browser: BrowserName,
     browser_port: int,
     profile_path: Path | None,
@@ -72,26 +109,35 @@ def _browser_process_matches(
         return False
     if not process.is_running() or process.status() == psutil.STATUS_ZOMBIE:
         return False
-    if process.environ().get(DETACHED_BROWSER_LAUNCH_ID_ENV) != launch_id:
-        return False
     command = tuple(process.cmdline())
+    if not _browser_process_matches_profile(process=process, browser=browser, profile_path=profile_path, command=command):
+        return False
+    option_name = "--port" if browser == "safari" else "--remote-debugging-port"
+    return _has_option(command=command, name=option_name, value=str(browser_port))
+
+
+def _browser_process_matches_profile(
+    *,
+    process: psutil.Process,
+    browser: BrowserName,
+    profile_path: Path | None,
+    command: tuple[str, ...],
+) -> bool:
+    if not process.is_running() or process.status() == psutil.STATUS_ZOMBIE:
+        return False
     if any(argument.startswith("--type=") for argument in command):
         return False
     match browser:
         case "chrome" | "brave" | "edge":
             if profile_path is None:
                 return False
-            return _has_option(command=command, name="--remote-debugging-port", value=str(browser_port)) and _has_option(
-                command=command, name="--user-data-dir", value=str(profile_path)
-            )
+            return _profile_option_matches(command=command, name="--user-data-dir", profile_path=profile_path)
         case "firefox":
             if profile_path is None:
                 return False
-            return _has_option(command=command, name="--remote-debugging-port", value=str(browser_port)) and _has_option(
-                command=command, name="--profile", value=str(profile_path)
-            )
+            return _profile_option_matches(command=command, name="--profile", profile_path=profile_path)
         case "safari":
-            return _has_option(command=command, name="--port", value=str(browser_port))
+            return profile_path is None
         case _:
             assert_never(browser)
 
@@ -100,3 +146,23 @@ def _has_option(*, command: tuple[str, ...], name: str, value: str) -> bool:
     if f"{name}={value}" in command:
         return True
     return any(argument == name and index + 1 < len(command) and command[index + 1] == value for index, argument in enumerate(command))
+
+
+def _option_value(*, command: tuple[str, ...], name: str) -> str | None:
+    option_prefix = f"{name}="
+    for index, argument in enumerate(command):
+        if argument.startswith(option_prefix):
+            return argument.removeprefix(option_prefix)
+        if argument == name and index + 1 < len(command):
+            return command[index + 1]
+    return None
+
+
+def _profile_option_matches(*, command: tuple[str, ...], name: str, profile_path: Path) -> bool:
+    option_value = _option_value(command=command, name=name)
+    if option_value is None:
+        return False
+    try:
+        return Path(option_value).samefile(profile_path)
+    except OSError:
+        return False

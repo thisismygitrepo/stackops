@@ -5,6 +5,13 @@ from dataclasses import dataclass
 import sys
 from typing import cast
 
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
+    BROWSER_RELAY_STARTUP_GRACE_SECONDS,
+    BROWSER_RELAY_TARGET_PROBE_INTERVAL_SECONDS,
+    BROWSER_RELAY_TARGET_PROBE_TIMEOUT_SECONDS,
+    BROWSER_RELAY_TARGET_UNAVAILABLE_GRACE_SECONDS,
+)
+
 
 @dataclass(frozen=True)
 class RelayConfig:
@@ -17,7 +24,37 @@ class RelayConfig:
 async def run_relay(*, config: RelayConfig) -> None:
     server = await asyncio.start_server(lambda reader, writer: _handle_client(reader=reader, writer=writer, config=config), config.listen_host, config.listen_port)
     async with server:
-        await server.serve_forever()
+        await _wait_until_target_unavailable(config=config)
+
+
+async def _wait_until_target_unavailable(*, config: RelayConfig) -> None:
+    event_loop = asyncio.get_running_loop()
+    startup_deadline = event_loop.time() + BROWSER_RELAY_STARTUP_GRACE_SECONDS
+    target_was_available = False
+    unavailable_since: float | None = None
+    while True:
+        probe_started_at = event_loop.time()
+        if await _target_is_available(config=config):
+            target_was_available = True
+            unavailable_since = None
+        elif not target_was_available and probe_started_at >= startup_deadline:
+            return
+        elif unavailable_since is None:
+            unavailable_since = probe_started_at
+        elif target_was_available and probe_started_at - unavailable_since >= BROWSER_RELAY_TARGET_UNAVAILABLE_GRACE_SECONDS:
+            return
+        await asyncio.sleep(BROWSER_RELAY_TARGET_PROBE_INTERVAL_SECONDS)
+
+
+async def _target_is_available(*, config: RelayConfig) -> bool:
+    try:
+        async with asyncio.timeout(BROWSER_RELAY_TARGET_PROBE_TIMEOUT_SECONDS):
+            _target_reader, target_writer = await asyncio.open_connection(config.target_host, config.target_port)
+    except (OSError, TimeoutError):
+        return False
+    target_writer.close()
+    await target_writer.wait_closed()
+    return True
 
 
 async def _handle_client(*, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, config: RelayConfig) -> None:

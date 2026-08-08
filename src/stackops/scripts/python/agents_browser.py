@@ -9,7 +9,11 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BrowserTechSelection,
     DEFAULT_BROWSER_PORT,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import DetachedBrowserLaunchResult, TmuxBrowserLaunchResult
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import (
+    DetachedBrowserLaunchResult,
+    ExistingBrowserLaunchResult,
+    TmuxBrowserLaunchResult,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_COMMAND_BACKEND
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
 
@@ -107,7 +111,7 @@ def launch_browser(
 ) -> None:
     """Launch browser automation endpoint with an isolated profile when supported."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import launch_browser as launch_browser_impl
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl
 
         result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan, detached=detached)
     except ValueError as error:
@@ -117,6 +121,12 @@ def launch_browser(
         raise typer.Exit(code=1) from error
 
     match result:
+        case ExistingBrowserLaunchResult():
+            typer.echo(f"Already running {result.process_label}: pid={result.process_id} owner={result.owner}")
+            if result.opened_page:
+                typer.echo("Opened a new browser page because the endpoint had no page targets.")
+            if result.repaired_relay:
+                typer.echo("Restarted the missing LAN relay.")
         case DetachedBrowserLaunchResult():
             typer.echo(f"Launched {result.process_label}: pid={result.process_id}")
             if result.relay_process_id is not None:
@@ -135,13 +145,15 @@ def launch_browser(
     if lan:
         typer.echo(f"{result.endpoint_short_label} is exposed on 0.0.0.0 through a relay; use this only on a trusted network.")
     if isinstance(result, TmuxBrowserLaunchResult):
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_session
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window
 
         try:
-            attach_or_switch_tmux_session(session_name=result.tmux.session_name)
+            attach_or_switch_tmux_window(
+                session_name=result.tmux.session_name,
+                window_name=result.tmux.browser_window_name,
+            )
         except RuntimeError as error:
-            typer.echo(str(error), err=True)
-            raise typer.Exit(code=1) from error
+            typer.echo(f"Browser endpoint is running, but automatic tmux attachment failed: {error}", err=True)
 
 
 def status(
@@ -170,8 +182,8 @@ def get_app() -> typer.Typer:
     browser_app = typer.Typer(help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False)
     browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, or MCP configs")(install_tech)
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
-    browser_app.command(name="launch-browser", no_args_is_help=True, short_help="<l> Launch browser automation endpoint")(launch_browser)
-    browser_app.command(name="l", no_args_is_help=True, hidden=True)(launch_browser)
+    browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<l> Launch browser automation endpoint")(launch_browser)
+    browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
     browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser launches")(status)
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     return browser_app
