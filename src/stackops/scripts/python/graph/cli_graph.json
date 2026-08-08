@@ -530,6 +530,7 @@
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry",
+                    "    from stackops.scripts.python.helpers.helpers_devops.cli_data_display import show_registration_summary",
                     "",
                     "    if interactive:",
                     "        path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os = _prompt_register_data_options(",
@@ -548,7 +549,7 @@
                     "        typer.echo(\"Error: PATH_LOCAL is required unless --interactive is used.\", err=True)",
                     "        raise typer.Exit(code=1)",
                     "    try:",
-                    "        backup_path, entry_name, replaced = register_backup_entry(",
+                    "        registration = register_backup_entry(",
                     "            path_local=path_local,",
                     "            group=group,",
                     "            entry_name=name,",
@@ -564,8 +565,7 @@
                     "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(exc)",
                     "        typer.echo(msg)",
                     "        raise typer.Exit(code=1)",
-                    "    action = \"Updated\" if replaced else \"Added\"",
-                    "    typer.echo(f\"{action} backup entry '{entry_name}' in {backup_path}\")"
+                    "    show_registration_summary(registration)"
                   ],
                   "name": "register_data",
                   "parameters": [
@@ -812,6 +812,93 @@
                 "aliases": [
                   {
                     "name": "r",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "display",
+                "fullPath": "devops data display",
+                "shortPath": "d d d",
+                "help": "📋 <d> Display registered backup entries from user mapper/data.yaml.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_data_display.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_data_display",
+                  "callable": "display_data"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def display_data() -> None:",
+                    "    try:",
+                    "        config = load_backup_config_file(USER_BACKUP_PATH, empty_as_config=True)",
+                    "    except ValueError as exc:",
+                    "        typer.echo(typer.style(\"Error: \", fg=typer.colors.RED) + str(exc), err=True)",
+                    "        raise typer.Exit(code=1) from exc",
+                    "    if config is None:",
+                    "        if USER_BACKUP_PATH.exists():",
+                    "            typer.echo(typer.style(\"Error: \", fg=typer.colors.RED) + describe_missing_backup_config(source=\"user\"), err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        config = {}",
+                    "",
+                    "    console = Console()",
+                    "    entry_count = sum(len(group_entries) for group_entries in config.values())",
+                    "    if entry_count == 0:",
+                    "        console.print(",
+                    "            Panel(",
+                    "                Text(f\"No registered backup entries found in {USER_BACKUP_PATH}\"),",
+                    "                title=\"No Backup Entries\",",
+                    "                border_style=\"yellow\",",
+                    "                padding=(1, 2),",
+                    "            )",
+                    "        )",
+                    "        return",
+                    "",
+                    "    table = Table(",
+                    "        title=f\"Registered Backup Entries ({entry_count})\",",
+                    "        caption=Text(f\"Data file: {USER_BACKUP_PATH}\", style=\"dim\"),",
+                    "        caption_justify=\"left\",",
+                    "        box=box.SIMPLE_HEAVY,",
+                    "        expand=True,",
+                    "        header_style=\"bold cyan\",",
+                    "    )",
+                    "    table.add_column(\"Entry\", ratio=2, overflow=\"fold\")",
+                    "    table.add_column(\"Local path\", ratio=3, overflow=\"fold\")",
+                    "    table.add_column(\"Cloud path\", ratio=2, overflow=\"fold\")",
+                    "    table.add_column(\"OS\", ratio=2, overflow=\"fold\")",
+                    "    table.add_column(\"Options\", ratio=2, overflow=\"fold\")",
+                    "    table.add_column(\"Share URL\", ratio=2, overflow=\"fold\")",
+                    "",
+                    "    for group_name, group_entries in config.items():",
+                    "        for entry_name, entry in group_entries.items():",
+                    "            path_cloud = entry[\"path_cloud\"] if entry[\"path_cloud\"] is not None else \"null\"",
+                    "            share_url = entry[\"share_url\"] if entry[\"share_url\"] is not None else \"null\"",
+                    "            encryption = entry[\"encryption\"] if entry[\"encryption\"] is not None else \"null\"",
+                    "            os_values = \", \".join(value for value in ALL_OS_VALUES if value in entry[\"os\"])",
+                    "            archive_mode = \"zip\" if entry[\"zip\"] else \"raw\"",
+                    "            path_mode = \"home-relative\" if entry[\"rel2home\"] else \"absolute\"",
+                    "",
+                    "            table.add_row(",
+                    "                Text(f\"{group_name}.{entry_name}\", style=\"bold cyan\"),",
+                    "                Text(entry[\"path_local\"]),",
+                    "                Text(path_cloud),",
+                    "                Text(os_values),",
+                    "                Text(f\"{archive_mode} · {encryption} · {path_mode}\"),",
+                    "                Text(share_url),",
+                    "            )",
+                    "",
+                    "    console.print(table)"
+                  ],
+                  "name": "display_data",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "d",
                     "hidden": true
                   }
                 ]

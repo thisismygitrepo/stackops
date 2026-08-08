@@ -50,6 +50,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_runtim
     start_endpoint_relay as _start_endpoint_relay,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import launch_browser_tmux
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILLS_CLI_PACKAGE, SKILL_INSTALL_COMMAND_BACKEND
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
@@ -76,7 +77,7 @@ def _resolve_browser_skills_cli_agent(*, agent: AGENTS) -> str:
     return resolved_agent
 
 
-def install_agent_browser_skill(*, agent: AGENTS) -> BrowserSkillInstallResult:
+def install_agent_browser_skill(*, agent: AGENTS, backend: SKILL_INSTALL_COMMAND_BACKEND) -> BrowserSkillInstallResult:
     skills_cli_agent = _resolve_browser_skills_cli_agent(agent=agent)
     install_root = BROWSING_ROOT.expanduser()
     install_root.mkdir(parents=True, exist_ok=True)
@@ -92,12 +93,12 @@ def install_agent_browser_skill(*, agent: AGENTS) -> BrowserSkillInstallResult:
         version=None,
         ctx=None,
     )
-    command = ("bunx", "skills@latest", "add", AGENT_BROWSER_SKILL_REPO, "--agent", skills_cli_agent, "--yes")
+    command = (backend, SKILLS_CLI_PACKAGE, "add", AGENT_BROWSER_SKILL_REPO, "--agent", skills_cli_agent, "--yes")
     _run_required_command(command=command, cwd=install_root)
     return BrowserSkillInstallResult(install_root=install_root, command=command)
 
 
-def install_pinchtab_skill(*, agent: AGENTS) -> BrowserSkillInstallResult:
+def install_pinchtab_skill(*, agent: AGENTS, backend: SKILL_INSTALL_COMMAND_BACKEND) -> BrowserSkillInstallResult:
     skills_cli_agent = _resolve_browser_skills_cli_agent(agent=agent)
     install_root = BROWSER_TECH_ROOT.expanduser().joinpath(PINCHTAB_INSTALLER_NAME)
     install_root.mkdir(parents=True, exist_ok=True)
@@ -114,8 +115,8 @@ def install_pinchtab_skill(*, agent: AGENTS) -> BrowserSkillInstallResult:
         ctx=None,
     )
     command = (
-        "bunx",
-        "skills@latest",
+        backend,
+        SKILLS_CLI_PACKAGE,
         "add",
         PINCHTAB_SKILL_REPO,
         "--skill",
@@ -139,10 +140,10 @@ def install_playwright_cli(*, agent: AGENTS) -> tuple[Path, tuple[tuple[str, ...
     return install_root, (install_command, skills_command)
 
 
-def install_browser_tech(*, which: BrowserTechName, agent: AGENTS) -> BrowserTechInstallResult:
+def install_browser_tech(*, which: BrowserTechName, agent: AGENTS, backend: SKILL_INSTALL_COMMAND_BACKEND) -> BrowserTechInstallResult:
     match which:
         case "agent-browser":
-            result = install_agent_browser_skill(agent=agent)
+            result = install_agent_browser_skill(agent=agent, backend=backend)
             guide_paths = write_browser_tech_files(which=which, install_root=result.install_root)
             return BrowserTechInstallResult(
                 which=which,
@@ -152,7 +153,7 @@ def install_browser_tech(*, which: BrowserTechName, agent: AGENTS) -> BrowserTec
                 mcp_servers=(),
             )
         case "pinchtab":
-            result = install_pinchtab_skill(agent=agent)
+            result = install_pinchtab_skill(agent=agent, backend=backend)
             guide_paths = write_browser_tech_files(which=which, install_root=result.install_root)
             return BrowserTechInstallResult(
                 which=which,

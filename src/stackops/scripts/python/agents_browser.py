@@ -2,18 +2,25 @@ from typing import Annotated, cast, get_args
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName, BrowserTechName, DEFAULT_BROWSER_PORT
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
+    BROWSER_TECH_NAMES,
+    BrowserName,
+    BrowserTechName,
+    BrowserTechSelection,
+    DEFAULT_BROWSER_PORT,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import DetachedBrowserLaunchResult, TmuxBrowserLaunchResult
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_COMMAND_BACKEND
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
 
 
 def install_tech(
     which: Annotated[
-        BrowserTechName,
+        BrowserTechSelection,
         typer.Option(
             "--which",
             "-w",
-            help="Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, or playwright-mcp.",
+            help="Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all.",
             case_sensitive=False,
             show_choices=True,
         ),
@@ -28,6 +35,16 @@ def install_tech(
             show_choices=True,
         ),
     ] = None,
+    backend: Annotated[
+        SKILL_INSTALL_COMMAND_BACKEND,
+        typer.Option(
+            "--backend",
+            "-b",
+            help="Upstream skills CLI runner used when the selected browser tech installs a skill.",
+            case_sensitive=False,
+            show_choices=True,
+        ),
+    ] = "npx",
 ) -> None:
     """Install browser automation CLI or MCP support for agents."""
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech
@@ -47,23 +64,28 @@ def install_tech(
                     options=order_current_first(options=agent_options, current=DEFAULT_AGENT), msg="Choose agent", header="Agent"
                 ),
             )
-        result = install_browser_tech(which=which, agent=resolved_agent)
+        selected_technologies: tuple[BrowserTechName, ...] = BROWSER_TECH_NAMES if which == "all" else (which,)
+        results = tuple(
+            install_browser_tech(which=selected_technology, agent=resolved_agent, backend=backend)
+            for selected_technology in selected_technologies
+        )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
-    typer.echo(f"Prepared {result.which} for {resolved_agent} in: {result.install_root}")
-    for command in result.commands:
-        typer.echo(f"Ran: {' '.join(command)}")
-    for guide_path in result.guide_paths:
-        typer.echo(f"Wrote: {guide_path}")
-    if len(result.mcp_servers) > 0:
-        typer.echo(f"MCP catalog servers: {', '.join(result.mcp_servers)}")
-        typer.echo(
-            f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local"
-        )
+    for result in results:
+        typer.echo(f"Prepared {result.which} for {resolved_agent} in: {result.install_root}")
+        for command in result.commands:
+            typer.echo(f"Ran: {' '.join(command)}")
+        for guide_path in result.guide_paths:
+            typer.echo(f"Wrote: {guide_path}")
+        if len(result.mcp_servers) > 0:
+            typer.echo(f"MCP catalog servers: {', '.join(result.mcp_servers)}")
+            typer.echo(
+                f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local"
+            )
 
 
 def launch_browser(

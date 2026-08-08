@@ -3,6 +3,7 @@ CC
 """
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from stackops.scripts.python.helpers.helpers_cloud.cloud_copy_artifacts import (
     prepared_upload_path,
@@ -23,6 +24,9 @@ from stackops.utils.cloud.rclone import (
 )
 from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
 from stackops.utils.cloud.target_conflict import TargetConflictAction, apply_target_conflict_action
+
+if TYPE_CHECKING:
+    from stackops.scripts.python.helpers.helpers_cloud.backup_registration import BackupRegistrationResult
 
 
 defaults = read_default_cloud_config()
@@ -149,7 +153,7 @@ def _record_upload(
     record_name: str,
     record_os: str,
     expand_symbol: str,
-) -> tuple[Path, str, bool]:
+) -> "BackupRegistrationResult":
     from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry
 
     original_target_parts = _split_remote_spec(original_target)
@@ -347,7 +351,7 @@ def main(
         if cloud_config_explicit["share"] and share_url is None:
             raise RuntimeError("Share was requested but rclone did not return a share URL.")
         if resolved_record_name is not None:
-            backup_path, entry_name, replaced = _record_upload(
+            registration = _record_upload(
                 source_path=source_path,
                 original_target=original_target,
                 cloud=cloud,
@@ -361,11 +365,11 @@ def main(
                 record_os=record_os,
                 expand_symbol=ES,
             )
-            action = "Updated" if replaced else "Added"
+            action = "Updated" if registration["replaced"] else "Added"
             if share_url is None:
-                console.print(Panel(f"📝 RECORDED UPLOAD\n📝 {action} backup entry: {entry_name}\n📄 Data file: {backup_path}", title="[bold blue]Record[/bold blue]", border_style="blue", width=152))
+                console.print(Panel(f"📝 RECORDED UPLOAD\n📝 {action} backup entry: {registration['entry_name']}\n📄 Data file: {registration['backup_path']}", title="[bold blue]Record[/bold blue]", border_style="blue", width=152))
             else:
-                console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 {action} backup entry: {entry_name}\n📄 Data file: {backup_path}\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
+                console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 {action} backup entry: {registration['entry_name']}\n📄 Data file: {registration['backup_path']}\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
         elif cloud_config_explicit["share"]:
             if share_url is None:
                 raise RuntimeError("Share was requested but rclone did not return a share URL.")

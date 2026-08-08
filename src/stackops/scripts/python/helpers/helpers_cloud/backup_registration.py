@@ -1,10 +1,12 @@
 import re
 from pathlib import Path
+from typing import TypedDict
 
 from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
 from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
 from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     BackupConfig,
+    BackupItem,
     USER_BACKUP_PATH,
     VALID_OS,
     describe_missing_backup_config,
@@ -12,6 +14,14 @@ from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     write_backup_config,
 )
 from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
+
+
+class BackupRegistrationResult(TypedDict):
+    backup_path: Path
+    group_name: str
+    entry_name: str
+    entry: BackupItem
+    replaced: bool
 
 
 def sanitize_entry_name(value: str) -> str:
@@ -44,7 +54,7 @@ def register_backup_entry(
     password: str | None,
     rel2home: bool | None,
     os: str,
-) -> tuple[Path, str, bool]:
+) -> BackupRegistrationResult:
     local_path = Path(path_local).expanduser().absolute()
     if not local_path.exists():
         raise ValueError(f"Local path does not exist: {local_path}")
@@ -97,7 +107,7 @@ def register_backup_entry(
         group_entries = {}
         config[group_name] = group_entries
     replaced = resolved_entry_name in group_entries
-    group_entries[resolved_entry_name] = {
+    entry: BackupItem = {
         "path_local": local_display,
         "path_cloud": cloud_value,
         "share_url": share_url_value,
@@ -106,5 +116,12 @@ def register_backup_entry(
         "rel2home": resolved_rel2home,
         "os": set(os_tokens),
     }
+    group_entries[resolved_entry_name] = entry
     write_backup_config(USER_BACKUP_PATH, config)
-    return USER_BACKUP_PATH, resolved_entry_name, replaced
+    return {
+        "backup_path": USER_BACKUP_PATH,
+        "group_name": group_name,
+        "entry_name": resolved_entry_name,
+        "entry": entry,
+        "replaced": replaced,
+    }

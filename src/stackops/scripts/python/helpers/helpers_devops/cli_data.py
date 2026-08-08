@@ -178,6 +178,7 @@ def register_data(
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry
+    from stackops.scripts.python.helpers.helpers_devops.cli_data_display import show_registration_summary
 
     if interactive:
         path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os = _prompt_register_data_options(
@@ -196,7 +197,7 @@ def register_data(
         typer.echo("Error: PATH_LOCAL is required unless --interactive is used.", err=True)
         raise typer.Exit(code=1)
     try:
-        backup_path, entry_name, replaced = register_backup_entry(
+        registration = register_backup_entry(
             path_local=path_local,
             group=group,
             entry_name=name,
@@ -212,8 +213,7 @@ def register_data(
         msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)
         typer.echo(msg)
         raise typer.Exit(code=1)
-    action = "Updated" if replaced else "Added"
-    typer.echo(f"{action} backup entry '{entry_name}' in {backup_path}")
+    show_registration_summary(registration)
 
 
 def edit_data(
@@ -283,7 +283,7 @@ def edit_data(
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.helpers.helpers_devops import cli_data_subset
+    from stackops.scripts.python.helpers.helpers_devops import cli_data_display, cli_data_subset
 
     app = typer.Typer(
         name="data",
@@ -302,6 +302,15 @@ def get_app() -> typer.Typer:
     app.command(name="register", no_args_is_help=True, hidden=False, help="📝 <r> Register a new backup entry in user mapper/data.yaml.")(register_data)
 
     app.command(name="r", no_args_is_help=True, hidden=True)(register_data)
+
+    app.command(
+        name="display",
+        no_args_is_help=False,
+        hidden=False,
+        help="📋 <d> Display registered backup entries from user mapper/data.yaml.",
+    )(cli_data_display.display_data)
+
+    app.command(name="d", no_args_is_help=False, hidden=True)(cli_data_display.display_data)
 
     app.command(name="subset", no_args_is_help=True, hidden=False, help=f"📦 <u> {cli_data_subset.DATA_SUBSET_HELP}")(cli_data_subset.subset)
 

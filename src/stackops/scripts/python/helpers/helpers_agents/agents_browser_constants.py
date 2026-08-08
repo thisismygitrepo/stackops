@@ -6,6 +6,15 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 BrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox", "safari"]
 BrowserTechName: TypeAlias = Literal["agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
+BrowserTechSelection: TypeAlias = Literal["agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp", "all"]
+
+BROWSER_TECH_NAMES: Final[tuple[BrowserTechName, ...]] = (
+    "agent-browser",
+    "pinchtab",
+    "playwright-cli",
+    "chrome-devtools-mcp",
+    "playwright-mcp",
+)
 
 DEFAULT_BROWSER_PORT: Final[int] = 9331
 AGENT_BROWSER_INSTALLER_NAME: Final[str] = "agent-browser"
