@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import assert_never
 
@@ -18,7 +17,6 @@ def find_browser_process_id(
     *,
     launch_id: str,
     browser: BrowserName,
-    browser_path: Path,
     browser_port: int,
     profile_path: Path | None,
     process_id: int,
@@ -30,7 +28,6 @@ def find_browser_process_id(
             process=process,
             launch_id=launch_id,
             browser=browser,
-            browser_path=browser_path,
             browser_port=browser_port,
             profile_path=profile_path,
             expected_created_at=process_created_at,
@@ -44,7 +41,6 @@ def find_browser_process_id(
                 process=process,
                 launch_id=launch_id,
                 browser=browser,
-                browser_path=browser_path,
                 browser_port=browser_port,
                 profile_path=profile_path,
                 expected_created_at=None,
@@ -68,7 +64,6 @@ def _browser_process_matches(
     process: psutil.Process,
     launch_id: str,
     browser: BrowserName,
-    browser_path: Path,
     browser_port: int,
     profile_path: Path | None,
     expected_created_at: float | None,
@@ -76,10 +71,6 @@ def _browser_process_matches(
     if expected_created_at is not None and process.create_time() != expected_created_at:
         return False
     if not process.is_running() or process.status() == psutil.STATUS_ZOMBIE:
-        return False
-    process_path = os.path.normcase(os.path.realpath(process.exe()))
-    expected_path = os.path.normcase(os.path.realpath(browser_path))
-    if process_path != expected_path:
         return False
     if process.environ().get(DETACHED_BROWSER_LAUNCH_ID_ENV) != launch_id:
         return False

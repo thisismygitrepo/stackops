@@ -14,7 +14,6 @@ class DetachedBrowserLaunchPayload(TypedDict):
     launch_id: str
     browser: BrowserName
     profile: str
-    browser_path: str
     host: str
     port: int
     browser_port: int
@@ -31,7 +30,6 @@ class DetachedBrowserLaunchRecord:
     launch_id: str
     browser: BrowserName
     profile: str
-    browser_path: Path
     host: str
     port: int
     browser_port: int
@@ -66,7 +64,6 @@ def record_detached_browser_launch(
         launch_id=launch_id,
         browser=result.browser,
         profile=browser_profile_label(browser=result.browser, profile_path=result.profile_path, port=result.port),
-        browser_path=result.browser_path,
         host=result.host,
         port=result.port,
         browser_port=result.browser_port,
@@ -82,7 +79,6 @@ def record_detached_browser_launch(
         "launch_id": record.launch_id,
         "browser": record.browser,
         "profile": record.profile,
-        "browser_path": str(record.browser_path),
         "host": record.host,
         "port": record.port,
         "browser_port": record.browser_port,
@@ -111,7 +107,6 @@ def collect_detached_browser_status() -> tuple[DetachedBrowserStatus, ...]:
         browser_process_id = find_browser_process_id(
             launch_id=launch.launch_id,
             browser=launch.browser,
-            browser_path=launch.browser_path,
             browser_port=launch.browser_port,
             profile_path=launch.profile_path,
             process_id=launch.process_id,
@@ -140,7 +135,6 @@ def _read_detached_browser_launch(*, record_path: Path) -> DetachedBrowserLaunch
             launch_id=payload["launch_id"],
             browser=payload["browser"],
             profile=payload["profile"],
-            browser_path=Path(payload["browser_path"]),
             host=payload["host"],
             port=payload["port"],
             browser_port=payload["browser_port"],

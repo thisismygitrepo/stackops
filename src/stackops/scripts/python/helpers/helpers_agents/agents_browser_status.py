@@ -8,7 +8,12 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import c
 
 def show_detached_browser_status() -> None:
     rows = collect_detached_browser_status()
-    table = Table(title=f"StackOps detached browser status: {len(rows)} tracked launch(es)", box=box.SIMPLE_HEAVY, show_lines=False)
+    table = Table(
+        title=f"StackOps detached browser status: {len(rows)} tracked launch(es)",
+        caption="Detached browsers launched before status tracking was added must be relaunched.",
+        box=box.SIMPLE_HEAVY,
+        show_lines=False,
+    )
     table.add_column("Browser")
     table.add_column("Profile", overflow="fold")
     table.add_column("Host")
