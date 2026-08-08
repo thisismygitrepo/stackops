@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 import socket
 import subprocess
 import sys
@@ -9,13 +9,29 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
 )
 
 
-def start_browser_process(*, command: Sequence[str], system_name: str, process_label: str) -> subprocess.Popen[bytes]:
-    return _start_background_process(command=command, system_name=system_name, failure_message=f"""Failed to launch {process_label}""")
+def start_browser_process(
+    *,
+    command: Sequence[str],
+    system_name: str,
+    process_label: str,
+    environment: Mapping[str, str],
+) -> subprocess.Popen[bytes]:
+    return _start_background_process(
+        command=command,
+        system_name=system_name,
+        failure_message=f"""Failed to launch {process_label}""",
+        environment=environment,
+    )
 
 
 def start_endpoint_relay(*, listen_port: int, target_port: int, system_name: str) -> subprocess.Popen[bytes]:
     command = build_relay_command(listen_port=listen_port, target_port=target_port)
-    return _start_background_process(command=command, system_name=system_name, failure_message="Failed to launch browser endpoint LAN relay")
+    return _start_background_process(
+        command=command,
+        system_name=system_name,
+        failure_message="Failed to launch browser endpoint LAN relay",
+        environment=None,
+    )
 
 
 def resolve_browser_endpoint_port(*, exposed_port: int, lan: bool) -> int:
@@ -61,10 +77,23 @@ def build_relay_command(*, listen_port: int, target_port: int) -> tuple[str, ...
     )
 
 
-def _start_background_process(*, command: Sequence[str], system_name: str, failure_message: str) -> subprocess.Popen[bytes]:
+def _start_background_process(
+    *,
+    command: Sequence[str],
+    system_name: str,
+    failure_message: str,
+    environment: Mapping[str, str] | None,
+) -> subprocess.Popen[bytes]:
     try:
         if system_name == "Windows":
-            return subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+            return subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=environment)
+        return subprocess.Popen(
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+            env=environment,
+        )
     except OSError as error:
         raise RuntimeError(f"""{failure_message}: {error}""") from error

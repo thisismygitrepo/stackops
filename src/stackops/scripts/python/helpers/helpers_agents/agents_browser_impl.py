@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
+import os
 from pathlib import Path
 import platform
 import subprocess
@@ -14,6 +15,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BROWSING_ROOT,
     BrowserName,
     BrowserTechName,
+    DETACHED_BROWSER_LAUNCH_ID_ENV,
     PINCHTAB_INSTALLER_NAME,
     PINCHTAB_SKILL_NAME,
     PINCHTAB_SKILL_REPO,
@@ -33,6 +35,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_resolution im
     resolve_profile_path,
     validate_port,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_identity import browser_launch_id
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import (
     BrowserLaunchDetails,
     BrowserLaunchResult,
@@ -216,16 +219,47 @@ def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None,
     )
     relay_command = _build_relay_command(listen_port=port, target_port=browser_port) if lan else None
     if detached:
-        process = _start_browser_process(command=command, system_name=platform.system(), process_label=launcher.process_label)
-        relay_process = _start_endpoint_relay(listen_port=port, target_port=browser_port, system_name=platform.system()) if lan else None
-        return build_detached_launch_result(
-            details=details,
-            process_id=process.pid,
-            relay_process_id=None if relay_process is None else relay_process.pid,
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import process_created_at
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_status import (
+            prepare_detached_browser_registry,
+            record_detached_browser_launch,
         )
+
+        prepare_detached_browser_registry()
+        launch_id = browser_launch_id(browser=browser, profile_path=profile_path, port=port)
+        process_environment = dict(os.environ)
+        process_environment[DETACHED_BROWSER_LAUNCH_ID_ENV] = launch_id
+        process = _start_browser_process(
+            command=command,
+            system_name=platform.system(),
+            process_label=launcher.process_label,
+            environment=process_environment,
+        )
+        browser_process_created_at = process_created_at(process_id=process.pid, process_label=launcher.process_label)
+        result = build_detached_launch_result(details=details, process_id=process.pid, relay_process_id=None)
+        record_detached_browser_launch(
+            result=result,
+            process_created_at=browser_process_created_at,
+            relay_expected=lan,
+            relay_process_created_at=None,
+        )
+        if not lan:
+            return result
+        try:
+            relay_process = _start_endpoint_relay(listen_port=port, target_port=browser_port, system_name=platform.system())
+            relay_process_created_at = process_created_at(process_id=relay_process.pid, process_label="browser endpoint LAN relay")
+        except RuntimeError as error:
+            raise RuntimeError(f"Browser process {process.pid} is running, but its LAN relay failed: {error}") from error
+        result = build_detached_launch_result(details=details, process_id=process.pid, relay_process_id=relay_process.pid)
+        record_detached_browser_launch(
+            result=result,
+            process_created_at=browser_process_created_at,
+            relay_expected=True,
+            relay_process_created_at=relay_process_created_at,
+        )
+        return result
     tmux_launch = launch_browser_tmux(
         browser=browser,
-        profile_name=profile_name,
         profile_path=profile_path,
         port=port,
         browser_port=browser_port,

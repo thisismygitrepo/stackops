@@ -122,63 +122,26 @@ def launch_browser(
             raise typer.Exit(code=1) from error
 
 
-def status() -> None:
-    """Show active StackOps browser tmux windows."""
+def status(
+    detached: Annotated[
+        bool,
+        typer.Option("--detached", "-d", help="Show browser processes launched with --detached instead of tmux windows."),
+    ] = False,
+) -> None:
+    """Show active StackOps browser launches."""
     try:
-        from rich import box
-        from rich.console import Console
-        from rich.table import Table
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import (
+            show_detached_browser_status,
+            show_tmux_browser_status,
+        )
 
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import collect_browser_tmux_status
-
-        rows = collect_browser_tmux_status()
+        if detached:
+            show_detached_browser_status()
+        else:
+            show_tmux_browser_status()
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
-
-    launch_count = len({row.metadata.launch_id for row in rows})
-    window_count = len({row.window_id for row in rows})
-    table = Table(
-        title=f"StackOps browser tmux: {launch_count} launch(es), {window_count} window(s), {len(rows)} pane(s)",
-        box=box.SIMPLE_HEAVY,
-        show_lines=False,
-    )
-    table.add_column("Session", style="cyan", overflow="fold")
-    table.add_column("Launch", overflow="fold")
-    table.add_column("Role")
-    table.add_column("Browser")
-    table.add_column("Profile", overflow="fold")
-    table.add_column("Endpoint")
-    table.add_column("Window")
-    table.add_column("Pane")
-    table.add_column("State")
-    table.add_column("PID", justify="right")
-    table.add_column("Command")
-    table.add_column("Profile Path", overflow="fold")
-    table.add_column("Prompt", overflow="fold")
-
-    for row in rows:
-        state = "dead" if row.pane_dead else "running"
-        endpoint = f"{row.metadata.host}:{row.metadata.port}"
-        if row.metadata.lan == "yes":
-            endpoint = f"{endpoint} -> 127.0.0.1:{row.metadata.browser_port}"
-        table.add_row(
-            row.session_name,
-            row.metadata.launch_id,
-            row.metadata.role,
-            row.metadata.browser,
-            row.metadata.profile,
-            endpoint,
-            f"{row.window_index}:{row.window_name}",
-            f"{row.pane_index} {row.pane_id}",
-            state,
-            row.pane_pid,
-            row.pane_current_command,
-            row.metadata.profile_path,
-            row.metadata.prompt_path,
-        )
-
-    Console().print(table)
 
 
 def get_app() -> typer.Typer:
@@ -187,6 +150,6 @@ def get_app() -> typer.Typer:
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch-browser", no_args_is_help=True, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=True, hidden=True)(launch_browser)
-    browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser tmux windows")(status)
+    browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser launches")(status)
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     return browser_app

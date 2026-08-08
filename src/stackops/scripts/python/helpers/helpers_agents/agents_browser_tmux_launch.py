@@ -1,11 +1,11 @@
 from collections.abc import Sequence
 from pathlib import Path
 import os
-import re
 import shlex
 import subprocess
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_identity import browser_launch_id, browser_profile_label
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_common import (
     raise_tmux_command_failure,
     require_tmux,
@@ -22,7 +22,6 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models i
 def launch_browser_tmux(
     *,
     browser: BrowserName,
-    profile_name: str | None,
     profile_path: Path | None,
     port: int,
     browser_port: int,
@@ -33,7 +32,7 @@ def launch_browser_tmux(
     prompt_path: Path,
 ) -> BrowserTmuxLaunch:
     require_tmux()
-    launch_id = _launch_id(browser=browser, profile_name=profile_name, profile_path=profile_path, port=port)
+    launch_id = browser_launch_id(browser=browser, profile_path=profile_path, port=port)
     browser_window_name = _allocate_window_name(base_window_name=f"{launch_id}-endpoint")
     _start_window_command(window_name=browser_window_name, command=browser_command, label="StackOps browser endpoint")
     _set_window_metadata(
@@ -42,7 +41,7 @@ def launch_browser_tmux(
             launch_id=launch_id,
             role="endpoint",
             browser=browser,
-            profile=_profile_label(profile_name=profile_name, profile_path=profile_path, port=port),
+            profile=browser_profile_label(browser=browser, profile_path=profile_path, port=port),
             profile_path="-" if profile_path is None else str(profile_path),
             host=host,
             port=str(port),
@@ -59,7 +58,7 @@ def launch_browser_tmux(
                 launch_id=launch_id,
                 role="relay",
                 browser=browser,
-                profile=_profile_label(profile_name=profile_name, profile_path=profile_path, port=port),
+                profile=browser_profile_label(browser=browser, profile_path=profile_path, port=port),
                 profile_path="-" if profile_path is None else str(profile_path),
                 host=host,
                 port=str(port),
@@ -87,27 +86,6 @@ def attach_or_switch_tmux_session(*, session_name: str) -> None:
     result = subprocess.run(command, check=False)
     if result.returncode != 0:
         raise RuntimeError(f"""tmux attach/switch failed with exit code {result.returncode}: {shlex.join(command)}""")
-
-
-def _launch_id(*, browser: BrowserName, profile_name: str | None, profile_path: Path | None, port: int) -> str:
-    profile_label = _profile_label(profile_name=profile_name, profile_path=profile_path, port=port)
-    return f"{_slug(value=browser)}-{_slug(value=profile_label)}-p{port}"
-
-
-def _profile_label(*, profile_name: str | None, profile_path: Path | None, port: int) -> str:
-    if profile_name is not None:
-        return f"profile-{profile_name}"
-    if profile_path is None:
-        return "no-profile"
-    return f"temp-port-{port}"
-
-
-def _slug(*, value: str) -> str:
-    lowered_value = value.strip().lower()
-    slug = re.sub("[^a-z0-9]+", "-", lowered_value).strip("-")
-    if slug == "":
-        raise ValueError("tmux name segment must not be empty")
-    return slug
 
 
 def _allocate_window_name(*, base_window_name: str) -> str:
