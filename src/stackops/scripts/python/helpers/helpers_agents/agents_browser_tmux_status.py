@@ -85,7 +85,7 @@ def _list_browser_tmux_panes() -> tuple[RawTmuxPane, ...]:
         "#{pane_dead}",
         "#{pane_current_path}",
     )
-    result = run_optional_tmux_command(command=("tmux", "list-panes", "-s", "-t", STACKOPS_BROWSER_TMUX_SESSION_NAME, "-F", TMUX_FIELD_SEPARATOR.join(fields)))
+    result = run_optional_tmux_command(command=("tmux", "list-panes", "-s", "-t", f"{STACKOPS_BROWSER_TMUX_SESSION_NAME}:", "-F", TMUX_FIELD_SEPARATOR.join(fields)))
     if result is None:
         return ()
     return tuple(_parse_pane_line(line=line, field_count=len(fields)) for line in result.stdout.splitlines() if line.strip())
