@@ -106,7 +106,7 @@ def _retrieve_from_share_url(
             zip_requested=item["zip"],
             encryption_mode=item["encryption"],
             pwd=pwd if item["encryption"] == "symmetric" else None,
-            overwrite=overwrite,
+            on_conflict="overwrite-target" if overwrite else "throw-error",
         )
     except ShareUrlDownloadError as error:
         raise ValueError(f"Could not retrieve '{display_name}' with --use-link: {error}") from error

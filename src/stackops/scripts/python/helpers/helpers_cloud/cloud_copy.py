@@ -5,6 +5,7 @@ CC
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_cloud.cloud_copy_artifacts import (
+    prepared_upload_path,
     restore_staged_download,
     staged_download,
 )
@@ -244,26 +245,30 @@ def main(
         console.print(Panel(f"📥 DOWNLOADING FROM CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}", title="[bold blue]Download[/bold blue]", border_style="blue", width=152))
         target_path = Path(target).expanduser().absolute()
         remote_path = Path(source.replace(cloud + ":", ""))
-        download_path = _artifact_path(
-            local_path=target_path,
-            zip_requested=cloud_config_explicit["zip"],
-            encryption_mode=cloud_config_explicit["encryption"],
-        )
         try:
-            rclone_wrapper.from_cloud(
-                local_path=download_path,
-                cloud=cloud,
-                remote_path=remote_path,
-                transfers=transfers,
-                verbose=True,
-            )
-            _finalize_download_path(
-                download_path=download_path,
+            with staged_download(
+                target_path=target_path,
                 zip_requested=cloud_config_explicit["zip"],
                 encryption_mode=cloud_config_explicit["encryption"],
-                pwd=cloud_config_explicit["pwd"],
-                overwrite=cloud_config_explicit["overwrite"],
-            )
+            ) as staged:
+                rclone_wrapper.from_cloud(
+                    local_path=staged.artifact_path,
+                    cloud=cloud,
+                    remote_path=remote_path,
+                    transfers=transfers,
+                    verbose=True,
+                )
+                restored_path = restore_staged_download(
+                    staged=staged,
+                    zip_requested=cloud_config_explicit["zip"],
+                    encryption_mode=cloud_config_explicit["encryption"],
+                    pwd=cloud_config_explicit["pwd"],
+                )
+                apply_target_conflict_action(
+                    staged_path=restored_path,
+                    target_path=staged.target_path,
+                    on_conflict="overwrite-target" if cloud_config_explicit["overwrite"] else "throw-error",
+                )
         except GpgCommandError as error:
             console.print(
                 Panel(
@@ -290,24 +295,23 @@ def main(
         console.print(Panel(f"📤 UPLOADING TO CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}", title="[bold blue]Upload[/bold blue]", border_style="blue", width=152))
         source_path = Path(source).expanduser().absolute()
         remote_path = Path(target.replace(cloud + ":", ""))
-        temp_paths: list[Path] = []
         share_url: str | None = None
         try:
-            upload_path, temp_paths = _prepare_upload_path(
+            with prepared_upload_path(
                 local_path=source_path,
                 zip_requested=cloud_config_explicit["zip"],
                 encryption_mode=cloud_config_explicit["encryption"],
                 pwd=cloud_config_explicit["pwd"],
-            )
-            share_url = rclone_wrapper.to_cloud(
-                local_path=upload_path,
-                cloud=cloud,
-                remote_path=remote_path,
-                share=cloud_config_explicit["share"],
-                share_options=share_options,
-                verbose=True,
-                transfers=transfers,
-            )
+            ) as upload_path:
+                share_url = rclone_wrapper.to_cloud(
+                    local_path=upload_path,
+                    cloud=cloud,
+                    remote_path=remote_path,
+                    share=cloud_config_explicit["share"],
+                    share_options=share_options,
+                    verbose=True,
+                    transfers=transfers,
+                )
         except GpgCommandError as error:
             console.print(
                 Panel(
@@ -338,8 +342,6 @@ def main(
                 )
             )
             raise SystemExit(1) from None
-        finally:
-            _delete_temp_paths(temp_paths)
         console.print(Panel("✅ Upload completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
 
         if cloud_config_explicit["share"] and share_url is None:
