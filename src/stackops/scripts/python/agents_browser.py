@@ -1,6 +1,7 @@
 from typing import Annotated, cast, get_args
 
 import typer
+from rich.console import Console
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     BROWSER_TECH_NAMES,
@@ -10,11 +11,11 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     DEFAULT_BROWSER_PORT,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import (
-    DetachedBrowserLaunchResult,
-    ExistingBrowserLaunchResult,
     TmuxBrowserLaunchResult,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_COMMAND_BACKEND
+from stackops.utils.network.address import InterfaceIPv4Address, select_lan_interface_ipv4
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
 
 
@@ -110,9 +111,14 @@ def launch_browser(
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
     """Launch browser automation endpoint with an isolated profile when supported."""
+    lan_address: InterfaceIPv4Address | None = None
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl
 
+        if lan:
+            lan_address = select_lan_interface_ipv4(prefer_vpn=False)
+            if lan_address is None:
+                raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoint.")
         result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan, detached=detached)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
@@ -120,30 +126,7 @@ def launch_browser(
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
-    match result:
-        case ExistingBrowserLaunchResult():
-            typer.echo(f"Already running {result.process_label}: pid={result.process_id} owner={result.owner}")
-            if result.opened_page:
-                typer.echo("Opened a new browser page because the endpoint had no page targets.")
-            if result.repaired_relay:
-                typer.echo("Restarted the missing LAN relay.")
-        case DetachedBrowserLaunchResult():
-            typer.echo(f"Launched {result.process_label}: pid={result.process_id}")
-            if result.relay_process_id is not None:
-                typer.echo(f"Relay: pid={result.relay_process_id} target=127.0.0.1:{result.browser_port}")
-        case TmuxBrowserLaunchResult():
-            typer.echo(f"Launched {result.process_label} in tmux session: {result.tmux.session_name}")
-            typer.echo(f"Browser window: {result.tmux.browser_window_name}")
-            if result.tmux.relay_window_name is not None:
-                typer.echo(f"Relay window: {result.tmux.relay_window_name} target=127.0.0.1:{result.browser_port}")
-            typer.echo(f"Attach: {' '.join(result.tmux.attach_command)}")
-    typer.echo(f"Executable: {result.browser_path}")
-    typer.echo(f"{result.endpoint_short_label}: {result.host}:{result.port}")
-    if result.profile_path is not None:
-        typer.echo(f"Profile: {result.profile_path}")
-    typer.echo(f"Prompt: {result.prompt_path}")
-    if lan:
-        typer.echo(f"{result.endpoint_short_label} is exposed on 0.0.0.0 through a relay; use this only on a trusted network.")
+    Console().print(build_browser_launch_summary(result=result, lan_address=lan_address))
     if isinstance(result, TmuxBrowserLaunchResult):
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window
 
