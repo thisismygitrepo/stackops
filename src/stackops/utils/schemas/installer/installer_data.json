@@ -6708,6 +6708,112 @@
           "darwin": "bun install -g @fission-ai/openspec@latest"
         }
       }
+    },
+    {
+      "appName": "AdGuardHome",
+      "license": "GPL-3.0-only",
+      "repoURL": "https://github.com/AdguardTeam/AdGuardHome",
+      "doc": "AdGuard Home network-wide ad and tracker blocking DNS server.",
+      "categoryLabels": [
+        "networking-diagnostics",
+        "security-credentials-privacy"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "AdGuardHome_linux_amd64.tar.gz",
+          "windows": "AdGuardHome_windows_amd64.zip",
+          "darwin": "AdGuardHome_darwin_amd64.zip"
+        },
+        "arm64": {
+          "linux": "AdGuardHome_linux_arm64.tar.gz",
+          "windows": "AdGuardHome_windows_arm64.zip",
+          "darwin": "AdGuardHome_darwin_arm64.zip"
+        }
+      }
+    },
+    {
+      "appName": "pihole",
+      "license": "EUPL-1.2",
+      "repoURL": "CMD",
+      "doc": "Pi-hole network-wide ad blocking DNS sinkhole.",
+      "categoryLabels": [
+        "networking-diagnostics",
+        "security-credentials-privacy"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "curl -sSL https://install.pi-hole.net | bash",
+          "windows": null,
+          "darwin": null
+        },
+        "arm64": {
+          "linux": "curl -sSL https://install.pi-hole.net | bash",
+          "windows": null,
+          "darwin": null
+        }
+      }
+    },
+    {
+      "appName": "dnsmasq",
+      "license": "GPL-2.0-only OR GPL-3.0-only",
+      "repoURL": "CMD",
+      "doc": "Lightweight DNS, DHCP, TFTP, PXE, and router advertisement server.",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache dnsmasq",
+            "apt": "sudo apt-get update && sudo apt-get install -y dnsmasq",
+            "dnf": "sudo dnf install -y dnsmasq",
+            "pacman": "sudo pacman -S --needed --noconfirm dnsmasq"
+          },
+          "windows": null,
+          "darwin": "brew install dnsmasq"
+        },
+        "arm64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache dnsmasq",
+            "apt": "sudo apt-get update && sudo apt-get install -y dnsmasq",
+            "dnf": "sudo dnf install -y dnsmasq",
+            "pacman": "sudo pacman -S --needed --noconfirm dnsmasq"
+          },
+          "windows": null,
+          "darwin": "brew install dnsmasq"
+        }
+      }
+    },
+    {
+      "appName": "unbound",
+      "license": "BSD-3-Clause",
+      "repoURL": "CMD",
+      "doc": "Validating, recursive, and caching DNS resolver.",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache unbound",
+            "apt": "sudo apt-get update && sudo apt-get install -y unbound",
+            "dnf": "sudo dnf install -y unbound",
+            "pacman": "sudo pacman -S --needed --noconfirm unbound"
+          },
+          "windows": null,
+          "darwin": "brew install unbound"
+        },
+        "arm64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache unbound",
+            "apt": "sudo apt-get update && sudo apt-get install -y unbound",
+            "dnf": "sudo dnf install -y unbound",
+            "pacman": "sudo pacman -S --needed --noconfirm unbound"
+          },
+          "windows": null,
+          "darwin": "brew install unbound"
+        }
+      }
     }
   ]
 }
