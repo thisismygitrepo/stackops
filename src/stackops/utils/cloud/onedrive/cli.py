@@ -1,0 +1,90 @@
+from pathlib import Path
+from typing import Annotated
+
+import typer
+
+from stackops.secrets.paths import SECRETS_DOFILE
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+from stackops.utils.cloud.onedrive.auth import authenticate as authenticate_account
+from stackops.utils.cloud.onedrive.file_ops import delete_item as delete_remote_item
+from stackops.utils.cloud.onedrive.file_ops import download_file as download_remote_file
+from stackops.utils.cloud.onedrive.file_ops import upload_file as upload_local_file
+from stackops.utils.cloud.onedrive.errors import run_cli
+from stackops.utils.cloud.onedrive.items import list_items as list_remote_items
+from stackops.utils.cloud.onedrive.items import search_items as search_remote_items
+from stackops.utils.cloud.onedrive.items import show_status as show_account_status
+
+
+def authenticate(account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")]) -> None:
+    run_cli(lambda: authenticate_account(account_name))
+
+
+def show_status(account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")]) -> None:
+    run_cli(lambda: show_account_status(account_name))
+
+
+def list_items(
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    remote_path: Annotated[str, typer.Argument(help="Remote folder path.")] = "/",
+) -> None:
+    run_cli(lambda: list_remote_items(account_name, remote_path))
+
+
+def search_items(
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    query: Annotated[str, typer.Argument(help="Text to search for.")],
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Output JSON.")] = False,
+) -> None:
+    run_cli(lambda: search_remote_items(account_name, query, output_json))
+
+
+def download_file(
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    remote_path: Annotated[str, typer.Argument(help="Remote file path.")],
+    local_path: Annotated[Path, typer.Argument(help="New local file path.")],
+) -> None:
+    run_cli(lambda: download_remote_file(account_name, remote_path, local_path))
+
+
+def upload_file(
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    local_path: Annotated[Path, typer.Argument(help="Existing local file path.")],
+    remote_path: Annotated[str, typer.Argument(help="Remote target path.")],
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Replace an existing remote item.")] = False,
+) -> None:
+    run_cli(lambda: upload_local_file(account_name, local_path, remote_path, overwrite))
+
+
+def delete_item(
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    remote_path: Annotated[str, typer.Argument(help="Remote item path.")],
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip the confirmation prompt.")] = False,
+) -> None:
+    run_cli(lambda: delete_remote_item(account_name, remote_path, yes))
+
+
+def config_path() -> None:
+    typer.echo(SECRETS_DOFILE)
+
+
+def get_app() -> typer.Typer:
+    app = typer.Typer(add_completion=False, help="Access OneDrive through Microsoft Graph.", no_args_is_help=True, pretty_exceptions_enable=False)
+
+    app.command("auth", short_help="Authenticate with Microsoft.")(authenticate)
+    app.command("a", hidden=True)(authenticate)
+    app.command("status", short_help="Show account and storage status.")(show_status)
+    app.command("t", hidden=True)(show_status)
+    app.command("ls", short_help="List a remote folder.")(list_items)
+    app.command("l", hidden=True)(list_items)
+    app.command("search", short_help="Search the drive.")(search_items)
+    app.command("s", hidden=True)(search_items)
+    app.command("download", short_help="Download a remote file.")(download_file)
+    app.command("w", hidden=True)(download_file)
+    app.command("upload", short_help="Upload a local file.")(upload_file)
+    app.command("u", hidden=True)(upload_file)
+    app.command("delete", short_help="Move an item to the recycle bin.")(delete_item)
+    app.command("d", hidden=True)(delete_item)
+    app.command("config-path", short_help="Print the global StackOps secrets path.")(config_path)
+    app.command("c", hidden=True)(config_path)
+
+    return apply_alias_markers(app)

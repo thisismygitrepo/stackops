@@ -1,289 +1,158 @@
-import os
-import json
-import platform
-import configparser
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any
-from urllib.parse import urlencode
+import time
+from collections.abc import Mapping
+from typing import IO, Literal, TypedDict, Unpack, cast
+from urllib.parse import quote
 
 import requests
+import typer
+
+from stackops.utils.cloud.onedrive.constants import DEVICE_ENDPOINT, REQUEST_TIMEOUT, SCOPE_TEXT, TOKEN_ENDPOINT
+from stackops.utils.cloud.onedrive.credentials import load_credentials, save_refresh_token
+from stackops.utils.cloud.onedrive.errors import OneDriveError
 
 
-def get_rclone_token(section: str) -> dict[str, str] | None:
-    if platform.system() == "Windows":
-        rclone_file_path = Path(os.getenv("APPDATA", "")) / "rclone" / "rclone.conf"
+type RequestMethod = Literal["GET", "POST", "PUT", "DELETE"]
+
+
+class RequestOptions(TypedDict, total=False):
+    headers: Mapping[str, str]
+    data: Mapping[str, str] | IO[bytes]
+    params: Mapping[str, str | int]
+    allow_redirects: bool
+    stream: bool
+
+
+def send_request(method: RequestMethod, url: str, **options: Unpack[RequestOptions]) -> requests.Response:
+    try:
+        return requests.request(method, url, timeout=REQUEST_TIMEOUT, **options)
+    except requests.RequestException as exc:
+        raise OneDriveError(f"Network request failed: {exc}") from exc
+
+
+def response_json(response: requests.Response, operation: str) -> dict[str, object]:
+    try:
+        payload: object = response.json()
+    except requests.exceptions.JSONDecodeError as exc:
+        if response.ok:
+            raise OneDriveError(f"{operation} returned invalid JSON.") from exc
+        raise OneDriveError(f"{operation} failed with HTTP {response.status_code}.") from exc
+
+    if not isinstance(payload, dict) or not all(isinstance(key, str) for key in payload):
+        raise OneDriveError(f"{operation} returned an unexpected response.")
+    return cast(dict[str, object], payload)
+
+
+def _error_description(payload: Mapping[str, object], fallback: str) -> str:
+    description = payload.get("error_description")
+    if isinstance(description, str) and description:
+        return description
+
+    error = payload.get("error")
+    if isinstance(error, Mapping):
+        message = error.get("message")
+        if isinstance(message, str) and message:
+            return message
+    if isinstance(error, str) and error:
+        return error
+    return fallback
+
+
+def require_success(response: requests.Response, operation: str) -> dict[str, object]:
+    payload = response_json(response, operation)
+    if not response.ok:
+        fallback = f"{operation} failed with HTTP {response.status_code}."
+        raise OneDriveError(_error_description(payload, fallback))
+    return payload
+
+
+def graph_headers(access_token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+def graph_json(method: RequestMethod, url: str, access_token: str, operation: str, *, params: Mapping[str, str | int] | None) -> dict[str, object]:
+    if params is None:
+        response = send_request(method, url, headers=graph_headers(access_token))
     else:
-        rclone_file_path = Path.home() / ".config" / "rclone" / "rclone.conf"
-    if rclone_file_path.exists():
-        config = configparser.ConfigParser()
-        config.read(rclone_file_path)
-        if section in config:
-            results = config[section]
-            return dict(results)
-    return None
+        response = send_request(method, url, headers=graph_headers(access_token), params=params)
+    return require_success(response, operation)
 
 
-_cached_config: dict[str, Any] | None = None
+def encoded_remote_path(remote_path: str) -> str:
+    return quote(remote_path.lstrip("/"), safe="/")
 
 
-def get_config(section: str) -> dict[str, Any]:
-    global _cached_config
-    if _cached_config is None:
-        rclone_config = get_rclone_token(section)
-        if not rclone_config:
-            raise Exception(f"Could not find rclone config section '{section}'. Please set up rclone first.")
-        token_str = rclone_config.get("token", "{}")
-        try:
-            token_data = json.loads(token_str)
-        except json.JSONDecodeError:
-            raise Exception(f"Invalid token format in rclone config section '{section}'")
-        _cached_config = {"token": token_data, "drive_id": rclone_config.get("drive_id"), "drive_type": rclone_config.get("drive_type", "personal")}
-    return _cached_config
+def _authorization_pending(device_code: str, poll_interval: int, account_name: str, client_id: str) -> None:
+    while True:
+        response = send_request(
+            "POST",
+            TOKEN_ENDPOINT,
+            data={"grant_type": "urn:ietf:params:oauth:grant-type:device_code", "client_id": client_id, "device_code": device_code},
+        )
+        payload = response_json(response, "Authentication")
+        access_token = payload.get("access_token")
+        refresh_token = payload.get("refresh_token")
+        if response.ok and isinstance(access_token, str) and access_token and isinstance(refresh_token, str) and refresh_token:
+            save_refresh_token(account_name=account_name, client_id=client_id, refresh_token=refresh_token)
+            typer.echo(f"Authentication saved for OneDrive account {account_name}.")
+            return
+
+        oauth_error = payload.get("error")
+        match oauth_error:
+            case "authorization_pending":
+                time.sleep(poll_interval)
+            case "slow_down":
+                poll_interval += 5
+                time.sleep(poll_interval)
+            case _:
+                raise OneDriveError(_error_description(payload, "Authentication failed."))
 
 
-def get_token(section: str) -> dict[str, Any]:
-    return get_config(section)["token"]
+def authenticate(account_name: str) -> None:
+    credentials = load_credentials(account_name=account_name, require_refresh_token=False)
+    client_id = credentials["client_id"]
+    response = send_request("POST", DEVICE_ENDPOINT, data={"client_id": client_id, "scope": SCOPE_TEXT})
+    payload = require_success(response, "Authentication")
+
+    device_code = payload.get("device_code")
+    user_code = payload.get("user_code")
+    verification_uri = payload.get("verification_uri")
+    poll_interval = payload.get("interval")
+    if (
+        not isinstance(device_code, str)
+        or not device_code
+        or not isinstance(user_code, str)
+        or not user_code
+        or not isinstance(verification_uri, str)
+        or not verification_uri
+        or isinstance(poll_interval, bool)
+        or not isinstance(poll_interval, int)
+        or poll_interval < 1
+    ):
+        raise OneDriveError("Authentication returned an unexpected response.")
+
+    typer.echo(f"Open {verification_uri} and enter code {user_code}")
+    _authorization_pending(device_code=device_code, poll_interval=poll_interval, account_name=account_name, client_id=client_id)
 
 
-def get_drive_id(section: str) -> str | None:
-    return get_config(section)["drive_id"]
+def refresh_access_token(account_name: str) -> str:
+    credentials = load_credentials(account_name=account_name, require_refresh_token=True)
+    client_id = credentials["client_id"]
+    refresh_token = credentials["refresh_token"]
+    if refresh_token is None:
+        raise OneDriveError(f"OneDrive account {account_name} is not authenticated. Run: cloud onedrive auth --account-name {account_name}")
 
+    response = send_request(
+        "POST", TOKEN_ENDPOINT, data={"grant_type": "refresh_token", "client_id": client_id, "refresh_token": refresh_token, "scope": SCOPE_TEXT}
+    )
+    payload = response_json(response, "Token refresh")
+    access_token = payload.get("access_token")
+    if not response.ok or not isinstance(access_token, str) or not access_token:
+        raise OneDriveError(_error_description(payload, "Token refresh failed."))
 
-def get_drive_type(section: str) -> str:
-    return get_config(section)["drive_type"]
-
-
-def clear_config_cache() -> None:
-    global _cached_config
-    _cached_config = None
-
-
-CLIENT_ID: str = os.getenv("ONEDRIVE_CLIENT_ID", "your_client_id_here")
-CLIENT_SECRET: str = os.getenv("ONEDRIVE_CLIENT_SECRET", "your_client_secret_here")
-REDIRECT_URI: str = os.getenv("ONEDRIVE_REDIRECT_URI", "http://localhost:8080/callback")
-
-GRAPH_API_BASE: str = "https://graph.microsoft.com/v1.0"
-OAUTH_TOKEN_ENDPOINT: str = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-
-
-def is_token_valid(section: str) -> bool:
-    try:
-        token = get_token(section)
-        expiry_str = token.get("expiry")
-        if not expiry_str:
-            return False
-        if "+" in expiry_str:
-            expiry_str = expiry_str.split("+")[0]
-        elif "Z" in expiry_str:
-            expiry_str = expiry_str.replace("Z", "")
-        expiry_time = datetime.fromisoformat(expiry_str)
-        current_time = datetime.now()
-        return expiry_time > current_time + timedelta(minutes=5)
-    except Exception as e:
-        print(f"Error checking token validity: {e}")
-        return False
-
-
-def save_token_to_file(token_data: dict[str, Any], file_path: str) -> bool:
-    try:
-        token_file_path = Path(file_path)
-        token_file_path.parent.mkdir(parents=True, exist_ok=True)
-        token_file_path.write_text(json.dumps(token_data, indent=2), encoding="utf-8")
-        os.chmod(token_file_path, 0o600)
-        print(f"💾 Token saved to: {token_file_path}")
-        return True
-    except Exception as e:
-        print(f"❌ Error saving token: {e}")
-        return False
-
-
-def load_token_from_file(file_path: str) -> dict[str, Any] | None:
-    try:
-        token_file_path = Path(file_path)
-        if token_file_path.exists():
-            token_data = json.loads(token_file_path.read_text(encoding="utf-8"))
-            global _cached_config
-            if _cached_config is not None:
-                _cached_config["token"] = token_data
-            else:
-                clear_config_cache()
-            print(f"📂 Token loaded from: {token_file_path}")
-            return token_data
-        else:
-            print(f"ℹ️  No saved token file found at: {token_file_path}")
-            return None
-    except Exception as e:
-        print(f"❌ Error loading token: {e}")
-        return None
-
-
-DEFAULT_TOKEN_FILE: str = os.path.expanduser("~/.onedrive_token.json")
-
-
-def refresh_access_token(section: str) -> dict[str, Any] | None:
-    token = get_token(section)
-    refresh_token = token.get("refresh_token")
-    if not refresh_token:
-        print("ERROR: No refresh token available!")
-        return None
-
-    print("🔄 Refreshing access token...")
-    data: dict[str, str] = {
-        "client_id": CLIENT_ID,
-        "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
-        "scope": "https://graph.microsoft.com/Files.ReadWrite.All offline_access",
-    }
-    if CLIENT_SECRET and CLIENT_SECRET != "your_client_secret_here":
-        data["client_secret"] = CLIENT_SECRET
-
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    try:
-        response = requests.post(OAUTH_TOKEN_ENDPOINT, data=data, headers=headers)
-        if response.status_code == 200:
-            token_data = response.json()
-            expires_in = token_data.get("expires_in", 3600)
-            expiry_time = datetime.now() + timedelta(seconds=expires_in)
-            new_token: dict[str, Any] = {
-                "access_token": token_data["access_token"],
-                "token_type": token_data.get("token_type", "Bearer"),
-                "refresh_token": token_data.get("refresh_token", refresh_token),
-                "expiry": expiry_time.isoformat(),
-            }
-            global _cached_config
-            if _cached_config is not None:
-                _cached_config["token"] = new_token
-            else:
-                clear_config_cache()
-            print("✅ Access token refreshed successfully!")
-            print(f"🕒 New token expires at: {expiry_time}")
-            save_token_to_file(new_token, file_path=DEFAULT_TOKEN_FILE)
-            return new_token
-        else:
-            print(f"❌ Token refresh failed: {response.status_code}")
-            print(f"Response: {response.text}")
-            return None
-    except Exception as e:
-        print(f"❌ Error refreshing token: {e}")
-        return None
-
-
-def get_access_token(section: str) -> str | None:
-    load_token_from_file(file_path=DEFAULT_TOKEN_FILE)
-    if not is_token_valid(section):
-        print("🔄 Access token has expired, attempting to refresh...")
-        refreshed_token = refresh_access_token(section)
-        if refreshed_token:
-            return refreshed_token["access_token"]
-        else:
-            print("❌ Failed to refresh token automatically!")
-            print("\n🔧 You have two options:")
-            print("1. Run setup_oauth_authentication() to set up OAuth")
-            print("2. Update your rclone token by running: rclone config reconnect odp")
-            return None
-    token = get_token(section)
-    return token.get("access_token")
-
-
-def make_graph_request(method: str, endpoint: str, section: str, **kwargs: Any) -> requests.Response:
-    token = get_access_token(section)
-    if not token:
-        raise Exception("Failed to get valid access token")
-    headers: dict[str, str] = kwargs.get("headers", {})
-    headers["Authorization"] = f"Bearer {token}"
-    kwargs["headers"] = headers
-    url = f"{GRAPH_API_BASE}/{endpoint.lstrip('/')}"
-    response = requests.request(method, url, **kwargs)
-    return response
-
-
-def get_authorization_url() -> str:
-    params = {
-        "client_id": CLIENT_ID,
-        "response_type": "code",
-        "redirect_uri": REDIRECT_URI,
-        "response_mode": "query",
-        "scope": "https://graph.microsoft.com/Files.ReadWrite.All offline_access",
-        "state": "onedrive_auth",
-    }
-    auth_url = f"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?{urlencode(params)}"
-    return auth_url
-
-
-def exchange_authorization_code(authorization_code: str) -> dict[str, Any] | None:
-    data: dict[str, str] = {
-        "client_id": CLIENT_ID,
-        "grant_type": "authorization_code",
-        "code": authorization_code,
-        "redirect_uri": REDIRECT_URI,
-        "scope": "https://graph.microsoft.com/Files.ReadWrite.All offline_access",
-    }
-    if CLIENT_SECRET and CLIENT_SECRET != "your_client_secret_here":
-        data["client_secret"] = CLIENT_SECRET
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    try:
-        response = requests.post(OAUTH_TOKEN_ENDPOINT, data=data, headers=headers)
-        if response.status_code == 200:
-            token_data = response.json()
-            expires_in = token_data.get("expires_in", 3600)
-            expiry_time = datetime.now() + timedelta(seconds=expires_in)
-            new_token: dict[str, Any] = {
-                "access_token": token_data["access_token"],
-                "token_type": token_data.get("token_type", "Bearer"),
-                "refresh_token": token_data["refresh_token"],
-                "expiry": expiry_time.isoformat(),
-            }
-            global _cached_config
-            if _cached_config is not None:
-                _cached_config["token"] = new_token
-            else:
-                clear_config_cache()
-            save_token_to_file(new_token, file_path=DEFAULT_TOKEN_FILE)
-            print("✅ Initial tokens obtained successfully!")
-            return new_token
-        else:
-            print(f"❌ Token exchange failed: {response.status_code}")
-            print(f"Response: {response.text}")
-            return None
-    except Exception as e:
-        print(f"❌ Error exchanging authorization code: {e}")
-        return None
-
-
-def setup_oauth_authentication() -> None:
-    print("🔧 Setting up OneDrive OAuth Authentication")
-    print("=" * 50)
-    if CLIENT_ID == "your_client_id_here":
-        print("❌ You need to set up Azure App Registration first!")
-        print("\n📋 Setup Instructions:")
-        print("1. Go to https://portal.azure.com")
-        print("2. Navigate to 'Azure Active Directory' > 'App registrations'")
-        print("3. Click 'New registration'")
-        print("4. Set Name: 'OneDrive API Access'")
-        print("5. Set Redirect URI: http://localhost:8080/callback")
-        print("6. After creation, copy the 'Application (client) ID'")
-        print("7. Go to 'API permissions' > 'Add permission' > 'Microsoft Graph'")
-        print("8. Add 'Files.ReadWrite.All' and 'offline_access' permissions")
-        print("9. Set environment variables:")
-        print("   export ONEDRIVE_CLIENT_ID='your_client_id'")
-        print("   export ONEDRIVE_REDIRECT_URI='http://localhost:8080/callback'")
-        return
-    print(f"Using Client ID: {CLIENT_ID}")
-    print(f"Redirect URI: {REDIRECT_URI}")
-    auth_url = get_authorization_url()
-    print("\n🌐 Please visit this URL to authorize the application:")
-    print(f"{auth_url}")
-    print("\n📋 After authorization, you'll be redirected to:")
-    print(f"{REDIRECT_URI}?code=AUTHORIZATION_CODE&state=onedrive_auth")
-    print("\n🔑 Copy the 'code' parameter from the URL and paste it below:")
-    auth_code = input("Authorization Code: ").strip()
-    if auth_code:
-        token_data = exchange_authorization_code(auth_code)
-        if token_data:
-            print("\n✅ OAuth setup completed successfully!")
-            print("🎉 You can now use the OneDrive functions without rclone!")
-        else:
-            print("\n❌ OAuth setup failed. Please try again.")
-    else:
-        print("\n❌ No authorization code provided.")
+    rotated_refresh_token = payload.get("refresh_token")
+    if rotated_refresh_token is None or rotated_refresh_token == "":
+        rotated_refresh_token = refresh_token
+    if not isinstance(rotated_refresh_token, str):
+        raise OneDriveError("Token refresh returned an invalid refresh token.")
+    save_refresh_token(account_name=account_name, client_id=client_id, refresh_token=rotated_refresh_token)
+    return access_token

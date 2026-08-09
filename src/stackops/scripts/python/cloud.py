@@ -118,6 +118,8 @@ def ftpx(
 
 
 def get_app() -> typer.Typer:
+    from stackops.utils.cloud.onedrive.cli import get_app as get_onedrive_app
+
     app = typer.Typer(add_completion=False, no_args_is_help=True, help="☁ Cloud management commands")
 
     app.command(name="sync", no_args_is_help=True, short_help="🔄 <s> Synchronize files/folders between local and cloud storage.")(sync)
@@ -131,6 +133,9 @@ def get_app() -> typer.Typer:
 
     app.command(name="ftpx", no_args_is_help=True, short_help="📦 <f> File transfer utility through SSH.")(ftpx)
     app.command(name="f", no_args_is_help=True, hidden=True)(ftpx)
+
+    app.add_typer(get_onedrive_app(), name="onedrive", help="☁ <o> Access OneDrive through Microsoft Graph.")
+    app.add_typer(get_onedrive_app(), name="o", help="Access OneDrive through Microsoft Graph.", hidden=True)
 
     return apply_alias_markers(app)
 
