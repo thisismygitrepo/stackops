@@ -6754,6 +6754,58 @@
       }
     },
     {
+      "appName": "nmap",
+      "license": "Nmap Public Source License 0.95",
+      "repoURL": "https://github.com/nmap/nmap",
+      "doc": "Network exploration and security auditing utility.",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache nmap",
+            "apt": "sudo apt-get update && sudo apt-get install -y nmap",
+            "dnf": "sudo dnf install -y nmap",
+            "pacman": "sudo pacman -S --needed --noconfirm nmap"
+          },
+          "windows": "winget install --no-upgrade --exact --id Insecure.Nmap --source winget --accept-package-agreements --accept-source-agreements",
+          "darwin": "brew install nmap"
+        },
+        "arm64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache nmap",
+            "apt": "sudo apt-get update && sudo apt-get install -y nmap",
+            "dnf": "sudo dnf install -y nmap",
+            "pacman": "sudo pacman -S --needed --noconfirm nmap"
+          },
+          "windows": "winget install --no-upgrade --exact --id Insecure.Nmap --source winget --accept-package-agreements --accept-source-agreements",
+          "darwin": "brew install nmap"
+        }
+      }
+    },
+    {
+      "appName": "rustscan",
+      "license": "GPL-3.0-only",
+      "repoURL": "https://github.com/bee-san/RustScan",
+      "doc": "Fast port scanner that automatically pipes discovered ports into Nmap.",
+      "categoryLabels": [
+        "networking-diagnostics"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "x86_64-linux-rustscan.tar.gz.zip",
+          "windows": "x86_64-windows-rustscan.exe.zip",
+          "darwin": "x86_64-macos-rustscan.tar.gz.zip"
+        },
+        "arm64": {
+          "linux": "aarch64-linux-rustscan.zip",
+          "windows": null,
+          "darwin": "aarch64-macos-rustscan.tar.gz.zip"
+        }
+      }
+    },
+    {
       "appName": "dnsmasq",
       "license": "GPL-2.0-only OR GPL-3.0-only",
       "repoURL": "CMD",
