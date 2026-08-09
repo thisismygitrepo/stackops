@@ -12905,6 +12905,720 @@
                 "hidden": true
               }
             ]
+          },
+          {
+            "kind": "group",
+            "name": "onedrive",
+            "fullPath": "cloud onedrive",
+            "shortPath": "c o",
+            "help": "☁ <o> Access OneDrive through Microsoft Graph.",
+            "source": {
+              "file": "src/stackops/scripts/python/cloud.py",
+              "module": "stackops.scripts.python.cloud",
+              "dispatches_to": "stackops.utils.cloud.onedrive.cli.get_app"
+            },
+            "app": {
+              "add_completion": false,
+              "help": "Access OneDrive through Microsoft Graph.",
+              "no_args_is_help": true,
+              "pretty_exceptions_enable": false
+            },
+            "children": [
+              {
+                "kind": "command",
+                "name": "add",
+                "fullPath": "cloud onedrive add",
+                "shortPath": "c o n",
+                "help": "add",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "add_account"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def add_account(",
+                    "    account_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--account-name\", \"-a\", help=\"Unique name for this OneDrive account. Omit to enter it interactively.\"),",
+                    "    ] = None,",
+                    "    client_id: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--client-id\", help=\"Microsoft Application (client) ID. Omit to enter it interactively.\"),",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    resolved_account_name = str(typer.prompt(\"OneDrive account name\")) if account_name is None else account_name",
+                    "    resolved_client_id = str(typer.prompt(\"Microsoft Application (client) ID\")) if client_id is None else client_id",
+                    "    run_cli(lambda: add_defined_account(secrets_path=SECRETS_DOFILE, account_name=resolved_account_name, client_id=resolved_client_id))",
+                    "    typer.echo(f\"Added OneDrive CLI account {resolved_account_name!r} to {SECRETS_DOFILE}.\")",
+                    "    typer.echo(f\"Next: cloud onedrive auth --account-name {shlex.quote(resolved_account_name)}\")"
+                  ],
+                  "name": "add_account",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--account-name', '-a', help='Unique name for this OneDrive account. Omit to enter it interactively.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Unique name for this OneDrive account. Omit to enter it interactively."
+                      }
+                    },
+                    {
+                      "name": "client_id",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--client-id', help='Microsoft Application (client) ID. Omit to enter it interactively.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--client-id"
+                        ],
+                        "long_flags": [
+                          "--client-id"
+                        ],
+                        "short_flags": [],
+                        "help": "Microsoft Application (client) ID. Omit to enter it interactively."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Add a OneDrive CLI account. Prompt for omitted values.",
+                "aliases": [
+                  {
+                    "name": "n",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "accounts",
+                "fullPath": "cloud onedrive accounts",
+                "shortPath": "c o r",
+                "help": "accounts",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "show_accounts"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def show_accounts() -> None:",
+                    "    accounts = run_cli(lambda: list_defined_accounts(SECRETS_DOFILE))",
+                    "    if not accounts:",
+                    "        typer.echo(\"No OneDrive CLI accounts are defined.\")",
+                    "        return",
+                    "    print_table(",
+                    "        headers=(\"ACCOUNT\", \"AUTHENTICATION\"),",
+                    "        rows=((account.account_name, account.authentication) for account in accounts),",
+                    "    )"
+                  ],
+                  "name": "show_accounts",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "short_help": "List defined OneDrive CLI accounts.",
+                "aliases": [
+                  {
+                    "name": "r",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "auth",
+                "fullPath": "cloud onedrive auth",
+                "shortPath": "c o a",
+                "help": "auth",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "authenticate"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def authenticate(account_name: Annotated[str, typer.Option(\"--account-name\", \"-a\", help=ACCOUNT_NAME_HELP)]) -> None:",
+                    "    run_cli(lambda: authenticate_account(account_name))"
+                  ],
+                  "name": "authenticate",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option('--account-name', '-a', help=ACCOUNT_NAME_HELP)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ]
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Authenticate with Microsoft.",
+                "aliases": [
+                  {
+                    "name": "a",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "status",
+                "fullPath": "cloud onedrive status",
+                "shortPath": "c o t",
+                "help": "status",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "show_status"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def show_status(account_name: Annotated[str, typer.Option(\"--account-name\", \"-a\", help=ACCOUNT_NAME_HELP)]) -> None:",
+                    "    run_cli(lambda: show_account_status(account_name))"
+                  ],
+                  "name": "show_status",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option('--account-name', '-a', help=ACCOUNT_NAME_HELP)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ]
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Show account and storage status.",
+                "aliases": [
+                  {
+                    "name": "t",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "ls",
+                "fullPath": "cloud onedrive ls",
+                "shortPath": "c o l",
+                "help": "ls",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "list_items"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def list_items(",
+                    "    account_name: Annotated[str, typer.Option(\"--account-name\", \"-a\", help=ACCOUNT_NAME_HELP)],",
+                    "    remote_path: Annotated[str, typer.Argument(help=\"Remote folder path.\")] = \"/\",",
+                    ") -> None:",
+                    "    run_cli(lambda: list_remote_items(account_name, remote_path))"
+                  ],
+                  "name": "list_items",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option('--account-name', '-a', help=ACCOUNT_NAME_HELP)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "remote_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "/",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Remote folder path.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Remote folder path."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "List a remote folder.",
+                "aliases": [
+                  {
+                    "name": "l",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "search",
+                "fullPath": "cloud onedrive search",
+                "shortPath": "c o s",
+                "help": "search",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "search_items"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def search_items(",
+                    "    account_name: Annotated[str, typer.Option(\"--account-name\", \"-a\", help=ACCOUNT_NAME_HELP)],",
+                    "    query: Annotated[str, typer.Argument(help=\"Text to search for.\")],",
+                    "    output_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Output JSON.\")] = False,",
+                    ") -> None:",
+                    "    run_cli(lambda: search_remote_items(account_name, query, output_json))"
+                  ],
+                  "name": "search_items",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option('--account-name', '-a', help=ACCOUNT_NAME_HELP)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "query",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Text to search for.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Text to search for."
+                      }
+                    },
+                    {
+                      "name": "output_json",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Output JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Output JSON."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Search the drive.",
+                "aliases": [
+                  {
+                    "name": "s",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "download",
+                "fullPath": "cloud onedrive download",
+                "shortPath": "c o w",
+                "help": "download",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "download_file"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def download_file(",
+                    "    account_name: Annotated[str, typer.Option(\"--account-name\", \"-a\", help=ACCOUNT_NAME_HELP)],",
+                    "    remote_path: Annotated[str, typer.Argument(help=\"Remote file path.\")],",
+                    "    local_path: Annotated[Path, typer.Argument(help=\"New local file path.\")],",
+                    ") -> None:",
+                    "    run_cli(lambda: download_remote_file(account_name, remote_path, local_path))"
+                  ],
+                  "name": "download_file",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option('--account-name', '-a', help=ACCOUNT_NAME_HELP)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "remote_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Remote file path.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Remote file path."
+                      }
+                    },
+                    {
+                      "name": "local_path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[Path, typer.Argument(help='New local file path.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "New local file path."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Download a remote file.",
+                "aliases": [
+                  {
+                    "name": "w",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "upload",
+                "fullPath": "cloud onedrive upload",
+                "shortPath": "c o u",
+                "help": "upload",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "upload_file"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def upload_file(",
+                    "    account_name: Annotated[str, typer.Option(\"--account-name\", \"-a\", help=ACCOUNT_NAME_HELP)],",
+                    "    local_path: Annotated[Path, typer.Argument(help=\"Existing local file path.\")],",
+                    "    remote_path: Annotated[str, typer.Argument(help=\"Remote target path.\")],",
+                    "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-o\", help=\"Replace an existing remote item.\")] = False,",
+                    ") -> None:",
+                    "    run_cli(lambda: upload_local_file(account_name, local_path, remote_path, overwrite))"
+                  ],
+                  "name": "upload_file",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option('--account-name', '-a', help=ACCOUNT_NAME_HELP)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "local_path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[Path, typer.Argument(help='Existing local file path.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Existing local file path."
+                      }
+                    },
+                    {
+                      "name": "remote_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Remote target path.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Remote target path."
+                      }
+                    },
+                    {
+                      "name": "overwrite",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--overwrite', '-o', help='Replace an existing remote item.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--overwrite",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--overwrite"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "Replace an existing remote item."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Upload a local file.",
+                "aliases": [
+                  {
+                    "name": "u",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "delete",
+                "fullPath": "cloud onedrive delete",
+                "shortPath": "c o d",
+                "help": "delete",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "delete_item"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def delete_item(",
+                    "    account_name: Annotated[str, typer.Option(\"--account-name\", \"-a\", help=ACCOUNT_NAME_HELP)],",
+                    "    remote_path: Annotated[str, typer.Argument(help=\"Remote item path.\")],",
+                    "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Skip the confirmation prompt.\")] = False,",
+                    ") -> None:",
+                    "    run_cli(lambda: delete_remote_item(account_name, remote_path, yes))"
+                  ],
+                  "name": "delete_item",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option('--account-name', '-a', help=ACCOUNT_NAME_HELP)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "remote_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Remote item path.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Remote item path."
+                      }
+                    },
+                    {
+                      "name": "yes",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--yes', '-y', help='Skip the confirmation prompt.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--yes",
+                          "-y"
+                        ],
+                        "long_flags": [
+                          "--yes"
+                        ],
+                        "short_flags": [
+                          "-y"
+                        ],
+                        "help": "Skip the confirmation prompt."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Move an item to the recycle bin.",
+                "aliases": [
+                  {
+                    "name": "d",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "config-path",
+                "fullPath": "cloud onedrive config-path",
+                "shortPath": "c o c",
+                "help": "config-path",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "config_path"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def config_path() -> None:",
+                    "    typer.echo(SECRETS_DOFILE)"
+                  ],
+                  "name": "config_path",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "short_help": "Print the global StackOps secrets path.",
+                "aliases": [
+                  {
+                    "name": "c",
+                    "hidden": true
+                  }
+                ]
+              }
+            ],
+            "aliases": [
+              {
+                "name": "o",
+                "hidden": true,
+                "help": "Access OneDrive through Microsoft Graph."
+              }
+            ]
           }
         ],
         "command_context_settings": {
@@ -17044,45 +17758,86 @@
                   "raw_lines": [
                     "def install_tech(",
                     "    which: Annotated[",
-                    "        BrowserTechName,",
+                    "        BrowserTechSelection,",
                     "        typer.Option(",
                     "            \"--which\",",
                     "            \"-w\",",
-                    "            help=\"Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, or playwright-mcp.\",",
+                    "            help=\"Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all.\",",
                     "            case_sensitive=False,",
                     "            show_choices=True,",
                     "        ),",
                     "    ] = \"agent-browser\",",
+                    "    agent: Annotated[",
+                    "        AGENTS | None,",
+                    "        typer.Option(",
+                    "            \"--agent\",",
+                    "            \"-a\",",
+                    "            help=\"Agent to receive the browser skill or MCP configuration guidance. Omit to choose interactively.\",",
+                    "            case_sensitive=False,",
+                    "            show_choices=True,",
+                    "        ),",
+                    "    ] = None,",
+                    "    backend: Annotated[",
+                    "        SKILL_INSTALL_COMMAND_BACKEND,",
+                    "        typer.Option(",
+                    "            \"--backend\",",
+                    "            \"-b\",",
+                    "            help=\"Upstream skills CLI runner used when the selected browser tech installs a skill.\",",
+                    "            case_sensitive=False,",
+                    "            show_choices=True,",
+                    "        ),",
+                    "    ] = \"npx\",",
                     ") -> None:",
                     "    \"\"\"Install browser automation CLI or MCP support for agents.\"\"\"",
                     "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech",
                     "",
                     "    try:",
-                    "        result = install_browser_tech(which=which)",
+                    "        resolved_agent = agent",
+                    "        if resolved_agent is None:",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import (",
+                    "                choose_required_option,",
+                    "                order_current_first,",
+                    "            )",
+                    "",
+                    "            agent_options = cast(tuple[AGENTS, ...], get_args(AGENTS))",
+                    "            resolved_agent = cast(",
+                    "                AGENTS,",
+                    "                choose_required_option(",
+                    "                    options=order_current_first(options=agent_options, current=DEFAULT_AGENT), msg=\"Choose agent\", header=\"Agent\"",
+                    "                ),",
+                    "            )",
+                    "        selected_technologies: tuple[BrowserTechName, ...] = BROWSER_TECH_NAMES if which == \"all\" else (which,)",
+                    "        results = tuple(",
+                    "            install_browser_tech(which=selected_technology, agent=resolved_agent, backend=backend)",
+                    "            for selected_technology in selected_technologies",
+                    "        )",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error",
                     "",
-                    "    typer.echo(f\"Prepared {result.which} in: {result.install_root}\")",
-                    "    for command in result.commands:",
-                    "        typer.echo(f\"Ran: {' '.join(command)}\")",
-                    "    for guide_path in result.guide_paths:",
-                    "        typer.echo(f\"Wrote: {guide_path}\")",
-                    "    if len(result.mcp_servers) > 0:",
-                    "        typer.echo(f\"MCP catalog servers: {', '.join(result.mcp_servers)}\")",
-                    "        typer.echo(f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent codex --scope local\")"
+                    "    for result in results:",
+                    "        typer.echo(f\"Prepared {result.which} for {resolved_agent} in: {result.install_root}\")",
+                    "        for command in result.commands:",
+                    "            typer.echo(f\"Ran: {' '.join(command)}\")",
+                    "        for guide_path in result.guide_paths:",
+                    "            typer.echo(f\"Wrote: {guide_path}\")",
+                    "        if len(result.mcp_servers) > 0:",
+                    "            typer.echo(f\"MCP catalog servers: {', '.join(result.mcp_servers)}\")",
+                    "            typer.echo(",
+                    "                f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local\"",
+                    "            )"
                   ],
                   "name": "install_tech",
                   "parameters": [
                     {
                       "name": "which",
                       "kind": "positional_or_keyword",
-                      "type": "BrowserTechName",
+                      "type": "BrowserTechSelection",
                       "default": "agent-browser",
                       "required": false,
-                      "annotation_raw": "Annotated[BrowserTechName, typer.Option('--which', '-w', help='Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, or playwright-mcp.', case_sensitive=False, show_choices=True)]",
+                      "annotation_raw": "Annotated[BrowserTechSelection, typer.Option('--which', '-w', help='Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all.', case_sensitive=False, show_choices=True)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -17095,7 +17850,51 @@
                         "short_flags": [
                           "-w"
                         ],
-                        "help": "Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, or playwright-mcp."
+                        "help": "Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all."
+                      }
+                    },
+                    {
+                      "name": "agent",
+                      "kind": "positional_or_keyword",
+                      "type": "AGENTS | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[AGENTS | None, typer.Option('--agent', '-a', help='Agent to receive the browser skill or MCP configuration guidance. Omit to choose interactively.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--agent",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--agent"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Agent to receive the browser skill or MCP configuration guidance. Omit to choose interactively."
+                      }
+                    },
+                    {
+                      "name": "backend",
+                      "kind": "positional_or_keyword",
+                      "type": "SKILL_INSTALL_COMMAND_BACKEND",
+                      "default": "npx",
+                      "required": false,
+                      "annotation_raw": "Annotated[SKILL_INSTALL_COMMAND_BACKEND, typer.Option('--backend', '-b', help='Upstream skills CLI runner used when the selected browser tech installs a skill.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--backend",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--backend"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Upstream skills CLI runner used when the selected browser tech installs a skill."
                       }
                     }
                   ],
@@ -17144,9 +17943,14 @@
                     "    detached: Annotated[bool, typer.Option(\"--detached\", \"-d\", help=\"Launch as background processes instead of tmux windows.\")] = False,",
                     ") -> None:",
                     "    \"\"\"Launch browser automation endpoint with an isolated profile when supported.\"\"\"",
+                    "    lan_address: InterfaceIPv4Address | None = None",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import launch_browser as launch_browser_impl",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl",
                     "",
+                    "        if lan:",
+                    "            lan_address = select_lan_interface_ipv4(prefer_vpn=False)",
+                    "            if lan_address is None:",
+                    "                raise RuntimeError(\"Could not determine a local LAN IPv4 address for the browser endpoint.\")",
                     "        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan, detached=detached)",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
@@ -17154,32 +17958,17 @@
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error",
                     "",
-                    "    match result:",
-                    "        case DetachedBrowserLaunchResult():",
-                    "            typer.echo(f\"Launched {result.process_label}: pid={result.process_id}\")",
-                    "            if result.relay_process_id is not None:",
-                    "                typer.echo(f\"Relay: pid={result.relay_process_id} target=127.0.0.1:{result.browser_port}\")",
-                    "        case TmuxBrowserLaunchResult():",
-                    "            typer.echo(f\"Launched {result.process_label} in tmux session: {result.tmux.session_name}\")",
-                    "            typer.echo(f\"Browser window: {result.tmux.browser_window_name}\")",
-                    "            if result.tmux.relay_window_name is not None:",
-                    "                typer.echo(f\"Relay window: {result.tmux.relay_window_name} target=127.0.0.1:{result.browser_port}\")",
-                    "            typer.echo(f\"Attach: {' '.join(result.tmux.attach_command)}\")",
-                    "    typer.echo(f\"Executable: {result.browser_path}\")",
-                    "    typer.echo(f\"{result.endpoint_short_label}: {result.host}:{result.port}\")",
-                    "    if result.profile_path is not None:",
-                    "        typer.echo(f\"Profile: {result.profile_path}\")",
-                    "    typer.echo(f\"Prompt: {result.prompt_path}\")",
-                    "    if lan:",
-                    "        typer.echo(f\"{result.endpoint_short_label} is exposed on 0.0.0.0 through a relay; use this only on a trusted network.\")",
+                    "    Console().print(build_browser_launch_summary(result=result, lan_address=lan_address))",
                     "    if isinstance(result, TmuxBrowserLaunchResult):",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_session",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window",
                     "",
                     "        try:",
-                    "            attach_or_switch_tmux_session(session_name=result.tmux.session_name)",
+                    "            attach_or_switch_tmux_window(",
+                    "                session_name=result.tmux.session_name,",
+                    "                window_name=result.tmux.browser_window_name,",
+                    "            )",
                     "        except RuntimeError as error:",
-                    "            typer.echo(str(error), err=True)",
-                    "            raise typer.Exit(code=1) from error"
+                    "            typer.echo(f\"Browser endpoint is running, but automatic tmux attachment failed: {error}\", err=True)"
                   ],
                   "name": "launch_browser",
                   "parameters": [
@@ -17298,7 +18087,7 @@
                 },
                 "short_help": "<l> Launch browser automation endpoint",
                 "typer": {
-                  "no_args_is_help": true
+                  "no_args_is_help": false
                 },
                 "doc": "Launch browser automation endpoint with an isolated profile when supported.",
                 "aliases": [
@@ -17313,7 +18102,7 @@
                 "name": "status",
                 "fullPath": "agents browser status",
                 "shortPath": "a b s",
-                "help": "Show active StackOps browser tmux windows.",
+                "help": "Show active StackOps browser launches.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_browser.py",
                   "module": "stackops.scripts.python.agents_browser",
@@ -17321,73 +18110,59 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def status() -> None:",
-                    "    \"\"\"Show active StackOps browser tmux windows.\"\"\"",
+                    "def status(",
+                    "    detached: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--detached\", \"-d\", help=\"Show browser processes launched with --detached instead of tmux windows.\"),",
+                    "    ] = False,",
+                    ") -> None:",
+                    "    \"\"\"Show active StackOps browser launches.\"\"\"",
                     "    try:",
-                    "        from rich import box",
-                    "        from rich.console import Console",
-                    "        from rich.table import Table",
-                    "",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import collect_browser_tmux_status",
-                    "",
-                    "        rows = collect_browser_tmux_status()",
-                    "    except RuntimeError as error:",
-                    "        typer.echo(str(error), err=True)",
-                    "        raise typer.Exit(code=1) from error",
-                    "",
-                    "    launch_count = len({row.metadata.launch_id for row in rows})",
-                    "    window_count = len({row.window_id for row in rows})",
-                    "    table = Table(",
-                    "        title=f\"StackOps browser tmux: {launch_count} launch(es), {window_count} window(s), {len(rows)} pane(s)\",",
-                    "        box=box.SIMPLE_HEAVY,",
-                    "        show_lines=False,",
-                    "    )",
-                    "    table.add_column(\"Session\", style=\"cyan\", overflow=\"fold\")",
-                    "    table.add_column(\"Launch\", overflow=\"fold\")",
-                    "    table.add_column(\"Role\")",
-                    "    table.add_column(\"Browser\")",
-                    "    table.add_column(\"Profile\", overflow=\"fold\")",
-                    "    table.add_column(\"Endpoint\")",
-                    "    table.add_column(\"Window\")",
-                    "    table.add_column(\"Pane\")",
-                    "    table.add_column(\"State\")",
-                    "    table.add_column(\"PID\", justify=\"right\")",
-                    "    table.add_column(\"Command\")",
-                    "    table.add_column(\"Profile Path\", overflow=\"fold\")",
-                    "    table.add_column(\"Prompt\", overflow=\"fold\")",
-                    "",
-                    "    for row in rows:",
-                    "        state = \"dead\" if row.pane_dead else \"running\"",
-                    "        endpoint = f\"{row.metadata.host}:{row.metadata.port}\"",
-                    "        if row.metadata.lan == \"yes\":",
-                    "            endpoint = f\"{endpoint} -> 127.0.0.1:{row.metadata.browser_port}\"",
-                    "        table.add_row(",
-                    "            row.session_name,",
-                    "            row.metadata.launch_id,",
-                    "            row.metadata.role,",
-                    "            row.metadata.browser,",
-                    "            row.metadata.profile,",
-                    "            endpoint,",
-                    "            f\"{row.window_index}:{row.window_name}\",",
-                    "            f\"{row.pane_index} {row.pane_id}\",",
-                    "            state,",
-                    "            row.pane_pid,",
-                    "            row.pane_current_command,",
-                    "            row.metadata.profile_path,",
-                    "            row.metadata.prompt_path,",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import (",
+                    "            show_detached_browser_status,",
+                    "            show_tmux_browser_status,",
                     "        )",
                     "",
-                    "    Console().print(table)"
+                    "        if detached:",
+                    "            show_detached_browser_status()",
+                    "        else:",
+                    "            show_tmux_browser_status()",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error"
                   ],
                   "name": "status",
-                  "parameters": [],
+                  "parameters": [
+                    {
+                      "name": "detached",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--detached', '-d', help='Show browser processes launched with --detached instead of tmux windows.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--detached",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--detached"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Show browser processes launched with --detached instead of tmux windows."
+                      }
+                    }
+                  ],
                   "return": "None"
                 },
-                "short_help": "<s> Show active browser tmux windows",
+                "short_help": "<s> Show active browser launches",
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Show active StackOps browser tmux windows.",
+                "doc": "Show active StackOps browser launches.",
                 "aliases": [
                   {
                     "name": "s",
@@ -17906,6 +18681,59 @@
                 "name": "I",
                 "hidden": true,
                 "help": "f'Iter maintenance for Herdr {HERDR_VERSION}'"
+              }
+            ]
+          },
+          {
+            "kind": "group",
+            "name": "second-brain",
+            "fullPath": "agents second-brain",
+            "shortPath": "a B",
+            "help": "🧠 <B> Second Brain commands",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "dispatches_to": "stackops.scripts.python.agents_second_brain.get_app"
+            },
+            "app": {
+              "help": "Second Brain commands",
+              "no_args_is_help": true,
+              "add_help_option": true,
+              "add_completion": false
+            },
+            "children": [
+              {
+                "kind": "command",
+                "name": "config",
+                "fullPath": "agents second-brain config",
+                "shortPath": "a B config",
+                "help": "config",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_second_brain.py",
+                  "module": "stackops.scripts.python.agents_second_brain",
+                  "callable": "config"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def config() -> None:",
+                    "    link_path = Path.home().joinpath(\"code\", \"agents\", \"second-brain\")",
+                    "    target_path = Path.home().joinpath(\"dotfiles\", \"stackops\", \"second-brain\")",
+                    "    link_path.parent.mkdir(parents=True, exist_ok=True)",
+                    "    link_path.symlink_to(target_path, target_is_directory=True)",
+                    "    typer.echo(f\"Created symlink: {link_path} -> {target_path}\")"
+                  ],
+                  "name": "config",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "short_help": "Link the Second Brain configuration"
+              }
+            ],
+            "aliases": [
+              {
+                "name": "B",
+                "hidden": true,
+                "help": "Second Brain commands"
               }
             ]
           },

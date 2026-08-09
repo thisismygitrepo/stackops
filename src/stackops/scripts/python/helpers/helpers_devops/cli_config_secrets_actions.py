@@ -11,10 +11,10 @@ from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker impor
     choose_interactive_options,
 )
 from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import SubsetOutputConflictAction
+from stackops.secrets.constants import SECRETS_FILE_VERSION
 from stackops.secrets.models import Login, SecretsFile
 
 SECRETS_SCHEMA_FILENAME = "secrets.schema.json"
-SECRETS_FILE_VERSION = "0.5"
 
 
 def edit_secrets_file(secrets_path: Path, editor: str, *, create: bool = False) -> None:

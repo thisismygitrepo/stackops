@@ -1,3 +1,4 @@
+import shlex
 from pathlib import Path
 from typing import Annotated
 
@@ -5,6 +6,8 @@ import typer
 
 from stackops.secrets.paths import SECRETS_DOFILE
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+from stackops.utils.cloud.onedrive.accounts import add_account as add_defined_account
+from stackops.utils.cloud.onedrive.accounts import list_accounts as list_defined_accounts
 from stackops.utils.cloud.onedrive.auth import authenticate as authenticate_account
 from stackops.utils.cloud.onedrive.file_ops import delete_item as delete_remote_item
 from stackops.utils.cloud.onedrive.file_ops import download_file as download_remote_file
@@ -13,25 +16,57 @@ from stackops.utils.cloud.onedrive.errors import run_cli
 from stackops.utils.cloud.onedrive.items import list_items as list_remote_items
 from stackops.utils.cloud.onedrive.items import search_items as search_remote_items
 from stackops.utils.cloud.onedrive.items import show_status as show_account_status
+from stackops.utils.cloud.onedrive.output import print_table
 
 
-def authenticate(account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")]) -> None:
+ACCOUNT_NAME_HELP = "OneDrive CLI account name. Run 'cloud onedrive accounts' to list configured names."
+
+
+def add_account(
+    account_name: Annotated[
+        str | None,
+        typer.Option("--account-name", "-a", help="Unique name for this OneDrive account. Omit to enter it interactively."),
+    ] = None,
+    client_id: Annotated[
+        str | None,
+        typer.Option("--client-id", help="Microsoft Application (client) ID. Omit to enter it interactively."),
+    ] = None,
+) -> None:
+    resolved_account_name = str(typer.prompt("OneDrive account name")) if account_name is None else account_name
+    resolved_client_id = str(typer.prompt("Microsoft Application (client) ID")) if client_id is None else client_id
+    run_cli(lambda: add_defined_account(secrets_path=SECRETS_DOFILE, account_name=resolved_account_name, client_id=resolved_client_id))
+    typer.echo(f"Added OneDrive CLI account {resolved_account_name!r} to {SECRETS_DOFILE}.")
+    typer.echo(f"Next: cloud onedrive auth --account-name {shlex.quote(resolved_account_name)}")
+
+
+def show_accounts() -> None:
+    accounts = run_cli(lambda: list_defined_accounts(SECRETS_DOFILE))
+    if not accounts:
+        typer.echo("No OneDrive CLI accounts are defined.")
+        return
+    print_table(
+        headers=("ACCOUNT", "AUTHENTICATION"),
+        rows=((account.account_name, account.authentication) for account in accounts),
+    )
+
+
+def authenticate(account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)]) -> None:
     run_cli(lambda: authenticate_account(account_name))
 
 
-def show_status(account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")]) -> None:
+def show_status(account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)]) -> None:
     run_cli(lambda: show_account_status(account_name))
 
 
 def list_items(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     remote_path: Annotated[str, typer.Argument(help="Remote folder path.")] = "/",
 ) -> None:
     run_cli(lambda: list_remote_items(account_name, remote_path))
 
 
 def search_items(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     query: Annotated[str, typer.Argument(help="Text to search for.")],
     output_json: Annotated[bool, typer.Option("--json", "-j", help="Output JSON.")] = False,
 ) -> None:
@@ -39,7 +74,7 @@ def search_items(
 
 
 def download_file(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     remote_path: Annotated[str, typer.Argument(help="Remote file path.")],
     local_path: Annotated[Path, typer.Argument(help="New local file path.")],
 ) -> None:
@@ -47,7 +82,7 @@ def download_file(
 
 
 def upload_file(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     local_path: Annotated[Path, typer.Argument(help="Existing local file path.")],
     remote_path: Annotated[str, typer.Argument(help="Remote target path.")],
     overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Replace an existing remote item.")] = False,
@@ -56,7 +91,7 @@ def upload_file(
 
 
 def delete_item(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help="Exact StackOps secrets accountName.")],
+    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     remote_path: Annotated[str, typer.Argument(help="Remote item path.")],
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip the confirmation prompt.")] = False,
 ) -> None:
@@ -70,6 +105,10 @@ def config_path() -> None:
 def get_app() -> typer.Typer:
     app = typer.Typer(add_completion=False, help="Access OneDrive through Microsoft Graph.", no_args_is_help=True, pretty_exceptions_enable=False)
 
+    app.command("add", short_help="Add a OneDrive CLI account. Prompt for omitted values.")(add_account)
+    app.command("n", hidden=True)(add_account)
+    app.command("accounts", short_help="List defined OneDrive CLI accounts.")(show_accounts)
+    app.command("r", hidden=True)(show_accounts)
     app.command("auth", short_help="Authenticate with Microsoft.")(authenticate)
     app.command("a", hidden=True)(authenticate)
     app.command("status", short_help="Show account and storage status.")(show_status)
