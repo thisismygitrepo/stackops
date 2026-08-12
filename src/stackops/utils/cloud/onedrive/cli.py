@@ -105,14 +105,12 @@ def config_path() -> None:
 def get_app() -> typer.Typer:
     app = typer.Typer(add_completion=False, help="Access OneDrive through Microsoft Graph.", no_args_is_help=True, pretty_exceptions_enable=False)
 
-    app.command("add", short_help="Add a OneDrive CLI account. Prompt for omitted values.")(add_account)
-    app.command("n", hidden=True)(add_account)
-    app.command("accounts", short_help="List defined OneDrive CLI accounts.")(show_accounts)
-    app.command("r", hidden=True)(show_accounts)
     app.command("auth", short_help="Authenticate with Microsoft.")(authenticate)
     app.command("a", hidden=True)(authenticate)
     app.command("status", short_help="Show account and storage status.")(show_status)
     app.command("t", hidden=True)(show_status)
+    app.command("accounts", short_help="List defined OneDrive CLI accounts.")(show_accounts)
+    app.command("r", hidden=True)(show_accounts)
     app.command("ls", short_help="List a remote folder.")(list_items)
     app.command("l", hidden=True)(list_items)
     app.command("search", short_help="Search the drive.")(search_items)
@@ -125,5 +123,7 @@ def get_app() -> typer.Typer:
     app.command("d", hidden=True)(delete_item)
     app.command("config-path", short_help="Print the global StackOps secrets path.")(config_path)
     app.command("c", hidden=True)(config_path)
+    app.command("add", short_help="Add a OneDrive CLI account. Prompt for omitted values.")(add_account)
+    app.command("A", hidden=True)(add_account)
 
     return apply_alias_markers(app)

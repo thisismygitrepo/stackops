@@ -12926,124 +12926,6 @@
             "children": [
               {
                 "kind": "command",
-                "name": "add",
-                "fullPath": "cloud onedrive add",
-                "shortPath": "c o n",
-                "help": "add",
-                "source": {
-                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
-                  "module": "stackops.utils.cloud.onedrive.cli",
-                  "callable": "add_account"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def add_account(",
-                    "    account_name: Annotated[",
-                    "        str | None,",
-                    "        typer.Option(\"--account-name\", \"-a\", help=\"Unique name for this OneDrive account. Omit to enter it interactively.\"),",
-                    "    ] = None,",
-                    "    client_id: Annotated[",
-                    "        str | None,",
-                    "        typer.Option(\"--client-id\", help=\"Microsoft Application (client) ID. Omit to enter it interactively.\"),",
-                    "    ] = None,",
-                    ") -> None:",
-                    "    resolved_account_name = str(typer.prompt(\"OneDrive account name\")) if account_name is None else account_name",
-                    "    resolved_client_id = str(typer.prompt(\"Microsoft Application (client) ID\")) if client_id is None else client_id",
-                    "    run_cli(lambda: add_defined_account(secrets_path=SECRETS_DOFILE, account_name=resolved_account_name, client_id=resolved_client_id))",
-                    "    typer.echo(f\"Added OneDrive CLI account {resolved_account_name!r} to {SECRETS_DOFILE}.\")",
-                    "    typer.echo(f\"Next: cloud onedrive auth --account-name {shlex.quote(resolved_account_name)}\")"
-                  ],
-                  "name": "add_account",
-                  "parameters": [
-                    {
-                      "name": "account_name",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--account-name', '-a', help='Unique name for this OneDrive account. Omit to enter it interactively.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--account-name",
-                          "-a"
-                        ],
-                        "long_flags": [
-                          "--account-name"
-                        ],
-                        "short_flags": [
-                          "-a"
-                        ],
-                        "help": "Unique name for this OneDrive account. Omit to enter it interactively."
-                      }
-                    },
-                    {
-                      "name": "client_id",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--client-id', help='Microsoft Application (client) ID. Omit to enter it interactively.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--client-id"
-                        ],
-                        "long_flags": [
-                          "--client-id"
-                        ],
-                        "short_flags": [],
-                        "help": "Microsoft Application (client) ID. Omit to enter it interactively."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "short_help": "Add a OneDrive CLI account. Prompt for omitted values.",
-                "aliases": [
-                  {
-                    "name": "n",
-                    "hidden": true
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "accounts",
-                "fullPath": "cloud onedrive accounts",
-                "shortPath": "c o r",
-                "help": "accounts",
-                "source": {
-                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
-                  "module": "stackops.utils.cloud.onedrive.cli",
-                  "callable": "show_accounts"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def show_accounts() -> None:",
-                    "    accounts = run_cli(lambda: list_defined_accounts(SECRETS_DOFILE))",
-                    "    if not accounts:",
-                    "        typer.echo(\"No OneDrive CLI accounts are defined.\")",
-                    "        return",
-                    "    print_table(",
-                    "        headers=(\"ACCOUNT\", \"AUTHENTICATION\"),",
-                    "        rows=((account.account_name, account.authentication) for account in accounts),",
-                    "    )"
-                  ],
-                  "name": "show_accounts",
-                  "parameters": [],
-                  "return": "None"
-                },
-                "short_help": "List defined OneDrive CLI accounts.",
-                "aliases": [
-                  {
-                    "name": "r",
-                    "hidden": true
-                  }
-                ]
-              },
-              {
-                "kind": "command",
                 "name": "auth",
                 "fullPath": "cloud onedrive auth",
                 "shortPath": "c o a",
@@ -13138,6 +13020,41 @@
                 "aliases": [
                   {
                     "name": "t",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "accounts",
+                "fullPath": "cloud onedrive accounts",
+                "shortPath": "c o r",
+                "help": "accounts",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "show_accounts"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def show_accounts() -> None:",
+                    "    accounts = run_cli(lambda: list_defined_accounts(SECRETS_DOFILE))",
+                    "    if not accounts:",
+                    "        typer.echo(\"No OneDrive CLI accounts are defined.\")",
+                    "        return",
+                    "    print_table(",
+                    "        headers=(\"ACCOUNT\", \"AUTHENTICATION\"),",
+                    "        rows=((account.account_name, account.authentication) for account in accounts),",
+                    "    )"
+                  ],
+                  "name": "show_accounts",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "short_help": "List defined OneDrive CLI accounts.",
+                "aliases": [
+                  {
+                    "name": "r",
                     "hidden": true
                   }
                 ]
@@ -13607,6 +13524,89 @@
                 "aliases": [
                   {
                     "name": "c",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "add",
+                "fullPath": "cloud onedrive add",
+                "shortPath": "c o A",
+                "help": "add",
+                "source": {
+                  "file": "src/stackops/utils/cloud/onedrive/cli.py",
+                  "module": "stackops.utils.cloud.onedrive.cli",
+                  "callable": "add_account"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def add_account(",
+                    "    account_name: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--account-name\", \"-a\", help=\"Unique name for this OneDrive account. Omit to enter it interactively.\"),",
+                    "    ] = None,",
+                    "    client_id: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--client-id\", help=\"Microsoft Application (client) ID. Omit to enter it interactively.\"),",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    resolved_account_name = str(typer.prompt(\"OneDrive account name\")) if account_name is None else account_name",
+                    "    resolved_client_id = str(typer.prompt(\"Microsoft Application (client) ID\")) if client_id is None else client_id",
+                    "    run_cli(lambda: add_defined_account(secrets_path=SECRETS_DOFILE, account_name=resolved_account_name, client_id=resolved_client_id))",
+                    "    typer.echo(f\"Added OneDrive CLI account {resolved_account_name!r} to {SECRETS_DOFILE}.\")",
+                    "    typer.echo(f\"Next: cloud onedrive auth --account-name {shlex.quote(resolved_account_name)}\")"
+                  ],
+                  "name": "add_account",
+                  "parameters": [
+                    {
+                      "name": "account_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--account-name', '-a', help='Unique name for this OneDrive account. Omit to enter it interactively.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--account-name",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--account-name"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Unique name for this OneDrive account. Omit to enter it interactively."
+                      }
+                    },
+                    {
+                      "name": "client_id",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--client-id', help='Microsoft Application (client) ID. Omit to enter it interactively.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--client-id"
+                        ],
+                        "long_flags": [
+                          "--client-id"
+                        ],
+                        "short_flags": [],
+                        "help": "Microsoft Application (client) ID. Omit to enter it interactively."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "Add a OneDrive CLI account. Prompt for omitted values.",
+                "aliases": [
+                  {
+                    "name": "A",
                     "hidden": true
                   }
                 ]

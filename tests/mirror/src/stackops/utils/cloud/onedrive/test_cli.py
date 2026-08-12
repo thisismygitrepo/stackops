@@ -30,7 +30,7 @@ def test_add_prompts_for_account_details_and_accounts_lists_the_result(tmp_path:
     add_result = runner.invoke(onedrive_cli.get_app(), ["add"], input="odp\napplication-client-id\n")
     alias_add_result = runner.invoke(
         onedrive_cli.get_app(),
-        ["n", "--account-name", "personal", "--client-id", "personal-client-id"],
+        ["A", "--account-name", "personal", "--client-id", "personal-client-id"],
     )
     accounts_result = runner.invoke(onedrive_cli.get_app(), ["accounts"])
     alias_accounts_result = runner.invoke(onedrive_cli.get_app(), ["r"])
@@ -58,7 +58,7 @@ def test_help_exposes_account_creation_and_listing_commands() -> None:
 
     assert result.exit_code == 0, result.output
     assert "add" in result.output
-    assert "<n>" in result.output
+    assert "<A>" in result.output
     assert "Add a OneDrive CLI account" in result.output
     assert "accounts" in result.output
     assert "<r>" in result.output
