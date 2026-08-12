@@ -227,6 +227,16 @@
           "minLength": 1,
           "description": "GitHub repository URL, direct installer source marker, or CMD for command-based installers."
         },
+        "lastCommitDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the latest commit on the GitHub repository's default branch."
+        },
+        "lastCommitDateCheckDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp when lastCommitDate was last refreshed."
+        },
         "doc": {
           "type": "string",
           "minLength": 1,

@@ -67,6 +67,8 @@ class InstallerData(TypedDict):
     license: str
     doc: str
     repoURL: str
+    lastCommitDate: NotRequired[str]
+    lastCommitDateCheckDate: NotRequired[str]
     categoryLabels: list[InstallerCategoryLabel]
     fileNamePattern: InstallerFileNamePatterns
 

@@ -33,7 +33,14 @@ Add-ToPathIfNotAlready -Directories @(
     "C:\Program Files\Git\bin"  # gives sh.exe bash.exe & git.exe
 )
 
-function xx { codex --dangerously-bypass-approvals-and-sandbox @args }
+function xx {
+    if ($args.Count -gt 0 -and $args[0] -match '^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$') {
+        codex resume --dangerously-bypass-approvals-and-sandbox @args
+    }
+    else {
+        codex --dangerously-bypass-approvals-and-sandbox @args
+    }
+}
 function xa { agy --dangerously-skip-permissions @args }
 function xc { copilot --yolo @args }
 
