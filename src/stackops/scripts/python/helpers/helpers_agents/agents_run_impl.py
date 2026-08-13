@@ -186,6 +186,7 @@ def run(
     source: PROMPTS_SOURCE,
     edit: bool,
     show_prompts_yaml_format: bool,
+    working_directory: Path | None,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
         edit_prompts_yaml,
@@ -235,6 +236,8 @@ def run(
     prompt_file = make_prompt_file(prompt=prompt_text, context=resolved_context)
     _print_prompt_file_preview(prompt_file=prompt_file)
     command_line = build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
+    if working_directory is not None:
+        command_line = agent_shell.render_command_in_directory(command=command_line, directory=working_directory)
 
     from stackops.utils.code import exit_then_run_shell_script
     exit_then_run_shell_script(script=command_line, strict=False)

@@ -2,9 +2,11 @@ from pathlib import Path
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constants import SECOND_BRAIN_ROOT
+
 
 def config() -> None:
-    link_path = Path.home().joinpath("code", "agents", "second-brain")
+    link_path = SECOND_BRAIN_ROOT
     target_path = Path.home().joinpath("dotfiles", "stackops", "second-brain")
     link_path.parent.mkdir(parents=True, exist_ok=True)
     link_path.symlink_to(target_path, target_is_directory=True)

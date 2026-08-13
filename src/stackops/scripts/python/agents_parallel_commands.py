@@ -274,6 +274,7 @@ def create_context(
                 source="all",
                 edit=False,
                 show_prompts_yaml_format=False,
+                working_directory=repo_root,
             )
     except SystemExit as e:
         exit_code = e.code if isinstance(e.code, int) else 0 if e.code is None else 1

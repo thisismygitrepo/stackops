@@ -1,11 +1,14 @@
 """Agents management commands - lazy loading subcommands."""
 
-from pathlib import Path
 import shutil
+from collections.abc import Generator
+from contextlib import chdir, contextmanager
+from pathlib import Path
 from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constants import SECOND_BRAIN_ROOT
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
@@ -39,6 +42,17 @@ _INIT_CONFIG_AGENT_HELP: Final[str] = (
     f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
     f"{','.join(_AGENT_VALUES)}"
 )
+
+
+@contextmanager
+def _agent_working_directory(*, second_brain: bool) -> Generator[Path | None, None, None]:
+    if not second_brain:
+        yield None
+        return
+    if not SECOND_BRAIN_ROOT.is_dir():
+        raise ValueError(f"Second Brain directory is not available: {SECOND_BRAIN_ROOT}")
+    with chdir(SECOND_BRAIN_ROOT):
+        yield SECOND_BRAIN_ROOT
 
 
 def _parse_init_config_agents(*, raw_value: str) -> tuple[AGENTS, ...]:
@@ -184,6 +198,10 @@ def run_interactive(
         INTERACTIVE_AGENT,
         typer.Option(..., "--agent", "-a", help="Agent to launch: codex/x, copilot/c, pi/p, or omp/o."),
     ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),
+    second_brain: Annotated[
+        bool,
+        typer.Option(..., "--second-brain", "-b", help="Run from the Second Brain repository."),
+    ] = False,
     caveman: Annotated[
         bool,
         typer.Option(..., "--caveman", "-c", help="Start the session with the caveman wenyan-full prompt."),
@@ -198,14 +216,20 @@ def run_interactive(
 
     resolved_agent = _resolve_interactive_agent(agent=agent)
     try:
-        command = _apply_headroom(
-            command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom
-        )
+        with _agent_working_directory(second_brain=second_brain) as working_directory:
+            command = _apply_headroom(
+                command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom
+            )
+            script = shlex.join(command)
+            if working_directory is not None:
+                from stackops.scripts.python.helpers.helpers_agents.agents_shell import render_command_in_directory
+
+                script = render_command_in_directory(command=script, directory=working_directory)
+            from stackops.utils.code import exit_then_run_shell_script
+
+            exit_then_run_shell_script(script=script, strict=False)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
-    from stackops.utils.code import exit_then_run_shell_script
-
-    exit_then_run_shell_script(script=shlex.join(command), strict=False)
 
 
 def run_prompt(
@@ -217,6 +241,10 @@ def run_prompt(
         ),
     ],
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = DEFAULT_AGENT,
+    second_brain: Annotated[
+        bool,
+        typer.Option(..., "--second-brain", "-b", help="Run from the Second Brain repository."),
+    ] = False,
     reasoning_effort: Annotated[
         ReasoningEffort | None,
         typer.Option(
@@ -275,18 +303,20 @@ def run_prompt(
     from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
 
     try:
-        impl(
-            prompt=" ".join(prompt) if prompt else None,
-            agent=agent,
-            reasoning_effort=reasoning_effort,
-            context=context,
-            context_path=context_path,
-            prompts_yaml_path=context_yaml_path,
-            context_name=context_name,
-            source=source,
-            edit=edit,
-            show_prompts_yaml_format=show_prompts_yaml_format,
-        )
+        with _agent_working_directory(second_brain=second_brain) as working_directory:
+            impl(
+                prompt=" ".join(prompt) if prompt else None,
+                agent=agent,
+                reasoning_effort=reasoning_effort,
+                context=context,
+                context_path=context_path,
+                prompts_yaml_path=context_yaml_path,
+                context_name=context_name,
+                source=source,
+                edit=edit,
+                show_prompts_yaml_format=show_prompts_yaml_format,
+                working_directory=working_directory,
+            )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
@@ -294,6 +324,10 @@ def run_prompt(
 def ask(
     prompt: Annotated[list[str], typer.Argument(help="Prompt text to pass to the selected agent.")],
     agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent to ask directly.")] = DEFAULT_AGENT,
+    second_brain: Annotated[
+        bool,
+        typer.Option("--second-brain", "-b", help="Run from the Second Brain repository."),
+    ] = False,
     reasoning: Annotated[ReasoningShortcut | None, typer.Option("--reasoning", "-r", help=_ASK_REASONING_HELP)] = None,
     file_prompt: Annotated[
         Path | None, typer.Option("--file-prompt", "-f", help="Append the contents of this file to PROMPT before asking the selected agent.")
@@ -302,9 +336,10 @@ def ask(
 ) -> None:
     """Ask a selected agent directly."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_ask_impl import run_ask as impl
+        with _agent_working_directory(second_brain=second_brain):
+            from stackops.scripts.python.helpers.helpers_agents.agents_ask_impl import run_ask as impl
 
-        return_code = impl(prompt_parts=prompt, agent=agent, reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)
+            return_code = impl(prompt_parts=prompt, agent=agent, reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     raise typer.Exit(code=return_code)

@@ -19,6 +19,14 @@ def quote_for_shell(value: str, *, is_windows: bool) -> str:
     return shlex.quote(value)
 
 
+def render_command_in_directory(*, command: str, directory: Path) -> str:
+    resolved_is_windows = is_windows_host()
+    quoted_directory = quote_for_shell(str(directory), is_windows=resolved_is_windows)
+    if resolved_is_windows:
+        return f"Set-Location -LiteralPath {quoted_directory} -ErrorAction Stop\n{command}"
+    return f"cd -- {quoted_directory} && {command}"
+
+
 def _render_executable(*, executable: str, is_windows: bool) -> str:
     if " " in executable:
         quoted_executable = quote_for_shell(executable, is_windows=is_windows)
