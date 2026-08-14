@@ -8,7 +8,6 @@ from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constants import SECOND_BRAIN_ROOT
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
@@ -49,10 +48,11 @@ def _agent_working_directory(*, second_brain: bool) -> Generator[Path | None, No
     if not second_brain:
         yield None
         return
-    if not SECOND_BRAIN_ROOT.is_dir():
-        raise ValueError(f"Second Brain directory is not available: {SECOND_BRAIN_ROOT}")
-    with chdir(SECOND_BRAIN_ROOT):
-        yield SECOND_BRAIN_ROOT
+    second_brain_root = Path.home().joinpath("code", "agents", "second-brain")
+    if not second_brain_root.is_dir():
+        raise ValueError(f"Second Brain directory is not available: {second_brain_root}")
+    with chdir(second_brain_root):
+        yield second_brain_root
 
 
 def _parse_init_config_agents(*, raw_value: str) -> tuple[AGENTS, ...]:

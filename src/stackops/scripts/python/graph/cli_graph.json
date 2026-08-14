@@ -16712,6 +16712,7 @@
                     "                source=\"all\",",
                     "                edit=False,",
                     "                show_prompts_yaml_format=False,",
+                    "                working_directory=repo_root,",
                     "            )",
                     "    except SystemExit as e:",
                     "        exit_code = e.code if isinstance(e.code, int) else 0 if e.code is None else 1",
@@ -18715,62 +18716,16 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def config(overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-w\", help=\"Replace existing Second Brain configuration files.\")] = False) -> None:",
-                    "    link_path = Path.home().joinpath(\"code\", \"agents\", \"second-brain\")",
-                    "    target_path = Path.home().joinpath(\"dotfiles\", \"stackops\", \"second-brain\")",
-                    "    instructions_path = target_path.joinpath(\"AGENTS.md\")",
+                    "def config() -> None:",
+                    "    home = Path.home()",
                     "    instructions_text = files(\"stackops.scripts.python\").joinpath(\"agents_second_brain.instructions.md\").read_text(encoding=\"utf-8\")",
+                    "    instructions_path, link_path, target_path = configure_second_brain(home=home, instructions_text=instructions_text)",
                     "",
-                    "    link_exists = link_path.exists() or link_path.is_symlink()",
-                    "    link_is_current = link_path.is_symlink() and link_path.readlink() == target_path",
-                    "    instructions_exist = instructions_path.exists() or instructions_path.is_symlink()",
-                    "    if link_exists and not link_is_current and not overwrite:",
-                    "        raise FileExistsError(f\"Second Brain configuration path already exists: {link_path}\")",
-                    "    if instructions_exist and not overwrite:",
-                    "        raise FileExistsError(f\"Second Brain instructions already exist: {instructions_path}\")",
-                    "    if link_exists and not link_is_current and link_path.is_dir() and not link_path.is_symlink():",
-                    "        raise IsADirectoryError(f\"Refusing to overwrite Second Brain directory: {link_path}\")",
-                    "    if instructions_path.is_dir() and not instructions_path.is_symlink():",
-                    "        raise IsADirectoryError(f\"Refusing to overwrite Second Brain instructions directory: {instructions_path}\")",
-                    "",
-                    "    link_path.parent.mkdir(parents=True, exist_ok=True)",
-                    "    target_path.mkdir(parents=True, exist_ok=True)",
-                    "    if link_exists and not link_is_current:",
-                    "        link_path.unlink()",
-                    "    if instructions_path.is_symlink():",
-                    "        instructions_path.unlink()",
-                    "    instructions_path.write_text(instructions_text, encoding=\"utf-8\")",
-                    "    if not link_is_current:",
-                    "        link_path.symlink_to(target_path, target_is_directory=True)",
-                    "",
-                    "    typer.echo(f\"Installed Second Brain instructions: {instructions_path}\")",
+                    "    typer.echo(f\"Second Brain instructions: {instructions_path}\")",
                     "    typer.echo(f\"Configured symlink: {link_path} -> {target_path}\")"
                   ],
                   "name": "config",
-                  "parameters": [
-                    {
-                      "name": "overwrite",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--overwrite', '-w', help='Replace existing Second Brain configuration files.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--overwrite",
-                          "-w"
-                        ],
-                        "long_flags": [
-                          "--overwrite"
-                        ],
-                        "short_flags": [
-                          "-w"
-                        ],
-                        "help": "Replace existing Second Brain configuration files."
-                      }
-                    }
-                  ],
+                  "parameters": [],
                   "return": "None"
                 },
                 "short_help": "Link the Second Brain configuration"
@@ -19759,6 +19714,10 @@
                 "        ),",
                 "    ],",
                 "    agent: Annotated[AGENTS, typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch.\")] = DEFAULT_AGENT,",
+                "    second_brain: Annotated[",
+                "        bool,",
+                "        typer.Option(..., \"--second-brain\", \"-b\", help=\"Run from the Second Brain repository.\"),",
+                "    ] = False,",
                 "    reasoning_effort: Annotated[",
                 "        ReasoningEffort | None,",
                 "        typer.Option(",
@@ -19817,18 +19776,20 @@
                 "    from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl",
                 "",
                 "    try:",
-                "        impl(",
-                "            prompt=\" \".join(prompt) if prompt else None,",
-                "            agent=agent,",
-                "            reasoning_effort=reasoning_effort,",
-                "            context=context,",
-                "            context_path=context_path,",
-                "            prompts_yaml_path=context_yaml_path,",
-                "            context_name=context_name,",
-                "            source=source,",
-                "            edit=edit,",
-                "            show_prompts_yaml_format=show_prompts_yaml_format,",
-                "        )",
+                "        with _agent_working_directory(second_brain=second_brain) as working_directory:",
+                "            impl(",
+                "                prompt=\" \".join(prompt) if prompt else None,",
+                "                agent=agent,",
+                "                reasoning_effort=reasoning_effort,",
+                "                context=context,",
+                "                context_path=context_path,",
+                "                prompts_yaml_path=context_yaml_path,",
+                "                context_name=context_name,",
+                "                source=source,",
+                "                edit=edit,",
+                "                show_prompts_yaml_format=show_prompts_yaml_format,",
+                "                working_directory=working_directory,",
+                "            )",
                 "    except ValueError as e:",
                 "        raise typer.BadParameter(str(e)) from e"
               ],
@@ -19869,6 +19830,29 @@
                       "-a"
                     ],
                     "help": "Agent to launch.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "second_brain",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--second-brain', '-b', help='Run from the Second Brain repository.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--second-brain",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--second-brain"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Run from the Second Brain repository.",
                     "default": "..."
                   }
                 },
@@ -20089,6 +20073,10 @@
                 "        INTERACTIVE_AGENT,",
                 "        typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch: codex/x, copilot/c, pi/p, or omp/o.\"),",
                 "    ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),",
+                "    second_brain: Annotated[",
+                "        bool,",
+                "        typer.Option(..., \"--second-brain\", \"-b\", help=\"Run from the Second Brain repository.\"),",
+                "    ] = False,",
                 "    caveman: Annotated[",
                 "        bool,",
                 "        typer.Option(..., \"--caveman\", \"-c\", help=\"Start the session with the caveman wenyan-full prompt.\"),",
@@ -20103,14 +20091,20 @@
                 "",
                 "    resolved_agent = _resolve_interactive_agent(agent=agent)",
                 "    try:",
-                "        command = _apply_headroom(",
-                "            command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom",
-                "        )",
-                "    except ValueError as error:",
-                "        raise typer.BadParameter(str(error)) from error",
-                "    from stackops.utils.code import exit_then_run_shell_script",
+                "        with _agent_working_directory(second_brain=second_brain) as working_directory:",
+                "            command = _apply_headroom(",
+                "                command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom",
+                "            )",
+                "            script = shlex.join(command)",
+                "            if working_directory is not None:",
+                "                from stackops.scripts.python.helpers.helpers_agents.agents_shell import render_command_in_directory",
                 "",
-                "    exit_then_run_shell_script(script=shlex.join(command), strict=False)"
+                "                script = render_command_in_directory(command=script, directory=working_directory)",
+                "            from stackops.utils.code import exit_then_run_shell_script",
+                "",
+                "            exit_then_run_shell_script(script=script, strict=False)",
+                "    except ValueError as error:",
+                "        raise typer.BadParameter(str(error)) from error"
               ],
               "name": "run_interactive",
               "parameters": [
@@ -20134,6 +20128,29 @@
                       "-a"
                     ],
                     "help": "Agent to launch: codex/x, copilot/c, pi/p, or omp/o.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "second_brain",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--second-brain', '-b', help='Run from the Second Brain repository.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--second-brain",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--second-brain"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Run from the Second Brain repository.",
                     "default": "..."
                   }
                 },
@@ -20214,6 +20231,10 @@
                 "def ask(",
                 "    prompt: Annotated[list[str], typer.Argument(help=\"Prompt text to pass to the selected agent.\")],",
                 "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent to ask directly.\")] = DEFAULT_AGENT,",
+                "    second_brain: Annotated[",
+                "        bool,",
+                "        typer.Option(\"--second-brain\", \"-b\", help=\"Run from the Second Brain repository.\"),",
+                "    ] = False,",
                 "    reasoning: Annotated[ReasoningShortcut | None, typer.Option(\"--reasoning\", \"-r\", help=_ASK_REASONING_HELP)] = None,",
                 "    file_prompt: Annotated[",
                 "        Path | None, typer.Option(\"--file-prompt\", \"-f\", help=\"Append the contents of this file to PROMPT before asking the selected agent.\")",
@@ -20222,9 +20243,10 @@
                 ") -> None:",
                 "    \"\"\"Ask a selected agent directly.\"\"\"",
                 "    try:",
-                "        from stackops.scripts.python.helpers.helpers_agents.agents_ask_impl import run_ask as impl",
+                "        with _agent_working_directory(second_brain=second_brain):",
+                "            from stackops.scripts.python.helpers.helpers_agents.agents_ask_impl import run_ask as impl",
                 "",
-                "        return_code = impl(prompt_parts=prompt, agent=agent, reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)",
+                "            return_code = impl(prompt_parts=prompt, agent=agent, reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)",
                 "    except ValueError as error:",
                 "        raise typer.BadParameter(str(error)) from error",
                 "    raise typer.Exit(code=return_code)"
@@ -20266,6 +20288,28 @@
                       "-a"
                     ],
                     "help": "Agent to ask directly."
+                  }
+                },
+                {
+                  "name": "second_brain",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--second-brain', '-b', help='Run from the Second Brain repository.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--second-brain",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--second-brain"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Run from the Second Brain repository."
                   }
                 },
                 {
