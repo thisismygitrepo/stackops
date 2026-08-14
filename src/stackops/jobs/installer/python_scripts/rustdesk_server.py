@@ -48,7 +48,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         case operating_system:
             raise NotImplementedError(f"RustDesk Server is not published for {operating_system}.")
 
-    binary_names = (installer_data["executableName"], *installer_data["additionalExecutableNames"])
+    binary_names = ("hbbs", "hbbr", "rustdesk-utils")
     release_installer_data = _build_release_installer_data(installer_data=installer_data)
     extracted_root, _resolved_version = Installer(installer_data=release_installer_data).binary_download(version=version)
     _ = _resolved_version

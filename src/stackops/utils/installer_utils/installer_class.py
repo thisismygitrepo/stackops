@@ -40,6 +40,7 @@ ALIASED_EXE_NAMES: dict[str, str] = {
     "gastown": "gt",
     "powershellwinget": "pwsh",
     "powershellgithub": "pwsh",
+    "rustdesk-server": "hbbs",
     "superfile": "spf",
 }
 PLATFORM_ALIASED_EXE_NAMES: dict[tuple[str, str], str] = {("orca", "Linux"): "orca-ide"}
@@ -64,9 +65,6 @@ class Installer:
 
     def get_exe_name(self) -> str:
         """Derive executable name from app name by converting to lowercase and removing spaces."""
-        explicit_executable_name = self.installer_data.get("executableName")
-        if explicit_executable_name is not None:
-            return explicit_executable_name
         normalized_app_name = self.installer_data["appName"].lower().replace(" ", "")
         platform_alias = PLATFORM_ALIASED_EXE_NAMES.get((normalized_app_name, platform.system()))
         if platform_alias is not None:
@@ -131,11 +129,7 @@ class Installer:
         try:
             exe_name = self.get_exe_name()
             install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
-            additional_executable_names = self.installer_data.get("additionalExecutableNames")
-            additional_executables_installed = additional_executable_names is None or all(
-                check_tool_exists(tool_name=additional_executable_name) for additional_executable_name in additional_executable_names
-            )
-            if additional_executables_installed and should_skip_install(
+            if should_skip_install(
                 exe_name=exe_name,
                 install_request=effective_install_request,
                 tool_exists=check_tool_exists,

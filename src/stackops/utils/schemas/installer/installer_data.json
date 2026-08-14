@@ -3042,11 +3042,6 @@
     },
     {
       "appName": "rustdesk-server",
-      "executableName": "hbbs",
-      "additionalExecutableNames": [
-        "hbbr",
-        "rustdesk-utils"
-      ],
       "license": "GNU Affero General Public License v3.0",
       "repoURL": "https://github.com/rustdesk/rustdesk-server",
       "doc": "🖥️ Self-hosted RustDesk ID/rendezvous and relay server.",

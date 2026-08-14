@@ -217,21 +217,6 @@
           "minLength": 1,
           "description": "Name of the application. Must be unique within installers."
         },
-        "executableName": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Primary executable name when it differs from appName."
-        },
-        "additionalExecutableNames": {
-          "type": "array",
-          "description": "Additional executables installed from the same package.",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "minItems": 1,
-          "uniqueItems": true
-        },
         "license": {
           "type": "string",
           "minLength": 1,
