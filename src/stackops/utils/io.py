@@ -58,6 +58,12 @@ def _format_process_output(output: str) -> str:
 
 def _gpg_hint(stderr: str, pwd: str | None) -> str | None:
     normalized = stderr.lower()
+    if pwd is None and ("no valid addressees" in normalized or "no user id" in normalized):
+        return (
+            "GPG could not find a usable personal key for asymmetric encryption. "
+            "Create or import an encryption-capable GPG key (for example, run `gpg --full-generate-key`) and retry. "
+            "Alternatively, rerun with `--password PASSWORD` to use symmetric encryption."
+        )
     if pwd is None and "no secret key" in normalized:
         return "No matching private key is available in the current GPG keyring. If this file was password-encrypted, rerun the command with --password so stackops uses loopback passphrase mode."
     if pwd is None and (

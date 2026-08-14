@@ -2,11 +2,12 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal, Never
 
 import typer
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionOption
+from stackops.utils.io import GpgCommandError
 
 if TYPE_CHECKING:
     from git.remote import Remote
@@ -39,6 +40,21 @@ def get_tmp_file() -> Path:
 def _print_section(console: "Console", title: str) -> None:
     console.print("")
     console.print(f"[bold blue]═════ {title} ═════[/bold blue]")
+
+
+def _exit_after_gpg_error(console: "Console", error: GpgCommandError) -> Never:
+    from rich.panel import Panel
+
+    operation = "encrypt" if "--encrypt" in error.command else "decrypt"
+    details = error.hint if error.hint is not None else str(error)
+    console.print(
+        Panel(
+            f"❌ Could not {operation} the repository archive.\n\n{details}",
+            title="GPG Error",
+            border_style="red",
+        )
+    )
+    raise typer.Exit(code=1) from None
 
 
 def _bash_quote(value: str) -> str:
@@ -275,11 +291,16 @@ def main(
     try:
         console.print(Panel("📥 DOWNLOADING REMOTE REPOSITORY", title_align="left", border_style="blue"))
         _download_repo_archive(repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
+    except GpgCommandError as error:
+        _exit_after_gpg_error(console=console, error=error)
     except RcloneCommandError as error:
         if not is_missing_remote_path_error(error):
             raise
         console.print(Panel("🆕 Remote repository doesn't exist\n📤 Creating new remote and exiting...", title_align="left", border_style="green"))
-        _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
+        try:
+            _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
+        except GpgCommandError as gpg_error:
+            _exit_after_gpg_error(console=console, error=gpg_error)
         return ""
 
     repo_remote_obj = Repo(repo_remote_root)
@@ -317,7 +338,10 @@ def main(
         console.print(Panel("✅ Pull succeeded!\n🧹 Removing originEnc remote and local copy\n📤 Pushing merged repository to cloud storage", title="Success", border_style="green"))
         delete_path(repo_remote_root, verbose=True)
         _remove_remote_if_present(repo=repo_local_obj, remote_name=REMOTE_NAME)
-        _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
+        try:
+            _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
+        except GpgCommandError as error:
+            _exit_after_gpg_error(console=console, error=error)
         return "success"
     if merge_result.status == "git_error":
         console.print(
