@@ -15,6 +15,7 @@ LIBRARY_MAPPER_PATH = get_path_reference_path(
 )
 USER_MAPPER_PATH = DOTFILES_USER_MAPPER_PATH
 DEFAULT_DOTFILE_MAPPER_HEADER = (
+    f"# yaml-language-server: $schema=./{mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE}\n"
     "# User-defined config file mappings\n"
     "# Created by `d c` CLI tool\n"
     "# os must be an explicit YAML list containing one or more of: linux, darwin, windows"

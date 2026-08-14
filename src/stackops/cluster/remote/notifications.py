@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import smtplib
+import ssl
 import imaplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -119,6 +120,9 @@ class Email:
             self.server = smtplib.SMTP_SSL(host=smtp_host, port=smtp_port)
         elif encryption_name == "tls":
             self.server = smtplib.SMTP(host=smtp_host, port=smtp_port)
+            self.server.starttls(context=ssl.create_default_context())
+        else:
+            raise ValueError(f"Email encryption for {config_name!r} must be 'tls' or 'ssl', got {encryption!r}.")
         self.server.login(self.email_add, password=password)
 
     def send_message(self, to: str, subject: str, body: str, txt_to_html: bool = True, attachments: list[Any] | None = None):

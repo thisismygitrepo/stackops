@@ -20,7 +20,8 @@ LIBRARY_BACKUP_PATH = get_path_reference_path(
     path_reference=mapper_assets.MAPPER_DATA_PATH_REFERENCE,
 )
 USER_BACKUP_PATH = DOTFILES_USER_BACKUP_PATH
-DEFAULT_BACKUP_HEADER = """# StackOps backup configuration
+DEFAULT_BACKUP_HEADER = f"""# yaml-language-server: $schema=./{mapper_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE}
+# StackOps backup configuration
 # Managed by `devops data` commands
 #
 # File structure:
@@ -219,7 +220,7 @@ def _user_backup_config_guidance() -> str:
     if not USER_BACKUP_PATH.exists():
         return (
             "Create a real backup entry interactively:\n"
-            "  devops data register --interactive\n"
+            "  devops config setup data\n"
             "Or install the example and schema for manual editing:\n"
             "  devops config dump --which data --default-path"
         )
@@ -232,7 +233,7 @@ def _user_backup_config_guidance() -> str:
         )
     return (
         "Resolve the non-file path shown above, then create a real entry:\n"
-        "  devops data register --interactive\n"
+        "  devops config setup data\n"
         "Create a separate example and schema for reference:\n"
         "  devops config dump --which data"
     )

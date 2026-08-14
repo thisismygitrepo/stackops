@@ -32,7 +32,7 @@ def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:
     typer.echo(
         f"❌ Layouts file not found: {layouts_file_resolved}\n\n"
         "Install the example layouts and JSON schema:\n"
-        "  devops config dump --which layout --default-path\n\n"
+        "  devops config setup layouts\n\n"
         "Or provide another file with --layouts-file PATH.",
         err=True,
     )

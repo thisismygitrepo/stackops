@@ -162,7 +162,12 @@ def _read_default_config_value(key: StackOpsConfigStringKey) -> str:
     try:
         return read_stackops_config_string(key)
     except (FileNotFoundError, KeyError, ValueError) as err:
-        raise ValueError(f"Config value '{key}' could not be read from `{DOTFILES_STACKOPS_CONFIG_PATH}`") from err
+        setup_domain = "cloud" if key == "default_rclone_config" else "email"
+        raise ValueError(
+            f"Config value '{key}' could not be read from `{DOTFILES_STACKOPS_CONFIG_PATH}`.\n\n"
+            "Create or update it with:\n"
+            f"  devops config setup {setup_domain}"
+        ) from err
 
 
 @dataclass

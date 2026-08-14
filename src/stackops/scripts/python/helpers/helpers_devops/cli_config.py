@@ -422,11 +422,8 @@ def get_app() -> typer.Typer:
         hidden=True,
     )
 
-    config_apps.add_typer(
-        setup_module.get_app(),
-        name="setup",
-        help="🧭 Guided setup for StackOps configuration files.",
-    )
+    config_apps.add_typer(setup_module.get_app(), name="setup", help=f"🧭 <u> {setup_module.SETUP_HELP}")
+    config_apps.add_typer(setup_module.get_app(), name="u", help=setup_module.SETUP_HELP, hidden=True)
 
     config_apps.command("dump", no_args_is_help=True, help="📦 <d> Dump example configuration files and init scripts.")(dump_config)
     config_apps.command("d", no_args_is_help=True, help="Dump example configuration files and init scripts.", hidden=True)(dump_config)

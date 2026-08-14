@@ -114,7 +114,7 @@ def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
             raise FileNotFoundError(
                 f"User dotfiles mapper does not exist: {mapper_path}\n\n"
                 "Create a real mapping interactively:\n"
-                "  devops config register --interactive\n"
+                "  devops config setup dotfiles\n"
                 "Or install the example and schema for manual editing:\n"
                 "  devops config dump --which dotfiles --default-path"
             )
