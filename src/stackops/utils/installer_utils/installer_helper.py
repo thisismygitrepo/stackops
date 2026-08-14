@@ -109,6 +109,53 @@ def install_msi_package(downloaded: Path) -> None:
     downloaded.unlink(missing_ok=True)
 
 
+def install_dmg_package(downloaded: Path) -> None:
+    import platform
+    import subprocess
+    import tempfile
+
+    if platform.system() != "Darwin":
+        raise RuntimeError("DMG packages can only be installed on macOS.")
+    with tempfile.TemporaryDirectory(prefix="stackops-dmg-") as mount_directory:
+        mount_point = Path(mount_directory)
+        subprocess.run(
+            ["/usr/bin/hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", str(mount_point), str(downloaded)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        try:
+            applications = [
+                candidate
+                for candidate in mount_point.iterdir()
+                if candidate.is_dir() and not candidate.is_symlink() and candidate.suffix.lower() == ".app"
+            ]
+            if len(applications) != 1:
+                raise FileNotFoundError(f"Expected one application bundle in {mount_point}, found {len(applications)}.")
+            applications_root = Path("/Applications")
+            with tempfile.TemporaryDirectory(prefix=".stackops-install-", dir=applications_root) as staging_directory:
+                staging_root = Path(staging_directory)
+                staged_application = staging_root.joinpath(applications[0].name)
+                subprocess.run(["/usr/bin/ditto", str(applications[0]), str(staged_application)], check=True)
+                if not staged_application.is_dir():
+                    raise FileNotFoundError(f"DMG application staging failed: {staged_application}.")
+
+                destination = applications_root.joinpath(applications[0].name)
+                previous_application = staging_root.joinpath(f"{applications[0].name}.previous")
+                had_previous_application = destination.exists() or destination.is_symlink()
+                if had_previous_application:
+                    destination.rename(previous_application)
+                try:
+                    staged_application.rename(destination)
+                except OSError:
+                    if had_previous_application:
+                        previous_application.rename(destination)
+                    raise
+        finally:
+            subprocess.run(["/usr/bin/hdiutil", "detach", str(mount_point)], capture_output=True, text=True, check=True)
+    downloaded.unlink(missing_ok=True)
+
+
 def download_and_prepare(download_url: str) -> Path:
     from stackops.utils.files.download import download
 

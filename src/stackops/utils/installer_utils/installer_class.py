@@ -1,5 +1,5 @@
 from stackops.utils import path_core
-from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_msi_package
+from stackops.utils.installer_utils.installer_helper import download_and_prepare, install_dmg_package, install_msi_package
 from stackops.utils.installer_utils.linux_package_file import get_linux_package_file_suffix, install_linux_package_file, is_linux_package_file
 from stackops.utils.installer_utils.install_request_logic import (
     InstallTarget,
@@ -64,6 +64,9 @@ class Installer:
 
     def get_exe_name(self) -> str:
         """Derive executable name from app name by converting to lowercase and removing spaces."""
+        explicit_executable_name = self.installer_data.get("executableName")
+        if explicit_executable_name is not None:
+            return explicit_executable_name
         normalized_app_name = self.installer_data["appName"].lower().replace(" ", "")
         platform_alias = PLATFORM_ALIASED_EXE_NAMES.get((normalized_app_name, platform.system()))
         if platform_alias is not None:
@@ -114,7 +117,8 @@ class Installer:
         effective_installer_value = resolve_installer_value(install_target=install_target, install_request=install_request)
         version = (
             install_request.version
-            if install_target.installer_kind == "github_release" or effective_installer_value.strip().startswith("winget install ")
+            if install_target.installer_kind in {"github_release", "script"}
+            or effective_installer_value.strip().startswith("winget install ")
             else None
         )
         self._install_from_value(installer_arch_os=effective_installer_value, version=version, update=install_request.update)
@@ -127,7 +131,15 @@ class Installer:
         try:
             exe_name = self.get_exe_name()
             install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
-            if should_skip_install(exe_name=exe_name, install_request=effective_install_request, tool_exists=check_tool_exists):
+            additional_executable_names = self.installer_data.get("additionalExecutableNames")
+            additional_executables_installed = additional_executable_names is None or all(
+                check_tool_exists(tool_name=additional_executable_name) for additional_executable_name in additional_executable_names
+            )
+            if additional_executables_installed and should_skip_install(
+                exe_name=exe_name,
+                install_request=effective_install_request,
+                tool_exists=check_tool_exists,
+            ):
                 return self._build_skipped_result(exe_name=exe_name)
             old_version_cli = self._read_installed_version(exe_name=exe_name)
             print(f"🚀 INSTALLING {exe_name.upper()} 🚀. 📊 Current version: {old_version_cli or 'Not installed'}")
@@ -235,6 +247,9 @@ class Installer:
                 elif downloaded_suffix == ".msi":
                     install_msi_package(downloaded_object)
                     version_to_be_installed = "downloaded_msi"
+                elif downloaded_suffix == ".dmg":
+                    install_dmg_package(downloaded_object)
+                    version_to_be_installed = "downloaded_dmg"
                 else:
                     raise ValueError(f"Downloaded file is not an executable: {downloaded_object}")
             else:
@@ -247,6 +262,8 @@ class Installer:
                 install_linux_package_file(downloaded)
             elif downloaded_suffix == ".msi":
                 install_msi_package(downloaded)
+            elif downloaded_suffix == ".dmg":
+                install_dmg_package(downloaded)
             else:
                 if platform.system() == "Windows":
                     exe = find_move_delete_windows(

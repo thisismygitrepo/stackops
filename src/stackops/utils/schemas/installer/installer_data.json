@@ -3019,7 +3019,12 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "rustdesk-{version}-x86_64.AppImage",
+          "linux": {
+            "apk": null,
+            "apt": "rustdesk-{version}-x86_64.deb",
+            "dnf": "rustdesk-{version}-0.x86_64.rpm",
+            "pacman": "rustdesk-{version}-0-x86_64.pkg.tar.zst"
+          },
           "windows": "rustdesk-{version}-x86_64.msi",
           "darwin": "rustdesk-{version}-x86_64.dmg"
         },
@@ -3027,11 +3032,37 @@
           "linux": {
             "apk": null,
             "apt": "rustdesk-{version}-aarch64.deb",
-            "dnf": null,
+            "dnf": "rustdesk-{version}-0.aarch64.rpm",
             "pacman": null
           },
-          "windows": null,
+          "windows": "rustdesk-{version}-aarch64.msi",
           "darwin": "rustdesk-{version}-aarch64.dmg"
+        }
+      }
+    },
+    {
+      "appName": "rustdesk-server",
+      "executableName": "hbbs",
+      "additionalExecutableNames": [
+        "hbbr",
+        "rustdesk-utils"
+      ],
+      "license": "GNU Affero General Public License v3.0",
+      "repoURL": "https://github.com/rustdesk/rustdesk-server",
+      "doc": "🖥️ Self-hosted RustDesk ID/rendezvous and relay server.",
+      "categoryLabels": [
+        "tunnels-remote-access"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "rustdesk_server.py",
+          "windows": "rustdesk_server.py",
+          "darwin": null
+        },
+        "arm64": {
+          "linux": "rustdesk_server.py",
+          "windows": null,
+          "darwin": null
         }
       }
     },

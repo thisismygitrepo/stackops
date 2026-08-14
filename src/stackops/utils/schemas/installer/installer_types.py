@@ -64,6 +64,8 @@ class InstallerFileNamePatterns(TypedDict):
 
 class InstallerData(TypedDict):
     appName: str
+    executableName: NotRequired[str]
+    additionalExecutableNames: NotRequired[list[str]]
     license: str
     doc: str
     repoURL: str
