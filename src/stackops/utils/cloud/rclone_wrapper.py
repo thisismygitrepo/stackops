@@ -87,7 +87,7 @@ def to_cloud(
         show_progress=verbose,
     )
     if verbose:
-        print(f"{'⬆️' * 5} UPLOAD COMPLETED.")
+        print(f"{'⬆️' * 5} UPLOAD COMPLETED TO {cloud}:{remote_path.as_posix()}.")
     if not share:
         return None
     if verbose:
