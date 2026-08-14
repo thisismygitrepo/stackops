@@ -18,6 +18,7 @@ def main(
 ) -> None:
     from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import parse_cloud_source_target
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount import get_mprocs_mount_txt
+    from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError
 
     from rich.console import Console
     from rich.panel import Panel
@@ -45,8 +46,21 @@ def main(
         share=False,
     )
 
-    cloud, source, target = parse_cloud_source_target(cloud_config_explicit=cloud_config_explicit,
-        source=source, target=target)
+    try:
+        cloud, source, target = parse_cloud_source_target(
+            cloud_config_explicit=cloud_config_explicit,
+            source=source,
+            target=target,
+        )
+    except DefaultRcloneRemoteConfigError as error:
+        console.print(
+            Panel(
+                f"❌ {error}\n\nFor this command, replace a leading :path with REMOTE:path.",
+                title="[bold red]Cloud Configuration Required[/bold red]",
+                border_style="red",
+            )
+        )
+        raise SystemExit(1) from None
     # map short flags to long flags (-u -> --upload), for easier use in the script
     if bisync:
         title = "🔄 BI-DIRECTIONAL SYNC"

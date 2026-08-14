@@ -53,7 +53,10 @@ def main_from_parser(
         return merged_mapper
 
     source_key = CONFIG_SOURCE_MAP[source]
-    mapper_full_obj = read_mapper(source=source_key)
+    try:
+        mapper_full_obj = read_mapper(source=source_key)
+    except (OSError, TypeError, ValueError) as exc:
+        _exit_with_error(str(exc))
     mapper_full: dict[str, list[ConfigMapper]]
     sensitivity_key = SENSITIVITY_MAP[sensitivity]
     if sensitivity_key == "private":

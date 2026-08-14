@@ -215,20 +215,51 @@ def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
     return config
 
 
+def _user_backup_config_guidance() -> str:
+    if not USER_BACKUP_PATH.exists():
+        return (
+            "Create a real backup entry interactively:\n"
+            "  devops data register --interactive\n"
+            "Or install the example and schema for manual editing:\n"
+            "  devops config dump --which data --default-path"
+        )
+    if USER_BACKUP_PATH.is_file():
+        return (
+            "Open the invalid file for correction:\n"
+            "  devops data edit\n"
+            "Create a separate example and schema for reference:\n"
+            "  devops config dump --which data"
+        )
+    return (
+        "Resolve the non-file path shown above, then create a real entry:\n"
+        "  devops data register --interactive\n"
+        "Create a separate example and schema for reference:\n"
+        "  devops config dump --which data"
+    )
+
+
 def load_backup_config_file(path: Path, *, empty_as_config: bool) -> BackupConfig | None:
     if not path.exists() or not path.is_file():
         return None
     try:
         raw_value = cast(object, yaml.safe_load(path.read_text(encoding="utf-8")))
     except (OSError, yaml.YAMLError) as exc:
-        raise ValueError(f"Could not load backup configuration file {path}: {exc}") from exc
+        message = f"Could not load backup configuration file {path}: {exc}"
+        if path == USER_BACKUP_PATH:
+            message = f"{message}\n\n{_user_backup_config_guidance()}"
+        raise ValueError(message) from exc
     if raw_value is None:
         if empty_as_config:
             return {}
         return None
     if not isinstance(raw_value, Mapping):
         return None
-    return _parse_backup_config({str(key): item for key, item in raw_value.items()})
+    try:
+        return _parse_backup_config({str(key): item for key, item in raw_value.items()})
+    except ValueError as exc:
+        if path != USER_BACKUP_PATH:
+            raise
+        raise ValueError(f"{exc}\n\n{_user_backup_config_guidance()}") from exc
 
 
 def serialize_backup_config(config: BackupConfig) -> str:
@@ -271,11 +302,12 @@ def describe_missing_backup_config(source: CONFIG_SOURCE_LOOSE) -> str:
         case "library" | "l":
             return _describe_backup_config_state(LIBRARY_BACKUP_PATH, label="Library")
         case "user" | "u":
-            return _describe_backup_config_state(USER_BACKUP_PATH, label="User")
+            state_message = _describe_backup_config_state(USER_BACKUP_PATH, label="User")
+            return f"{state_message}\n\n{_user_backup_config_guidance()}"
         case "all" | "a":
             library_message = _describe_backup_config_state(LIBRARY_BACKUP_PATH, label="Library")
             user_message = _describe_backup_config_state(USER_BACKUP_PATH, label="User")
-            return f"No backup configuration could be loaded.\n{library_message}\n{user_message}"
+            return f"No backup configuration could be loaded.\n{library_message}\n{user_message}\n\n{_user_backup_config_guidance()}"
         case _:
             raise ValueError(f"Invalid backup config source value: {source!r}.")
 

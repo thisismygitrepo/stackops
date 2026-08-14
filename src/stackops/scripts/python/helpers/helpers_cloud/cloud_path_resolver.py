@@ -1,7 +1,7 @@
 from stackops.scripts.python.helpers.helpers_cloud.cloud_helpers import my_abs
+from stackops.utils.cloud.default_remote import read_default_rclone_remote
 from stackops.utils.cloud.defaults import CloudConfig
 from stackops.utils.cloud.rclone_wrapper import get_remote_path
-from stackops.utils.source_of_truth import read_stackops_config_string
 from stackops.utils.accessories import pprint
 from rich.console import Console
 from rich.panel import Panel
@@ -21,13 +21,13 @@ def parse_cloud_source_target(
     if source.startswith(":"):
         if ES in target:
             raise NotImplementedError("Not Implemented here yet.")
-        default_cloud = read_stackops_config_string("default_rclone_config")
+        default_cloud = read_default_rclone_remote()
         console.print(Panel(f"⚠️  No cloud name specified for source. Using default cloud: {default_cloud}", width=150, border_style="yellow"))
         source = default_cloud + ":" + source[1:]
     if target.startswith(":"):
         if ES in source:
             raise NotImplementedError("Not Implemented here yet.")
-        default_cloud = read_stackops_config_string("default_rclone_config")
+        default_cloud = read_default_rclone_remote()
         console.print(Panel(f"⚠️  No cloud name specified for target. Using default cloud: {default_cloud}", width=150, border_style="yellow"))
         target = default_cloud + ":" + target[1:]
         print("target mutated to:", target, f"because of default cloud being {default_cloud}")

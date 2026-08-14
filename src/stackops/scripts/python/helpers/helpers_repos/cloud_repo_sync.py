@@ -226,7 +226,8 @@ def main(
     )
     from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
     from stackops.utils.code import get_uv_command_executing_python_script
-    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_config_string
+    from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError, read_default_rclone_remote
+    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH
     from stackops.utils.path_core import delete_path
     from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
@@ -235,10 +236,16 @@ def main(
 
     if cloud is None:
         try:
-            cloud_resolved = read_stackops_config_string("default_rclone_config")
+            cloud_resolved = read_default_rclone_remote()
             console.print(Panel(f"⚠️  Using default cloud: `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}", title="Default Cloud", border_style="yellow"))
-        except (FileNotFoundError, KeyError, ValueError) as exc:
-            console.print(Panel(f"❌ ERROR: No cloud profile found\nLocation: {DOTFILES_STACKOPS_CONFIG_PATH}\nPlease set one up or provide one via the --cloud flag.", title="Error", border_style="red"))
+        except DefaultRcloneRemoteConfigError as exc:
+            console.print(
+                Panel(
+                    f"❌ {exc}\n\nUse a remote for this run only:\n  devops repos guard REPO --cloud REMOTE",
+                    title="Cloud Configuration Required",
+                    border_style="red",
+                )
+            )
             raise typer.Exit(code=1) from exc
     else:
         cloud_resolved = cloud

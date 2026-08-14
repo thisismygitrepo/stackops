@@ -177,6 +177,19 @@ def _run_rclone(command: list[str], *, show_command: bool, show_progress: bool) 
     return completed
 
 
+def list_remote_names() -> tuple[str, ...]:
+    completed = _run_rclone(["rclone", "listremotes"], show_command=False, show_progress=False)
+    remote_names: list[str] = []
+    for output_line in completed.stdout.splitlines():
+        remote_name_with_separator = output_line.strip()
+        if remote_name_with_separator == "":
+            continue
+        if not remote_name_with_separator.endswith(":"):
+            raise RcloneConfigError(f"Unexpected output from rclone listremotes: {remote_name_with_separator!r}")
+        remote_names.append(remote_name_with_separator.removesuffix(":"))
+    return tuple(remote_names)
+
+
 def _rclone_config_dump() -> dict[str, dict[str, object]]:
     try:
         completed = _run_rclone(["rclone", "config", "dump"], show_command=False, show_progress=False)

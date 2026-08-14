@@ -211,6 +211,7 @@ def main(
     from rich.console import Console
     from rich.panel import Panel
     from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES, parse_cloud_source_target
+    from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError
     console = Console()
     console.print(Panel("☁️  Cloud Copy Utility", title="[bold blue]Cloud Copy[/bold blue]", border_style="blue", width=152))
     original_target = target
@@ -237,11 +238,22 @@ def main(
     )
 
     console.print(Panel("🔍 Parsing source and target paths...", title="[bold blue]Info[/bold blue]", border_style="blue"))
-    cloud, source, target = parse_cloud_source_target(
-        cloud_config_explicit=cloud_config_explicit,
-        source=source,
-        target=target,
-    )
+    try:
+        cloud, source, target = parse_cloud_source_target(
+            cloud_config_explicit=cloud_config_explicit,
+            source=source,
+            target=target,
+        )
+    except DefaultRcloneRemoteConfigError as error:
+        console.print(
+            Panel(
+                f"❌ {error}\n\nFor this command, replace a leading :path with REMOTE:path.",
+                title="[bold red]Cloud Configuration Required[/bold red]",
+                border_style="red",
+                width=152,
+            )
+        )
+        raise SystemExit(1) from None
     if cloud in source:
         if resolved_record_name is not None:
             console.print(Panel("❌ --record-name is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))

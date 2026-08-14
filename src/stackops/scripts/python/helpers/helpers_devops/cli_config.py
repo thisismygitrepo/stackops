@@ -236,11 +236,16 @@ def _dump_asset_spec(*, spec: DumpAssetSpec, data: bool, schema: bool, force: bo
         output_paths.append(spec.data_output_path)
     if dump_schema:
         output_paths.append(spec.schema_output_path)
-    _reject_unwritable_output_paths(output_paths, force=force)
+    non_file_paths = [path for path in output_paths if path.exists() and not path.is_file()]
+    if non_file_paths:
+        _reject_unwritable_output_paths(non_file_paths, force=force)
+    paths_to_write = output_paths if force else [path for path in output_paths if not path.exists()]
+    if not paths_to_write:
+        _reject_unwritable_output_paths(output_paths, force=force)
 
-    if dump_data:
+    if dump_data and spec.data_output_path in paths_to_write:
         created_paths.append(_write_asset(source_path=spec.data_source_path, output_path=spec.data_output_path, force=force))
-    if dump_schema:
+    if dump_schema and spec.schema_output_path in paths_to_write:
         created_paths.append(_write_asset(source_path=spec.schema_source_path, output_path=spec.schema_output_path, force=force))
     _echo_created_paths(created_paths)
 
@@ -369,6 +374,7 @@ def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all",
 
 def get_app() -> typer.Typer:
     import stackops.scripts.python.helpers.helpers_devops.cli_config_secrets as secrets_module
+    import stackops.scripts.python.helpers.helpers_devops.cli_config_setup as setup_module
 
     from stackops.profile import create_links_export
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import edit_dotfile, register_dotfile
@@ -414,6 +420,12 @@ def get_app() -> typer.Typer:
         name="S",
         help=secrets_module.SECRETS_HELP,
         hidden=True,
+    )
+
+    config_apps.add_typer(
+        setup_module.get_app(),
+        name="setup",
+        help="🧭 Guided setup for StackOps configuration files.",
     )
 
     config_apps.command("dump", no_args_is_help=True, help="📦 <d> Dump example configuration files and init scripts.")(dump_config)

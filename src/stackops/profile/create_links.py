@@ -6,6 +6,8 @@ This script Takes away all config files from the computer, place them in one dir
 
 from pathlib import Path
 
+import yaml
+
 from stackops.profile.linking.operations import ActionType, OperationRecord, OperationResult
 from rich.console import Console
 from rich.panel import Panel
@@ -107,7 +109,30 @@ def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
             return {"public": merged_public, "private": merged_private}
         case _:
             raise ValueError(f"Unsupported config source value: {source}")
-    mapper_data: MapperDocument = load_dotfiles_mapper(mapper_path)
+    if not mapper_path.exists():
+        if source_key == "user":
+            raise FileNotFoundError(
+                f"User dotfiles mapper does not exist: {mapper_path}\n\n"
+                "Create a real mapping interactively:\n"
+                "  devops config register --interactive\n"
+                "Or install the example and schema for manual editing:\n"
+                "  devops config dump --which dotfiles --default-path"
+            )
+        raise FileNotFoundError(f"Packaged dotfiles mapper does not exist: {mapper_path}")
+    if not mapper_path.is_file():
+        raise IsADirectoryError(f"Dotfiles mapper path is not a file: {mapper_path}")
+    try:
+        mapper_data: MapperDocument = load_dotfiles_mapper(mapper_path)
+    except (TypeError, ValueError, yaml.YAMLError) as exc:
+        if source_key == "user":
+            raise ValueError(
+                f"User dotfiles mapper is invalid: {mapper_path}\n{exc}\n\n"
+                "Open it for correction:\n"
+                "  devops config edit\n"
+                "Create a separate example and schema for reference:\n"
+                "  devops config dump --which dotfiles"
+            ) from exc
+        raise ValueError(f"Packaged dotfiles mapper is invalid: {mapper_path}\n{exc}") from exc
     public: dict[str, list[ConfigMapper]] = {}
     private: dict[str, list[ConfigMapper]] = {}
     normalized_system = _normalize_os_name(SYSTEM)
