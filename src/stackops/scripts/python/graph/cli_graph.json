@@ -18707,7 +18707,7 @@
                 "kind": "command",
                 "name": "config",
                 "fullPath": "agents second-brain config",
-                "shortPath": "a B config",
+                "shortPath": "a B c",
                 "help": "config",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_second_brain.py",
@@ -18719,16 +18719,24 @@
                     "def config() -> None:",
                     "    home = Path.home()",
                     "    instructions_text = files(\"stackops.scripts.python\").joinpath(\"agents_second_brain.instructions.md\").read_text(encoding=\"utf-8\")",
-                    "    instructions_path, link_path, target_path = configure_second_brain(home=home, instructions_text=instructions_text)",
+                    "    instructions_path = configure_second_brain(home=home, instructions_text=instructions_text)",
                     "",
-                    "    typer.echo(f\"Second Brain instructions: {instructions_path}\")",
-                    "    typer.echo(f\"Configured symlink: {link_path} -> {target_path}\")"
+                    "    typer.echo(f\"Second Brain instructions: {instructions_path}\")"
                   ],
                   "name": "config",
                   "parameters": [],
                   "return": "None"
                 },
-                "short_help": "Link the Second Brain configuration"
+                "short_help": "<c> Configure the Second Brain repository",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "c",
+                    "hidden": true
+                  }
+                ]
               }
             ],
             "aliases": [
