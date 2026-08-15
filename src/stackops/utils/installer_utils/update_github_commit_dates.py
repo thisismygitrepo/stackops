@@ -1,52 +1,31 @@
 import json
-import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from pathlib import Path
-from time import monotonic
 from typing import TypedDict, cast
-from urllib.parse import quote, urlsplit
+from urllib.parse import urlsplit
 
 from rich.console import Console
-from rich.markup import escape
 from rich.panel import Panel
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
+from rich.table import Table
+
+from stackops.utils.installer_utils.github_commit_dates_constants import (
+    COMMIT_DATE_REPORT_PATH,
+    GITHUB_HOST,
+    INSTALLER_DATA_PATH,
+    MAX_CONCURRENT_GITHUB_REQUESTS,
 )
-
-
-INSTALLER_DATA_PATH = Path(__file__).resolve().parents[1].joinpath("schemas", "installer", "installer_data.json")
-GITHUB_HOST = "github.com"
-MAX_CONCURRENT_GITHUB_REQUESTS = 8
+from stackops.utils.installer_utils.github_commit_dates_fetch import ensure_github_authentication, fetch_commit_dates
+from stackops.utils.installer_utils.github_commit_dates_output import TextOutput, commit_text_outputs
+from stackops.utils.installer_utils.github_commit_dates_report import (
+    render_commit_date_extremes,
+    serialize_commit_date_report,
+    sort_repository_commit_dates,
+)
 
 
 class CommitDateMetadata(TypedDict):
     lastCommitDate: str
     lastCommitDateCheckDate: str
-
-
-def run_gh(args: list[str], failure_message: str) -> str:
-    try:
-        result = subprocess.run(["gh", *args], check=False, capture_output=True, text=True)
-    except FileNotFoundError as error:
-        raise RuntimeError("GitHub CLI was not found on PATH. Install `gh`, then run `gh auth login --hostname github.com`.") from error
-    if result.returncode != 0:
-        detail = result.stderr.strip() or result.stdout.strip() or f"gh exited with code {result.returncode}"
-        raise RuntimeError(f"{failure_message}\n{detail}")
-    return result.stdout.strip()
-
-
-def ensure_github_authentication() -> None:
-    run_gh(
-        args=["auth", "status", "--active", "--hostname", GITHUB_HOST],
-        failure_message="GitHub CLI is not logged in to github.com. Run `gh auth login --hostname github.com` and retry.",
-    )
 
 
 def require_json_object(value: object, context: str) -> dict[str, object]:
@@ -61,10 +40,7 @@ def load_installer_data(path: Path) -> tuple[dict[str, object], list[dict[str, o
     installers_value = payload.get("installers")
     if not isinstance(installers_value, list):
         raise RuntimeError(f"Expected {path} to contain an 'installers' array.")
-    installers = [
-        require_json_object(value=installer, context=f"installers[{index}]")
-        for index, installer in enumerate(installers_value)
-    ]
+    installers = [require_json_object(value=installer, context=f"installers[{index}]") for index, installer in enumerate(installers_value)]
     return payload, installers
 
 
@@ -80,82 +56,7 @@ def github_repository(repo_url: str) -> str | None:
     return f"{owner}/{normalized_repo}"
 
 
-def fetch_last_commit_date(repository: str) -> str:
-    owner, repo = repository.split("/", maxsplit=1)
-    endpoint = f"repos/{quote(owner, safe='')}/{quote(repo, safe='')}/commits?per_page=1"
-    last_commit_date = run_gh(
-        args=["api", "--hostname", GITHUB_HOST, endpoint, "--jq", ".[0].commit.committer.date"],
-        failure_message=f"Failed to fetch the latest commit for {repository}.",
-    )
-    if not last_commit_date:
-        raise RuntimeError(f"GitHub returned no commits for {repository}.")
-    return last_commit_date
-
-
-def fetch_commit_dates(repositories_by_key: dict[str, str], console: Console) -> dict[str, str]:
-    repository_count = len(repositories_by_key)
-    if repository_count == 0:
-        return {}
-
-    commit_dates_by_repository_key: dict[str, str] = {}
-    failures: list[OSError | RuntimeError] = []
-    worker_count = min(repository_count, MAX_CONCURRENT_GITHUB_REQUESTS)
-    started_at = monotonic()
-    completed_count = 0
-    progress = Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        MofNCompleteColumn(),
-        TextColumn("[cyan]{task.fields[rate]}"),
-        TimeElapsedColumn(),
-        TimeRemainingColumn(),
-        console=console,
-    )
-
-    with progress:
-        executor = ThreadPoolExecutor(max_workers=worker_count, thread_name_prefix="github-commit-date")
-        try:
-            task_id = progress.add_task("Fetching latest commits", total=repository_count, rate="0.0 repos/s")
-            future_to_repository = {
-                executor.submit(fetch_last_commit_date, repository=repository): (repository_key, repository)
-                for repository_key, repository in repositories_by_key.items()
-            }
-            for future in as_completed(future_to_repository):
-                repository_key, repository = future_to_repository[future]
-                try:
-                    last_commit_date = future.result()
-                except (OSError, RuntimeError) as error:
-                    failures.append(error)
-                    progress.console.print(f"[bold red]x[/bold red] {escape(repository)}  [red]{escape(str(error))}[/red]")
-                else:
-                    commit_dates_by_repository_key[repository_key] = last_commit_date
-                    progress.console.print(
-                        f"[bold green]✓[/bold green] {escape(repository)}  [cyan]{escape(last_commit_date)}[/cyan]"
-                    )
-
-                completed_count += 1
-                elapsed_seconds = monotonic() - started_at
-                repositories_per_second = completed_count / elapsed_seconds
-                progress.update(task_id, advance=1, rate=f"{repositories_per_second:.1f} repos/s")
-
-            progress.update(
-                task_id,
-                description=(
-                    "[bold red]Fetch completed with errors[/bold red]"
-                    if failures
-                    else "[bold green]Fetched latest commits[/bold green]"
-                ),
-            )
-        finally:
-            executor.shutdown(wait=True, cancel_futures=True)
-
-    if failures:
-        raise RuntimeError(f"Failed to fetch {len(failures)} of {repository_count} repositories. First error:\n{failures[0]}") from failures[0]
-    return commit_dates_by_repository_key
-
-
-def update_installer_commit_dates(path: Path, console: Console) -> tuple[int, int]:
+def update_installer_commit_dates(path: Path, report_path: Path, console: Console) -> tuple[int, int]:
     ensure_github_authentication()
     payload, installers = load_installer_data(path=path)
     repositories_by_key: dict[str, str] = {}
@@ -174,28 +75,28 @@ def update_installer_commit_dates(path: Path, console: Console) -> tuple[int, in
 
     repository_count = len(repositories_by_key)
     github_installer_count = len(repository_keys_by_installer_index)
-    console.print(
-        Panel.fit(
-            f"[bold]{github_installer_count}[/bold] installer records across [bold]{repository_count}[/bold] unique GitHub repositories\n"
-            f"[dim]{len(installers) - github_installer_count} non-GitHub records will be skipped · "
-            f"up to {MAX_CONCURRENT_GITHUB_REQUESTS} concurrent requests[/dim]",
-            title="Refresh commit dates",
-            border_style="blue",
-        )
-    )
+    refresh_summary = Table.grid(padding=(0, 2))
+    refresh_summary.add_column(style="bold cyan", no_wrap=True)
+    refresh_summary.add_column(overflow="fold")
+    refresh_summary.add_row("GitHub installers", f"{github_installer_count} records across {repository_count} unique repositories")
+    refresh_summary.add_row("Skipped", f"{len(installers) - github_installer_count} non-GitHub records")
+    refresh_summary.add_row("Concurrency", f"up to {MAX_CONCURRENT_GITHUB_REQUESTS} requests")
+    refresh_summary.add_row("Installer data", str(path))
+    refresh_summary.add_row("CSV report", str(report_path))
+    refresh_summary.add_row("Writes", "once all GitHub requests succeed")
+    console.print(Panel.fit(refresh_summary, title="Refresh commit dates", border_style="blue"))
     commit_dates_by_repository_key = fetch_commit_dates(repositories_by_key=repositories_by_key, console=console)
+    sorted_commit_dates = sort_repository_commit_dates(
+        repositories_by_key=repositories_by_key, commit_dates_by_repository_key=commit_dates_by_repository_key
+    )
 
     checked_at = datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, installer in enumerate(installers):
         repository_key = repository_keys_by_installer_index.get(index)
-        updated_installer = {
-            key: value
-            for key, value in installer.items()
-            if key not in {"lastCommitDate", "lastCommitDateCheckDate"}
-        }
+        updated_installer = {key: value for key, value in installer.items() if key not in {"lastCommitDate", "lastCommitDateCheckDate"}}
         if repository_key is not None:
             metadata = CommitDateMetadata(
-                lastCommitDate=commit_dates_by_repository_key[repository_key],
+                lastCommitDate=commit_dates_by_repository_key[repository_key].isoformat(timespec="seconds").replace("+00:00", "Z"),
                 lastCommitDateCheckDate=checked_at,
             )
             ordered_installer: dict[str, object] = {}
@@ -207,23 +108,32 @@ def update_installer_commit_dates(path: Path, console: Console) -> tuple[int, in
         installers[index] = updated_installer
 
     payload["installers"] = installers
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    commit_text_outputs(
+        outputs=(
+            TextOutput(path=path, content=json.dumps(payload, indent=2, ensure_ascii=False) + "\n"),
+            TextOutput(path=report_path, content=serialize_commit_date_report(commit_dates=sorted_commit_dates)),
+        )
+    )
+    render_commit_date_extremes(commit_dates=sorted_commit_dates, console=console)
     return github_installer_count, repository_count
 
 
 def main() -> None:
     console = Console()
     try:
-        updated_count, repository_count = update_installer_commit_dates(path=INSTALLER_DATA_PATH, console=console)
+        updated_count, repository_count = update_installer_commit_dates(
+            path=INSTALLER_DATA_PATH, report_path=COMMIT_DATE_REPORT_PATH, console=console
+        )
     except (OSError, json.JSONDecodeError, RuntimeError) as error:
         raise SystemExit(str(error)) from error
-    console.print(
-        Panel.fit(
-            f"[bold green]Updated commit metadata for {updated_count} installers[/bold green]\n"
-            f"[dim]{repository_count} unique repositories · {escape(str(INSTALLER_DATA_PATH))}[/dim]",
-            border_style="green",
-        )
-    )
+    saved_summary = Table.grid(padding=(0, 2))
+    saved_summary.add_column(style="bold cyan", no_wrap=True)
+    saved_summary.add_column(overflow="fold")
+    saved_summary.add_row("Installer records", str(updated_count))
+    saved_summary.add_row("Unique repositories", str(repository_count))
+    saved_summary.add_row("Installer data", str(INSTALLER_DATA_PATH))
+    saved_summary.add_row("CSV report", str(COMMIT_DATE_REPORT_PATH))
+    console.print(Panel.fit(saved_summary, title="Commit metadata saved", border_style="green"))
 
 
 if __name__ == "__main__":

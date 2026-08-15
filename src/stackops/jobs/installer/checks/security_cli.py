@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Annotated, Literal
 
 import typer
 
+from stackops.jobs.installer.checks.security_helper import parse_apps_argument
+
 if TYPE_CHECKING:
     from rich.console import Console
     from rich.table import Table
@@ -20,17 +22,23 @@ def _console() -> Console:
     return Console()
 
 
-def _parse_apps_argument(apps: str | None) -> list[str] | None:
-    if apps is None:
-        return None
-    app_names = [name.strip() for name in apps.split(",") if name.strip()]
-    return app_names or None
-
-
 def _resolve_report_view(view: ReportView | None, summarize: bool) -> ReportView:
     if view is not None:
         return view
     return "app-summary" if summarize else "engines"
+
+
+def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool) -> None:
+    if path_value is not None:
+        from pathlib import Path
+
+        from stackops.jobs.installer.checks.security_helper import scan_single_path
+
+        scan_single_path(Path(path_value), record)
+    else:
+        from stackops.jobs.installer.checks.check_installations import scan_installed_apps
+
+        scan_installed_apps(app_names, write_reports_to_repo=record)
 
 
 def scan(
@@ -50,23 +58,21 @@ def scan(
         ),
     ] = None,
 ) -> None:
-    def run_scan(apps: str | None, path: Path | None, record: bool | None) -> None:
-        from stackops.jobs.installer.checks.security_helper import scan_single_path
-
-        if apps is not None and path is not None:
-            raise typer.BadParameter("Use either APPS or --path, not both.")
-        resolved_record = record if record is not None else path is None
-        if path is not None:
-            scan_single_path(path, resolved_record)
-        else:
-            from stackops.jobs.installer.checks.check_installations import scan_installed_apps
-
-            app_names = _parse_apps_argument(apps)
-            scan_installed_apps(app_names, write_reports_to_repo=resolved_record)
+    if apps is not None and path is not None:
+        raise typer.BadParameter("Use either APPS or --path, not both.")
+    app_names = parse_apps_argument(apps)
+    path_value = str(path) if path is not None else None
+    resolved_record = record if record is not None else path is None
 
     from stackops.utils.code import run_lambda_function
 
-    run_lambda_function(lambda: run_scan(apps=apps, path=path, record=record), uv_with=["vt-py"], uv_project_dir=None)
+    proc = run_lambda_function(
+        lambda: _run_scan(app_names=app_names, path_value=path_value, record=resolved_record),
+        uv_with=["vt-py"],
+        uv_project_dir=None,
+    )
+    if proc.returncode != 0:
+        raise typer.Exit(code=proc.returncode)
 
 
 def _build_apps_table(apps_to_scan: list[tuple[Path, str | None]]) -> Table:
@@ -85,7 +91,7 @@ def _build_apps_table(apps_to_scan: list[tuple[Path, str | None]]) -> Table:
 def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to list")] = None) -> None:
     from stackops.jobs.installer.checks.check_installations import collect_apps_to_scan
 
-    apps_names = _parse_apps_argument(apps)
+    apps_names = parse_apps_argument(apps)
     apps_to_scan = collect_apps_to_scan(apps_names)
     if not apps_to_scan:
         if apps_names is None:
@@ -147,7 +153,7 @@ def report(
         normalize_app_names,
     )
 
-    apps_names = _parse_apps_argument(apps)
+    apps_names = parse_apps_argument(apps)
     normalized_app_names = normalize_app_names(apps_names)
     app_rows, engine_rows, app_data_list, hydrated_engine_rows = load_filtered_report_rows(normalized_app_names)
 
