@@ -113,6 +113,63 @@ remmina:
     - linux
     - darwin
     - windows
+rustdesk_client:
+  linux:
+    original: ~/.config/rustdesk
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/client/config
+    os:
+    - linux
+  windows:
+    original: ~/AppData/Roaming/RustDesk/config
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/client/config
+    os:
+    - windows
+  darwin:
+    original: ~/Library/Preferences/com.carriez.RustDesk
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/client/config
+    os:
+    - darwin
+rustdesk_client_service:
+  linux:
+    original: /root/.config/rustdesk
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/client_service/config
+    os:
+    - linux
+  windows:
+    original: C:/Windows/ServiceProfiles/LocalService/AppData/Roaming/RustDesk/config
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/client_service/config
+    os:
+    - windows
+  darwin:
+    original: /Library/Preferences/com.carriez.RustDesk
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/client_service/config
+    os:
+    - darwin
+rustdesk_server:
+  private_key:
+    original: ~/rustdesk-server/data/id_ed25519
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/server/data/id_ed25519
+    os:
+    - linux
+    - windows
+  public_key:
+    original: ~/rustdesk-server/data/id_ed25519.pub
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/server/data/id_ed25519.pub
+    os:
+    - linux
+    - windows
+  config:
+    original: ~/rustdesk-server/data/.config
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/server/data/.config
+    os:
+    - linux
+    - windows
+  compose:
+    original: ~/rustdesk-server/compose.yml
+    self_managed: DOTFILES_ROOT/creds/RDP/rustdesk/server/compose.yml
+    os:
+    - linux
+    - windows
 
 # ============ Desktop Launchers ============
 webapp_linux:
