@@ -1,5 +1,7 @@
 import subprocess
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from time import monotonic
 from urllib.parse import quote
@@ -9,7 +11,13 @@ from rich.markup import escape
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 
 from stackops.utils.installer_utils.github_commit_dates_constants import GITHUB_HOST, MAX_CONCURRENT_GITHUB_REQUESTS
-from stackops.utils.installer_utils.github_commit_dates_report import RepositoryCommitDate, build_fetched_commit_row
+from stackops.utils.installer_utils.github_commit_dates_report import RepositoryCommitDate, RepositoryCommitDateFailure, build_fetched_commit_row
+
+
+@dataclass(frozen=True, slots=True)
+class CommitDateFetchResult:
+    commit_dates_by_repository_key: Mapping[str, datetime]
+    failures: tuple[RepositoryCommitDateFailure, ...]
 
 
 def run_gh(args: list[str], failure_message: str) -> str:
@@ -48,13 +56,13 @@ def fetch_last_commit_date(repository: str) -> datetime:
     return last_commit_at.astimezone(UTC)
 
 
-def fetch_commit_dates(repositories_by_key: dict[str, str], console: Console) -> dict[str, datetime]:
+def fetch_commit_dates(repositories_by_key: dict[str, str], console: Console) -> CommitDateFetchResult:
     repository_count = len(repositories_by_key)
     if repository_count == 0:
-        return {}
+        return CommitDateFetchResult(commit_dates_by_repository_key={}, failures=())
 
     commit_dates_by_repository_key: dict[str, datetime] = {}
-    failures: list[OSError | RuntimeError] = []
+    failures: list[RepositoryCommitDateFailure] = []
     worker_count = min(repository_count, MAX_CONCURRENT_GITHUB_REQUESTS)
     repository_column_width = max(len(repository) for repository in repositories_by_key.values())
     started_at = monotonic()
@@ -83,7 +91,7 @@ def fetch_commit_dates(repositories_by_key: dict[str, str], console: Console) ->
                 try:
                     last_commit_at = future.result()
                 except (OSError, RuntimeError) as error:
-                    failures.append(error)
+                    failures.append(RepositoryCommitDateFailure(repository=repository, error_message=str(error)))
                     progress.console.print(f"[bold red]x[/bold red] {escape(repository)}  [red]{escape(str(error))}[/red]")
                 else:
                     commit_dates_by_repository_key[repository_key] = last_commit_at
@@ -101,11 +109,14 @@ def fetch_commit_dates(repositories_by_key: dict[str, str], console: Console) ->
 
             progress.update(
                 task_id,
-                description=("[bold red]Fetch completed with errors[/bold red]" if failures else "[bold green]Fetched latest commits[/bold green]"),
+                description=(
+                    f"[bold yellow]Fetched with {len(failures)} errors[/bold yellow]"
+                    if failures
+                    else "[bold green]Fetched latest commits[/bold green]"
+                ),
             )
         finally:
             executor.shutdown(wait=True, cancel_futures=True)
 
-    if failures:
-        raise RuntimeError(f"Failed to fetch {len(failures)} of {repository_count} repositories. First error:\n{failures[0]}") from failures[0]
-    return commit_dates_by_repository_key
+    failures.sort(key=lambda failure: failure.repository.casefold())
+    return CommitDateFetchResult(commit_dates_by_repository_key=commit_dates_by_repository_key, failures=tuple(failures))

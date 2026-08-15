@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict, cast
@@ -18,6 +19,7 @@ from stackops.utils.installer_utils.github_commit_dates_fetch import ensure_gith
 from stackops.utils.installer_utils.github_commit_dates_output import TextOutput, commit_text_outputs
 from stackops.utils.installer_utils.github_commit_dates_report import (
     render_commit_date_extremes,
+    render_commit_date_failures,
     serialize_commit_date_report,
     sort_repository_commit_dates,
 )
@@ -26,6 +28,15 @@ from stackops.utils.installer_utils.github_commit_dates_report import (
 class CommitDateMetadata(TypedDict):
     lastCommitDate: str
     lastCommitDateCheckDate: str
+
+
+@dataclass(frozen=True, slots=True)
+class CommitDateUpdateResult:
+    updated_installer_count: int
+    github_installer_count: int
+    successful_repository_count: int
+    failed_repository_count: int
+    repository_count: int
 
 
 def require_json_object(value: object, context: str) -> dict[str, object]:
@@ -56,7 +67,7 @@ def github_repository(repo_url: str) -> str | None:
     return f"{owner}/{normalized_repo}"
 
 
-def update_installer_commit_dates(path: Path, report_path: Path, console: Console) -> tuple[int, int]:
+def update_installer_commit_dates(path: Path, report_path: Path, console: Console) -> CommitDateUpdateResult:
     ensure_github_authentication()
     payload, installers = load_installer_data(path=path)
     repositories_by_key: dict[str, str] = {}
@@ -83,9 +94,12 @@ def update_installer_commit_dates(path: Path, report_path: Path, console: Consol
     refresh_summary.add_row("Concurrency", f"up to {MAX_CONCURRENT_GITHUB_REQUESTS} requests")
     refresh_summary.add_row("Installer data", str(path))
     refresh_summary.add_row("CSV report", str(report_path))
-    refresh_summary.add_row("Writes", "once all GitHub requests succeed")
+    refresh_summary.add_row("Writes", "successful fetches are saved; failed repositories retain existing metadata")
     console.print(Panel.fit(refresh_summary, title="Refresh commit dates", border_style="blue"))
-    commit_dates_by_repository_key = fetch_commit_dates(repositories_by_key=repositories_by_key, console=console)
+    fetch_result = fetch_commit_dates(repositories_by_key=repositories_by_key, console=console)
+    commit_dates_by_repository_key = fetch_result.commit_dates_by_repository_key
+    if repository_count > 0 and len(commit_dates_by_repository_key) == 0:
+        raise RuntimeError(f"Failed to fetch all {repository_count} GitHub repositories; no outputs were written.")
     sorted_commit_dates = sort_repository_commit_dates(
         repositories_by_key=repositories_by_key, commit_dates_by_repository_key=commit_dates_by_repository_key
     )
@@ -93,6 +107,8 @@ def update_installer_commit_dates(path: Path, report_path: Path, console: Consol
     checked_at = datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, installer in enumerate(installers):
         repository_key = repository_keys_by_installer_index.get(index)
+        if repository_key is not None and repository_key not in commit_dates_by_repository_key:
+            continue
         updated_installer = {key: value for key, value in installer.items() if key not in {"lastCommitDate", "lastCommitDateCheckDate"}}
         if repository_key is not None:
             metadata = CommitDateMetadata(
@@ -115,25 +131,36 @@ def update_installer_commit_dates(path: Path, report_path: Path, console: Consol
         )
     )
     render_commit_date_extremes(commit_dates=sorted_commit_dates, console=console)
-    return github_installer_count, repository_count
+    render_commit_date_failures(failures=fetch_result.failures, console=console)
+    updated_installer_count = sum(repository_key in commit_dates_by_repository_key for repository_key in repository_keys_by_installer_index.values())
+    return CommitDateUpdateResult(
+        updated_installer_count=updated_installer_count,
+        github_installer_count=github_installer_count,
+        successful_repository_count=len(commit_dates_by_repository_key),
+        failed_repository_count=len(fetch_result.failures),
+        repository_count=repository_count,
+    )
 
 
 def main() -> None:
     console = Console()
     try:
-        updated_count, repository_count = update_installer_commit_dates(
-            path=INSTALLER_DATA_PATH, report_path=COMMIT_DATE_REPORT_PATH, console=console
-        )
+        update_result = update_installer_commit_dates(path=INSTALLER_DATA_PATH, report_path=COMMIT_DATE_REPORT_PATH, console=console)
     except (OSError, json.JSONDecodeError, RuntimeError) as error:
         raise SystemExit(str(error)) from error
     saved_summary = Table.grid(padding=(0, 2))
     saved_summary.add_column(style="bold cyan", no_wrap=True)
     saved_summary.add_column(overflow="fold")
-    saved_summary.add_row("Installer records", str(updated_count))
-    saved_summary.add_row("Unique repositories", str(repository_count))
+    saved_summary.add_row(
+        "Installer records", f"{update_result.updated_installer_count} updated of {update_result.github_installer_count} GitHub records"
+    )
+    saved_summary.add_row("Repositories saved", f"{update_result.successful_repository_count} of {update_result.repository_count}")
+    saved_summary.add_row("Fetch failures", str(update_result.failed_repository_count))
     saved_summary.add_row("Installer data", str(INSTALLER_DATA_PATH))
     saved_summary.add_row("CSV report", str(COMMIT_DATE_REPORT_PATH))
-    console.print(Panel.fit(saved_summary, title="Commit metadata saved", border_style="green"))
+    panel_style = "yellow" if update_result.failed_repository_count > 0 else "green"
+    panel_title = "Commit metadata saved with fetch failures" if update_result.failed_repository_count > 0 else "Commit metadata saved"
+    console.print(Panel.fit(saved_summary, title=panel_title, border_style=panel_style))
 
 
 if __name__ == "__main__":

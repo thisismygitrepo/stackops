@@ -1,5 +1,5 @@
 import csv
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from io import StringIO
@@ -22,8 +22,14 @@ class RepositoryCommitDate:
     last_commit_at: datetime
 
 
+@dataclass(frozen=True, slots=True)
+class RepositoryCommitDateFailure:
+    repository: str
+    error_message: str
+
+
 def sort_repository_commit_dates(
-    repositories_by_key: dict[str, str], commit_dates_by_repository_key: dict[str, datetime]
+    repositories_by_key: Mapping[str, str], commit_dates_by_repository_key: Mapping[str, datetime]
 ) -> list[RepositoryCommitDate]:
     commit_dates = [
         RepositoryCommitDate(repository=repositories_by_key[repository_key], last_commit_at=last_commit_at)
@@ -80,3 +86,14 @@ def render_commit_date_extremes(commit_dates: Sequence[RepositoryCommitDate], co
             title=f"{len(oldest_commit_dates)} oldest commits", commit_dates=oldest_commit_dates, repository_column_width=repository_column_width
         )
     )
+
+
+def render_commit_date_failures(failures: Sequence[RepositoryCommitDateFailure], console: Console) -> None:
+    if len(failures) == 0:
+        return
+    table = Table(title=f"{len(failures)} fetch failures", box=box.SIMPLE_HEAVY, header_style="bold yellow", expand=False)
+    table.add_column("Repository", style="yellow", no_wrap=True)
+    table.add_column("Error", style="red", overflow="fold")
+    for failure in failures:
+        table.add_row(Text(failure.repository), Text(failure.error_message))
+    console.print(table)
