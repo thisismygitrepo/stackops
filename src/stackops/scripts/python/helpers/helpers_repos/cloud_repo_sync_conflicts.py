@@ -1,48 +1,34 @@
-from pathlib import Path
-import shlex
-from typing import Literal
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal
 
 
-ConflictResolutionAction = Literal[
-    "ask",
-    "push-local-merge",
-    "overwrite-local",
-    "stop-on-conflict",
-    "remove-rclone-conflict",
-    "merge-accept-remote",
-    "merge-accept-local",
+if TYPE_CHECKING:
+    from git.repo import Repo
+
+
+type ConflictResolutionAction = Literal["ask", "push-local-merge", "overwrite-local", "stop-on-conflict", "merge-accept-remote", "merge-accept-local"]
+type ConflictResolutionOption = Literal[
+    "ask", "a", "push-local-merge", "p", "overwrite-local", "o", "stop-on-conflict", "s", "merge-accept-remote", "merge-accept-local"
 ]
-ConflictResolutionOption = Literal[
-    "ask",
-    "a",
-    "push-local-merge",
-    "p",
-    "overwrite-local",
-    "o",
-    "stop-on-conflict",
-    "s",
-    "remove-rclone-conflict",
-    "r",
-    "merge-accept-remote",
-    "merge-accept-local",
-]
-MergeConflictResolutionSide = Literal["local", "remote"]
+type MergeConflictResolutionSide = Literal["local", "remote"]
+type ConflictPathState = Literal["present", "deleted"]
 
 
-def _bash_quote(value: str) -> str:
-    return shlex.quote(value)
+@dataclass(frozen=True)
+class MergeConflict:
+    path: str
+    local: ConflictPathState
+    remote: ConflictPathState
 
 
-def powershell_single_quote(value: str) -> str:
-    return "'" + value.replace("'", "''") + "'"
-
-
-def _build_conflict_path_arguments(conflict_paths: tuple[str, ...], shell: Literal["bash", "powershell"]) -> str:
-    if len(conflict_paths) == 0:
-        raise ValueError("Cannot build a conflict-resolution program without conflicted paths.")
-    if shell == "bash":
-        return " ".join(_bash_quote(path) for path in conflict_paths)
-    return " ".join(powershell_single_quote(path) for path in conflict_paths)
+def get_merge_conflicts(repo: "Repo") -> tuple[MergeConflict, ...]:
+    conflicts: list[MergeConflict] = []
+    for path, stage_blobs in sorted(repo.index.unmerged_blobs().items()):
+        stages = frozenset(stage for stage, _blob in stage_blobs)
+        if 2 not in stages and 3 not in stages:
+            raise RuntimeError(f"Unmerged path has neither a local nor remote version: {path}")
+        conflicts.append(MergeConflict(path=str(path), local="present" if 2 in stages else "deleted", remote="present" if 3 in stages else "deleted"))
+    return tuple(conflicts)
 
 
 def resolve_conflict_action(on_conflict: ConflictResolutionOption) -> ConflictResolutionAction:
@@ -55,37 +41,38 @@ def resolve_conflict_action(on_conflict: ConflictResolutionOption) -> ConflictRe
         "overwrite-local": "overwrite-local",
         "s": "stop-on-conflict",
         "stop-on-conflict": "stop-on-conflict",
-        "r": "remove-rclone-conflict",
-        "remove-rclone-conflict": "remove-rclone-conflict",
         "merge-accept-remote": "merge-accept-remote",
         "merge-accept-local": "merge-accept-local",
     }
     return on_conflict_mapper[on_conflict]
 
 
-def build_merge_accept_program(
-    repo_local_root: Path,
-    conflict_paths: tuple[str, ...],
-    accept_side: MergeConflictResolutionSide,
-    push_local_program: str,
-    platform_name: str,
-) -> str:
+def resolve_merge_conflicts(repo: "Repo", expected_conflicts: tuple[MergeConflict, ...], accept_side: MergeConflictResolutionSide) -> str:
+    current_conflicts = get_merge_conflicts(repo=repo)
+    if current_conflicts != expected_conflicts:
+        raise RuntimeError("Merge conflicts changed after they were presented for resolution.")
+
     checkout_flag = "--ours" if accept_side == "local" else "--theirs"
-    shell_kind: Literal["bash", "powershell"] = "powershell" if platform_name == "Windows" else "bash"
-    conflict_args = _build_conflict_path_arguments(conflict_paths=conflict_paths, shell=shell_kind)
-    if platform_name == "Windows":
-        repo_local_root_quoted = powershell_single_quote(str(repo_local_root))
-        return f"""
-Set-Location -LiteralPath {repo_local_root_quoted}
-git checkout {checkout_flag} -- {conflict_args}
-git add -- {conflict_args}
-git commit --no-edit
-{push_local_program}
-"""
-    return f"""
-cd {_bash_quote(str(repo_local_root))}
-git checkout {checkout_flag} -- {conflict_args}
-git add -- {conflict_args}
-git commit --no-edit
-{push_local_program}
-"""
+    present_paths: list[str] = []
+    deleted_paths: list[str] = []
+    for conflict in current_conflicts:
+        selected_state = conflict.local if accept_side == "local" else conflict.remote
+        match selected_state:
+            case "present":
+                present_paths.append(conflict.path)
+            case "deleted":
+                deleted_paths.append(conflict.path)
+
+    if len(present_paths) > 0:
+        repo.git.checkout(checkout_flag, "--", *present_paths)
+        repo.git.add("--", *present_paths)
+    if len(deleted_paths) > 0:
+        repo.git.rm("--", *deleted_paths)
+
+    unresolved_conflicts = get_merge_conflicts(repo=repo)
+    if len(unresolved_conflicts) > 0:
+        unresolved_paths = ", ".join(conflict.path for conflict in unresolved_conflicts)
+        raise RuntimeError(f"Merge resolution left unresolved paths: {unresolved_paths}")
+    repo.git.diff("--cached", "--check")
+    repo.git.commit("--no-edit")
+    return str(repo.head.commit.hexsha)

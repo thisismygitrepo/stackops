@@ -1,6 +1,7 @@
 from typing import Final, Literal, TypedDict, TypeAlias
 import json
 import os
+from pathlib import Path
 import shlex
 import subprocess
 import sys
@@ -16,14 +17,11 @@ SHARE_LINK_TYPES_DISPLAY: Final[str] = "view, v, edit, e, embed, m"
 _CONFIG_ERROR_MARKERS: Final[tuple[str, ...]] = (
     "didn't find section in config file",
     "config file doesn't contain",
+    "failed to load config file",
     "failed to create file system for",
+    "could not parse line",
 )
-_MISSING_PATH_MARKERS: Final[tuple[str, ...]] = (
-    "directory not found",
-    "object not found",
-    "file not found",
-    "no such file or directory",
-)
+_MISSING_PATH_MARKERS: Final[tuple[str, ...]] = ("directory not found", "object not found", "file not found", "no such file or directory")
 _REMOTE_WRAPPER_BACKENDS: Final[frozenset[str]] = frozenset({"alias", "crypt", "chunker", "hasher"})
 
 
@@ -37,15 +35,7 @@ class RcloneConfigError(RuntimeError):
 
 
 class RcloneCommandError(RuntimeError):
-    def __init__(
-        self,
-        *,
-        command: list[str],
-        returncode: int,
-        stdout: str,
-        stderr: str,
-        hint: str | None,
-    ) -> None:
+    def __init__(self, *, command: list[str], returncode: int, stdout: str, stderr: str, hint: str | None) -> None:
         self.command = tuple(command)
         self.returncode = returncode
         self.stdout = stdout
@@ -137,32 +127,21 @@ def _run_rclone(command: list[str], *, show_command: bool, show_progress: bool) 
 
     try:
         if show_progress:
-            process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-            )
-            if process.stdout is None:
-                raise RuntimeError(f"Could not capture rclone output for: {_format_command(command)}")
-            output_chunks: list[str] = []
-            while True:
-                chunk = process.stdout.read(1)
-                if chunk == "":
-                    break
-                output_chunks.append(chunk)
-                sys.stdout.write(chunk)
-                sys.stdout.flush()
-            process.stdout.close()
-            completed = subprocess.CompletedProcess(command, process.wait(), "".join(output_chunks), "")
+            with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1) as process:
+                if process.stdout is None:
+                    raise RuntimeError(f"Could not capture rclone output for: {_format_command(command)}")
+                output_chunks: list[str] = []
+                while True:
+                    chunk = process.stdout.read(1)
+                    if chunk == "":
+                        break
+                    output_chunks.append(chunk)
+                    sys.stdout.write(chunk)
+                    sys.stdout.flush()
+                process.stdout.close()
+                completed = subprocess.CompletedProcess(command, process.wait(), "".join(output_chunks), "")
         else:
-            completed = subprocess.run(
-                command,
-                check=False,
-                capture_output=True,
-                text=True,
-            )
+            completed = subprocess.run(command, check=False, capture_output=True, text=True)
     except FileNotFoundError as error:
         raise RuntimeError(f"rclone executable not found while running: {_format_command(command)}") from error
 
@@ -177,8 +156,8 @@ def _run_rclone(command: list[str], *, show_command: bool, show_progress: bool) 
     return completed
 
 
-def list_remote_names() -> tuple[str, ...]:
-    completed = _run_rclone(["rclone", "listremotes"], show_command=False, show_progress=False)
+def _remote_names_from_list_command(command: list[str]) -> tuple[str, ...]:
+    completed = _run_rclone(command, show_command=False, show_progress=False)
     remote_names: list[str] = []
     for output_line in completed.stdout.splitlines():
         remote_name_with_separator = output_line.strip()
@@ -188,6 +167,16 @@ def list_remote_names() -> tuple[str, ...]:
             raise RcloneConfigError(f"Unexpected output from rclone listremotes: {remote_name_with_separator!r}")
         remote_names.append(remote_name_with_separator.removesuffix(":"))
     return tuple(remote_names)
+
+
+def list_remote_names() -> tuple[str, ...]:
+    return _remote_names_from_list_command(command=["rclone", "listremotes"])
+
+
+def list_remote_names_from_config(config_path: Path) -> tuple[str, ...]:
+    if not config_path.is_file():
+        raise RcloneConfigError(f"Rclone config file does not exist: {config_path}")
+    return _remote_names_from_list_command(command=["rclone", "listremotes", "--config", str(config_path)])
 
 
 def _rclone_config_dump() -> dict[str, dict[str, object]]:
@@ -305,16 +294,7 @@ def sync(*, source: str, target: str, transfers: int, delete_during: bool, show_
 
 
 def bisync(*, source: str, target: str, transfers: int, delete_during: bool, show_command: bool, show_progress: bool) -> None:
-    command = [
-        "rclone",
-        "bisync",
-        source,
-        target,
-        "--resync",
-        "--remove-empty-dirs",
-        f"--transfers={transfers}",
-        "--verbose",
-    ]
+    command = ["rclone", "bisync", source, target, "--resync", "--remove-empty-dirs", f"--transfers={transfers}", "--verbose"]
     if show_progress:
         command.append("--progress")
     if delete_during:

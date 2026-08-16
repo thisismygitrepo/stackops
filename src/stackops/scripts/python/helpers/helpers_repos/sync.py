@@ -1,13 +1,9 @@
-from stackops.utils.io import encrypt_file_asymmetric
-import stackops.utils.files.compression as path_compression
-from stackops.utils.path_core import delete_path
-from stackops.utils.cloud.rclone_wrapper import get_remote_path, to_cloud
-import platform
 from pathlib import Path
+import platform
+import tempfile
+
 from rich.console import Console
 from rich.panel import Panel
-
-console = Console()
 
 
 def get_tmux_cmd(wd1: Path, wd2: Path) -> str:
@@ -20,77 +16,35 @@ def get_tmux_cmd(wd1: Path, wd2: Path) -> str:
     ]
     return "\n".join(lines)
 
-def delete_remote_repo_copy_and_push_local(remote_repo: str, local_repo: str, cloud: str):
-    console.print(Panel("🗑️  Deleting remote repo copy and pushing local copy", title="[bold blue]Repo Sync[/bold blue]", border_style="blue"))
-    repo_sync_root = Path(remote_repo).expanduser().absolute()
-    repo_root_path = Path(local_repo).expanduser().absolute()
-    delete_path(repo_sync_root, verbose=True)
-    print("🧹 Removed temporary remote copy")
-    from git.remote import Remote
-    from git.repo import Repo
-
-    try:
-        Remote.remove(Repo(repo_root_path), "originEnc")
-        console.print(Panel("🔗 Removed originEnc remote reference", border_style="blue"))
-    except Exception:
-        pass
-    console.print(Panel("📈 Deleting remote repository copy and pushing local changes", width=150, border_style="blue"))
-    archive_path = path_compression.zip_path(
-        repo_root_path,
-        path=None,
-        folder=None,
-        name=None,
-        arcname=None,
-        inplace=False,
-        verbose=True,
-        content=False,
-        orig=False,
-        mode="w",
-    )
-    encrypted_archive_path = encrypt_file_asymmetric(file_path=archive_path)
-    remote_path = Path(f"{get_remote_path(local_path=repo_root_path, root='myhome', os_specific=False, rel2home=True, strict=True).as_posix()}.zip.gpg")
-    try:
-        to_cloud(
-            local_path=encrypted_archive_path,
-            cloud=cloud,
-            remote_path=remote_path,
-            share=False,
-            share_options=None,
-            verbose=True,
-            transfers=10,
-        )
-    finally:
-        delete_path(archive_path, verbose=False)
-        delete_path(encrypted_archive_path, verbose=False)
-
-    console.print(Panel("✅ Repository successfully pushed to cloud", title="[bold green]Repo Sync[/bold green]", border_style="green"))
-
-
 
 def _quote_powershell_literal(value: Path) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
 def get_windows_inspect_cmd(wd1: Path, wd2: Path) -> str:
-    local_path = _quote_powershell_literal(wd1)
-    remote_path = _quote_powershell_literal(wd2)
-    lines = [
-        f'mprocs "git -C {local_path} status" "git -C {remote_path} status" --names "local,remote"',
-    ]
-    return "\n".join(lines)
+    local_path = _quote_powershell_literal(value=wd1)
+    remote_path = _quote_powershell_literal(value=wd2)
+    return f'mprocs "git -C {local_path} status" "git -C {remote_path} status" --names "local,integration"'
 
 
-def inspect_repos(repo_local_root: str, repo_remote_root: str):
-    console.print(Panel(f"📂 Local:  {repo_local_root}\n📂 Remote: {repo_remote_root}", title="[bold blue]🔍 Inspecting Repositories[/bold blue]", border_style="blue"))
-
+def inspect_repos(repo_local_root: str, repo_remote_root: str) -> None:
+    console = Console()
+    console.print(
+        Panel(
+            f"📂 Local:       {repo_local_root}\n📂 Integration: {repo_remote_root}",
+            title="[bold blue]🔍 Inspecting Repositories[/bold blue]",
+            border_style="blue",
+        )
+    )
     if platform.system() == "Windows":
         program = get_windows_inspect_cmd(wd1=Path(repo_local_root), wd2=Path(repo_remote_root))
+        suffix = ".ps1"
     elif platform.system() in ["Linux", "Darwin"]:
         program = get_tmux_cmd(wd1=Path(repo_local_root), wd2=Path(repo_remote_root))
+        suffix = ".sh"
     else:
         raise NotImplementedError(f"Platform {platform.system()} not implemented.")
-    import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', suffix=".sh" if platform.system() != "Windows" else ".ps1", delete=False, encoding='utf-8') as temp_file:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False, encoding="utf-8") as temp_file:
         temp_file.write(program)
         temp_script_path = Path(temp_file.name)
-    console.print(Panel(f"🚀 Launching repo inspection tool...\n\n[blue]{temp_script_path}[/blue]", border_style="blue"))
+    console.print(Panel(f"Run the inspection script:\n\n[blue]{temp_script_path}[/blue]", border_style="blue"))
