@@ -2196,7 +2196,8 @@
                     "    )",
                     "    from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error",
                     "    from stackops.utils.code import get_uv_command_executing_python_script",
-                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_config_string",
+                    "    from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError, read_default_rclone_remote",
+                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_RCLONE_CONF_PATH, DOTFILES_ROOT, DOTFILES_SCRIPTS_ROOT, DOTFILES_STACKOPS_CONFIG_PATH",
                     "    from stackops.utils.path_core import delete_path",
                     "    from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT",
                     "",
@@ -2205,10 +2206,16 @@
                     "",
                     "    if cloud is None:",
                     "        try:",
-                    "            cloud_resolved = read_stackops_config_string(\"default_rclone_config\")",
+                    "            cloud_resolved = read_default_rclone_remote()",
                     "            console.print(Panel(f\"⚠️  Using default cloud: `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}\", title=\"Default Cloud\", border_style=\"yellow\"))",
-                    "        except (FileNotFoundError, KeyError, ValueError) as exc:",
-                    "            console.print(Panel(f\"❌ ERROR: No cloud profile found\\nLocation: {DOTFILES_STACKOPS_CONFIG_PATH}\\nPlease set one up or provide one via the --cloud flag.\", title=\"Error\", border_style=\"red\"))",
+                    "        except DefaultRcloneRemoteConfigError as exc:",
+                    "            console.print(",
+                    "                Panel(",
+                    "                    f\"❌ {exc}\\n\\nUse a remote for this run only:\\n  devops repos guard REPO --cloud REMOTE\",",
+                    "                    title=\"Cloud Configuration Required\",",
+                    "                    border_style=\"red\",",
+                    "                )",
+                    "            )",
                     "            raise typer.Exit(code=1) from exc",
                     "    else:",
                     "        cloud_resolved = cloud",
@@ -2238,11 +2245,16 @@
                     "    try:",
                     "        console.print(Panel(\"📥 DOWNLOADING REMOTE REPOSITORY\", title_align=\"left\", border_style=\"blue\"))",
                     "        _download_repo_archive(repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
+                    "    except GpgCommandError as error:",
+                    "        _exit_after_gpg_error(console=console, error=error)",
                     "    except RcloneCommandError as error:",
                     "        if not is_missing_remote_path_error(error):",
                     "            raise",
                     "        console.print(Panel(\"🆕 Remote repository doesn't exist\\n📤 Creating new remote and exiting...\", title_align=\"left\", border_style=\"green\"))",
-                    "        _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
+                    "        try:",
+                    "            _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
+                    "        except GpgCommandError as gpg_error:",
+                    "            _exit_after_gpg_error(console=console, error=gpg_error)",
                     "        return \"\"",
                     "",
                     "    repo_remote_obj = Repo(repo_remote_root)",
@@ -2280,7 +2292,10 @@
                     "        console.print(Panel(\"✅ Pull succeeded!\\n🧹 Removing originEnc remote and local copy\\n📤 Pushing merged repository to cloud storage\", title=\"Success\", border_style=\"green\"))",
                     "        delete_path(repo_remote_root, verbose=True)",
                     "        _remove_remote_if_present(repo=repo_local_obj, remote_name=REMOTE_NAME)",
-                    "        _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
+                    "        try:",
+                    "            _upload_repo_archive(repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
+                    "        except GpgCommandError as error:",
+                    "            _exit_after_gpg_error(console=console, error=error)",
                     "        return \"success\"",
                     "    if merge_result.status == \"git_error\":",
                     "        console.print(",
@@ -3277,7 +3292,10 @@
                     "        return merged_mapper",
                     "",
                     "    source_key = CONFIG_SOURCE_MAP[source]",
-                    "    mapper_full_obj = read_mapper(source=source_key)",
+                    "    try:",
+                    "        mapper_full_obj = read_mapper(source=source_key)",
+                    "    except (OSError, TypeError, ValueError) as exc:",
+                    "        _exit_with_error(str(exc))",
                     "    mapper_full: dict[str, list[ConfigMapper]]",
                     "    sensitivity_key = SENSITIVITY_MAP[sensitivity]",
                     "    if sensitivity_key == \"private\":",
@@ -5501,6 +5519,559 @@
                     "name": "S",
                     "hidden": true,
                     "help": "secrets_module.SECRETS_HELP"
+                  }
+                ]
+              },
+              {
+                "kind": "group",
+                "name": "setup",
+                "fullPath": "devops config setup",
+                "shortPath": "d c u",
+                "help": "f'🧭 <u> {setup_module.SETUP_HELP}'",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
+                  "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup.get_app"
+                },
+                "app": {
+                  "help": "SETUP_HELP",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false
+                },
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "cloud",
+                    "fullPath": "devops config setup cloud",
+                    "shortPath": "d c u c",
+                    "help": "f'☁️ <c> {CLOUD_SETUP_HELP}'",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_setup.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup",
+                      "callable": "setup_cloud"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def setup_cloud(",
+                        "    cloud: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(\"--cloud\", \"-c\", help=\"Use this existing rclone remote instead of prompting.\"),",
+                        "    ] = None,",
+                        "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Write without confirmation. Requires --cloud.\")] = False,",
+                        ") -> None:",
+                        "    import stackops.utils.schemas.config as config_assets",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import (",
+                        "        exit_with_setup_error,",
+                        "        load_stackops_config_for_setup,",
+                        "        write_stackops_config,",
+                        "    )",
+                        "    from stackops.utils.cloud.rclone import list_remote_names",
+                        "    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH",
+                        "",
+                        "    if yes and cloud is None:",
+                        "        exit_with_setup_error(\"--yes requires --cloud so the selected remote is explicit.\")",
+                        "",
+                        "    try:",
+                        "        remote_names = list_remote_names()",
+                        "    except RuntimeError as exc:",
+                        "        exit_with_setup_error(",
+                        "            f\"Could not inspect rclone remotes:\\n{exc}\\n\\n\"",
+                        "            \"Create or repair an rclone remote with:\\n\"",
+                        "            \"  rclone config\"",
+                        "        )",
+                        "    if len(remote_names) == 0:",
+                        "        exit_with_setup_error(",
+                        "            \"No rclone remotes are configured. StackOps stores a remote name, not cloud credentials.\\n\\n\"",
+                        "            \"Create a remote first:\\n\"",
+                        "            \"  rclone config\\n\\n\"",
+                        "            \"Then rerun:\\n\"",
+                        "            \"  devops config setup cloud\"",
+                        "        )",
+                        "",
+                        "    config_path = DOTFILES_STACKOPS_CONFIG_PATH",
+                        "    schema_path = config_path.with_name(config_assets.CONFIG_SCHEMA_PATH_REFERENCE)",
+                        "    if schema_path.exists() and not schema_path.is_file():",
+                        "        exit_with_setup_error(f\"StackOps schema path exists but is not a file: {schema_path}\")",
+                        "",
+                        "    existing_config = load_stackops_config_for_setup(config_path=config_path)",
+                        "    configured_remote = existing_config.get(\"default_rclone_config\") if existing_config is not None else None",
+                        "    if cloud is None:",
+                        "        selected_remote = _select_remote(remote_names=remote_names, configured_remote=configured_remote)",
+                        "    else:",
+                        "        selected_remote = cloud.strip()",
+                        "        if selected_remote == \"\":",
+                        "            exit_with_setup_error(\"--cloud must name an existing rclone remote.\")",
+                        "        if selected_remote.endswith(\":\"):",
+                        "            exit_with_setup_error(\"Pass the rclone remote name without its trailing colon.\")",
+                        "        if selected_remote not in remote_names:",
+                        "            exit_with_setup_error(",
+                        "                f\"Rclone remote {selected_remote!r} does not exist. Available remotes: {', '.join(remote_names)}\\n\\n\"",
+                        "                \"Create another remote with:\\n\"",
+                        "                \"  rclone config\"",
+                        "            )",
+                        "",
+                        "    config_action = \"Create\" if existing_config is None else \"Update\"",
+                        "",
+                        "    summary = Table.grid(padding=(0, 2))",
+                        "    summary.add_column(style=\"bold cyan\", no_wrap=True)",
+                        "    summary.add_column(overflow=\"fold\")",
+                        "    summary.add_row(\"Action\", config_action)",
+                        "    summary.add_row(\"Rclone remote\", selected_remote)",
+                        "    summary.add_row(\"Config\", config_path.as_posix())",
+                        "    summary.add_row(\"Schema\", schema_path.as_posix())",
+                        "    console = Console()",
+                        "    console.print(Panel(summary, title=\"Cloud Configuration\", border_style=\"cyan\", padding=(1, 2)))",
+                        "    if not yes and not typer.confirm(\"Write this configuration?\", default=True):",
+                        "        raise typer.Exit(code=0)",
+                        "",
+                        "    write_stackops_config(",
+                        "        config_path=config_path,",
+                        "        schema_path=schema_path,",
+                        "        existing_config=existing_config,",
+                        "        values={\"default_rclone_config\": selected_remote},",
+                        "    )",
+                        "    console.print(",
+                        "        Panel(",
+                        "            f\"Default cloud is now [bold]{selected_remote}[/bold].\\n\"",
+                        "            \"Commands that omit --cloud will use this rclone remote.\",",
+                        "            title=\"Configuration Saved\",",
+                        "            border_style=\"green\",",
+                        "            padding=(1, 2),",
+                        "        )",
+                        "    )"
+                      ],
+                      "name": "setup_cloud",
+                      "parameters": [
+                        {
+                          "name": "cloud",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--cloud', '-c', help='Use this existing rclone remote instead of prompting.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--cloud",
+                              "-c"
+                            ],
+                            "long_flags": [
+                              "--cloud"
+                            ],
+                            "short_flags": [
+                              "-c"
+                            ],
+                            "help": "Use this existing rclone remote instead of prompting."
+                          }
+                        },
+                        {
+                          "name": "yes",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--yes', '-y', help='Write without confirmation. Requires --cloud.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--yes",
+                              "-y"
+                            ],
+                            "long_flags": [
+                              "--yes"
+                            ],
+                            "short_flags": [
+                              "-y"
+                            ],
+                            "help": "Write without confirmation. Requires --cloud."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "c",
+                        "hidden": true,
+                        "help": "CLOUD_SETUP_HELP"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "email",
+                    "fullPath": "devops config setup email",
+                    "shortPath": "d c u e",
+                    "help": "f'📧 <e> {setup_email.EMAIL_SETUP_HELP}'",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_setup_email.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup_email",
+                      "callable": "setup_email"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def setup_email() -> None:",
+                        "    import stackops.utils.schemas.config as config_assets",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import (",
+                        "        exit_with_setup_error,",
+                        "        load_stackops_config_for_setup,",
+                        "        write_stackops_config,",
+                        "    )",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_email_profile import (",
+                        "        NewEmailProfile,",
+                        "        load_email_profiles,",
+                        "        prompt_new_email_profile,",
+                        "        write_new_email_profile,",
+                        "    )",
+                        "    from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_choice, ask_text",
+                        "    from stackops.secrets.paths import SECRETS_DOFILE",
+                        "    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH",
+                        "",
+                        "    config_path = DOTFILES_STACKOPS_CONFIG_PATH",
+                        "    schema_path = config_path.with_name(config_assets.CONFIG_SCHEMA_PATH_REFERENCE)",
+                        "    if schema_path.exists() and not schema_path.is_file():",
+                        "        exit_with_setup_error(f\"StackOps schema path exists but is not a file: {schema_path}\")",
+                        "    existing_config = load_stackops_config_for_setup(config_path=config_path)",
+                        "    configured_profile = existing_config.get(\"default_email_config\") if existing_config is not None else None",
+                        "    configured_recipient = existing_config.get(\"default_email_address\") if existing_config is not None else None",
+                        "    secrets_file, email_profiles = load_email_profiles(secrets_path=SECRETS_DOFILE)",
+                        "",
+                        "    new_profile: NewEmailProfile | None = None",
+                        "    if email_profiles and typer.confirm(\"Use an existing SMTP profile?\", default=True):",
+                        "        profile_names = tuple(sorted(email_profiles))",
+                        "        default_profile = configured_profile if configured_profile in email_profiles else profile_names[0]",
+                        "        selected_profile = ask_choice(",
+                        "            \"SMTP profile\",",
+                        "            help_text=\"Choose credentials already stored in the global StackOps secrets file.\",",
+                        "            choices=profile_names,",
+                        "            default=default_profile,",
+                        "        )",
+                        "        sender = email_profiles[selected_profile]",
+                        "    else:",
+                        "        existing_login_names = {entry[\"name\"] for entry in secrets_file[\"entries\"]} if secrets_file is not None else set()",
+                        "        new_profile = prompt_new_email_profile(",
+                        "            existing_login_names=existing_login_names,",
+                        "            configured_profile=configured_profile,",
+                        "            configured_recipient=configured_recipient,",
+                        "        )",
+                        "        selected_profile = new_profile[\"login\"][\"name\"]",
+                        "        sender = new_profile[\"sender\"]",
+                        "",
+                        "    recipient = ask_text(",
+                        "        \"Default recipient\",",
+                        "        help_text=\"Notifications use this address when a command does not provide a recipient.\",",
+                        "        default=configured_recipient if configured_recipient is not None else sender,",
+                        "    )",
+                        "    assert recipient is not None",
+                        "",
+                        "    summary = Table.grid(padding=(0, 2))",
+                        "    summary.add_column(style=\"bold cyan\", no_wrap=True)",
+                        "    summary.add_column(overflow=\"fold\")",
+                        "    summary.add_row(\"SMTP profile\", selected_profile)",
+                        "    summary.add_row(\"Profile action\", \"Create\" if new_profile is not None else \"Reuse\")",
+                        "    summary.add_row(\"Sender\", sender)",
+                        "    summary.add_row(\"Default recipient\", recipient)",
+                        "    summary.add_row(\"Config\", config_path.as_posix())",
+                        "    summary.add_row(\"Secrets\", SECRETS_DOFILE.as_posix())",
+                        "    console = Console()",
+                        "    console.print(Panel(summary, title=\"Email Configuration\", border_style=\"cyan\", padding=(1, 2)))",
+                        "    if not typer.confirm(\"Write this configuration?\", default=True):",
+                        "        raise typer.Exit(code=0)",
+                        "",
+                        "    if new_profile is not None:",
+                        "        try:",
+                        "            write_new_email_profile(secrets_path=SECRETS_DOFILE, secrets_file=secrets_file, profile=new_profile)",
+                        "        except (OSError, ValueError) as exc:",
+                        "            exit_with_setup_error(f\"Could not write the email profile: {exc}\")",
+                        "    write_stackops_config(",
+                        "        config_path=config_path,",
+                        "        schema_path=schema_path,",
+                        "        existing_config=existing_config,",
+                        "        values={",
+                        "            \"default_email_config\": selected_profile,",
+                        "            \"default_email_address\": recipient,",
+                        "        },",
+                        "    )",
+                        "    console.print(Panel(\"Default email notifications are configured.\", title=\"Configuration Saved\", border_style=\"green\", padding=(1, 2)))"
+                      ],
+                      "name": "setup_email",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "e",
+                        "hidden": true,
+                        "help": "setup_email.EMAIL_SETUP_HELP"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "data",
+                    "fullPath": "devops config setup data",
+                    "shortPath": "d c u d",
+                    "help": "f'💾 <d> {setup_domains.DATA_SETUP_HELP}'",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_setup_domains.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup_domains",
+                      "callable": "setup_data"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def setup_data() -> None:",
+                        "    import stackops.utils.schemas.mapper as mapper_assets",
+                        "    from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER",
+                        "    from stackops.scripts.python.helpers.helpers_cloud.backup_config import USER_BACKUP_PATH",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_data import register_data",
+                        "",
+                        "    _ensure_packaged_schema(",
+                        "        module=mapper_assets,",
+                        "        path_reference=mapper_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE,",
+                        "        schema_path=USER_BACKUP_PATH.with_name(mapper_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE),",
+                        "    )",
+                        "    register_data(",
+                        "        path_local=None,",
+                        "        group=\"default\",",
+                        "        name=None,",
+                        "        path_cloud=None,",
+                        "        share_url=None,",
+                        "        zip_=True,",
+                        "        encryption=None,",
+                        "        pwd=None,",
+                        "        rel2home=None,",
+                        "        os=DEFAULT_OS_FILTER,",
+                        "        interactive=True,",
+                        "    )"
+                      ],
+                      "name": "setup_data",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "d",
+                        "hidden": true,
+                        "help": "setup_domains.DATA_SETUP_HELP"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "dotfiles",
+                    "fullPath": "devops config setup dotfiles",
+                    "shortPath": "d c u f",
+                    "help": "f'📄 <f> {setup_domains.DOTFILES_SETUP_HELP}'",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_setup_domains.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup_domains",
+                      "callable": "setup_dotfiles"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def setup_dotfiles() -> None:",
+                        "    import stackops.utils.schemas.mapper as mapper_assets",
+                        "    from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER, USER_MAPPER_PATH",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import register_dotfile",
+                        "",
+                        "    _ensure_packaged_schema(",
+                        "        module=mapper_assets,",
+                        "        path_reference=mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE,",
+                        "        schema_path=USER_MAPPER_PATH.with_name(mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE),",
+                        "    )",
+                        "    register_dotfile(",
+                        "        file=None,",
+                        "        method=\"copy\",",
+                        "        on_conflict=\"throw-error\",",
+                        "        sensitivity=\"private\",",
+                        "        destination=None,",
+                        "        name=None,",
+                        "        section=\"default\",",
+                        "        os_filter=DEFAULT_OS_FILTER,",
+                        "        shared=False,",
+                        "        record=True,",
+                        "        interactive=True,",
+                        "    )"
+                      ],
+                      "name": "setup_dotfiles",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "f",
+                        "hidden": true,
+                        "help": "setup_domains.DOTFILES_SETUP_HELP"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "layouts",
+                    "fullPath": "devops config setup layouts",
+                    "shortPath": "d c u l",
+                    "help": "f'🧩 <l> {setup_domains.LAYOUTS_SETUP_HELP}'",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_setup_domains.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup_domains",
+                      "callable": "setup_layouts"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def setup_layouts(",
+                        "    force: Annotated[bool, typer.Option(\"--force\", \"-f\", help=\"Overwrite existing layouts and schema.\")] = False,",
+                        ") -> None:",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config import dump_config",
+                        "    from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH",
+                        "",
+                        "    dump_config(which=\"layout\", data=False, schema=False, default_path=True, force=force, run=False)",
+                        "    typer.echo(f\"Starter layouts are ready at {DOTFILES_LAYOUTS_JSON_PATH}\")"
+                      ],
+                      "name": "setup_layouts",
+                      "parameters": [
+                        {
+                          "name": "force",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--force', '-f', help='Overwrite existing layouts and schema.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--force",
+                              "-f"
+                            ],
+                            "long_flags": [
+                              "--force"
+                            ],
+                            "short_flags": [
+                              "-f"
+                            ],
+                            "help": "Overwrite existing layouts and schema."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "l",
+                        "hidden": true,
+                        "help": "setup_domains.LAYOUTS_SETUP_HELP"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "secrets",
+                    "fullPath": "devops config setup secrets",
+                    "shortPath": "d c u s",
+                    "help": "f'🔐 <s> {setup_domains.SECRETS_SETUP_HELP}'",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_setup_domains.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup_domains",
+                      "callable": "setup_secrets"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def setup_secrets() -> None:",
+                        "    import stackops.secrets.assets as secrets_assets",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_prompts import prompt_secret_login",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import exit_with_setup_error",
+                        "    from stackops.secrets.constants import SECRETS_FILE_VERSION",
+                        "    from stackops.secrets.loader import SecretsSchemaError, load_secrets_file",
+                        "    from stackops.secrets.models import SecretsFile",
+                        "    from stackops.secrets.paths import SECRETS_DOFILE",
+                        "    from stackops.secrets.writer import create_secrets_file",
+                        "    from stackops.utils.path_reference import get_path_reference_path",
+                        "",
+                        "    secrets_exist = SECRETS_DOFILE.exists()",
+                        "    if secrets_exist:",
+                        "        if not SECRETS_DOFILE.is_file():",
+                        "            exit_with_setup_error(f\"Global secrets path exists but is not a file: {SECRETS_DOFILE}\")",
+                        "        try:",
+                        "            load_secrets_file(SECRETS_DOFILE)",
+                        "        except (OSError, SecretsSchemaError) as exc:",
+                        "            exit_with_setup_error(f\"Global secrets cannot be safely read:\\n{exc}\")",
+                        "",
+                        "    schema_path = SECRETS_DOFILE.with_name(secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE)",
+                        "    if schema_path.exists() and not schema_path.is_file():",
+                        "        exit_with_setup_error(f\"Secrets schema path exists but is not a file: {schema_path}\")",
+                        "    schema_content: str | None = None",
+                        "    if not schema_path.exists():",
+                        "        schema_source_path = get_path_reference_path(",
+                        "            module=secrets_assets,",
+                        "            path_reference=secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE,",
+                        "        )",
+                        "        try:",
+                        "            schema_content = schema_source_path.read_text(encoding=\"utf-8\")",
+                        "        except OSError as exc:",
+                        "            exit_with_setup_error(f\"Could not read the packaged secrets schema: {exc}\")",
+                        "    if secrets_exist:",
+                        "        try:",
+                        "            if schema_content is not None:",
+                        "                schema_path.write_text(schema_content, encoding=\"utf-8\")",
+                        "        except OSError as exc:",
+                        "            exit_with_setup_error(f\"Could not install the global secrets schema: {exc}\")",
+                        "        typer.echo(",
+                        "            f\"Global secrets and schema are ready: {SECRETS_DOFILE}\\n\"",
+                        "            \"Add another login with:\\n\"",
+                        "            \"  devops config secrets add --source global\"",
+                        "        )",
+                        "        return",
+                        "",
+                        "    typer.echo(\"Create the first global login entry. Secret values are hidden while you type.\")",
+                        "    secrets_file: SecretsFile = {",
+                        "        \"$schema\": f\"./{secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE}\",",
+                        "        \"version\": SECRETS_FILE_VERSION,",
+                        "        \"entries\": [prompt_secret_login()],",
+                        "    }",
+                        "    try:",
+                        "        create_secrets_file(secrets_path=SECRETS_DOFILE, secrets_file=secrets_file)",
+                        "        if schema_content is not None:",
+                        "            schema_path.write_text(schema_content, encoding=\"utf-8\")",
+                        "    except OSError as exc:",
+                        "        exit_with_setup_error(f\"Global secrets setup was not completed: {exc}\")",
+                        "    typer.echo(typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Global secrets and schema are ready: {SECRETS_DOFILE}\")"
+                      ],
+                      "name": "setup_secrets",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "s",
+                        "hidden": true,
+                        "help": "setup_domains.SECRETS_SETUP_HELP"
+                      }
+                    ]
+                  }
+                ],
+                "aliases": [
+                  {
+                    "name": "u",
+                    "hidden": true,
+                    "help": "setup_module.SETUP_HELP"
                   }
                 ]
               },
@@ -17795,22 +18366,16 @@
                     "    try:",
                     "        resolved_agent = agent",
                     "        if resolved_agent is None:",
-                    "            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import (",
-                    "                choose_required_option,",
-                    "                order_current_first,",
-                    "            )",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import choose_required_option, order_current_first",
                     "",
                     "            agent_options = cast(tuple[AGENTS, ...], get_args(AGENTS))",
                     "            resolved_agent = cast(",
                     "                AGENTS,",
-                    "                choose_required_option(",
-                    "                    options=order_current_first(options=agent_options, current=DEFAULT_AGENT), msg=\"Choose agent\", header=\"Agent\"",
-                    "                ),",
+                    "                choose_required_option(options=order_current_first(options=agent_options, current=DEFAULT_AGENT), msg=\"Choose agent\", header=\"Agent\"),",
                     "            )",
                     "        selected_technologies: tuple[BrowserTechName, ...] = BROWSER_TECH_NAMES if which == \"all\" else (which,)",
                     "        results = tuple(",
-                    "            install_browser_tech(which=selected_technology, agent=resolved_agent, backend=backend)",
-                    "            for selected_technology in selected_technologies",
+                    "            install_browser_tech(which=selected_technology, agent=resolved_agent, backend=backend) for selected_technology in selected_technologies",
                     "        )",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
@@ -17826,9 +18391,7 @@
                     "            typer.echo(f\"Wrote: {guide_path}\")",
                     "        if len(result.mcp_servers) > 0:",
                     "            typer.echo(f\"MCP catalog servers: {', '.join(result.mcp_servers)}\")",
-                    "            typer.echo(",
-                    "                f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local\"",
-                    "            )"
+                    "            typer.echo(f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local\")"
                   ],
                   "name": "install_tech",
                   "parameters": [
@@ -17929,16 +18492,11 @@
                     "def launch_browser(",
                     "    port: Annotated[int, typer.Option(\"--port\", \"-p\", help=\"Browser automation endpoint port.\")] = DEFAULT_BROWSER_PORT,",
                     "    browser: Annotated[",
-                    "        BrowserName,",
-                    "        typer.Option(\"--browser\", \"-b\", help=\"Browser to launch for agent automation.\", case_sensitive=False, show_choices=True),",
+                    "        BrowserName, typer.Option(\"--browser\", \"-b\", help=\"Browser to launch for agent automation.\", case_sensitive=False, show_choices=True)",
                     "    ] = \"chrome\",",
                     "    profile: Annotated[",
                     "        str | None,",
-                    "        typer.Option(",
-                    "            \"--profile\",",
-                    "            \"-r\",",
-                    "            help=\"StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile.\",",
-                    "        ),",
+                    "        typer.Option(\"--profile\", \"-r\", help=\"StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile.\"),",
                     "    ] = None,",
                     "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Expose endpoint on 0.0.0.0 through a localhost relay.\")] = False,",
                     "    detached: Annotated[bool, typer.Option(\"--detached\", \"-d\", help=\"Launch as background processes instead of tmux windows.\")] = False,",
@@ -17964,10 +18522,7 @@
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window",
                     "",
                     "        try:",
-                    "            attach_or_switch_tmux_window(",
-                    "                session_name=result.tmux.session_name,",
-                    "                window_name=result.tmux.browser_window_name,",
-                    "            )",
+                    "            attach_or_switch_tmux_window(session_name=result.tmux.session_name, window_name=result.tmux.browser_window_name)",
                     "        except RuntimeError as error:",
                     "            typer.echo(f\"Browser endpoint is running, but automatic tmux attachment failed: {error}\", err=True)"
                   ],
@@ -18113,16 +18668,12 @@
                   "raw_lines": [
                     "def status(",
                     "    detached: Annotated[",
-                    "        bool,",
-                    "        typer.Option(\"--detached\", \"-d\", help=\"Show browser processes launched with --detached instead of tmux windows.\"),",
+                    "        bool, typer.Option(\"--detached\", \"-d\", help=\"Show browser processes launched with --detached instead of tmux windows.\")",
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"Show active StackOps browser launches.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import (",
-                    "            show_detached_browser_status,",
-                    "            show_tmux_browser_status,",
-                    "        )",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import show_detached_browser_status, show_tmux_browser_status",
                     "",
                     "        if detached:",
                     "            show_detached_browser_status()",
@@ -18167,6 +18718,218 @@
                 "aliases": [
                   {
                     "name": "s",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "declutter",
+                "fullPath": "agents browser declutter",
+                "shortPath": "a b d",
+                "help": "Remove rebuildable models and caches from a closed browser profile.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_browser.py",
+                  "module": "stackops.scripts.python.agents_browser",
+                  "callable": "declutter"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def declutter(",
+                    "    profile: Annotated[str, typer.Option(\"--profile\", \"-r\", help=\"StackOps profile under ~/data/browsers-profiles/<browser>/<profile>.\")],",
+                    "    browser: Annotated[",
+                    "        ProfileBrowserName,",
+                    "        typer.Option(\"--browser\", \"-b\", help=\"Browser whose profile should be decluttered.\", case_sensitive=False, show_choices=True),",
+                    "    ] = \"chrome\",",
+                    ") -> None:",
+                    "    \"\"\"Remove rebuildable models and caches from a closed browser profile.\"\"\"",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import declutter_browser_profile",
+                    "",
+                    "        result = declutter_browser_profile(browser=browser, profile_name=profile)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    typer.echo(f\"Decluttered {browser} profile: {result.profile_path}\")",
+                    "    typer.echo(f\"Removed paths: {len(result.removed_paths)}\")",
+                    "    typer.echo(f\"Recovered: {_format_mebibytes(byte_count=result.recovered_bytes)} MiB\")",
+                    "    typer.echo(f\"Profile size: {_format_mebibytes(byte_count=result.size_after_bytes)} MiB\")"
+                  ],
+                  "name": "declutter",
+                  "parameters": [
+                    {
+                      "name": "profile",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Option('--profile', '-r', help='StackOps profile under ~/data/browsers-profiles/<browser>/<profile>.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--profile",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--profile"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "StackOps profile under ~/data/browsers-profiles/<browser>/<profile>."
+                      }
+                    },
+                    {
+                      "name": "browser",
+                      "kind": "positional_or_keyword",
+                      "type": "ProfileBrowserName",
+                      "default": "chrome",
+                      "required": false,
+                      "annotation_raw": "Annotated[ProfileBrowserName, typer.Option('--browser', '-b', help='Browser whose profile should be decluttered.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--browser",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--browser"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Browser whose profile should be decluttered."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<d> Remove rebuildable browser profile data",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Remove rebuildable models and caches from a closed browser profile.",
+                "aliases": [
+                  {
+                    "name": "d",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "replicate",
+                "fullPath": "agents browser replicate",
+                "shortPath": "a b r",
+                "help": "Copy a closed base profile to p1 through pN without overwriting.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_browser.py",
+                  "module": "stackops.scripts.python.agents_browser",
+                  "callable": "replicate"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def replicate(",
+                    "    count: Annotated[int, typer.Argument(min=1, help=\"Number of copies to create as p1, p2, ... pN.\")],",
+                    "    browser: Annotated[",
+                    "        ProfileBrowserName,",
+                    "        typer.Option(\"--browser\", \"-b\", help=\"Browser whose base profile should be replicated.\", case_sensitive=False, show_choices=True),",
+                    "    ] = \"chrome\",",
+                    "    profile: Annotated[",
+                    "        str, typer.Option(\"--profile\", \"-r\", help=\"Source StackOps profile under ~/data/browsers-profiles/<browser>/<profile>.\")",
+                    "    ] = \"base\",",
+                    ") -> None:",
+                    "    \"\"\"Copy a closed base profile to p1 through pN without overwriting.\"\"\"",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import replicate_browser_profile",
+                    "",
+                    "        result = replicate_browser_profile(browser=browser, profile_name=profile, count=count)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    typer.echo(f\"Replicated {browser} profile: {result.source_path}\")",
+                    "    for destination_path in result.destination_paths:",
+                    "        typer.echo(f\"Created: {destination_path}\")",
+                    "    typer.echo(f\"Source size: {_format_mebibytes(byte_count=result.source_size_bytes)} MiB\")"
+                  ],
+                  "name": "replicate",
+                  "parameters": [
+                    {
+                      "name": "count",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[int, typer.Argument(min=1, help='Number of copies to create as p1, p2, ... pN.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Number of copies to create as p1, p2, ... pN."
+                      }
+                    },
+                    {
+                      "name": "browser",
+                      "kind": "positional_or_keyword",
+                      "type": "ProfileBrowserName",
+                      "default": "chrome",
+                      "required": false,
+                      "annotation_raw": "Annotated[ProfileBrowserName, typer.Option('--browser', '-b', help='Browser whose base profile should be replicated.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--browser",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--browser"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Browser whose base profile should be replicated."
+                      }
+                    },
+                    {
+                      "name": "profile",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "base",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Option('--profile', '-r', help='Source StackOps profile under ~/data/browsers-profiles/<browser>/<profile>.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--profile",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--profile"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Source StackOps profile under ~/data/browsers-profiles/<browser>/<profile>."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<r> Copy a base profile to p1 through pN",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Copy a closed base profile to p1 through pN without overwriting.",
+                "aliases": [
+                  {
+                    "name": "r",
                     "hidden": true
                   }
                 ]

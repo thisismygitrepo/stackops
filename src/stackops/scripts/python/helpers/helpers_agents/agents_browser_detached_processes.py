@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 from pathlib import Path
+import platform
 from typing import assert_never
 
 import psutil
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
-    BROWSER_PROCESS_TERMINATION_TIMEOUT_SECONDS,
-    BrowserName,
-)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BROWSER_PROCESS_TERMINATION_TIMEOUT_SECONDS, BrowserName
+from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
 
 @dataclass(frozen=True)
@@ -24,21 +23,12 @@ def process_created_at(*, process_id: int, process_label: str) -> float:
 
 
 def find_browser_process_id(
-    *,
-    browser: BrowserName,
-    browser_port: int,
-    profile_path: Path | None,
-    process_id: int,
-    process_created_at: float,
+    *, browser: BrowserName, browser_port: int, profile_path: Path | None, process_id: int, process_created_at: float
 ) -> int | None:
     try:
         process = psutil.Process(process_id)
         if _browser_process_matches(
-            process=process,
-            browser=browser,
-            browser_port=browser_port,
-            profile_path=profile_path,
-            expected_created_at=process_created_at,
+            process=process, browser=browser, browser_port=browser_port, profile_path=profile_path, expected_created_at=process_created_at
         ):
             return process_id
     except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
@@ -46,11 +36,7 @@ def find_browser_process_id(
     for process in psutil.process_iter():
         try:
             if _browser_process_matches(
-                process=process,
-                browser=browser,
-                browser_port=browser_port,
-                profile_path=profile_path,
-                expected_created_at=None,
+                process=process, browser=browser, browser_port=browser_port, profile_path=profile_path, expected_created_at=None
             ):
                 return process.pid
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
@@ -72,6 +58,29 @@ def find_running_browser_processes(*, browser: BrowserName, profile_path: Path) 
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, ValueError):
             continue
     return tuple(running_processes)
+
+
+def find_browser_process_ids(*, browser: BrowserName) -> tuple[int, ...]:
+    launcher = get_browser_launcher(browser=browser)
+    executable_names = {_normalize_executable_name(executable_name=path.name) for path in launcher.known_paths(system_name=platform.system())}
+    executable_names.update(_normalize_executable_name(executable_name=command_name) for command_name in launcher.command_names)
+    process_ids: list[int] = []
+    for process in psutil.process_iter():
+        try:
+            process_name = _normalize_executable_name(executable_name=process.name())
+            if _matches_browser_executable_name(process_name=process_name, executable_names=executable_names):
+                process_ids.append(process.pid)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            continue
+    return tuple(sorted(process_ids))
+
+
+def _normalize_executable_name(*, executable_name: str) -> str:
+    return Path(executable_name).name.casefold().removesuffix(".exe")
+
+
+def _matches_browser_executable_name(*, process_name: str, executable_names: set[str]) -> bool:
+    return process_name in executable_names or any(process_name.startswith(f"{executable_name} helper") for executable_name in executable_names)
 
 
 def registered_process_is_running(*, process_id: int, process_created_at: float) -> bool:
@@ -98,12 +107,7 @@ def terminate_registered_process(*, process_id: int, process_created_at: float, 
 
 
 def _browser_process_matches(
-    *,
-    process: psutil.Process,
-    browser: BrowserName,
-    browser_port: int,
-    profile_path: Path | None,
-    expected_created_at: float | None,
+    *, process: psutil.Process, browser: BrowserName, browser_port: int, profile_path: Path | None, expected_created_at: float | None
 ) -> bool:
     if expected_created_at is not None and process.create_time() != expected_created_at:
         return False
@@ -116,13 +120,7 @@ def _browser_process_matches(
     return _has_option(command=command, name=option_name, value=str(browser_port))
 
 
-def _browser_process_matches_profile(
-    *,
-    process: psutil.Process,
-    browser: BrowserName,
-    profile_path: Path | None,
-    command: tuple[str, ...],
-) -> bool:
+def _browser_process_matches_profile(*, process: psutil.Process, browser: BrowserName, profile_path: Path | None, command: tuple[str, ...]) -> bool:
     if not process.is_running() or process.status() == psutil.STATUS_ZOMBIE:
         return False
     if any(argument.startswith("--type=") for argument in command):
