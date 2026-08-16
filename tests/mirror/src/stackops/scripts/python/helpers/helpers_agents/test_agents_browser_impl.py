@@ -29,10 +29,10 @@ def test_install_browser_tech_prepares_pinchtab_binary_skill_and_guide(monkeypat
     monkeypatch.setattr("stackops.utils.installer_utils.installer_cli.main_installer_cli", capture_installer)
     monkeypatch.setattr(agents_browser_impl, "_run_required_command", capture_command)
 
-    result = agents_browser_impl.install_browser_tech(which="pinchtab")
+    result = agents_browser_impl.install_browser_tech(which="pinchtab", agent="codex", backend="bunx")
 
     install_root = tmp_path.joinpath("pinchtab")
-    skill_command = ("bunx", "skills@latest", "add", "pinchtab/pinchtab", "--skill", "pinchtab", "--yes")
+    skill_command = ("bunx", "skills@latest", "add", "pinchtab/pinchtab", "--skill", "pinchtab", "--agent", "codex", "--yes")
     assert installer_names == ["pinchtab"]
     assert commands == [(skill_command, install_root)]
     assert result.which == "pinchtab"

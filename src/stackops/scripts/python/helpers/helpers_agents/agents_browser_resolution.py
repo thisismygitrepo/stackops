@@ -4,11 +4,7 @@ from pathlib import Path
 import platform
 import shutil
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
-    BROWSER_PROFILES_ROOT,
-    BrowserName,
-    TEMP_BROWSER_PROFILES_ROOT,
-)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BROWSER_PROFILES_ROOT, BrowserName, TEMP_BROWSER_PROFILES_ROOT
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
 
@@ -36,6 +32,13 @@ def resolve_profile_path(*, browser: BrowserName, profile_name: str | None, port
         return None
     if profile_name is None:
         return TEMP_BROWSER_PROFILES_ROOT.expanduser().joinpath(browser, f"port-{port}")
+    return resolve_named_profile_path(browser=browser, profile_name=profile_name)
+
+
+def resolve_named_profile_path(*, browser: BrowserName, profile_name: str) -> Path:
+    launcher = get_browser_launcher(browser=browser)
+    if launcher.profile_mode == "unsupported":
+        raise ValueError(f"""{launcher.display_name} does not support StackOps browser profiles""")
     normalized_profile_name = _normalize_profile_name(profile_name=profile_name)
     return BROWSER_PROFILES_ROOT.expanduser().joinpath(browser, normalized_profile_name)
 

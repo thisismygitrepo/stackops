@@ -5,16 +5,11 @@ from typing import Final, Literal, TypeAlias
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 BrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox", "safari"]
+ProfileBrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox"]
 BrowserTechName: TypeAlias = Literal["agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
 BrowserTechSelection: TypeAlias = Literal["agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp", "all"]
 
-BROWSER_TECH_NAMES: Final[tuple[BrowserTechName, ...]] = (
-    "agent-browser",
-    "pinchtab",
-    "playwright-cli",
-    "chrome-devtools-mcp",
-    "playwright-mcp",
-)
+BROWSER_TECH_NAMES: Final[tuple[BrowserTechName, ...]] = ("agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp")
 
 DEFAULT_BROWSER_PORT: Final[int] = 9331
 BROWSER_CDP_REQUEST_TIMEOUT_SECONDS: Final[float] = 2.0
@@ -39,6 +34,31 @@ BROWSER_MCP_ROOT: Final[Path] = BROWSER_TECH_ROOT.joinpath("mcp")
 BROWSER_DETACHED_LAUNCHES_ROOT: Final[Path] = BROWSER_TECH_ROOT.joinpath("detached-launches")
 BROWSER_PROFILES_ROOT: Final[Path] = Path.home().joinpath("data", "browsers-profiles")
 TEMP_BROWSER_PROFILES_ROOT: Final[Path] = Path(gettempdir()).joinpath("stackops-browser-profiles")
+CHROMIUM_USER_DATA_CLEANUP_PATHS: Final[tuple[tuple[str, ...], ...]] = (
+    ("OptGuideOnDeviceModel",),
+    ("OptGuideOnDeviceClassifierModel",),
+    ("OnDeviceHeadSuggestModel",),
+    ("optimization_guide_model_store",),
+    ("component_crx_cache",),
+    ("extensions_crx_cache",),
+    ("GPUPersistentCache",),
+    ("GrShaderCache",),
+    ("ShaderCache",),
+)
+CHROMIUM_PROFILE_CLEANUP_PATHS: Final[tuple[tuple[str, ...], ...]] = (
+    ("Cache",),
+    ("Code Cache",),
+    ("DawnCache",),
+    ("DawnGraphiteCache",),
+    ("DawnWebGPUCache",),
+    ("GPUCache",),
+    ("GrShaderCache",),
+    ("Media Cache",),
+    ("ShaderCache",),
+    ("AutofillAiModelCache",),
+    ("image_cache",),
+)
+FIREFOX_PROFILE_CLEANUP_PATHS: Final[tuple[tuple[str, ...], ...]] = (("cache2",), ("shader-cache",), ("startupCache",))
 REMOTE_DEBUGGING_LOCALHOST: Final[str] = "127.0.0.1"
 REMOTE_DEBUGGING_LAN: Final[str] = "0.0.0.0"
 BROWSER_SKILLS_CLI_AGENT_BY_STACKOPS_AGENT: Final[dict[AGENTS, str]] = {
