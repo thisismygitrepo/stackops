@@ -106,6 +106,36 @@ def terminate_registered_process(*, process_id: int, process_created_at: float, 
         raise RuntimeError(f"Stale {process_label} process {process_id} did not stop after termination") from error
 
 
+def terminate_browser_launch_process(
+    *, browser: BrowserName, browser_port: int, profile_path: Path | None, process_id: int, process_created_at: float, process_label: str
+) -> None:
+    """Terminate the recorded browser or its exact profile-and-port handoff."""
+    resolved_process_id = find_browser_process_id(
+        browser=browser, browser_port=browser_port, profile_path=profile_path, process_id=process_id, process_created_at=process_created_at
+    )
+    if resolved_process_id is None:
+        return
+    if resolved_process_id == process_id:
+        terminate_registered_process(process_id=process_id, process_created_at=process_created_at, process_label=process_label)
+        return
+
+    try:
+        process = psutil.Process(resolved_process_id)
+        resolved_created_at = process.create_time()
+        if not _browser_process_matches(
+            process=process, browser=browser, browser_port=browser_port, profile_path=profile_path, expected_created_at=resolved_created_at
+        ):
+            return
+        process.terminate()
+        process.wait(timeout=BROWSER_PROCESS_TERMINATION_TIMEOUT_SECONDS)
+    except (psutil.NoSuchProcess, psutil.ZombieProcess):
+        return
+    except psutil.AccessDenied as error:
+        raise RuntimeError(f"Could not terminate tracked {process_label} process {resolved_process_id}: {error}") from error
+    except psutil.TimeoutExpired as error:
+        raise RuntimeError(f"Tracked {process_label} process {resolved_process_id} did not stop after termination") from error
+
+
 def _browser_process_matches(
     *, process: psutil.Process, browser: BrowserName, browser_port: int, profile_path: Path | None, expected_created_at: float | None
 ) -> bool:

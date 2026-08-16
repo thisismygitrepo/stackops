@@ -18559,18 +18559,18 @@
               },
               {
                 "kind": "command",
-                "name": "launch-browsers",
-                "fullPath": "agents browser launch-browsers",
+                "name": "batch-launch",
+                "fullPath": "agents browser batch-launch",
                 "shortPath": "a b L",
                 "help": "Launch every saved profile for one browser on its assigned port.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_browser.py",
                   "module": "stackops.scripts.python.agents_browser",
-                  "callable": "launch_browsers"
+                  "callable": "batch_launch"
                 },
                 "signature": {
                   "raw_lines": [
-                    "def launch_browsers(",
+                    "def batch_launch(",
                     "    browser: Annotated[",
                     "        ProfileBrowserName,",
                     "        typer.Option(\"--browser\", \"-b\", help=\"Browser whose saved profiles should all be launched.\", case_sensitive=False, show_choices=True),",
@@ -18616,7 +18616,7 @@
                     "        except RuntimeError as error:",
                     "            typer.echo(f\"Browser endpoints are running, but automatic tmux attachment failed: {error}\", err=True)"
                   ],
-                  "name": "launch_browsers",
+                  "name": "batch_launch",
                   "parameters": [
                     {
                       "name": "browser",
@@ -18743,6 +18743,84 @@
                 "aliases": [
                   {
                     "name": "L",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "batch-close",
+                "fullPath": "agents browser batch-close",
+                "shortPath": "a b C",
+                "help": "Close tracked saved-profile launches for one browser.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_browser.py",
+                  "module": "stackops.scripts.python.agents_browser",
+                  "callable": "batch_close"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def batch_close(",
+                    "    browser: Annotated[",
+                    "        ProfileBrowserName,",
+                    "        typer.Option(",
+                    "            \"--browser\", \"-b\", help=\"Browser whose StackOps-tracked saved-profile launches should be closed.\", case_sensitive=False, show_choices=True",
+                    "        ),",
+                    "    ] = \"chrome\",",
+                    ") -> None:",
+                    "    \"\"\"Close tracked saved-profile launches for one browser.\"\"\"",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_batch import close_browser_profile_launches",
+                    "",
+                    "        result = close_browser_profile_launches(browser=browser)",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    browser_label = browser.title()",
+                    "    if result.closed_count == 0:",
+                    "        typer.echo(f\"No active {browser_label} saved-profile launches found.\")",
+                    "        return",
+                    "    typer.echo(",
+                    "        f\"Closed {result.closed_count} {browser_label} saved-profile launch(es) \"",
+                    "        f\"({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached).\"",
+                    "    )"
+                  ],
+                  "name": "batch_close",
+                  "parameters": [
+                    {
+                      "name": "browser",
+                      "kind": "positional_or_keyword",
+                      "type": "ProfileBrowserName",
+                      "default": "chrome",
+                      "required": false,
+                      "annotation_raw": "Annotated[ProfileBrowserName, typer.Option('--browser', '-b', help='Browser whose StackOps-tracked saved-profile launches should be closed.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--browser",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--browser"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Browser whose StackOps-tracked saved-profile launches should be closed."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<C> Close tracked saved-profile browser launches",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Close tracked saved-profile launches for one browser.",
+                "aliases": [
+                  {
+                    "name": "C",
                     "hidden": true
                   }
                 ]
