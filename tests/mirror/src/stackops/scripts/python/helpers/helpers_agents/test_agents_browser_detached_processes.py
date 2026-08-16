@@ -85,6 +85,21 @@ def test_find_brave_process_ids_matches_darwin_parent_and_helper_only(monkeypatc
     assert agents_browser_detached_processes.find_browser_process_ids(browser="brave") == (7, 19)
 
 
+def test_find_browser_profile_process_ids_matches_only_the_selected_profile(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    profile_path = tmp_path.joinpath("browsers-profiles", "chrome", "base")
+    other_profile_path = tmp_path.joinpath("browsers-profiles", "chrome", "other")
+    profile_path.mkdir(parents=True)
+    other_profile_path.mkdir()
+    processes = (
+        FakeTrackedProcess(pid=7, created_at=1.0, command=("chrome", f"--user-data-dir={profile_path}")),
+        FakeTrackedProcess(pid=11, created_at=2.0, command=("chrome", f"--user-data-dir={other_profile_path}")),
+        FakeTrackedProcess(pid=13, created_at=3.0, command=("chrome", f"--user-data-dir={profile_path}", "--type=renderer")),
+    )
+    monkeypatch.setattr(agents_browser_detached_processes.psutil, "process_iter", lambda: iter(processes))
+
+    assert agents_browser_detached_processes.find_browser_profile_process_ids(browser="chrome", profile_path=profile_path) == (7,)
+
+
 def test_terminate_browser_launch_process_revalidates_and_terminates_exact_handoff(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     profile_path = tmp_path.joinpath("browsers-profiles", "chrome", "p1")
     profile_path.mkdir(parents=True)

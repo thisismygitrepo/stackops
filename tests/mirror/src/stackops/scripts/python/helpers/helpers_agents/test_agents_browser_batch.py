@@ -43,6 +43,7 @@ def test_build_browser_profile_launch_specs_maps_numbered_profiles_and_uses_free
     chrome_root = profiles_root.joinpath("chrome")
     for profile_name in ("p10", "work", "p2", "p1"):
         chrome_root.joinpath(profile_name).mkdir(parents=True)
+    chrome_root.joinpath("work", ".tmp", "bright-broker").mkdir(parents=True)
     chrome_root.joinpath("ignored.json").write_text("{}", encoding="utf-8")
     monkeypatch.setattr(agents_browser_batch, "BROWSER_PROFILES_ROOT", profiles_root)
 
@@ -74,6 +75,7 @@ def test_build_browser_profile_launch_specs_applies_custom_port_start(monkeypatc
 def test_close_browser_profile_launches_closes_exact_tmux_windows_for_matching_browser(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     profiles_root = tmp_path.joinpath("browsers-profiles")
     chrome_profile = profiles_root.joinpath("chrome", "p1")
+    copied_chrome_profile = chrome_profile.joinpath(".tmp", "bright-broker")
     firefox_profile = profiles_root.joinpath("firefox", "p1")
     temp_profile = tmp_path.joinpath("temp-profiles", "chrome", "port-9331")
     rows = (
@@ -81,6 +83,7 @@ def test_close_browser_profile_launches_closes_exact_tmux_windows_for_matching_b
         _tmux_row(launch_id="chrome-p1", role="relay", browser="chrome", profile_path=chrome_profile, window_id="%2"),
         _tmux_row(launch_id="chrome-temp", role="endpoint", browser="chrome", profile_path=temp_profile, window_id="%3"),
         _tmux_row(launch_id="firefox-p1", role="endpoint", browser="firefox", profile_path=firefox_profile, window_id="%4"),
+        _tmux_row(launch_id="chrome-copied", role="endpoint", browser="chrome", profile_path=copied_chrome_profile, window_id="%5"),
     )
     close_calls: list[tuple[str, ...]] = []
 
@@ -93,10 +96,10 @@ def test_close_browser_profile_launches_closes_exact_tmux_windows_for_matching_b
 
     result = agents_browser_batch.close_browser_profile_launches(browser="chrome")
 
-    assert close_calls == [("%1", "%2")]
-    assert result.tmux_launch_ids == ("chrome-p1",)
+    assert close_calls == [("%1", "%2", "%5")]
+    assert result.tmux_launch_ids == ("chrome-copied", "chrome-p1")
     assert result.detached_launch_ids == ()
-    assert result.closed_count == 1
+    assert result.closed_count == 2
 
 
 def test_close_browser_profile_launches_terminates_registered_detached_processes_and_removes_matching_record(
@@ -106,9 +109,10 @@ def test_close_browser_profile_launches_terminates_registered_detached_processes
     detached_root = tmp_path.joinpath("detached-launches")
     detached_root.mkdir()
     matching_record_path = detached_root.joinpath("chrome-p1.json")
+    copied_record_path = detached_root.joinpath("chrome-z-copied.json")
     temp_record_path = detached_root.joinpath("chrome-temp.json")
     other_browser_record_path = detached_root.joinpath("firefox-p1.json")
-    for record_path in (matching_record_path, temp_record_path, other_browser_record_path):
+    for record_path in (matching_record_path, copied_record_path, temp_record_path, other_browser_record_path):
         record_path.write_text("{}", encoding="utf-8")
     records = {
         matching_record_path: _detached_record(
@@ -119,6 +123,13 @@ def test_close_browser_profile_launches_terminates_registered_detached_processes
             process_created_at=1.01,
             relay_process_id=202,
             relay_process_created_at=2.02,
+        ),
+        copied_record_path: _detached_record(
+            launch_id="chrome-z-copied",
+            browser="chrome",
+            profile_path=profiles_root.joinpath("chrome", "base", ".tmp", "bright-broker"),
+            process_id=505,
+            process_created_at=5.05,
         ),
         temp_record_path: _detached_record(
             launch_id="chrome-temp",
@@ -155,13 +166,17 @@ def test_close_browser_profile_launches_terminates_registered_detached_processes
     result = agents_browser_batch.close_browser_profile_launches(browser="chrome")
 
     assert relay_termination_calls == [(202, 2.02, "browser endpoint LAN relay")]
-    assert browser_termination_calls == [("chrome", 60001, profiles_root.joinpath("chrome", "p1"), 101, 1.01, "chrome browser")]
+    assert browser_termination_calls == [
+        ("chrome", 60001, profiles_root.joinpath("chrome", "p1"), 101, 1.01, "chrome browser"),
+        ("chrome", 60001, profiles_root.joinpath("chrome", "base", ".tmp", "bright-broker"), 505, 5.05, "chrome browser"),
+    ]
     assert not matching_record_path.exists()
+    assert not copied_record_path.exists()
     assert temp_record_path.exists()
     assert other_browser_record_path.exists()
     assert result.tmux_launch_ids == ()
-    assert result.detached_launch_ids == ("chrome-p1",)
-    assert result.closed_count == 1
+    assert result.detached_launch_ids == ("chrome-p1", "chrome-z-copied")
+    assert result.closed_count == 2
 
 
 def test_close_browser_profile_launches_keeps_failed_record_and_continues_with_later_records(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

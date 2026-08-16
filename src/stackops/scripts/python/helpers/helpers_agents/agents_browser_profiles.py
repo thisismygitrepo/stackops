@@ -7,11 +7,13 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     CHROMIUM_PROFILE_CLEANUP_PATHS,
     CHROMIUM_USER_DATA_CLEANUP_PATHS,
     FIREFOX_PROFILE_CLEANUP_PATHS,
+    TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME,
     BrowserName,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import find_browser_process_ids
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import find_browser_profile_process_ids
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_lock import browser_launch_lock
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_filesystem import (
+    copy_directory_tree_excluding,
     directory_size_bytes,
     remove_owned_profile_directories,
     require_tree_without_filesystem_boundaries,
@@ -40,14 +42,15 @@ class BrowserProfileReplicationResult:
 def declutter_browser_profile(*, browser: BrowserName, profile_name: str) -> BrowserProfileDeclutterResult:
     profile_path = resolve_named_profile_path(browser=browser, profile_name=profile_name)
     with browser_launch_lock():
-        _require_profile_directory(profile_path=profile_path)
-        _require_profile_not_in_use(browser=browser, profile_path=profile_path)
-        size_before_bytes = directory_size_bytes(directory=profile_path)
+        require_browser_profile_directory(profile_path=profile_path)
+        require_browser_profile_not_in_use(browser=browser, profile_path=profile_path)
+        excluded_root_directory_names = frozenset({TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME})
+        size_before_bytes = directory_size_bytes(directory=profile_path, excluded_root_directory_names=excluded_root_directory_names)
         cleanup_paths = _resolve_cleanup_paths(browser=browser, profile_path=profile_path)
         existing_cleanup_paths = tuple(path for path in cleanup_paths if path.exists() or path.is_symlink())
         for cleanup_path in existing_cleanup_paths:
             if cleanup_path.is_dir() and not cleanup_path.is_symlink() and not cleanup_path.is_junction():
-                require_tree_without_filesystem_boundaries(directory=cleanup_path, include_root=True)
+                require_tree_without_filesystem_boundaries(directory=cleanup_path, include_root=True, excluded_root_directory_names=frozenset())
         removed_paths: list[Path] = []
         for cleanup_path in existing_cleanup_paths:
             try:
@@ -60,7 +63,7 @@ def declutter_browser_profile(*, browser: BrowserName, profile_name: str) -> Bro
             except OSError as error:
                 raise RuntimeError(f"""Could not remove browser profile data at {cleanup_path}: {error}""") from error
             removed_paths.append(cleanup_path)
-        size_after_bytes = directory_size_bytes(directory=profile_path)
+        size_after_bytes = directory_size_bytes(directory=profile_path, excluded_root_directory_names=excluded_root_directory_names)
     return BrowserProfileDeclutterResult(
         browser=browser,
         profile_path=profile_path,
@@ -77,14 +80,17 @@ def replicate_browser_profile(*, browser: BrowserName, profile_name: str, count:
     source_path = resolve_named_profile_path(browser=browser, profile_name=profile_name)
     destination_paths = tuple(resolve_named_profile_path(browser=browser, profile_name=f"p{index}") for index in range(1, count + 1))
     with browser_launch_lock():
-        _require_profile_directory(profile_path=source_path)
-        _require_profile_not_in_use(browser=browser, profile_path=source_path)
-        require_tree_without_filesystem_boundaries(directory=source_path, include_root=False)
+        require_browser_profile_directory(profile_path=source_path)
+        require_browser_profile_not_in_use(browser=browser, profile_path=source_path)
+        excluded_root_directory_names = frozenset({TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME})
+        require_tree_without_filesystem_boundaries(
+            directory=source_path, include_root=False, excluded_root_directory_names=excluded_root_directory_names
+        )
         collisions = tuple(path for path in destination_paths if path.exists() or path.is_symlink())
         if len(collisions) > 0:
             collision_list = ", ".join(str(path) for path in collisions)
             raise ValueError(f"""Refusing to overwrite existing browser profile copies: {collision_list}""")
-        source_size_bytes = directory_size_bytes(directory=source_path)
+        source_size_bytes = directory_size_bytes(directory=source_path, excluded_root_directory_names=excluded_root_directory_names)
         reserved_paths: list[Path] = []
         destination_path = destination_paths[0]
         try:
@@ -96,7 +102,9 @@ def replicate_browser_profile(*, browser: BrowserName, profile_name: str, count:
                     reserved_paths.pop()
                     raise
             for destination_path in destination_paths:
-                shutil.copytree(source_path, destination_path, symlinks=True, dirs_exist_ok=True)
+                copy_directory_tree_excluding(
+                    source_directory=source_path, destination_directory=destination_path, excluded_root_directory_names=excluded_root_directory_names
+                )
         except BaseException as error:
             cleanup_failures = remove_owned_profile_directories(directories=tuple(reserved_paths))
             if isinstance(error, OSError):
@@ -110,7 +118,7 @@ def replicate_browser_profile(*, browser: BrowserName, profile_name: str, count:
     )
 
 
-def _require_profile_directory(*, profile_path: Path) -> None:
+def require_browser_profile_directory(*, profile_path: Path) -> None:
     if not profile_path.is_dir():
         raise ValueError(f"""Browser profile does not exist or is not a directory: {profile_path}""")
     if profile_path.is_symlink() or profile_path.is_junction():
@@ -123,8 +131,8 @@ def _require_profile_directory(*, profile_path: Path) -> None:
         raise RuntimeError(f"""Could not resolve browser profile path {profile_path}: {error}""") from error
 
 
-def _require_profile_not_in_use(*, browser: BrowserName, profile_path: Path) -> None:
-    process_ids = find_browser_process_ids(browser=browser)
+def require_browser_profile_not_in_use(*, browser: BrowserName, profile_path: Path) -> None:
+    process_ids = find_browser_profile_process_ids(browser=browser, profile_path=profile_path)
     if len(process_ids) > 0:
         process_list = ", ".join(str(process_id) for process_id in process_ids)
         raise RuntimeError(

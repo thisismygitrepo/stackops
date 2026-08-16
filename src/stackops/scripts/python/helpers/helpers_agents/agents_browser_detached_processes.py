@@ -75,6 +75,18 @@ def find_browser_process_ids(*, browser: BrowserName) -> tuple[int, ...]:
     return tuple(sorted(process_ids))
 
 
+def find_browser_profile_process_ids(*, browser: BrowserName, profile_path: Path) -> tuple[int, ...]:
+    process_ids: list[int] = []
+    for process in psutil.process_iter():
+        try:
+            command = tuple(process.cmdline())
+            if _browser_process_matches_profile(process=process, browser=browser, profile_path=profile_path, command=command):
+                process_ids.append(process.pid)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            continue
+    return tuple(sorted(process_ids))
+
+
 def _normalize_executable_name(*, executable_name: str) -> str:
     return Path(executable_name).name.casefold().removesuffix(".exe")
 

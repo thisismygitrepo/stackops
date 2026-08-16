@@ -92,8 +92,11 @@ def launch_browser(
     ] = "chrome",
     profile: Annotated[
         str | None,
-        typer.Option("--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile."),
+        typer.Option(
+            "--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a fresh port-scoped profile."
+        ),
     ] = None,
+    tmp: Annotated[bool, typer.Option("--tmp", "-t", help="Copy --profile to <profile>/.tmp/<random-alias> and launch the copy.")] = False,
     lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoint on 0.0.0.0 through a localhost relay.")] = False,
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
@@ -106,7 +109,7 @@ def launch_browser(
             lan_address = select_lan_interface_ipv4(prefer_vpn=False)
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoint.")
-        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan, detached=detached)
+        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, temporary=tmp, lan=lan, detached=detached)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
@@ -151,7 +154,8 @@ def batch_launch(
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoints.")
         results = tuple(
-            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, lan=lan, detached=detached) for spec in specs
+            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, temporary=False, lan=lan, detached=detached)
+            for spec in specs
         )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error

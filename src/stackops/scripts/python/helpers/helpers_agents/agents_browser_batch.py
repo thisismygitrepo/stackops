@@ -8,6 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BROWSER_DETACHED_LAUNCHES_ROOT,
     BROWSER_PROFILES_ROOT,
     DEFAULT_BROWSER_PROFILE_PORT_START,
+    TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME,
     ProfileBrowserName,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import (
@@ -151,7 +152,13 @@ def _close_detached_browser_profile_launches(*, browser: ProfileBrowserName) -> 
 
 def _is_saved_browser_profile(*, profile_path: Path, browser: ProfileBrowserName) -> bool:
     browser_profiles_root = BROWSER_PROFILES_ROOT.expanduser().joinpath(browser)
-    return _lexical_path_key(path=profile_path.parent) == _lexical_path_key(path=browser_profiles_root)
+    browser_profiles_root_key = _lexical_path_key(path=browser_profiles_root)
+    if _lexical_path_key(path=profile_path.parent) == browser_profiles_root_key:
+        return True
+    return (
+        profile_path.parent.name == TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME
+        and _lexical_path_key(path=profile_path.parents[1].parent) == browser_profiles_root_key
+    )
 
 
 def _lexical_path_key(*, path: Path) -> str:

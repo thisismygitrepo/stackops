@@ -35,6 +35,8 @@ BROWSER_MCP_ROOT: Final[Path] = BROWSER_TECH_ROOT.joinpath("mcp")
 BROWSER_DETACHED_LAUNCHES_ROOT: Final[Path] = BROWSER_TECH_ROOT.joinpath("detached-launches")
 BROWSER_PROFILES_ROOT: Final[Path] = Path.home().joinpath("data", "browsers-profiles")
 TEMP_BROWSER_PROFILES_ROOT: Final[Path] = Path(gettempdir()).joinpath("stackops-browser-profiles")
+TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME: Final[str] = ".tmp"
+TEMPORARY_BROWSER_PROFILE_ALIAS_ATTEMPTS: Final[int] = 32
 CHROMIUM_USER_DATA_CLEANUP_PATHS: Final[tuple[tuple[str, ...], ...]] = (
     ("OptGuideOnDeviceModel",),
     ("OptGuideOnDeviceClassifierModel",),

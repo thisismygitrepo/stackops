@@ -23,8 +23,11 @@ def test_linux_mountinfo_rejects_same_filesystem_bind_mount(monkeypatch: pytest.
     monkeypatch.setattr(Path, "read_text", read_mount_info)
     monkeypatch.setattr(Path, "is_mount", lambda _path: False)
 
+    assert profile_filesystem.path_is_filesystem_boundary(path=bind_mount_path) is True
     with pytest.raises(RuntimeError, match="refuses filesystem boundary"):
-        profile_filesystem.require_tree_without_filesystem_boundaries(directory=profile_path, include_root=False)
+        profile_filesystem.require_tree_without_filesystem_boundaries(
+            directory=profile_path, include_root=False, excluded_root_directory_names=frozenset()
+        )
 
 
 def test_linux_mountinfo_rejects_same_filesystem_file_bind_mount(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -47,4 +50,6 @@ def test_linux_mountinfo_rejects_same_filesystem_file_bind_mount(monkeypatch: py
     monkeypatch.setattr(Path, "is_mount", lambda _path: False)
 
     with pytest.raises(RuntimeError, match="refuses filesystem boundary"):
-        profile_filesystem.require_tree_without_filesystem_boundaries(directory=profile_path, include_root=False)
+        profile_filesystem.require_tree_without_filesystem_boundaries(
+            directory=profile_path, include_root=False, excluded_root_directory_names=frozenset()
+        )
