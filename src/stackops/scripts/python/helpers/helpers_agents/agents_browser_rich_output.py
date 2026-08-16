@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from rich import box
 from rich.console import Group
 from rich.panel import Panel
@@ -61,8 +63,54 @@ def build_browser_launch_summary(*, result: BrowserLaunchResult, lan_address: In
     if not lan_exposed:
         return Group(summary_panel)
 
-    warning = Text(
-        f"{result.endpoint_short_label} is exposed to the LAN through a relay. Use this only on a trusted network.",
-        style="yellow",
-    )
+    warning = Text(f"{result.endpoint_short_label} is exposed to the LAN through a relay. Use this only on a trusted network.", style="yellow")
     return Group(summary_panel, Panel(warning, title="⚠ LAN exposure", border_style="yellow"))
+
+
+def build_browser_launches_summary(*, results: Sequence[BrowserLaunchResult], lan_address: InterfaceIPv4Address | None) -> Group:
+    if len(results) == 0:
+        raise ValueError("At least one browser launch result is required")
+    lan_exposed = results[0].host == REMOTE_DEBUGGING_LAN
+    if any((result.host == REMOTE_DEBUGGING_LAN) != lan_exposed for result in results):
+        raise ValueError("Batch browser launch results must use the same LAN exposure mode")
+    if lan_exposed != (lan_address is not None):
+        raise ValueError("A selected LAN address is required exactly when the browser endpoints are exposed to the LAN")
+
+    table = Table(
+        title=f"✓ {results[0].process_label} profiles ready · {len(results)} endpoint(s)", box=box.ROUNDED, header_style="bold cyan", show_lines=False
+    )
+    table.add_column("Profile", style="bold white")
+    table.add_column("IP")
+    table.add_column("Port", justify="right", style="bold bright_blue")
+    table.add_column("State")
+    table.add_column("Runtime", overflow="fold")
+
+    for result in results:
+        endpoint_ip = lan_address.ipv4_address if lan_address is not None else result.host
+        endpoint = f"http://{endpoint_ip}:{result.port}"
+        endpoint_ip_text = Text(endpoint_ip, style="bright_blue")
+        endpoint_ip_text.stylize(f"link {endpoint}")
+        profile_name = result.profile_path.name if result.profile_path is not None else "-"
+        state, runtime = _batch_launch_state(result=result)
+        table.add_row(profile_name, endpoint_ip_text, str(result.port), state, runtime)
+
+    if lan_address is None:
+        return Group(table)
+    interface_details = f"{lan_address.interface} · {lan_address.ipv4_address}"
+    warning = Text(
+        f"All endpoints are exposed to the LAN through localhost relays on {interface_details}. Use this only on a trusted network.", style="yellow"
+    )
+    return Group(table, Panel(warning, title="⚠ LAN exposure", border_style="yellow"))
+
+
+def _batch_launch_state(*, result: BrowserLaunchResult) -> tuple[Text, Text]:
+    match result:
+        case ExistingBrowserLaunchResult():
+            return Text("ready", style="bold green"), Text(f"existing {result.owner} · PID {result.process_id}")
+        case DetachedBrowserLaunchResult():
+            runtime = f"detached · PID {result.process_id}"
+            if result.relay_process_id is not None:
+                runtime = f"{runtime} · relay PID {result.relay_process_id}"
+            return Text("launched", style="bold green"), Text(runtime)
+        case TmuxBrowserLaunchResult():
+            return Text("launched", style="bold green"), Text(f"tmux · {result.tmux.browser_window_name}")

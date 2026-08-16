@@ -4,7 +4,7 @@ import pytest
 from typer.testing import CliRunner
 
 from stackops.scripts.python import agents_browser
-from stackops.scripts.python.helpers.helpers_agents import agents_browser_launch, agents_browser_profiles
+from stackops.scripts.python.helpers.helpers_agents import agents_browser_batch, agents_browser_launch, agents_browser_profiles
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LAN, BrowserName
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import BrowserLaunchResult, DetachedBrowserLaunchResult
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import BrowserProfileDeclutterResult, BrowserProfileReplicationResult
@@ -77,6 +77,109 @@ def test_launch_browser_lan_exits_before_launch_when_address_selection_fails(mon
     assert selector_preferences == [False]
     assert launch_calls == []
     assert "Could not determine a local LAN IPv4 address" in result.output
+
+
+def test_launch_browsers_launches_every_saved_profile_on_assigned_ports(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    profiles_root = tmp_path.joinpath("browsers-profiles")
+    chrome_root = profiles_root.joinpath("chrome")
+    for profile_name in ("p2", "base", "p1"):
+        chrome_root.joinpath(profile_name).mkdir(parents=True)
+    chrome_root.joinpath("README.txt").write_text("not a profile", encoding="utf-8")
+    launch_calls: list[LaunchCall] = []
+
+    def launch(*, browser: BrowserName, port: int, profile_name: str | None, lan: bool, detached: bool) -> BrowserLaunchResult:
+        launch_calls.append((browser, port, profile_name, lan, detached))
+        assert profile_name is not None
+        return DetachedBrowserLaunchResult(
+            browser=browser,
+            browser_path=Path("C:/Program Files/Google/Chrome/Application/chrome.exe"),
+            command=("chrome.exe",),
+            endpoint_label="Chrome DevTools Protocol",
+            endpoint_short_label="CDP",
+            process_label="Chrome",
+            host="127.0.0.1",
+            port=port,
+            browser_port=port,
+            profile_path=chrome_root.joinpath(profile_name),
+            prompt_path=tmp_path.joinpath(f"{profile_name}.md"),
+            process_id=1000 + port,
+            relay_process_id=None,
+        )
+
+    monkeypatch.setattr(agents_browser_batch, "BROWSER_PROFILES_ROOT", profiles_root)
+    monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
+
+    result = CliRunner().invoke(
+        agents_browser.get_app(), ["launch-browsers", "--browser", "chrome", "--port-start", "61000", "--detached"], terminal_width=180
+    )
+
+    assert result.exit_code == 0, result.output
+    assert launch_calls == [("chrome", 61001, "p1", False, True), ("chrome", 61002, "p2", False, True), ("chrome", 61003, "base", False, True)]
+    assert "Chrome profiles ready · 3 endpoint(s)" in result.output
+    assert "p1" in result.output
+    assert "p2" in result.output
+    assert "base" in result.output
+    assert "127.0.0.1" in result.output
+    assert "61001" in result.output
+    assert "61003" in result.output
+
+
+def test_launch_browsers_is_listed_with_uppercase_alias() -> None:
+    runner = CliRunner()
+
+    help_result = runner.invoke(agents_browser.get_app(), ["--help"], terminal_width=140)
+    alias_help_result = runner.invoke(agents_browser.get_app(), ["L", "--help"], terminal_width=140)
+
+    assert help_result.exit_code == 0, help_result.output
+    assert "launch-browsers" in help_result.output
+    assert "<L> Launch every saved profile for one browser" in help_result.output
+    assert alias_help_result.exit_code == 0, alias_help_result.output
+    assert "--port-start" in alias_help_result.output
+    assert "60000" in alias_help_result.output
+    assert "--max-profiles" in alias_help_result.output
+
+
+def test_launch_browsers_caps_requested_count_to_available_profiles(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    profiles_root = tmp_path.joinpath("browsers-profiles")
+    firefox_root = profiles_root.joinpath("firefox")
+    firefox_root.joinpath("p1").mkdir(parents=True)
+    firefox_root.joinpath("p2").mkdir()
+    launch_calls: list[LaunchCall] = []
+
+    def launch(*, browser: BrowserName, port: int, profile_name: str | None, lan: bool, detached: bool) -> BrowserLaunchResult:
+        launch_calls.append((browser, port, profile_name, lan, detached))
+        assert profile_name is not None
+        return DetachedBrowserLaunchResult(
+            browser=browser,
+            browser_path=Path("C:/Program Files/Mozilla Firefox/firefox.exe"),
+            command=("firefox.exe",),
+            endpoint_label="WebDriver BiDi",
+            endpoint_short_label="BiDi",
+            process_label="Firefox",
+            host="127.0.0.1",
+            port=port,
+            browser_port=port,
+            profile_path=firefox_root.joinpath(profile_name),
+            prompt_path=tmp_path.joinpath(f"{profile_name}.md"),
+            process_id=port,
+            relay_process_id=None,
+        )
+
+    monkeypatch.setattr(agents_browser_batch, "BROWSER_PROFILES_ROOT", profiles_root)
+    monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
+
+    limited_result = CliRunner().invoke(agents_browser.get_app(), ["L", "--browser", "firefox", "-n", "1", "--detached"])
+
+    assert limited_result.exit_code == 0, limited_result.output
+    assert launch_calls == [("firefox", 60001, "p1", False, True)]
+    assert "Firefox profiles ready · 1 endpoint(s)" in limited_result.output
+
+    launch_calls.clear()
+    available_result = CliRunner().invoke(agents_browser.get_app(), ["L", "--browser", "firefox", "-n", "5", "--detached"])
+
+    assert available_result.exit_code == 0, available_result.output
+    assert launch_calls == [("firefox", 60001, "p1", False, True), ("firefox", 60002, "p2", False, True)]
+    assert "Firefox profiles ready · 2 endpoint(s)" in available_result.output
 
 
 def test_declutter_defaults_to_chrome_and_reports_recovered_size(monkeypatch: pytest.MonkeyPatch) -> None:

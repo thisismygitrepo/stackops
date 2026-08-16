@@ -6,13 +6,14 @@ from rich.console import Console
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     BROWSER_TECH_NAMES,
     BrowserName,
-    ProfileBrowserName,
     BrowserTechName,
     BrowserTechSelection,
     DEFAULT_BROWSER_PORT,
+    DEFAULT_BROWSER_PROFILE_PORT_START,
+    ProfileBrowserName,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_COMMAND_BACKEND
 from stackops.utils.network.address import InterfaceIPv4Address, select_lan_interface_ipv4
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
@@ -122,6 +123,53 @@ def launch_browser(
             typer.echo(f"Browser endpoint is running, but automatic tmux attachment failed: {error}", err=True)
 
 
+def launch_browsers(
+    browser: Annotated[
+        ProfileBrowserName,
+        typer.Option("--browser", "-b", help="Browser whose saved profiles should all be launched.", case_sensitive=False, show_choices=True),
+    ] = "chrome",
+    port_start: Annotated[
+        int, typer.Option("--port-start", "--port", "-p", help="Base port for profile endpoints; p1 uses this value plus 1.")
+    ] = DEFAULT_BROWSER_PROFILE_PORT_START,
+    max_profiles: Annotated[
+        int | None, typer.Option("--max-profiles", "--max", "-n", min=1, help="Maximum profiles to launch; fewer are used when fewer are available.")
+    ] = None,
+    lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoints on 0.0.0.0 through localhost relays.")] = False,
+    detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
+) -> None:
+    """Launch every saved profile for one browser on its assigned port."""
+    lan_address: InterfaceIPv4Address | None = None
+    try:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_batch import build_browser_profile_launch_specs
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl
+
+        specs = build_browser_profile_launch_specs(browser=browser, port_start=port_start)
+        if max_profiles is not None:
+            specs = specs[:max_profiles]
+        if lan:
+            lan_address = select_lan_interface_ipv4(prefer_vpn=False)
+            if lan_address is None:
+                raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoints.")
+        results = tuple(
+            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, lan=lan, detached=detached) for spec in specs
+        )
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    except RuntimeError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(code=1) from error
+
+    Console().print(build_browser_launches_summary(results=results, lan_address=lan_address))
+    first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)
+    if first_tmux_result is not None:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window
+
+        try:
+            attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)
+        except RuntimeError as error:
+            typer.echo(f"Browser endpoints are running, but automatic tmux attachment failed: {error}", err=True)
+
+
 def status(
     detached: Annotated[
         bool, typer.Option("--detached", "-d", help="Show browser processes launched with --detached instead of tmux windows.")
@@ -203,6 +251,8 @@ def get_app() -> typer.Typer:
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
+    browser_app.command(name="launch-browsers", no_args_is_help=False, short_help="<L> Launch every saved profile for one browser")(launch_browsers)
+    browser_app.command(name="L", no_args_is_help=False, hidden=True)(launch_browsers)
     browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser launches")(status)
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     browser_app.command(name="declutter", no_args_is_help=False, short_help="<d> Remove rebuildable browser profile data")(declutter)

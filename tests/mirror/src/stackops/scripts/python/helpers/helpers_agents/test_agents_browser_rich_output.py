@@ -8,7 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models
     ExistingBrowserLaunchResult,
     TmuxBrowserLaunchResult,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models import BrowserTmuxLaunch
 from stackops.utils.network.address import InterfaceIPv4Address
 
@@ -29,11 +29,7 @@ def test_detached_lan_summary_shows_selected_endpoint_relay_and_warning() -> Non
         process_id=30852,
         relay_process_id=17176,
     )
-    lan_address = InterfaceIPv4Address(
-        interface="Ethernet",
-        ipv4_address="10.0.26.200",
-        mac_address="00:11:22:33:44:55",
-    )
+    lan_address = InterfaceIPv4Address(interface="Ethernet", ipv4_address="10.0.26.200", mac_address="00:11:22:33:44:55")
     output = StringIO()
     console = Console(file=output, width=120, color_system=None)
 
@@ -119,3 +115,39 @@ def test_non_lan_existing_summary_shows_owner_and_opened_page_action() -> None:
     assert "Restarted the missing LAN relay" not in rendered_output
     assert "Profile" not in rendered_output
     assert "LAN exposure" not in rendered_output
+
+
+def test_batch_lan_summary_shows_one_row_per_profile_and_shared_interface_warning() -> None:
+    lan_address = InterfaceIPv4Address(interface="Ethernet", ipv4_address="10.0.26.200", mac_address=None)
+    results = tuple(
+        DetachedBrowserLaunchResult(
+            browser="chrome",
+            browser_path=Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
+            command=("chrome.exe",),
+            endpoint_label="Chrome DevTools Protocol",
+            endpoint_short_label="CDP",
+            process_label="Chrome",
+            host="0.0.0.0",
+            port=port,
+            browser_port=57000 + index,
+            profile_path=Path(rf"C:\Users\eng_a\data\browsers-profiles\chrome\p{index}"),
+            prompt_path=Path(rf"C:\Users\eng_a\code\agents\browser\vercel\prompts\chrome-p{index}.md"),
+            process_id=30000 + index,
+            relay_process_id=31000 + index,
+        )
+        for index, port in enumerate((60001, 60002), start=1)
+    )
+    output = StringIO()
+    console = Console(file=output, width=180, color_system=None)
+
+    console.print(build_browser_launches_summary(results=results, lan_address=lan_address))
+
+    rendered_output = output.getvalue()
+    assert "Chrome profiles ready · 2 endpoint(s)" in rendered_output
+    assert "p1" in rendered_output
+    assert "p2" in rendered_output
+    assert "10.0.26.200" in rendered_output
+    assert "60001" in rendered_output
+    assert "60002" in rendered_output
+    assert "Ethernet" in rendered_output
+    assert rendered_output.count("LAN exposure") == 1

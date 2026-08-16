@@ -18655,6 +18655,196 @@
               },
               {
                 "kind": "command",
+                "name": "launch-browsers",
+                "fullPath": "agents browser launch-browsers",
+                "shortPath": "a b L",
+                "help": "Launch every saved profile for one browser on its assigned port.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_browser.py",
+                  "module": "stackops.scripts.python.agents_browser",
+                  "callable": "launch_browsers"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def launch_browsers(",
+                    "    browser: Annotated[",
+                    "        ProfileBrowserName,",
+                    "        typer.Option(\"--browser\", \"-b\", help=\"Browser whose saved profiles should all be launched.\", case_sensitive=False, show_choices=True),",
+                    "    ] = \"chrome\",",
+                    "    port_start: Annotated[",
+                    "        int, typer.Option(\"--port-start\", \"--port\", \"-p\", help=\"Base port for profile endpoints; p1 uses this value plus 1.\")",
+                    "    ] = DEFAULT_BROWSER_PROFILE_PORT_START,",
+                    "    max_profiles: Annotated[",
+                    "        int | None, typer.Option(\"--max-profiles\", \"--max\", \"-n\", min=1, help=\"Maximum profiles to launch; fewer are used when fewer are available.\")",
+                    "    ] = None,",
+                    "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Expose endpoints on 0.0.0.0 through localhost relays.\")] = False,",
+                    "    detached: Annotated[bool, typer.Option(\"--detached\", \"-d\", help=\"Launch as background processes instead of tmux windows.\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"Launch every saved profile for one browser on its assigned port.\"\"\"",
+                    "    lan_address: InterfaceIPv4Address | None = None",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_batch import build_browser_profile_launch_specs",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl",
+                    "",
+                    "        specs = build_browser_profile_launch_specs(browser=browser, port_start=port_start)",
+                    "        if max_profiles is not None:",
+                    "            specs = specs[:max_profiles]",
+                    "        if lan:",
+                    "            lan_address = select_lan_interface_ipv4(prefer_vpn=False)",
+                    "            if lan_address is None:",
+                    "                raise RuntimeError(\"Could not determine a local LAN IPv4 address for the browser endpoints.\")",
+                    "        results = tuple(",
+                    "            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, lan=lan, detached=detached) for spec in specs",
+                    "        )",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    Console().print(build_browser_launches_summary(results=results, lan_address=lan_address))",
+                    "    first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)",
+                    "    if first_tmux_result is not None:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window",
+                    "",
+                    "        try:",
+                    "            attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)",
+                    "        except RuntimeError as error:",
+                    "            typer.echo(f\"Browser endpoints are running, but automatic tmux attachment failed: {error}\", err=True)"
+                  ],
+                  "name": "launch_browsers",
+                  "parameters": [
+                    {
+                      "name": "browser",
+                      "kind": "positional_or_keyword",
+                      "type": "ProfileBrowserName",
+                      "default": "chrome",
+                      "required": false,
+                      "annotation_raw": "Annotated[ProfileBrowserName, typer.Option('--browser', '-b', help='Browser whose saved profiles should all be launched.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--browser",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--browser"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Browser whose saved profiles should all be launched."
+                      }
+                    },
+                    {
+                      "name": "port_start",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "DEFAULT_BROWSER_PROFILE_PORT_START",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--port-start', '--port', '-p', help='Base port for profile endpoints; p1 uses this value plus 1.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--port-start",
+                          "--port",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--port-start",
+                          "--port"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Base port for profile endpoints; p1 uses this value plus 1."
+                      }
+                    },
+                    {
+                      "name": "max_profiles",
+                      "kind": "positional_or_keyword",
+                      "type": "int | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[int | None, typer.Option('--max-profiles', '--max', '-n', min=1, help='Maximum profiles to launch; fewer are used when fewer are available.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--max-profiles",
+                          "--max",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--max-profiles",
+                          "--max"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Maximum profiles to launch; fewer are used when fewer are available."
+                      }
+                    },
+                    {
+                      "name": "lan",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--lan', '-l', help='Expose endpoints on 0.0.0.0 through localhost relays.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--lan",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--lan"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Expose endpoints on 0.0.0.0 through localhost relays."
+                      }
+                    },
+                    {
+                      "name": "detached",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--detached', '-d', help='Launch as background processes instead of tmux windows.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--detached",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--detached"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Launch as background processes instead of tmux windows."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<L> Launch every saved profile for one browser",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Launch every saved profile for one browser on its assigned port.",
+                "aliases": [
+                  {
+                    "name": "L",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "status",
                 "fullPath": "agents browser status",
                 "shortPath": "a b s",

@@ -12,6 +12,7 @@ BrowserTechSelection: TypeAlias = Literal["agent-browser", "pinchtab", "playwrig
 BROWSER_TECH_NAMES: Final[tuple[BrowserTechName, ...]] = ("agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp")
 
 DEFAULT_BROWSER_PORT: Final[int] = 9331
+DEFAULT_BROWSER_PROFILE_PORT_START: Final[int] = 60000
 BROWSER_CDP_REQUEST_TIMEOUT_SECONDS: Final[float] = 2.0
 BROWSER_ENDPOINT_STARTUP_TIMEOUT_SECONDS: Final[float] = 10.0
 BROWSER_ENDPOINT_PROBE_INTERVAL_SECONDS: Final[float] = 0.1

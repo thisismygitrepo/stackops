@@ -247,6 +247,14 @@ agents browser status
 agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```
 
+`agents browser launch-browsers` launches every saved profile under `~/data/browsers-profiles/<browser>/` for the browser selected with `--browser`. Its `--port-start`/`--port`/`-p` base defaults to `60000`. Profiles named `pN` use `port-start + N`, so `p1` uses `60001`, `p2` uses `60002`, and so on by default. Other profile names use the next unreserved port above the base. Use `--max-profiles`/`--max`/`-n` to cap the launch count; StackOps launches the requested count or the number available, whichever is smaller. The command prints one compact table with each profile, IP, port, state, and tmux window or process ID. It supports the same `--lan` and `--detached` launch modes as `launch-browser`; Safari is excluded because it does not support custom profiles.
+
+```bash
+agents browser launch-browsers --browser chrome
+agents browser L --browser firefox -n 4 --lan
+agents browser launch-browsers --browser brave --port-start 61000 --detached
+```
+
 `agents browser declutter` removes rebuildable data from a named profile after confirming that the selected browser is closed. Chrome, Brave, and Edge cleanup includes downloaded on-device AI models (including `OptGuideOnDeviceModel`) plus HTTP, code, GPU, shader, and extension-download caches. Firefox cleanup includes its disk, startup, and shader caches. Cookies, history, passwords, extensions, sessions, service-worker data, IndexedDB, and local storage are preserved. The command reports the recovered and remaining profile sizes in MiB.
 
 `agents browser replicate COUNT` copies a closed source profile to `p1` through `pCOUNT`. Chrome is the default browser and `base` is the default source profile. All destination paths are checked before copying, and existing profiles are never overwritten. Both profile-maintenance commands use the same `~/data/browsers-profiles/<browser>/<profile>` layout on Windows, macOS, and Linux. They support Chrome, Brave, Edge, and Firefox; Safari is excluded because safaridriver does not support StackOps custom profiles.
@@ -294,6 +302,7 @@ agents ask --help
 agents add-skill --help
 agents browser install-tech --help
 agents browser launch-browser --help
+agents browser launch-browsers --help
 agents browser declutter --help
 agents browser replicate --help
 ```
