@@ -4,7 +4,7 @@ import platform
 import shutil
 
 
-def require_tree_without_filesystem_boundaries(*, directory: Path, include_root: bool) -> None:
+def require_tree_without_filesystem_boundaries(*, directory: Path, include_root: bool, excluded_root_directory_names: frozenset[str]) -> None:
     mount_points = _linux_mount_points()
     compare_resolved_mount_paths = len(mount_points) > 0 and directory.resolve(strict=False) != directory.absolute()
     pending_directories = [directory]
@@ -17,6 +17,8 @@ def require_tree_without_filesystem_boundaries(*, directory: Path, include_root:
                 raise RuntimeError(f"""Browser profile operation refuses filesystem boundary: {current_directory}""")
             with os.scandir(current_directory) as entries:
                 for entry in entries:
+                    if current_directory == directory and entry.name in excluded_root_directory_names:
+                        continue
                     entry_path = Path(entry.path)
                     if entry.is_symlink():
                         continue
@@ -45,7 +47,22 @@ def remove_owned_profile_directories(*, directories: tuple[Path, ...]) -> tuple[
     return tuple(cleanup_failures)
 
 
-def directory_size_bytes(*, directory: Path) -> int:
+def path_is_filesystem_boundary(*, path: Path) -> bool:
+    mount_points = _linux_mount_points()
+    compare_resolved_mount_paths = len(mount_points) > 0 and path.resolve(strict=False) != path.absolute()
+    return _is_filesystem_boundary(path=path, linux_mount_points=mount_points, compare_resolved_mount_paths=compare_resolved_mount_paths)
+
+
+def copy_directory_tree_excluding(*, source_directory: Path, destination_directory: Path, excluded_root_directory_names: frozenset[str]) -> None:
+    def ignored_root_directories(current_source: str, directory_names: list[str]) -> set[str]:
+        if Path(current_source) != source_directory:
+            return set()
+        return set(directory_names).intersection(excluded_root_directory_names)
+
+    shutil.copytree(source_directory, destination_directory, symlinks=True, dirs_exist_ok=True, ignore=ignored_root_directories)
+
+
+def directory_size_bytes(*, directory: Path, excluded_root_directory_names: frozenset[str]) -> int:
     size_bytes = 0
     mount_points = _linux_mount_points()
     compare_resolved_mount_paths = len(mount_points) > 0 and directory.resolve(strict=False) != directory.absolute()
@@ -55,6 +72,8 @@ def directory_size_bytes(*, directory: Path) -> int:
         try:
             with os.scandir(current_directory) as entries:
                 for entry in entries:
+                    if current_directory == directory and entry.name in excluded_root_directory_names:
+                        continue
                     entry_path = Path(entry.path)
                     if entry.is_symlink() or _is_filesystem_boundary(
                         path=entry_path, linux_mount_points=mount_points, compare_resolved_mount_paths=compare_resolved_mount_paths

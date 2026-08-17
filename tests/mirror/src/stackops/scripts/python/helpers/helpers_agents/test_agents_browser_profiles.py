@@ -13,12 +13,12 @@ def profiles_root(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     root = tmp_path.joinpath("browsers-profiles")
     root.mkdir()
 
-    def no_browser_processes(*, browser: BrowserName) -> tuple[int, ...]:
-        del browser
+    def no_browser_processes(*, browser: BrowserName, profile_path: Path) -> tuple[int, ...]:
+        del browser, profile_path
         return ()
 
     monkeypatch.setattr(agents_browser_resolution, "BROWSER_PROFILES_ROOT", root)
-    monkeypatch.setattr(profiles, "find_browser_process_ids", no_browser_processes)
+    monkeypatch.setattr(profiles, "find_browser_profile_process_ids", no_browser_processes)
     monkeypatch.setattr(profiles, "browser_launch_lock", nullcontext)
     return root
 
@@ -51,6 +51,7 @@ def test_declutter_chromium_removes_only_cache_data_and_reports_recovered_bytes(
         _write_sized_file(profile_path.joinpath("Default", "Preferences"), 17),
         _write_sized_file(profile_path.joinpath("Default", "Service Worker", "CacheStorage", "data.bin"), 19),
     }
+    temporary_copy_file = _write_sized_file(profile_path.joinpath(".tmp", "old-alias", "profile.bin"), 101)
 
     result = profiles.declutter_browser_profile(browser=browser, profile_name="base")
 
@@ -68,6 +69,7 @@ def test_declutter_chromium_removes_only_cache_data_and_reports_recovered_bytes(
     }
     assert all(not path.exists() for path in removed_files)
     assert all(path.is_file() for path in persistent_files)
+    assert temporary_copy_file.is_file()
 
 
 def test_declutter_firefox_uses_its_cache_allowlist(profiles_root: Path) -> None:
@@ -94,11 +96,12 @@ def test_declutter_refuses_to_change_a_profile_while_browser_is_running(monkeypa
     profile_path = _create_profile(profiles_root=profiles_root, browser="chrome")
     cache_file = _write_sized_file(profile_path.joinpath("Cache", "data.bin"), 8)
 
-    def running_browser_processes(*, browser: BrowserName) -> tuple[int, ...]:
+    def running_browser_processes(*, browser: BrowserName, profile_path: Path) -> tuple[int, ...]:
         assert browser == "chrome"
+        assert profile_path == profiles_root.joinpath("chrome", "base")
         return (101, 202)
 
-    monkeypatch.setattr(profiles, "find_browser_process_ids", running_browser_processes)
+    monkeypatch.setattr(profiles, "find_browser_profile_process_ids", running_browser_processes)
 
     with pytest.raises(RuntimeError, match=r"101, 202"):
         profiles.declutter_browser_profile(browser="chrome", profile_name="base")
@@ -141,6 +144,19 @@ def test_replicate_creates_p1_through_pn_from_the_base_profile(profiles_root: Pa
         assert destination_path.joinpath("Default", "Cookies").read_bytes() == b"x" * 13
 
 
+def test_replicate_excludes_temporary_profile_copies(profiles_root: Path) -> None:
+    source_path = _create_profile(profiles_root=profiles_root, browser="chrome")
+    _write_sized_file(source_path.joinpath("Local State"), 8)
+    _write_sized_file(source_path.joinpath(".tmp", "old-alias", "temporary.bin"), 13)
+
+    result = profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=1)
+
+    destination_path = profiles_root.joinpath("chrome", "p1")
+    assert result.source_size_bytes == 8
+    assert destination_path.joinpath("Local State").read_bytes() == b"x" * 8
+    assert not destination_path.joinpath(".tmp").exists()
+
+
 def test_replicate_preflights_all_destination_collisions(profiles_root: Path) -> None:
     source_path = _create_profile(profiles_root=profiles_root, browser="chrome")
     _write_sized_file(source_path.joinpath("Local State"), 8)
@@ -181,15 +197,19 @@ def test_replicate_does_not_remove_destination_created_after_preflight(monkeypat
 def test_replicate_rolls_back_all_reserved_destinations_after_partial_copy_failure(monkeypatch: pytest.MonkeyPatch, profiles_root: Path) -> None:
     source_path = _create_profile(profiles_root=profiles_root, browser="chrome")
     _write_sized_file(source_path.joinpath("Local State"), 8)
-    original_copytree = profiles.shutil.copytree
+    original_copy_directory = profiles.copy_directory_tree_excluding
 
-    def fail_on_p2(source: Path, destination: Path, *, symlinks: bool, dirs_exist_ok: bool) -> Path:
-        if destination.name == "p2":
-            destination.joinpath("partial.bin").write_bytes(b"partial")
+    def fail_on_p2(*, source_directory: Path, destination_directory: Path, excluded_root_directory_names: frozenset[str]) -> None:
+        if destination_directory.name == "p2":
+            destination_directory.joinpath("partial.bin").write_bytes(b"partial")
             raise OSError("copy failed")
-        return original_copytree(source, destination, symlinks=symlinks, dirs_exist_ok=dirs_exist_ok)
+        original_copy_directory(
+            source_directory=source_directory,
+            destination_directory=destination_directory,
+            excluded_root_directory_names=excluded_root_directory_names,
+        )
 
-    monkeypatch.setattr(profiles.shutil, "copytree", fail_on_p2)
+    monkeypatch.setattr(profiles, "copy_directory_tree_excluding", fail_on_p2)
 
     with pytest.raises(RuntimeError, match="copy failed"):
         profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=3)
@@ -201,12 +221,12 @@ def test_replicate_rolls_back_all_reserved_destinations_after_interruption(monke
     source_path = _create_profile(profiles_root=profiles_root, browser="chrome")
     _write_sized_file(source_path.joinpath("Local State"), 8)
 
-    def interrupt_copy(source: Path, destination: Path, *, symlinks: bool, dirs_exist_ok: bool) -> Path:
-        del source, symlinks, dirs_exist_ok
-        destination.joinpath("partial.bin").write_bytes(b"partial")
+    def interrupt_copy(*, source_directory: Path, destination_directory: Path, excluded_root_directory_names: frozenset[str]) -> None:
+        del source_directory, excluded_root_directory_names
+        destination_directory.joinpath("partial.bin").write_bytes(b"partial")
         raise KeyboardInterrupt
 
-    monkeypatch.setattr(profiles.shutil, "copytree", interrupt_copy)
+    monkeypatch.setattr(profiles, "copy_directory_tree_excluding", interrupt_copy)
 
     with pytest.raises(KeyboardInterrupt):
         profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=2)

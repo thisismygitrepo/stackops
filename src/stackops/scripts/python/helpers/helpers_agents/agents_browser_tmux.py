@@ -3,6 +3,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_lifecycl
     assert_browser_tmux_window_running,
     build_attach_or_switch_command,
     close_browser_tmux_launch,
+    close_browser_tmux_windows,
     prune_dead_browser_tmux_launches,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_launch import (
@@ -29,6 +30,7 @@ __all__ = [
     "assert_browser_tmux_window_running",
     "build_attach_or_switch_command",
     "close_browser_tmux_launch",
+    "close_browser_tmux_windows",
     "collect_browser_tmux_status",
     "launch_browser_tmux",
     "prune_dead_browser_tmux_launches",

@@ -66,3 +66,19 @@ def close_browser_tmux_launch(*, launch: BrowserTmuxLaunch) -> None:
         result = run_optional_tmux_command(command=("tmux", "kill-window", "-t", target))
         if result is None:
             return
+
+
+def close_browser_tmux_windows(*, window_ids: tuple[str, ...]) -> None:
+    """Close exact StackOps browser windows discovered from tmux metadata."""
+    errors: list[str] = []
+    for window_id in window_ids:
+        try:
+            result = run_optional_tmux_command(command=("tmux", "kill-window", "-t", window_id))
+        except RuntimeError as error:
+            errors.append(f"{window_id}: {error}")
+            continue
+        if result is None:
+            break
+    if errors:
+        details = "\n".join(f"  - {error}" for error in errors)
+        raise RuntimeError(f"Browser tmux window close failures:\n{details}")

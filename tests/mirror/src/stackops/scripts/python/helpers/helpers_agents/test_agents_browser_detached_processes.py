@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 import psutil
 import pytest
@@ -15,6 +16,33 @@ class FakeProcess:
         if isinstance(self.process_name, Exception):
             raise self.process_name
         return self.process_name
+
+
+@dataclass
+class FakeTrackedProcess:
+    pid: int
+    created_at: float
+    command: tuple[str, ...]
+    terminated: bool = False
+    wait_timeout: float | None = None
+
+    def create_time(self) -> float:
+        return self.created_at
+
+    def is_running(self) -> bool:
+        return True
+
+    def status(self) -> str:
+        return psutil.STATUS_RUNNING
+
+    def cmdline(self) -> list[str]:
+        return list(self.command)
+
+    def terminate(self) -> None:
+        self.terminated = True
+
+    def wait(self, timeout: float) -> None:
+        self.wait_timeout = timeout
 
 
 @pytest.mark.parametrize(
@@ -55,3 +83,52 @@ def test_find_brave_process_ids_matches_darwin_parent_and_helper_only(monkeypatc
     monkeypatch.setattr(agents_browser_detached_processes.psutil, "process_iter", lambda: iter(processes))
 
     assert agents_browser_detached_processes.find_browser_process_ids(browser="brave") == (7, 19)
+
+
+def test_find_browser_profile_process_ids_matches_only_the_selected_profile(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    profile_path = tmp_path.joinpath("browsers-profiles", "chrome", "base")
+    other_profile_path = tmp_path.joinpath("browsers-profiles", "chrome", "other")
+    profile_path.mkdir(parents=True)
+    other_profile_path.mkdir()
+    processes = (
+        FakeTrackedProcess(pid=7, created_at=1.0, command=("chrome", f"--user-data-dir={profile_path}")),
+        FakeTrackedProcess(pid=11, created_at=2.0, command=("chrome", f"--user-data-dir={other_profile_path}")),
+        FakeTrackedProcess(pid=13, created_at=3.0, command=("chrome", f"--user-data-dir={profile_path}", "--type=renderer")),
+    )
+    monkeypatch.setattr(agents_browser_detached_processes.psutil, "process_iter", lambda: iter(processes))
+
+    assert agents_browser_detached_processes.find_browser_profile_process_ids(browser="chrome", profile_path=profile_path) == (7,)
+
+
+def test_terminate_browser_launch_process_revalidates_and_terminates_exact_handoff(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    profile_path = tmp_path.joinpath("browsers-profiles", "chrome", "p1")
+    profile_path.mkdir(parents=True)
+    process = FakeTrackedProcess(pid=202, created_at=2.02, command=("chrome.exe", "--remote-debugging-port=60001", f"--user-data-dir={profile_path}"))
+    monkeypatch.setattr(agents_browser_detached_processes, "find_browser_process_id", lambda **_kwargs: process.pid)
+    monkeypatch.setattr(agents_browser_detached_processes.psutil, "Process", lambda process_id: process)
+
+    agents_browser_detached_processes.terminate_browser_launch_process(
+        browser="chrome", browser_port=60001, profile_path=profile_path, process_id=101, process_created_at=1.01, process_label="chrome browser"
+    )
+
+    assert process.terminated is True
+    assert process.wait_timeout == agents_browser_detached_processes.BROWSER_PROCESS_TERMINATION_TIMEOUT_SECONDS
+
+
+def test_terminate_browser_launch_process_rejects_fallback_that_no_longer_matches_profile(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    profile_path = tmp_path.joinpath("browsers-profiles", "chrome", "p1")
+    other_profile_path = tmp_path.joinpath("browsers-profiles", "chrome", "personal")
+    profile_path.mkdir(parents=True)
+    other_profile_path.mkdir()
+    process = FakeTrackedProcess(
+        pid=202, created_at=2.02, command=("chrome.exe", "--remote-debugging-port=60001", f"--user-data-dir={other_profile_path}")
+    )
+    monkeypatch.setattr(agents_browser_detached_processes, "find_browser_process_id", lambda **_kwargs: process.pid)
+    monkeypatch.setattr(agents_browser_detached_processes.psutil, "Process", lambda process_id: process)
+
+    agents_browser_detached_processes.terminate_browser_launch_process(
+        browser="chrome", browser_port=60001, profile_path=profile_path, process_id=101, process_created_at=1.01, process_label="chrome browser"
+    )
+
+    assert process.terminated is False
+    assert process.wait_timeout is None

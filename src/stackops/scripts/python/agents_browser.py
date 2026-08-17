@@ -92,8 +92,11 @@ def launch_browser(
     ] = "chrome",
     profile: Annotated[
         str | None,
-        typer.Option("--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a temp profile."),
+        typer.Option(
+            "--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a fresh port-scoped profile."
+        ),
     ] = None,
+    tmp: Annotated[bool, typer.Option("--tmp", "-t", help="Copy --profile to <profile>/.tmp/<random-alias> and launch the copy.")] = False,
     lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoint on 0.0.0.0 through a localhost relay.")] = False,
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
@@ -106,7 +109,7 @@ def launch_browser(
             lan_address = select_lan_interface_ipv4(prefer_vpn=False)
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoint.")
-        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, lan=lan, detached=detached)
+        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, temporary=tmp, lan=lan, detached=detached)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
@@ -123,7 +126,7 @@ def launch_browser(
             typer.echo(f"Browser endpoint is running, but automatic tmux attachment failed: {error}", err=True)
 
 
-def launch_browsers(
+def batch_launch(
     browser: Annotated[
         ProfileBrowserName,
         typer.Option("--browser", "-b", help="Browser whose saved profiles should all be launched.", case_sensitive=False, show_choices=True),
@@ -151,7 +154,8 @@ def launch_browsers(
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoints.")
         results = tuple(
-            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, lan=lan, detached=detached) for spec in specs
+            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, temporary=False, lan=lan, detached=detached)
+            for spec in specs
         )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
@@ -168,6 +172,33 @@ def launch_browsers(
             attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)
         except RuntimeError as error:
             typer.echo(f"Browser endpoints are running, but automatic tmux attachment failed: {error}", err=True)
+
+
+def batch_close(
+    browser: Annotated[
+        ProfileBrowserName,
+        typer.Option(
+            "--browser", "-b", help="Browser whose StackOps-tracked saved-profile launches should be closed.", case_sensitive=False, show_choices=True
+        ),
+    ] = "chrome",
+) -> None:
+    """Close tracked saved-profile launches for one browser."""
+    try:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_batch import close_browser_profile_launches
+
+        result = close_browser_profile_launches(browser=browser)
+    except RuntimeError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(code=1) from error
+
+    browser_label = browser.title()
+    if result.closed_count == 0:
+        typer.echo(f"No active {browser_label} saved-profile launches found.")
+        return
+    typer.echo(
+        f"Closed {result.closed_count} {browser_label} saved-profile launch(es) "
+        f"({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached)."
+    )
 
 
 def status(
@@ -251,8 +282,10 @@ def get_app() -> typer.Typer:
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
-    browser_app.command(name="launch-browsers", no_args_is_help=False, short_help="<L> Launch every saved profile for one browser")(launch_browsers)
-    browser_app.command(name="L", no_args_is_help=False, hidden=True)(launch_browsers)
+    browser_app.command(name="batch-launch", no_args_is_help=False, short_help="<L> Launch every saved profile for one browser")(batch_launch)
+    browser_app.command(name="L", no_args_is_help=False, hidden=True)(batch_launch)
+    browser_app.command(name="batch-close", no_args_is_help=False, short_help="<C> Close tracked saved-profile browser launches")(batch_close)
+    browser_app.command(name="C", no_args_is_help=False, hidden=True)(batch_close)
     browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser launches")(status)
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     browser_app.command(name="declutter", no_args_is_help=False, short_help="<d> Remove rebuildable browser profile data")(declutter)
