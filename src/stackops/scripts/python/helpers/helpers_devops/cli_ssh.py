@@ -1,3 +1,4 @@
+import subprocess
 from typing import Annotated
 
 import typer
@@ -30,13 +31,9 @@ def install_ssh_server() -> None:
         distribution = detect_current_linux_distribution()
         print(f"🐧 Installing OpenSSH server on {distribution.distribution_id} using {distribution.package_manager}.")
         script = _get_linux_ssh_server_install_script(distribution)
-        import subprocess
-
         result = subprocess.run(("/bin/sh", "-s"), input=script, text=True, check=False)
     elif system == "Darwin":
         script = _get_macos_ssh_server_install_script()
-        import subprocess
-
         result = subprocess.run(("/bin/sh", "-s"), input=script, text=True, check=False)
     else:
         print(f"❌ Error: Platform {system} is not supported.")
