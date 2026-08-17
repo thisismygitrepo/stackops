@@ -35,6 +35,14 @@ def _string_list(value: object) -> list[str] | None:
     return cast(list[str], value)
 
 
+def _integer_list(value: object) -> list[int] | None:
+    if isinstance(value, int) and not isinstance(value, bool):
+        return [value]
+    if not isinstance(value, list) or not all(isinstance(item, int) and not isinstance(item, bool) for item in value):
+        return None
+    return cast(list[int], value)
+
+
 def _port_filter_matches(local_port: str, port: int) -> bool:
     for token in re.split(r"[,\s]+", local_port):
         if token in ("Any", "*"):
@@ -147,7 +155,7 @@ $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enab
             Action = [string]$rule.Action
             Profile = [string]$rule.Profile
             PrimaryStatus = [string]$rule.PrimaryStatus
-            EnforcementStatus = [string]$rule.EnforcementStatus
+            EnforcementStatuses = @($rule.EnforcementStatus | ForEach-Object { [int]$_ })
             FilterShapeValid = (
                 $portFilters.Count -eq 1 -and
                 $applicationFilters.Count -eq 1 -and
@@ -263,7 +271,7 @@ $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enab
                 action = rule.get("Action")
                 rule_profile = rule.get("Profile")
                 primary_status = rule.get("PrimaryStatus")
-                enforcement_status = rule.get("EnforcementStatus")
+                enforcement_statuses = _integer_list(rule.get("EnforcementStatuses"))
                 filter_shape_valid = rule.get("FilterShapeValid")
                 protocol = rule.get("Protocol")
                 local_port = rule.get("LocalPort")
@@ -271,7 +279,7 @@ $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enab
                     not isinstance(action, str)
                     or not isinstance(rule_profile, str)
                     or not isinstance(primary_status, str)
-                    or not isinstance(enforcement_status, str)
+                    or enforcement_statuses is None
                     or not isinstance(filter_shape_valid, bool)
                     or not isinstance(protocol, str)
                     or not isinstance(local_port, str)
@@ -303,19 +311,6 @@ $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enab
                         command_suggestions=(),
                         manual_advice=("Inspect every associated port, application, service, address, interface, and security filter.",),
                     )
-                if primary_status != "OK" or enforcement_status != "Full":
-                    return SSHDebugCheck(
-                        identifier="firewall",
-                        group="firewall",
-                        label="Windows Firewall",
-                        status="unknown",
-                        message=(
-                            f"A matching rule is not proved fully enforced "
-                            f"(PrimaryStatus={primary_status}, EnforcementStatus={enforcement_status})"
-                        ),
-                        command_suggestions=(),
-                        manual_advice=("Inspect the rule's effective policy source and enforcement reason.",),
-                    )
                 application_match = _rule_applies_to_sshd(rule, sshd_path)
                 if application_match is None:
                     return SSHDebugCheck(
@@ -329,6 +324,23 @@ $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enab
                     )
                 if not application_match:
                     continue
+                if (
+                    primary_status != "OK"
+                    or 1 not in enforcement_statuses
+                    or any(status not in (1, 5) for status in enforcement_statuses)
+                ):
+                    return SSHDebugCheck(
+                        identifier="firewall",
+                        group="firewall",
+                        label="Windows Firewall",
+                        status="unknown",
+                        message=(
+                            f"A matching rule is not proved fully enforced "
+                            f"(PrimaryStatus={primary_status}, EnforcementStatus codes={enforcement_statuses})"
+                        ),
+                        command_suggestions=(),
+                        manual_advice=("Inspect the rule's effective policy source and enforcement reason.",),
+                    )
                 if action == "Block":
                     unscoped = _rule_is_unscoped(rule)
                     if unscoped is None:

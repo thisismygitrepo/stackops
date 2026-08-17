@@ -10,6 +10,23 @@ UFW_RULE_PATTERN = re.compile(
 )
 
 
+def _ufw_target_matches_tcp_port(target: str, port: int) -> bool | None:
+    if target == "Anywhere":
+        return True
+    port_specification, separator, protocol = target.partition("/")
+    if separator:
+        if protocol.casefold() == "udp":
+            return False
+        if protocol.casefold() != "tcp":
+            return None
+    if port_specification.isdecimal():
+        return int(port_specification) == port
+    first_port, range_separator, last_port = port_specification.partition(":")
+    if range_separator and first_port.isdecimal() and last_port.isdecimal():
+        return int(first_port) <= port <= int(last_port)
+    return None
+
+
 def _check_ufw(
     ports: tuple[int, ...],
     listener_families_by_port: dict[int, frozenset[ListenerAddressFamily]] | None,
@@ -32,6 +49,7 @@ def _check_ufw(
         )
 
     parsed_rules: list[tuple[int, str, str, str, str]] = []
+    unparsed_numbered_rules: list[str] = []
     for line in completed.stdout.splitlines():
         match = UFW_RULE_PATTERN.fullmatch(line.strip())
         if match is not None:
@@ -44,6 +62,19 @@ def _check_ufw(
                     "ipv6" if match.group("ipv6") is not None else "ipv4",
                 )
             )
+        elif line.lstrip().startswith("["):
+            unparsed_numbered_rules.append(line.strip())
+    if unparsed_numbered_rules:
+        return SSHDebugCheck(
+            identifier="firewall",
+            group="firewall",
+            label="Inbound firewall",
+            status="unknown",
+            message="UFW has numbered rules whose target, direction, or address family could not be resolved",
+            command_suggestions=(),
+            manual_advice=("Inspect every numbered UFW rule before relying on first-match order.",),
+        )
+    parsed_rules.sort(key=lambda rule: rule[0])
     unproved: list[str] = []
     for port in ports:
         port_families = listener_families_by_port.get(port)
@@ -51,34 +82,33 @@ def _check_ufw(
             unproved.append(f"unknown-family:{port}/tcp")
             continue
         for family in sorted(port_families):
-            relevant: list[tuple[int, str, bool]] = []
+            family_proved = False
             for number, target, action, source, rule_family in parsed_rules:
                 if rule_family != family:
                     continue
-                target_port, separator, protocol = target.partition("/")
-                exact_target = (
-                    separator == "/"
-                    and protocol == "tcp"
-                    and target_port.isdecimal()
-                    and int(target_port) == port
-                )
-                if exact_target or target == "Anywhere":
-                    relevant.append((number, action, source.removesuffix(" (v6)") == "Anywhere"))
-            relevant.sort(key=lambda rule: rule[0])
-            if relevant and not relevant[0][2]:
-                unproved.append(f"{family}:{port}/tcp (first rule is source-scoped)")
-                continue
-            if relevant and relevant[0][1] in ("DENY", "REJECT"):
-                return SSHDebugCheck(
-                    identifier="firewall",
-                    group="firewall",
-                    label="Inbound firewall",
-                    status="error",
-                    message=f"The first matching {family} UFW rule explicitly blocks TCP port {port}",
-                    command_suggestions=("sudo ufw status numbered",),
-                    manual_advice=("Review UFW rule order before changing or deleting a blocking rule.",),
-                )
-            if not relevant or relevant[0][1] != "ALLOW":
+                target_matches = _ufw_target_matches_tcp_port(target=target, port=port)
+                if target_matches is False:
+                    continue
+                if target_matches is None:
+                    unproved.append(f"{family}:{port}/tcp (rule {number} has unresolved target {target!r})")
+                    break
+                if source.removesuffix(" (v6)") != "Anywhere":
+                    unproved.append(f"{family}:{port}/tcp (rule {number} is source-scoped)")
+                    break
+                if action in ("DENY", "REJECT"):
+                    return SSHDebugCheck(
+                        identifier="firewall",
+                        group="firewall",
+                        label="Inbound firewall",
+                        status="error",
+                        message=f"The first matching {family} UFW rule explicitly blocks TCP port {port}",
+                        command_suggestions=("sudo ufw status numbered",),
+                        manual_advice=("Review UFW rule order before changing or deleting a blocking rule.",),
+                    )
+                if action == "ALLOW":
+                    family_proved = True
+                    break
+            if not family_proved and not any(item.startswith(f"{family}:{port}/tcp (") for item in unproved):
                 unproved.append(f"{family}:{port}/tcp")
     if unproved:
         return SSHDebugCheck(
@@ -197,15 +227,8 @@ def _check_firewalld(ports: tuple[int, ...]) -> SSHDebugCheck | None:
                 continue
             target = run_argv(("firewall-cmd", f"--zone={zone}", "--get-target"))
             if target.returncode == 0 and target.stdout in ("DROP", "REJECT"):
-                return SSHDebugCheck(
-                    identifier="firewall",
-                    group="firewall",
-                    label="Inbound firewall",
-                    status="error",
-                    message=f"firewalld zone {zone} blocks by default and has no TCP port or service allow for port {port}",
-                    command_suggestions=(f"sudo firewall-cmd --permanent --zone={zone} --add-port={port}/tcp",),
-                    manual_advice=("Confirm the interface-to-zone assignment before adding a permanent rule.",),
-                )
+                unproved.append(f"{zone}:{port}/tcp ({target.stdout} target; connection ingress zone unproved)")
+                continue
             unproved.append(f"{zone}:{port}/tcp")
     if unproved:
         return SSHDebugCheck(

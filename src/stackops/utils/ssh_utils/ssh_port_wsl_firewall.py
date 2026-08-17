@@ -59,7 +59,13 @@ $activeProfiles = @(
 if ($activeProfiles.Count -eq 0) { exit 0 }
 $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Enabled True -Direction Inbound)
 foreach ($profile in $activeProfiles) {
-    $allowProved = $profile.DefaultInboundAction.ToString() -eq "Allow"
+    $defaultInboundAction = $profile.DefaultInboundAction.ToString()
+    if ($defaultInboundAction -notin @("Allow", "Block")) { exit 5 }
+    if ($profile.AllowInboundRules.ToString() -ne "True") {
+        if ($defaultInboundAction -eq "Allow") { continue }
+        exit 3
+    }
+    $allowProved = $defaultInboundAction -eq "Allow"
     $scopedRuleFound = $false
     foreach ($rule in $rules) {
         $ruleProfiles = @($rule.Profile.ToString() -split "," | ForEach-Object { $_.Trim() })
@@ -70,25 +76,46 @@ foreach ($profile in $activeProfiles) {
         $addressFilters = @($rule | Get-NetFirewallAddressFilter)
         $interfaceFilters = @($rule | Get-NetFirewallInterfaceFilter)
         $interfaceTypeFilters = @($rule | Get-NetFirewallInterfaceTypeFilter)
+        $securityFilters = @($rule | Get-NetFirewallSecurityFilter)
         if (
             $portFilters.Count -ne 1 -or
             $applicationFilters.Count -ne 1 -or
             $serviceFilters.Count -ne 1 -or
             $addressFilters.Count -ne 1 -or
             $interfaceFilters.Count -ne 1 -or
-            $interfaceTypeFilters.Count -ne 1
+            $interfaceTypeFilters.Count -ne 1 -or
+            $securityFilters.Count -ne 1
         ) { exit 5 }
         $protocol = $portFilters[0].Protocol.ToString()
         if ($protocol -notin @("TCP", "6", "Any", "256")) { continue }
         if (-not (Test-PortMatch -Values @($portFilters[0].LocalPort) -Port $targetPort -RequireAny $false)) { continue }
+        $enforcementStatuses = @($rule.EnforcementStatus | ForEach-Object { [int]$_ })
+        $unexpectedEnforcementStatuses = @(
+            $enforcementStatuses | Where-Object { $_ -ne 1 -and $_ -ne 5 }
+        )
+        $ruleIsEnforced = (
+            $enforcementStatuses -contains 1 -and
+            $unexpectedEnforcementStatuses.Count -eq 0
+        )
         $isUnscoped = (
+            $ruleIsEnforced -and
             (Test-PortMatch -Values @($portFilters[0].RemotePort) -Port $targetPort -RequireAny $true) -and
             (Test-AnyValue -Values @($applicationFilters[0].Program)) -and
+            [string]::IsNullOrEmpty([string]$applicationFilters[0].Package) -and
             (Test-AnyValue -Values @($serviceFilters[0].Service)) -and
             (Test-AnyValue -Values @($addressFilters[0].LocalAddress)) -and
             (Test-AnyValue -Values @($addressFilters[0].RemoteAddress)) -and
             (Test-AnyValue -Values @($interfaceFilters[0].InterfaceAlias)) -and
-            (Test-AnyValue -Values @($interfaceTypeFilters[0].InterfaceType))
+            (Test-AnyValue -Values @($interfaceTypeFilters[0].InterfaceType)) -and
+            $securityFilters[0].Authentication.ToString() -eq "NotRequired" -and
+            $securityFilters[0].Encryption.ToString() -eq "NotRequired" -and
+            $securityFilters[0].OverrideBlockRules -eq $false -and
+            (Test-AnyValue -Values @($securityFilters[0].LocalUser)) -and
+            (Test-AnyValue -Values @($securityFilters[0].RemoteUser)) -and
+            (Test-AnyValue -Values @($securityFilters[0].RemoteMachine)) -and
+            [string]::IsNullOrEmpty([string]$rule.Owner) -and
+            [string]::IsNullOrEmpty([string]($rule.RemoteDynamicKeywordAddresses -join ",")) -and
+            [string]::IsNullOrEmpty([string]$rule.PolicyAppId)
         )
         if (-not $isUnscoped) {
             if ($rule.Action.ToString() -eq "Block") { exit 5 }
@@ -122,7 +149,7 @@ exit 0
     if result.returncode == 5:
         raise RuntimeError(
             f"Windows Firewall has scoped or structurally ambiguous rules covering TCP port {target_port}, so WSL ingress cannot be proven. "
-            "Inspect the active profile, remote port, addresses, application, service, and interface filters, then retry."
+            "Inspect the active profile, rule enforcement, ports, addresses, application, service, interface, and security filters, then retry."
         )
     error_output = result.stderr.strip() or result.stdout.strip()
     raise RuntimeError(

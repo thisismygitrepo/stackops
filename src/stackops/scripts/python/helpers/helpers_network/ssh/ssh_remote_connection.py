@@ -1,10 +1,9 @@
 import base64
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 import getpass
 import socket
-from typing import cast
 
 import paramiko
 
@@ -29,7 +28,7 @@ class RemoteCommandResult:
 
 
 @contextmanager
-def open_remote_connection(remote_target: str, password: str | None) -> Iterator[ConnectedRemote]:
+def open_remote_connection(remote_target: str, password: str | None) -> Generator[ConnectedRemote]:
     parsed_destination = parse_open_ssh_destination(destination=remote_target)
     profile = resolve_ssh_connection_profile(
         host=remote_target,
@@ -87,8 +86,8 @@ def open_remote_connection(remote_target: str, password: str | None) -> Iterator
 def run_remote_command(connection: ConnectedRemote, command: str) -> RemoteCommandResult:
     stdin, stdout, stderr = connection.client.exec_command(command=command)
     stdin.close()
-    stdout_bytes = cast(bytes, stdout.read())
-    stderr_bytes = cast(bytes, stderr.read())
+    stdout_bytes = stdout.read()
+    stderr_bytes = stderr.read()
     return_code = stdout.channel.recv_exit_status()
     return RemoteCommandResult(
         return_code=return_code,
@@ -124,7 +123,7 @@ def _connect_once(
             password=password,
             passphrase=passphrase,
             port=connection_port,
-            key_filename=list(profile.identity_files) if automatic_authentication and profile.identity_files else None,
+            key_filename=list(profile.identity_files) if automatic_authentication and profile.identity_files else None,  # type: ignore[arg-type]
             sock=connection_socket,
             allow_agent=automatic_authentication and not profile.identities_only,
             look_for_keys=automatic_authentication and not profile.identities_only,

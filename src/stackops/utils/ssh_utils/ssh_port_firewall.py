@@ -62,6 +62,9 @@ def _assert_ufw_permission(status_output: str, target_port: int) -> None:
         exact_target = normalized_target.casefold() == f"{target_port}/tcp"
         global_target = normalized_target.casefold() == "anywhere"
         normalized_action = action.casefold()
+        action_fields = normalized_action.split()
+        if len(action_fields) > 1 and action_fields[1] != "in":
+            continue
         is_block = normalized_action.startswith("deny") or normalized_action.startswith("reject")
         is_allow = normalized_action.startswith("allow")
         if not exact_target and not global_target:

@@ -3,7 +3,7 @@ import binascii
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal
 
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_public_key_validation import (
     validate_ecdsa_public_point,
@@ -95,7 +95,7 @@ def _parse_public_key_record(line: str, source: str, line_number: int) -> Public
     key_type_text, encoded_key = parts[0:2]
     if key_type_text not in SUPPORTED_KEY_TYPES:
         raise ValueError(f"{source}, line {line_number} uses unsupported SSH key type {key_type_text!r}.")
-    key_type = cast(PublicKeyType, key_type_text)
+    key_type = key_type_text
     try:
         padding = "=" * (-len(encoded_key) % 4)
         payload = base64.b64decode(encoded_key + padding, validate=True)
