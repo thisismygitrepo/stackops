@@ -4,6 +4,7 @@ from pathlib import Path
 import shlex
 
 from stackops.utils.ssh_utils.open_ssh_config import SSHConfigLookup, select_existing_identity_file
+from stackops.utils.ssh_utils.open_ssh_command import parse_open_ssh_destination
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,13 +15,6 @@ class SSHConnectionTarget:
     port: int
     ssh_key_path: str | None
     proxy_command: str | None
-
-
-@dataclass(frozen=True, slots=True)
-class _ParsedSSHHost:
-    hostname: str
-    username: str | None
-    port: int | None
 
 
 def resolve_ssh_connection_target(
@@ -40,7 +34,7 @@ def resolve_ssh_connection_target(
             host=None, hostname=hostname, username=username, port=validated_default_port, ssh_key_path=ssh_key_path, proxy_command=None
         )
 
-    parsed_host = _parse_ssh_host(host=host)
+    parsed_host = parse_open_ssh_destination(destination=host)
     requested_username = parsed_host.username or username
     config_options = ssh_config_lookup(parsed_host.hostname, requested_username, parsed_host.port)
     configured_hostname = _optional_config_text(config_options=config_options, key="hostname")
@@ -69,39 +63,6 @@ def resolve_ssh_connection_target(
         ssh_key_path=ssh_key_path if ssh_key_path is not None else configured_identity_file,
         proxy_command=proxy_command,
     )
-
-
-def _parse_ssh_host(host: str) -> _ParsedSSHHost:
-    if not host:
-        raise ValueError("SSH host must not be empty.")
-
-    inline_username, username_separator, address = host.rpartition("@")
-    if not username_separator:
-        inline_username = ""
-        address = host
-    elif not inline_username or not address:
-        raise ValueError(f"Invalid SSH destination: {host!r}.")
-
-    inline_port: int | None = None
-    if address.startswith("["):
-        closing_bracket = address.find("]")
-        if closing_bracket == -1:
-            raise ValueError(f"Invalid bracketed SSH hostname: {address!r}.")
-        parsed_hostname = address[1:closing_bracket]
-        port_suffix = address[closing_bracket + 1 :]
-        if port_suffix:
-            if not port_suffix.startswith(":"):
-                raise ValueError(f"Invalid bracketed SSH destination: {address!r}.")
-            inline_port = _parse_port(port_text=port_suffix[1:], source=host)
-    elif address.count(":") == 1:
-        parsed_hostname, port_text = address.rsplit(":", maxsplit=1)
-        inline_port = _parse_port(port_text=port_text, source=host)
-    else:
-        parsed_hostname = address
-
-    if not parsed_hostname:
-        raise ValueError(f"SSH hostname must not be empty: {host!r}.")
-    return _ParsedSSHHost(hostname=parsed_hostname, username=inline_username or None, port=inline_port)
 
 
 def _optional_config_text(config_options: Mapping[str, object], key: str) -> str | None:
@@ -150,7 +111,7 @@ def _resolve_proxy_command(
     jump_hosts = expanded_proxy_jump.split(",")
     if any(not jump_host for jump_host in jump_hosts):
         raise ValueError(f"Invalid ProxyJump value: {proxy_jump!r}.")
-    final_jump = _parse_ssh_host(host=jump_hosts[-1])
+    final_jump = parse_open_ssh_destination(destination=jump_hosts[-1])
     command = ["ssh", "-T"]
     if len(jump_hosts) > 1:
         command.extend(["-J", ",".join(jump_hosts[:-1])])

@@ -1,23 +1,67 @@
+import os
 from pathlib import Path
+import re
 import subprocess
 
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_public_keys import PublicKeyRecord, update_authorized_keys
 
-def add_ssh_key_windows(path_to_key: Path) -> None:
-    sshd_dir = Path("C:/ProgramData/ssh")
-    admin_auth_keys = sshd_dir / "administrators_authorized_keys"
-    sshd_config = sshd_dir / "sshd_config"
-    key_content = path_to_key.read_text(encoding="utf-8").strip()
-    if admin_auth_keys.exists():
-        existing = admin_auth_keys.read_text(encoding="utf-8")
-        if not existing.endswith("\n"):
-            existing += "\n"
-        admin_auth_keys.write_text(existing + key_content + "\n", encoding="utf-8")
+
+ADMINISTRATORS_SID = "S-1-5-32-544"
+SYSTEM_SID = "S-1-5-18"
+ELEVATED_INTEGRITY_SIDS: frozenset[str] = frozenset({"S-1-16-12288", "S-1-16-16384"})
+SID_PATTERN = re.compile(r"\bS-\d+(?:-\d+)+\b", flags=re.IGNORECASE)
+
+
+def add_ssh_key_windows(records: list[PublicKeyRecord]) -> tuple[Path, int]:
+    group_sids = _read_whoami_sids(arguments=("/groups", "/fo", "csv", "/nh"))
+    is_administrator = ADMINISTRATORS_SID in group_sids
+    if is_administrator:
+        if group_sids.isdisjoint(ELEVATED_INTEGRITY_SIDS):
+            raise PermissionError("Administrator accounts must run this command elevated to update ProgramData SSH authorization.")
+        authorized_keys = Path("C:/ProgramData/ssh/administrators_authorized_keys")
+        authorized_keys.parent.mkdir(parents=True, exist_ok=True)
+        authorized_keys.touch(exist_ok=True)
+        _apply_file_acl(path=authorized_keys, trustee_sids=(ADMINISTRATORS_SID, SYSTEM_SID))
     else:
-        admin_auth_keys.write_text(key_content + "\n", encoding="utf-8")
-    icacls_cmd = f'icacls "{admin_auth_keys}" /inheritance:r /grant "Administrators:F" /grant "SYSTEM:F"'
-    subprocess.run(icacls_cmd, shell=True, check=True)
-    if sshd_config.exists():
-        config_text = sshd_config.read_text(encoding="utf-8")
-        config_text = config_text.replace("#PubkeyAuthentication", "PubkeyAuthentication")
-        sshd_config.write_text(config_text, encoding="utf-8")
-    subprocess.run("Restart-Service sshd -Force", shell=True, check=True)
+        user_profile = os.environ.get("USERPROFILE")
+        if user_profile is None or user_profile == "":
+            raise RuntimeError("USERPROFILE is unavailable; the standard-user SSH authorization path cannot be resolved.")
+        user_sids = _read_whoami_sids(arguments=("/user", "/fo", "csv", "/nh"))
+        if len(user_sids) != 1:
+            raise RuntimeError("Unable to determine the current Windows account SID.")
+        user_sid = next(iter(user_sids))
+        ssh_directory = Path(user_profile).joinpath(".ssh")
+        authorized_keys = ssh_directory.joinpath("authorized_keys")
+        ssh_directory.mkdir(parents=True, exist_ok=True)
+        authorized_keys.touch(exist_ok=True)
+        _apply_directory_acl(path=ssh_directory, trustee_sids=(user_sid, SYSTEM_SID, ADMINISTRATORS_SID))
+        _apply_file_acl(path=authorized_keys, trustee_sids=(user_sid, SYSTEM_SID, ADMINISTRATORS_SID))
+
+    added_count = update_authorized_keys(path=authorized_keys, records=records)
+    return authorized_keys, added_count
+
+
+def _read_whoami_sids(arguments: tuple[str, ...]) -> set[str]:
+    completed_process: subprocess.CompletedProcess[str] = subprocess.run(
+        ["whoami.exe", *arguments],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return {match.upper() for match in SID_PATTERN.findall(completed_process.stdout)}
+
+
+def _apply_file_acl(path: Path, trustee_sids: tuple[str, ...]) -> None:
+    grants = [f"*{trustee_sid}:F" for trustee_sid in trustee_sids]
+    subprocess.run(
+        ["icacls.exe", str(path), "/inheritance:r", "/grant:r", *grants],
+        check=True,
+    )
+
+
+def _apply_directory_acl(path: Path, trustee_sids: tuple[str, ...]) -> None:
+    grants = [f"*{trustee_sid}:(OI)(CI)F" for trustee_sid in trustee_sids]
+    subprocess.run(
+        ["icacls.exe", str(path), "/inheritance:r", "/grant:r", *grants],
+        check=True,
+    )

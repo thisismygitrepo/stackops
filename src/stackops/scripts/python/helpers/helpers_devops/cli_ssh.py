@@ -1,13 +1,12 @@
-import shlex
 from typing import Annotated
 
 import typer
 
-from stackops.utils.installer_utils.linux_package_manager import (
-    LinuxDistribution,
-    build_package_install_command,
-    detect_current_linux_distribution,
-    get_openssh_server_package,
+from stackops.utils.installer_utils.linux_package_manager import detect_current_linux_distribution
+from stackops.utils.ssh_utils.server_install import (
+    build_linux_ssh_server_install_script as _get_linux_ssh_server_install_script,
+    build_macos_ssh_server_install_script as _get_macos_ssh_server_install_script,
+    build_windows_ssh_server_install_script as _get_windows_ssh_server_install_script,
 )
 
 
@@ -23,19 +22,25 @@ def install_ssh_server() -> None:
 
     system = platform.system()
     if system == "Windows":
-        script = _get_windows_ssh_server_install_script(use_winget=True)
+        script = _get_windows_ssh_server_install_script()
+        from stackops.utils.code import run_shell_script
+
+        result = run_shell_script(script=script, display_script=True, clean_env=False)
     elif system == "Linux":
         distribution = detect_current_linux_distribution()
         print(f"🐧 Installing OpenSSH server on {distribution.distribution_id} using {distribution.package_manager}.")
         script = _get_linux_ssh_server_install_script(distribution)
+        import subprocess
+
+        result = subprocess.run(("/bin/sh", "-s"), input=script, text=True, check=False)
     elif system == "Darwin":
         script = _get_macos_ssh_server_install_script()
+        import subprocess
+
+        result = subprocess.run(("/bin/sh", "-s"), input=script, text=True, check=False)
     else:
         print(f"❌ Error: Platform {system} is not supported.")
         raise typer.Exit(code=1)
-    from stackops.utils.code import run_shell_script
-
-    result = run_shell_script(script=script, display_script=True, clean_env=False)
     if result.returncode != 0:
         raise RuntimeError(f"SSH server installation failed with exit code {result.returncode}")
 
@@ -50,112 +55,6 @@ def change_ssh_port(port: Annotated[int, typer.Option("--port", "-p", help="SSH 
     from stackops.utils.ssh_utils.wsl import change_ssh_port as _change_ssh_port
 
     _change_ssh_port(port=port)
-
-
-def _get_linux_ssh_server_install_script(distribution: LinuxDistribution) -> str:
-    openssh_package = get_openssh_server_package(distribution.package_manager)
-    install_command = build_package_install_command(distribution.package_manager, (openssh_package,))
-    return "\n".join(
-        ("#!/usr/bin/env bash", "set -euo pipefail", shlex.join(("sudo", *install_command)), f'echo "✅ FINISHED installing {openssh_package}."', "")
-    )
-
-
-def _get_macos_ssh_server_install_script() -> str:
-    return """
-set -eu
-sudo systemsetup -setremotelogin on
-echo "✅ FINISHED enabling SSH server."
-"""
-
-
-def _get_windows_ssh_server_install_script(use_winget: bool) -> str:
-    install_winget = r"""
-    Write-Host "Installing OpenSSH via winget..." -ForegroundColor Cyan
-    winget install --no-upgrade --Id Microsoft.OpenSSH.Preview --source winget --accept-package-agreements --accept-source-agreements
-    $wingetSshPath = "C:\Program Files\OpenSSH"
-    $currentMachinePath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
-    if ($currentMachinePath -notlike "*$wingetSshPath*") {
-        Write-Host "Adding OpenSSH to system PATH..." -ForegroundColor Yellow
-        [System.Environment]::SetEnvironmentVariable("Path", "$currentMachinePath;$wingetSshPath", "Machine")
-    }
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-"""
-    install_capability = r"""
-    Write-Host "Installing OpenSSH via Windows Capability..." -ForegroundColor Cyan
-    Add-WindowsCapability -Online -Name OpenSSH.Server
-    Add-WindowsCapability -Online -Name OpenSSH.Client
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-"""
-    configure_sshd_service = r"""
-    $serviceExists = Get-Service -Name sshd -ErrorAction SilentlyContinue
-    if (-not $serviceExists) {
-        Write-Host "sshd service not found, registering manually..." -ForegroundColor Yellow
-        sc.exe create sshd binPath= "$sshdExePath" start= auto
-        if ($LASTEXITCODE -ne 0) { throw "Failed to create sshd service" }
-    }
-    Set-Service -Name sshd -StartupType Automatic
-    Start-Service sshd
-    Write-Host "sshd service started successfully." -ForegroundColor Green
-"""
-    configure_firewall = r"""
-    $existingRule = Get-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -ErrorAction SilentlyContinue
-    if (-not $existingRule) {
-        Write-Host "Creating firewall rule for SSH..." -ForegroundColor Yellow
-        New-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -DisplayName "OpenSSH SSH Server" -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 -Program $sshdExePath
-    } else {
-        Write-Host "Firewall rule already exists." -ForegroundColor Green
-    }
-"""
-    configure_default_shell = r"""
-    Write-Host "Configuring default shell for SSH..." -ForegroundColor Cyan
-    $shell = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-    if (-not (Test-Path "HKLM:\SOFTWARE\OpenSSH")) { New-Item -Path "HKLM:\SOFTWARE\OpenSSH" -Force | Out-Null }
-    New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value $shell -PropertyType String -Force | Out-Null
-    New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShellCommandOption -Value "/c" -PropertyType String -Force | Out-Null
-    Write-Host "Default shell set to: $shell" -ForegroundColor Green
-"""
-    configure_ssh_agent = r"""
-    Write-Host "Configuring ssh-agent service..." -ForegroundColor Cyan
-    $agentService = Get-Service -Name ssh-agent -ErrorAction SilentlyContinue
-    if ($agentService) {
-        Set-Service -Name ssh-agent -StartupType Automatic
-        Start-Service ssh-agent -ErrorAction SilentlyContinue
-        Write-Host "ssh-agent service configured and started." -ForegroundColor Green
-    } else {
-        Write-Host "ssh-agent service not available." -ForegroundColor Yellow
-    }
-"""
-    ensure_ssh_directory = r"""
-    $sshDir = Join-Path $env:USERPROFILE ".ssh"
-    if (-not (Test-Path $sshDir)) {
-        New-Item -ItemType Directory -Path $sshDir -Force | Out-Null
-        Write-Host "Created .ssh directory at: $sshDir" -ForegroundColor Green
-    }
-"""
-    if use_winget:
-        install_method = install_winget
-        sshd_exe_path = r"C:\Program Files\OpenSSH\sshd.exe"
-    else:
-        install_method = install_capability
-        sshd_exe_path = r"$env:WINDIR\System32\OpenSSH\sshd.exe"
-    return rf'''
-$ErrorActionPreference = "Stop"
-try {{ Set-ExecutionPolicy -Scope CurrentUser Bypass -ErrorAction SilentlyContinue }} catch {{ }}
-Write-Host "========================================" -ForegroundColor Magenta
-Write-Host "OpenSSH Server Installation for Windows" -ForegroundColor Magenta
-Write-Host "========================================" -ForegroundColor Magenta
-{install_method}
-$sshdExePath = "{sshd_exe_path}"
-{configure_sshd_service}
-{configure_firewall}
-{configure_default_shell}
-{configure_ssh_agent}
-{ensure_ssh_directory}
-Write-Host "========================================" -ForegroundColor Magenta
-Write-Host "OpenSSH Server installation complete!" -ForegroundColor Green
-Write-Host "SSH config directory: $env:ProgramData\ssh" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Magenta
-'''
 
 
 def add_ssh_key(
@@ -195,16 +94,23 @@ def debug_ssh() -> None:
     """🐛 Debug SSH connection"""
     from platform import system
 
-    if system() == "Linux" or system() == "Darwin":
+    current_system = system()
+    if current_system == "Linux":
         import stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux
 
-        ssh_debug_linux.ssh_debug_linux()
-    elif system() == "Windows":
+        result = ssh_debug_linux.ssh_debug_linux()
+    elif current_system == "Darwin":
+        from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin import ssh_debug_darwin
+
+        result = ssh_debug_darwin()
+    elif current_system == "Windows":
         from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows import ssh_debug_windows
 
-        ssh_debug_windows()
+        result = ssh_debug_windows()
     else:
-        print(f"❌ Error: Platform {system()} is not supported.")
+        print(f"❌ Error: Platform {current_system} is not supported.")
+        raise typer.Exit(code=1)
+    if result.summary.has_errors:
         raise typer.Exit(code=1)
 
 

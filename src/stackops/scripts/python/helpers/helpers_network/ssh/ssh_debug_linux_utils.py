@@ -1,73 +1,219 @@
-import shlex
-import subprocess
-from dataclasses import dataclass
+import ipaddress
+import os
+import re
+import shutil
 from pathlib import Path
-from typing import assert_never
 
-from stackops.utils.installer_utils.linux_package_manager import (
-    LinuxPackageManager,
-    build_metadata_refresh_command,
-    build_package_install_command,
-    detect_current_linux_distribution,
-    get_openssh_server_package,
-)
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import run_argv
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import SSHDebugCheck
 
 
-@dataclass(frozen=True, slots=True)
-class SshServiceCommands:
-    status: tuple[str, ...]
-    enable_and_start: str
-    restart: str
+def find_linux_sshd() -> Path | None:
+    candidates = (Path("/usr/sbin/sshd"), Path("/usr/bin/sshd"), Path("/sbin/sshd"))
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate
+    discovered = shutil.which("sshd")
+    if discovered is not None:
+        path = Path(discovered)
+        if path.is_file() and os.access(path, os.X_OK):
+            return path
+    return None
 
 
-def run_cmd(cmd: list[str]) -> tuple[bool, str]:
+def check_linux_service() -> SSHDebugCheck:
+    inactive_units: list[str] = []
+    probe_failures: list[str] = []
+    for unit in ("ssh.service", "sshd.service", "ssh.socket", "sshd.socket"):
+        completed = run_argv(("systemctl", "show", unit, "--property=LoadState", "--property=ActiveState"))
+        if completed.returncode is None:
+            probe_failures.append(completed.failure or "systemctl could not be run")
+            break
+        if completed.returncode != 0:
+            probe_failures.append(completed.stderr or completed.stdout or f"systemctl failed for {unit}")
+            continue
+        properties: dict[str, str] = {}
+        for line in completed.stdout.splitlines():
+            name, separator, value = line.partition("=")
+            if separator:
+                properties[name] = value
+        load_state = properties.get("LoadState")
+        active_state = properties.get("ActiveState")
+        if load_state == "loaded" and active_state == "active":
+            return SSHDebugCheck(
+                identifier="ssh_service",
+                group="service",
+                label="SSH service",
+                status="ok",
+                message=f"{unit} is loaded and active",
+                command_suggestions=(),
+                manual_advice=(),
+            )
+        if load_state == "loaded":
+            inactive_units.append(f"{unit} ({active_state or 'state unknown'})")
+    if inactive_units:
+        unit_name = inactive_units[0].split()[0]
+        return SSHDebugCheck(
+            identifier="ssh_service",
+            group="service",
+            label="SSH service",
+            status="error",
+            message=f"Loaded SSH service is not active: {', '.join(inactive_units)}",
+            command_suggestions=(f"sudo systemctl start {unit_name}",),
+            manual_advice=("Review the service journal before changing its startup configuration.",),
+        )
+    return SSHDebugCheck(
+        identifier="ssh_service",
+        group="service",
+        label="SSH service",
+        status="unknown",
+        message="No loaded ssh/sshd systemd unit could be verified"
+        + (f" ({'; '.join(probe_failures)})" if probe_failures else ""),
+        command_suggestions=(),
+        manual_advice=("Inspect the SSH service with the init system used by this host.",),
+    )
+
+
+def _parse_ss_endpoint(endpoint: str) -> tuple[str, int] | None:
+    address, separator, port_text = endpoint.rpartition(":")
+    if not separator or not port_text.isdecimal():
+        return None
+    normalized_address = address.removeprefix("[").removesuffix("]")
+    return normalized_address, int(port_text)
+
+
+def _is_external_address(address: str) -> bool | None:
+    if address in ("*", "0.0.0.0", "::"):
+        return True
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-        return result.returncode == 0, result.stdout.strip()
-    except FileNotFoundError:
-        return False, ""
+        parsed = ipaddress.ip_address(address.split("%", maxsplit=1)[0])
+    except ValueError:
+        return None
+    return not parsed.is_loopback
 
 
-def check_sshd_installed() -> tuple[bool, str]:
-    sshd_paths = ["/usr/sbin/sshd", "/usr/bin/sshd", "/sbin/sshd"]
-    for path in sshd_paths:
-        if Path(path).exists():
-            return True, path
-    ok, which_out = run_cmd(["which", "sshd"])
-    if ok and which_out:
-        return True, which_out
-    return False, ""
+def _active_systemd_ssh_socket() -> bool | None:
+    query_failed = False
+    for unit in ("ssh.socket", "sshd.socket"):
+        completed = run_argv(("systemctl", "show", unit, "--property=LoadState", "--property=ActiveState"))
+        if completed.returncode != 0:
+            query_failed = True
+            continue
+        properties = dict(line.partition("=")[::2] for line in completed.stdout.splitlines() if "=" in line)
+        if properties.get("LoadState") == "loaded" and properties.get("ActiveState") == "active":
+            return True
+    return None if query_failed else False
 
 
-def detect_package_manager() -> tuple[LinuxPackageManager, str]:
-    package_manager = detect_current_linux_distribution().package_manager
-    openssh_package = get_openssh_server_package(package_manager)
-    install_command = shlex.join(("sudo", *build_package_install_command(package_manager, (openssh_package,))))
-    match package_manager:
-        case "apk":
-            return package_manager, install_command
-        case "apt":
-            refresh_command = shlex.join(("sudo", *build_metadata_refresh_command(package_manager)))
-            return package_manager, f"{refresh_command} && {install_command}"
-        case "dnf":
-            return package_manager, install_command
-        case "pacman":
-            return package_manager, install_command
-    assert_never(package_manager)
+def _listener_owner(process_text: str, systemd_socket_active: bool | None) -> tuple[bool | None, tuple[str, ...]]:
+    owner_names = tuple(re.findall(r'\("([^"]+)"', process_text))
+    if not owner_names:
+        return None, ()
+    if "sshd" in owner_names:
+        return True, owner_names
+    if "systemd" in owner_names:
+        return systemd_socket_active, owner_names
+    return False, owner_names
 
 
-def get_ssh_service_commands(package_manager: LinuxPackageManager, service_name: str) -> SshServiceCommands:
-    match package_manager:
-        case "apk":
-            return SshServiceCommands(
-                status=("rc-service", service_name, "status"),
-                enable_and_start=f"sudo rc-update add {service_name} default && sudo rc-service {service_name} start",
-                restart=f"sudo rc-service {service_name} restart",
-            )
-        case "apt" | "dnf" | "pacman":
-            return SshServiceCommands(
-                status=("systemctl", "is-active", service_name),
-                enable_and_start=f"sudo systemctl enable --now {service_name}",
-                restart=f"sudo systemctl restart {service_name}",
-            )
-    assert_never(package_manager)
+def check_linux_listeners(ports: tuple[int, ...]) -> SSHDebugCheck:
+    completed = run_argv(("ss", "-H", "-ltnp"))
+    if completed.returncode != 0:
+        detail = completed.stderr or completed.stdout or completed.failure or "unknown command failure"
+        return SSHDebugCheck(
+            identifier="ssh_listener",
+            group="network",
+            label="TCP listener",
+            status="unknown",
+            message=f"Could not inspect listening sockets with ss: {detail}",
+            command_suggestions=(),
+            manual_advice=("Inspect listening TCP endpoints and compare their exact ports with sshd -T.",),
+        )
+
+    systemd_socket_active = _active_systemd_ssh_socket()
+    endpoints: dict[int, list[tuple[str, bool | None, tuple[str, ...]]]] = {port: [] for port in ports}
+    for line in completed.stdout.splitlines():
+        fields = line.split()
+        if len(fields) < 4 or fields[0] != "LISTEN":
+            continue
+        parsed_endpoint = _parse_ss_endpoint(fields[3])
+        if parsed_endpoint is None:
+            continue
+        address, port = parsed_endpoint
+        if port in endpoints:
+            owned_by_ssh, owner_names = _listener_owner(" ".join(fields[5:]), systemd_socket_active)
+            endpoints[port].append((address, owned_by_ssh, owner_names))
+    missing_ports = [port for port, records in endpoints.items() if not records]
+    if missing_ports:
+        return SSHDebugCheck(
+            identifier="ssh_listener",
+            group="network",
+            label="TCP listener",
+            status="error",
+            message=f"No exact listening endpoint for TCP port(s) {', '.join(map(str, missing_ports))}",
+            command_suggestions=(),
+            manual_advice=("Review the SSH service state and effective ListenAddress settings.",),
+        )
+    uncertain_address_ports: list[int] = []
+    uncertain_owner_ports: list[int] = []
+    localhost_ports: list[int] = []
+    wrong_owners: dict[int, tuple[str, ...]] = {}
+    for port, records in endpoints.items():
+        external_records = [record for record in records if _is_external_address(record[0]) is True]
+        if not external_records:
+            if any(_is_external_address(record[0]) is None for record in records):
+                uncertain_address_ports.append(port)
+            else:
+                localhost_ports.append(port)
+            continue
+        if any(owned_by_ssh is True for _address, owned_by_ssh, _owners in external_records):
+            continue
+        if any(owned_by_ssh is None for _address, owned_by_ssh, _owners in external_records):
+            uncertain_owner_ports.append(port)
+            continue
+        wrong_owners[port] = tuple(
+            dict.fromkeys(owner for _address, _owned_by_ssh, owners in external_records for owner in owners)
+        )
+    if localhost_ports:
+        return SSHDebugCheck(
+            identifier="ssh_listener",
+            group="network",
+            label="TCP listener",
+            status="error",
+            message=f"TCP port(s) {', '.join(map(str, localhost_ports))} listen only on loopback addresses",
+            command_suggestions=(),
+            manual_advice=("Review effective ListenAddress settings with sshd -T.",),
+        )
+    if wrong_owners:
+        details = ", ".join(f"{port}: {owners}" for port, owners in wrong_owners.items())
+        return SSHDebugCheck(
+            identifier="ssh_listener",
+            group="network",
+            label="TCP listener",
+            status="error",
+            message=f"Effective SSH port(s) are owned by non-SSH processes ({details})",
+            command_suggestions=(),
+            manual_advice=("Stop or reconfigure the conflicting process before starting sshd.",),
+        )
+    if uncertain_address_ports or uncertain_owner_ports:
+        return SSHDebugCheck(
+            identifier="ssh_listener",
+            group="network",
+            label="TCP listener",
+            status="unknown",
+            message=(
+                f"Listener address unknown for port(s) {uncertain_address_ports}; "
+                f"sshd/systemd ownership unknown for port(s) {uncertain_owner_ports}"
+            ),
+            command_suggestions=(),
+            manual_advice=("Inspect the raw ss -H -ltnp output and process ownership.",),
+        )
+    return SSHDebugCheck(
+        identifier="ssh_listener",
+        group="network",
+        label="TCP listener",
+        status="ok",
+        message=f"sshd/systemd owns exact non-loopback listener(s) for TCP port(s) {', '.join(map(str, ports))}",
+        command_suggestions=(),
+        manual_advice=(),
+    )
