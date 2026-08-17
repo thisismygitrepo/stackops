@@ -210,16 +210,38 @@ def run_interactive(
         bool,
         typer.Option(..., "--headroom", "-h", help="Launch the session through headroom."),
     ] = False,
+    followup: Annotated[
+        bool,
+        typer.Option(..., "--followup", "-f", help="Choose a session recorded in Second Brain update.csv files."),
+    ] = False,
+    fork: Annotated[
+        bool,
+        typer.Option(..., "--fork", "-F", help="Fork the selected follow-up into a new session instead of resuming it."),
+    ] = False,
 ) -> None:
     """Launch an agent with reasonable defaults."""
     import shlex
 
-    resolved_agent = _resolve_interactive_agent(agent=agent)
     try:
-        with _agent_working_directory(second_brain=second_brain) as working_directory:
-            command = _apply_headroom(
-                command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom
-            )
+        if fork and not followup:
+            raise ValueError("--fork requires --followup.")
+
+        with _agent_working_directory(second_brain=second_brain or followup) as working_directory:
+            if followup:
+                from stackops.scripts.python.agents_followup import build_followup_command, choose_followup_session
+
+                selected_session = choose_followup_session(second_brain_root=cast(Path, working_directory))
+                resolved_agent = selected_session.agent
+                command = build_followup_command(
+                    session=selected_session,
+                    action="fork" if fork else "resume",
+                    initial_prompt=_CAVEMAN_INITIAL_PROMPT if caveman else None,
+                )
+            else:
+                resolved_agent = _resolve_interactive_agent(agent=agent)
+                command = _interactive_agent_command(agent=resolved_agent, caveman=caveman)
+
+            command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)
             script = shlex.join(command)
             if working_directory is not None:
                 from stackops.scripts.python.helpers.helpers_agents.agents_shell import render_command_in_directory
