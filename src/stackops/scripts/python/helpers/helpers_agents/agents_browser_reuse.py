@@ -99,10 +99,10 @@ def reuse_browser_launch_if_active(
             repaired_relay=repaired_relay,
         )
 
-    running_profile_processes = (
-        () if profile_path is None else find_running_browser_processes(browser=browser, profile_path=profile_path)
-    )
-    for running_process in running_profile_processes:
+    if profile_path is None:
+        return None
+
+    for running_process in find_running_browser_processes(browser=browser, profile_path=profile_path):
         if not lan and running_process.browser_port == port and tcp_port_is_open(host=REMOTE_DEBUGGING_LOCALHOST, port=port):
             details = build_browser_launch_details(
                 browser=browser,

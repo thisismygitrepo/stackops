@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stackops"
-version = "26.8"
+version = "26.8.1"
 description = "Developer Stack Manager"
 readme = "README.md"
 license = {text = "Apache 2.0"}
@@ -99,6 +99,7 @@ dev = [
     "numpy>=2.5.0",
     "pandas>=3.0.3",
     "paramiko>=5.0.0",
+    "playwright>=1.62.0",
     "plotly>=6.8.0",
     "polars>=1.42.0",
     "pre-commit>=4.6.0",
