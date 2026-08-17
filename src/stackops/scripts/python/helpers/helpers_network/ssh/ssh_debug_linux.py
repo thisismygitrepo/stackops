@@ -144,8 +144,14 @@ def ssh_debug_linux(connection_context: SSHDConnectionContext | None) -> SSHDebu
             )
         )
     else:
-        checks.append(check_linux_listeners(configuration.ports))
-        checks.append(check_linux_firewall(configuration.ports))
+        listener_assessment = check_linux_listeners(configuration.ports)
+        checks.append(listener_assessment.check)
+        checks.append(
+            check_linux_firewall(
+                ports=configuration.ports,
+                listener_families_by_port=listener_assessment.families_by_port,
+            )
+        )
 
     result = build_debug_result(checks)
     render_debug_result(result=result, console=Console())

@@ -1,3 +1,4 @@
+import base64
 import os
 from pathlib import Path
 import re
@@ -25,8 +26,8 @@ def add_ssh_key_windows(records: list[PublicKeyRecord]) -> tuple[Path, int]:
         authorized_keys = ssh_directory.joinpath("administrators_authorized_keys")
         ssh_directory.mkdir(parents=True, exist_ok=True)
         authorized_keys.touch(exist_ok=True)
-        _replace_acl(path=ssh_directory, trustee_sids=(ADMINISTRATORS_SID, SYSTEM_SID), owner_sid=ADMINISTRATORS_SID, directory=True)
-        _replace_acl(path=authorized_keys, trustee_sids=(ADMINISTRATORS_SID, SYSTEM_SID), owner_sid=ADMINISTRATORS_SID, directory=False)
+        authorization_trustees = (ADMINISTRATORS_SID, SYSTEM_SID)
+        authorization_owner = ADMINISTRATORS_SID
     else:
         user_profile = os.environ.get("USERPROFILE")
         if user_profile is None or user_profile == "":
@@ -39,20 +40,13 @@ def add_ssh_key_windows(records: list[PublicKeyRecord]) -> tuple[Path, int]:
         authorized_keys = ssh_directory.joinpath("authorized_keys")
         ssh_directory.mkdir(parents=True, exist_ok=True)
         authorized_keys.touch(exist_ok=True)
-        trustee_sids = (user_sid, SYSTEM_SID, ADMINISTRATORS_SID)
-        _replace_acl(path=ssh_directory, trustee_sids=trustee_sids, owner_sid=user_sid, directory=True)
-        _replace_acl(path=authorized_keys, trustee_sids=trustee_sids, owner_sid=user_sid, directory=False)
+        authorization_trustees = (user_sid, SYSTEM_SID, ADMINISTRATORS_SID)
+        authorization_owner = user_sid
 
+    _replace_acl(path=ssh_directory, trustee_sids=authorization_trustees, owner_sid=authorization_owner, directory=True)
+    _replace_acl(path=authorized_keys, trustee_sids=authorization_trustees, owner_sid=authorization_owner, directory=False)
     added_count = update_authorized_keys(path=authorized_keys, records=records)
-    if is_administrator:
-        _replace_acl(
-            path=authorized_keys,
-            trustee_sids=(ADMINISTRATORS_SID, SYSTEM_SID),
-            owner_sid=ADMINISTRATORS_SID,
-            directory=False,
-        )
-    else:
-        _replace_acl(path=authorized_keys, trustee_sids=trustee_sids, owner_sid=user_sid, directory=False)
+    _replace_acl(path=authorized_keys, trustee_sids=authorization_trustees, owner_sid=authorization_owner, directory=False)
     return authorized_keys, added_count
 
 
@@ -67,13 +61,50 @@ def _read_whoami_sids(arguments: tuple[str, ...]) -> set[str]:
 
 
 def _replace_acl(path: Path, trustee_sids: tuple[str, ...], owner_sid: str, directory: bool) -> None:
-    icacls = str(_windows_system_executable(name="icacls.exe"))
-    subprocess.run([icacls, str(path), "/reset"], check=True)
-    subprocess.run([icacls, str(path), "/inheritance:r"], check=True)
-    permission = "(OI)(CI)F" if directory else "F"
-    grants = [f"*{trustee_sid}:{permission}" for trustee_sid in trustee_sids]
-    subprocess.run([icacls, str(path), "/grant:r", *grants], check=True)
-    subprocess.run([icacls, str(path), "/setowner", f"*{owner_sid}"], check=True)
+    encoded_path = base64.b64encode(str(path).encode("utf-8")).decode("ascii")
+    trustee_values = ", ".join(f'"{trustee_sid}"' for trustee_sid in trustee_sids)
+    directory_literal = "$true" if directory else "$false"
+    script = f"""$ErrorActionPreference = "Stop"
+$path = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{encoded_path}"))
+$trusteeSids = @({trustee_values})
+$ownerSid = "{owner_sid}"
+$directory = {directory_literal}
+$security = if ($directory) {{
+    [System.Security.AccessControl.DirectorySecurity]::new()
+}} else {{
+    [System.Security.AccessControl.FileSecurity]::new()
+}}
+$security.SetAccessRuleProtection($true, $false)
+$security.SetOwner([System.Security.Principal.SecurityIdentifier]::new($ownerSid))
+$inheritance = if ($directory) {{
+    [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit
+}} else {{
+    [System.Security.AccessControl.InheritanceFlags]::None
+}}
+foreach ($trusteeSid in $trusteeSids) {{
+    $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
+        [System.Security.Principal.SecurityIdentifier]::new($trusteeSid),
+        [System.Security.AccessControl.FileSystemRights]::FullControl,
+        $inheritance,
+        [System.Security.AccessControl.PropagationFlags]::None,
+        [System.Security.AccessControl.AccessControlType]::Allow
+    )
+    [void]$security.AddAccessRule($rule)
+}}
+Set-Acl -LiteralPath $path -AclObject $security
+"""
+    encoded_script = base64.b64encode(script.encode("utf-16-le")).decode("ascii")
+    subprocess.run(
+        [
+            str(_windows_system_executable(name="WindowsPowerShell/v1.0/powershell.exe")),
+            "-NoLogo",
+            "-NoProfile",
+            "-NonInteractive",
+            "-EncodedCommand",
+            encoded_script,
+        ],
+        check=True,
+    )
 
 
 def _windows_system_executable(name: str) -> Path:

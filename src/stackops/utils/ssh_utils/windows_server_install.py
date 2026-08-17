@@ -58,22 +58,8 @@ New-NetFirewallRule `
     -Direction Inbound `
     -Action Allow `
     -EdgeTraversalPolicy Block `
-    -LooseSourceMapping $false `
-    -LocalOnlyMapping $false `
-    -LocalAddress Any `
-    -RemoteAddress Any `
     -Protocol TCP `
-    -LocalPort 22 `
-    -RemotePort Any `
-    -IcmpType Any `
-    -DynamicTarget Any `
-    -Program Any `
-    -Service Any `
-    -InterfaceAlias Any `
-    -InterfaceType Any `
-    -Authentication NotRequired `
-    -Encryption NotRequired `
-    -OverrideBlockRules $false | Out-Null
+    -LocalPort 22 | Out-Null
 
 function Get-SingleFirewallFilter {
     param([object[]]$Filters, [string]$Label)
@@ -88,13 +74,63 @@ function ConvertTo-JoinedString {
     return [string]::Join(",", @($Value))
 }
 
+function Test-FirewallPortIncludes {
+    param([object]$Ports, [int]$Port)
+    foreach ($portExpression in @($Ports)) {
+        $portText = [string]$portExpression
+        if ($portText -eq "Any" -or $portText -eq [string]$Port) {
+            return $true
+        }
+        if ($portText -match "^(\d+)-(\d+)$") {
+            if ([int]$Matches[1] -le $Port -and $Port -le [int]$Matches[2]) {
+                return $true
+            }
+        }
+    }
+    return $false
+}
+
+$effectiveProfiles = @(Get-NetFirewallProfile -PolicyStore ActiveStore -ErrorAction Stop)
+$effectiveProfileNames = @($effectiveProfiles.Name | Sort-Object)
+if (
+    $effectiveProfiles.Count -ne 3 -or
+    (ConvertTo-JoinedString $effectiveProfileNames) -ne "Domain,Private,Public"
+) {
+    throw "Effective firewall policy has $($effectiveProfiles.Count) profiles; expected Domain, Private, and Public."
+}
+$blockedProfiles = @(
+    $effectiveProfiles | Where-Object {
+        $_.Enabled.ToString() -ne "True" -or
+        $_.AllowInboundRules.ToString() -ne "True" -or
+        $_.AllowLocalFirewallRules.ToString() -ne "True"
+    }
+)
+if ($blockedProfiles.Count -gt 0) {
+    $blockedProfileStates = @(
+        $blockedProfiles | ForEach-Object {
+            "$($_.Name): Enabled=$($_.Enabled), AllowInboundRules=$($_.AllowInboundRules), AllowLocalFirewallRules=$($_.AllowLocalFirewallRules)"
+        }
+    )
+    throw "Effective firewall profile policy suppresses the local inbound SSH rule: $($blockedProfileStates -join '; ')."
+}
+
 $effectiveRules = @(
-    Get-NetFirewallRule -PolicyStore ActiveStore -Name $ruleName -ErrorAction Stop
+    Get-NetFirewallRule -PolicyStore ActiveStore -Name $ruleName -TracePolicyStore -ErrorAction Stop
 )
 if ($effectiveRules.Count -ne 1) {
     throw "Effective firewall policy has $($effectiveRules.Count) rules named $ruleName; expected exactly one."
 }
 $effectiveRule = $effectiveRules[0]
+$enforcementStatuses = @($effectiveRule.EnforcementStatus | ForEach-Object { [int]$_ })
+$unexpectedEnforcementStatuses = @(
+    $enforcementStatuses | Where-Object { $_ -ne 1 -and $_ -ne 5 }
+)
+if (
+    $enforcementStatuses -notcontains 1 -or
+    $unexpectedEnforcementStatuses.Count -gt 0
+) {
+    throw "Effective firewall rule $ruleName is not enforced: $($effectiveRule.EnforcementStatus -join ', ')."
+}
 $portFilter = Get-SingleFirewallFilter -Filters @($effectiveRule | Get-NetFirewallPortFilter) -Label "port"
 $applicationFilter = Get-SingleFirewallFilter -Filters @($effectiveRule | Get-NetFirewallApplicationFilter) -Label "application"
 $serviceFilter = Get-SingleFirewallFilter -Filters @($effectiveRule | Get-NetFirewallServiceFilter) -Label "service"
@@ -111,9 +147,12 @@ $ruleIsExact = (
     $effectiveRule.EdgeTraversalPolicy.ToString() -eq "Block" -and
     $effectiveRule.LooseSourceMapping -eq $false -and
     $effectiveRule.LocalOnlyMapping -eq $false -and
+    $effectiveRule.PolicyStoreSourceType.ToString() -eq "Local" -and
+    $effectiveRule.PolicyStoreSource -eq "PersistentStore" -and
     [string]::IsNullOrEmpty([string]$effectiveRule.Owner) -and
     (ConvertTo-JoinedString $effectiveRule.Platform) -eq "" -and
-    (ConvertTo-JoinedString $effectiveRule.RemoteDynamicKeywordAddresses) -eq ""
+    (ConvertTo-JoinedString $effectiveRule.RemoteDynamicKeywordAddresses) -eq "" -and
+    [string]::IsNullOrEmpty([string]$effectiveRule.PolicyAppId)
 )
 $portFilterIsExact = (
     $portFilter.Protocol.ToString() -eq "TCP" -and
@@ -153,6 +192,30 @@ if (-not (
     $securityFilterIsExact
 )) {
     throw "Effective firewall rule $ruleName is not the exact unrestricted inbound TCP port 22 rule."
+}
+
+$overlappingBlockRules = @(
+    Get-NetFirewallRule -PolicyStore ActiveStore -ErrorAction Stop |
+        Where-Object {
+            $_.Enabled.ToString() -eq "True" -and
+            $_.Direction.ToString() -eq "Inbound" -and
+            $_.Action.ToString() -eq "Block"
+        } |
+        Where-Object {
+            $blockPortFilters = @($_ | Get-NetFirewallPortFilter)
+            if ($blockPortFilters.Count -ne 1) {
+                throw "Effective block rule $($_.Name) has $($blockPortFilters.Count) port filters; expected exactly one."
+            }
+            $blockProtocol = $blockPortFilters[0].Protocol.ToString()
+            ($blockProtocol -eq "Any" -or $blockProtocol -eq "TCP" -or $blockProtocol -eq "6") -and
+            (Test-FirewallPortIncludes -Ports $blockPortFilters[0].LocalPort -Port 22)
+        }
+)
+if ($overlappingBlockRules.Count -gt 0) {
+    $blockRuleNames = @(
+        $overlappingBlockRules | ForEach-Object { "$($_.DisplayName) [$($_.Name)]" }
+    )
+    throw "Effective firewall policy contains inbound block rules that override TCP port 22: $($blockRuleNames -join '; ')."
 }
 
 Write-Host "OpenSSH Server is installed, automatic, running, and allowed on TCP port 22." -ForegroundColor Green

@@ -1,6 +1,6 @@
 import re
 
-from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import run_argv
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import ListenerAddressFamily, run_argv
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import SSHDebugCheck
 
 
@@ -10,13 +10,26 @@ UFW_RULE_PATTERN = re.compile(
 )
 
 
-def _check_ufw(ports: tuple[int, ...]) -> SSHDebugCheck | None:
+def _check_ufw(
+    ports: tuple[int, ...],
+    listener_families_by_port: dict[int, frozenset[ListenerAddressFamily]] | None,
+) -> SSHDebugCheck | None:
     completed = run_argv(("ufw", "status", "numbered"))
     if completed.returncode != 0:
         return None
     status_lines = [line.strip() for line in completed.stdout.splitlines() if line.strip().startswith("Status:")]
     if status_lines != ["Status: active"]:
         return None
+    if listener_families_by_port is None:
+        return SSHDebugCheck(
+            identifier="firewall",
+            group="firewall",
+            label="Inbound firewall",
+            status="unknown",
+            message="UFW is active but effective SSH listener address families could not be proved",
+            command_suggestions=(),
+            manual_advice=("Compare UFW IPv4/IPv6 rules with the effective ListenAddress values.",),
+        )
 
     parsed_rules: list[tuple[int, str, str, str, str]] = []
     for line in completed.stdout.splitlines():
@@ -33,7 +46,11 @@ def _check_ufw(ports: tuple[int, ...]) -> SSHDebugCheck | None:
             )
     unproved: list[str] = []
     for port in ports:
-        for family in ("ipv4", "ipv6"):
+        port_families = listener_families_by_port.get(port)
+        if not port_families:
+            unproved.append(f"unknown-family:{port}/tcp")
+            continue
+        for family in sorted(port_families):
             relevant: list[tuple[int, str, bool]] = []
             for number, target, action, source, rule_family in parsed_rules:
                 if rule_family != family:
@@ -78,7 +95,11 @@ def _check_ufw(ports: tuple[int, ...]) -> SSHDebugCheck | None:
         group="firewall",
         label="Inbound firewall",
         status="ok",
-        message=f"Active UFW has first-match IPv4 and IPv6 TCP allow rules for port(s) {', '.join(map(str, ports))}",
+        message=(
+            f"Active UFW has first-match TCP allow rules for listener family/families "
+            f"{', '.join(sorted({family for families in listener_families_by_port.values() for family in families}))} "
+            f"on port(s) {', '.join(map(str, ports))}"
+        ),
         command_suggestions=(),
         manual_advice=(),
     )
@@ -110,6 +131,30 @@ def _check_firewalld(ports: tuple[int, ...]) -> SSHDebugCheck | None:
             message="firewalld is running but reported no active zone",
             command_suggestions=(),
             manual_advice=("Determine which firewalld zone applies to the incoming interface.",),
+        )
+
+    active_policies = run_argv(("firewall-cmd", "--get-active-policies"))
+    if active_policies.returncode != 0:
+        detail = active_policies.stderr or active_policies.stdout or active_policies.failure or "unknown command failure"
+        return SSHDebugCheck(
+            identifier="firewall",
+            group="firewall",
+            label="Inbound firewall",
+            status="unknown",
+            message=f"Active firewalld policy objects could not be inspected: {detail}",
+            command_suggestions=(),
+            manual_advice=("Inspect policy objects together with active zones before changing SSH rules.",),
+        )
+    policy_names = tuple(active_policies.stdout.split())
+    if policy_names:
+        return SSHDebugCheck(
+            identifier="firewall",
+            group="firewall",
+            label="Inbound firewall",
+            status="unknown",
+            message=f"Active firewalld policy objects require ingress/egress evaluation: {', '.join(policy_names)}",
+            command_suggestions=(),
+            manual_advice=("Evaluate active policy targets, services, ports, and rich rules for traffic to HOST.",),
         )
 
     direct_rules = run_argv(("firewall-cmd", "--direct", "--get-all-rules"))
@@ -207,8 +252,11 @@ def _firewalld_service_allows_port(zone: str, port: int) -> bool | None:
     return False
 
 
-def check_linux_firewall(ports: tuple[int, ...]) -> SSHDebugCheck:
-    ufw_check = _check_ufw(ports)
+def check_linux_firewall(
+    ports: tuple[int, ...],
+    listener_families_by_port: dict[int, frozenset[ListenerAddressFamily]] | None,
+) -> SSHDebugCheck:
+    ufw_check = _check_ufw(ports=ports, listener_families_by_port=listener_families_by_port)
     firewalld_check = _check_firewalld(ports)
     active_checks = [check for check in (ufw_check, firewalld_check) if check is not None]
     if len(active_checks) == 2:

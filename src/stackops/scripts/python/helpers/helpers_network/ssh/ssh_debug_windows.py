@@ -8,7 +8,7 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import
     SSHDConnectionContext,
     assess_sshd_configuration,
 )
-from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_keys import assess_public_key_contents
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_keys import KeyFileAssessment, assess_public_key_contents
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import (
     SSHDebugCheck,
     SSHDebugResult,
@@ -70,6 +70,14 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
     )
     checks.extend(configuration.checks)
     checks.append(identity_assessment.check)
+    authorized_keys_command_active = (
+        configuration.connection_context_applied
+        and configuration.settings is not None
+        and any(
+            command != "none"
+            for command in configuration.settings.values.get("authorizedkeyscommand", ())
+        )
+    )
 
     key_path: Path | None = None
     if identity_assessment.identity is not None and configuration.connection_context_applied:
@@ -103,6 +111,11 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
         )
     else:
         key_contents = assess_public_key_contents(key_path)
+        if key_contents.status == "error" and authorized_keys_command_active:
+            key_contents = KeyFileAssessment(
+                status="unknown",
+                message=f"{key_contents.message}; AuthorizedKeysCommand may supply keys independently",
+            )
         checks.append(
             SSHDebugCheck(
                 identifier="authorized_keys",
@@ -134,8 +147,12 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
                     identifier="authorized_keys_acl",
                     group="permissions",
                     label="Authorized-keys ACL",
-                    status="error",
-                    message=f"{key_path} does not exist as a regular file",
+                    status="unknown" if authorized_keys_command_active else "error",
+                    message=(
+                        f"{key_path} does not exist as a regular file; AuthorizedKeysCommand may supply keys"
+                        if authorized_keys_command_active
+                        else f"{key_path} does not exist as a regular file"
+                    ),
                     command_suggestions=(),
                     manual_advice=("Create the corresponding key file and then restrict its ACL by SID.",),
                 )

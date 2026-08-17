@@ -2,9 +2,10 @@ import ipaddress
 import os
 import re
 import shutil
+from dataclasses import dataclass
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import run_argv
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import ListenerAddressFamily, run_argv
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import SSHDebugCheck
 
 
@@ -103,18 +104,27 @@ def _listener_owner(process_text: str) -> tuple[bool | None, tuple[str, ...]]:
     return False, owner_names
 
 
-def check_linux_listeners(ports: tuple[int, ...]) -> SSHDebugCheck:
+@dataclass(frozen=True, slots=True)
+class LinuxListenerAssessment:
+    check: SSHDebugCheck
+    families_by_port: dict[int, frozenset[ListenerAddressFamily]] | None
+
+
+def check_linux_listeners(ports: tuple[int, ...]) -> LinuxListenerAssessment:
     completed = run_argv(("ss", "-H", "-ltnp"))
     if completed.returncode != 0:
         detail = completed.stderr or completed.stdout or completed.failure or "unknown command failure"
-        return SSHDebugCheck(
-            identifier="ssh_listener",
-            group="network",
-            label="TCP listener",
-            status="unknown",
-            message=f"Could not inspect listening sockets with ss: {detail}",
-            command_suggestions=(),
-            manual_advice=("Inspect listening TCP endpoints and compare their exact ports with sshd -T.",),
+        return LinuxListenerAssessment(
+            check=SSHDebugCheck(
+                identifier="ssh_listener",
+                group="network",
+                label="TCP listener",
+                status="unknown",
+                message=f"Could not inspect listening sockets with ss: {detail}",
+                command_suggestions=(),
+                manual_advice=("Inspect listening TCP endpoints and compare their exact ports with sshd -T.",),
+            ),
+            families_by_port=None,
         )
 
     endpoints: dict[int, list[tuple[str, bool | None, tuple[str, ...]]]] = {port: [] for port in ports}
@@ -129,16 +139,40 @@ def check_linux_listeners(ports: tuple[int, ...]) -> SSHDebugCheck:
         if port in endpoints:
             owned_by_ssh, owner_names = _listener_owner(" ".join(fields[5:]))
             endpoints[port].append((address, owned_by_ssh, owner_names))
+    families_by_port: dict[int, frozenset[ListenerAddressFamily]] = {}
+    listener_families_proved = True
+    for port, records in endpoints.items():
+        port_families: set[ListenerAddressFamily] = set()
+        for address, _owned_by_ssh, _owners in records:
+            external_state = _is_external_address(address)
+            if external_state is False:
+                continue
+            if external_state is None or address == "*":
+                listener_families_proved = False
+                continue
+            try:
+                parsed_address = ipaddress.ip_address(address.split("%", maxsplit=1)[0])
+            except ValueError:
+                listener_families_proved = False
+            else:
+                port_families.add("ipv4" if parsed_address.version == 4 else "ipv6")
+        if not port_families:
+            listener_families_proved = False
+        families_by_port[port] = frozenset(port_families)
+    proved_families = families_by_port if listener_families_proved else None
     missing_ports = [port for port, records in endpoints.items() if not records]
     if missing_ports:
-        return SSHDebugCheck(
-            identifier="ssh_listener",
-            group="network",
-            label="TCP listener",
-            status="error",
-            message=f"No exact listening endpoint for TCP port(s) {', '.join(map(str, missing_ports))}",
-            command_suggestions=(),
-            manual_advice=("Review the SSH service state and effective ListenAddress settings.",),
+        return LinuxListenerAssessment(
+            check=SSHDebugCheck(
+                identifier="ssh_listener",
+                group="network",
+                label="TCP listener",
+                status="error",
+                message=f"No exact listening endpoint for TCP port(s) {', '.join(map(str, missing_ports))}",
+                command_suggestions=(),
+                manual_advice=("Review the SSH service state and effective ListenAddress settings.",),
+            ),
+            families_by_port=proved_families,
         )
     uncertain_address_ports: list[int] = []
     uncertain_owner_ports: list[int] = []
@@ -161,45 +195,57 @@ def check_linux_listeners(ports: tuple[int, ...]) -> SSHDebugCheck:
             dict.fromkeys(owner for _address, _owned_by_ssh, owners in external_records for owner in owners)
         )
     if localhost_ports:
-        return SSHDebugCheck(
-            identifier="ssh_listener",
-            group="network",
-            label="TCP listener",
-            status="error",
-            message=f"TCP port(s) {', '.join(map(str, localhost_ports))} listen only on loopback addresses",
-            command_suggestions=(),
-            manual_advice=("Review effective ListenAddress settings with sshd -T.",),
+        return LinuxListenerAssessment(
+            check=SSHDebugCheck(
+                identifier="ssh_listener",
+                group="network",
+                label="TCP listener",
+                status="error",
+                message=f"TCP port(s) {', '.join(map(str, localhost_ports))} listen only on loopback addresses",
+                command_suggestions=(),
+                manual_advice=("Review effective ListenAddress settings with sshd -T.",),
+            ),
+            families_by_port=proved_families,
         )
     if wrong_owners:
         details = ", ".join(f"{port}: {owners}" for port, owners in wrong_owners.items())
-        return SSHDebugCheck(
-            identifier="ssh_listener",
-            group="network",
-            label="TCP listener",
-            status="error",
-            message=f"Effective SSH port(s) are owned by non-SSH processes ({details})",
-            command_suggestions=(),
-            manual_advice=("Stop or reconfigure the conflicting process before starting sshd.",),
+        return LinuxListenerAssessment(
+            check=SSHDebugCheck(
+                identifier="ssh_listener",
+                group="network",
+                label="TCP listener",
+                status="error",
+                message=f"Effective SSH port(s) are owned by non-SSH processes ({details})",
+                command_suggestions=(),
+                manual_advice=("Stop or reconfigure the conflicting process before starting sshd.",),
+            ),
+            families_by_port=proved_families,
         )
     if uncertain_address_ports or uncertain_owner_ports:
-        return SSHDebugCheck(
+        return LinuxListenerAssessment(
+            check=SSHDebugCheck(
+                identifier="ssh_listener",
+                group="network",
+                label="TCP listener",
+                status="unknown",
+                message=(
+                    f"Listener address unknown for port(s) {uncertain_address_ports}; "
+                    f"sshd/systemd ownership unknown for port(s) {uncertain_owner_ports}"
+                ),
+                command_suggestions=(),
+                manual_advice=("Inspect the raw ss -H -ltnp output and process ownership.",),
+            ),
+            families_by_port=proved_families,
+        )
+    return LinuxListenerAssessment(
+        check=SSHDebugCheck(
             identifier="ssh_listener",
             group="network",
             label="TCP listener",
-            status="unknown",
-            message=(
-                f"Listener address unknown for port(s) {uncertain_address_ports}; "
-                f"sshd/systemd ownership unknown for port(s) {uncertain_owner_ports}"
-            ),
+            status="ok",
+            message=f"sshd/systemd owns exact non-loopback listener(s) for TCP port(s) {', '.join(map(str, ports))}",
             command_suggestions=(),
-            manual_advice=("Inspect the raw ss -H -ltnp output and process ownership.",),
-        )
-    return SSHDebugCheck(
-        identifier="ssh_listener",
-        group="network",
-        label="TCP listener",
-        status="ok",
-        message=f"sshd/systemd owns exact non-loopback listener(s) for TCP port(s) {', '.join(map(str, ports))}",
-        command_suggestions=(),
-        manual_advice=(),
+            manual_advice=(),
+        ),
+        families_by_port=proved_families,
     )

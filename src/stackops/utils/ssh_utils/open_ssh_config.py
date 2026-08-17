@@ -41,11 +41,11 @@ def parse_open_ssh_config(config_text: str) -> dict[str, object]:
             ):
                 config_options[normalized_key] = value
             case "identityfile":
-                identity_files.append(value)
+                identity_files.append(_unquote_config_value(value=value))
             case "userknownhostsfile":
-                user_known_hosts_files.extend(shlex.split(value))
+                user_known_hosts_files.extend(_split_config_paths(value=value))
             case "globalknownhostsfile":
-                global_known_hosts_files.extend(shlex.split(value))
+                global_known_hosts_files.extend(_split_config_paths(value=value))
             case _:
                 continue
     if identity_files:
@@ -77,3 +77,13 @@ def select_existing_identity_files(config_options: Mapping[str, object]) -> tupl
         if identity_file_path.is_file():
             existing_identity_files.append(str(identity_file_path.absolute()))
     return tuple(existing_identity_files)
+
+
+def _split_config_paths(value: str) -> list[str]:
+    return [_unquote_config_value(value=path) for path in shlex.split(value, posix=False)]
+
+
+def _unquote_config_value(value: str) -> str:
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    return value

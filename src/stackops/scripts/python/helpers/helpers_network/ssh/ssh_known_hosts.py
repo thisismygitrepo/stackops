@@ -62,6 +62,7 @@ def _resolve_configured_path(value: str) -> Path | None:
 
 def _append_host_key(path: Path, hostname: str, key: paramiko.PKey) -> None:
     directory_was_missing = not path.parent.exists()
+    file_was_missing = not path.exists()
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     default_ssh_directory = Path.home().joinpath(".ssh")
     if os.name != "nt" and (directory_was_missing or path.parent == default_ssh_directory):
@@ -79,7 +80,7 @@ def _append_host_key(path: Path, hostname: str, key: paramiko.PKey) -> None:
         written_bytes = os.write(file_descriptor, entry)
         if written_bytes != len(entry):
             raise OSError(f"Only {written_bytes} of {len(entry)} known-host bytes were written to {path}.")
-        if os.name != "nt" and stat.S_ISREG(os.fstat(file_descriptor).st_mode):
+        if file_was_missing and os.name != "nt" and stat.S_ISREG(os.fstat(file_descriptor).st_mode):
             os.fchmod(file_descriptor, 0o600)
     finally:
         os.close(file_descriptor)

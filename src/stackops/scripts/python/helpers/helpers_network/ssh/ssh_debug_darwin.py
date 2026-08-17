@@ -14,6 +14,7 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin_firewa
 )
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin_network import check_darwin_listeners
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin_utils import (
+    check_remote_login_access,
     check_remote_login_service,
     find_darwin_sshd,
 )
@@ -64,6 +65,7 @@ def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDeb
 
     checks.append(check_remote_login_service())
     current_identity = pwd.getpwuid(os.getuid())
+    checks.append(check_remote_login_access(user_name=current_identity.pw_name))
     home_directory = Path(current_identity.pw_dir)
     configuration = assess_sshd_configuration(
         sshd_path=sshd_path,

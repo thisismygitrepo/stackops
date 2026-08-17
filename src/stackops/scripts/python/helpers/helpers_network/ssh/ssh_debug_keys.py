@@ -91,10 +91,11 @@ def assess_posix_authorized_keys(
     user_id: int,
     authorized_keys_command: tuple[str, ...],
 ) -> KeyFileAssessment:
+    command_active = any(command != "none" for command in authorized_keys_command)
     if paths is None:
         return KeyFileAssessment(status="unknown", message="Effective AuthorizedKeysFile paths could not be resolved")
     if not paths:
-        if any(command != "none" for command in authorized_keys_command):
+        if command_active:
             return KeyFileAssessment(
                 status="unknown",
                 message="Public keys are supplied by AuthorizedKeysCommand rather than a verifiable key file",
@@ -177,9 +178,23 @@ def assess_posix_authorized_keys(
         else:
             unknowns.append(content_assessment.message)
     if errors:
+        if command_active:
+            return KeyFileAssessment(
+                status="unknown",
+                message=(
+                    f"Configured key-file failures were found, but AuthorizedKeysCommand may supply keys: {'; '.join(errors)}"
+                ),
+            )
         return KeyFileAssessment(status="error", message="; ".join(errors))
     if unknowns:
         return KeyFileAssessment(status="unknown", message="; ".join(unknowns))
     if valid_files:
         return KeyFileAssessment(status="ok", message="; ".join(valid_files))
+    if command_active:
+        return KeyFileAssessment(
+            status="unknown",
+            message=(
+                f"No configured key file exists, but AuthorizedKeysCommand may supply keys: {', '.join(missing_paths)}"
+            ),
+        )
     return KeyFileAssessment(status="error", message=f"No configured key file exists: {', '.join(missing_paths)}")

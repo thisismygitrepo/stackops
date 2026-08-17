@@ -67,3 +67,71 @@ def check_remote_login_service() -> SSHDebugCheck:
         manual_advice=("Inspect Remote Login in System Settings.",),
     )
 
+
+def check_remote_login_access(user_name: str) -> SSHDebugCheck:
+    group_name = "com.apple.access_ssh"
+    group = run_argv(("/usr/bin/dscl", ".", "-read", f"/Groups/{group_name}"))
+    if group.returncode != 0:
+        detail = group.stderr or group.stdout or group.failure or "unknown directory-service failure"
+        if "eDSRecordNotFound" in detail or "-14136" in detail:
+            return SSHDebugCheck(
+                identifier="remote_login_access",
+                group="permissions",
+                label="Remote Login user access",
+                status="ok",
+                message=f"No {group_name} restriction group exists; Remote Login is not user-list restricted",
+                command_suggestions=(),
+                manual_advice=(),
+            )
+        return SSHDebugCheck(
+            identifier="remote_login_access",
+            group="permissions",
+            label="Remote Login user access",
+            status="unknown",
+            message=f"The Remote Login service ACL could not be read: {detail}",
+            command_suggestions=(),
+            manual_advice=("Inspect the Remote Login user list in System Settings.",),
+        )
+
+    membership = run_argv(("/usr/sbin/dseditgroup", "-o", "checkmember", "-m", user_name, group_name))
+    if membership.returncode != 0:
+        detail = membership.stderr or membership.stdout or membership.failure or "unknown membership failure"
+        return SSHDebugCheck(
+            identifier="remote_login_access",
+            group="permissions",
+            label="Remote Login user access",
+            status="unknown",
+            message=f"Membership in {group_name} could not be verified: {detail}",
+            command_suggestions=(),
+            manual_advice=("Verify nested and direct membership in the Remote Login access group.",),
+        )
+    normalized = membership.stdout.casefold()
+    if normalized.startswith("yes ") and " is a member of " in normalized:
+        return SSHDebugCheck(
+            identifier="remote_login_access",
+            group="permissions",
+            label="Remote Login user access",
+            status="ok",
+            message=f"Directory Services reports {user_name} is admitted by {group_name}",
+            command_suggestions=(),
+            manual_advice=(),
+        )
+    if normalized.startswith("no ") and " is not a member of " in normalized:
+        return SSHDebugCheck(
+            identifier="remote_login_access",
+            group="permissions",
+            label="Remote Login user access",
+            status="error",
+            message=f"Directory Services reports {user_name} is not admitted by {group_name}",
+            command_suggestions=(),
+            manual_advice=("Add the intended account through the Remote Login user list, not by bypassing the service ACL.",),
+        )
+    return SSHDebugCheck(
+        identifier="remote_login_access",
+        group="permissions",
+        label="Remote Login user access",
+        status="unknown",
+        message=f"Directory Services returned unrecognized membership evidence: {membership.stdout or 'empty output'}",
+        command_suggestions=(),
+        manual_advice=("Inspect the Remote Login user list in System Settings.",),
+    )

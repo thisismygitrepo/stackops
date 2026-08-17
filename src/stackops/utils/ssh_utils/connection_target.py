@@ -72,7 +72,7 @@ def resolve_ssh_connection_profile(
     resolved_identity_files = (
         (str(Path(ssh_key_path).expanduser().absolute()),) if ssh_key_path is not None else configured_identity_files
     )
-    identities_only = _optional_config_boolean(config_options=config_options, key="identitiesonly")
+    identities_only = ssh_key_path is not None or _optional_config_boolean(config_options=config_options, key="identitiesonly")
     user_known_hosts_files = _config_text_values(config_options=config_options, key="userknownhostsfile")
     global_known_hosts_files = _config_text_values(config_options=config_options, key="globalknownhostsfile")
     host_key_alias = _optional_config_text(config_options=config_options, key="hostkeyalias")
@@ -173,9 +173,12 @@ def _config_text_values(config_options: Mapping[str, object], key: str) -> tuple
         return ()
     if isinstance(value, str):
         return (value,)
-    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+    if not isinstance(value, list):
         raise TypeError(f"SSH config option {key!r} must be text or a list of text values.")
-    return tuple(value)
+    text_values = tuple(item for item in value if isinstance(item, str))
+    if len(text_values) != len(value):
+        raise TypeError(f"Every SSH config option {key!r} value must be text.")
+    return text_values
 
 
 def _resolve_proxy_command(

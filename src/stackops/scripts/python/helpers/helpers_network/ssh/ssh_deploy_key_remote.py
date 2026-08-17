@@ -59,10 +59,10 @@ def deploy_keys_to_remote(remote_target: str, records: list[PublicKeyRecord], pa
 
 
 def _detect_remote_system(connection: ConnectedRemote) -> str:
-    posix_result = run_remote_command(connection=connection, command="uname -s")
+    posix_result = run_remote_command(connection=connection, command="command -v uname >/dev/null 2>&1 && uname -s")
     if posix_result.return_code == 0 and posix_result.stdout.strip() != "":
         posix_name = posix_result.stdout.strip().splitlines()[-1]
-        if not posix_name.casefold().startswith(("cygwin", "mingw", "msys")):
+        if not posix_name.casefold().startswith(("mingw", "msys")):
             return f"POSIX ({posix_name})"
 
     windows_detection = encode_powershell_command(
@@ -153,28 +153,29 @@ if (-not (Test-Path -LiteralPath $authorizedKeys -PathType Leaf)) {
 
 function Set-RestrictedAcl {
     param([string]$Path, [string[]]$TrusteeSids, [string]$OwnerSid, [bool]$Directory)
-    $resetOutput = & "$env:SystemRoot\System32\icacls.exe" $Path "/reset" 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw "icacls reset failed for $Path`: $($resetOutput -join [Environment]::NewLine)"
+    $security = if ($Directory) {
+        [System.Security.AccessControl.DirectorySecurity]::new()
+    } else {
+        [System.Security.AccessControl.FileSecurity]::new()
     }
-    $inheritanceOutput = & "$env:SystemRoot\System32\icacls.exe" $Path "/inheritance:r" 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw "icacls inheritance replacement failed for $Path`: $($inheritanceOutput -join [Environment]::NewLine)"
+    $security.SetAccessRuleProtection($true, $false)
+    $security.SetOwner([System.Security.Principal.SecurityIdentifier]::new($OwnerSid))
+    $inheritance = if ($Directory) {
+        [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit
+    } else {
+        [System.Security.AccessControl.InheritanceFlags]::None
     }
-    $grants = @()
     foreach ($trusteeSid in $TrusteeSids) {
-        $permission = if ($Directory) { "(OI)(CI)F" } else { "F" }
-        $grants += "*$($trusteeSid):$permission"
+        $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
+            [System.Security.Principal.SecurityIdentifier]::new($trusteeSid),
+            [System.Security.AccessControl.FileSystemRights]::FullControl,
+            $inheritance,
+            [System.Security.AccessControl.PropagationFlags]::None,
+            [System.Security.AccessControl.AccessControlType]::Allow
+        )
+        [void]$security.AddAccessRule($rule)
     }
-    $arguments = @($Path, "/grant:r") + $grants
-    $aclOutput = & "$env:SystemRoot\System32\icacls.exe" @arguments 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw "icacls failed for $Path`: $($aclOutput -join [Environment]::NewLine)"
-    }
-    $ownerOutput = & "$env:SystemRoot\System32\icacls.exe" $Path "/setowner" "*$OwnerSid" 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw "icacls owner replacement failed for $Path`: $($ownerOutput -join [Environment]::NewLine)"
-    }
+    Set-Acl -LiteralPath $Path -AclObject $security
 }
 
 Set-RestrictedAcl -Path $sshDirectory -TrusteeSids $fileTrustees -OwnerSid $ownerSid -Directory $true
