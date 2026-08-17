@@ -1,5 +1,4 @@
 import re
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -7,6 +6,8 @@ from stackops.utils.ssh_utils.ssh_port_commands import (
     PrivilegePrefix,
     authorize_privileged_commands,
     capture_checked_command,
+    require_trusted_system_command,
+    resolve_trusted_system_command,
     run_command,
 )
 from stackops.utils.ssh_utils.ssh_port_service import ServiceManager, resolve_service_manager
@@ -28,15 +29,9 @@ class PortChangePlan:
 
 
 def _resolve_sshd_path() -> Path:
-    discovered_path = shutil.which("sshd")
-    candidates = tuple(
-        Path(candidate)
-        for candidate in (discovered_path, "/usr/sbin/sshd", "/usr/local/sbin/sshd")
-        if candidate is not None
-    )
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
+    sshd_path = resolve_trusted_system_command(command_name="sshd")
+    if sshd_path is not None:
+        return sshd_path
     raise RuntimeError("OpenSSH server is not installed; run `ssh install-server`, then retry.")
 
 
@@ -86,11 +81,11 @@ def inspect_effective_sshd_config(
 
 
 def _listening_socket_lines(privilege_prefix: PrivilegePrefix) -> tuple[str, ...]:
-    ss_path = shutil.which("ss")
+    ss_path = resolve_trusted_system_command(command_name="ss")
     if ss_path is None:
         raise RuntimeError("The `ss` command is required to verify SSH listeners; install iproute2, then retry.")
     output = capture_checked_command(
-        command=(*privilege_prefix, ss_path, "-H", "-ltnp"),
+        command=(*privilege_prefix, str(ss_path), "-H", "-ltnp"),
         failure_message="Unable to inspect active TCP listeners",
     )
     return tuple(line for line in output.splitlines() if line.strip() != "")
@@ -139,25 +134,45 @@ def assert_active_ssh_listener(plan: PortChangePlan, expected_port: int) -> None
 
 
 def assert_active_socket_port(plan: PortChangePlan, expected_port: int) -> None:
-    socket_name = plan.service_manager.socket_name
-    if socket_name is None:
+    socket_streams = active_socket_streams(plan=plan)
+    if len(socket_streams) == 0:
         return
-    output = capture_checked_command(
-        command=(*plan.privilege_prefix, "systemctl", "show", socket_name, "--property=Listen", "--value"),
-        failure_message=f"Unable to inspect active socket {socket_name}",
-    )
-    socket_ports = {_endpoint_port(match.group(1)) for match in re.finditer(r"(\S+)\s+\(Stream\)", output)}
+    socket_ports = {_endpoint_port(stream) for stream in socket_streams}
     if socket_ports != {expected_port}:
         displayed_ports = ", ".join(str(port) for port in sorted(socket_ports)) or "none"
+        socket_name = plan.service_manager.socket_name
         raise RuntimeError(
             f"Active socket {socket_name} listens on {displayed_ports}, not exclusively on TCP port {expected_port}. "
             "Correct its ListenStream configuration, then retry."
         )
 
 
+def active_socket_streams(plan: PortChangePlan) -> tuple[str, ...]:
+    socket_name = plan.service_manager.socket_name
+    if socket_name is None:
+        return ()
+    output = capture_checked_command(
+        command=(
+            *plan.privilege_prefix,
+            require_trusted_system_command(command_name="systemctl"),
+            "show",
+            socket_name,
+            "--property=Listen",
+            "--value",
+        ),
+        failure_message=f"Unable to inspect active socket {socket_name}",
+    )
+    streams = tuple(dict.fromkeys(match.group(1) for match in re.finditer(r"(\S+)\s+\(Stream\)", output)))
+    if len(streams) == 0:
+        raise RuntimeError(f"Active socket {socket_name} has no inspectable TCP ListenStream endpoints.")
+    return streams
+
+
 def prepare_port_change(config_path: Path) -> PortChangePlan:
     privilege_prefix = authorize_privileged_commands()
-    if run_command((*privilege_prefix, "test", "-f", str(config_path))).returncode != 0:
+    if run_command(
+        (*privilege_prefix, require_trusted_system_command(command_name="test"), "-f", str(config_path))
+    ).returncode != 0:
         raise FileNotFoundError(f"SSH config file not found: {config_path}")
     sshd_path = _resolve_sshd_path()
     service_manager = resolve_service_manager(privilege_prefix=privilege_prefix)

@@ -19,30 +19,92 @@ def preflight_wsl_windows_firewall(target_port: int) -> None:
             "WSL cannot verify Windows Firewall because powershell.exe is unavailable. "
             f"From elevated PowerShell run `{firewall_command}`, then retry."
         )
-    script = rf'''
+    script = r'''
 $ErrorActionPreference = "Stop"
-$activeProfiles = @(Get-NetFirewallProfile | Where-Object Enabled)
-if ($activeProfiles.Count -eq 0) {{ exit 0 }}
-$blockingFilters = @(
-    Get-NetFirewallRule -PolicyStore ActiveStore -Enabled True -Direction Inbound -Action Block |
-        Get-NetFirewallPortFilter |
-        Where-Object {{
-            $_.Protocol.ToString() -eq "TCP" -and
-            ((@($_.LocalPort) -contains "{target_port}") -or (@($_.LocalPort) -contains "Any"))
-        }}
+function Test-PortMatch {
+    param([object[]]$Values, [int]$Port, [bool]$RequireAny)
+    foreach ($rawValue in $Values) {
+        foreach ($value in ([string]$rawValue -split "[, ]+")) {
+            if ($value -in @("Any", "*")) { return $true }
+            if ($RequireAny) { continue }
+            if ($value -match "^(\d+)$" -and [int]$Matches[1] -eq $Port) { return $true }
+            if ($value -match "^(\d+)-(\d+)$" -and [int]$Matches[1] -le $Port -and $Port -le [int]$Matches[2]) {
+                return $true
+            }
+        }
+    }
+    return $false
+}
+function Test-AnyValue {
+    param([object[]]$Values)
+    $matchingValue = @($Values | ForEach-Object { [string]$_ }) |
+        Where-Object { $_ -in @("Any", "All", "*") } |
+        Select-Object -First 1
+    return $null -ne $matchingValue
+}
+$targetPort = __TARGET_PORT__
+$profileNames = @(Get-NetConnectionProfile | ForEach-Object {
+    switch ([string]$_.NetworkCategory) {
+        "DomainAuthenticated" { "Domain" }
+        "Private" { "Private" }
+        "Public" { "Public" }
+    }
+} | Sort-Object -Unique)
+if ($profileNames.Count -eq 0) { exit 5 }
+$activeProfiles = @(
+    $profileNames |
+        ForEach-Object { Get-NetFirewallProfile -PolicyStore ActiveStore -Name $_ } |
+        Where-Object Enabled
 )
-if ($blockingFilters.Count -gt 0) {{ exit 4 }}
-$matchingFilters = @(
-    Get-NetFirewallRule -PolicyStore ActiveStore -Enabled True -Direction Inbound -Action Allow |
-        Get-NetFirewallPortFilter |
-        Where-Object {{
-            $_.Protocol.ToString() -eq "TCP" -and
-            ((@($_.LocalPort) -contains "{target_port}") -or (@($_.LocalPort) -contains "Any"))
-        }}
-)
-if ($matchingFilters.Count -gt 0) {{ exit 0 }}
-exit 3
-'''
+if ($activeProfiles.Count -eq 0) { exit 0 }
+$rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Enabled True -Direction Inbound)
+foreach ($profile in $activeProfiles) {
+    $allowProved = $profile.DefaultInboundAction.ToString() -eq "Allow"
+    $scopedRuleFound = $false
+    foreach ($rule in $rules) {
+        $ruleProfiles = @($rule.Profile.ToString() -split "," | ForEach-Object { $_.Trim() })
+        if ($ruleProfiles -notcontains "Any" -and $ruleProfiles -notcontains $profile.Name) { continue }
+        $portFilters = @($rule | Get-NetFirewallPortFilter)
+        $applicationFilters = @($rule | Get-NetFirewallApplicationFilter)
+        $serviceFilters = @($rule | Get-NetFirewallServiceFilter)
+        $addressFilters = @($rule | Get-NetFirewallAddressFilter)
+        $interfaceFilters = @($rule | Get-NetFirewallInterfaceFilter)
+        $interfaceTypeFilters = @($rule | Get-NetFirewallInterfaceTypeFilter)
+        if (
+            $portFilters.Count -ne 1 -or
+            $applicationFilters.Count -ne 1 -or
+            $serviceFilters.Count -ne 1 -or
+            $addressFilters.Count -ne 1 -or
+            $interfaceFilters.Count -ne 1 -or
+            $interfaceTypeFilters.Count -ne 1
+        ) { exit 5 }
+        $protocol = $portFilters[0].Protocol.ToString()
+        if ($protocol -notin @("TCP", "6", "Any", "256")) { continue }
+        if (-not (Test-PortMatch -Values @($portFilters[0].LocalPort) -Port $targetPort -RequireAny $false)) { continue }
+        $isUnscoped = (
+            (Test-PortMatch -Values @($portFilters[0].RemotePort) -Port $targetPort -RequireAny $true) -and
+            (Test-AnyValue -Values @($applicationFilters[0].Program)) -and
+            (Test-AnyValue -Values @($serviceFilters[0].Service)) -and
+            (Test-AnyValue -Values @($addressFilters[0].LocalAddress)) -and
+            (Test-AnyValue -Values @($addressFilters[0].RemoteAddress)) -and
+            (Test-AnyValue -Values @($interfaceFilters[0].InterfaceAlias)) -and
+            (Test-AnyValue -Values @($interfaceTypeFilters[0].InterfaceType))
+        )
+        if (-not $isUnscoped) {
+            if ($rule.Action.ToString() -eq "Block") { exit 5 }
+            $scopedRuleFound = $true
+            continue
+        }
+        if ($rule.Action.ToString() -eq "Block") { exit 4 }
+        if ($rule.Action.ToString() -eq "Allow") { $allowProved = $true }
+    }
+    if (-not $allowProved) {
+        if ($scopedRuleFound) { exit 5 }
+        exit 3
+    }
+}
+exit 0
+'''.replace("__TARGET_PORT__", str(target_port))
     result = run_command((powershell_path, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script))
     if result.returncode == 0:
         return
@@ -56,6 +118,11 @@ exit 3
             f"Active Windows Firewall has an inbound block rule covering TCP port {target_port}. "
             "From elevated PowerShell inspect `Get-NetFirewallRule -Enabled True -Direction Inbound -Action Block`, "
             "remove or narrow the applicable block rule, then retry."
+        )
+    if result.returncode == 5:
+        raise RuntimeError(
+            f"Windows Firewall has scoped or structurally ambiguous rules covering TCP port {target_port}, so WSL ingress cannot be proven. "
+            "Inspect the active profile, remote port, addresses, application, service, and interface filters, then retry."
         )
     error_output = result.stderr.strip() or result.stdout.strip()
     raise RuntimeError(

@@ -59,20 +59,22 @@ def deploy_keys_to_remote(remote_target: str, records: list[PublicKeyRecord], pa
 
 
 def _detect_remote_system(connection: ConnectedRemote) -> str:
+    posix_result = run_remote_command(connection=connection, command="uname -s")
+    if posix_result.return_code == 0 and posix_result.stdout.strip() != "":
+        posix_name = posix_result.stdout.strip().splitlines()[-1]
+        if not posix_name.casefold().startswith(("cygwin", "mingw", "msys")):
+            return f"POSIX ({posix_name})"
+
     windows_detection = encode_powershell_command(
         script=f"""if ([Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {{ exit 3 }}
 Write-Output '{WINDOWS_MARKER}'"""
     )
     windows_result = run_remote_command(connection=connection, command=windows_detection)
-    if windows_result.return_code == 0 and windows_result.stdout.strip() == WINDOWS_MARKER:
+    if windows_result.return_code == 0 and WINDOWS_MARKER in windows_result.stdout.splitlines():
         return "Windows"
-
-    posix_result = run_remote_command(connection=connection, command="uname -s")
-    if posix_result.return_code == 0 and posix_result.stdout.strip() != "":
-        return f"POSIX ({posix_result.stdout.strip()})"
     raise RuntimeError(
         f"Unable to detect a native Windows or POSIX remote environment. "
-        f"PowerShell error: {windows_result.stderr.strip()!r}; uname error: {posix_result.stderr.strip()!r}"
+        f"uname error: {posix_result.stderr.strip()!r}; PowerShell error: {windows_result.stderr.strip()!r}"
     )
 
 
@@ -127,9 +129,13 @@ if ($isAdministrator) {
     if (-not $principal.IsInRole($adminSidObject)) {
         throw "Administrator account is not elevated; refusing to write ProgramData SSH authorization."
     }
-    $sshDirectory = "C:\ProgramData\ssh"
+    if ([string]::IsNullOrWhiteSpace($env:ProgramData)) {
+        throw "ProgramData is unavailable for the administrator SSH authorization path."
+    }
+    $sshDirectory = Join-Path $env:ProgramData "ssh"
     $authorizedKeys = Join-Path $sshDirectory "administrators_authorized_keys"
     $fileTrustees = @($administratorsSid, $systemSid)
+    $ownerSid = $administratorsSid
 } else {
     if ([string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
         throw "USERPROFILE is unavailable for the standard-user SSH authorization path."
@@ -137,6 +143,7 @@ if ($isAdministrator) {
     $sshDirectory = Join-Path $env:USERPROFILE ".ssh"
     $authorizedKeys = Join-Path $sshDirectory "authorized_keys"
     $fileTrustees = @($userSid, $systemSid, $administratorsSid)
+    $ownerSid = $userSid
 }
 
 New-Item -ItemType Directory -Path $sshDirectory -Force | Out-Null
@@ -145,23 +152,33 @@ if (-not (Test-Path -LiteralPath $authorizedKeys -PathType Leaf)) {
 }
 
 function Set-RestrictedAcl {
-    param([string]$Path, [string[]]$TrusteeSids, [bool]$Directory)
+    param([string]$Path, [string[]]$TrusteeSids, [string]$OwnerSid, [bool]$Directory)
+    $resetOutput = & "$env:SystemRoot\System32\icacls.exe" $Path "/reset" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "icacls reset failed for $Path`: $($resetOutput -join [Environment]::NewLine)"
+    }
+    $inheritanceOutput = & "$env:SystemRoot\System32\icacls.exe" $Path "/inheritance:r" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "icacls inheritance replacement failed for $Path`: $($inheritanceOutput -join [Environment]::NewLine)"
+    }
     $grants = @()
     foreach ($trusteeSid in $TrusteeSids) {
         $permission = if ($Directory) { "(OI)(CI)F" } else { "F" }
         $grants += "*$($trusteeSid):$permission"
     }
-    $arguments = @($Path, "/inheritance:r", "/grant:r") + $grants
+    $arguments = @($Path, "/grant:r") + $grants
     $aclOutput = & "$env:SystemRoot\System32\icacls.exe" @arguments 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "icacls failed for $Path`: $($aclOutput -join [Environment]::NewLine)"
     }
+    $ownerOutput = & "$env:SystemRoot\System32\icacls.exe" $Path "/setowner" "*$OwnerSid" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "icacls owner replacement failed for $Path`: $($ownerOutput -join [Environment]::NewLine)"
+    }
 }
 
-if (-not $isAdministrator) {
-    Set-RestrictedAcl -Path $sshDirectory -TrusteeSids $fileTrustees -Directory $true
-}
-Set-RestrictedAcl -Path $authorizedKeys -TrusteeSids $fileTrustees -Directory $false
+Set-RestrictedAcl -Path $sshDirectory -TrusteeSids $fileTrustees -OwnerSid $ownerSid -Directory $true
+Set-RestrictedAcl -Path $authorizedKeys -TrusteeSids $fileTrustees -OwnerSid $ownerSid -Directory $false
 
 $utf8 = [System.Text.UTF8Encoding]::new($false)
 $publicKey = $utf8.GetString([Convert]::FromBase64String("__PUBLIC_KEY_BASE64__"))
@@ -171,7 +188,7 @@ if ($existingLines -cnotcontains $publicKey) {
 }
 $content = ($existingLines -join "`n") + "`n"
 [System.IO.File]::WriteAllText($authorizedKeys, $content, $utf8)
-Set-RestrictedAcl -Path $authorizedKeys -TrusteeSids $fileTrustees -Directory $false
+Set-RestrictedAcl -Path $authorizedKeys -TrusteeSids $fileTrustees -OwnerSid $ownerSid -Directory $false
 Write-Output "STACKOPS_KEY_READY"
 """
 

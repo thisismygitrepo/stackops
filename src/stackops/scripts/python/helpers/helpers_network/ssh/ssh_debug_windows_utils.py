@@ -194,7 +194,7 @@ def resolve_windows_authorized_key_path(
 ) -> Path | None:
     program_data = Path(os.environ.get("PROGRAMDATA", "C:/ProgramData"))
     if settings is None:
-        return program_data.joinpath("ssh/administrators_authorized_keys") if identity.is_administrator else None
+        return None
     configured_values = settings.values.get("authorizedkeysfile", ())
     resolved_paths: list[Path] = []
     for configured_value in configured_values:
@@ -211,11 +211,6 @@ def resolve_windows_authorized_key_path(
                 return None
             path = Path(expanded)
             resolved_paths.append(path if path.is_absolute() else home_directory.joinpath(path))
-    if identity.is_administrator:
-        non_home_paths = [path for path in resolved_paths if not path.is_relative_to(home_directory)]
-        if non_home_paths:
-            return non_home_paths[0]
-        return program_data.joinpath("ssh/administrators_authorized_keys")
     if resolved_paths:
         return resolved_paths[0]
     return None

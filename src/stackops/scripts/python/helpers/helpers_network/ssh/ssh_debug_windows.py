@@ -1,11 +1,13 @@
 import os
-import socket
 from pathlib import Path
 from platform import system
 
 from rich.console import Console
 
-from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import assess_sshd_configuration
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import (
+    SSHDConnectionContext,
+    assess_sshd_configuration,
+)
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_keys import assess_public_key_contents
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import (
     SSHDebugCheck,
@@ -25,7 +27,7 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows_utils
 )
 
 
-def ssh_debug_windows() -> SSHDebugResult:
+def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDebugResult:
     if system() != "Windows":
         raise NotImplementedError("ssh_debug_windows is only supported on Windows")
 
@@ -59,17 +61,18 @@ def ssh_debug_windows() -> SSHDebugResult:
     checks.append(check_windows_service())
     identity_assessment = assess_windows_identity()
     current_name = identity_assessment.identity.name if identity_assessment.identity is not None else os.environ.get("USERNAME", "unknown")
+    verified_connection_context = connection_context if identity_assessment.identity is not None else None
     configuration = assess_sshd_configuration(
         sshd_path=sshd_path,
         config_path=windows_sshd_config_path(),
         user_name=current_name,
-        host_name=socket.gethostname(),
+        connection_context=verified_connection_context,
     )
     checks.extend(configuration.checks)
     checks.append(identity_assessment.check)
 
     key_path: Path | None = None
-    if identity_assessment.identity is not None:
+    if identity_assessment.identity is not None and configuration.connection_context_applied:
         key_path = resolve_windows_authorized_key_path(
             settings=configuration.settings,
             identity=identity_assessment.identity,
@@ -173,4 +176,5 @@ def ssh_debug_windows() -> SSHDebugResult:
 
 
 if __name__ == "__main__":
-    ssh_debug_windows()
+    direct_result = ssh_debug_windows(connection_context=None)
+    raise SystemExit(0 if direct_result.summary.ready else 1)

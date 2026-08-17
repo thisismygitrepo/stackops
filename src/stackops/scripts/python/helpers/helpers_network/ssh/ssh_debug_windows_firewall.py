@@ -91,7 +91,7 @@ $activeBits = @(Get-NetConnectionProfile | ForEach-Object {
     Where-Object { $null -ne $_ } | Sort-Object -Unique)
 $profiles = @(foreach ($bit in $activeBits) {
     $name = switch ($bit) { 1 { 'Domain' } 2 { 'Private' } 4 { 'Public' } }
-    $profile = Get-NetFirewallProfile -Name $name
+    $profile = Get-NetFirewallProfile -PolicyStore ActiveStore -Name $name
     [PSCustomObject]@{
         Bit = [int]$bit
         Name = $name
@@ -99,7 +99,7 @@ $profiles = @(foreach ($bit in $activeBits) {
         DefaultInboundAction = [string]$profile.DefaultInboundAction
     }
 })
-$rules = @(Get-NetFirewallRule -Direction Inbound -Enabled True | ForEach-Object {
+$rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enabled True | ForEach-Object {
     $rule = $_
     $portFilters = @(Get-NetFirewallPortFilter -AssociatedNetFirewallRule $rule)
     $applicationFilters = @(Get-NetFirewallApplicationFilter -AssociatedNetFirewallRule $rule)
@@ -188,6 +188,7 @@ $rules = @(Get-NetFirewallRule -Direction Inbound -Enabled True | ForEach-Object
             continue
         for port in ports:
             exact_allows = 0
+            scoped_allow_found = False
             for rule in rules:
                 action = rule.get("Action")
                 rule_profile = rule.get("Profile")
@@ -274,7 +275,12 @@ $rules = @(Get-NetFirewallRule -Direction Inbound -Enabled True | ForEach-Object
                         )
                     if unscoped:
                         exact_allows += 1
+                    else:
+                        scoped_allow_found = True
             if not exact_allows:
+                if scoped_allow_found:
+                    unproved.append(f"{name}:{port}/tcp (scoped allow)")
+                    continue
                 if default_action == "Block":
                     return SSHDebugCheck(
                         identifier="firewall",

@@ -1,11 +1,13 @@
 import os
-import socket
 from pathlib import Path
 from platform import system
 
 from rich.console import Console
 
-from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import assess_sshd_configuration
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import (
+    SSHDConnectionContext,
+    assess_sshd_configuration,
+)
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin_firewall import (
     check_application_firewall,
     check_packet_filter,
@@ -27,7 +29,7 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import
 )
 
 
-def ssh_debug_darwin() -> SSHDebugResult:
+def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDebugResult:
     if system() != "Darwin":
         raise NotImplementedError("ssh_debug_darwin is only supported on macOS")
 
@@ -67,18 +69,23 @@ def ssh_debug_darwin() -> SSHDebugResult:
         sshd_path=sshd_path,
         config_path=None,
         user_name=current_identity.pw_name,
-        host_name=socket.gethostname(),
+        connection_context=connection_context,
     )
     checks.extend(configuration.checks)
 
-    if configuration.settings is None:
+    if not configuration.connection_context_applied or configuration.settings is None:
+        context_detail = (
+            "No explicit connection context was supplied"
+            if connection_context is None
+            else "The supplied connection context could not be applied by sshd -T"
+        )
         checks.append(
             SSHDebugCheck(
                 identifier="authorized_keys",
                 group="permissions",
                 label="Authorized keys",
                 status="unknown",
-                message="Effective AuthorizedKeysFile paths are unavailable because sshd -T failed",
+                message=f"{context_detail}; Match-dependent AuthorizedKeysFile paths were not inspected",
                 command_suggestions=(),
                 manual_advice=("Resolve the effective-configuration probe before inspecting key-file permissions.",),
             )
@@ -146,7 +153,7 @@ def ssh_debug_darwin() -> SSHDebugResult:
     else:
         checks.append(check_darwin_listeners(configuration.ports))
         checks.append(check_packet_filter(configuration.ports))
-        checks.append(check_application_firewall(sshd_path=sshd_path, ports=configuration.ports))
+        checks.append(check_application_firewall(ports=configuration.ports))
 
     result = build_debug_result(checks)
     render_debug_result(result=result, console=Console())
@@ -154,4 +161,5 @@ def ssh_debug_darwin() -> SSHDebugResult:
 
 
 if __name__ == "__main__":
-    ssh_debug_darwin()
+    direct_result = ssh_debug_darwin(connection_context=None)
+    raise SystemExit(0 if direct_result.summary.ready else 1)

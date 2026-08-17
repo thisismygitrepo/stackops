@@ -92,27 +92,14 @@ def _is_external_address(address: str) -> bool | None:
     return not parsed.is_loopback
 
 
-def _active_systemd_ssh_socket() -> bool | None:
-    query_failed = False
-    for unit in ("ssh.socket", "sshd.socket"):
-        completed = run_argv(("systemctl", "show", unit, "--property=LoadState", "--property=ActiveState"))
-        if completed.returncode != 0:
-            query_failed = True
-            continue
-        properties = dict(line.partition("=")[::2] for line in completed.stdout.splitlines() if "=" in line)
-        if properties.get("LoadState") == "loaded" and properties.get("ActiveState") == "active":
-            return True
-    return None if query_failed else False
-
-
-def _listener_owner(process_text: str, systemd_socket_active: bool | None) -> tuple[bool | None, tuple[str, ...]]:
+def _listener_owner(process_text: str) -> tuple[bool | None, tuple[str, ...]]:
     owner_names = tuple(re.findall(r'\("([^"]+)"', process_text))
     if not owner_names:
         return None, ()
     if "sshd" in owner_names:
         return True, owner_names
     if "systemd" in owner_names:
-        return systemd_socket_active, owner_names
+        return None, owner_names
     return False, owner_names
 
 
@@ -130,7 +117,6 @@ def check_linux_listeners(ports: tuple[int, ...]) -> SSHDebugCheck:
             manual_advice=("Inspect listening TCP endpoints and compare their exact ports with sshd -T.",),
         )
 
-    systemd_socket_active = _active_systemd_ssh_socket()
     endpoints: dict[int, list[tuple[str, bool | None, tuple[str, ...]]]] = {port: [] for port in ports}
     for line in completed.stdout.splitlines():
         fields = line.split()
@@ -141,7 +127,7 @@ def check_linux_listeners(ports: tuple[int, ...]) -> SSHDebugCheck:
             continue
         address, port = parsed_endpoint
         if port in endpoints:
-            owned_by_ssh, owner_names = _listener_owner(" ".join(fields[5:]), systemd_socket_active)
+            owned_by_ssh, owner_names = _listener_owner(" ".join(fields[5:]))
             endpoints[port].append((address, owned_by_ssh, owner_names))
     missing_ports = [port for port, records in endpoints.items() if not records]
     if missing_ports:

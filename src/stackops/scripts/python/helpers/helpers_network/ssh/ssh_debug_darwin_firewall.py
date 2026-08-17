@@ -119,16 +119,6 @@ def check_packet_filter(ports: tuple[int, ...]) -> SSHDebugCheck:
             and (" proto " not in rule or re.search(r"\bproto tcp\b", rule) is not None)
             and " port " not in rule
         ]
-        if exact_blocks and not exact_passes:
-            return SSHDebugCheck(
-                identifier="packet_filter",
-                group="firewall",
-                label="Packet Filter",
-                status="error",
-                message=f"PF has an explicit TCP block for port {port} and no exact pass rule",
-                command_suggestions=(),
-                manual_advice=("Review PF rule order and anchors before editing the ruleset.",),
-            )
         if not exact_passes or exact_blocks or generic_blocks:
             return SSHDebugCheck(
                 identifier="packet_filter",
@@ -150,7 +140,7 @@ def check_packet_filter(ports: tuple[int, ...]) -> SSHDebugCheck:
     )
 
 
-def check_application_firewall(sshd_path: Path | None, ports: tuple[int, ...]) -> SSHDebugCheck:
+def check_application_firewall(ports: tuple[int, ...]) -> SSHDebugCheck:
     firewall_tool = "/usr/libexec/ApplicationFirewall/socketfilterfw"
     state = run_argv((firewall_tool, "--getglobalstate"))
     if state.returncode != 0:
@@ -185,17 +175,28 @@ def check_application_firewall(sshd_path: Path | None, ports: tuple[int, ...]) -
             command_suggestions=(),
             manual_advice=(),
         )
-    if sshd_path is None:
+    if state_match.group("state") == "2":
         return SSHDebugCheck(
             identifier="application_firewall",
             group="firewall",
             label="Application firewall",
             status="unknown",
-            message="Application firewall is enabled but the sshd executable path is unknown",
+            message="Application firewall is in block-all mode, where Remote Login admission cannot be proved",
             command_suggestions=(),
-            manual_advice=("Identify the sshd executable before checking its application rule.",),
+            manual_advice=("Inspect Block all incoming connections and the Remote Login system-service exemption.",),
         )
-    blocked = run_argv((firewall_tool, "--getappblocked", str(sshd_path)))
+    firewall_subject = Path("/usr/libexec/sshd-keygen-wrapper")
+    if not firewall_subject.is_file():
+        return SSHDebugCheck(
+            identifier="application_firewall",
+            group="firewall",
+            label="Application firewall",
+            status="unknown",
+            message=f"Remote Login firewall subject {firewall_subject} was not found",
+            command_suggestions=(),
+            manual_advice=("Inspect the ProgramArguments of the system SSH launch daemon.",),
+        )
+    blocked = run_argv((firewall_tool, "--getappblocked", str(firewall_subject)))
     if blocked.returncode != 0:
         detail = blocked.stderr or blocked.stdout or blocked.failure or "unknown command failure"
         return SSHDebugCheck(
@@ -203,7 +204,7 @@ def check_application_firewall(sshd_path: Path | None, ports: tuple[int, ...]) -
             group="firewall",
             label="Application firewall",
             status="unknown",
-            message=f"sshd application rule could not be read: {detail}",
+            message=f"Remote Login application rule could not be read: {detail}",
             command_suggestions=(),
             manual_advice=("Inspect the sshd application rule in Firewall Options.",),
         )
@@ -214,7 +215,7 @@ def check_application_firewall(sshd_path: Path | None, ports: tuple[int, ...]) -
             group="firewall",
             label="Application firewall",
             status="ok",
-            message=f"Application firewall reports sshd unblocked for effective port(s) {', '.join(map(str, ports))}",
+            message=f"Application firewall reports Remote Login unblocked for effective port(s) {', '.join(map(str, ports))}",
             command_suggestions=(),
             manual_advice=(),
         )
@@ -224,8 +225,8 @@ def check_application_firewall(sshd_path: Path | None, ports: tuple[int, ...]) -
             group="firewall",
             label="Application firewall",
             status="error",
-            message="Application firewall reports sshd blocked",
-            command_suggestions=(f"sudo {firewall_tool} --unblockapp {sshd_path}",),
+            message="Application firewall reports Remote Login blocked",
+            command_suggestions=(f"sudo {firewall_tool} --unblockapp {firewall_subject}",),
             manual_advice=("Confirm the intended application rule in Firewall Options before changing it.",),
         )
     return SSHDebugCheck(
@@ -233,7 +234,7 @@ def check_application_firewall(sshd_path: Path | None, ports: tuple[int, ...]) -
         group="firewall",
         label="Application firewall",
         status="unknown",
-        message=f"Application firewall did not provide conclusive sshd evidence: {blocked.stdout or 'empty output'}",
+        message=f"Application firewall did not provide conclusive Remote Login evidence: {blocked.stdout or 'empty output'}",
         command_suggestions=(),
         manual_advice=("Add or review sshd explicitly in Firewall Options.",),
     )

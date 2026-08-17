@@ -7,6 +7,8 @@ from stackops.utils.installer_utils.linux_package_manager import detect_current_
 from stackops.utils.ssh_utils.server_install import (
     build_linux_ssh_server_install_script as _get_linux_ssh_server_install_script,
     build_macos_ssh_server_install_script as _get_macos_ssh_server_install_script,
+)
+from stackops.utils.ssh_utils.windows_server_install import (
     build_windows_ssh_server_install_script as _get_windows_ssh_server_install_script,
 )
 
@@ -87,27 +89,55 @@ def add_ssh_key(
     helper.main(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote)
 
 
-def debug_ssh() -> None:
+def debug_ssh(
+    client_host: Annotated[str | None, typer.Option("--client-host", help="Resolved SSH client host name for Match rules")] = None,
+    client_address: Annotated[str | None, typer.Option("--client-address", help="SSH client source IP address for Match rules")] = None,
+    local_address: Annotated[str | None, typer.Option("--local-address", help="Server local IP address receiving the connection")] = None,
+    local_port: Annotated[int | None, typer.Option("--local-port", help="Server local TCP port receiving the connection", min=1, max=65535)] = None,
+    routing_domain: Annotated[str | None, typer.Option("--routing-domain", help="Optional routing domain for Match RDomain rules")] = None,
+) -> None:
     """🐛 Debug SSH connection"""
     from platform import system
+
+    from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import SSHDConnectionContext
+
+    supplied_context = (client_host, client_address, local_address, local_port)
+    if all(value is None for value in supplied_context) and routing_domain is None:
+        connection_context = None
+    elif (
+        isinstance(client_host, str)
+        and isinstance(client_address, str)
+        and isinstance(local_address, str)
+        and isinstance(local_port, int)
+    ):
+        connection_context = SSHDConnectionContext(
+            client_host_name=client_host,
+            client_address=client_address,
+            local_address=local_address,
+            local_port=local_port,
+            routing_domain=routing_domain,
+        )
+    else:
+        print("❌ Error: --client-host, --client-address, --local-address, and --local-port must be supplied together.")
+        raise typer.Exit(code=2)
 
     current_system = system()
     if current_system == "Linux":
         import stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux
 
-        result = ssh_debug_linux.ssh_debug_linux()
+        result = ssh_debug_linux.ssh_debug_linux(connection_context=connection_context)
     elif current_system == "Darwin":
         from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin import ssh_debug_darwin
 
-        result = ssh_debug_darwin()
+        result = ssh_debug_darwin(connection_context=connection_context)
     elif current_system == "Windows":
         from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows import ssh_debug_windows
 
-        result = ssh_debug_windows()
+        result = ssh_debug_windows(connection_context=connection_context)
     else:
         print(f"❌ Error: Platform {current_system} is not supported.")
         raise typer.Exit(code=1)
-    if result.summary.has_errors:
+    if not result.summary.ready:
         raise typer.Exit(code=1)
 
 

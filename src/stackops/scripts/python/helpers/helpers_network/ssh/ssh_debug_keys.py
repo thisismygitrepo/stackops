@@ -1,6 +1,3 @@
-import base64
-import binascii
-import re
 import shlex
 import stat
 from dataclasses import dataclass
@@ -8,9 +5,10 @@ from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import SSHDSettings
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import CheckStatus
-
-
-PUBLIC_KEY_TYPE_PATTERN = re.compile(r"(?:ssh|ecdsa|sk-ssh|sk-ecdsa)-[A-Za-z0-9@._+-]+")
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_public_keys import (
+    SUPPORTED_KEY_TYPES,
+    parse_public_key_records,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,7 +47,10 @@ def assess_public_key_contents(path: Path) -> KeyFileAssessment:
     except FileNotFoundError:
         return KeyFileAssessment(status="error", message=f"{path} does not exist")
     except PermissionError:
-        return KeyFileAssessment(status="error", message=f"{path} is not readable by the current user")
+        return KeyFileAssessment(
+            status="unknown",
+            message=f"{path} is not readable by the diagnostic user; sshd may read it with elevated service rights",
+        )
     except UnicodeDecodeError:
         return KeyFileAssessment(status="error", message=f"{path} is not valid UTF-8 text")
     except OSError as error:
@@ -65,18 +66,16 @@ def assess_public_key_contents(path: Path) -> KeyFileAssessment:
         except ValueError:
             invalid_records += 1
             continue
-        key_index = next((index for index, token in enumerate(tokens) if PUBLIC_KEY_TYPE_PATTERN.fullmatch(token)), None)
+        key_index = next((index for index, token in enumerate(tokens) if token in SUPPORTED_KEY_TYPES), None)
         if key_index is None or key_index + 1 >= len(tokens):
             invalid_records += 1
             continue
-        encoded_key = tokens[key_index + 1]
-        encoded_key += "=" * (-len(encoded_key) % 4)
         try:
-            decoded_key = base64.b64decode(encoded_key, validate=True)
-        except (binascii.Error, ValueError):
-            invalid_records += 1
-            continue
-        if len(decoded_key) < 16:
+            parse_public_key_records(
+                value=f"{tokens[key_index]} {tokens[key_index + 1]}",
+                source=f"{path}, authorized_keys record",
+            )
+        except ValueError:
             invalid_records += 1
     if invalid_records:
         return KeyFileAssessment(

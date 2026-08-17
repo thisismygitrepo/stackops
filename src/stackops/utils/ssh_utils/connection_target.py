@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import shlex
 
-from stackops.utils.ssh_utils.open_ssh_config import SSHConfigLookup, select_existing_identity_file
+from stackops.utils.ssh_utils.open_ssh_config import SSHConfigLookup, select_existing_identity_files
 from stackops.utils.ssh_utils.open_ssh_command import parse_open_ssh_destination
 
 
@@ -17,7 +17,18 @@ class SSHConnectionTarget:
     proxy_command: str | None
 
 
-def resolve_ssh_connection_target(
+@dataclass(frozen=True, slots=True)
+class SSHConnectionProfile:
+    target: SSHConnectionTarget
+    identity_files: tuple[str, ...]
+    identities_only: bool
+    user_known_hosts_files: tuple[str, ...]
+    global_known_hosts_files: tuple[str, ...]
+    host_key_alias: str | None
+    hash_known_hosts: bool
+
+
+def resolve_ssh_connection_profile(
     host: str | None,
     username: str | None,
     hostname: str | None,
@@ -25,13 +36,30 @@ def resolve_ssh_connection_target(
     port: int,
     local_username: str,
     ssh_config_lookup: SSHConfigLookup,
-) -> SSHConnectionTarget:
+) -> SSHConnectionProfile:
     validated_default_port = _validated_port(port=port, source="port argument")
     if host is None:
         if username is None or not username or hostname is None or not hostname:
             raise ValueError("Either host or both username and hostname must be provided.")
-        return SSHConnectionTarget(
-            host=None, hostname=hostname, username=username, port=validated_default_port, ssh_key_path=ssh_key_path, proxy_command=None
+        resolved_identity_files = (
+            (str(Path(ssh_key_path).expanduser().absolute()),) if ssh_key_path is not None else ()
+        )
+        target = SSHConnectionTarget(
+            host=None,
+            hostname=hostname,
+            username=username,
+            port=validated_default_port,
+            ssh_key_path=resolved_identity_files[0] if resolved_identity_files else None,
+            proxy_command=None,
+        )
+        return SSHConnectionProfile(
+            target=target,
+            identity_files=resolved_identity_files,
+            identities_only=ssh_key_path is not None,
+            user_known_hosts_files=(str(Path.home().joinpath(".ssh", "known_hosts")),),
+            global_known_hosts_files=("/etc/ssh/ssh_known_hosts", "/etc/ssh/ssh_known_hosts2"),
+            host_key_alias=None,
+            hash_known_hosts=False,
         )
 
     parsed_host = parse_open_ssh_destination(destination=host)
@@ -40,7 +68,17 @@ def resolve_ssh_connection_target(
     configured_hostname = _optional_config_text(config_options=config_options, key="hostname")
     configured_username = _optional_config_text(config_options=config_options, key="user")
     configured_port = _optional_config_port(config_options=config_options)
-    configured_identity_file = select_existing_identity_file(config_options=config_options)
+    configured_identity_files = select_existing_identity_files(config_options=config_options)
+    resolved_identity_files = (
+        (str(Path(ssh_key_path).expanduser().absolute()),) if ssh_key_path is not None else configured_identity_files
+    )
+    identities_only = _optional_config_boolean(config_options=config_options, key="identitiesonly")
+    user_known_hosts_files = _config_text_values(config_options=config_options, key="userknownhostsfile")
+    global_known_hosts_files = _config_text_values(config_options=config_options, key="globalknownhostsfile")
+    host_key_alias = _optional_config_text(config_options=config_options, key="hostkeyalias")
+    if host_key_alias is not None and host_key_alias.casefold() == "none":
+        host_key_alias = None
+    hash_known_hosts = _optional_config_boolean(config_options=config_options, key="hashknownhosts")
 
     resolved_port = parsed_host.port if parsed_host.port is not None else configured_port
     if resolved_port is None:
@@ -55,14 +93,44 @@ def resolve_ssh_connection_target(
         resolved_port=resolved_port,
     )
 
-    return SSHConnectionTarget(
+    target = SSHConnectionTarget(
         host=host,
         hostname=resolved_hostname,
         username=resolved_username,
         port=resolved_port,
-        ssh_key_path=ssh_key_path if ssh_key_path is not None else configured_identity_file,
+        ssh_key_path=resolved_identity_files[0] if resolved_identity_files else None,
         proxy_command=proxy_command,
     )
+    return SSHConnectionProfile(
+        target=target,
+        identity_files=resolved_identity_files,
+        identities_only=identities_only,
+        user_known_hosts_files=user_known_hosts_files,
+        global_known_hosts_files=global_known_hosts_files,
+        host_key_alias=host_key_alias,
+        hash_known_hosts=hash_known_hosts,
+    )
+
+
+def resolve_ssh_connection_target(
+    host: str | None,
+    username: str | None,
+    hostname: str | None,
+    ssh_key_path: str | None,
+    port: int,
+    local_username: str,
+    ssh_config_lookup: SSHConfigLookup,
+) -> SSHConnectionTarget:
+    profile = resolve_ssh_connection_profile(
+        host=host,
+        username=username,
+        hostname=hostname,
+        ssh_key_path=ssh_key_path,
+        port=port,
+        local_username=local_username,
+        ssh_config_lookup=ssh_config_lookup,
+    )
+    return profile.target
 
 
 def _optional_config_text(config_options: Mapping[str, object], key: str) -> str | None:
@@ -83,14 +151,45 @@ def _optional_config_port(config_options: Mapping[str, object]) -> int | None:
     return _parse_port(port_text=str(value), source="SSH config option 'port'")
 
 
+def _optional_config_boolean(config_options: Mapping[str, object], key: str) -> bool:
+    value = config_options.get(key)
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    if not isinstance(value, str):
+        raise TypeError(f"SSH config option {key!r} must be text or a boolean, received {type(value).__name__}.")
+    normalized_value = value.casefold()
+    if normalized_value in {"yes", "true"}:
+        return True
+    if normalized_value in {"no", "false"}:
+        return False
+    raise ValueError(f"SSH config option {key!r} must be yes or no, received {value!r}.")
+
+
+def _config_text_values(config_options: Mapping[str, object], key: str) -> tuple[str, ...]:
+    value = config_options.get(key)
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        return (value,)
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise TypeError(f"SSH config option {key!r} must be text or a list of text values.")
+    return tuple(value)
+
+
 def _resolve_proxy_command(
     config_options: Mapping[str, object], requested_hostname: str, resolved_hostname: str, resolved_username: str, resolved_port: int
 ) -> str | None:
     proxy_command = _optional_config_text(config_options=config_options, key="proxycommand")
     proxy_jump = _optional_config_text(config_options=config_options, key="proxyjump")
+    if proxy_command is not None and proxy_command.casefold() == "none":
+        proxy_command = None
+    if proxy_jump is not None and proxy_jump.casefold() == "none":
+        proxy_jump = None
     if proxy_command is not None and proxy_jump is not None:
         raise ValueError("OpenSSH returned both ProxyCommand and ProxyJump for one destination.")
-    if proxy_command is not None and proxy_command.casefold() != "none":
+    if proxy_command is not None:
         return _expand_proxy_tokens(
             value=proxy_command,
             requested_hostname=requested_hostname,
@@ -98,7 +197,7 @@ def _resolve_proxy_command(
             resolved_username=resolved_username,
             resolved_port=resolved_port,
         )
-    if proxy_jump is None or proxy_jump.casefold() == "none":
+    if proxy_jump is None:
         return None
 
     expanded_proxy_jump = _expand_proxy_tokens(

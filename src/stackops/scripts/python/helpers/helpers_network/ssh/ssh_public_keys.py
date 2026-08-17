@@ -5,6 +5,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
 
+from stackops.scripts.python.helpers.helpers_network.ssh.ssh_public_key_validation import (
+    validate_ecdsa_public_point,
+    validate_ed25519_public_key,
+    validate_rsa_public_numbers,
+)
+
 
 type PublicKeyType = Literal[
     "ecdsa-sha2-nistp256",
@@ -95,6 +101,9 @@ def _parse_public_key_record(line: str, source: str, line_number: int) -> Public
         payload = base64.b64decode(encoded_key + padding, validate=True)
     except (binascii.Error, ValueError) as error:
         raise ValueError(f"{source}, line {line_number} has invalid public-key base64 data.") from error
+    canonical_key = base64.b64encode(payload).decode("ascii")
+    if encoded_key not in {canonical_key, canonical_key.rstrip("=")}:
+        raise ValueError(f"{source}, line {line_number} has non-canonical public-key base64 data.")
     _validate_key_payload(payload=payload, key_type=key_type, source=source, line_number=line_number)
 
     comment = parts[2].strip() if len(parts) == 3 else ""
@@ -112,20 +121,19 @@ def _validate_key_payload(payload: bytes, key_type: PublicKeyType, source: str, 
         match key_type:
             case "ssh-ed25519":
                 public_key, offset = _read_ssh_field(payload=payload, offset=offset)
-                if len(public_key) != 32:
-                    raise ValueError("an Ed25519 key must contain 32 public-key bytes")
+                validate_ed25519_public_key(public_key=public_key)
             case "ssh-rsa":
                 exponent, offset = _read_ssh_field(payload=payload, offset=offset)
                 modulus, offset = _read_ssh_field(payload=payload, offset=offset)
-                if int.from_bytes(exponent, signed=True) <= 0 or int.from_bytes(modulus, signed=True) <= 0:
-                    raise ValueError("RSA exponent and modulus must be positive")
+                validate_rsa_public_numbers(exponent_field=exponent, modulus_field=modulus)
             case "ecdsa-sha2-nistp256" | "ecdsa-sha2-nistp384" | "ecdsa-sha2-nistp521":
                 offset = _validate_ecdsa_fields(payload=payload, offset=offset, key_type=key_type)
             case "sk-ssh-ed25519@openssh.com":
                 public_key, offset = _read_ssh_field(payload=payload, offset=offset)
                 application, offset = _read_ssh_field(payload=payload, offset=offset)
-                if len(public_key) != 32 or application == b"":
-                    raise ValueError("a security-key Ed25519 record has invalid fields")
+                validate_ed25519_public_key(public_key=public_key)
+                if application == b"":
+                    raise ValueError("a security-key Ed25519 record has no application")
             case "sk-ecdsa-sha2-nistp256@openssh.com":
                 offset = _validate_ecdsa_fields(payload=payload, offset=offset, key_type="ecdsa-sha2-nistp256")
                 application, offset = _read_ssh_field(payload=payload, offset=offset)
@@ -141,10 +149,9 @@ def _validate_ecdsa_fields(payload: bytes, offset: int, key_type: str) -> int:
     curve_name = key_type.removeprefix("ecdsa-sha2-")
     curve, offset = _read_ssh_field(payload=payload, offset=offset)
     point, offset = _read_ssh_field(payload=payload, offset=offset)
-    point_lengths = {"nistp256": 65, "nistp384": 97, "nistp521": 133}
-    expected_point_length = point_lengths.get(curve_name)
-    if expected_point_length is None or curve.decode("ascii") != curve_name or len(point) != expected_point_length or point[0] != 4:
-        raise ValueError("the ECDSA curve or public point is invalid")
+    if curve.decode("ascii") != curve_name:
+        raise ValueError("the encoded ECDSA curve differs from the declared key type")
+    validate_ecdsa_public_point(curve_name=curve_name, point=point)
     return offset
 
 

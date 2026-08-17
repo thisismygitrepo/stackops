@@ -1,11 +1,15 @@
 import os
 import platform
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from stackops.utils.ssh_utils.ssh_port_commands import PrivilegePrefix, run_command
+from stackops.utils.ssh_utils.ssh_port_commands import (
+    PrivilegePrefix,
+    require_trusted_system_command,
+    resolve_trusted_system_command,
+    run_command,
+)
 
 
 type InitSystem = Literal["openrc", "systemd", "sysv"]
@@ -20,10 +24,11 @@ class ServiceManager:
 
 
 def _systemd_unit_properties(unit_name: str, privilege_prefix: PrivilegePrefix) -> dict[str, str]:
+    systemctl_path = require_trusted_system_command(command_name="systemctl")
     result = run_command(
         (
             *privilege_prefix,
-            "systemctl",
+            systemctl_path,
             "show",
             unit_name,
             "--property=Id",
@@ -43,9 +48,10 @@ def _systemd_unit_properties(unit_name: str, privilege_prefix: PrivilegePrefix) 
 
 
 def _resolve_systemd_manager(privilege_prefix: PrivilegePrefix) -> ServiceManager | None:
-    if shutil.which("systemctl") is None:
+    systemctl_path = resolve_trusted_system_command(command_name="systemctl")
+    if systemctl_path is None:
         return None
-    system_state = run_command(("systemctl", "is-system-running"))
+    system_state = run_command((str(systemctl_path), "is-system-running"))
     if system_state.stdout.strip() not in {"running", "degraded"}:
         return None
 
@@ -110,12 +116,13 @@ def _resolve_systemd_manager(privilege_prefix: PrivilegePrefix) -> ServiceManage
 
 
 def _resolve_openrc_manager(privilege_prefix: PrivilegePrefix) -> ServiceManager | None:
-    if shutil.which("rc-service") is None:
+    rc_service_path = resolve_trusted_system_command(command_name="rc-service")
+    if rc_service_path is None:
         return None
     active_services = tuple(
         service_name
         for service_name in ("ssh", "sshd")
-        if run_command((*privilege_prefix, "rc-service", service_name, "status")).returncode == 0
+        if run_command((*privilege_prefix, str(rc_service_path), service_name, "status")).returncode == 0
     )
     if len(active_services) != 1:
         detected = ", ".join(active_services) or "none"
@@ -131,7 +138,8 @@ def _resolve_openrc_manager(privilege_prefix: PrivilegePrefix) -> ServiceManager
 
 
 def _resolve_sysv_manager(privilege_prefix: PrivilegePrefix) -> ServiceManager | None:
-    if shutil.which("service") is None:
+    service_path = resolve_trusted_system_command(command_name="service")
+    if service_path is None:
         return None
     installed_services = tuple(
         service_name for service_name in ("ssh", "sshd") if Path("/etc/init.d").joinpath(service_name).is_file()
@@ -141,7 +149,7 @@ def _resolve_sysv_manager(privilege_prefix: PrivilegePrefix) -> ServiceManager |
     active_services = tuple(
         service_name
         for service_name in installed_services
-        if run_command((*privilege_prefix, "service", service_name, "status")).returncode == 0
+        if run_command((*privilege_prefix, str(service_path), service_name, "status")).returncode == 0
     )
     if len(active_services) != 1:
         detected = ", ".join(active_services) or "none"

@@ -1,5 +1,6 @@
 from collections.abc import Callable, Mapping
 from pathlib import Path
+import shlex
 import subprocess
 
 
@@ -20,27 +21,46 @@ def lookup_open_ssh_config(hostname: str, username: str | None, port: int | None
 def parse_open_ssh_config(config_text: str) -> dict[str, object]:
     config_options: dict[str, object] = {}
     identity_files: list[str] = []
+    user_known_hosts_files: list[str] = []
+    global_known_hosts_files: list[str] = []
     for line_number, line in enumerate(config_text.splitlines(), start=1):
         key, separator, value = line.partition(" ")
         if not separator or not key or not value:
             raise ValueError(f"Invalid output from 'ssh -G' on line {line_number}: {line!r}.")
         normalized_key = key.casefold()
         match normalized_key:
-            case "hostname" | "user" | "port" | "proxycommand" | "proxyjump":
+            case (
+                "hostname"
+                | "user"
+                | "port"
+                | "proxycommand"
+                | "proxyjump"
+                | "identitiesonly"
+                | "hostkeyalias"
+                | "hashknownhosts"
+            ):
                 config_options[normalized_key] = value
             case "identityfile":
                 identity_files.append(value)
+            case "userknownhostsfile":
+                user_known_hosts_files.extend(shlex.split(value))
+            case "globalknownhostsfile":
+                global_known_hosts_files.extend(shlex.split(value))
             case _:
                 continue
     if identity_files:
         config_options["identityfile"] = identity_files
+    if user_known_hosts_files:
+        config_options["userknownhostsfile"] = user_known_hosts_files
+    if global_known_hosts_files:
+        config_options["globalknownhostsfile"] = global_known_hosts_files
     return config_options
 
 
-def select_existing_identity_file(config_options: Mapping[str, object]) -> str | None:
+def select_existing_identity_files(config_options: Mapping[str, object]) -> tuple[str, ...]:
     value = config_options.get("identityfile")
     if value is None:
-        return None
+        return ()
     if isinstance(value, str):
         identity_files = [value]
     elif isinstance(value, list):
@@ -49,10 +69,11 @@ def select_existing_identity_file(config_options: Mapping[str, object]) -> str |
             raise TypeError("Every SSH config identity file must be text.")
     else:
         raise TypeError(f"SSH config option 'identityfile' must be text or a list, received {type(value).__name__}.")
+    existing_identity_files: list[str] = []
     for identity_file in identity_files:
         if identity_file.casefold() == "none":
             continue
         identity_file_path = Path(identity_file).expanduser()
         if identity_file_path.is_file():
-            return str(identity_file_path.absolute())
-    return None
+            existing_identity_files.append(str(identity_file_path.absolute()))
+    return tuple(existing_identity_files)

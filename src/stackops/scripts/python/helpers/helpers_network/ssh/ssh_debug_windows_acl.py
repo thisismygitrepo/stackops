@@ -112,6 +112,16 @@ $rules = @($acl.Access | ForEach-Object {{
                 command_suggestions=(),
                 manual_advice=("Review explicit and inherited deny entries.",),
             )
+        if access_type == "Deny" and rights & READ_DATA_RIGHT:
+            return SSHDebugCheck(
+                identifier="authorized_keys_acl",
+                group="permissions",
+                label="Authorized-keys ACL",
+                status="unknown",
+                message=f"Deny SID {sid} may apply through Windows group membership; effective read access is unproved",
+                command_suggestions=(),
+                manual_advice=("Use a Windows effective-access check for the user and sshd service identity.",),
+            )
         if access_type != "Allow":
             continue
         if rights & READ_DATA_RIGHT:
@@ -144,8 +154,8 @@ $rules = @($acl.Access | ForEach-Object {{
             identifier="authorized_keys_acl",
             group="permissions",
             label="Authorized-keys ACL",
-            status="error",
-            message=f"Required SID(s) lack an explicit readable ACE on {path}: {', '.join(sorted(missing))}",
+            status="unknown",
+            message=f"Required SID(s) lack a direct readable ACE and may depend on group-granted access: {', '.join(sorted(missing))}",
             command_suggestions=(),
             manual_advice=("Grant only the required principals sufficient read/control rights.",),
         )

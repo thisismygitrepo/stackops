@@ -39,6 +39,8 @@ def build_map_port_command(
         "-o",
         "ExitOnForwardFailure=yes",
         "-o",
+        "ClearAllForwardings=no",
+        "-o",
         "ForkAfterAuthentication=no",
         "-o",
         "ControlMaster=no",

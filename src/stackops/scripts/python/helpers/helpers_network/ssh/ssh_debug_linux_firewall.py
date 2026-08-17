@@ -5,7 +5,7 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import
 
 
 UFW_RULE_PATTERN = re.compile(
-    r"^\[\s*(?P<number>\d+)\]\s+(?P<target>\S+)(?:\s+\(v6\))?\s+"
+    r"^\[\s*(?P<number>\d+)\]\s+(?P<target>\S+)(?:\s+(?P<ipv6>\(v6\)))?\s+"
     r"(?P<action>ALLOW|DENY|REJECT)\s+IN\s+(?P<source>.+)$"
 )
 
@@ -18,43 +18,59 @@ def _check_ufw(ports: tuple[int, ...]) -> SSHDebugCheck | None:
     if status_lines != ["Status: active"]:
         return None
 
-    parsed_rules: list[tuple[int, str, str, str]] = []
+    parsed_rules: list[tuple[int, str, str, str, str]] = []
     for line in completed.stdout.splitlines():
         match = UFW_RULE_PATTERN.fullmatch(line.strip())
         if match is not None:
             parsed_rules.append(
-                (int(match.group("number")), match.group("target"), match.group("action"), match.group("source"))
+                (
+                    int(match.group("number")),
+                    match.group("target"),
+                    match.group("action"),
+                    match.group("source"),
+                    "ipv6" if match.group("ipv6") is not None else "ipv4",
+                )
             )
-    unproved_ports: list[int] = []
+    unproved: list[str] = []
     for port in ports:
-        relevant: list[tuple[int, str, bool]] = []
-        for number, target, action, source in parsed_rules:
-            target_port, separator, protocol = target.partition("/")
-            exact_target = separator == "/" and protocol == "tcp" and target_port.isdecimal() and int(target_port) == port
-            global_block = target == "Anywhere" and action in ("DENY", "REJECT")
-            if source.startswith("Anywhere") and (exact_target or global_block):
-                relevant.append((number, action, exact_target))
-        relevant.sort(key=lambda rule: rule[0])
-        if relevant and relevant[0][1] in ("DENY", "REJECT"):
-            return SSHDebugCheck(
-                identifier="firewall",
-                group="firewall",
-                label="Inbound firewall",
-                status="error",
-                message=f"The first matching UFW rule explicitly blocks TCP port {port}",
-                command_suggestions=("sudo ufw status numbered",),
-                manual_advice=("Review UFW rule order before changing or deleting a blocking rule.",),
-            )
-        if not relevant or relevant[0][1] != "ALLOW" or not relevant[0][2]:
-            unproved_ports.append(port)
-    if unproved_ports:
+        for family in ("ipv4", "ipv6"):
+            relevant: list[tuple[int, str, bool]] = []
+            for number, target, action, source, rule_family in parsed_rules:
+                if rule_family != family:
+                    continue
+                target_port, separator, protocol = target.partition("/")
+                exact_target = (
+                    separator == "/"
+                    and protocol == "tcp"
+                    and target_port.isdecimal()
+                    and int(target_port) == port
+                )
+                if exact_target or target == "Anywhere":
+                    relevant.append((number, action, source.removesuffix(" (v6)") == "Anywhere"))
+            relevant.sort(key=lambda rule: rule[0])
+            if relevant and not relevant[0][2]:
+                unproved.append(f"{family}:{port}/tcp (first rule is source-scoped)")
+                continue
+            if relevant and relevant[0][1] in ("DENY", "REJECT"):
+                return SSHDebugCheck(
+                    identifier="firewall",
+                    group="firewall",
+                    label="Inbound firewall",
+                    status="error",
+                    message=f"The first matching {family} UFW rule explicitly blocks TCP port {port}",
+                    command_suggestions=("sudo ufw status numbered",),
+                    manual_advice=("Review UFW rule order before changing or deleting a blocking rule.",),
+                )
+            if not relevant or relevant[0][1] != "ALLOW":
+                unproved.append(f"{family}:{port}/tcp")
+    if unproved:
         return SSHDebugCheck(
             identifier="firewall",
             group="firewall",
             label="Inbound firewall",
             status="unknown",
-            message=f"Active UFW has no provable first-match TCP allow for port(s) {', '.join(map(str, unproved_ports))}",
-            command_suggestions=tuple(f"sudo ufw allow {port}/tcp" for port in unproved_ports),
+            message=f"Active UFW has no provable first-match allow for {', '.join(unproved)}",
+            command_suggestions=(),
             manual_advice=("Review existing numbered rules and source restrictions before adding rules.",),
         )
     return SSHDebugCheck(
@@ -62,7 +78,7 @@ def _check_ufw(ports: tuple[int, ...]) -> SSHDebugCheck | None:
         group="firewall",
         label="Inbound firewall",
         status="ok",
-        message=f"Active UFW has first-match inbound TCP allow rules for port(s) {', '.join(map(str, ports))}",
+        message=f"Active UFW has first-match IPv4 and IPv6 TCP allow rules for port(s) {', '.join(map(str, ports))}",
         command_suggestions=(),
         manual_advice=(),
     )
@@ -114,52 +130,38 @@ def _check_firewalld(ports: tuple[int, ...]) -> SSHDebugCheck | None:
         if rich_rules.returncode != 0:
             unproved.append(f"{zone}: rich rules unavailable")
             continue
-        generic_blocks = [
-            rule
-            for rule in rich_rules.stdout.splitlines()
-            if re.search(r"\b(drop|reject)\b", rule) is not None and " port " not in rule
-        ]
-        if generic_blocks:
+        if rich_rules.stdout:
             return SSHDebugCheck(
                 identifier="firewall",
                 group="firewall",
                 label="Inbound firewall",
                 status="unknown",
-                message=f"firewalld zone {zone} has generic rich block rules whose SSH effect is not provable",
+                message=f"firewalld zone {zone} has rich rules whose source scopes and priorities require contextual evaluation",
                 command_suggestions=(),
-                manual_advice=("Evaluate rich-rule source scopes and priorities for the effective SSH ports.",),
+                manual_advice=("Evaluate the rich rules for the actual SSH client address.",),
             )
         for port in ports:
-            exact_port = re.compile(rf'port port="{port}" protocol="tcp"')
-            blocking_rules = [
-                rule
-                for rule in rich_rules.stdout.splitlines()
-                if exact_port.search(rule) is not None and re.search(r"\b(drop|reject)\b", rule) is not None
-            ]
-            if blocking_rules:
+            query = run_argv(("firewall-cmd", f"--zone={zone}", f"--query-port={port}/tcp"))
+            if query.returncode == 0 and query.stdout == "yes":
+                continue
+            service_permission = _firewalld_service_allows_port(zone=zone, port=port)
+            if service_permission is True:
+                continue
+            if service_permission is None:
+                unproved.append(f"{zone}:{port}/tcp (service rules unavailable)")
+                continue
+            target = run_argv(("firewall-cmd", f"--zone={zone}", "--get-target"))
+            if target.returncode == 0 and target.stdout in ("DROP", "REJECT"):
                 return SSHDebugCheck(
                     identifier="firewall",
                     group="firewall",
                     label="Inbound firewall",
                     status="error",
-                    message=f"firewalld zone {zone} explicitly blocks TCP port {port}",
-                    command_suggestions=(),
-                    manual_advice=("Review the matching rich rule and its priority.",),
+                    message=f"firewalld zone {zone} blocks by default and has no TCP port or service allow for port {port}",
+                    command_suggestions=(f"sudo firewall-cmd --permanent --zone={zone} --add-port={port}/tcp",),
+                    manual_advice=("Confirm the interface-to-zone assignment before adding a permanent rule.",),
                 )
-            query = run_argv(("firewall-cmd", f"--zone={zone}", f"--query-port={port}/tcp"))
-            if query.returncode != 0 or query.stdout != "yes":
-                target = run_argv(("firewall-cmd", f"--zone={zone}", "--get-target"))
-                if target.returncode == 0 and target.stdout in ("DROP", "REJECT"):
-                    return SSHDebugCheck(
-                        identifier="firewall",
-                        group="firewall",
-                        label="Inbound firewall",
-                        status="error",
-                        message=f"firewalld zone {zone} blocks by default and has no exact TCP allow for port {port}",
-                        command_suggestions=(f"sudo firewall-cmd --permanent --zone={zone} --add-port={port}/tcp",),
-                        manual_advice=("Confirm the interface-to-zone assignment before adding a permanent rule.",),
-                    )
-                unproved.append(f"{zone}:{port}/tcp")
+            unproved.append(f"{zone}:{port}/tcp")
     if unproved:
         return SSHDebugCheck(
             identifier="firewall",
@@ -179,6 +181,30 @@ def _check_firewalld(ports: tuple[int, ...]) -> SSHDebugCheck | None:
         command_suggestions=(),
         manual_advice=(),
     )
+
+
+def _firewalld_service_allows_port(zone: str, port: int) -> bool | None:
+    listed_services = run_argv(("firewall-cmd", f"--zone={zone}", "--list-services"))
+    if listed_services.returncode != 0:
+        return None
+    for service_name in listed_services.stdout.split():
+        service_details = run_argv(("firewall-cmd", f"--info-service={service_name}"))
+        if service_details.returncode != 0:
+            return None
+        port_lines = [line.strip().removeprefix("ports:").strip() for line in service_details.stdout.splitlines() if line.strip().startswith("ports:")]
+        if len(port_lines) != 1:
+            return None
+        for port_specification in port_lines[0].split():
+            port_value, separator, protocol = port_specification.partition("/")
+            if separator != "/" or protocol.casefold() != "tcp":
+                continue
+            if port_value.isdecimal() and int(port_value) == port:
+                return True
+            first_port, range_separator, last_port = port_value.partition("-")
+            if range_separator == "-" and first_port.isdecimal() and last_port.isdecimal():
+                if int(first_port) <= port <= int(last_port):
+                    return True
+    return False
 
 
 def check_linux_firewall(ports: tuple[int, ...]) -> SSHDebugCheck:
