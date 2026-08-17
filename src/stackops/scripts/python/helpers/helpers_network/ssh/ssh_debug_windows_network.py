@@ -108,6 +108,7 @@ ConvertTo-Json -InputObject @($rows) -Compress
         )
     loopback_ports: list[int] = []
     invalid_addresses: list[int] = []
+    mixed_owner_ports: list[int] = []
     wrong_owners: dict[int, tuple[int, ...]] = {}
     for port, records in endpoints.items():
         external_records: list[tuple[str, bool, int]] = []
@@ -124,7 +125,10 @@ ConvertTo-Json -InputObject @($rows) -Compress
         if not external_records and port not in invalid_addresses:
             loopback_ports.append(port)
             continue
-        if external_records and not any(owned_by_sshd for _address, owned_by_sshd, _process_id in external_records):
+        ownership = tuple(owned_by_sshd for _address, owned_by_sshd, _process_id in external_records)
+        if ownership and any(ownership) and not all(ownership):
+            mixed_owner_ports.append(port)
+        elif ownership and not any(ownership):
             wrong_owners[port] = tuple(dict.fromkeys(process_id for _address, _owned_by_sshd, process_id in external_records))
     if loopback_ports:
         return SSHDebugCheck(
@@ -156,6 +160,16 @@ ConvertTo-Json -InputObject @($rows) -Compress
             message=f"Effective SSH port(s) are not owned by the registered sshd service ({details})",
             command_suggestions=(),
             manual_advice=("Stop or reconfigure the conflicting process before starting the sshd service.",),
+        )
+    if mixed_owner_ports:
+        return SSHDebugCheck(
+            identifier="ssh_listener",
+            group="network",
+            label="TCP listener",
+            status="unknown",
+            message=f"sshd and unrelated processes both own non-loopback listeners for TCP port(s) {mixed_owner_ports}",
+            command_suggestions=(),
+            manual_advice=("Inspect listener ownership separately for each local address and address family.",),
         )
     return SSHDebugCheck(
         identifier="ssh_listener",

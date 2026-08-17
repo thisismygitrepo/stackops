@@ -384,6 +384,13 @@ def _assess_connection_authentication(settings: SSHDSettings, user_name: str) ->
             message="Root public-key login is restricted to forced commands",
             manual_advice=("Verify that the intended key and connection supply an allowed forced command.",),
         )
+    if user_name == "root" and permit_root not in (("yes",), ("prohibit-password",), ("without-password",)):
+        return replace(
+            base_check,
+            status="unknown",
+            message=f"Effective PermitRootLogin does not conclusively admit root public-key login: {permit_root or ('missing',)}",
+            manual_advice=("Inspect the connection-specific PermitRootLogin value.",),
+        )
 
     deny_users = tuple(token for value in settings.values.get("denyusers", ()) for token in value.split())
     allow_users = tuple(token for value in settings.values.get("allowusers", ()) for token in value.split())
@@ -439,6 +446,13 @@ def _assess_connection_authentication(settings: SSHDSettings, user_name: str) ->
         for value in settings.values.get("authenticationmethods", ())
         for method_list in value.split()
     )
+    if not authentication_methods:
+        return replace(
+            base_check,
+            status="unknown",
+            message="Effective AuthenticationMethods was not reported",
+            manual_advice=("Inspect the connection-specific AuthenticationMethods value.",),
+        )
     if "any" not in authentication_methods:
         public_key_sequences = [
             tuple(method.partition(":")[0] for method in method_list.split(","))
@@ -449,7 +463,7 @@ def _assess_connection_authentication(settings: SSHDSettings, user_name: str) ->
             return replace(
                 base_check,
                 status="error",
-                message=f"AuthenticationMethods does not permit publickey: {authentication_methods or ('missing',)}",
+                message=f"AuthenticationMethods does not permit publickey: {authentication_methods}",
                 manual_advice=("Select an authentication method admitted by the effective connection configuration.",),
             )
         if ("publickey",) not in public_key_sequences:

@@ -143,7 +143,9 @@ def check_linux_listeners(ports: tuple[int, ...]) -> LinuxListenerAssessment:
     listener_families_proved = True
     for port, records in endpoints.items():
         port_families: set[ListenerAddressFamily] = set()
-        for address, _owned_by_ssh, _owners in records:
+        for address, owned_by_ssh, _owners in records:
+            if owned_by_ssh is False:
+                continue
             external_state = _is_external_address(address)
             if external_state is False:
                 continue
@@ -186,9 +188,12 @@ def check_linux_listeners(ports: tuple[int, ...]) -> LinuxListenerAssessment:
             else:
                 localhost_ports.append(port)
             continue
-        if any(owned_by_ssh is True for _address, owned_by_ssh, _owners in external_records):
+        owner_states = tuple(owned_by_ssh for _address, owned_by_ssh, _owners in external_records)
+        if all(owned_by_ssh is True for owned_by_ssh in owner_states):
             continue
-        if any(owned_by_ssh is None for _address, owned_by_ssh, _owners in external_records):
+        if any(owned_by_ssh is None for owned_by_ssh in owner_states) or any(
+            owned_by_ssh is True for owned_by_ssh in owner_states
+        ):
             uncertain_owner_ports.append(port)
             continue
         wrong_owners[port] = tuple(

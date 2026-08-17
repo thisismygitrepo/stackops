@@ -68,18 +68,37 @@ def _append_host_key(path: Path, hostname: str, key: paramiko.PKey) -> None:
     if os.name != "nt" and (directory_was_missing or path.parent == default_ssh_directory):
         path.parent.chmod(0o700)
 
-    separator = b""
-    if path.is_file() and path.stat().st_size > 0:
-        with path.open("rb") as known_hosts_file:
-            known_hosts_file.seek(-1, os.SEEK_END)
-            if known_hosts_file.read(1) != b"\n":
-                separator = b"\n"
-    entry = separator + f"{hostname} {key.get_name()} {key.get_base64()}\n".encode("ascii")
-    file_descriptor = os.open(path, os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o600)
+    entry = f"{hostname} {key.get_name()} {key.get_base64()}\n".encode("ascii")
+    file_descriptor = os.open(path, os.O_APPEND | os.O_CREAT | os.O_RDWR, 0o600)
     try:
-        written_bytes = os.write(file_descriptor, entry)
-        if written_bytes != len(entry):
-            raise OSError(f"Only {written_bytes} of {len(entry)} known-host bytes were written to {path}.")
+        if os.name == "nt":
+            import msvcrt
+
+            os.lseek(file_descriptor, 0, os.SEEK_SET)
+            msvcrt.locking(file_descriptor, msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(file_descriptor, fcntl.LOCK_EX)
+        try:
+            file_size = os.fstat(file_descriptor).st_size
+            separator = b""
+            if file_size > 0:
+                os.lseek(file_descriptor, -1, os.SEEK_END)
+                if os.read(file_descriptor, 1) != b"\n":
+                    separator = b"\n"
+            appended_entry = separator + entry
+            written_bytes = os.write(file_descriptor, appended_entry)
+            if written_bytes != len(appended_entry):
+                raise OSError(
+                    f"Only {written_bytes} of {len(appended_entry)} known-host bytes were written to {path}."
+                )
+        finally:
+            if os.name == "nt":
+                os.lseek(file_descriptor, 0, os.SEEK_SET)
+                msvcrt.locking(file_descriptor, msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(file_descriptor, fcntl.LOCK_UN)
         if file_was_missing and os.name != "nt" and stat.S_ISREG(os.fstat(file_descriptor).st_mode):
             os.fchmod(file_descriptor, 0o600)
     finally:

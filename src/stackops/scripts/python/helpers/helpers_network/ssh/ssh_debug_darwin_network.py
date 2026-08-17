@@ -148,9 +148,13 @@ def check_darwin_listeners(ports: tuple[int, ...]) -> SSHDebugCheck:
     wrong_owners: dict[int, tuple[str, ...]] = {}
     for port, records in owner_records.items():
         external_records = [record for record in records if _is_external_address(record[0]) is True]
-        if any(command == "sshd" for _address, command in external_records):
+        owner_states = tuple(
+            True if command == "sshd" else None if command in (None, "launchd") else False
+            for _address, command in external_records
+        )
+        if owner_states and all(state is True for state in owner_states):
             continue
-        if not external_records or any(command in (None, "launchd") for _address, command in external_records):
+        if not owner_states or any(state is None for state in owner_states) or any(state is True for state in owner_states):
             unknown_owner_ports.append(port)
             continue
         wrong_owners[port] = tuple(dict.fromkeys(command for _address, command in external_records if command is not None))
@@ -180,7 +184,7 @@ def check_darwin_listeners(ports: tuple[int, ...]) -> SSHDebugCheck:
         group="network",
         label="TCP listener",
         status="ok",
-        message=f"sshd/launchd owns exact non-loopback listener(s) for TCP port(s) {', '.join(map(str, ports))}",
+        message=f"sshd owns every observed non-loopback listener for TCP port(s) {', '.join(map(str, ports))}",
         command_suggestions=(),
         manual_advice=(),
     )
