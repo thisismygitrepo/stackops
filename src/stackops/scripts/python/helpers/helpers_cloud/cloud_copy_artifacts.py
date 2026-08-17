@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -45,7 +45,7 @@ def prepared_upload_path(
     zip_requested: bool,
     encryption_mode: EncryptionMode | None,
     pwd: str | None,
-) -> Iterator[Path]:
+) -> Generator[Path, None, None]:
     source_path = local_path.expanduser().absolute()
     if not source_path.exists():
         raise FileNotFoundError(source_path)
@@ -90,7 +90,7 @@ def staged_download(
     target_path: Path,
     zip_requested: bool,
     encryption_mode: EncryptionMode | None,
-) -> Iterator[StagedDownload]:
+) -> Generator[StagedDownload, None, None]:
     resolved_target = target_path.expanduser().absolute()
     if resolved_target.name == "":
         raise ValueError("Cloud copy target must have a final path component.")

@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 import os
 
@@ -6,7 +6,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
 
 
 @contextmanager
-def browser_launch_lock() -> Iterator[None]:
+def browser_launch_lock() -> Generator[None, None, None]:
     BROWSER_LAUNCH_LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
     with BROWSER_LAUNCH_LOCK_PATH.open("a+b") as lock_file:
         if os.name == "nt":
