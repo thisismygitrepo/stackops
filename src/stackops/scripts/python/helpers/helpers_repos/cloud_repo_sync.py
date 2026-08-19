@@ -90,6 +90,7 @@ def main(
         console.print(Panel(f"Repository must live under {Path.home()}\nLocation: {repo_local_root}", title="Error", border_style="red"))
         raise typer.Exit(code=1) from exc
 
+    message_resolved = "sync" if message is None or message.strip() == "" else message
     run_name = randstr(8)
     repo_remote_root = Path(CONFIG_ROOT).joinpath("remote", run_name, repo_local_root.name)
     integration_root = Path(CONFIG_ROOT).joinpath("integration", run_name, repo_local_root.name)
@@ -104,6 +105,11 @@ def main(
             raise
         delete_path(repo_remote_root.parent, verbose=False)
         console.print(Panel("🆕 Remote repository does not exist; creating it from local.", border_style="green"))
+        try:
+            commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)
+        except GitCommandError as exc:
+            console.print(Panel(f"❌ COMMIT FAILED\n{exc}", title="Commit Failed", border_style="red"))
+            raise typer.Exit(code=1) from exc
         try:
             publish_local_repository(
                 repo_local_root=repo_local_root,
@@ -124,11 +130,16 @@ def main(
         repo_remote_obj.close()
     if remote_repo_is_dirty:
         console.print(
-            Panel(f"Downloaded repository is dirty and was preserved at {repo_remote_root}", title="Invalid Remote Archive", border_style="red")
+            Panel(
+                f"Downloaded repository is dirty and was preserved at {repo_remote_root}\n\n"
+                f"Remote location: {cloud_resolved}:{remote_path.as_posix()}\n"
+                f"Delete remote: rclone deletefile {cloud_resolved}:{remote_path.as_posix()}",
+                title="Invalid Remote Archive",
+                border_style="red",
+            )
         )
         raise typer.Exit(code=1)
 
-    message_resolved = "sync" if message is None or message.strip() == "" else message
     try:
         commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)
     except GitCommandError as exc:
