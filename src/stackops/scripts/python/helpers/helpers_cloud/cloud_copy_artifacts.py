@@ -67,6 +67,7 @@ def prepared_upload_path(
                 content=False,
                 orig=False,
                 mode="w",
+                included_relative_paths=None,
             )
         else:
             if not source_path.is_file():

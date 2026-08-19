@@ -67,8 +67,10 @@ def _archive_root(source: Path, arcname: str | None) -> Path:
     return arcname_path if arcname_path.name == source.name else arcname_path / source.name
 
 
-def _iter_archive_members(source: Path) -> list[Path]:
-    return sorted(source.rglob("*"), key=lambda candidate: candidate.as_posix())
+def _iter_archive_members(source: Path, included_relative_paths: tuple[Path, ...] | None) -> list[Path]:
+    if included_relative_paths is None:
+        return sorted(source.rglob("*"), key=lambda candidate: candidate.as_posix())
+    return [source.joinpath(relative_path) for relative_path in included_relative_paths]
 
 
 def _split_embedded_archive_path(source: Path) -> tuple[Path, Path | None]:
@@ -129,6 +131,7 @@ def zip_path(
     content: bool,
     orig: bool,
     mode: FileMode,
+    included_relative_paths: tuple[Path, ...] | None,
 ) -> Path:
     source_resolved = source.expanduser().resolve()
     if not source_resolved.exists():
@@ -143,7 +146,7 @@ def zip_path(
         elif source_resolved.is_dir():
             if not content and not any(source_resolved.iterdir()):
                 archive.writestr(f"{archive_root.as_posix().rstrip('/')}/", "")
-            for member in _iter_archive_members(source_resolved):
+            for member in _iter_archive_members(source_resolved, included_relative_paths=included_relative_paths):
                 relative_member = member.relative_to(source_resolved)
                 archive_name = relative_member if content else archive_root / relative_member
                 if member.is_dir():

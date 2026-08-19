@@ -27,6 +27,10 @@ def main(
         ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")
     ] = "ask",
     pwd: Annotated[str | None, typer.Option(..., "--password", "-p", help="Password for encryption/decryption of the remote repository.")] = None,
+    ignore_gitignore: Annotated[
+        bool,
+        typer.Option("--ignore-gitignore", help="Include files excluded by Git ignore rules in the repository archive."),
+    ] = False,
 ) -> str | None:
     from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError
     from git.repo import Repo
@@ -102,7 +106,12 @@ def main(
         console.print(Panel("🆕 Remote repository does not exist; creating it from local.", border_style="green"))
         try:
             publish_local_repository(
-                repo_local_root=repo_local_root, repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd
+                repo_local_root=repo_local_root,
+                repo_remote_root=repo_remote_root,
+                cloud=cloud_resolved,
+                remote_path=remote_path,
+                pwd=pwd,
+                ignore_gitignore=ignore_gitignore,
             )
         except GpgCommandError as gpg_error:
             _exit_after_gpg_error(error=gpg_error)
@@ -184,7 +193,12 @@ def main(
 
     try:
         publish_local_repository(
-            repo_local_root=repo_local_root, repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd
+            repo_local_root=repo_local_root,
+            repo_remote_root=repo_remote_root,
+            cloud=cloud_resolved,
+            remote_path=remote_path,
+            pwd=pwd,
+            ignore_gitignore=ignore_gitignore,
         )
     except GpgCommandError as error:
         _exit_after_gpg_error(error=error)

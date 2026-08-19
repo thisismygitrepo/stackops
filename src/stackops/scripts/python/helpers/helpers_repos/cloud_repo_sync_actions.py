@@ -55,11 +55,13 @@ def validate_integration_transport(repo_local_root: Path, integration_root: Path
         raise RcloneConfigError(f"Resolved rclone config does not contain required remote '{cloud}'. Integration remains at {integration_root}.")
 
 
-def publish_local_repository(repo_local_root: Path, repo_remote_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> None:
+def publish_local_repository(
+    repo_local_root: Path, repo_remote_root: Path, cloud: str, remote_path: Path, pwd: str | None, ignore_gitignore: bool
+) -> None:
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import upload_repo_archive
     from stackops.utils.path_core import delete_path
 
-    upload_repo_archive(repo_root=repo_local_root, cloud=cloud, remote_path=remote_path, pwd=pwd)
+    upload_repo_archive(repo_root=repo_local_root, cloud=cloud, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore)
     delete_path(repo_remote_root.parent, verbose=True)
 
 
