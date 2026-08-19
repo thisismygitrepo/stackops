@@ -35,7 +35,7 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "orchestration": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orchestration"),
     AGENTOPS_SKILL_NAME: AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill=AGENTOPS_SKILL_NAME),
     "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
-    "unslop": AgentSkillSource("cursor/plugins", skill="unslop"),
+    "unslop": AgentSkillSource("https://github.com/cursor/plugins", skill="unslop"),
 }
 
 
