@@ -6952,6 +6952,29 @@
       }
     },
     {
+      "appName": "amq",
+      "license": "MIT License",
+      "repoURL": "https://github.com/avivsinai/agent-message-queue",
+      "lastCommitDate": "2026-08-18T20:19:24Z",
+      "lastCommitDateCheckDate": "2026-08-19T01:12:58Z",
+      "doc": "Local file-based interoperability bus for agent sessions and adapters.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "amq_{version}_linux_amd64.tar.gz",
+          "darwin": "amq_{version}_darwin_amd64.tar.gz",
+          "windows": "amq_{version}_windows_amd64.zip"
+        },
+        "arm64": {
+          "linux": "amq_{version}_linux_arm64.tar.gz",
+          "darwin": "amq_{version}_darwin_arm64.tar.gz",
+          "windows": "amq_{version}_windows_arm64.zip"
+        }
+      }
+    },
+    {
       "appName": "dolt",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/dolthub/dolt",
