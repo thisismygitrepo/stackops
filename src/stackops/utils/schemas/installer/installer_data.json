@@ -6026,7 +6026,7 @@
             "dnf": "sudo dnf install -y gnupg2",
             "pacman": "sudo pacman -S --needed --noconfirm gnupg"
           },
-          "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install gnupg"
         },
         "arm64": {
@@ -6036,7 +6036,7 @@
             "dnf": "sudo dnf install -y gnupg2",
             "pacman": "sudo pacman -S --needed --noconfirm gnupg"
           },
-          "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --scope user --accept-package-agreements --accept-source-agreements",
+          "windows": "winget install --no-upgrade --name \"GNU Privacy Guard\" --Id \"GnuPG.GnuPG\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install gnupg"
         }
       }
