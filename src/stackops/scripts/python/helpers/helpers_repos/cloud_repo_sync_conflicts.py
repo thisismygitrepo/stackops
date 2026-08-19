@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypeAlias
 
 
 if TYPE_CHECKING:
@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 type ConflictResolutionAction = Literal["ask", "push-local-merge", "overwrite-local", "stop-on-conflict", "merge-accept-remote", "merge-accept-local"]
-type ConflictResolutionOption = Literal[
+ConflictResolutionOption: TypeAlias = Literal[
     "ask", "a", "push-local-merge", "p", "overwrite-local", "o", "stop-on-conflict", "s", "merge-accept-remote", "merge-accept-local"
 ]
 type MergeConflictResolutionSide = Literal["local", "remote"]
