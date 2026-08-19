@@ -27,7 +27,7 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "agent-skills": AgentSkillSource("addyosmani/agent-skills"),
     "caveman": AgentSkillSource("JuliusBrussee/caveman", skill="caveman"),
     "computer-use": AgentSkillSource(ORCA_SKILL_SOURCE, skill="computer-use"),
-    "grill-me": AgentSkillSource("mattpocock/skills/grill-me"),
+    "grill-with-docs": AgentSkillSource("mattpocock/skills", skill="grill-with-docs"),
     "last30days": AgentSkillSource("mvanhorn/last30days-skill"),
     "orca-cli": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-cli"),
     "orca-emulator": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-emulator"),
@@ -35,6 +35,7 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "orchestration": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orchestration"),
     AGENTOPS_SKILL_NAME: AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill=AGENTOPS_SKILL_NAME),
     "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
+    "unslop": AgentSkillSource("cursor/plugins", skill="unslop"),
 }
 
 
