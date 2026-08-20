@@ -35,7 +35,7 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
         settings_change = _write_json_if_missing(
             repo_root=repo_root,
             path=repo_root.joinpath(".pi/settings.json"),
-            content={"enableInstallTelemetry": False},
+            content={"defaultThinkingLevel": "max", "enableInstallTelemetry": False},
         )
         mcp_change = _write_json_if_missing(
             repo_root=repo_root,
