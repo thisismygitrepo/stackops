@@ -582,6 +582,12 @@ def unlock() -> None:
         err_console.print(f"Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] to re-authenticate and refresh the cached session.")
         raise VaultExit(code=1)
 
+    # Info goes to stderr so stdout stays a clean eval-able script.
+    account = escape(vault_status.user_email or "unknown account")
+    err_console.print(f"[green]🔓 Exporting BW_SESSION for account:[/green] [bold]{account}[/bold]")
+    if vault_status.server_url:
+        err_console.print(f"[dim]Server:[/dim] {escape(vault_status.server_url)}")
+
     print(f'export BW_SESSION="{session}"')
 
 
