@@ -76,6 +76,16 @@ def login_and_unlock(
         _raise_typer_exit(exc)
 
 
+def unlock() -> None:
+    """Print an eval-able script exporting the saved BW_SESSION for the current shell."""
+    from stackops.scripts.python.helpers.helpers_devops import vault
+
+    try:
+        vault.unlock()
+    except vault.VaultExit as exc:
+        _raise_typer_exit(exc)
+
+
 def clean_cache() -> None:
     """Remove cached vault data under ~/tmp_results."""
     from stackops.scripts.python.helpers.helpers_devops import vault
@@ -103,6 +113,12 @@ def get_app() -> typer.Typer:
         help="<l> Log in with Bitwarden API credentials from StackOps secrets, unlock the vault, and persist BW_SESSION locally.",
     )(login_and_unlock)
     app.command("l", no_args_is_help=False, help="Alias for login-and-unlock.", hidden=True)(login_and_unlock)
+
+    app.command(
+        "unlock",
+        help='<u> Print an eval-able script exporting the saved BW_SESSION (usage: eval "$(devops vault unlock)").',
+    )(unlock)
+    app.command("u", help="Alias for unlock.", hidden=True)(unlock)
 
     app.command("clean-cache", help="<c> Remove encrypted vault cache stored under ~/tmp_results.")(clean_cache)
     app.command("c", help="Alias for clean-cache.", hidden=True)(clean_cache)

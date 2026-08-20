@@ -2186,6 +2186,10 @@
                     "        ConflictResolutionOption, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on merge conflict. Default is 'ask'.\")",
                     "    ] = \"ask\",",
                     "    pwd: Annotated[str | None, typer.Option(..., \"--password\", \"-p\", help=\"Password for encryption/decryption of the remote repository.\")] = None,",
+                    "    ignore_gitignore: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--ignore-gitignore\", help=\"Include files excluded by Git ignore rules in the repository archive.\"),",
+                    "    ] = False,",
                     ") -> str | None:",
                     "    from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError",
                     "    from git.repo import Repo",
@@ -2245,6 +2249,7 @@
                     "        console.print(Panel(f\"Repository must live under {Path.home()}\\nLocation: {repo_local_root}\", title=\"Error\", border_style=\"red\"))",
                     "        raise typer.Exit(code=1) from exc",
                     "",
+                    "    message_resolved = \"sync\" if message is None or message.strip() == \"\" else message",
                     "    run_name = randstr(8)",
                     "    repo_remote_root = Path(CONFIG_ROOT).joinpath(\"remote\", run_name, repo_local_root.name)",
                     "    integration_root = Path(CONFIG_ROOT).joinpath(\"integration\", run_name, repo_local_root.name)",
@@ -2260,8 +2265,18 @@
                     "        delete_path(repo_remote_root.parent, verbose=False)",
                     "        console.print(Panel(\"🆕 Remote repository does not exist; creating it from local.\", border_style=\"green\"))",
                     "        try:",
+                    "            commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)",
+                    "        except GitCommandError as exc:",
+                    "            console.print(Panel(f\"❌ COMMIT FAILED\\n{exc}\", title=\"Commit Failed\", border_style=\"red\"))",
+                    "            raise typer.Exit(code=1) from exc",
+                    "        try:",
                     "            publish_local_repository(",
-                    "                repo_local_root=repo_local_root, repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd",
+                    "                repo_local_root=repo_local_root,",
+                    "                repo_remote_root=repo_remote_root,",
+                    "                cloud=cloud_resolved,",
+                    "                remote_path=remote_path,",
+                    "                pwd=pwd,",
+                    "                ignore_gitignore=ignore_gitignore,",
                     "            )",
                     "        except GpgCommandError as gpg_error:",
                     "            _exit_after_gpg_error(error=gpg_error)",
@@ -2274,11 +2289,16 @@
                     "        repo_remote_obj.close()",
                     "    if remote_repo_is_dirty:",
                     "        console.print(",
-                    "            Panel(f\"Downloaded repository is dirty and was preserved at {repo_remote_root}\", title=\"Invalid Remote Archive\", border_style=\"red\")",
+                    "            Panel(",
+                    "                f\"Downloaded repository is dirty and was preserved at {repo_remote_root}\\n\\n\"",
+                    "                f\"Remote location: {cloud_resolved}:{remote_path.as_posix()}\\n\"",
+                    "                f\"Delete remote: rclone deletefile {cloud_resolved}:{remote_path.as_posix()}\",",
+                    "                title=\"Invalid Remote Archive\",",
+                    "                border_style=\"red\",",
+                    "            )",
                     "        )",
                     "        raise typer.Exit(code=1)",
                     "",
-                    "    message_resolved = \"sync\" if message is None or message.strip() == \"\" else message",
                     "    try:",
                     "        commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)",
                     "    except GitCommandError as exc:",
@@ -2343,7 +2363,12 @@
                     "",
                     "    try:",
                     "        publish_local_repository(",
-                    "            repo_local_root=repo_local_root, repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd",
+                    "            repo_local_root=repo_local_root,",
+                    "            repo_remote_root=repo_remote_root,",
+                    "            cloud=cloud_resolved,",
+                    "            remote_path=remote_path,",
+                    "            pwd=pwd,",
+                    "            ignore_gitignore=ignore_gitignore,",
                     "        )",
                     "    except GpgCommandError as error:",
                     "        _exit_after_gpg_error(error=error)",
@@ -2457,6 +2482,25 @@
                         ],
                         "help": "Password for encryption/decryption of the remote repository.",
                         "default": "..."
+                      }
+                    },
+                    {
+                      "name": "ignore_gitignore",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--ignore-gitignore', help='Include files excluded by Git ignore rules in the repository archive.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--ignore-gitignore"
+                        ],
+                        "long_flags": [
+                          "--ignore-gitignore"
+                        ],
+                        "short_flags": [],
+                        "help": "Include files excluded by Git ignore rules in the repository archive."
                       }
                     }
                   ],
@@ -6677,6 +6721,41 @@
               },
               {
                 "kind": "command",
+                "name": "unlock",
+                "fullPath": "devops vault unlock",
+                "shortPath": "d v u",
+                "help": "<u> Print an eval-able script exporting the saved BW_SESSION (usage: eval \"$(devops vault unlock)\").",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_vault",
+                  "callable": "unlock"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def unlock() -> None:",
+                    "    \"\"\"Print an eval-able script exporting the saved BW_SESSION for the current shell.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_devops import vault",
+                    "",
+                    "    try:",
+                    "        vault.unlock()",
+                    "    except vault.VaultExit as exc:",
+                    "        _raise_typer_exit(exc)"
+                  ],
+                  "name": "unlock",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "doc": "Print an eval-able script exporting the saved BW_SESSION for the current shell.",
+                "aliases": [
+                  {
+                    "name": "u",
+                    "hidden": true,
+                    "help": "Alias for unlock."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "clean-cache",
                 "fullPath": "devops vault clean-cache",
                 "shortPath": "d v c",
@@ -8076,19 +8155,21 @@
                         "",
                         "    system = platform.system()",
                         "    if system == \"Windows\":",
-                        "        script = _get_windows_ssh_server_install_script(use_winget=True)",
+                        "        script = _get_windows_ssh_server_install_script()",
+                        "        from stackops.utils.code import run_shell_script",
+                        "",
+                        "        result = run_shell_script(script=script, display_script=True, clean_env=False)",
                         "    elif system == \"Linux\":",
                         "        distribution = detect_current_linux_distribution()",
                         "        print(f\"🐧 Installing OpenSSH server on {distribution.distribution_id} using {distribution.package_manager}.\")",
                         "        script = _get_linux_ssh_server_install_script(distribution)",
+                        "        result = subprocess.run((\"/bin/sh\", \"-s\"), input=script, text=True, check=False)",
                         "    elif system == \"Darwin\":",
                         "        script = _get_macos_ssh_server_install_script()",
+                        "        result = subprocess.run((\"/bin/sh\", \"-s\"), input=script, text=True, check=False)",
                         "    else:",
                         "        print(f\"❌ Error: Platform {system} is not supported.\")",
                         "        raise typer.Exit(code=1)",
-                        "    from stackops.utils.code import run_shell_script",
-                        "",
-                        "    result = run_shell_script(script=script, display_script=True, clean_env=False)",
                         "    if result.returncode != 0:",
                         "        raise RuntimeError(f\"SSH server installation failed with exit code {result.returncode}\")"
                       ],
@@ -8355,24 +8436,155 @@
                     },
                     "signature": {
                       "raw_lines": [
-                        "def debug_ssh() -> None:",
+                        "def debug_ssh(",
+                        "    client_host: Annotated[str | None, typer.Option(\"--client-host\", help=\"Resolved SSH client host name for Match rules\")] = None,",
+                        "    client_address: Annotated[str | None, typer.Option(\"--client-address\", help=\"SSH client source IP address for Match rules\")] = None,",
+                        "    local_address: Annotated[str | None, typer.Option(\"--local-address\", help=\"Server local IP address receiving the connection\")] = None,",
+                        "    local_port: Annotated[int | None, typer.Option(\"--local-port\", help=\"Server local TCP port receiving the connection\", min=1, max=65535)] = None,",
+                        "    routing_domain: Annotated[str | None, typer.Option(\"--routing-domain\", help=\"Optional routing domain for Match RDomain rules\")] = None,",
+                        ") -> None:",
                         "    \"\"\"🐛 Debug SSH connection\"\"\"",
                         "    from platform import system",
                         "",
-                        "    if system() == \"Linux\" or system() == \"Darwin\":",
+                        "    from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import SSHDConnectionContext",
+                        "",
+                        "    supplied_context = (client_host, client_address, local_address, local_port)",
+                        "    if all(value is None for value in supplied_context) and routing_domain is None:",
+                        "        connection_context = None",
+                        "    elif (",
+                        "        isinstance(client_host, str)",
+                        "        and isinstance(client_address, str)",
+                        "        and isinstance(local_address, str)",
+                        "        and isinstance(local_port, int)",
+                        "    ):",
+                        "        connection_context = SSHDConnectionContext(",
+                        "            client_host_name=client_host,",
+                        "            client_address=client_address,",
+                        "            local_address=local_address,",
+                        "            local_port=local_port,",
+                        "            routing_domain=routing_domain,",
+                        "        )",
+                        "    else:",
+                        "        print(\"❌ Error: --client-host, --client-address, --local-address, and --local-port must be supplied together.\")",
+                        "        raise typer.Exit(code=2)",
+                        "",
+                        "    current_system = system()",
+                        "    if current_system == \"Linux\":",
                         "        import stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux",
                         "",
-                        "        ssh_debug_linux.ssh_debug_linux()",
-                        "    elif system() == \"Windows\":",
+                        "        result = ssh_debug_linux.ssh_debug_linux(connection_context=connection_context)",
+                        "    elif current_system == \"Darwin\":",
+                        "        from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin import ssh_debug_darwin",
+                        "",
+                        "        result = ssh_debug_darwin(connection_context=connection_context)",
+                        "    elif current_system == \"Windows\":",
                         "        from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows import ssh_debug_windows",
                         "",
-                        "        ssh_debug_windows()",
+                        "        result = ssh_debug_windows(connection_context=connection_context)",
                         "    else:",
-                        "        print(f\"❌ Error: Platform {system()} is not supported.\")",
+                        "        print(f\"❌ Error: Platform {current_system} is not supported.\")",
+                        "        raise typer.Exit(code=1)",
+                        "    if not result.summary.ready:",
                         "        raise typer.Exit(code=1)"
                       ],
                       "name": "debug_ssh",
-                      "parameters": [],
+                      "parameters": [
+                        {
+                          "name": "client_host",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--client-host', help='Resolved SSH client host name for Match rules')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--client-host"
+                            ],
+                            "long_flags": [
+                              "--client-host"
+                            ],
+                            "short_flags": [],
+                            "help": "Resolved SSH client host name for Match rules"
+                          }
+                        },
+                        {
+                          "name": "client_address",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--client-address', help='SSH client source IP address for Match rules')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--client-address"
+                            ],
+                            "long_flags": [
+                              "--client-address"
+                            ],
+                            "short_flags": [],
+                            "help": "SSH client source IP address for Match rules"
+                          }
+                        },
+                        {
+                          "name": "local_address",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--local-address', help='Server local IP address receiving the connection')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--local-address"
+                            ],
+                            "long_flags": [
+                              "--local-address"
+                            ],
+                            "short_flags": [],
+                            "help": "Server local IP address receiving the connection"
+                          }
+                        },
+                        {
+                          "name": "local_port",
+                          "kind": "positional_or_keyword",
+                          "type": "int | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[int | None, typer.Option('--local-port', help='Server local TCP port receiving the connection', min=1, max=65535)]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--local-port"
+                            ],
+                            "long_flags": [
+                              "--local-port"
+                            ],
+                            "short_flags": [],
+                            "help": "Server local TCP port receiving the connection"
+                          }
+                        },
+                        {
+                          "name": "routing_domain",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--routing-domain', help='Optional routing domain for Match RDomain rules')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--routing-domain"
+                            ],
+                            "long_flags": [
+                              "--routing-domain"
+                            ],
+                            "short_flags": [],
+                            "help": "Optional routing domain for Match RDomain rules"
+                          }
+                        }
+                      ],
                       "return": "None"
                     },
                     "doc": "🐛 Debug SSH connection",
@@ -8401,7 +8613,7 @@
                         "    destination: Annotated[str, typer.Argument(help=\"SSH config name or destination (host, user@host, or either form with an SSH port).\")],",
                         "    remote_port: Annotated[int, typer.Argument(min=1, max=65_535, help=\"TCP port on the remote machine.\")],",
                         "    local_port: Annotated[int | None, typer.Option(\"--local-port\", \"-l\", min=1, max=65_535, help=\"Local TCP port; defaults to REMOTE_PORT.\")] = None,",
-                        "    open_browser: Annotated[bool, typer.Option(\"--open-browser\", \"-b\", help=\"Open the mapped local address in the default browser.\")] = False,",
+                        "    open_browser: Annotated[bool, typer.Option(\"--open-browser\", \"-b\", help=\"Open the mapped local HTTP address after the tunnel is ready.\")] = False,",
                         ") -> None:",
                         "    selected_local_port = remote_port if local_port is None else local_port",
                         "    try:",
@@ -8416,18 +8628,48 @@
                         "    except OSError as error:",
                         "        typer.echo(f\"Unable to start OpenSSH: {error}\", err=True)",
                         "        raise typer.Exit(code=1) from error",
-                        "    command = build_map_port_command(ssh_destination=ssh_destination, remote_port=remote_port, local_port=selected_local_port)",
-                        "    typer.echo(f\"Mapping 127.0.0.1:{selected_local_port} to 127.0.0.1:{remote_port} through {destination}. Press Ctrl-C to stop.\")",
+                        "    try:",
+                        "        ensure_local_port_available(local_port=selected_local_port)",
+                        "    except ValueError as error:",
+                        "        raise typer.BadParameter(str(error), param_hint=\"LOCAL_PORT\") from error",
+                        "",
+                        "    command = build_map_port_command(",
+                        "        ssh_destination=ssh_destination,",
+                        "        remote_port=remote_port,",
+                        "        local_port=selected_local_port,",
+                        "    )",
+                        "    typer.echo(",
+                        "        f\"Mapping 127.0.0.1:{selected_local_port} to 127.0.0.1:{remote_port} through {destination}. Press Ctrl-C to stop.\"",
+                        "    )",
                         "    try:",
                         "        ssh_process = subprocess.Popen(command)",
                         "    except OSError as error:",
                         "        typer.echo(f\"Unable to start OpenSSH: {error}\", err=True)",
                         "        raise typer.Exit(code=1) from error",
-                        "    if open_browser:",
-                        "        webbrowser.open_new_tab(f\"http://127.0.0.1:{selected_local_port}\")",
-                        "    exit_code = ssh_process.wait()",
+                        "",
+                        "    try:",
+                        "        if open_browser:",
+                        "            readiness_exit_code = wait_for_local_forward(ssh_process=ssh_process, local_port=selected_local_port)",
+                        "            if readiness_exit_code is not None:",
+                        "                normalized_exit_code = 128 + abs(readiness_exit_code) if readiness_exit_code < 0 else readiness_exit_code",
+                        "                raise typer.Exit(code=normalized_exit_code)",
+                        "            if not webbrowser.open_new_tab(f\"http://127.0.0.1:{selected_local_port}\"):",
+                        "                typer.echo(\"The tunnel is ready, but no browser accepted the local address.\", err=True)",
+                        "        exit_code = ssh_process.wait()",
+                        "    except KeyboardInterrupt as error:",
+                        "        stop_ssh_process(ssh_process=ssh_process)",
+                        "        raise typer.Exit(code=130) from error",
+                        "    except typer.Exit:",
+                        "        stop_ssh_process(ssh_process=ssh_process)",
+                        "        raise",
+                        "    except Exception as error:",
+                        "        stop_ssh_process(ssh_process=ssh_process)",
+                        "        typer.echo(f\"Unable to open the mapped address: {error}\", err=True)",
+                        "        raise typer.Exit(code=1) from error",
+                        "",
                         "    if exit_code != 0:",
-                        "        raise typer.Exit(code=exit_code)"
+                        "        normalized_exit_code = 128 + abs(exit_code) if exit_code < 0 else exit_code",
+                        "        raise typer.Exit(code=normalized_exit_code)"
                       ],
                       "name": "map_port",
                       "parameters": [
@@ -8489,7 +8731,7 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--open-browser', '-b', help='Open the mapped local address in the default browser.')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--open-browser', '-b', help='Open the mapped local HTTP address after the tunnel is ready.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -8502,7 +8744,7 @@
                             "short_flags": [
                               "-b"
                             ],
-                            "help": "Open the mapped local address in the default browser."
+                            "help": "Open the mapped local HTTP address after the tunnel is ready."
                           }
                         }
                       ],
@@ -21054,16 +21296,38 @@
                 "        bool,",
                 "        typer.Option(..., \"--headroom\", \"-h\", help=\"Launch the session through headroom.\"),",
                 "    ] = False,",
+                "    followup: Annotated[",
+                "        bool,",
+                "        typer.Option(..., \"--followup\", \"-f\", help=\"Choose a session recorded in Second Brain update.csv files.\"),",
+                "    ] = False,",
+                "    fork: Annotated[",
+                "        bool,",
+                "        typer.Option(..., \"--fork\", \"-F\", help=\"Fork the selected follow-up into a new session instead of resuming it.\"),",
+                "    ] = False,",
                 ") -> None:",
                 "    \"\"\"Launch an agent with reasonable defaults.\"\"\"",
                 "    import shlex",
                 "",
-                "    resolved_agent = _resolve_interactive_agent(agent=agent)",
                 "    try:",
-                "        with _agent_working_directory(second_brain=second_brain) as working_directory:",
-                "            command = _apply_headroom(",
-                "                command=_interactive_agent_command(agent=resolved_agent, caveman=caveman), agent=resolved_agent, headroom=headroom",
-                "            )",
+                "        if fork and not followup:",
+                "            raise ValueError(\"--fork requires --followup.\")",
+                "",
+                "        with _agent_working_directory(second_brain=second_brain or followup) as working_directory:",
+                "            if followup:",
+                "                from stackops.scripts.python.agents_followup import build_followup_command, choose_followup_session",
+                "",
+                "                selected_session = choose_followup_session(second_brain_root=cast(Path, working_directory))",
+                "                resolved_agent = selected_session.agent",
+                "                command = build_followup_command(",
+                "                    session=selected_session,",
+                "                    action=\"fork\" if fork else \"resume\",",
+                "                    initial_prompt=_CAVEMAN_INITIAL_PROMPT if caveman else None,",
+                "                )",
+                "            else:",
+                "                resolved_agent = _resolve_interactive_agent(agent=agent)",
+                "                command = _interactive_agent_command(agent=resolved_agent, caveman=caveman)",
+                "",
+                "            command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)",
                 "            script = shlex.join(command)",
                 "            if working_directory is not None:",
                 "                from stackops.scripts.python.helpers.helpers_agents.agents_shell import render_command_in_directory",
@@ -21166,6 +21430,52 @@
                       "-h"
                     ],
                     "help": "Launch the session through headroom.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "followup",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--followup', '-f', help='Choose a session recorded in Second Brain update.csv files.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--followup",
+                      "-f"
+                    ],
+                    "long_flags": [
+                      "--followup"
+                    ],
+                    "short_flags": [
+                      "-f"
+                    ],
+                    "help": "Choose a session recorded in Second Brain update.csv files.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "fork",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--fork', '-F', help='Fork the selected follow-up into a new session instead of resuming it.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--fork",
+                      "-F"
+                    ],
+                    "long_flags": [
+                      "--fork"
+                    ],
+                    "short_flags": [
+                      "-F"
+                    ],
+                    "help": "Fork the selected follow-up into a new session instead of resuming it.",
                     "default": "..."
                   }
                 }

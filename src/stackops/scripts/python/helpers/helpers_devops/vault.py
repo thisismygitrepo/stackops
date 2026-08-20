@@ -569,6 +569,22 @@ def login_and_unlock(account_name: str | None = None, *, login_name: str = DEFAU
     console.print("[green]Vault unlocked.[/green] Session saved to encrypted cache.")
 
 
+def unlock() -> None:
+    """Print an eval-able script exporting the cached BW_SESSION (validates it first)."""
+    session = load_session_token_from_cache()
+    if not session:
+        err_console.print(f"[bold red]No BW_SESSION saved in vault cache.[/bold red] Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] first.")
+        raise VaultExit(code=1)
+
+    vault_status = get_vault_status(session)
+    if vault_status.status != "unlocked":
+        err_console.print(f"[bold red]Saved BW_SESSION is not a valid unlocked session ({vault_status.status}).[/bold red]")
+        err_console.print(f"Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] to re-authenticate and refresh the cached session.")
+        raise VaultExit(code=1)
+
+    print(f'export BW_SESSION="{session}"')
+
+
 def clean_cache() -> None:
     """Remove cached vault data under ~/tmp_results."""
     if CACHE_PATH.exists():
