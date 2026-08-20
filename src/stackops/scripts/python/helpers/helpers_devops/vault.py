@@ -293,7 +293,7 @@ def load_bitwarden_credentials(login_name: str, account_name: str | None = None)
         err_console.print(json.dumps(expected_entry, indent=2), markup=False)
         raise VaultExit(code=2)
     if len(logins) > 1:
-        err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] {selection}")
+        _report_ambiguous_bitwarden_bundles(logins=logins, login_name=login_name)
         raise VaultExit(code=2)
 
     key_values = logins[0]["secrets"][0]["keyValues"]
@@ -327,6 +327,34 @@ def extract_user_id(client_id: str) -> str:
         err_console.print(f'[bold red]BW_CLIENTID in StackOps secrets must be a user API key shaped "{BITWARDEN_CLIENT_ID_USER_PREFIX}<userId>".[/bold red]')
         raise VaultExit(code=2)
     return client_id[len(BITWARDEN_CLIENT_ID_USER_PREFIX):]
+
+
+def _report_ambiguous_bitwarden_bundles(*, logins: list[Login], login_name: str) -> None:
+    """Explain which Bitwarden bundles matched, which email each maps to, and how to disambiguate."""
+    vault_status = get_vault_status()
+    logged_in_client_id = f"{BITWARDEN_CLIENT_ID_USER_PREFIX}{vault_status.user_id}" if vault_status.user_id else None
+
+    bundles_table = Table(box=None, show_header=True, header_style="bold")
+    bundles_table.add_column("Account", style="bold")
+    bundles_table.add_column("Email")
+    bundles_table.add_column("Description")
+    bundles_table.add_column("Bitwarden session")
+    for login in logins:
+        client_id = str(login["secrets"][0]["keyValues"]["BW_CLIENTID"])
+        is_current_login = logged_in_client_id is not None and client_id == logged_in_client_id
+        bundles_table.add_row(
+            str(login.get("accountName", "-")),
+            str(login.get("email", "-")),
+            str(login.get("description", "-")),
+            "[green]current login[/green]" if is_current_login else "-",
+        )
+
+    err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] Login: {login_name}")
+    err_console.print(bundles_table)
+    if vault_status.user_email:
+        err_console.print(f"bw is currently logged in as [bold]{escape(vault_status.user_email)}[/bold] ({vault_status.status}).")
+    account_names = ", ".join(str(login.get("accountName", "-")) for login in logins)
+    err_console.print(f"Pick one explicitly, e.g. [bold]devops vault login-and-unlock --account-name <accountName>[/bold]. Accounts: {account_names}")
 
 
 def print_process_output(result: subprocess.CompletedProcess[str], *, stderr: bool = False) -> None:
