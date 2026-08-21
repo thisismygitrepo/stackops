@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import os
 from pathlib import Path
 import shutil
 from typing import assert_never
@@ -9,6 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     FIREFOX_PROFILE_CLEANUP_PATHS,
     TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME,
     BrowserName,
+    ProfileBrowserName,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import find_browser_profile_process_ids
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_lock import browser_launch_lock
@@ -18,6 +20,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_files
     remove_owned_profile_directories,
     require_tree_without_filesystem_boundaries,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_listing import list_browser_profile_paths
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_resolution import resolve_named_profile_path
 
 
@@ -74,11 +77,19 @@ def declutter_browser_profile(*, browser: BrowserName, profile_name: str) -> Bro
     )
 
 
-def replicate_browser_profile(*, browser: BrowserName, profile_name: str, count: int) -> BrowserProfileReplicationResult:
+def declutter_all_browser_profiles(*, browser: ProfileBrowserName) -> tuple[BrowserProfileDeclutterResult, ...]:
+    profile_paths = list_browser_profile_paths(browser=browser)
+    return tuple(declutter_browser_profile(browser=browser, profile_name=profile_path.name) for profile_path in profile_paths)
+
+
+def replicate_browser_profile(*, browser: BrowserName, profile_name: str, count: int, overwrite: bool) -> BrowserProfileReplicationResult:
     if count < 1:
         raise ValueError("COUNT must be at least 1")
     source_path = resolve_named_profile_path(browser=browser, profile_name=profile_name)
     destination_paths = tuple(resolve_named_profile_path(browser=browser, profile_name=f"p{index}") for index in range(1, count + 1))
+    source_path_key = os.path.normcase(str(source_path))
+    if any(os.path.normcase(str(destination_path)) == source_path_key for destination_path in destination_paths):
+        raise ValueError(f"""Source profile must not be one of the replication destinations: {source_path}""")
     with browser_launch_lock():
         require_browser_profile_directory(profile_path=source_path)
         require_browser_profile_not_in_use(browser=browser, profile_path=source_path)
@@ -87,9 +98,11 @@ def replicate_browser_profile(*, browser: BrowserName, profile_name: str, count:
             directory=source_path, include_root=False, excluded_root_directory_names=excluded_root_directory_names
         )
         collisions = tuple(path for path in destination_paths if path.exists() or path.is_symlink())
-        if len(collisions) > 0:
+        if overwrite:
+            _remove_existing_destination_profiles(browser=browser, destination_paths=collisions)
+        elif len(collisions) > 0:
             collision_list = ", ".join(str(path) for path in collisions)
-            raise ValueError(f"""Refusing to overwrite existing browser profile copies: {collision_list}""")
+            raise ValueError(f"""Refusing to overwrite existing browser profile copies: {collision_list}. Pass --overwrite to replace them.""")
         source_size_bytes = directory_size_bytes(directory=source_path, excluded_root_directory_names=excluded_root_directory_names)
         reserved_paths: list[Path] = []
         destination_path = destination_paths[0]
@@ -138,6 +151,18 @@ def require_browser_profile_not_in_use(*, browser: BrowserName, profile_path: Pa
         raise RuntimeError(
             f"""The selected browser is running under process ID(s) {process_list}. Close it before changing profile: {profile_path}"""
         )
+
+
+def _remove_existing_destination_profiles(*, browser: BrowserName, destination_paths: tuple[Path, ...]) -> None:
+    for destination_path in destination_paths:
+        require_browser_profile_directory(profile_path=destination_path)
+        require_browser_profile_not_in_use(browser=browser, profile_path=destination_path)
+        require_tree_without_filesystem_boundaries(directory=destination_path, include_root=True, excluded_root_directory_names=frozenset())
+    for destination_path in destination_paths:
+        try:
+            shutil.rmtree(destination_path)
+        except OSError as error:
+            raise RuntimeError(f"""Could not remove existing browser profile copy {destination_path}: {error}""") from error
 
 
 def _resolve_cleanup_paths(*, browser: BrowserName, profile_path: Path) -> tuple[Path, ...]:

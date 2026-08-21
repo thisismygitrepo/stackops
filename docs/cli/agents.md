@@ -261,15 +261,16 @@ agents browser batch-launch --browser brave --port-start 61000 --detached
 agents browser batch-close --browser brave
 ```
 
-`agents browser declutter` removes rebuildable data from a named profile after confirming that the selected browser is closed. Chrome, Brave, and Edge cleanup includes downloaded on-device AI models (including `OptGuideOnDeviceModel`) plus HTTP, code, GPU, shader, and extension-download caches. Firefox cleanup includes its disk, startup, and shader caches. Cookies, history, passwords, extensions, sessions, service-worker data, IndexedDB, and local storage are preserved. The command reports the recovered and remaining profile sizes in MiB.
+`agents browser declutter` removes rebuildable data from a named profile (or from every saved profile of the browser with `--all`) after confirming that the selected browser is closed. Chrome, Brave, and Edge cleanup includes downloaded on-device AI models (including `OptGuideOnDeviceModel`) plus HTTP, code, GPU, shader, and extension-download caches. Firefox cleanup includes its disk, startup, and shader caches. Cookies, history, passwords, extensions, sessions, service-worker data, IndexedDB, and local storage are preserved. The command reports the recovered and remaining profile sizes in MiB.
 
-`agents browser replicate COUNT` copies a closed source profile to `p1` through `pCOUNT`. Chrome is the default browser and `base` is the default source profile. All destination paths are checked before copying, and existing profiles are never overwritten. Both profile-maintenance commands use the same `~/data/browsers-profiles/<browser>/<profile>` layout on Windows, macOS, and Linux. They support Chrome, Brave, Edge, and Firefox; Safari is excluded because safaridriver does not support StackOps custom profiles.
+`agents browser replicate COUNT` copies a closed source profile to `p1` through `pCOUNT`. Chrome is the default browser and `base` is the default source profile. All destination paths are checked before copying; existing copies are refused unless `--overwrite` is passed, which deletes each existing destination completely before recopying. Both profile-maintenance commands use the same `~/data/browsers-profiles/<browser>/<profile>` layout on Windows, macOS, and Linux. They support Chrome, Brave, Edge, and Firefox; Safari is excluded because safaridriver does not support StackOps custom profiles.
 
 ```bash
 agents browser declutter --profile alex-copy
-agents browser declutter --browser firefox --profile base
+agents browser declutter --browser firefox --all
 agents browser replicate 4
 agents browser replicate 3 --browser brave --profile alex-copy
+agents browser replicate 5 --overwrite
 ```
 
 ---

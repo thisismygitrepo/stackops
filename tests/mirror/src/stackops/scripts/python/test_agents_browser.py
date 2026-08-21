@@ -4,7 +4,12 @@ import pytest
 from typer.testing import CliRunner
 
 from stackops.scripts.python import agents_browser
-from stackops.scripts.python.helpers.helpers_agents import agents_browser_batch, agents_browser_launch, agents_browser_profiles
+from stackops.scripts.python.helpers.helpers_agents import (
+    agents_browser_batch,
+    agents_browser_launch,
+    agents_browser_profile_listing,
+    agents_browser_profiles,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LAN, BrowserName, ProfileBrowserName
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import BrowserLaunchResult, DetachedBrowserLaunchResult
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import BrowserProfileDeclutterResult, BrowserProfileReplicationResult
@@ -106,7 +111,7 @@ def test_batch_launch_launches_every_saved_profile_on_assigned_ports(monkeypatch
             relay_process_id=None,
         )
 
-    monkeypatch.setattr(agents_browser_batch, "BROWSER_PROFILES_ROOT", profiles_root)
+    monkeypatch.setattr(agents_browser_profile_listing, "BROWSER_PROFILES_ROOT", profiles_root)
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
     result = CliRunner().invoke(
@@ -181,7 +186,7 @@ def test_batch_launch_caps_requested_count_to_available_profiles(monkeypatch: py
             relay_process_id=None,
         )
 
-    monkeypatch.setattr(agents_browser_batch, "BROWSER_PROFILES_ROOT", profiles_root)
+    monkeypatch.setattr(agents_browser_profile_listing, "BROWSER_PROFILES_ROOT", profiles_root)
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
     limited_result = CliRunner().invoke(agents_browser.get_app(), ["L", "--browser", "firefox", "-n", "1", "--detached"])
@@ -258,13 +263,57 @@ def test_declutter_defaults_to_chrome_and_reports_recovered_size(monkeypatch: py
     assert "Removed paths: 2" in result.output
     assert "Recovered: 4.0 MiB" in result.output
     assert "Profile size: 1.0 MiB" in result.output
+    assert "Profiles decluttered: 1" in result.output
+    assert "Total recovered: 4.0 MiB" in result.output
+
+
+def test_declutter_all_declutters_every_saved_profile_and_reports_totals(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[ProfileBrowserName] = []
+
+    def declutter_all(*, browser: ProfileBrowserName) -> tuple[BrowserProfileDeclutterResult, ...]:
+        calls.append(browser)
+        return (
+            BrowserProfileDeclutterResult(
+                browser=browser,
+                profile_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/base"),
+                removed_paths=(Path("ShaderCache"),),
+                size_before_bytes=3 * 1024 * 1024,
+                size_after_bytes=2 * 1024 * 1024,
+                recovered_bytes=1 * 1024 * 1024,
+            ),
+            BrowserProfileDeclutterResult(
+                browser=browser,
+                profile_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/p1"),
+                removed_paths=(),
+                size_before_bytes=2 * 1024 * 1024,
+                size_after_bytes=2 * 1024 * 1024,
+                recovered_bytes=0,
+            ),
+        )
+
+    monkeypatch.setattr(agents_browser_profiles, "declutter_all_browser_profiles", declutter_all)
+
+    result = CliRunner().invoke(agents_browser.get_app(), ["declutter", "--all", "--browser", "brave"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == ["brave"]
+    assert result.output.count("Decluttered brave profile:") == 2
+    assert "Profiles decluttered: 2" in result.output
+    assert "Total recovered: 1.0 MiB" in result.output
+
+
+@pytest.mark.parametrize("arguments", [["declutter"], ["declutter", "--all", "--profile", "base"]])
+def test_declutter_requires_exactly_one_of_profile_or_all(arguments: list[str]) -> None:
+    result = CliRunner().invoke(agents_browser.get_app(), arguments)
+
+    assert result.exit_code != 0
 
 
 def test_replicate_defaults_to_chrome_base_and_forwards_count(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[BrowserName, str, int]] = []
+    calls: list[tuple[BrowserName, str, int, bool]] = []
 
-    def replicate(*, browser: BrowserName, profile_name: str, count: int) -> BrowserProfileReplicationResult:
-        calls.append((browser, profile_name, count))
+    def replicate(*, browser: BrowserName, profile_name: str, count: int, overwrite: bool) -> BrowserProfileReplicationResult:
+        calls.append((browser, profile_name, count, overwrite))
         return BrowserProfileReplicationResult(
             browser=browser,
             source_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/base"),
@@ -277,6 +326,26 @@ def test_replicate_defaults_to_chrome_base_and_forwards_count(monkeypatch: pytes
     result = CliRunner().invoke(agents_browser.get_app(), ["replicate", "3"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("chrome", "base", 3)]
+    assert calls == [("chrome", "base", 3, False)]
     assert result.output.count("Created:") == 3
     assert "Source size: 2.0 MiB" in result.output
+
+
+def test_replicate_overwrite_forwards_the_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[BrowserName, str, int, bool]] = []
+
+    def replicate(*, browser: BrowserName, profile_name: str, count: int, overwrite: bool) -> BrowserProfileReplicationResult:
+        calls.append((browser, profile_name, count, overwrite))
+        return BrowserProfileReplicationResult(
+            browser=browser,
+            source_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/base"),
+            destination_paths=(Path("p1"),),
+            source_size_bytes=2 * 1024 * 1024,
+        )
+
+    monkeypatch.setattr(agents_browser_profiles, "replicate_browser_profile", replicate)
+
+    result = CliRunner().invoke(agents_browser.get_app(), ["replicate", "5", "--browser", "brave", "--profile", "alex-copy", "--overwrite"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == [("brave", "alex-copy", 5, True)]

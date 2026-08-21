@@ -217,27 +217,46 @@ def status(
 
 
 def declutter(
-    profile: Annotated[str, typer.Option("--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>.")],
+    profile: Annotated[
+        str | None,
+        typer.Option("--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit with --all."),
+    ] = None,
     browser: Annotated[
         ProfileBrowserName,
         typer.Option("--browser", "-b", help="Browser whose profile should be decluttered.", case_sensitive=False, show_choices=True),
     ] = "chrome",
+    all_profiles: Annotated[
+        bool,
+        typer.Option("--all", "-a", help="Declutter every saved profile for the browser instead of one --profile."),
+    ] = False,
 ) -> None:
-    """Remove rebuildable models and caches from a closed browser profile."""
+    """Remove rebuildable models and caches from closed browser profiles."""
+    if profile is not None and all_profiles:
+        raise typer.BadParameter("Choose either --profile or --all, not both")
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import declutter_browser_profile
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import declutter_all_browser_profiles, declutter_browser_profile
 
-        result = declutter_browser_profile(browser=browser, profile_name=profile)
+        if all_profiles:
+            results = declutter_all_browser_profiles(browser=browser)
+        elif profile is None:
+            raise typer.BadParameter("Provide --profile or --all")
+        else:
+            results = (declutter_browser_profile(browser=browser, profile_name=profile),)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
-    typer.echo(f"Decluttered {browser} profile: {result.profile_path}")
-    typer.echo(f"Removed paths: {len(result.removed_paths)}")
-    typer.echo(f"Recovered: {_format_mebibytes(byte_count=result.recovered_bytes)} MiB")
-    typer.echo(f"Profile size: {_format_mebibytes(byte_count=result.size_after_bytes)} MiB")
+    total_recovered_bytes = 0
+    for result in results:
+        total_recovered_bytes += result.recovered_bytes
+        typer.echo(f"Decluttered {browser} profile: {result.profile_path}")
+        typer.echo(f"Removed paths: {len(result.removed_paths)}")
+        typer.echo(f"Recovered: {_format_mebibytes(byte_count=result.recovered_bytes)} MiB")
+        typer.echo(f"Profile size: {_format_mebibytes(byte_count=result.size_after_bytes)} MiB")
+    typer.echo(f"Profiles decluttered: {len(results)}")
+    typer.echo(f"Total recovered: {_format_mebibytes(byte_count=total_recovered_bytes)} MiB")
 
 
 def replicate(
@@ -249,12 +268,15 @@ def replicate(
     profile: Annotated[
         str, typer.Option("--profile", "-r", help="Source StackOps profile under ~/data/browsers-profiles/<browser>/<profile>.")
     ] = "base",
+    overwrite: Annotated[
+        bool, typer.Option("--overwrite", "-o", help="Delete existing p1 through pN copies completely before copying the source profile.")
+    ] = False,
 ) -> None:
-    """Copy a closed base profile to p1 through pN without overwriting."""
+    """Copy a closed base profile to p1 through pN, replacing existing copies with --overwrite."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import replicate_browser_profile
 
-        result = replicate_browser_profile(browser=browser, profile_name=profile, count=count)
+        result = replicate_browser_profile(browser=browser, profile_name=profile, count=count, overwrite=overwrite)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:

@@ -17,6 +17,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_proc
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_status import read_detached_browser_launch
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_lock import browser_launch_lock
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_listing import list_browser_profile_paths, natural_profile_name_key
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import close_browser_tmux_windows, collect_browser_tmux_status
 
 
@@ -43,25 +44,14 @@ def build_browser_profile_launch_specs(
     *, browser: ProfileBrowserName, port_start: int = DEFAULT_BROWSER_PROFILE_PORT_START
 ) -> tuple[BrowserProfileLaunchSpec, ...]:
     _validate_port_start(port_start=port_start)
-    browser_profiles_root = BROWSER_PROFILES_ROOT.expanduser().joinpath(browser)
-    if not browser_profiles_root.is_dir():
-        raise RuntimeError(f"Browser profiles directory does not exist: {browser_profiles_root}")
-
-    try:
-        profile_paths = tuple(
-            sorted((path for path in browser_profiles_root.iterdir() if path.is_dir()), key=lambda path: _natural_name_key(name=path.name))
-        )
-    except OSError as error:
-        raise RuntimeError(f"Could not read browser profiles directory {browser_profiles_root}: {error}") from error
-    if len(profile_paths) == 0:
-        raise RuntimeError(f"No browser profiles found under: {browser_profiles_root}")
+    profile_paths = list_browser_profile_paths(browser=browser)
 
     port_by_profile = _assign_profile_ports(profile_paths=profile_paths, port_start=port_start)
     specs = tuple(
         BrowserProfileLaunchSpec(browser=browser, profile_name=profile_path.name, profile_path=profile_path, port=port_by_profile[profile_path.name])
         for profile_path in profile_paths
     )
-    return tuple(sorted(specs, key=lambda spec: (spec.port, _natural_name_key(name=spec.profile_name))))
+    return tuple(sorted(specs, key=lambda spec: (spec.port, natural_profile_name_key(name=spec.profile_name))))
 
 
 def close_browser_profile_launches(*, browser: ProfileBrowserName) -> BrowserProfileCloseResult:
@@ -210,7 +200,3 @@ def _profile_number(*, profile_name: str) -> int | None:
 def _validate_port_start(*, port_start: int) -> None:
     if port_start < 1 or port_start > 65534:
         raise ValueError("--port-start must be between 1 and 65534")
-
-
-def _natural_name_key(*, name: str) -> tuple[tuple[int, int | str], ...]:
-    return tuple((0, int(part)) if part.isdigit() else (1, part) for part in re.split(r"(\d+)", name.casefold()) if part != "")
