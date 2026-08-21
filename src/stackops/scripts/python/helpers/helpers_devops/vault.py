@@ -82,6 +82,12 @@ def cache_set(key: str, value: str) -> None:
     save_encrypted_cache(cache)
 
 
+def purge_cached_searches() -> None:
+    """Drop cached `bw list items` results, e.g. after switching Bitwarden accounts."""
+    cache = load_encrypted_cache()
+    save_encrypted_cache({key: value for key, value in cache.items() if not key.startswith("search::")})
+
+
 def prune_empty_directories(path: Path, *, stop: Path) -> None:
     """Remove empty cache directories up to, but not including, the stop path."""
     current = path.resolve(strict=False)
@@ -287,7 +293,7 @@ def load_bitwarden_credentials(login_name: str, account_name: str | None = None)
         err_console.print(json.dumps(expected_entry, indent=2), markup=False)
         raise VaultExit(code=2)
     if len(logins) > 1:
-        err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] {selection}")
+        _report_ambiguous_bitwarden_bundles(logins=logins, login_name=login_name)
         raise VaultExit(code=2)
 
     key_values = logins[0]["secrets"][0]["keyValues"]
@@ -310,6 +316,45 @@ def _format_bitwarden_secret_selection(*, login_name: str, account_name: str | N
     if account_name is not None:
         text += f" Account: {account_name}"
     return text
+
+
+BITWARDEN_CLIENT_ID_USER_PREFIX = "user."
+
+
+def extract_user_id(client_id: str) -> str:
+    """Extract the Bitwarden user id from a user API key client id (\"user.<userId>\") """
+    if not client_id.startswith(BITWARDEN_CLIENT_ID_USER_PREFIX) or len(client_id) <= len(BITWARDEN_CLIENT_ID_USER_PREFIX):
+        err_console.print(f'[bold red]BW_CLIENTID in StackOps secrets must be a user API key shaped "{BITWARDEN_CLIENT_ID_USER_PREFIX}<userId>".[/bold red]')
+        raise VaultExit(code=2)
+    return client_id[len(BITWARDEN_CLIENT_ID_USER_PREFIX):]
+
+
+def _report_ambiguous_bitwarden_bundles(*, logins: list[Login], login_name: str) -> None:
+    """Explain which Bitwarden bundles matched, which email each maps to, and how to disambiguate."""
+    vault_status = get_vault_status()
+    logged_in_client_id = f"{BITWARDEN_CLIENT_ID_USER_PREFIX}{vault_status.user_id}" if vault_status.user_id else None
+
+    bundles_table = Table(box=None, show_header=True, header_style="bold")
+    bundles_table.add_column("Account", style="bold")
+    bundles_table.add_column("Email")
+    bundles_table.add_column("Description")
+    bundles_table.add_column("Bitwarden session")
+    for login in logins:
+        client_id = str(login["secrets"][0]["keyValues"]["BW_CLIENTID"])
+        is_current_login = logged_in_client_id is not None and client_id == logged_in_client_id
+        bundles_table.add_row(
+            str(login.get("accountName", "-")),
+            str(login.get("email", "-")),
+            str(login.get("description", "-")),
+            "[green]current login[/green]" if is_current_login else "-",
+        )
+
+    err_console.print(f"[bold red]Multiple Bitwarden secret bundles matched.[/bold red] Login: {login_name}")
+    err_console.print(bundles_table)
+    if vault_status.user_email:
+        err_console.print(f"bw is currently logged in as [bold]{escape(vault_status.user_email)}[/bold] ({vault_status.status}).")
+    account_names = ", ".join(str(login.get("accountName", "-")) for login in logins)
+    err_console.print(f"Pick one explicitly, e.g. [bold]devops vault login-and-unlock --account-name <accountName>[/bold]. Accounts: {account_names}")
 
 
 def print_process_output(result: subprocess.CompletedProcess[str], *, stderr: bool = False) -> None:
@@ -510,34 +555,39 @@ def search(
 def login_and_unlock(account_name: str | None = None, *, login_name: str = DEFAULT_BITWARDEN_LOGIN_NAME) -> None:
     """Authenticate with Bitwarden and persist a local BW_SESSION token."""
     credentials = load_bitwarden_credentials(login_name=login_name, account_name=account_name)
+    expected_user_id = extract_user_id(credentials.client_id)
+    selection = _format_bitwarden_secret_selection(login_name=credentials.login_name, account_name=credentials.account_name)
 
     env = os.environ.copy()
-    existing_session = load_session_token_from_cache()
-    if existing_session:
-        env["BW_SESSION"] = existing_session
-        os.environ["BW_SESSION"] = existing_session
-
     env["BW_CLIENTID"] = credentials.client_id
     env["BW_CLIENTSECRET"] = credentials.client_secret
     env["BW_PASSWORD"] = credentials.password
-    os.environ["BW_CLIENTID"] = credentials.client_id
-    os.environ["BW_CLIENTSECRET"] = credentials.client_secret
-    os.environ["BW_PASSWORD"] = credentials.password
+    cached_session = load_session_token_from_cache()
+    if cached_session:
+        env["BW_SESSION"] = cached_session
 
-    login_check = run_command(["bw", "login", "--check"], env=env)
-    if login_check.returncode == 0:
-        selection = _format_bitwarden_secret_selection(login_name=credentials.login_name, account_name=credentials.account_name)
+    vault_status = get_vault_status(env.get("BW_SESSION"))
+    logged_into_target = vault_status.user_id == expected_user_id and vault_status.status in {"locked", "unlocked"}
+
+    if logged_into_target:
         console.print(f"[green]Already logged in.[/green] {selection}")
     else:
-        console.print("Logging in")
+        if vault_status.status != "unauthenticated":
+            stale_account = vault_status.user_email or vault_status.user_id or "unknown"
+            console.print(f"[yellow]Logged in to a different Bitwarden account ({escape(stale_account)}) — logging out.[/yellow]")
+            run_bw_command(["bw", "logout"], env=env)
+        env.pop("BW_SESSION", None)
+
+        console.print(f"Logging in. {selection}")
         login_result = run_command(["bw", "login", "--apikey"], env=env, check=True)
         print_process_output(login_result)
 
-        login_verify = run_command(["bw", "login", "--check"], env=env)
-        if login_verify.returncode != 0:
-            print_process_output(login_verify, stderr=True)
-            err_console.print("[bold red]Bitwarden login check failed after bw login --apikey.[/bold red]")
+        post_login_status = get_vault_status(None)
+        if post_login_status.user_id != expected_user_id:
+            err_console.print(f"[bold red]Bitwarden login did not activate account {expected_user_id}.[/bold red]")
             raise VaultExit(code=1)
+
+        purge_cached_searches()
 
     unlock_check = run_command(["bw", "unlock", "--check"], env=env)
     if unlock_check.returncode == 0:
@@ -557,7 +607,6 @@ def login_and_unlock(account_name: str | None = None, *, login_name: str = DEFAU
         raise VaultExit(code=1)
 
     env["BW_SESSION"] = session
-    os.environ["BW_SESSION"] = session
     persist_session_token_to_cache(session)
 
     unlock_verify = run_command(["bw", "unlock", "--check"], env=env)
@@ -566,7 +615,31 @@ def login_and_unlock(account_name: str | None = None, *, login_name: str = DEFAU
         err_console.print("[bold red]Bitwarden unlock check failed after bw unlock.[/bold red]")
         raise VaultExit(code=1)
 
-    console.print("[green]Vault unlocked.[/green] Session saved to encrypted cache.")
+    final_status = get_vault_status(session)
+    account = escape(final_status.user_email or final_status.user_id or "unknown account")
+    console.print(f"[green]Vault unlocked.[/green] Session saved to encrypted cache. Account: [bold]{account}[/bold]")
+
+
+def unlock() -> None:
+    """Print an eval-able script exporting the cached BW_SESSION (validates it first)."""
+    session = load_session_token_from_cache()
+    if not session:
+        err_console.print(f"[bold red]No BW_SESSION saved in vault cache.[/bold red] Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] first.")
+        raise VaultExit(code=1)
+
+    vault_status = get_vault_status(session)
+    if vault_status.status != "unlocked":
+        err_console.print(f"[bold red]Saved BW_SESSION is not a valid unlocked session ({vault_status.status}).[/bold red]")
+        err_console.print(f"Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] to re-authenticate and refresh the cached session.")
+        raise VaultExit(code=1)
+
+    # Info goes to stderr so stdout stays a clean eval-able script.
+    account = escape(vault_status.user_email or "unknown account")
+    err_console.print(f"[green]🔓 Exporting BW_SESSION for account:[/green] [bold]{account}[/bold]")
+    if vault_status.server_url:
+        err_console.print(f"[dim]Server:[/dim] {escape(vault_status.server_url)}")
+
+    print(f'export BW_SESSION="{session}"')
 
 
 def clean_cache() -> None:

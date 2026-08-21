@@ -5626,6 +5626,30 @@
       }
     },
     {
+      "appName": "chrome-agent",
+      "license": "MIT License",
+      "repoURL": "https://github.com/captivus/chrome-agent",
+      "lastCommitDate": "2026-07-26T02:03:22Z",
+      "lastCommitDateCheckDate": "2026-08-19T11:51:30Z",
+      "doc": "🧰 Chrome DevTools protocol CLI for AI agents.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "browsers-web-access"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "uv tool install chrome-agent",
+          "windows": "uv tool install chrome-agent",
+          "darwin": "uv tool install chrome-agent"
+        },
+        "arm64": {
+          "linux": "uv tool install chrome-agent",
+          "windows": "uv tool install chrome-agent",
+          "darwin": "uv tool install chrome-agent"
+        }
+      }
+    },
+    {
       "appName": "Cursor",
       "license": "Proprietary; limited right to access and use the Service under Cursor Terms of Service",
       "repoURL": "CMD",
