@@ -17,7 +17,7 @@ Coordinate agent creation, delegation, result collection, reporting, and shutdow
 
 Before creating or messaging agents:
 
-1. Inspect `herdr --help` and relevant workspace/tab/pane/agent help.
+1. Complete the Herdr preflight and inspect `herdr --help` plus relevant workspace/tab/pane/agent help.
 2. Read existing Herdr sessions/agents so ownership is clear.
 3. Identify the controller command from the process tree.
 4. Create `.ai/agentops/parallel-agents/contracts/agents.json` only when durable recovery across multiple operations is needed.
@@ -86,15 +86,19 @@ Use the current cwd unless the user asks for another directory.
 
 ```bash
 herdr workspace create --cwd '<cwd>' --label '<run-name>' --no-focus
-herdr tab create --workspace '<workspace_id>' --cwd '<cwd>' --label '<agent-name>' --no-focus
-herdr agent start '<agent-name>' --cwd '<cwd>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>
+herdr tab rename '<returned-root-tab-id>' '<first-agent-name>'
+herdr agent start '<first-agent-name>' --kind '<kind>' --pane '<returned-root-pane-id>' -- <native-agent-args...>
+herdr tab create --workspace '<workspace-id>' --cwd '<cwd>' --label '<later-agent-name>' --no-focus
+herdr agent start '<later-agent-name>' --kind '<kind>' --pane '<returned-root-pane-id>' -- <native-agent-args...>
 herdr agent list
 herdr agent get '<agent-name>'
-herdr pane list --workspace '<workspace_id>'
-herdr pane report-metadata '<pane_id>' --source 'agentops:<run-id>:<agent-id>' --agent '<agent-name>' --title '<role>' --custom-status 'delegated'
+herdr pane list --workspace '<workspace-id>'
+herdr pane report-metadata '<pane-id>' --source 'agentops:<run-id>:<agent-id>' --agent '<agent-name>' --title '<role>' --token workflow=parallel-agents
 ```
 
-After launch, verify the agent target exists, the tab has one pane, and the CLI is ready. Submit the task packet path using the Herdr prompt protocol from [herdr.md](herdr.md).
+Use the workspace's root tab/pane for the first agent; do not leave an unused initial tab. Keep every agent name unique, lowercase, within 32 characters, and limited to Herdr's allowed name characters.
+
+After launch, verify the agent target exists, the tab has one pane, and the CLI is ready. Submit the task packet path using `agent prompt --wait` from [herdr.md](herdr.md).
 
 ## Delegation Prompt
 
@@ -126,12 +130,12 @@ Inspect agents through Herdr:
 herdr agent list
 herdr agent get '<agent target>'
 herdr agent explain '<agent target>' --json
-herdr agent read '<agent target>' --source recent --lines 200
-herdr pane read '<pane_id>' --source recent --lines 200
-herdr wait agent-status '<pane_id>' --status done --timeout <ms>
+herdr agent read '<agent target>' --source recent-unwrapped --lines 200
+herdr pane read '<pane-id>' --source recent-unwrapped --lines 200
+herdr agent wait '<agent target>' --timeout <ms>
 ```
 
-If an agent is still working, report Herdr status and leave it running. If complete, read its result packet first, use Herdr recent output only to clarify visible status or missing results, and close the smallest owned Herdr target:
+Without `--until`, `agent wait` settles on `idle`, `done`, or `blocked`. If it returns `blocked`, inspect and ask the user before sending input. If an agent is still working, report Herdr status and leave it running. If complete, read its result packet first, use Herdr recent output only to clarify visible status or missing results, and close the smallest owned Herdr target:
 
 ```bash
 herdr tab close '<tab_id>'

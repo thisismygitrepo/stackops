@@ -1,6 +1,6 @@
 import json
 from collections.abc import Iterable
-from typing import Any, cast
+from typing import cast
 
 from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     AttachSessionChoice,
@@ -13,10 +13,10 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
 from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 
 
-JsonObject = dict[str, Any]
+type JsonObject = dict[str, object]
 
 
-def _run_json_command(args: list[str]) -> JsonObject | list[JsonObject] | None:
+def _run_json_command(args: list[str]) -> list[JsonObject] | None:
     try:
         result = run_command(args)
     except FileNotFoundError:
@@ -25,57 +25,23 @@ def _run_json_command(args: list[str]) -> JsonObject | list[JsonObject] | None:
         return None
 
     text = result.stdout.strip()
-    if text == "" or text.startswith("No sessions found"):
+    if text.startswith("No sessions found"):
         return []
+    if text == "":
+        return None
 
     try:
-        parsed = json.loads(text)
+        parsed = cast(object, json.loads(text))
     except json.JSONDecodeError:
         return None
-    if isinstance(parsed, dict):
-        return cast(JsonObject, parsed)
-    if isinstance(parsed, list):
-        return [cast(JsonObject, item) for item in parsed if isinstance(item, dict)]
-    return None
-
-
-def _dict_entries(value: object) -> list[JsonObject]:
-    if not isinstance(value, list):
-        return []
-    return [cast(JsonObject, item) for item in value if isinstance(item, dict)]
-
-
-def _session_entries_from_payload(payload: JsonObject | list[JsonObject] | None) -> list[JsonObject] | None:
-    if payload is None:
+    if not isinstance(parsed, list):
         return None
-    if isinstance(payload, list):
-        return payload
-
-    for key in ("sessions", "items", "data"):
-        entries = _dict_entries(payload.get(key))
-        if entries:
-            return entries
-
-    result = payload.get("result")
-    if isinstance(result, dict):
-        for key in ("sessions", "items", "data"):
-            entries = _dict_entries(result.get(key))
-            if entries:
-                return entries
-
-    return []
-
-
-def _session_entries() -> list[JsonObject] | None:
-    sessions = _session_entries_from_payload(_run_json_command(["aoe", "list", "--json"]))
-    if sessions is None:
-        return None
-    sessions.sort(key=lambda session: natural_sort_key(_session_display_name(session)))
-    return sessions
-
-
-def list_session_entries() -> list[JsonObject] | None:
-    return _session_entries()
+    entries: list[JsonObject] = []
+    for item in parsed:
+        if not isinstance(item, dict):
+            return None
+        entries.append(cast(JsonObject, item))
+    return entries
 
 
 def _entry_text(entry: JsonObject, *keys: str) -> str | None:
@@ -86,12 +52,52 @@ def _entry_text(entry: JsonObject, *keys: str) -> str | None:
     return None
 
 
+def _session_entries() -> list[JsonObject] | None:
+    sessions = _run_json_command(["aoe", "list", "--json"])
+    if sessions is None:
+        return None
+    if len(sessions) == 0:
+        return []
+
+    runtime_entries = _run_json_command(["aoe", "ps", "--tmux", "--json", "--dead"])
+    if runtime_entries is None:
+        return None
+    runtime_by_session_id: dict[str, JsonObject] = {}
+    for runtime_entry in runtime_entries:
+        session_id = _entry_text(runtime_entry, "session")
+        if session_id is None or session_id in runtime_by_session_id:
+            return None
+        runtime_by_session_id[session_id] = runtime_entry
+
+    terminal_sessions: list[JsonObject] = []
+    for session in sessions:
+        session_id = _entry_text(session, "id")
+        if session_id is None:
+            return None
+        runtime_entry = runtime_by_session_id.get(session_id)
+        if runtime_entry is None:
+            continue
+        state = _entry_text(runtime_entry, "state")
+        if state is None:
+            return None
+        merged_session = session | runtime_entry
+        merged_session["running"] = state != "dead"
+        terminal_sessions.append(merged_session)
+
+    terminal_sessions.sort(key=lambda session: natural_sort_key(_session_display_name(session)))
+    return terminal_sessions
+
+
+def list_session_entries() -> list[JsonObject] | None:
+    return _session_entries()
+
+
 def entry_text(entry: JsonObject, *keys: str) -> str | None:
     return _entry_text(entry, *keys)
 
 
 def _session_title(session: JsonObject) -> str | None:
-    return _entry_text(session, "title", "name")
+    return _entry_text(session, "title")
 
 
 def session_title(session: JsonObject) -> str | None:
@@ -99,7 +105,7 @@ def session_title(session: JsonObject) -> str | None:
 
 
 def _session_id(session: JsonObject) -> str | None:
-    return _entry_text(session, "id", "session_id", "sessionId")
+    return _entry_text(session, "id")
 
 
 def session_id(session: JsonObject) -> str | None:
@@ -107,7 +113,7 @@ def session_id(session: JsonObject) -> str | None:
 
 
 def _session_identifier(session: JsonObject) -> str | None:
-    return _session_title(session) or _session_id(session)
+    return _session_id(session) or _session_title(session)
 
 
 def session_identifier(session: JsonObject) -> str | None:
@@ -115,7 +121,7 @@ def session_identifier(session: JsonObject) -> str | None:
 
 
 def _session_display_name(session: JsonObject) -> str:
-    return _session_identifier(session) or "session"
+    return _session_title(session) or _session_id(session) or "session"
 
 
 def session_display_name(session: JsonObject) -> str:
@@ -123,7 +129,7 @@ def session_display_name(session: JsonObject) -> str:
 
 
 def _session_status(session: JsonObject) -> str | None:
-    return _entry_text(session, "status", "state", "run_status", "runStatus")
+    return _entry_text(session, "state")
 
 
 def session_status(session: JsonObject) -> str | None:
@@ -131,14 +137,7 @@ def session_status(session: JsonObject) -> str | None:
 
 
 def _session_is_killable(session: JsonObject) -> bool:
-    running = session.get("running")
-    if isinstance(running, bool):
-        return running
-
-    status = (_session_status(session) or "").strip().lower().replace("_", " ")
-    if status in {"stopped", "not started", "archived", "snoozed"}:
-        return False
-    return True
+    return session.get("running") is True
 
 
 def list_killable_session_names() -> list[str] | None:
@@ -162,13 +161,13 @@ def session_preview(session: JsonObject) -> str:
     status = _session_status(session)
     if status is not None:
         lines.append(f"status: {status}")
-    group = _entry_text(session, "group", "group_path", "groupPath")
+    group = _entry_text(session, "group")
     if group is not None:
         lines.append(f"group: {group}")
-    path = _entry_text(session, "path", "project_path", "projectPath", "workspace", "cwd")
+    path = _entry_text(session, "path")
     if path is not None:
         lines.append(f"path: {path}")
-    agent = _entry_text(session, "agent", "tool", "command")
+    agent = _entry_text(session, "agent", "tool")
     if agent is not None:
         lines.append(f"agent: {agent}")
     return "\n".join(lines)
@@ -219,10 +218,11 @@ def choose_session(
     sessions = _session_entries()
     if sessions is None:
         return ("error", "Could not read AoE sessions. Is `aoe` installed?")
-    if len(sessions) == 0:
-        return ("error", "No AoE sessions are available to attach to.")
+    running_sessions = [session for session in sessions if _session_is_killable(session)]
+    if len(running_sessions) == 0:
+        return ("error", "No running AoE sessions are available to attach to.")
 
-    option_to_identifier, options_to_preview_mapping = _build_option_maps(sessions)
+    option_to_identifier, options_to_preview_mapping = _build_option_maps(running_sessions)
     selection = interactive_choose_with_preview(
         msg="Choose an AoE session to attach to:",
         options_to_preview_mapping=options_to_preview_mapping,

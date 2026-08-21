@@ -349,6 +349,9 @@ def trace(
     if every <= 0:
         typer.echo("Error: --every must be greater than 0.", err=True, color=True)
         raise typer.Exit(code=1)
+    if backend_resolved == "aoe" and until == "exit-code":
+        typer.echo("Error: AoE does not expose process exit codes for session tracing.", err=True, color=True)
+        raise typer.Exit(code=1)
     if until == "exit-code" and exit_code is None:
         typer.echo("Error: --exit-code is required when --until exit-code is selected.", err=True, color=True)
         raise typer.Exit(code=1)

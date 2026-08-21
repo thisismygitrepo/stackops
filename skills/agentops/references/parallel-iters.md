@@ -2,7 +2,7 @@
 
 Read [herdr.md](herdr.md) and [iter.md](iter.md) first.
 
-This command first identifies independent lines of work, then launches one goal-directed iteration chain for each line in the same working directory. Separation is by explicit scope ownership only: file paths, modules, features, tests, or investigation targets. Do not create branches, do not create git worktrees, do not use `wt`, and do not move agents into separate working copies for this command.
+This command first identifies independent lines of work, then launches one goal-directed iteration chain for each line in the same working directory. Complete the Herdr preflight once, then give each chain its own iter workspace using the 0.8.2 root-pane launch and `agent prompt --wait` protocol. Separation is by explicit scope ownership only: file paths, modules, features, tests, or investigation targets. Do not create branches, do not create git worktrees, do not use `wt`, and do not move agents into separate working copies for this command.
 
 Give each chain observable completion criteria that it can satisfy entirely within its scope. Each chain stops immediately when its criteria are satisfied. It also stops when blocked, unsafe, explicitly paused, or after two consecutive passes without material progress. The controller does not finish or integrate the final task; after all chains finish or report their blockers, the user takes over integration.
 

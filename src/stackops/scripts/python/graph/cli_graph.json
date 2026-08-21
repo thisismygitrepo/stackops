@@ -19153,7 +19153,7 @@
               "dispatches_to": "stackops.scripts.python.agents_iter.get_app"
             },
             "app": {
-              "help": "🔁 <I> Iter maintenance for Herdr 0.7.3",
+              "help": "🔁 <I> Iter maintenance for Herdr 0.8.2",
               "no_args_is_help": true,
               "add_help_option": true,
               "add_completion": false

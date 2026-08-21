@@ -55,12 +55,15 @@ def _get_trace_loader(
 
 
 def _validate_trace_options(
+    backend: TraceBackend,
     until: TraceUntil,
     every_seconds: float,
     exit_code: int | None,
 ) -> None:
     if every_seconds <= 0:
         raise typer.BadParameter("`--every` must be greater than 0.")
+    if backend == "aoe" and until == "exit-code":
+        raise typer.BadParameter("AoE does not expose process exit codes for session tracing.")
     if until == "exit-code" and exit_code is None:
         raise typer.BadParameter("`--exit-code` is required when `--until exit-code` is selected.")
     if until != "exit-code" and exit_code is not None:
@@ -75,7 +78,12 @@ def trace_sessions_for_backend(
     exit_code: int | None,
     kill: bool,
 ) -> None:
-    _validate_trace_options(until=until, every_seconds=every_seconds, exit_code=exit_code)
+    _validate_trace_options(
+        backend=backend,
+        until=until,
+        every_seconds=every_seconds,
+        exit_code=exit_code,
+    )
     if len(session_names) == 0:
         raise typer.BadParameter("At least one session must be selected.")
     if len(session_names) != len(set(session_names)):

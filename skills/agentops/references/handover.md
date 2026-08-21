@@ -6,7 +6,7 @@ Start a normal external agent through `herdr`, not an internal subagent. Use a f
 
 ## Protocol
 
-1. Inspect `herdr --help` and relevant tab/pane/agent help.
+1. Complete the Herdr preflight and inspect `herdr --help` plus relevant workspace/tab/pane/agent help.
 2. Identify the current interactive agent executable from the process tree:
    - `codex` hands over to `codex`
    - `opencode` hands over to `opencode`
@@ -14,8 +14,8 @@ Start a normal external agent through `herdr`, not an internal subagent. Use a f
    - another CLI hands over to the same executable
 3. Gather fresh context: cwd, branch, git status, changed files, task tracker state, commands run, outcomes, blockers, and next steps.
 4. Write the handoff packet using the format below.
-5. Launch the new agent with the autonomous argv from [herdr.md](herdr.md), in the current cwd unless the user asks otherwise.
-6. Submit a short Herdr prompt that points to the handoff packet, send explicit `Enter` to the target pane, and verify the agent accepted it.
+5. Create a `handover-<short-task-name>` workspace in the default session and use its returned root tab/pane. Launch the same agent kind there with `herdr agent start` and the native autonomous arguments from [herdr.md](herdr.md), in the current cwd unless the user asks otherwise.
+6. Submit a short packet-pointer prompt with `herdr agent prompt ... --wait`. Do not send a second Enter. If it returns `blocked`, inspect the agent and ask the user before responding to the dialog.
 7. Report the Herdr session/agent name, visible status, and prompt-submission result.
 
 ## Handoff Packet
@@ -69,12 +69,14 @@ Read <handoff-packet-path> and continue the work. Do not assume access to prior 
 
 ## Mechanics
 
-Name handover sessions with:
+Name handover workspaces and agents with:
 
 ```text
 handover-<short-task-name>
 ```
 
+Keep the live agent name within Herdr's 32-character limit and allowed character set.
+
 The handoff packet is the source of truth. Do not paste the full handoff into Herdr and also store it in Markdown.
 
-Do not count the handover as complete when text merely appears in the target terminal. Resolve the pane id, send `Enter`, refresh Herdr status/recent output, and confirm the new agent is working or responding.
+Do not count the handover as complete until `agent prompt` confirms a lifecycle change or settled state and fresh `agent get`/`agent read` output agrees.

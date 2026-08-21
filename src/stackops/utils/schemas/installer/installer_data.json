@@ -6929,10 +6929,10 @@
     },
     {
       "appName": "herdr",
-      "license": "No license asserted",
-      "repoURL": "https://github.com/ogulcancelik/herdr",
-      "lastCommitDate": "2026-08-14T20:03:53Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/herdrdev/herdr",
+      "lastCommitDate": "2026-08-20T20:09:42Z",
+      "lastCommitDateCheckDate": "2026-08-21T04:32:11Z",
       "doc": "agent multiplexer that lives in your terminal.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -6942,7 +6942,7 @@
         "amd64": {
           "linux": "herdr-linux-x86_64",
           "darwin": "herdr-macos-x86_64",
-          "windows": null
+          "windows": "herdr-windows-x86_64.zip"
         },
         "arm64": {
           "linux": "herdr-linux-aarch64",

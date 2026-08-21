@@ -15,7 +15,7 @@ Create one `wt`/Worktrunk git worktree per agent from the current repository sta
 ## Startup
 
 1. Determine the requested agent count; ask if missing.
-2. Inspect `herdr --help`, relevant Herdr subcommand help, `wt --help`, `wt switch --help`, and `wt list --format json`.
+2. Complete the Herdr preflight. Inspect `herdr --help`, relevant Herdr subcommand help, `wt --help`, `wt switch --help`, and `wt list --format json`.
 3. Capture source state:
    - repo root: `git rev-parse --show-toplevel`
    - repo name: root directory name
@@ -39,12 +39,16 @@ wt -C '<repo-root>' list --format json
 6. Create one Herdr workspace for the run, one tab per agent, and one agent target per worktree:
 
 ```bash
-herdr workspace create --cwd '<repo-root>' --label '<run-name>' --no-focus
-herdr tab create --workspace '<workspace_id>' --cwd '<worktree>' --label '<agent-name>' --no-focus
-herdr agent start '<agent-name>' --cwd '<worktree>' --workspace '<workspace_id>' --tab '<tab_id>' --no-focus -- <autonomous agent argv...>
+herdr workspace create --cwd '<first-worktree>' --label '<run-name>' --no-focus
+herdr tab rename '<returned-root-tab-id>' '<first-agent-name>'
+herdr agent start '<first-agent-name>' --kind '<kind>' --pane '<returned-root-pane-id>' -- <native-agent-args...>
+herdr tab create --workspace '<workspace-id>' --cwd '<later-worktree>' --label '<later-agent-name>' --no-focus
+herdr agent start '<later-agent-name>' --kind '<kind>' --pane '<returned-root-pane-id>' -- <native-agent-args...>
 ```
 
-7. Write each agent's task packet and send only the packet path using the Herdr prompt protocol from [herdr.md](herdr.md).
+Use the workspace's returned root tab/pane for the first worktree and `tab create` only for later worktrees.
+
+7. Write each agent's task packet and send only the packet path with `agent prompt --wait` from [herdr.md](herdr.md).
 8. Index every worktree, Herdr identifier, and packet path in `.ai/agentops/parallel-isolated-agents/contracts/agents.json`.
 9. Report run id, agent count, branch names, worktree paths, Herdr targets/IDs, and visible statuses.
 
@@ -69,13 +73,13 @@ Use `wt remove '<agent-branch>'` for cleanup. Use `wt merge` only after the user
 
 Default Herdr layout: one workspace, one tab per agent, one pane per tab. Use panes only when the user explicitly asks; then create one tab/window, split panes evenly, launch one agent per pane, and verify pane count equals agent count.
 
-Name agents after the worktree:
+Give each agent a short name associated with its worktree:
 
 ```text
-parallel-isolated-<repo-name>-<run-id>-agent-01
+iso-<run-id>-01
 ```
 
-Always set each agent cwd to its own worktree. Verify visibility with `herdr agent list`, `herdr agent get`, and `herdr pane list`.
+Keep names unique and within Herdr's 32-character limit. Always set each tab cwd to its agent's worktree. Verify visibility with `herdr agent list`, `herdr agent get`, and `herdr pane list`.
 
 ## Communication Records
 
@@ -121,4 +125,4 @@ Read <task-packet-path> and follow it. Do not assume access to prior conversatio
 
 ## Non-Interactive Agents
 
-Use non-interactive mode only when required. Inspect the target CLI help for the one-shot invocation and run it through a Herdr-managed pane with `herdr pane run` so output remains visible.
+Use non-interactive mode only when required. Inspect the target CLI help for the one-shot invocation and run it through a Herdr-managed pane with `herdr pane run` so output remains visible. Wait for terminal evidence with `herdr pane wait-output`, not the removed top-level `herdr wait` family.

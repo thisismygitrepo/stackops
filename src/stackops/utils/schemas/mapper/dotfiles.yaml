@@ -643,6 +643,12 @@ herdr:
     os:
     - linux
     - darwin
+herdr_windows:
+  config:
+    original: ~/AppData/Roaming/herdr/config.toml
+    self_managed: CONFIG_ROOT/settings/herdr/config.toml
+    os:
+    - windows
 psmux_windows:
   config:
     original: ~/.config/psmux/psmux.conf

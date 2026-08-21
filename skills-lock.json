@@ -4,7 +4,7 @@
     "agentops": {
       "source": ".",
       "sourceType": "local",
-      "computedHash": "5619317b3e7ed0009673ef3e0bae51c37cd0280cdd126dd0c3b71e8ede1d7e1f"
+      "computedHash": "da68bfa4a34af595fe1571cc3ac003d318ef14dabea1b63a64dd719ab02e5343"
     },
     "caveman": {
       "source": "JuliusBrussee/caveman",

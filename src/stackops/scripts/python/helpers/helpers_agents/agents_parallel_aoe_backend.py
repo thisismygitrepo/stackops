@@ -8,6 +8,7 @@ from stackops.scripts.python.helpers.helpers_sessions.sessions_aoe_impl import A
 
 
 _AOE_AGENT_BY_STACKOPS_AGENT: Final[dict[str, str]] = {
+    "agy": "antigravity",
     "claude": "claude",
     "qwen": "qwen",
     "copilot": "copilot",
@@ -19,10 +20,17 @@ _AOE_AGENT_BY_STACKOPS_AGENT: Final[dict[str, str]] = {
 }
 
 
-def resolve_aoe_agent_for_stackops_agent(agent: str | None) -> str | None:
+def resolve_aoe_tool_for_stackops_agent(agent: str | None) -> str | None:
     if agent is None:
         return None
-    return _AOE_AGENT_BY_STACKOPS_AGENT.get(agent)
+    aoe_tool = _AOE_AGENT_BY_STACKOPS_AGENT.get(agent)
+    if aoe_tool is None:
+        supported_agents = ", ".join(sorted(_AOE_AGENT_BY_STACKOPS_AGENT))
+        raise ValueError(
+            f"StackOps agent '{agent}' is not supported by the AoE backend. "
+            f"Supported agents: {supported_agents}."
+        )
+    return aoe_tool
 
 
 def run_generated_layout_with_aoe(*, layout_output_path: Path, agent: str | None = None) -> None:
@@ -34,15 +42,7 @@ def run_generated_layout_with_aoe(*, layout_output_path: Path, agent: str | None
         layouts_selected=layouts,
         options=AoeLaunchOptions(
             aoe_bin="aoe",
-            agent=resolve_aoe_agent_for_stackops_agent(agent),
-            model=None,
-            provider=None,
-            sandbox=None,
-            yolo=False,
-            cmd=None,
-            extra_agent_args=(),
-            env_vars=(),
-            force=False,
+            tool=resolve_aoe_tool_for_stackops_agent(agent),
             dry_run=False,
             sleep_inbetween=1.0,
             tab_command_mode="cmd",

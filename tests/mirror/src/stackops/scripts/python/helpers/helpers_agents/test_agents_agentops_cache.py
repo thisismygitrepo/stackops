@@ -13,8 +13,8 @@ def _write_run_manifest(*, run_path: Path, herdr_session: str, workspace_id: str
         json.dumps(
             {
                 "schema_version": 1,
-                "herdr_version": "0.7.3",
-                "herdr_protocol": 16,
+                "herdr_version": "0.8.2",
+                "herdr_protocol": 20,
                 "herdr_session": herdr_session,
                 "workspace_id": workspace_id,
                 "workspace_label": workspace_label,

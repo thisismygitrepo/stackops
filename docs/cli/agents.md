@@ -16,7 +16,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 | --- | --- |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
 | `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
-| `iter` | Inspect and maintain current-format AgentOps iteration workspaces through Herdr 0.7.3 |
+| `iter` | Inspect and maintain current-format AgentOps iteration workspaces through Herdr 0.8.2 |
 | `account` | Back up active agent credentials to saved profiles or retrieve a profile as active |
 | `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
@@ -29,7 +29,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 
 ## `iter`
 
-`iter` supports Herdr 0.7.3/protocol 16 only. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agentops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agentops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
+`iter` supports Herdr 0.8.2/protocol 20 only. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agentops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agentops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
 
 ```bash
 agents iter status --all

@@ -32,6 +32,7 @@ _DONE_STATUSES = {
     "closed",
     "complete",
     "completed",
+    "dead",
     "done",
     "error",
     "failed",
@@ -99,11 +100,11 @@ def _session_exit_code(session: JsonObject) -> int | None:
 
 
 def _session_identifier(session: JsonObject) -> str | None:
-    return _session_title(session) or _session_id(session)
+    return _session_id(session) or _session_title(session)
 
 
 def _session_display_name(session: JsonObject) -> str:
-    return _session_identifier(session) or "session"
+    return _session_title(session) or _session_id(session) or "session"
 
 
 def _session_match_values(session: JsonObject) -> set[str]:

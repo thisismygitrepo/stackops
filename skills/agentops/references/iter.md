@@ -17,19 +17,21 @@ Interactive mode is the default. Preserve the selected mode across passes.
 
 ## Start
 
-1. Inspect Herdr help, repository state, project rules, branch/commit, changed files, prior commands, and blockers. Record `HERDR_SESSION`, using `default` only when unset.
+1. Complete the Herdr preflight. Inspect Herdr help, require Herdr 0.8.2/protocol 20, inspect repository state, project rules, branch/commit, changed files, prior commands, and blockers. Record `HERDR_SESSION`, using `default` only when unset.
 2. Create `.ai/agentops/iterations/<slug>/` and write the records below before launch.
-3. Create one Herdr workspace, rename its root tab/pane `iter-<slug>-001`, launch the autonomous agent there, and do not create another initial tab.
-4. Send `Read <records>/iter-001/task.md and follow it. Do not assume access to prior conversation.`, press Enter, and confirm the agent is working.
+3. Create one Herdr workspace, rename its returned root tab `iter-<slug>-001`, and launch the autonomous agent in its returned root pane with `agent start --kind ... --pane ...`. Do not create another initial tab.
+4. Send `Read <records>/iter-001/task.md and follow it. Do not assume access to prior conversation.` with `agent prompt --wait` and confirm its returned lifecycle state. Do not send another Enter.
 5. Report the slug, records path, workspace, agent target/status, and mode.
 
-Use `iter-<slug>` for the workspace and `iter-<slug>-<NNN>` for tabs and agents. In non-interactive mode, use the CLI's documented one-shot form; if it cannot launch a successor, the controller does so from the written recommendation.
+Use `iter-<slug>` for the workspace and `iter-<slug>-<NNN>` for tabs and agents. Keep `<slug>` to at most 23 allowed name characters so the live agent name remains valid. In non-interactive mode, use the CLI's documented one-shot form through `pane run`; if it cannot launch a successor, the controller does so from the written recommendation.
 
 Write `run.json` immediately after workspace creation:
 
 ```json
 {
   "schema_version": 1,
+  "herdr_version": "0.8.2",
+  "herdr_protocol": 20,
   "herdr_session": "default",
   "workspace_id": "w1",
   "workspace_label": "iter-<slug>"
@@ -51,7 +53,7 @@ Write `run.json` immediately after workspace creation:
     handoff.json          # continuing passes only
 ```
 
-- `run.md`: stable objective, work class, functional criteria, explicitly permitted non-functional work, exclusions, completion criteria, evaluation, mode, workspace/argv, boundaries, project rules, and the pass protocol below.
+- `run.md`: stable objective, work class, functional criteria, explicitly permitted non-functional work, exclusions, completion criteria, evaluation, mode, workspace, agent kind/native arguments, boundaries, project rules, and the pass protocol below.
 - `state.md`: bounded current result, criteria status, risks/blockers, no-progress count, and anti-repeat notes.
 - `index.md`: one compact row per pass with Herdr target, packet paths, production delta, focused check, and outcome.
 - `result.md`: production behavior/files changed, commands/check, criteria status, risks, and state/index updates.
@@ -67,7 +69,7 @@ Put this pass protocol in `run.md`:
 - Run at most the permitted focused check. Do not create validation infrastructure or chase unrelated failures.
 - Evaluate every completion criterion unchanged. Write `result.md`, `recommendation.md`, the `index.md` row, and changed shared state.
 - Stop without successor artifacts when a stop condition applies.
-- When continuing, recommend one pass toward an unmet criterion, write its `task.md`, then close pass `<NNN-1>`'s tab if present. Create/rename/launch pass `<NNN+1>` in the same workspace, send only its task path, press Enter, confirm it is working, query both agents, then write the exact handoff receipt.
+- When continuing, recommend one pass toward an unmet criterion, write its `task.md`, then close pass `<NNN-1>`'s tab if present. Create pass `<NNN+1>` with `tab create`, launch it in the returned root pane, send only its task path with `agent prompt --wait`, confirm the lifecycle result, query both agents, then write the exact handoff receipt.
 
 ## Task Packet
 
@@ -100,6 +102,8 @@ Write `iter-<NNN>/handoff.json` only after the successor prompt is visibly accep
 ```json
 {
   "schema_version": 1,
+  "herdr_version": "0.8.2",
+  "herdr_protocol": 20,
   "herdr_session": "default",
   "workspace_id": "w1",
   "source_iteration": 1,
@@ -113,7 +117,7 @@ Write `iter-<NNN>/handoff.json` only after the successor prompt is visibly accep
 }
 ```
 
-Never infer, pre-create, copy, or repair a receipt. Its identifiers and accepted revision must match a fresh atomic Herdr snapshot.
+Never infer, pre-create, copy, or repair a receipt. Its identifiers and accepted revision must match a fresh atomic Herdr snapshot captured after `agent prompt` accepted the successor task.
 
 ## Recommendation
 

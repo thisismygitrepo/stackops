@@ -391,13 +391,8 @@ def _attach_tab_script(session_name: str, tab_id: str) -> str:
     )
 
 
-def _attach_pane_script(session_name: str, focus_target: str) -> str:
-    return "\n".join(
-        [
-            f"herdr --session {quote(session_name)} agent focus {quote(focus_target)}",
-            attach_script_from_name(session_name),
-        ]
-    )
+def _attach_pane_script(session_name: str, terminal_id: str) -> str:
+    return f"herdr --session {quote(session_name)} terminal attach {quote(terminal_id)}"
 
 
 def _close_tab_script(session_name: str, tab_id: str) -> str:
@@ -441,11 +436,16 @@ def _build_window_target_options(active_sessions: list[str], *, for_kill: bool) 
         for pane in panes:
             pane_id = _entry_text(pane, "pane_id")
             terminal_id = _entry_text(pane, "terminal_id")
-            target_id = pane_id if for_kill else terminal_id or pane_id
-            if target_id is None:
-                continue
+            if pane_id is None:
+                raise RuntimeError(f"Herdr session '{session_name}' returned a pane without a pane_id.")
+            if for_kill:
+                target_script = _close_pane_script(session_name, pane_id)
+            else:
+                if terminal_id is None:
+                    raise RuntimeError(f"Herdr session '{session_name}' returned a pane without a terminal_id.")
+                target_script = _attach_pane_script(session_name, terminal_id)
             workspace_context = _target_workspace_context(target=pane, target_kind="pane", contexts_by_id=contexts_by_id, session_name=session_name)
-            pane_identity = pane_id or target_id
+            pane_identity = pane_id
             label = f"[{session_name}] [space: {workspace_context.space_name} ({workspace_context.workspace_id})] {_pane_display(pane, tab_display_by_id)} [{pane_identity}]"
             if pane.get("focused"):
                 label += " *"
@@ -457,11 +457,7 @@ def _build_window_target_options(active_sessions: list[str], *, for_kill: bool) 
             tab_parent_label = tab_option_label_by_id.get(tab_id)
             if tab_parent_label is None:
                 raise RuntimeError(f"Herdr session '{session_name}' returned a pane for unknown tab ID '{tab_id}'.")
-            options_to_script[label] = (
-                _close_pane_script(session_name, target_id)
-                if for_kill
-                else _attach_pane_script(session_name, target_id)
-            )
+            options_to_script[label] = target_script
             options_to_preview[label] = _pane_preview(session_name, workspace_context, pane, tab_display_by_id)
             tab_parent_by_pane_label[label] = tab_parent_label
             session_name_by_target_label[label] = session_name

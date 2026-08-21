@@ -97,15 +97,7 @@ def run_cli(
 
             options = AoeLaunchOptions(
                 aoe_bin="aoe",
-                agent="codex",
-                model=None,
-                provider=None,
-                sandbox=None,
-                yolo=False,
-                cmd=None,
-                extra_agent_args=(),
-                env_vars=(),
-                force=False,
+                tool="codex",
                 dry_run=False,
                 sleep_inbetween=sleep_inbetween,
                 tab_command_mode="prompt",
