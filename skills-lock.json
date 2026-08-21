@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "agentops": {
+      "source": ".",
+      "sourceType": "local",
+      "computedHash": "5619317b3e7ed0009673ef3e0bae51c37cd0280cdd126dd0c3b71e8ede1d7e1f"
+    },
     "caveman": {
       "source": "JuliusBrussee/caveman",
       "sourceType": "github",
@@ -42,11 +47,6 @@
       "sourceType": "github",
       "skillPath": "skills/stackops/SKILL.md",
       "computedHash": "c44940313eaf0cdc82373508f59815674ea671ab02ed05e1e57baa2b1d33aa8b"
-    },
-    "agentops": {
-      "source": "/Users/alex/code/stackops",
-      "sourceType": "local",
-      "computedHash": "5619317b3e7ed0009673ef3e0bae51c37cd0280cdd126dd0c3b71e8ede1d7e1f"
     }
   }
 }

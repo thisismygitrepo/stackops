@@ -7,7 +7,7 @@
 Second step is to check for specialized agents under `~/code/agents`, e.g. for browser, go with this one ~/code/agents/browser/vercel
 Always opt for skills there, rather than controlling my computer, whenever possible.
 
-* Once you finish working on a work-item, please update the csv `./work-items/<some-item>/update.csv` by adding one row about the work done, if it doesn't fall into one work-item and was a random question, then go with ./work-items/msc/update.csv
+* Once you finish working on a work-item, please update the csv `./work-items/<some-item>/<may-be-sub-item>/update.csv` by adding one row about the work done, if it doesn't fall into one work-item and was a random question, then go with ./work-items/msc/update.csv
 Columns are: agent, session-id, topic, actionsTaken, date
 create the file if it doesn't exist.
 session id is the agent session id, you probably have it in env variables or somewhere, its agent dependent. This allows user to follow up on discussion or get more context on work done.
