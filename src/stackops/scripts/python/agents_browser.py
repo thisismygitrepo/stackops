@@ -25,7 +25,7 @@ def install_tech(
         typer.Option(
             "--which",
             "-w",
-            help="Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all.",
+            help=("Browser automation tech: agent-browser, browser-use, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all."),
             case_sensitive=False,
             show_choices=True,
         ),
@@ -43,11 +43,7 @@ def install_tech(
     backend: Annotated[
         SKILL_INSTALL_COMMAND_BACKEND,
         typer.Option(
-            "--backend",
-            "-b",
-            help="Upstream skills CLI runner used when the selected browser tech installs a skill.",
-            case_sensitive=False,
-            show_choices=True,
+            "--backend", "-b", help="Upstream skills CLI runner used by agent-browser and pinchtab.", case_sensitive=False, show_choices=True
         ),
     ] = "npx",
 ) -> None:

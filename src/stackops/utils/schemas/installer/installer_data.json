@@ -4956,6 +4956,28 @@
       }
     },
     {
+      "appName": "browser-use",
+      "license": "MIT License",
+      "repoURL": "CMD",
+      "doc": "Make websites accessible for AI agents.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "browsers-web-access"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "uv tool install --python 3.12 --force browser-use",
+          "windows": "uv tool install --python 3.12 --force browser-use",
+          "darwin": "uv tool install --python 3.12 --force browser-use"
+        },
+        "arm64": {
+          "linux": "uv tool install --python 3.12 --force browser-use",
+          "windows": "uv tool install --python 3.12 --force browser-use",
+          "darwin": "uv tool install --python 3.12 --force browser-use"
+        }
+      }
+    },
+    {
       "appName": "pinchtab",
       "license": "MIT License",
       "repoURL": "https://github.com/pinchtab/pinchtab",

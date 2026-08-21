@@ -10,7 +10,7 @@ from stackops.utils.installer_utils.github_release_bulk import AssetInfo, Releas
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution, LinuxDistributionId
 from stackops.utils.path_reference import get_path_reference_path
-from stackops.utils.schemas.installer.installer_types import CPU_ARCHITECTURES, OPERATING_SYSTEMS, InstallerData
+from stackops.utils.schemas.installer.installer_types import CPU_ARCHITECTURES, OPERATING_SYSTEMS, InstallRequest, InstallerData
 
 
 def test_installer_catalog_matches_schema_and_has_unique_app_names() -> None:
@@ -25,6 +25,34 @@ def test_installer_catalog_matches_schema_and_has_unique_app_names() -> None:
     app_names = [installer["appName"] for installer in installers]
 
     assert len(app_names) == len(set(app_names))
+
+
+def test_browser_use_catalog_uses_upstream_uv_tool_contract() -> None:
+    matching_installers = [
+        installer
+        for installer in installer_runner.get_installers(os="darwin", arch="arm64", which_cats=None)
+        if installer["appName"] == "browser-use"
+    ]
+    assert len(matching_installers) == 1
+    browser_use_installer = matching_installers[0]
+    operating_systems: tuple[OPERATING_SYSTEMS, ...] = ("windows", "linux", "darwin")
+    architectures: tuple[CPU_ARCHITECTURES, ...] = ("amd64", "arm64")
+    expected_command = "uv tool install --python 3.12 --force browser-use"
+
+    resolved_patterns = {
+        install_request_logic.resolve_installer_pattern(
+            installer_data=browser_use_installer, operating_system=operating_system, architecture=architecture
+        )
+        for operating_system in operating_systems
+        for architecture in architectures
+    }
+    assert resolved_patterns == {expected_command}
+
+    install_target = install_request_logic.build_install_target(repo_url=browser_use_installer["repoURL"], installer_value=expected_command)
+    resolved_update_command = install_request_logic.resolve_installer_value(
+        install_target=install_target, install_request=InstallRequest(version=None, update=True)
+    )
+    assert resolved_update_command == f"{expected_command} --upgrade"
 
 
 @pytest.fixture(scope="module")

@@ -15749,6 +15749,9 @@
                 "    if every <= 0:",
                 "        typer.echo(\"Error: --every must be greater than 0.\", err=True, color=True)",
                 "        raise typer.Exit(code=1)",
+                "    if backend_resolved == \"aoe\" and until == \"exit-code\":",
+                "        typer.echo(\"Error: AoE does not expose process exit codes for session tracing.\", err=True, color=True)",
+                "        raise typer.Exit(code=1)",
                 "    if until == \"exit-code\" and exit_code is None:",
                 "        typer.echo(\"Error: --exit-code is required when --until exit-code is selected.\", err=True, color=True)",
                 "        raise typer.Exit(code=1)",
@@ -18480,7 +18483,7 @@
                     "        typer.Option(",
                     "            \"--which\",",
                     "            \"-w\",",
-                    "            help=\"Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all.\",",
+                    "            help=(\"Browser automation tech: agent-browser, browser-use, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all.\"),",
                     "            case_sensitive=False,",
                     "            show_choices=True,",
                     "        ),",
@@ -18498,11 +18501,7 @@
                     "    backend: Annotated[",
                     "        SKILL_INSTALL_COMMAND_BACKEND,",
                     "        typer.Option(",
-                    "            \"--backend\",",
-                    "            \"-b\",",
-                    "            help=\"Upstream skills CLI runner used when the selected browser tech installs a skill.\",",
-                    "            case_sensitive=False,",
-                    "            show_choices=True,",
+                    "            \"--backend\", \"-b\", help=\"Upstream skills CLI runner used by agent-browser and pinchtab.\", case_sensitive=False, show_choices=True",
                     "        ),",
                     "    ] = \"npx\",",
                     ") -> None:",
@@ -18547,7 +18546,7 @@
                       "type": "BrowserTechSelection",
                       "default": "agent-browser",
                       "required": false,
-                      "annotation_raw": "Annotated[BrowserTechSelection, typer.Option('--which', '-w', help='Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all.', case_sensitive=False, show_choices=True)]",
+                      "annotation_raw": "Annotated[BrowserTechSelection, typer.Option('--which', '-w', help='Browser automation tech: agent-browser, browser-use, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all.', case_sensitive=False, show_choices=True)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -18560,7 +18559,7 @@
                         "short_flags": [
                           "-w"
                         ],
-                        "help": "Browser automation tech: agent-browser, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all."
+                        "help": "Browser automation tech: agent-browser, browser-use, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all."
                       }
                     },
                     {
@@ -18591,7 +18590,7 @@
                       "type": "SKILL_INSTALL_COMMAND_BACKEND",
                       "default": "npx",
                       "required": false,
-                      "annotation_raw": "Annotated[SKILL_INSTALL_COMMAND_BACKEND, typer.Option('--backend', '-b', help='Upstream skills CLI runner used when the selected browser tech installs a skill.', case_sensitive=False, show_choices=True)]",
+                      "annotation_raw": "Annotated[SKILL_INSTALL_COMMAND_BACKEND, typer.Option('--backend', '-b', help='Upstream skills CLI runner used by agent-browser and pinchtab.', case_sensitive=False, show_choices=True)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -18604,7 +18603,7 @@
                         "short_flags": [
                           "-b"
                         ],
-                        "help": "Upstream skills CLI runner used when the selected browser tech installs a skill."
+                        "help": "Upstream skills CLI runner used by agent-browser and pinchtab."
                       }
                     }
                   ],

@@ -16,18 +16,10 @@ class BrowserTechAssetSet:
 
 
 _BROWSER_TECH_ASSETS: Final[dict[BrowserTechName, BrowserTechAssetSet]] = {
-    "agent-browser": BrowserTechAssetSet(
-        path_references=(browser_guide_assets.AGENT_BROWSER_GUIDE_PATH_REFERENCE,),
-        mcp_servers=(),
-    ),
-    "pinchtab": BrowserTechAssetSet(
-        path_references=(PINCHTAB_GUIDE_PATH_REFERENCE,),
-        mcp_servers=(),
-    ),
-    "playwright-cli": BrowserTechAssetSet(
-        path_references=(browser_guide_assets.PLAYWRIGHT_CLI_GUIDE_PATH_REFERENCE,),
-        mcp_servers=(),
-    ),
+    "agent-browser": BrowserTechAssetSet(path_references=(browser_guide_assets.AGENT_BROWSER_GUIDE_PATH_REFERENCE,), mcp_servers=()),
+    "browser-use": BrowserTechAssetSet(path_references=(browser_guide_assets.BROWSER_USE_GUIDE_PATH_REFERENCE,), mcp_servers=()),
+    "pinchtab": BrowserTechAssetSet(path_references=(PINCHTAB_GUIDE_PATH_REFERENCE,), mcp_servers=()),
+    "playwright-cli": BrowserTechAssetSet(path_references=(browser_guide_assets.PLAYWRIGHT_CLI_GUIDE_PATH_REFERENCE,), mcp_servers=()),
     "chrome-devtools-mcp": BrowserTechAssetSet(
         path_references=(
             browser_guide_assets.CHROME_DEVTOOLS_MCP_GUIDE_PATH_REFERENCE,

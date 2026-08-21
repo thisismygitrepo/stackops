@@ -6,10 +6,27 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 BrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox", "safari"]
 ProfileBrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox"]
-BrowserTechName: TypeAlias = Literal["agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
-BrowserTechSelection: TypeAlias = Literal["agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp", "all"]
+BrowserTechName: TypeAlias = Literal["agent-browser", "browser-use", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
+BrowserTechSelection: TypeAlias = Literal[
+    "agent-browser", "browser-use", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp", "all"
+]
+BrowserUseSkillTarget: TypeAlias = Literal["agents", "claude", "codex", "copilot", "cursor", "opencode"]
 
-BROWSER_TECH_NAMES: Final[tuple[BrowserTechName, ...]] = ("agent-browser", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp")
+BROWSER_TECH_NAMES: Final[tuple[BrowserTechName, ...]] = (
+    "agent-browser",
+    "browser-use",
+    "pinchtab",
+    "playwright-cli",
+    "chrome-devtools-mcp",
+    "playwright-mcp",
+)
+BROWSER_USE_SKILL_TARGET_BY_STACKOPS_AGENT: Final[dict[AGENTS, BrowserUseSkillTarget]] = {
+    "claude": "claude",
+    "codex": "codex",
+    "copilot": "copilot",
+    "cursor-agent": "cursor",
+    "opencode": "opencode",
+}
 
 DEFAULT_BROWSER_PORT: Final[int] = 9331
 DEFAULT_BROWSER_PROFILE_PORT_START: Final[int] = 60000
@@ -23,6 +40,7 @@ BROWSER_RELAY_TARGET_PROBE_INTERVAL_SECONDS: Final[float] = 0.5
 BROWSER_RELAY_TARGET_PROBE_TIMEOUT_SECONDS: Final[float] = 1.0
 AGENT_BROWSER_INSTALLER_NAME: Final[str] = "agent-browser"
 AGENT_BROWSER_SKILL_REPO: Final[str] = "vercel-labs/agent-browser"
+BROWSER_USE_INSTALLER_NAME: Final[str] = "browser-use"
 PINCHTAB_INSTALLER_NAME: Final[str] = "pinchtab"
 PINCHTAB_SKILL_NAME: Final[str] = "pinchtab"
 PINCHTAB_SKILL_REPO: Final[str] = "pinchtab/pinchtab"
