@@ -143,15 +143,20 @@ def build_bw_command(args: Sequence[str], session: Optional[str] = None) -> list
     return ["bw"] + (["--session", session] if session else []) + list(args)
 
 
+def mask_session_args(args: Sequence[str]) -> list[str]:
+    """Return args with any `--session <token>` value masked for safe display."""
+    return ["***" if index > 0 and args[index - 1] == "--session" else arg for index, arg in enumerate(args)]
+
+
 def run_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None, check: bool = False) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command and optionally raise a vault command error."""
     try:
         return subprocess.run(list(args), capture_output=True, text=True, env=env, check=check)
     except FileNotFoundError:
-        err_console.print(f"[bold red]Command not found:[/bold red] {' '.join(args)}")
+        err_console.print(f"[bold red]Command not found:[/bold red] {' '.join(mask_session_args(args))}")
         raise VaultExit(code=1)
     except subprocess.CalledProcessError as exc:
-        err_console.print(f"[bold red]Command failed:[/bold red] {' '.join(args)}")
+        err_console.print(f"[bold red]Command failed:[/bold red] {' '.join(mask_session_args(args))}")
         if exc.stderr:
             err_console.print("[red]stderr:[/red]", exc.stderr.strip())
         if exc.stdout:
@@ -195,6 +200,21 @@ def get_vault_account_details(vault_status: VaultStatus) -> list[tuple[str, str]
 def run_bw_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None) -> str:
     """Run a bw CLI command and return stdout (text). Raises VaultExit on failure."""
     return run_command(args, env=env, check=True).stdout
+
+
+def ensure_vault_accessible(vault_status: VaultStatus) -> None:
+    """Raise VaultExit with actionable guidance when the vault cannot serve `bw` queries."""
+    status = vault_status.status
+    if status == "locked":
+        message_lines = ["[bold red]🔒 Vault is locked.[/bold red]"]
+        for label, value in get_vault_account_details(vault_status):
+            message_lines.append(f"[dim]{label}:[/dim] [bold]{escape(value)}[/bold]")
+        message_lines.append(f"[dim]Next:[/dim] Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] or save a valid session token using the CLI.")
+        err_console.print("\n".join(message_lines))
+        raise VaultExit(code=1)
+    if status == "unauthenticated":
+        err_console.print(f"[bold red]🔒 Not logged in to Bitwarden.[/bold red] Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] first.")
+        raise VaultExit(code=1)
 
 
 def parse_items(raw: str) -> List[VaultItem]:
@@ -417,27 +437,13 @@ def search(
 
     if not raw:
         vault_status = get_vault_status(session)
-        status = vault_status.status
-        login_command = DEFAULT_LOGIN_COMMAND
-        if status == "locked":
-            message_lines = ["[bold red]🔒 Vault is locked.[/bold red]"]
-            for label, value in get_vault_account_details(vault_status):
-                message_lines.append(f"[dim]{label}:[/dim] [bold]{escape(value)}[/bold]")
-            message_lines.append(f"[dim]Next:[/dim] Run [bold]{login_command}[/bold] or save a valid session token using the CLI.")
-            err_console.print("\n".join(message_lines))
-            raise VaultExit(code=1)
-        if status == "unauthenticated":
-            err_console.print(f"[bold red]🔒 Not logged in to Bitwarden.[/bold red] Run [bold]{login_command}[/bold] first.")
-            raise VaultExit(code=1)
-        if status == "unknown":
+        ensure_vault_accessible(vault_status)
+        if vault_status.status == "unknown":
             info("[yellow]⚠️  Could not determine vault status — proceeding anyway.[/yellow]")
 
         info(f"🔍 Searching for credentials matching: [bold]{name}[/bold] ...")
         cmd_args = build_bw_command(["list", "items", "--search", name], session)
-        masked_args = cmd_args.copy()
-        if session:
-            masked_args[2] = "***"
-        info(f"[dim]$ {' '.join(masked_args)}[/dim]")
+        info(f"[dim]$ {' '.join(mask_session_args(cmd_args))}[/dim]")
         raw = run_bw_command(cmd_args)
         cache_set(cache_key, raw)
 
@@ -550,6 +556,26 @@ def search(
             console.print("[yellow]No credential fields available to display.[/yellow]")
 
     time.sleep(0.05)
+
+
+def sync() -> None:
+    """Sync the Bitwarden vault with the server and drop stale cached search results."""
+    session = load_session_token_from_cache()
+    vault_status = get_vault_status(session)
+    ensure_vault_accessible(vault_status)
+    if vault_status.status == "unknown":
+        console.print("[yellow]⚠️  Could not determine vault status — proceeding anyway.[/yellow]")
+
+    console.print("[blue]🔄 Syncing vault...[/blue]")
+    sync_result = run_command(build_bw_command(["sync"], session))
+    if sync_result.returncode != 0:
+        print_process_output(sync_result, stderr=True)
+        err_console.print("[bold red]Vault sync failed.[/bold red]")
+        raise VaultExit(code=1)
+
+    purge_cached_searches()
+    account = escape(vault_status.user_email or vault_status.user_id or "unknown account")
+    console.print(f"[green]✅ Vault synced.[/green] Account: [bold]{account}[/bold]. Cached searches were refreshed.")
 
 
 def login_and_unlock(account_name: str | None = None, *, login_name: str = DEFAULT_BITWARDEN_LOGIN_NAME) -> None:

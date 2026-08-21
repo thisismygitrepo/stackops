@@ -6756,6 +6756,41 @@
               },
               {
                 "kind": "command",
+                "name": "sync",
+                "fullPath": "devops vault sync",
+                "shortPath": "d v S",
+                "help": "<S> Sync the Bitwarden vault with the server and refresh cached searches.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_vault",
+                  "callable": "sync"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def sync() -> None:",
+                    "    \"\"\"Sync the Bitwarden vault with the server and refresh cached search results.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_devops import vault",
+                    "",
+                    "    try:",
+                    "        vault.sync()",
+                    "    except vault.VaultExit as exc:",
+                    "        _raise_typer_exit(exc)"
+                  ],
+                  "name": "sync",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "doc": "Sync the Bitwarden vault with the server and refresh cached search results.",
+                "aliases": [
+                  {
+                    "name": "S",
+                    "hidden": true,
+                    "help": "Alias for sync."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "clean-cache",
                 "fullPath": "devops vault clean-cache",
                 "shortPath": "d v c",

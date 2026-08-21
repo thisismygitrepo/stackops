@@ -86,6 +86,16 @@ def unlock() -> None:
         _raise_typer_exit(exc)
 
 
+def sync() -> None:
+    """Sync the Bitwarden vault with the server and refresh cached search results."""
+    from stackops.scripts.python.helpers.helpers_devops import vault
+
+    try:
+        vault.sync()
+    except vault.VaultExit as exc:
+        _raise_typer_exit(exc)
+
+
 def clean_cache() -> None:
     """Remove cached vault data under ~/tmp_results."""
     from stackops.scripts.python.helpers.helpers_devops import vault
@@ -119,6 +129,9 @@ def get_app() -> typer.Typer:
         help='<u> Print an eval-able script exporting the saved BW_SESSION (usage: eval "$(devops vault unlock)").',
     )(unlock)
     app.command("u", help="Alias for unlock.", hidden=True)(unlock)
+
+    app.command("sync", help="<S> Sync the Bitwarden vault with the server and refresh cached searches.")(sync)
+    app.command("S", help="Alias for sync.", hidden=True)(sync)
 
     app.command("clean-cache", help="<c> Remove encrypted vault cache stored under ~/tmp_results.")(clean_cache)
     app.command("c", help="Alias for clean-cache.", hidden=True)(clean_cache)
