@@ -41,7 +41,7 @@ def test_launch_browser_lan_selects_address_before_launch_and_renders_it(monkeyp
             port=port,
             browser_port=57632,
             profile_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/p1"),
-            prompt_path=Path("C:/Users/eng_a/code/agents/browser/vercel/prompts/chrome-p1-p9000.md"),
+            prompt_path=Path("C:/Users/eng_a/code/agents/browser/agent-browser/prompts/chrome-p1-p9000.md"),
             process_id=30852,
             relay_process_id=17176,
         )

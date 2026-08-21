@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
-    BROWSING_ROOT,
+    AGENT_BROWSER_ROOT,
     REMOTE_DEBUGGING_LAN,
     REMOTE_DEBUGGING_LOCALHOST,
     BrowserName,
@@ -30,7 +30,7 @@ def build_browser_launch_details(
         profile_path=profile_path,
     )
     prompt_path = write_browser_prompt(
-        browsing_root=BROWSING_ROOT,
+        agent_browser_root=AGENT_BROWSER_ROOT,
         browser=browser,
         port=port,
         browser_port=browser_port,

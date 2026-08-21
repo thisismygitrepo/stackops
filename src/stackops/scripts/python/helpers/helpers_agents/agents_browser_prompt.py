@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry i
 
 def write_browser_prompt(
     *,
-    browsing_root: Path,
+    agent_browser_root: Path,
     browser: BrowserName,
     port: int,
     browser_port: int,
@@ -20,7 +20,7 @@ def write_browser_prompt(
 ) -> Path:
     launcher = get_browser_launcher(browser=browser)
     launch_id = browser_launch_id(browser=browser, profile_path=profile_path, port=port)
-    prompt_path = browsing_root.expanduser().joinpath("prompts", f"{launch_id}.md")
+    prompt_path = agent_browser_root.expanduser().joinpath("prompts", f"{launch_id}.md")
     prompt_path.parent.mkdir(parents=True, exist_ok=True)
     lan_instructions = (
         f"""If this browser endpoint is on another computer, connect from the agent machine to `http://<LAN-IP>:{port}`.

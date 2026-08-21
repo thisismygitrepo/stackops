@@ -6,13 +6,13 @@ from typing import assert_never
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     AGENT_BROWSER_INSTALLER_NAME,
+    AGENT_BROWSER_ROOT,
     AGENT_BROWSER_SKILL_REPO,
     BROWSER_USE_INSTALLER_NAME,
     BROWSER_USE_SKILL_TARGET_BY_STACKOPS_AGENT,
     BROWSER_MCP_ROOT,
     BROWSER_SKILLS_CLI_AGENT_BY_STACKOPS_AGENT,
     BROWSER_TECH_ROOT,
-    BROWSING_ROOT,
     BrowserTechName,
     OMP_INSTALLER_NAME,
     PINCHTAB_INSTALLER_NAME,
@@ -50,7 +50,7 @@ def _resolve_browser_skills_cli_agent(*, agent: AGENTS) -> str:
 
 def install_agent_browser_skill(*, agent: AGENTS, backend: SKILL_INSTALL_COMMAND_BACKEND) -> BrowserSkillInstallResult:
     skills_cli_agent = _resolve_browser_skills_cli_agent(agent=agent)
-    install_root = BROWSING_ROOT.expanduser()
+    install_root = AGENT_BROWSER_ROOT.expanduser()
     install_root.mkdir(parents=True, exist_ok=True)
 
     from stackops.utils.installer_utils.installer_cli import main_installer_cli
