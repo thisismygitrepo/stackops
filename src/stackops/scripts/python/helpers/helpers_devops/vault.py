@@ -271,6 +271,25 @@ def choose_entry_interactive(items: List[VaultItem]) -> VaultItem:
     return mapping[choice]
 
 
+def print_matches_table(items: Sequence[VaultItem]) -> None:
+    """Print search matches as a rich table without exposing secret values."""
+    table = Table(title=f"Vault matches ({len(items)})", show_header=True, header_style="bold")
+    table.add_column("Name", style="bold")
+    table.add_column("ID", style="dim")
+    table.add_column("Username")
+    table.add_column("URLs")
+    for item in items:
+        login = item.raw.get("login", {}) or {}
+        uris = ", ".join(str(u.get("uri", "")) for u in (login.get("uris") or []))
+        table.add_row(
+            escape(item.name),
+            item.id,
+            escape(item.username or "-"),
+            escape(uris or "-"),
+        )
+    console.print(table)
+
+
 def copy_to_clipboard(value: str, slot: int = 1) -> bool:
     """Copy value to clipboard using `cb` CLI tool. Return True on success."""
     try:
@@ -399,17 +418,22 @@ def search(
     silent: bool = False,
     json_output: bool = False,
     raw_output: bool = False,
+    table_output: bool = False,
     fresh: bool = False,
 ) -> None:
     """Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard."""
 
     # install_if_missing(which="tv")
 
-    info = (lambda *a, **kw: None) if silent or json_output or raw_output else console.print
+    info = (lambda *a, **kw: None) if silent or json_output or raw_output or table_output else console.print
 
     copy = copy.lower()
     if copy not in {"password", "username", "totp", "none"}:
         err_console.print("[red]Invalid --copy value. Use 'password', 'username', 'totp', or 'none'.[/red]")
+        raise VaultExit(code=2)
+
+    if table_output and (raw_output or json_output):
+        err_console.print("[red]--table cannot be combined with --raw or --json.[/red]")
         raise VaultExit(code=2)
 
     # Try to load session from cache
@@ -457,6 +481,10 @@ def search(
     if not items:
         err_console.print(f"[red]No entries found for:[/red] {name}")
         raise VaultExit(code=1)
+
+    if table_output:
+        print_matches_table(items)
+        return
 
     if len(items) == 1:
         entry = items[0]

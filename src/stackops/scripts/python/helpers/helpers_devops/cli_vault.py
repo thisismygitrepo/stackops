@@ -33,6 +33,9 @@ def search(
     silent: Annotated[bool, typer.Option("--silent", "-q", help="Suppress all progress/status output; only the final result is printed")] = False,
     json_output: Annotated[bool, typer.Option("--json", "--json-output", "-j", help="Output selected credentials as JSON (includes notes)")] = False,
     raw_output: Annotated[bool, typer.Option("--raw", "-r", help="Output raw search results JSON exactly as returned by bw")] = False,
+    table_output: Annotated[
+        bool, typer.Option("--table", "-l", help="Print all matches as a rich table instead of interactive selection (never exposes secrets, never copies)")
+    ] = False,
     fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass cache and query Bitwarden directly")] = False,
 ) -> None:
     """Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard."""
@@ -52,6 +55,7 @@ def search(
             silent=silent,
             json_output=json_output,
             raw_output=raw_output,
+            table_output=table_output,
             fresh=fresh,
         )
     except vault.VaultExit as exc:
