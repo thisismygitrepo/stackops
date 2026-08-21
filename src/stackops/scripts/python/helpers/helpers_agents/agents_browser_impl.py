@@ -14,6 +14,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BROWSER_TECH_ROOT,
     BROWSING_ROOT,
     BrowserTechName,
+    OMP_INSTALLER_NAME,
     PINCHTAB_INSTALLER_NAME,
     PINCHTAB_SKILL_NAME,
     PINCHTAB_SKILL_REPO,
@@ -97,7 +98,24 @@ def install_playwright_cli(*, agent: AGENTS) -> tuple[Path, tuple[tuple[str, ...
     return install_root, (install_command, skills_command)
 
 
-def install_browser_tech(*, which: BrowserTechName, agent: AGENTS, backend: SKILL_INSTALL_COMMAND_BACKEND) -> BrowserTechInstallResult:
+def install_omp_browser_support() -> BrowserTechInstallResult:
+    install_root = BROWSER_TECH_ROOT.expanduser().joinpath(OMP_INSTALLER_NAME)
+    install_root.mkdir(parents=True, exist_ok=True)
+
+    from stackops.utils.installer_utils.installer_cli import main_installer_cli
+
+    main_installer_cli(which=OMP_INSTALLER_NAME, group=False, interactive=False, explore=False, update=True, version=None, ctx=None)
+    guide_paths = write_browser_tech_files(which=OMP_INSTALLER_NAME, install_root=install_root)
+    return BrowserTechInstallResult(which=OMP_INSTALLER_NAME, install_root=install_root, commands=(), guide_paths=guide_paths, mcp_servers=())
+
+
+def install_browser_tech(
+    *, which: BrowserTechName, agent: AGENTS | None, backend: SKILL_INSTALL_COMMAND_BACKEND
+) -> BrowserTechInstallResult:
+    if which == "omp":
+        return install_omp_browser_support()
+    if agent is None:
+        raise ValueError(f"--agent is required for browser tech '{which}'")
     match which:
         case "agent-browser":
             result = install_agent_browser_skill(agent=agent, backend=backend)

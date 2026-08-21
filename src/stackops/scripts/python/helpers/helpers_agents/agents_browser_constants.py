@@ -6,9 +6,11 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 BrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox", "safari"]
 ProfileBrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox"]
-BrowserTechName: TypeAlias = Literal["agent-browser", "browser-use", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp"]
+BrowserTechName: TypeAlias = Literal[
+    "agent-browser", "browser-use", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp", "omp"
+]
 BrowserTechSelection: TypeAlias = Literal[
-    "agent-browser", "browser-use", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp", "all"
+    "agent-browser", "browser-use", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp", "omp", "all"
 ]
 BrowserUseSkillTarget: TypeAlias = Literal["agents", "claude", "codex", "copilot", "cursor", "opencode"]
 
@@ -19,7 +21,9 @@ BROWSER_TECH_NAMES: Final[tuple[BrowserTechName, ...]] = (
     "playwright-cli",
     "chrome-devtools-mcp",
     "playwright-mcp",
+    "omp",
 )
+BROWSER_TECH_NAMES_WITHOUT_AGENT: Final[frozenset[BrowserTechName]] = frozenset({"omp"})
 BROWSER_USE_SKILL_TARGET_BY_STACKOPS_AGENT: Final[dict[AGENTS, BrowserUseSkillTarget]] = {
     "claude": "claude",
     "codex": "codex",
@@ -44,6 +48,7 @@ BROWSER_USE_INSTALLER_NAME: Final[str] = "browser-use"
 PINCHTAB_INSTALLER_NAME: Final[str] = "pinchtab"
 PINCHTAB_SKILL_NAME: Final[str] = "pinchtab"
 PINCHTAB_SKILL_REPO: Final[str] = "pinchtab/pinchtab"
+OMP_INSTALLER_NAME: Final[BrowserTechName] = "omp"
 PLAYWRIGHT_CLI_COMMAND_NAME: Final[str] = "playwright-cli"
 PLAYWRIGHT_CLI_PACKAGE_NAME: Final[str] = "@playwright/cli"
 BROWSER_TECH_ROOT: Final[Path] = Path.home().joinpath("code", "agents", "browser")

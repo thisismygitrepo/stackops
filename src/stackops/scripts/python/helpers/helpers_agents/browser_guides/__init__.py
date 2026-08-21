@@ -2,6 +2,8 @@ from typing import Final
 
 AGENT_BROWSER_GUIDE_PATH_REFERENCE: Final[str] = "agent-browser.md"
 BROWSER_USE_GUIDE_PATH_REFERENCE: Final[str] = "browser-use.md"
+OMP_BROWSER_CDP_CONFIG_PATH_REFERENCE: Final[str] = "omp-browser-cdp.yml"
+OMP_GUIDE_PATH_REFERENCE: Final[str] = "omp.md"
 CHROME_DEVTOOLS_MCP_BROWSER_URL_CONFIG_PATH_REFERENCE: Final[str] = "chrome-devtools-mcp-browser-url.mcp.json"
 CHROME_DEVTOOLS_MCP_CONFIG_PATH_REFERENCE: Final[str] = "chrome-devtools-mcp.mcp.json"
 CHROME_DEVTOOLS_MCP_GUIDE_PATH_REFERENCE: Final[str] = "chrome-devtools-mcp.md"

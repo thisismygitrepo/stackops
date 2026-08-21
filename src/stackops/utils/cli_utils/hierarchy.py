@@ -1090,7 +1090,7 @@ STACKOPS_AGENTS_PARALLEL_COMMAND: "StackOpsAgentsParallelCommand" = {
 STACKOPS_AGENTS_BROWSER_INSTALL_TECH_COMMAND: "StackOpsAgentsBrowserInstallTechCommand" = {
     "command_name": "install-tech",
     "short_name": "i",
-    "help": "<i> Install browser CLIs, skills, or MCP configs",
+    "help": "<i> Install browser CLIs, skills, MCP configs, or agents",
     "subcommands": {},
 }
 

@@ -5,6 +5,7 @@ from rich.console import Console
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     BROWSER_TECH_NAMES,
+    BROWSER_TECH_NAMES_WITHOUT_AGENT,
     BrowserName,
     BrowserTechName,
     BrowserTechSelection,
@@ -25,7 +26,7 @@ def install_tech(
         typer.Option(
             "--which",
             "-w",
-            help=("Browser automation tech: agent-browser, browser-use, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, or all."),
+            help=("Browser automation tech: agent-browser, browser-use, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, omp, or all."),
             case_sensitive=False,
             show_choices=True,
         ),
@@ -35,7 +36,7 @@ def install_tech(
         typer.Option(
             "--agent",
             "-a",
-            help="Agent to receive the browser skill or MCP configuration guidance. Omit to choose interactively.",
+            help="Agent to receive the browser skill or MCP configuration guidance; not used by omp. Omit to choose interactively.",
             case_sensitive=False,
             show_choices=True,
         ),
@@ -47,12 +48,13 @@ def install_tech(
         ),
     ] = "npx",
 ) -> None:
-    """Install browser automation CLI or MCP support for agents."""
+    """Install browser automation CLI, MCP support, or a browser-capable agent."""
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech
 
     try:
+        selected_technologies: tuple[BrowserTechName, ...] = BROWSER_TECH_NAMES if which == "all" else (which,)
         resolved_agent = agent
-        if resolved_agent is None:
+        if resolved_agent is None and any(technology not in BROWSER_TECH_NAMES_WITHOUT_AGENT for technology in selected_technologies):
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import choose_required_option, order_current_first
 
             agent_options = cast(tuple[AGENTS, ...], get_args(AGENTS))
@@ -60,7 +62,6 @@ def install_tech(
                 AGENTS,
                 choose_required_option(options=order_current_first(options=agent_options, current=DEFAULT_AGENT), msg="Choose agent", header="Agent"),
             )
-        selected_technologies: tuple[BrowserTechName, ...] = BROWSER_TECH_NAMES if which == "all" else (which,)
         results = tuple(
             install_browser_tech(which=selected_technology, agent=resolved_agent, backend=backend) for selected_technology in selected_technologies
         )
@@ -71,7 +72,7 @@ def install_tech(
         raise typer.Exit(code=1) from error
 
     for result in results:
-        typer.echo(f"Prepared {result.which} for {resolved_agent} in: {result.install_root}")
+        typer.echo(f"Prepared {result.which} in: {result.install_root}")
         for command in result.commands:
             typer.echo(f"Ran: {' '.join(command)}")
         for guide_path in result.guide_paths:
@@ -274,7 +275,7 @@ def get_app() -> typer.Typer:
     browser_app = typer.Typer(
         help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False
     )
-    browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, or MCP configs")(install_tech)
+    browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, MCP configs, or agents")(install_tech)
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)

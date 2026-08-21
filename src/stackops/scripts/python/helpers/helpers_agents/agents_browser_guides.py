@@ -39,6 +39,13 @@ _BROWSER_TECH_ASSETS: Final[dict[BrowserTechName, BrowserTechAssetSet]] = {
         ),
         mcp_servers=("playwright", "playwright-extension", "playwright-cdp"),
     ),
+    "omp": BrowserTechAssetSet(
+        path_references=(
+            browser_guide_assets.OMP_GUIDE_PATH_REFERENCE,
+            browser_guide_assets.OMP_BROWSER_CDP_CONFIG_PATH_REFERENCE,
+        ),
+        mcp_servers=(),
+    ),
 }
 
 

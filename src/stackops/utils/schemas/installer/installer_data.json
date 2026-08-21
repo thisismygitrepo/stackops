@@ -7347,6 +7347,29 @@
           "darwin": "brew install unbound"
         }
       }
+    },
+    {
+      "appName": "freellmapi",
+      "license": "MIT License",
+      "repoURL": "https://github.com/tashfeenahmed/freellmapi",
+      "lastCommitDate": "2026-08-20T21:06:48Z",
+      "lastCommitDateCheckDate": "2026-08-21T18:35:10Z",
+      "doc": "🤖 OpenAI-compatible proxy that stacks free tiers of 28 LLM providers behind one /v1 endpoint, with smart routing and failover.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "FreeLLMAPI-0.8.1.AppImage",
+          "windows": "FreeLLMAPI-0.8.1-win.zip",
+          "darwin": null
+        },
+        "arm64": {
+          "linux": null,
+          "windows": null,
+          "darwin": "FreeLLMAPI-0.8.1-arm64.dmg"
+        }
+      }
     }
   ]
 }

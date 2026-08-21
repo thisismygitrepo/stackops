@@ -1255,7 +1255,7 @@ StackOpsAgentsBrowserInstallTechCommand = TypedDict(
     {
         "command_name": Literal["install-tech"],
         "short_name": Literal["i"],
-        "help": Literal["<i> Install browser CLIs, skills, or MCP configs"],
+        "help": Literal["<i> Install browser CLIs, skills, MCP configs, or agents"],
         "subcommands": EmptySubcommands,
     },
 )
