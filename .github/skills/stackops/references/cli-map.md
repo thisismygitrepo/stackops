@@ -163,7 +163,7 @@ stackops
 │  │  └─ make-template
 │  ├─ browser
 │  │  ├─ install-tech
-│  │  └─ launch-browser
+│  │  └─ launch
 │  ├─ add-mcp
 │  ├─ add-skill
 │  ├─ add-todo

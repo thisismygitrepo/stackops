@@ -126,9 +126,13 @@ def check_windows_service() -> SSHDebugCheck:
     script = """
 $service = Get-Service -Name sshd -ErrorAction SilentlyContinue
 if ($null -eq $service) {
-    [PSCustomObject]@{ Found = $false; Status = $null } | ConvertTo-Json -Compress
+    [PSCustomObject]@{ Found = $false; Status = $null; StartType = $null } | ConvertTo-Json -Compress
 } else {
-    [PSCustomObject]@{ Found = $true; Status = [string]$service.Status } | ConvertTo-Json -Compress
+    [PSCustomObject]@{
+        Found = $true
+        Status = [string]$service.Status
+        StartType = [string]$service.StartType
+    } | ConvertTo-Json -Compress
 }
 """
     completed = run_powershell(script)
@@ -146,6 +150,7 @@ if ($null -eq $service) {
         )
     found = parsed.get("Found")
     status = parsed.get("Status")
+    start_type = parsed.get("StartType")
     if found is False:
         return SSHDebugCheck(
             identifier="ssh_service",
@@ -156,34 +161,62 @@ if ($null -eq $service) {
             command_suggestions=(),
             manual_advice=("Install or register OpenSSH Server using the supported Windows administration workflow.",),
         )
-    if found is True and status == "Running":
+    if found is not True or not isinstance(status, str) or not isinstance(start_type, str):
         return SSHDebugCheck(
             identifier="ssh_service",
             group="service",
             label="SSH service",
-            status="ok",
-            message="The sshd Windows service is Running",
+            status="unknown",
+            message="PowerShell returned malformed sshd service data",
             command_suggestions=(),
-            manual_advice=(),
+            manual_advice=("Inspect the sshd service manually.",),
         )
-    if found is True and isinstance(status, str):
+    if status != "Running":
+        message = f"The sshd Windows service is {status}"
+        if start_type in ("Automatic", "Manual", "Disabled"):
+            message += f" (startup type {start_type})"
         return SSHDebugCheck(
             identifier="ssh_service",
             group="service",
             label="SSH service",
             status="error",
-            message=f"The sshd Windows service is {status}",
+            message=message,
             command_suggestions=("Start-Service -Name sshd",),
             manual_advice=("Review the sshd service event log before changing startup behavior.",),
+        )
+    if start_type == "Automatic":
+        return SSHDebugCheck(
+            identifier="ssh_service",
+            group="service",
+            label="SSH service",
+            status="ok",
+            message="The sshd Windows service is Running with startup type Automatic",
+            command_suggestions=(),
+            manual_advice=(),
+        )
+    if start_type in ("Manual", "Disabled"):
+        return SSHDebugCheck(
+            identifier="ssh_service",
+            group="service",
+            label="SSH service",
+            status="error",
+            message=(
+                f"The sshd Windows service is Running but its startup type is {start_type}; "
+                "SSH access will be lost at the next reboot"
+            ),
+            command_suggestions=("Set-Service -Name sshd -StartupType Automatic",),
+            manual_advice=(
+                "The service keeps running until reboot; only the startup type prevents it from starting again.",
+            ),
         )
     return SSHDebugCheck(
         identifier="ssh_service",
         group="service",
         label="SSH service",
         status="unknown",
-        message="PowerShell returned malformed sshd service data",
+        message=f"PowerShell returned an unusable sshd startup type: {start_type}",
         command_suggestions=(),
-        manual_advice=("Inspect the sshd service manually.",),
+        manual_advice=("Inspect the sshd service startup type manually.",),
     )
 
 

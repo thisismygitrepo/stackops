@@ -17,20 +17,20 @@ stackops agents browser install-tech --which agent-browser
 Launch a browser with a dedicated CDP profile. By default, StackOps opens the shared `stackops-browser` tmux session and creates a qualified browser endpoint window:
 
 ```bash
-stackops agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
+stackops agents browser launch --browser chrome --port 9331 --profile agent-browser
 ```
 
 Expose a browser on the LAN when the other computer is trusted and reachable. This adds a qualified relay window in the same tmux session:
 
 ```bash
-stackops agents browser launch-browser --browser chrome --port 9331 --profile agent-browser --lan
+stackops agents browser launch --browser chrome --port 9331 --profile agent-browser --lan
 agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```
 
 Use `--detached`/`-d` for the background process launch mode only when you deliberately do not want tmux ownership:
 
 ```bash
-stackops agents browser launch-browser --browser chrome --port 9331 --profile agent-browser -d
+stackops agents browser launch --browser chrome --port 9331 --profile agent-browser -d
 ```
 
 Inspect active StackOps browser tmux windows:

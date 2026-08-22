@@ -35,7 +35,7 @@ if ($service.Status -ne "Running") {
     throw "The sshd service did not reach the Running state."
 }
 $serviceConfiguration = Get-CimInstance -ClassName Win32_Service -Filter "Name='sshd'"
-if ($null -eq $serviceConfiguration -or $serviceConfiguration.StartMode -ne "Auto") {
+if ($null -eq $serviceConfiguration -or $serviceConfiguration.StartMode -ne "Automatic") {
     throw "The sshd service startup mode is not Automatic."
 }
 

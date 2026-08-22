@@ -237,20 +237,20 @@ agents add-mcp playwright --agent codex --scope local
 agents add-mcp playwright-cdp --agent codex --scope local
 ```
 
-`agents browser launch-browser` launches Chrome, Brave, Edge, Firefox, or Safari automation endpoints. Chromium browsers use CDP with an isolated profile; Firefox uses WebDriver BiDi; Safari uses safaridriver. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a port-scoped profile under the system temp directory for profile-capable browsers; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. Pass `--tmp`/`-t` with `--profile` to copy that profile to `<profile>/.tmp/<random-alias>` and launch the copy. By default, StackOps runs browser endpoints in one `stackops-browser` tmux session with qualified windows such as `chrome-profile-agent-browser-p9331-endpoint`; `--lan`/`-l` adds a matching relay window and exposes the requested port through a StackOps relay on `0.0.0.0`. Pass `--detached`/`-d` to launch background processes instead of tmux windows.
+`agents browser launch` launches Chrome, Brave, Edge, Firefox, or Safari automation endpoints. Chromium browsers use CDP with an isolated profile; Firefox uses WebDriver BiDi; Safari uses safaridriver. The default port is `9331`; pass `--port 9222` when using the shipped CDP MCP catalog entries without editing them. Omitting `--profile` uses a port-scoped profile under the system temp directory for profile-capable browsers; a profile name uses `~/data/browsers-profiles/<browser>/<profile>`. Pass `--tmp`/`-t` with `--profile` to copy that profile to `<profile>/.tmp/<random-alias>` and launch the copy. By default, StackOps runs browser endpoints in one `stackops-browser` tmux session with qualified windows such as `chrome-profile-agent-browser-p9331-endpoint`; `--lan`/`-l` adds a matching relay window and exposes the requested port through a StackOps relay on `0.0.0.0`. Pass `--detached`/`-d` to launch background processes instead of tmux windows.
 
 ```bash
-agents browser launch-browser --browser chrome --port 9331 --profile agent-browser
-agents browser launch-browser --browser edge --port 9331 --profile agent-browser
-agents browser launch-browser --browser chrome --profile agent-browser --tmp
-agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
-agents browser launch-browser --browser chrome --port 9331 --lan
-agents browser launch-browser --browser chrome --port 9331 --profile agent-browser -d
+agents browser launch --browser chrome --port 9331 --profile agent-browser
+agents browser launch --browser edge --port 9331 --profile agent-browser
+agents browser launch --browser chrome --profile agent-browser --tmp
+agents browser launch --browser chrome --port 9222 --profile playwright-mcp
+agents browser launch --browser chrome --port 9331 --lan
+agents browser launch --browser chrome --port 9331 --profile agent-browser -d
 agents browser status
 agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```
 
-`agents browser batch-launch` launches every saved profile under `~/data/browsers-profiles/<browser>/` for the browser selected with `--browser`. Its `--port-start`/`--port`/`-p` base defaults to `60000`. Profiles named `pN` use `port-start + N`, so `p1` uses `60001`, `p2` uses `60002`, and so on by default. Other profile names use the next unreserved port above the base. Use `--max-profiles`/`--max`/`-n` to cap the launch count; StackOps launches the requested count or the number available, whichever is smaller. The command prints one compact table with each profile, IP, port, state, and tmux window or process ID. It supports the same `--lan` and `--detached` launch modes as `launch-browser`; Safari is excluded because it does not support custom profiles.
+`agents browser batch-launch` launches every saved profile under `~/data/browsers-profiles/<browser>/` for the browser selected with `--browser`. Its `--port-start`/`--port`/`-p` base defaults to `60000`. Profiles named `pN` use `port-start + N`, so `p1` uses `60001`, `p2` uses `60002`, and so on by default. Other profile names use the next unreserved port above the base. Use `--max-profiles`/`--max`/`-n` to cap the launch count; StackOps launches the requested count or the number available, whichever is smaller. The command prints one compact table with each profile, IP, port, state, and tmux window or process ID. It supports the same `--lan` and `--detached` launch modes as `launch`; Safari is excluded because it does not support custom profiles.
 
 `agents browser batch-close` closes every StackOps-tracked launch for a saved profile or one of its `--tmp` copies for the selected browser, including both tmux and detached launches. It leaves port-scoped profiles, other browsers, and browser sessions not managed by StackOps untouched. Running it when no matching launches are active succeeds without changing anything.
 
@@ -308,7 +308,7 @@ agents run-interactive --help
 agents ask --help
 agents add-skill --help
 agents browser install-tech --help
-agents browser launch-browser --help
+agents browser launch --help
 agents browser batch-launch --help
 agents browser batch-close --help
 agents browser declutter --help

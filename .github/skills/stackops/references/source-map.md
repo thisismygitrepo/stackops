@@ -161,7 +161,7 @@ Use this map to jump from a command path to the file that registers or implement
 - `agents parallel collect` -> `src/stackops/scripts/python/agents_parallel_commands.py` -> `collect`
 - `agents parallel make-template` -> `src/stackops/scripts/python/agents_parallel_commands.py` -> `make_agents_command_template`
 - `agents browser install-tech` -> `src/stackops/scripts/python/agents_browser.py` -> `install_tech`
-- `agents browser launch-browser` -> `src/stackops/scripts/python/agents_browser.py` -> `launch_browser`
+- `agents browser launch` -> `src/stackops/scripts/python/agents_browser.py` -> `launch_browser`
 - `agents add-mcp` -> `src/stackops/scripts/python/agents.py` -> `add_mcp`
 - `agents add-skill` -> `src/stackops/scripts/python/agents.py` -> `add_skill`
 - `agents add-todo` -> `src/stackops/scripts/python/agents.py` -> `make_todo_files`

@@ -326,7 +326,7 @@ def get_app() -> typer.Typer:
     )
     browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, MCP configs, or agents")(install_tech)
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
-    browser_app.command(name="launch-browser", no_args_is_help=False, short_help="<l> Launch browser automation endpoint")(launch_browser)
+    browser_app.command(name="launch", no_args_is_help=False, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
     browser_app.command(name="batch-launch", no_args_is_help=False, short_help="<L> Launch every saved profile for one browser")(batch_launch)
     browser_app.command(name="L", no_args_is_help=False, hidden=True)(batch_launch)

@@ -50,7 +50,7 @@ def test_launch_browser_lan_selects_address_before_launch_and_renders_it(monkeyp
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
     result = CliRunner().invoke(
-        agents_browser.get_app(), ["launch-browser", "--port", "9000", "--detached", "--lan", "--profile", "p1", "-t"], terminal_width=140
+        agents_browser.get_app(), ["launch", "--port", "9000", "--detached", "--lan", "--profile", "p1", "-t"], terminal_width=140
     )
 
     assert result.exit_code == 0, result.output
@@ -76,7 +76,7 @@ def test_launch_browser_lan_exits_before_launch_when_address_selection_fails(mon
     monkeypatch.setattr(agents_browser, "select_lan_interface_ipv4", select_address)
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
-    result = CliRunner().invoke(agents_browser.get_app(), ["launch-browser", "--lan"])
+    result = CliRunner().invoke(agents_browser.get_app(), ["launch", "--lan"])
 
     assert result.exit_code == 1, result.output
     assert selector_preferences == [False]
@@ -140,11 +140,11 @@ def test_batch_commands_are_listed_with_uppercase_aliases() -> None:
     launch_alias_help_result = runner.invoke(agents_browser.get_app(), ["L", "--help"], terminal_width=140)
     single_launch_help_result = runner.invoke(agents_browser.get_app(), ["l", "--help"], terminal_width=140)
     close_alias_help_result = runner.invoke(agents_browser.get_app(), ["C", "--help"], terminal_width=140)
-    old_command_result = runner.invoke(agents_browser.get_app(), ["launch-browsers", "--help"], terminal_width=140)
+    old_command_result = runner.invoke(agents_browser.get_app(), ["launch-browser", "--help"], terminal_width=140)
 
     assert help_result.exit_code == 0, help_result.output
     assert "batch-launch" in help_result.output
-    assert "launch-browsers" not in help_result.output
+    assert "launch-browser" not in help_result.output
     assert "<L> Launch every saved profile for one browser" in help_result.output
     assert "batch-close" in help_result.output
     assert "<C> Close tracked saved-profile browser launches" in help_result.output
@@ -204,7 +204,7 @@ def test_batch_launch_caps_requested_count_to_available_profiles(monkeypatch: py
 
 
 def test_launch_browser_tmp_requires_a_named_profile() -> None:
-    result = CliRunner().invoke(agents_browser.get_app(), ["launch-browser", "--tmp"])
+    result = CliRunner().invoke(agents_browser.get_app(), ["launch", "--tmp"])
 
     assert result.exit_code == 2, result.output
     assert "--tmp requires --profile" in result.output

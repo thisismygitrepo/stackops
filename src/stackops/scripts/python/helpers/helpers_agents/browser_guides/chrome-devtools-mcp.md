@@ -36,7 +36,7 @@ The standard MCP config is in `chrome-devtools-mcp.mcp.json`. It lets the MCP se
 For a running browser, use `chrome-devtools-mcp-browser-url.mcp.json` after starting Chrome through StackOps with a custom profile. StackOps passes `--user-data-dir` when launching the browser:
 
 ```bash
-stackops agents browser launch-browser --browser chrome --port 9222 --profile chrome-devtools-mcp
+stackops agents browser launch --browser chrome --port 9222 --profile chrome-devtools-mcp
 ```
 
 The MCP args must point at the same port:
@@ -61,7 +61,7 @@ Operational notes:
 
 - Chrome DevTools MCP officially supports Google Chrome and Chrome for Testing. Other Chromium browsers may work, but they are not the support target.
 - StackOps catalog installation uses an explicit profile under `{home}/data/browsers-profiles/mcp/chrome-devtools`.
-- StackOps attach installation expects the browser endpoint to come from `stackops agents browser launch-browser`, which always passes a custom `--user-data-dir`.
+- StackOps attach installation expects the browser endpoint to come from `stackops agents browser launch`, which always passes a custom `--user-data-dir`.
 - The MCP server can inspect and modify browser content. Do not run it against sensitive browsing sessions.
 - Remote debugging exposes browser control on the selected host and port. Keep it on `127.0.0.1` unless you deliberately need LAN access.
 - Usage statistics are enabled by default upstream. Use `--no-usage-statistics` or `CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS` if that is not acceptable.

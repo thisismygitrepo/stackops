@@ -15,7 +15,7 @@ The install writes `omp-browser-cdp.yml` into this directory, a config overlay t
 Launch the endpoint with a dedicated profile:
 
 ```bash
-stackops agents browser launch-browser --browser chrome --port 9331 --profile omp
+stackops agents browser launch --browser chrome --port 9331 --profile omp
 ```
 
 Start omp with the overlay:
@@ -33,7 +33,7 @@ omp config set browser.cdpUrl http://127.0.0.1:9331
 Expose the endpoint on the LAN when the other computer is trusted and reachable; point the remote omp at the relay instead:
 
 ```bash
-stackops agents browser launch-browser --browser chrome --port 9331 --profile omp --lan
+stackops agents browser launch --browser chrome --port 9331 --profile omp --lan
 omp config set browser.cdpUrl http://OTHER_COMPUTER_IP:9331
 ```
 

@@ -40,7 +40,7 @@ Profile modes:
 Start a browser for the CDP mode:
 
 ```bash
-stackops agents browser launch-browser --browser chrome --port 9222 --profile playwright-mcp
+stackops agents browser launch --browser chrome --port 9222 --profile playwright-mcp
 ```
 
 Edit the CDP config if you choose a different port:

@@ -1095,7 +1095,7 @@ STACKOPS_AGENTS_BROWSER_INSTALL_TECH_COMMAND: "StackOpsAgentsBrowserInstallTechC
 }
 
 STACKOPS_AGENTS_BROWSER_LAUNCH_BROWSER_COMMAND: "StackOpsAgentsBrowserLaunchBrowserCommand" = {
-    "command_name": "launch-browser",
+    "command_name": "launch",
     "short_name": "l",
     "help": "<l> Launch browser automation endpoint",
     "subcommands": {},
@@ -1103,7 +1103,7 @@ STACKOPS_AGENTS_BROWSER_LAUNCH_BROWSER_COMMAND: "StackOpsAgentsBrowserLaunchBrow
 
 STACKOPS_AGENTS_BROWSER_SUBCOMMANDS: "StackOpsAgentsBrowserSubcommands" = {
     "install-tech": STACKOPS_AGENTS_BROWSER_INSTALL_TECH_COMMAND,
-    "launch-browser": STACKOPS_AGENTS_BROWSER_LAUNCH_BROWSER_COMMAND,
+    "launch": STACKOPS_AGENTS_BROWSER_LAUNCH_BROWSER_COMMAND,
 }
 
 STACKOPS_AGENTS_BROWSER_COMMAND: "StackOpsAgentsBrowserCommand" = {

@@ -1263,7 +1263,7 @@ StackOpsAgentsBrowserInstallTechCommand = TypedDict(
 StackOpsAgentsBrowserLaunchBrowserCommand = TypedDict(
     "StackOpsAgentsBrowserLaunchBrowserCommand",
     {
-        "command_name": Literal["launch-browser"],
+        "command_name": Literal["launch"],
         "short_name": Literal["l"],
         "help": Literal["<l> Launch browser automation endpoint"],
         "subcommands": EmptySubcommands,
@@ -1272,7 +1272,7 @@ StackOpsAgentsBrowserLaunchBrowserCommand = TypedDict(
 
 StackOpsAgentsBrowserSubcommands = TypedDict(
     "StackOpsAgentsBrowserSubcommands",
-    {"install-tech": StackOpsAgentsBrowserInstallTechCommand, "launch-browser": StackOpsAgentsBrowserLaunchBrowserCommand},
+    {"install-tech": StackOpsAgentsBrowserInstallTechCommand, "launch": StackOpsAgentsBrowserLaunchBrowserCommand},
 )
 
 StackOpsAgentsBrowserCommand = TypedDict(

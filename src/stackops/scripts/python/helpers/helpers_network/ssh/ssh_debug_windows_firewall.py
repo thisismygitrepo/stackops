@@ -118,6 +118,44 @@ def _rule_is_unscoped(rule: dict[str, object]) -> bool | None:
     )
 
 
+def _other_profile_tcp_allows(
+    rules: list[dict[str, object]],
+    sshd_path: Path,
+    port: int,
+    active_profile_name: str,
+) -> tuple[str, ...]:
+    """Enabled sshd TCP allow rules that match `port` but never apply to `active_profile_name`."""
+    labels: list[str] = []
+    for rule in rules:
+        action = rule.get("Action")
+        rule_profile = rule.get("Profile")
+        protocol = rule.get("Protocol")
+        local_port = rule.get("LocalPort")
+        if (
+            not isinstance(action, str)
+            or not isinstance(rule_profile, str)
+            or not isinstance(protocol, str)
+            or not isinstance(local_port, str)
+        ):
+            continue
+        if action != "Allow":
+            continue
+        rule_profiles = {part.strip() for part in rule_profile.split(",")}
+        if "Any" in rule_profiles or active_profile_name in rule_profiles:
+            continue
+        if protocol.casefold() not in ("tcp", "6", "any", "256"):
+            continue
+        if not _port_filter_matches(local_port, port):
+            continue
+        if _rule_applies_to_sshd(rule, sshd_path) is not True:
+            continue
+        name = rule.get("Name")
+        if not isinstance(name, str):
+            continue
+        labels.append(f"{name} (Profile={rule_profile})")
+    return tuple(dict.fromkeys(labels))
+
+
 def check_windows_firewall(ports: tuple[int, ...], sshd_path: Path) -> SSHDebugCheck:
     script = """
 $ErrorActionPreference = 'Stop'
@@ -392,7 +430,30 @@ $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enab
                 if scoped_allow_found:
                     unproved.append(f"{name}:{port}/tcp (scoped allow)")
                     continue
+                other_profile_allows = _other_profile_tcp_allows(
+                    rules=rules,
+                    sshd_path=sshd_path,
+                    port=port,
+                    active_profile_name=name,
+                )
                 if default_action == "Block":
+                    if other_profile_allows:
+                        return SSHDebugCheck(
+                            identifier="firewall",
+                            group="firewall",
+                            label="Windows Firewall",
+                            status="error",
+                            message=(
+                                f"The {name} profile blocks inbound by default and every enabled sshd TCP allow for port {port} "
+                                f"applies only to other profile(s): {'; '.join(other_profile_allows)}"
+                            ),
+                            command_suggestions=("Get-NetConnectionProfile",),
+                            manual_advice=(
+                                "If this network is trusted, its NetworkCategory may be misclassified; fix it with "
+                                "Set-NetConnectionProfile -InterfaceAlias <alias> -NetworkCategory Private, or extend the "
+                                "rule's Profile to cover the active profile.",
+                            ),
+                        )
                     return SSHDebugCheck(
                         identifier="firewall",
                         group="firewall",
@@ -402,7 +463,10 @@ $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enab
                         command_suggestions=(),
                         manual_advice=("Choose the intended profiles and remote-address scope before creating a rule.",),
                     )
-                unproved.append(f"{name}:{port}/tcp")
+                if other_profile_allows:
+                    unproved.append(f"{name}:{port}/tcp (allows only on other profiles: {'; '.join(other_profile_allows)})")
+                else:
+                    unproved.append(f"{name}:{port}/tcp")
     if unproved:
         return SSHDebugCheck(
             identifier="firewall",
