@@ -82,22 +82,41 @@ def install_tech(
             typer.echo(f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local")
 
 
+def _parse_profile_names(*, raw_profile: str | None) -> tuple[str | None, ...]:
+    if raw_profile is None:
+        return (None,)
+    names = tuple(name.strip() for name in raw_profile.split(","))
+    if any(name == "" for name in names):
+        raise typer.BadParameter("--profile entries cannot be empty")
+    if len(set(names)) != len(names):
+        raise typer.BadParameter("--profile entries must be unique")
+    return names
+
+
 def launch_browser(
-    port: Annotated[int, typer.Option("--port", "-p", help="Browser automation endpoint port.")] = DEFAULT_BROWSER_PORT,
+    port: Annotated[
+        int, typer.Option("--port", "-p", help="Browser automation endpoint port; with multiple profiles, consecutive ports are used starting here.")
+    ] = DEFAULT_BROWSER_PORT,
     browser: Annotated[
         BrowserName, typer.Option("--browser", "-b", help="Browser to launch for agent automation.", case_sensitive=False, show_choices=True)
     ] = "chrome",
     profile: Annotated[
         str | None,
         typer.Option(
-            "--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit for a fresh port-scoped profile."
+            "--profile",
+            "-r",
+            help=(
+                "Comma-separated StackOps profiles under ~/data/browsers-profiles/<browser>/<profile>; each profile gets its own endpoint. "
+                "Omit for a fresh port-scoped profile."
+            ),
         ),
     ] = None,
     tmp: Annotated[bool, typer.Option("--tmp", "-t", help="Copy --profile to <profile>/.tmp/<random-alias> and launch the copy.")] = False,
-    lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoint on 0.0.0.0 through a localhost relay.")] = False,
+    lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoints on 0.0.0.0 through a localhost relay.")] = False,
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
-    """Launch browser automation endpoint with an isolated profile when supported."""
+    """Launch browser automation endpoints with isolated profiles when supported."""
+    profile_names = _parse_profile_names(raw_profile=profile)
     lan_address: InterfaceIPv4Address | None = None
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl
@@ -106,19 +125,27 @@ def launch_browser(
             lan_address = select_lan_interface_ipv4(prefer_vpn=False)
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoint.")
-        result = launch_browser_impl(browser=browser, port=port, profile_name=profile, temporary=tmp, lan=lan, detached=detached)
+        results = tuple(
+            launch_browser_impl(browser=browser, port=port + offset, profile_name=profile_name, temporary=tmp, lan=lan, detached=detached)
+            for offset, profile_name in enumerate(profile_names)
+        )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
-    Console().print(build_browser_launch_summary(result=result, lan_address=lan_address))
-    if isinstance(result, TmuxBrowserLaunchResult):
+    console = Console()
+    if len(results) == 1:
+        console.print(build_browser_launch_summary(result=results[0], lan_address=lan_address))
+    else:
+        console.print(build_browser_launches_summary(results=results, lan_address=lan_address))
+    first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)
+    if first_tmux_result is not None:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window
 
         try:
-            attach_or_switch_tmux_window(session_name=result.tmux.session_name, window_name=result.tmux.browser_window_name)
+            attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)
         except RuntimeError as error:
             typer.echo(f"Browser endpoint is running, but automatic tmux attachment failed: {error}", err=True)
 
