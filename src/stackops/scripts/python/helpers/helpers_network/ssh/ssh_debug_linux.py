@@ -24,6 +24,23 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import
     build_debug_result,
     render_debug_result,
 )
+from stackops.utils.installer_utils.linux_package_manager import (
+    UnsupportedLinuxDistributionError,
+    detect_current_linux_distribution,
+    get_openssh_service_name,
+)
+
+
+def _linux_probe_failure_commands(sshd_path: Path | None) -> tuple[str, ...]:
+    if any(Path("/etc/ssh").glob("ssh_host_*_key")):
+        if sshd_path is None:
+            return ()
+        return (f"sudo {sshd_path} -T",)
+    try:
+        service_name = get_openssh_service_name(detect_current_linux_distribution().package_manager)
+    except UnsupportedLinuxDistributionError:
+        return ("sudo ssh-keygen -A",)
+    return ("sudo ssh-keygen -A", f"sudo systemctl restart {service_name}")
 
 
 def ssh_debug_linux(connection_context: SSHDConnectionContext | None) -> SSHDebugResult:
@@ -47,7 +64,7 @@ def ssh_debug_linux(connection_context: SSHDConnectionContext | None) -> SSHDebu
                 label="OpenSSH server",
                 status="error",
                 message="No executable sshd binary was found in standard paths or PATH",
-                command_suggestions=(),
+                command_suggestions=("devops network ssh install-server",),
                 manual_advice=("Install the OpenSSH server package provided by this Linux distribution.",),
             )
         )
@@ -72,6 +89,7 @@ def ssh_debug_linux(connection_context: SSHDConnectionContext | None) -> SSHDebu
         config_path=None,
         user_name=current_identity.pw_name,
         connection_context=connection_context,
+        probe_failure_commands=_linux_probe_failure_commands(sshd_path=sshd_path),
     )
     checks.extend(configuration.checks)
 
@@ -89,7 +107,7 @@ def ssh_debug_linux(connection_context: SSHDConnectionContext | None) -> SSHDebu
                 status="unknown",
                 message=f"{context_detail}; Match-dependent AuthorizedKeysFile paths were not inspected",
                 command_suggestions=(),
-                manual_advice=("Resolve the effective-configuration probe before inspecting key-file permissions.",),
+                manual_advice=("Fix the 'Effective sshd configuration' check first; key-file inspection depends on it.",),
             )
         )
     else:
@@ -130,7 +148,7 @@ def ssh_debug_linux(connection_context: SSHDConnectionContext | None) -> SSHDebu
                     status="unknown",
                     message="The exact effective SSH port is unavailable",
                     command_suggestions=(),
-                    manual_advice=("Resolve the sshd -T probe before inspecting listeners.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; the listener port depends on it.",),
                 ),
                 SSHDebugCheck(
                     identifier="firewall",
@@ -139,7 +157,7 @@ def ssh_debug_linux(connection_context: SSHDConnectionContext | None) -> SSHDebu
                     status="unknown",
                     message="The exact effective SSH port is unavailable",
                     command_suggestions=(),
-                    manual_advice=("Resolve the sshd -T probe before inspecting firewall policy.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; firewall evaluation depends on it.",),
                 ),
             )
         )

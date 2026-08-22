@@ -30,6 +30,14 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import
 )
 
 
+def _darwin_probe_failure_commands(sshd_path: Path | None) -> tuple[str, ...]:
+    if any(Path("/etc/ssh").glob("ssh_host_*_key")):
+        if sshd_path is None:
+            return ()
+        return (f"sudo {sshd_path} -T",)
+    return ("sudo ssh-keygen -A", "sudo launchctl kickstart -k system/com.openssh.sshd")
+
+
 def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDebugResult:
     if system() != "Darwin":
         raise NotImplementedError("ssh_debug_darwin is only supported on macOS")
@@ -46,7 +54,7 @@ def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDeb
                 label="OpenSSH server",
                 status="error",
                 message="No executable sshd binary was found in standard paths or PATH",
-                command_suggestions=(),
+                command_suggestions=("devops network ssh install-server",),
                 manual_advice=("Restore or install an OpenSSH server before enabling Remote Login.",),
             )
         )
@@ -72,6 +80,7 @@ def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDeb
         config_path=None,
         user_name=current_identity.pw_name,
         connection_context=connection_context,
+        probe_failure_commands=_darwin_probe_failure_commands(sshd_path=sshd_path),
     )
     checks.extend(configuration.checks)
 
@@ -89,7 +98,7 @@ def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDeb
                 status="unknown",
                 message=f"{context_detail}; Match-dependent AuthorizedKeysFile paths were not inspected",
                 command_suggestions=(),
-                manual_advice=("Resolve the effective-configuration probe before inspecting key-file permissions.",),
+                manual_advice=("Fix the 'Effective sshd configuration' check first; key-file inspection depends on it.",),
             )
         )
     else:
@@ -130,7 +139,7 @@ def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDeb
                     status="unknown",
                     message="The exact effective SSH port is unavailable",
                     command_suggestions=(),
-                    manual_advice=("Resolve the sshd -T probe before inspecting listeners.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; the listener port depends on it.",),
                 ),
                 SSHDebugCheck(
                     identifier="packet_filter",
@@ -139,7 +148,7 @@ def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDeb
                     status="unknown",
                     message="The exact effective SSH port is unavailable",
                     command_suggestions=(),
-                    manual_advice=("Resolve the sshd -T probe before evaluating PF rules.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; PF evaluation depends on it.",),
                 ),
                 SSHDebugCheck(
                     identifier="application_firewall",
@@ -148,7 +157,7 @@ def ssh_debug_darwin(connection_context: SSHDConnectionContext | None) -> SSHDeb
                     status="unknown",
                     message="The exact effective SSH port is unavailable",
                     command_suggestions=(),
-                    manual_advice=("Resolve the sshd -T probe before evaluating sshd firewall access.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; sshd firewall access depends on it.",),
                 ),
             )
         )

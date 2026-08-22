@@ -9,6 +9,7 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import
 
 
 COMMAND_TIMEOUT_SECONDS = 15
+HOSTKEY_FAILURE_MARKER = "no hostkeys available"
 SETTING_NAME_PATTERN = re.compile(r"[a-z][a-z0-9]*")
 type ListenerAddressFamily = Literal["ipv4", "ipv6"]
 
@@ -90,6 +91,7 @@ def assess_sshd_configuration(
     config_path: Path | None,
     user_name: str,
     connection_context: SSHDConnectionContext | None,
+    probe_failure_commands: tuple[str, ...],
 ) -> SSHDConfigurationAssessment:
     unknown_config = SSHDebugCheck(
         identifier="effective_configuration",
@@ -98,7 +100,7 @@ def assess_sshd_configuration(
         status="unknown",
         message="sshd -T was not run",
         command_suggestions=(),
-        manual_advice=("Inspect the effective configuration with sshd -T without using elevated privileges.",),
+        manual_advice=("Fix the OpenSSH server installation check first; this probe depends on it.",),
     )
     unknown_pubkey = SSHDebugCheck(
         identifier="public_key_authentication",
@@ -107,7 +109,7 @@ def assess_sshd_configuration(
         status="unknown",
         message="Effective PubkeyAuthentication value is unavailable",
         command_suggestions=(),
-        manual_advice=("Resolve the effective-configuration probe before relying on key authentication.",),
+        manual_advice=("Fix the 'Effective sshd configuration' check first; this value depends on it.",),
     )
     if sshd_path is None:
         return SSHDConfigurationAssessment(
@@ -147,14 +149,19 @@ def assess_sshd_configuration(
     completed = run_argv(tuple(argv))
     if completed.returncode != 0:
         detail = completed.stderr or completed.stdout or completed.failure or "unknown command failure"
+        hostkey_note = (
+            "; host keys are missing or unreadable by this account"
+            if HOSTKEY_FAILURE_MARKER in detail.casefold()
+            else ""
+        )
         failed_config = SSHDebugCheck(
             identifier=unknown_config.identifier,
             group=unknown_config.group,
             label=unknown_config.label,
             status="unknown",
-            message=f"sshd -T failed: {detail}",
-            command_suggestions=(),
-            manual_advice=unknown_config.manual_advice,
+            message=f"sshd -T failed: {detail}{hostkey_note}",
+            command_suggestions=probe_failure_commands,
+            manual_advice=("Run the suggested command(s), then re-run 'devops network ssh debug'.",),
         )
         return SSHDConfigurationAssessment(
             settings=None,
@@ -172,8 +179,8 @@ def assess_sshd_configuration(
             label=unknown_config.label,
             status="unknown",
             message="sshd -T returned empty or malformed settings",
-            command_suggestions=(),
-            manual_advice=unknown_config.manual_advice,
+            command_suggestions=probe_failure_commands,
+            manual_advice=("Run the suggested command(s), then re-run 'devops network ssh debug'.",),
         )
         return SSHDConfigurationAssessment(
             settings=None,
@@ -194,7 +201,7 @@ def assess_sshd_configuration(
                 status="unknown",
                 message=f"sshd -T returned an invalid Port value: {value}",
                 command_suggestions=(),
-                manual_advice=unknown_config.manual_advice,
+                manual_advice=("Fix the Port directive in the sshd configuration; the reported value is invalid.",),
             )
             return SSHDConfigurationAssessment(
                 settings=settings,
@@ -212,7 +219,7 @@ def assess_sshd_configuration(
             status="unknown",
             message="sshd -T did not report an effective Port",
             command_suggestions=(),
-            manual_advice=unknown_config.manual_advice,
+            manual_advice=("Inspect the sshd configuration; no effective Port was reported.",),
         )
         return SSHDConfigurationAssessment(
             settings=settings,
@@ -241,7 +248,7 @@ def assess_sshd_configuration(
                 status="unknown",
                 message=f"sshd -T returned an unparseable ListenAddress endpoint: {listen_address}",
                 command_suggestions=(),
-                manual_advice=unknown_config.manual_advice,
+                manual_advice=("Fix the ListenAddress directive in the sshd configuration; the reported endpoint is unparseable.",),
             )
             return SSHDConfigurationAssessment(
                 settings=settings,
@@ -422,15 +429,16 @@ def _assess_connection_authentication(settings: SSHDSettings, user_name: str) ->
         )
     if allow_users and user_name not in allow_users:
         if any(candidate.casefold() == user_name.casefold() for candidate in allow_users):
-            status = "unknown"
-            message = f"AllowUsers differs from target {user_name} only by case"
-        else:
-            status = "error"
-            message = f"Effective AllowUsers does not admit {user_name}"
+            return replace(
+                base_check,
+                status="unknown",
+                message=f"AllowUsers differs from target {user_name} only by case",
+                manual_advice=("Verify the exact target account admitted by AllowUsers.",),
+            )
         return replace(
             base_check,
-            status=status,
-            message=message,
+            status="error",
+            message=f"Effective AllowUsers does not admit {user_name}",
             manual_advice=("Verify the exact target account admitted by AllowUsers.",),
         )
     if settings.values.get("allowgroups", ()) or settings.values.get("denygroups", ()):

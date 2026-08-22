@@ -27,6 +27,21 @@ from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows_utils
 )
 
 
+def _windows_probe_failure_commands() -> tuple[str, ...]:
+    host_key_directory = windows_sshd_config_path().parent
+    try:
+        host_keys_present = any(host_key_directory.glob("ssh_host_*_key"))
+    except OSError:
+        host_keys_present = True
+    if host_keys_present:
+        return (
+            "Start-Process powershell -Verb RunAs -ArgumentList '-NoExit','-Command','devops network ssh debug'",
+        )
+    return (
+        "Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile','-Command','ssh-keygen -A; Restart-Service sshd'",
+    )
+
+
 def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDebugResult:
     if system() != "Windows":
         raise NotImplementedError("ssh_debug_windows is only supported on Windows")
@@ -41,7 +56,7 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
                 label="OpenSSH server",
                 status="error",
                 message="No sshd.exe was found in the Windows OpenSSH locations or PATH",
-                command_suggestions=(),
+                command_suggestions=("devops network ssh install-server",),
                 manual_advice=("Install the Windows OpenSSH Server capability or a supported OpenSSH distribution.",),
             )
         )
@@ -67,6 +82,7 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
         config_path=windows_sshd_config_path(),
         user_name=current_name,
         connection_context=verified_connection_context,
+        probe_failure_commands=_windows_probe_failure_commands(),
     )
     checks.extend(configuration.checks)
     checks.append(identity_assessment.check)
@@ -96,7 +112,7 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
                     status="unknown",
                     message="The effective authorized-keys file could not be selected",
                     command_suggestions=(),
-                    manual_advice=("Resolve identity membership and effective AuthorizedKeysFile settings.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; the key path depends on it.",),
                 ),
                 SSHDebugCheck(
                     identifier="authorized_keys_acl",
@@ -105,7 +121,7 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
                     status="unknown",
                     message="No effective authorized-keys path is available for ACL inspection",
                     command_suggestions=(),
-                    manual_advice=("Resolve the effective key path before inspecting its owner and DACL by SID.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; ACL inspection depends on it.",),
                 ),
             )
         )
@@ -170,7 +186,7 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
                     status="unknown",
                     message="The exact effective SSH port is unavailable",
                     command_suggestions=(),
-                    manual_advice=("Resolve the sshd -T probe before inspecting listeners.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; the listener port depends on it.",),
                 ),
                 SSHDebugCheck(
                     identifier="firewall",
@@ -179,7 +195,7 @@ def ssh_debug_windows(connection_context: SSHDConnectionContext | None) -> SSHDe
                     status="unknown",
                     message="The exact effective SSH port or sshd executable path is unavailable",
                     command_suggestions=(),
-                    manual_advice=("Resolve the sshd -T probe before evaluating firewall rules.",),
+                    manual_advice=("Fix the 'Effective sshd configuration' check first; firewall evaluation depends on it.",),
                 ),
             )
         )
