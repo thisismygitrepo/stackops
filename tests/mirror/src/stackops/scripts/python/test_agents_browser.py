@@ -5,10 +5,16 @@ from typer.testing import CliRunner
 
 from stackops.scripts.python import agents_browser
 from stackops.scripts.python.helpers.helpers_agents import (
-    agents_browser_batch,
+    agents_browser_close,
     agents_browser_launch,
     agents_browser_profile_listing,
     agents_browser_profiles,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import (
+    BrowserLaunchCloseResult,
+    NamedProfileBrowserLaunches,
+    SavedProfileBrowserLaunches,
+    SingleBrowserLaunch,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LAN, BrowserName, ProfileBrowserName
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import BrowserLaunchResult, DetachedBrowserLaunchResult
@@ -139,6 +145,7 @@ def test_batch_commands_are_listed_with_uppercase_aliases() -> None:
     help_result = runner.invoke(agents_browser.get_app(), ["--help"], terminal_width=140)
     launch_alias_help_result = runner.invoke(agents_browser.get_app(), ["L", "--help"], terminal_width=140)
     single_launch_help_result = runner.invoke(agents_browser.get_app(), ["l", "--help"], terminal_width=140)
+    close_help_result = runner.invoke(agents_browser.get_app(), ["c", "--help"], terminal_width=140)
     close_alias_help_result = runner.invoke(agents_browser.get_app(), ["C", "--help"], terminal_width=140)
     old_command_result = runner.invoke(agents_browser.get_app(), ["launch-browser", "--help"], terminal_width=140)
 
@@ -146,6 +153,8 @@ def test_batch_commands_are_listed_with_uppercase_aliases() -> None:
     assert "batch-launch" in help_result.output
     assert "launch-browser" not in help_result.output
     assert "<L> Launch every saved profile for one browser" in help_result.output
+    assert "close" in help_result.output
+    assert "<c> Close one tracked browser endpoint" in help_result.output
     assert "batch-close" in help_result.output
     assert "<C> Close tracked saved-profile browser launches" in help_result.output
     assert launch_alias_help_result.exit_code == 0, launch_alias_help_result.output
@@ -155,6 +164,10 @@ def test_batch_commands_are_listed_with_uppercase_aliases() -> None:
     assert "--port-start" in launch_alias_help_result.output
     assert "60000" in launch_alias_help_result.output
     assert "--max-profiles" in launch_alias_help_result.output
+    assert close_help_result.exit_code == 0, close_help_result.output
+    assert "--port" in close_help_result.output
+    assert "9331" in close_help_result.output
+    assert "--browser" in close_help_result.output
     assert close_alias_help_result.exit_code == 0, close_alias_help_result.output
     assert "--browser" in close_alias_help_result.output
     assert old_command_result.exit_code == 2, old_command_result.output
@@ -210,16 +223,114 @@ def test_launch_browser_tmp_requires_a_named_profile() -> None:
     assert "--tmp requires --profile" in result.output
 
 
+def test_close_closes_the_tracked_launch_for_browser_and_port(monkeypatch: pytest.MonkeyPatch) -> None:
+    close_calls: list[tuple[BrowserName, int]] = []
+
+    def close(*, browser: BrowserName, port: int) -> BrowserLaunchCloseResult:
+        close_calls.append((browser, port))
+        return BrowserLaunchCloseResult(
+            scope=SingleBrowserLaunch(browser=browser, port=port), tmux_launch_ids=(f"{browser}-p1",), detached_launch_ids=()
+        )
+
+    monkeypatch.setattr(agents_browser_close, "close_browser_launch", close)
+
+    result = CliRunner().invoke(agents_browser.get_app(), ["close", "--browser", "chrome", "--port", "9331"])
+
+    assert result.exit_code == 0, result.output
+    assert close_calls == [("chrome", 9331)]
+    assert "Closed chrome launch on port 9331 (1 tmux, 0 detached)." in result.output
+
+
+def test_close_defaults_to_chrome_on_the_default_port_and_is_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
+    close_calls: list[tuple[BrowserName, int]] = []
+
+    def close(*, browser: BrowserName, port: int) -> BrowserLaunchCloseResult:
+        close_calls.append((browser, port))
+        return BrowserLaunchCloseResult(scope=SingleBrowserLaunch(browser=browser, port=port), tmux_launch_ids=(), detached_launch_ids=())
+
+    monkeypatch.setattr(agents_browser_close, "close_browser_launch", close)
+
+    result = CliRunner().invoke(agents_browser.get_app(), ["close"])
+
+    assert result.exit_code == 0, result.output
+    assert close_calls == [("chrome", 9331)]
+    assert "No active chrome launch found on port 9331." in result.output
+
+
+def test_close_reports_runtime_errors_on_stderr_and_exits_nonzero(monkeypatch: pytest.MonkeyPatch) -> None:
+    def close(*, browser: BrowserName, port: int) -> BrowserLaunchCloseResult:
+        raise RuntimeError("Could not close the chrome launch on port 9331:\n- detached launch close failure")
+
+    monkeypatch.setattr(agents_browser_close, "close_browser_launch", close)
+
+    result = CliRunner().invoke(agents_browser.get_app(), ["close", "--port", "9331"])
+
+    assert result.exit_code == 1, result.output
+    assert "Could not close the chrome launch on port 9331" in result.output
+
+
+def test_close_accepts_comma_separated_profiles_and_closes_them(monkeypatch: pytest.MonkeyPatch) -> None:
+    close_calls: list[tuple[BrowserName, tuple[str, ...]]] = []
+
+    def close_named(*, browser: BrowserName, profile_names: tuple[str, ...]) -> BrowserLaunchCloseResult:
+        close_calls.append((browser, profile_names))
+        return BrowserLaunchCloseResult(
+            scope=NamedProfileBrowserLaunches(browser=browser, profile_names=profile_names),
+            tmux_launch_ids=("chrome-p1", "chrome-p2"),
+            detached_launch_ids=("chrome-p2-detached",),
+        )
+
+    monkeypatch.setattr(agents_browser_close, "close_named_browser_profile_launches", close_named)
+
+    result = CliRunner().invoke(agents_browser.get_app(), ["close", "--browser", "chrome", "--profile", "p1,p2"])
+
+    assert result.exit_code == 0, result.output
+    assert close_calls == [("chrome", ("p1", "p2"))]
+    assert "Closed 3 chrome saved-profile launch(es) for p1, p2 (2 tmux, 1 detached)." in result.output
+
+
+def test_close_is_idempotent_for_profiles_with_no_active_launches(monkeypatch: pytest.MonkeyPatch) -> None:
+    def close_named(*, browser: BrowserName, profile_names: tuple[str, ...]) -> BrowserLaunchCloseResult:
+        return BrowserLaunchCloseResult(
+            scope=NamedProfileBrowserLaunches(browser=browser, profile_names=profile_names), tmux_launch_ids=(), detached_launch_ids=()
+        )
+
+    monkeypatch.setattr(agents_browser_close, "close_named_browser_profile_launches", close_named)
+
+    result = CliRunner().invoke(agents_browser.get_app(), ["c", "-r", "base"])
+
+    assert result.exit_code == 0, result.output
+    assert "No active chrome saved-profile launches found for: base." in result.output
+
+
+@pytest.mark.parametrize("arguments", [["close", "--profile", "p1", "--port", "9331"], ["close", "--profile", "p1", "--browser", "safari"]])
+def test_close_rejects_profile_combined_with_port_or_safari(arguments: list[str]) -> None:
+    result = CliRunner().invoke(agents_browser.get_app(), arguments)
+
+    assert result.exit_code == 2, result.output
+    assert ("Choose either --port or --profile, not both" in result.output) or ("Safari does not support saved profiles" in result.output)
+
+
+@pytest.mark.parametrize("profile_value", ["", "p1,,p2", "p1,p1"])
+def test_close_rejects_malformed_profile_lists(profile_value: str) -> None:
+    result = CliRunner().invoke(agents_browser.get_app(), ["close", "--profile", profile_value])
+
+    assert result.exit_code == 2, result.output
+    assert "--profile entries" in result.output
+
+
 def test_batch_close_closes_selected_browser_launches_across_modes(monkeypatch: pytest.MonkeyPatch) -> None:
     close_calls: list[ProfileBrowserName] = []
 
-    def close(*, browser: ProfileBrowserName) -> agents_browser_batch.BrowserProfileCloseResult:
+    def close(*, browser: ProfileBrowserName) -> BrowserLaunchCloseResult:
         close_calls.append(browser)
-        return agents_browser_batch.BrowserProfileCloseResult(
-            browser=browser, tmux_launch_ids=("brave-profile-p1", "brave-profile-p2"), detached_launch_ids=("brave-profile-p3",)
+        return BrowserLaunchCloseResult(
+            scope=SavedProfileBrowserLaunches(browser=browser),
+            tmux_launch_ids=("brave-profile-p1", "brave-profile-p2"),
+            detached_launch_ids=("brave-profile-p3",),
         )
 
-    monkeypatch.setattr(agents_browser_batch, "close_browser_profile_launches", close)
+    monkeypatch.setattr(agents_browser_close, "close_all_browser_profile_launches", close)
 
     result = CliRunner().invoke(agents_browser.get_app(), ["batch-close", "--browser", "brave"])
 
@@ -229,10 +340,10 @@ def test_batch_close_closes_selected_browser_launches_across_modes(monkeypatch: 
 
 
 def test_batch_close_is_idempotent_when_no_launches_are_active(monkeypatch: pytest.MonkeyPatch) -> None:
-    def close(*, browser: ProfileBrowserName) -> agents_browser_batch.BrowserProfileCloseResult:
-        return agents_browser_batch.BrowserProfileCloseResult(browser=browser, tmux_launch_ids=(), detached_launch_ids=())
+    def close(*, browser: ProfileBrowserName) -> BrowserLaunchCloseResult:
+        return BrowserLaunchCloseResult(scope=SavedProfileBrowserLaunches(browser=browser), tmux_launch_ids=(), detached_launch_ids=())
 
-    monkeypatch.setattr(agents_browser_batch, "close_browser_profile_launches", close)
+    monkeypatch.setattr(agents_browser_close, "close_all_browser_profile_launches", close)
 
     result = CliRunner().invoke(agents_browser.get_app(), ["batch-close"])
 

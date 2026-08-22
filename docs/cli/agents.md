@@ -250,11 +250,15 @@ agents browser status
 agent-browser connect http://OTHER_COMPUTER_IP:9331
 ```
 
+`agents browser close` closes StackOps-tracked launches selected in exactly one of two ways: `--port` (default `9331`) closes one endpoint, while `--profile` closes the comma-separated saved profiles under `~/data/browsers-profiles/<browser>/<profile>`, including their `--tmp` copies. `--profile` requires a profile-capable browser, so Safari must use `--port`. Both modes cover tmux and detached launches, leave other ports and profiles, other browsers, and browser sessions not managed by StackOps untouched, and succeed without changing anything when nothing matching is active.
+
 `agents browser batch-launch` launches every saved profile under `~/data/browsers-profiles/<browser>/` for the browser selected with `--browser`. Its `--port-start`/`--port`/`-p` base defaults to `60000`. Profiles named `pN` use `port-start + N`, so `p1` uses `60001`, `p2` uses `60002`, and so on by default. Other profile names use the next unreserved port above the base. Use `--max-profiles`/`--max`/`-n` to cap the launch count; StackOps launches the requested count or the number available, whichever is smaller. The command prints one compact table with each profile, IP, port, state, and tmux window or process ID. It supports the same `--lan` and `--detached` launch modes as `launch`; Safari is excluded because it does not support custom profiles.
 
 `agents browser batch-close` closes every StackOps-tracked launch for a saved profile or one of its `--tmp` copies for the selected browser, including both tmux and detached launches. It leaves port-scoped profiles, other browsers, and browser sessions not managed by StackOps untouched. Running it when no matching launches are active succeeds without changing anything.
 
 ```bash
+agents browser close --browser chrome --port 9331
+agents browser close --browser chrome --profile p1,p2
 agents browser batch-launch --browser chrome
 agents browser L --browser firefox -n 4 --lan
 agents browser batch-launch --browser brave --port-start 61000 --detached
@@ -309,6 +313,7 @@ agents ask --help
 agents add-skill --help
 agents browser install-tech --help
 agents browser launch --help
+agents browser close --help
 agents browser batch-launch --help
 agents browser batch-close --help
 agents browser declutter --help

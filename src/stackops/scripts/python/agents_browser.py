@@ -82,9 +82,7 @@ def install_tech(
             typer.echo(f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local")
 
 
-def _parse_profile_names(*, raw_profile: str | None) -> tuple[str | None, ...]:
-    if raw_profile is None:
-        return (None,)
+def _parse_profile_names(*, raw_profile: str) -> tuple[str, ...]:
     names = tuple(name.strip() for name in raw_profile.split(","))
     if any(name == "" for name in names):
         raise typer.BadParameter("--profile entries cannot be empty")
@@ -116,7 +114,7 @@ def launch_browser(
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
     """Launch browser automation endpoints with isolated profiles when supported."""
-    profile_names = _parse_profile_names(raw_profile=profile)
+    profile_names: tuple[str | None, ...] = (None,) if profile is None else _parse_profile_names(raw_profile=profile)
     lan_address: InterfaceIPv4Address | None = None
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl
@@ -148,6 +146,62 @@ def launch_browser(
             attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)
         except RuntimeError as error:
             typer.echo(f"Browser endpoint is running, but automatic tmux attachment failed: {error}", err=True)
+
+
+def close_browser(
+    port: Annotated[
+        int | None,
+        typer.Option("--port", "-p", help="Port of the tracked browser automation endpoint to close. Defaults to 9331 when --profile is omitted."),
+    ] = None,
+    browser: Annotated[
+        BrowserName, typer.Option("--browser", "-b", help="Browser whose tracked launch should be closed.", case_sensitive=False, show_choices=True)
+    ] = "chrome",
+    profile: Annotated[
+        str | None,
+        typer.Option(
+            "--profile",
+            "-r",
+            help="Comma-separated saved StackOps profiles under ~/data/browsers-profiles/<browser>/<profile> whose tracked launches should be closed.",
+        ),
+    ] = None,
+) -> None:
+    """Close one tracked browser endpoint by --port or its saved profiles by --profile."""
+    profile_names: tuple[str, ...] | None = None
+    try:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import close_browser_launch, close_named_browser_profile_launches
+
+        if profile is not None:
+            if port is not None:
+                raise ValueError("Choose either --port or --profile, not both")
+            profile_names = _parse_profile_names(raw_profile=profile)
+            match browser:
+                case "chrome" | "brave" | "edge" | "firefox":
+                    result = close_named_browser_profile_launches(browser=browser, profile_names=profile_names)
+                case "safari":
+                    raise ValueError("Safari does not support saved profiles; close it with --port")
+        else:
+            result = close_browser_launch(browser=browser, port=DEFAULT_BROWSER_PORT if port is None else port)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    except RuntimeError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(code=1) from error
+
+    if profile_names is not None:
+        profile_label = ", ".join(profile_names)
+        if result.closed_count == 0:
+            typer.echo(f"No active {browser} saved-profile launches found for: {profile_label}.")
+            return
+        typer.echo(
+            f"Closed {result.closed_count} {browser} saved-profile launch(es) for {profile_label} "
+            f"({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached)."
+        )
+        return
+    resolved_port = DEFAULT_BROWSER_PORT if port is None else port
+    if result.closed_count == 0:
+        typer.echo(f"No active {browser} launch found on port {resolved_port}.")
+        return
+    typer.echo(f"Closed {browser} launch on port {resolved_port} ({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached).")
 
 
 def batch_launch(
@@ -208,9 +262,9 @@ def batch_close(
 ) -> None:
     """Close tracked saved-profile launches for one browser."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_batch import close_browser_profile_launches
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import close_all_browser_profile_launches
 
-        result = close_browser_profile_launches(browser=browser)
+        result = close_all_browser_profile_launches(browser=browser)
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
@@ -245,16 +299,14 @@ def status(
 
 def declutter(
     profile: Annotated[
-        str | None,
-        typer.Option("--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit with --all."),
+        str | None, typer.Option("--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit with --all.")
     ] = None,
     browser: Annotated[
         ProfileBrowserName,
         typer.Option("--browser", "-b", help="Browser whose profile should be decluttered.", case_sensitive=False, show_choices=True),
     ] = "chrome",
     all_profiles: Annotated[
-        bool,
-        typer.Option("--all", "-a", help="Declutter every saved profile for the browser instead of one --profile."),
+        bool, typer.Option("--all", "-a", help="Declutter every saved profile for the browser instead of one --profile.")
     ] = False,
 ) -> None:
     """Remove rebuildable models and caches from closed browser profiles."""
@@ -324,10 +376,14 @@ def get_app() -> typer.Typer:
     browser_app = typer.Typer(
         help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False
     )
-    browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, MCP configs, or agents")(install_tech)
+    browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, MCP configs, or agents")(
+        install_tech
+    )
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch", no_args_is_help=False, short_help="<l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
+    browser_app.command(name="close", no_args_is_help=False, short_help="<c> Close one tracked browser endpoint")(close_browser)
+    browser_app.command(name="c", no_args_is_help=False, hidden=True)(close_browser)
     browser_app.command(name="batch-launch", no_args_is_help=False, short_help="<L> Launch every saved profile for one browser")(batch_launch)
     browser_app.command(name="L", no_args_is_help=False, hidden=True)(batch_launch)
     browser_app.command(name="batch-close", no_args_is_help=False, short_help="<C> Close tracked saved-profile browser launches")(batch_close)
