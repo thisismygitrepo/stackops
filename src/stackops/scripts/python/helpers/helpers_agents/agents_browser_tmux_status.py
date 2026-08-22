@@ -53,7 +53,6 @@ def _read_window_metadata(*, window_id: str) -> BrowserTmuxMetadata:
         port=_read_window_option(window_id=window_id, option="@stackops_browser_port"),
         browser_port=_read_window_option(window_id=window_id, option="@stackops_browser_browser_port"),
         lan=_read_window_option(window_id=window_id, option="@stackops_browser_lan"),
-        prompt_path=_read_window_option(window_id=window_id, option="@stackops_browser_prompt_path"),
     )
 
 

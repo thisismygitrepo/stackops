@@ -57,7 +57,6 @@ def build_browser_launch_summary(*, result: BrowserLaunchResult, lan_address: In
         table.add_row(f"{result.endpoint_short_label} LAN", lan_endpoint_text)
     if result.profile_path is not None:
         table.add_row("Profile", Text(str(result.profile_path)))
-    table.add_row("Prompt", Text(str(result.prompt_path)))
 
     summary_panel = Panel(table, title=title, border_style="green")
     if not lan_exposed:

@@ -104,7 +104,6 @@ def test_temporary_launch_preserves_copy_when_runtime_start_is_interrupted(monke
             port=port,
             browser_port=browser_port,
             profile_path=profile_path,
-            prompt_path=tmp_path.joinpath("prompt.md"),
         )
 
     def interrupt_runtime(*, details: BrowserLaunchDetails, lan: bool) -> Never:

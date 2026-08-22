@@ -18,7 +18,6 @@ class BrowserLaunchDetails:
     port: int
     browser_port: int
     profile_path: Path | None
-    prompt_path: Path
 
 
 @dataclass(frozen=True)
@@ -55,7 +54,6 @@ def build_detached_launch_result(*, details: BrowserLaunchDetails, process_id: i
         port=details.port,
         browser_port=details.browser_port,
         profile_path=details.profile_path,
-        prompt_path=details.prompt_path,
         process_id=process_id,
         relay_process_id=relay_process_id,
     )
@@ -73,7 +71,6 @@ def build_tmux_launch_result(*, details: BrowserLaunchDetails, tmux: BrowserTmux
         port=details.port,
         browser_port=details.browser_port,
         profile_path=details.profile_path,
-        prompt_path=details.prompt_path,
         tmux=tmux,
     )
 
@@ -97,7 +94,6 @@ def build_existing_launch_result(
         port=details.port,
         browser_port=details.browser_port,
         profile_path=details.profile_path,
-        prompt_path=details.prompt_path,
         process_id=process_id,
         owner=owner,
         opened_page=opened_page,

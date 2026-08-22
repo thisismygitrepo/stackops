@@ -31,7 +31,6 @@ def _tmux_row(*, launch_id: str, role: str, browser: str, profile_path: Path, po
             port=str(port),
             browser_port=str(port),
             lan="yes" if role == "relay" else "no",
-            prompt_path="prompt.md",
         ),
     )
 

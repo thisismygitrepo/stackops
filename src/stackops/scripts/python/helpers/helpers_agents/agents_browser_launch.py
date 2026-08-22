@@ -68,7 +68,6 @@ def launch_browser(*, browser: BrowserName, port: int, profile_name: str | None,
                 lan=lan,
                 browser_command=details.command,
                 relay_command=relay_command,
-                prompt_path=details.prompt_path,
             )
             try:
                 wait_for_tcp_endpoint(host=REMOTE_DEBUGGING_LOCALHOST, port=browser_port, process=None, process_label=launcher.process_label)

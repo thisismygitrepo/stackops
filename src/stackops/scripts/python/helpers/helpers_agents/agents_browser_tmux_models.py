@@ -25,7 +25,6 @@ class BrowserTmuxMetadata:
     port: str
     browser_port: str
     lan: str
-    prompt_path: str
 
 
 @dataclass(frozen=True)

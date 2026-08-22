@@ -75,7 +75,6 @@ def reuse_browser_launch_if_active(
                     browser_port=endpoint.browser_port,
                     host=details.host,
                     relay_command=relay_command,
-                    prompt_path=details.prompt_path,
                 )
                 wait_for_tcp_endpoint(
                     host=REMOTE_DEBUGGING_LOCALHOST,

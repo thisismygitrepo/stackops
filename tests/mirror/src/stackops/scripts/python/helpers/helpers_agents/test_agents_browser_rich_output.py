@@ -25,7 +25,6 @@ def test_detached_lan_summary_shows_selected_endpoint_relay_and_warning() -> Non
         port=9000,
         browser_port=57632,
         profile_path=Path(r"C:\Users\eng_a\data\browsers-profiles\chrome\p1"),
-        prompt_path=Path(r"C:\Users\eng_a\code\agents\browser\vercel\prompts\chrome-p1.md"),
         process_id=30852,
         relay_process_id=17176,
     )
@@ -59,7 +58,6 @@ def test_non_lan_tmux_summary_shows_session_windows_and_attach_command() -> None
         port=9331,
         browser_port=9331,
         profile_path=Path("/tmp/stackops-browser-profiles/chrome-9331"),
-        prompt_path=Path("/tmp/browser-prompt.md"),
         tmux=BrowserTmuxLaunch(
             session_name="stackops-browser",
             browser_window_name="chrome-9331",
@@ -97,7 +95,6 @@ def test_non_lan_existing_summary_shows_owner_and_opened_page_action() -> None:
         port=9331,
         browser_port=9331,
         profile_path=None,
-        prompt_path=Path(r"C:\Users\eng_a\code\agents\browser\vercel\prompts\edge-temp.md"),
         process_id=42100,
         owner="external",
         opened_page=True,
@@ -131,7 +128,6 @@ def test_batch_lan_summary_shows_one_row_per_profile_and_shared_interface_warnin
             port=port,
             browser_port=57000 + index,
             profile_path=Path(rf"C:\Users\eng_a\data\browsers-profiles\chrome\p{index}"),
-            prompt_path=Path(rf"C:\Users\eng_a\code\agents\browser\vercel\prompts\chrome-p{index}.md"),
             process_id=30000 + index,
             relay_process_id=31000 + index,
         )

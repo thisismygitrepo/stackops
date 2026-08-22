@@ -29,7 +29,6 @@ def launch_browser_tmux(
     lan: bool,
     browser_command: Sequence[str],
     relay_command: Sequence[str] | None,
-    prompt_path: Path,
 ) -> BrowserTmuxLaunch:
     require_tmux()
     launch_id = browser_launch_id(browser=browser, profile_path=profile_path, port=port)
@@ -47,7 +46,6 @@ def launch_browser_tmux(
             port=str(port),
             browser_port=str(browser_port),
             lan="yes" if lan else "no",
-            prompt_path=str(prompt_path),
         ),
     )
     relay_window_name = _start_relay_window(launch_id=launch_id, relay_command=relay_command)
@@ -64,7 +62,6 @@ def launch_browser_tmux(
                 port=str(port),
                 browser_port=str(browser_port),
                 lan="yes" if lan else "no",
-                prompt_path=str(prompt_path),
             ),
         )
     return BrowserTmuxLaunch(
@@ -86,7 +83,6 @@ def repair_browser_tmux_relay(
     browser_port: int,
     host: str,
     relay_command: Sequence[str],
-    prompt_path: Path,
 ) -> str:
     launch_id = browser_launch_id(browser=browser, profile_path=profile_path, port=port)
     relay_window_name = _start_relay_window(launch_id=launch_id, relay_command=relay_command)
@@ -104,7 +100,6 @@ def repair_browser_tmux_relay(
             port=str(port),
             browser_port=str(browser_port),
             lan="yes",
-            prompt_path=str(prompt_path),
         ),
     )
     return relay_window_name
@@ -184,7 +179,6 @@ def _set_window_metadata(*, window_name: str, metadata: BrowserTmuxMetadata) -> 
         ("@stackops_browser_port", metadata.port),
         ("@stackops_browser_browser_port", metadata.browser_port),
         ("@stackops_browser_lan", metadata.lan),
-        ("@stackops_browser_prompt_path", metadata.prompt_path),
     ):
         run_required_tmux_command(command=("tmux", "set-window-option", "-q", "-t", _window_target(window_name=window_name), key, value))
 

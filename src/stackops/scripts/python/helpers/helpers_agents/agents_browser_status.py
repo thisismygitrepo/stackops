@@ -70,7 +70,6 @@ def show_tmux_browser_status() -> None:
     table.add_column("PID", justify="right")
     table.add_column("Command")
     table.add_column("Profile Path", overflow="fold")
-    table.add_column("Prompt", overflow="fold")
 
     for row in rows:
         state = "dead" if row.pane_dead else "running"
@@ -90,7 +89,6 @@ def show_tmux_browser_status() -> None:
             row.pane_pid,
             row.pane_current_command,
             row.metadata.profile_path,
-            row.metadata.prompt_path,
         )
 
     Console().print(table)

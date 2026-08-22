@@ -47,7 +47,6 @@ def test_launch_browser_lan_selects_address_before_launch_and_renders_it(monkeyp
             port=port,
             browser_port=57632,
             profile_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/p1"),
-            prompt_path=Path("C:/Users/eng_a/code/agents/browser/agent-browser/prompts/chrome-p1-p9000.md"),
             process_id=30852,
             relay_process_id=17176,
         )
@@ -112,7 +111,6 @@ def test_batch_launch_launches_every_saved_profile_on_assigned_ports(monkeypatch
             port=port,
             browser_port=port,
             profile_path=chrome_root.joinpath(profile_name),
-            prompt_path=tmp_path.joinpath(f"{profile_name}.md"),
             process_id=1000 + port,
             relay_process_id=None,
         )
@@ -194,7 +192,6 @@ def test_batch_launch_caps_requested_count_to_available_profiles(monkeypatch: py
             port=port,
             browser_port=port,
             profile_path=firefox_root.joinpath(profile_name),
-            prompt_path=tmp_path.joinpath(f"{profile_name}.md"),
             process_id=port,
             relay_process_id=None,
         )
