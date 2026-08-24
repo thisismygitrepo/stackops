@@ -7361,7 +7361,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "FreeLLMAPI-{version}.AppImage",
-          "windows": "FreeLLMAPI-{version}-win.zip",
+          "windows": "freellmapi.py",
           "darwin": null
         },
         "arm64": {
