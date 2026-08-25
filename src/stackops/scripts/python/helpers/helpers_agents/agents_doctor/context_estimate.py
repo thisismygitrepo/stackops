@@ -51,12 +51,14 @@ def _definition_paths(*, report: DoctorReport) -> dict[ContextDefinitionSource, 
     return paths_by_source
 
 
-def _skill_catalog_character_count(*, path: Path) -> int:
+def _skill_catalog_counts(*, path: Path) -> tuple[int, int]:
     text = path.read_text(encoding="utf-8")
     frontmatter_match = re.match(r"^---\s*\n(?P<body>.*?)\n---\s*(?:\n|$)", text, flags=re.DOTALL)
     if frontmatter_match is None:
-        return len(text)
-    return len(frontmatter_match.group("body")) + len(str(path))
+        return len(text), len(text.split())
+    metadata = frontmatter_match.group("body")
+    path_text = str(path)
+    return len(metadata) + len(path_text), len(metadata.split()) + len(path_text.split())
 
 
 def context_estimate_table(*, report: DoctorReport) -> Table:
@@ -72,7 +74,7 @@ def context_estimate_table(*, report: DoctorReport) -> Table:
     )
     table.add_column("Source", style="bold", overflow="fold")
     table.add_column("Files", justify="right")
-    table.add_column("Characters", justify="right")
+    table.add_column("Words", justify="right")
     table.add_column("Est. tokens", justify="right")
     table.add_column("Cumulative", justify="right")
     table.add_column("Cum. %", justify="right")
@@ -83,26 +85,31 @@ def context_estimate_table(*, report: DoctorReport) -> Table:
         paths = paths_by_source[source]
         if len(paths) == 0:
             continue
-        character_count = (
-            sum(_skill_catalog_character_count(path=path) for path in paths)
-            if source == "Skill catalog"
-            else sum(len(path.read_text(encoding="utf-8")) for path in paths)
-        )
+        character_count = 0
+        word_count = 0
+        for path in paths:
+            if source == "Skill catalog":
+                path_character_count, path_word_count = _skill_catalog_counts(path=path)
+            else:
+                text = path.read_text(encoding="utf-8")
+                path_character_count, path_word_count = len(text), len(text.split())
+            character_count += path_character_count
+            word_count += path_word_count
         estimated_tokens = (character_count + DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN - 1) // DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN
-        estimates.append((source, len(paths), character_count, estimated_tokens))
+        estimates.append((source, len(paths), word_count, estimated_tokens))
     estimates.sort(key=lambda estimate: (-estimate[3], _CONTEXT_DEFINITION_SOURCES.index(estimate[0])))
 
     total_files = sum(file_count for _, file_count, _, _ in estimates)
-    total_characters = sum(character_count for _, _, character_count, _ in estimates)
+    total_words = sum(word_count for _, _, word_count, _ in estimates)
     total_tokens = sum(estimated_tokens for _, _, _, estimated_tokens in estimates)
     cumulative_tokens = 0
-    for source, file_count, character_count, estimated_tokens in estimates:
+    for source, file_count, word_count, estimated_tokens in estimates:
         cumulative_tokens += estimated_tokens
         cumulative_percentage = cumulative_tokens / total_tokens * 100.0 if total_tokens > 0 else 0.0
         table.add_row(
             source,
             f"{file_count:,}",
-            f"{character_count:,}",
+            f"{word_count:,}",
             f"{estimated_tokens:,}",
             f"{cumulative_tokens:,}",
             f"{cumulative_percentage:.1f}%",
@@ -112,7 +119,7 @@ def context_estimate_table(*, report: DoctorReport) -> Table:
     table.add_row(
         "Total",
         f"{total_files:,}",
-        f"{total_characters:,}",
+        f"{total_words:,}",
         f"{total_tokens:,}",
         f"{total_tokens:,}",
         "100.0%" if total_tokens > 0 else "0.0%",
