@@ -6,6 +6,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.context_estimate import context_estimate_table
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import (
     DoctorContext,
     DoctorReport,
@@ -201,6 +202,7 @@ def render_doctor_reports(
     )
     for selected_focus in displayed_focuses:
         console.print(_resource_table(report=report, resource_focus=selected_focus))
+    console.print(context_estimate_table(report=report))
     if len(report.definition.notes) > 0:
         notes = Text("\n".join(f"• {note}" for note in report.definition.notes))
         console.print(Panel(notes, title="Notes", border_style="blue"))

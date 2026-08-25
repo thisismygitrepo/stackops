@@ -1,4 +1,5 @@
 from typing import Final
 
 
+DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN: Final[int] = 4
 DOCTOR_VERSION_TIMEOUT_SECONDS: Final[int] = 3
