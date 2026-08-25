@@ -52,9 +52,9 @@ xx() {
     local session_id_pattern='^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$'
 
     if (( $# > 0 )) && [[ $1 =~ $session_id_pattern ]]; then
-        command codex resume --dangerously-bypass-approvals-and-sandbox "$@"
+        command codex resume --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c 'model_reasoning_effort="ultra"' "$@"
     else
-        command codex --dangerously-bypass-approvals-and-sandbox "$@"
+        command codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c 'model_reasoning_effort="ultra"' "$@"
     fi
 }
 alias xa='agy --dangerously-skip-permissions'

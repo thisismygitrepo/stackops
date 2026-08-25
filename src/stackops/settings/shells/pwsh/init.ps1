@@ -35,10 +35,10 @@ Add-ToPathIfNotAlready -Directories @(
 
 function xx {
     if ($args.Count -gt 0 -and $args[0] -match '^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$') {
-        codex resume --dangerously-bypass-approvals-and-sandbox @args
+        codex resume --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c 'model_reasoning_effort="ultra"' @args
     }
     else {
-        codex --dangerously-bypass-approvals-and-sandbox @args
+        codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c 'model_reasoning_effort="ultra"' @args
     }
 }
 function xa { agy --dangerously-skip-permissions @args }

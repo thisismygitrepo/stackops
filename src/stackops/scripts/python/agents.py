@@ -18,15 +18,16 @@ _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "p
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
+_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "pi", "opencode", "omp"]
 
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
-INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "pi", "p", "opencode", "omp", "o"]
+INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "pi", "p", "opencode", "oc", "omp", "o"]
 _CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $caveman wenyan-full for this entire session."
 _HEADROOM_COMMAND: Final[str] = "headroom"
 _HEADROOM_AGENTS: Final[tuple[_HEADROOM_AGENT, ...]] = ("codex", "copilot")
-_INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, AGENTS]] = {
+_INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, _INTERACTIVE_CANONICAL_AGENT]] = {
     "codex": "codex",
     "x": "codex",
     "copilot": "copilot",
@@ -34,8 +35,9 @@ _INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, AGENTS]] = {
     "pi": "pi",
     "p": "pi",
     "opencode": "opencode",
-    "omp": "opencode",
-    "o": "opencode",
+    "oc": "opencode",
+    "omp": "omp",
+    "o": "omp",
 }
 _INIT_CONFIG_AGENT_HELP: Final[str] = (
     f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
@@ -150,11 +152,11 @@ def add_mcp(
         raise typer.BadParameter(str(e)) from e
 
 
-def _resolve_interactive_agent(agent: INTERACTIVE_AGENT) -> AGENTS:
+def _resolve_interactive_agent(agent: INTERACTIVE_AGENT) -> _INTERACTIVE_CANONICAL_AGENT:
     return _INTERACTIVE_AGENT_ALIASES[agent]
 
 
-def _interactive_agent_command(agent: AGENTS, caveman: bool) -> list[str]:
+def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, caveman: bool) -> list[str]:
     match agent:
         case "codex":
             command = ["codex", "--dangerously-bypass-approvals-and-sandbox"]
@@ -172,6 +174,11 @@ def _interactive_agent_command(agent: AGENTS, caveman: bool) -> list[str]:
                 command.append(_CAVEMAN_INITIAL_PROMPT)
             return command
         case "opencode":
+            command = ["opencode"]
+            if caveman:
+                command.extend(["--prompt", _CAVEMAN_INITIAL_PROMPT])
+            return command
+        case "omp":
             command = ["omp"]
             if caveman:
                 command.append(_CAVEMAN_INITIAL_PROMPT)
@@ -180,7 +187,7 @@ def _interactive_agent_command(agent: AGENTS, caveman: bool) -> list[str]:
             raise ValueError(f"Unsupported interactive agent: {agent}")
 
 
-def _apply_headroom(command: list[str], agent: AGENTS, headroom: bool) -> list[str]:
+def _apply_headroom(command: list[str], agent: _INTERACTIVE_CANONICAL_AGENT, headroom: bool) -> list[str]:
     if headroom:
         resolved_headroom = shutil.which(_HEADROOM_COMMAND)
         if resolved_headroom is None:
@@ -196,7 +203,7 @@ def _apply_headroom(command: list[str], agent: AGENTS, headroom: bool) -> list[s
 def run_interactive(
     agent: Annotated[
         INTERACTIVE_AGENT,
-        typer.Option(..., "--agent", "-a", help="Agent to launch: codex/x, copilot/c, pi/p, or omp/o."),
+        typer.Option(..., "--agent", "-a", help="Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, or omp/o."),
     ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),
     second_brain: Annotated[
         bool,
@@ -438,6 +445,21 @@ def clean(
         raise typer.Exit(code=1)
 
 
+def doctor(
+    agent: Annotated[
+        str,
+        typer.Argument(help="Agent to inspect, such as codex, pi, omp, or opencode. Use 'all' for the health matrix."),
+    ] = "all",
+) -> None:
+    """Inspect agent binaries, configuration, plugins, skills, and instruction provenance."""
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor
+
+    try:
+        run_doctor(requested_agent=agent, working_directory=Path.cwd())
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+
+
 def get_app() -> typer.Typer:
     from stackops.scripts.python.ai_account import get_app as get_account_app
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
@@ -474,6 +496,8 @@ def get_app() -> typer.Typer:
     agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
     agents_app.command(name="clean", no_args_is_help=False, short_help="<C> Delete .ai directories from repositories")(clean)
     agents_app.command(name="C", no_args_is_help=False, hidden=True)(clean)
+    agents_app.command(name="doctor", no_args_is_help=False, short_help="<d> Inspect agent health and resource provenance")(doctor)
+    agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
 
     agents_app.add_typer(
         get_account_app(),

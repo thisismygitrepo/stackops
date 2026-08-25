@@ -7,7 +7,7 @@ from typing import Final, Literal, cast
 from stackops.utils.options_utils.options import choose_from_options
 
 
-type FOLLOWUP_AGENT = Literal["codex", "copilot", "pi", "opencode"]
+type FOLLOWUP_AGENT = Literal["codex", "copilot", "pi", "opencode", "omp"]
 type FOLLOWUP_ACTION = Literal["resume", "fork"]
 _UPDATE_COLUMNS: Final[tuple[str, ...]] = ("agent", "session-id", "topic", "actionsTaken", "date")
 _AGENT_BY_LABEL: Final[dict[str, FOLLOWUP_AGENT]] = {
@@ -16,14 +16,15 @@ _AGENT_BY_LABEL: Final[dict[str, FOLLOWUP_AGENT]] = {
     "github copilot": "copilot",
     "pi": "pi",
     "opencode": "opencode",
-    "omp": "opencode",
-    "oh my pi": "opencode",
+    "omp": "omp",
+    "oh my pi": "omp",
 }
 _AGENT_DISPLAY_NAME: Final[dict[FOLLOWUP_AGENT, str]] = {
     "codex": "Codex",
     "copilot": "Copilot",
     "pi": "Pi",
-    "opencode": "OMP",
+    "opencode": "OpenCode",
+    "omp": "Oh My Pi",
 }
 _NON_RESUMABLE_SESSION_IDS: Final[frozenset[str]] = frozenset({"not-exposed"})
 
@@ -125,7 +126,7 @@ def choose_followup_session(*, second_brain_root: Path) -> FollowupSession:
 
 
 def build_followup_command(*, session: FollowupSession, action: FOLLOWUP_ACTION, initial_prompt: str | None) -> list[str]:
-    if action == "fork" and session.agent not in ("codex", "pi"):
+    if action == "fork" and session.agent not in ("codex", "pi", "opencode", "omp"):
         raise ValueError(f"Forking follow-up sessions is not supported for {_AGENT_DISPLAY_NAME[session.agent]}.")
 
     match session.agent:
@@ -136,11 +137,17 @@ def build_followup_command(*, session: FollowupSession, action: FOLLOWUP_ACTION,
         case "pi":
             command = ["pi", "--fork" if action == "fork" else "--session", session.session_id]
         case "opencode":
-            command = ["omp", f"--resume={session.session_id}"]
+            command = ["opencode", "--session", session.session_id]
+            if action == "fork":
+                command.append("--fork")
+        case "omp":
+            command = ["omp", "--fork" if action == "fork" else "--resume", session.session_id]
 
     if initial_prompt is not None:
         if session.agent == "copilot":
             command.extend(["--interactive", initial_prompt])
+        elif session.agent == "opencode":
+            command.extend(["--prompt", initial_prompt])
         else:
             command.append(initial_prompt)
     return command

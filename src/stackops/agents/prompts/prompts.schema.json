@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StackOps prompts.yaml",
+  "description": "Named prompt and context entries used by `agents run`.",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/definitions/promptEntry"
+  },
+  "definitions": {
+    "promptEntry": {
+      "description": "Prompt text, a prompt object, or a nested namespace of prompt entries.",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "description": {
+              "description": "Human-facing description. Ignored when StackOps builds prompt text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "desc": {
+              "description": "Short human-facing description. Ignored when StackOps builds prompt text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "desciption": {
+              "description": "Legacy misspelling accepted by StackOps and ignored when building prompt text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "agent": {
+              "description": "Optional preferred agent label. Ignored when StackOps builds prompt text.",
+              "enum": [
+                "agy",
+                "cursor-agent",
+                "claude",
+                "qwen",
+                "copilot",
+                "codex",
+                "forge",
+                "crush",
+                "q",
+                "opencode",
+                "kilocode",
+                "cline",
+                "auggie",
+                "oz",
+                "droid",
+                "pi",
+                null
+              ]
+            },
+            "prompt": {
+              "description": "Prompt or context text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "directory": {
+              "description": "Working directory displayed with this prompt.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/promptEntry"
+          }
+        }
+      ]
+    }
+  }
+}
