@@ -34,6 +34,7 @@ def configuration_resources(*, config_entries: Iterable[ConfigEntry]) -> tuple[D
         candidates=(
             resource_candidate(
                 kind="configuration",
+                is_mcp=False,
                 name=path.name,
                 origin=origin,
                 path=path,

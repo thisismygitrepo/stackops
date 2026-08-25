@@ -24,7 +24,15 @@ def _directory_instructions(*, directory: Path, origin: DoctorOrigin, names: tup
             state = "shadowed"
             selection_detail = f"lower filename precedence than {active_path.name}" if active_path is not None else "not selected"
         resources.append(
-            DoctorResource(kind="instructions", name=path.name, origin=origin, state=state, path=path, detail=f"{detail}; {selection_detail}")
+            DoctorResource(
+                kind="instructions",
+                is_mcp=False,
+                name=path.name,
+                origin=origin,
+                state=state,
+                path=path,
+                detail=f"{detail}; {selection_detail}",
+            )
         )
     return tuple(resources)
 

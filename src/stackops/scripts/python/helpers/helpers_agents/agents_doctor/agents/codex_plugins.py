@@ -58,6 +58,7 @@ def plugin_setting_resources(*, settings: tuple[CodexPluginSetting, ...]) -> tup
         resources.append(
             DoctorResource(
                 kind="plugin",
+                is_mcp=False,
                 name=setting.plugin_id,
                 origin=setting.layer.origin,
                 state=state,

@@ -8,7 +8,7 @@ def _loose_skills(*, origin: DoctorOrigin, root: Path, detail: str) -> tuple[Doc
     if not root.is_dir():
         return ()
     return tuple(
-        DoctorResource(kind="skill", name=path.stem, origin=origin, state="active", path=path.resolve(strict=False), detail=detail)
+        DoctorResource(kind="skill", is_mcp=False, name=path.stem, origin=origin, state="active", path=path.resolve(strict=False), detail=detail)
         for path in sorted(root.glob("*.md"))
         if path.name != "SKILL.md"
     )
@@ -46,6 +46,7 @@ def _context_instructions(*, context: DoctorContext) -> tuple[DoctorResource, ..
             resources.append(
                 DoctorResource(
                     kind="instructions",
+                    is_mcp=False,
                     name=path.name,
                     origin=origin,
                     state="active" if index == 0 else "shadowed",
@@ -66,6 +67,7 @@ def _system_instructions(*, context: DoctorContext) -> tuple[DoctorResource, ...
             resources.append(
                 DoctorResource(
                     kind="instructions",
+                    is_mcp=False,
                     name=name,
                     origin="local",
                     state="active",
@@ -77,6 +79,7 @@ def _system_instructions(*, context: DoctorContext) -> tuple[DoctorResource, ...
             resources.append(
                 DoctorResource(
                     kind="instructions",
+                    is_mcp=False,
                     name=name,
                     origin="global",
                     state="shadowed" if local_path.is_file() else "active",

@@ -9,8 +9,12 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard impor
 
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     configurations = (
-        DoctorPathCandidate("settings.json", "global", context.xdg_config_directory / "amazon-q/settings.json", "Amazon Q user settings", True),
-        DoctorPathCandidate("settings.json", "local", context.project_root / ".amazonq/settings.json", "Amazon Q project settings", True),
+        DoctorPathCandidate(
+            "settings.json", "global", context.xdg_config_directory / "amazon-q/settings.json", "Amazon Q user settings", True, is_mcp=True
+        ),
+        DoctorPathCandidate(
+            "settings.json", "local", context.project_root / ".amazonq/settings.json", "Amazon Q project settings", True, is_mcp=True
+        ),
     )
     instruction_roots = (
         DoctorFileRoot("global", context.xdg_config_directory / "amazon-q/rules", ("**/*.md",), "Amazon Q user rule"),

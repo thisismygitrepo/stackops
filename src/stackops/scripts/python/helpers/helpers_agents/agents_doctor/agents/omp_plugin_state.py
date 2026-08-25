@@ -72,6 +72,7 @@ def _state_files(*, roots: Iterable[ResourceRoot]) -> tuple[DoctorResource, ...]
             candidates.append(
                 resource_candidate(
                     kind="configuration",
+                    is_mcp=False,
                     name=name,
                     origin=origin,
                     path=root / name,
@@ -90,6 +91,7 @@ def _plugin_skills(*, declaration: _PluginDeclaration, package_root: Path) -> tu
     return tuple(
         DoctorResource(
             kind="skill",
+            is_mcp=False,
             name=path.parent.name,
             origin=declaration.origin,
             state="available",
@@ -136,6 +138,7 @@ def plugin_state_resources(*, context: DoctorContext) -> tuple[DoctorResource, .
         resources.append(
             DoctorResource(
                 kind="plugin",
+                is_mcp=False,
                 name=declaration.name,
                 origin=declaration.origin,
                 state=state,

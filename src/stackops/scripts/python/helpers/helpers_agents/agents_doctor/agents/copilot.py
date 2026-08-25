@@ -20,14 +20,23 @@ def _copilot_home(*, context: DoctorContext) -> Path:
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     copilot_home = _copilot_home(context=context)
     configurations = (
-        DoctorPathCandidate("mcp-config.json", "global", copilot_home / "mcp-config.json", "Copilot CLI user MCP configuration", True),
-        DoctorPathCandidate(".mcp.json", "local", context.project_root / ".mcp.json", "Copilot project MCP configuration", True),
+        DoctorPathCandidate(
+            "mcp-config.json", "global", copilot_home / "mcp-config.json", "Copilot CLI user MCP configuration", True, is_mcp=True
+        ),
+        DoctorPathCandidate(
+            ".mcp.json", "local", context.project_root / ".mcp.json", "Copilot project MCP configuration", True, is_mcp=True
+        ),
     )
     instructions = (
         DoctorPathCandidate(
-            "copilot-instructions.md", "local", context.project_root / ".github/copilot-instructions.md", "repository-wide Copilot instructions", True
+            "copilot-instructions.md",
+            "local",
+            context.project_root / ".github/copilot-instructions.md",
+            "repository-wide Copilot instructions",
+            True,
+            is_mcp=False,
         ),
-        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "shared agent guidance", False),
+        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "shared agent guidance", False, is_mcp=False),
     )
     instruction_roots = (
         DoctorFileRoot("local", context.project_root / ".github/instructions", ("**/*.instructions.md",), "path-scoped Copilot instructions"),

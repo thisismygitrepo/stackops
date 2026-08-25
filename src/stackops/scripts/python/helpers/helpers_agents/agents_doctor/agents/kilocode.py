@@ -9,10 +9,21 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard impor
 
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     configurations = (
-        DoctorPathCandidate("mcp.json", "global", context.xdg_config_directory / "kilocode/mcp.json", "Kilo Code user MCP configuration", True),
-        DoctorPathCandidate("mcp.json", "local", context.project_root / ".kilocode/mcp.json", "Kilo Code project MCP configuration", True),
+        DoctorPathCandidate(
+            "mcp.json",
+            "global",
+            context.xdg_config_directory / "kilocode/mcp.json",
+            "Kilo Code user MCP configuration",
+            True,
+            is_mcp=True,
+        ),
+        DoctorPathCandidate(
+            "mcp.json", "local", context.project_root / ".kilocode/mcp.json", "Kilo Code project MCP configuration", True, is_mcp=True
+        ),
     )
-    instructions = (DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "shared project guidance", False),)
+    instructions = (
+        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "shared project guidance", False, is_mcp=False),
+    )
     instruction_roots = (DoctorFileRoot("local", context.project_root / ".kilocode/rules", ("**/*.md",), "Kilo Code project rule"),)
     skill_roots = (
         *shared_skill_roots(context=context),

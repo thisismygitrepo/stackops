@@ -9,18 +9,33 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard impor
 
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     configurations = (
-        DoctorPathCandidate("settings.json", "global", context.claude_home / "settings.json", "Claude user settings", True),
-        DoctorPathCandidate(".claude.json", "global", context.home_directory / ".claude.json", "Claude user MCP and state configuration", True),
-        DoctorPathCandidate("settings.json", "local", context.project_root / ".claude/settings.json", "Claude shared project settings", True),
+        DoctorPathCandidate("settings.json", "global", context.claude_home / "settings.json", "Claude user settings", True, is_mcp=False),
         DoctorPathCandidate(
-            "settings.local.json", "local", context.project_root / ".claude/settings.local.json", "Claude private project settings", True
+            ".claude.json", "global", context.home_directory / ".claude.json", "Claude user MCP and state configuration", True, is_mcp=True
         ),
-        DoctorPathCandidate(".mcp.json", "local", context.project_root / ".mcp.json", "Claude project MCP configuration", True),
+        DoctorPathCandidate(
+            "settings.json", "local", context.project_root / ".claude/settings.json", "Claude shared project settings", True, is_mcp=False
+        ),
+        DoctorPathCandidate(
+            "settings.local.json",
+            "local",
+            context.project_root / ".claude/settings.local.json",
+            "Claude private project settings",
+            True,
+            is_mcp=False,
+        ),
+        DoctorPathCandidate(
+            ".mcp.json", "local", context.project_root / ".mcp.json", "Claude project MCP configuration", True, is_mcp=True
+        ),
     )
     instructions = (
-        DoctorPathCandidate("CLAUDE.md", "global", context.claude_home / "CLAUDE.md", "inherited Claude user guidance", True),
-        DoctorPathCandidate("CLAUDE.md", "local", context.project_root / "CLAUDE.md", "Claude project guidance", True),
-        DoctorPathCandidate("CLAUDE.local.md", "local", context.project_root / "CLAUDE.local.md", "private Claude project guidance", False),
+        DoctorPathCandidate(
+            "CLAUDE.md", "global", context.claude_home / "CLAUDE.md", "inherited Claude user guidance", True, is_mcp=False
+        ),
+        DoctorPathCandidate("CLAUDE.md", "local", context.project_root / "CLAUDE.md", "Claude project guidance", True, is_mcp=False),
+        DoctorPathCandidate(
+            "CLAUDE.local.md", "local", context.project_root / "CLAUDE.local.md", "private Claude project guidance", False, is_mcp=False
+        ),
     )
     instruction_roots = (
         DoctorFileRoot("global", context.claude_home / "rules", ("**/*.md",), "Claude user rule"),

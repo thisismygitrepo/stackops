@@ -44,6 +44,7 @@ def configured_plugins(*, config_paths: Iterable[OpenCodeConfigPath]) -> tuple[D
                 resources.append(
                     DoctorResource(
                         kind="plugin",
+                        is_mcp=False,
                         name=value.removeprefix("-"),
                         origin=origin,
                         state="disabled" if disabled else "configured",
@@ -57,6 +58,7 @@ def configured_plugins(*, config_paths: Iterable[OpenCodeConfigPath]) -> tuple[D
                 resources.append(
                     DoctorResource(
                         kind="plugin",
+                        is_mcp=False,
                         name=package,
                         origin=origin,
                         state="configured",

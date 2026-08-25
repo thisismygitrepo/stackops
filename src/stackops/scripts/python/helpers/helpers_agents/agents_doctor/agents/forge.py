@@ -4,11 +4,17 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard impor
 
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     configurations = (
-        DoctorPathCandidate(".mcp.json", "global", context.home_directory / "forge/.mcp.json", "Forge user MCP configuration", True),
-        DoctorPathCandidate("forge.yaml", "local", context.project_root / "forge.yaml", "Forge project configuration", True),
-        DoctorPathCandidate(".mcp.json", "local", context.project_root / ".mcp.json", "Forge project MCP configuration", True),
+        DoctorPathCandidate(
+            ".mcp.json", "global", context.home_directory / "forge/.mcp.json", "Forge user MCP configuration", True, is_mcp=True
+        ),
+        DoctorPathCandidate("forge.yaml", "local", context.project_root / "forge.yaml", "Forge project configuration", True, is_mcp=False),
+        DoctorPathCandidate(
+            ".mcp.json", "local", context.project_root / ".mcp.json", "Forge project MCP configuration", True, is_mcp=True
+        ),
     )
-    instructions = (DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "Forge project guidance", True),)
+    instructions = (
+        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "Forge project guidance", True, is_mcp=False),
+    )
     return collect_standard_resources(
         configurations=configurations,
         instructions=instructions,

@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import 
     DoctorContext,
     DoctorReport,
     DoctorResource,
-    DoctorResourceKind,
+    DoctorResourceFocus,
     DoctorResourceState,
 )
 
@@ -23,11 +23,21 @@ _STATE_STYLE: dict[DoctorResourceState, str] = {
     "missing": "dim red",
     "shadowed": "dim yellow",
 }
-_RESOURCE_TITLES: dict[DoctorResourceKind, str] = {
+_RESOURCE_FOCUS_TITLES: dict[DoctorResourceFocus, str] = {
+    "all": "Resources",
     "configuration": "Configurations",
+    "mcp": "MCP configurations",
     "plugin": "Plugins / extensions",
     "skill": "Skills",
     "instructions": "Instructions considered",
+}
+_RESOURCE_FOCUS_SUMMARY_TITLES: dict[DoctorResourceFocus, str] = {
+    "all": "Resources",
+    "configuration": "Cfg",
+    "mcp": "MCP",
+    "plugin": "Plug",
+    "skill": "Skill",
+    "instructions": "Instr",
 }
 
 
@@ -56,8 +66,21 @@ def _origin_label(*, resource: DoctorResource) -> str:
             return "bundled · system"
 
 
-def _present_count(*, report: DoctorReport, kind: DoctorResourceKind) -> int:
-    return sum(resource.kind == kind and resource.state != "missing" for resource in report.resources)
+def _resource_matches_focus(*, resource: DoctorResource, resource_focus: DoctorResourceFocus) -> bool:
+    match resource_focus:
+        case "all":
+            return True
+        case "mcp":
+            return resource.is_mcp
+        case "configuration" | "plugin" | "skill" | "instructions":
+            return resource.kind == resource_focus
+
+
+def _present_count(*, report: DoctorReport, resource_focus: DoctorResourceFocus) -> int:
+    return sum(
+        _resource_matches_focus(resource=resource, resource_focus=resource_focus) and resource.state != "missing"
+        for resource in report.resources
+    )
 
 
 def _binary_status(*, report: DoctorReport) -> Text:
@@ -76,29 +99,41 @@ def _binary_summary(*, report: DoctorReport) -> Text:
     return Text(f"✓ {report.definition.executable}", style="bold green")
 
 
-def _summary_table(*, reports: Sequence[DoctorReport]) -> Table:
+def _summary_table(*, reports: Sequence[DoctorReport], resource_focuses: tuple[DoctorResourceFocus, ...]) -> Table:
     table = Table(title="Agent health", header_style="bold cyan", show_lines=False)
     table.add_column("Agent", style="bold")
     table.add_column("Binary")
     table.add_column("Version", overflow="fold")
-    table.add_column("Cfg", justify="right")
-    table.add_column("Plug", justify="right")
-    table.add_column("Skill", justify="right")
-    table.add_column("Instr", justify="right")
+    if resource_focuses == ("all",):
+        table.add_column("Cfg", justify="right")
+        table.add_column("Plug", justify="right")
+        table.add_column("Skill", justify="right")
+        table.add_column("Instr", justify="right")
+    else:
+        for resource_focus in resource_focuses:
+            table.add_column(_RESOURCE_FOCUS_SUMMARY_TITLES[resource_focus], justify="right")
     for report in reports:
-        table.add_row(
-            Text(report.definition.display_name),
-            _binary_summary(report=report),
-            Text(report.executable.version or "—"),
-            str(_present_count(report=report, kind="configuration")),
-            str(_present_count(report=report, kind="plugin")),
-            str(_present_count(report=report, kind="skill")),
-            str(_present_count(report=report, kind="instructions")),
-        )
+        if resource_focuses == ("all",):
+            table.add_row(
+                Text(report.definition.display_name),
+                _binary_summary(report=report),
+                Text(report.executable.version or "—"),
+                str(_present_count(report=report, resource_focus="configuration")),
+                str(_present_count(report=report, resource_focus="plugin")),
+                str(_present_count(report=report, resource_focus="skill")),
+                str(_present_count(report=report, resource_focus="instructions")),
+            )
+        else:
+            table.add_row(
+                Text(report.definition.display_name),
+                _binary_summary(report=report),
+                Text(report.executable.version or "—"),
+                *(str(_present_count(report=report, resource_focus=resource_focus)) for resource_focus in resource_focuses),
+            )
     return table
 
 
-def _overview_table(*, report: DoctorReport) -> Table:
+def _overview_table(*, report: DoctorReport, resource_focuses: tuple[DoctorResourceFocus, ...]) -> Table:
     table = Table.grid(padding=(0, 2))
     table.add_column(style="bold cyan", no_wrap=True)
     table.add_column(overflow="fold")
@@ -114,17 +149,22 @@ def _overview_table(*, report: DoctorReport) -> Table:
     table.add_row("Inspection", report.definition.support_level)
     table.add_row("Working directory", Text(_display_path(path=report.context.working_directory, context=report.context)))
     table.add_row("Project root", Text(_display_path(path=report.context.project_root, context=report.context)))
+    if resource_focuses != ("all",):
+        focus_titles = ", ".join(_RESOURCE_FOCUS_TITLES[resource_focus] for resource_focus in resource_focuses)
+        table.add_row("Resource focus", Text(focus_titles))
     return table
 
 
-def _resource_table(*, report: DoctorReport, kind: DoctorResourceKind) -> Table:
-    table = Table(title=_RESOURCE_TITLES[kind], header_style="bold cyan", show_lines=False)
+def _resource_table(*, report: DoctorReport, resource_focus: DoctorResourceFocus) -> Table:
+    table = Table(title=_RESOURCE_FOCUS_TITLES[resource_focus], header_style="bold cyan", show_lines=False)
     table.add_column("Name", style="bold", overflow="fold")
     table.add_column("Source", no_wrap=True)
     table.add_column("State", no_wrap=True)
     table.add_column("Path", overflow="fold")
     table.add_column("Why", overflow="fold")
-    resources = tuple(resource for resource in report.resources if resource.kind == kind)
+    resources = tuple(
+        resource for resource in report.resources if _resource_matches_focus(resource=resource, resource_focus=resource_focus)
+    )
     if len(resources) == 0:
         table.add_row("—", "—", Text("none discovered", style="dim"), "—", "—")
         return table
@@ -139,16 +179,28 @@ def _resource_table(*, report: DoctorReport, kind: DoctorResourceKind) -> Table:
     return table
 
 
-def render_doctor_reports(*, console: Console, reports: Sequence[DoctorReport]) -> None:
-    console.print(_summary_table(reports=reports))
+def render_doctor_reports(
+    *, console: Console, reports: Sequence[DoctorReport], resource_focuses: tuple[DoctorResourceFocus, ...]
+) -> None:
+    console.print(_summary_table(reports=reports, resource_focuses=resource_focuses))
     if len(reports) != 1:
-        console.print("[dim]Run `agents doctor <target>` for the full provenance tables.[/dim]")
+        if resource_focuses == ("all",):
+            console.print("[dim]Run `agents doctor <target>` for the full provenance tables.[/dim]")
+        else:
+            requested_resources = ",".join(resource_focuses)
+            console.print(
+                f"[dim]Run `agents doctor <target> --resource {requested_resources}` for the matching provenance tables.[/dim]"
+            )
         return
     report = reports[0]
-    console.print(Panel(_overview_table(report=report), title="Doctor overview", border_style="cyan"))
-    resource_kinds: tuple[DoctorResourceKind, ...] = ("configuration", "plugin", "skill", "instructions")
-    for kind in resource_kinds:
-        console.print(_resource_table(report=report, kind=kind))
+    console.print(
+        Panel(_overview_table(report=report, resource_focuses=resource_focuses), title="Doctor overview", border_style="cyan")
+    )
+    displayed_focuses: tuple[DoctorResourceFocus, ...] = (
+        ("configuration", "plugin", "skill", "instructions") if resource_focuses == ("all",) else resource_focuses
+    )
+    for selected_focus in displayed_focuses:
+        console.print(_resource_table(report=report, resource_focus=selected_focus))
     if len(report.definition.notes) > 0:
         notes = Text("\n".join(f"• {note}" for note in report.definition.notes))
         console.print(Panel(notes, title="Notes", border_style="blue"))

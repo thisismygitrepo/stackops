@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import Literal, Protocol, TypeAlias
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
 type DoctorOrigin = Literal["local", "global", "admin", "system"]
 type DoctorResourceKind = Literal["configuration", "plugin", "skill", "instructions"]
+DoctorResourceFocus: TypeAlias = Literal["all", "configuration", "mcp", "plugin", "skill", "instructions"]
 type DoctorResourceState = Literal["active", "available", "configured", "disabled", "missing", "shadowed"]
 type DoctorSupportLevel = Literal["focused", "standard"]
 type DoctorAgent = AGENTS | Literal["omp"]
@@ -29,6 +30,7 @@ class DoctorContext:
 @dataclass(frozen=True)
 class DoctorResource:
     kind: DoctorResourceKind
+    is_mcp: bool
     name: str
     origin: DoctorOrigin
     state: DoctorResourceState

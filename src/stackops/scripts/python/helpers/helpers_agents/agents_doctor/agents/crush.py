@@ -17,14 +17,18 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     global_config_paths = _global_config_paths(context=context)
     global_config_root = global_config_paths[0].parent
     configurations = (
-        *(DoctorPathCandidate(path.name, "global", path, "Crush user configuration", True) for path in global_config_paths),
-        DoctorPathCandidate(".crush.json", "local", context.project_root / ".crush.json", "Crush project configuration", True),
+        *(DoctorPathCandidate(path.name, "global", path, "Crush user configuration", True, is_mcp=True) for path in global_config_paths),
+        DoctorPathCandidate(
+            ".crush.json", "local", context.project_root / ".crush.json", "Crush project configuration", True, is_mcp=True
+        ),
     )
     instructions = (
-        DoctorPathCandidate("CRUSH.md", "global", global_config_root / "CRUSH.md", "inherited Crush user guidance", False),
-        DoctorPathCandidate("AGENTS.md", "global", context.xdg_config_directory / "AGENTS.md", "inherited shared user guidance", False),
-        DoctorPathCandidate("CRUSH.md", "local", context.project_root / "CRUSH.md", "Crush project guidance", True),
-        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "shared project guidance", False),
+        DoctorPathCandidate("CRUSH.md", "global", global_config_root / "CRUSH.md", "inherited Crush user guidance", False, is_mcp=False),
+        DoctorPathCandidate(
+            "AGENTS.md", "global", context.xdg_config_directory / "AGENTS.md", "inherited shared user guidance", False, is_mcp=False
+        ),
+        DoctorPathCandidate("CRUSH.md", "local", context.project_root / "CRUSH.md", "Crush project guidance", True, is_mcp=False),
+        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "shared project guidance", False, is_mcp=False),
     )
     configured_skill_root = os.environ.get("CRUSH_SKILLS_DIR")
     skill_roots = (

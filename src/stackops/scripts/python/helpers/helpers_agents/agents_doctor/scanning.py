@@ -66,13 +66,21 @@ def create_doctor_context(*, working_directory: Path) -> DoctorContext:
 
 
 def resource_candidate(
-    *, kind: DoctorResourceKind, name: str, origin: DoctorOrigin, path: Path, present_state: DoctorResourceState, detail: str, include_missing: bool
+    *,
+    kind: DoctorResourceKind,
+    is_mcp: bool,
+    name: str,
+    origin: DoctorOrigin,
+    path: Path,
+    present_state: DoctorResourceState,
+    detail: str,
+    include_missing: bool,
 ) -> DoctorResource | None:
     resolved_path = path.expanduser().resolve(strict=False)
     if resolved_path.exists():
-        return DoctorResource(kind=kind, name=name, origin=origin, state=present_state, path=resolved_path, detail=detail)
+        return DoctorResource(kind=kind, is_mcp=is_mcp, name=name, origin=origin, state=present_state, path=resolved_path, detail=detail)
     if include_missing:
-        return DoctorResource(kind=kind, name=name, origin=origin, state="missing", path=resolved_path, detail=detail)
+        return DoctorResource(kind=kind, is_mcp=is_mcp, name=name, origin=origin, state="missing", path=resolved_path, detail=detail)
     return None
 
 
@@ -108,7 +116,13 @@ def scan_skill_roots(*, roots: Sequence[tuple[DoctorOrigin, Path, str]], recursi
             seen_paths.add(resolved_path)
             resources.append(
                 DoctorResource(
-                    kind="skill", name=_skill_name(skill_path=resolved_path), origin=origin, state=state, path=resolved_path, detail=detail
+                    kind="skill",
+                    is_mcp=False,
+                    name=_skill_name(skill_path=resolved_path),
+                    origin=origin,
+                    state=state,
+                    path=resolved_path,
+                    detail=detail,
                 )
             )
     return tuple(resources)
@@ -131,7 +145,9 @@ def scan_plugin_roots(
                     continue
                 seen_paths.add(resolved_path)
                 name = resolved_path.parent.name if resolved_path.name.startswith("index.") else resolved_path.stem
-                resources.append(DoctorResource(kind="plugin", name=name, origin=origin, state=state, path=resolved_path, detail=detail))
+                resources.append(
+                    DoctorResource(kind="plugin", is_mcp=False, name=name, origin=origin, state=state, path=resolved_path, detail=detail)
+                )
     return tuple(resources)
 
 

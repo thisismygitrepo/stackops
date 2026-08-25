@@ -5,10 +5,17 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning impor
 
 
 def _configuration(
-    *, name: str, origin: DoctorOrigin, path: Path, present_state: DoctorResourceState, detail: str
+    *, name: str, origin: DoctorOrigin, path: Path, present_state: DoctorResourceState, detail: str, is_mcp: bool
 ) -> tuple[DoctorResource, dict[str, object]]:
     candidate = resource_candidate(
-        kind="configuration", name=name, origin=origin, path=path, present_state=present_state, detail=detail, include_missing=True
+        kind="configuration",
+        is_mcp=is_mcp,
+        name=name,
+        origin=origin,
+        path=path,
+        present_state=present_state,
+        detail=detail,
+        include_missing=True,
     )
     if candidate is None:
         raise RuntimeError(f"Missing Pi configuration candidate for {path}")
@@ -19,6 +26,7 @@ def _configuration(
     if isinstance(loaded, str):
         invalid = DoctorResource(
             kind="configuration",
+            is_mcp=is_mcp,
             name=name,
             origin=origin,
             state="configured",
@@ -79,6 +87,7 @@ def _settings_plugins(
         resources.append(
             DoctorResource(
                 kind="plugin",
+                is_mcp=False,
                 name=source,
                 origin=origin,
                 state=state,
@@ -94,6 +103,7 @@ def _settings_plugins(
         resources.append(
             DoctorResource(
                 kind="plugin",
+                is_mcp=False,
                 name=entry.lstrip("!+-"),
                 origin=origin,
                 state=state,
@@ -108,7 +118,7 @@ def collect_pi_settings_resources(context: DoctorContext) -> tuple[DoctorResourc
     global_settings_path = context.pi_home / "settings.json"
     local_settings_path = context.working_directory / ".pi" / "settings.json"
     global_settings_resource, global_settings = _configuration(
-        name="settings.json", origin="global", path=global_settings_path, present_state="active", detail="Global Pi settings"
+        name="settings.json", origin="global", path=global_settings_path, present_state="active", detail="Global Pi settings", is_mcp=False
     )
     local_settings_resource, local_settings = _configuration(
         name="settings.json",
@@ -116,6 +126,7 @@ def collect_pi_settings_resources(context: DoctorContext) -> tuple[DoctorResourc
         path=local_settings_path,
         present_state="active",
         detail="Project Pi settings; merged over global settings",
+        is_mcp=False,
     )
     global_mcp, _global_mcp_mapping = _configuration(
         name="mcp.json",
@@ -123,6 +134,7 @@ def collect_pi_settings_resources(context: DoctorContext) -> tuple[DoctorResourc
         path=context.pi_home / "mcp.json",
         present_state="configured",
         detail="Extension-owned MCP configuration; Pi core has no built-in MCP loader",
+        is_mcp=True,
     )
     local_mcp, _local_mcp_mapping = _configuration(
         name="mcp.json",
@@ -130,6 +142,7 @@ def collect_pi_settings_resources(context: DoctorContext) -> tuple[DoctorResourc
         path=context.working_directory / ".pi" / "mcp.json",
         present_state="configured",
         detail="Extension-owned MCP configuration; Pi core has no built-in MCP loader",
+        is_mcp=True,
     )
 
     local_package_sources = frozenset(source for source, _filtered in _package_sources(settings=local_settings))

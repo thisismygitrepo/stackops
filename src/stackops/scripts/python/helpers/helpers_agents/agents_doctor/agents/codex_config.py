@@ -62,7 +62,9 @@ def config_layers(*, context: DoctorContext) -> tuple[CodexConfigLayer, ...]:
 
 def config_resources(*, layers: tuple[CodexConfigLayer, ...]) -> tuple[DoctorResource, ...]:
     return tuple(
-        DoctorResource(kind="configuration", name=layer.name, origin=layer.origin, state=layer.state, path=layer.path, detail=layer.detail)
+        DoctorResource(
+            kind="configuration", is_mcp=True, name=layer.name, origin=layer.origin, state=layer.state, path=layer.path, detail=layer.detail
+        )
         for layer in layers
     )
 

@@ -4,12 +4,18 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard impor
 
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     configurations = (
-        DoctorPathCandidate("settings.json", "global", context.home_directory / ".qwen/settings.json", "Qwen user settings", True),
-        DoctorPathCandidate("settings.json", "local", context.project_root / ".qwen/settings.json", "Qwen project settings", True),
+        DoctorPathCandidate(
+            "settings.json", "global", context.home_directory / ".qwen/settings.json", "Qwen user settings", True, is_mcp=True
+        ),
+        DoctorPathCandidate(
+            "settings.json", "local", context.project_root / ".qwen/settings.json", "Qwen project settings", True, is_mcp=True
+        ),
     )
     instructions = (
-        DoctorPathCandidate("QWEN.md", "global", context.home_directory / ".qwen/QWEN.md", "inherited Qwen user guidance", False),
-        DoctorPathCandidate("QWEN.md", "local", context.project_root / "QWEN.md", "Qwen project guidance", True),
+        DoctorPathCandidate(
+            "QWEN.md", "global", context.home_directory / ".qwen/QWEN.md", "inherited Qwen user guidance", False, is_mcp=False
+        ),
+        DoctorPathCandidate("QWEN.md", "local", context.project_root / "QWEN.md", "Qwen project guidance", True, is_mcp=False),
     )
     skill_roots = (
         *shared_skill_roots(context=context),

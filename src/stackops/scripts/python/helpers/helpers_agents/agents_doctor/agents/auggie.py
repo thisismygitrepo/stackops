@@ -4,12 +4,20 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard impor
 
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     configurations = (
-        DoctorPathCandidate("settings.json", "global", context.home_directory / ".augment/settings.json", "Auggie user settings", True),
-        DoctorPathCandidate("settings.json", "local", context.project_root / ".augment/settings.json", "Auggie project settings", True),
+        DoctorPathCandidate(
+            "settings.json", "global", context.home_directory / ".augment/settings.json", "Auggie user settings", True, is_mcp=True
+        ),
+        DoctorPathCandidate(
+            "settings.json", "local", context.project_root / ".augment/settings.json", "Auggie project settings", True, is_mcp=True
+        ),
     )
     instructions = (
-        DoctorPathCandidate("guidelines.md", "global", context.home_directory / ".augment/guidelines.md", "inherited Auggie guidance", False),
-        DoctorPathCandidate("guidelines.md", "local", context.project_root / ".augment/guidelines.md", "Auggie project guidance", True),
+        DoctorPathCandidate(
+            "guidelines.md", "global", context.home_directory / ".augment/guidelines.md", "inherited Auggie guidance", False, is_mcp=False
+        ),
+        DoctorPathCandidate(
+            "guidelines.md", "local", context.project_root / ".augment/guidelines.md", "Auggie project guidance", True, is_mcp=False
+        ),
     )
     skill_roots = (
         *shared_skill_roots(context=context),

@@ -23,14 +23,22 @@ def _cursor_config_root(*, context: DoctorContext) -> Path:
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     cursor_config_root = _cursor_config_root(context=context)
     configurations = (
-        DoctorPathCandidate("cli-config.json", "global", cursor_config_root / "cli-config.json", "Cursor CLI user configuration", True),
-        DoctorPathCandidate("mcp.json", "global", cursor_config_root / "mcp.json", "Cursor user MCP configuration", True),
-        DoctorPathCandidate("cli.json", "local", context.project_root / ".cursor/cli.json", "Cursor project CLI permissions", True),
-        DoctorPathCandidate("mcp.json", "local", context.project_root / ".cursor/mcp.json", "Cursor project MCP configuration", True),
+        DoctorPathCandidate(
+            "cli-config.json", "global", cursor_config_root / "cli-config.json", "Cursor CLI user configuration", True, is_mcp=False
+        ),
+        DoctorPathCandidate("mcp.json", "global", cursor_config_root / "mcp.json", "Cursor user MCP configuration", True, is_mcp=True),
+        DoctorPathCandidate(
+            "cli.json", "local", context.project_root / ".cursor/cli.json", "Cursor project CLI permissions", True, is_mcp=False
+        ),
+        DoctorPathCandidate(
+            "mcp.json", "local", context.project_root / ".cursor/mcp.json", "Cursor project MCP configuration", True, is_mcp=True
+        ),
     )
     instructions = (
-        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "project agent guidance", True),
-        DoctorPathCandidate("CLAUDE.md", "local", context.project_root / "CLAUDE.md", "Claude-compatible project guidance", False),
+        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "project agent guidance", True, is_mcp=False),
+        DoctorPathCandidate(
+            "CLAUDE.md", "local", context.project_root / "CLAUDE.md", "Claude-compatible project guidance", False, is_mcp=False
+        ),
     )
     instruction_roots = (
         DoctorFileRoot("local", context.project_root / ".cursor/rules", ("*.md", "*.mdc", "**/*.md", "**/*.mdc"), "Cursor project rule"),

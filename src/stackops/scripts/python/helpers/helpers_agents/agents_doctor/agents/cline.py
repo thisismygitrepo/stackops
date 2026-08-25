@@ -10,8 +10,12 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard impor
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     settings_suffix = ".cline/data/settings/cline_mcp_settings.json"
     configurations = (
-        DoctorPathCandidate("cline_mcp_settings.json", "global", context.home_directory / settings_suffix, "Cline user MCP configuration", True),
-        DoctorPathCandidate("cline_mcp_settings.json", "local", context.project_root / settings_suffix, "Cline project MCP configuration", True),
+        DoctorPathCandidate(
+            "cline_mcp_settings.json", "global", context.home_directory / settings_suffix, "Cline user MCP configuration", True, is_mcp=True
+        ),
+        DoctorPathCandidate(
+            "cline_mcp_settings.json", "local", context.project_root / settings_suffix, "Cline project MCP configuration", True, is_mcp=True
+        ),
     )
     instruction_roots = (DoctorFileRoot("local", context.project_root / ".clinerules", ("*.md", "**/*.md"), "Cline project rule"),)
     skill_roots = (

@@ -44,6 +44,7 @@ def _skills(*, context: DoctorContext, config_paths: Iterable[OpenCodeConfigPath
                 configured_sources.append(
                     DoctorResource(
                         kind="skill",
+                        is_mcp=False,
                         name=value,
                         origin=origin,
                         state="configured",
@@ -85,6 +86,7 @@ def _instructions(*, context: DoctorContext, config_paths: Iterable[OpenCodeConf
         resources.append(
             DoctorResource(
                 kind="instructions",
+                is_mcp=False,
                 name="AGENTS.md",
                 origin="global",
                 state="active",
@@ -99,6 +101,7 @@ def _instructions(*, context: DoctorContext, config_paths: Iterable[OpenCodeConf
             resources.append(
                 DoctorResource(
                     kind="instructions",
+                    is_mcp=False,
                     name="AGENTS.md",
                     origin="local",
                     state="disabled" if project_disabled else "active",
@@ -117,6 +120,7 @@ def _instructions(*, context: DoctorContext, config_paths: Iterable[OpenCodeConf
                 resources.append(
                     DoctorResource(
                         kind="instructions",
+                        is_mcp=False,
                         name=value,
                         origin=origin,
                         state="configured",
@@ -133,6 +137,7 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         candidates=(
             resource_candidate(
                 kind="configuration",
+                is_mcp=True,
                 name=path.name,
                 origin=origin,
                 path=path,

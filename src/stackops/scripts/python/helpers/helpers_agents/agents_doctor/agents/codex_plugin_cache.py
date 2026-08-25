@@ -52,7 +52,9 @@ def cached_plugins(
         detail = f"cached Codex plugin manifest; version {manifest.version}"
         if manifest.error is not None:
             detail = f"{detail}; JSON could not be parsed: {manifest.error}"
-        resources.append(DoctorResource(kind="plugin", name=manifest.plugin_id, origin=origin, state=state, path=manifest.path, detail=detail))
+        resources.append(
+            DoctorResource(kind="plugin", is_mcp=False, name=manifest.plugin_id, origin=origin, state=state, path=manifest.path, detail=detail)
+        )
         if setting is not None and setting.enabled is True and manifest.skill_root is not None:
             enabled_skill_roots.append((origin, manifest.skill_root, f"skill bundled by enabled plugin {manifest.plugin_id}"))
     plugin_skills = scan_skill_roots(roots=enabled_skill_roots, recursive=True, state="available")

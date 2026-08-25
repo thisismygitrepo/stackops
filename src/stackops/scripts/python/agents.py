@@ -450,12 +450,33 @@ def doctor(
         str,
         typer.Argument(help="Agent to inspect, such as codex, pi, omp, or opencode. Use 'all' for the health matrix."),
     ] = "all",
+    directory: Annotated[
+        Path | None,
+        typer.Option(
+            "--directory",
+            "-d",
+            help="Directory to inspect. Defaults to the current working directory.",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+        ),
+    ] = None,
+    resource: Annotated[
+        str,
+        typer.Option(
+            "--resource",
+            "-r",
+            help="Comma-separated resource focuses: all, configuration, mcp, plugin, skill, or instructions.",
+        ),
+    ] = "all",
 ) -> None:
     """Inspect agent binaries, configuration, plugins, skills, and instruction provenance."""
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor
 
+    working_directory = directory if directory is not None else Path.cwd()
     try:
-        run_doctor(requested_agent=agent, working_directory=Path.cwd())
+        run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
 

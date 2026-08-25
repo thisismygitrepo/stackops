@@ -56,6 +56,7 @@ def configured_extensions(*, config_entries: Iterable[ConfigEntry]) -> tuple[Doc
             resources.append(
                 DoctorResource(
                     kind="plugin",
+                    is_mcp=False,
                     name=value,
                     origin=origin,
                     state="configured",
@@ -67,6 +68,7 @@ def configured_extensions(*, config_entries: Iterable[ConfigEntry]) -> tuple[Doc
             resources.append(
                 DoctorResource(
                     kind="plugin",
+                    is_mcp=False,
                     name=value,
                     origin=origin,
                     state="disabled",
@@ -83,7 +85,14 @@ def plugins(*, context: DoctorContext, configured_extensions: Iterable[DoctorRes
     directories = present_resources(
         candidates=(
             resource_candidate(
-                kind="plugin", name=path.name, origin=origin, path=path, present_state="active", detail=detail, include_missing=origin == "global"
+                kind="plugin",
+                is_mcp=False,
+                name=path.name,
+                origin=origin,
+                path=path,
+                present_state="active",
+                detail=detail,
+                include_missing=origin == "global",
             )
             for origin, path, detail in (*registry_roots, *extension_roots)
         )

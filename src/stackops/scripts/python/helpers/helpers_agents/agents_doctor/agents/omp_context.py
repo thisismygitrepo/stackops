@@ -66,7 +66,14 @@ def instructions(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         present_resources(
             candidates=(
                 resource_candidate(
-                    kind="instructions", name=path.name, origin=origin, path=path, present_state="active", detail=detail, include_missing=False
+                    kind="instructions",
+                    is_mcp=False,
+                    name=path.name,
+                    origin=origin,
+                    path=path,
+                    present_state="active",
+                    detail=detail,
+                    include_missing=False,
                 )
                 for origin, path, detail in fixed_sources
             )
@@ -92,6 +99,14 @@ def instructions(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
                     continue
                 seen_paths.add(resolved_path)
                 resources.append(
-                    DoctorResource(kind="instructions", name=path.name, origin=origin, state="active", path=resolved_path, detail=detail)
+                    DoctorResource(
+                        kind="instructions",
+                        is_mcp=False,
+                        name=path.name,
+                        origin=origin,
+                        state="active",
+                        path=resolved_path,
+                        detail=detail,
+                    )
                 )
     return tuple(resources)

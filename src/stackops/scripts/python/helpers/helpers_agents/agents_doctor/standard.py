@@ -18,6 +18,7 @@ class DoctorPathCandidate:
     path: Path
     detail: str
     include_missing: bool
+    is_mcp: bool
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,7 @@ def _path_resources(*, kind: DoctorResourceKind, candidates: Sequence[DoctorPath
         candidates=(
             resource_candidate(
                 kind=kind,
+                is_mcp=candidate.is_mcp,
                 name=candidate.name,
                 origin=candidate.origin,
                 path=candidate.path,
@@ -66,7 +68,15 @@ def _file_root_resources(*, kind: DoctorResourceKind, roots: Sequence[DoctorFile
                     continue
                 seen_paths.add(resolved_path)
                 resources.append(
-                    DoctorResource(kind=kind, name=resolved_path.name, origin=root.origin, state="active", path=resolved_path, detail=root.detail)
+                    DoctorResource(
+                        kind=kind,
+                        is_mcp=False,
+                        name=resolved_path.name,
+                        origin=root.origin,
+                        state="active",
+                        path=resolved_path,
+                        detail=root.detail,
+                    )
                 )
     return tuple(resources)
 

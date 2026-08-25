@@ -10,12 +10,20 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
             context.home_directory / ".gemini/antigravity-cli/mcp_config.json",
             "Antigravity user MCP configuration",
             True,
+            is_mcp=True,
         ),
         DoctorPathCandidate(
-            "mcp_config.json", "local", context.project_root / ".agents/mcp_config.json", "Antigravity project MCP configuration", True
+            "mcp_config.json",
+            "local",
+            context.project_root / ".agents/mcp_config.json",
+            "Antigravity project MCP configuration",
+            True,
+            is_mcp=True,
         ),
     )
-    instructions = (DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "project agent guidance", True),)
+    instructions = (
+        DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "project agent guidance", True, is_mcp=False),
+    )
     skill_roots = (
         *shared_skill_roots(context=context),
         ("global", context.home_directory / ".gemini/skills", "Gemini-compatible user skill"),
