@@ -12,6 +12,7 @@ RESOLVED_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
 STACKOPS_FALLBACK_SKILL_INSTALL_BACKEND: Final[SKILL_INSTALL_COMMAND_BACKEND] = "bunx"
 AGENT_SKILL_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
+AGENT_SKILLS_REFERENCE_FILE_NAME: Final[str] = "agent-skills-reference.md"
 AGENTOPS_SKILL_NAME: Final[Literal["agentops"]] = "agentops"
 ORCA_SKILL_SOURCE: Final[str] = "https://github.com/stablyai/orca"
 
@@ -46,6 +47,19 @@ def is_supported_agent_skill_name(*, skill_name: str) -> bool:
 
 def supported_agent_skill_names() -> tuple[str, ...]:
     return tuple(_OPEN_SOURCE_SKILL_SOURCES)
+
+
+def render_supported_agent_skills_reference() -> str:
+    lines = [
+        "# Supported agent skills",
+        "",
+        "| Skill | Source | Source skill |",
+        "| --- | --- | --- |",
+    ]
+    for skill_name, source in _OPEN_SOURCE_SKILL_SOURCES.items():
+        source_skill_cell = "—" if source.skill is None else f"`{source.skill}`"
+        lines.append(f"| `{skill_name}` | `{source.source}` | {source_skill_cell} |")
+    return "\n".join(lines) + "\n"
 
 
 def resolve_agent_skill_install_backend(*, backend: SKILL_INSTALL_BACKEND) -> RESOLVED_SKILL_INSTALL_BACKEND:
@@ -175,9 +189,22 @@ def print_stackops_skill_install_fallback(*, error: ValueError, fallback_backend
 
 
 def add_skill(
-    *, skill_name: str | None, agent: str | None, scope: SKILL_INSTALL_SCOPE, directory: str | None, backend: SKILL_INSTALL_BACKEND, yes: bool
+    *,
+    skill_name: str | None,
+    agent: str | None,
+    scope: SKILL_INSTALL_SCOPE,
+    directory: str | None,
+    reference: bool,
+    backend: SKILL_INSTALL_BACKEND,
+    yes: bool,
 ) -> int:
     install_root = resolve_agent_skill_install_root(directory=directory)
+    if reference:
+        reference_path = install_root.joinpath(AGENT_SKILLS_REFERENCE_FILE_NAME)
+        reference_path.write_text(render_supported_agent_skills_reference(), encoding="utf-8")
+        print(f"Supported skill reference written to: {reference_path}")
+        return 0
+
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
     resolved_skill_names = choose_requested_skill_names() if skill_name is None else parse_requested_skill_names(raw_value=skill_name)
     resolved_backend = resolve_agent_skill_install_backend(backend=backend)

@@ -396,7 +396,10 @@ def execute(
 
 def add_skill(
     skill_name: Annotated[
-        str | None, typer.Argument(help="Name(s) of the skills to add, comma-separated. If omitted, opens an interactive multi-select picker.")
+        str | None,
+        typer.Argument(
+            help="Name(s) of the skills to add, comma-separated. If omitted without --reference, opens an interactive multi-select picker."
+        ),
     ] = None,
     agent: Annotated[
         str | None,
@@ -412,8 +415,17 @@ def add_skill(
     ] = "local",
     directory: Annotated[
         str | None,
-        typer.Option(..., "--directory", "-d", help="Directory to add the skill to. If not provided, defaults to current working directory."),
+        typer.Option(
+            ...,
+            "--directory",
+            "-d",
+            help="Directory used for installation or reference output. If not provided, defaults to current working directory.",
+        ),
     ] = None,
+    reference: Annotated[
+        bool,
+        typer.Option("--reference", "-r", help="Write a Markdown table of all supported skills instead of installing a skill."),
+    ] = False,
     backend: Annotated[
         _SKILL_INSTALL_BACKEND,
         typer.Option("--backend", "-b", help="Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally."),
@@ -423,11 +435,19 @@ def add_skill(
         typer.Option("--yes", "-y", help="Pass --yes to the upstream skills CLI."),
     ] = False,
 ) -> None:
-    """Add a skill through an installer backend."""
+    """Install a skill or generate the supported-skill reference."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 
-        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory, backend=backend, yes=yes)
+        return_code = impl(
+            skill_name=skill_name,
+            agent=agent,
+            scope=scope,
+            directory=directory,
+            reference=reference,
+            backend=backend,
+            yes=yes,
+        )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     raise typer.Exit(code=return_code)
