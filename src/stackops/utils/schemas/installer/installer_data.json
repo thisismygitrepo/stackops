@@ -7370,6 +7370,30 @@
           "darwin": "FreeLLMAPI-{version}-arm64.dmg"
         }
       }
+    },
+    {
+      "appName": "gdu",
+      "license": "MIT License",
+      "repoURL": "https://github.com/dundee/gdu",
+      "lastCommitDate": "2026-08-27T12:06:29Z",
+      "lastCommitDateCheckDate": "2026-08-27T23:28:52Z",
+      "doc": "💾 Fast disk usage analyzer with console interface written in Go.",
+      "categoryLabels": [
+        "storage-backup-sync",
+        "monitoring-performance"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "gdu_linux_amd64.tgz",
+          "windows": "gdu_windows_amd64.exe.zip",
+          "darwin": "gdu_darwin_amd64.tgz"
+        },
+        "arm64": {
+          "linux": "gdu_linux_arm64.tgz",
+          "windows": null,
+          "darwin": "gdu_darwin_arm64.tgz"
+        }
+      }
     }
   ]
 }
