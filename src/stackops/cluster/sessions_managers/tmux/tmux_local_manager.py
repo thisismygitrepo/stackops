@@ -45,6 +45,7 @@ class TmuxLocalManager:
         self.exit_mode: SessionExitMode = exit_mode
         self.session_layouts = session_layouts
         self.managers: list[TmuxLayoutGenerator] = []
+        self.launched_managers: list[TmuxLayoutGenerator] = []
         for layout_config in session_layouts:
             session_name = layout_config["layoutName"].replace(" ", "_")
             if self.session_name_prefix is not None:
@@ -65,6 +66,7 @@ class TmuxLocalManager:
 
     def start_all_sessions(self, on_conflict: SessionConflictAction) -> dict[str, StartResult]:
         results: dict[str, StartResult] = {}
+        self.launched_managers = []
         launch_plan = build_session_launch_plan(
             requested_session_names=[manager.session_name for manager in self.managers],
             backend="tmux",
@@ -92,6 +94,7 @@ class TmuxLocalManager:
                     commands=manager.launch_commands,
                     timeout_seconds=30.0,
                 )
+                self.launched_managers.append(manager)
                 results[session_name] = {"success": True, "message": f"Session '{session_name}' started successfully"}
             except Exception as exc:
                 results[session_name] = {"success": False, "error": str(exc)}
@@ -99,7 +102,7 @@ class TmuxLocalManager:
 
     def kill_all_sessions(self) -> dict[str, StartResult]:
         results: dict[str, StartResult] = {}
-        for manager in self.managers:
+        for manager in self.launched_managers:
             session_name = manager.session_name or "unknown"
             try:
                 result = subprocess.run(["tmux", "kill-session", "-t", session_name], capture_output=True, text=True, timeout=10)
@@ -175,13 +178,36 @@ class TmuxLocalManager:
         print("=" * 80)
 
     def run_monitoring_routine(self, wait_ms: int) -> None:
+        from stackops.scripts.python.helpers.helpers_sessions.session_trace_tmux import (
+            load_trace_snapshot,
+        )
+
         def routine(scheduler: Scheduler) -> None:
             print(f"\n⏰ Monitoring cycle {scheduler.cycle} at {datetime.now()}")
             all_status = self.check_all_sessions_status()
-            active_sessions = [name for name, status in all_status.items() if status.get("session_status", {}).get("session_exists", False)]
-            print(f"Active tmux sessions: {len(active_sessions)}")
+            launched_session_names = {
+                manager.session_name
+                for manager in self.launched_managers
+            }
+            active_sessions = [
+                name
+                for name, status in all_status.items()
+                if name in launched_session_names
+                and status.get("session_status", {}).get("session_exists", False)
+            ]
+            if self.exit_mode == "backToShell" and scheduler.cycle > 0:
+                active_sessions = [
+                    session_name
+                    for session_name in active_sessions
+                    if not load_trace_snapshot(
+                        session_name=session_name,
+                        until="idle-shell",
+                        expected_exit_code=None,
+                    ).criterion_satisfied
+                ]
+            print(f"Active monitored tmux sessions: {len(active_sessions)}")
             if not active_sessions:
-                print("⚠️  No active sessions detected. Stopping monitoring.")
+                print("⚠️  No active monitored commands or sessions detected. Stopping monitoring.")
                 scheduler.max_cycles = scheduler.cycle
         from stackops.cluster.scheduler import LoggerTemplate
         from typing import cast

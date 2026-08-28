@@ -55,6 +55,7 @@ def agents_create(
         resolve_agents_output_dir,
         resolve_agents_workspace_root,
         resolve_prompt_input,
+        validate_agents_output_dir_cleanup,
     )
     from stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch import (
         get_agents_launch_layout,
@@ -89,6 +90,8 @@ def agents_create(
     del job_name
     requested_agents_dir = agents_dir
     cleanup_existing_agents_dir = agents_dir is not None and agents_dir_obj.exists()
+    if cleanup_existing_agents_dir:
+        validate_agents_output_dir_cleanup(repo_root=repo_root, agents_dir_obj=agents_dir_obj)
     del agents_dir
 
     show_agents_create_overview(
@@ -114,6 +117,7 @@ def agents_create(
 
     if cleanup_existing_agents_dir:
         _confirm_existing_agents_dir_cleanup(agents_dir_obj=agents_dir_obj)
+        validate_agents_output_dir_cleanup(repo_root=repo_root, agents_dir_obj=agents_dir_obj)
         import shutil
 
         shutil.rmtree(agents_dir_obj)

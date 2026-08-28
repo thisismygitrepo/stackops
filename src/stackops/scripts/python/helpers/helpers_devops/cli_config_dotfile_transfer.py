@@ -12,7 +12,7 @@ def _format_home_relative_path(path: Path) -> str:
 
 
 def export_dotfiles(
-    pwd: Annotated[str, typer.Argument(..., help="Password for zip encryption")],
+    _prompt_password: Annotated[bool, typer.Option("--prompt-password", help="Prompt securely for the zip encryption password")] = False,
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Use internet-based transfer (wormhole-magic)")] = False,
     over_ssh: Annotated[bool, typer.Option("--over-ssh", "-s", help="Use SSH-based transfer (scp) to a remote machine")] = False,
 ) -> None:
@@ -30,6 +30,10 @@ def export_dotfiles(
 
     if not DOTFILES_ROOT.exists() or not DOTFILES_ROOT.is_dir():
         print(f"Dotfiles directory does not exist: {DOTFILES_ROOT}")
+        raise typer.Exit(code=1)
+    pwd = typer.prompt("Enter the password for zip encryption", hide_input=True)
+    if pwd == "":
+        print("Password for zip encryption must be non-empty.")
         raise typer.Exit(code=1)
     if DOTFILES_ZIP_PATH.exists():
         DOTFILES_ZIP_PATH.unlink()
@@ -62,8 +66,8 @@ def export_dotfiles(
     port = 8888
     display_with_flashy_style(msg=f"""
 On the remote machine, run:
-d c I -u http://{local_ipv4}:{port} -p {pwd}; d c s d -s all -m s -w all
-devops config interactive --url http://{local_ipv4}:{port} -p {pwd}; devops config sync down --sensitivity all --method symlink --which all
+d c I -u http://{local_ipv4}:{port}; d c s d -s all -m s -w all
+devops config import-dotfiles --url http://{local_ipv4}:{port}; devops config sync down --sensitivity all --method symlink --which all
 """, title="Remote Machine Instructions")
     cli_share_server.web_file_explorer(path=str(zipfile_encrypted_path), no_auth=True, port=port)
 
@@ -104,7 +108,6 @@ def _resolve_import_dotfiles_source(url: str) -> Path:
 
 def import_dotfiles(
     url: Annotated[str | None, typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles archive (.zip.gpg)")] = None,
-    pwd: Annotated[str | None, typer.Option(..., "--pwd", "-p", help="Password for zip decryption")] = None,
     use_ssh: Annotated[bool, typer.Option("--use-ssh", "-s", help="Use SSH-based transfer (scp) from a remote machine that has dotfiles.")] = False,
 ) -> None:
     import shutil
@@ -126,8 +129,10 @@ def import_dotfiles(
 
     if url is None:
         url = typer.prompt(f"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) ")
-    if pwd is None:
-        pwd = typer.prompt("Enter the password for zip decryption", hide_input=True)
+    pwd = typer.prompt("Enter the password for zip decryption", hide_input=True)
+    if pwd == "":
+        print("Password for zip decryption must be non-empty.")
+        raise typer.Exit(code=1)
     assert url is not None
     try:
         zipfile_encrypted_path = _resolve_import_dotfiles_source(url=url)
@@ -137,7 +142,6 @@ def import_dotfiles(
         raise typer.Exit(code=1) from error
 
     from stackops.utils.io import GpgCommandError, decrypt_file_symmetric
-    assert pwd is not None
     try:
         zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)
     except (FileNotFoundError, IsADirectoryError, RuntimeError, GpgCommandError) as error:

@@ -73,7 +73,14 @@ def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str
             encrypted_archive_path = encrypt_file_symmetric(file_path=archive_path, pwd=pwd)
     try:
         rclone_wrapper.to_cloud(
-            local_path=encrypted_archive_path, cloud=cloud, remote_path=remote_path, share=False, share_options=None, verbose=True, transfers=10
+            local_path=encrypted_archive_path,
+            cloud=cloud,
+            remote_path=remote_path,
+            overwrite=True,
+            share=False,
+            share_options=None,
+            verbose=True,
+            transfers=10,
         )
     finally:
         _cleanup_temp_paths(paths=(archive_path, encrypted_archive_path))

@@ -34,18 +34,64 @@ def _build_generic_agent_command(
     )
 
 
-def _local_agent_environment_lines(*, agent: AGENTS, api_spec: API_SPEC, is_windows: bool) -> list[str]:
-    match agent:
-        case "codex":
-            env_name = "CODEX_API_KEY"
-            warning_message = "Warning: No CODEX_API_KEY provided, hoping it is set in the environment."
-        case _:
-            return []
+def _without_api_key(*, ai_spec: AI_SPEC) -> AI_SPEC:
+    api_spec = ai_spec["api_spec"]
+    return AI_SPEC(
+        provider=ai_spec["provider"],
+        model=ai_spec["model"],
+        agent=ai_spec["agent"],
+        machine=ai_spec["machine"],
+        api_spec=API_SPEC(
+            api_key=None,
+            api_name=api_spec["api_name"],
+            api_label=api_spec["api_label"],
+            api_account=api_spec["api_account"],
+        ),
+        reasoning_effort=ai_spec["reasoning_effort"],
+    )
 
-    api_key = api_spec["api_key"]
-    if api_key is None:
+
+def _runtime_api_key_environment_lines(
+    *, env_name: str, provider: PROVIDER, api_spec: API_SPEC, is_windows: bool
+) -> list[str]:
+    if api_spec["api_key"] is None:
+        warning_message = f"Warning: No configured API key provided, hoping {env_name} is set in the environment."
         return [agent_shell.render_output(message=warning_message, is_windows=is_windows)]
-    return [agent_shell.render_env_assignment(name=env_name, value=api_key, is_windows=is_windows)]
+
+    api_key_path = dotfiles_llm_api_keys_path(provider)
+    api_label = api_spec["api_label"]
+    resolver_code = (
+        "import configparser\n"
+        "import sys\n"
+        "config = configparser.ConfigParser(interpolation=None)\n"
+        f"config.read({str(api_key_path)!r}, encoding='utf-8')\n"
+        f"api_key = config[{api_label!r}]['api_key'].strip()\n"
+        "if not api_key:\n"
+        "    raise RuntimeError('Configured API key is empty.')\n"
+        "sys.stdout.write(api_key)\n"
+    )
+    resolver_command = agent_shell.build_shell_invocation(
+        executable="uv",
+        arguments=["run", "--no-project", "--quiet", "python", "-c", resolver_code],
+        is_windows=is_windows,
+    )
+    if is_windows:
+        return [
+            f"$env:{env_name} = (& {resolver_command})",
+            "if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }",
+        ]
+    return [
+        f'{env_name}="$({resolver_command})" || exit $?',
+        f"export {env_name}",
+    ]
+
+
+def _forward_docker_environment(*, command: str, env_name: str) -> str:
+    marker = "docker run -it --rm \\\n"
+    if marker not in command:
+        raise RuntimeError("Docker agent command does not contain the expected docker run invocation.")
+    replacement = f"docker run -it --rm \\\n  -e {env_name} \\\n"
+    return command.replace(marker, replacement, 1)
 
 
 def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list[API_SPEC]:
@@ -117,6 +163,7 @@ def prep_agent_launch(
         agent_cmd_launch_path = prompt_root / agent_shell.get_agent_command_filename(idx=idx, is_windows=is_windows)
         random_sleep_time = random.uniform(0, stagger_max)
         ai_spec: AI_SPEC
+        api_key_environment_name: str | None = None
         match agent:
             case "cursor-agent":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
@@ -146,9 +193,10 @@ def prep_agent_launch(
                         is_windows=is_windows,
                     )
                 else:
-                    from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_crush import fire_crush
+                    from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_crush import CRUSH_API_KEY_ENV, fire_crush
 
-                    cmd = fire_crush(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
+                    api_key_environment_name = CRUSH_API_KEY_ENV
+                    cmd = fire_crush(ai_spec=_without_api_key(ai_spec=ai_spec), prompt_path=prompt_path, repo_root=repo_root)
             case "copilot":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
@@ -169,6 +217,7 @@ def prep_agent_launch(
                 api_keys = get_api_keys(provider="openai", silent_if_missing=True)
                 api_spec = api_keys[idx % len(api_keys)] if len(api_keys) > 0 else API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
+                api_key_environment_name = "CODEX_API_KEY"
                 if machine == "local":
                     cmd = _build_generic_agent_command(
                         agent=agent,
@@ -181,7 +230,8 @@ def prep_agent_launch(
                 else:
                     from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex import fire_codex
 
-                    cmd = fire_codex(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
+                    cmd = fire_codex(ai_spec=_without_api_key(ai_spec=ai_spec), prompt_path=prompt_path, repo_root=repo_root)
+                    cmd = _forward_docker_environment(command=cmd, env_name=api_key_environment_name)
             case "pi":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
@@ -235,8 +285,18 @@ def prep_agent_launch(
         script_lines.append(
             agent_shell.render_env_assignment(name="FIRE_AGENTS_AGENT_LAUNCHER", value=str(agent_cmd_launch_path), is_windows=is_windows)
         )
-        if machine == "local":
-            script_lines.extend(_local_agent_environment_lines(agent=agent, api_spec=ai_spec["api_spec"], is_windows=is_windows))
+        if api_key_environment_name is not None:
+            selected_provider = ai_spec["provider"]
+            if selected_provider is None:
+                raise RuntimeError(f"Provider is required to resolve the {api_key_environment_name} credential.")
+            script_lines.extend(
+                _runtime_api_key_environment_lines(
+                    env_name=api_key_environment_name,
+                    provider=selected_provider,
+                    api_spec=ai_spec["api_spec"],
+                    is_windows=is_windows,
+                )
+            )
         script_lines.append("")
         script_lines.append(
             agent_shell.render_output(
@@ -253,7 +313,6 @@ def prep_agent_launch(
             agent_shell.render_output(message=f"Running with api acount:  {ai_spec['api_spec']['api_account']}", is_windows=is_windows)
         )
         script_lines.append(agent_shell.render_output(message=f"Running with api name:    {ai_spec['api_spec']['api_name']}", is_windows=is_windows))
-        script_lines.append(agent_shell.render_output(message=f"Running with api key:     {ai_spec['api_spec']['api_key']}", is_windows=is_windows))
         script_lines.append(agent_shell.render_sleep_milliseconds(milliseconds=100, is_windows=is_windows))
         script_lines.append(agent_shell.render_output(message="---------END OF AGENT OUTPUT---------", is_windows=is_windows))
         script_lines.append("")

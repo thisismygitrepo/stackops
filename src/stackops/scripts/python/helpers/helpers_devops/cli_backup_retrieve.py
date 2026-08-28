@@ -1,6 +1,5 @@
 """BR: Backup and Retrieve"""
 
-import shlex
 from pathlib import Path
 from platform import system
 from typing import Literal
@@ -114,6 +113,28 @@ def _retrieve_from_share_url(
         raise ValueError(f"Could not decrypt '{display_name}' after downloading its share_url.\n{error}") from error
 
 
+def _run_cloud_copy(*, source_path: str, target_path: str, item: BackupItem, pwd: str | None) -> None:
+    from stackops.scripts.python.helpers.helpers_cloud import cloud_copy
+
+    cloud_copy.main(
+        source=source_path,
+        target=target_path,
+        transfers=32,
+        overwrite=not all_os_values(item["os"]),
+        share_scope=None,
+        share_type=None,
+        record_group="default",
+        record_name=None,
+        record_os="linux,darwin,windows",
+        rel2home=item["rel2home"],
+        root=cloud_copy.defaults["root"],
+        pwd=pwd if item["encryption"] == "symmetric" else None,
+        password_name=None,
+        encryption=item["encryption"],
+        zip_=item["zip"],
+        os_specific=cloud_copy.defaults["os_specific"],
+    )
+
 
 def main_backup_retrieve(
     direction: DIRECTION,
@@ -197,7 +218,14 @@ def main_backup_retrieve(
         console.print(Panel(f"📋 PROCESSING SELECTED ENTRIES\n🔢 Total entries to process: {sum(len(item) for item in items.values())}", title="[bold blue]Process Selected Entries[/bold blue]", border_style="blue"))
     if use_link_retrieve:
         _validate_use_link_items(items)
+    if pwd is None and any(item["encryption"] == "symmetric" for group_items in items.values() for item in group_items.values()):
+        import typer
+
+        pwd = typer.prompt("Enter the symmetric encryption password", hide_input=True)
+        if pwd == "":
+            raise ValueError("Symmetric encryption password must be non-empty.")
     program = ""
+    copy_operations: list[tuple[str, str, BackupItem]] = []
     link_download_count = 0
     needs_fallback_cloud = (
         not use_link_retrieve
@@ -214,8 +242,8 @@ def main_backup_retrieve(
         if not fallback_cloud:
             raise ValueError("Cloud selection cancelled.")
     cloud_mode = "share_url links" if use_link_retrieve else cloud_override or fallback_cloud or "path_cloud-specific"
-    operation_line = f"🔗 RUNNING {direction} VIA SHARE LINKS" if use_link_retrieve else f"🚀 GENERATING {direction} SCRIPT"
-    operation_title = "[bold blue]Link Retrieve[/bold blue]" if use_link_retrieve else "[bold blue]Script Generation[/bold blue]"
+    operation_line = f"🔗 RUNNING {direction} VIA SHARE LINKS" if use_link_retrieve else f"🚀 RUNNING {direction}"
+    operation_title = "[bold blue]Link Retrieve[/bold blue]" if use_link_retrieve else "[bold blue]Cloud Sync[/bold blue]"
     console.print(Panel(f"{operation_line}\n🌥️  Cloud: {cloud_mode}\n🗂️  Items: {sum(len(item) for item in items.values())}", title=operation_title, border_style="blue"))
     for group_name, group_items in items.items():
         for item_name, item in group_items.items():
@@ -224,9 +252,6 @@ def main_backup_retrieve(
             flags += "z" if item["zip"] else ""
             flags += "r" if item["rel2home"] else ""
             flags += "o" if not all_os_values(item["os"]) else ""
-            encryption_mode = item["encryption"]
-            encryption_arg = f" --encryption {encryption_mode}" if encryption_mode is not None else ""
-            password_arg = f" --password {shlex.quote(pwd)}" if encryption_mode == "symmetric" and pwd is not None else ""
             local_path = Path(item["path_local"]).as_posix()
             path_cloud = item["path_cloud"]
             if use_link_retrieve:
@@ -281,27 +306,27 @@ def main_backup_retrieve(
                 title=f"[bold blue]Processing Item: {display_name}[/bold blue]",
                 border_style="blue",
             ))
-            flag_arg = f" -{flags}" if flags else ""
             if direction == "BACKUP":
-                program += f"""\ncloud copy "{local_path}" "{remote_spec}"{flag_arg}{encryption_arg}{password_arg}\n"""
+                copy_operations.append((local_path, remote_spec, item))
             elif direction == "RETRIEVE":
-                program += f"""\ncloud copy "{remote_spec}" "{local_path}"{flag_arg}{encryption_arg}{password_arg}\n"""
+                copy_operations.append((remote_spec, local_path, item))
             else:
                 console.print(Panel('❌ ERROR: INVALID DIRECTION\n⚠️  Direction must be either "BACKUP" or "RETRIEVE"', title="[bold red]Error: Invalid Direction[/bold red]", border_style="red"))
                 raise RuntimeError(f"Unknown direction: {direction}")
             if group_name == "dotfiles" and system_raw == "Linux":
                 program += """\nchmod 700 ~/.ssh/*\n"""
                 console.print(Panel("🔒 SPECIAL HANDLING: SSH PERMISSIONS\n🛠️  Setting secure permissions for SSH files\n📝 Command: chmod 700 ~/.ssh/*", title="[bold blue]Special Handling: SSH Permissions[/bold blue]", border_style="blue"))
+    for copy_source, copy_target, copy_item in copy_operations:
+        _run_cloud_copy(source_path=copy_source, target_path=copy_target, item=copy_item, pwd=pwd)
     if program.strip():
-        script_desc = f"{direction} post-processing script" if use_link_retrieve else f"{direction} script"
+        script_desc = f"{direction} post-processing script"
         print_code(code=program, lexer="shell", desc=script_desc)
-        console.print(Panel(f"✅ {direction} SCRIPT GENERATION COMPLETE\n🚀 Ready to execute the operations", title="[bold green]Script Generation Complete[/bold green]", border_style="green"))
-        # import subprocess
-        # subprocess.run(program, shell=True, check=True)
         from stackops.utils.code import run_shell_script
         run_shell_script(program, display_script=True, clean_env=False)
     if link_download_count:
         console.print(Panel(f"✅ LINK RETRIEVE COMPLETE\n🔢 Downloaded entries: {link_download_count}", title="[bold green]Link Retrieve Complete[/bold green]", border_style="green"))
+    elif copy_operations:
+        console.print(Panel(f"✅ {direction} COMPLETE\n🔢 Processed entries: {len(copy_operations)}", title="[bold green]Complete[/bold green]", border_style="green"))
     elif not program.strip():
         console.print(Panel(f"✅ {direction} COMPLETE\nNo shell commands were generated.", title="[bold green]Complete[/bold green]", border_style="green"))
 

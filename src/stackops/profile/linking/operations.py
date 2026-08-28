@@ -204,12 +204,10 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
             if config_file_default_path.is_symlink():
                 # Case: config_file_default_path exists AND config_file_self_managed_path doesn't exist AND config_file_default_path is a symlink (pointing anywhere)
                 action_taken = "relink2newSelfManagedPath"
-                details = "Removed existing symlink, will create config_file_self_managed_path and new symlink"
-                console.print(Panel(f"🔄 RELINKING | Updating symlink from {config_file_default_path} ➡️  {config_file_self_managed_path}", title="Relinking", expand=False))
+                details = "Copied existing symlink target to config_file_self_managed_path and created new symlink"
+                console.print(Panel(f"🔄 RELINKING | Copying existing symlink target to {config_file_self_managed_path}, then updating {config_file_default_path}", title="Relinking", expand=False))
+                path_core.copy(config_file_default_path, path=config_file_self_managed_path, verbose=True)
                 delete_path(config_file_default_path, verbose=True)
-                # Create config_file_self_managed_path
-                config_file_self_managed_path.parent.mkdir(parents=True, exist_ok=True)
-                config_file_self_managed_path.touch()
             else:
                 # Case: config_file_default_path exists AND config_file_self_managed_path doesn't exist AND config_file_default_path is a concrete path
                 action_taken = "move2selfManagedPath"
@@ -331,11 +329,10 @@ def copy_map(config_file_default_path: Path, config_file_self_managed_path: Path
             # config_file_default_path exists, config_file_self_managed_path doesn't
             if config_file_default_path.is_symlink():
                 action_taken = "relink2newSelfManagedPath"
-                details = "Removed existing symlink, will create config_file_self_managed_path and copy"
-                console.print(Panel(f"🔄 REMOVING SYMLINK | Removing symlink {config_file_default_path}, creating {config_file_self_managed_path}", title="Removing Symlink", expand=False))
+                details = "Copied existing symlink target to config_file_self_managed_path and replaced symlink with copy"
+                console.print(Panel(f"🔄 REPLACING SYMLINK | Copying existing symlink target to {config_file_self_managed_path}, then replacing {config_file_default_path} with a copy", title="Replacing Symlink", expand=False))
+                path_core.copy(config_file_default_path, path=config_file_self_managed_path, verbose=True)
                 delete_path(config_file_default_path, verbose=True)
-                config_file_self_managed_path.parent.mkdir(parents=True, exist_ok=True)
-                config_file_self_managed_path.touch()
             else:
                 action_taken = "move2selfManagedPath"
                 details = "Moved config_file_default_path to config_file_self_managed_path location, will copy back"

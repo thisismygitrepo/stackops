@@ -303,6 +303,7 @@ def _sync_from_cloud(cloud: str, path: Path) -> None:
             in_path=f"{cloud}:{rel}",
             out_path=str(path),
             transfers=RCLONE_TRANSFERS,
+            overwrite=True,
             show_command=False,
             show_progress=False,
         )
@@ -317,6 +318,7 @@ def _sync_to_cloud(cloud: str, path: Path) -> None:
         in_path=str(path),
         out_path=f"{cloud}:{rel}",
         transfers=RCLONE_TRANSFERS,
+        overwrite=True,
         show_command=False,
         show_progress=False,
     )

@@ -15,6 +15,7 @@ from typing import cast
 import stackops.utils.path_core as path_core
 from rich.console import Console
 
+from stackops.jobs.installer.checks.vt_utils import ScanResult, summarize_scan_results
 from stackops.utils.cloud.rclone_wrapper import get_remote_path, to_cloud
 from stackops.utils.source_of_truth import CONFIG_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
@@ -128,6 +129,33 @@ def load_engine_results_report() -> list[dict[str, str]]:
     console.print(f"[yellow]Warning: Engine results report not found at {ENGINE_RESULTS_PATH}[/yellow]")
     return []
 
+
+def _build_scan_results_by_app(rows: list[dict[str, str]]) -> dict[str, list[ScanResult]]:
+    scan_results_by_app: dict[str, list[ScanResult]] = {}
+    for row in rows:
+        app_name = (row.get("app_name") or "").strip()
+        engine_name = (row.get("engine_name") or "").strip()
+        if not app_name or not engine_name:
+            continue
+        scan_results_by_app.setdefault(app_name, []).append(
+            {
+                "engine_name": engine_name,
+                "category": (row.get("engine_category") or "").strip(),
+                "result": row.get("engine_result") or None,
+            }
+        )
+    return scan_results_by_app
+
+
+def _is_safe_app_report_row(row: dict[str, str], scan_results_by_app: dict[str, list[ScanResult]]) -> bool:
+    app_name = (row.get("app_name") or "").strip()
+    scan_summary_available = (row.get("scan_summary_available") or "").strip().casefold() == "true"
+    if not app_name or not scan_summary_available:
+        return False
+    scan_summary = summarize_scan_results(scan_results_by_app.get(app_name, []))
+    return scan_summary["verdict_engines"] > 0 and scan_summary["flagged_engines"] == 0
+
+
 def download_safe_apps(name: str = "essentials") -> bool:
     """Downloads and installs safe apps."""
     data = load_app_metadata_report()
@@ -135,16 +163,15 @@ def download_safe_apps(name: str = "essentials") -> bool:
         console.print("[red]No app data available to install.[/red]")
         return False
 
-    apps_to_install = []
+    scan_results_by_app = _build_scan_results_by_app(load_engine_results_report())
+    safe_apps = [item for item in data if _is_safe_app_report_row(item, scan_results_by_app)]
     if name == "essentials":
-        # Install all available apps in the report? Or filter?
-        # Original code installed all if name="essentials" (implied by logic)
-        apps_to_install = [item['app_url'] for item in data if item.get('app_url')]
+        apps_to_install = [item["app_url"] for item in safe_apps if item.get("app_url")]
     else:
-        apps_to_install = [item['app_url'] for item in data if item.get('app_name') == name and item.get('app_url')]
+        apps_to_install = [item["app_url"] for item in safe_apps if item.get("app_name") == name and item.get("app_url")]
 
     if not apps_to_install:
-        console.print(f"[yellow]No apps found to install for '{name}'.[/yellow]")
+        console.print(f"[yellow]No safe apps found to install for '{name}'.[/yellow]")
         return False
 
     console.print(f"[bold]Installing {len(apps_to_install)} apps...[/bold]")

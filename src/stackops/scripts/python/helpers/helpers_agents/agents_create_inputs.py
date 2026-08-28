@@ -1,5 +1,7 @@
+import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from stackops.scripts.python.helpers.helpers_agents.agents_create_artifacts import (
     ContextSourceKind,
@@ -206,6 +208,52 @@ def resolve_agents_output_dir(*, repo_root: Path, agents_dir: str | None, job_na
     else:
         job_name_resolved = job_name.strip()
     return agents_dir_obj, job_name_resolved
+
+
+def validate_agents_output_dir_cleanup(*, repo_root: Path, agents_dir_obj: Path) -> None:
+    if not agents_dir_obj.exists():
+        raise ValueError(f"--agents-dir cleanup target no longer exists: {agents_dir_obj}")
+    if not agents_dir_obj.is_dir():
+        raise ValueError(f"--agents-dir points to an existing non-directory path: {agents_dir_obj}")
+
+    agents_dir_resolved = agents_dir_obj.expanduser().resolve()
+    if agents_dir_resolved != agents_dir_obj:
+        raise ValueError(f"--agents-dir cleanup target changed after path resolution: {agents_dir_obj}")
+
+    repo_root_resolved = repo_root.expanduser().resolve()
+    home_root = Path.home().resolve()
+    filesystem_root = Path(agents_dir_resolved.anchor)
+    protected_roots = (
+        filesystem_root,
+        home_root,
+        repo_root_resolved,
+        repo_root_resolved / ".ai",
+        repo_root_resolved / ".ai" / "agents",
+    )
+    protected_ancestors = (home_root, repo_root_resolved)
+    if agents_dir_resolved in protected_roots or any(root.is_relative_to(agents_dir_resolved) for root in protected_ancestors):
+        raise ValueError(f"Refusing to delete protected --agents-dir path: {agents_dir_resolved}")
+
+    manifest_path = agents_dir_resolved / ".create" / "manifest.json"
+    if not manifest_path.is_file():
+        raise ValueError(
+            f"Refusing to delete an existing --agents-dir that StackOps does not own: {agents_dir_resolved}\n"
+            f"Expected ownership manifest: {manifest_path}"
+        )
+    try:
+        manifest = cast(object, json.loads(manifest_path.read_text(encoding="utf-8")))
+    except json.JSONDecodeError as error:
+        raise ValueError(f"Invalid StackOps agents ownership manifest: {manifest_path}") from error
+    match manifest:
+        case {"agents_dir": str(recorded_agents_dir)}:
+            recorded_agents_dir_resolved = Path(recorded_agents_dir).expanduser().resolve()
+        case _:
+            raise ValueError(f"Invalid StackOps agents ownership manifest: {manifest_path}")
+    if recorded_agents_dir_resolved != agents_dir_resolved:
+        raise ValueError(
+            f"Refusing to delete --agents-dir with ownership metadata for a different path: {agents_dir_resolved}\n"
+            f"Manifest records: {recorded_agents_dir_resolved}"
+        )
 
 
 def resolve_agents_workspace_root(*, preferred_root: Path, agents_dir_obj: Path) -> Path:

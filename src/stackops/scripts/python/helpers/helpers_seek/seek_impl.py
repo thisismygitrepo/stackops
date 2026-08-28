@@ -201,22 +201,13 @@ def _run_semantic_search(path: str, query: str, extension: str | None, max_files
         content: str
 
     def semantic_search(query: str, text_files: list[str]) -> list[SemanticSearchResult]:
-        # semtools search "hi" ./devcontainer.json --json
-        import random
-
-        random_suffix = str(random.randint(1000, 9999))
-        import string
-
-        random_suffix += "".join(random.choices(string.ascii_letters + string.digits, k=8))
-        results_file = Path.home().joinpath("tmp_results", "tmp_text", "semantic_search", "results_" + random_suffix + ".json")
-        results_file.parent.mkdir(parents=True, exist_ok=True)
-        command = f"""semtools search "{query}" {" ".join(text_files)} --json --top-k 5 --n-lines 10 > {results_file}"""
         import subprocess
 
-        subprocess.run(command, shell=True, check=True)
+        command = ["semtools", "search", query, *text_files, "--json", "--top-k", "5", "--n-lines", "10"]
+        result = subprocess.run(command, stdout=subprocess.PIPE, check=True)
         import json
 
-        results_json = results_file.read_text(encoding="utf-8")
+        results_json = result.stdout.decode()
         results: list[SemanticSearchResult] = json.loads(results_json)["results"]
         return results
 

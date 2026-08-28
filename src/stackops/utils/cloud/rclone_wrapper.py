@@ -71,6 +71,7 @@ def to_cloud(
     local_path: Path,
     cloud: str,
     remote_path: Path,
+    overwrite: bool,
     share: bool,
     share_options: rclone_utils.ShareLinkOptions | None,
     verbose: bool,
@@ -83,6 +84,7 @@ def to_cloud(
         in_path=local_path_resolved.as_posix(),
         out_path=f"{cloud}:{remote_path.as_posix()}",
         transfers=transfers,
+        overwrite=overwrite,
         show_command=verbose,
         show_progress=verbose,
     )
@@ -117,6 +119,7 @@ def from_cloud(
         in_path=f"{cloud}:{remote_path.as_posix()}",
         out_path=local_path_resolved.as_posix(),
         transfers=transfers,
+        overwrite=True,
         show_command=verbose,
         show_progress=verbose,
     )

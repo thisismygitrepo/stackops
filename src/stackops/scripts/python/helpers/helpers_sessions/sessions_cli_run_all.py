@@ -21,9 +21,9 @@ def run_all_cli(
     subsitute_home: bool,
 ) -> None:
     try:
-        if on_conflict in {"mergeOverwrite", "mergeSkip"}:
+        if on_conflict in {"skip", "mergeOverwrite", "mergeSkip"}:
             raise ValueError(
-                "--on-conflict mergeOverwrite and mergeSkip are not supported for run-all "
+                "--on-conflict skip, mergeOverwrite, and mergeSkip are not supported for run-all "
                 "because the dynamic scheduler requires exclusive control of the session."
             )
 
