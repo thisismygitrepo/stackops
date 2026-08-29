@@ -111,7 +111,7 @@ def agents_create(
             ...,
             "--agents-dir",
             "-d",
-            help="Exact directory to store agent files in. If it already exists, you will be asked before it is deleted for a clean run.",
+            help="Exact directory to store agent files in. Existing directories are replaced only when StackOps ownership metadata matches and you confirm.",
         ),
     ] = None,
     save_as_yaml: Annotated[

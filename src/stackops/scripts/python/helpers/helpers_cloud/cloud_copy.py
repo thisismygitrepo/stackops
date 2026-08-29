@@ -323,6 +323,7 @@ def main(
                     local_path=upload_path,
                     cloud=cloud,
                     remote_path=remote_path,
+                    overwrite=cloud_config_explicit["overwrite"],
                     share=cloud_config_explicit["share"],
                     share_options=share_options,
                     verbose=True,

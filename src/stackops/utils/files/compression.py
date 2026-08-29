@@ -73,6 +73,14 @@ def _iter_archive_members(source: Path, included_relative_paths: tuple[Path, ...
     return [source.joinpath(relative_path) for relative_path in included_relative_paths]
 
 
+def _resolve_contained_archive_path(extraction_root: Path, member_name: str) -> Path:
+    resolved_root = extraction_root.resolve()
+    resolved_member = (resolved_root / member_name).resolve()
+    if resolved_member == resolved_root or not resolved_member.is_relative_to(resolved_root):
+        raise ValueError(f"Archive member escapes extraction root: {member_name!r}")
+    return resolved_member
+
+
 def _split_embedded_archive_path(source: Path) -> tuple[Path, Path | None]:
     parts = source.expanduser().parts
     for index, part in enumerate(parts):
@@ -217,11 +225,11 @@ def unzip_path(
     with zipfile.ZipFile(archive_path, "r") as archive:
         if overwrite:
             if target_name is not None:
-                delete_path(extraction_root / target_name, verbose=True)
+                delete_path(_resolve_contained_archive_path(extraction_root, target_name), verbose=True)
             elif content:
                 top_level_entries = {Path(entry).parts[0] for entry in archive.namelist() if entry != "" and len(Path(entry).parts) > 0}
                 for entry in sorted(top_level_entries):
-                    delete_path(extraction_root / entry, verbose=True)
+                    delete_path(_resolve_contained_archive_path(extraction_root, entry), verbose=True)
             else:
                 delete_path(destination_root, verbose=True)
         password = None if pwd is None else pwd.encode()
@@ -241,7 +249,7 @@ def untar_path(source: Path, *, folder: Path | None, name: str | None, path: Pat
     destination = _resolve_output_path(source_resolved, folder=folder, name=name, path=path, default_name=_strip_suffix(source_resolved.name, ".tar"))
     destination.mkdir(parents=True, exist_ok=True)
     with tarfile.open(source_resolved, "r") as archive:
-        archive.extractall(path=destination)
+        archive.extractall(path=destination, filter="data")
     return _finalize_result(
         source=source_resolved,
         result=destination,

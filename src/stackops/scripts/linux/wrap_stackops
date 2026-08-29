@@ -16,6 +16,8 @@ wrap_in_shell_script() {
   local RANDOM_NAME=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
   local OP_DIR="$HOME/tmp_results/tmp_scripts/stackops"
   local OP_PROGRAM_PATH="$OP_DIR/${RANDOM_NAME}.sh"
+  local command_exit_code
+  local exit_code
   export OP_PROGRAM_PATH
   # local timestamp=$(date -u +"%Y-%m-%d %H:%M:%SZ")
   # printf "%b\n" "${BOLD}${BLUE}🛠️  stackops — running ${command}${RESET}"
@@ -23,11 +25,12 @@ wrap_in_shell_script() {
   # printf "%b\n" "${BLUE}Op program path:${RESET} ${OP_PROGRAM_PATH}"
   # Forward arguments to the command
   "$command" "$@"
+  command_exit_code=$?
   if [[ -f "$OP_PROGRAM_PATH" ]]; then
     printf "%b\n" "🚀 Taking over from python script @ ${OP_PROGRAM_PATH}${RESET}"
     # printf "%b\n" "${GREEN}▶ Running...${RESET}"
     . "$OP_PROGRAM_PATH"
-    local exit_code=$?
+    exit_code=$?
     # if [[ $exit_code -eq 0 ]]; then
       # printf "%b\n" "${GREEN}✅ '${command}' execution completed.${RESET}"
     # else
@@ -35,11 +38,12 @@ wrap_in_shell_script() {
     # fi
   else
     echo " "
+    exit_code=$command_exit_code
     # printf "%b\n" "${GREEN}✅ '${command}' execution completed.${RESET}"
   fi
+  return "$exit_code"
 }
 
 if [[ $# -gt 0 ]]; then
   wrap_in_shell_script "$@"
 fi
-

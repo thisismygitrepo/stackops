@@ -167,14 +167,15 @@ def exit_then_run_shell_script(script: str, strict: bool = False) -> None:
         console.print("[cyan]🚀 Handing over to shell script runner via OP_PROGRAM_PATH:[/cyan]")
         console.print(f"[bold green]{str(op_program_path)}[/bold green]")
         print_code(code=script, lexer="shell", desc="script to run via OP_PROGRAM_PATH")
+        exit_code = 0
     else:
         if op_program_path_raw is not None and exists:
             console.print(f"[yellow]⚠️  OP_PROGRAM_PATH @ {op_program_path_raw} already exists.[/yellow] [cyan]Falling back to direct execution.[/cyan]")
         elif op_program_path_raw is None:
             console.print("[cyan]ℹ️  OP_PROGRAM_PATH is not set.[/cyan] [yellow]Falling back to direct execution.[/yellow]")
-        run_shell_script(script, display_script=True, clean_env=False)
+        exit_code = run_shell_script(script, display_script=True, clean_env=False).returncode
     import sys
-    sys.exit(0)
+    sys.exit(exit_code)
 def exit_then_run_shell_file(script_path: str, strict: bool) -> None:
     import os
     from rich.console import Console
@@ -187,8 +188,9 @@ def exit_then_run_shell_file(script_path: str, strict: bool) -> None:
             sys.exit(1)
     if op_program_path_raw is None or Path(op_program_path_raw).exists():
         console.print("[cyan]ℹ️  OP_PROGRAM_PATH is not set.[/cyan] [yellow]Falling back to direct execution.[/yellow]")
-        run_shell_file(script_path=script_path, clean_env=False)
-        return
+        proc = run_shell_file(script_path=script_path, clean_env=False)
+        import sys
+        sys.exit(proc.returncode)
     import platform
     if platform.system() == "Windows":
         suffix = ".ps1"

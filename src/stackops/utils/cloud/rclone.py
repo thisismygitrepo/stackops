@@ -264,8 +264,10 @@ def _share_link_backend_flags(*, remote_name: str, share_options: ShareLinkOptio
             return []
 
 
-def copyto(*, in_path: str, out_path: str, transfers: int, show_command: bool, show_progress: bool) -> None:
+def copyto(*, in_path: str, out_path: str, transfers: int, overwrite: bool, show_command: bool, show_progress: bool) -> None:
     command = ["rclone", "copyto", in_path, out_path, f"--transfers={transfers}"]
+    if not overwrite:
+        command.extend(["--immutable", "--check-first"])
     if show_progress:
         command.append("--progress")
     _run_rclone(command, show_command=show_command, show_progress=show_progress)

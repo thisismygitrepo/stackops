@@ -172,22 +172,19 @@ def create_nu_shell_profile() -> None:
     from stackops.profile.create_helper import copy_assets_to_machine
     copy_assets_to_machine("settings")
     copy_assets_to_machine("scripts")
-    desired_config = NUSHELL_CONFIG_SOURCE_LINE + "\n"
-    desired_env = NUSHELL_ENV_SOURCE_LINE + "\n"
-    current_config = config_file.read_text(encoding="utf-8") if config_file.exists() else None
-    current_env = env_file.read_text(encoding="utf-8") if env_file.exists() else None
-    if current_config == desired_config:
-        console.print(Panel("🔄 NU SHELL CONFIG | config.nu already matches the managed wrapper.", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
-    else:
-        console.print(Panel(f"""📝 NU SHELL CONFIG | Writing managed config.nu wrapper to `{config_file}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
-        config_file.write_text(desired_config, encoding="utf-8")
-        console.print(Panel("✅ Nu shell config updated successfully", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
-    if current_env == desired_env:
-        console.print(Panel("🔄 NU SHELL CONFIG | env.nu already matches the managed wrapper.", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
-    else:
-        console.print(Panel(f"""📝 NU SHELL CONFIG | Writing managed env.nu wrapper to `{env_file}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
-        env_file.write_text(desired_env, encoding="utf-8")
-        console.print(Panel("✅ Nu shell env updated successfully", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+    for profile_path, source_line in (
+        (config_file, NUSHELL_CONFIG_SOURCE_LINE),
+        (env_file, NUSHELL_ENV_SOURCE_LINE),
+    ):
+        current_profile = profile_path.read_text(encoding="utf-8") if profile_path.exists() else ""
+        if any(existing_line.strip() == source_line for existing_line in current_profile.splitlines()):
+            console.print(Panel(f"🔄 NU SHELL CONFIG | {profile_path.name} already sources the StackOps profile.", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+            continue
+        console.print(Panel(f"""📝 NU SHELL CONFIG | Adding the StackOps source to `{profile_path}`.""", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
+        separator = "" if current_profile == "" or current_profile.endswith("\n") else "\n"
+        with profile_path.open("a", encoding="utf-8") as profile:
+            profile.write(separator + source_line + "\n")
+        console.print(Panel(f"✅ Nu shell {profile_path.name} updated successfully", title="[bold cyan]Nu Shell Config[/bold cyan]", border_style="cyan"))
 
 
 if __name__ == "__main__":

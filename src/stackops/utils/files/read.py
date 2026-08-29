@@ -121,7 +121,7 @@ def read_toml(path: 'Path') -> Any:
 
 def read_npy(path: 'Path', **kwargs: Any) -> Any:
     import numpy as np
-    data = np.load(str(path), allow_pickle=True, **kwargs)
+    data = np.load(str(path), allow_pickle=False, **kwargs)
     return data
 
 
@@ -187,8 +187,6 @@ READERS: dict[str, Callable[..., Any]] = {
     "toml": read_toml,
     "npy": read_npy,
     "npz": read_npz,
-    "pickle": read_pickle,
-    "pkl": read_pkl,
     "py": read_py,
     "txt": read_txt,
     "parquet": read_parquet,

@@ -1,8 +1,9 @@
 from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
-from stackops.utils.cloud.encryption import EncryptionModeChoice, parse_encryption_mode
+from stackops.utils.cloud.encryption import EncryptionModeChoice
 
 
 defaults = read_default_cloud_config()
+
 
 def main(
     source: str,
@@ -27,19 +28,25 @@ def main(
     title = "☁️  Cloud Sync Utility"
     console.print(Panel(title, title_align="left", border_style="blue"))
 
-    encryption_mode = None if encryption is None else parse_encryption_mode(encryption, label="--encryption")
+    unsupported_options: list[str] = []
     if pwd is not None:
-        if pwd == "":
-            raise ValueError("--pwd must be non-empty.")
-        if encryption_mode != "symmetric":
-            raise ValueError("--pwd requires --encryption symmetric.")
+        unsupported_options.append("--pwd")
+    if encryption is not None:
+        unsupported_options.append("--encryption")
+    if zip_:
+        unsupported_options.append("--zip")
+    if unsupported_options:
+        raise ValueError(
+            f"cloud sync does not support {', '.join(unsupported_options)} because incremental sync cannot stage ZIP or GPG artifacts. "
+            "Use cloud copy for compressed or encrypted transfers."
+        )
 
     cloud_config_explicit = CloudConfig(
         cloud="",
         root=root,
-        pwd=pwd,
-        encryption=encryption_mode,
-        zip=zip_,
+        pwd=None,
+        encryption=None,
+        zip=False,
         rel2home=True,
         os_specific=False,
         overwrite=False,
