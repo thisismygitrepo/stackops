@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -93,3 +94,53 @@ def test_add_ai_configs_agentops_opt_out_preserves_existing_skill(
     assert target_skill_path.read_text(encoding="utf-8") == "existing customization\n"
     assert result.plan.add_agentops_skill is False
     assert result.artifact_changes == ()
+
+
+def test_add_ai_configs_writes_pi_ten_retry_policy(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repository"
+    repo_root.mkdir()
+
+    initai.add_ai_configs(
+        repo_root=repo_root,
+        frameworks=("pi",),
+        include_common_scaffold=False,
+        add_all_touched_configs_to_gitignore=False,
+        add_vscode_task=False,
+        add_private_config=True,
+        add_instructions=False,
+        add_agentops_skill=False,
+    )
+
+    settings = json.loads(repo_root.joinpath(".pi", "settings.json").read_text(encoding="utf-8"))
+    assert settings["retry"] == {
+        "enabled": True,
+        "maxRetries": 10,
+        "baseDelayMs": 2_000,
+        "provider": {
+            "maxRetries": 0,
+            "maxRetryDelayMs": 60_000,
+        },
+    }
+
+
+def test_add_ai_configs_writes_omp_ten_retry_policy(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repository"
+    repo_root.mkdir()
+
+    initai.add_ai_configs(
+        repo_root=repo_root,
+        frameworks=("omp",),
+        include_common_scaffold=False,
+        add_all_touched_configs_to_gitignore=False,
+        add_vscode_task=False,
+        add_private_config=True,
+        add_instructions=False,
+        add_agentops_skill=False,
+    )
+
+    assert repo_root.joinpath(".omp", "config.yml").read_text(encoding="utf-8") == """retry:
+  enabled: true
+  maxRetries: 10
+  baseDelayMs: 500
+  maxDelayMs: 300000
+"""

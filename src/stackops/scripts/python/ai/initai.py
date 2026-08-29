@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from pathlib import Path
 from time import perf_counter
-from typing import get_args
 
 import stackops.scripts.python.ai.scripts.paths as ai_script_paths
 from stackops.scripts.python.ai.initai_artifacts import merge_artifact_changes, write_text_artifact
@@ -13,7 +12,7 @@ from stackops.scripts.python.ai.utils.vscode_tasks import add_lint_and_type_chec
 from stackops.scripts.python.helpers.helpers_agents import agents_skill_stackops_backend
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import AGENTOPS_SKILL_NAME, build_stackops_skill_folder_names
 from stackops.utils.accessories import get_repo_root
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import CONFIG_AGENT_VALUES, CONFIG_AGENTS
 
 def _collect_gitignore_entries(*, changes: tuple[ArtifactChange, ...]) -> tuple[str, ...]:
     return tuple(change.path.as_posix() for change in changes if change.action != "removed" and change.path != Path(".gitignore"))
@@ -21,7 +20,7 @@ def _collect_gitignore_entries(*, changes: tuple[ArtifactChange, ...]) -> tuple[
 
 def add_ai_configs(
     repo_root: Path,
-    frameworks: Sequence[AGENTS],
+    frameworks: Sequence[CONFIG_AGENTS],
     include_common_scaffold: bool,
     add_all_touched_configs_to_gitignore: bool,
     add_vscode_task: bool,
@@ -37,11 +36,10 @@ def add_ai_configs(
     if repo_root_resolved is not None:
         repo_root = repo_root_resolved
     repo_root = repo_root.resolve()
-    supported_frameworks = get_args(AGENTS)
-    selected_frameworks: tuple[AGENTS, ...] = tuple(dict.fromkeys(frameworks))
+    selected_frameworks: tuple[CONFIG_AGENTS, ...] = tuple(dict.fromkeys(frameworks))
     for framework in selected_frameworks:
-        if framework not in supported_frameworks:
-            raise ValueError(f"Unsupported framework: {framework}. The supported frameworks are: {', '.join(supported_frameworks)}")
+        if framework not in CONFIG_AGENT_VALUES:
+            raise ValueError(f"Unsupported framework: {framework}. The supported frameworks are: {', '.join(CONFIG_AGENT_VALUES)}")
 
     plan = InitConfigPlan(
         repo_root=repo_root,

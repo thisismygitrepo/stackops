@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import CONFIG_AGENTS
 
 
 type ArtifactAction = Literal["created", "written", "removed"]
@@ -15,7 +15,7 @@ class ArtifactChange:
 @dataclass(frozen=True, slots=True)
 class InitConfigPlan:
     repo_root: Path
-    frameworks: tuple[AGENTS, ...]
+    frameworks: tuple[CONFIG_AGENTS, ...]
     include_common_scaffold: bool
     add_all_touched_configs_to_gitignore: bool
     add_vscode_task: bool

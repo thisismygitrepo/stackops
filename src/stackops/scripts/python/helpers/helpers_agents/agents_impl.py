@@ -12,7 +12,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend impo
     resolve_agent_parallel_backend,
     run_generated_layout,
 )
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, normalize_reasoning_effort
 
 
@@ -437,7 +437,7 @@ def make_agents_command_template() -> None:
 
 def init_config(
     root: str | None,
-    frameworks: tuple[AGENTS, ...],
+    frameworks: tuple[CONFIG_AGENTS, ...],
     include_common: bool,
     add_all_configs_to_gitignore: bool,
     add_lint_task: bool,
@@ -452,15 +452,15 @@ def init_config(
         repo_root = Path.cwd()
     else:
         repo_root = Path(root).expanduser().resolve()
-    from typing import get_args
-
     if len(frameworks) > 0:
-        selected_frameworks_list: list[AGENTS] = []
+        selected_frameworks_list: list[CONFIG_AGENTS] = []
         for framework in frameworks:
-            if framework not in get_args(AGENTS):
-                raise ValueError(f"Unsupported framework: {framework}. The supported frameworks are: {', '.join(get_args(AGENTS))}")
+            if framework not in CONFIG_AGENT_VALUES:
+                raise ValueError(
+                    f"Unsupported framework: {framework}. The supported frameworks are: {', '.join(CONFIG_AGENT_VALUES)}"
+                )
             selected_frameworks_list.append(framework)
-        selected_frameworks: tuple[AGENTS, ...] = tuple(dict.fromkeys(selected_frameworks_list))
+        selected_frameworks: tuple[CONFIG_AGENTS, ...] = tuple(dict.fromkeys(selected_frameworks_list))
     else:
         raise ValueError("Provide at least one --framework option, or pass --all-frameworks")
 

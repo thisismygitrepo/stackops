@@ -11,7 +11,7 @@ import typer
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS, DEFAULT_AGENT
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
@@ -41,7 +41,7 @@ _INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, _INTERACTIVE_CANONICAL
 }
 _INIT_CONFIG_AGENT_HELP: Final[str] = (
     f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
-    f"{','.join(_AGENT_VALUES)}"
+    f"{','.join(CONFIG_AGENT_VALUES)}"
 )
 
 
@@ -57,20 +57,20 @@ def _agent_working_directory(*, second_brain: bool) -> Generator[Path | None, No
         yield second_brain_root
 
 
-def _parse_init_config_agents(*, raw_value: str) -> tuple[AGENTS, ...]:
+def _parse_init_config_agents(*, raw_value: str) -> tuple[CONFIG_AGENTS, ...]:
     parts = [part.strip() for part in raw_value.split(",")]
     if any(part == "" for part in parts):
         raise ValueError("Agent names must be a comma-separated list without empty entries")
     if _INIT_CONFIG_ALL_AGENTS in parts:
         if len(parts) != 1:
             raise ValueError("Do not mix 'all' with specific agent names")
-        return _AGENT_VALUES
+        return CONFIG_AGENT_VALUES
 
-    resolved_agents: list[AGENTS] = []
+    resolved_agents: list[CONFIG_AGENTS] = []
     seen_agents: set[str] = set()
     for part in parts:
-        if part not in _AGENT_VALUES:
-            raise ValueError(f"Unsupported agent: {part}. Supported agents: all, {', '.join(_AGENT_VALUES)}")
+        if part not in CONFIG_AGENT_VALUES:
+            raise ValueError(f"Unsupported agent: {part}. Supported agents: all, {', '.join(CONFIG_AGENT_VALUES)}")
         if part in seen_agents:
             continue
         seen_agents.add(part)

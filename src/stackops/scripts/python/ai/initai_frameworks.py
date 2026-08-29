@@ -12,16 +12,17 @@ from stackops.scripts.python.ai.solutions.droid import droid
 from stackops.scripts.python.ai.solutions.forge import forge
 from stackops.scripts.python.ai.solutions.kilocode import kilocode
 from stackops.scripts.python.ai.solutions.opencode import opencode
+from stackops.scripts.python.ai.solutions.omp import omp
 from stackops.scripts.python.ai.solutions.oz import oz
 from stackops.scripts.python.ai.solutions.pi import pi
 from stackops.scripts.python.ai.solutions.q import amazon_q
 from stackops.scripts.python.ai.solutions.qwen_code import qwen_code
 from stackops.scripts.python.ai.initai_models import ArtifactChange
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import CONFIG_AGENTS
 
 
 def build_framework_config(
-    *, repo_root: Path, framework: AGENTS, add_private_config: bool, add_instructions: bool
+    *, repo_root: Path, framework: CONFIG_AGENTS, add_private_config: bool, add_instructions: bool
 ) -> tuple[ArtifactChange, ...]:
     match framework:
         case "agy":
@@ -86,6 +87,10 @@ def build_framework_config(
             )
         case "pi":
             return pi.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
+        case "omp":
+            return omp.build_configuration(
                 repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
             )
         case _:

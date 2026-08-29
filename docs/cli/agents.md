@@ -188,11 +188,11 @@ agents ask --quiet "summarize the current directory"
 
 ## Repository and MCP helpers
 
-`add-config` requires an agent argument and copies the latest AgentOps skill bundled with StackOps into `.agents/skills/agentops` by default. Pass `--no-agentops-skill`/`-A` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `all` to configure every supported agent, or pass a comma-separated list.
+`add-config` requires an agent argument and copies the latest AgentOps skill bundled with StackOps into `.agents/skills/agentops` by default. Pass `--no-agentops-skill`/`-A` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `all` to configure every supported agent, or pass a comma-separated list. Pi and OMP configurations include their native ten-attempt exponential retry policies for transient API failures.
 
 ```bash
 agents add-config all --root .
-agents add-config codex,copilot,agy,pi --root . --include-scripts --add-gitignore
+agents add-config codex,copilot,agy,pi,omp --root . --include-scripts --add-gitignore
 agents add-config codex --root . -A
 ```
 

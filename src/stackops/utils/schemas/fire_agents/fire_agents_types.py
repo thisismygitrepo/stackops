@@ -1,4 +1,4 @@
-from typing import Final, Literal, TypeAlias, TypedDict
+from typing import Final, Literal, TypeAlias, TypedDict, cast, get_args
 
 
 AGENTS: TypeAlias = Literal[
@@ -19,6 +19,11 @@ AGENTS: TypeAlias = Literal[
     "droid",
     "pi",
 ]
+CONFIG_AGENTS: TypeAlias = AGENTS | Literal["omp"]
+CONFIG_AGENT_VALUES: Final[tuple[CONFIG_AGENTS, ...]] = (
+    *cast(tuple[AGENTS, ...], get_args(AGENTS)),
+    "omp",
+)
 DEFAULT_AGENT: Final[AGENTS] = "codex"
 HOST: TypeAlias = Literal["local", "docker"]
 PROVIDER: TypeAlias = Literal[
