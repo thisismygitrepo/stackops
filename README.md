@@ -34,7 +34,8 @@ Choose your platform and expand only the commands you need.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv tool install --upgrade --python 3.14 stackops
 stackops --help
-# OR: . < (curl -L https://bit.ly/sopsu)
+# Short @ https://bit.ly/sopsu
+# OR: . < (curl -L "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/linux/interactive.sh")
 ```
 
 </details>
@@ -46,7 +47,8 @@ stackops --help
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv tool install --upgrade --python 3.14 stackops
 stackops --help
-# OR: . < (curl -L https://bit.ly/sopsu)
+# Short @ https://bit.ly/sopsu
+# OR: . < (curl -L "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/linux/interactive.sh")
 ```
 
 </details>
@@ -58,7 +60,8 @@ stackops --help
 powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
 uv tool install --upgrade --python 3.14 stackops
 stackops --help
-# OR: irm bit.ly/sopsw | iex
+# Short @ bit.ly/sopsw
+# OR: irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/windows/interactive.ps1" | iex
 ```
 
 </details>

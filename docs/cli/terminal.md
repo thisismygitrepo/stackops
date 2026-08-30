@@ -361,9 +361,10 @@ Current behavior:
 
 Current layout files use the `LayoutsFile` wrapper. The important keys are `layouts`, `layoutName`, `layoutTabs`, `tabName`, `startDir`, and `command`.
 
+<!-- Short @ https://bit.ly/cfglayout -->
 ```json
 {
-  "$schema": "https://bit.ly/cfglayout",
+  "$schema": "https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/src/machineconfig/utils/schemas/layouts/layout.schema.json",
   "version": "0.1",
   "layouts": [
     {

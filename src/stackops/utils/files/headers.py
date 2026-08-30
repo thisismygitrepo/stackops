@@ -79,7 +79,8 @@ def print_logo(logo: str) -> None:
             else: character_color(logo)
         else:
             # print("\n" + "🚫 " + "-" * 70 + " 🚫")
-            # print("🔍 Missing ASCII art dependencies. Install with: iwr bit.ly/cfgasciiartwindows | iex")
+            # Short @ bit.ly/cfgasciiartwindows
+            # print("🔍 Missing ASCII art dependencies. Install with: iwr https://raw.githubusercontent.com/thisismygitrepo/machineconfig/main/src/machineconfig/setup_windows/web_shortcuts/ascii_art.ps1 | iex")
             # print("🚫 " + "-" * 70 + " 🚫\n")
             _default_art = Path(random.choice([item for item in glob.glob(str(Path(__file__).parent.joinpath("art", "*"))) if Path(item).is_file() and item.endswith(".txt")]))
             print(_default_art.read_text())
