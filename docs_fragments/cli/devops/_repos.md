@@ -193,6 +193,4 @@ Example:
 devops repos count-lines ~/code/stackops
 ```
 
-The nested help screens render shortened usage such as `devops sync ...`, `devops action ...`, or `devops viz ...`, but the full entrypoints remain `devops repos sync ...`, `devops repos action ...`, and `devops repos viz ...`.
-
 ---
