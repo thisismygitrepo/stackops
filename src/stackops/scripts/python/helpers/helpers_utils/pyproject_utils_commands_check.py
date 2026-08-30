@@ -31,7 +31,7 @@ def type_check(
         typer.Option(
             "--latest",
             "-l",
-            help="Resolve the latest compatible lint and type-check tool versions for this run.",
+            help="Resolve and report the latest compatible lint and type-check tool versions for this run.",
         ),
     ] = False,
 ) -> None:

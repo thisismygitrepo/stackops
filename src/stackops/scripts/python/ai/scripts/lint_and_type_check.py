@@ -22,6 +22,7 @@ from rich.text import Text
 from stackops.scripts.python.ai.scripts import (
     dashboard as dashboard_module,
     models as models_module,
+    tool_versions as tool_versions_module,
 )
 
 
@@ -32,14 +33,17 @@ COMPLETED_KIND = models_module.COMPLETED_KIND
 DiagnosticSummary = models_module.DiagnosticSummary
 FAILURE_LABEL = models_module.FAILURE_LABEL
 ISSUES_LABEL = models_module.ISSUES_LABEL
+LATEST_TYPE_CHECK_TOOLS = models_module.LATEST_TYPE_CHECK_TOOLS
 REPORTS_DIR = models_module.REPORTS_DIR
 REPO_MARKER = models_module.REPO_MARKER
 START_FAILED_KIND = models_module.START_FAILED_KIND
 SUCCESS_LABEL = models_module.SUCCESS_LABEL
 SUMMARY_PATH = models_module.SUMMARY_PATH
+TOOL_VERSION_SPECS = models_module.TOOL_VERSION_SPECS
 CleanupResult = models_module.CleanupResult
 RunningTool = models_module.RunningTool
 ToolResult = models_module.ToolResult
+ToolVersionResult = models_module.ToolVersionResult
 build_diagnostic_summary = models_module.build_diagnostic_summary
 format_tool_report = models_module.format_tool_report
 format_bytes = models_module.format_bytes
@@ -52,6 +56,9 @@ write_start_failure = models_module.write_start_failure
 build_command_preview = dashboard_module.build_command_preview
 build_final_summary = dashboard_module.build_final_summary
 build_live_renderable = dashboard_module.build_live_renderable
+ToolVersionResolutionError = tool_versions_module.ToolVersionResolutionError
+build_tool_versions_panel = tool_versions_module.build_tool_versions_panel
+resolve_tool_versions = tool_versions_module.resolve_tool_versions
 
 
 def build_subprocess_environment() -> dict[str, str]:
@@ -232,6 +239,7 @@ def terminate_running_tools(running_tools: dict[str, RunningTool]) -> None:
 def write_summary(
     cleanup_result: CleanupResult,
     checker_results: tuple[ToolResult, ...],
+    tool_version_results: tuple[ToolVersionResult, ...],
     wall_started_at: float,
 ) -> None:
     checker_sum = sum(result.duration_seconds for result in checker_results)
@@ -297,6 +305,18 @@ def write_summary(
         lines.append(
             f"| {result.spec.title} | {result.status} | {diagnostic_count} | {classifier} | {distribution} |"
         )
+    if len(tool_version_results) > 0:
+        lines.extend(
+            (
+                "",
+                "## CLI Versions",
+                "",
+                "| CLI | Resolved version |",
+                "| --- | --- |",
+            )
+        )
+        for result in tool_version_results:
+            lines.append(f"| {result.spec.title} | `{result.version}` |")
     SUMMARY_PATH.write_text(data="\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -330,6 +350,26 @@ def main() -> int:
             border_style="cyan",
         )
     )
+    tool_version_results: tuple[ToolVersionResult, ...] = ()
+    if LATEST_TYPE_CHECK_TOOLS:
+        try:
+            with console.status(
+                "[bold cyan]Resolving the latest compatible CLI versions"
+            ):
+                tool_version_results = resolve_tool_versions(
+                    specs=TOOL_VERSION_SPECS,
+                    subprocess_environment=build_subprocess_environment(),
+                )
+        except ToolVersionResolutionError as error:
+            console.print(
+                Panel(
+                    Text(str(error), style="bold red"),
+                    title="CLI Version Resolution Failed",
+                    border_style="red",
+                )
+            )
+            return 1
+        console.print(build_tool_versions_panel(results=tool_version_results))
     console.print(build_command_preview())
     cleanup_result = run_cleanup(console=console)
     running_tools, completed_tools = start_checker_processes()
@@ -374,6 +414,7 @@ def main() -> int:
     write_summary(
         cleanup_result=cleanup_result,
         checker_results=checker_results,
+        tool_version_results=tool_version_results,
         wall_started_at=wall_started_at,
     )
     console.print(

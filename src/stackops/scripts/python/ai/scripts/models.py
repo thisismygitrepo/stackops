@@ -7,6 +7,7 @@ from stackops.scripts.python.ai.scripts import models_diagnostics as models_diag
 from stackops.scripts.python.ai.scripts import (
     models_config as models_config_module,
     models_reports as models_reports_module,
+    tool_versions as tool_versions_module,
 )
 from stackops.scripts.python.ai.scripts.models_core import (
     CleanupStatus,
@@ -30,6 +31,8 @@ from stackops.scripts.python.ai.scripts.models_core import (
 
 DiagnosticBucket = models_diagnostics_module.DiagnosticBucket
 DiagnosticSummary = models_diagnostics_module.DiagnosticSummary
+ToolVersionResult = tool_versions_module.ToolVersionResult
+ToolVersionSpec = tool_versions_module.ToolVersionSpec
 build_diagnostic_summary = models_diagnostics_module.build_diagnostic_summary
 format_diagnostic_distribution = (
     models_diagnostics_module.format_diagnostic_distribution
@@ -102,6 +105,7 @@ PYRIGHT_CONFIG_OVERRIDE_PATH = models_config_module.PYRIGHT_CONFIG_OVERRIDE_PATH
 TYPE_CHECK_EXCLUDES_ENV_VAR = models_config_module.TYPE_CHECK_EXCLUDES_ENV_VAR
 build_checker_specs = models_config_module.build_checker_specs
 build_cleanup_commands = models_config_module.build_cleanup_commands
+build_tool_version_specs = tool_versions_module.build_tool_version_specs
 load_latest_type_check_tools = models_config_module.load_latest_type_check_tools
 load_type_check_excluded_directories = (
     models_config_module.load_type_check_excluded_directories
@@ -120,6 +124,9 @@ TYPE_CHECK_EXCLUDED_DIRECTORIES: Final[tuple[str, ...]] = (
     load_type_check_excluded_directories()
 )
 LATEST_TYPE_CHECK_TOOLS: Final[bool] = load_latest_type_check_tools()
+TOOL_VERSION_SPECS: Final[tuple[ToolVersionSpec, ...]] = build_tool_version_specs(
+    latest=LATEST_TYPE_CHECK_TOOLS
+)
 CLEANUP_COMMANDS: Final[tuple[tuple[str, ...], ...]] = build_cleanup_commands(
     excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES, latest=LATEST_TYPE_CHECK_TOOLS
 )
@@ -136,6 +143,7 @@ __all__ = (
     "ERROR_LABEL",
     "FAILURE_LABEL",
     "ISSUES_LABEL",
+    "LATEST_TYPE_CHECK_TOOLS",
     "PYRIGHT_CONFIG_OVERRIDE_PATH",
     "REPO_MARKER",
     "REPORTS_DIR",
@@ -145,6 +153,7 @@ __all__ = (
     "SUMMARY_PATH",
     "TYPE_CHECK_EXCLUDES_ENV_VAR",
     "TYPE_CHECK_EXCLUDED_DIRECTORIES",
+    "TOOL_VERSION_SPECS",
     "CleanupResult",
     "DiagnosticBucket",
     "DiagnosticSummary",
@@ -152,6 +161,8 @@ __all__ = (
     "RunningTool",
     "ToolResult",
     "ToolSpec",
+    "ToolVersionResult",
+    "ToolVersionSpec",
     "build_diagnostic_summary",
     "format_bytes",
     "format_command",
