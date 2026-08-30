@@ -76,7 +76,7 @@ alias xc='copilot --yolo'
 
 # https://github.com/atuinsh/atuin
 # eval "$(atuin init bash)"
-# source /home/alex/.config/broot/launcher/bash/br
+# source "${HOME}/.config/broot/launcher/bash/br"
 # eval "$(thefuck --alias)"
 # from https://github.com/ajeetdsouza/zoxide
 eval "$(zoxide init zsh)"

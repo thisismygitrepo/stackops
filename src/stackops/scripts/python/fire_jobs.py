@@ -23,12 +23,12 @@ def fire(
     root_repo: Annotated[bool, typer.Option("--root-repo", "-r", help="Resolve and search from the repository root")] = False,
     remote: Annotated[bool, typer.Option("--remote", "-R", help="Launch on a remote machine")] = False,
     streamlit: Annotated[bool, typer.Option("--streamlit", "-S", help="Run as streamlit app")] = False,
-    holdDirectory: Annotated[bool, typer.Option("--holdDirectory", "-D", help="Hold current directory and avoid cd'ing to the script directory")] = False,
-    PathExport: Annotated[bool, typer.Option("--PathExport", "-P", help="Augment the PYTHONPATH with repo root")] = False,
+    hold_directory: Annotated[bool, typer.Option("--hold-directory", "-D", help="Hold current directory and avoid cd'ing to the script directory")] = False,
+    path_export: Annotated[bool, typer.Option("--path-export", "-P", help="Augment the PYTHONPATH with repo root")] = False,
     git_pull: Annotated[bool, typer.Option("--git-pull", "-g", help="Start by pulling the git repo")] = False,
     watch: Annotated[bool, typer.Option("--watch", "-w", help="Watch the file for changes")] = False,
 ) -> None:
-    """Main function to process fire jobs arguments."""
+    """Fire and manage jobs."""
     from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_args_helper import FireJobArgs, parse_fire_args_from_context
     from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_impl import route
 
@@ -50,8 +50,8 @@ def fire(
         module=module,
         script=script,
         streamlit=streamlit,
-        holdDirectory=holdDirectory,
-        PathExport=PathExport,
+        hold_directory=hold_directory,
+        path_export=path_export,
         git_pull=git_pull,
         optimized=optimized,
         jit=jit,

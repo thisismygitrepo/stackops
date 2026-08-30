@@ -4,9 +4,10 @@ from typing import Any, TypedDict, cast
 from stackops.utils.files.read import read_json
 from stackops.utils.io import save_json
 from stackops.utils.schemas.repos.repos_types import RepoRecordDict, RepoRecordFile
+from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT
 
 
-DEFAULT_REPOS_SPEC_PATH = Path("/home/alex/dotfiles/stackops/mapper/repos.json")
+DEFAULT_REPOS_SPEC_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "repos.json")
 REPOS_SPEC_VERSION = "0.1"
 
 

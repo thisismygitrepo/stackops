@@ -162,8 +162,8 @@ def _ensure_pyright_config_override(excluded_directories: tuple[str, ...]) -> Pa
     else:
         override_config = dict(base_config)
         override_config["exclude"] = list(merged_excludes)
-    override_path.write_text(json.dumps(override_config, indent=2) + "\n", encoding="utf-8")
     atexit.register(_remove_generated_file, override_path)
+    override_path.write_text(json.dumps(override_config, indent=2) + "\n", encoding="utf-8")
     return override_path
 
 
@@ -207,10 +207,15 @@ def build_checker_specs(
     mypy_excludes = _merge_distinct_strings((MYPY_EXCLUDE_PATTERN,), excluded_patterns)
     pyright_command = build_uv_tool_command(package="pyright", latest=latest)
     pyright_command.extend(("pyright", "--outputjson", "--threads", "10"))
+    pyright_temporary_paths: tuple[Path, ...] = ()
     if len(excluded_directories) > 0:
-        pyright_command.extend(
-            ("--project", str(_ensure_pyright_config_override(excluded_directories)))
+        pyright_config_override_path = _ensure_pyright_config_override(
+            excluded_directories
         )
+        pyright_command.extend(
+            ("--project", str(pyright_config_override_path))
+        )
+        pyright_temporary_paths = (pyright_config_override_path,)
     pyright_command.append(".")
     mypy_command = build_uv_tool_command(package="mypy", latest=latest)
     mypy_command.extend(("mypy", "-O", "json"))
@@ -266,6 +271,7 @@ def build_checker_specs(
             report_path=REPORTS_DIR / "issues_pyright.md",
             command=tuple(pyright_command),
             output_format="json",
+            temporary_paths=pyright_temporary_paths,
         ),
         ToolSpec(
             slug="mypy",
@@ -273,6 +279,7 @@ def build_checker_specs(
             report_path=REPORTS_DIR / "issues_mypy.md",
             command=tuple(mypy_command),
             output_format="json",
+            temporary_paths=(),
         ),
         ToolSpec(
             slug="pylint",
@@ -280,6 +287,7 @@ def build_checker_specs(
             report_path=REPORTS_DIR / "issues_pylint.md",
             command=tuple(pylint_command),
             output_format="json",
+            temporary_paths=(),
         ),
         ToolSpec(
             slug="pyrefly",
@@ -287,6 +295,7 @@ def build_checker_specs(
             report_path=REPORTS_DIR / "issues_pyrefly.md",
             command=tuple(pyrefly_command),
             output_format="json",
+            temporary_paths=(),
         ),
         ToolSpec(
             slug="ty",
@@ -294,6 +303,7 @@ def build_checker_specs(
             report_path=REPORTS_DIR / "issues_ty.md",
             command=tuple(ty_command),
             output_format="json",
+            temporary_paths=(),
         ),
         ToolSpec(
             slug="ruff",
@@ -301,5 +311,6 @@ def build_checker_specs(
             report_path=REPORTS_DIR / "issues_ruff.md",
             command=tuple(ruff_command),
             output_format="json",
+            temporary_paths=(),
         ),
     )

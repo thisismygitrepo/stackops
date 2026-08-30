@@ -3,9 +3,9 @@
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-import stackops.utils.schemas.installer as installer_schema_assets
 from stackops.utils.installer_utils.installer_locator_utils import check_if_installed_already
 from stackops.utils.installer_utils.installer_class import Installer
+from stackops.utils.installer_utils.installer_catalog import read_installer_data
 from stackops.utils.installer_utils.install_request_logic import resolve_installer_pattern
 from stackops.utils.installer_utils.installer_summary import render_installation_summary
 from stackops.utils.schemas.installer.installer_types import (
@@ -13,7 +13,7 @@ from stackops.utils.schemas.installer.installer_types import (
     InstallRequest,
     InstallationResult,
     InstallerData,
-    InstallerDataFiles,
+    InstallerDataSource,
     OPERATING_SYSTEMS,
     get_normalized_arch,
     get_os_name,
@@ -21,8 +21,6 @@ from stackops.utils.schemas.installer.installer_types import (
 from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
 from stackops.utils.path_core import delete_path
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
-from stackops.utils.files.read import read_json
-from stackops.utils.path_reference import get_path_reference_path
 
 from rich.console import Console
 from rich.panel import Panel
@@ -106,23 +104,25 @@ def get_installed_cli_apps():
     return apps
 
 
-def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: list[PACKAGE_NAME] | None) -> list[InstallerData]:
-    res_raw: InstallerDataFiles = read_json(
-        get_path_reference_path(module=installer_schema_assets, path_reference=installer_schema_assets.INSTALLER_DATA_PATH_REFERENCE)
-    )
-    res_all: list[InstallerData] = res_raw["installers"]
-
-    acceptable_apps_names: list[str] | None = None
+def _filter_installers(
+    installers: list[InstallerData],
+    os: OPERATING_SYSTEMS,
+    arch: CPU_ARCHITECTURES,
+    which_cats: list[PACKAGE_NAME] | None,
+) -> list[InstallerData]:
+    acceptable_apps_names: set[str] | None = None
     if which_cats is not None:
-        acceptable_apps_names = []
-        for cat in which_cats:
-            acceptable_apps_names += PACKAGE_GROUP2NAMES[cat]
+        acceptable_apps_names = {
+            app_name.casefold()
+            for category in which_cats
+            for app_name in PACKAGE_GROUP2NAMES[category]
+        }
     else:
         acceptable_apps_names = None
     all_installers: list[InstallerData] = []
-    for installer_data in res_all:
+    for installer_data in installers:
         if acceptable_apps_names is not None:
-            if installer_data["appName"] not in acceptable_apps_names:
+            if installer_data["appName"].casefold() not in acceptable_apps_names:
                 continue
         try:
             if resolve_installer_pattern(installer_data=installer_data, operating_system=os, architecture=arch) is None:
@@ -133,6 +133,21 @@ def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: l
             raise KeyError(f"Missing key in installer data: {ke}") from ke
         all_installers.append(installer_data)
     return all_installers
+
+
+def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: list[PACKAGE_NAME] | None) -> list[InstallerData]:
+    library_installers = read_installer_data(source="library")
+    return _filter_installers(installers=library_installers, os=os, arch=arch, which_cats=which_cats)
+
+
+def get_installers_from_source(
+    source: InstallerDataSource,
+    os: OPERATING_SYSTEMS,
+    arch: CPU_ARCHITECTURES,
+    which_cats: list[PACKAGE_NAME] | None,
+) -> list[InstallerData]:
+    installers = read_installer_data(source=source)
+    return _filter_installers(installers=installers, os=os, arch=arch, which_cats=which_cats)
 
 
 def _install_single_installer(installer_data: InstallerData, install_request: InstallRequest) -> InstallationResult:

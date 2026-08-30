@@ -51,8 +51,14 @@ def compress_pdf(
         quality: Annotated[int, typer.Option("--quality", "-q", help="JPEG quality for image compression (0-100, 0=no change, 100=best).")] = 85,
         image_dpi: Annotated[int, typer.Option("--image-dpi", "-d", help="Target DPI for image resampling. If set, images above this DPI will be downsampled.")] = 0,
         # remove_images: Annotated[bool, typer.Option("--remove-images", "-r", help="Remove all images from the PDF.")] = False,
-        compress_streams: Annotated[bool, typer.Option("--compress-streams", "-c", help="Compress uncompressed streams.")] = True,
-        use_objstms: Annotated[bool, typer.Option("--object-streams", "-s", help="Use object streams for additional compression.")] = True,
+        no_compress_streams: Annotated[
+            bool,
+            typer.Option("--no-compress-streams", "-C", help="Do not compress uncompressed streams."),
+        ] = False,
+        no_object_streams: Annotated[
+            bool,
+            typer.Option("--no-object-streams", "-S", help="Do not use object streams for additional compression."),
+        ] = False,
     ) -> None:
     def compress_pdf_internal(pdf_input: str, output: str | None, quality: int, image_dpi: int, compress_streams: bool, use_objstms: bool) -> None:
         import pymupdf
@@ -88,7 +94,14 @@ def compress_pdf(
             doc.close()
     from stackops.utils.meta import lambda_to_python_script
     code = lambda_to_python_script(
-        lambda: compress_pdf_internal(pdf_input=pdf_input, output=output, quality=quality, image_dpi=image_dpi, compress_streams=compress_streams, use_objstms=use_objstms),
+        lambda: compress_pdf_internal(
+            pdf_input=pdf_input,
+            output=output,
+            quality=quality,
+            image_dpi=image_dpi,
+            compress_streams=not no_compress_streams,
+            use_objstms=not no_object_streams,
+        ),
         in_global=True,
         import_module=False,
     )

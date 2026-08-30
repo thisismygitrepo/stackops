@@ -12,8 +12,9 @@ Write-Host "Starting new uv run..."
 $processInfo = New-Object System.Diagnostics.ProcessStartInfo
 $processInfo.FileName = "uv"
 $processInfo.ArgumentList.Add("run")
-$processInfo.ArgumentList.Add("/home/alex/code/bytesense/exchanges/src/exchanges/cli/cli_binance.py")
-$processInfo.ArgumentList.Add("b")
+foreach ($argument in $args) {
+    $processInfo.ArgumentList.Add($argument)
+}
 $processInfo.UseShellExecute = $false
 $processInfo.RedirectStandardOutput = $true
 $processInfo.RedirectStandardError = $true

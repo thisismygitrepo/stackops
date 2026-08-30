@@ -186,21 +186,21 @@ def explore_cli(ctx: typer.Context) -> None:
     """🧭 <x> Explore the StackOps CLI graph."""
     from stackops.scripts.python.graph.visualize import cli_graph_app
 
-    apply_alias_markers(cli_graph_app.get_app())(ctx.args, standalone_mode=False)
+    apply_alias_markers(cli_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
 
 
 def explore_python_api(ctx: typer.Context) -> None:
     """🧭 <p> Explore the StackOps Python API graph."""
     from stackops.scripts.python.graph.visualize import python_api_graph_app
 
-    apply_alias_markers(python_api_graph_app.get_app())(ctx.args, standalone_mode=False)
+    apply_alias_markers(python_api_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
 
 
 def security(ctx: typer.Context) -> None:
     """🔐 <y> Security related CLI tools."""
     import stackops.jobs.installer.checks.security_cli as security_cli_module
 
-    apply_alias_markers(security_cli_module.get_app())(ctx.args, standalone_mode=False)
+    apply_alias_markers(security_cli_module.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
 
 
 def docs(

@@ -8,11 +8,11 @@ def _is_remote_path(path: str) -> bool:
     return ":" in path and (path[1] != ":" if len(path) > 1 else True)
 
 
-def _run_ftpx_impl(source: str, target: str, recursive: bool, zipFirst: bool, cloud: bool, overwrite_existing: bool) -> None:
+def _run_ftpx_impl(source: str, target: str, recursive: bool, zip_first: bool, cloud: bool, overwrite_existing: bool) -> None:
     from stackops.scripts.python.helpers.helpers_network.ftpx_impl import ftpx as impl
 
     try:
-        impl(source=source, target=target, recursive=recursive, zipFirst=zipFirst, cloud=cloud, overwrite_existing=overwrite_existing)
+        impl(source=source, target=target, recursive=recursive, zip_first=zip_first, cloud=cloud, overwrite_existing=overwrite_existing)
     except ValueError as err:
         import sys
 
@@ -32,13 +32,13 @@ def ftpx(
     source: Annotated[str, typer.Argument(help="Source path (machine:path)")],
     target: Annotated[str, typer.Argument(help="Target path (machine:path)")],
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Send recursively.")] = False,
-    zipFirst: Annotated[bool, typer.Option("--zipFirst", "-z", help="Zip before sending.")] = False,
+    zip_first: Annotated[bool, typer.Option("--zip-first", "-z", help="Zip before sending.")] = False,
     cloud: Annotated[bool, typer.Option("--cloud", "-c", help="Transfer through the cloud.")] = False,
     overwrite_existing: Annotated[bool, typer.Option("--overwrite-existing", "-o", help="Overwrite existing files on remote when sending from local to remote.")] = False,
 ) -> None:
     """File transfer utility through SSH."""
     if not _is_remote_path(source) and not _is_remote_path(target):
-        _run_ftpx_impl(source=source, target=target, recursive=recursive, zipFirst=zipFirst, cloud=cloud, overwrite_existing=overwrite_existing)
+        _run_ftpx_impl(source=source, target=target, recursive=recursive, zip_first=zip_first, cloud=cloud, overwrite_existing=overwrite_existing)
         return
 
     from stackops.utils.code import run_lambda_function
@@ -49,7 +49,7 @@ def ftpx(
             source=source,
             target=target,
             recursive=recursive,
-            zipFirst=zipFirst,
+            zip_first=zip_first,
             cloud=cloud,
             overwrite_existing=overwrite_existing,
         ),

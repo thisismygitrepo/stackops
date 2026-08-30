@@ -144,7 +144,7 @@ Current options:
 | Option | Meaning |
 | --- | --- |
 | `--recursive`, `-r` | Transfer recursively |
-| `--zipFirst`, `-z` | Zip before sending |
+| `--zip-first`, `-z` | Zip before sending |
 | `--cloud`, `-c` | Transfer through the cloud |
 | `--overwrite-existing`, `-o` | Overwrite existing remote files when sending local to remote |
 

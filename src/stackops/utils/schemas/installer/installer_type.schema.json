@@ -215,7 +215,11 @@
         "appName": {
           "type": "string",
           "minLength": 1,
-          "description": "Name of the application. Must be unique within installers."
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+ -]*$",
+          "not": {
+            "pattern": "^(devops|stackops)[ ]+install([ ]|$)"
+          },
+          "description": "Application name, not an installation command or URL. Must be unique within installers."
         },
         "license": {
           "type": "string",

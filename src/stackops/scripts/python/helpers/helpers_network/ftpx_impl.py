@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from stackops.utils.ssh_utils.ssh import SSH
 
 
-def ftpx(source: str, target: str, recursive: bool, zipFirst: bool, cloud: bool, overwrite_existing: bool) -> None:
+def ftpx(source: str, target: str, recursive: bool, zip_first: bool, cloud: bool, overwrite_existing: bool) -> None:
     """File transfer utility through SSH."""
     if target == "wsl" or source == "wsl":
         _handle_wsl_transfer(source=source, target=target, overwrite_existing=overwrite_existing)
@@ -52,7 +52,7 @@ def ftpx(source: str, target: str, recursive: bool, zipFirst: bool, cloud: bool,
             resolved_source=resolved_source,
             resolved_target=resolved_target,
             source_is_remote=source_is_remote,
-            zipFirst=zipFirst,
+            zip_first=zip_first,
             recursive=recursive,
             overwrite_existing=overwrite_existing,
             console=console,
@@ -214,7 +214,7 @@ def _handle_direct_transfer(
     resolved_source: str | None,
     resolved_target: str | None,
     source_is_remote: bool,
-    zipFirst: bool,
+    zip_first: bool,
     recursive: bool,
     overwrite_existing: bool,
     console: Console,
@@ -234,7 +234,7 @@ def _handle_direct_transfer(
                         "📥 Transfer Mode: Remote → Local",
                         f"Source: [cyan]{resolved_source}[/cyan]",
                         f"Target: [cyan]{target_display}[/cyan]",
-                        f"Options: {'ZIP compression' if zipFirst else 'No compression'}, {'Recursive' if recursive else 'Non-recursive'}",
+                        f"Options: {'ZIP compression' if zip_first else 'No compression'}, {'Recursive' if recursive else 'Non-recursive'}",
                     ]
                 ),
                 title="Transfer Details",
@@ -242,7 +242,7 @@ def _handle_direct_transfer(
                 padding=(1, 2),
             )
         )
-        ssh.copy_to_here(source=resolved_source, target=resolved_target, compress_with_zip=zipFirst, recursive=recursive, internal_call=False)
+        ssh.copy_to_here(source=resolved_source, target=resolved_target, compress_with_zip=zip_first, recursive=recursive, internal_call=False)
         if resolved_target is None:
             received_file = None
         else:
@@ -257,7 +257,7 @@ def _handle_direct_transfer(
                         "📤 Transfer Mode: Local → Remote",
                         f"Source: [cyan]{resolved_source}[/cyan]",
                         f"Target: [cyan]{target_display}[/cyan]",
-                        f"Options: {'ZIP compression' if zipFirst else 'No compression'}, {'Recursive' if recursive else 'Non-recursive'}",
+                        f"Options: {'ZIP compression' if zip_first else 'No compression'}, {'Recursive' if recursive else 'Non-recursive'}",
                     ]
                 ),
                 title="Transfer Details",
@@ -268,7 +268,7 @@ def _handle_direct_transfer(
         ssh.copy_from_here(
             source_path=resolved_source,
             target_rel2home=resolved_target,
-            compress_with_zip=zipFirst,
+            compress_with_zip=zip_first,
             recursive=recursive,
             overwrite_existing=overwrite_existing,
         )

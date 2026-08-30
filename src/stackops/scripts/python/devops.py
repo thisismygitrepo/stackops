@@ -6,6 +6,7 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_search.script_help import SCRIPT_SOURCE
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+from stackops.utils.schemas.installer.installer_types import InstallerDataSource
 
 
 class EmojiDisplayDiagnostic(TypedDict):
@@ -47,12 +48,9 @@ def inspect_devops_help_emojis() -> list[EmojiDisplayDiagnostic]:
     return emoji_display_diagnostics(emojis=["🔧", "📁", "🔩", "💾", "🔧", "🌐", "🚀"])
 
 
-def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer], *, prog_name: str | None = None) -> None:
+def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) -> None:
     nested_app = apply_alias_markers(app_factory())
-    if prog_name is None:
-        nested_result: object = nested_app(ctx.args, standalone_mode=False)
-    else:
-        nested_result = nested_app(ctx.args, prog_name=prog_name, standalone_mode=False)
+    nested_result: object = nested_app(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
     if isinstance(nested_result, int):
         raise typer.Exit(code=nested_result)
 
@@ -67,6 +65,15 @@ def install(
     ] = None,
     group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
     check: Annotated[bool, typer.Option(..., "--check", "-c", help="Check installation status instead of installing.")] = False,
+    source: Annotated[
+        InstallerDataSource,
+        typer.Option(
+            ...,
+            "--source",
+            "-s",
+            help="Installer data source to use: 'library', 'user', or 'all'. User file: ~/dotfiles/stackops/mapper/installer_data.json.",
+        ),
+    ] = "all",
     interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
     explore: Annotated[bool, typer.Option(..., "--explore", "-x", help="Explore installer categoryLabels before installing.")] = False,
     update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
@@ -74,6 +81,7 @@ def install(
 ) -> None:
     """📦 Install packages."""
     from stackops.utils.installer_utils import installer_cli as installer_entry_point
+    from stackops.utils.installer_utils.installer_catalog import InstallerDataFileError
 
     if check:
         if which is None:
@@ -81,7 +89,20 @@ def install(
         installer_entry_point.check_installations(which=which, group=group)
         return
 
-    installer_entry_point.main_installer_cli(ctx=ctx, which=which, group=group, interactive=interactive, explore=explore, update=update, version=version)
+    try:
+        installer_entry_point.main_installer_cli(
+            ctx=ctx,
+            which=which,
+            group=group,
+            source=source,
+            interactive=interactive,
+            explore=explore,
+            update=update,
+            version=version,
+        )
+    except InstallerDataFileError as exc:
+        typer.echo(f"❌ {exc}", err=True)
+        raise typer.Exit(1) from exc
 
 
 def repos(ctx: typer.Context) -> None:
@@ -95,7 +116,7 @@ def config(ctx: typer.Context) -> None:
     """⚙️ <c> Configuration management"""
     from stackops.scripts.python.helpers.helpers_devops import cli_config
 
-    _run_nested_app(ctx, cli_config.get_app, prog_name=ctx.command_path)
+    _run_nested_app(ctx, cli_config.get_app)
 
 
 def data(ctx: typer.Context) -> None:
@@ -161,7 +182,7 @@ def vault(ctx: typer.Context) -> None:
     """🔐 <v> Search Bitwarden credentials and manage vault sessions."""
     from stackops.scripts.python.helpers.helpers_devops import cli_vault
 
-    _run_nested_app(ctx, cli_vault.get_app, prog_name=ctx.command_path)
+    _run_nested_app(ctx, cli_vault.get_app)
 
 
 def get_app() -> typer.Typer:

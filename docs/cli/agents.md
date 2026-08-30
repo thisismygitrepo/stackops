@@ -270,10 +270,10 @@ agents browser batch-close --browser brave
 `agents browser replicate COUNT` copies a closed source profile to `p1` through `pCOUNT`. Chrome is the default browser and `base` is the default source profile. All destination paths are checked before copying; existing copies are refused unless `--overwrite` is passed, which deletes each existing destination completely before recopying. Both profile-maintenance commands use the same `~/data/browsers-profiles/<browser>/<profile>` layout on Windows, macOS, and Linux. They support Chrome, Brave, Edge, and Firefox; Safari is excluded because safaridriver does not support StackOps custom profiles.
 
 ```bash
-agents browser declutter --profile alex-copy
+agents browser declutter --profile example-copy
 agents browser declutter --browser firefox --all
 agents browser replicate 4
-agents browser replicate 3 --browser brave --profile alex-copy
+agents browser replicate 3 --browser brave --profile example-copy
 agents browser replicate 5 --overwrite
 ```
 

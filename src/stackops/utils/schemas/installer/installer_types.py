@@ -1,10 +1,20 @@
 import platform
 from dataclasses import dataclass
-from typing import Literal, NotRequired, TypeAlias, TypedDict
+from typing import Final, Literal, NotRequired, TypeAlias, TypedDict
 
 
 CPU_ARCHITECTURES: TypeAlias = Literal["amd64", "arm64"]
 OPERATING_SYSTEMS: TypeAlias = Literal["windows", "linux", "darwin"]
+InstallerDataSource: TypeAlias = Literal["library", "l", "user", "u", "all", "a"]
+NormalizedInstallerDataSource: TypeAlias = Literal["library", "user", "all"]
+INSTALLER_DATA_SOURCE_MAP: Final[dict[InstallerDataSource, NormalizedInstallerDataSource]] = {
+    "library": "library",
+    "l": "library",
+    "user": "user",
+    "u": "user",
+    "all": "all",
+    "a": "all",
+}
 InstallerCategoryLabel: TypeAlias = Literal[
     "ai-agents-assistants",
     "browsers-web-access",

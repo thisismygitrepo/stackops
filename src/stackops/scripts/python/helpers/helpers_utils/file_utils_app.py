@@ -246,10 +246,10 @@ def read_db_cli_tui(
         typer.Option("--recursive", "-r", help="Search subdirectories when using --find."),
     ] = False,
     backend: Annotated[DatabaseBackend, typer.Option("--backend", "-b", help="The TUI database client to use.")] = "harlequin",
-    read_only: Annotated[
+    read_write: Annotated[
         bool,
         typer.Option("--read-write", "-w", help="Open the database in read/write mode (if supported by backend)."),
-    ] = True,
+    ] = False,
     theme: Annotated[str | None, typer.Option("--theme", "-t", help="Theme to use (if supported by backend).")] = None,
     limit: Annotated[int | None, typer.Option("--limit", "-l", help="Maximum number of rows to load (if supported by backend).")] = None,
 ) -> None:
@@ -262,7 +262,7 @@ def read_db_cli_tui(
         find_root=find_root,
         recursive=recursive,
         backend=backend,
-        read_only=read_only,
+        read_only=not read_write,
         theme=theme,
         limit=limit,
     )

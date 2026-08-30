@@ -28,6 +28,7 @@ nav = [
     { terminal = "cli/terminal.md" },
     { agents = "cli/agents.md" },
     { utils = "cli/utils.md" },
+    { preview = "cli/preview.md" },
     { seek = "cli/seek.md" },
     { fire = "cli/fire.md" },
     { cloud = "cli/cloud.md" },

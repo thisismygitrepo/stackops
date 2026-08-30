@@ -146,7 +146,7 @@ def _build_command(
             debug=args.debug,
             module=args.module,
             streamlit=args.streamlit,
-            hold_directory=args.holdDirectory,
+            hold_directory=args.hold_directory,
             cmd=args.cmd,
             exe_line=exe_line,
             choice_file=choice_file,
@@ -278,7 +278,7 @@ def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path,
     if args.git_pull:
         command = f"\ngit -C {choice_file.parent} pull\n" + command
 
-    if args.PathExport:
+    if args.path_export:
         from stackops.scripts.python.helpers.helpers_fire_command.file_wrangler import add_to_path
 
         export_line = add_to_path(path_variable="PYTHONPATH", directory=str(repo_root))
