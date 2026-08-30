@@ -4,7 +4,6 @@ from typing import Annotated, Literal
 import typer
 
 from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_helpers import (
-    TypeHintDependencyMode,
     normalize_init_project_groups,
     normalize_init_project_libraries,
     resolve_pyproject_root,
@@ -78,34 +77,6 @@ def upgrade_packages(
             err=True,
         )
         raise typer.Exit(code=error.returncode) from error
-
-
-def type_hint(
-    path: Annotated[str, typer.Argument(..., help="Path to file/project dir to type hint.")] = ".",
-    dependency: Annotated[
-        TypeHintDependencyMode,
-        typer.Option(..., "--dependency", "-d", help="Generated file is self contained or performs imports"),
-    ] = "self-contained",
-) -> None:
-    path_resolved = Path(path).expanduser().resolve()
-    if path_resolved.exists() is False:
-        typer.echo(f"Error: The provided path '{path}' does not exist.", err=True)
-        raise typer.Exit(code=1)
-    if path_resolved.is_file():
-        modules = [path_resolved]
-    else:
-        if path_resolved.joinpath("pyproject.toml").exists() is False:
-            typer.echo("Error: Provided directory path is not a project root (missing pyproject.toml).", err=True)
-            raise typer.Exit(code=1)
-        modules = [file for file in path_resolved.rglob("dtypes.py") if ".venv" not in file.parts]
-    if len(modules) == 0:
-        typer.echo("Error: No dtypes.py files were found under the provided project root.", err=True)
-        raise typer.Exit(code=1)
-    typer.echo(
-        f"Error: Type-hint generation is not available for dependency mode '{dependency}' because the generator implementation is missing.",
-        err=True,
-    )
-    raise typer.Exit(code=1)
 
 
 def init_project(

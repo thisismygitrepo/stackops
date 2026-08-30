@@ -20,10 +20,14 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `account` | Back up active agent credentials to saved profiles or retrieve a profile as active |
 | `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
+| `clean` | Remove `.ai` directories from discovered Git repositories |
+| `doctor` | Inspect agent binaries, configuration, plugins, skills, and instruction provenance |
 | `run-prompt` | Run one prompt through a selected agent, with inline, file, or YAML-backed context |
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
+| `execute` | Execute an AgentOps plan JSON file, optionally for one pass |
 | `add-skill` | Add a supported skill into an agent directory |
+| `second-brain` | Configure the Second Brain repository and its agent instructions |
 
 ---
 
@@ -59,6 +63,49 @@ Use `--active-credential`/`-c` to override the agent-specific active file in eit
 ```bash
 agents account b codex
 agents A r codex
+```
+
+---
+
+## `clean`
+
+`clean [DIRECTORY]` discovers direct child Git repositories and removes each repository's `.ai` directory. Pass `--recursive/-r` to search nested repositories. The removal is immediate, so point the command at the intended repository root.
+
+```bash
+agents clean ~/code
+agents clean ~/code --recursive
+```
+
+---
+
+## `doctor`
+
+`doctor [AGENT]` reports agent health and resource provenance. `AGENT` defaults to `all`; use `--directory/-d` to inspect another project and `--resource/-r` to select comma-separated `configuration`, `mcp`, `plugin`, `skill`, or `instructions` resources.
+
+```bash
+agents doctor
+agents doctor codex --directory . --resource plugin,skill,instructions
+```
+
+---
+
+## `execute`
+
+`execute [PLAN_JSON]` advances an AgentOps plan. If the path is omitted, StackOps requires exactly one `.ai/plans/*.plan.json` file. `--agent/-a` selects the completion-checking agent, `--interval/-i` controls the delay between passes, and `--once/-o` performs one pass and exits.
+
+```bash
+agents execute .ai/plans/release.plan.json --once
+agents execute --agent codex --interval 300
+```
+
+---
+
+## `second-brain`
+
+`second-brain config` creates `~/code/agents/second-brain` and installs its starter `AGENTS.md` when that file does not already exist. Existing instructions are preserved.
+
+```bash
+agents second-brain config
 ```
 
 ---
@@ -304,6 +351,10 @@ agents --help
 agents account --help
 agents account backup --help
 agents account retrieve --help
+agents clean --help
+agents doctor --help
+agents execute --help
+agents second-brain --help
 agents parallel --help
 agents add-config --help
 agents add-mcp --help

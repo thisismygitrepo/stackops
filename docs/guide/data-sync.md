@@ -3,7 +3,7 @@
 StackOps currently splits data movement into two layers:
 
 - `devops data` for repeatable, named backup entries stored in the backup config
-- `cloud` for direct source/target copy, sync, mount, and SSH file transfer
+- `cloud` for direct source/target copy, sync, mount, SSH transfer, and OneDrive access through Microsoft Graph
 
 ---
 
@@ -19,6 +19,8 @@ Current subcommands:
 
 - `sync`
 - `register`
+- `display`
+- `subset`
 - `edit`
 
 ### Register a backup item
@@ -79,9 +81,6 @@ devops data sync up --which all
 # Restore one group from the user backup config
 devops data sync down -s user --which dotfiles
 
-# Replace an existing restore target
-devops data sync down -s user --which dotfiles --on-conflict overwrite-target
-
 # Restrict the generated commands to one item and one cloud profile
 devops data sync up --cloud myremote --which dotfiles.wezterm
 
@@ -94,22 +93,16 @@ devops data sync down --use-link --which dotfiles.wezterm
 
 `--use-link` is only valid for `down`. Every selected entry must have a non-null `share_url`; otherwise StackOps exits with the affected entry names and tells you to either remove `--use-link` or add valid links.
 
-`--on-conflict` controls what happens when the direction's target already exists. The target is the cloud destination for `up` and the local destination for `down`. Accepted policies are:
-
-- `throw-error`: stop instead of changing an existing target; this is the default
-- `overwrite-target`: replace the existing target
-- `merge-target`: merge the source into the existing target
-
-Choose the policy explicitly when an existing target is expected. For example, use `--on-conflict merge-target` when restoring into a local directory whose target-only contents must remain.
-
-### Inspect or edit the backup config
+### Inspect, subset, or edit the backup config
 
 ```bash
+devops data display
+devops data subset ./laptop-data.yaml --which dotfiles.wezterm
 devops data edit -s user
 devops data edit -s library
 ```
 
-Use `--source`, `-s` on data sync and edit commands to choose `library`, `user`, or `all` where supported.
+`display` renders the registered user entries. `subset` writes selected entries to a standalone YAML file and has its own output-file `--on-conflict` policy. Use `--source`, `-s` on data sync, subset, and edit commands to choose the configuration source where supported.
 
 ---
 
@@ -127,6 +120,7 @@ Current top-level commands:
 - `copy`
 - `mount`
 - `ftpx`
+- `onedrive`
 
 ### Copy
 
@@ -164,6 +158,15 @@ Transfer files between `machine:path` endpoints:
 
 ```bash
 cloud ftpx localmachine:/tmp/archive remotehost:/tmp/archive --recursive
+```
+
+### OneDrive through Microsoft Graph
+
+The `onedrive` group manages configured Microsoft Graph accounts and supports listing, searching, uploading, downloading, and deleting drive items:
+
+```bash
+cloud onedrive --help
+cloud onedrive accounts
 ```
 
 ---

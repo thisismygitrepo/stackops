@@ -35,8 +35,6 @@ devops config terminal --help
 
 Use `devops config terminal config-shell --which default` or `devops config terminal config-shell --which nushell` to invoke the shell-profile setup action directly.
 
-The nested help screen renders `Usage: devops terminal ...`, but the full entrypoint remains `devops config terminal ...`.
-
 ---
 
 ## Syncing configuration
@@ -98,6 +96,7 @@ Beyond sync, register, edit, export, and import, `devops config --help` also lis
 - `dump`
 - `terminal`
 - `secrets`
+- `setup`
 
 Inside `devops config terminal --help`, the current terminal commands are:
 

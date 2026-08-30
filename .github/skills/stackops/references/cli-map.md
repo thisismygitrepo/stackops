@@ -1,16 +1,17 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-07-10.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-08-31.
 
-This reference intentionally uses:
-- direct commands only
-- canonical command names only
+Use this as a root index only. Discover command groups, options, defaults, aliases, and help text from the live CLI with `--help`.
 
 This reference intentionally excludes:
+- command option listings
+- generated per-command reference pages
 - short aliases
 - hidden alias-only paths
+- nested command trees
 
-The tree is root-relative: use `devops repos sync` directly, or `stackops devops repos sync` through the umbrella entrypoint.
+Do not copy details from this file when `uv run <entrypoint> --help` can provide the current answer.
 
 ## Direct Entry Points
 
@@ -26,186 +27,21 @@ Defined in `pyproject.toml` `[project.scripts]`:
 - `stackops` -> `stackops.scripts.python.stackops_entry:main`
 - `seek` -> `stackops.scripts.python.seek:main`
 
-## Command Tree
+## Top-Level Help
 
-```text
-stackops
-├─ devops
-│  ├─ install
-│  ├─ data
-│  │  ├─ sync
-│  │  ├─ register
-│  │  └─ edit
-│  ├─ repos
-│  │  ├─ sync
-│  │  ├─ register
-│  │  ├─ action
-│  │  ├─ analyze
-│  │  ├─ guard
-│  │  ├─ viz
-│  │  └─ count-lines
-│  ├─ config
-│  │  ├─ sync
-│  │  ├─ register
-│  │  ├─ edit
-│  │  ├─ export-dotfiles
-│  │  ├─ import-dotfiles
-│  │  ├─ terminal
-│  │  │  ├─ config-shell
-│  │  │  ├─ starship-theme
-│  │  │  ├─ pwsh-theme
-│  │  │  ├─ wezterm-theme
-│  │  │  ├─ ghostty-theme
-│  │  │  ├─ windows-terminal-theme
-│  │  │  └─ tmux-style
-│  │  │     ├─ install-oh-my-tmux
-│  │  │     ├─ apply-stackops-local
-│  │  │     ├─ preset
-│  │  │     ├─ set-option
-│  │  │     ├─ reload
-│  │  │     └─ status
-│  │  ├─ interactive
-│  │  ├─ copy-assets
-│  │  ├─ secrets
-│  │  │  ├─ search
-│  │  │  ├─ stats
-│  │  │  ├─ subset
-│  │  │  ├─ add
-│  │  │  └─ edit
-│  │  └─ dump
-│  ├─ vault
-│  │  ├─ search
-│  │  ├─ login-and-unlock
-│  │  └─ clean-cache
-│  ├─ network
-│  │  ├─ share-terminal
-│  │  ├─ share-server
-│  │  ├─ send
-│  │  ├─ receive
-│  │  ├─ share-temp-file
-│  │  ├─ ssh
-│  │  │  ├─ install-server
-│  │  │  ├─ change-port
-│  │  │  ├─ add-key
-│  │  │  ├─ debug
-│  │  │  └─ map-port
-│  │  ├─ cloudflare
-│  │  │  ├─ switch-public-ip
-│  │  │  ├─ reset-cloudflare-tunnel
-│  │  │  ├─ add-ip-exclusion-to-warp
-│  │  │  ├─ cloudflare-tunnel-status
-│  │  │  ├─ update-cloudflare-connectors
-│  │  │  └─ sync-cloudflare-routes
-│  │  ├─ device
-│  │  │  ├─ wifi-select
-│  │  │  ├─ bind-wsl-port
-│  │  │  ├─ open-wsl-port
-│  │  │  └─ link-wsl-windows
-│  │  ├─ show-address
-│  │  └─ vscode-share
-│  ├─ execute
-│  └─ self
-│     ├─ install
-│     ├─ clone
-│     ├─ update
-│     ├─ status
-│     ├─ security
-│     │  ├─ scan
-│     │  ├─ list
-│     │  ├─ upload
-│     │  ├─ download
-│     │  ├─ install
-│     │  └─ report
-│     ├─ explore
-│     │  ├─ search
-│     │  ├─ tree
-│     │  ├─ dot
-│     │  ├─ view
-│     │  └─ tui
-│     ├─ readme
-│     ├─ docs
-│     ├─ build-installer
-│     ├─ download-installer
-│     ├─ build-docker
-│     ├─ build-graph
-│     ├─ build-assets
-│     │  ├─ update-cli-graph
-│     │  ├─ regenerate-charts
-│     │  └─ update-skill-refs
-│     └─ agentops
-│        ├─ update-installer
-│        ├─ update-test
-│        ├─ update-docs
-│        └─ update-logic
-├─ cloud
-│  ├─ sync
-│  ├─ copy
-│  ├─ mount
-│  └─ ftpx
-├─ terminal
-│  ├─ run
-│  ├─ run-all
-│  ├─ run-aoe
-│  ├─ attach
-│  ├─ kill
-│  ├─ trace
-│  ├─ create-from-function
-│  ├─ balance-load
-│  ├─ create-template
-│  ├─ summary
-│  └─ summarize
-├─ agents
-│  ├─ parallel
-│  │  ├─ create
-│  │  ├─ create-context
-│  │  ├─ run-parallel
-│  │  ├─ collect
-│  │  └─ make-template
-│  ├─ browser
-│  │  ├─ install-tech
-│  │  └─ launch
-│  ├─ add-mcp
-│  ├─ add-skill
-│  ├─ add-todo
-│  ├─ add-symlinks
-│  ├─ add-config
-│  ├─ run-prompt
-│  ├─ run-interactive
-│  └─ ask
-├─ utils
-│  ├─ machine
-│  │  ├─ kill-process
-│  │  ├─ environment
-│  │  ├─ get-machine-specs
-│  │  ├─ list-devices
-│  │  └─ mount
-│  ├─ pyproject
-│  │  ├─ init-project
-│  │  ├─ upgrade-packages
-│  │  ├─ type-hint
-│  │  ├─ type-check
-│  │  ├─ config-linters
-│  │  ├─ cleanup
-│  │  ├─ type-fix (callback group)
-│  │  ├─ test-runtime (callback group)
-│  │  └─ test-reference
-│  └─ file
-│     ├─ edit
-│     ├─ download
-│     ├─ scrape
-│     ├─ pdf-merge
-│     ├─ pdf-compress
-│     ├─ ocr
-│     └─ read-db
-├─ seek
-│  └─ seek
-├─ fire
-└─ preview
-```
+- `UV_CACHE_DIR=/tmp/uv-cache uv run stackops --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run devops --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run cloud --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run terminal --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run agents --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run utils --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run seek --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run fire --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run preview --help`
 
 ## Important Nuances
 
-- `devops self docs`, `devops self build-docker`, `devops self build-assets`, and `devops self agentops` are registered only when the developer checkout exists at `~/code/stackops`.
-- Callback groups such as `utils pyproject type-fix` and `utils pyproject test-runtime` are invoked as the group command itself.
-- The generated graph stores aliases on each node. Use `src/stackops/scripts/python/graph/cli_graph.json` when alias details matter.
+- Developer-only command groups under `devops self` depend on the developer checkout at `~/code/stackops`.
+- Callback groups are invoked as the group command itself; confirm the exact behavior with `--help`.
+- The generated graph stores aliases and metadata. Use `src/stackops/scripts/python/graph/cli_graph.json` only when live help or source is insufficient.
 - Docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.

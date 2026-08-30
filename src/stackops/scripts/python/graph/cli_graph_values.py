@@ -3,11 +3,17 @@ from pathlib import Path
 from typing import Any
 
 from stackops.scripts.python.graph.cli_graph_resolver import (
+    evaluate_module_assignment,
     is_name,
     literal_values,
+    resolve_exported_value,
     resolve_imported_symbol,
 )
-from stackops.scripts.python.graph.cli_graph_shared import ModuleInfo, Unresolved
+from stackops.scripts.python.graph.cli_graph_shared import (
+    ModuleInfo,
+    ResolvedModule,
+    Unresolved,
+)
 
 
 def evaluate_condition(
@@ -38,6 +44,10 @@ def evaluate_expr(
             return env[expr.id]
         if expr.id in function_docs:
             return {"__doc__": function_docs[expr.id] or ""}
+        if expr.id in module_info.assignments:
+            assigned = evaluate_module_assignment(module_info.assignments[expr.id])
+            if assigned is not None:
+                return assigned
         imported = resolve_imported_symbol(module_info, expr.id)
         if imported is not None:
             return imported
@@ -94,6 +104,10 @@ def evaluate_expr(
         base = evaluate_expr(expr.value, module_info, env, function_docs)
         if expr.attr == "__doc__" and isinstance(base, dict):
             return base.get("__doc__", "")
+        if isinstance(base, ResolvedModule):
+            exported = resolve_exported_value(base.module, expr.attr)
+            if exported is not None:
+                return exported
         return Unresolved(ast.unparse(expr))
 
     if isinstance(expr, ast.Subscript):
@@ -222,11 +236,3 @@ def simplify_value(value: Any, *, fallback: str) -> Any:
             simplified[str(key)] = simplify_value(item, fallback=str(item))
         return simplified
     return value if value is not None else fallback if fallback == "None" else value
-
-
-def value_to_string(value: Any, *, fallback: str) -> str:
-    if isinstance(value, str):
-        return value
-    if isinstance(value, Unresolved):
-        return value.text
-    return fallback

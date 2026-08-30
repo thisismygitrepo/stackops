@@ -130,9 +130,18 @@ def resolve_child_app_ref(
     resolved = resolve_callable(
         expr.func, module_info, local_modules=local_modules, local_names=local_names
     )
-    if resolved is None or resolved.callable_name != "get_app":
+    if resolved is None:
         return None
-    return AppRef(module=resolved.module, factory=resolved.callable_name)
+    if resolved.callable_name == "get_app":
+        return AppRef(module=resolved.module, factory=resolved.callable_name)
+    if resolved.callable_name != "apply_alias_markers" or len(expr.args) != 1:
+        return None
+    return resolve_child_app_ref(
+        expr.args[0],
+        module_info,
+        local_modules=local_modules,
+        local_names=local_names,
+    )
 
 
 def resolve_child_app_factory_ref(

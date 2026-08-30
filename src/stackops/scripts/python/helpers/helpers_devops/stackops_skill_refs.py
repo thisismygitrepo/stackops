@@ -12,6 +12,7 @@ from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
 STACKOPS_SKILL_REFERENCES_RELATIVE_PATHS: tuple[Path, ...] = (
     Path("skills", "stackops", "references"),
     Path("src", "stackops", "skills", "stackops", "references"),
+    Path(".github", "skills", "stackops", "references"),
 )
 CLI_GRAPH_DISPLAY_PATH = "src/stackops/scripts/python/graph/cli_graph.json"
 JsonObject: TypeAlias = Mapping[str, object]

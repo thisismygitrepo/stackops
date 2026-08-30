@@ -1,7 +1,7 @@
 import ast
 from typing import Any
 
-from stackops.scripts.python.graph.cli_graph_shared import ModuleInfo
+from stackops.scripts.python.graph.cli_graph_shared import ModuleInfo, Unresolved
 from stackops.scripts.python.graph.cli_graph_values import evaluate_expr, simplify_value
 
 
@@ -26,9 +26,22 @@ def evaluate_kwargs(
     for keyword in keywords:
         if keyword.arg is None:
             continue
+        value = evaluate_expr(keyword.value, module_info, env, function_docs)
+        if keyword.arg in {"help", "short_help"}:
+            if isinstance(value, Unresolved):
+                raise RuntimeError(
+                    f"Could not resolve {keyword.arg} in {module_info.module}: "
+                    f"{value.text}"
+                )
+            if value is not None and not isinstance(value, str):
+                raise RuntimeError(
+                    f"Expected {keyword.arg} to resolve to str or None in "
+                    f"{module_info.module}, got {type(value).__name__}"
+                )
+            result[keyword.arg] = value
+            continue
         result[keyword.arg] = simplify_value(
-            evaluate_expr(keyword.value, module_info, env, function_docs),
+            value,
             fallback=ast.unparse(keyword.value),
         )
     return result
-

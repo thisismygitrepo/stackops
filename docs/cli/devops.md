@@ -76,11 +76,14 @@ These are the child commands exposed by the current live help.
 - `dump`
 - `terminal`
 - `secrets`
+- `setup`
 
 `data`:
 
 - `sync`
 - `register`
+- `display`
+- `subset`
 - `edit`
 
 `self`:
@@ -90,7 +93,8 @@ These are the child commands exposed by the current live help.
 - `update`
 - `status`
 - `security`
-- `explore`
+- `explore-cli`
+- `explore-python-api`
 - `readme`
 - `docs`
 - `build-installer`
@@ -98,7 +102,6 @@ These are the child commands exposed by the current live help.
 - `build-docker`
 - `build-graph`
 - `build-assets`
-- `agentops`
 
 `network`:
 
@@ -110,12 +113,15 @@ These are the child commands exposed by the current live help.
 - `show-address`
 - `vscode-share`
 - `ssh`
+- `cloudflare`
 - `device`
 
 `vault`:
 
 - `search`
 - `login-and-unlock`
+- `unlock`
+- `sync`
 - `clean-cache`
 
 ---
@@ -158,6 +164,8 @@ Current behavior:
 
 - `search` retrieves Bitwarden credentials and can copy password, username, TOTP, or raw JSON to clipboard slots
 - `login-and-unlock` loads Bitwarden API credentials from StackOps secrets, unlocks the vault, and saves `BW_SESSION` locally
+- `unlock` prints an eval-able shell script that exports the saved `BW_SESSION`
+- `sync` synchronizes Bitwarden with the server and refreshes cached searches
 - `clean-cache` removes cached search results and any saved session token
 
 Examples:
@@ -166,6 +174,8 @@ Examples:
 devops vault login-and-unlock --account-name dev
 devops vault search github --copy password
 devops v s github --json
+eval "$(devops vault unlock)"
+devops vault sync
 devops vault clean-cache
 ```
 

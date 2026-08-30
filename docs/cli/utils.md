@@ -64,7 +64,6 @@ utils pyproject [OPTIONS] COMMAND [ARGS]...
 |---------|---------|
 | `init-project` | Initialize a project with a uv virtual environment and dev packages |
 | `upgrade-packages` | Regenerate package-add commands for a project, optionally clearing groups first |
-| `type-hint` | Type-hint a file or project directory |
 | `type-check` | Run the lint-and-type-check suite for a repository |
 | `check-deps` | Check Python import dependencies and cycles with `pyan3` or `pydeps` |
 | `config-linters` | Add standard linter configuration files to a git repository |
@@ -77,7 +76,6 @@ Key behavior:
 
 - `init-project` defaults to Python `3.13` and package groups `p,t,l,i,d`; `--tmp-dir` creates a temporary project, `--libraries` adds extra packages, and `--group` accepts comma-separated group keys.
 - `upgrade-packages [ROOT]` can repeat `--clean-group`, use `--clean-all-groups` to clear every dependency group and extra, and use `--delete-venv` to remove the project's `.venv` before regenerating `pyproject_init.sh`.
-- `type-hint [PATH]` validates a file or project root and defaults to `--dependency self-contained`, but type-hint generation currently exits with an error because the generator implementation is missing.
 - `type-check [REPO]` resolves the repository root from the nearest `pyproject.toml` and passes exclusions through the lint/type-check script.
 - If `--exclude` is omitted, `type-check` currently defaults to excluding `tests`, `.github`, `.codex`, `.ai`, `.links`, and `.venv`.
 - `check-deps [TARGET]` runs either `pyan3` or `pydeps` through `uv run --with`, emits JSON/JSONIC by default, can write interactive HTML under `./.ai/check_deps`, and highlights direct mutual dependencies plus larger cycle groups.
@@ -93,7 +91,6 @@ Examples:
 utils pyproject init-project --name sample --python 3.14
 utils pyproject upgrade-packages . --clean-group dev
 utils pyproject upgrade-packages . --clean-all-groups --delete-venv
-utils pyproject type-hint src/my_module.py
 utils pyproject type-check . --exclude tests --exclude .venv
 utils pyproject check-deps . --backend pyan --output html
 utils pyproject check-deps src/my_package --backend pydeps --focus my_package --edge-filter dual
@@ -126,10 +123,10 @@ Key behavior:
 - `download [URL]` supports `--decompress`, `--output`, and `--output-dir`.
 - `scrape [URL] [OUTPUT_PATH]` wraps `uvx "scrapling[shell]" extract stealthy-fetch`, defaulting to `f.md`, `article` selectors, `--wait 2000`, `--timeout 60000`, and `--enable-resources`. Additional options: `--output/-o` (alternative to positional output path), `--selector/-s` (CSS selector), `--wait-selector/-W` (CSS selector to wait for), `--enable-resources/-e/-E` (toggle browser resources), `--package-spec/-p` (uvx package spec).
 - `pdf-merge PDFS...` requires at least two distinct input files, defaults to `merged.pdf`, refuses to overwrite an existing output, and can `--compress` the merged output.
-- `pdf-compress PDF_INPUT` defaults to `<input>_compressed.pdf` and supports `--quality` and `--image-dpi`. The current CLI accepts `--no-compress-streams/-C` and `--no-object-streams/-S`, but those flags leave stream and object-stream compression enabled.
+- `pdf-compress PDF_INPUT` defaults to `<input>_compressed.pdf` and supports `--quality` and `--image-dpi`. Stream and object-stream compression are enabled by default; use `--no-compress-streams/-C` or `--no-object-streams/-S` to disable either behavior.
 - `ocr DATA_PATH` runs the `surya-ocr` package through `uv run --with ... --no-project` without importing Surya during CLI startup. Use `--task` with `ocr`, `detect`, `layout`, or `table`; common Surya flags include `--output-dir`, `--page-range`, `--images`, `--debug`, `--keep-server`, and `--skip-table-detection` (table task only). `--package-spec/-P` overrides the uv package spec. Extra Surya flags can be passed after `--`.
 - `read-db [PATH]` defaults to the `harlequin` backend. Provide only one of positional `PATH`, `--url/-u`, or `--find/-f`; `--find-root` and `--recursive` refine file discovery.
-- `read-db` supports backends `rainfrog`, `lazysql`, `dblab`, `usql`, `harlequin`, and `sqlit` plus their one-letter aliases. The current `--read-write/-w` flag is accepted but still leaves read-only mode enabled. `--theme/-t` sets the TUI theme when supported by the backend. `--limit/-l` caps the number of rows loaded when supported by the backend.
+- `read-db` supports backends `rainfrog`, `lazysql`, `dblab`, `usql`, `harlequin`, and `sqlit` plus their one-letter aliases. Local databases open read-only by default; `--read-write/-w` disables read-only mode. StackOps rejects a local backend that cannot provide verified read-only access unless `--read-write` is set. `--theme/-t` sets the TUI theme when supported by the backend. `--limit/-l` caps the number of rows loaded when supported by the backend.
 
 Examples:
 

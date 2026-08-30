@@ -8,6 +8,7 @@ from stackops.scripts.python.graph.cli_graph_resolver import (
     collect_local_imports,
     is_typer_ctor,
     load_module,
+    resolve_exported_value,
 )
 from stackops.scripts.python.graph.cli_graph_shared import (
     APP_CACHE,
@@ -15,11 +16,12 @@ from stackops.scripts.python.graph.cli_graph_shared import (
     AppRef,
     ModuleInfo,
     Registration,
+    ResolvedModule,
+    Unresolved,
 )
 from stackops.scripts.python.graph.cli_graph_values import (
     evaluate_condition,
     evaluate_expr,
-    value_to_string,
 )
 
 
@@ -50,6 +52,12 @@ def extract_app_model(
     return_app_var: str | None = None
     order = 0
     local_modules, local_names = collect_local_imports(function_info)
+    bind_local_imports(
+        env=env,
+        function_docs=function_docs,
+        local_modules=local_modules,
+        local_names=local_names,
+    )
 
     def process_registration_expr(expr: ast.AST) -> None:
         nonlocal order
@@ -88,10 +96,20 @@ def extract_app_model(
                         and target.attr == "__doc__"
                         and isinstance(target.value, ast.Name)
                     ):
-                        function_docs[target.value.id] = value_to_string(
-                            evaluate_expr(assign_value, module_info, env, function_docs),
-                            fallback=ast.unparse(assign_value),
+                        doc_value = evaluate_expr(
+                            assign_value, module_info, env, function_docs
                         )
+                        if isinstance(doc_value, Unresolved):
+                            raise RuntimeError(
+                                f"Could not resolve {target.value.id}.__doc__ in "
+                                f"{module_info.module}: {doc_value.text}"
+                            )
+                        if not isinstance(doc_value, str):
+                            raise RuntimeError(
+                                f"Expected {target.value.id}.__doc__ to resolve to str "
+                                f"in {module_info.module}, got {type(doc_value).__name__}"
+                            )
+                        function_docs[target.value.id] = doc_value
                 continue
 
             if isinstance(statement, ast.AnnAssign) and isinstance(
@@ -160,6 +178,45 @@ def extract_app_model(
         app_config=app_config,
         registrations=registrations,
     )
+
+
+def bind_local_imports(
+    *,
+    env: dict[str, Any],
+    function_docs: dict[str, str | None],
+    local_modules: dict[str, str],
+    local_names: dict[str, tuple[str, str]],
+) -> None:
+    for local_name, module in local_modules.items():
+        try:
+            load_module(module)
+        except FileNotFoundError:
+            continue
+        env[local_name] = ResolvedModule(module=module)
+
+    for local_name, (module, imported_name) in local_names.items():
+        imported_module = f"{module}.{imported_name}"
+        try:
+            load_module(imported_module)
+        except FileNotFoundError:
+            pass
+        else:
+            env[local_name] = ResolvedModule(module=imported_module)
+            continue
+
+        try:
+            imported_module_info = load_module(module)
+        except FileNotFoundError:
+            continue
+
+        imported_function = imported_module_info.functions.get(imported_name)
+        if imported_function is not None:
+            function_docs[local_name] = ast.get_docstring(imported_function)
+            continue
+
+        imported_value = resolve_exported_value(module, imported_name)
+        if imported_value is not None:
+            env[local_name] = imported_value
 
 
 def build_static_loop_bindings(statement: ast.For) -> list[dict[str, ast.AST]] | None:

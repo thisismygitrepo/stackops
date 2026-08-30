@@ -26,9 +26,6 @@ Current `devops self --help` exposes:
 | `build-docker` | Build Docker images from the repo script | Only when `~/code/stackops` exists |
 | `build-graph` | Build the architecture dependency graph | Only when `~/code/stackops` exists |
 | `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/stackops` exists |
-| `agentops` | Developer AI agent operations | Only when `~/code/stackops` exists |
-
-The nested help screens render shortened usage such as `Usage: devops update ...`, but the full entrypoints remain `devops self ...` and `devops self security ...`.
 
 ### update
 
@@ -566,34 +563,6 @@ devops self build-graph --view
 ```
 
 This command is only registered when `~/code/stackops` exists locally.
-
-### agentops
-
-Developer AI agent-operation helpers live under a nested Typer app:
-
-```bash
-devops self agentops [SUBCOMMAND] [ARGS]...
-```
-
-Current `devops self agentops --help` exposes:
-
-| Command | Description |
-|---------|-------------|
-| `update-installer` | Create an agents layout for updating `installer_data.json` |
-| `update-test` | Create an agents layout for writing tests from repo Python sources |
-| `update-docs` | Create an agents layout for updating CLI and API docs only |
-| `update-logic` | Create an agents layout for checking CLI command logic |
-
-Examples:
-
-```bash
-devops self agentops update-installer
-devops self agentops update-test
-devops self agentops update-docs
-devops self agentops update-logic
-```
-
-This sub-app is only registered when `~/code/stackops` exists locally.
 
 ### readme
 
