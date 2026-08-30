@@ -217,11 +217,11 @@ Important disclosure behavior:
   omitting it does not prevent the VirusTotal upload. Installed-app scans record
   by default, and the current CLI has no `--no-record` option.
 - An installed-app scan also attempts to upload every discovered directory
-  entry to the configured rclone remote named `gdp` and requests a share link,
+  entry to the configured default rclone remote and requests a share link,
   even if the VirusTotal scan returned no summary. Discovery does not require
   an entry to be a regular executable before queuing it; VirusTotal skips
-  directories, but the `gdp` upload is still attempted. A single explicit
-  `--path` scan does not perform this additional `gdp` upload.
+  directories, but the cloud upload is still attempted. A single explicit
+  `--path` scan does not perform this additional cloud upload.
 - `security upload` and installed-app sharing are provider operations. There is
   no `security` command that recalls a VirusTotal submission or deletes the
   remote object/share. Use the providers' controls.

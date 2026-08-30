@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 
 from stackops.utils.cloud import rclone_wrapper
+from stackops.utils.cloud.default_remote import read_default_rclone_remote
 from stackops.utils.installer_utils import installer_offline_constants as constants
 from stackops.utils.installer_utils.installer_offline_models import ExportStepResult
 
@@ -16,6 +17,7 @@ KNOWN_TARGET_KEYS: tuple[str, ...] = (
 
 
 def publish_archive(*, archive_path: Path, system_name: str, arch_name: str) -> list[ExportStepResult]:
+    cloud = read_default_rclone_remote()
     remote_path = rclone_wrapper.get_remote_path(
         local_path=archive_path,
         root=constants.OFFLINE_INSTALLER_UPLOAD_REMOTE_ROOT,
@@ -25,7 +27,7 @@ def publish_archive(*, archive_path: Path, system_name: str, arch_name: str) -> 
     )
     share_url = rclone_wrapper.to_cloud(
         local_path=archive_path,
-        cloud=constants.OFFLINE_INSTALLER_UPLOAD_CLOUD,
+        cloud=cloud,
         remote_path=remote_path,
         overwrite=True,
         share=True,
@@ -44,7 +46,7 @@ def publish_archive(*, archive_path: Path, system_name: str, arch_name: str) -> 
         ExportStepResult(
             label="cloud upload",
             status="included",
-            detail=f"uploaded to {constants.OFFLINE_INSTALLER_UPLOAD_CLOUD}:{remote_path.as_posix()}",
+            detail=f"uploaded to {cloud}:{remote_path.as_posix()}",
             output_path=archive_path,
         ),
         ExportStepResult(

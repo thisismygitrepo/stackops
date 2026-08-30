@@ -141,7 +141,7 @@ devops self build-installer
 devops self build-installer --upload-to-cloud
 ```
 
-Use `--upload-to-cloud` to upload the generated archive to the mirrored `gdp:myhome/generic_os/.config/stackops/offline_installers/<archive-name>` path, generate a shared URL, and update the JSON URL map consumed by `scripts_dynamic/download_stackops_offline_installer.py`.
+Use `--upload-to-cloud` to upload the generated archive to the mirrored path on the configured default rclone remote, generate a shared URL, and update the JSON URL map consumed by `scripts_dynamic/download_stackops_offline_installer.py`.
 
 ### download-installer
 
