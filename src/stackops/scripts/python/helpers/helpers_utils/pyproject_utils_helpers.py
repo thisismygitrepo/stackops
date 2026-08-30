@@ -5,6 +5,7 @@ ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
 TypeHintDependencyMode: TypeAlias = Literal["self-contained", "import"]
 InitProjectGroupKey: TypeAlias = Literal["p", "t", "types", "l", "i", "d"]
 TYPE_CHECK_EXCLUDES_ENV_VAR = "STACKOPS_TYPE_CHECK_EXCLUDES"
+TYPE_CHECK_LATEST_ENV_VAR = "STACKOPS_TYPE_CHECK_LATEST"
 DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES: tuple[str, ...] = (
     "tests",
     ".github",
@@ -121,6 +122,7 @@ def resolve_type_check_excluded_directories(
 
 def build_type_check_environment(
     excluded_directories: tuple[str, ...],
+    latest: bool,
 ) -> dict[str, str]:
     import json
     import os
@@ -129,4 +131,5 @@ def build_type_check_environment(
     environment[TYPE_CHECK_EXCLUDES_ENV_VAR] = json.dumps(
         list(excluded_directories)
     )
+    environment[TYPE_CHECK_LATEST_ENV_VAR] = "1" if latest else "0"
     return environment

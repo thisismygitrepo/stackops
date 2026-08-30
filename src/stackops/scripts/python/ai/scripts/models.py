@@ -102,6 +102,7 @@ PYRIGHT_CONFIG_OVERRIDE_PATH = models_config_module.PYRIGHT_CONFIG_OVERRIDE_PATH
 TYPE_CHECK_EXCLUDES_ENV_VAR = models_config_module.TYPE_CHECK_EXCLUDES_ENV_VAR
 build_checker_specs = models_config_module.build_checker_specs
 build_cleanup_commands = models_config_module.build_cleanup_commands
+load_latest_type_check_tools = models_config_module.load_latest_type_check_tools
 load_type_check_excluded_directories = (
     models_config_module.load_type_check_excluded_directories
 )
@@ -118,11 +119,12 @@ write_start_failure = models_reports_module.write_start_failure
 TYPE_CHECK_EXCLUDED_DIRECTORIES: Final[tuple[str, ...]] = (
     load_type_check_excluded_directories()
 )
+LATEST_TYPE_CHECK_TOOLS: Final[bool] = load_latest_type_check_tools()
 CLEANUP_COMMANDS: Final[tuple[tuple[str, ...], ...]] = build_cleanup_commands(
-    TYPE_CHECK_EXCLUDED_DIRECTORIES
+    excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES, latest=LATEST_TYPE_CHECK_TOOLS
 )
 CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = build_checker_specs(
-    TYPE_CHECK_EXCLUDED_DIRECTORIES
+    excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES, latest=LATEST_TYPE_CHECK_TOOLS
 )
 
 __all__ = (

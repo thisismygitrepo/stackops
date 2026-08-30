@@ -16,6 +16,7 @@ from rich import box
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.text import Text
 
 from stackops.scripts.python.ai.scripts import (
@@ -65,20 +66,40 @@ def run_cleanup(console: Console) -> CleanupResult:
     exit_code = 0
     cleanup_chunks: list[str] = []
     subprocess_environment = build_subprocess_environment()
-    for command in CLEANUP_COMMANDS:
-        cleanup_chunks.append(f"$ {' '.join(command)}\n")
-        completed = subprocess.run(
-            command,
-            env=subprocess_environment,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            check=False,
+    cleanup_command_count = len(CLEANUP_COMMANDS)
+    with Progress(
+        SpinnerColumn(style="cyan"),
+        TextColumn("[bold cyan]{task.description}"),
+        BarColumn(bar_width=None),
+        TextColumn("{task.completed}/{task.total} finished"),
+        TimeElapsedColumn(),
+        console=console,
+        expand=True,
+    ) as progress:
+        cleanup_task = progress.add_task(
+            description="Starting cleanup commands",
+            total=cleanup_command_count,
         )
-        cleanup_chunks.append(completed.stdout or "")
-        cleanup_chunks.append("\n")
-        if completed.returncode != 0 and exit_code == 0:
-            exit_code = completed.returncode
+        for index, command in enumerate(CLEANUP_COMMANDS, start=1):
+            progress.update(
+                cleanup_task,
+                description=f"Cleanup step {index}/{cleanup_command_count} running — waiting for command to finish",
+            )
+            cleanup_chunks.append(f"$ {' '.join(command)}\n")
+            completed = subprocess.run(
+                command,
+                env=subprocess_environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                check=False,
+            )
+            cleanup_chunks.append(completed.stdout or "")
+            cleanup_chunks.append("\n")
+            if completed.returncode != 0 and exit_code == 0:
+                exit_code = completed.returncode
+            progress.advance(cleanup_task)
+        progress.update(cleanup_task, description="Cleanup commands finished")
     cleanup_path.write_text("".join(cleanup_chunks), encoding="utf-8")
     finished_at = time.monotonic()
     result = CleanupResult(

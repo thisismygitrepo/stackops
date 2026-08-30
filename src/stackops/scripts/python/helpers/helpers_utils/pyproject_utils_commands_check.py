@@ -26,8 +26,17 @@ def type_check(
             help="Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.",
         ),
     ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(
+            "--latest",
+            "-l",
+            help="Resolve the latest compatible lint and type-check tool versions for this run.",
+        ),
+    ] = False,
 ) -> None:
     import subprocess
+    import sys
 
     import stackops.scripts.python.ai.scripts as ai_scripts
     from stackops.utils.path_reference import get_path_reference_path
@@ -79,16 +88,18 @@ def type_check(
         )
         raise typer.Exit(code=1)
 
-    try:
-        completed = subprocess.run(
-            ["uv", "run", str(script_path)],
-            cwd=repo_root,
-            check=False,
-            env=build_type_check_environment(excluded_directories),
-        )
-    except FileNotFoundError as error:
-        typer.echo("Error: uv is required but was not found on PATH.", err=True)
-        raise typer.Exit(code=1) from error
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "stackops.scripts.python.ai.scripts.lint_and_type_check",
+        ],
+        cwd=repo_root,
+        check=False,
+        env=build_type_check_environment(
+            excluded_directories=excluded_directories, latest=latest
+        ),
+    )
     if completed.returncode != 0:
         raise typer.Exit(code=completed.returncode)
 

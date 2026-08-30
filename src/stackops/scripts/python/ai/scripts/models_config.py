@@ -11,6 +11,7 @@ from stackops.scripts.python.ai.scripts.models_core import REPORTS_DIR, ToolSpec
 
 
 TYPE_CHECK_EXCLUDES_ENV_VAR: Final[str] = "STACKOPS_TYPE_CHECK_EXCLUDES"
+TYPE_CHECK_LATEST_ENV_VAR: Final[str] = "STACKOPS_TYPE_CHECK_LATEST"
 MYPY_EXCLUDE_PATTERN: Final[str] = r"(^|/|\\)gromit-mpx($|/|\\)"
 PYRIGHT_CONFIG_PATH: Final[Path] = Path("pyrightconfig.json")
 PYPROJECT_PATH: Final[Path] = Path("pyproject.toml")
@@ -59,6 +60,15 @@ def load_type_check_excluded_directories() -> tuple[str, ...]:
     return tuple(excluded_directories)
 
 
+def load_latest_type_check_tools() -> bool:
+    raw_value = os.environ.get(TYPE_CHECK_LATEST_ENV_VAR, "0")
+    if raw_value == "1":
+        return True
+    if raw_value == "0":
+        return False
+    raise ValueError(f"Invalid {TYPE_CHECK_LATEST_ENV_VAR} value. Expected '1' or '0'.")
+
+
 def _merge_distinct_strings(*groups: tuple[str, ...]) -> tuple[str, ...]:
     merged_values: list[str] = []
     seen_values: set[str] = set()
@@ -85,6 +95,15 @@ def _append_repeated_option(
 ) -> None:
     for value in values:
         command.extend((option, value))
+
+
+def _build_uv_tool_command(package: str, latest: bool) -> list[str]:
+    if latest:
+        command = ["uv", "run", "--isolated", "--upgrade-package", package]
+    else:
+        command = ["uv", "run", "--frozen"]
+    command.extend(("--with", package))
+    return command
 
 
 def _parse_jsonc_object(raw_text: str) -> dict[str, object]:
@@ -150,25 +169,19 @@ def _ensure_pyright_config_override(excluded_directories: tuple[str, ...]) -> Pa
 
 def build_cleanup_commands(
     excluded_directories: tuple[str, ...],
+    latest: bool,
 ) -> tuple[tuple[str, ...], ...]:
     excluded_patterns = tuple(
         _build_directory_regex(directory) for directory in excluded_directories
     )
-    cleanpy_command = ["uv", "run", "--frozen", "--with", "cleanpy", "-m", "cleanpy"]
+    cleanpy_command = _build_uv_tool_command(package="cleanpy", latest=latest)
+    cleanpy_command.extend(("-m", "cleanpy"))
     _append_repeated_option(
         command=cleanpy_command, option="--exclude", values=excluded_patterns
     )
     cleanpy_command.append(".")
-    ruff_fix_command = [
-        "uv",
-        "run",
-        "--frozen",
-        "--with",
-        "ruff",
-        "ruff",
-        "check",
-        "--fix",
-    ]
+    ruff_fix_command = _build_uv_tool_command(package="ruff", latest=latest)
+    ruff_fix_command.extend(("ruff", "check", "--fix"))
     if len(excluded_directories) > 0:
         ruff_fix_command.append("--force-exclude")
         _append_repeated_option(
@@ -179,99 +192,65 @@ def build_cleanup_commands(
     ruff_fix_command.append(".")
     return (
         tuple(cleanpy_command),
-        ("uv", "run", "--frozen", "--with", "ruff", "-m", "ruff", "clean"),
+        (*_build_uv_tool_command(package="ruff", latest=latest), "-m", "ruff", "clean"),
         tuple(ruff_fix_command),
     )
 
 
-def build_checker_specs(excluded_directories: tuple[str, ...]) -> tuple[ToolSpec, ...]:
+def build_checker_specs(
+    excluded_directories: tuple[str, ...],
+    latest: bool,
+) -> tuple[ToolSpec, ...]:
     excluded_patterns = tuple(
         _build_directory_regex(directory) for directory in excluded_directories
     )
     mypy_excludes = _merge_distinct_strings((MYPY_EXCLUDE_PATTERN,), excluded_patterns)
-    pyright_command = [
-        "uv",
-        "run",
-        "--frozen",
-        "--with",
-        "pyright",
-        "pyright",
-        "--outputjson",
-        "--threads",
-        "10",
-    ]
+    pyright_command = _build_uv_tool_command(package="pyright", latest=latest)
+    pyright_command.extend(("pyright", "--outputjson", "--threads", "10"))
     if len(excluded_directories) > 0:
         pyright_command.extend(
             ("--project", str(_ensure_pyright_config_override(excluded_directories)))
         )
     pyright_command.append(".")
-    mypy_command = ["uv", "run", "--frozen", "--with", "mypy", "mypy", "-O", "json"]
+    mypy_command = _build_uv_tool_command(package="mypy", latest=latest)
+    mypy_command.extend(("mypy", "-O", "json"))
     _append_repeated_option(command=mypy_command, option="--exclude", values=mypy_excludes)
     mypy_command.append(".")
-    pylint_command = [
-        "uv",
-        "run",
-        "--frozen",
-        "--with",
-        "pylint",
-        "pylint",
-        "--recursive=y",
-        "--jobs=5",
-        "--ignore=.venv",
-        "--output-format=json2",
-        "--score=n",
-        "--reports=n",
-    ]
+    pylint_command = _build_uv_tool_command(package="pylint", latest=latest)
+    pylint_command.extend(
+        (
+            "pylint",
+            "--recursive=y",
+            "--jobs=5",
+            "--ignore=.venv",
+            "--output-format=json2",
+            "--score=n",
+            "--reports=n",
+        )
+    )
     if len(excluded_patterns) > 0:
         pylint_command.extend(("--ignore-paths", _build_combined_regex(excluded_patterns)))
     pylint_command.append(".")
-    pyrefly_command = [
-        "uv",
-        "run",
-        "--frozen",
-        "--with",
-        "pyrefly",
-        "pyrefly",
-        "check",
-        "--summary=none",
-        "--output-format",
-        "json",
-    ]
+    pyrefly_command = _build_uv_tool_command(package="pyrefly", latest=latest)
+    pyrefly_command.extend(
+        ("pyrefly", "check", "--summary=none", "--output-format", "json")
+    )
     _append_repeated_option(
         command=pyrefly_command,
         option="--project-excludes",
         values=excluded_directories,
     )
     pyrefly_command.append(".")
-    ty_command = [
-        "uv",
-        "run",
-        "--frozen",
-        "--with",
-        "ty",
-        "ty",
-        "check",
-        "--no-progress",
-        "--output-format",
-        "gitlab",
-    ]
+    ty_command = _build_uv_tool_command(package="ty", latest=latest)
+    ty_command.extend(("ty", "check", "--no-progress", "--output-format", "gitlab"))
     if len(excluded_directories) > 0:
         ty_command.append("--force-exclude")
         _append_repeated_option(
             command=ty_command, option="--exclude", values=excluded_directories
         )
     ty_command.append(".")
-    ruff_command = [
-        "uv",
-        "run",
-        "--frozen",
-        "--with",
-        "ruff",
-        "ruff",
-        "check",
-        "--output-format",
-        "json",
-    ]
+    ruff_command = _build_uv_tool_command(package="ruff", latest=latest)
+    ruff_command.extend(("ruff", "check", "--output-format", "json"))
     if len(excluded_directories) > 0:
         ruff_command.append("--force-exclude")
         _append_repeated_option(
