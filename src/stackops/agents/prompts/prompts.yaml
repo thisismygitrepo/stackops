@@ -18,6 +18,17 @@ renameTmuxTabs:
     - Do not interrupt running processes, send input to panes, change layouts, or switch the user's active window.
     - Verify the final window list and report the resulting index-to-name mapping.
 
+findBugsOrImprovementRoom:
+  description: a generic prompt to improve a repo.
+  prompt: |
+    Please find either bugs or room to improve this repo.
+    * The thing is, the repo is huge, so you need to split work to N agents. The use must specify a concrete value for N, if not, stop and ask them for the value. Once you find out the value, you need to undestand the repo at a fairly high level and figure out a way to distribute the workload on those sub agents.
+    * The sub agents must be created within herdr framework, its a tmux-like session manager intended for agents, you create a space and windows there, one window per agent with good name. The agent is of the same harness as you are, unless user specified, e.g. codex, pi, omp, opencode etc.
+    * you wait until they all finish, then collect the results from them and pass on the final reports back to the user so they decide on what to do next.
+    * Notice that so far, we didn't fix anything or improve anything, it was just anaylsis,
+    * The user then might ask you to approve the bug fix suggestions or improvements suggestions, in which case you proceed to launch sub agents, one per improvment/bug fix (exactly one), they go in different herdr space and lunached separetely, and they must be instucted with additional caveat "please fix this only if you think it is genuinely a bug/improvment space, if you disagree please leave as is". This gives us extra reassurance that first work was not hallucination because the prior agent was handling too much and missed details.
+  
+
 ensureLightweightCommands:
   description: we want typer cli files to remain light weight and prevent uncncessary upfront loading.
   prompt: |
