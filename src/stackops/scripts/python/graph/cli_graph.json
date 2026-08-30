@@ -3924,7 +3924,7 @@
                 "signature": {
                   "raw_lines": [
                     "def export_dotfiles(",
-                    "    pwd: Annotated[str, typer.Argument(..., help=\"Password for zip encryption\")],",
+                    "    _prompt_password: Annotated[bool, typer.Option(\"--prompt-password\", help=\"Prompt securely for the zip encryption password\")] = False,",
                     "    over_internet: Annotated[bool, typer.Option(\"--over-internet\", \"-i\", help=\"Use internet-based transfer (wormhole-magic)\")] = False,",
                     "    over_ssh: Annotated[bool, typer.Option(\"--over-ssh\", \"-s\", help=\"Use SSH-based transfer (scp) to a remote machine\")] = False,",
                     ") -> None:",
@@ -3942,6 +3942,10 @@
                     "",
                     "    if not DOTFILES_ROOT.exists() or not DOTFILES_ROOT.is_dir():",
                     "        print(f\"Dotfiles directory does not exist: {DOTFILES_ROOT}\")",
+                    "        raise typer.Exit(code=1)",
+                    "    pwd = typer.prompt(\"Enter the password for zip encryption\", hide_input=True)",
+                    "    if pwd == \"\":",
+                    "        print(\"Password for zip encryption must be non-empty.\")",
                     "        raise typer.Exit(code=1)",
                     "    if DOTFILES_ZIP_PATH.exists():",
                     "        DOTFILES_ZIP_PATH.unlink()",
@@ -3974,27 +3978,30 @@
                     "    port = 8888",
                     "    display_with_flashy_style(msg=f\"\"\"",
                     "On the remote machine, run:",
-                    "d c I -u http://{local_ipv4}:{port} -p {pwd}; d c s d -s all -m s -w all",
-                    "devops config interactive --url http://{local_ipv4}:{port} -p {pwd}; devops config sync down --sensitivity all --method symlink --which all",
+                    "d c I -u http://{local_ipv4}:{port}; d c s d -s all -m s -w all",
+                    "devops config import-dotfiles --url http://{local_ipv4}:{port}; devops config sync down --sensitivity all --method symlink --which all",
                     "\"\"\", title=\"Remote Machine Instructions\")",
                     "    cli_share_server.web_file_explorer(path=str(zipfile_encrypted_path), no_auth=True, port=port)"
                   ],
                   "name": "export_dotfiles",
                   "parameters": [
                     {
-                      "name": "pwd",
+                      "name": "_prompt_password",
                       "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Password for zip encryption')]",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--prompt-password', help='Prompt securely for the zip encryption password')]",
                       "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
+                        "kind": "option",
+                        "param_decls": [
+                          "--prompt-password"
+                        ],
+                        "long_flags": [
+                          "--prompt-password"
+                        ],
                         "short_flags": [],
-                        "help": "Password for zip encryption",
-                        "default": "..."
+                        "help": "Prompt securely for the zip encryption password"
                       }
                     },
                     {
@@ -4071,7 +4078,6 @@
                   "raw_lines": [
                     "def import_dotfiles(",
                     "    url: Annotated[str | None, typer.Option(..., \"--url\", \"-u\", help=\"URL or local path to the encrypted dotfiles archive (.zip.gpg)\")] = None,",
-                    "    pwd: Annotated[str | None, typer.Option(..., \"--pwd\", \"-p\", help=\"Password for zip decryption\")] = None,",
                     "    use_ssh: Annotated[bool, typer.Option(\"--use-ssh\", \"-s\", help=\"Use SSH-based transfer (scp) from a remote machine that has dotfiles.\")] = False,",
                     ") -> None:",
                     "    import shutil",
@@ -4093,8 +4099,10 @@
                     "",
                     "    if url is None:",
                     "        url = typer.prompt(f\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) \")",
-                    "    if pwd is None:",
-                    "        pwd = typer.prompt(\"Enter the password for zip decryption\", hide_input=True)",
+                    "    pwd = typer.prompt(\"Enter the password for zip decryption\", hide_input=True)",
+                    "    if pwd == \"\":",
+                    "        print(\"Password for zip decryption must be non-empty.\")",
+                    "        raise typer.Exit(code=1)",
                     "    assert url is not None",
                     "    try:",
                     "        zipfile_encrypted_path = _resolve_import_dotfiles_source(url=url)",
@@ -4104,7 +4112,6 @@
                     "        raise typer.Exit(code=1) from error",
                     "",
                     "    from stackops.utils.io import GpgCommandError, decrypt_file_symmetric",
-                    "    assert pwd is not None",
                     "    try:",
                     "        zipfile_path = decrypt_file_symmetric(file_path=zipfile_encrypted_path, pwd=pwd)",
                     "    except (FileNotFoundError, IsADirectoryError, RuntimeError, GpgCommandError) as error:",
@@ -4158,29 +4165,6 @@
                           "-u"
                         ],
                         "help": "URL or local path to the encrypted dotfiles archive (.zip.gpg)",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "pwd",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--pwd', '-p', help='Password for zip decryption')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--pwd",
-                          "-p"
-                        ],
-                        "long_flags": [
-                          "--pwd"
-                        ],
-                        "short_flags": [
-                          "-p"
-                        ],
-                        "help": "Password for zip decryption",
                         "default": "..."
                       }
                     },
@@ -16834,7 +16818,7 @@
                     "            ...,",
                     "            \"--agents-dir\",",
                     "            \"-d\",",
-                    "            help=\"Exact directory to store agent files in. If it already exists, you will be asked before it is deleted for a clean run.\",",
+                    "            help=\"Exact directory to store agent files in. Existing directories are replaced only when StackOps ownership metadata matches and you confirm.\",",
                     "        ),",
                     "    ] = None,",
                     "    save_as_yaml: Annotated[",
@@ -17336,7 +17320,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--agents-dir', '-d', help='Exact directory to store agent files in. If it already exists, you will be asked before it is deleted for a clean run.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--agents-dir', '-d', help='Exact directory to store agent files in. Existing directories are replaced only when StackOps ownership metadata matches and you confirm.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -17349,7 +17333,7 @@
                         "short_flags": [
                           "-d"
                         ],
-                        "help": "Exact directory to store agent files in. If it already exists, you will be asked before it is deleted for a clean run.",
+                        "help": "Exact directory to store agent files in. Existing directories are replaced only when StackOps ownership metadata matches and you confirm.",
                         "default": "..."
                       }
                     },
@@ -20406,7 +20390,7 @@
             "name": "add-skill",
             "fullPath": "agents add-skill",
             "shortPath": "a s",
-            "help": "Add a skill through an installer backend.",
+            "help": "Install a skill or generate the supported-skill reference.",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
@@ -20416,7 +20400,10 @@
               "raw_lines": [
                 "def add_skill(",
                 "    skill_name: Annotated[",
-                "        str | None, typer.Argument(help=\"Name(s) of the skills to add, comma-separated. If omitted, opens an interactive multi-select picker.\")",
+                "        str | None,",
+                "        typer.Argument(",
+                "            help=\"Name(s) of the skills to add, comma-separated. If omitted without --reference, opens an interactive multi-select picker.\"",
+                "        ),",
                 "    ] = None,",
                 "    agent: Annotated[",
                 "        str | None,",
@@ -20432,8 +20419,17 @@
                 "    ] = \"local\",",
                 "    directory: Annotated[",
                 "        str | None,",
-                "        typer.Option(..., \"--directory\", \"-d\", help=\"Directory to add the skill to. If not provided, defaults to current working directory.\"),",
+                "        typer.Option(",
+                "            ...,",
+                "            \"--directory\",",
+                "            \"-d\",",
+                "            help=\"Directory used for installation or reference output. If not provided, defaults to current working directory.\",",
+                "        ),",
                 "    ] = None,",
+                "    reference: Annotated[",
+                "        bool,",
+                "        typer.Option(\"--reference\", \"-r\", help=\"Write a Markdown table of all supported skills instead of installing a skill.\"),",
+                "    ] = False,",
                 "    backend: Annotated[",
                 "        _SKILL_INSTALL_BACKEND,",
                 "        typer.Option(\"--backend\", \"-b\", help=\"Install backend: bunx/npx use the upstream skills CLI; stackops/s copies bundled skills locally.\"),",
@@ -20443,11 +20439,19 @@
                 "        typer.Option(\"--yes\", \"-y\", help=\"Pass --yes to the upstream skills CLI.\"),",
                 "    ] = False,",
                 ") -> None:",
-                "    \"\"\"Add a skill through an installer backend.\"\"\"",
+                "    \"\"\"Install a skill or generate the supported-skill reference.\"\"\"",
                 "    try:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl",
                 "",
-                "        return_code = impl(skill_name=skill_name, agent=agent, scope=scope, directory=directory, backend=backend, yes=yes)",
+                "        return_code = impl(",
+                "            skill_name=skill_name,",
+                "            agent=agent,",
+                "            scope=scope,",
+                "            directory=directory,",
+                "            reference=reference,",
+                "            backend=backend,",
+                "            yes=yes,",
+                "        )",
                 "    except ValueError as error:",
                 "        raise typer.BadParameter(str(error)) from error",
                 "    raise typer.Exit(code=return_code)"
@@ -20460,13 +20464,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name(s) of the skills to add, comma-separated. If omitted, opens an interactive multi-select picker.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Name(s) of the skills to add, comma-separated. If omitted without --reference, opens an interactive multi-select picker.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name(s) of the skills to add, comma-separated. If omitted, opens an interactive multi-select picker."
+                    "help": "Name(s) of the skills to add, comma-separated. If omitted without --reference, opens an interactive multi-select picker."
                   }
                 },
                 {
@@ -20520,7 +20524,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--directory', '-d', help='Directory to add the skill to. If not provided, defaults to current working directory.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--directory', '-d', help='Directory used for installation or reference output. If not provided, defaults to current working directory.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -20533,8 +20537,30 @@
                     "short_flags": [
                       "-d"
                     ],
-                    "help": "Directory to add the skill to. If not provided, defaults to current working directory.",
+                    "help": "Directory used for installation or reference output. If not provided, defaults to current working directory.",
                     "default": "..."
+                  }
+                },
+                {
+                  "name": "reference",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--reference', '-r', help='Write a Markdown table of all supported skills instead of installing a skill.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--reference",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--reference"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Write a Markdown table of all supported skills instead of installing a skill."
                   }
                 },
                 {
@@ -20585,7 +20611,7 @@
               "return": "None"
             },
             "short_help": "<s> Add a skill to an agent",
-            "doc": "Add a skill through an installer backend.",
+            "doc": "Install a skill or generate the supported-skill reference.",
             "aliases": [
               {
                 "name": "s",
@@ -20909,6 +20935,130 @@
             "aliases": [
               {
                 "name": "C",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "doctor",
+            "fullPath": "agents doctor",
+            "shortPath": "a d",
+            "help": "Inspect agent binaries, configuration, plugins, skills, and instruction provenance.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "callable": "doctor"
+            },
+            "signature": {
+              "raw_lines": [
+                "def doctor(",
+                "    agent: Annotated[",
+                "        str,",
+                "        typer.Argument(help=\"Agent to inspect, such as codex, pi, omp, or opencode. Use 'all' for the health matrix.\"),",
+                "    ] = \"all\",",
+                "    directory: Annotated[",
+                "        Path | None,",
+                "        typer.Option(",
+                "            \"--directory\",",
+                "            \"-d\",",
+                "            help=\"Directory to inspect. Defaults to the current working directory.\",",
+                "            exists=True,",
+                "            file_okay=False,",
+                "            dir_okay=True,",
+                "            resolve_path=True,",
+                "        ),",
+                "    ] = None,",
+                "    resource: Annotated[",
+                "        str,",
+                "        typer.Option(",
+                "            \"--resource\",",
+                "            \"-r\",",
+                "            help=\"Comma-separated resource focuses: all, configuration, mcp, plugin, skill, or instructions.\",",
+                "        ),",
+                "    ] = \"all\",",
+                ") -> None:",
+                "    \"\"\"Inspect agent binaries, configuration, plugins, skills, and instruction provenance.\"\"\"",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor",
+                "",
+                "    working_directory = directory if directory is not None else Path.cwd()",
+                "    try:",
+                "        run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)",
+                "    except ValueError as error:",
+                "        raise typer.BadParameter(str(error)) from error"
+              ],
+              "name": "doctor",
+              "parameters": [
+                {
+                  "name": "agent",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help=\"Agent to inspect, such as codex, pi, omp, or opencode. Use 'all' for the health matrix.\")]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Agent to inspect, such as codex, pi, omp, or opencode. Use 'all' for the health matrix."
+                  }
+                },
+                {
+                  "name": "directory",
+                  "kind": "positional_or_keyword",
+                  "type": "Path | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--directory', '-d', help='Directory to inspect. Defaults to the current working directory.', exists=True, file_okay=False, dir_okay=True, resolve_path=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--directory",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--directory"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Directory to inspect. Defaults to the current working directory."
+                  }
+                },
+                {
+                  "name": "resource",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Option('--resource', '-r', help='Comma-separated resource focuses: all, configuration, mcp, plugin, skill, or instructions.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--resource",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--resource"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Comma-separated resource focuses: all, configuration, mcp, plugin, skill, or instructions."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "<d> Inspect agent health and resource provenance",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "Inspect agent binaries, configuration, plugins, skills, and instruction provenance.",
+            "aliases": [
+              {
+                "name": "d",
                 "hidden": true
               }
             ]
@@ -21573,7 +21723,7 @@
                 "def run_interactive(",
                 "    agent: Annotated[",
                 "        INTERACTIVE_AGENT,",
-                "        typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch: codex/x, copilot/c, pi/p, or omp/o.\"),",
+                "        typer.Option(..., \"--agent\", \"-a\", help=\"Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, or omp/o.\"),",
                 "    ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),",
                 "    second_brain: Annotated[",
                 "        bool,",
@@ -21638,7 +21788,7 @@
                   "type": "INTERACTIVE_AGENT",
                   "default": "cast(INTERACTIVE_AGENT, DEFAULT_AGENT)",
                   "required": false,
-                  "annotation_raw": "Annotated[INTERACTIVE_AGENT, typer.Option(..., '--agent', '-a', help='Agent to launch: codex/x, copilot/c, pi/p, or omp/o.')]",
+                  "annotation_raw": "Annotated[INTERACTIVE_AGENT, typer.Option(..., '--agent', '-a', help='Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, or omp/o.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21651,7 +21801,7 @@
                     "short_flags": [
                       "-a"
                     ],
-                    "help": "Agent to launch: codex/x, copilot/c, pi/p, or omp/o.",
+                    "help": "Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, or omp/o.",
                     "default": "..."
                   }
                 },
@@ -23000,6 +23150,129 @@
               },
               {
                 "kind": "command",
+                "name": "config-linters",
+                "fullPath": "utils pyproject config-linters",
+                "shortPath": "u p l",
+                "help": "🧰 <l> Add linter config files to a git repository",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_maintenance.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_maintenance",
+                  "callable": "config_linters"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def config_linters(",
+                    "    directory: Annotated[str, typer.Argument(help=\"📁 Git repository directory to configure.\")] = \".\",",
+                    "    linter: Annotated[str | None, typer.Option(\"--linter\", \"-t\", help=\"Linter to configure: ruff, mypy, pylint, flake8, ty.\")] = None,",
+                    ") -> None:",
+                    "    target_dir = Path(directory).expanduser().absolute().resolve()",
+                    "    if not target_dir.exists():",
+                    "        typer.echo(f\"❌ Path does not exist: {target_dir}\")",
+                    "        raise typer.Exit(code=1)",
+                    "    if not target_dir.is_dir():",
+                    "        typer.echo(f\"❌ Path is not a directory: {target_dir}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    from git import InvalidGitRepositoryError, Repo",
+                    "",
+                    "    try:",
+                    "        repo = Repo(str(target_dir), search_parent_directories=True)",
+                    "    except InvalidGitRepositoryError as exc:",
+                    "        typer.echo(f\"❌ {target_dir} is not within a git repository. Pass a path inside a git repo and retry.\")",
+                    "        raise typer.Exit(code=1) from exc",
+                    "",
+                    "    if repo.working_tree_dir is None:",
+                    "        typer.echo(f\"❌ {target_dir} is inside a bare git repository. Pass a working tree path and retry.\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    repo_root = Path(repo.working_tree_dir).resolve()",
+                    "    templates_dir = Path(__file__).resolve().parents[4].joinpath(\"settings\", \"linters\")",
+                    "    if not templates_dir.exists():",
+                    "        typer.echo(f\"❌ Linter template directory not found: {templates_dir}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    linter_to_file: dict[str, str] = {\"flake8\": \".flake8\", \"mypy\": \".mypy.ini\", \"pylint\": \".pylintrc\", \"ruff\": \".ruff.toml\", \"ty\": \"ty.toml\"}",
+                    "    available_linters: list[str] = sorted(linter_to_file.keys())",
+                    "",
+                    "    if linter is not None and linter not in linter_to_file:",
+                    "        typer.echo(f\"❌ Unsupported linter '{linter}'. Choose one of: {', '.join(available_linters)}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    selected_linters = available_linters if linter is None else [linter]",
+                    "    for selected_linter in selected_linters:",
+                    "        file_name = linter_to_file[selected_linter]",
+                    "        source = templates_dir.joinpath(file_name)",
+                    "        if not source.exists():",
+                    "            typer.echo(f\"❌ Linter template not found: {source}\")",
+                    "            raise typer.Exit(code=1)",
+                    "        template_content = source.read_text(encoding=\"utf-8\")",
+                    "        destination = repo_root.joinpath(file_name)",
+                    "        if destination.exists():",
+                    "            if not destination.is_file():",
+                    "                typer.echo(f\"❌ Refusing to overwrite non-file path: {destination}\")",
+                    "                raise typer.Exit(code=1)",
+                    "            if destination.read_text(encoding=\"utf-8\") == template_content:",
+                    "                typer.echo(f\"ℹ️ {file_name} already matches the template in {repo_root}\")",
+                    "                continue",
+                    "            typer.echo(f\"❌ Refusing to overwrite existing {file_name} in {repo_root}. Remove it or update it manually.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        destination.write_text(template_content, encoding=\"utf-8\")",
+                    "        typer.echo(f\"✅ Added {file_name} to {repo_root}\")"
+                  ],
+                  "name": "config_linters",
+                  "parameters": [
+                    {
+                      "name": "directory",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": ".",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='📁 Git repository directory to configure.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "📁 Git repository directory to configure."
+                      }
+                    },
+                    {
+                      "name": "linter",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--linter', '-t', help='Linter to configure: ruff, mypy, pylint, flake8, ty.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--linter",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--linter"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Linter to configure: ruff, mypy, pylint, flake8, ty."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "l",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "upgrade-packages",
                 "fullPath": "utils pyproject upgrade-packages",
                 "shortPath": "u p a",
@@ -23171,246 +23444,6 @@
                 "aliases": [
                   {
                     "name": "a",
-                    "hidden": true
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "type-hint",
-                "fullPath": "utils pyproject type-hint",
-                "shortPath": "u p t",
-                "help": "✐ <t> Type hint a file or project directory.",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_setup.py",
-                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_setup",
-                  "callable": "type_hint"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def type_hint(",
-                    "    path: Annotated[str, typer.Argument(..., help=\"Path to file/project dir to type hint.\")] = \".\",",
-                    "    dependency: Annotated[",
-                    "        TypeHintDependencyMode,",
-                    "        typer.Option(..., \"--dependency\", \"-d\", help=\"Generated file is self contained or performs imports\"),",
-                    "    ] = \"self-contained\",",
-                    ") -> None:",
-                    "    path_resolved = Path(path).expanduser().resolve()",
-                    "    if path_resolved.exists() is False:",
-                    "        typer.echo(f\"Error: The provided path '{path}' does not exist.\", err=True)",
-                    "        raise typer.Exit(code=1)",
-                    "    if path_resolved.is_file():",
-                    "        modules = [path_resolved]",
-                    "    else:",
-                    "        if path_resolved.joinpath(\"pyproject.toml\").exists() is False:",
-                    "            typer.echo(\"Error: Provided directory path is not a project root (missing pyproject.toml).\", err=True)",
-                    "            raise typer.Exit(code=1)",
-                    "        modules = [file for file in path_resolved.rglob(\"dtypes.py\") if \".venv\" not in file.parts]",
-                    "    if len(modules) == 0:",
-                    "        typer.echo(\"Error: No dtypes.py files were found under the provided project root.\", err=True)",
-                    "        raise typer.Exit(code=1)",
-                    "    typer.echo(",
-                    "        f\"Error: Type-hint generation is not available for dependency mode '{dependency}' because the generator implementation is missing.\",",
-                    "        err=True,",
-                    "    )",
-                    "    raise typer.Exit(code=1)"
-                  ],
-                  "name": "type_hint",
-                  "parameters": [
-                    {
-                      "name": "path",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": ".",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to file/project dir to type hint.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Path to file/project dir to type hint.",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "dependency",
-                      "kind": "positional_or_keyword",
-                      "type": "TypeHintDependencyMode",
-                      "default": "self-contained",
-                      "required": false,
-                      "annotation_raw": "Annotated[TypeHintDependencyMode, typer.Option(..., '--dependency', '-d', help='Generated file is self contained or performs imports')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--dependency",
-                          "-d"
-                        ],
-                        "long_flags": [
-                          "--dependency"
-                        ],
-                        "short_flags": [
-                          "-d"
-                        ],
-                        "help": "Generated file is self contained or performs imports",
-                        "default": "..."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": true
-                },
-                "aliases": [
-                  {
-                    "name": "t",
-                    "hidden": true
-                  }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "type-check",
-                "fullPath": "utils pyproject type-check",
-                "shortPath": "u p c",
-                "help": "🧪 <c> Run the lint-and-type-check suite for a repository.",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_check.py",
-                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_check",
-                  "callable": "type_check"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def type_check(",
-                    "    repo: Annotated[",
-                    "        str,",
-                    "        typer.Argument(",
-                    "            help=\"Repository root or any path inside the repository to lint and type check.\"",
-                    "        ),",
-                    "    ] = \".\",",
-                    "    exclude: Annotated[",
-                    "        list[str] | None,",
-                    "        typer.Option(",
-                    "            \"--exclude\",",
-                    "            \"-x\",",
-                    "            help=\"Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.\",",
-                    "        ),",
-                    "    ] = None,",
-                    ") -> None:",
-                    "    import subprocess",
-                    "",
-                    "    import stackops.scripts.python.ai.scripts as ai_scripts",
-                    "    from stackops.utils.path_reference import get_path_reference_path",
-                    "",
-                    "    try:",
-                    "        repo_root = resolve_pyproject_root(Path(repo))",
-                    "        (",
-                    "            default_excluded_directories,",
-                    "            _skipped_default_excluded_directories,",
-                    "        ) = resolve_type_check_excluded_directories(",
-                    "            repo_root=repo_root,",
-                    "            excluded_directories=list(DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES),",
-                    "        )",
-                    "        explicit_excluded_directories = [] if exclude is None else exclude",
-                    "        (",
-                    "            resolved_explicit_excluded_directories,",
-                    "            skipped_explicit_excluded_directories,",
-                    "        ) = resolve_type_check_excluded_directories(",
-                    "            repo_root=repo_root,",
-                    "            excluded_directories=explicit_excluded_directories,",
-                    "        )",
-                    "        if len(skipped_explicit_excluded_directories) > 0:",
-                    "            skipped_paths = \", \".join(",
-                    "                f\"'{excluded_directory}'\"",
-                    "                for excluded_directory in skipped_explicit_excluded_directories",
-                    "            )",
-                    "            raise ValueError(",
-                    "                f\"Excluded directories must exist inside '{repo_root}': {skipped_paths}.\"",
-                    "            )",
-                    "    except ValueError as error:",
-                    "        typer.echo(f\"Error: {error}\", err=True)",
-                    "        raise typer.Exit(code=1) from error",
-                    "    excluded_directories = tuple(",
-                    "        dict.fromkeys(",
-                    "            (",
-                    "                *default_excluded_directories,",
-                    "                *resolved_explicit_excluded_directories,",
-                    "            )",
-                    "        )",
-                    "    )",
-                    "",
-                    "    script_path = get_path_reference_path(",
-                    "        ai_scripts, ai_scripts.LINT_AND_TYPE_CHECK_PATH_REFERENCE",
-                    "    )",
-                    "    if script_path.exists() is False:",
-                    "        typer.echo(",
-                    "            f\"Error: StackOps type-check script not found at '{script_path}'.\",",
-                    "            err=True,",
-                    "        )",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    try:",
-                    "        completed = subprocess.run(",
-                    "            [\"uv\", \"run\", str(script_path)],",
-                    "            cwd=repo_root,",
-                    "            check=False,",
-                    "            env=build_type_check_environment(excluded_directories),",
-                    "        )",
-                    "    except FileNotFoundError as error:",
-                    "        typer.echo(\"Error: uv is required but was not found on PATH.\", err=True)",
-                    "        raise typer.Exit(code=1) from error",
-                    "    if completed.returncode != 0:",
-                    "        raise typer.Exit(code=completed.returncode)"
-                  ],
-                  "name": "type_check",
-                  "parameters": [
-                    {
-                      "name": "repo",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": ".",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='Repository root or any path inside the repository to lint and type check.')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Repository root or any path inside the repository to lint and type check."
-                      }
-                    },
-                    {
-                      "name": "exclude",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--exclude', '-x', help='Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--exclude",
-                          "-x"
-                        ],
-                        "long_flags": [
-                          "--exclude"
-                        ],
-                        "short_flags": [
-                          "-x"
-                        ],
-                        "help": "Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "typer": {
-                  "no_args_is_help": false
-                },
-                "aliases": [
-                  {
-                    "name": "c",
                     "hidden": true
                   }
                 ]
@@ -23669,227 +23702,229 @@
               },
               {
                 "kind": "command",
-                "name": "config-linters",
-                "fullPath": "utils pyproject config-linters",
-                "shortPath": "u p l",
-                "help": "🧰 <l> Add linter config files to a git repository",
+                "name": "type-hint",
+                "fullPath": "utils pyproject type-hint",
+                "shortPath": "u p t",
+                "help": "✐ <t> Type hint a file or project directory.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_maintenance.py",
-                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_maintenance",
-                  "callable": "config_linters"
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_setup.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_setup",
+                  "callable": "type_hint"
                 },
                 "signature": {
                   "raw_lines": [
-                    "def config_linters(",
-                    "    directory: Annotated[str, typer.Argument(help=\"📁 Git repository directory to configure.\")] = \".\",",
-                    "    linter: Annotated[str | None, typer.Option(\"--linter\", \"-t\", help=\"Linter to configure: ruff, mypy, pylint, flake8, ty.\")] = None,",
+                    "def type_hint(",
+                    "    path: Annotated[str, typer.Argument(..., help=\"Path to file/project dir to type hint.\")] = \".\",",
+                    "    dependency: Annotated[",
+                    "        TypeHintDependencyMode,",
+                    "        typer.Option(..., \"--dependency\", \"-d\", help=\"Generated file is self contained or performs imports\"),",
+                    "    ] = \"self-contained\",",
                     ") -> None:",
-                    "    target_dir = Path(directory).expanduser().absolute().resolve()",
-                    "    if not target_dir.exists():",
-                    "        typer.echo(f\"❌ Path does not exist: {target_dir}\")",
+                    "    path_resolved = Path(path).expanduser().resolve()",
+                    "    if path_resolved.exists() is False:",
+                    "        typer.echo(f\"Error: The provided path '{path}' does not exist.\", err=True)",
                     "        raise typer.Exit(code=1)",
-                    "    if not target_dir.is_dir():",
-                    "        typer.echo(f\"❌ Path is not a directory: {target_dir}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    from git import InvalidGitRepositoryError, Repo",
-                    "",
-                    "    try:",
-                    "        repo = Repo(str(target_dir), search_parent_directories=True)",
-                    "    except InvalidGitRepositoryError as exc:",
-                    "        typer.echo(f\"❌ {target_dir} is not within a git repository. Pass a path inside a git repo and retry.\")",
-                    "        raise typer.Exit(code=1) from exc",
-                    "",
-                    "    if repo.working_tree_dir is None:",
-                    "        typer.echo(f\"❌ {target_dir} is inside a bare git repository. Pass a working tree path and retry.\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    repo_root = Path(repo.working_tree_dir).resolve()",
-                    "    templates_dir = Path(__file__).resolve().parents[4].joinpath(\"settings\", \"linters\")",
-                    "    if not templates_dir.exists():",
-                    "        typer.echo(f\"❌ Linter template directory not found: {templates_dir}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    linter_to_file: dict[str, str] = {\"flake8\": \".flake8\", \"mypy\": \".mypy.ini\", \"pylint\": \".pylintrc\", \"ruff\": \".ruff.toml\", \"ty\": \"ty.toml\"}",
-                    "    available_linters: list[str] = sorted(linter_to_file.keys())",
-                    "",
-                    "    if linter is not None and linter not in linter_to_file:",
-                    "        typer.echo(f\"❌ Unsupported linter '{linter}'. Choose one of: {', '.join(available_linters)}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    selected_linters = available_linters if linter is None else [linter]",
-                    "    for selected_linter in selected_linters:",
-                    "        file_name = linter_to_file[selected_linter]",
-                    "        source = templates_dir.joinpath(file_name)",
-                    "        if not source.exists():",
-                    "            typer.echo(f\"❌ Linter template not found: {source}\")",
+                    "    if path_resolved.is_file():",
+                    "        modules = [path_resolved]",
+                    "    else:",
+                    "        if path_resolved.joinpath(\"pyproject.toml\").exists() is False:",
+                    "            typer.echo(\"Error: Provided directory path is not a project root (missing pyproject.toml).\", err=True)",
                     "            raise typer.Exit(code=1)",
-                    "        template_content = source.read_text(encoding=\"utf-8\")",
-                    "        destination = repo_root.joinpath(file_name)",
-                    "        if destination.exists():",
-                    "            if not destination.is_file():",
-                    "                typer.echo(f\"❌ Refusing to overwrite non-file path: {destination}\")",
-                    "                raise typer.Exit(code=1)",
-                    "            if destination.read_text(encoding=\"utf-8\") == template_content:",
-                    "                typer.echo(f\"ℹ️ {file_name} already matches the template in {repo_root}\")",
-                    "                continue",
-                    "            typer.echo(f\"❌ Refusing to overwrite existing {file_name} in {repo_root}. Remove it or update it manually.\")",
-                    "            raise typer.Exit(code=1)",
-                    "        destination.write_text(template_content, encoding=\"utf-8\")",
-                    "        typer.echo(f\"✅ Added {file_name} to {repo_root}\")"
+                    "        modules = [file for file in path_resolved.rglob(\"dtypes.py\") if \".venv\" not in file.parts]",
+                    "    if len(modules) == 0:",
+                    "        typer.echo(\"Error: No dtypes.py files were found under the provided project root.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    typer.echo(",
+                    "        f\"Error: Type-hint generation is not available for dependency mode '{dependency}' because the generator implementation is missing.\",",
+                    "        err=True,",
+                    "    )",
+                    "    raise typer.Exit(code=1)"
                   ],
-                  "name": "config_linters",
+                  "name": "type_hint",
                   "parameters": [
                     {
-                      "name": "directory",
+                      "name": "path",
                       "kind": "positional_or_keyword",
                       "type": "str",
                       "default": ".",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='📁 Git repository directory to configure.')]",
+                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to file/project dir to type hint.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "📁 Git repository directory to configure."
+                        "help": "Path to file/project dir to type hint.",
+                        "default": "..."
                       }
                     },
                     {
-                      "name": "linter",
+                      "name": "dependency",
                       "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
+                      "type": "TypeHintDependencyMode",
+                      "default": "self-contained",
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--linter', '-t', help='Linter to configure: ruff, mypy, pylint, flake8, ty.')]",
+                      "annotation_raw": "Annotated[TypeHintDependencyMode, typer.Option(..., '--dependency', '-d', help='Generated file is self contained or performs imports')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--linter",
-                          "-t"
+                          "--dependency",
+                          "-d"
                         ],
                         "long_flags": [
-                          "--linter"
+                          "--dependency"
                         ],
                         "short_flags": [
-                          "-t"
+                          "-d"
                         ],
-                        "help": "Linter to configure: ruff, mypy, pylint, flake8, ty."
+                        "help": "Generated file is self contained or performs imports",
+                        "default": "..."
                       }
                     }
                   ],
                   "return": "None"
                 },
                 "typer": {
-                  "no_args_is_help": false
+                  "no_args_is_help": true
                 },
                 "aliases": [
                   {
-                    "name": "l",
+                    "name": "t",
                     "hidden": true
                   }
                 ]
               },
               {
                 "kind": "command",
-                "name": "cleanup",
-                "fullPath": "utils pyproject cleanup",
-                "shortPath": "u p n",
-                "help": "🧹 <n> Clean repository directories from cache files",
+                "name": "type-check",
+                "fullPath": "utils pyproject type-check",
+                "shortPath": "u p c",
+                "help": "🧪 <c> Run the lint-and-type-check suite for a repository.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_maintenance.py",
-                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_maintenance",
-                  "callable": "cleanup"
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_check.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_check",
+                  "callable": "type_check"
                 },
                 "signature": {
                   "raw_lines": [
-                    "def cleanup(",
-                    "    repo: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
-                    "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"🔍 Recurse into nested repositories.\")] = False,",
+                    "def type_check(",
+                    "    repo: Annotated[",
+                    "        str,",
+                    "        typer.Argument(",
+                    "            help=\"Repository root or any path inside the repository to lint and type check.\"",
+                    "        ),",
+                    "    ] = \".\",",
+                    "    exclude: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Option(",
+                    "            \"--exclude\",",
+                    "            \"-x\",",
+                    "            help=\"Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.\",",
+                    "        ),",
+                    "    ] = None,",
                     ") -> None:",
-                    "    if repo is None:",
-                    "        repo = Path.cwd().as_posix()",
+                    "    import subprocess",
                     "",
-                    "    arg_path = Path(repo).expanduser().absolute().resolve()",
-                    "    if not arg_path.exists():",
-                    "        typer.echo(f\"❌ Path does not exist: {arg_path}\")",
+                    "    import stackops.scripts.python.ai.scripts as ai_scripts",
+                    "    from stackops.utils.path_reference import get_path_reference_path",
+                    "",
+                    "    try:",
+                    "        repo_root = resolve_pyproject_root(Path(repo))",
+                    "        (",
+                    "            default_excluded_directories,",
+                    "            _skipped_default_excluded_directories,",
+                    "        ) = resolve_type_check_excluded_directories(",
+                    "            repo_root=repo_root,",
+                    "            excluded_directories=list(DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES),",
+                    "        )",
+                    "        explicit_excluded_directories = [] if exclude is None else exclude",
+                    "        (",
+                    "            resolved_explicit_excluded_directories,",
+                    "            skipped_explicit_excluded_directories,",
+                    "        ) = resolve_type_check_excluded_directories(",
+                    "            repo_root=repo_root,",
+                    "            excluded_directories=explicit_excluded_directories,",
+                    "        )",
+                    "        if len(skipped_explicit_excluded_directories) > 0:",
+                    "            skipped_paths = \", \".join(",
+                    "                f\"'{excluded_directory}'\"",
+                    "                for excluded_directory in skipped_explicit_excluded_directories",
+                    "            )",
+                    "            raise ValueError(",
+                    "                f\"Excluded directories must exist inside '{repo_root}': {skipped_paths}.\"",
+                    "            )",
+                    "    except ValueError as error:",
+                    "        typer.echo(f\"Error: {error}\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    excluded_directories = tuple(",
+                    "        dict.fromkeys(",
+                    "            (",
+                    "                *default_excluded_directories,",
+                    "                *resolved_explicit_excluded_directories,",
+                    "            )",
+                    "        )",
+                    "    )",
+                    "",
+                    "    script_path = get_path_reference_path(",
+                    "        ai_scripts, ai_scripts.LINT_AND_TYPE_CHECK_PATH_REFERENCE",
+                    "    )",
+                    "    if script_path.exists() is False:",
+                    "        typer.echo(",
+                    "            f\"Error: StackOps type-check script not found at '{script_path}'.\",",
+                    "            err=True,",
+                    "        )",
                     "        raise typer.Exit(code=1)",
-                    "    if not arg_path.is_dir():",
-                    "        typer.echo(f\"❌ Path is not a directory: {arg_path}\")",
-                    "        raise typer.Exit(code=1)",
                     "",
-                    "    from git import InvalidGitRepositoryError, Repo",
-                    "",
-                    "    if not recursive:",
-                    "        try:",
-                    "            repo_obj = Repo(str(arg_path), search_parent_directories=False)",
-                    "        except InvalidGitRepositoryError:",
-                    "            typer.echo(f\"❌ {arg_path} is not a git repository. Use -r flag for recursive cleanup.\")",
-                    "            raise typer.Exit(code=1)",
-                    "        if repo_obj.working_tree_dir is None:",
-                    "            typer.echo(f\"❌ {arg_path} is inside a bare git repository. Pass a working tree root and retry.\")",
-                    "            raise typer.Exit(code=1)",
-                    "        repo_root = Path(repo_obj.working_tree_dir).resolve()",
-                    "        if arg_path != repo_root:",
-                    "            typer.echo(f\"❌ {arg_path} is not a git working tree root. Pass the repository root or use -r for recursive cleanup.\")",
-                    "            raise typer.Exit(code=1)",
-                    "        repos_to_clean = [repo_root]",
-                    "    else:",
-                    "        git_dirs = list(arg_path.rglob(\".git\"))",
-                    "        repos_to_clean = [git_dir.parent for git_dir in git_dirs if git_dir.is_dir() or git_dir.is_file()]",
-                    "        if not repos_to_clean:",
-                    "            typer.echo(f\"❌ No git repositories found under {arg_path}\")",
-                    "            raise typer.Exit(code=1)",
-                    "",
-                    "    for repo_path in repos_to_clean:",
-                    "        typer.echo(f\"🧹 Cleaning {repo_path}\")",
-                    "        script = rf\"\"\"",
-                    "cd {quote(repo_path.as_posix())}",
-                    "uv run --no-project --with cleanpy cleanpy .",
-                    "\"\"\"",
-                    "        from stackops.utils.code import run_shell_script",
-                    "",
-                    "        result = run_shell_script(script, display_script=True, clean_env=False)",
-                    "        if result.returncode != 0:",
-                    "            raise typer.Exit(code=result.returncode)"
+                    "    try:",
+                    "        completed = subprocess.run(",
+                    "            [\"uv\", \"run\", str(script_path)],",
+                    "            cwd=repo_root,",
+                    "            check=False,",
+                    "            env=build_type_check_environment(excluded_directories),",
+                    "        )",
+                    "    except FileNotFoundError as error:",
+                    "        typer.echo(\"Error: uv is required but was not found on PATH.\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    if completed.returncode != 0:",
+                    "        raise typer.Exit(code=completed.returncode)"
                   ],
-                  "name": "cleanup",
+                  "name": "type_check",
                   "parameters": [
                     {
                       "name": "repo",
                       "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
+                      "type": "str",
+                      "default": ".",
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Argument(help='📁 Directory containing repo(s).')]",
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Repository root or any path inside the repository to lint and type check.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "📁 Directory containing repo(s)."
+                        "help": "Repository root or any path inside the repository to lint and type check."
                       }
                     },
                     {
-                      "name": "recursive",
+                      "name": "exclude",
                       "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
+                      "type": "list[str] | None",
+                      "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--recursive', '-r', help='🔍 Recurse into nested repositories.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--exclude', '-x', help='Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--recursive",
-                          "-r"
+                          "--exclude",
+                          "-x"
                         ],
                         "long_flags": [
-                          "--recursive"
+                          "--exclude"
                         ],
                         "short_flags": [
-                          "-r"
+                          "-x"
                         ],
-                        "help": "🔍 Recurse into nested repositories."
+                        "help": "Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories."
                       }
                     }
                   ],
@@ -23900,29 +23935,163 @@
                 },
                 "aliases": [
                   {
-                    "name": "n",
+                    "name": "c",
                     "hidden": true
                   }
                 ]
               },
               {
-                "kind": "group",
+                "kind": "command",
                 "name": "type-fix",
                 "fullPath": "utils pyproject type-fix",
                 "shortPath": "u p f",
                 "help": "🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
-                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app",
-                  "dispatches_to": "stackops.scripts.python.agents_type_fix.get_app"
+                  "file": "src/stackops/scripts/python/agents_type_fix.py",
+                  "module": "stackops.scripts.python.agents_type_fix",
+                  "callable": "launch_type_fix"
                 },
-                "app": {
-                  "help": "🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.",
-                  "no_args_is_help": true,
-                  "add_help_option": true,
-                  "add_completion": false
+                "signature": {
+                  "raw_lines": [
+                    "def launch_type_fix(",
+                    "    ctx: typer.Context,",
+                    "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent type.\")] = DEFAULT_AGENT,",
+                    "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", help=\"Number of diagnostics per prompt.\")] = 10,",
+                    "    which_checker: Annotated[",
+                    "        CheckerName,",
+                    "        typer.Option(\"--which-checker\", \"--which\", \"-w\", help=\"Which issues_<checker>.md file under ./.ai/linters to process.\"),",
+                    "    ] = \"mypy\",",
+                    "    max_tabs: Annotated[",
+                    "        int,",
+                    "        typer.Option(\"--max-agents\", \"-m\", help=\"Maximum agents allowed in the generated layout.\"),",
+                    "    ] = 50,",
+                    ") -> None:",
+                    "    job_name = _get_job_name(checker_name=which_checker)",
+                    "    agents_create_command(",
+                    "        agent=agent,",
+                    "        context_path=_get_issues_path(checker_name=which_checker),",
+                    "        separator=DIAGNOSTIC_SEPARATOR,",
+                    "        agent_load=agent_load,",
+                    "        prompt=PROMPT,",
+                    "        job_name=job_name,",
+                    "    )",
+                    "    proceed = typer.confirm(f\"Agents layout for fixing {which_checker} issues created. Do you want to run it now?\", default=True)",
+                    "    if not proceed:",
+                    "        typer.echo(\"Agents not luanched.\")",
+                    "        return",
+                    "    terminal_run_command(",
+                    "        ctx=ctx,",
+                    "        layouts_file=_get_layout_path(checker_name=which_checker),",
+                    "        max_tabs=max_tabs,",
+                    "        on_conflict=\"restart\",",
+                    "    )"
+                  ],
+                  "name": "launch_type_fix",
+                  "parameters": [
+                    {
+                      "name": "ctx",
+                      "kind": "positional_or_keyword",
+                      "type": "typer.Context",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "typer.Context"
+                    },
+                    {
+                      "name": "agent",
+                      "kind": "positional_or_keyword",
+                      "type": "AGENTS",
+                      "default": "DEFAULT_AGENT",
+                      "required": false,
+                      "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent type.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--agent",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--agent"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Agent type."
+                      }
+                    },
+                    {
+                      "name": "agent_load",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": 10,
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', help='Number of diagnostics per prompt.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--agent-load",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--agent-load"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Number of diagnostics per prompt."
+                      }
+                    },
+                    {
+                      "name": "which_checker",
+                      "kind": "positional_or_keyword",
+                      "type": "CheckerName",
+                      "default": "mypy",
+                      "required": false,
+                      "annotation_raw": "Annotated[CheckerName, typer.Option('--which-checker', '--which', '-w', help='Which issues_<checker>.md file under ./.ai/linters to process.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--which-checker",
+                          "--which",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--which-checker",
+                          "--which"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Which issues_<checker>.md file under ./.ai/linters to process."
+                      }
+                    },
+                    {
+                      "name": "max_tabs",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": 50,
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--max-agents', '-m', help='Maximum agents allowed in the generated layout.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--max-agents",
+                          "-m"
+                        ],
+                        "long_flags": [
+                          "--max-agents"
+                        ],
+                        "short_flags": [
+                          "-m"
+                        ],
+                        "help": "Maximum agents allowed in the generated layout."
+                      }
+                    }
+                  ],
+                  "return": "None"
                 },
-                "children": [],
+                "typer": {
+                  "no_args_is_help": true
+                },
                 "aliases": [
                   {
                     "name": "f",
@@ -23931,23 +24100,148 @@
                 ]
               },
               {
-                "kind": "group",
+                "kind": "command",
                 "name": "test-runtime",
                 "fullPath": "utils pyproject test-runtime",
                 "shortPath": "u p R",
                 "help": "🧪 <R> Create and run the runtime-test workflow for Python files under the current directory.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_app.py",
-                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app",
-                  "dispatches_to": "stackops.scripts.python.agents_test_runtime.get_app"
+                  "file": "src/stackops/scripts/python/agents_test_runtime.py",
+                  "module": "stackops.scripts.python.agents_test_runtime",
+                  "callable": "launch_test_runtime"
                 },
-                "app": {
-                  "help": "🧪 <tr> Create and run the runtime-test workflow for Python files under the current directory.",
-                  "no_args_is_help": true,
-                  "add_help_option": true,
-                  "add_completion": false
+                "signature": {
+                  "raw_lines": [
+                    "def launch_test_runtime(",
+                    "    ctx: typer.Context,",
+                    "    agent: Annotated[AGENTS, typer.Option(\"--agent\", \"-a\", help=\"Agent type.\")] = DEFAULT_AGENT,",
+                    "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", help=\"Number of files per prompt.\")] = 10,",
+                    "    max_tabs: Annotated[",
+                    "        int,",
+                    "        typer.Option(\"--max-agents\", \"-m\", help=\"Maximum agents allowed in the generated layout.\"),",
+                    "    ] = 50,",
+                    ") -> None:",
+                    "    search_root = Path.cwd().resolve()",
+                    "    try:",
+                    "        workspace_root = _resolve_workspace_root(current_dir=search_root)",
+                    "    except ValueError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    if workspace_root is None:",
+                    "        typer.echo(f\"💥 Could not determine a valid workspace root. Please run this command {_WORKSPACE_ROOT_REQUIREMENT}.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    context_path = _get_context_path(workspace_root=workspace_root)",
+                    "    try:",
+                    "        build_result = _write_context_file(workspace_root=workspace_root, search_root=search_root, context_path=context_path)",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    typer.echo(",
+                    "        f\"Prepared runtime-test context for {build_result.file_count} Python files across {build_result.repo_count} repositories from {search_root}.\"",
+                    "    )",
+                    "",
+                    "    agents_create_command(",
+                    "        agent=agent,",
+                    "        context_path=str(context_path),",
+                    "        separator=FILE_SEPARATOR,",
+                    "        agent_load=agent_load,",
+                    "        prompt=_build_prompt(),",
+                    "        job_name=JOB_NAME,",
+                    "    )",
+                    "    proceed = typer.confirm(\"Agents layout for runtime test generation created. Do you want to run it now?\", default=True)",
+                    "    if not proceed:",
+                    "        typer.echo(\"Agents not launched.\")",
+                    "        return",
+                    "    terminal_run_command(",
+                    "        ctx=ctx,",
+                    "        layouts_file=_get_layout_path(workspace_root=workspace_root),",
+                    "        max_tabs=max_tabs,",
+                    "        on_conflict=\"restart\",",
+                    "    )"
+                  ],
+                  "name": "launch_test_runtime",
+                  "parameters": [
+                    {
+                      "name": "ctx",
+                      "kind": "positional_or_keyword",
+                      "type": "typer.Context",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "typer.Context"
+                    },
+                    {
+                      "name": "agent",
+                      "kind": "positional_or_keyword",
+                      "type": "AGENTS",
+                      "default": "DEFAULT_AGENT",
+                      "required": false,
+                      "annotation_raw": "Annotated[AGENTS, typer.Option('--agent', '-a', help='Agent type.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--agent",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--agent"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Agent type."
+                      }
+                    },
+                    {
+                      "name": "agent_load",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": 10,
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', help='Number of files per prompt.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--agent-load",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--agent-load"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Number of files per prompt."
+                      }
+                    },
+                    {
+                      "name": "max_tabs",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": 50,
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--max-agents', '-m', help='Maximum agents allowed in the generated layout.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--max-agents",
+                          "-m"
+                        ],
+                        "long_flags": [
+                          "--max-agents"
+                        ],
+                        "short_flags": [
+                          "-m"
+                        ],
+                        "help": "Maximum agents allowed in the generated layout."
+                      }
+                    }
+                  ],
+                  "return": "None"
                 },
-                "children": [],
+                "typer": {
+                  "no_args_is_help": true
+                },
                 "aliases": [
                   {
                     "name": "R",
@@ -24083,6 +24377,121 @@
                 "aliases": [
                   {
                     "name": "r",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "cleanup",
+                "fullPath": "utils pyproject cleanup",
+                "shortPath": "u p n",
+                "help": "🧹 <n> Clean repository directories from cache files",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/pyproject_utils_commands_maintenance.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_maintenance",
+                  "callable": "cleanup"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def cleanup(",
+                    "    repo: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
+                    "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"🔍 Recurse into nested repositories.\")] = False,",
+                    ") -> None:",
+                    "    if repo is None:",
+                    "        repo = Path.cwd().as_posix()",
+                    "",
+                    "    arg_path = Path(repo).expanduser().absolute().resolve()",
+                    "    if not arg_path.exists():",
+                    "        typer.echo(f\"❌ Path does not exist: {arg_path}\")",
+                    "        raise typer.Exit(code=1)",
+                    "    if not arg_path.is_dir():",
+                    "        typer.echo(f\"❌ Path is not a directory: {arg_path}\")",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    from git import InvalidGitRepositoryError, Repo",
+                    "",
+                    "    if not recursive:",
+                    "        try:",
+                    "            repo_obj = Repo(str(arg_path), search_parent_directories=False)",
+                    "        except InvalidGitRepositoryError:",
+                    "            typer.echo(f\"❌ {arg_path} is not a git repository. Use -r flag for recursive cleanup.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        if repo_obj.working_tree_dir is None:",
+                    "            typer.echo(f\"❌ {arg_path} is inside a bare git repository. Pass a working tree root and retry.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        repo_root = Path(repo_obj.working_tree_dir).resolve()",
+                    "        if arg_path != repo_root:",
+                    "            typer.echo(f\"❌ {arg_path} is not a git working tree root. Pass the repository root or use -r for recursive cleanup.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        repos_to_clean = [repo_root]",
+                    "    else:",
+                    "        git_dirs = list(arg_path.rglob(\".git\"))",
+                    "        repos_to_clean = [git_dir.parent for git_dir in git_dirs if git_dir.is_dir() or git_dir.is_file()]",
+                    "        if not repos_to_clean:",
+                    "            typer.echo(f\"❌ No git repositories found under {arg_path}\")",
+                    "            raise typer.Exit(code=1)",
+                    "",
+                    "    for repo_path in repos_to_clean:",
+                    "        typer.echo(f\"🧹 Cleaning {repo_path}\")",
+                    "        script = rf\"\"\"",
+                    "cd {quote(repo_path.as_posix())}",
+                    "uv run --no-project --with cleanpy cleanpy .",
+                    "\"\"\"",
+                    "        from stackops.utils.code import run_shell_script",
+                    "",
+                    "        result = run_shell_script(script, display_script=True, clean_env=False)",
+                    "        if result.returncode != 0:",
+                    "            raise typer.Exit(code=result.returncode)"
+                  ],
+                  "name": "cleanup",
+                  "parameters": [
+                    {
+                      "name": "repo",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='📁 Directory containing repo(s).')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "📁 Directory containing repo(s)."
+                      }
+                    },
+                    {
+                      "name": "recursive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--recursive', '-r', help='🔍 Recurse into nested repositories.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--recursive",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--recursive"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "🔍 Recurse into nested repositories."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "n",
                     "hidden": true
                   }
                 ]
