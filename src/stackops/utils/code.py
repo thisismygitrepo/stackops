@@ -89,7 +89,12 @@ def run_shell_file(script_path: str, clean_env: bool) -> subprocess.CompletedPro
     import platform
     env: dict[str, str] | None = {} if clean_env else None
     if platform.system() == "Windows":
-        proc = subprocess.run(f'powershell -ExecutionPolicy Bypass -File "{script_path}"', check=False, shell=True, env=env)
+        # -File swallows the exit code of native commands (e.g. uv.exe) when the script itself runs to
+        # completion, so we invoke via -Command and propagate $LASTEXITCODE explicitly.
+        proc = subprocess.run(
+            f'''powershell -ExecutionPolicy Bypass -Command "& '{script_path}'; exit $LASTEXITCODE"''',
+            check=False, shell=True, env=env,
+        )
     elif platform.system() == "Linux" or platform.system() == "Darwin":
         proc = subprocess.run(f"bash {str(script_path)}", check=False, shell=True, env=env)
     else:
@@ -116,15 +121,12 @@ def run_shell_script(script: str, display_script: bool, clean_env: bool) -> subp
     if display_script:
         console.print(Panel(Syntax(code=script, lexer=lexer), title=f"📄 shell script @ {temp_shell_script_path}", subtitle="shell script being executed"), style="bold red")
     proc = run_shell_file(script_path=str(temp_shell_script_path), clean_env=clean_env)
-    # console.print(f"✅  [green]Script executed successfully:[/green] [blue]{temp_script_path}[/blue]")
     if proc.returncode == 130:
         console.print(f"❓  [yellow]Script execution cancelled:[/yellow] [blue]{temp_shell_script_path}[/blue]")
     elif proc.returncode != 0:
         console.print(f"❌  [red]Script execution failed with return code {proc.returncode}:[/red] [blue]{temp_shell_script_path}[/blue]")
-    elif proc.returncode == 0:
-        console.print(f"✅  [green]Script executed successfully:[/green] [blue]{temp_shell_script_path}[/blue]")
     else:
-        console.print(f"⚠️  [yellow]Script executed with warnings (return code {proc.returncode}):[/yellow] [blue]{temp_shell_script_path}[/blue]")
+        console.print(f"✅  [green]Script executed successfully:[/green] [blue]{temp_shell_script_path}[/blue]")
     temp_shell_script_path.unlink(missing_ok=True)
     console.print(f"🗑️  [blue]Temporary script deleted:[/blue] [green]{temp_shell_script_path}[/green]")
     return proc

@@ -464,6 +464,8 @@ stderr:
                 raise RuntimeError(
                     f"If target is not specified, source must be relative to home directory, but got: {source_obj}"
                 )
+        if target_rel2home.startswith("~"):
+            target_rel2home = target_rel2home[1:].lstrip("/\\")
         if not compress_with_zip and source_obj.is_dir():
             if not recursive:
                 raise RuntimeError(

@@ -192,7 +192,11 @@ class Installer:
                 elif installer_arch_os.endswith(".ps1"):
                     if platform.system() != "Windows":
                         raise NotImplementedError(f"PowerShell script installation not supported on {platform.system()}")
-                    subprocess.run(f"powershell -ExecutionPolicy Bypass -File {installer_path}", shell=True, check=True)
+                    # -File swallows native command exit codes; propagate $LASTEXITCODE so check=True is meaningful
+                    subprocess.run(
+                        f'''powershell -ExecutionPolicy Bypass -Command "& '{installer_path}'; exit $LASTEXITCODE"''',
+                        shell=True, check=True,
+                    )
                     version_to_be_installed = "scripted_installation"
                 elif installer_arch_os.endswith(".py"):
                     import runpy
