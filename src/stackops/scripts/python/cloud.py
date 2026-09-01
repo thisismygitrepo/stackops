@@ -108,13 +108,13 @@ def ftpx(
     source: Annotated[str, typer.Argument(help="Source path (machine:path)")],
     target: Annotated[str, typer.Argument(help="Target path (machine:path)")],
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Send recursively.")] = False,
-    zipFirst: Annotated[bool, typer.Option("--zipFirst", "-z", help="Zip before sending.")] = False,
+    zip_first: Annotated[bool, typer.Option("--zip-first", "-z", help="Zip before sending.")] = False,
     cloud: Annotated[bool, typer.Option("--cloud", "-c", help="Transfer through the cloud.")] = False,
     overwrite_existing: Annotated[bool, typer.Option("--overwrite-existing", "-o", help="Overwrite existing files on remote when sending from local to remote.")] = False,
 ) -> None:
     """📦 File transfer utility through SSH."""
     from stackops.scripts.python.ftpx import ftpx as ftpx_impl
-    ftpx_impl(source=source, target=target, recursive=recursive, zipFirst=zipFirst, cloud=cloud, overwrite_existing=overwrite_existing)
+    ftpx_impl(source=source, target=target, recursive=recursive, zip_first=zip_first, cloud=cloud, overwrite_existing=overwrite_existing)
 
 
 def get_app() -> typer.Typer:
