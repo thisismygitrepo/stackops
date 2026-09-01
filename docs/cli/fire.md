@@ -27,7 +27,7 @@ fire [OPTIONS] [PATH] [FUNCTION]
 | Function selection | `--choose-function` |
 | Notebook and app launch | `--jupyter`, `--marimo`, `--streamlit` |
 | Shell and background helpers | `--cmd`, `--loop`, `--watch`, `--git-pull` |
-| Path and repo handling | `--root-repo`, `--holdDirectory`, `--PathExport` |
+| Path and repo handling | `--root-repo`, `--hold-directory`, `--path-export` |
 | Remote launch | `--remote` |
 
 ---
@@ -122,7 +122,7 @@ fire analysis.py -j
 - `--jit` (`-J`) sets `PYTHON_JIT=1` before launching the Python-backed command. This opts into CPython's experimental JIT when the selected interpreter supports it.
 - `--watch` prefixes the final command with `watchexec --restart --exts py,sh,ps1`.
 - `--git-pull` runs `git -C <script-dir> pull` first.
-- `--PathExport` prepends a shell snippet that appends the repo root to `PYTHONPATH`.
+- `--path-export` prepends a shell snippet that appends the repo root to `PYTHONPATH`.
 - `--loop` reruns after completion or interruption.
 
 Examples:

@@ -34,7 +34,7 @@ def terminal(ctx: typer.Context) -> None:
     """🐚 <t> Configure your terminal profile."""
     from stackops.scripts.python.helpers.helpers_devops import cli_config_terminal
 
-    apply_alias_markers(cli_config_terminal.get_app())(ctx.args, standalone_mode=False)
+    apply_alias_markers(cli_config_terminal.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
 
 
 def _read_init_script(which: InitScriptKind) -> str:

@@ -21,8 +21,8 @@ class FireJobArgs:
     module: bool = False
     script: bool = False
     streamlit: bool = False
-    holdDirectory: bool = False
-    PathExport: bool = False
+    hold_directory: bool = False
+    path_export: bool = False
     git_pull: bool = False
     optimized: bool = False
     jit: bool = False

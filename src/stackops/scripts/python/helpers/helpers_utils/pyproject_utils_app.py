@@ -13,7 +13,6 @@ from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_chec
 )
 from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_commands_setup import (
     init_project,
-    type_hint,
     upgrade_packages,
 )
 
@@ -38,9 +37,6 @@ def get_app() -> typer.Typer:
 
     pyproject_app.command(name="check-deps", no_args_is_help=False, help="🔗 <d> Check Python import dependencies and cycles.")(check_deps)
     pyproject_app.command(name="d", no_args_is_help=False, hidden=True)(check_deps)
-
-    pyproject_app.command(name="type-hint", no_args_is_help=True, help="✐ <t> Type hint a file or project directory.")(type_hint)
-    pyproject_app.command(name="t", no_args_is_help=True, hidden=True)(type_hint)
 
     pyproject_app.command(name="type-check", no_args_is_help=False, help="🧪 <c> Run the lint-and-type-check suite for a repository.")(type_check)
     pyproject_app.command(name="c", no_args_is_help=False, hidden=True)(type_check)

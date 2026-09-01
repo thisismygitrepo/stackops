@@ -135,7 +135,7 @@ config.colors = {
   -- selection_bg = 'rgba(50% 50% 50% 50%)',
 }
 
--- config.window_background_image = '/home/alex/Downloads/uni.jpg'
+-- config.window_background_image = wezterm.home_dir .. '/Downloads/background.jpg'
 -- config.window_background_image_hsb = {
 --   -- Darken the background image by reducing it to 1/3rd
 --   brightness = 0.04,

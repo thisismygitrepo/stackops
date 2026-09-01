@@ -57,7 +57,7 @@
         "startDir": {
           "type": "string",
           "description": "Directory to start the tab in (supports ~ expansion).",
-          "examples": ["~/code/bytesense/bithence"]
+          "examples": ["~/code/example/project"]
         },
         "command": {
           "type": "string",

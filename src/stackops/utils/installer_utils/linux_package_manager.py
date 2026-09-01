@@ -67,7 +67,7 @@ _LINUX_DISTRIBUTION_PACKAGE_MANAGERS: Final[dict[LinuxDistributionId, LinuxPacka
     "rhel": "dnf",
     "rocky": "dnf",
 }
-_LINUX_DISTRIBUTION_ALIASES: Final[dict[str, LinuxDistributionId]] = {"redhat": "rhel"}
+_LINUX_DISTRIBUTION_ALIASES: Final[dict[str, LinuxDistributionId]] = {"omarchy": "arch", "redhat": "rhel"}
 _FEDORA_IMMUTABLE_VARIANTS: Final[frozenset[str]] = frozenset({"coreos", "kinoite", "onyx", "sericea", "silverblue"})
 
 

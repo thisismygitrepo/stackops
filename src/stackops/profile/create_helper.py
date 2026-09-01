@@ -78,4 +78,10 @@ def copy_assets_to_machine(which: Literal["scripts", "settings"]) -> None:
     target = CONFIG_ROOT.joinpath("settings")
 
     _copy_path(source=source, target=target, overwrite=True)
+    marimo_config_path = target.joinpath("marimo", "marimo.toml")
+    marimo_config = marimo_config_path.read_text(encoding="utf-8")
+    marimo_config_path.write_text(
+        marimo_config.replace("{STACKOPS_CONFIG_ROOT}", CONFIG_ROOT.as_posix()),
+        encoding="utf-8",
+    )
     

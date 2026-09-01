@@ -1,4 +1,5 @@
 .agents/
+/.pyright.type-check.override.*.json
 *.html
 *.htm
 *.xhtml

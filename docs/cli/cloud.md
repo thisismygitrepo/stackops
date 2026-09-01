@@ -1,6 +1,6 @@
 # cloud
 
-`cloud` is the direct entrypoint for StackOps's cloud copy, sync, mount, and SSH-transfer helpers.
+`cloud` is the direct entrypoint for StackOps's cloud copy, sync, mount, SSH-transfer, and Microsoft Graph OneDrive helpers.
 
 ---
 
@@ -18,14 +18,15 @@ Current top-level commands:
 | `copy` | Upload or download files and folders |
 | `mount` | Mount a configured cloud target locally |
 | `ftpx` | Transfer files through SSH using `machine:path` endpoints |
+| `onedrive` | Access OneDrive accounts and files through Microsoft Graph |
 
-The command also defines hidden one-letter aliases for the same actions: `s`, `c`, `m`, and `f`.
+The command also defines hidden one-letter aliases for the same actions: `s`, `c`, `m`, `f`, and `o`.
 
 ---
 
 ## Defaults
 
-When a command does not override them, cloud defaults come from `stackops.utils.cloud_defaults.read_default_cloud_config()`:
+The rclone-backed `sync`, `copy`, and `mount` commands use defaults from `stackops.utils.cloud_defaults.read_default_cloud_config()` when a command does not override them:
 
 - remote root: `myhome`
 - cloud name: `mycloud101`
@@ -144,7 +145,7 @@ Current options:
 | Option | Meaning |
 | --- | --- |
 | `--recursive`, `-r` | Transfer recursively |
-| `--zipFirst`, `-z` | Zip before sending |
+| `--zip-first`, `-z` | Zip before sending |
 | `--cloud`, `-c` | Transfer through the cloud |
 | `--overwrite-existing`, `-o` | Overwrite existing remote files when sending local to remote |
 
@@ -152,6 +153,38 @@ Example:
 
 ```bash
 cloud ftpx localmachine:/tmp/archive remotehost:/tmp/archive --recursive
+```
+
+---
+
+## `onedrive`
+
+```bash
+cloud onedrive [OPTIONS] COMMAND [ARGS]...
+```
+
+This group manages OneDrive accounts and files directly through Microsoft Graph. Its current commands are:
+
+| Command | Purpose |
+| --- | --- |
+| `add` | Add an account name and Microsoft application client ID |
+| `auth` | Authenticate a configured account with Microsoft |
+| `status` | Show account and storage status |
+| `accounts` | List configured OneDrive accounts |
+| `ls` | List a remote folder |
+| `search` | Search the drive, optionally as JSON |
+| `download` | Download a remote file |
+| `upload` | Upload a local file, optionally replacing the remote item |
+| `delete` | Move a remote item to the recycle bin |
+| `config-path` | Print the global StackOps secrets path used for account configuration |
+
+Most file operations require `--account-name/-a`. Start by adding and authenticating an account:
+
+```bash
+cloud onedrive add --account-name work --client-id <microsoft-client-id>
+cloud onedrive auth --account-name work
+cloud onedrive accounts
+cloud onedrive ls --account-name work /
 ```
 
 ---
@@ -164,4 +197,5 @@ cloud sync --help
 cloud copy --help
 cloud mount --help
 cloud ftpx --help
+cloud onedrive --help
 ```

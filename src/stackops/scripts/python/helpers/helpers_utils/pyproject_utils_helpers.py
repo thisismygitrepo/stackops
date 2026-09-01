@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
-TypeHintDependencyMode: TypeAlias = Literal["self-contained", "import"]
 InitProjectGroupKey: TypeAlias = Literal["p", "t", "types", "l", "i", "d"]
 TYPE_CHECK_EXCLUDES_ENV_VAR = "STACKOPS_TYPE_CHECK_EXCLUDES"
 TYPE_CHECK_LATEST_ENV_VAR = "STACKOPS_TYPE_CHECK_LATEST"

@@ -1,5 +1,7 @@
 
+# Source @ https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/src/machineconfig/setup_windows/web_shortcuts/quick_init.ps1
 # Short @ https://bit.ly/cfgwq
+# Source @ https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/windows/quick_init.ps1
 # Short @ https://bit.ly/sopswq
 
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/setup/windows/uv.ps1" | iex

@@ -5,6 +5,7 @@
 
 
 import os
+import signal
 import shutil
 import subprocess
 import sys
@@ -65,6 +66,11 @@ def build_subprocess_environment() -> dict[str, str]:
     subprocess_environment = dict(os.environ)
     subprocess_environment.pop("VIRTUAL_ENV", None)
     return subprocess_environment
+
+
+def remove_temporary_paths(spec: models_module.ToolSpec) -> None:
+    for temporary_path in spec.temporary_paths:
+        temporary_path.unlink(missing_ok=True)
 
 
 def run_cleanup(console: Console) -> CleanupResult:
@@ -151,6 +157,7 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
             )
         except OSError as error:
             report_handle.close()
+            remove_temporary_paths(spec=spec)
             write_start_failure(
                 report_path=spec.report_path,
                 title=spec.title,
@@ -197,6 +204,7 @@ def finish_ready_processes(
             encoding="utf-8",
         )
         running_tool.report_handle.close()
+        remove_temporary_paths(spec=running_tool.spec)
         finished_at = time.monotonic()
         completed_tools[slug] = ToolResult(
             spec=running_tool.spec,
@@ -234,6 +242,7 @@ def terminate_running_tools(running_tools: dict[str, RunningTool]) -> None:
             encoding="utf-8",
         )
         running_tool.report_handle.close()
+        remove_temporary_paths(spec=running_tool.spec)
 
 
 def write_summary(
@@ -340,6 +349,7 @@ def validate_environment() -> Path:
 
 
 def main() -> int:
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
     repo_root = validate_environment()
     console = Console()
     wall_started_at = time.monotonic()

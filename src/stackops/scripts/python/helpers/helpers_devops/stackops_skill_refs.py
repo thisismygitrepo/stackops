@@ -7,13 +7,13 @@ import tomllib
 from typing import TypeAlias, cast
 
 from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
-from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
-STACKOPS_SKILL_REFERENCES_RELATIVE_PATH = Path("skills", "stackops", "references")
-STACKOPS_SKILL_CLI_MAP_RELATIVE_PATH = STACKOPS_SKILL_REFERENCES_RELATIVE_PATH.joinpath("cli-map.md")
-STACKOPS_SKILL_SOURCE_MAP_RELATIVE_PATH = STACKOPS_SKILL_REFERENCES_RELATIVE_PATH.joinpath("source-map.md")
-STALE_STACKOPS_SKILL_COMMAND_REFERENCES_RELATIVE_PATH = STACKOPS_SKILL_REFERENCES_RELATIVE_PATH.joinpath("commands")
+STACKOPS_SKILL_REFERENCES_RELATIVE_PATHS: tuple[Path, ...] = (
+    Path("skills", "stackops", "references"),
+    Path("src", "stackops", "skills", "stackops", "references"),
+    Path(".github", "skills", "stackops", "references"),
+)
 CLI_GRAPH_DISPLAY_PATH = "src/stackops/scripts/python/graph/cli_graph.json"
 JsonObject: TypeAlias = Mapping[str, object]
 
@@ -52,22 +52,26 @@ def write_stackops_skill_references(*, repo_root: Path, generated_on: date | Non
     project_scripts = read_project_scripts(repo_root=repo_root)
     resolved_generated_on = date.today() if generated_on is None else generated_on
 
-    cli_map_path = repo_root.joinpath(STACKOPS_SKILL_CLI_MAP_RELATIVE_PATH)
-    source_map_path = repo_root.joinpath(STACKOPS_SKILL_SOURCE_MAP_RELATIVE_PATH)
-    stale_command_references_path = repo_root.joinpath(STALE_STACKOPS_SKILL_COMMAND_REFERENCES_RELATIVE_PATH)
-    cli_map_path.parent.mkdir(parents=True, exist_ok=True)
-    if stale_command_references_path.exists():
-        shutil.rmtree(stale_command_references_path)
+    cli_map_text = render_cli_map(
+        cli_graph_payload=graph_payload,
+        project_scripts=project_scripts,
+        generated_on=resolved_generated_on,
+    )
+    source_map_text = render_source_map(cli_graph_payload=graph_payload, generated_on=resolved_generated_on)
+    generated_paths: list[Path] = []
+    for references_relative_path in STACKOPS_SKILL_REFERENCES_RELATIVE_PATHS:
+        references_path = repo_root.joinpath(references_relative_path)
+        stale_command_references_path = references_path.joinpath("commands")
+        references_path.mkdir(parents=True, exist_ok=True)
+        if stale_command_references_path.exists():
+            shutil.rmtree(stale_command_references_path)
 
-    cli_map_path.write_text(
-        render_cli_map(cli_graph_payload=graph_payload, project_scripts=project_scripts, generated_on=resolved_generated_on),
-        encoding="utf-8",
-    )
-    source_map_path.write_text(
-        render_source_map(cli_graph_payload=graph_payload, generated_on=resolved_generated_on),
-        encoding="utf-8",
-    )
-    return cli_map_path, source_map_path
+        cli_map_path = references_path.joinpath("cli-map.md")
+        source_map_path = references_path.joinpath("source-map.md")
+        cli_map_path.write_text(cli_map_text, encoding="utf-8")
+        source_map_path.write_text(source_map_text, encoding="utf-8")
+        generated_paths.extend((cli_map_path, source_map_path))
+    return tuple(generated_paths)
 
 
 def render_cli_map(*, cli_graph_payload: JsonObject, project_scripts: Mapping[str, str], generated_on: date) -> str:
@@ -147,7 +151,7 @@ def render_source_map(*, cli_graph_payload: JsonObject, generated_on: date) -> s
 
 def _important_nuance_lines() -> list[str]:
     return [
-        f"- Developer-only command groups under `devops self` depend on the developer checkout at `{STACKOPS_REPO_DIR}`.",
+        "- Developer-only command groups under `devops self` depend on the developer checkout at `~/code/stackops`.",
         "- Callback groups are invoked as the group command itself; confirm the exact behavior with `--help`.",
         f"- The generated graph stores aliases and metadata. Use `{CLI_GRAPH_DISPLAY_PATH}` only when live help or source is insufficient.",
         "- Docs may lag source. Prefer command paths and behavior verified from current Typer source and `--help` output.",

@@ -58,7 +58,6 @@
 	"mounts": [
 		"source=${localEnv:HOME}/data,target=/root/data,type=bind,consistency=cached",
 		"source=${localEnv:HOME}/dotfiles,target=/root/dotfiles,type=bind,consistency=cached"
-		// "source=/home/alex/data,target=/root/data,type=bind,consistency=cached",
 		// "target=/root/.vscode-server,type=volume"
 	]
 }

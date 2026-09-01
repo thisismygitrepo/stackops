@@ -13,7 +13,7 @@ from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
 def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) -> None:
     nested_app = apply_alias_markers(app_factory())
-    nested_result: object = nested_app(ctx.args, standalone_mode=not ctx.args)
+    nested_result: object = nested_app(ctx.args, prog_name=ctx.command_path, standalone_mode=not ctx.args)
     if isinstance(nested_result, int):
         raise typer.Exit(code=nested_result)
 
@@ -38,8 +38,8 @@ def fire(
     jit: Annotated[bool, typer.Option("--jit", "-J", help="Enable CPython experimental JIT with PYTHON_JIT=1")] = False,
     root_repo: Annotated[bool, typer.Option("--root-repo", "-r", help="Resolve and search from the repository root")] = False,
     remote: Annotated[bool, typer.Option("--remote", "-R", help="Launch on a remote machine")] = False,
-    holdDirectory: Annotated[bool, typer.Option("--holdDirectory", "-D", help="Hold current directory and avoid cd'ing to the script directory")] = False,
-    PathExport: Annotated[bool, typer.Option("--PathExport", "-P", help="Augment the PYTHONPATH with repo root")] = False,
+    hold_directory: Annotated[bool, typer.Option("--hold-directory", "-D", help="Hold current directory and avoid cd'ing to the script directory")] = False,
+    path_export: Annotated[bool, typer.Option("--path-export", "-P", help="Augment the PYTHONPATH with repo root")] = False,
     git_pull: Annotated[bool, typer.Option("--git-pull", "-g", help="Start by pulling the git repo")] = False,
     watch: Annotated[bool, typer.Option("--watch", "-w", help="Watch the file for changes")] = False,
 ) -> None:
@@ -48,8 +48,8 @@ def fire(
     fire_impl(ctx=ctx, path=path, function=function, cmd=cmd, interactive=interactive, debug=debug,
               choose_function=choose_function, loop=loop, jupyter=jupyter, marimo=marimo, module=module,
               script=script, optimized=optimized, jit=jit, root_repo=root_repo,
-              remote=remote, streamlit=streamlit, holdDirectory=holdDirectory,
-              PathExport=PathExport, git_pull=git_pull, watch=watch)
+              remote=remote, streamlit=streamlit, hold_directory=hold_directory,
+              path_export=path_export, git_pull=git_pull, watch=watch)
 
 
 def preview(

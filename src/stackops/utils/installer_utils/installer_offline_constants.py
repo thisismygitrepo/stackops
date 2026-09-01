@@ -55,7 +55,6 @@ BINARY_NAMES: list[str] = [
     "yq",
 ]
 DEFAULT_OUTPUT_ROOT: Path = CONFIG_ROOT.joinpath("offline_installers")
-OFFLINE_INSTALLER_UPLOAD_CLOUD: Final[str] = "gdp"
 OFFLINE_INSTALLER_UPLOAD_REMOTE_ROOT: Final[str] = "myhome"
 OFFLINE_INSTALLER_URL_MAP_PATH: Path = LIBRARY_ROOT / "jobs" / "scripts_dynamic" / "download_stackops_offline_installer.json"
 

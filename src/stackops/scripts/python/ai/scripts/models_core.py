@@ -28,6 +28,7 @@ class ToolSpec:
     report_path: Path
     command: tuple[str, ...]
     output_format: ToolOutputFormat
+    temporary_paths: tuple[Path, ...]
 
 
 @dataclass(frozen=True, slots=True)

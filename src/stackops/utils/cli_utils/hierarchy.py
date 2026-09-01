@@ -148,7 +148,6 @@ if TYPE_CHECKING:
         StackOpsUtilsMachineCommand,
         StackOpsUtilsPyprojectInitProjectCommand,
         StackOpsUtilsPyprojectUpgradePackagesCommand,
-        StackOpsUtilsPyprojectTypeHintCommand,
         StackOpsUtilsPyprojectTypeCheckCommand,
         StackOpsUtilsPyprojectConfigLintersCommand,
         StackOpsUtilsPyprojectCleanupCommand,
@@ -1229,13 +1228,6 @@ STACKOPS_UTILS_PYPROJECT_UPGRADE_PACKAGES_COMMAND: "StackOpsUtilsPyprojectUpgrad
     "subcommands": {},
 }
 
-STACKOPS_UTILS_PYPROJECT_TYPE_HINT_COMMAND: "StackOpsUtilsPyprojectTypeHintCommand" = {
-    "command_name": "type-hint",
-    "short_name": "t",
-    "help": "✐ <t> Type hint a file or project directory.",
-    "subcommands": {},
-}
-
 STACKOPS_UTILS_PYPROJECT_TYPE_CHECK_COMMAND: "StackOpsUtilsPyprojectTypeCheckCommand" = {
     "command_name": "type-check",
     "short_name": "c",
@@ -1281,7 +1273,6 @@ STACKOPS_UTILS_PYPROJECT_TEST_REFERENCE_COMMAND: "StackOpsUtilsPyprojectTestRefe
 STACKOPS_UTILS_PYPROJECT_SUBCOMMANDS: "StackOpsUtilsPyprojectSubcommands" = {
     "init-project": STACKOPS_UTILS_PYPROJECT_INIT_PROJECT_COMMAND,
     "upgrade-packages": STACKOPS_UTILS_PYPROJECT_UPGRADE_PACKAGES_COMMAND,
-    "type-hint": STACKOPS_UTILS_PYPROJECT_TYPE_HINT_COMMAND,
     "type-check": STACKOPS_UTILS_PYPROJECT_TYPE_CHECK_COMMAND,
     "config-linters": STACKOPS_UTILS_PYPROJECT_CONFIG_LINTERS_COMMAND,
     "cleanup": STACKOPS_UTILS_PYPROJECT_CLEANUP_COMMAND,

@@ -5,7 +5,7 @@ from typing import Any, Literal, TypedDict
 
 import typer
 
-from stackops.utils.schemas.installer.installer_types import InstallRequest, InstallationResult, InstallerData
+from stackops.utils.schemas.installer.installer_types import InstallRequest, InstallationResult, InstallerData, InstallerDataSource
 
 
 class CategoryLabelDefinition(TypedDict):
@@ -155,20 +155,24 @@ def _dedupe_installers(installers: list[InstallerData]) -> list[InstallerData]:
     return sorted(app_name_to_installer.values(), key=lambda installer_data: installer_data["appName"].lower())
 
 
-def explore_installers_by_category_labels(install_request: InstallRequest, category_labels: list[str] | None) -> None:
+def explore_installers_by_category_labels(
+    install_request: InstallRequest,
+    category_labels: list[str] | None,
+    source: InstallerDataSource,
+) -> None:
     from rich.console import Console
     from rich.panel import Panel
 
     from stackops.utils.installer_utils.installer_class import Installer
     from stackops.utils.cli_utils.command_lookup import check_tool_exists
-    from stackops.utils.installer_utils.installer_runner import get_installers
+    from stackops.utils.installer_utils.installer_runner import get_installers_from_source
     from stackops.utils.installer_utils.installer_summary import render_installation_summary
     from stackops.utils.options_utils.options import choose_from_options
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
 
     console = Console()
-    installers = get_installers(os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
+    installers = get_installers_from_source(source=source, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
     category_definitions = _load_category_label_definitions()
     category_to_installers = _group_installers_by_category_label(installers=installers)
     category_option_to_label = _build_category_label_options(

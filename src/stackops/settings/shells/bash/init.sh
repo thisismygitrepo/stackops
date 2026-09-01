@@ -77,7 +77,7 @@ alias xc='copilot --yolo'
 #   gh copilot explain "Input command is: $x The output is this: $y"
 # }
 
-# source /home/alex/.config/broot/launcher/bash/br
+# source "${HOME}/.config/broot/launcher/bash/br"
 # eval "$(thefuck --alias)"
 # from https://github.com/ajeetdsouza/zoxide
 eval "$(zoxide init bash)"

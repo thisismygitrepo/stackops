@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# https://bit.ly/sopsuq
+# Source @ https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/linux/quick_init.sh
+# Short @ https://bit.ly/sopsuq
 
 . <( curl -sSL "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/setup/linux/uv.sh")
 uv tool install --upgrade --python 3.14 stackops
@@ -9,4 +10,3 @@ devops config sync down --sensitivity public --method copy --on-conflict overwri
 devops config terminal config-shell --which default
 devops install --group termabc
 devops install --group sysabc
-

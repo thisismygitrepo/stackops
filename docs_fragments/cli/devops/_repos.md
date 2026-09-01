@@ -32,14 +32,14 @@ Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--specs-path`, `-s` | Explicit path to the `repos.json` specification. Defaults to `/home/alex/dotfiles/stackops/mapper/repos.json` |
+| `--specs-path`, `-s` | Explicit path to the `repos.json` specification. Defaults to `~/dotfiles/stackops/mapper/repos.json` |
 | `--checkout-to-commit`, `-c` | Check out commits pinned in the specification |
 | `--checkout-to-branch`, `-b` | Check out the main branch from the specification |
 
 Important behavior from the implementation:
 
 - `--checkout-to-commit` and `--checkout-to-branch` are mutually exclusive
-- Without `--specs-path`, stackops reads `/home/alex/dotfiles/stackops/mapper/repos.json`
+- Without `--specs-path`, stackops reads `~/dotfiles/stackops/mapper/repos.json`
 - Repository destination paths come from the records inside the spec file
 
 Examples:
@@ -63,7 +63,7 @@ Scan a directory of repositories and merge those entries into a `repos.json` spe
 devops repos register [DIRECTORY] [OPTIONS]
 ```
 
-By default, `register` updates `/home/alex/dotfiles/stackops/mapper/repos.json`. Use `--specs-path` to update another file. Records under the registered directory are refreshed, while records from other roots are preserved.
+By default, `register` updates `~/dotfiles/stackops/mapper/repos.json`. Use `--specs-path` to update another file. Records under the registered directory are refreshed, while records from other roots are preserved.
 
 Examples:
 
@@ -192,7 +192,5 @@ Example:
 ```bash
 devops repos count-lines ~/code/stackops
 ```
-
-The nested help screens render shortened usage such as `devops sync ...`, `devops action ...`, or `devops viz ...`, but the full entrypoints remain `devops repos sync ...`, `devops repos action ...`, and `devops repos viz ...`.
 
 ---

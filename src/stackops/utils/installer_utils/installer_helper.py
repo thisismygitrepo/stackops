@@ -11,11 +11,18 @@ def _is_supported_archive(path: Path) -> bool:
     return not is_linux_package_file(path) and str(path).endswith(DECOMPRESS_SUPPORTED_FORMATS)
 
 
-def get_group_name_to_repr() -> dict[str, str]:
+def get_group_name_to_repr(available_app_names: set[str] | None) -> dict[str, str]:
     # Build category options and maintain a mapping from display text to actual category name
     category_display_to_name: dict[str, str] = {}
     for group_name, group_values in PACKAGE_GROUP2NAMES.items():
-        display = f"📦 {group_name:<20}" + "   --   " + f"{'|'.join(group_values):<60}"
+        displayed_group_values = (
+            group_values
+            if available_app_names is None
+            else [app_name for app_name in group_values if app_name.casefold() in available_app_names]
+        )
+        if len(displayed_group_values) == 0:
+            continue
+        display = f"📦 {group_name:<20}" + "   --   " + f"{'|'.join(displayed_group_values):<60}"
         category_display_to_name[display] = group_name
     return category_display_to_name
 

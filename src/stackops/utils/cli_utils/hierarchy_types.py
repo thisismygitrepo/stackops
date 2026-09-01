@@ -1449,16 +1449,6 @@ StackOpsUtilsPyprojectUpgradePackagesCommand = TypedDict(
     },
 )
 
-StackOpsUtilsPyprojectTypeHintCommand = TypedDict(
-    "StackOpsUtilsPyprojectTypeHintCommand",
-    {
-        "command_name": Literal["type-hint"],
-        "short_name": Literal["t"],
-        "help": Literal["✐ <t> Type hint a file or project directory."],
-        "subcommands": EmptySubcommands,
-    },
-)
-
 StackOpsUtilsPyprojectTypeCheckCommand = TypedDict(
     "StackOpsUtilsPyprojectTypeCheckCommand",
     {
@@ -1524,7 +1514,6 @@ StackOpsUtilsPyprojectSubcommands = TypedDict(
     {
         "init-project": StackOpsUtilsPyprojectInitProjectCommand,
         "upgrade-packages": StackOpsUtilsPyprojectUpgradePackagesCommand,
-        "type-hint": StackOpsUtilsPyprojectTypeHintCommand,
         "type-check": StackOpsUtilsPyprojectTypeCheckCommand,
         "config-linters": StackOpsUtilsPyprojectConfigLintersCommand,
         "cleanup": StackOpsUtilsPyprojectCleanupCommand,

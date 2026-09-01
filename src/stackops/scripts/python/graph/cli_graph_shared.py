@@ -22,6 +22,11 @@ class AppRef:
     factory: str = "get_app"
 
 
+@dataclass(frozen=True)
+class ResolvedModule:
+    module: str
+
+
 @dataclass
 class ModuleInfo:
     module: str

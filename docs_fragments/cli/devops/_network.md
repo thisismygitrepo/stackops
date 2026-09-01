@@ -472,6 +472,4 @@ devops network vscode-share share-local --dir . --host 0.0.0.0
 
 Before `run` or `install-service`, StackOps shows whether a VS Code tunnel credential is stored and whether its provider is GitHub or Microsoft. VS Code does not expose the credential's exact username or email. To guarantee which account is used, run `code tunnel user logout`, then `code tunnel user login --provider github` or `code tunnel user login --provider microsoft` before starting the tunnel.
 
-The nested help screens render shortened usage such as `devops share-server ...`, `devops ssh ...`, `devops cloudflare ...`, `devops device ...`, or `devops vscode-share ...`, but the full entrypoints remain under `devops network ...`.
-
 ---

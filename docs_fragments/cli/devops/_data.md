@@ -14,6 +14,7 @@ Current `devops data --help` exposes:
 |---------|-------------|
 | `sync` | Generate backup or retrieve commands through `cloud copy` |
 | `register` | Add or update a backup entry in the user data-mapping file |
+| `display` | Display registered entries from the user data-mapping file |
 | `subset` | Select entries interactively or with `--which` and write a standalone data-mapping file |
 | `edit` | Open the user or library backup configuration file |
 
@@ -93,6 +94,14 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 
 If `--name` is omitted, the command generates one from the local path and OS filter.
 
+### display
+
+Render the entries in the user backup configuration as a table, including local and cloud paths, OS filters, archive and encryption options, and share URLs.
+
+```bash
+devops data display
+```
+
 ### subset
 
 Choose backup entries and write them to a separate YAML configuration.
@@ -162,7 +171,5 @@ Selection behavior for `devops data sync --which ...`:
 - `dotfiles` selects the whole group
 - `dotfiles.wezterm` selects one item
 - `all` selects every applicable item
-
-The nested help screens render `Usage: devops sync ...`, `devops register ...`, `devops subset ...`, and `devops edit ...`, but the full entrypoints remain under `devops data`.
 
 ---

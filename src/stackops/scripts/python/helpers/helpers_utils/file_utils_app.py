@@ -154,14 +154,14 @@ def compress_pdf(
         int,
         typer.Option("--image-dpi", "-d", min=0, help="Target DPI for image resampling (0=no resampling)."),
     ] = 0,
-    compress_streams: Annotated[
+    no_compress_streams: Annotated[
         bool,
         typer.Option("--no-compress-streams", "-C", help="Do not compress uncompressed streams."),
-    ] = True,
-    use_objstms: Annotated[
+    ] = False,
+    no_object_streams: Annotated[
         bool,
         typer.Option("--no-object-streams", "-S", help="Do not use object streams for additional compression."),
-    ] = True,
+    ] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.pdf import compress_pdf as impl
 
@@ -170,8 +170,8 @@ def compress_pdf(
         output=output,
         quality=quality,
         image_dpi=image_dpi,
-        compress_streams=compress_streams,
-        use_objstms=use_objstms,
+        compress_streams=not no_compress_streams,
+        use_objstms=not no_object_streams,
     )
 
 
@@ -246,10 +246,10 @@ def read_db_cli_tui(
         typer.Option("--recursive", "-r", help="Search subdirectories when using --find."),
     ] = False,
     backend: Annotated[DatabaseBackend, typer.Option("--backend", "-b", help="The TUI database client to use.")] = "harlequin",
-    read_only: Annotated[
+    read_write: Annotated[
         bool,
         typer.Option("--read-write", "-w", help="Open the database in read/write mode (if supported by backend)."),
-    ] = True,
+    ] = False,
     theme: Annotated[str | None, typer.Option("--theme", "-t", help="Theme to use (if supported by backend).")] = None,
     limit: Annotated[int | None, typer.Option("--limit", "-l", help="Maximum number of rows to load (if supported by backend).")] = None,
 ) -> None:
@@ -262,7 +262,7 @@ def read_db_cli_tui(
         find_root=find_root,
         recursive=recursive,
         backend=backend,
-        read_only=read_only,
+        read_only=not read_write,
         theme=theme,
         limit=limit,
     )

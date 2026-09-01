@@ -16,13 +16,13 @@ import stackops.utils.path_core as path_core
 from rich.console import Console
 
 from stackops.jobs.installer.checks.vt_utils import ScanResult, summarize_scan_results
+from stackops.utils.cloud.default_remote import read_default_rclone_remote
 from stackops.utils.cloud.rclone_wrapper import get_remote_path, to_cloud
 from stackops.utils.source_of_truth import CONFIG_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 # Constants
 APP_METADATA_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_metadata_report.csv")
 ENGINE_RESULTS_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_engine_results_report.csv")
-CLOUD_STORAGE_NAME = "gdp"  # Default cloud storage name for rclone
 
 console = Console()
 
@@ -44,7 +44,7 @@ def upload_app(path: Path) -> str | None:
         )
         return to_cloud(
             local_path=local_path,
-            cloud=CLOUD_STORAGE_NAME,
+            cloud=read_default_rclone_remote(),
             remote_path=remote_path,
             share=True,
             share_options=None,

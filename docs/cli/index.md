@@ -20,7 +20,7 @@ For day-to-day use, prefer the standalone command when you already know which to
 | [`preview`](preview.md) | File preview and `uv run` backend launcher |
 | [`seek`](seek.md) | Interactive search across files, text matches, and symbols |
 | [`fire`](fire.md) | File, function, notebook, and app runner |
-| [`cloud`](cloud.md) | Cloud sync, copy, mount, and SSH transfer helpers |
+| [`cloud`](cloud.md) | Cloud sync, copy, mount, SSH transfer, and OneDrive helpers |
 
 ---
 

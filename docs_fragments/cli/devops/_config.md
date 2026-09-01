@@ -22,6 +22,7 @@ Current `devops config --help` exposes:
 | `secrets` | Define env vars from `.stackops/secrets/secrets.json` |
 | `dump` | Write example configuration files or print/run packaged init/setup scripts |
 | `terminal` | Shell profile and terminal theme commands |
+| `setup` | Guided creation of StackOps user configuration files |
 
 ### interactive
 
@@ -32,6 +33,31 @@ devops config interactive
 ```
 
 This launches the interactive setup helper instead of performing a direct install.
+
+### setup
+
+Create or update StackOps user configuration through focused guided flows:
+
+```bash
+devops config setup [SUBCOMMAND] [ARGS]...
+```
+
+| Command | Description |
+|---------|-------------|
+| `cloud` | Select an rclone remote and create or update the StackOps config and schema |
+| `email` | Select or create an SMTP profile and save the default recipient |
+| `data` | Interactively add a backup entry and install its YAML schema |
+| `dotfiles` | Interactively register a dotfile and install its YAML schema |
+| `layouts` | Install starter terminal layouts and their JSON schema |
+| `secrets` | Interactively create the global secrets file and schema |
+
+Examples:
+
+```bash
+devops config setup cloud
+devops config setup data
+devops config setup layouts
+```
 
 ### sync
 
@@ -260,8 +286,6 @@ devops config terminal [SUBCOMMAND] [ARGS]...
 | `ghostty-theme` | Interactive Ghostty theme selection |
 | `windows-terminal-theme` | Interactive Windows Terminal color scheme selection |
 | `tmux-style` | Oh My Tmux install, local config, preset, option, reload, and status helpers (`t`) |
-
-The nested help screens render `Usage: devops terminal ...`, but the full entrypoint remains `devops config terminal ...`.
 
 Examples:
 

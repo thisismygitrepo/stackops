@@ -30,7 +30,7 @@ def export(
         typer.Option(
             "--upload-to-cloud",
             "-u",
-            help="Upload the finished archive to its mirrored gdp:myhome/ path, share it, and refresh the dynamic downloader URL map.",
+            help="Upload the finished archive to the configured default rclone remote, share it, and refresh the dynamic downloader URL map.",
         ),
     ] = False,
 ) -> None:
