@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
 
 import typer
+from typer.core import TyperGroup
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
@@ -43,6 +44,26 @@ _INIT_CONFIG_AGENT_HELP: Final[str] = (
     f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
     f"{','.join(CONFIG_AGENT_VALUES)}"
 )
+_AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
+    "add-mcp",
+    "add-skill",
+    "add-config",
+    "browser",
+    "second-brain",
+    "doctor",
+    "run-prompt",
+    "run-interactive",
+    "ask",
+    "parallel",
+    "iter",
+    "clean",
+)
+
+
+class _PanelOrderedAgentsGroup(TyperGroup):
+    def list_commands(self, ctx: object) -> list[str]:
+        declared_positions = {name: position for position, name in enumerate(_AGENTS_COMMAND_PANEL_ORDER)}
+        return sorted(self.commands, key=lambda name: declared_positions.get(name, len(declared_positions)))
 
 
 @contextmanager
@@ -374,26 +395,6 @@ def ask(
     raise typer.Exit(code=return_code)
 
 
-def execute(
-    plan_json: Annotated[
-        Path | None,
-        typer.Argument(help="Plan JSON file to execute. If omitted, execute the only .ai/plans/*.plan.json file."),
-    ] = None,
-    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent used to check whether the active phase is finished.")] = DEFAULT_AGENT,
-    interval_seconds: Annotated[int, typer.Option("--interval", "-i", help="Seconds to sleep between executor passes.")] = 300,
-    once: Annotated[bool, typer.Option("--once", "-o", help="Run one executor pass and exit.")] = False,
-) -> None:
-    """Execute an agentops plan JSON file."""
-    import typer as _typer
-
-    from stackops.scripts.python.helpers.helpers_agents.agents_execute_impl import run_execute as impl
-
-    try:
-        impl(plan_path=plan_json, checker_agent=agent, interval_seconds=interval_seconds, once=once, report=_typer.echo)
-    except ValueError as error:
-        raise typer.BadParameter(str(error)) from error
-
-
 def add_skill(
     skill_name: Annotated[
         str | None,
@@ -502,14 +503,19 @@ def doctor(
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.ai_account import get_app as get_account_app
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
     from stackops.scripts.python.agents_iter import get_app as get_iter_app
     from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
     from stackops.scripts.python.agents_second_brain import get_app as get_second_brain_app
     from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_VERSION
 
-    agents_app = typer.Typer(help="🤖 AI Agents management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    agents_app = typer.Typer(
+        cls=_PanelOrderedAgentsGroup,
+        help="🤖 AI Agents management subcommands",
+        no_args_is_help=True,
+        add_help_option=True,
+        add_completion=False,
+    )
     agents_app.add_typer(
         get_parallel_app(), name="parallel", help="🧵 <p> Parallel agent workflow commands", short_help="<p> Parallel agent workflow commands"
     )
@@ -540,14 +546,6 @@ def get_app() -> typer.Typer:
     agents_app.command(name="doctor", no_args_is_help=False, short_help="<d> Inspect agent health and resource provenance")(doctor)
     agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
 
-    agents_app.add_typer(
-        get_account_app(),
-        name="account",
-        help="Back up active AI agent credentials or retrieve saved profiles.",
-        short_help="<A> Back up or retrieve an AI agent credential",
-    )
-    agents_app.add_typer(get_account_app(), name="A", hidden=True)
-
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)
     agents_app.command(name="run-interactive", no_args_is_help=False, short_help="<i> Launch an agent with reasonable defaults")(
@@ -556,8 +554,6 @@ def get_app() -> typer.Typer:
     agents_app.command(name="i", no_args_is_help=False, hidden=True)(run_interactive)
     agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
-    agents_app.command(name="execute", no_args_is_help=False, short_help="<E> Execute an agentops plan JSON")(execute)
-    agents_app.command(name="E", no_args_is_help=False, hidden=True)(execute)
     return apply_alias_markers(agents_app)
 
 

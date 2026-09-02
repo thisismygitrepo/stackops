@@ -14,20 +14,18 @@ agents [OPTIONS] COMMAND [ARGS]...
 
 | Command | Current behavior |
 | --- | --- |
-| `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
-| `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
-| `iter` | Inspect and maintain current-format AgentOps iteration workspaces through Herdr 0.8.2 |
-| `account` | Back up active agent credentials to saved profiles or retrieve a profile as active |
-| `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
-| `clean` | Remove `.ai` directories from discovered Git repositories |
+| `add-skill` | Add a supported skill into an agent directory |
+| `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
+| `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
+| `second-brain` | Configure the Second Brain repository and its agent instructions |
 | `doctor` | Inspect agent binaries, configuration, plugins, skills, and instruction provenance |
 | `run-prompt` | Run one prompt through a selected agent, with inline, file, or YAML-backed context |
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
-| `execute` | Execute an AgentOps plan JSON file, optionally for one pass |
-| `add-skill` | Add a supported skill into an agent directory |
-| `second-brain` | Configure the Second Brain repository and its agent instructions |
+| `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
+| `iter` | Inspect and maintain current-format AgentOps iteration workspaces through Herdr 0.8.2 |
+| `clean` | Remove `.ai` directories from discovered Git repositories |
 
 ---
 
@@ -43,26 +41,6 @@ agents iter close --all --dry-run
 agents iter close -I
 agents iter clean --all --dry-run
 agents iter clean -I -n
-```
-
----
-
-## `account`
-
-Account transfers always state their direction explicitly:
-
-```bash
-agents account backup codex --profile work
-agents account retrieve codex --profile work
-```
-
-`backup` copies the agent's active credential into the target profile. For agents whose active credential contains a safe identity, omitting the profile updates the unique matching profile or creates a new identity-derived profile for a new login. Agents without a safe automatic identity still require `--profile`. `retrieve` copies the source profile into the agent's active credential file; omitting `--profile` opens the profile picker.
-
-Use `--active-credential`/`-c` to override the agent-specific active file in either direction. `account` provides hidden `b` and `r` aliases for `backup` and `retrieve`; the hidden `A` alias supports the same subcommands:
-
-```bash
-agents account b codex
-agents A r codex
 ```
 
 ---
@@ -85,17 +63,6 @@ agents clean ~/code --recursive
 ```bash
 agents doctor
 agents doctor codex --directory . --resource plugin,skill,instructions
-```
-
----
-
-## `execute`
-
-`execute [PLAN_JSON]` advances an AgentOps plan. If the path is omitted, StackOps requires exactly one `.ai/plans/*.plan.json` file. `--agent/-a` selects the completion-checking agent, `--interval/-i` controls the delay between passes, and `--once/-o` performs one pass and exits.
-
-```bash
-agents execute .ai/plans/release.plan.json --once
-agents execute --agent codex --interval 300
 ```
 
 ---
