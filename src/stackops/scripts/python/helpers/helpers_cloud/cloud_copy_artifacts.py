@@ -77,7 +77,7 @@ def prepared_upload_path(
 
         match encryption_mode:
             case "asymmetric":
-                upload_path = encrypt_file_asymmetric(file_path=upload_path)
+                upload_path = encrypt_file_asymmetric(file_path=upload_path, recipient=None)
             case "symmetric":
                 upload_path = encrypt_file_symmetric(file_path=upload_path, pwd=_symmetric_password(pwd))
             case None:

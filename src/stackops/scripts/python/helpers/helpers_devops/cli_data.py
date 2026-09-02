@@ -283,7 +283,7 @@ def edit_data(
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.helpers.helpers_devops import cli_data_display, cli_data_subset
+    from stackops.scripts.python.helpers.helpers_devops import cli_data_display, cli_data_encrypt, cli_data_subset
 
     app = typer.Typer(
         name="data",
@@ -319,5 +319,13 @@ def get_app() -> typer.Typer:
     app.command(name="edit", no_args_is_help=False, hidden=False, help="✏️ <e> Open backup configuration file in nano, hx, or code.")(edit_data)
 
     app.command(name="e", no_args_is_help=False, hidden=True)(edit_data)
+
+    app.command(name="encrypt", no_args_is_help=True, hidden=False, help=cli_data_encrypt.DATA_ENCRYPT_HELP)(cli_data_encrypt.encrypt)
+
+    app.command(name="x", no_args_is_help=True, hidden=True)(cli_data_encrypt.encrypt)
+
+    app.command(name="decrypt", no_args_is_help=True, hidden=False, help=cli_data_encrypt.DATA_DECRYPT_HELP)(cli_data_encrypt.decrypt)
+
+    app.command(name="y", no_args_is_help=True, hidden=True)(cli_data_encrypt.decrypt)
 
     return app

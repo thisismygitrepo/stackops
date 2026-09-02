@@ -68,7 +68,7 @@ def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str
         )
     with console.status(f"[bold cyan]Encrypting repository archive[/bold cyan] [dim]{escape(str(archive_path))}[/dim]", spinner="dots"):
         if pwd is None:
-            encrypted_archive_path = encrypt_file_asymmetric(file_path=archive_path)
+            encrypted_archive_path = encrypt_file_asymmetric(file_path=archive_path, recipient=None)
         else:
             encrypted_archive_path = encrypt_file_symmetric(file_path=archive_path, pwd=pwd)
     try:

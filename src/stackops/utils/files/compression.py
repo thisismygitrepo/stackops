@@ -13,6 +13,11 @@ from stackops.utils.code import run_lambda_function
 from stackops.utils.path_core import delete_path
 
 type FileMode = Literal["r", "w", "x", "a"]
+type TarFormat = Literal["tar", "tar.gz", "tar.bz2", "tar.xz"]
+type TarOpenMode = Literal["w", "w:gz", "w:bz2", "w:xz"]
+
+TAR_FORMAT_OPEN_MODES: dict[TarFormat, TarOpenMode] = {"tar": "w", "tar.gz": "w:gz", "tar.bz2": "w:bz2", "tar.xz": "w:xz"}
+TAR_FORMAT_SUFFIXES: dict[TarFormat, str] = {"tar": ".tar", "tar.gz": ".tar.gz", "tar.bz2": ".tar.bz2", "tar.xz": ".tar.xz"}
 
 DECOMPRESS_SUPPORTED_FORMATS: tuple[str, ...] = (
     ".tar.gz",
@@ -173,6 +178,37 @@ def zip_path(
     )
 
 
+def tar_path(
+    source: Path,
+    *,
+    path: Path | None,
+    folder: Path | None,
+    name: str | None,
+    arcname: str | None,
+    tar_format: TarFormat,
+    inplace: bool,
+    orig: bool,
+    verbose: bool,
+) -> Path:
+    source_resolved = source.expanduser().resolve()
+    if not source_resolved.exists():
+        raise FileNotFoundError(source_resolved)
+    default_name = f"{source_resolved.name}{TAR_FORMAT_SUFFIXES[tar_format]}"
+    destination = _resolve_output_path(source_resolved, folder=folder, name=name, path=path, default_name=default_name)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    archive_root = _archive_root(source_resolved, arcname)
+    with tarfile.open(destination, TAR_FORMAT_OPEN_MODES[tar_format]) as archive:
+        archive.add(source_resolved, arcname=archive_root.as_posix(), recursive=True)
+    return _finalize_result(
+        source=source_resolved,
+        result=destination,
+        orig=orig,
+        inplace=inplace,
+        verbose=verbose,
+        message=f"TARRED {source_resolved!r} ==> {destination!r}",
+    )
+
+
 def unzip_path(
     source: Path,
     *,
@@ -309,18 +345,18 @@ def decompress_path(source: Path, *, folder: Path | None, name: str | None, path
     source_resolved = source.expanduser().resolve()
     source_name = source_resolved.name
     if source_name.endswith(".tar.gz") or source_name.endswith(".tgz"):
-        tar_path = ungz_path(source_resolved, folder=None, name=f"tmp_{randstr()}.tar", path=None, inplace=inplace, orig=False, verbose=verbose)
-        return untar_path(tar_path, folder=folder, name=name, path=path, inplace=True, orig=orig, verbose=verbose)
+        intermediate_tar = ungz_path(source_resolved, folder=None, name=f"tmp_{randstr()}.tar", path=None, inplace=inplace, orig=False, verbose=verbose)
+        return untar_path(intermediate_tar, folder=folder, name=name, path=path, inplace=True, orig=orig, verbose=verbose)
     if source_name.endswith(".tar"):
         return untar_path(source_resolved, folder=folder, name=name, path=path, inplace=inplace, orig=orig, verbose=verbose)
     if source_name.endswith(".gz"):
         return ungz_path(source_resolved, folder=folder, name=name, path=path, inplace=inplace, orig=orig, verbose=verbose)
     if source_name.endswith(".tar.bz") or source_name.endswith(".tbz") or source_name.endswith(".tar.bz2"):
-        tar_path = unbz_path(source_resolved, folder=None, name=f"tmp_{randstr()}.tar", path=None, inplace=inplace, orig=False, verbose=verbose)
-        return untar_path(tar_path, folder=folder, name=name, path=path, inplace=True, orig=orig, verbose=verbose)
+        intermediate_tar = unbz_path(source_resolved, folder=None, name=f"tmp_{randstr()}.tar", path=None, inplace=inplace, orig=False, verbose=verbose)
+        return untar_path(intermediate_tar, folder=folder, name=name, path=path, inplace=True, orig=orig, verbose=verbose)
     if source_name.endswith(".tar.xz"):
-        tar_path = unxz_path(source_resolved, folder=None, name=f"tmp_{randstr()}.tar", path=None, inplace=inplace, orig=False, verbose=verbose)
-        return untar_path(tar_path, folder=folder, name=name, path=path, inplace=True, orig=orig, verbose=verbose)
+        intermediate_tar = unxz_path(source_resolved, folder=None, name=f"tmp_{randstr()}.tar", path=None, inplace=inplace, orig=False, verbose=verbose)
+        return untar_path(intermediate_tar, folder=folder, name=name, path=path, inplace=True, orig=orig, verbose=verbose)
     if source_name.endswith(".zip"):
         return unzip_path(
             source_resolved,
@@ -355,7 +391,9 @@ def decompress_path(source: Path, *, folder: Path | None, name: str | None, path
 __all__ = [
     "DECOMPRESS_SUPPORTED_FORMATS",
     "FileMode",
+    "TarFormat",
     "decompress_path",
+    "tar_path",
     "unbz_path",
     "ungz_path",
     "untar_path",

@@ -1230,6 +1230,330 @@
                     "hidden": true
                   }
                 ]
+              },
+              {
+                "kind": "command",
+                "name": "encrypt",
+                "fullPath": "devops data encrypt",
+                "shortPath": "d d x",
+                "help": "🔐 <x> Encrypt a file or folder with symmetric or asymmetric GPG.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_data_encrypt.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt",
+                  "callable": "encrypt"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def encrypt(",
+                    "    path: Annotated[Path, typer.Argument(help=\"📄 File or folder to encrypt. Folders are archived before encryption.\")],",
+                    "    encryption: Annotated[",
+                    "        EncryptionModeChoice,",
+                    "        typer.Option(\"--encryption\", \"-e\", help=f\"🔐 Encryption mode: {ENCRYPTION_MODES_DISPLAY}. Symmetric uses a password; asymmetric uses GPG keys.\"),",
+                    "    ] = \"symmetric\",",
+                    "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted.\")] = None,",
+                    "    recipient: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--recipient\", \"-r\", help=\"🪪 Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key.\"),",
+                    "    ] = None,",
+                    "    compression: Annotated[",
+                    "        FolderArchiveFormat,",
+                    "        typer.Option(\"--compression\", \"-c\", help=\"🗜 Archive format for folders: zip, tar.gz, tar.bz2, or tar.xz. Ignored for files.\"),",
+                    "    ] = \"zip\",",
+                    "    output: Annotated[",
+                    "        Path | None,",
+                    "        typer.Option(\"--output\", \"-o\", help=\"📦 Encrypted output path. Defaults to <path>.parent/<name>[.<compression>].gpg.\"),",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    mode = _resolve_encryption(encryption, pwd=pwd, recipient=recipient)",
+                    "    source = path.expanduser().absolute()",
+                    "    if not source.exists():",
+                    "        _fail(f\"Path does not exist: {source}\")",
+                    "    output_path = output.expanduser().absolute() if output is not None else _default_encrypted_output(source, compression=compression)",
+                    "    if output_path.exists() or output_path.is_symlink():",
+                    "        _fail(f\"Output path already exists: {output_path}\")",
+                    "    output_path.parent.mkdir(parents=True, exist_ok=True)",
+                    "    try:",
+                    "        _encrypt_to_output(source=source, mode=mode, pwd=pwd, recipient=recipient, compression=compression, output_path=output_path)",
+                    "    except (OSError, ValueError, RuntimeError) as exc:",
+                    "        _fail(str(exc))",
+                    "    typer.echo(typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Encrypted {source} ==> {output_path}\")"
+                  ],
+                  "name": "encrypt",
+                  "parameters": [
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[Path, typer.Argument(help='📄 File or folder to encrypt. Folders are archived before encryption.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "📄 File or folder to encrypt. Folders are archived before encryption."
+                      }
+                    },
+                    {
+                      "name": "encryption",
+                      "kind": "positional_or_keyword",
+                      "type": "EncryptionModeChoice",
+                      "default": "symmetric",
+                      "required": false,
+                      "annotation_raw": "Annotated[EncryptionModeChoice, typer.Option('--encryption', '-e', help=f'🔐 Encryption mode: {ENCRYPTION_MODES_DISPLAY}. Symmetric uses a password; asymmetric uses GPG keys.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--encryption",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--encryption"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "pwd",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--password",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--password"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted."
+                      }
+                    },
+                    {
+                      "name": "recipient",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--recipient', '-r', help='🪪 Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--recipient",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--recipient"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "🪪 Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key."
+                      }
+                    },
+                    {
+                      "name": "compression",
+                      "kind": "positional_or_keyword",
+                      "type": "FolderArchiveFormat",
+                      "default": "zip",
+                      "required": false,
+                      "annotation_raw": "Annotated[FolderArchiveFormat, typer.Option('--compression', '-c', help='🗜 Archive format for folders: zip, tar.gz, tar.bz2, or tar.xz. Ignored for files.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--compression",
+                          "-c"
+                        ],
+                        "long_flags": [
+                          "--compression"
+                        ],
+                        "short_flags": [
+                          "-c"
+                        ],
+                        "help": "🗜 Archive format for folders: zip, tar.gz, tar.bz2, or tar.xz. Ignored for files."
+                      }
+                    },
+                    {
+                      "name": "output",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='📦 Encrypted output path. Defaults to <path>.parent/<name>[.<compression>].gpg.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--output",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--output"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "📦 Encrypted output path. Defaults to <path>.parent/<name>[.<compression>].gpg."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "x",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "decrypt",
+                "fullPath": "devops data decrypt",
+                "shortPath": "d d y",
+                "help": "🔓 <y> Decrypt a GPG file; folder archives are extracted.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_data_encrypt.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt",
+                  "callable": "decrypt"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def decrypt(",
+                    "    path: Annotated[Path, typer.Argument(help=\"🔐 Encrypted .gpg file to decrypt.\")],",
+                    "    encryption: Annotated[",
+                    "        EncryptionModeChoice,",
+                    "        typer.Option(\"--encryption\", \"-e\", help=f\"🔓 Encryption mode used to create the file: {ENCRYPTION_MODES_DISPLAY}.\"),",
+                    "    ] = \"symmetric\",",
+                    "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted.\")] = None,",
+                    "    output: Annotated[",
+                    "        Path | None,",
+                    "        typer.Option(\"--output\", \"-o\", help=\"📦 Decrypted output path. Defaults next to the encrypted file with .gpg and archive suffixes stripped.\"),",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    mode = parse_encryption_mode(encryption, label=\"encryption\")",
+                    "    source = path.expanduser().absolute()",
+                    "    if not source.is_file():",
+                    "        _fail(f\"Encrypted file does not exist: {source}\")",
+                    "    if source.suffix != \".gpg\":",
+                    "        _fail(f\"Expected a .gpg encrypted file: {source}\")",
+                    "    inner_name = source.name.removesuffix(\".gpg\")",
+                    "    archive_suffix = _match_archive_suffix(inner_name)",
+                    "    output_path = output.expanduser().absolute() if output is not None else source.parent / _stripped_artifact_name(inner_name, archive_suffix=archive_suffix)",
+                    "    if output_path.exists() or output_path.is_symlink():",
+                    "        _fail(f\"Output path already exists: {output_path}\")",
+                    "    output_path.parent.mkdir(parents=True, exist_ok=True)",
+                    "    try:",
+                    "        _decrypt_to_output(source=source, mode=mode, pwd=pwd, archive_suffix=archive_suffix, output_path=output_path)",
+                    "    except (OSError, ValueError, RuntimeError) as exc:",
+                    "        _fail(str(exc))",
+                    "    typer.echo(typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Decrypted {source} ==> {output_path}\")"
+                  ],
+                  "name": "decrypt",
+                  "parameters": [
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[Path, typer.Argument(help='🔐 Encrypted .gpg file to decrypt.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "🔐 Encrypted .gpg file to decrypt."
+                      }
+                    },
+                    {
+                      "name": "encryption",
+                      "kind": "positional_or_keyword",
+                      "type": "EncryptionModeChoice",
+                      "default": "symmetric",
+                      "required": false,
+                      "annotation_raw": "Annotated[EncryptionModeChoice, typer.Option('--encryption', '-e', help=f'🔓 Encryption mode used to create the file: {ENCRYPTION_MODES_DISPLAY}.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--encryption",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--encryption"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ]
+                      }
+                    },
+                    {
+                      "name": "pwd",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--password",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--password"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted."
+                      }
+                    },
+                    {
+                      "name": "output",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', help='📦 Decrypted output path. Defaults next to the encrypted file with .gpg and archive suffixes stripped.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--output",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--output"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "📦 Decrypted output path. Defaults next to the encrypted file with .gpg and archive suffixes stripped."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "y",
+                    "hidden": true
+                  }
+                ]
               }
             ],
             "command_context_settings": {

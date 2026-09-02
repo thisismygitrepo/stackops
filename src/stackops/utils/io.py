@@ -289,15 +289,16 @@ def decrypt_file_symmetric(file_path: PathLike, pwd: str) -> Path:
     return output_path
 
 
-def encrypt_file_asymmetric(file_path: PathLike) -> Path:
+def encrypt_file_asymmetric(file_path: PathLike, *, recipient: str | None) -> Path:
     source = _ensure_file(file_path)
     output_path = _encrypted_gpg_path(source)
+    recipient_args = ["--default-recipient-self"] if recipient is None else ["--recipient", recipient]
     _run_gpg(
         [
             "gpg",
             "--batch",
             "--yes",
-            "--default-recipient-self",
+            *recipient_args,
             "--encrypt",
             "--output",
             str(output_path),
