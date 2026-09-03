@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import platform
 import shlex
+import shutil
 from typing import TYPE_CHECKING, Literal
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionAction
@@ -63,6 +64,19 @@ def publish_local_repository(
 
     upload_repo_archive(repo_root=repo_local_root, cloud=cloud, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore)
     delete_path(repo_remote_root.parent, verbose=True)
+
+
+def restore_local_repository(repo_local_root: Path, repo_remote_root: Path) -> None:
+    if os.path.lexists(repo_local_root):
+        raise FileExistsError(f"Refusing to restore over an existing path: {repo_local_root}")
+    if not repo_remote_root.is_dir():
+        raise FileNotFoundError(f"Downloaded repository was not found at: {repo_remote_root}")
+
+    temporary_parent = repo_remote_root.parent
+    repo_local_root.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo_remote_root), str(repo_local_root))
+    if temporary_parent.exists() and not any(temporary_parent.iterdir()):
+        temporary_parent.rmdir()
 
 
 def overwrite_local_with_remote(repo_local_root: Path, repo_remote_root: Path) -> str:

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Annotated, Never
 
@@ -41,6 +42,7 @@ def main(
         overwrite_local_with_remote,
         publish_local_repository,
         remove_integration_state,
+        restore_local_repository,
         select_conflict_action,
         validate_integration_transport,
     )
@@ -77,15 +79,22 @@ def main(
     else:
         cloud_resolved = cloud
 
-    requested_repo_root = Path.cwd() if repo == "." else Path(repo).expanduser().absolute()
+    requested_repo_root = Path(os.path.abspath(Path.cwd() if repo == "." else Path(repo).expanduser()))
     try:
-        repo_local_obj = Repo(requested_repo_root, search_parent_directories=True)
-    except (InvalidGitRepositoryError, NoSuchPathError) as exc:
+        repo_local_obj = Repo(requested_repo_root, search_parent_directories=requested_repo_root == Path.cwd())
+    except InvalidGitRepositoryError as exc:
         typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"'{requested_repo_root}' is not a git repository.")
         raise typer.Exit(code=1) from exc
-    repo_local_root = Path(repo_local_obj.working_dir)
+    except NoSuchPathError as exc:
+        if os.path.lexists(requested_repo_root):
+            typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"'{requested_repo_root}' is not a git repository.")
+            raise typer.Exit(code=1) from exc
+        repo_local_obj = None
+        repo_local_root = requested_repo_root
+    else:
+        repo_local_root = Path(repo_local_obj.working_dir)
     try:
-        repo_local_root.relative_to(Path.home())
+        repo_local_root.resolve().relative_to(Path.home().resolve())
     except ValueError as exc:
         console.print(Panel(f"Repository must live under {Path.home()}\nLocation: {repo_local_root}", title="Error", border_style="red"))
         raise typer.Exit(code=1) from exc
@@ -95,6 +104,14 @@ def main(
     repo_remote_root = Path(CONFIG_ROOT).joinpath("remote", run_name, repo_local_root.name)
     integration_root = Path(CONFIG_ROOT).joinpath("integration", run_name, repo_local_root.name)
     remote_path = get_repo_remote_archive_path(repo_root=repo_local_root)
+    if repo_local_obj is None:
+        console.print(
+            Panel(
+                f"Local repository does not exist at {repo_local_root}\nLooking for {cloud_resolved}:{remote_path.as_posix()}",
+                title="First Sync",
+                border_style="blue",
+            )
+        )
     try:
         console.print(Panel("📥 DOWNLOADING REMOTE REPOSITORY", title_align="left", border_style="blue"))
         download_repo_archive(repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)
@@ -104,6 +121,16 @@ def main(
         if not is_missing_remote_path_error(error):
             raise
         delete_path(repo_remote_root.parent, verbose=False)
+        if repo_local_obj is None:
+            console.print(
+                Panel(
+                    f"No local repository exists at {repo_local_root}\n"
+                    f"No remote archive exists at {cloud_resolved}:{remote_path.as_posix()}",
+                    title="Repository Not Found",
+                    border_style="red",
+                )
+            )
+            raise typer.Exit(code=1) from error
         console.print(Panel("🆕 Remote repository does not exist; creating it from local.", border_style="green"))
         try:
             commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)
@@ -139,6 +166,12 @@ def main(
             )
         )
         raise typer.Exit(code=1)
+
+    if repo_local_obj is None:
+        validate_integration_transport(repo_local_root=repo_local_root, integration_root=repo_remote_root, cloud=cloud_resolved)
+        restore_local_repository(repo_local_root=repo_local_root, repo_remote_root=repo_remote_root)
+        console.print(Panel(f"✅ Repository restored to {repo_local_root}", title="First Sync", border_style="green"))
+        return "restored"
 
     try:
         commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)
