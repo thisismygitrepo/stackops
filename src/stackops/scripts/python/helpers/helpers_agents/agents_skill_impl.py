@@ -27,6 +27,7 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "agent-browser": AgentSkillSource("vercel-labs/agent-browser"),
     "agent-skills": AgentSkillSource("addyosmani/agent-skills"),
     "amq": AgentSkillSource("avivsinai/agent-message-queue"),
+    "archify": AgentSkillSource("tt-a1i/archify"),
     "caveman": AgentSkillSource("JuliusBrussee/caveman", skill="caveman"),
     "computer-use": AgentSkillSource(ORCA_SKILL_SOURCE, skill="computer-use"),
     "grill-with-docs": AgentSkillSource("mattpocock/skills", skill="grill-with-docs"),
