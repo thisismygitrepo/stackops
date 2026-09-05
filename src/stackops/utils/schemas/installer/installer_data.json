@@ -55,6 +55,29 @@
       }
     },
     {
+      "appName": "nub",
+      "license": "MIT License",
+      "repoURL": "https://github.com/nubjs/nub",
+      "lastCommitDate": "2026-09-04T12:29:30Z",
+      "lastCommitDateCheckDate": "2026-09-04T13:53:29Z",
+      "doc": "All-in-one Node.js toolkit: TypeScript-first runtime, fast package manager, script runner, and Node version manager in one Rust binary.",
+      "categoryLabels": [
+        "languages-runtimes"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "nub-linux-x64-musl.tar.gz",
+          "windows": "nub-win32-x64.zip",
+          "darwin": "nub-darwin-x64.tar.gz"
+        },
+        "arm64": {
+          "linux": "nub-linux-arm64-musl.tar.gz",
+          "windows": "nub-win32-arm64.zip",
+          "darwin": "nub-darwin-arm64.tar.gz"
+        }
+      }
+    },
+    {
       "appName": "rust",
       "license": "Apache License 2.0 OR MIT License",
       "repoURL": "CMD",

@@ -1,5 +1,6 @@
 from pathlib import Path
 from platform import system
+from sys import executable as python_executable
 from typing import Literal, TypeAlias, cast
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
@@ -170,7 +171,15 @@ def build_agent_command(
             if model is not None:
                 model_arg = f" --model {agent_shell.quote_for_shell(model, is_windows=resolved_is_windows)}"
             thinking_arg = _build_pi_thinking_arg(reasoning_effort=normalized_reasoning_effort, is_windows=resolved_is_windows)
-            return f"{agent_cli}{provider_arg}{model_arg}{thinking_arg} -p {prompt_content_expr}"
+            pi_command = f"{agent_cli} --mode json{provider_arg}{model_arg}{thinking_arg} -p {prompt_content_expr}"
+            monitor_path = Path(__file__).with_name("agents_run_pi_monitor.py")
+            monitor_invocation = (
+                f"{agent_shell.quote_for_shell(python_executable, is_windows=resolved_is_windows)} "
+                f"{agent_shell.quote_for_shell(str(monitor_path), is_windows=resolved_is_windows)}"
+            )
+            if resolved_is_windows:
+                return f"{pi_command} | {monitor_invocation}"
+            return f"set -o pipefail; {pi_command} | {monitor_invocation}"
         case "cursor-agent":
             return f"{agent_cli} -p {prompt_content_expr} --output-format text"
 
