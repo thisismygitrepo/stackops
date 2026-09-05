@@ -106,7 +106,7 @@ def _dump_init_script(which: InitScriptKind, run: bool) -> None:
 
 
 def dump_config(
-    which: Annotated[DumpConfigKind, typer.Option(..., "--which", "-w", help="Which config or init script to dump")],
+    which: Annotated[DumpConfigKind, typer.Argument(help="Which config or init script to dump")],
     data: Annotated[bool, typer.Option("--data", "-d", help="Dump the config data/template file. Defaults to data and schema when omitted.")] = False,
     schema: Annotated[bool, typer.Option("--schema", "-s", help="Dump the matching schema file. Defaults to data and schema when omitted.")] = False,
     default_path: Annotated[
@@ -114,7 +114,7 @@ def dump_config(
         typer.Option("--default-path", "-p", help="Write to the default StackOps path for the selected file instead of the current directory."),
     ] = False,
     force: Annotated[bool, typer.Option("--force", "-f", help="Overwrite existing dump output files.")] = False,
-    run: Annotated[bool, typer.Option("--run", "-r", help="Run an init script instead of printing it.")] = False,
+    run: Annotated[bool, typer.Option("--run", "-R", help="Run an init script instead of printing it.")] = False,
 ) -> None:
     """🔗 Dump example configuration files and init scripts."""
     match which:

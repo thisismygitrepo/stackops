@@ -235,7 +235,7 @@ def subset(
     on_conflict: Annotated[
         cli_subset_support.SubsetOutputConflictOption,
         typer.Option(
-            "--on-conflict", "-o", case_sensitive=False, help="How to handle an existing output path: throw-error/t, overwrite/o, or append/a."
+            "--on-conflict", "-c", case_sensitive=False, help="How to handle an existing output path: throw-error/t, overwrite/o, or append/a."
         ),
     ] = "throw-error",
     preview_secrets: Annotated[bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview.")] = False,
@@ -287,7 +287,7 @@ def edit(
     create: Annotated[
         bool, typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.")
     ] = False,
-    editor: Annotated[str, typer.Option("--editor", "-E", help="Editor to use. Defaults to hx.")] = "hx",
+    editor: Annotated[str, typer.Option("--editor", "-e", help="Editor to use. Defaults to hx.")] = "hx",
 ) -> None:
     """📝 <e> Open a StackOps secrets file for editing."""
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)

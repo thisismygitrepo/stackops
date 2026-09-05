@@ -3,7 +3,7 @@ from typing import Annotated
 import typer
 
 
-def bind_wsl_port(port: Annotated[int, typer.Option(..., "--port", "-p", min=1, max=65535, help="Port number to bind")]) -> None:
+def bind_wsl_port(port: Annotated[int, typer.Argument(help="Port number to bind", min=1, max=65535)]) -> None:
     code = f"""
 if ! command -v netsh.exe >/dev/null 2>&1; then
   echo "netsh.exe is not available. Run this command from WSL on Windows."

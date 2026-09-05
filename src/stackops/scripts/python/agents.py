@@ -103,20 +103,20 @@ def init_config(
     agent: Annotated[str, typer.Argument(help=_INIT_CONFIG_AGENT_HELP)],
     root: Annotated[
         str | None,
-        typer.Option("--root", "-r", help="Root directory of the repository to initialize AI configs in. Defaults to current directory."),
+        typer.Option("--root", "-R", help="Root directory of the repository to initialize AI configs in. Defaults to current directory."),
     ] = None,
     add_config: Annotated[
         bool,
-        typer.Option("--no-add-config", "-C", help="Skip private agent config files/directories"),
+        typer.Option("--add-config/--no-add-config", "-C", help="Include private agent config files/directories"),
     ] = True,
     add_instructions: Annotated[
         bool,
-        typer.Option("--no-add-instructions", "-I", help="Skip agent instruction files (e.g. AGENTS.md)"),
+        typer.Option("--add-instructions/--no-add-instructions", "-I", help="Include agent instruction files (e.g. AGENTS.md)"),
     ] = True,
-    skip_agentops_skill: Annotated[
+    add_agentops_skill: Annotated[
         bool,
-        typer.Option("--no-agentops-skill", "-A", help="Skip copying the latest bundled AgentOps skill"),
-    ] = False,
+        typer.Option("--agentops-skill/--no-agentops-skill", "-A", help="Copy the latest bundled AgentOps skill"),
+    ] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
     add_to_gitignore: Annotated[
@@ -137,7 +137,7 @@ def init_config(
             add_lint_task=add_vscode_tasks,
             add_config=add_config,
             add_instructions=add_instructions,
-            add_agentops_skill=not skip_agentops_skill,
+            add_agentops_skill=add_agentops_skill,
         )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e

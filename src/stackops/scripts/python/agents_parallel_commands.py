@@ -72,7 +72,7 @@ def agents_create(
         ),
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,
-    host: Annotated[HOST, typer.Option(..., "--host", "-h", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",
+    host: Annotated[HOST, typer.Option(..., "--host", "-H", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",
     backend: Annotated[
         AgentParallelBackendOption,
         typer.Option(..., "--backend", "-b", help=f"Backend used when --run launches the generated layout. One of {AGENT_PARALLEL_BACKEND_HELP}."),
@@ -234,7 +234,7 @@ def _decode_separator(separator: str) -> str:
 
 def create_context(
     prompt: Annotated[str, typer.Argument(help="Prompt text to send to the selected agent.")],
-    job_name: Annotated[str, typer.Option(..., "--job-name", "-n", help="Job name used in ./.ai/agents/<jobName>/context.md output path.")],
+    job_name: Annotated[str, typer.Argument(help="Job name used in ./.ai/agents/<jobName>/context.md output path.")],
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = DEFAULT_AGENT,
     separator: Annotated[
         str, typer.Option(..., "--separator", "-s", help="Separator between individual results in context.md. Supports escaped values like '\\n'.")

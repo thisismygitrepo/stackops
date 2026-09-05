@@ -15,13 +15,13 @@ def close(
     ] = None,
     continuous: Annotated[bool, typer.Option("--loop", "-l", help="Repeat close passes until interrupted.")] = False,
     all_workspaces: Annotated[bool, typer.Option("--all", "-a", help="Prune every Herdr iter workspace.")] = False,
-    interactive: Annotated[bool, typer.Option("--interactive", "-I", help="Choose one Herdr iter workspace with a TV preview.")] = False,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose one Herdr iter workspace with a TV preview.")] = False,
     retain_previous: Annotated[
         int, typer.Option("--retain-previous", "-k", min=0, help="Retain the latest iteration plus this many previous iterations.")
     ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Show the close plan without closing tabs.")] = False,
     interval_seconds: Annotated[
-        int, typer.Option("--interval", "-i", min=1, help="Seconds between close passes when --loop is used.")
+        int, typer.Option("--interval", "-I", min=1, help="Seconds between close passes when --loop is used.")
     ] = CLOSE_LOOP_INTERVAL_SECONDS,
 ) -> None:
     """Close handed-off iteration tabs after exact receipt and live-state validation."""
@@ -60,7 +60,7 @@ def clean(
     all_workspaces: Annotated[
         bool, typer.Option("--all", "-a", help="Clean inactive records across every current-session AgentOps iteration run.")
     ] = False,
-    interactive: Annotated[bool, typer.Option("--interactive", "-I", help="Choose one AgentOps iteration run with a TV preview.")] = False,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose one AgentOps iteration run with a TV preview.")] = False,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Show stale iteration records without removing them.")] = False,
 ) -> None:
     """Remove stale iteration records while preserving live and unrelated AgentOps records."""
@@ -81,7 +81,7 @@ def status(
         str | None, typer.Argument(help="Stable Herdr iter workspace ID to inspect. Omit when using --all or --interactive.")
     ] = None,
     all_workspaces: Annotated[bool, typer.Option("--all", "-a", help="Show every Herdr iter workspace.")] = False,
-    interactive: Annotated[bool, typer.Option("--interactive", "-I", help="Choose one Herdr iter workspace with a TV preview.")] = False,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose one Herdr iter workspace with a TV preview.")] = False,
     retain_previous: Annotated[
         int, typer.Option("--retain-previous", "-k", min=0, help="Evaluate closable tabs while retaining this many previous iterations.")
     ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,

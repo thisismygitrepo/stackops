@@ -16,14 +16,14 @@ defaults = read_default_cloud_config()
 def sync(
     source: Annotated[str, typer.Argument(help="source")],
     target: Annotated[str, typer.Argument(help="target")],
-    transfers: Annotated[int, typer.Option("--transfers", "-t", help="Number of threads in syncing.")] = 10,
+    transfers: Annotated[int, typer.Option("--transfers", "-T", help="Number of threads in syncing.")] = 10,
     root: Annotated[str, typer.Option("--root", "-R", help="Remote root.")] = defaults["root"],
-    pwd: Annotated[str | None, typer.Option("--pwd", "-P", help="Symmetric GPG encryption password. Requires --encryption symmetric.")] = defaults["pwd"],
+    pwd: Annotated[str | None, typer.Option("--password", "-p", help="Symmetric GPG encryption password. Requires --encryption symmetric.")] = defaults["pwd"],
     encryption: Annotated[
         EncryptionModeChoice | None,
         typer.Option("--encryption", "-e", help="Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."),
     ] = defaults["encryption"],
-    zip_: Annotated[bool, typer.Option("--zip", "-z", help="unzip after receiving.")] = defaults["zip"],
+    zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z", help="unzip after receiving.")] = defaults["zip"],
     bisync: Annotated[bool, typer.Option("--bisync", "-b", help="Bidirectional sync.")] = False,
     resync: Annotated[bool, typer.Option("--resync", "-r", help="Initialize or recover --bisync state. Omit for normal bidirectional syncs.")] = False,
     delete: Annotated[
@@ -64,13 +64,13 @@ def copy(
     source: Annotated[str, typer.Argument(help="📂 file/folder path to be taken from here.")],
     target: Annotated[str, typer.Argument(help="🎯 file/folder path to be be sent to here.")],
     transfers: Annotated[int, typer.Option("--transfers", "-T", help="🔀 Number of concurrent file transfers.")] = 32,
-    overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="📝 Overwrite existing file.")] = defaults["overwrite"],
+    overwrite: Annotated[bool, typer.Option("--overwrite/--no-overwrite", "-o", help="📝 Overwrite existing file.")] = defaults["overwrite"],
     share_scope: Annotated[ShareScopeChoice | None, typer.Option("--share-scope", "-s", help="🔗 Share link scope: anonymous/a or organization/o.")] = None,
     share_type: Annotated[ShareLinkTypeChoice | None, typer.Option("--share-type", "-t", help="🔗 Share link type: view/v, edit/e, or embed/m.")] = None,
     record_group: Annotated[str, typer.Option("--record-group", "-g", help="🗂 Group name for mapper/data.yaml. Used when --record-name is passed.")] = "default",
     record_name: Annotated[str | None, typer.Option("--record-name", "-n", help="🏷 Record the upload in mapper/data.yaml with this entry name.")] = None,
     record_os: Annotated[str, typer.Option("--record-os", "-F", help="💻 OS filter for recorded uploads. Comma-separated: linux,darwin,windows. Defaults to all.")] = "linux,darwin,windows",
-    rel2home: Annotated[bool, typer.Option("--relative2home", "-r", help="🏠 Relative to `myhome` folder")] = defaults["rel2home"],
+    rel2home: Annotated[bool, typer.Option("--rel2home/--no-rel2home", "-r", help="🏠 Relative to `myhome` folder")] = defaults["rel2home"],
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password. Requires --encryption symmetric.")] = defaults["pwd"],
     password_name: Annotated[
@@ -81,8 +81,8 @@ def copy(
         EncryptionModeChoice | None,
         typer.Option("--encryption", "-e", help="🔐 Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."),
     ] = defaults["encryption"],
-    zip_: Annotated[bool, typer.Option("--zip", "-z", help="📦 unzip after receiving.")] = defaults["zip"],
-    os_specific: Annotated[bool, typer.Option("--os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
+    zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z", help="📦 unzip after receiving.")] = defaults["zip"],
+    os_specific: Annotated[bool, typer.Option("--os-specific/--no-os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main

@@ -43,7 +43,7 @@ def run_parallel(
         typer.Option(..., "--reasoning", "-r", help="Override reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it."),
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Override provider.")] = None,
-    host: Annotated[HOST | None, typer.Option(..., "--host", "-h", help=f"Override machine. One of {', '.join(get_args(HOST))}")] = None,
+    host: Annotated[HOST | None, typer.Option(..., "--host", "-H", help=f"Override machine. One of {', '.join(get_args(HOST))}")] = None,
     backend: Annotated[
         AgentParallelBackendOption | None,
         typer.Option(..., "--backend", "-b", help="Override backend used when --run launches the generated layout."),

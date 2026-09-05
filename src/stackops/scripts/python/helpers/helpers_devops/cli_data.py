@@ -163,7 +163,7 @@ def register_data(
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in mapper/data.yaml.")] = None,
     path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
     share_url: Annotated[str | None, typer.Option("--share-url", "-u", help="Optional http(s) share URL for sync down --use-link.")] = None,
-    zip_: Annotated[bool, typer.Option("--no-zip", "-z", help="Store the backup entry without zipping before upload.")] = True,
+    zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z", help="Zip the backup entry before upload.")] = True,
     encryption: Annotated[
         EncryptionModeChoice | None,
         typer.Option("--encryption", "-e", help="Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."),
@@ -171,7 +171,7 @@ def register_data(
     pwd: Annotated[
         str | None, typer.Option("--password", "-p", help="Symmetric GPG encryption password. Requires --encryption symmetric and is not stored.")
     ] = None,
-    rel2home: Annotated[bool | None, typer.Option("--no-rel2home", "-r", help="Store the local path as absolute even when it is under home.")] = None,
+    rel2home: Annotated[bool | None, typer.Option("--rel2home/--no-rel2home", "-r", help="Store the local path relative to home when it is under home.")] = None,
     os: Annotated[
         str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")
     ] = DEFAULT_OS_FILTER,

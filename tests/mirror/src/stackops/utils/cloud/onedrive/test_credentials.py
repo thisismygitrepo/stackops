@@ -33,7 +33,7 @@ def test_missing_credentials_points_to_the_dedicated_add_command_and_tag(tmp_pat
         credentials.load_credentials(account_name="odp", require_refresh_token=False)
 
     message = str(error.value)
-    assert "cloud onedrive add --account-name odp" in message
+    assert "cloud onedrive add odp" in message
     assert "login name 'onedrive'" in message
     assert "required login tag 'onedrive-stackops-cli'" in message
     assert '"tags": [\n    "onedrive-stackops-cli"' in message

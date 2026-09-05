@@ -19,13 +19,22 @@ from stackops.utils.cloud.onedrive.items import show_status as show_account_stat
 from stackops.utils.cloud.onedrive.output import print_table
 
 
-ACCOUNT_NAME_HELP = "OneDrive CLI account name. Run 'cloud onedrive accounts' to list configured names."
+ACCOUNT_NAME_HELP = "OneDrive CLI account name. Run 'cloud onedrive accounts' to list configured names. Omit to use the only configured account or enter it interactively."
+
+
+def resolve_account_name(account_name: str | None) -> str:
+    if account_name is not None:
+        return account_name
+    accounts = run_cli(lambda: list_defined_accounts(SECRETS_DOFILE))
+    if len(accounts) == 1:
+        return accounts[0].account_name
+    return str(typer.prompt("OneDrive account name"))
 
 
 def add_account(
     account_name: Annotated[
         str | None,
-        typer.Option("--account-name", "-a", help="Unique name for this OneDrive account. Omit to enter it interactively."),
+        typer.Argument(help="Unique name for this OneDrive account. Omit to enter it interactively."),
     ] = None,
     client_id: Annotated[
         str | None,
@@ -36,7 +45,7 @@ def add_account(
     resolved_client_id = str(typer.prompt("Microsoft Application (client) ID")) if client_id is None else client_id
     run_cli(lambda: add_defined_account(secrets_path=SECRETS_DOFILE, account_name=resolved_account_name, client_id=resolved_client_id))
     typer.echo(f"Added OneDrive CLI account {resolved_account_name!r} to {SECRETS_DOFILE}.")
-    typer.echo(f"Next: cloud onedrive auth --account-name {shlex.quote(resolved_account_name)}")
+    typer.echo(f"Next: cloud onedrive auth {shlex.quote(resolved_account_name)}")
 
 
 def show_accounts() -> None:
@@ -50,52 +59,59 @@ def show_accounts() -> None:
     )
 
 
-def authenticate(account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)]) -> None:
-    run_cli(lambda: authenticate_account(account_name))
+def authenticate(account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None) -> None:
+    resolved = resolve_account_name(account_name)
+    run_cli(lambda: authenticate_account(resolved))
 
 
-def show_status(account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)]) -> None:
-    run_cli(lambda: show_account_status(account_name))
+def show_status(account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None) -> None:
+    resolved = resolve_account_name(account_name)
+    run_cli(lambda: show_account_status(resolved))
 
 
 def list_items(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     remote_path: Annotated[str, typer.Argument(help="Remote folder path.")] = "/",
+    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
-    run_cli(lambda: list_remote_items(account_name, remote_path))
+    resolved = resolve_account_name(account_name)
+    run_cli(lambda: list_remote_items(resolved, remote_path))
 
 
 def search_items(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     query: Annotated[str, typer.Argument(help="Text to search for.")],
     output_json: Annotated[bool, typer.Option("--json", "-j", help="Output JSON.")] = False,
+    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
-    run_cli(lambda: search_remote_items(account_name, query, output_json))
+    resolved = resolve_account_name(account_name)
+    run_cli(lambda: search_remote_items(resolved, query, output_json))
 
 
 def download_file(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     remote_path: Annotated[str, typer.Argument(help="Remote file path.")],
     local_path: Annotated[Path, typer.Argument(help="New local file path.")],
+    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
-    run_cli(lambda: download_remote_file(account_name, remote_path, local_path))
+    resolved = resolve_account_name(account_name)
+    run_cli(lambda: download_remote_file(resolved, remote_path, local_path))
 
 
 def upload_file(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     local_path: Annotated[Path, typer.Argument(help="Existing local file path.")],
     remote_path: Annotated[str, typer.Argument(help="Remote target path.")],
     overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Replace an existing remote item.")] = False,
+    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
-    run_cli(lambda: upload_local_file(account_name, local_path, remote_path, overwrite))
+    resolved = resolve_account_name(account_name)
+    run_cli(lambda: upload_local_file(resolved, local_path, remote_path, overwrite))
 
 
 def delete_item(
-    account_name: Annotated[str, typer.Option("--account-name", "-a", help=ACCOUNT_NAME_HELP)],
     remote_path: Annotated[str, typer.Argument(help="Remote item path.")],
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip the confirmation prompt.")] = False,
+    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
-    run_cli(lambda: delete_remote_item(account_name, remote_path, yes))
+    resolved = resolve_account_name(account_name)
+    run_cli(lambda: delete_remote_item(resolved, remote_path, yes))
 
 
 def config_path() -> None:

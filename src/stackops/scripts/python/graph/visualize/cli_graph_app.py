@@ -21,7 +21,7 @@ def resolve_uv_context(*, local_uv_with: list[str] | None, external_uv_with: lis
 
 
 def tree(
-    show_help: Annotated[bool, typer.Option("--no-show-help", "-H", help="Hide help text in labels")] = True,
+    show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", "-H", help="Show help text in labels")] = True,
     show_aliases: Annotated[bool, typer.Option("--show-aliases", "-a", help="Include aliases in labels")] = False,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the tree")] = None,
 ) -> None:
@@ -49,7 +49,7 @@ def tree(
 
 def dot(
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write DOT output to a file")] = None,
-    include_help: Annotated[bool, typer.Option("--no-include-help", "-H", help="Hide help text in labels")] = True,
+    include_help: Annotated[bool, typer.Option("--include-help/--no-include-help", "-H", help="Show help text in labels")] = True,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
 ) -> None:
     """Export the graph as Graphviz DOT."""

@@ -84,14 +84,14 @@ def gource_viz(
     start_date: Annotated[str | None, typer.Option(..., "--start-date", "-S", help="Start date (YYYY-MM-DD)")] = None,
     stop_date: Annotated[str | None, typer.Option(..., "--stop-date", "-E", help="Stop date (YYYY-MM-DD)")] = None,
     user_image_dir: Annotated[Path | None, typer.Option(..., "--user-image-dir", "-i", help="Directory with user avatar images")] = None,
-    max_files: Annotated[int, typer.Option(..., "--max-files", "-M", help="Maximum number of files to show (0 = no limit)")] = 0,
+    max_files: Annotated[int, typer.Option(..., "--max-files", "-m", help="Maximum number of files to show (0 = no limit)")] = 0,
     max_file_lag: Annotated[float, typer.Option(..., "--max-file-lag", "-L", help="Max time files remain on screen after last change")] = 5.0,
     file_idle_time: Annotated[int, typer.Option(..., "--file-idle-time", "-I", help="Time in seconds files remain idle before being removed")] = 0,
     framerate: Annotated[int, typer.Option(..., "--framerate", "-F", help="Frames per second for video output")] = 60,
     background_color: Annotated[str, typer.Option(..., "--background-color", "-B", help="Background color in hex (e.g., 000000 for black)")] = "000000",
     font_size: Annotated[int, typer.Option(..., "--font-size", "-z", help="Font size")] = 22,
     camera_mode: Annotated[str, typer.Option(..., "--camera-mode", "-C", help="Camera mode: overview or track")] = "overview",
-    self: Annotated[bool, typer.Option(..., "--self", "-x", help="Clone stackops repository and act on it")] = False,
+    self: Annotated[bool, typer.Option(..., "--self", "-s", help="Clone stackops repository and act on it")] = False,
 ) -> None:
     """🎬 Visualize repository activity using Gource."""
     from stackops.scripts.python.helpers.helpers_repos.grource import visualize

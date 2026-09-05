@@ -32,7 +32,7 @@ type LoadedAccountRegistry = tuple[SecretsFile, tuple[OneDriveAccount, ...]]
 
 def validate_account_name(account_name: str) -> None:
     if account_name == "" or account_name != account_name.strip():
-        raise OneDriveError("--account-name must be non-empty and must not start or end with whitespace.")
+        raise OneDriveError("Account name must be non-empty and must not start or end with whitespace.")
 
 
 def validate_client_id(client_id: str) -> None:

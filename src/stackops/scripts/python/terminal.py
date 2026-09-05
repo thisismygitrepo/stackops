@@ -86,7 +86,7 @@ def run_all(
     ctx: typer.Context,
     *,
     layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
-    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-T", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
@@ -182,18 +182,18 @@ def attach_to_session(
 
 def kill_session_target(
         name: Annotated[str | None, typer.Argument(help="Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.")] = None,
-        kill_all: Annotated[bool, typer.Option("--all", "-a", help="Kill all sessions. With --idle, inspect all sessions for idle panes/windows.", show_default=True)] = False,
-        idle: Annotated[bool, typer.Option("--idle", "-i", help="Kill idle-shell panes/windows. With --all, inspect all sessions; otherwise inspect NAME or a chosen session.", show_default=True)] = False,
+        kill_all: Annotated[bool, typer.Option("--kill-all", "-k", help="Kill all sessions. With --idle, inspect all sessions for idle panes/windows.", show_default=True)] = False,
+        idle: Annotated[bool, typer.Option("--idle", "-i", help="Kill idle-shell panes/windows. With --kill-all, inspect all sessions; otherwise inspect NAME or a chosen session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
         delete: Annotated[bool, typer.Option("--delete", "-D", help="Delete stopped Herdr session records instead of killing running sessions.", show_default=True)] = False,
         backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use: tmux, herdr, aoe, or auto")] = "tmux",
         ) -> None:
     """Choose one or more session targets to kill."""
     if kill_all and name is not None:
-        typer.echo("Error: --all cannot be used together with NAME.", err=True, color=True)
+        typer.echo("Error: --kill-all cannot be used together with NAME.", err=True, color=True)
         raise typer.Exit(code=1)
     if kill_all and window:
-        typer.echo("Error: --all cannot be used together with --window.", err=True, color=True)
+        typer.echo("Error: --kill-all cannot be used together with --window.", err=True, color=True)
         raise typer.Exit(code=1)
     if name is not None and window:
         typer.echo("Error: --window can only be used when NAME is omitted.", err=True, color=True)
@@ -267,7 +267,7 @@ def kill_session_target(
 
 def export(
     sessions: Annotated[str | None, typer.Option("--sessions", "-s", help="Comma-separated backend session/workspace names. Pass an empty value or omit it to select interactively.")] = None,
-    all_sessions: Annotated[bool, typer.Option("--all", "-A", help="Export all running backend sessions/workspaces without prompting.", show_default=True)] = False,
+    all_sessions: Annotated[bool, typer.Option("--all", "-a", help="Export all running backend sessions/workspaces without prompting.", show_default=True)] = False,
     output_path: Annotated[str | None, typer.Option("--output-path", "-o", help="Path to write the generated layout file. Defaults to ./tmux_export_layout.json.")] = None,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-w", help="Replace the output file if it already exists.", show_default=True)] = False,
     merge: Annotated[bool, typer.Option("--merge", "-m", help="Merge exported sessions into an existing layout file by layoutName.", show_default=True)] = False,

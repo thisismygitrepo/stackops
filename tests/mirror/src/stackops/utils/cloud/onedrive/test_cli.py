@@ -30,7 +30,7 @@ def test_add_prompts_for_account_details_and_accounts_lists_the_result(tmp_path:
     add_result = runner.invoke(onedrive_cli.get_app(), ["add"], input="odp\napplication-client-id\n")
     alias_add_result = runner.invoke(
         onedrive_cli.get_app(),
-        ["A", "--account-name", "personal", "--client-id", "personal-client-id"],
+        ["A", "personal", "--client-id", "personal-client-id"],
     )
     accounts_result = runner.invoke(onedrive_cli.get_app(), ["accounts"])
     alias_accounts_result = runner.invoke(onedrive_cli.get_app(), ["r"])
@@ -39,7 +39,7 @@ def test_add_prompts_for_account_details_and_accounts_lists_the_result(tmp_path:
     assert "OneDrive account name" in add_result.output
     assert "Microsoft Application (client) ID" in add_result.output
     assert f"Added OneDrive CLI account 'odp' to {secrets_path}." in add_result.output
-    assert "Next: cloud onedrive auth --account-name odp" in add_result.output
+    assert "Next: cloud onedrive auth odp" in add_result.output
     assert alias_add_result.exit_code == 0, alias_add_result.output
     assert f"Added OneDrive CLI account 'personal' to {secrets_path}." in alias_add_result.output
     assert accounts_result.exit_code == 0, accounts_result.output

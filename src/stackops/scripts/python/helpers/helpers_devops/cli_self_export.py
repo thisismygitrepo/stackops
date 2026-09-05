@@ -15,11 +15,11 @@ def export(
     ] = installer_offline_constants.DEFAULT_OUTPUT_ROOT,
     include_configs: Annotated[
         bool,
-        typer.Option("--no-include-configs", "-c", help="Exclude the StackOps config tree from the offline installer."),
+        typer.Option("--include-configs/--no-include-configs", "-c", help="Include the StackOps config tree in the offline installer."),
     ] = True,
     include_uv_bundle: Annotated[
         bool,
-        typer.Option("--no-include-uv-bundle", "-b", help="Exclude the uv-managed StackOps runtime bundle."),
+        typer.Option("--include-uv-bundle/--no-include-uv-bundle", "-b", help="Include the uv-managed StackOps runtime bundle."),
     ] = True,
     keep_unpacked: Annotated[
         bool,

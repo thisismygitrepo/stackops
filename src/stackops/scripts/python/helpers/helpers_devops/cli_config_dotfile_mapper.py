@@ -323,7 +323,7 @@ def register_dotfile(
     section: Annotated[str, typer.Option("--section", "-S", help="Section name in mapper/dotfiles.yaml to record this mapping.")] = "default",
     os_filter: Annotated[str, typer.Option("--os", "-o", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
     shared: Annotated[bool, typer.Option("--shared", "-h", help="Whether the config file is shared across destinations directory.")] = False,
-    record: Annotated[bool, typer.Option("--record", "-r", help="Record the mapping in user's mapper.yaml")] = True,
+    record: Annotated[bool, typer.Option("--record/--no-record", "-r", help="Record the mapping in user's mapper.yaml")] = True,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     from rich.console import Console
