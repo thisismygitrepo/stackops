@@ -133,10 +133,13 @@ def sync_to_cloud(
     remote_path: Path,
     sync_up: bool,
     sync_down: bool,
+    resync: bool,
     transfers: int,
     delete: bool,
     verbose: bool,
 ) -> Path:
+    if resync and (sync_up or sync_down):
+        raise ValueError("resync requires bidirectional sync.")
     local_path_resolved = _absolute_path(local_path)
     local_path_resolved.parent.mkdir(parents=True, exist_ok=True)
     remote_target = f"{cloud}:{remote_path.as_posix()}"
@@ -155,7 +158,9 @@ def sync_to_cloud(
             source=source,
             target=target,
             transfers=transfers,
+            resync=resync,
             delete_during=delete,
+            remove_empty_dirs=True,
             show_command=verbose,
             show_progress=verbose,
         )
@@ -167,7 +172,7 @@ def sync_to_cloud(
         source=source,
         target=target,
         transfers=transfers,
-        delete_during=delete,
+        delete=delete,
         show_command=verbose,
         show_progress=verbose,
     )

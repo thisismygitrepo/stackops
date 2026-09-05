@@ -75,14 +75,9 @@ jobs:
             print(f"""{package_name} {current_version} is already on PyPI.""")
         PY
 
-  build-and-publish:
-    needs: check-version
+  build-and-check:
     runs-on: ubuntu-latest
-    if: needs.check-version.outputs.publish-needed == 'true' && github.event_name == 'push'
-    permissions:
-      contents: write
-      id-token: write
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
@@ -111,6 +106,80 @@ jobs:
       run: |
         echo "📦 Listing built artifacts:"
         ls -la dist/
+
+    - name: Install wheel in a clean environment
+      run: |
+        uv venv "$RUNNER_TEMP/stackops-wheel-check"
+        uv pip install --python "$RUNNER_TEMP/stackops-wheel-check/bin/python" dist/*.whl
+
+    - name: Check installed wheel
+      working-directory: ${{ runner.temp }}
+      env:
+        PYTHONPATH: ''
+      run: |
+        "$RUNNER_TEMP/stackops-wheel-check/bin/python" -I - <<'PY'
+        import importlib
+        import json
+        import subprocess
+        import sys
+        from importlib.metadata import distribution
+        from importlib.resources import files
+        from pathlib import Path
+
+        import yaml
+
+        console_scripts = sorted(
+            (entry for entry in distribution("stackops").entry_points if entry.group == "console_scripts"),
+            key=lambda entry: entry.name,
+        )
+        assert console_scripts, "The wheel contains no console scripts"
+        for entry in console_scripts:
+            print(f"Checking {entry.name} --help", flush=True)
+            subprocess.run(
+                [str(Path(sys.executable).parent.joinpath(entry.name)), "--help"],
+                check=True,
+                stdin=subprocess.DEVNULL,
+                timeout=60,
+            )
+
+        prompts_root = files("stackops").joinpath("agents", "prompts")
+        prompts: object = yaml.safe_load(prompts_root.joinpath("prompts.yaml").read_text(encoding="utf-8"))
+        schema: object = json.loads(prompts_root.joinpath("prompts.schema.json").read_text(encoding="utf-8"))
+        assert isinstance(prompts, dict) and prompts, "Bundled prompts must be a non-empty mapping"
+        assert isinstance(schema, dict) and schema, "Bundled prompt schema must be a non-empty mapping"
+
+        for module_name in (
+            "stackops.utils.options_utils.textual_options_form",
+            "stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main",
+        ):
+            importlib.import_module(module_name)
+        print("Installed wheel checks passed")
+        PY
+
+    - name: Upload verified distributions
+      uses: actions/upload-artifact@v4
+      with:
+        name: verified-dist
+        path: dist/*
+        if-no-files-found: error
+
+  publish:
+    needs: [check-version, build-and-check]
+    runs-on: ubuntu-latest
+    if: needs.check-version.outputs.publish-needed == 'true' && github.event_name == 'push'
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+
+    - name: Download verified distributions
+      uses: actions/download-artifact@v5
+      with:
+        name: verified-dist
+        path: dist
 
     - name: Publish to PyPI
       env:
@@ -149,48 +218,3 @@ jobs:
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  test-build:
-    needs: check-version
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && needs.check-version.outputs.publish-needed == 'false')
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
-
-    - name: Setup Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.13'
-
-    - name: Install uv
-      uses: astral-sh/setup-uv@v7
-      with:
-        enable-cache: true
-
-    - name: Set up venv
-      run: uv sync --no-dev
-
-    - name: Clean previous build artifacts
-      run: |
-        echo "🧹 Cleaning previous build artifacts..."
-        rm -rf dist/ build/ *.egg-info/
-
-    - name: Test build package
-      run: |
-        echo "🔨 Testing package build..."
-        uv build
-
-    - name: List built artifacts
-      run: |
-        echo "📦 Listing built artifacts:"
-        ls -la dist/
-        
-    - name: Test package installation
-      run: |
-        echo "🧪 Testing package installation..."
-        uv sync --no-dev
-        source .venv/bin/activate
-        uv pip install dist/*.whl
-        python -c "import stackops; print('✅ Package imports successfully')"

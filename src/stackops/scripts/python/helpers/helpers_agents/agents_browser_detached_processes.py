@@ -165,6 +165,11 @@ def _browser_process_matches(
 def _browser_process_matches_profile(*, process: psutil.Process, browser: BrowserName, profile_path: Path | None, command: tuple[str, ...]) -> bool:
     if not process.is_running() or process.status() == psutil.STATUS_ZOMBIE:
         return False
+    launcher = get_browser_launcher(browser=browser)
+    executable_names = {_normalize_executable_name(executable_name=path.name) for path in launcher.known_paths(system_name=platform.system())}
+    executable_names.update(_normalize_executable_name(executable_name=command_name) for command_name in launcher.command_names)
+    if not command or _normalize_executable_name(executable_name=command[0]) not in executable_names:
+        return False
     if any(argument.startswith("--type=") for argument in command):
         return False
     match browser:

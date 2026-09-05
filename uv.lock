@@ -4137,6 +4137,7 @@ dependencies = [
     { name = "requests" },
     { name = "rich" },
     { name = "tenacity" },
+    { name = "textual" },
     { name = "typer" },
 ]
 
@@ -4200,7 +4201,6 @@ dev = [
     { name = "ruff" },
     { name = "ruff-lsp" },
     { name = "sqlalchemy" },
-    { name = "textual" },
     { name = "trogon" },
     { name = "ty" },
     { name = "types-mysqlclient" },
@@ -4259,6 +4259,7 @@ requires-dist = [
     { name = "rich", specifier = ">=14.3.3" },
     { name = "sqlalchemy", marker = "extra == 'plot'", specifier = ">=2.0.51" },
     { name = "tenacity", specifier = ">=9.1.4" },
+    { name = "textual", specifier = ">=8.2.7" },
     { name = "typer", specifier = ">=0.24.1" },
 ]
 provides-extras = ["windows", "plot"]
@@ -4306,7 +4307,6 @@ dev = [
     { name = "ruff", specifier = ">=0.15.20" },
     { name = "ruff-lsp", specifier = ">=0.0.62" },
     { name = "sqlalchemy", specifier = ">=2.0.51" },
-    { name = "textual", specifier = ">=8.2.7" },
     { name = "trogon", specifier = ">=0.6.0" },
     { name = "ty", specifier = ">=0.0.55" },
     { name = "types-mysqlclient", specifier = ">=2.2.0.20260508" },
