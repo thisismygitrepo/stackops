@@ -15775,23 +15775,39 @@
                 "    ] = defaults[\"encryption\"],",
                 "    zip_: Annotated[bool, typer.Option(\"--zip\", \"-z\", help=\"unzip after receiving.\")] = defaults[\"zip\"],",
                 "    bisync: Annotated[bool, typer.Option(\"--bisync\", \"-b\", help=\"Bidirectional sync.\")] = False,",
-                "    delete: Annotated[bool, typer.Option(\"--delete\", \"-D\", help=\"Delete files in remote that are not in local.\")] = False,",
-                "    verbose: Annotated[bool, typer.Option(\"--verbose\", \"-v\", help=\"Verbosity of mprocs to show details of syncing.\")] = False,",
+                "    resync: Annotated[bool, typer.Option(\"--resync\", \"-r\", help=\"Initialize or recover --bisync state. Omit for normal bidirectional syncs.\")] = False,",
+                "    delete: Annotated[",
+                "        bool,",
+                "        typer.Option(\"--delete\", \"-D\", help=\"Delete destination-only files during one-way sync. Bisync always propagates deletions; this flag changes their timing.\"),",
+                "    ] = False,",
+                "    verbose: Annotated[bool, typer.Option(\"--verbose\", \"-v\", help=\"Show the rclone command being executed.\")] = False,",
                 ") -> None:",
                 "    \"\"\"🔄 Synchronize files/folders between local and cloud storage.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_cloud.cloud_sync import main as sync_main",
-                "    sync_main(",
-                "        source=source,",
-                "        target=target,",
-                "        transfers=transfers,",
-                "        root=root,",
-                "        pwd=pwd,",
-                "        encryption=encryption,",
-                "        zip_=zip_,",
-                "        bisync=bisync,",
-                "        delete=delete,",
-                "        verbose=verbose,",
-                "    )"
+                "    from stackops.utils.cloud.rclone import RcloneCommandError",
+                "",
+                "    try:",
+                "        sync_main(",
+                "            source=source,",
+                "            target=target,",
+                "            transfers=transfers,",
+                "            root=root,",
+                "            pwd=pwd,",
+                "            encryption=encryption,",
+                "            zip_=zip_,",
+                "            bisync=bisync,",
+                "            resync=resync,",
+                "            delete=delete,",
+                "            verbose=verbose,",
+                "        )",
+                "    except ValueError as error:",
+                "        raise typer.BadParameter(str(error)) from error",
+                "    except RcloneCommandError as error:",
+                "        typer.echo(str(error), err=True)",
+                "        raise typer.Exit(code=error.returncode) from error",
+                "    except RuntimeError as error:",
+                "        typer.echo(str(error), err=True)",
+                "        raise typer.Exit(code=1) from error"
               ],
               "name": "sync",
               "parameters": [
@@ -15958,12 +15974,34 @@
                   }
                 },
                 {
+                  "name": "resync",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--resync', '-r', help='Initialize or recover --bisync state. Omit for normal bidirectional syncs.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--resync",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--resync"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Initialize or recover --bisync state. Omit for normal bidirectional syncs."
+                  }
+                },
+                {
                   "name": "delete",
                   "kind": "positional_or_keyword",
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--delete', '-D', help='Delete files in remote that are not in local.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--delete', '-D', help='Delete destination-only files during one-way sync. Bisync always propagates deletions; this flag changes their timing.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -15976,7 +16014,7 @@
                     "short_flags": [
                       "-D"
                     ],
-                    "help": "Delete files in remote that are not in local."
+                    "help": "Delete destination-only files during one-way sync. Bisync always propagates deletions; this flag changes their timing."
                   }
                 },
                 {
@@ -15985,7 +16023,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Verbosity of mprocs to show details of syncing.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Show the rclone command being executed.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -15998,7 +16036,7 @@
                     "short_flags": [
                       "-v"
                     ],
-                    "help": "Verbosity of mprocs to show details of syncing."
+                    "help": "Show the rclone command being executed."
                   }
                 }
               ],
@@ -20552,6 +20590,7 @@
                     "                context_path=None,",
                     "                prompts_yaml_path=None,",
                     "                context_name=None,",
+                    "                skill=None,",
                     "                source=\"all\",",
                     "                edit=False,",
                     "                show_prompts_yaml_format=False,",
@@ -24198,6 +24237,15 @@
                 "            help=\"YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.\",",
                 "        ),",
                 "    ] = None,",
+                "    skill: Annotated[",
+                "        str | None,",
+                "        typer.Option(",
+                "            ...,",
+                "            \"--skill\",",
+                "            \"-S\",",
+                "            help=\"Reference a supported agent skill on the fly (see agents add-skill). The skill is referenced, never installed. Pass an empty value to pick interactively.\",",
+                "        ),",
+                "    ] = None,",
                 "    source: Annotated[",
                 "        _PROMPTS_SOURCE,",
                 "        typer.Option(..., \"--source\", \"-s\", help=\"Source to look for context YAML files when --context-yaml-path is not provided.\"),",
@@ -24234,6 +24282,7 @@
                 "                context_path=context_path,",
                 "                prompts_yaml_path=context_yaml_path,",
                 "                context_name=context_name,",
+                "                skill=skill,",
                 "                source=source,",
                 "                edit=edit,",
                 "                show_prompts_yaml_format=show_prompts_yaml_format,",
@@ -24417,6 +24466,29 @@
                       "-n"
                     ],
                     "help": "YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "skill",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--skill', '-S', help='Reference a supported agent skill on the fly (see agents add-skill). The skill is referenced, never installed. Pass an empty value to pick interactively.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--skill",
+                      "-S"
+                    ],
+                    "long_flags": [
+                      "--skill"
+                    ],
+                    "short_flags": [
+                      "-S"
+                    ],
+                    "help": "Reference a supported agent skill on the fly (see agents add-skill). The skill is referenced, never installed. Pass an empty value to pick interactively.",
                     "default": "..."
                   }
                 },

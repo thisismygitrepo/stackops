@@ -326,6 +326,15 @@ def run_prompt(
             help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.",
         ),
     ] = None,
+    skill: Annotated[
+        str | None,
+        typer.Option(
+            ...,
+            "--skill",
+            "-S",
+            help="Reference a supported agent skill on the fly (see agents add-skill). The skill is referenced, never installed. Pass an empty value to pick interactively.",
+        ),
+    ] = None,
     source: Annotated[
         _PROMPTS_SOURCE,
         typer.Option(..., "--source", "-s", help="Source to look for context YAML files when --context-yaml-path is not provided."),
@@ -362,6 +371,7 @@ def run_prompt(
                 context_path=context_path,
                 prompts_yaml_path=context_yaml_path,
                 context_name=context_name,
+                skill=skill,
                 source=source,
                 edit=edit,
                 show_prompts_yaml_format=show_prompts_yaml_format,

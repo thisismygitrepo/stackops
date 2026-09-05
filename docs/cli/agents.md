@@ -146,6 +146,7 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 - `--reasoning` for codex, copilot, and pi agents; unsupported agents ignore it
 - `--context` or `--context-path`
 - `--context-yaml-path` plus `--context-name`
+- `--skill`/`-S` to reference one supported agent skill (same catalog as `agents add-skill`) on the fly: the prompt file tells the agent to read the skill's `SKILL.md` from its source repository and follow it; the skill is never installed. Pass an empty value (`--skill ""`) to pick the skill interactively
 - `--source`, `-s` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, or `library`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
 - free-form prompt parts after `--`; option-looking tokens after the delimiter are prompt text, not StackOps flags
@@ -162,6 +163,7 @@ agents run-prompt --agent copilot --reasoning high --context-path ./context.md "
 agents run-prompt --agent copilot --context-name docs.cli -s all "update the assigned docs"
 agents run-prompt --agent agy --context-path ./context.md "inspect this repo"
 agents run-prompt --agent pi --reasoning high --context-path ./context.md "inspect this repo"
+agents run-prompt --agent codex --skill caveman --context-path ./context.md "compress your replies"
 agents run-prompt --show-format
 ```
 

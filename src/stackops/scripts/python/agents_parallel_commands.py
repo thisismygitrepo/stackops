@@ -271,6 +271,7 @@ def create_context(
                 context_path=None,
                 prompts_yaml_path=None,
                 context_name=None,
+                skill=None,
                 source="all",
                 edit=False,
                 show_prompts_yaml_format=False,

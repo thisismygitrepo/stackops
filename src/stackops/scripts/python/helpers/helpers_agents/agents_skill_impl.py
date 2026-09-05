@@ -46,6 +46,13 @@ def is_supported_agent_skill_name(*, skill_name: str) -> bool:
     return skill_name in _OPEN_SOURCE_SKILL_SOURCES
 
 
+def get_agent_skill_source(*, skill_name: str) -> AgentSkillSource:
+    source = _OPEN_SOURCE_SKILL_SOURCES.get(skill_name)
+    if source is None:
+        raise ValueError(f"Skill '{skill_name}' is not recognized. Supported skills: {', '.join(supported_agent_skill_names())}")
+    return source
+
+
 def supported_agent_skill_names() -> tuple[str, ...]:
     return tuple(_OPEN_SOURCE_SKILL_SOURCES)
 
