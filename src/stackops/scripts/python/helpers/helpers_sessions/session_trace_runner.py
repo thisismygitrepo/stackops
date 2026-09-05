@@ -29,9 +29,10 @@ def trace_sessions(
 ) -> None:
     from time import monotonic, sleep
 
-    from rich.console import Console
+    from rich.console import Console, Group
     from rich.live import Live
     from rich.panel import Panel
+    from rich.text import Text
 
     from stackops.scripts.python.helpers.helpers_sessions.sessions_trace_render import (
         build_traces_renderable,
@@ -59,12 +60,14 @@ def trace_sessions(
         with Live(
             build_traces_renderable(
                 snapshots=snapshots,
+                backend=backend,
                 until=until,
                 exit_code=exit_code,
                 attempt=attempt,
                 elapsed_seconds=0.0,
                 next_poll_seconds=0.0,
                 checked_at=checked_at_text(),
+                console=console,
             ),
             console=console,
             refresh_per_second=8,
@@ -104,12 +107,14 @@ def trace_sessions(
                 live.update(
                     build_traces_renderable(
                         snapshots=snapshots,
+                        backend=backend,
                         until=until,
                         exit_code=exit_code,
                         attempt=attempt,
                         elapsed_seconds=elapsed_seconds,
                         next_poll_seconds=every_seconds,
                         checked_at=current_checked_at,
+                        console=console,
                     )
                 )
 
@@ -137,24 +142,30 @@ def trace_sessions(
                     live.update(
                         build_traces_renderable(
                             snapshots=snapshots,
+                            backend=backend,
                             until=until,
                             exit_code=exit_code,
                             attempt=attempt,
                             elapsed_seconds=monotonic() - started_at,
                             next_poll_seconds=remaining_seconds,
                             checked_at=current_checked_at,
+                            console=console,
                         )
                     )
 
-        selected_targets = ", ".join(f"`{session_name}`" for session_name in session_names)
+        selected_targets = "\n".join(f"  {session_name}" for session_name in session_names)
         target_noun = "Session" if len(session_names) == 1 else "Sessions"
+        summary_content = Group(
+            Text.assemble(
+                (f"{target_noun} satisfied ", "white"),
+                (criterion_label(until=until, exit_code=exit_code), "bold cyan"),
+                (f" after {format_duration(monotonic() - started_at)} and {attempt} checks.", "white"),
+            ),
+            Text(selected_targets, style="white"),
+        )
         console.print(
             Panel(
-                (
-                    f"{target_noun} {selected_targets} satisfied "
-                    f"`{criterion_label(until=until, exit_code=exit_code)}` after "
-                    f"{format_duration(monotonic() - started_at)} and {attempt} checks."
-                ),
+                summary_content,
                 title="Complete",
                 border_style="green",
             )
