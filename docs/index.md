@@ -12,7 +12,7 @@ hide:
 
 # **StackOps**
 
-### Cross-platform CLI for Stack Management, Setup & Maintenance
+### Developer workstation and workflow CLI
 
 [![PyPI version](https://img.shields.io/pypi/v/stackops.svg)](https://pypi.org/project/stackops/)
 [![Python versions](https://img.shields.io/pypi/pyversions/stackops.svg)](https://pypi.org/project/stackops/)
@@ -23,11 +23,7 @@ hide:
 [Quickstart](quickstart.md){ .md-button }
 [View on GitHub](https://github.com/thisismygitrepo/stackops){ .md-button }
 
-`1 command + 5 minutes`: from a naked, minimal, freshly purchased/formatted machine to the usable-ready machine that you have been optimizing for 10 years, all your digitial life, sorted out, by 100s of scripts that configure your machine.
-
-| Before | After |
-| --- | --- |
-| ![Fresh minimal machine state](assets/before.png) | ![Developer-ready machine state](assets/after.png) |
+Coordinate selected packages, configuration, repositories, data, terminal layouts, and coding-agent resources around the tools you already use.
 
 </div>
 
@@ -35,16 +31,13 @@ hide:
 
 ## What you get
 
-* cross-platform package mangager, top 200 rust-based most popular cli projects on github, and more.
-* Dotfile manager:
-    * private and public configurations for all those applications and more.
-    * secrets, creds, passwords etc.
-* data sync solution.
-* repositories mapped out for 1-liner backup and retreival.
+* Install selected tools or package groups through platform package managers, release assets, and installer scripts.
+* Synchronize declared public and private configuration mappings, with explicit copy, symlink, and conflict options.
+* Manage repository groups and transfer data through existing cloud and SSH tools.
+* Launch, inspect, export, and trace terminal layouts and sessions.
+* Configure supported coding-agent resources and run prompt or parallel workflows.
 
-✅ This covers `100%` of your digital footprint.
-
-StackOps does not invent anything, it simply manages the stack that you are comfortable with.
+Use a focused command such as `terminal`, `agents`, or `cloud`, or explore them through `stackops`. Installer and backend availability varies by platform. Start with one workflow and the tools it requires.
 
 
 ---
@@ -63,7 +56,7 @@ StackOps does not invent anything, it simply manages the stack that you are comf
 
     ---
 
-    Follow a short path through help, shell setup, install, and sync commands.
+    Explore help, install a selected tool, and choose the configuration workflow you need.
 
     [:octicons-arrow-right-24: Quickstart](quickstart.md)
 

@@ -17,7 +17,7 @@ devops [OPTIONS] COMMAND [ARGS]...
 | `install` | Install packages or named groups |
 | `repos` | Manage development repositories |
 | `config` | Configuration and dotfile workflows |
-| `data` | Backup and restore configured data paths |
+| `data` | Backup and restore configured data paths; encrypt or decrypt local files and folders |
 | `self` | StackOps self-management and developer workflows |
 | `network` | Sharing, transfer, address, SSH, and device helpers |
 | `execute` | Run scripts from predefined locations or as a raw command |
@@ -34,6 +34,8 @@ devops install [OPTIONS] [WHICH]
 Current options:
 
 - `--group` to treat `WHICH` as a bundle name
+- `--source` to select `library`, `user`, or `all` installer catalogs; defaults to `all`
+- `--check` to report binary availability without installing or validating catalog entries
 - `--interactive` to choose packages interactively
 - `--explore` / `-x` to browse installer `categoryLabels` before choosing packages
 - `--update` to reinstall or upgrade when supported
@@ -59,6 +61,7 @@ These are the child commands exposed by the current live help.
 - `sync`
 - `register`
 - `action`
+- `version`
 - `analyze`
 - `guard`
 - `viz`
@@ -85,6 +88,8 @@ These are the child commands exposed by the current live help.
 - `display`
 - `subset`
 - `edit`
+- `encrypt`
+- `decrypt`
 
 `self`:
 
@@ -123,6 +128,42 @@ These are the child commands exposed by the current live help.
 - `unlock`
 - `sync`
 - `clean-cache`
+
+---
+
+## `repos version`
+
+Capture and restore named repository states in the workspace's `versions.json`:
+
+| Command | Behavior |
+| --- | --- |
+| `declare VERSION --message TEXT` | Record repository commits, branches, remote information, and whether each working tree is dirty |
+| `status [VERSION]` | List declared versions, or compare one with the current repositories |
+| `checkout VERSION` | Restore an existing repository collection to the declared commits and branches; `--dry-run` previews without fetching or changing repositories |
+
+All three accept `--directory`, `-d` to select the workspace; the default is the current directory. `declare --recursive`, `-r` includes nested repositories. Checkout refuses dirty current repositories and versions captured with dirty repositories; it does not clone missing repositories.
+
+```bash
+devops repos version declare baseline --message "Before dependency updates" --directory ./workspace
+devops repos version status --directory ./workspace
+devops repos version status baseline --directory ./workspace
+devops repos version checkout baseline --directory ./workspace --dry-run
+```
+
+---
+
+## `data encrypt` and `data decrypt`
+
+These local operations use GPG without uploading data or registering a backup entry. `encrypt PATH` accepts a file or folder; folders are archived first. `decrypt PATH` accepts a `.gpg` file and extracts a recognized folder archive after decryption. Both preserve the input and refuse an existing output path.
+
+Both commands accept `--encryption`, `-e` (`symmetric`/`s` or `asymmetric`/`a`), `--password`, `-p`, and `--output`, `-o`. Symmetric encryption is the default and prompts for a password when omitted. For asymmetric encryption, `encrypt --recipient`, `-r` selects a GPG key; otherwise it uses the user's own key. Folder encryption supports `--compression`, `-c` with `zip` (default), `tar.gz`, `tar.bz2`, or `tar.xz`.
+
+```bash
+devops data encrypt ./notes.txt
+devops data decrypt ./notes.txt.gpg --output ./restored-notes.txt
+devops data encrypt ./project --encryption asymmetric --compression tar.gz
+devops data decrypt ./project.tar.gz.gpg --encryption asymmetric --output ./restored-project
+```
 
 ---
 

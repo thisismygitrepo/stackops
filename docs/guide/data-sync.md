@@ -2,7 +2,7 @@
 
 StackOps currently splits data movement into two layers:
 
-- `devops data` for repeatable, named backup entries stored in the backup config
+- `devops data` for repeatable named backups and local file/folder encryption
 - `cloud` for direct source/target copy, sync, mount, SSH transfer, and OneDrive access through Microsoft Graph
 
 ---
@@ -22,6 +22,8 @@ Current subcommands:
 - `display`
 - `subset`
 - `edit`
+- `encrypt`
+- `decrypt`
 
 ### Register a backup item
 
@@ -65,7 +67,7 @@ dotfiles:
 Every persisted entry requires `encryption: symmetric`, `encryption: asymmetric`, or `encryption: null`. `null` means plaintext. The short values `s` and `a` are CLI aliases only; YAML stores the full mode names.
 `--encryption`, `-e` is the sole encryption switch for registration. Omit it to record `encryption: null`. A password supplies credentials but does not select a mode, so `--password` requires explicit `--encryption symmetric` and is never stored in `mapper/data.yaml`.
 
-### Generate backup or restore commands
+### Run a backup or restore
 
 `devops data sync` is direction-based:
 
@@ -75,13 +77,13 @@ Every persisted entry requires `encryption: symmetric`, `encryption: asymmetric`
 Examples:
 
 ```bash
-# Generate commands for every registered item
+# Back up every registered item
 devops data sync up --which all
 
 # Restore one group from the user backup config
 devops data sync down -s user --which dotfiles
 
-# Restrict the generated commands to one item and one cloud profile
+# Back up one item using a specific cloud profile
 devops data sync up --cloud myremote --which dotfiles.wezterm
 
 # Use one password for entries that explicitly store encryption: symmetric
@@ -93,6 +95,8 @@ devops data sync down --use-link --which dotfiles.wezterm
 
 `--use-link` is only valid for `down`. Every selected entry must have a non-null `share_url`; otherwise StackOps exits with the affected entry names and tells you to either remove `--use-link` or add valid links.
 
+These commands perform the transfers; they do not only print a plan.
+
 ### Inspect, subset, or edit the backup config
 
 ```bash
@@ -103,6 +107,23 @@ devops data edit -s library
 ```
 
 `display` renders the registered user entries. `subset` writes selected entries to a standalone YAML file and has its own output-file `--on-conflict` policy. Use `--source`, `-s` on data sync, subset, and edit commands to choose the configuration source where supported.
+
+---
+
+## Local encryption and decryption
+
+Use `devops data encrypt` and `decrypt` for local GPG artifacts without a cloud transfer or backup registration:
+
+```bash
+devops data encrypt ./notes.txt
+devops data decrypt ./notes.txt.gpg --output ./restored-notes.txt
+devops data encrypt ./project --encryption asymmetric --compression tar.gz
+devops data decrypt ./project.tar.gz.gpg --encryption asymmetric --output ./restored-project
+```
+
+Both commands preserve the source and refuse an existing output. Symmetric encryption is the default and prompts for a password when `--password`, `-p` is omitted. Pass `--encryption asymmetric` for GPG keys; encryption accepts `--recipient`, `-r`, defaulting to the user's own key. Folders are archived before encryption using `--compression`, `-c`: `zip` (default), `tar.gz`, `tar.bz2`, or `tar.xz`.
+
+Without `--output`, `-o`, encryption writes beside the source with a `.gpg` suffix, plus the archive suffix for a folder. Decryption writes beside the encrypted file with those suffixes removed and extracts recognized folder archives.
 
 ---
 
@@ -141,16 +162,23 @@ Ad hoc directory synchronization:
 
 ```bash
 cloud sync ~/documents remote:documents
+cloud sync ~/documents remote:documents --bisync --resync
 cloud sync ~/documents remote:documents --bisync
 ```
+
+`--resync` requires `--bisync` and initializes or recovers its state; omit it for normal bidirectional runs. Bisync propagates deletions. For one-way sync, `--delete` removes destination-only files; with bisync it changes deletion timing.
+
+`cloud sync` rejects `--pwd`, `--encryption`, and `--zip` because incremental sync cannot stage GPG or ZIP artifacts. Use `cloud copy` when a transfer needs encryption or compression.
 
 ### Mount
 
 Mount a configured remote locally:
 
 ```bash
-cloud mount --interactive
+cloud mount
 ```
+
+Mount selection is interactive by default. To choose a remote directly, use `cloud mount --cloud remote --no-interactive`.
 
 ### FTP-over-SSH
 
@@ -173,7 +201,7 @@ cloud onedrive accounts
 
 ## Config sources
 
-The `cloud` commands rely on explicit CLI flags for transfer behavior. The live help shows the current flags for ad hoc operations such as:
+The `cloud` commands use explicit CLI flags and configured defaults for transfer behavior. For `cloud copy`, options include:
 
 - `--root`
 - `--encryption`
@@ -182,6 +210,6 @@ The `cloud` commands rely on explicit CLI flags for transfer behavior. The live 
 
 If a remote path starts with `:`, StackOps fills in the cloud name from the configured default cloud.
 
-Both `cloud copy` and `cloud sync` use `--encryption`, `-e` as the sole encryption switch. Accepted CLI values are `symmetric`/`s` and `asymmetric`/`a`; omitting the option keeps the transfer plaintext. Password options require an explicit symmetric mode.
+`cloud copy` uses `--encryption`, `-e` as the sole encryption switch. Accepted CLI values are `symmetric`/`s` and `asymmetric`/`a`; omitting the option keeps the transfer plaintext. Password options require an explicit symmetric mode. These staging options are not supported by `cloud sync`.
 
 Use `devops data` when you want durable named backup sets. Use `cloud copy` or `cloud sync` when you already know the exact source and destination you want to move.
