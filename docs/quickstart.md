@@ -1,31 +1,34 @@
 # Quickstart
 
-## Good first commands (install System ABC's, configure cli's & init the shell profile)
+## Choose a workflow
 
-
-You interactively start with `devops config interactive`, which gives selection menu:
-
-![Quick Start walkthrough](assets/quick_start.png)
-
-Behind the scense, its simply running the commands below, in case you want to script it later on:
+After [installation](installation.md), inspect the command families and the workflow you need:
 
 ```bash
-
-devops install --group sysabc  # Install system essentials with apk, apt, dnf, pacman, Homebrew, or winget
-devops config copy-assets all  # copy config files to machine
-devops config sync down --sensitivity public --method copy --on-conflict throw-error --which all  # link config files
-devops config terminal config-shell --which default  # add alias to shell (pwsh, zsh or bash)
-devops install --group termabc  # install the basic terminal cli's
-# restart your shell ... you should see a difference.
+stackops --help
+devops install --help
+devops config sync --help
+terminal run --help
 ```
-
 
 ## Install tools
 
-Interactive flow:
+For example, check whether Television's `tv` binary is available:
 
 ```bash
-devops install --interactive
+devops install tv --check
+```
+
+This checks binary status; it does not preview or validate the installer. To install Television using the packaged catalog:
+
+```bash
+devops install tv --source library
+```
+
+Availability and installer behavior depend on the platform. To select other tools interactively:
+
+```bash
+devops install --interactive --source library
 ```
 
 If you already know the bundle you want:
@@ -34,20 +37,40 @@ If you already know the bundle you want:
 devops install --group <group-name>
 ```
 
-Check the live help before choosing names:
+Check the live help and [package guide](guide/packages.md) before choosing names:
 
 ```bash
 devops install --help
 ```
 
-## Inspect config and data sync workflows
+## Choose configuration changes
+
+Configuration sync uses declared mappings. Inspect its options and the [configuration guide](guide/configuration.md) before choosing a mapping:
 
 ```bash
 devops config sync --help
 devops data sync --help
 ```
 
-These help screens show the current required arguments and options for dotfiles/config sync and backup sync.
+`devops config interactive` offers package, asset, configuration, and shell setup choices. Its public copy and symlink choices use `overwrite-default-path`, which can replace existing target files. The explicit scripted example below instead uses `throw-error` to stop on conflicts.
+
+## Optional workstation setup
+
+This broader sequence installs system and terminal package groups, copies bundled assets, applies all public configuration mappings, and updates the default shell profile. It is useful when you want StackOps' workstation conventions. On an existing configured machine, choose only the individual actions you need. System package groups can invoke privileged package managers, and their behavior varies by platform.
+
+```bash
+devops install --group sysabc
+devops config copy-assets all
+devops config sync down \
+  --sensitivity public \
+  --method copy \
+  --on-conflict throw-error \
+  --which all
+devops config terminal config-shell --which default
+devops install --group termabc
+```
+
+The sync command copies files; it does not create symlinks. If it reports a conflict, inspect the existing target and choose a conflict policy deliberately. Open a new shell after configuring its profile.
 
 ## Explore the rest of the CLI
 

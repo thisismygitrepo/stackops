@@ -38,14 +38,23 @@ StackOps supports Python 3.13+ and is easiest to install with [uv](https://docs.
 uv tool install --upgrade --python 3.14 stackops
 ```
 
-This should give entrypoints: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `preview`, `seek`, `stackops`
-You can verify with, e.g.:
+This installs nine commands: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `preview`, `seek`, and `stackops`. Open the command index with:
 
 ```bash
-devops --help
+stackops --help
 ```
 
 Alpine support covers native APK package-manager paths. Portable Linux assets built for glibc and offline bundles produced on another Linux libc are not guaranteed to run on Alpine.
+
+## Report the installed version
+
+The current source supports `stackops --version`. Published release `26.9` predates that option; for that release, inspect the installed package with:
+
+```bash
+uv tool list
+```
+
+When reporting behavior from a source checkout, include its Git commit as well as the package version. Source changes can precede the next release.
 
 ## Upgrade or remove
 

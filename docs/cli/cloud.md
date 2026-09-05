@@ -26,13 +26,13 @@ The command also defines hidden one-letter aliases for the same actions: `s`, `c
 
 ## Defaults
 
-The rclone-backed `sync`, `copy`, and `mount` commands use defaults from `stackops.utils.cloud_defaults.read_default_cloud_config()` when a command does not override them:
+The rclone-backed commands use defaults from `stackops.utils.cloud.defaults.read_default_cloud_config()` where applicable:
 
 - remote root: `myhome`
 - cloud name: `mycloud101`
 - `zip`, `share`, `overwrite`, `os_specific`, `rel2home`: `False`
 - `pwd`: unset
-- encryption mode: unset, so transfers are plaintext unless `--encryption` is passed
+- encryption mode: unset; `copy` supports explicit encryption, while `sync` rejects encryption and ZIP staging options
 - if a remote path starts with `:`, StackOps fills in the cloud name from the configured default rclone remote
 
 ---
@@ -49,22 +49,23 @@ Current options from live help:
 | --- | --- |
 | `--transfers`, `-t` | Number of sync threads |
 | `--root`, `-R` | Remote root |
-| `--pwd`, `-P` | Symmetric GPG encryption password; requires `--encryption symmetric` |
-| `--encryption`, `-e` | Enable encryption with `symmetric`/`s` or `asymmetric`/`a`; omit for plaintext |
-| `--zip`, `-z` | Current help text: unzip after receiving |
+| `--pwd`, `-P` | Listed by the CLI but rejected by sync; use `cloud copy` for encrypted transfers |
+| `--encryption`, `-e` | Listed by the CLI but rejected by sync; use `cloud copy` for encrypted transfers |
+| `--zip`, `-z` | Listed by the CLI but rejected by sync; use `cloud copy` for compressed transfers |
 | `--bisync`, `-b` | Bidirectional sync |
-| `--delete`, `-D` | Delete remote files not present locally |
-| `--verbose`, `-v` | Show more sync details |
+| `--resync`, `-r` | Initialize or recover bidirectional sync state; requires `--bisync` |
+| `--delete`, `-D` | Delete destination-only files during one-way sync; with bisync, changes deletion timing rather than enabling deletion |
+| `--verbose`, `-v` | Show the rclone command being executed |
 
 Example:
 
 ```bash
+cloud sync ~/documents remote:documents
+cloud sync ~/documents remote:documents --bisync --resync
 cloud sync ~/documents remote:documents --bisync
-cloud sync ~/documents remote:documents --encryption a
-cloud sync ~/documents remote:documents --encryption symmetric --pwd "$STACKOPS_BACKUP_PASSWORD"
 ```
 
-`--encryption`, `-e` is the only encryption switch. A password supplies credentials but does not select a mode, so `--pwd` is invalid unless the mode is explicitly `symmetric`.
+Use `--resync` for the first bidirectional run or to recover its state; omit it for normal runs. Bisync propagates deletions even without `--delete`. Incremental sync cannot stage ZIP or GPG artifacts, so it rejects `--pwd`, `--encryption`, and `--zip`; use `cloud copy` for those transfers.
 
 ---
 

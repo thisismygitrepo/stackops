@@ -1,8 +1,5 @@
 
-# Source @ https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/src/machineconfig/setup_windows/web_shortcuts/interactive.ps1
-# Short @ bit.ly/cfgwindows
 # Source @ https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/windows/interactive.ps1
-# Short @ bit.ly/sopsw
 
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/setup/windows/uv.ps1" | iex
 irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackops/scripts/windows/wrap_stackops.ps1" | iex
@@ -13,7 +10,6 @@ irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackop
 function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.9" devops $args }
 function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.9" cloud $args }
 function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.9" agents $args }
-function sessions { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.9" sessions $args }
 function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.9" fire $args }
 function preview { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.9" preview $args }
 function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.9" utils $args }
@@ -23,7 +19,6 @@ function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>
 function d { wrap_in_shell_script devops @args }
 function c { wrap_in_shell_script cloud @args }
 function a { wrap_in_shell_script agents @args }
-function sx { wrap_in_shell_script sessions @args }
 function f { wrap_in_shell_script fire @args }
 function p { wrap_in_shell_script preview @args }
 function u { wrap_in_shell_script utils @args }

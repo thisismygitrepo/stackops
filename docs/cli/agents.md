@@ -316,12 +316,8 @@ agents add-skill caveman --agent github-copilot --scope global
 
 ```bash
 agents --help
-agents account --help
-agents account backup --help
-agents account retrieve --help
 agents clean --help
 agents doctor --help
-agents execute --help
 agents second-brain --help
 agents parallel --help
 agents add-config --help

@@ -2,7 +2,7 @@
 
 <h1>🗜 StackOps</h1>
 
-<strong>Digital Life Manager.</strong>
+<strong>Developer workstation and workflow CLI.</strong>
 
 <p>
   <a href="https://thisismygitrepo.github.io/stackops/"><img alt="Docs" src="https://img.shields.io/badge/docs-online-2f6f6f"></a>
@@ -13,13 +13,7 @@
 
 </div>
 
-StackOps is a cross-platform CLI for managing your development stack. It is package installer, configurator, dotfile/secrets manager, data and code sync solution, command launcher, processes orchestrator (is there anything else?) all wrapped into one solution. As such, it should take a few minutes to make a fresh new machine to look like the machine you were customizing for 10 years.
-
-
-| Before | After |
-| --- | --- |
-| ![Fresh minimal machine state](docs/assets/before.png) | ![Developer-ready machine state](docs/assets/after.png) |
-
+StackOps coordinates packages, configuration, repositories, data, terminal layouts, and coding-agent resources around the tools you already use. Install selected packages, synchronize declared configuration, or launch an authored tmux workspace through focused commands. Available installers and integrations vary by operating system and external tool.
 
 See the [online docs](https://thisismygitrepo.github.io/stackops/) for full usage and reference material.
 
@@ -34,8 +28,6 @@ Choose your platform and expand only the commands you need.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv tool install --upgrade --python 3.14 stackops
 stackops --help
-# Short @ https://bit.ly/sopsu
-# OR: . < (curl -L "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/linux/interactive.sh")
 ```
 
 </details>
@@ -47,8 +39,6 @@ stackops --help
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv tool install --upgrade --python 3.14 stackops
 stackops --help
-# Short @ https://bit.ly/sopsu
-# OR: . < (curl -L "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/linux/interactive.sh")
 ```
 
 </details>
@@ -60,8 +50,6 @@ stackops --help
 powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"
 uv tool install --upgrade --python 3.14 stackops
 stackops --help
-# Short @ bit.ly/sopsw
-# OR: irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/scripts/setup/windows/interactive.ps1" | iex
 ```
 
 </details>
@@ -76,9 +64,21 @@ bunx skills add thisismygitrepo/stackops --skill stackops --global --agent codex
 ```
 
 
-## Quick Init
+## Start with a workflow
 
-Run these once StackOps is installed.
+Inspect the commands for the workflow you need:
+
+```bash
+devops install --help
+devops config sync --help
+terminal run --help
+```
+
+The [quickstart](https://thisismygitrepo.github.io/stackops/quickstart/) shows a selected-package example and configuration options.
+
+## Optional workstation setup
+
+This broader setup installs system and terminal package groups, copies bundled assets, applies public configuration mappings, and configures the default shell. Use it when you want those workstation conventions; existing customized systems can use individual commands instead. Package-group behavior depends on the platform and may invoke privileged package managers.
 
 ```bash
 devops install --group sysabc
@@ -91,6 +91,8 @@ devops config sync down \
 devops config terminal config-shell --which default
 devops install --group termabc
 ```
+
+The scripted sync above copies configuration and stops on conflicts. The public copy/symlink choices in `devops config interactive` use `overwrite-default-path` and can replace existing targets; they are a different setup choice.
 
 
 ## CLI
@@ -109,7 +111,7 @@ StackOps exposes standalone commands and an umbrella wrapper:
 | `seek` | Interactive search across files, text matches, and symbols |
 | `stackops` | Umbrella wrapper that routes into all of the above |
 
-Run `<command> --help` for details, or `stackops --help` to see the full tree.
+Run `<command> --help` for details, or `stackops --help` to see the command families.
 
 
 ## Author

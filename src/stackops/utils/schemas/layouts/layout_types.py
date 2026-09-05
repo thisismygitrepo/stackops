@@ -69,8 +69,7 @@ def _merge_layouts_by_name(existing_layouts: list[LayoutConfig], new_layouts: li
 def serialize_layouts_to_file(layouts: list[LayoutConfig], version: Literal["0.1"], path: str, *, write_mode: LayoutFileWriteMode) -> None:
     _get_unique_layout_indexes_by_name(layouts=layouts, source="new layouts")
     layout_file: LayoutJsonFile = {
-        # Short @ https://bit.ly/cfglayout
-        "$schema": "https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/src/machineconfig/utils/schemas/layouts/layout.schema.json",
+        "$schema": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json",
         "version": version,
         "layouts": layouts,
     }

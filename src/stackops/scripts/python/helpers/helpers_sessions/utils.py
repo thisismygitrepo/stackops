@@ -81,8 +81,7 @@ def create_template(name: str | None, num_tabs: int) -> None:
         tabs.append(tab)
     layouts: list[LayoutConfig] = [{"layoutName": f"{Path.cwd().name}Layout", "layoutTabs": tabs}]
     file: LayoutsFile = {
-        # Short @ https://bit.ly/cfglayout
-        "$schema": "https://raw.githubusercontent.com/thisismygitrepo/machineconfig/refs/heads/main/src/machineconfig/utils/schemas/layouts/layout.schema.json",  # type: ignore
+        "$schema": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json",  # type: ignore
         "version": "0.1",
         "layouts": layouts,
     }
