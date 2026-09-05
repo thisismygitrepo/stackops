@@ -24,14 +24,14 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
-| `iter` | Inspect and maintain current-format AgentOps iteration workspaces through Herdr 0.8.2 |
+| `iter` | Inspect and maintain current-format AgentOps iteration workspaces through Herdr |
 | `clean` | Remove `.ai` directories from discovered Git repositories |
 
 ---
 
 ## `iter`
 
-`iter` supports Herdr 0.8.2/protocol 20 only. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agentops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agentops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
+`iter` works against the current Herdr CLI; there is no pinned version, and each command validates the live `herdr api snapshot` shape itself. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agentops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agentops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
 
 ```bash
 agents iter status --all

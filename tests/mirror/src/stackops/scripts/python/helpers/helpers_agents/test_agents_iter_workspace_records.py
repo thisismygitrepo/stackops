@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_records, agents_iter_workspace_records
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_PROTOCOL, HERDR_VERSION
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     HerdrAgent,
     HerdrSnapshot,
@@ -66,8 +65,6 @@ def _write_run_manifest(*, project_root: Path, run_slug: str, herdr_session: str
         json.dumps(
             {
                 "schema_version": RECORD_SCHEMA_VERSION,
-                "herdr_version": HERDR_VERSION,
-                "herdr_protocol": HERDR_PROTOCOL,
                 "herdr_session": herdr_session,
                 "workspace_id": workspace_id,
                 "workspace_label": workspace_label,

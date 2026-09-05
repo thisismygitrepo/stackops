@@ -16,8 +16,6 @@ def _snapshot_payload() -> JsonObject:
         "result": {
             "type": "session_snapshot",
             "snapshot": {
-                "version": "0.8.2",
-                "protocol": 20,
                 "focused_workspace_id": "w1",
                 "focused_tab_id": "w1:t1",
                 "focused_pane_id": "w1:p1",
@@ -97,8 +95,6 @@ def test_capture_uses_one_atomic_current_snapshot(monkeypatch: pytest.MonkeyPatc
     (
         (("id",), "cli:workspace:list", "response id"),
         (("result", "type"), "workspace_list", "response type"),
-        (("result", "snapshot", "version"), "0.7.2", "require Herdr 0.8.2"),
-        (("result", "snapshot", "protocol"), 15, "require Herdr 0.8.2"),
     ),
 )
 def test_snapshot_rejects_every_noncurrent_envelope(path: tuple[str, ...], value: object, message: str) -> None:

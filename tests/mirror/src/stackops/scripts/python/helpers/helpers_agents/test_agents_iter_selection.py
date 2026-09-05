@@ -104,8 +104,6 @@ def test_agentops_cache_selection_previews_inactive_run_action(tmp_path: Path, m
         json.dumps(
             {
                 "schema_version": 1,
-                "herdr_version": "0.8.2",
-                "herdr_protocol": 20,
                 "herdr_session": "default",
                 "workspace_id": "w9",
                 "workspace_label": "iter-alpha",

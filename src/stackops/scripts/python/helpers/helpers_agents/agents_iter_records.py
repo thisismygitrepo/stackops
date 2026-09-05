@@ -4,19 +4,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_PROTOCOL, HERDR_VERSION
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import PaneId, TabId, TerminalId, WorkspaceId
 
 
 type JsonObject = dict[str, object]
 
 RECORD_SCHEMA_VERSION = 1
-_RUN_KEYS = frozenset(("schema_version", "herdr_version", "herdr_protocol", "herdr_session", "workspace_id", "workspace_label"))
+_RUN_KEYS = frozenset(("schema_version", "herdr_session", "workspace_id", "workspace_label"))
 _HANDOFF_KEYS = frozenset(
     (
         "schema_version",
-        "herdr_version",
-        "herdr_protocol",
         "herdr_session",
         "workspace_id",
         "source_iteration",
@@ -190,10 +187,8 @@ def _load_json_object(*, path: Path, record_name: str) -> JsonObject:
 
 def _validate_current_header(*, mapping: JsonObject, path: Path) -> None:
     schema_version = _required_int(mapping=mapping, key="schema_version", minimum=1)
-    version = _required_string(mapping=mapping, key="herdr_version")
-    protocol = _required_int(mapping=mapping, key="herdr_protocol", minimum=0)
-    if schema_version != RECORD_SCHEMA_VERSION or version != HERDR_VERSION or protocol != HERDR_PROTOCOL:
-        raise RuntimeError(f"AgentOps record does not use the current Herdr contract: {path}")
+    if schema_version != RECORD_SCHEMA_VERSION:
+        raise RuntimeError(f"AgentOps record does not use the current schema: {path}")
 
 
 def _required_string(*, mapping: JsonObject, key: str) -> str:

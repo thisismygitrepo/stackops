@@ -1,6 +1,5 @@
 from typing import cast
 
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_PROTOCOL, HERDR_VERSION
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     HerdrAgent,
     HerdrPane,
@@ -25,13 +24,6 @@ class HerdrProtocolError(RuntimeError):
 def parse_snapshot_response(*, payload: JsonObject) -> HerdrSnapshot:
     result = _response_result(payload=payload, expected_id="cli:api:snapshot", expected_type="session_snapshot")
     snapshot = _required_object(mapping=result, key="snapshot")
-    version = _required_string(mapping=snapshot, key="version")
-    protocol = _required_int(mapping=snapshot, key="protocol", minimum=0)
-    if version != HERDR_VERSION or protocol != HERDR_PROTOCOL:
-        raise HerdrProtocolError(
-            f"StackOps iter commands require Herdr {HERDR_VERSION} protocol {HERDR_PROTOCOL}; "
-            f"the running Herdr server is {version} protocol {protocol}."
-        )
 
     _optional_identifier(mapping=snapshot, key="focused_workspace_id")
     _optional_identifier(mapping=snapshot, key="focused_tab_id")

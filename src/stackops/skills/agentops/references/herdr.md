@@ -27,7 +27,7 @@ herdr session
 
 Do not run bare `herdr` for discovery because it launches or attaches the TUI. Do not probe a mutating nested command by omitting arguments; creation commands execute with defaults.
 
-AgentOps iteration maintenance requires Herdr 0.8.2/protocol 20. Confirm the binary with `herdr --version` and the active server contract with `herdr api snapshot` before creating iteration records.
+AgentOps iteration maintenance tracks the current Herdr CLI; there is no pinned version. Confirm the live server with `herdr status` and the active contract with `herdr api snapshot` before creating iteration records. StackOps validates the returned snapshot shape itself and rejects an incompatible server loudly.
 
 ## Targets And State
 
@@ -61,7 +61,7 @@ herdr tab rename '<root-tab-id>' '<agent-name>'
 herdr agent start '<agent-name>' --kind '<kind>' --pane '<root-pane-id>' -- <native-agent-args...>
 ```
 
-`workspace create` returns `.result.workspace`, `.result.tab`, and `.result.root_pane`. `tab create` returns `.result.tab` and `.result.root_pane`. Use the workspace's root tab/pane for the first agent; do not create an extra initial tab.
+`workspace create` returns `.result.workspace`, `.result.tab`, and `.result.root_pane`. `tab create` returns `.result.tab` and `.result.root_pane`. Use the workspace's root tab/pane for the first agent; do not create an extra initial tab. Both accept `--env <KEY=VALUE>` to set environment variables for the launched shell process.
 
 For each later one-pane tab:
 
@@ -103,20 +103,29 @@ herdr pane run '<pane-id>' '<command>'
 herdr pane send-text '<pane-id>' '<text>'
 herdr pane send-keys '<pane-id>' enter
 herdr pane wait-output '<pane-id>' --match '<text>' --lines 200 --timeout <ms>
+herdr pane wait-output '<pane-id>' --regex '<rust-regex>' --raw --timeout <ms>
+herdr pane get '<pane-id>'
+herdr pane process-info '<pane-id>'
+herdr pane zoom '<pane-id>'
 herdr pane report-agent '<pane-id>' --source '<workflow-source>' --agent '<label>' --state '<idle|working|blocked|unknown>' --message '<note>'
 herdr pane report-agent-session '<pane-id>' --source '<workflow-source>' --agent '<label>' --agent-session-id '<id>' --agent-session-path '<path>'
 herdr pane report-metadata '<pane-id>' --source '<workflow-source>' --agent '<label>' --title '<title>' --token workflow=agentops
+herdr pane release-agent '<pane-id>' --source '<workflow-source>' --agent '<label>'
 herdr pane close '<pane-id>'
 herdr agent list
 herdr agent get '<agent-target>'
 herdr agent read '<agent-target>' --source recent-unwrapped --lines 200
 herdr agent prompt '<agent-target>' '<text>' --wait --timeout <ms>
+herdr agent rename '<agent-target>' '<new-name>'
+herdr agent focus '<agent-target>'
+herdr agent attach '<agent-target>'
 herdr agent send-keys '<agent-target>' esc
 herdr agent wait '<agent-target>' --timeout <ms>
 herdr agent explain '<agent-target>' --json
+herdr workspace report-metadata '<workspace-id>' --source '<workflow-source>' --token workflow=agentops
 ```
 
-`pane report-metadata` supports title, display-agent, state-label, and token metadata; it has no `--custom-status` option. Top-level `herdr wait` no longer exists. Use `agent wait` for lifecycle state and `pane wait-output` for terminal text.
+`pane report-metadata` supports title, display-agent, state-label, and token metadata; `workspace report-metadata` supports token metadata only. Neither has a `--custom-status` option. Report commands accept `--seq <N>` for ordering and `--ttl-ms <N>` to expire display-only metadata, and `report-agent-session` additionally accepts `--session-start-source`. Top-level `herdr wait` no longer exists. Use `agent wait` for lifecycle state and `pane wait-output` for terminal text.
 
 Use stable report sources such as `agentops:<run-id>:<agent-id>`.
 

@@ -205,8 +205,6 @@ def test_current_handoff_file_is_strictly_parsed(tmp_path: Path, monkeypatch: py
         json.dumps(
             {
                 "schema_version": 1,
-                "herdr_version": "0.8.2",
-                "herdr_protocol": 20,
                 "herdr_session": "default",
                 "workspace_id": "w1",
                 "workspace_label": "iter-alpha",
@@ -216,8 +214,6 @@ def test_current_handoff_file_is_strictly_parsed(tmp_path: Path, monkeypatch: py
     )
     receipt = {
         "schema_version": 1,
-        "herdr_version": "0.8.2",
-        "herdr_protocol": 20,
         "herdr_session": "default",
         "workspace_id": "w1",
         "source_iteration": 1,

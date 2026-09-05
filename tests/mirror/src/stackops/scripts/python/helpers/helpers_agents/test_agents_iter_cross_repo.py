@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_service
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_PROTOCOL, HERDR_VERSION
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     HerdrAgent,
     HerdrPane,
@@ -115,8 +114,6 @@ def _write_iteration_records(*, project_root: Path, snapshot: HerdrSnapshot) -> 
         json.dumps(
             {
                 "schema_version": RECORD_SCHEMA_VERSION,
-                "herdr_version": HERDR_VERSION,
-                "herdr_protocol": HERDR_PROTOCOL,
                 "herdr_session": "default",
                 "workspace_id": workspace.workspace_id,
                 "workspace_label": workspace.label,
@@ -128,8 +125,6 @@ def _write_iteration_records(*, project_root: Path, snapshot: HerdrSnapshot) -> 
         json.dumps(
             {
                 "schema_version": RECORD_SCHEMA_VERSION,
-                "herdr_version": HERDR_VERSION,
-                "herdr_protocol": HERDR_PROTOCOL,
                 "herdr_session": "default",
                 "workspace_id": workspace.workspace_id,
                 "source_iteration": 1,

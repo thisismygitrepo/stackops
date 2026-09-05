@@ -6,7 +6,6 @@ import typer
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import (
     CLOSE_LOOP_INTERVAL_SECONDS,
     DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
-    HERDR_VERSION,
 )
 
 
@@ -102,7 +101,7 @@ def status(
 
 def get_app() -> typer.Typer:
     iter_app = typer.Typer(
-        help=f"🔁 <I> Iter maintenance for Herdr {HERDR_VERSION}", no_args_is_help=True, add_help_option=True, add_completion=False
+        help="🔁 <I> Iter maintenance through Herdr", no_args_is_help=True, add_help_option=True, add_completion=False
     )
     iter_app.command(name="clean", no_args_is_help=False, short_help="<c> Remove stale iter records under .ai")(clean)
     iter_app.command(name="c", no_args_is_help=False, hidden=True)(clean)

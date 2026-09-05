@@ -1,8 +1,6 @@
 from typing import Final
 
 
-HERDR_VERSION: Final[str] = "0.8.2"
-HERDR_PROTOCOL: Final[int] = 20
 HERDR_COMMAND_TIMEOUT_SECONDS: Final[int] = 15
 DEFAULT_RETAIN_PREVIOUS_ITERATIONS: Final[int] = 3
 CLOSE_LOOP_INTERVAL_SECONDS: Final[int] = 300

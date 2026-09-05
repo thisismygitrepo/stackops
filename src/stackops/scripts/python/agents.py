@@ -507,7 +507,6 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.agents_iter import get_app as get_iter_app
     from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
     from stackops.scripts.python.agents_second_brain import get_app as get_second_brain_app
-    from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import HERDR_VERSION
 
     agents_app = typer.Typer(
         cls=_PanelOrderedAgentsGroup,
@@ -525,9 +524,9 @@ def get_app() -> typer.Typer:
     )
     agents_app.add_typer(get_browser_app(), name="b", help="Browser automation for agent CLIs and MCP", hidden=True)
     agents_app.add_typer(
-        get_iter_app(), name="iter", help=f"🔁 <I> Iter maintenance for Herdr {HERDR_VERSION}", short_help="<I> Current Herdr iter maintenance"
+        get_iter_app(), name="iter", help="🔁 <I> Iter maintenance through Herdr", short_help="<I> Current Herdr iter maintenance"
     )
-    agents_app.add_typer(get_iter_app(), name="I", help=f"Iter maintenance for Herdr {HERDR_VERSION}", hidden=True)
+    agents_app.add_typer(get_iter_app(), name="I", help="Iter maintenance through Herdr", hidden=True)
     agents_app.add_typer(
         get_second_brain_app(), name="second-brain", help="🧠 <B> Second Brain commands", short_help="<B> Second Brain commands"
     )

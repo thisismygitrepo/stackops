@@ -22741,14 +22741,14 @@
             "name": "iter",
             "fullPath": "agents iter",
             "shortPath": "a I",
-            "help": "🔁 <I> Iter maintenance for Herdr 0.8.2",
+            "help": "🔁 <I> Iter maintenance through Herdr",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
               "dispatches_to": "stackops.scripts.python.agents_iter.get_app"
             },
             "app": {
-              "help": "🔁 <I> Iter maintenance for Herdr 0.8.2",
+              "help": "🔁 <I> Iter maintenance through Herdr",
               "no_args_is_help": true,
               "add_help_option": true,
               "add_completion": false
@@ -23237,7 +23237,7 @@
               {
                 "name": "I",
                 "hidden": true,
-                "help": "Iter maintenance for Herdr 0.8.2"
+                "help": "Iter maintenance through Herdr"
               }
             ]
           },
