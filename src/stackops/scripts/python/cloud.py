@@ -108,16 +108,14 @@ def copy(
 
 
 def mount(
-    cloud: Annotated[str | None, typer.Option(..., "--cloud", "-c", help="cloud to mount.")] = None,
-    destination: Annotated[str | None, typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
-    network: Annotated[str | None, typer.Option(..., "--network", "-n", help="Windows network mount target, for example X:")] = None,
+    clouds: Annotated[list[str] | None, typer.Argument(help="cloud remotes to mount, omit for interactive selection")] = None,
+    destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
+    network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
-    interactive: Annotated[bool, typer.Option("--no-interactive", "-I", help="Require --cloud instead of choosing interactively from config.")] = True,
-
 ) -> None:
     """🔗 Mount cloud storage services as local drives."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount import mount as mount_main
-    mount_main(cloud=cloud, destination=destination, network=network, backend=backend, interactive=interactive)
+    mount_main(clouds=clouds, destination=destination, network=network, backend=backend)
 
 
 def ftpx(
@@ -144,8 +142,8 @@ def get_app() -> typer.Typer:
     app.command(name="copy", no_args_is_help=True, short_help="📤 <c> Upload or 📥 Download files/folders to/from cloud storage.")(copy)
     app.command(name="c", no_args_is_help=True, hidden=True)(copy)
 
-    app.command(name="mount", no_args_is_help=True, short_help="🔗 <m> Mount cloud storage services as local drives.")(mount)
-    app.command(name="m", no_args_is_help=True, hidden=True)(mount)
+    app.command(name="mount", short_help="🔗 <m> Mount cloud storage services as local drives.")(mount)
+    app.command(name="m", hidden=True)(mount)
 
     app.command(name="ftpx", no_args_is_help=True, short_help="📦 <f> File transfer utility through SSH.")(ftpx)
     app.command(name="f", no_args_is_help=True, hidden=True)(ftpx)

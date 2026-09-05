@@ -16482,40 +16482,30 @@
             "signature": {
               "raw_lines": [
                 "def mount(",
-                "    cloud: Annotated[str | None, typer.Option(..., \"--cloud\", \"-c\", help=\"cloud to mount.\")] = None,",
-                "    destination: Annotated[str | None, typer.Option(..., \"--destination\", \"-d\", help=\"destination to mount\")] = None,",
-                "    network: Annotated[str | None, typer.Option(..., \"--network\", \"-n\", help=\"Windows network mount target, for example X:\")] = None,",
+                "    clouds: Annotated[list[str] | None, typer.Argument(help=\"cloud remotes to mount, omit for interactive selection\")] = None,",
+                "    destination: Annotated[str | None, typer.Option(\"--destination\", \"-d\", help=\"destination to mount\")] = None,",
+                "    network: Annotated[str | None, typer.Option(\"--network\", \"-n\", help=\"Windows network mount target, for example X:\")] = None,",
                 "    backend: Annotated[Literal[\"tmux\", \"t\", \"auto\", \"a\"], typer.Option(\"--backend\", \"-b\", help=\"terminal backend for Linux/macOS\")] = \"tmux\",",
-                "    interactive: Annotated[bool, typer.Option(\"--no-interactive\", \"-I\", help=\"Require --cloud instead of choosing interactively from config.\")] = True,",
-                "",
                 ") -> None:",
                 "    \"\"\"🔗 Mount cloud storage services as local drives.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_cloud.cloud_mount import mount as mount_main",
-                "    mount_main(cloud=cloud, destination=destination, network=network, backend=backend, interactive=interactive)"
+                "    mount_main(clouds=clouds, destination=destination, network=network, backend=backend)"
               ],
               "name": "mount",
               "parameters": [
                 {
-                  "name": "cloud",
+                  "name": "clouds",
                   "kind": "positional_or_keyword",
-                  "type": "str | None",
+                  "type": "list[str] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--cloud', '-c', help='cloud to mount.')]",
+                  "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='cloud remotes to mount, omit for interactive selection')]",
                   "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--cloud",
-                      "-c"
-                    ],
-                    "long_flags": [
-                      "--cloud"
-                    ],
-                    "short_flags": [
-                      "-c"
-                    ],
-                    "help": "cloud to mount.",
-                    "default": "..."
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "cloud remotes to mount, omit for interactive selection"
                   }
                 },
                 {
@@ -16524,7 +16514,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--destination', '-d', help='destination to mount')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--destination', '-d', help='destination to mount')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16537,8 +16527,7 @@
                     "short_flags": [
                       "-d"
                     ],
-                    "help": "destination to mount",
-                    "default": "..."
+                    "help": "destination to mount"
                   }
                 },
                 {
@@ -16547,7 +16536,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--network', '-n', help='Windows network mount target, for example X:')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--network', '-n', help='Windows network mount target, for example X:')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -16560,8 +16549,7 @@
                     "short_flags": [
                       "-n"
                     ],
-                    "help": "Windows network mount target, for example X:",
-                    "default": "..."
+                    "help": "Windows network mount target, for example X:"
                   }
                 },
                 {
@@ -16585,36 +16573,11 @@
                     ],
                     "help": "terminal backend for Linux/macOS"
                   }
-                },
-                {
-                  "name": "interactive",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": true,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--no-interactive', '-I', help='Require --cloud instead of choosing interactively from config.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--no-interactive",
-                      "-I"
-                    ],
-                    "long_flags": [
-                      "--no-interactive"
-                    ],
-                    "short_flags": [
-                      "-I"
-                    ],
-                    "help": "Require --cloud instead of choosing interactively from config."
-                  }
                 }
               ],
               "return": "None"
             },
             "short_help": "🔗 <m> Mount cloud storage services as local drives.",
-            "typer": {
-              "no_args_is_help": true
-            },
             "doc": "🔗 Mount cloud storage services as local drives.",
             "aliases": [
               {
