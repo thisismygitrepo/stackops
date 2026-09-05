@@ -6,3 +6,4 @@ graft src/stackops/scripts
 graft src/stackops/utils/schemas
 graft src/stackops/secrets
 graft src/stackops/skills
+graft src/stackops/agents

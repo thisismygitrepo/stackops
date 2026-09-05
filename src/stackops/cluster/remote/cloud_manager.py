@@ -331,7 +331,7 @@ def _sync_dir_from_cloud(cloud: str, directory: Path) -> None:
             source=f"{cloud}:{rel}",
             target=str(directory),
             transfers=RCLONE_TRANSFERS,
-            delete_during=False,
+            delete=True,
             show_command=False,
             show_progress=False,
         )
@@ -346,7 +346,7 @@ def _sync_dir_to_cloud(cloud: str, directory: Path) -> None:
         source=str(directory),
         target=f"{cloud}:{rel}",
         transfers=RCLONE_TRANSFERS,
-        delete_during=False,
+        delete=True,
         show_command=False,
         show_progress=False,
     )

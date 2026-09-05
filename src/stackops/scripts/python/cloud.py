@@ -25,23 +25,39 @@ def sync(
     ] = defaults["encryption"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="unzip after receiving.")] = defaults["zip"],
     bisync: Annotated[bool, typer.Option("--bisync", "-b", help="Bidirectional sync.")] = False,
-    delete: Annotated[bool, typer.Option("--delete", "-D", help="Delete files in remote that are not in local.")] = False,
-    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Verbosity of mprocs to show details of syncing.")] = False,
+    resync: Annotated[bool, typer.Option("--resync", "-r", help="Initialize or recover --bisync state. Omit for normal bidirectional syncs.")] = False,
+    delete: Annotated[
+        bool,
+        typer.Option("--delete", "-D", help="Delete destination-only files during one-way sync. Bisync always propagates deletions; this flag changes their timing."),
+    ] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show the rclone command being executed.")] = False,
 ) -> None:
     """🔄 Synchronize files/folders between local and cloud storage."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_sync import main as sync_main
-    sync_main(
-        source=source,
-        target=target,
-        transfers=transfers,
-        root=root,
-        pwd=pwd,
-        encryption=encryption,
-        zip_=zip_,
-        bisync=bisync,
-        delete=delete,
-        verbose=verbose,
-    )
+    from stackops.utils.cloud.rclone import RcloneCommandError
+
+    try:
+        sync_main(
+            source=source,
+            target=target,
+            transfers=transfers,
+            root=root,
+            pwd=pwd,
+            encryption=encryption,
+            zip_=zip_,
+            bisync=bisync,
+            resync=resync,
+            delete=delete,
+            verbose=verbose,
+        )
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    except RcloneCommandError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(code=error.returncode) from error
+    except RuntimeError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(code=1) from error
 
 
 def copy(

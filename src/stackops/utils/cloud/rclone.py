@@ -286,17 +286,21 @@ def link(*, target: str, remote_name: str, share_options: ShareLinkOptions | Non
     raise RuntimeError(f"rclone link returned no output for {target}")
 
 
-def sync(*, source: str, target: str, transfers: int, delete_during: bool, show_command: bool, show_progress: bool) -> None:
-    command = ["rclone", "sync", source, target, f"--transfers={transfers}", "--verbose"]
+def sync(*, source: str, target: str, transfers: int, delete: bool, show_command: bool, show_progress: bool) -> None:
+    command = ["rclone", "sync" if delete else "copy", source, target, f"--transfers={transfers}", "--verbose"]
     if show_progress:
         command.append("--progress")
-    if delete_during:
-        command.append("--delete-during")
     _run_rclone(command, show_command=show_command, show_progress=show_progress)
 
 
-def bisync(*, source: str, target: str, transfers: int, delete_during: bool, show_command: bool, show_progress: bool) -> None:
-    command = ["rclone", "bisync", source, target, "--resync", "--remove-empty-dirs", f"--transfers={transfers}", "--verbose"]
+def bisync(
+    *, source: str, target: str, transfers: int, resync: bool, delete_during: bool, remove_empty_dirs: bool, show_command: bool, show_progress: bool
+) -> None:
+    command = ["rclone", "bisync", source, target, f"--transfers={transfers}", "--verbose"]
+    if resync:
+        command.append("--resync")
+    if remove_empty_dirs:
+        command.append("--remove-empty-dirs")
     if show_progress:
         command.append("--progress")
     if delete_during:

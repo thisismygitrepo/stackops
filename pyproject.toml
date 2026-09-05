@@ -29,6 +29,7 @@ dependencies = [
     "requests>=2.32.5",
     "rich>=14.3.3",
     "tenacity>=9.1.4",
+    "textual>=8.2.7",
     "typer>=0.24.1",
 ]
 
@@ -120,7 +121,6 @@ dev = [
     "ruff>=0.15.20",
     "ruff-lsp>=0.0.62",
     "sqlalchemy>=2.0.51",
-    "textual>=8.2.7",
     "trogon>=0.6.0",
     "ty>=0.0.55",
     "types-mysqlclient>=2.2.0.20260508",
