@@ -48,16 +48,11 @@ mprocs "echo 'see {DEFAULT_MOUNT}/{cloud} for the mounted cloud'; rclone about {
 
 
 def mount(
-    cloud: Annotated[str | None, typer.Option(..., "--cloud", "-c", help="cloud to mount.")] = None,
-    destination: Annotated[str | None, typer.Option(..., "--destination", "-d", help="destination to mount")] = None,
-    network: Annotated[str | None, typer.Option(..., "--network", "-n", help="Windows network mount target, for example X:")] = None,
+    clouds: Annotated[list[str] | None, typer.Argument(help="cloud remotes to mount, omit for interactive selection")] = None,
+    destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
+    network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
-    interactive: Annotated[bool, typer.Option("--no-interactive", "-I", help="Require --cloud instead of choosing interactively from config.")] = True,
 ) -> None:
-    if cloud is None and not interactive:
-        print("❌ Error: --cloud is required when --no-interactive is set")
-        raise typer.Exit(code=1)
-
     from stackops.utils.options_utils.options import choose_from_options
     from pathlib import Path
     import platform
@@ -72,18 +67,17 @@ def mount(
     console.print(Panel(title, title_align="left", border_style="blue"))
 
     config = get_rclone_config()
-    if cloud is None:
+    if clouds is None:
         res = choose_from_options(multi=True, msg="which cloud", options=config.sections(), header="CLOUD MOUNT", default=None, tv=True)
         if res is None or len(res) == 0:
             print("❌ Error: No cloud selected")
             raise typer.Exit(code=1)
-        clouds: list[str] = res
-
+        clouds = res
     else:
-        if cloud not in config.sections():
-            print(f"❌ Error: Cloud '{cloud}' not found in config")
+        missing = [cloud_name for cloud_name in clouds if cloud_name not in config.sections()]
+        if missing:
+            print(f"❌ Error: Cloud(s) not found in config: {', '.join(missing)}")
             raise typer.Exit(code=1)
-        clouds = [cloud]
 
     system_name = platform.system()
 
@@ -180,7 +174,7 @@ def mount(
 
 def get_app():
     app = typer.Typer(name="cloud-mount", help="Cloud mount utility")
-    app.command(name="mount", no_args_is_help=True)(mount)
+    app.command(name="mount")(mount)
     return app
 
 if __name__ == "__main__":

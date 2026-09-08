@@ -30,7 +30,7 @@ def _load_account(account_name: str) -> tuple[SecretsFile, OneDriveAccount]:
     expected_entry = build_account_login(account_name=account_name, client_id="<client-id>", refresh_token=None)
     expected_json = json.dumps(expected_entry, indent=2, ensure_ascii=False)
     if not matches:
-        setup_command = f"cloud onedrive add --account-name {shlex.quote(account_name)}"
+        setup_command = f"cloud onedrive add {shlex.quote(account_name)}"
         raise OneDriveError(
             f"No OneDrive CLI OAuth secret matched account {account_name!r} in {SECRETS_DOFILE}.\n"
             f"Create the correctly tagged entry with:\n  {setup_command}\n"
@@ -51,7 +51,7 @@ def load_credentials(account_name: str, require_refresh_token: bool) -> OneDrive
     if require_refresh_token and account.refresh_token is None:
         raise OneDriveError(
             f"OneDrive account {account_name!r} is not authenticated because {REFRESH_TOKEN_KEY} is missing.\n"
-            f"Run: cloud onedrive auth --account-name {shlex.quote(account_name)}"
+            f"Run: cloud onedrive auth {shlex.quote(account_name)}"
         )
     return {"account_name": account.account_name, "client_id": account.client_id, "refresh_token": account.refresh_token}
 

@@ -47,7 +47,7 @@ def subset(
     on_conflict: Annotated[
         SubsetOutputConflictOption,
         typer.Option(
-            "--on-conflict", "-o", case_sensitive=False, help="How to handle an existing output path: throw-error/t, overwrite/o, or append/a."
+            "--on-conflict", "-c", case_sensitive=False, help="How to handle an existing output path: throw-error/t, overwrite/o, or append/a."
         ),
     ] = "throw-error",
 ) -> None:

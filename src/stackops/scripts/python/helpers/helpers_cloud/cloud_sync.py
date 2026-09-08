@@ -31,7 +31,7 @@ def main(
 
     unsupported_options: list[str] = []
     if pwd is not None:
-        unsupported_options.append("--pwd")
+        unsupported_options.append("--password")
     if encryption is not None:
         unsupported_options.append("--encryption")
     if zip_:

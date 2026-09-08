@@ -1,6 +1,7 @@
 from typing import Any
 
 from stackops.scripts.python.graph.cli_graph_apps import load_app_model
+from stackops.scripts.python.graph.cli_graph_policy import validate_cli_graph
 from stackops.scripts.python.graph.cli_graph_nodes import build_children
 from stackops.scripts.python.graph.cli_graph_shared import AppRef, ROOT_FACTORY, ROOT_MODULE
 
@@ -30,7 +31,7 @@ def build_cli_graph() -> dict[str, Any]:
         ),
     }
 
-    return {
+    payload: dict[str, Any] = {
         "schema": {
             "version": "1.0",
             "description": (
@@ -73,3 +74,5 @@ def build_cli_graph() -> dict[str, Any]:
         },
         "root": root_node,
     }
+    validate_cli_graph(payload)
+    return payload

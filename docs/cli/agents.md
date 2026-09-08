@@ -146,6 +146,7 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 - `--reasoning` for codex, copilot, and pi agents; unsupported agents ignore it
 - `--context` or `--context-path`
 - `--context-yaml-path` plus `--context-name`
+- `--skill`/`-S` to reference one supported agent skill (same catalog as `agents add-skill`) on the fly: the prompt file tells the agent to read the skill's `SKILL.md` from its source repository and follow it; the skill is never installed. Pass an empty value (`--skill ""`) to pick the skill interactively
 - `--source`, `-s` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, or `library`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
 - free-form prompt parts after `--`; option-looking tokens after the delimiter are prompt text, not StackOps flags
@@ -162,6 +163,7 @@ agents run-prompt --agent copilot --reasoning high --context-path ./context.md "
 agents run-prompt --agent copilot --context-name docs.cli -s all "update the assigned docs"
 agents run-prompt --agent agy --context-path ./context.md "inspect this repo"
 agents run-prompt --agent pi --reasoning high --context-path ./context.md "inspect this repo"
+agents run-prompt --agent codex --skill caveman --context-path ./context.md "compress your replies"
 agents run-prompt --show-format
 ```
 
@@ -219,7 +221,7 @@ agents add-config codex --root . -A
 - `agy` means Google Antigravity CLI. Local MCP config is written to `.agents/mcp_config.json`; global MCP config is written to `~/.gemini/antigravity-cli/mcp_config.json`
 - `oz` means Warp Oz CLI. Local MCP config is written to `.warp/mcp.json` in Oz's direct `--mcp` file shape, and StackOps passes that file to `oz agent run --mcp` when it exists.
 - `pi` local MCP config is written to `.pi/mcp.json`; global MCP config is written to `~/.pi/agent/mcp.json`
-- `agent-browser`, `agent-skills`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
+- `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
 For `add-mcp`, `--source repo` or `-S repo` resolves to `<git-root>/.stackops/mcp.json`.
@@ -295,13 +297,14 @@ agents browser replicate 5 --overwrite
 
 ## `add-skill`
 
-`add-skill` uses the StackOps backend by default, copying bundled skills directly into `<repo-root>/.agents/skills/<skill>` for local installs. If the StackOps backend cannot handle the request, it reports the reason and falls back to the existing `bunx skills@latest add` path. Use `--backend bunx` to run the upstream skills CLI directly, or `--backend npx` to run `npx skills@latest add` instead. The shipped source aliases are `agent-browser`, `agent-skills`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping for `bunx`/`npx`; the StackOps backend installs into the shared repo-local skill directory. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+`add-skill` uses the StackOps backend by default, copying bundled skills directly into `<repo-root>/.agents/skills/<skill>` for local installs. If the StackOps backend cannot handle the request, it reports the reason and falls back to the existing `bunx skills@latest add` path. Use `--backend bunx` to run the upstream skills CLI directly, or `--backend npx` to run `npx skills@latest add` instead. The shipped source aliases are `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping for `bunx`/`npx`; the StackOps backend installs into the shared repo-local skill directory. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
 
 ```bash
 agents add-skill --scope local
 agents add-skill stackops --agent codex --scope local
 agents add-skill agent-skills --agent codex --scope global
 agents add-skill last30days --agent codex --scope global --backend npx
+agents add-skill archify --agent codex --scope global --backend npx
 agents add-skill stackops --scope local --backend s
 agents add-skill agent-ops --scope local --backend stackops
 agents add-skill grill-with-docs --scope local

@@ -27,6 +27,7 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "agent-browser": AgentSkillSource("vercel-labs/agent-browser"),
     "agent-skills": AgentSkillSource("addyosmani/agent-skills"),
     "amq": AgentSkillSource("avivsinai/agent-message-queue"),
+    "archify": AgentSkillSource("tt-a1i/archify"),
     "caveman": AgentSkillSource("JuliusBrussee/caveman", skill="caveman"),
     "computer-use": AgentSkillSource(ORCA_SKILL_SOURCE, skill="computer-use"),
     "grill-with-docs": AgentSkillSource("mattpocock/skills", skill="grill-with-docs"),
@@ -43,6 +44,13 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
 
 def is_supported_agent_skill_name(*, skill_name: str) -> bool:
     return skill_name in _OPEN_SOURCE_SKILL_SOURCES
+
+
+def get_agent_skill_source(*, skill_name: str) -> AgentSkillSource:
+    source = _OPEN_SOURCE_SKILL_SOURCES.get(skill_name)
+    if source is None:
+        raise ValueError(f"Skill '{skill_name}' is not recognized. Supported skills: {', '.join(supported_agent_skill_names())}")
+    return source
 
 
 def supported_agent_skill_names() -> tuple[str, ...]:

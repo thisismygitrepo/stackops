@@ -139,7 +139,7 @@ def refresh_access_token(account_name: str) -> str:
     client_id = credentials["client_id"]
     refresh_token = credentials["refresh_token"]
     if refresh_token is None:
-        raise OneDriveError(f"OneDrive account {account_name} is not authenticated. Run: cloud onedrive auth --account-name {account_name}")
+        raise OneDriveError(f"OneDrive account {account_name} is not authenticated. Run: cloud onedrive auth {account_name}")
 
     response = send_request(
         "POST", TOKEN_ENDPOINT, data={"grant_type": "refresh_token", "client_id": client_id, "refresh_token": refresh_token, "scope": SCOPE_TEXT}

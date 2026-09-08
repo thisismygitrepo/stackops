@@ -103,20 +103,20 @@ def init_config(
     agent: Annotated[str, typer.Argument(help=_INIT_CONFIG_AGENT_HELP)],
     root: Annotated[
         str | None,
-        typer.Option("--root", "-r", help="Root directory of the repository to initialize AI configs in. Defaults to current directory."),
+        typer.Option("--root", "-R", help="Root directory of the repository to initialize AI configs in. Defaults to current directory."),
     ] = None,
     add_config: Annotated[
         bool,
-        typer.Option("--no-add-config", "-C", help="Skip private agent config files/directories"),
+        typer.Option("--add-config/--no-add-config", "-C", help="Include private agent config files/directories"),
     ] = True,
     add_instructions: Annotated[
         bool,
-        typer.Option("--no-add-instructions", "-I", help="Skip agent instruction files (e.g. AGENTS.md)"),
+        typer.Option("--add-instructions/--no-add-instructions", "-I", help="Include agent instruction files (e.g. AGENTS.md)"),
     ] = True,
-    skip_agent_ops_skill: Annotated[
+    add_agent_ops_skill: Annotated[
         bool,
-        typer.Option("--no-agent-ops-skill", "-A", help="Skip copying the latest bundled Agent-Ops skill"),
-    ] = False,
+        typer.Option("--agent-ops-skill/--no-agent-ops-skill", "-A", help="Copy the latest bundled Agent-Ops skill"),
+    ] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
     add_to_gitignore: Annotated[
@@ -137,7 +137,7 @@ def init_config(
             add_lint_task=add_vscode_tasks,
             add_config=add_config,
             add_instructions=add_instructions,
-            add_agent_ops_skill=not skip_agent_ops_skill,
+            add_agent_ops_skill=add_agent_ops_skill,
         )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
@@ -326,6 +326,15 @@ def run_prompt(
             help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.",
         ),
     ] = None,
+    skill: Annotated[
+        str | None,
+        typer.Option(
+            ...,
+            "--skill",
+            "-S",
+            help="Reference a supported agent skill on the fly (see agents add-skill). The skill is referenced, never installed. Pass an empty value to pick interactively.",
+        ),
+    ] = None,
     source: Annotated[
         _PROMPTS_SOURCE,
         typer.Option(..., "--source", "-s", help="Source to look for context YAML files when --context-yaml-path is not provided."),
@@ -362,6 +371,7 @@ def run_prompt(
                 context_path=context_path,
                 prompts_yaml_path=context_yaml_path,
                 context_name=context_name,
+                skill=skill,
                 source=source,
                 edit=edit,
                 show_prompts_yaml_format=show_prompts_yaml_format,

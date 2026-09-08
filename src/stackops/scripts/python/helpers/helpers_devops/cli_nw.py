@@ -57,9 +57,9 @@ def vscode_share(
     ],
     name: Annotated[str | None, typer.Option("--name", "-n", help="Name for tunnel/service actions (run, install-service)")] = None,
     path: Annotated[str | None, typer.Option("--path", "-p", help="Server base path for local web mode (share-local)")] = None,
-    host: Annotated[str, typer.Option("--host", "-h", help="Host for local web mode (share-local)")] = "0.0.0.0",
+    host: Annotated[str, typer.Option("--host", "-H", help="Host for local web mode (share-local)")] = "0.0.0.0",
     directory: Annotated[
-        str | None, typer.Option("--dir", "-d", help="Folder to open in local web mode (share-local), defaults to the current working directory")
+        str | None, typer.Option("--directory", "-d", help="Folder to open in local web mode (share-local), defaults to the current working directory")
     ] = None,
     cli_data_dir: Annotated[str | None, typer.Option("--cli-data-dir", help="VS Code CLI data directory to use for every generated command")] = None,
     extra_args: Annotated[str | None, typer.Option("--extra-args", "-e", help="Extra args to append to the generated VS Code command")] = None,

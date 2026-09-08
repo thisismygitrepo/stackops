@@ -20,18 +20,16 @@ def _format_shell_args(values: list[str], *, is_windows: bool) -> str:
     return " " + " ".join(agent_shell.quote_for_shell(value, is_windows=is_windows) for value in values)
 
 
-def make_prompt_file(prompt: str, context: str) -> Path:
+def make_prompt_file(prompt: str, context: str, skill_reference: str | None) -> Path:
     from stackops.utils.accessories import randstr
 
     prompt_file = Path.home().joinpath("tmp_results", "tmp_files", "agents", f"run_prompt_{randstr()}.md")
     prompt_file.parent.mkdir(parents=True, exist_ok=True)
-    payload = f"""# Context
-{context}
-
-# Prompt
-{prompt}
-"""
-    prompt_file.write_text(payload, encoding="utf-8")
+    sections = [f"# Context\n{context}"]
+    if skill_reference is not None:
+        sections.append(f"# Skill\n{skill_reference}")
+    sections.append(f"# Prompt\n{prompt}")
+    prompt_file.write_text("\n\n".join(sections) + "\n", encoding="utf-8")
     return prompt_file
 
 
@@ -192,6 +190,7 @@ def run(
     context_path: str | None,
     prompts_yaml_path: str | None,
     context_name: str | None,
+    skill: str | None,
     source: PROMPTS_SOURCE,
     edit: bool,
     show_prompts_yaml_format: bool,
@@ -234,6 +233,13 @@ def run(
     has_explicit_context = context is not None or context_path is not None or context_name is not None
     if (edit or show_prompts_yaml_format) and prompt is None and not has_explicit_context:
         return
+    from stackops.scripts.python.helpers.helpers_agents.agents_run_skill import (
+        render_agent_skill_reference,
+        resolve_run_skill_name,
+    )
+
+    skill_name = resolve_run_skill_name(skill=skill)
+    skill_reference = None if skill_name is None else render_agent_skill_reference(skill_name=skill_name)
     resolved_context = resolve_context(
         context=context,
         context_path=context_path,
@@ -242,7 +248,7 @@ def run(
         source=source,
     )
     prompt_text = prompt if prompt is not None else ""
-    prompt_file = make_prompt_file(prompt=prompt_text, context=resolved_context)
+    prompt_file = make_prompt_file(prompt=prompt_text, context=resolved_context, skill_reference=skill_reference)
     _print_prompt_file_preview(prompt_file=prompt_file)
     command_line = build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
     if working_directory is not None:

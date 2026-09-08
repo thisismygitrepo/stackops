@@ -19,7 +19,7 @@ def switch_public_ip_address(
 def reset_cloudflare_tunnel(
     task: Annotated[
         Literal["oneoff-shell-process", "oneoff-background-process", "as-service"],
-        typer.Option(..., "--task", "-t", help="Task to perform", case_sensitive=False, show_choices=True),
+        typer.Argument(help="Task to perform", case_sensitive=False, show_choices=True),
     ],
     tunnel_name: Annotated[str | None, typer.Option("--tunnel-name", "-n", help="Name of the Cloudflare tunnel to run")] = None,
 ) -> None:
