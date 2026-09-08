@@ -1,7 +1,7 @@
 from collections import Counter
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import AgentopsCacheCleanResult
+from stackops.scripts.python.helpers.helpers_agents.agents_agent_ops_cache import AgentOpsCacheCleanResult
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import ITER_WORKSPACE_PREVIEW_SIZE_PERCENT
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import IterWorkspaceStatus, WorkspaceId
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import IterRunManifest, load_iter_run_manifest
@@ -23,11 +23,11 @@ def choose_iter_workspace_id(*, statuses: tuple[IterWorkspaceStatus, ...]) -> st
     return str(selected_status.workspace.workspace_id)
 
 
-def choose_agentops_cache_workspace_id(*, result: AgentopsCacheCleanResult) -> WorkspaceId:
+def choose_agent_ops_cache_workspace_id(*, result: AgentOpsCacheCleanResult) -> WorkspaceId:
     inactive_paths = frozenset(result.removed_runs)
     run_paths = tuple(sorted((*result.removed_runs, *result.protected_runs), key=lambda path: path.name))
     if len(run_paths) == 0:
-        raise RuntimeError("No current AgentOps iteration runs are available for interactive selection.")
+        raise RuntimeError("No current Agent-Ops iteration runs are available for interactive selection.")
 
     manifest_by_label: dict[str, IterRunManifest] = {}
     preview_by_label: dict[str, str] = {}
@@ -35,26 +35,26 @@ def choose_agentops_cache_workspace_id(*, result: AgentopsCacheCleanResult) -> W
     for run_path in run_paths:
         manifest = load_iter_run_manifest(run_path=run_path)
         if manifest is None:
-            raise RuntimeError(f"AgentOps iteration run changed before interactive selection: {run_path}")
+            raise RuntimeError(f"Agent-Ops iteration run changed before interactive selection: {run_path}")
         label = f"{manifest.workspace_label} [{manifest.workspace_id}]"
         if manifest.workspace_id in workspace_ids:
-            raise RuntimeError(f"AgentOps iteration records contain duplicate workspace ID {manifest.workspace_id!r}.")
+            raise RuntimeError(f"Agent-Ops iteration records contain duplicate workspace ID {manifest.workspace_id!r}.")
         if label in manifest_by_label:
-            raise RuntimeError(f"AgentOps iteration records produce duplicate selection label {label!r}.")
+            raise RuntimeError(f"Agent-Ops iteration records produce duplicate selection label {label!r}.")
         workspace_ids.add(manifest.workspace_id)
         manifest_by_label[label] = manifest
-        preview_by_label[label] = build_agentops_cache_preview(
+        preview_by_label[label] = build_agent_ops_cache_preview(
             run_path=run_path, manifest=manifest, active=run_path not in inactive_paths, project_root=result.project_root
         )
 
-    selected_label = _choose_preview_label(preview_by_label=preview_by_label, selection_name="AgentOps iteration run")
+    selected_label = _choose_preview_label(preview_by_label=preview_by_label, selection_name="Agent-Ops iteration run")
     selected_manifest = manifest_by_label.get(selected_label)
     if selected_manifest is None:
-        raise RuntimeError(f"Interactive selection did not map to an AgentOps iteration run: {selected_label}")
+        raise RuntimeError(f"Interactive selection did not map to an Agent-Ops iteration run: {selected_label}")
     return selected_manifest.workspace_id
 
 
-def build_agentops_cache_preview(*, run_path: Path, manifest: IterRunManifest, active: bool, project_root: Path) -> str:
+def build_agent_ops_cache_preview(*, run_path: Path, manifest: IterRunManifest, active: bool, project_root: Path) -> str:
     try:
         display_path = f"./{run_path.relative_to(project_root).as_posix()}"
     except ValueError:
@@ -106,7 +106,7 @@ def build_iter_workspace_preview(*, status: IterWorkspaceStatus) -> str:
             f"- Workspace ID: `{workspace.workspace_id}`",
             f"- Workspace number: `{workspace.number}`",
             f"- Workspace status: `{workspace.agent_status}`",
-            f"- AgentOps run: `{plan.run_path}`",
+            f"- Agent-Ops run: `{plan.run_path}`",
             f"- Focused: `{str(workspace.focused).lower()}`",
             f"- Tabs: `{workspace.tab_count}`",
             f"- Panes: `{workspace.pane_count}`",

@@ -49,7 +49,7 @@ herdr agent start '<later-agent-name>' --kind '<kind>' --pane '<returned-root-pa
 Use the workspace's returned root tab/pane for the first worktree and `tab create` only for later worktrees.
 
 7. Write each agent's task packet and send only the packet path with `agent prompt --wait` from [herdr.md](herdr.md).
-8. Index every worktree, Herdr identifier, and packet path in `.ai/agentops/parallel-isolated-agents/contracts/agents.json`.
+8. Index every worktree, Herdr identifier, and packet path in `.ai/agent-ops/parallel-isolated-agents/contracts/agents.json`.
 9. Report run id, agent count, branch names, worktree paths, Herdr targets/IDs, and visible statuses.
 
 ## Worktrees
@@ -86,7 +86,7 @@ Keep names unique and within Herdr's 32-character limit. Always set each tab cwd
 For non-trivial delegation, create per-agent packets under:
 
 ```text
-.ai/agentops/parallel-isolated-agents/runs/<run-id>/
+.ai/agent-ops/parallel-isolated-agents/runs/<run-id>/
   run.md
   state.md
   index.md
@@ -125,4 +125,4 @@ Read <task-packet-path> and follow it. Do not assume access to prior conversatio
 
 ## Non-Interactive Agents
 
-Use non-interactive mode only when required. Inspect the target CLI help for the one-shot invocation and run it through a Herdr-managed pane with `herdr pane run` so output remains visible. Wait for terminal evidence with `herdr pane wait-output`, not the removed top-level `herdr wait` family.
+Use non-interactive mode only when required. Inspect the target CLI help for the one-shot invocation and run it through a Herdr-managed pane with `herdr pane run` so output remains visible. Wait for terminal evidence with `herdr pane wait-output`.

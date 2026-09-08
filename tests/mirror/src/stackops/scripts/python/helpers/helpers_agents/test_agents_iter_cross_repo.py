@@ -107,7 +107,7 @@ def _write_iteration_records(*, project_root: Path, snapshot: HerdrSnapshot) -> 
     successor_agent = snapshot.agents[1]
     successor_agent_name = successor_agent.name
     assert successor_agent_name is not None
-    run_path = project_root.joinpath(".ai", "agentops", "iterations", workspace.label.removeprefix("iter-"))
+    run_path = project_root.joinpath(".ai", "agent-ops", "iterations", workspace.label.removeprefix("iter-"))
     iteration_path = run_path.joinpath("iter-001")
     iteration_path.mkdir(parents=True)
     run_path.joinpath("run.json").write_text(

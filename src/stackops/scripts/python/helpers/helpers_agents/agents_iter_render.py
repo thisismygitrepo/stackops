@@ -6,7 +6,7 @@ from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
-from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import AgentopsCacheCleanResult
+from stackops.scripts.python.helpers.helpers_agents.agents_agent_ops_cache import AgentOpsCacheCleanResult
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     FailedTabClose,
     HerdrAgent,
@@ -19,7 +19,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
 )
 
 
-def build_agentops_cache_clean_panel(*, result: AgentopsCacheCleanResult) -> Panel:
+def build_agent_ops_cache_clean_panel(*, result: AgentOpsCacheCleanResult) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold cyan", no_wrap=True)
     table.add_column("Value", overflow="fold")
@@ -31,12 +31,12 @@ def build_agentops_cache_clean_panel(*, result: AgentopsCacheCleanResult) -> Pan
     table.add_row("Paths", str(result.removed_entries))
     if result.dry_run and len(result.removed_runs) > 0:
         table.add_row("Status", "[yellow]dry run; no records removed[/yellow]")
-        return Panel(table, title="AgentOps Iteration Records", border_style="yellow")
+        return Panel(table, title="Agent-Ops Iteration Records", border_style="yellow")
     if result.removed:
         table.add_row("Status", "[green]inactive records removed[/green]")
-        return Panel(table, title="AgentOps Iteration Records", border_style="green")
+        return Panel(table, title="Agent-Ops Iteration Records", border_style="green")
     table.add_row("Status", "[green]nothing stale to remove[/green]")
-    return Panel(table, title="AgentOps Iteration Records", border_style="green")
+    return Panel(table, title="Agent-Ops Iteration Records", border_style="green")
 
 
 def build_iter_close_plan_table(*, close_plans: tuple[IterWorkspaceClosePlan, ...]) -> Table:

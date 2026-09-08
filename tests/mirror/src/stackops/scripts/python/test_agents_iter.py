@@ -43,7 +43,7 @@ def command_calls(monkeypatch: pytest.MonkeyPatch) -> CommandCalls:
 
     monkeypatch.setattr(agents_iter_rich_output, "show_close_iter_workspaces_loop", capture_close)
     monkeypatch.setattr(agents_iter_rich_output, "show_iter_status", capture_status)
-    monkeypatch.setattr(agents_iter_rich_output, "show_clean_agentops_cache", capture_clean)
+    monkeypatch.setattr(agents_iter_rich_output, "show_clean_agent_ops_cache", capture_clean)
     return calls
 
 

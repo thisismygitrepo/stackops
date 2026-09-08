@@ -10,24 +10,25 @@ Before inspecting or controlling Herdr, verify that the controller is itself run
 test "${HERDR_ENV:-}" = 1
 ```
 
-If this fails, say that AgentOps requires a Herdr-managed pane and stop. Do not inspect or control the focused default session from outside Herdr.
+If this fails, say that Agent-Ops requires a Herdr-managed pane and stop. Do not inspect or control the focused default session from outside Herdr.
 
-The installed binary is authoritative. Use `herdr --help`, then run the relevant command group without a subcommand:
+Use the latest Herdr CLI and server; only the latest release is supported. The latest release's installed help is authoritative for command syntax; consult the [official CLI reference](https://herdr.dev/docs/cli-reference/) for additional context:
 
 ```bash
-herdr workspace
-herdr tab
-herdr pane
-herdr agent
-herdr worktree
-herdr notification
-herdr integration
-herdr session
+herdr --help
+herdr workspace --help
+herdr tab --help
+herdr pane --help
+herdr agent --help
+herdr worktree --help
+herdr notification --help
+herdr integration --help
+herdr session --help
 ```
 
 Do not run bare `herdr` for discovery because it launches or attaches the TUI. Do not probe a mutating nested command by omitting arguments; creation commands execute with defaults.
 
-AgentOps iteration maintenance tracks the current Herdr CLI; there is no pinned version. Confirm the live server with `herdr status` and the active contract with `herdr api snapshot` before creating iteration records. StackOps validates the returned snapshot shape itself and rejects an incompatible server loudly.
+Confirm the live server with `herdr status server` and the active contract with `herdr api snapshot` before creating iteration records. StackOps validates the returned snapshot shape itself and rejects an incompatible server loudly.
 
 ## Targets And State
 
@@ -43,13 +44,13 @@ Agent commands accept a unique live agent name or the pane ID currently hosting 
 
 Herdr lifecycle states have specific meanings:
 
-- `idle`: ready for input and already seen in the focused Herdr UI.
-- `done`: ready for input after unseen background work finished.
+- `idle`: ready for input and marked seen by the server.
+- `done`: ready for input after completion that the server has not marked seen.
 - `blocked`: Herdr recognized an approval or question UI.
 - `working`: active agent work.
 - `unknown`: an agent is present but Herdr cannot classify it confidently; this does not prove completion.
 
-Focusing the tab or using a pane/agent focus command marks work seen. CLI reads do not.
+CLI/API states use the server's seen state. Explicit `pane focus` and `agent focus` commands mark the target seen; CLI reads do not. Each TUI client tracks viewed completions independently, so its Done badge can differ from the CLI.
 
 ## Launch
 
@@ -76,7 +77,7 @@ Pass only native agent arguments after `--` because Herdr selects the executable
 - OpenCode: `run --interactive --dangerously-skip-permissions --dir '<workdir>'`
 - Pi: `--approve`
 
-Inspect `herdr agent` for the installed kind list and the target CLI's own help for its arguments. A successful `agent start` waits for the expected agent to become interactively ready. If startup returns `agent_not_ready` because the agent is blocked, the name remains usable; inspect it and wait for an idle state before prompting.
+Inspect `herdr agent start --help` for the supported kind list and the target CLI's own help for its arguments. A successful `agent start` waits for the expected agent to become interactively ready. If startup returns `agent_not_ready` because the agent is blocked, the name remains usable; inspect it and wait for an idle state before prompting.
 
 Use `pane run` only for an ordinary command or an intentionally non-interactive agent invocation:
 
@@ -105,11 +106,11 @@ herdr pane send-keys '<pane-id>' enter
 herdr pane wait-output '<pane-id>' --match '<text>' --lines 200 --timeout <ms>
 herdr pane wait-output '<pane-id>' --regex '<rust-regex>' --raw --timeout <ms>
 herdr pane get '<pane-id>'
-herdr pane process-info '<pane-id>'
+herdr pane process-info --pane '<pane-id>'
 herdr pane zoom '<pane-id>'
 herdr pane report-agent '<pane-id>' --source '<workflow-source>' --agent '<label>' --state '<idle|working|blocked|unknown>' --message '<note>'
 herdr pane report-agent-session '<pane-id>' --source '<workflow-source>' --agent '<label>' --agent-session-id '<id>' --agent-session-path '<path>'
-herdr pane report-metadata '<pane-id>' --source '<workflow-source>' --agent '<label>' --title '<title>' --token workflow=agentops
+herdr pane report-metadata '<pane-id>' --source '<workflow-source>' --agent '<label>' --title '<title>' --token workflow=agent-ops
 herdr pane release-agent '<pane-id>' --source '<workflow-source>' --agent '<label>'
 herdr pane close '<pane-id>'
 herdr agent list
@@ -122,12 +123,12 @@ herdr agent attach '<agent-target>'
 herdr agent send-keys '<agent-target>' esc
 herdr agent wait '<agent-target>' --timeout <ms>
 herdr agent explain '<agent-target>' --json
-herdr workspace report-metadata '<workspace-id>' --source '<workflow-source>' --token workflow=agentops
+herdr workspace report-metadata '<workspace-id>' --source '<workflow-source>' --token workflow=agent-ops
 ```
 
-`pane report-metadata` supports title, display-agent, state-label, and token metadata; `workspace report-metadata` supports token metadata only. Neither has a `--custom-status` option. Report commands accept `--seq <N>` for ordering and `--ttl-ms <N>` to expire display-only metadata, and `report-agent-session` additionally accepts `--session-start-source`. Top-level `herdr wait` no longer exists. Use `agent wait` for lifecycle state and `pane wait-output` for terminal text.
+`pane report-metadata` supports title, display-agent, state-label, and token metadata; `workspace report-metadata` supports token metadata only. Metadata reports accept `--seq <N>` for ordering and `--ttl-ms <N>` for expiry. Lifecycle and session reports accept `--seq <N>`; `report-agent-session` also accepts `--session-start-source`. The metadata `--agent` guard matches the detected agent label, not its unique live name. Use `agent wait` for lifecycle state and `pane wait-output` for terminal text.
 
-Use stable report sources such as `agentops:<run-id>:<agent-id>`.
+Use stable report sources such as `agent-ops:<run-id>:<agent-id>`.
 
 ## Prompt, Wait, And Read
 
@@ -137,7 +138,7 @@ Submit interactive work atomically through the agent surface:
 herdr agent prompt '<agent-target>' 'Read <packet-path> and follow it. Do not assume access to prior conversation.' --wait --timeout 120000
 ```
 
-`agent prompt` sends bracketed-paste-aware text and Enter. Do not follow it with `pane send-keys enter`. It rejects an already blocked agent before writing input. With `--wait` and no `--until`, it waits for the first settled `idle`, `done`, or `blocked` state. Use `--until` only when the workflow requires a specific state. A non-working target must show a lifecycle change within five seconds or Herdr returns `agent_prompt_stalled`.
+`agent prompt` submits bracketed-paste-aware text followed by delayed Enter. Do not follow it with `pane send-keys enter`. It rejects an already blocked agent before writing input. Without `--wait`, success acknowledges input delivery. With `--wait`, a non-working target must reach `working` or `blocked` within five seconds after submission or Herdr returns `agent_prompt_stalled`; an earlier caller timeout returns `timeout`. It then matches `idle`, `done`, or `blocked` by default. `--until` requires `--wait` and selects exact states. Waiting does not track individual turns: an already-working target's active turn can satisfy it.
 
 If a wait fails or returns `blocked`, inspect `agent get` and `agent read`. Do not answer an approval or question dialog without the user's direction. When `unknown` is returned, inspect output instead of treating it as completion.
 
@@ -159,7 +160,7 @@ Use pointer-first communication:
 Use agent-owned directories for Markdown records:
 
 ```text
-.ai/agentops/<operation>/<run-id>/
+.ai/agent-ops/<operation>/<run-id>/
   run.md
   state.md
   index.md
@@ -181,7 +182,7 @@ Local JSON stores Herdr targets, delegated roles, worktree ownership, packet pat
 
 Use Herdr's persistent `default` session and create workflow workspaces within it. Use another session only when the user explicitly requests one.
 
-Default AgentOps layout is one agent per tab and one pane per tab. Use the root tab/pane for the first agent and `tab create` for each later agent. Use `pane split` only when the user explicitly requests a pane layout; choose direction after inspecting `pane layout` and keep the caller focused with `--no-focus`.
+Default Agent-Ops layout is one agent per tab and one pane per tab. Use the root tab/pane for the first agent and `tab create` for each later agent. Use `pane split` only when the user explicitly requests a pane layout; choose direction after inspecting `pane layout` and keep the caller focused with `--no-focus`.
 
 - Use `--no-focus` for background work.
 - Do not close workspaces, tabs, panes, or sessions the workflow did not create unless the user explicitly asks.

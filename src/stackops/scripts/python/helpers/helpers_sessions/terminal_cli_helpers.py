@@ -82,7 +82,7 @@ def resolve_session_backend(
             return "tmux"
         case "herdr" | "h":
             if system == "windows":
-                typer.echo("Error: Herdr is not supported on Windows.", err=True, color=True)
+                typer.echo("Error: StackOps Herdr session commands require macOS or Linux.", err=True, color=True)
                 raise typer.Exit(code=1)
             return "herdr"
         case "aoe" | "e":

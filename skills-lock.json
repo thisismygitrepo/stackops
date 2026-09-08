@@ -1,10 +1,10 @@
 {
   "version": 1,
   "skills": {
-    "agentops": {
+    "agent-ops": {
       "source": ".",
       "sourceType": "local",
-      "computedHash": "da68bfa4a34af595fe1571cc3ac003d318ef14dabea1b63a64dd719ab02e5343"
+      "computedHash": "e8673103fd76cd4d4f3b067f851d406655be7ac99c0bd804b6ebe61493feaba2"
     },
     "caveman": {
       "source": "JuliusBrussee/caveman",

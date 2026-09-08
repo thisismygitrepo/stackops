@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import clean_agentops_cache
+from stackops.scripts.python.helpers.helpers_agents.agents_agent_ops_cache import clean_agent_ops_cache
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import WorkspaceId
 
 
@@ -24,7 +24,7 @@ def _write_run_manifest(*, run_path: Path, herdr_session: str, workspace_id: str
 
 def test_clean_protects_current_run_by_stable_workspace_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HERDR_SESSION", raising=False)
-    run_path = tmp_path.joinpath(".ai", "agentops", "iterations", "alpha")
+    run_path = tmp_path.joinpath(".ai", "agent-ops", "iterations", "alpha")
     _write_run_manifest(run_path=run_path, herdr_session="default", workspace_id="w1", workspace_label="iter-renamed")
     nested_cwd = tmp_path.joinpath("nested", "directory")
     nested_cwd.mkdir(parents=True)
@@ -32,7 +32,7 @@ def test_clean_protects_current_run_by_stable_workspace_id(tmp_path: Path, monke
     def active_ids() -> frozenset[WorkspaceId]:
         return frozenset((WorkspaceId("w1"),))
 
-    result = clean_agentops_cache(
+    result = clean_agent_ops_cache(
         cwd=nested_cwd, workspace_id=None, dry_run=False, load_active_workspace_ids=active_ids, report=lambda _message: None
     )
 
@@ -43,7 +43,7 @@ def test_clean_protects_current_run_by_stable_workspace_id(tmp_path: Path, monke
 
 def test_clean_removes_only_inactive_current_records(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HERDR_SESSION", raising=False)
-    iterations_path = tmp_path.joinpath(".ai", "agentops", "iterations")
+    iterations_path = tmp_path.joinpath(".ai", "agent-ops", "iterations")
     current_path = iterations_path.joinpath("current")
     legacy_path = iterations_path.joinpath("legacy")
     named_session_path = iterations_path.joinpath("named-session")
@@ -54,7 +54,7 @@ def test_clean_removes_only_inactive_current_records(tmp_path: Path, monkeypatch
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
 
-    result = clean_agentops_cache(
+    result = clean_agent_ops_cache(
         cwd=tmp_path, workspace_id=None, dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None
     )
 
@@ -67,7 +67,7 @@ def test_clean_removes_only_inactive_current_records(tmp_path: Path, monkeypatch
 
 def test_clean_scopes_removal_to_one_inactive_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HERDR_SESSION", raising=False)
-    iterations_path = tmp_path.joinpath(".ai", "agentops", "iterations")
+    iterations_path = tmp_path.joinpath(".ai", "agent-ops", "iterations")
     selected_path = iterations_path.joinpath("selected")
     unselected_path = iterations_path.joinpath("unselected")
     _write_run_manifest(run_path=selected_path, herdr_session="default", workspace_id="w1", workspace_label="iter-selected")
@@ -76,7 +76,7 @@ def test_clean_scopes_removal_to_one_inactive_workspace(tmp_path: Path, monkeypa
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
 
-    result = clean_agentops_cache(
+    result = clean_agent_ops_cache(
         cwd=tmp_path, workspace_id=WorkspaceId("w1"), dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None
     )
 
@@ -87,23 +87,23 @@ def test_clean_scopes_removal_to_one_inactive_workspace(tmp_path: Path, monkeypa
 
 def test_clean_rejects_unknown_workspace_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HERDR_SESSION", raising=False)
-    run_path = tmp_path.joinpath(".ai", "agentops", "iterations", "alpha")
+    run_path = tmp_path.joinpath(".ai", "agent-ops", "iterations", "alpha")
     _write_run_manifest(run_path=run_path, herdr_session="default", workspace_id="w1", workspace_label="iter-alpha")
 
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
 
     with pytest.raises(RuntimeError, match="workspace ID 'missing'"):
-        clean_agentops_cache(
+        clean_agent_ops_cache(
             cwd=tmp_path, workspace_id=WorkspaceId("missing"), dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None
         )
 
 
-def test_clean_requires_a_local_agentops_records_tree(tmp_path: Path) -> None:
+def test_clean_requires_a_local_agent_ops_records_tree(tmp_path: Path) -> None:
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
 
     with pytest.raises(RuntimeError) as error:
-        clean_agentops_cache(cwd=tmp_path, workspace_id=None, dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None)
+        clean_agent_ops_cache(cwd=tmp_path, workspace_id=None, dry_run=False, load_active_workspace_ids=no_active_ids, report=lambda _message: None)
 
-    assert str(error.value) == f"AgentOps clean found no .ai/agentops records directory in {tmp_path.resolve()} or its ancestors."
+    assert str(error.value) == f"Agent-Ops clean found no .ai/agent-ops records directory in {tmp_path.resolve()} or its ancestors."

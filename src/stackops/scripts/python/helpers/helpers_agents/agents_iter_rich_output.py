@@ -6,9 +6,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import clean_agentops_cache
+from stackops.scripts.python.helpers.helpers_agents.agents_agent_ops_cache import clean_agent_ops_cache
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_render import (
-    build_agentops_cache_clean_panel,
+    build_agent_ops_cache_clean_panel,
     build_iter_close_plan_table,
     build_iter_close_summary_table,
     build_iter_status_table,
@@ -20,26 +20,26 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_service import (
     load_active_workspace_ids,
     plan_iter_workspace_closes,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_iter_selection import choose_agentops_cache_workspace_id, choose_iter_workspace_id
+from stackops.scripts.python.helpers.helpers_agents.agents_iter_selection import choose_agent_ops_cache_workspace_id, choose_iter_workspace_id
 
 
 _CONSOLE: Final[Console] = Console()
 
 
-def show_clean_agentops_cache(*, cwd: Path, workspace_id: str | None, all_workspaces: bool, interactive: bool, dry_run: bool) -> None:
+def show_clean_agent_ops_cache(*, cwd: Path, workspace_id: str | None, all_workspaces: bool, interactive: bool, dry_run: bool) -> None:
     selected_workspace_id = WorkspaceId(workspace_id) if workspace_id is not None else None
     if interactive:
-        inventory = clean_agentops_cache(
+        inventory = clean_agent_ops_cache(
             cwd=cwd, workspace_id=None, dry_run=True, load_active_workspace_ids=load_active_workspace_ids, report=lambda _message: None
         )
-        selected_workspace_id = choose_agentops_cache_workspace_id(result=inventory)
+        selected_workspace_id = choose_agent_ops_cache_workspace_id(result=inventory)
     elif not all_workspaces and selected_workspace_id is None:
         raise AssertionError("Validated clean scope did not identify a workspace.")
 
-    result = clean_agentops_cache(
+    result = clean_agent_ops_cache(
         cwd=cwd, workspace_id=selected_workspace_id, dry_run=dry_run, load_active_workspace_ids=load_active_workspace_ids, report=_show_progress
     )
-    _CONSOLE.print(build_agentops_cache_clean_panel(result=result))
+    _CONSOLE.print(build_agent_ops_cache_clean_panel(result=result))
 
 
 def show_close_iter_workspaces_loop(

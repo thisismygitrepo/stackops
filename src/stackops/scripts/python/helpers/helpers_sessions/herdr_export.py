@@ -81,22 +81,12 @@ def _select_representative_pane(
     return tab_panes[0]
 
 
-def _cwd_from_entry(entry: JsonObject | None) -> str | None:
-    if entry is None:
-        return None
-    return (
-        entry_text(entry, "foreground_cwd")
-        or entry_text(entry, "cwd")
-        or entry_text(entry, "start_dir")
-        or entry_text(entry, "startDir")
-    )
-
-
-def _start_dir_from_tab(tab: JsonObject, pane: JsonObject | None) -> str:
-    cwd = _cwd_from_entry(entry=pane) or _cwd_from_entry(entry=tab)
-    if cwd is None:
-        return str(Path.home())
-    return cwd
+def _start_dir_from_pane(pane: JsonObject | None) -> str:
+    if pane is not None:
+        cwd = entry_text(pane, "foreground_cwd") or entry_text(pane, "cwd")
+        if cwd is not None:
+            return cwd
+    return str(Path.home())
 
 
 def _workspace_label_counts(workspaces: list[JsonObject]) -> dict[str, int]:
@@ -153,8 +143,7 @@ def _build_layout_for_herdr_workspace(
                     tab=tab,
                     used_tab_names=used_tab_names,
                 ),
-                "startDir": _start_dir_from_tab(
-                    tab=tab,
+                "startDir": _start_dir_from_pane(
                     pane=representative_pane,
                 ),
                 "command": TMUX_EXPORT_SHELL_COMMAND,

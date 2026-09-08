@@ -11,7 +11,7 @@ Give each chain observable completion criteria that it can satisfy entirely with
 When invoking worker chains, use this intent unless the user gave a sharper one:
 
 ```text
-We want to run /agentops iter, but a single iter thread is very slow.
+We want to run /agent-ops iter, but a single iter thread is very slow.
 
 Identify what and how many parallel iter chains can accelerate this goal. After identifying independent lines of work, define observable completion criteria for each line and launch all of them in the same working directory. Each chain must stop as soon as it satisfies its criteria, and each line must be safely separated from the others by scope. When all chains are done, leave the results for the user to review and integrate toward the final task. It is implicitly understood that launching parallel-iters will not get us to the final goal, because there is more work to be done after the identified parallelizable chains are finished.
 ```
@@ -25,4 +25,4 @@ Identify what and how many parallel iter chains can accelerate this goal. After 
 5. Reject unsafe splits where two lanes would edit the same files, mutate the same data model contract from different directions, or require shared sequencing.
 6. If no safe split exists, run normal `iter` instead and explain why parallel chains would collide before proceeding with one sequential chain.
 7. Scope separation is the safety mechanism. The lane contract must make ownership concrete enough that two active chains can work without coordinating every edit. If a lane discovers it needs another lane's scope, it must stop and report the collision instead of editing across the boundary.
-8. Each chain has its own space in Herdr.
+8. Each chain has its own workspace in Herdr.

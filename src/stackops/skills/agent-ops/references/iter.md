@@ -18,8 +18,8 @@ Interactive mode is the default. Preserve the selected mode across passes.
 ## Start
 
 1. Complete the Herdr preflight. Inspect Herdr help, confirm `herdr api snapshot` responds with the session contract, inspect repository state, project rules, branch/commit, changed files, prior commands, and blockers. Record `HERDR_SESSION`, using `default` only when unset.
-2. Create `.ai/agentops/iterations/<slug>/` and write the records below before launch.
-3. Create one Herdr workspace, rename its returned root tab `iter-<slug>-001`, and launch the autonomous agent in its returned root pane with `agent start --kind ... --pane ...`. Do not create another initial tab.
+2. Create `.ai/agent-ops/iterations/<slug>/` and write the records below before launch.
+3. Create one Herdr workspace, rename its returned root tab `iter-<slug>-001`, and launch the autonomous agent in its returned root pane with `herdr agent start 'iter-<slug>-001' --kind '<kind>' --pane '<root-pane-id>' -- <native-agent-args...>`. Do not create another initial tab.
 4. Send `Read <records>/iter-001/task.md and follow it. Do not assume access to prior conversation.` with `agent prompt --wait` and confirm its returned lifecycle state. Do not send another Enter.
 5. Report the slug, records path, workspace, agent target/status, and mode.
 
@@ -39,7 +39,7 @@ Write `run.json` immediately after workspace creation:
 ## Records
 
 ```text
-.ai/agentops/iterations/<slug>/
+.ai/agent-ops/iterations/<slug>/
   run.md
   run.json
   state.md
