@@ -131,6 +131,50 @@ These are the child commands exposed by the current live help.
 
 ---
 
+## `repos guard`
+
+`guard` syncs a Git repository through an encrypted archive in cloud storage. Your local working files and `.git` history stay readable; GPG encrypts the archive before upload and decrypts it locally after download. Git handles merging on your machine, while rclone transfers the encrypted archive.
+
+```bash
+devops repos guard ~/code/private-repo --cloud myremote --message "sync before travel"
+```
+
+When both the local repository and cloud archive exist, the flow is:
+
+```mermaid
+flowchart TB
+    subgraph cloud["Cloud storage · rclone remote"]
+        remote["Repository archive<br/>repo.zip.gpg · encrypted"]
+    end
+
+    subgraph machine["Local machine"]
+        downloaded["Downloaded archive<br/>repo.zip.gpg · encrypted"]
+        copy["Temporary copy of cloud repository<br/>Readable files + .git"]
+        local["Your local Git repository<br/>Readable files + .git"]
+        integration["Isolated Git worktree<br/>Merge local and downloaded history"]
+        updated["Updated local Git repository<br/>Readable files + .git"]
+        archive["Repository ZIP<br/>Files + .git history · unencrypted"]
+        encrypted["Archive ready to upload<br/>repo.zip.gpg · encrypted"]
+
+        downloaded -->|"2. GPG decrypt + unzip"| copy
+        local -->|"3. Commit changes; create worktree"| integration
+        copy -->|"4. Git fetch master + merge"| integration
+        integration -->|"5. Fast-forward after successful merge"| updated
+        updated -->|"6. Zip repository"| archive
+        archive -->|"7. GPG encrypt"| encrypted
+    end
+
+    remote -->|"1. Download with rclone"| downloaded
+    encrypted -->|"8. Upload with rclone; replace cloud archive"| remote
+```
+
+- **Encryption:** by default, GPG encrypts to your own key; restoring requires its private key. Supplying `--password` selects symmetric encryption with that password.
+- **Archive contents:** repository files and `.git` history are encrypted together. Git-ignored files are excluded by default; `--ignore-gitignore` includes them.
+- **First sync:** if the cloud archive is missing, guard commits local changes and publishes the first encrypted archive. If the local repository is missing, it downloads, decrypts, and restores the cloud copy.
+- **Conflicts:** guard handles them in the isolated worktree using `--on-conflict` (default: `ask`). Stopping preserves that worktree and the downloaded copy for inspection; the live repository keeps its local commit without receiving merge conflict markers.
+
+---
+
 ## `repos version`
 
 Capture and restore named repository states in the workspace's `versions.json`:
