@@ -54,7 +54,7 @@ def build_init_config_plan_panel(*, plan: InitConfigPlan) -> Panel:
     table.add_row("Agents", Text(", ".join(plan.frameworks), style="bold magenta"))
     table.add_row("Instructions", _enabled_label(enabled=plan.add_instructions, enabled_text="write agent instruction files"))
     table.add_row("Private config", _enabled_label(enabled=plan.add_private_config, enabled_text="write agent-specific config"))
-    table.add_row("AgentOps skill", _enabled_label(enabled=plan.add_agentops_skill, enabled_text="copy latest bundled skill"))
+    table.add_row("Agent-Ops skill", _enabled_label(enabled=plan.add_agent_ops_skill, enabled_text="copy latest bundled skill"))
     table.add_row("Shared scripts", _enabled_label(enabled=plan.include_common_scaffold, enabled_text="populate ./scripts/type_checking"))
     table.add_row("VS Code task", _enabled_label(enabled=plan.add_vscode_task, enabled_text="update ./.vscode/tasks.json"))
     table.add_row(

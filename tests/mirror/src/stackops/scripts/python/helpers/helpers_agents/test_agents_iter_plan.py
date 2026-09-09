@@ -22,7 +22,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_records import I
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_workspace_records import IterWorkspaceRecords
 
 
-_RUN_PATH = Path("/repo/.ai/agentops/iterations/alpha")
+_RUN_PATH = Path("/repo/.ai/agent-ops/iterations/alpha")
 
 
 def _snapshot(*, source_status: HerdrStatus, include_unmanaged_tab: bool) -> tuple[HerdrSnapshot, HerdrWorkspace]:
@@ -199,7 +199,7 @@ def test_stale_revision_and_legacy_tracker_are_rejected() -> None:
 
 def test_current_handoff_file_is_strictly_parsed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HERDR_SESSION", raising=False)
-    run_path = tmp_path.joinpath(".ai", "agentops", "iterations", "alpha", "iter-001")
+    run_path = tmp_path.joinpath(".ai", "agent-ops", "iterations", "alpha", "iter-001")
     run_path.mkdir(parents=True)
     run_path.parent.joinpath("run.json").write_text(
         json.dumps(
@@ -277,7 +277,7 @@ def test_close_skips_candidate_when_workspace_run_path_changes(monkeypatch: pyte
     def moved_records(*, snapshot: HerdrSnapshot, workspace: HerdrWorkspace) -> IterWorkspaceRecords:
         assert len(snapshot.workspaces) == 1
         assert workspace.workspace_id == WorkspaceId("w1")
-        return IterWorkspaceRecords(run_path=Path("/other-project/.ai/agentops/iterations/alpha"), handoffs=handoffs)
+        return IterWorkspaceRecords(run_path=Path("/other-project/.ai/agent-ops/iterations/alpha"), handoffs=handoffs)
 
     def capture_close(*, tab_id: TabId) -> None:
         close_calls.append(tab_id)

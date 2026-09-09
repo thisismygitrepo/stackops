@@ -1,11 +1,11 @@
 ---
-name: agentops
+name: agent-ops
 description: Manage external interactive agent operations through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for goal-directed iterative improvement, asks for multiple scope-separated iter chains, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
 ---
 
-# AgentOps
+# Agent-Ops
 
-Coordinate external agents through `herdr`:
+Coordinate external agents through the latest `herdr` CLI. Only the latest release is supported:
 
 - `handover`: transfer active work.
 - `iter`: run a goal-directed chain, one pass per agent.
@@ -27,7 +27,7 @@ Do not create workflow state before reading them.
 
 ## Invariants
 
-- Before any Herdr operation, satisfy the `HERDR_ENV=1` preflight in the Herdr mechanics reference; stop outside a Herdr-managed pane.
+- Run Agent-Ops from any shell, regardless of `HERDR_ENV`.
 - Herdr is authoritative for live state. Keep local records to durable contracts, pointers, stable IDs, ownership, decisions, and exceptions; never mirror transcripts or routine status.
 - Put non-trivial context in agent-owned Markdown packets and send only their paths. Keep shared summaries bounded.
 - Default to one agent per tab and one pane per tab. Use each created workspace's root pane for its first agent and panes only when requested.

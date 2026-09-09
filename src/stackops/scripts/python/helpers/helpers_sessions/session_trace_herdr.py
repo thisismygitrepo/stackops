@@ -19,15 +19,8 @@ from stackops.scripts.python.helpers.helpers_sessions.session_trace_models impor
 JsonObject = dict[str, Any]
 WorkspaceChoice = tuple[Literal["error"], str] | tuple[Literal["session_names"], list[str]]
 
-_DONE_AGENT_STATUSES = {"done"}
-_IDLE_AGENT_STATUSES = {"idle"}
+_IDLE_AGENT_STATUSES = {"idle", "done"}
 _RUNNING_AGENT_STATUSES = {"working", "blocked"}
-_EXIT_CODE_KEYS = (
-    "exit_code",
-    "exit_status",
-    "command_exit_code",
-    "terminal_exit_code",
-)
 
 
 def _run_herdr_json(args: list[str]) -> tuple[JsonObject | None, str | None]:
@@ -177,14 +170,6 @@ def _pane_sort_key(pane: JsonObject) -> tuple[str, str]:
     )
 
 
-def _pane_exit_code(pane: JsonObject) -> int | None:
-    for key in _EXIT_CODE_KEYS:
-        exit_code = _entry_int(pane, key)
-        if exit_code is not None:
-            return exit_code
-    return None
-
-
 def _pane_agent_status(pane: JsonObject, tab: JsonObject | None) -> str:
     return (
         _entry_text(pane, "agent_status")
@@ -193,9 +178,7 @@ def _pane_agent_status(pane: JsonObject, tab: JsonObject | None) -> str:
     ).lower()
 
 
-def _pane_category(agent_status: str, exit_code: int | None) -> PaneCategory:
-    if exit_code is not None or agent_status in _DONE_AGENT_STATUSES:
-        return "exited"
+def _pane_category(agent_status: str) -> PaneCategory:
     if agent_status in _IDLE_AGENT_STATUSES:
         return "idle-shell"
     if agent_status in _RUNNING_AGENT_STATUSES:
@@ -213,14 +196,8 @@ def _pane_process_name(pane: JsonObject) -> str:
     )
 
 
-def _pane_status_text(agent_status: str, category: PaneCategory, exit_code: int | None) -> str:
-    if exit_code is not None:
-        return f"exited (code {exit_code})"
-    if category == "exited":
-        return "done"
-    if category == "idle-shell":
-        return "idle agent"
-    if category == "running":
+def _pane_status_text(agent_status: str, category: PaneCategory) -> str:
+    if category in {"idle-shell", "running"}:
         return f"{agent_status} agent"
     return agent_status
 
@@ -228,19 +205,12 @@ def _pane_status_text(agent_status: str, category: PaneCategory, exit_code: int 
 def _pane_matches_criterion(
     *,
     category: PaneCategory,
-    agent_status: str,
-    exit_code: int | None,
     until: TraceUntil,
-    expected_exit_code: int | None,
 ) -> bool:
     match until:
         case "idle-shell":
-            return category == "idle-shell" or agent_status in _DONE_AGENT_STATUSES
-        case "all-exited":
-            return category == "exited"
-        case "exit-code":
-            return category == "exited" and exit_code == expected_exit_code
-        case "session-missing":
+            return category == "idle-shell"
+        case "all-exited" | "exit-code" | "session-missing":
             return False
 
 
@@ -344,7 +314,7 @@ def choose_existing_workspace_names(
 def load_trace_snapshot(
     session_name: str,
     until: TraceUntil,
-    expected_exit_code: int | None,
+    _expected_exit_code: int | None,
 ) -> TraceSnapshot:
     workspaces, workspace_error = _load_workspaces()
     if workspaces is None:
@@ -388,7 +358,6 @@ def load_trace_snapshot(
         tabs=tabs,
         panes=panes,
         until=until,
-        expected_exit_code=expected_exit_code,
         pane_warning=pane_warning,
     )
 
@@ -399,7 +368,6 @@ def evaluate_trace_snapshot(
     tabs: list[JsonObject],
     panes: list[JsonObject],
     until: TraceUntil,
-    expected_exit_code: int | None,
     pane_warning: str | None,
 ) -> TraceSnapshot:
     tab_by_id = {
@@ -411,30 +379,23 @@ def evaluate_trace_snapshot(
     pane_states: list[TracePaneState] = []
     idle_shell_panes = 0
     running_panes = 0
-    exited_panes = 0
     unknown_panes = 0
 
     for pane in panes_sorted:
         tab_id = _entry_text(pane, "tab_id")
         tab = tab_by_id.get(tab_id or "")
         agent_status = _pane_agent_status(pane=pane, tab=tab)
-        exit_code = _pane_exit_code(pane)
-        category = _pane_category(agent_status=agent_status, exit_code=exit_code)
+        category = _pane_category(agent_status=agent_status)
         pane_id = _entry_text(pane, "pane_id")
         matched = _pane_matches_criterion(
             category=category,
-            agent_status=agent_status,
-            exit_code=exit_code,
             until=until,
-            expected_exit_code=expected_exit_code,
         )
         match category:
             case "idle-shell":
                 idle_shell_panes += 1
             case "running":
                 running_panes += 1
-            case "exited":
-                exited_panes += 1
             case "unknown":
                 unknown_panes += 1
         pane_states.append(
@@ -448,12 +409,11 @@ def evaluate_trace_snapshot(
                 status_text=_pane_status_text(
                     agent_status=agent_status,
                     category=category,
-                    exit_code=exit_code,
                 ),
                 cwd=_entry_text(pane, "foreground_cwd") or _entry_text(pane, "cwd") or "—",
                 is_active=bool(pane.get("focused")),
                 category=category,
-                exit_code=exit_code,
+                exit_code=None,
                 matched=matched,
             )
         )
@@ -473,6 +433,6 @@ def evaluate_trace_snapshot(
         criterion_satisfied=total_targets > 0 and matched_targets == total_targets,
         idle_shell_panes=idle_shell_panes,
         running_panes=running_panes,
-        exited_panes=exited_panes,
+        exited_panes=0,
         unknown_panes=unknown_panes,
     )

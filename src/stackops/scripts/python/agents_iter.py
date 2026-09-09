@@ -58,17 +58,17 @@ def clean(
         str | None, typer.Argument(help="Stable Herdr iter workspace ID whose inactive records should be removed. Omit with --all or --interactive.")
     ] = None,
     all_workspaces: Annotated[
-        bool, typer.Option("--all", "-a", help="Clean inactive records across every current-session AgentOps iteration run.")
+        bool, typer.Option("--all", "-a", help="Clean inactive records across every current-session Agent-Ops iteration run.")
     ] = False,
-    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose one AgentOps iteration run with a TV preview.")] = False,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose one Agent-Ops iteration run with a TV preview.")] = False,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Show stale iteration records without removing them.")] = False,
 ) -> None:
-    """Remove stale iteration records while preserving live and unrelated AgentOps records."""
+    """Remove stale iteration records while preserving live and unrelated Agent-Ops records."""
     try:
         _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)
-        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agentops_cache
+        from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agent_ops_cache
 
-        show_clean_agentops_cache(cwd=Path.cwd(), workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive, dry_run=dry_run)
+        show_clean_agent_ops_cache(cwd=Path.cwd(), workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive, dry_run=dry_run)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:

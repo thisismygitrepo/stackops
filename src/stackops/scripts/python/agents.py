@@ -113,9 +113,9 @@ def init_config(
         bool,
         typer.Option("--add-instructions/--no-add-instructions", "-I", help="Include agent instruction files (e.g. AGENTS.md)"),
     ] = True,
-    add_agentops_skill: Annotated[
+    add_agent_ops_skill: Annotated[
         bool,
-        typer.Option("--agentops-skill/--no-agentops-skill", "-A", help="Copy the latest bundled AgentOps skill"),
+        typer.Option("--agent-ops-skill/--no-agent-ops-skill", "-A", help="Copy the latest bundled Agent-Ops skill"),
     ] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
@@ -137,7 +137,7 @@ def init_config(
             add_lint_task=add_vscode_tasks,
             add_config=add_config,
             add_instructions=add_instructions,
-            add_agentops_skill=add_agentops_skill,
+            add_agent_ops_skill=add_agent_ops_skill,
         )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e

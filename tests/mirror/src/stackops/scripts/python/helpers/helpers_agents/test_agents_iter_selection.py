@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import AgentopsCacheCleanResult
+from stackops.scripts.python.helpers.helpers_agents.agents_agent_ops_cache import AgentOpsCacheCleanResult
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import ITER_WORKSPACE_PREVIEW_SIZE_PERCENT
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     HerdrTab,
@@ -16,7 +16,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_selection import (
     build_iter_workspace_preview,
-    choose_agentops_cache_workspace_id,
+    choose_agent_ops_cache_workspace_id,
     choose_iter_workspace_id,
 )
 from stackops.utils.options_utils import tv_options
@@ -39,7 +39,7 @@ def _status() -> IterWorkspaceStatus:
     )
     plan = IterWorkspaceClosePlan(
         workspace=workspace,
-        run_path=Path("/project/.ai/agentops/iterations/alpha"),
+        run_path=Path("/project/.ai/agent-ops/iterations/alpha"),
         tabs=(close_tab, retained_tab, protected_tab),
         retained_tabs=(retained_tab,),
         protected_tabs=(ProtectedTab(tab=protected_tab, reason="unmanaged"),),
@@ -97,8 +97,8 @@ def test_iter_workspace_preview_reports_live_plan() -> None:
     assert "`iter-alpha-notes` (`w1:t3`) — unmanaged" in preview
 
 
-def test_agentops_cache_selection_previews_inactive_run_action(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    run_path = tmp_path.joinpath(".ai", "agentops", "iterations", "alpha")
+def test_agent_ops_cache_selection_previews_inactive_run_action(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    run_path = tmp_path.joinpath(".ai", "agent-ops", "iterations", "alpha")
     run_path.mkdir(parents=True)
     run_path.joinpath("run.json").write_text(
         json.dumps(
@@ -111,7 +111,7 @@ def test_agentops_cache_selection_previews_inactive_run_action(tmp_path: Path, m
         ),
         encoding="utf-8",
     )
-    result = AgentopsCacheCleanResult(
+    result = AgentOpsCacheCleanResult(
         project_root=tmp_path,
         iterations_path=run_path.parent,
         removed_runs=(run_path,),
@@ -131,19 +131,19 @@ def test_agentops_cache_selection_previews_inactive_run_action(tmp_path: Path, m
 
     monkeypatch.setattr(tv_options, "choose_from_dict_with_preview", select_run)
 
-    workspace_id = choose_agentops_cache_workspace_id(result=result)
+    workspace_id = choose_agent_ops_cache_workspace_id(result=result)
 
     assert workspace_id == WorkspaceId("w9")
     preview = captured_preview["iter-alpha [w9]"]
     assert "Current state: `inactive`" in preview
     assert "Clean action: `remove`" in preview
-    assert "Record path: `./.ai/agentops/iterations/alpha`" in preview
+    assert "Record path: `./.ai/agent-ops/iterations/alpha`" in preview
 
 
-def test_agentops_cache_selection_requires_a_managed_run(tmp_path: Path) -> None:
-    result = AgentopsCacheCleanResult(
+def test_agent_ops_cache_selection_requires_a_managed_run(tmp_path: Path) -> None:
+    result = AgentOpsCacheCleanResult(
         project_root=tmp_path,
-        iterations_path=tmp_path.joinpath(".ai", "agentops", "iterations"),
+        iterations_path=tmp_path.joinpath(".ai", "agent-ops", "iterations"),
         removed_runs=(),
         protected_runs=(),
         unmanaged_entries=(),
@@ -151,5 +151,5 @@ def test_agentops_cache_selection_requires_a_managed_run(tmp_path: Path) -> None
         dry_run=True,
     )
 
-    with pytest.raises(RuntimeError, match="No current AgentOps iteration runs"):
-        choose_agentops_cache_workspace_id(result=result)
+    with pytest.raises(RuntimeError, match="No current Agent-Ops iteration runs"):
+        choose_agent_ops_cache_workspace_id(result=result)

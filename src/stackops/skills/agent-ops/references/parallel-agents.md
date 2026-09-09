@@ -20,12 +20,12 @@ Before creating or messaging agents:
 1. Complete the Herdr preflight and inspect `herdr --help` plus relevant workspace/tab/pane/agent help.
 2. Read existing Herdr sessions/agents so ownership is clear.
 3. Identify the controller command from the process tree.
-4. Create `.ai/agentops/parallel-agents/contracts/agents.json` only when durable recovery across multiple operations is needed.
+4. Create `.ai/agent-ops/parallel-agents/contracts/agents.json` only when durable recovery across multiple operations is needed.
 5. If the index exists, read it before creating, messaging, collecting from, or terminating agents.
 
 ## Agent Index
 
-Store only durable ownership state in `.ai/agentops/parallel-agents/contracts/agents.json`. Herdr remains the live registry.
+Store only durable ownership state in `.ai/agent-ops/parallel-agents/contracts/agents.json`. Herdr remains the live registry.
 
 ```json
 {
@@ -68,7 +68,7 @@ Update the index only for durable ownership changes, packet paths, or exceptions
 For non-trivial delegation, create per-agent packets under:
 
 ```text
-.ai/agentops/parallel-agents/runs/<run-id>/
+.ai/agent-ops/parallel-agents/runs/<run-id>/
   run.md
   state.md
   index.md
@@ -93,7 +93,7 @@ herdr agent start '<later-agent-name>' --kind '<kind>' --pane '<returned-root-pa
 herdr agent list
 herdr agent get '<agent-name>'
 herdr pane list --workspace '<workspace-id>'
-herdr pane report-metadata '<pane-id>' --source 'agentops:<run-id>:<agent-id>' --agent '<agent-name>' --title '<role>' --token workflow=parallel-agents
+herdr pane report-metadata '<pane-id>' --source 'agent-ops:<run-id>:<agent-id>' --title '<role>' --token workflow=parallel-agents
 ```
 
 Use the workspace's root tab/pane for the first agent; do not leave an unused initial tab. Keep every agent name unique, lowercase, within 32 characters, and limited to Herdr's allowed name characters.

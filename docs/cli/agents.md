@@ -24,14 +24,14 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
-| `iter` | Inspect and maintain current-format AgentOps iteration workspaces through Herdr |
+| `iter` | Inspect and maintain current-format Agent-Ops iteration workspaces through Herdr |
 | `clean` | Remove `.ai` directories from discovered Git repositories |
 
 ---
 
 ## `iter`
 
-`iter` works against the current Herdr CLI; there is no pinned version, and each command validates the live `herdr api snapshot` shape itself. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agentops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agentops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
+`iter` supports only the latest Herdr CLI and server; each command validates the live `herdr api snapshot` shape itself. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agent-ops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agent-ops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
 
 ```bash
 agents iter status --all
@@ -204,7 +204,7 @@ agents ask --quiet "summarize the current directory"
 
 ## Repository and MCP helpers
 
-`add-config` requires an agent argument and copies the latest AgentOps skill bundled with StackOps into `.agents/skills/agentops` by default. Pass `--no-agentops-skill`/`-A` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `all` to configure every supported agent, or pass a comma-separated list. Pi and OMP configurations include their native ten-attempt exponential retry policies for transient API failures.
+`add-config` requires an agent argument and copies the latest Agent-Ops skill bundled with StackOps into `.agents/skills/agent-ops` by default. Pass `--no-agent-ops-skill`/`-A` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `all` to configure every supported agent, or pass a comma-separated list. Pi and OMP configurations include their native ten-attempt exponential retry policies for transient API failures.
 
 ```bash
 agents add-config all --root .
@@ -221,7 +221,7 @@ agents add-config codex --root . -A
 - `agy` means Google Antigravity CLI. Local MCP config is written to `.agents/mcp_config.json`; global MCP config is written to `~/.gemini/antigravity-cli/mcp_config.json`
 - `oz` means Warp Oz CLI. Local MCP config is written to `.warp/mcp.json` in Oz's direct `--mcp` file shape, and StackOps passes that file to `oz agent run --mcp` when it exists.
 - `pi` local MCP config is written to `.pi/mcp.json`; global MCP config is written to `~/.pi/agent/mcp.json`
-- `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agentops`, and `stackops` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
+- `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
 For `add-mcp`, `--source repo` or `-S repo` resolves to `<git-root>/.stackops/mcp.json`.
@@ -297,7 +297,7 @@ agents browser replicate 5 --overwrite
 
 ## `add-skill`
 
-`add-skill` uses the StackOps backend by default, copying bundled skills directly into `<repo-root>/.agents/skills/<skill>` for local installs. If the StackOps backend cannot handle the request, it reports the reason and falls back to the existing `bunx skills@latest add` path. Use `--backend bunx` to run the upstream skills CLI directly, or `--backend npx` to run `npx skills@latest add` instead. The shipped source aliases are `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agentops`, and `stackops`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping for `bunx`/`npx`; the StackOps backend installs into the shared repo-local skill directory. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+`add-skill` uses the StackOps backend by default, copying bundled skills directly into `<repo-root>/.agents/skills/<skill>` for local installs. If the StackOps backend cannot handle the request, it reports the reason and falls back to the existing `bunx skills@latest add` path. Use `--backend bunx` to run the upstream skills CLI directly, or `--backend npx` to run `npx skills@latest add` instead. The shipped source aliases are `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping for `bunx`/`npx`; the StackOps backend installs into the shared repo-local skill directory. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
 
 ```bash
 agents add-skill --scope local
@@ -306,7 +306,7 @@ agents add-skill agent-skills --agent codex --scope global
 agents add-skill last30days --agent codex --scope global --backend npx
 agents add-skill archify --agent codex --scope global --backend npx
 agents add-skill stackops --scope local --backend s
-agents add-skill agentops --scope local --backend stackops
+agents add-skill agent-ops --scope local --backend stackops
 agents add-skill grill-with-docs --scope local
 agents add-skill caveman --agent codex --scope local
 agents add-skill caveman --agent github-copilot --scope global

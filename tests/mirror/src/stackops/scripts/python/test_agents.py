@@ -9,17 +9,17 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import CONFIG_AGENTS
 
 
 @pytest.mark.parametrize(
-    ("extra_arguments", "expected_add_agentops_skill"),
+    ("extra_arguments", "expected_add_agent_ops_skill"),
     [
         ((), True),
-        (("--no-agentops-skill",), False),
+        (("--no-agent-ops-skill",), False),
     ],
 )
 @pytest.mark.parametrize("command_name", ["add-config", "c"])
-def test_add_config_forwards_agentops_skill_default_and_opt_out(
+def test_add_config_forwards_agent_ops_skill_default_and_opt_out(
     command_name: str,
     extra_arguments: Sequence[str],
-    expected_add_agentops_skill: bool,
+    expected_add_agent_ops_skill: bool,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     forwarded_values: list[bool] = []
@@ -33,7 +33,7 @@ def test_add_config_forwards_agentops_skill_default_and_opt_out(
         add_lint_task: bool,
         add_config: bool,
         add_instructions: bool,
-        add_agentops_skill: bool,
+        add_agent_ops_skill: bool,
     ) -> None:
         assert root is None
         assert frameworks == ("codex",)
@@ -42,14 +42,14 @@ def test_add_config_forwards_agentops_skill_default_and_opt_out(
         assert add_lint_task is False
         assert add_config is True
         assert add_instructions is True
-        forwarded_values.append(add_agentops_skill)
+        forwarded_values.append(add_agent_ops_skill)
 
     monkeypatch.setattr(agents_impl, "init_config", capture_init_config)
 
     result = CliRunner().invoke(agents.get_app(), [command_name, "codex", *extra_arguments])
 
     assert result.exit_code == 0, result.output
-    assert forwarded_values == [expected_add_agentops_skill]
+    assert forwarded_values == [expected_add_agent_ops_skill]
 
 
 def test_add_config_accepts_omp(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -64,7 +64,7 @@ def test_add_config_accepts_omp(monkeypatch: pytest.MonkeyPatch) -> None:
         add_lint_task: bool,
         add_config: bool,
         add_instructions: bool,
-        add_agentops_skill: bool,
+        add_agent_ops_skill: bool,
     ) -> None:
         assert root is None
         assert include_common is False
@@ -72,7 +72,7 @@ def test_add_config_accepts_omp(monkeypatch: pytest.MonkeyPatch) -> None:
         assert add_lint_task is False
         assert add_config is True
         assert add_instructions is True
-        assert add_agentops_skill is True
+        assert add_agent_ops_skill is True
         forwarded_frameworks.append(frameworks)
 
     monkeypatch.setattr(agents_impl, "init_config", capture_init_config)

@@ -1,5 +1,6 @@
 # terminal
 
+The Herdr backend supports only the latest Herdr CLI and server. See the [Herdr CLI reference](https://herdr.dev/docs/cli-reference/) for current command syntax.
 
 ## Usage
 
@@ -226,6 +227,8 @@ terminal trace [SESSION_NAME] [OPTIONS]
 | `--every` | `-e` | Polling interval in seconds |
 | `--until` | `-u` | `idle-shell`, `all-exited`, `exit-code`, or `session-missing` |
 | `--exit-code` | `-c` | Required exit code when `--until exit-code` is selected |
+
+With `--backend herdr`, tracing supports `idle-shell` and `session-missing`. Herdr's API does not expose process exit status, so `all-exited` and `exit-code` are rejected. Herdr agent states `idle` and `done` both count as ready for input; `done` indicates an unseen completion.
 
 Examples:
 

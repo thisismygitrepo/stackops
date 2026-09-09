@@ -20,7 +20,7 @@ def resolve_trace_backend(backend: TraceBackendOption) -> TraceBackend:
             return "tmux"
         case "herdr" | "h":
             if platform.system().lower() == "windows":
-                typer.echo("Error: Herdr is not supported on Windows.", err=True, color=True)
+                typer.echo("Error: StackOps Herdr session tracing requires macOS or Linux.", err=True, color=True)
                 raise typer.Exit(code=1)
             return "herdr"
         case "aoe" | "a" | "e":
@@ -62,6 +62,11 @@ def _validate_trace_options(
 ) -> None:
     if every_seconds <= 0:
         raise typer.BadParameter("`--every` must be greater than 0.")
+    if backend == "herdr" and until in {"all-exited", "exit-code"}:
+        raise typer.BadParameter(
+            "Herdr does not expose process exit status for session tracing. "
+            "Use `--until idle-shell` or `--until session-missing`."
+        )
     if backend == "aoe" and until == "exit-code":
         raise typer.BadParameter("AoE does not expose process exit codes for session tracing.")
     if until == "exit-code" and exit_code is None:

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from stackops.scripts.python.helpers.helpers_agents import agents_iter_rich_output
-from stackops.scripts.python.helpers.helpers_agents.agents_agentops_cache import AgentopsCacheCleanResult
+from stackops.scripts.python.helpers.helpers_agents.agents_agent_ops_cache import AgentOpsCacheCleanResult
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_models import (
     HerdrWorkspace,
     IterWorkspaceClose,
@@ -80,9 +80,9 @@ def test_interactive_status_selects_once_then_refreshes_selected_workspace(monke
 
 def test_interactive_clean_inventories_then_cleans_selected_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     clean_calls: list[tuple[WorkspaceId | None, bool]] = []
-    empty_result = AgentopsCacheCleanResult(
+    empty_result = AgentOpsCacheCleanResult(
         project_root=tmp_path,
-        iterations_path=tmp_path.joinpath(".ai", "agentops", "iterations"),
+        iterations_path=tmp_path.joinpath(".ai", "agent-ops", "iterations"),
         removed_runs=(),
         protected_runs=(),
         unmanaged_entries=(),
@@ -97,7 +97,7 @@ def test_interactive_clean_inventories_then_cleans_selected_workspace(tmp_path: 
         dry_run: bool,
         load_active_workspace_ids: Callable[[], frozenset[WorkspaceId]],
         report: Callable[[str], None],
-    ) -> AgentopsCacheCleanResult:
+    ) -> AgentOpsCacheCleanResult:
         assert cwd == tmp_path
         assert load_active_workspace_ids() == frozenset()
         report("checked")
@@ -107,14 +107,14 @@ def test_interactive_clean_inventories_then_cleans_selected_workspace(tmp_path: 
     def no_active_ids() -> frozenset[WorkspaceId]:
         return frozenset()
 
-    def choose_run(*, result: AgentopsCacheCleanResult) -> WorkspaceId:
+    def choose_run(*, result: AgentOpsCacheCleanResult) -> WorkspaceId:
         assert result is empty_result
         return WorkspaceId("w9")
 
-    monkeypatch.setattr(agents_iter_rich_output, "clean_agentops_cache", clean_cache)
+    monkeypatch.setattr(agents_iter_rich_output, "clean_agent_ops_cache", clean_cache)
     monkeypatch.setattr(agents_iter_rich_output, "load_active_workspace_ids", no_active_ids)
-    monkeypatch.setattr(agents_iter_rich_output, "choose_agentops_cache_workspace_id", choose_run)
+    monkeypatch.setattr(agents_iter_rich_output, "choose_agent_ops_cache_workspace_id", choose_run)
 
-    agents_iter_rich_output.show_clean_agentops_cache(cwd=tmp_path, workspace_id=None, all_workspaces=False, interactive=True, dry_run=False)
+    agents_iter_rich_output.show_clean_agent_ops_cache(cwd=tmp_path, workspace_id=None, all_workspaces=False, interactive=True, dry_run=False)
 
     assert clean_calls == [(None, True), (WorkspaceId("w9"), False)]

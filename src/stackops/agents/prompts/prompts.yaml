@@ -23,17 +23,17 @@ findBugsOrImprovementRoom:
   prompt: |
     Please find either bugs or room to improve this repo.
     * The thing is, the repo is huge, so you need to split work to N agents. The use must specify a concrete value for N, if not, stop and ask them for the value. Once you find out the value, you need to undestand the repo at a fairly high level and figure out a way to distribute the workload on those sub agents.
-    * The sub agents must be created within herdr framework, its a tmux-like session manager intended for agents, you create a space and windows there, one window per agent with good name. The agent is of the same harness as you are, unless user specified, e.g. codex, pi, omp, opencode etc.
+    * Create the sub agents with the latest Herdr CLI: create a workspace with one clearly named tab per agent. Use the same agent harness as you unless the user specifies another, e.g. codex, pi, omp, opencode etc.
     * you wait until they all finish, then collect the results from them and pass on the final reports back to the user so they decide on what to do next.
     * Notice that so far, we didn't fix anything or improve anything, it was just anaylsis,
-    * The user then might ask you to approve the bug fix suggestions or improvements suggestions, in which case you proceed to launch sub agents, one per improvment/bug fix (exactly one), they go in different herdr space and lunached separetely, and they must be instucted with additional caveat """please fix this only if you think it is genuinely a bug/improvment space, if you disagree please leave as is, also, please take into consideration complexity and speed, if solution adds too much complexity, we skip, if solution slow down things significantly, we skip too. We are not super fussy about correctness, we are more about practicality and performance and maintainability.""". This gives us extra reassurance that first work was not hallucination because the prior agent was handling too much and missed details. The bug finding operation might have been done already and you are asked to start working on fixes, in which case the above applies.
-    * When finished, please don't close the tmux/herdr space/session, as user might want followup questions with those agents.
+    * The user then might ask you to approve the bug fix suggestions or improvements suggestions, in which case you proceed to launch sub agents, one per improvment/bug fix (exactly one), they go in a separate Herdr workspace and are launched in separate tabs, and they must be instucted with additional caveat """please fix this only if you think it is genuinely a bug/improvment space, if you disagree please leave as is, also, please take into consideration complexity and speed, if solution adds too much complexity, we skip, if solution slow down things significantly, we skip too. We are not super fussy about correctness, we are more about practicality and performance and maintainability.""". This gives us extra reassurance that first work was not hallucination because the prior agent was handling too much and missed details. The bug finding operation might have been done already and you are asked to start working on fixes, in which case the above applies.
+    * When finished, please don't close the Herdr workspaces or tabs, as user might want followup questions with those agents.
   
 
 ensureLightweightCommands:
   description: we want typer cli files to remain light weight and prevent uncncessary upfront loading.
   prompt: |
-    Use the `$agentops` skill with the `parallel-agents` command.
+    Use the `$agent-ops` skill with the `parallel-agents` command.
 
     $caveman weynan full.
     Please look into every cli typer py file that has (import typer).
@@ -45,7 +45,7 @@ ensureLightweightCommands:
     Convey those messages to the new agent instances, but its up to you to decide which one is worth working on and which one is already reasonably optimized, plese don't be overzelous.
 
     Because the number of files is too big, please spin up another veresion of you (whether you are codex, claude, opencode, copilot etc)
-    but not as a sub agent. Use Herdr-managed tabs/windows/panes as directed by the `$agentops` skill and give each agent a clear name matching its task.
+    but not as a sub agent. Use Herdr workspaces, tabs, and panes as directed by the `$agent-ops` skill and give each agent a clear name matching its task.
 
     # Instructions for agents:
     * Pass sufficient instructions to them to be able to get the job done
@@ -57,12 +57,12 @@ ensureLightweightCommands:
     * Please start the agents interactively, i.e. start the cli, then paste/type the prompt intended for that agent and press enter to let it go at it.
     * You want to make sure that they are actually working, by seeing some progress, just in case your launch failed, only then, you job is finished, you don't need to monitor them until they finish.
 
-    Do not use internal subagents. Use `$agentops parallel-agents`, submit each prompt, verify each agent accepted it, then report the Herdr targets and visible status.
+    Do not use internal subagents. Use `$agent-ops parallel-agents`, submit each prompt, verify each agent accepted it, then report the Herdr targets and visible status.
 
 createParallelAgents:
-  description: Use agentops parallel-agents for an appended requirement.
+  description: Use agent-ops parallel-agents for an appended requirement.
   prompt: |
-    Use the `$agentops` skill with the `parallel-agents` command for the appended user requirement.
+    Use the `$agent-ops` skill with the `parallel-agents` command for the appended user requirement.
 
     You are preparing a StackOps external parallel-agent run for the user requirement in the appended prompt.
 
@@ -70,14 +70,14 @@ createParallelAgents:
     1. Read the appended user requirement as the source of truth.
     2. Design the full external-agent split: agent choice, task boundaries, context source, chunking, paths, and agent names.
     3. Create task-specific standalone instructions needed for robust delegation.
-    4. Start Herdr-managed interactive agents through `$agentops parallel-agents`.
+    4. Start Herdr-managed interactive agents through `$agent-ops parallel-agents`.
     5. Submit the intended prompt to each agent and verify each agent accepted it.
 
     This is an orchestration prompt. Do not pass this prompt itself to spawned agents. Write or select a prompt that tells spawned agents how to do the user's actual work.
 
     Creation and launch contract:
 
-    - The purpose is to launch external interactive agents through `$agentops parallel-agents`.
+    - The purpose is to launch external interactive agents through `$agent-ops parallel-agents`.
     - The purpose is not to create generated `agents parallel create` layout files.
     - Do not use internal subagents.
     - Do not use `agents parallel create`, `agents parallel run-parallel`, `--run`, `--Run`, or `-R`.
@@ -117,9 +117,9 @@ createParallelAgents:
     - Mention any agent that failed to start or accept its prompt.
 
 stackopsMaintinanceUpdateInstaller:
-  description: Use agentops parallel-agents to update installer filename patterns.
+  description: Use agent-ops parallel-agents to update installer filename patterns.
   prompt: |
-    Use the `$agentops` skill with the `parallel-agents` command.
+    Use the `$agent-ops` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to update GitHub release filename patterns in `src/stackops/utils/schemas/installer/installer_data.json`.
     Split installer entries across agents, with 10 entries per agent. Tell agents to edit only entries assigned to them.
@@ -137,9 +137,9 @@ stackopsMaintinanceUpdateInstaller:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsMaintinanceUpdateTest:
-  description: Use agentops parallel-agents to write mirrored runtime tests.
+  description: Use agent-ops parallel-agents to write mirrored runtime tests.
   prompt: |
-    Use the `$agentops` skill with the `parallel-agents` command.
+    Use the `$agent-ops` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to add focused runtime tests for StackOps Python files.
     Build the work list from git-visible `.py` files, excluding `tests` and ignored/generated directories. Give each agent about 10 files.
@@ -156,9 +156,9 @@ stackopsMaintinanceUpdateTest:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsMaintinanceUpdateDocs:
-  description: Use agentops parallel-agents to update CLI and API docs.
+  description: Use agent-ops parallel-agents to update CLI and API docs.
   prompt: |
-    Use the `$agentops` skill with the `parallel-agents` command.
+    Use the `$agent-ops` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to update documentation under `docs/cli` and `docs/api`.
     Build the work list from git-visible Markdown files in those two directories. Give agents clear file chunks.
@@ -174,9 +174,9 @@ stackopsMaintinanceUpdateDocs:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsMaintinanceUpdateLogic:
-  description: Use agentops parallel-agents to review command logic.
+  description: Use agent-ops parallel-agents to review command logic.
   prompt: |
-    Use the `$agentops` skill with the `parallel-agents` command.
+    Use the `$agent-ops` skill with the `parallel-agents` command.
 
     Goal: coordinate external agents to review StackOps CLI command logic and fix real issues.
     Build the work list from CLI command source locations, with each task naming the repo-relative source file and command path.
@@ -194,9 +194,9 @@ stackopsMaintinanceUpdateLogic:
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 stackopsUpdateAgentsConfig:
-  description: Use agentops parallel-agents to update agents add-config outputs, one external agent per supported target.
+  description: Use agent-ops parallel-agents to update agents add-config outputs, one external agent per supported target.
   prompt: |
-    Use the `$agentops` skill with the `parallel-agents` command.
+    Use the `$agent-ops` skill with the `parallel-agents` command.
 
     Please update StackOps `agents add-config` support against the latest official docs for every supported agent.
 
@@ -207,7 +207,7 @@ stackopsUpdateAgentsConfig:
 
     Determine the supported `agents add-config --agent` values from the live command and current source. Do not rely on this prompt for a hardcoded agent list.
 
-    After determining the supported values, launch Herdr-managed interactive agents through `$agentops parallel-agents`:
+    After determining the supported values, launch Herdr-managed interactive agents through `$agent-ops parallel-agents`:
     - Start exactly one external agent per supported `agents add-config --agent` value.
     - Give each spawned agent one supported target only, and name the Herdr target after that assigned target.
     - Do not group multiple supported targets into one spawned agent.

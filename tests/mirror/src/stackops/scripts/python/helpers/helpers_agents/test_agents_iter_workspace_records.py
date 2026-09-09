@@ -59,7 +59,7 @@ def _snapshot(*, workspaces: tuple[HerdrWorkspace, ...], entries: tuple[Snapshot
 
 
 def _write_run_manifest(*, project_root: Path, run_slug: str, herdr_session: str, workspace_id: str, workspace_label: str) -> Path:
-    run_path = project_root.joinpath(".ai", "agentops", "iterations", run_slug)
+    run_path = project_root.joinpath(".ai", "agent-ops", "iterations", run_slug)
     run_path.mkdir(parents=True)
     run_path.joinpath("run.json").write_text(
         json.dumps(
@@ -146,7 +146,7 @@ def test_no_exact_run_manifest_raises_error(tmp_path: Path, monkeypatch: pytest.
     entry = _entry(workspace=iter_workspace, number=1, label="iter-alpha-001", cwd=str(no_record_directory), foreground_cwd="relative/path")
     snapshot = _snapshot(workspaces=(iter_workspace,), entries=(entry,))
 
-    with pytest.raises(RuntimeError, match="Cannot locate AgentOps records for Herdr iter workspace") as error:
+    with pytest.raises(RuntimeError, match="Cannot locate Agent-Ops records for Herdr iter workspace") as error:
         agents_iter_workspace_records.resolve_iter_workspace_run_path(snapshot=snapshot, workspace=iter_workspace)
 
     assert str(no_record_directory) in str(error.value)
@@ -171,7 +171,7 @@ def test_multiple_exact_run_manifests_raise_ambiguity_error(tmp_path: Path, monk
     second_entry = _entry(workspace=iter_workspace, number=2, label="iter-alpha-002", cwd=str(second_subdirectory), foreground_cwd=None)
     snapshot = _snapshot(workspaces=(iter_workspace,), entries=(first_entry, second_entry))
 
-    with pytest.raises(RuntimeError, match="resolves to multiple AgentOps runs") as error:
+    with pytest.raises(RuntimeError, match="resolves to multiple Agent-Ops runs") as error:
         agents_iter_workspace_records.resolve_iter_workspace_run_path(snapshot=snapshot, workspace=iter_workspace)
 
     assert str(first_run_path) in str(error.value)

@@ -13,7 +13,7 @@ SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
 STACKOPS_FALLBACK_SKILL_INSTALL_BACKEND: Final[SKILL_INSTALL_COMMAND_BACKEND] = "bunx"
 AGENT_SKILL_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 AGENT_SKILLS_REFERENCE_FILE_NAME: Final[str] = "agent-skills-reference.md"
-AGENTOPS_SKILL_NAME: Final[Literal["agentops"]] = "agentops"
+AGENT_OPS_SKILL_NAME: Final[Literal["agent-ops"]] = "agent-ops"
 ORCA_SKILL_SOURCE: Final[str] = "https://github.com/stablyai/orca"
 
 
@@ -36,7 +36,7 @@ _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
     "orca-emulator": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-emulator"),
     "orca-linear": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-linear"),
     "orchestration": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orchestration"),
-    AGENTOPS_SKILL_NAME: AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill=AGENTOPS_SKILL_NAME),
+    AGENT_OPS_SKILL_NAME: AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill=AGENT_OPS_SKILL_NAME),
     "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
     "unslop": AgentSkillSource("https://github.com/cursor/plugins", skill="unslop"),
 }
