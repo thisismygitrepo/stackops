@@ -27,7 +27,7 @@ Do not create workflow state before reading them.
 
 ## Invariants
 
-- Before any Herdr operation, satisfy the `HERDR_ENV=1` preflight in the Herdr mechanics reference; stop outside a Herdr-managed pane.
+- Run Agent-Ops from any shell, regardless of `HERDR_ENV`.
 - Herdr is authoritative for live state. Keep local records to durable contracts, pointers, stable IDs, ownership, decisions, and exceptions; never mirror transcripts or routine status.
 - Put non-trivial context in agent-owned Markdown packets and send only their paths. Keep shared summaries bounded.
 - Default to one agent per tab and one pane per tab. Use each created workspace's root pane for its first agent and panes only when requested.

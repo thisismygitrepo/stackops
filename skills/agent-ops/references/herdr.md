@@ -4,13 +4,7 @@ Read this before any workflow command. `herdr` is the live ledger for external a
 
 ## Preflight
 
-Before inspecting or controlling Herdr, verify that the controller is itself running in a Herdr-managed pane:
-
-```bash
-test "${HERDR_ENV:-}" = 1
-```
-
-If this fails, say that Agent-Ops requires a Herdr-managed pane and stop. Do not inspect or control the focused default session from outside Herdr.
+The controller can run inside or outside Herdr. Do not check or require `HERDR_ENV`; use the CLI and live server checks below.
 
 Use the latest Herdr CLI and server; only the latest release is supported. The latest release's installed help is authoritative for command syntax; consult the [official CLI reference](https://herdr.dev/docs/cli-reference/) for additional context:
 
@@ -38,7 +32,7 @@ Public workspace, tab, and pane IDs are opaque stable handles. Parse them from J
 printf '%s\n' "$HERDR_WORKSPACE_ID" "$HERDR_TAB_ID" "$HERDR_PANE_ID"
 ```
 
-Prefer `--current` when targeting the calling pane and explicit IDs or unique agent names everywhere else. Omitting a target can act on another client's focused pane.
+Use `--current` only when targeting the calling pane and Herdr caller context is available. Otherwise, discover targets with `herdr workspace list`, `herdr pane list --workspace '<workspace-id>'`, or `herdr agent list` and pass explicit IDs or unique agent names. Omitting a target can act on another client's focused pane.
 
 Agent commands accept a unique live agent name or the pane ID currently hosting that agent. They do not accept terminal IDs or bare agent-kind labels. Names must match `[a-z][a-z0-9_-]{0,31}` and be unique among live agents. A name follows its pane occupant and is cleared when that agent exits, is released, or is replaced.
 
