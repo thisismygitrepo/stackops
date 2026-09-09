@@ -3962,7 +3962,8 @@
       "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
       "doc": "Git worktree manager for parallel AI agent workflows.",
       "categoryLabels": [
-        "version-control"
+        "version-control",
+        "ai-agents-assistants"
       ],
       "fileNamePattern": {
         "amd64": {
@@ -4353,7 +4354,6 @@
       "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
       "doc": "💰 Cointop is a fast and lightweight interactive terminal based UI application for tracking and monitoring cryptocurrency coin stats in real-time.",
       "categoryLabels": [
-        "monitoring-performance",
         "finance-markets"
       ],
       "fileNamePattern": {
@@ -5795,7 +5795,7 @@
       "appName": "nerdfont",
       "license": "Mixed; MIT for project source code, SIL OFL 1.1 for source/patched fonts and folders with explicit OFL/SIL files",
       "repoURL": "CMD",
-      "doc": "lightweight containerization",
+      "doc": "🔤 Patched fonts with programming icon glyphs for terminals and editors.",
       "categoryLabels": [
         "terminals-shells"
       ],
@@ -7157,7 +7157,7 @@
         }
       },
       "categoryLabels": [
-        "search-navigation"
+        "monitoring-performance"
       ]
     },
     {
@@ -7168,7 +7168,8 @@
       "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
       "doc": "GitHub Spec Kit CLI for specifying and scaffolding projects.",
       "categoryLabels": [
-        "build-devops-containers"
+        "build-devops-containers",
+        "ai-agents-assistants"
       ],
       "fileNamePattern": {
         "amd64": {
@@ -7415,6 +7416,30 @@
           "linux": "gdu_linux_arm64.tgz",
           "windows": null,
           "darwin": "gdu_darwin_arm64.tgz"
+        }
+      }
+    },
+    {
+      "appName": "dbx",
+      "license": "Apache-2.0",
+      "repoURL": "https://github.com/t8y2/dbx",
+      "lastCommitDate": "2026-09-08T18:04:54Z",
+      "lastCommitDateCheckDate": "2026-09-09T00:10:21Z",
+      "doc": "🗃️ Lightweight cross-platform database client for 90+ databases with built-in AI, CLI, MCP server, and desktop app.",
+      "categoryLabels": [
+        "databases",
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "DBX_{version}_amd64.AppImage",
+          "windows": "DBX_{version}_x64-portable.zip",
+          "darwin": "DBX_{version}_x64.dmg"
+        },
+        "arm64": {
+          "linux": "DBX_{version}_arm64.AppImage",
+          "windows": "DBX_{version}_arm64-portable.zip",
+          "darwin": "DBX_{version}_arm64.dmg"
         }
       }
     }
