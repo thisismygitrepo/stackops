@@ -27,9 +27,6 @@ def configure_default_shell() -> None:
     create_default_shell_profile()
 
 
-AUTO_COMMIT_MESSAGE = "chore: auto-commit local changes before stackops update"
-
-
 def update(
     copy_assets: Annotated[
         bool,
@@ -54,7 +51,7 @@ def update(
     dev: Annotated[
         bool,
         typer.Option(
-            "--dev", "-d", help="Before updating: add + auto-commit all repo changes and push (requires a repo checkout)."
+            "--dev", "-d", help="Before updating: commit local repo changes and sync (pull --rebase + push) with origin, fail-fast."
         ),
     ] = False,
 ) -> None:
@@ -66,25 +63,17 @@ def update(
     --config-shell       -> devops config terminal config-shell --which default
 
     --dev is a pre-update action (requires a repo checkout):
-    --dev                -> git add -A; git commit; git push; before git pull --ff-only
+    --dev                -> commit local changes, git pull --rebase, git push (stops safely on any failure)
     """
     dev_repo_root = cli_self_repo.developer_repo_root()
     if dev and dev_repo_root is None:
         typer.echo(f"❌ --dev requires a stackops repo checkout at {STACKOPS_REPO_DIR}; run 'devops s i --dev' first.")
         raise typer.Exit(code=1)
+    if dev and dev_repo_root is not None:
+        cli_self_repo.sync_dev_repo_before_update(dev_repo_root)
     if dev_repo_root is not None:
-        sync_lines = ""
-        if dev:
-            import git
-
-            repo = git.Repo(str(dev_repo_root))
-            if repo.is_dirty(untracked_files=True):
-                sync_lines = f'git add -A\ngit commit -m "{AUTO_COMMIT_MESSAGE}"\n'
-            sync_lines += "git push\n"
         shell_script = f"""
 uv self update
-cd "{STACKOPS_REPO_DIR}"
-{sync_lines}git pull --ff-only
 uv tool install --no-cache --upgrade --editable "{STACKOPS_REPO_DIR}"
 """
     else:
