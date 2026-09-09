@@ -1,7 +1,7 @@
-use ($nu.home-dir | path join ".config" "stackops" "settings" "shells" "nushell" "init.nu") *
+use ./init.nu *
 
 def --env __stackops_init_starship [] {
-    if ($env.__STACKOPS_STARSHIP_INIT? | default false) {
+    if ($env.__STACKOPS_STARSHIP_INIT_PID? == ($nu.pid | into string)) or (which starship | is-empty) {
         return
     }
 
@@ -27,11 +27,11 @@ def --env __stackops_init_starship [] {
     }
 
     $env.config = ($env.config | merge { render_right_prompt_on_last_line: true })
-    $env.__STACKOPS_STARSHIP_INIT = true
+    $env.__STACKOPS_STARSHIP_INIT_PID = ($nu.pid | into string)
 }
 
 def --env __stackops_init_zoxide [] {
-    if ($env.__STACKOPS_ZOXIDE_INIT? | default false) {
+    if ($env.__STACKOPS_ZOXIDE_INIT_PID? == ($nu.pid | into string)) or (which zoxide | is-empty) {
         return
     }
 
@@ -55,14 +55,14 @@ def --env __stackops_init_zoxide [] {
         )
     )
 
-    $env.__STACKOPS_ZOXIDE_INIT = true
+    $env.__STACKOPS_ZOXIDE_INIT_PID = ($nu.pid | into string)
 }
 
 def __stackops_atuin_search_cmd [...flags: string] {
     [
         ($env.__STACKOPS_ATUIN_KEYBINDING_TOKEN? | default ""),
         ([
-            `with-env { ATUIN_LOG: error, ATUIN_QUERY: (commandline), ATUIN_SHELL: nu } {`,
+            `with-env { ATUIN_QUERY: (commandline), ATUIN_SHELL: nu } {`,
                 ([
                     "let output = (run-external atuin search",
                     ($flags | append [--interactive] | each {|flag| $'"($flag)"'}),
@@ -79,7 +79,7 @@ def __stackops_atuin_search_cmd [...flags: string] {
 }
 
 def --env __stackops_init_atuin [] {
-    if ($env.__STACKOPS_ATUIN_INIT? | default false) {
+    if ($env.__STACKOPS_ATUIN_INIT_PID? == ($nu.pid | into string)) or (which atuin | is-empty) {
         return
     }
 
@@ -102,7 +102,9 @@ def --env __stackops_init_atuin [] {
         }
 
         if not ($cmd | str starts-with $env.__STACKOPS_ATUIN_KEYBINDING_TOKEN) {
-            $env.ATUIN_HISTORY_ID = (atuin history start -- $cmd e>| complete | get stdout | str trim)
+            $env.ATUIN_HISTORY_ID = (with-env { ATUIN_SHELL: nu } {
+                ^atuin history start --hook -- $cmd | complete | get stdout | str trim
+            })
         }
     }
 
@@ -113,11 +115,9 @@ def --env __stackops_init_atuin [] {
             return
         }
 
-        with-env { ATUIN_LOG: error } {
-            job spawn {
-                ^atuin history end $'--exit=($env.LAST_EXIT_CODE)' -- $env.ATUIN_HISTORY_ID | complete
-            } | ignore
-        }
+        job spawn {
+            ^atuin history end --hook $'--exit=($last_exit)' -- $env.ATUIN_HISTORY_ID | complete
+        } | ignore
 
         hide-env ATUIN_HISTORY_ID
     }
@@ -156,7 +156,7 @@ def --env __stackops_init_atuin [] {
         )
     )
 
-    $env.__STACKOPS_ATUIN_INIT = true
+    $env.__STACKOPS_ATUIN_INIT_PID = ($nu.pid | into string)
 }
 
 __stackops_init_zoxide

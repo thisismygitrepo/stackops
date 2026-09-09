@@ -76,13 +76,19 @@ def reload_shell_profile_and_exit() -> None:
 
 
 def get_nu_shell_profile_path() -> Path:
+    import os
     import platform
     from rich.console import Console
     from rich.panel import Panel
     system = platform.system()
     console = Console()
-    if system == "Windows":
-        profile_path = Path.home().joinpath(r"AppData\Roaming\nushell")
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
+    if xdg_config_home and Path(xdg_config_home).is_absolute():
+        profile_path = Path(xdg_config_home).joinpath("nushell")
+    elif system == "Windows":
+        appdata = os.environ.get("APPDATA")
+        config_root = Path(appdata) if appdata else Path.home().joinpath("AppData", "Roaming")
+        profile_path = config_root.joinpath("nushell")
     elif system == "Linux":
         profile_path = Path.home().joinpath(".config/nushell")
     elif system == "Darwin":

@@ -52,7 +52,7 @@ PACKAGES_TERMINAL_EMULATORS = [
     "vtm",
     "edex-ui",
     "extraterm",
-    "nushell",
+    "nu",
 ]
 
 # Browsers - Web browsers and terminal browsers

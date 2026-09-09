@@ -31,9 +31,10 @@ def update(
     copy_assets: Annotated[
         bool,
         typer.Option(
-            "--copy-assets", "-a", help="Copy assets to machine after update (scripts + settings, overwrites local assets)."
+            "--copy-assets/--no-copy-assets", "-a",
+            help="Copy scripts and settings after update (enabled by default; overwrites local assets)."
         ),
-    ] = False,
+    ] = True,
     sync_public: Annotated[
         bool,
         typer.Option(
@@ -57,7 +58,8 @@ def update(
 ) -> None:
     """🔄 UPDATE uv and stackops
 
-    Each flag independently triggers one post-update action:
+    Assets are copied by default; --no-copy-assets skips copying.
+    Post-update actions:
     --copy-assets        -> devops config copy-assets all
     --link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
     --config-shell       -> devops config terminal config-shell --which default

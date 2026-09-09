@@ -60,7 +60,7 @@ def copy_assets_to_machine(which: Literal["scripts", "settings"]) -> None:
             _copy_path(source=a_path, target=target_path, overwrite=True)
 
         wrap_stackops_source = LIBRARY_ROOT.joinpath("scripts", "nu", "wrap_stackops.nu")
-        wrap_stackops_target = CONFIG_ROOT.joinpath("scripts", "wrap_stackops.nu")
+        wrap_stackops_target = CONFIG_ROOT.joinpath("scripts", "nu", "wrap_stackops.nu")
 
         wrap_stackops_target.parent.mkdir(parents=True, exist_ok=True)
         _copy_path(source=wrap_stackops_source, target=wrap_stackops_target, overwrite=True)
