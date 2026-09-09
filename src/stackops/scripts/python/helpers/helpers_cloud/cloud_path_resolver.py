@@ -2,13 +2,9 @@ from stackops.scripts.python.helpers.helpers_cloud.cloud_helpers import my_abs
 from stackops.utils.cloud.default_remote import read_default_rclone_remote
 from stackops.utils.cloud.defaults import CloudConfig
 from stackops.utils.cloud.rclone_wrapper import get_remote_path
-from stackops.utils.accessories import pprint
-from rich.console import Console
-from rich.panel import Panel
 
 
 ES = "^"  # chosen carefully to not mean anything on any shell. `$` was a bad choice.
-console = Console()
 
 
 def parse_cloud_source_target(
@@ -16,21 +12,16 @@ def parse_cloud_source_target(
     source: str,
     target: str,
 ) -> tuple[str, str, str]:
-    print("Source:", source)
-    print("Target:", target)
     if source.startswith(":"):
         if ES in target:
             raise NotImplementedError("Not Implemented here yet.")
         default_cloud = read_default_rclone_remote()
-        console.print(Panel(f"⚠️  No cloud name specified for source. Using default cloud: {default_cloud}", width=150, border_style="yellow"))
         source = default_cloud + ":" + source[1:]
     if target.startswith(":"):
         if ES in source:
             raise NotImplementedError("Not Implemented here yet.")
         default_cloud = read_default_rclone_remote()
-        console.print(Panel(f"⚠️  No cloud name specified for target. Using default cloud: {default_cloud}", width=150, border_style="yellow"))
         target = default_cloud + ":" + target[1:]
-        print("target mutated to:", target, f"because of default cloud being {default_cloud}")
 
     if ":" in source and (source[1] != ":" if len(source) > 1 else True):  # avoid the deceptive case of "C:/"
         source_parts: list[str] = source.split(":")
@@ -78,14 +69,5 @@ def parse_cloud_source_target(
         if cloud_config_explicit["encryption"] is not None and not target.endswith(".gpg"):
             target += ".gpg"
     else:
-        console.print(
-            Panel(
-                "❌ ERROR: Invalid path configuration\nEither source or target must be a remote path (i.e. machine:path)",
-                title="[bold red]Error[/bold red]",
-                border_style="red",
-            )
-        )
         raise ValueError(f"Either source or target must be a remote path (i.e. machine:path)\nGot: source: `{source}`, target: `{target}`")
-    console.print(Panel("🔍 Path resolution complete", title="[bold blue]Resolution[/bold blue]", border_style="blue"))
-    pprint({"cloud": cloud, "source": str(source), "target": str(target)}, "CLI Resolution")
     return cloud, str(source), str(target)

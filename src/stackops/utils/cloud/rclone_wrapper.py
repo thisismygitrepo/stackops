@@ -75,6 +75,7 @@ def to_cloud(
     share: bool,
     share_options: rclone_utils.ShareLinkOptions | None,
     verbose: bool,
+    show_progress: bool,
     transfers: int,
 ) -> str | None:
     local_path_resolved = _absolute_path(local_path)
@@ -86,7 +87,7 @@ def to_cloud(
         transfers=transfers,
         overwrite=overwrite,
         show_command=verbose,
-        show_progress=verbose,
+        show_progress=show_progress,
     )
     if verbose:
         print(f"{'⬆️' * 5} UPLOAD COMPLETED TO {cloud}:{remote_path.as_posix()}.")
@@ -112,6 +113,7 @@ def from_cloud(
     remote_path: Path,
     transfers: int,
     verbose: bool,
+    show_progress: bool,
 ) -> Path:
     local_path_resolved = _absolute_path(local_path)
     local_path_resolved.parent.mkdir(parents=True, exist_ok=True)
@@ -121,7 +123,7 @@ def from_cloud(
         transfers=transfers,
         overwrite=True,
         show_command=verbose,
-        show_progress=verbose,
+        show_progress=show_progress,
     )
     return local_path_resolved
 

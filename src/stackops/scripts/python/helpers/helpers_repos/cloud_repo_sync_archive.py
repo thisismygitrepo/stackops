@@ -80,6 +80,7 @@ def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str
             share=False,
             share_options=None,
             verbose=True,
+            show_progress=True,
             transfers=10,
         )
     finally:
@@ -93,7 +94,7 @@ def download_repo_archive(repo_remote_root: Path, cloud: str, remote_path: Path,
     from stackops.utils.path_core import delete_path
 
     encrypted_archive_path = Path(f"{repo_remote_root}.zip.gpg")
-    rclone_wrapper.from_cloud(local_path=encrypted_archive_path, cloud=cloud, remote_path=remote_path, transfers=10, verbose=True)
+    rclone_wrapper.from_cloud(local_path=encrypted_archive_path, cloud=cloud, remote_path=remote_path, transfers=10, verbose=True, show_progress=True)
     if pwd is None:
         archive_path = decrypt_file_asymmetric(file_path=encrypted_archive_path)
     else:

@@ -33,6 +33,7 @@ def publish_archive(*, archive_path: Path, system_name: str, arch_name: str) -> 
         share=True,
         share_options=None,
         verbose=True,
+        show_progress=True,
         transfers=10,
     )
     if share_url is None:

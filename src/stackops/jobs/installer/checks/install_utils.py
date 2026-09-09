@@ -49,6 +49,7 @@ def upload_app(path: Path) -> str | None:
             share=True,
             share_options=None,
             verbose=False,
+            show_progress=False,
             transfers=10,
         )
     except Exception as e:

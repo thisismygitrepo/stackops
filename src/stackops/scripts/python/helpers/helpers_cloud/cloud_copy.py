@@ -3,7 +3,7 @@ CC
 """
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from stackops.scripts.python.helpers.helpers_cloud.cloud_copy_artifacts import (
     prepared_upload_path,
@@ -209,11 +209,12 @@ def main(
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services like Google Drive, Dropbox, OneDrive, etc."""
     from rich.console import Console
-    from rich.panel import Panel
+    from rich.text import Text
+    from stackops.scripts.python.helpers.helpers_cloud.cloud_copy_summary import cloud_copy_summary
     from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES, parse_cloud_source_target
     from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError
     console = Console()
-    console.print(Panel("☁️  Cloud Copy Utility", title="[bold blue]Cloud Copy[/bold blue]", border_style="blue", width=152))
+    original_source = source
     original_target = target
 
     try:
@@ -222,7 +223,7 @@ def main(
         share_options = _resolve_share_options(share_scope=share_scope, share_type=share_type)
         resolved_record_name = _resolve_record_name(record_name)
     except (TypeError, ValueError) as error:
-        console.print(Panel(f"❌ ERROR: Invalid cloud copy configuration\n{error}", title="[bold red]Error[/bold red]", border_style="red", width=152))
+        console.print(Text(f"""❌ Invalid cloud copy configuration: {error}""", style="red"))
         raise SystemExit(1) from None
 
     cloud_config_explicit = CloudConfig(
@@ -237,7 +238,6 @@ def main(
         os_specific=os_specific,
     )
 
-    console.print(Panel("🔍 Parsing source and target paths...", title="[bold blue]Info[/bold blue]", border_style="blue"))
     try:
         cloud, source, target = parse_cloud_source_target(
             cloud_config_explicit=cloud_config_explicit,
@@ -246,20 +246,47 @@ def main(
         )
     except DefaultRcloneRemoteConfigError as error:
         console.print(
-            Panel(
-                f"❌ {error}\n\nFor this command, replace a leading :path with REMOTE:path.",
-                title="[bold red]Cloud Configuration Required[/bold red]",
-                border_style="red",
-                width=152,
+            Text(
+                f"""❌ {error}
+For this command, replace a leading :path with REMOTE:path.""",
+                style="red",
             )
         )
         raise SystemExit(1) from None
+    except ValueError as error:
+        console.print(Text(f"""❌ Invalid cloud copy paths: {error}""", style="red"))
+        raise SystemExit(1) from None
+
+    operation: Literal["download", "upload"]
     if cloud in source:
+        operation = "download"
         if resolved_record_name is not None:
-            console.print(Panel("❌ --record-name is only supported for uploads to cloud targets.", title="[bold red]Error[/bold red]", border_style="red", width=152))
+            console.print(Text("❌ --record-name is only supported for uploads to cloud targets.", style="red"))
             raise SystemExit(1)
-        console.print(Panel(f"📥 DOWNLOADING FROM CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}", title="[bold blue]Download[/bold blue]", border_style="blue", width=152))
-        target_path = Path(target).expanduser().absolute()
+        target = str(Path(target).expanduser().absolute())
+    elif cloud in target:
+        operation = "upload"
+        source = str(Path(source).expanduser().absolute())
+    else:
+        console.print(Text(f"""❌ Cloud '{cloud}' not found in source or target""", style="red"))
+        raise SystemExit(1)
+
+    console.print(
+        cloud_copy_summary(
+            operation=operation,
+            cloud=cloud,
+            original_source=original_source,
+            original_target=original_target,
+            source=source,
+            target=target,
+            config=cloud_config_explicit,
+            transfers=transfers,
+            share_options=share_options,
+        )
+    )
+
+    if operation == "download":
+        target_path = Path(target)
         remote_path = Path(source.replace(cloud + ":", ""))
         try:
             with staged_download(
@@ -272,7 +299,8 @@ def main(
                     cloud=cloud,
                     remote_path=remote_path,
                     transfers=transfers,
-                    verbose=True,
+                    verbose=False,
+                    show_progress=True,
                 )
                 restored_path = restore_staged_download(
                     staged=staged,
@@ -280,36 +308,18 @@ def main(
                     encryption_mode=cloud_config_explicit["encryption"],
                     pwd=cloud_config_explicit["pwd"],
                 )
-                apply_target_conflict_action(
+                downloaded_path = apply_target_conflict_action(
                     staged_path=restored_path,
                     target_path=staged.target_path,
                     on_conflict="overwrite-target" if cloud_config_explicit["overwrite"] else "throw-error",
                 )
-        except GpgCommandError as error:
-            console.print(
-                Panel(
-                    f"☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}\n\n{error}",
-                    title="[bold red]GPG Error[/bold red]",
-                    border_style="red",
-                    width=152,
-                )
-            )
+        except (GpgCommandError, RcloneCommandError) as error:
+            console.print(Text(f"""❌ Download failed: {error}""", style="red"))
             raise SystemExit(1) from None
-        except RcloneCommandError as error:
-            console.print(
-                Panel(
-                    f"☁️  Cloud: {cloud}\n📂 Source: {source.replace(cloud + ':', '')}\n🎯 Target: {target}\n\n{error}",
-                    title="[bold red]Rclone Error[/bold red]",
-                    border_style="red",
-                    width=152,
-                )
-            )
-            raise SystemExit(1) from None
-        console.print(Panel("✅ Download completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
+        console.print(Text(f"""✅ Download completed. Saved to: {downloaded_path}""", style="green"))
 
-    elif cloud in target:
-        console.print(Panel(f"📤 UPLOADING TO CLOUD\n☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}", title="[bold blue]Upload[/bold blue]", border_style="blue", width=152))
-        source_path = Path(source).expanduser().absolute()
+    else:
+        source_path = Path(source)
         remote_path = Path(target.replace(cloud + ":", ""))
         share_url: str | None = None
         try:
@@ -326,40 +336,14 @@ def main(
                     overwrite=cloud_config_explicit["overwrite"],
                     share=cloud_config_explicit["share"],
                     share_options=share_options,
-                    verbose=True,
+                    verbose=False,
+                    show_progress=True,
                     transfers=transfers,
                 )
-        except GpgCommandError as error:
-            console.print(
-                Panel(
-                    f"☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}\n\n{error}",
-                    title="[bold red]GPG Error[/bold red]",
-                    border_style="red",
-                    width=152,
-                )
-            )
+        except (GpgCommandError, RcloneCommandError, RcloneConfigError) as error:
+            console.print(Text(f"""❌ Upload failed: {error}""", style="red"))
             raise SystemExit(1) from None
-        except RcloneCommandError as error:
-            console.print(
-                Panel(
-                    f"☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}\n\n{error}",
-                    title="[bold red]Rclone Error[/bold red]",
-                    border_style="red",
-                    width=152,
-                )
-            )
-            raise SystemExit(1) from None
-        except RcloneConfigError as error:
-            console.print(
-                Panel(
-                    f"☁️  Cloud: {cloud}\n📂 Source: {source}\n🎯 Target: {target.replace(cloud + ':', '')}\n\n{error}",
-                    title="[bold red]Rclone Config Error[/bold red]",
-                    border_style="red",
-                    width=152,
-                )
-            )
-            raise SystemExit(1) from None
-        console.print(Panel("✅ Upload completed successfully", title="[bold green]Success[/bold green]", border_style="green", width=152))
+        console.print(Text(f"""✅ Upload completed. Saved to: {target}""", style="green"))
 
         if cloud_config_explicit["share"] and share_url is None:
             raise RuntimeError("Share was requested but rclone did not return a share URL.")
@@ -379,14 +363,10 @@ def main(
                 expand_symbol=ES,
             )
             action = "Updated" if registration["replaced"] else "Added"
-            if share_url is None:
-                console.print(Panel(f"📝 RECORDED UPLOAD\n📝 {action} backup entry: {registration['entry_name']}\n📄 Data file: {registration['backup_path']}", title="[bold blue]Record[/bold blue]", border_style="blue", width=152))
-            else:
-                console.print(Panel(f"🔗 SHARE URL GENERATED\n📝 {action} backup entry: {registration['entry_name']}\n📄 Data file: {registration['backup_path']}\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
-        elif cloud_config_explicit["share"]:
-            if share_url is None:
-                raise RuntimeError("Share was requested but rclone did not return a share URL.")
-            console.print(Panel(f"🔗 SHARE URL GENERATED\n🌍 {share_url}", title="[bold blue]Share[/bold blue]", border_style="blue", width=152))
-    else:
-        console.print(Panel(f"❌ ERROR: Cloud '{cloud}' not found in source or target", title="[bold red]Error[/bold red]", border_style="red", width=152))
-        raise SystemExit(1)
+            console.print(Text(f"""📝 {action} backup entry: {registration['entry_name']}
+Data file: {registration['backup_path']}"""))
+        if share_url is not None:
+            console.print(Text(f"""🔗 Share URL: {share_url}"""))
+            direct_download_url = rclone_wrapper.google_drive_direct_download_url(share_url=share_url)
+            if direct_download_url is not None:
+                console.print(Text(f"""⬇️ Direct download URL: {direct_download_url}"""))
