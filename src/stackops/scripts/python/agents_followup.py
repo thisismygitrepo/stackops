@@ -1,32 +1,20 @@
-import csv
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Final, Literal, cast
+from typing import Literal
 
+import typer
+
+from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constants import (
+    AGENT_DISPLAY_NAME,
+    FOLLOWUP_AGENT,
+    NON_RESUMABLE_SESSION_IDS,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import read_second_brain_updates
 from stackops.utils.options_utils.options import choose_from_options
 
 
-type FOLLOWUP_AGENT = Literal["codex", "copilot", "pi", "opencode", "omp"]
 type FOLLOWUP_ACTION = Literal["resume", "fork"]
-_UPDATE_COLUMNS: Final[tuple[str, ...]] = ("agent", "session-id", "topic", "actionsTaken", "date")
-_AGENT_BY_LABEL: Final[dict[str, FOLLOWUP_AGENT]] = {
-    "codex": "codex",
-    "copilot": "copilot",
-    "github copilot": "copilot",
-    "pi": "pi",
-    "opencode": "opencode",
-    "omp": "omp",
-    "oh my pi": "omp",
-}
-_AGENT_DISPLAY_NAME: Final[dict[FOLLOWUP_AGENT, str]] = {
-    "codex": "Codex",
-    "copilot": "Copilot",
-    "pi": "Pi",
-    "opencode": "OpenCode",
-    "omp": "Oh My Pi",
-}
-_NON_RESUMABLE_SESSION_IDS: Final[frozenset[str]] = frozenset({"not-exposed"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,55 +27,34 @@ class FollowupSession:
 
 
 def load_followup_sessions(*, second_brain_root: Path) -> list[FollowupSession]:
-    update_paths = sorted(path for path in second_brain_root.rglob("update.csv") if path.is_file())
-    if len(update_paths) == 0:
+    update_files = read_second_brain_updates(second_brain_root=second_brain_root)
+    if len(update_files) == 0:
         raise ValueError(f"No update.csv files found under the Second Brain directory: {second_brain_root}")
 
     sessions_by_identity: dict[tuple[FOLLOWUP_AGENT, str], FollowupSession] = {}
-    for update_path in update_paths:
-        with update_path.open(mode="r", encoding="utf-8", newline="") as update_file:
-            reader = csv.DictReader(update_file)
-            if reader.fieldnames != list(_UPDATE_COLUMNS):
-                expected = ",".join(_UPDATE_COLUMNS)
-                actual = ",".join(reader.fieldnames or [])
-                raise ValueError(f"Invalid update.csv header in {update_path}. Expected '{expected}', found '{actual}'.")
-
-            for row in reader:
-                values = [row[column] for column in _UPDATE_COLUMNS]
-                if any(value is None or value.strip() == "" for value in values):
-                    raise ValueError(f"Empty update.csv value in {update_path} at row {reader.line_num}.")
-
-                agent_label, session_id, topic, _actions_taken, updated_on_text = cast(list[str], values)
-                normalized_session_id = session_id.strip()
-                if normalized_session_id.casefold() in _NON_RESUMABLE_SESSION_IDS:
-                    continue
-
-                normalized_agent_label = agent_label.strip().casefold()
-                agent = _AGENT_BY_LABEL.get(normalized_agent_label)
-                if agent is None:
-                    raise ValueError(
-                        f"Unsupported agent '{agent_label}' in {update_path} at row {reader.line_num}. "
-                        f"Supported agents: {', '.join(_AGENT_DISPLAY_NAME.values())}."
-                    )
-
-                try:
-                    updated_on = date.fromisoformat(updated_on_text.strip())
-                except ValueError as error:
-                    raise ValueError(
-                        f"Invalid date '{updated_on_text}' in {update_path} at row {reader.line_num}. Expected an ISO date."
-                    ) from error
-
-                session = FollowupSession(
-                    agent=agent,
-                    session_id=normalized_session_id,
-                    topic=topic.strip(),
-                    updated_on=updated_on,
-                    update_path=update_path,
-                )
-                identity = (session.agent, session.session_id)
-                previous_session = sessions_by_identity.get(identity)
-                if previous_session is None or session.updated_on >= previous_session.updated_on:
-                    sessions_by_identity[identity] = session
+    for update_file in update_files:
+        if update_file.error is not None:
+            typer.echo(f"""Warning: Skipping {update_file.path}: {update_file.error}""", err=True)
+            continue
+        for invalid_row in update_file.invalid_rows:
+            typer.echo(
+                f"""Warning: Skipping {update_file.path} at row {invalid_row.line_number}: {invalid_row.reason}""",
+                err=True,
+            )
+        for record in update_file.records:
+            if record.session_id.casefold() in NON_RESUMABLE_SESSION_IDS:
+                continue
+            session = FollowupSession(
+                agent=record.agent,
+                session_id=record.session_id,
+                topic=record.topic,
+                updated_on=record.updated_on,
+                update_path=update_file.path,
+            )
+            identity = (session.agent, session.session_id)
+            previous_session = sessions_by_identity.get(identity)
+            if previous_session is None or session.updated_on >= previous_session.updated_on:
+                sessions_by_identity[identity] = session
 
     sessions = sorted(
         sessions_by_identity.values(),
@@ -103,7 +70,7 @@ def choose_followup_session(*, second_brain_root: Path) -> FollowupSession:
     sessions = load_followup_sessions(second_brain_root=second_brain_root)
     session_by_label = {
         (
-            f"{_AGENT_DISPLAY_NAME[session.agent]} · {session.session_id} · {session.updated_on.isoformat()} · "
+            f"{AGENT_DISPLAY_NAME[session.agent]} · {session.session_id} · {session.updated_on.isoformat()} · "
             f"{session.update_path.parent.relative_to(second_brain_root)} · {session.topic}"
         ): session
         for session in sessions
@@ -127,7 +94,7 @@ def choose_followup_session(*, second_brain_root: Path) -> FollowupSession:
 
 def build_followup_command(*, session: FollowupSession, action: FOLLOWUP_ACTION, initial_prompt: str | None) -> list[str]:
     if action == "fork" and session.agent not in ("codex", "pi", "opencode", "omp"):
-        raise ValueError(f"Forking follow-up sessions is not supported for {_AGENT_DISPLAY_NAME[session.agent]}.")
+        raise ValueError(f"Forking follow-up sessions is not supported for {AGENT_DISPLAY_NAME[session.agent]}.")
 
     match session.agent:
         case "codex":
