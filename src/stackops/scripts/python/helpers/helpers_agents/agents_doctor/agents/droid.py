@@ -1,4 +1,6 @@
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from pathlib import Path
+
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import DoctorPathCandidate, collect_standard_resources, shared_skill_roots
 
 
@@ -17,12 +19,12 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         ),
         DoctorPathCandidate("DROID.md", "local", context.project_root / "DROID.md", "Droid project guidance", True, is_mcp=False),
     )
-    skill_roots = (
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", context.home_directory / ".factory/skills", "Droid user skill"),
         ("local", context.project_root / ".factory/skills", "Droid project skill"),
     )
-    plugin_roots = (
+    plugin_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         ("global", context.home_directory / ".factory/plugins", "Droid user plugin"),
         ("local", context.project_root / ".factory/plugins", "Droid project plugin"),
     )

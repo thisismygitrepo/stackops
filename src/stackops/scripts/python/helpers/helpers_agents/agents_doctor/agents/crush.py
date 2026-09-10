@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import DoctorPathCandidate, collect_standard_resources, shared_skill_roots
 
 
@@ -31,7 +31,12 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "shared project guidance", False, is_mcp=False),
     )
     configured_skill_root = os.environ.get("CRUSH_SKILLS_DIR")
-    skill_roots = (
+    configured_skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
+        (("global", Path(configured_skill_root).expanduser().resolve(strict=False), "CRUSH_SKILLS_DIR"),)
+        if configured_skill_root is not None and configured_skill_root.strip() != ""
+        else ()
+    )
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", context.xdg_config_directory / "agents/skills", "XDG shared user skill"),
         ("global", global_config_root / "skills", "Crush user skill"),
@@ -39,11 +44,7 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         ("local", context.project_root / ".crush/skills", "Crush project skill"),
         ("local", context.project_root / ".claude/skills", "Claude-compatible project skill"),
         ("local", context.project_root / ".cursor/skills", "Cursor-compatible project skill"),
-        *(
-            (("global", Path(configured_skill_root).expanduser().resolve(strict=False), "CRUSH_SKILLS_DIR"),)
-            if configured_skill_root is not None and configured_skill_root.strip() != ""
-            else ()
-        ),
+        *configured_skill_roots,
     )
     return collect_standard_resources(
         configurations=configurations, instructions=instructions, instruction_roots=(), skill_roots=skill_roots, plugin_roots=(), plugin_patterns=()

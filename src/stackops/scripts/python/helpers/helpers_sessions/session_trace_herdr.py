@@ -178,7 +178,7 @@ def _pane_agent_status(pane: JsonObject, tab: JsonObject | None) -> str:
     ).lower()
 
 
-def _pane_category(agent_status: str) -> PaneCategory:
+def _pane_category(agent_status: str) -> Literal["idle-shell", "running", "unknown"]:
     if agent_status in _IDLE_AGENT_STATUSES:
         return "idle-shell"
     if agent_status in _RUNNING_AGENT_STATUSES:

@@ -46,6 +46,7 @@ def upload_app(path: Path) -> str | None:
             local_path=local_path,
             cloud=read_default_rclone_remote(),
             remote_path=remote_path,
+            overwrite=False,
             share=True,
             share_options=None,
             verbose=False,

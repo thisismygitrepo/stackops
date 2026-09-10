@@ -1,4 +1,6 @@
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from pathlib import Path
+
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import DoctorPathCandidate, collect_standard_resources, shared_skill_roots
 
 
@@ -19,7 +21,7 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     instructions = (
         DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "Oz project guidance", True, is_mcp=False),
     )
-    skill_roots = (
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", context.home_directory / ".warp/skills", "Warp-compatible user skill"),
         ("local", context.project_root / ".warp/skills", "Warp-compatible project skill"),

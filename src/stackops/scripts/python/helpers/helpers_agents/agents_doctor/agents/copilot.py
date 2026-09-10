@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import (
     DoctorFileRoot,
     DoctorPathCandidate,
@@ -41,12 +41,12 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     instruction_roots = (
         DoctorFileRoot("local", context.project_root / ".github/instructions", ("**/*.instructions.md",), "path-scoped Copilot instructions"),
     )
-    skill_roots = (
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", copilot_home / "skills", "Copilot user skill"),
         ("local", context.project_root / ".github/skills", "Copilot project skill"),
     )
-    plugin_roots = (
+    plugin_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         ("global", copilot_home / "plugins", "Copilot user plugin"),
         ("local", context.project_root / ".github/plugins", "Copilot project plugin"),
     )

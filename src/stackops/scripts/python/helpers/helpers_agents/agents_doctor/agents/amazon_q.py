@@ -1,4 +1,6 @@
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from pathlib import Path
+
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import (
     DoctorFileRoot,
     DoctorPathCandidate,
@@ -20,7 +22,7 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         DoctorFileRoot("global", context.xdg_config_directory / "amazon-q/rules", ("**/*.md",), "Amazon Q user rule"),
         DoctorFileRoot("local", context.project_root / ".amazonq/rules", ("**/*.md",), "Amazon Q project rule"),
     )
-    skill_roots = (
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", context.xdg_config_directory / "amazon-q/skills", "Amazon Q user skill"),
         ("local", context.project_root / ".amazonq/skills", "Amazon Q project skill"),

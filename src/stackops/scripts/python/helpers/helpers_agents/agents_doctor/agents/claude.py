@@ -1,4 +1,6 @@
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from pathlib import Path
+
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import (
     DoctorFileRoot,
     DoctorPathCandidate,
@@ -41,12 +43,12 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         DoctorFileRoot("global", context.claude_home / "rules", ("**/*.md",), "Claude user rule"),
         DoctorFileRoot("local", context.project_root / ".claude/rules", ("**/*.md",), "Claude project rule"),
     )
-    skill_roots = (
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", context.claude_home / "skills", "Claude user skill"),
         ("local", context.project_root / ".claude/skills", "Claude project skill"),
     )
-    plugin_roots = (
+    plugin_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         ("global", context.claude_home / "plugins", "Claude user plugin"),
         ("local", context.project_root / ".claude/plugins", "Claude project plugin"),
     )

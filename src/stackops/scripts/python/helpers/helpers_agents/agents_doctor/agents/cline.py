@@ -1,4 +1,6 @@
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from pathlib import Path
+
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import (
     DoctorFileRoot,
     DoctorPathCandidate,
@@ -18,7 +20,7 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         ),
     )
     instruction_roots = (DoctorFileRoot("local", context.project_root / ".clinerules", ("*.md", "**/*.md"), "Cline project rule"),)
-    skill_roots = (
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", context.home_directory / ".cline/skills", "Cline user skill"),
         ("local", context.project_root / ".cline/skills", "Cline project skill"),

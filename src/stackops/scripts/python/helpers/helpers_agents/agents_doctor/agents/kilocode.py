@@ -1,4 +1,6 @@
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from pathlib import Path
+
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import (
     DoctorFileRoot,
     DoctorPathCandidate,
@@ -25,7 +27,7 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         DoctorPathCandidate("AGENTS.md", "local", context.project_root / "AGENTS.md", "shared project guidance", False, is_mcp=False),
     )
     instruction_roots = (DoctorFileRoot("local", context.project_root / ".kilocode/rules", ("**/*.md",), "Kilo Code project rule"),)
-    skill_roots = (
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", context.xdg_config_directory / "kilocode/skills", "Kilo Code user skill"),
         ("local", context.project_root / ".kilocode/skills", "Kilo Code project skill"),

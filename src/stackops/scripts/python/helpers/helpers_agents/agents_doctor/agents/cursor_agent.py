@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorResource
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgentDefinition, DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard import (
     DoctorFileRoot,
     DoctorPathCandidate,
@@ -43,7 +43,7 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     instruction_roots = (
         DoctorFileRoot("local", context.project_root / ".cursor/rules", ("*.md", "*.mdc", "**/*.md", "**/*.mdc"), "Cursor project rule"),
     )
-    skill_roots = (
+    skill_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
         *shared_skill_roots(context=context),
         ("global", cursor_config_root / "skills", "Cursor user skill"),
         ("local", context.project_root / ".cursor/skills", "Cursor project skill"),
