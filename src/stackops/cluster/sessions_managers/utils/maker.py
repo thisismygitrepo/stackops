@@ -1,8 +1,23 @@
 
-from types import FunctionType
-from typing import Literal
-from stackops.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig
 from pathlib import Path
+from types import FunctionType
+from typing import Final, Literal
+
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+
+
+PYTHON_PROCESS_LAUNCHERS: Final[frozenset[str]] = frozenset({"uv", "python", "python3", "fire", "b", "bi", "bo", "bp"})
+WRAP_STACKOPS_PYTHON_SUBCOMMANDS: Final[frozenset[str]] = frozenset({"fire", "uv"})
+
+
+def _is_python_process_command(*, command: str) -> bool:
+    tokens = command.split()
+    if len(tokens) == 0:
+        return False
+    first_token = Path(tokens[0]).name
+    if first_token in PYTHON_PROCESS_LAUNCHERS:
+        return True
+    return first_token.startswith("wrap_stackops") and len(tokens) > 1 and tokens[1] in WRAP_STACKOPS_PYTHON_SUBCOMMANDS
 
 
 def _prepend_random_stagger(command: str, max_stagger: float | None) -> str:
@@ -96,7 +111,15 @@ def make_layout_from_functions(functions: list[FunctionType], functions_weights:
             artifact_files = []
         tab_config["command"] = _prepend_random_stagger(tab_config["command"], max_stagger=max_stagger)
         tabs2artifacts.append((tab_config, artifact_files))
-    list_of_tabs = [tab for tab, _ in tabs2artifacts] + tab_configs
+    staggered_tab_configs: list[TabConfig] = []
+    for tab in tab_configs:
+        staggered_tab: TabConfig = {"tabName": tab["tabName"], "startDir": tab["startDir"], "command": tab["command"]}
+        if "tabWeight" in tab:
+            staggered_tab["tabWeight"] = tab["tabWeight"]
+        if _is_python_process_command(command=staggered_tab["command"]):
+            staggered_tab["command"] = _prepend_random_stagger(staggered_tab["command"], max_stagger=max_stagger)
+        staggered_tab_configs.append(staggered_tab)
+    list_of_tabs = [tab for tab, _ in tabs2artifacts] + staggered_tab_configs
     layout_config: LayoutConfig = {
         "layoutName": layout_name,
         "layoutTabs": list_of_tabs,
