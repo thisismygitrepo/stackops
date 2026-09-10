@@ -91,16 +91,21 @@ uv tool install --no-cache --upgrade stackops
         any_post = copy_assets or sync_public or config_shell
         full_script = shell_script
         if any_post:
-            def _post_update() -> None:
+            def _post_update(copy_assets: bool, sync_public: bool, config_shell: bool) -> None:
+                from stackops.scripts.python.helpers.helpers_devops import cli_self
+
                 if copy_assets:
-                    copy_assets_all()
+                    cli_self.copy_assets_all()
                 if sync_public:
-                    link_public_configs()
+                    cli_self.link_public_configs()
                 if config_shell:
-                    configure_default_shell()
+                    cli_self.configure_default_shell()
 
             uv_command, _py_file = get_shell_script_running_lambda_function(
-                lmb=_post_update, uv_with=["stackops"], uv_project_dir=None
+                lmb=lambda: _post_update(copy_assets=copy_assets, sync_public=sync_public, config_shell=config_shell),
+                uv_with=["stackops"],
+                uv_project_dir=None,
+                uv_run_flags="",
             )
             full_script = shell_script + "\n" + uv_command
         exit_then_run_shell_script(full_script, strict=True)
