@@ -14,6 +14,16 @@ def developer_repo_root() -> Path | None:
     return None
 
 
+def pull_repo_before_update(repo_root: Path) -> None:
+    try:
+        with git.Repo(repo_root) as repo:
+            pull_output = repo.git.pull("--ff-only", "--no-rebase", "--no-autostash")
+    except git.GitCommandError as error:
+        typer.echo(f"""❌ Pulling {repo_root} failed; update stopped before reinstalling stackops.\n{error}""")
+        raise typer.Exit(code=1) from None
+    typer.echo(pull_output)
+
+
 def _abort_rebase_if_in_progress(repo: git.Repo) -> None:
     git_dir = Path(repo.git_dir)
     if git_dir.joinpath("rebase-merge").exists() or git_dir.joinpath("rebase-apply").exists():

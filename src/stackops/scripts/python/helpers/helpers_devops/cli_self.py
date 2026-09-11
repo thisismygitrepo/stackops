@@ -71,9 +71,11 @@ def update(
     if dev and dev_repo_root is None:
         typer.echo(f"❌ --dev requires a stackops repo checkout at {STACKOPS_REPO_DIR}; run 'devops s i --dev' first.")
         raise typer.Exit(code=1)
-    if dev and dev_repo_root is not None:
-        cli_self_repo.sync_dev_repo_before_update(dev_repo_root)
     if dev_repo_root is not None:
+        if dev:
+            cli_self_repo.sync_dev_repo_before_update(dev_repo_root)
+        else:
+            cli_self_repo.pull_repo_before_update(repo_root=dev_repo_root)
         shell_script = f"""
 uv self update
 uv tool install --no-cache --upgrade --editable "{STACKOPS_REPO_DIR}"
