@@ -25,14 +25,22 @@ def main(
     ] = None,
     message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
     mode: Annotated[
-        Literal["merge", "overwrite-local", "overwrite-remote"],
+        Literal["merge", "m", "overwrite-local", "l", "overwrite-remote", "r"],
         typer.Option(
             "--mode",
-            help="Merge both copies, replace local with remote, or replace remote with local. Overwrite modes never merge.",
+            "-M",
+            help="merge (m): merge both copies; overwrite-local (l): replace local with remote; "
+            "overwrite-remote (r): replace remote with local. Overwrite modes never merge.",
         ),
     ] = "merge",
     on_conflict: Annotated[
-        ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict in merge mode only.")
+        ConflictResolutionOption,
+        typer.Option(
+            ...,
+            "--on-conflict",
+            "-c",
+            help="Merge conflicts only: ask (a), stop-on-conflict (s), merge-accept-remote (r), or merge-accept-local (l).",
+        ),
     ] = "ask",
     pwd: Annotated[str | None, typer.Option(..., "--password", "-p", help="Password for encryption/decryption of the remote repository.")] = None,
     ignore_gitignore: Annotated[
@@ -64,6 +72,14 @@ def main(
     from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
     from stackops.utils.path_core import delete_path
     from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_CONFIG_PATH
+
+    match mode:
+        case "m":
+            mode = "merge"
+        case "l":
+            mode = "overwrite-local"
+        case "r":
+            mode = "overwrite-remote"
 
     console = Console()
     if cloud is None:

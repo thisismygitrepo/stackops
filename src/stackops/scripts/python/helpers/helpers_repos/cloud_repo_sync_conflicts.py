@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 type ConflictResolutionAction = Literal["ask", "stop-on-conflict", "merge-accept-remote", "merge-accept-local"]
-ConflictResolutionOption: TypeAlias = Literal["ask", "a", "stop-on-conflict", "s", "merge-accept-remote", "merge-accept-local"]
+ConflictResolutionOption: TypeAlias = Literal["ask", "a", "stop-on-conflict", "s", "merge-accept-remote", "r", "merge-accept-local", "l"]
 type MergeConflictResolutionSide = Literal["local", "remote"]
 type ConflictPathState = Literal["present", "deleted"]
 
@@ -35,7 +35,9 @@ def resolve_conflict_action(on_conflict: ConflictResolutionOption) -> ConflictRe
         "ask": "ask",
         "s": "stop-on-conflict",
         "stop-on-conflict": "stop-on-conflict",
+        "r": "merge-accept-remote",
         "merge-accept-remote": "merge-accept-remote",
+        "l": "merge-accept-local",
         "merge-accept-local": "merge-accept-local",
     }
     return on_conflict_mapper[on_conflict]
