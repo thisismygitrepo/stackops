@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Annotated, Never
+from typing import Annotated, Literal, Never
 
 import typer
 
@@ -24,8 +24,15 @@ def main(
         str | None, typer.Option(..., "--cloud", "-C", help="Cloud storage profile name. If not provided, uses default from config.")
     ] = None,
     message: Annotated[str | None, typer.Option(..., "--message", "-m", help="Commit message for local changes.")] = None,
+    mode: Annotated[
+        Literal["merge", "overwrite-local", "overwrite-remote"],
+        typer.Option(
+            "--mode",
+            help="Merge both copies, replace local with remote, or replace remote with local. Overwrite modes never merge.",
+        ),
+    ] = "merge",
     on_conflict: Annotated[
-        ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on merge conflict. Default is 'ask'.")
+        ConflictResolutionOption, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict in merge mode only.")
     ] = "ask",
     pwd: Annotated[str | None, typer.Option(..., "--password", "-p", help="Password for encryption/decryption of the remote repository.")] = None,
     ignore_gitignore: Annotated[
@@ -41,24 +48,17 @@ def main(
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_actions import (
         overwrite_local_with_remote,
         publish_local_repository,
-        remove_integration_state,
         restore_local_repository,
-        select_conflict_action,
         validate_integration_transport,
     )
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import download_repo_archive, get_repo_remote_archive_path
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import (
-        MergeConflictResolutionSide,
-        resolve_conflict_action,
-        resolve_merge_conflicts,
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import (
+        download_repo_archive,
+        get_repo_remote_archive_path,
+        upload_repo_archive,
     )
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import (
-        MergeConflictResult,
-        MergeGitError,
-        commit_local_changes,
-        merge_remote_copy,
-    )
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_integration import create_integration_worktree, fast_forward_local_repo
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import resolve_conflict_action
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import commit_local_changes
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_integration import integrate_remote_repository
     from stackops.utils.accessories import randstr
     from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError, read_default_rclone_remote
     from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
@@ -66,7 +66,6 @@ def main(
     from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_CONFIG_PATH
 
     console = Console()
-    conflict_action = resolve_conflict_action(on_conflict=on_conflict)
     if cloud is None:
         try:
             cloud_resolved = read_default_rclone_remote()
@@ -104,6 +103,24 @@ def main(
     repo_remote_root = Path(CONFIG_ROOT).joinpath("remote", run_name, repo_local_root.name)
     integration_root = Path(CONFIG_ROOT).joinpath("integration", run_name, repo_local_root.name)
     remote_path = get_repo_remote_archive_path(repo_root=repo_local_root)
+    if mode == "overwrite-remote":
+        if repo_local_obj is None:
+            console.print(Panel(f"No local repository exists at {repo_local_root}", title="Repository Not Found", border_style="red"))
+            raise typer.Exit(code=1)
+        try:
+            commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)
+        except GitCommandError as exc:
+            console.print(Panel(f"❌ COMMIT FAILED\n{exc}", title="Commit Failed", border_style="red"))
+            raise typer.Exit(code=1) from exc
+        try:
+            upload_repo_archive(
+                repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore
+            )
+        except GpgCommandError as error:
+            _exit_after_gpg_error(error=error)
+        console.print(Panel("✅ Cloud repository replaced with the local repository.", title="Overwrite Remote", border_style="green"))
+        return "overwritten-remote"
+
     if repo_local_obj is None:
         console.print(
             Panel(
@@ -121,11 +138,13 @@ def main(
         if not is_missing_remote_path_error(error):
             raise
         delete_path(repo_remote_root.parent, verbose=False)
-        if repo_local_obj is None:
+        if repo_local_obj is None or mode == "overwrite-local":
+            missing_source = f"No remote archive exists at {cloud_resolved}:{remote_path.as_posix()}"
+            if repo_local_obj is None:
+                missing_source = f"No local repository exists at {repo_local_root}\n{missing_source}"
             console.print(
                 Panel(
-                    f"No local repository exists at {repo_local_root}\n"
-                    f"No remote archive exists at {cloud_resolved}:{remote_path.as_posix()}",
+                    missing_source,
                     title="Repository Not Found",
                     border_style="red",
                 )
@@ -173,67 +192,26 @@ def main(
         console.print(Panel(f"✅ Repository restored to {repo_local_root}", title="First Sync", border_style="green"))
         return "restored"
 
+    if mode == "overwrite-local":
+        repo_local_obj.close()
+        result = overwrite_local_with_remote(repo_local_root=repo_local_root, repo_remote_root=repo_remote_root)
+        console.print(Panel("✅ Local repository replaced with the cloud repository.", title="Overwrite Local", border_style="green"))
+        return result
+
     try:
         commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)
     except GitCommandError as exc:
         console.print(Panel(f"❌ COMMIT FAILED\n{exc}", title="Commit Failed", border_style="red"))
         raise typer.Exit(code=1) from exc
 
-    integration_worktree = create_integration_worktree(repo=repo_local_obj, worktree_root=integration_root)
-    repo_integration_obj = Repo(integration_worktree.root)
-    merge_result = merge_remote_copy(repo=repo_integration_obj, remote_path=repo_remote_root, console=console)
-
-    if isinstance(merge_result, MergeGitError):
-        console.print(
-            Panel(
-                f"Integration failed and was preserved at {integration_root}\nRemote copy: {repo_remote_root}\n\n{merge_result.details}",
-                title="Pull Failed",
-                border_style="red",
-            )
-        )
-        raise typer.Exit(code=1)
-
-    if isinstance(merge_result, MergeConflictResult):
-        conflict_paths = "\n".join(f"• {conflict.path}" for conflict in merge_result.conflicts)
-        console.print(
-            Panel(
-                f"Live repository remains unchanged.\nIsolated merge: {integration_root}\nRemote copy: {repo_remote_root}\n\nConflicting paths:\n{conflict_paths}",
-                title="Merge Conflict",
-                border_style="red",
-            )
-        )
-        console.print(Panel("🔄 RESOLVE MERGE CONFLICT", border_style="blue"))
-        selected_action = select_conflict_action(on_conflict=conflict_action)
-        match selected_action:
-            case "stop-on-conflict":
-                raise typer.Exit(code=1)
-            case "inspect":
-                from stackops.scripts.python.helpers.helpers_repos.sync import inspect_repos
-
-                inspect_repos(repo_local_root=str(repo_local_root), repo_remote_root=str(integration_root))
-                raise typer.Exit(code=1)
-            case "push-local-merge":
-                remove_integration_state(local_repo=repo_local_obj, integration_repo=repo_integration_obj, integration_worktree=integration_worktree)
-            case "overwrite-local":
-                remove_integration_state(local_repo=repo_local_obj, integration_repo=repo_integration_obj, integration_worktree=integration_worktree)
-                repo_local_obj.close()
-                return overwrite_local_with_remote(repo_local_root=repo_local_root, repo_remote_root=repo_remote_root)
-            case "merge-accept-remote" | "merge-accept-local":
-                accepted_side: MergeConflictResolutionSide = "remote" if selected_action == "merge-accept-remote" else "local"
-                resolve_merge_conflicts(repo=repo_integration_obj, expected_conflicts=merge_result.conflicts, accept_side=accepted_side)
-                validate_integration_transport(repo_local_root=repo_local_root, integration_root=integration_root, cloud=cloud_resolved)
-                fast_forward_local_repo(
-                    local_repo=repo_local_obj, integration_repo=repo_integration_obj, expected_local_head=integration_worktree.base_commit
-                )
-                remove_integration_state(local_repo=repo_local_obj, integration_repo=repo_integration_obj, integration_worktree=integration_worktree)
-            case "ask":
-                raise RuntimeError("Interactive conflict action was not resolved.")
-    else:
-        validate_integration_transport(repo_local_root=repo_local_root, integration_root=integration_root, cloud=cloud_resolved)
-        fast_forward_local_repo(
-            local_repo=repo_local_obj, integration_repo=repo_integration_obj, expected_local_head=integration_worktree.base_commit
-        )
-        remove_integration_state(local_repo=repo_local_obj, integration_repo=repo_integration_obj, integration_worktree=integration_worktree)
+    integrate_remote_repository(
+        local_repo=repo_local_obj,
+        repo_remote_root=repo_remote_root,
+        integration_root=integration_root,
+        cloud=cloud_resolved,
+        on_conflict=resolve_conflict_action(on_conflict=on_conflict),
+        console=console,
+    )
 
     try:
         publish_local_repository(

@@ -22,11 +22,10 @@ def select_conflict_action(on_conflict: ConflictResolutionAction) -> SelectedCon
     import questionary
 
     choices: dict[str, SelectedConflictAction] = {
-        "Keep local repository and replace the cloud copy": "push-local-merge",
-        "Replace local repository with the cloud copy": "overwrite-local",
         "Inspect local repository and isolated merge worktree": "inspect",
         "Finish merge and accept remote versions for conflicting paths": "merge-accept-remote",
         "Finish merge and accept local versions for conflicting paths": "merge-accept-local",
+        "Stop on conflict": "stop-on-conflict",
     }
     choice = questionary.select("Choose one option:", choices=tuple(choices)).ask()
     if choice is None:
