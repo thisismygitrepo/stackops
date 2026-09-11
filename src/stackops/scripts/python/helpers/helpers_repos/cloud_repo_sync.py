@@ -74,11 +74,11 @@ def main(
     from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_CONFIG_PATH
 
     match mode:
-        case "m":
+        case "m" | "merge":
             mode = "merge"
-        case "l":
+        case "l" | "overwrite-local":
             mode = "overwrite-local"
-        case "r":
+        case "r" | "overwrite-remote":
             mode = "overwrite-remote"
 
     console = Console()
