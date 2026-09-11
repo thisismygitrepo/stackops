@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+import os
 from pathlib import Path
+import stat
 from typing import TYPE_CHECKING
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import MergeConflict
@@ -30,6 +32,26 @@ class MergeGitError:
 
 
 type MergeAttemptResult = MergeSuccess | MergeConflictResult | MergeGitError
+
+
+def restore_downloaded_file_modes(repo: "Repo") -> None:
+    if os.name == "nt":
+        repo.git.config("--local", "core.filemode", "false")
+        return
+
+    repo_root = Path(repo.working_dir)
+    executable_bits = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+    for (relative_path, stage), entry in repo.index.entries.items():
+        if stage != 0 or not stat.S_ISREG(entry.mode):
+            continue
+        file_path = repo_root.joinpath(relative_path)
+        if not file_path.is_file(follow_symlinks=False):
+            continue
+        current_mode = stat.S_IMODE(file_path.stat(follow_symlinks=False).st_mode)
+        restored_mode = (current_mode & ~executable_bits) | (entry.mode & executable_bits)
+        if restored_mode != current_mode:
+            file_path.chmod(restored_mode)
+    repo.git.config("--local", "core.filemode", "true")
 
 
 def _print_section(console: "Console", title: str) -> None:

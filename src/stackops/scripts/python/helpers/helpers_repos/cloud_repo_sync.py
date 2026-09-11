@@ -65,7 +65,7 @@ def main(
         upload_repo_archive,
     )
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import resolve_conflict_action
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import commit_local_changes
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import commit_local_changes, restore_downloaded_file_modes
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_integration import integrate_remote_repository
     from stackops.utils.accessories import randstr
     from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError, read_default_rclone_remote
@@ -113,6 +113,9 @@ def main(
     except ValueError as exc:
         console.print(Panel(f"Repository must live under {Path.home()}\nLocation: {repo_local_root}", title="Error", border_style="red"))
         raise typer.Exit(code=1) from exc
+
+    if repo_local_obj is not None and os.name == "nt":
+        repo_local_obj.git.config("--local", "core.filemode", "false")
 
     message_resolved = "sync" if message is None or message.strip() == "" else message
     run_name = randstr(8)
@@ -187,6 +190,7 @@ def main(
 
     repo_remote_obj = Repo(repo_remote_root)
     try:
+        restore_downloaded_file_modes(repo=repo_remote_obj)
         remote_repo_is_dirty = repo_remote_obj.is_dirty(untracked_files=True)
     finally:
         repo_remote_obj.close()
