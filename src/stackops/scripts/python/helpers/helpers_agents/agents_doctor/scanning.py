@@ -11,6 +11,7 @@ from typing import Literal, cast
 import yaml
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import DOCTOR_VERSION_TIMEOUT_SECONDS
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths import permitted_resource_path
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import (
     DoctorAgentDefinition,
     DoctorContext,
@@ -31,18 +32,20 @@ type ConfigFormat = Literal["json", "toml", "yaml"]
 def _environment_path(*, variable_name: str, fallback: Path) -> Path:
     raw_value = os.environ.get(variable_name)
     if raw_value is None or raw_value.strip() == "":
-        return fallback.resolve(strict=False)
-    return Path(raw_value).expanduser().resolve(strict=False)
+        return fallback.absolute()
+    return Path(raw_value).expanduser().absolute()
 
 
 def _omp_home(*, home_directory: Path) -> Path:
     profile = os.environ.get("OMP_PROFILE")
     if profile is not None and profile.strip() not in ("", "default"):
-        return home_directory.joinpath(".omp", "profiles", profile.strip(), "agent").resolve(strict=False)
+        return home_directory.joinpath(".omp", "profiles", profile.strip(), "agent").absolute()
     return _environment_path(variable_name="PI_CODING_AGENT_DIR", fallback=home_directory.joinpath(".omp", "agent"))
 
 
 def create_doctor_context(*, working_directory: Path) -> DoctorContext:
+    if not permitted_resource_path(path=working_directory, home_directory=Path.home()):
+        raise ValueError("Protected directory excluded from inspection")
     resolved_working_directory = working_directory.expanduser().resolve(strict=False)
     detected_repo_root = get_repo_root(resolved_working_directory)
     project_root = (detected_repo_root or resolved_working_directory).resolve(strict=False)
@@ -76,7 +79,9 @@ def resource_candidate(
     detail: str,
     include_missing: bool,
 ) -> DoctorResource | None:
-    resolved_path = path.expanduser().resolve(strict=False)
+    resolved_path = path.expanduser().absolute()
+    if not permitted_resource_path(path=resolved_path, home_directory=Path.home()):
+        return DoctorResource(kind=kind, is_mcp=is_mcp, name=name, origin=origin, state="configured", path=resolved_path, detail="Protected path excluded from inspection")
     if resolved_path.exists():
         return DoctorResource(kind=kind, is_mcp=is_mcp, name=name, origin=origin, state=present_state, path=resolved_path, detail=detail)
     if include_missing:
@@ -89,6 +94,8 @@ def present_resources(*, candidates: Iterable[DoctorResource | None]) -> tuple[D
 
 
 def _skill_name(*, skill_path: Path) -> str:
+    if not permitted_resource_path(path=skill_path, home_directory=Path.home()):
+        return skill_path.parent.name
     try:
         text = skill_path.read_text(encoding="utf-8")
     except OSError:
@@ -106,11 +113,15 @@ def scan_skill_roots(*, roots: Sequence[tuple[DoctorOrigin, Path, str]], recursi
     resources: list[DoctorResource] = []
     seen_paths: set[Path] = set()
     for origin, root, detail in roots:
-        if not root.is_dir():
+        if not permitted_resource_path(path=root, home_directory=Path.home()) or not root.is_dir():
             continue
-        paths = root.rglob("SKILL.md") if recursive else root.glob("*/SKILL.md")
+        direct_skills = tuple(
+            child / "SKILL.md" for child in root.iterdir()
+            if not permitted_resource_path(path=child, home_directory=Path.home()) or (child / "SKILL.md").is_file()
+        )
+        paths = (*direct_skills, *root.rglob("SKILL.md")) if recursive else direct_skills
         for path in sorted(paths):
-            resolved_path = path.resolve(strict=False)
+            resolved_path = path.absolute()
             if resolved_path in seen_paths or "node_modules" in resolved_path.parts:
                 continue
             seen_paths.add(resolved_path)
@@ -134,13 +145,13 @@ def scan_plugin_roots(
     resources: list[DoctorResource] = []
     seen_paths: set[Path] = set()
     for origin, root, detail in roots:
-        if not root.is_dir():
+        if not permitted_resource_path(path=root, home_directory=Path.home()) or not root.is_dir():
             continue
         for pattern in patterns:
             for path in sorted(root.glob(pattern)):
-                if not path.is_file():
+                if not permitted_resource_path(path=path, home_directory=Path.home()) or not path.is_file():
                     continue
-                resolved_path = path.resolve(strict=False)
+                resolved_path = path.absolute()
                 if resolved_path in seen_paths or "node_modules" in resolved_path.parts:
                     continue
                 seen_paths.add(resolved_path)
@@ -153,6 +164,8 @@ def scan_plugin_roots(
 
 def load_config_mapping(*, path: Path, config_format: ConfigFormat) -> dict[str, object] | str:
     try:
+        if not permitted_resource_path(path=path, home_directory=Path.home()):
+            return "Protected path excluded from inspection"
         text = path.read_text(encoding="utf-8")
         match config_format:
             case "json":
@@ -189,6 +202,20 @@ def _version_status(*, definition: DoctorAgentDefinition) -> DoctorExecutableSta
 
 
 def build_doctor_report(*, definition: DoctorAgentDefinition, working_directory: Path) -> DoctorReport:
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.discovery import collect_hooks
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.resource_inventory import collect_agent_resources
+
     context = create_doctor_context(working_directory=working_directory)
-    resources = definition.collector(context=context)
-    return DoctorReport(definition=definition, context=context, executable=_version_status(definition=definition), resources=resources)
+    inventory = collect_hooks(agent=definition.agent, context=context)
+    resources = (
+        *collect_agent_resources(definition=definition, context=context),
+        *(DoctorResource(
+            kind="hook", is_mcp=False, name=entry.name, origin=entry.origin, state=entry.state,
+            path=entry.path, detail=f"""{entry.event}: {entry.command}""",
+        ) for entry in inventory.entries),
+    )
+    return DoctorReport(
+        definition=definition, context=context, executable=_version_status(definition=definition), resources=resources,
+        inspection_notes=tuple(f"""{item.path}: {item.message}""" for item in inventory.diagnostics if item.severity == "notice"),
+        inspection_errors=tuple(f"""{item.path}: {item.message}""" for item in inventory.diagnostics if item.severity == "error"),
+    )

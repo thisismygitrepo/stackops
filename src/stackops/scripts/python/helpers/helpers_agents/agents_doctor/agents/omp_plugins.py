@@ -52,7 +52,7 @@ def configured_extensions(*, config_entries: Iterable[ConfigEntry]) -> tuple[Doc
         for value in string_values(value=mapping.get("extensions")):
             extension_path = _configured_extension_path(value=value, config_path=config_path)
             is_package = extension_path is None
-            resource_path = config_path.resolve(strict=False) if extension_path is None else extension_path
+            resource_path = config_path.absolute() if extension_path is None else extension_path
             resources.append(
                 DoctorResource(
                     kind="plugin",
@@ -72,7 +72,7 @@ def configured_extensions(*, config_entries: Iterable[ConfigEntry]) -> tuple[Doc
                     name=value,
                     origin=origin,
                     state="disabled",
-                    path=config_path.resolve(strict=False),
+                    path=config_path.absolute(),
                     detail="disabled by OMP configuration",
                 )
             )

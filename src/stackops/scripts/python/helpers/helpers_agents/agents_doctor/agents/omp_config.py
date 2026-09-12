@@ -69,5 +69,5 @@ def custom_skill_roots(*, config_entries: Iterable[ConfigEntry]) -> tuple[Resour
             root = Path(value).expanduser()
             if not root.is_absolute():
                 root = config_path.parent / root
-            roots.append((origin, root.resolve(strict=False), f"custom skills configured by {config_path}"))
+            roots.append((origin, root.absolute(), f"custom skills configured by {config_path}"))
     return tuple(roots)

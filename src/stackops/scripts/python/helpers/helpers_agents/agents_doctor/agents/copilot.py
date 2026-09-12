@@ -14,7 +14,7 @@ def _copilot_home(*, context: DoctorContext) -> Path:
     configured_home = os.environ.get("COPILOT_HOME")
     if configured_home is None or configured_home.strip() == "":
         return context.home_directory / ".copilot"
-    return Path(configured_home).expanduser().resolve(strict=False)
+    return Path(configured_home).expanduser().absolute()
 
 
 def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:

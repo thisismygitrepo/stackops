@@ -5416,6 +5416,30 @@
       }
     },
     {
+      "appName": "workmux",
+      "license": "MIT License",
+      "repoURL": "https://github.com/raine/workmux",
+      "lastCommitDate": "2026-09-11T05:45:54Z",
+      "lastCommitDateCheckDate": "2026-09-11T21:35:03Z",
+      "doc": "git worktrees + tmux windows for zero-friction parallel dev",
+      "categoryLabels": [
+        "terminal-workspaces",
+        "version-control"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "workmux-linux-amd64.tar.gz",
+          "windows": null,
+          "darwin": "workmux-darwin-amd64.tar.gz"
+        },
+        "arm64": {
+          "linux": "workmux-linux-arm64.tar.gz",
+          "windows": null,
+          "darwin": "workmux-darwin-arm64.tar.gz"
+        }
+      }
+    },
+    {
       "appName": "warp-terminal",
       "license": "Proprietary license under Warp Terms of Service / Product and Services License Agreement",
       "repoURL": "CMD",

@@ -51,6 +51,7 @@ _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
     "browser",
     "second-brain",
     "doctor",
+    "depoison",
     "run-prompt",
     "run-interactive",
     "ask",
@@ -498,22 +499,25 @@ def doctor(
         typer.Option(
             "--resource",
             "-r",
-            help="Comma-separated resource focuses: all, configuration, mcp, plugin, skill, or instructions.",
+            help="Comma-separated resource focuses: all, configuration, mcp, hook, plugin, skill, or instructions.",
         ),
     ] = "all",
 ) -> None:
-    """Inspect agent binaries, configuration, plugins, skills, and instruction provenance."""
+    """Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance."""
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor
 
     working_directory = directory if directory is not None else Path.cwd()
     try:
-        run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)
+        complete = run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
+    if not complete:
+        raise typer.Exit(code=1)
 
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
+    from stackops.scripts.python.agents_depoison import depoison
     from stackops.scripts.python.agents_iter import get_app as get_iter_app
     from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
     from stackops.scripts.python.agents_second_brain import get_app as get_second_brain_app
@@ -554,6 +558,7 @@ def get_app() -> typer.Typer:
     agents_app.command(name="C", no_args_is_help=False, hidden=True)(clean)
     agents_app.command(name="doctor", no_args_is_help=False, short_help="<d> Inspect agent health and resource provenance")(doctor)
     agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
+    agents_app.command(name="depoison", no_args_is_help=False, short_help="Preview or reset agent customizations")(depoison)
 
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)

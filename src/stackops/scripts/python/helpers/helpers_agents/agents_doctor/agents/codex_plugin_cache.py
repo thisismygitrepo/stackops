@@ -26,7 +26,7 @@ def _load_plugin_manifest(*, path: Path) -> _PluginManifest:
     raw_version = loaded.get("version")
     version = raw_version if isinstance(raw_version, str) and raw_version.strip() != "" else cached_version
     raw_skills = loaded.get("skills")
-    skill_root = path.parent.parent.joinpath(raw_skills).resolve(strict=False) if isinstance(raw_skills, str) else None
+    skill_root = path.parent.parent.joinpath(raw_skills).absolute() if isinstance(raw_skills, str) else None
     return _PluginManifest(plugin_id=plugin_id, version=version, path=path, skill_root=skill_root, error=None)
 
 

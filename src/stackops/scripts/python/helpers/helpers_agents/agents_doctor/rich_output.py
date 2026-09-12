@@ -7,6 +7,7 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.context_estimate import context_estimate_table
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hook_tools import render_hook_tools
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import (
     DoctorContext,
     DoctorReport,
@@ -20,6 +21,7 @@ _STATE_STYLE: dict[DoctorResourceState, str] = {
     "active": "bold green",
     "available": "cyan",
     "configured": "blue",
+    "referenced": "cyan",
     "disabled": "yellow",
     "missing": "dim red",
     "shadowed": "dim yellow",
@@ -28,6 +30,7 @@ _RESOURCE_FOCUS_TITLES: dict[DoctorResourceFocus, str] = {
     "all": "Resources",
     "configuration": "Configurations",
     "mcp": "MCP configurations",
+    "hook": "Hooks / executable integrations",
     "plugin": "Plugins / extensions",
     "skill": "Skills",
     "instructions": "Instructions considered",
@@ -36,6 +39,7 @@ _RESOURCE_FOCUS_SUMMARY_TITLES: dict[DoctorResourceFocus, str] = {
     "all": "Resources",
     "configuration": "Cfg",
     "mcp": "MCP",
+    "hook": "Hooks",
     "plugin": "Plug",
     "skill": "Skill",
     "instructions": "Instr",
@@ -73,7 +77,7 @@ def _resource_matches_focus(*, resource: DoctorResource, resource_focus: DoctorR
             return True
         case "mcp":
             return resource.is_mcp
-        case "configuration" | "plugin" | "skill" | "instructions":
+        case "configuration" | "hook" | "plugin" | "skill" | "instructions":
             return resource.kind == resource_focus
 
 
@@ -107,6 +111,7 @@ def _summary_table(*, reports: Sequence[DoctorReport], resource_focuses: tuple[D
     table.add_column("Version", overflow="fold")
     if resource_focuses == ("all",):
         table.add_column("Cfg", justify="right")
+        table.add_column("Hooks", justify="right")
         table.add_column("Plug", justify="right")
         table.add_column("Skill", justify="right")
         table.add_column("Instr", justify="right")
@@ -120,6 +125,7 @@ def _summary_table(*, reports: Sequence[DoctorReport], resource_focuses: tuple[D
                 _binary_summary(report=report),
                 Text(report.executable.version or "—"),
                 str(_present_count(report=report, resource_focus="configuration")),
+                str(_present_count(report=report, resource_focus="hook")),
                 str(_present_count(report=report, resource_focus="plugin")),
                 str(_present_count(report=report, resource_focus="skill")),
                 str(_present_count(report=report, resource_focus="instructions")),
@@ -158,6 +164,16 @@ def _overview_table(*, report: DoctorReport, resource_focuses: tuple[DoctorResou
 
 def _resource_table(*, report: DoctorReport, resource_focus: DoctorResourceFocus) -> Table:
     table = Table(title=_RESOURCE_FOCUS_TITLES[resource_focus], header_style="bold cyan", show_lines=False)
+    if resource_focus == "hook":
+        table.add_column("Hook / command", ratio=3, overflow="fold")
+        table.add_column("Provenance", ratio=2, overflow="fold")
+        hooks = tuple(resource for resource in report.resources if resource.kind == "hook")
+        if not hooks:
+            table.add_row("No persisted hooks discovered", "See inspection notes for coverage")
+        for resource in hooks:
+            provenance = Text(f"""{resource.origin} · {resource.state}\n{_display_path(path=resource.path, context=report.context)}""")
+            table.add_row(Text(f"""{resource.name}\n{resource.detail}"""), provenance)
+        return table
     table.add_column("Name", style="bold", overflow="fold")
     table.add_column("Source", no_wrap=True)
     table.add_column("State", no_wrap=True)
@@ -184,7 +200,13 @@ def render_doctor_reports(
     *, console: Console, reports: Sequence[DoctorReport], resource_focuses: tuple[DoctorResourceFocus, ...]
 ) -> None:
     console.print(_summary_table(reports=reports, resource_focuses=resource_focuses))
+    if "all" in resource_focuses or "hook" in resource_focuses:
+        render_hook_tools(console=console)
+    for report in reports:
+        if report.inspection_errors:
+            console.print(Panel(Text("\n".join(report.inspection_errors)), title=f"{report.definition.display_name}: incomplete inspection", border_style="red"))
     if len(reports) != 1:
+        console.print("[dim]Hook counts cover recognized persisted resources. Inspect an agent for source files and coverage limits.[/dim]")
         if resource_focuses == ("all",):
             console.print("[dim]Run `agents doctor <target>` for the full provenance tables.[/dim]")
         else:
@@ -198,11 +220,13 @@ def render_doctor_reports(
         Panel(_overview_table(report=report, resource_focuses=resource_focuses), title="Doctor overview", border_style="cyan")
     )
     displayed_focuses: tuple[DoctorResourceFocus, ...] = (
-        ("configuration", "plugin", "skill", "instructions") if resource_focuses == ("all",) else resource_focuses
+        ("configuration", "hook", "plugin", "skill", "instructions") if resource_focuses == ("all",) else resource_focuses
     )
     for selected_focus in displayed_focuses:
         console.print(_resource_table(report=report, resource_focus=selected_focus))
     console.print(context_estimate_table(report=report))
-    if len(report.definition.notes) > 0:
-        notes = Text("\n".join(f"• {note}" for note in report.definition.notes))
+    all_notes = (*report.definition.notes, *report.inspection_notes)
+    if len(all_notes) > 0:
+        notes = Text("\n".join(f"• {note}" for note in all_notes))
         console.print(Panel(notes, title="Notes", border_style="blue"))
+    console.print("[dim]Preview a full reset: agents depoison <target>. Use --resource hook to limit cleanup to hooks.[/dim]")

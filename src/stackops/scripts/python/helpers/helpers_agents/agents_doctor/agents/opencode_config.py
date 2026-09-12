@@ -48,7 +48,7 @@ def configured_plugins(*, config_paths: Iterable[OpenCodeConfigPath]) -> tuple[D
                         name=value.removeprefix("-"),
                         origin=origin,
                         state="disabled" if disabled else "configured",
-                        path=config_path.resolve(strict=False),
+                        path=config_path.absolute(),
                         detail="OpenCode config entry",
                     )
                 )
@@ -62,7 +62,7 @@ def configured_plugins(*, config_paths: Iterable[OpenCodeConfigPath]) -> tuple[D
                         name=package,
                         origin=origin,
                         state="configured",
-                        path=config_path.resolve(strict=False),
+                        path=config_path.absolute(),
                         detail="OpenCode config package entry",
                     )
                 )

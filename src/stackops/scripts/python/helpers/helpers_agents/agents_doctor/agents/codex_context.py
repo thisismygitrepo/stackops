@@ -10,7 +10,7 @@ _ADMIN_SKILLS_PATH: Final[Path] = Path("/etc/codex/skills")
 
 def _directory_instructions(*, directory: Path, origin: DoctorOrigin, names: tuple[str, ...], detail: str) -> tuple[DoctorResource, ...]:
     candidates = tuple(directory / name for name in dict.fromkeys(names))
-    existing = tuple(path.resolve(strict=False) for path in candidates if path.is_file())
+    existing = tuple(path.absolute() for path in candidates if path.is_file())
     active_path = next((path for path in existing if path.stat().st_size > 0), None)
     resources: list[DoctorResource] = []
     for path in existing:
@@ -25,13 +25,7 @@ def _directory_instructions(*, directory: Path, origin: DoctorOrigin, names: tup
             selection_detail = f"lower filename precedence than {active_path.name}" if active_path is not None else "not selected"
         resources.append(
             DoctorResource(
-                kind="instructions",
-                is_mcp=False,
-                name=path.name,
-                origin=origin,
-                state=state,
-                path=path,
-                detail=f"{detail}; {selection_detail}",
+                kind="instructions", is_mcp=False, name=path.name, origin=origin, state=state, path=path, detail=f"{detail}; {selection_detail}"
             )
         )
     return tuple(resources)

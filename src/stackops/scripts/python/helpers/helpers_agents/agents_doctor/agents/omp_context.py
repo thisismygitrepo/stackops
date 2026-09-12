@@ -34,13 +34,16 @@ def skills(
             ("local", context.working_directory / ".github" / "skills", "Copilot-compatible project skills"),
         ]
     )
-    roots.extend(custom_skill_roots(config_entries=config_entries))
-    roots.extend(
+    referenced_roots = list(custom_skill_roots(config_entries=config_entries))
+    referenced_roots.extend(
         (resource.origin, resource.path / "skills", "skills supplied by configured OMP extension")
         for resource in configured_extensions
         if resource.state == "configured" and resource.path.is_dir()
     )
-    return scan_skill_roots(roots=roots, recursive=True, state="available")
+    return (
+        *scan_skill_roots(roots=roots, recursive=True, state="available"),
+        *scan_skill_roots(roots=referenced_roots, recursive=True, state="referenced"),
+    )
 
 
 def instructions(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
@@ -94,19 +97,11 @@ def instructions(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
     for origin, root, detail, patterns in instruction_roots:
         for pattern in patterns:
             for path in sorted(root.glob(pattern)):
-                resolved_path = path.resolve(strict=False)
-                if not path.is_file() or resolved_path in seen_paths:
+                source_path = path.absolute()
+                if not path.is_file() or source_path in seen_paths:
                     continue
-                seen_paths.add(resolved_path)
+                seen_paths.add(source_path)
                 resources.append(
-                    DoctorResource(
-                        kind="instructions",
-                        is_mcp=False,
-                        name=path.name,
-                        origin=origin,
-                        state="active",
-                        path=resolved_path,
-                        detail=detail,
-                    )
+                    DoctorResource(kind="instructions", is_mcp=False, name=path.name, origin=origin, state="active", path=source_path, detail=detail)
                 )
     return tuple(resources)

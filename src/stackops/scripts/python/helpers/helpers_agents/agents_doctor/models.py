@@ -6,9 +6,9 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
 type DoctorOrigin = Literal["local", "global", "admin", "system"]
-type DoctorResourceKind = Literal["configuration", "plugin", "skill", "instructions"]
-DoctorResourceFocus: TypeAlias = Literal["all", "configuration", "mcp", "plugin", "skill", "instructions"]
-type DoctorResourceState = Literal["active", "available", "configured", "disabled", "missing", "shadowed"]
+type DoctorResourceKind = Literal["configuration", "hook", "plugin", "skill", "instructions"]
+DoctorResourceFocus: TypeAlias = Literal["all", "configuration", "mcp", "hook", "plugin", "skill", "instructions"]
+type DoctorResourceState = Literal["active", "available", "configured", "referenced", "disabled", "missing", "shadowed"]
 type DoctorSupportLevel = Literal["focused", "standard"]
 type DoctorAgent = AGENTS | Literal["omp"]
 
@@ -67,3 +67,5 @@ class DoctorReport:
     context: DoctorContext
     executable: DoctorExecutableStatus
     resources: tuple[DoctorResource, ...]
+    inspection_notes: tuple[str, ...]
+    inspection_errors: tuple[str, ...]

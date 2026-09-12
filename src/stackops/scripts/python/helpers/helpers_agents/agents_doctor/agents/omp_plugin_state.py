@@ -95,7 +95,7 @@ def _plugin_skills(*, declaration: _PluginDeclaration, package_root: Path) -> tu
             name=path.parent.name,
             origin=declaration.origin,
             state="available",
-            path=path.resolve(strict=False),
+            path=path.absolute(),
             detail=f"skill supplied by active OMP plugin {declaration.name}",
         )
         for path in sorted(skills_root.rglob("SKILL.md"))
@@ -142,7 +142,7 @@ def plugin_state_resources(*, context: DoctorContext) -> tuple[DoctorResource, .
                 name=declaration.name,
                 origin=declaration.origin,
                 state=state,
-                path=package_root.resolve(strict=False) if installed else declaration.declaration_path.resolve(strict=False),
+                path=package_root.absolute() if installed else declaration.declaration_path.absolute(),
                 detail=f"{status_detail}{version_detail}; declared in {declaration.declaration_path}",
             )
         )

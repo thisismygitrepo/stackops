@@ -2554,8 +2554,23 @@
                     "        str | None, typer.Option(..., \"--cloud\", \"-C\", help=\"Cloud storage profile name. If not provided, uses default from config.\")",
                     "    ] = None,",
                     "    message: Annotated[str | None, typer.Option(..., \"--message\", \"-m\", help=\"Commit message for local changes.\")] = None,",
+                    "    mode: Annotated[",
+                    "        Literal[\"merge\", \"m\", \"overwrite-local\", \"l\", \"overwrite-remote\", \"r\"],",
+                    "        typer.Option(",
+                    "            \"--mode\",",
+                    "            \"-M\",",
+                    "            help=\"merge (m): merge both copies; overwrite-local (l): replace local with remote; \"",
+                    "            \"overwrite-remote (r): replace remote with local. Overwrite modes never merge.\",",
+                    "        ),",
+                    "    ] = \"merge\",",
                     "    on_conflict: Annotated[",
-                    "        ConflictResolutionOption, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on merge conflict. Default is 'ask'.\")",
+                    "        ConflictResolutionOption,",
+                    "        typer.Option(",
+                    "            ...,",
+                    "            \"--on-conflict\",",
+                    "            \"-c\",",
+                    "            help=\"Merge conflicts only: ask (a), stop-on-conflict (s), merge-accept-remote (r), or merge-accept-local (l).\",",
+                    "        ),",
                     "    ] = \"ask\",",
                     "    pwd: Annotated[str | None, typer.Option(..., \"--password\", \"-p\", help=\"Password for encryption/decryption of the remote repository.\")] = None,",
                     "    ignore_gitignore: Annotated[",
@@ -2571,32 +2586,32 @@
                     "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_actions import (",
                     "        overwrite_local_with_remote,",
                     "        publish_local_repository,",
-                    "        remove_integration_state,",
                     "        restore_local_repository,",
-                    "        select_conflict_action,",
                     "        validate_integration_transport,",
                     "    )",
-                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import download_repo_archive, get_repo_remote_archive_path",
-                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import (",
-                    "        MergeConflictResolutionSide,",
-                    "        resolve_conflict_action,",
-                    "        resolve_merge_conflicts,",
+                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import (",
+                    "        download_repo_archive,",
+                    "        get_repo_remote_archive_path,",
+                    "        upload_repo_archive,",
                     "    )",
-                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import (",
-                    "        MergeConflictResult,",
-                    "        MergeGitError,",
-                    "        commit_local_changes,",
-                    "        merge_remote_copy,",
-                    "    )",
-                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_integration import create_integration_worktree, fast_forward_local_repo",
+                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import resolve_conflict_action",
+                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import commit_local_changes, restore_downloaded_file_modes",
+                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_integration import integrate_remote_repository",
                     "    from stackops.utils.accessories import randstr",
                     "    from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError, read_default_rclone_remote",
                     "    from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error",
                     "    from stackops.utils.path_core import delete_path",
                     "    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_CONFIG_PATH",
                     "",
+                    "    match mode:",
+                    "        case \"m\" | \"merge\":",
+                    "            mode = \"merge\"",
+                    "        case \"l\" | \"overwrite-local\":",
+                    "            mode = \"overwrite-local\"",
+                    "        case \"r\" | \"overwrite-remote\":",
+                    "            mode = \"overwrite-remote\"",
+                    "",
                     "    console = Console()",
-                    "    conflict_action = resolve_conflict_action(on_conflict=on_conflict)",
                     "    if cloud is None:",
                     "        try:",
                     "            cloud_resolved = read_default_rclone_remote()",
@@ -2629,11 +2644,32 @@
                     "        console.print(Panel(f\"Repository must live under {Path.home()}\\nLocation: {repo_local_root}\", title=\"Error\", border_style=\"red\"))",
                     "        raise typer.Exit(code=1) from exc",
                     "",
+                    "    if repo_local_obj is not None and os.name == \"nt\":",
+                    "        repo_local_obj.git.config(\"--local\", \"core.filemode\", \"false\")",
+                    "",
                     "    message_resolved = \"sync\" if message is None or message.strip() == \"\" else message",
                     "    run_name = randstr(8)",
                     "    repo_remote_root = Path(CONFIG_ROOT).joinpath(\"remote\", run_name, repo_local_root.name)",
                     "    integration_root = Path(CONFIG_ROOT).joinpath(\"integration\", run_name, repo_local_root.name)",
                     "    remote_path = get_repo_remote_archive_path(repo_root=repo_local_root)",
+                    "    if mode == \"overwrite-remote\":",
+                    "        if repo_local_obj is None:",
+                    "            console.print(Panel(f\"No local repository exists at {repo_local_root}\", title=\"Repository Not Found\", border_style=\"red\"))",
+                    "            raise typer.Exit(code=1)",
+                    "        try:",
+                    "            commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)",
+                    "        except GitCommandError as exc:",
+                    "            console.print(Panel(f\"❌ COMMIT FAILED\\n{exc}\", title=\"Commit Failed\", border_style=\"red\"))",
+                    "            raise typer.Exit(code=1) from exc",
+                    "        try:",
+                    "            upload_repo_archive(",
+                    "                repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore",
+                    "            )",
+                    "        except GpgCommandError as error:",
+                    "            _exit_after_gpg_error(error=error)",
+                    "        console.print(Panel(\"✅ Cloud repository replaced with the local repository.\", title=\"Overwrite Remote\", border_style=\"green\"))",
+                    "        return \"overwritten-remote\"",
+                    "",
                     "    if repo_local_obj is None:",
                     "        console.print(",
                     "            Panel(",
@@ -2651,11 +2687,13 @@
                     "        if not is_missing_remote_path_error(error):",
                     "            raise",
                     "        delete_path(repo_remote_root.parent, verbose=False)",
-                    "        if repo_local_obj is None:",
+                    "        if repo_local_obj is None or mode == \"overwrite-local\":",
+                    "            missing_source = f\"No remote archive exists at {cloud_resolved}:{remote_path.as_posix()}\"",
+                    "            if repo_local_obj is None:",
+                    "                missing_source = f\"No local repository exists at {repo_local_root}\\n{missing_source}\"",
                     "            console.print(",
                     "                Panel(",
-                    "                    f\"No local repository exists at {repo_local_root}\\n\"",
-                    "                    f\"No remote archive exists at {cloud_resolved}:{remote_path.as_posix()}\",",
+                    "                    missing_source,",
                     "                    title=\"Repository Not Found\",",
                     "                    border_style=\"red\",",
                     "                )",
@@ -2682,6 +2720,7 @@
                     "",
                     "    repo_remote_obj = Repo(repo_remote_root)",
                     "    try:",
+                    "        restore_downloaded_file_modes(repo=repo_remote_obj)",
                     "        remote_repo_is_dirty = repo_remote_obj.is_dirty(untracked_files=True)",
                     "    finally:",
                     "        repo_remote_obj.close()",
@@ -2703,67 +2742,26 @@
                     "        console.print(Panel(f\"✅ Repository restored to {repo_local_root}\", title=\"First Sync\", border_style=\"green\"))",
                     "        return \"restored\"",
                     "",
+                    "    if mode == \"overwrite-local\":",
+                    "        repo_local_obj.close()",
+                    "        result = overwrite_local_with_remote(repo_local_root=repo_local_root, repo_remote_root=repo_remote_root)",
+                    "        console.print(Panel(\"✅ Local repository replaced with the cloud repository.\", title=\"Overwrite Local\", border_style=\"green\"))",
+                    "        return result",
+                    "",
                     "    try:",
                     "        commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)",
                     "    except GitCommandError as exc:",
                     "        console.print(Panel(f\"❌ COMMIT FAILED\\n{exc}\", title=\"Commit Failed\", border_style=\"red\"))",
                     "        raise typer.Exit(code=1) from exc",
                     "",
-                    "    integration_worktree = create_integration_worktree(repo=repo_local_obj, worktree_root=integration_root)",
-                    "    repo_integration_obj = Repo(integration_worktree.root)",
-                    "    merge_result = merge_remote_copy(repo=repo_integration_obj, remote_path=repo_remote_root, console=console)",
-                    "",
-                    "    if isinstance(merge_result, MergeGitError):",
-                    "        console.print(",
-                    "            Panel(",
-                    "                f\"Integration failed and was preserved at {integration_root}\\nRemote copy: {repo_remote_root}\\n\\n{merge_result.details}\",",
-                    "                title=\"Pull Failed\",",
-                    "                border_style=\"red\",",
-                    "            )",
-                    "        )",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    if isinstance(merge_result, MergeConflictResult):",
-                    "        conflict_paths = \"\\n\".join(f\"• {conflict.path}\" for conflict in merge_result.conflicts)",
-                    "        console.print(",
-                    "            Panel(",
-                    "                f\"Live repository remains unchanged.\\nIsolated merge: {integration_root}\\nRemote copy: {repo_remote_root}\\n\\nConflicting paths:\\n{conflict_paths}\",",
-                    "                title=\"Merge Conflict\",",
-                    "                border_style=\"red\",",
-                    "            )",
-                    "        )",
-                    "        console.print(Panel(\"🔄 RESOLVE MERGE CONFLICT\", border_style=\"blue\"))",
-                    "        selected_action = select_conflict_action(on_conflict=conflict_action)",
-                    "        match selected_action:",
-                    "            case \"stop-on-conflict\":",
-                    "                raise typer.Exit(code=1)",
-                    "            case \"inspect\":",
-                    "                from stackops.scripts.python.helpers.helpers_repos.sync import inspect_repos",
-                    "",
-                    "                inspect_repos(repo_local_root=str(repo_local_root), repo_remote_root=str(integration_root))",
-                    "                raise typer.Exit(code=1)",
-                    "            case \"push-local-merge\":",
-                    "                remove_integration_state(local_repo=repo_local_obj, integration_repo=repo_integration_obj, integration_worktree=integration_worktree)",
-                    "            case \"overwrite-local\":",
-                    "                remove_integration_state(local_repo=repo_local_obj, integration_repo=repo_integration_obj, integration_worktree=integration_worktree)",
-                    "                repo_local_obj.close()",
-                    "                return overwrite_local_with_remote(repo_local_root=repo_local_root, repo_remote_root=repo_remote_root)",
-                    "            case \"merge-accept-remote\" | \"merge-accept-local\":",
-                    "                accepted_side: MergeConflictResolutionSide = \"remote\" if selected_action == \"merge-accept-remote\" else \"local\"",
-                    "                resolve_merge_conflicts(repo=repo_integration_obj, expected_conflicts=merge_result.conflicts, accept_side=accepted_side)",
-                    "                validate_integration_transport(repo_local_root=repo_local_root, integration_root=integration_root, cloud=cloud_resolved)",
-                    "                fast_forward_local_repo(",
-                    "                    local_repo=repo_local_obj, integration_repo=repo_integration_obj, expected_local_head=integration_worktree.base_commit",
-                    "                )",
-                    "                remove_integration_state(local_repo=repo_local_obj, integration_repo=repo_integration_obj, integration_worktree=integration_worktree)",
-                    "            case \"ask\":",
-                    "                raise RuntimeError(\"Interactive conflict action was not resolved.\")",
-                    "    else:",
-                    "        validate_integration_transport(repo_local_root=repo_local_root, integration_root=integration_root, cloud=cloud_resolved)",
-                    "        fast_forward_local_repo(",
-                    "            local_repo=repo_local_obj, integration_repo=repo_integration_obj, expected_local_head=integration_worktree.base_commit",
-                    "        )",
-                    "        remove_integration_state(local_repo=repo_local_obj, integration_repo=repo_integration_obj, integration_worktree=integration_worktree)",
+                    "    integrate_remote_repository(",
+                    "        local_repo=repo_local_obj,",
+                    "        repo_remote_root=repo_remote_root,",
+                    "        integration_root=integration_root,",
+                    "        cloud=cloud_resolved,",
+                    "        on_conflict=resolve_conflict_action(on_conflict=on_conflict),",
+                    "        console=console,",
+                    "    )",
                     "",
                     "    try:",
                     "        publish_local_repository(",
@@ -2843,12 +2841,34 @@
                       }
                     },
                     {
+                      "name": "mode",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['merge', 'm', 'overwrite-local', 'l', 'overwrite-remote', 'r']",
+                      "default": "merge",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['merge', 'm', 'overwrite-local', 'l', 'overwrite-remote', 'r'], typer.Option('--mode', '-M', help='merge (m): merge both copies; overwrite-local (l): replace local with remote; overwrite-remote (r): replace remote with local. Overwrite modes never merge.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--mode",
+                          "-M"
+                        ],
+                        "long_flags": [
+                          "--mode"
+                        ],
+                        "short_flags": [
+                          "-M"
+                        ],
+                        "help": "merge (m): merge both copies; overwrite-local (l): replace local with remote; overwrite-remote (r): replace remote with local. Overwrite modes never merge."
+                      }
+                    },
+                    {
                       "name": "on_conflict",
                       "kind": "positional_or_keyword",
                       "type": "ConflictResolutionOption",
                       "default": "ask",
                       "required": false,
-                      "annotation_raw": "Annotated[ConflictResolutionOption, typer.Option(..., '--on-conflict', '-c', help=\"Action to take on merge conflict. Default is 'ask'.\")]",
+                      "annotation_raw": "Annotated[ConflictResolutionOption, typer.Option(..., '--on-conflict', '-c', help='Merge conflicts only: ask (a), stop-on-conflict (s), merge-accept-remote (r), or merge-accept-local (l).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -2861,7 +2881,7 @@
                         "short_flags": [
                           "-c"
                         ],
-                        "help": "Action to take on merge conflict. Default is 'ask'.",
+                        "help": "Merge conflicts only: ask (a), stop-on-conflict (s), merge-accept-remote (r), or merge-accept-local (l).",
                         "default": "..."
                       }
                     },
@@ -12401,9 +12421,10 @@
                     "    copy_assets: Annotated[",
                     "        bool,",
                     "        typer.Option(",
-                    "            \"--copy-assets\", \"-a\", help=\"Copy assets to machine after update (scripts + settings, overwrites local assets).\"",
+                    "            \"--copy-assets/--no-copy-assets\", \"-a\",",
+                    "            help=\"Copy scripts and settings after update (enabled by default; overwrites local assets).\"",
                     "        ),",
-                    "    ] = False,",
+                    "    ] = True,",
                     "    sync_public: Annotated[",
                     "        bool,",
                     "        typer.Option(",
@@ -12427,7 +12448,8 @@
                     ") -> None:",
                     "    \"\"\"🔄 UPDATE uv and stackops",
                     "",
-                    "    Each flag independently triggers one post-update action:",
+                    "    Assets are copied by default; --no-copy-assets skips copying.",
+                    "    Post-update actions:",
                     "    --copy-assets        -> devops config copy-assets all",
                     "    --link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all",
                     "    --config-shell       -> devops config terminal config-shell --which default",
@@ -12439,9 +12461,11 @@
                     "    if dev and dev_repo_root is None:",
                     "        typer.echo(f\"❌ --dev requires a stackops repo checkout at {STACKOPS_REPO_DIR}; run 'devops s i --dev' first.\")",
                     "        raise typer.Exit(code=1)",
-                    "    if dev and dev_repo_root is not None:",
-                    "        cli_self_repo.sync_dev_repo_before_update(dev_repo_root)",
                     "    if dev_repo_root is not None:",
+                    "        if dev:",
+                    "            cli_self_repo.sync_dev_repo_before_update(dev_repo_root)",
+                    "        else:",
+                    "            cli_self_repo.pull_repo_before_update(repo_root=dev_repo_root)",
                     "        shell_script = f\"\"\"",
                     "uv self update",
                     "uv tool install --no-cache --upgrade --editable \"{STACKOPS_REPO_DIR}\"",
@@ -12459,16 +12483,21 @@
                     "        any_post = copy_assets or sync_public or config_shell",
                     "        full_script = shell_script",
                     "        if any_post:",
-                    "            def _post_update() -> None:",
+                    "            def _post_update(copy_assets: bool, sync_public: bool, config_shell: bool) -> None:",
+                    "                from stackops.scripts.python.helpers.helpers_devops import cli_self",
+                    "",
                     "                if copy_assets:",
-                    "                    copy_assets_all()",
+                    "                    cli_self.copy_assets_all()",
                     "                if sync_public:",
-                    "                    link_public_configs()",
+                    "                    cli_self.link_public_configs()",
                     "                if config_shell:",
-                    "                    configure_default_shell()",
+                    "                    cli_self.configure_default_shell()",
                     "",
                     "            uv_command, _py_file = get_shell_script_running_lambda_function(",
-                    "                lmb=_post_update, uv_with=[\"stackops\"], uv_project_dir=None",
+                    "                lmb=lambda: _post_update(copy_assets=copy_assets, sync_public=sync_public, config_shell=config_shell),",
+                    "                uv_with=[\"stackops\"],",
+                    "                uv_project_dir=None,",
+                    "                uv_run_flags=\"\",",
                     "            )",
                     "            full_script = shell_script + \"\\n\" + uv_command",
                     "        exit_then_run_shell_script(full_script, strict=True)",
@@ -12492,22 +12521,23 @@
                       "name": "copy_assets",
                       "kind": "positional_or_keyword",
                       "type": "bool",
-                      "default": false,
+                      "default": true,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--copy-assets', '-a', help='Copy assets to machine after update (scripts + settings, overwrites local assets).')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--copy-assets/--no-copy-assets', '-a', help='Copy scripts and settings after update (enabled by default; overwrites local assets).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--copy-assets",
+                          "--copy-assets/--no-copy-assets",
                           "-a"
                         ],
                         "long_flags": [
-                          "--copy-assets"
+                          "--copy-assets",
+                          "--no-copy-assets"
                         ],
                         "short_flags": [
                           "-a"
                         ],
-                        "help": "Copy assets to machine after update (scripts + settings, overwrites local assets)."
+                        "help": "Copy scripts and settings after update (enabled by default; overwrites local assets)."
                       }
                     },
                     {
@@ -12582,7 +12612,7 @@
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "🔄 UPDATE uv and stackops\n\nEach flag independently triggers one post-update action:\n--copy-assets        -> devops config copy-assets all\n--link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all\n--config-shell       -> devops config terminal config-shell --which default\n\n--dev is a pre-update action (requires a repo checkout):\n--dev                -> commit local changes, git pull --rebase, git push (stops safely on any failure)",
+                "doc": "🔄 UPDATE uv and stackops\n\nAssets are copied by default; --no-copy-assets skips copying.\nPost-update actions:\n--copy-assets        -> devops config copy-assets all\n--link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all\n--config-shell       -> devops config terminal config-shell --which default\n\n--dev is a pre-update action (requires a repo checkout):\n--dev                -> commit local changes, git pull --rebase, git push (stops safely on any failure)",
                 "aliases": [
                   {
                     "name": "u",
@@ -23216,6 +23246,119 @@
                     "hidden": true
                   }
                 ]
+              },
+              {
+                "kind": "command",
+                "name": "status",
+                "fullPath": "agents second-brain status",
+                "shortPath": "a B s",
+                "help": "status",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_second_brain.py",
+                  "module": "stackops.scripts.python.agents_second_brain",
+                  "callable": "status"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def status() -> None:",
+                    "    second_brain_root = Path.home().joinpath(\"code\", \"agents\", \"second-brain\")",
+                    "    today = date.today()",
+                    "    try:",
+                    "        update_files = read_second_brain_updates(second_brain_root=second_brain_root)",
+                    "        git_activity = read_second_brain_git_activity(second_brain_root=second_brain_root, today=today)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except (OSError, RuntimeError) as error:",
+                    "        typer.echo(f\"\"\"Could not read Second Brain status: {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    show_second_brain_status(second_brain_root=second_brain_root, update_files=update_files, git_activity=git_activity, today=today)"
+                  ],
+                  "name": "status",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "short_help": "<s> Show Second Brain statistics and invalid updates",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "s",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "align",
+                "fullPath": "agents second-brain align",
+                "shortPath": "a B a",
+                "help": "align",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_second_brain.py",
+                  "module": "stackops.scripts.python.agents_second_brain",
+                  "callable": "align"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def align(",
+                    "    force: Annotated[bool, typer.Option(\"--force\", \"-f\", help=\"Authorize deletion of invalid updates. Otherwise, preview only.\")] = False,",
+                    ") -> None:",
+                    "    second_brain_root = Path.home().joinpath(\"code\", \"agents\", \"second-brain\")",
+                    "    try:",
+                    "        update_files = read_second_brain_updates(second_brain_root=second_brain_root)",
+                    "        removed_rows = align_second_brain_updates(update_files=update_files, force=force)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except OSError as error:",
+                    "        typer.echo(f\"\"\"Could not align Second Brain updates: {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    show_second_brain_align_result(",
+                    "        second_brain_root=second_brain_root,",
+                    "        removed_rows=removed_rows,",
+                    "        scanned_file_count=len(update_files),",
+                    "        force=force,",
+                    "    )"
+                  ],
+                  "name": "align",
+                  "parameters": [
+                    {
+                      "name": "force",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--force', '-f', help='Authorize deletion of invalid updates. Otherwise, preview only.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--force",
+                          "-f"
+                        ],
+                        "long_flags": [
+                          "--force"
+                        ],
+                        "short_flags": [
+                          "-f"
+                        ],
+                        "help": "Authorize deletion of invalid updates. Otherwise, preview only."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "<a> Preview invalid updates; --force deletes them",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "a",
+                    "hidden": true
+                  }
+                ]
               }
             ],
             "aliases": [
@@ -23948,7 +24091,7 @@
             "name": "doctor",
             "fullPath": "agents doctor",
             "shortPath": "a d",
-            "help": "Inspect agent binaries, configuration, plugins, skills, and instruction provenance.",
+            "help": "Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance.",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
@@ -23978,18 +24121,20 @@
                 "        typer.Option(",
                 "            \"--resource\",",
                 "            \"-r\",",
-                "            help=\"Comma-separated resource focuses: all, configuration, mcp, plugin, skill, or instructions.\",",
+                "            help=\"Comma-separated resource focuses: all, configuration, mcp, hook, plugin, skill, or instructions.\",",
                 "        ),",
                 "    ] = \"all\",",
                 ") -> None:",
-                "    \"\"\"Inspect agent binaries, configuration, plugins, skills, and instruction provenance.\"\"\"",
+                "    \"\"\"Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor",
                 "",
                 "    working_directory = directory if directory is not None else Path.cwd()",
                 "    try:",
-                "        run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)",
+                "        complete = run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)",
                 "    except ValueError as error:",
-                "        raise typer.BadParameter(str(error)) from error"
+                "        raise typer.BadParameter(str(error)) from error",
+                "    if not complete:",
+                "        raise typer.Exit(code=1)"
               ],
               "name": "doctor",
               "parameters": [
@@ -24036,7 +24181,7 @@
                   "type": "str",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--resource', '-r', help='Comma-separated resource focuses: all, configuration, mcp, plugin, skill, or instructions.')]",
+                  "annotation_raw": "Annotated[str, typer.Option('--resource', '-r', help='Comma-separated resource focuses: all, configuration, mcp, hook, plugin, skill, or instructions.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -24049,7 +24194,7 @@
                     "short_flags": [
                       "-r"
                     ],
-                    "help": "Comma-separated resource focuses: all, configuration, mcp, plugin, skill, or instructions."
+                    "help": "Comma-separated resource focuses: all, configuration, mcp, hook, plugin, skill, or instructions."
                   }
                 }
               ],
@@ -24059,13 +24204,225 @@
             "typer": {
               "no_args_is_help": false
             },
-            "doc": "Inspect agent binaries, configuration, plugins, skills, and instruction provenance.",
+            "doc": "Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance.",
             "aliases": [
               {
                 "name": "d",
                 "hidden": true
               }
             ]
+          },
+          {
+            "kind": "command",
+            "name": "depoison",
+            "fullPath": "agents depoison",
+            "shortPath": "a depoison",
+            "help": "Preview or reset hooks, plugins, MCP servers, skills, instructions, and configuration.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents_depoison.py",
+              "module": "stackops.scripts.python.agents_depoison",
+              "callable": "depoison"
+            },
+            "signature": {
+              "raw_lines": [
+                "def depoison(",
+                "    agent: Annotated[str, typer.Argument(help=\"Agent to reset, or all.\")] = \"all\",",
+                "    directory: Annotated[Path | None, typer.Option(\"--directory\", \"-d\", exists=True, file_okay=False, help=\"Inspect this project directory.\")] = None,",
+                "    scope: Annotated[CleanupScope, typer.Option(\"--scope\", \"-s\", help=\"Select local, global, or all configuration.\")] = \"all\",",
+                "    resource: Annotated[str, typer.Option(\"--resource\", \"-r\", help=\"Comma-separated resources: all, hook, plugin, mcp, skill, instructions, configuration.\")] = \"all\",",
+                "    match: Annotated[str | None, typer.Option(\"--match\", \"-m\", help=\"Select resources by name, command, or source path substring.\")] = None,",
+                "    apply: Annotated[bool, typer.Option(\"--apply\", \"-a\", help=\"Apply the displayed reset and keep original files in quarantine.\")] = False,",
+                ") -> None:",
+                "    \"\"\"Preview or reset hooks, plugins, MCP servers, skills, instructions, and configuration.\"\"\"",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.discovery import collect_hooks",
+                "",
+                "    try:",
+                "        context = create_doctor_context(working_directory=directory or Path.cwd())",
+                "        definitions = resolve_doctor_definitions(requested_agent=agent)",
+                "        focuses = resolve_resource_focuses(requested_resources=resource)",
+                "        inventories: list[HookInventory] = []",
+                "        for definition in definitions:",
+                "            if \"all\" in focuses or \"hook\" in focuses:",
+                "                inventories.append(collect_hooks(agent=definition.agent, context=context))",
+                "            if focuses != (\"hook\",):",
+                "                inventories.append(collect_cleanup_resources(agent=definition.agent, context=context, resource_focuses=focuses))",
+                "        inventory = HookInventory(",
+                "            entries=tuple(entry for item in inventories for entry in item.entries),",
+                "            diagnostics=tuple(diagnostic for item in inventories for diagnostic in item.diagnostics),",
+                "        )",
+                "        plan = build_cleanup_plan(inventory=inventory, scope=scope, match=match, home_directory=context.home_directory)",
+                "        typer.echo(f\"{'Apply' if apply else 'Preview'}: {len(plan.entries)} resource(s), {len(plan.changes)} path(s).\")",
+                "        for entry in plan.entries:",
+                "            action = \"read-only\" if entry.removal is None else entry.removal.action",
+                "            typer.echo(f\"  {entry.agent} {entry.origin}: {entry.name} — {action} — {entry.path}\")",
+                "            if entry.command:",
+                "                typer.echo(f\"    {entry.command}\")",
+                "        for change in plan.changes:",
+                "            action = \"quarantine\" if change.replacement is None else \"edit configuration\"",
+                "            typer.echo(f\"  Will {action}: {change.snapshot.path}\")",
+                "        for diagnostic in inventory.diagnostics:",
+                "            if scope != \"all\" and diagnostic.origin != scope:",
+                "                continue",
+                "            if diagnostic.severity == \"notice\":",
+                "                typer.echo(f\"Notice: {diagnostic.path}: {diagnostic.message}\")",
+                "            elif f\"{diagnostic.path}: {diagnostic.message}\" not in plan.blockers:",
+                "                typer.echo(f\"Inspection error covered by whole-source reset: {diagnostic.path}: {diagnostic.message}\")",
+                "        for blocker in plan.blockers:",
+                "            typer.echo(f\"Blocked: {blocker}\", err=True)",
+                "        if plan.blockers:",
+                "            raise typer.Exit(code=1)",
+                "        if not apply:",
+                "            typer.echo(\"Preview only. Add --apply to perform this reset and preserve backups.\")",
+                "            return",
+                "        result = apply_cleanup_plan(",
+                "            plan=plan,",
+                "            backup_root=context.home_directory / \".local\" / \"state\" / \"stackops\" / \"depoison\",",
+                "            home_directory=context.home_directory,",
+                "        )",
+                "        typer.echo(f\"Reset {len(result.changed_paths)} path(s).\")",
+                "        if result.backup_directory is not None:",
+                "            typer.echo(f\"Originals and restore manifest: {result.backup_directory}\")",
+                "        if result.changed_paths:",
+                "            typer.echo(\"Restart the agent to load the reset configuration.\")",
+                "    except (OSError, ValueError) as error:",
+                "        raise typer.BadParameter(str(error)) from error"
+              ],
+              "name": "depoison",
+              "parameters": [
+                {
+                  "name": "agent",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Agent to reset, or all.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Agent to reset, or all."
+                  }
+                },
+                {
+                  "name": "directory",
+                  "kind": "positional_or_keyword",
+                  "type": "Path | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--directory', '-d', exists=True, file_okay=False, help='Inspect this project directory.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--directory",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--directory"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Inspect this project directory."
+                  }
+                },
+                {
+                  "name": "scope",
+                  "kind": "positional_or_keyword",
+                  "type": "CleanupScope",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[CleanupScope, typer.Option('--scope', '-s', help='Select local, global, or all configuration.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--scope",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--scope"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Select local, global, or all configuration."
+                  }
+                },
+                {
+                  "name": "resource",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Option('--resource', '-r', help='Comma-separated resources: all, hook, plugin, mcp, skill, instructions, configuration.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--resource",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--resource"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Comma-separated resources: all, hook, plugin, mcp, skill, instructions, configuration."
+                  }
+                },
+                {
+                  "name": "match",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--match', '-m', help='Select resources by name, command, or source path substring.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--match",
+                      "-m"
+                    ],
+                    "long_flags": [
+                      "--match"
+                    ],
+                    "short_flags": [
+                      "-m"
+                    ],
+                    "help": "Select resources by name, command, or source path substring."
+                  }
+                },
+                {
+                  "name": "apply",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--apply', '-a', help='Apply the displayed reset and keep original files in quarantine.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--apply",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--apply"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "Apply the displayed reset and keep original files in quarantine."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "Preview or reset agent customizations",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "doc": "Preview or reset hooks, plugins, MCP servers, skills, instructions, and configuration."
           },
           {
             "kind": "command",

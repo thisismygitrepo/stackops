@@ -31,6 +31,7 @@ def _skills(*, context: DoctorContext, config_paths: Iterable[OpenCodeConfigPath
             ]
         )
     configured_sources: list[DoctorResource] = []
+    referenced_roots: list[tuple[DoctorOrigin, Path, str]] = []
     for origin, config_path in config_paths:
         if not config_path.is_file():
             continue
@@ -48,7 +49,7 @@ def _skills(*, context: DoctorContext, config_paths: Iterable[OpenCodeConfigPath
                         name=value,
                         origin=origin,
                         state="configured",
-                        path=config_path.resolve(strict=False),
+                        path=config_path.absolute(),
                         detail="remote skill catalog configured by OpenCode",
                     )
                 )
@@ -56,12 +57,13 @@ def _skills(*, context: DoctorContext, config_paths: Iterable[OpenCodeConfigPath
             configured_root = Path(value).expanduser()
             if not configured_root.is_absolute():
                 configured_root = context.working_directory / configured_root
-            roots.append((origin, configured_root.resolve(strict=False), "configured OpenCode skill source"))
+            referenced_roots.append((origin, configured_root.absolute(), "configured OpenCode skill source"))
     claude_roots: list[tuple[DoctorOrigin, Path, str]] = [("global", context.claude_home / "skills", "Claude-compatible user skills")]
     claude_roots.extend(("local", directory / ".claude" / "skills", "Claude-compatible project skills") for directory in context.ancestor_directories)
     claude_skills_disabled = os.environ.get("OPENCODE_DISABLE_CLAUDE_CODE") == "1" or os.environ.get("OPENCODE_DISABLE_CLAUDE_CODE_SKILLS") == "1"
     return (
         *scan_skill_roots(roots=roots, recursive=True, state="available"),
+        *scan_skill_roots(roots=referenced_roots, recursive=True, state="referenced"),
         *scan_skill_roots(roots=claude_roots, recursive=True, state="disabled" if claude_skills_disabled else "available"),
         *configured_sources,
     )
@@ -90,7 +92,7 @@ def _instructions(*, context: DoctorContext, config_paths: Iterable[OpenCodeConf
                 name="AGENTS.md",
                 origin="global",
                 state="active",
-                path=global_path.resolve(strict=False),
+                path=global_path.absolute(),
                 detail="loaded first as inherited OpenCode guidance",
             )
         )
@@ -105,7 +107,7 @@ def _instructions(*, context: DoctorContext, config_paths: Iterable[OpenCodeConf
                     name="AGENTS.md",
                     origin="local",
                     state="disabled" if project_disabled else "active",
-                    path=path.resolve(strict=False),
+                    path=path.absolute(),
                     detail="ambient project guidance" if not project_disabled else "disabled by OPENCODE_DISABLE_PROJECT_CONFIG=1",
                 )
             )
@@ -124,7 +126,7 @@ def _instructions(*, context: DoctorContext, config_paths: Iterable[OpenCodeConf
                         name=value,
                         origin=origin,
                         state="configured",
-                        path=config_path.resolve(strict=False),
+                        path=config_path.absolute(),
                         detail="retained in V2 config but not loaded into model context",
                     )
                 )

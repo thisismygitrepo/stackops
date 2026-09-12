@@ -8,14 +8,7 @@ def _configuration(
     *, name: str, origin: DoctorOrigin, path: Path, present_state: DoctorResourceState, detail: str, is_mcp: bool
 ) -> tuple[DoctorResource, dict[str, object]]:
     candidate = resource_candidate(
-        kind="configuration",
-        is_mcp=is_mcp,
-        name=name,
-        origin=origin,
-        path=path,
-        present_state=present_state,
-        detail=detail,
-        include_missing=True,
+        kind="configuration", is_mcp=is_mcp, name=name, origin=origin, path=path, present_state=present_state, detail=detail, include_missing=True
     )
     if candidate is None:
         raise RuntimeError(f"Missing Pi configuration candidate for {path}")
@@ -30,7 +23,7 @@ def _configuration(
             name=name,
             origin=origin,
             state="configured",
-            path=path.resolve(strict=False),
+            path=path.absolute(),
             detail=f"{detail}; invalid JSON: {loaded}",
         )
         return invalid, {}
@@ -72,7 +65,7 @@ def _package_path(*, source: str, base_directory: Path, declaration_path: Path) 
     candidate = Path(source).expanduser()
     if candidate.is_absolute() or source.startswith((".", "~")):
         return _setting_path(value=source, base_directory=base_directory)
-    return declaration_path.resolve(strict=False)
+    return declaration_path.absolute()
 
 
 def _settings_plugins(

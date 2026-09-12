@@ -20,16 +20,16 @@ class CodexConfigLayer:
 
 
 def _load_config_layer(*, name: str, origin: DoctorOrigin, path: Path, detail: str) -> CodexConfigLayer:
-    resolved_path = path.expanduser().resolve(strict=False)
-    if not resolved_path.exists():
-        return CodexConfigLayer(name=name, origin=origin, path=resolved_path, state="missing", detail=detail, mapping=None)
-    loaded = load_config_mapping(path=resolved_path, config_format="toml")
+    source_path = path.expanduser().absolute()
+    if not source_path.exists():
+        return CodexConfigLayer(name=name, origin=origin, path=source_path, state="missing", detail=detail, mapping=None)
+    loaded = load_config_mapping(path=source_path, config_format="toml")
     if isinstance(loaded, str):
         error = loaded.replace("\n", " ")
         return CodexConfigLayer(
-            name=name, origin=origin, path=resolved_path, state="configured", detail=f"{detail}; TOML could not be parsed: {error}", mapping=None
+            name=name, origin=origin, path=source_path, state="configured", detail=f"{detail}; TOML could not be parsed: {error}", mapping=None
         )
-    return CodexConfigLayer(name=name, origin=origin, path=resolved_path, state="active", detail=detail, mapping=loaded)
+    return CodexConfigLayer(name=name, origin=origin, path=source_path, state="active", detail=detail, mapping=loaded)
 
 
 def config_layers(*, context: DoctorContext) -> tuple[CodexConfigLayer, ...]:

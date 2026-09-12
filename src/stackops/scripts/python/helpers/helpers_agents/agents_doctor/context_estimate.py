@@ -5,27 +5,31 @@ from typing import Final, Literal
 from rich.table import Table
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths import permitted_resource_path
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorReport, DoctorResource, DoctorResourceState
 
 
 type ContextDefinitionSource = Literal[
-    "MCP / tool config", "Plugins / extensions", "Skill catalog", "AGENTS / instructions", "Other configuration"
+    "MCP / tool config", "Hooks", "Plugins / extensions", "Skill catalog", "AGENTS / instructions", "Other configuration"
 ]
 
 _CONTEXT_DEFINITION_SOURCES: Final[tuple[ContextDefinitionSource, ...]] = (
     "MCP / tool config",
+    "Hooks",
     "Plugins / extensions",
     "Skill catalog",
     "AGENTS / instructions",
     "Other configuration",
 )
-_CONTEXT_RESOURCE_STATES: Final[tuple[DoctorResourceState, ...]] = ("active", "available", "configured")
+_CONTEXT_RESOURCE_STATES: Final[tuple[DoctorResourceState, ...]] = ("active", "available", "configured", "referenced")
 
 
 def _definition_source(*, resource: DoctorResource) -> ContextDefinitionSource:
     if resource.is_mcp:
         return "MCP / tool config"
     match resource.kind:
+        case "hook":
+            return "Hooks"
         case "plugin":
             return "Plugins / extensions"
         case "skill":
@@ -42,6 +46,8 @@ def _definition_paths(*, report: DoctorReport) -> dict[ContextDefinitionSource, 
     }
     seen_paths: set[Path] = set()
     for resource in report.resources:
+        if not permitted_resource_path(path=resource.path, home_directory=report.context.home_directory):
+            continue
         path = resource.path.resolve(strict=False)
         is_inactive_plugin = resource.kind == "plugin" and resource.state == "available"
         if resource.state not in _CONTEXT_RESOURCE_STATES or is_inactive_plugin or not path.is_file() or path in seen_paths:

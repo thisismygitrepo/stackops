@@ -28,8 +28,9 @@ def resolve_resource_focuses(*, requested_resources: str) -> tuple[DoctorResourc
     return resource_focuses
 
 
-def run_doctor(*, requested_agent: str, working_directory: Path, requested_resources: str) -> None:
+def run_doctor(*, requested_agent: str, working_directory: Path, requested_resources: str) -> bool:
     definitions = resolve_doctor_definitions(requested_agent=requested_agent)
     resource_focuses = resolve_resource_focuses(requested_resources=requested_resources)
     reports = tuple(build_doctor_report(definition=definition, working_directory=working_directory) for definition in definitions)
     render_doctor_reports(console=Console(), reports=reports, resource_focuses=resource_focuses)
+    return not any(report.inspection_errors for report in reports)

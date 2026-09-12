@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext, DoctorOrigin, DoctorResource, DoctorResourceKind
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths import permitted_resource_path
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning import (
     present_resources,
     resource_candidate,
@@ -57,13 +58,13 @@ def _file_root_resources(*, kind: DoctorResourceKind, roots: Sequence[DoctorFile
     resources: list[DoctorResource] = []
     seen_paths: set[Path] = set()
     for root in roots:
-        if not root.root.is_dir():
+        if not permitted_resource_path(path=root.root, home_directory=Path.home()) or not root.root.is_dir():
             continue
         for pattern in root.patterns:
             for path in sorted(root.root.glob(pattern)):
-                if not path.is_file():
+                if not permitted_resource_path(path=path, home_directory=Path.home()) or not path.is_file():
                     continue
-                resolved_path = path.resolve(strict=False)
+                resolved_path = path.absolute()
                 if resolved_path in seen_paths:
                     continue
                 seen_paths.add(resolved_path)

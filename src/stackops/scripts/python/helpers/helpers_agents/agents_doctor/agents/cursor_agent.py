@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.standard impor
 def _cursor_config_root(*, context: DoctorContext) -> Path:
     configured_root = os.environ.get("CURSOR_CONFIG_DIR")
     if configured_root is not None and configured_root.strip() != "":
-        return Path(configured_root).expanduser().resolve(strict=False)
+        return Path(configured_root).expanduser().absolute()
     xdg_config_root = os.environ.get("XDG_CONFIG_HOME")
     if xdg_config_root is not None and xdg_config_root.strip() != "":
         return context.xdg_config_directory / "cursor"
