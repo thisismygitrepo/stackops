@@ -62,7 +62,8 @@ def get_command_streamlit(choice_file: Path) -> str:
     local_ip_v4 = select_lan_ipv4(prefer_vpn=False)
 
     computer_name = platform.node()
-    port = 8501
+    from stackops.utils.dashboards.constants import STREAMLIT_PORT
+    port = STREAMLIT_PORT
     toml_path: Path | None = None
     toml_path_maybe = choice_file.parent.joinpath(".streamlit/config.toml")
     if toml_path_maybe.exists():
@@ -76,7 +77,10 @@ def get_command_streamlit(choice_file: Path) -> str:
         config = tomllib.loads(toml_path.read_text(encoding="utf-8"))
         if "server" in config:
             if "port" in config["server"]:
-                port = config["server"]["port"]
+                configured_port: object = config["server"]["port"]
+                if type(configured_port) is not int or not 1 <= configured_port <= 65535:
+                    raise ValueError(f"Invalid Streamlit server.port in {toml_path}")
+                port = configured_port
     from stackops.utils.installer_utils.installer_cli import install_if_missing
     install_if_missing(which="qrterminal", binary_name=None, verbose=True)
     access_hosts = [computer_name, "localhost"]
@@ -90,11 +94,11 @@ def get_command_streamlit(choice_file: Path) -> str:
     print_code(code=script, lexer="shell", desc="Streamlit QR Codes and URLs")
 
     numbered_access_urls = "\n".join(f"{index}- {url}" for index, url in enumerate(access_urls, start=1))
-    message = f"🚀 Streamlit app is running @:\n{numbered_access_urls}"
+    message = f"Streamlit access URLs (availability checked at launch):\n{numbered_access_urls}"
     from rich.panel import Panel
     from rich import print as rprint
 
     rprint(Panel(message))
-    exe = f"streamlit run --server.address 0.0.0.0 --server.headless true --server.port {port}"
+    exe = f"python -m stackops.utils.dashboard_streamlit --port {port} --"
     # exe = f"cd '{choice_file.parent}'; " + exe
     return exe

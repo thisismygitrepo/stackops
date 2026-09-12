@@ -1,10 +1,16 @@
 """Pure Python implementation for fire_jobs route command - no typer dependencies."""
 
+import os
 import platform
 import subprocess
 from typing import Callable, Literal
 from pathlib import Path
 from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_args_helper import FireJobArgs
+from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_environment import (
+    build_uv_run_arguments,
+    build_uv_run_shell_prefix,
+    resolve_fire_environment,
+)
 
 RandStrFunc = Callable[[int], str]
 type SupportedPlatformSystem = Literal["Windows", "Linux", "Darwin"]
@@ -61,12 +67,16 @@ def _get_search_root(root_repo: bool) -> Path | None:
 def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc, jit: bool) -> None:
     """Handle marimo notebook launch."""
     print(f"🧽 Preparing to launch Marimo notebook for `{choice_file}`...")
-    project_segment = f"--project {repo_root} " if repo_root is not None else ""
-    marimo_check_cmd = ["uv", "run"]
-    if repo_root is not None:
-        marimo_check_cmd.extend(["--project", str(repo_root)])
+    environment = resolve_fire_environment(choice_file=choice_file, repo_root=repo_root)
+    uv_prefix = build_uv_run_shell_prefix(environment=environment, frozen=False, cmd=False)
+    marimo_check_cmd = build_uv_run_arguments(environment=environment, frozen=False)
     marimo_check_cmd.extend(["--with", "marimo", "marimo", "check", str(choice_file)])
-    check_result = subprocess.run(marimo_check_cmd, capture_output=True, text=True, check=False)
+    process_environment = os.environ.copy()
+    if environment is None:
+        process_environment.pop("UV_PROJECT_ENVIRONMENT", None)
+    else:
+        process_environment["UV_PROJECT_ENVIRONMENT"] = str(environment.directory)
+    check_result = subprocess.run(marimo_check_cmd, capture_output=True, text=True, check=False, env=process_environment)
     check_output = f"{check_result.stdout}\n{check_result.stderr}".lower()
     not_valid_markers = ("not a valid notebook", "not recognizable as a marimo notebook", "failed to parse")
     is_valid_marimo_notebook = not any(marker in check_output for marker in not_valid_markers)
@@ -74,7 +84,7 @@ def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: Rand
     if is_valid_marimo_notebook:
         print(f"✅ `{choice_file}` is recognized as a marimo notebook. Skipping conversion.")
         script = f"""
-uv run {project_segment} --with marimo --with pydantic-ai-slim marimo edit --host 0.0.0.0 {choice_file}
+{uv_prefix} --with marimo --with pydantic-ai-slim marimo edit --host 0.0.0.0 {choice_file}
 # pydantic-ai-slim is added to allow ai functionality to work, if needed.
 """
     else:
@@ -83,8 +93,8 @@ uv run {project_segment} --with marimo --with pydantic-ai-slim marimo edit --hos
         tmp_dir.mkdir(parents=True, exist_ok=True)
         script = f"""
 cd {tmp_dir}
-uv run --python 3.14 --with marimo marimo convert {choice_file} -o marimo_nb.py
-uv run {project_segment} --with marimo --with pydantic-ai-slim marimo edit --host 0.0.0.0 marimo_nb.py
+{uv_prefix} --with marimo marimo convert {choice_file} -o marimo_nb.py
+{uv_prefix} --with marimo --with pydantic-ai-slim marimo edit --host 0.0.0.0 marimo_nb.py
 # pydantic-ai-slim is added to allow ai functionality to work, if needed.
 """
     from stackops.utils.code import exit_then_run_shell_script
@@ -129,7 +139,9 @@ def _build_command(
     if choice_file.suffix == ".py":
         exe_line = _build_python_exe_line(
             module=args.module,
+            cmd=args.cmd,
             interactive=args.interactive,
+            optimized=args.optimized,
             frozen=args.frozen,
             streamlit=args.streamlit,
             jupyter=args.jupyter,
@@ -162,13 +174,13 @@ def _build_command(
 
 
 def _build_python_exe_line(
-    module: bool, interactive: bool, frozen: bool, streamlit: bool, jupyter: bool, choice_file: Path, repo_root: Path | None
+    module: bool, cmd: bool, interactive: bool, optimized: bool, frozen: bool, streamlit: bool, jupyter: bool, choice_file: Path, repo_root: Path | None
 ) -> str:
     """Build Python execution line."""
     module_line = "-m" if module else ""
-    with_project = f"--project {repo_root} " if repo_root is not None else ""
+    environment = resolve_fire_environment(choice_file=choice_file, repo_root=repo_root)
+    uv_prefix = build_uv_run_shell_prefix(environment=environment, frozen=frozen, cmd=cmd)
     interactive_line = "-i" if interactive else ""
-    frozen_line = "--frozen" if frozen else ""
     if interactive:
         ipython_line = "--no-banner --profile default "
     else:
@@ -183,7 +195,10 @@ def _build_python_exe_line(
     else:
         interpreter_line = "python" if not interactive else "ipython"
 
-    return f"uv run {frozen_line} {with_project} {interpreter_line} {interactive_line} {module_line} {ipython_line}"
+    if optimized and interpreter_line.partition(" ")[0] == "python":
+        interpreter_line = interpreter_line.replace("python", "python -OO", 1)
+
+    return f"{uv_prefix} {interpreter_line} {interactive_line} {module_line} {ipython_line}"
 
 
 def _adjust_choice_file(module: bool, choice_file: Path, repo_root: Path | None) -> str:
@@ -253,9 +268,11 @@ def _build_final_command(
     if choice_function is not None and choice_file.suffix == ".py":
         return f"{exe_line} -m fire {choice_file_adjusted} {choice_function} {fire_args}"
     if streamlit:
+        import shlex
+
         if hold_directory:
-            return f"{exe_line} {choice_file}"
-        return f"cd {choice_file.parent}\n{exe_line} {choice_file.name}\ncd {Path.cwd()}"
+            return f"{exe_line} {shlex.quote(str(choice_file))}"
+        return f"(cd {shlex.quote(str(choice_file.parent))} && {exe_line} {shlex.quote(choice_file.name)})"
     if cmd:
         return rf""" cd /d {choice_file.parent} & {exe_line} {choice_file.name} """
     if choice_file.suffix == "":
@@ -266,11 +283,8 @@ def _build_final_command(
 def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path, repo_root: Path | None) -> str:
     """Apply various command modifiers based on args."""
     if args.cmd:
-        new_line = "\n"
-        command = rf"""start cmd -Argument "/k {command.replace(new_line, " & ")} " """
-
-    if args.optimized:
-        command = command.replace("python ", "python -OO ")
+        cmd_command = command.replace("\n", " & ").replace("'", "''")
+        command = f"""start cmd -Argument '/k {cmd_command}'"""
 
     if args.watch:
         command = "watchexec --restart --exts py,sh,ps1 " + command
