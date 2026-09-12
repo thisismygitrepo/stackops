@@ -6,6 +6,8 @@
     ".venv",
     ".ai",
     ".agents",
+    "build",
+    "dist",
   ],
   "ignore": [
     "tests"
