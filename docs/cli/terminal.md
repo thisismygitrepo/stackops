@@ -28,15 +28,19 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 ## Common Layout Source Rules
 
-- `run` and `run-all` default to `~/dotfiles/stackops/layouts.json` when the optional `LAYOUTS_FILE` argument is omitted.
+- Without `LAYOUTS_FILE` or `--test-layout`, `run` and `run-all` combine named layouts from `~/dotfiles/stackops/config/layouts.json` and `PWD/.stackops/config/layout.json`, including each file that exists, then open a layout picker. `PWD` is the current working directory. Cancelling the picker aborts the command.
+- The default picker labels entries `global:name` or `local:name` and previews their source file paths. Layout and session names remain unchanged.
+- An explicit `LAYOUTS_FILE` loads layouts only from the supplied file.
+- For `run`, an explicit `--choose-layouts` or `--choose-tabs` selector uses that selection without opening an additional layout picker.
 - `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `LAYOUTS_FILE`.
 - `--choose-layouts ""` opens interactive layout selection.
+- Named layout selectors accept an unambiguous name or `global:name` / `local:name`. A name shared by both sources requires the qualified form.
 - `--choose-tabs ""` opens interactive tab selection.
-- Explicit tab selectors can be either `tabName` or `layoutName::tabName`.
+- Tab selectors accept `tabName` or `layoutName::tabName`. When both sources share a layout name, qualify it as `global:layoutName::tabName` or `local:layoutName::tabName`; an ambiguous layout name is rejected. Bare tab names match across selected layouts.
 
 ## run
 
-Launch selected layouts from a layout configuration file.
+Launch selected layouts from an explicit file or the default layout files.
 
 ```bash
 terminal run [OPTIONS] [LAYOUTS_FILE]
@@ -44,7 +48,7 @@ terminal run [OPTIONS] [LAYOUTS_FILE]
 
 | Argument / Option | Short | Description |
 |-------------------|-------|-------------|
-| `LAYOUTS_FILE` | - | Optional path that overrides the default layout file |
+| `LAYOUTS_FILE` | - | Optional layout file path; omit to select from the combined default files |
 | `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--choose-layouts` | `-l` | Comma-separated layout names, or `""` for interactive selection |
 | `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection across all layouts |
@@ -62,8 +66,17 @@ terminal run [OPTIONS] [LAYOUTS_FILE]
 Examples:
 
 ```bash
-# Run the default ~/dotfiles/stackops/layouts.json
+# Choose layouts from the global file and PWD/.stackops/config/layout.json when present
 terminal run
+
+# Run unambiguous named layouts from the combined default files without prompting
+terminal run --choose-layouts "dev,build"
+
+# Select the local dev layout when both sources define dev
+terminal run --choose-layouts "local:dev"
+
+# Select a tab from the local dev layout
+terminal run --choose-tabs "local:dev::server"
 
 # Run only selected layouts from an explicit file
 terminal run layouts.json --choose-layouts "dev,build"
@@ -86,7 +99,7 @@ terminal run layout.json --backend aoe
 
 ## run-all
 
-Merge every tab from every layout into one paced run.
+Merge every tab from the selected layouts into one paced run. An explicit file uses all its layouts; omitting the file opens a picker for the combined default files. `--max-parallel-tabs` is required in both cases.
 
 ```bash
 terminal run-all [OPTIONS] [LAYOUTS_FILE]
@@ -94,7 +107,7 @@ terminal run-all [OPTIONS] [LAYOUTS_FILE]
 
 | Argument / Option | Short | Description |
 |-------------------|-------|-------------|
-| `LAYOUTS_FILE` | - | Optional path that overrides the default layout file |
+| `LAYOUTS_FILE` | - | Optional file whose layouts all run; omit to choose layouts from the combined default files |
 | `--test-layout` | `-T` | Use the generated mock layout instead of reading a file |
 | `--max-parallel-tabs` | `-t` | Required cap for concurrently active tabs |
 | `--poll-seconds` | `-p` | Polling interval for finished-tab detection |
@@ -105,6 +118,9 @@ terminal run-all [OPTIONS] [LAYOUTS_FILE]
 Examples:
 
 ```bash
+# Choose layouts from the combined default files and keep at most eight tabs active
+terminal run-all --max-parallel-tabs 8
+
 # Keep at most eight tabs active while working through the whole file
 terminal run-all layouts.json --max-parallel-tabs 8
 

@@ -17468,7 +17468,7 @@
               "raw_lines": [
                 "def run(",
                 "    ctx: typer.Context,",
-                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to use the configured default.\")] = None,",
+                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.\")] = None,",
                 "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.\")] = False,",
                 "",
                 "    choose_layouts: Annotated[str | None, typer.Option(..., \"--choose-layouts\", \"-l\", help=\"Comma separated layout names. Pass empty string to select layouts interactively.\")] = None,",
@@ -17495,6 +17495,8 @@
                 "",
                 "    The type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.",
                 "    \"\"\"",
+                "    if layouts_file is None and not test_layout and choose_layouts is None and choose_tabs is None:",
+                "        choose_layouts = \"\"",
                 "    from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose2Strict",
                 "    on_conflict = SessionConflictActionLoose2Strict[on_conflict]",
                 "    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl",
@@ -17532,13 +17534,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to use the configured default.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Path to the layout JSON file. Omit to use the configured default."
+                    "help": "Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files."
                   }
                 },
                 {
@@ -17843,7 +17845,7 @@
             },
             "short_help": "<r> Run the selected layout(s)",
             "typer": {
-              "no_args_is_help": true
+              "no_args_is_help": false
             },
             "doc": "Launch selected layouts from a layout configuration file.\n\nUse --on-conflict to choose behavior when a target session already exists:\nerror, restart, rename, mergeOverwrite, or\nmergeSkip. Those two merge policies are\nsupported for tmux.\nUse `run-all` for the paced whole-file dynamic scheduler.\n\nThe type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.",
             "aliases": [
@@ -17870,7 +17872,7 @@
                 "def run_all(",
                 "    ctx: typer.Context,",
                 "    *,",
-                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to use the configured default.\")] = None,",
+                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.\")] = None,",
                 "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.\")] = False,",
                 "    max_parallel_tabs: Annotated[int, typer.Option(..., \"--max-parallel-tabs\", \"-t\", help=\"Maximum number of tabs to keep active while dynamically working through the whole file.\")],",
                 "    poll_seconds: Annotated[float, typer.Option(\"--poll-seconds\", \"-p\", help=\"Polling interval in seconds used to detect finished tabs.\")] = 2.0,",
@@ -17928,13 +17930,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to use the configured default.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Path to the layout JSON file. Omit to use the configured default."
+                    "help": "Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files."
                   }
                 },
                 {

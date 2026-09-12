@@ -37,10 +37,10 @@ def run_cli(
         )
         from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
         from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import (
-            choose_tabs_from_source,
             load_selected_layouts_from_source,
             resolve_layout_source,
         )
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_tabs import choose_tabs_from_source
 
         backend_resolved = resolve_standard_backend(backend)
         layout_source = resolve_layout_source(
@@ -48,13 +48,12 @@ def run_cli(
             layouts_file=layouts_file,
             test_layout=test_layout,
         )
-        layouts_selected = load_selected_layouts_from_source(
+        layout_entries = load_selected_layouts_from_source(
             layout_source=layout_source,
             choose_layouts=choose_layouts,
         )
         layouts_selected = choose_tabs_from_source(
-            layout_source=layout_source,
-            layouts_selected=layouts_selected,
+            layouts_selected=layout_entries,
             choose_tabs=choose_tabs,
             preserve_layout_groups=backend_resolved == "aoe",
         )

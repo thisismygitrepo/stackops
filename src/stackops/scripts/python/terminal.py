@@ -33,7 +33,7 @@ def balance_load(
 
 def run(
     ctx: typer.Context,
-    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to use the configured default.")] = None,
+    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.")] = None,
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
 
     choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
@@ -60,6 +60,8 @@ def run(
 
     The type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.
     """
+    if layouts_file is None and not test_layout and choose_layouts is None and choose_tabs is None:
+        choose_layouts = ""
     from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose2Strict
     on_conflict = SessionConflictActionLoose2Strict[on_conflict]
     from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl
@@ -85,7 +87,7 @@ def run(
 def run_all(
     ctx: typer.Context,
     *,
-    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to use the configured default.")] = None,
+    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.")] = None,
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
@@ -400,8 +402,8 @@ def get_app() -> typer.Typer:
 
     layouts_app = typer.Typer(help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
 
-    layouts_app.command("run", no_args_is_help=True, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)
-    layouts_app.command("r", no_args_is_help=True, help=run.__doc__, hidden=True)(run)
+    layouts_app.command("run", no_args_is_help=False, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)
+    layouts_app.command("r", no_args_is_help=False, help=run.__doc__, hidden=True)(run)
 
     layouts_app.command("run-all", no_args_is_help=True, help=run_all.__doc__, short_help="<R> Dynamically run every layout in a file")(run_all)
     layouts_app.command("R", no_args_is_help=True, help=run_all.__doc__, hidden=True)(run_all)
