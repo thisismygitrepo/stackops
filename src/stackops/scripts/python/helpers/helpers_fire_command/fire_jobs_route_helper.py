@@ -99,6 +99,6 @@ def get_command_streamlit(choice_file: Path) -> str:
     from rich import print as rprint
 
     rprint(Panel(message))
-    exe = f"python -m stackops.utils.dashboard_streamlit --port {port} --"
+    exe = f"streamlit run --server.address 0.0.0.0 --server.headless true --server.port {port}"
     # exe = f"cd '{choice_file.parent}'; " + exe
     return exe

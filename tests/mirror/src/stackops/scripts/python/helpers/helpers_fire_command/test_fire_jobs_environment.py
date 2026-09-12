@@ -120,16 +120,16 @@ def test_standalone_script_does_not_discover_caller_project(tmp_path: Path) -> N
 
 @pytest.mark.skipif(os.name == "nt", reason="Parses the POSIX shell handoff.")
 @pytest.mark.parametrize("optimized", [False, True])
-def test_streamlit_preserves_dashboard_lifecycle_command(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, optimized: bool) -> None:
+def test_streamlit_command_runs_in_selected_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, optimized: bool) -> None:
     owner = create_project(directory=tmp_path / "owner", prepare_environment=True)
     source = create_project(directory=tmp_path / "source", prepare_environment=False)
     (source / ".venv").symlink_to(owner / ".venv", target_is_directory=True)
 
-    def dashboard_command(choice_file: Path) -> str:
+    def streamlit_command(choice_file: Path) -> str:
         assert choice_file == source / "app.py"
-        return "python -m stackops.utils.dashboard_streamlit --port 41000 --"
+        return "streamlit run --server.address 0.0.0.0 --server.headless true --server.port 41000"
 
-    monkeypatch.setattr(fire_jobs_route_helper, "get_command_streamlit", dashboard_command)
+    monkeypatch.setattr(fire_jobs_route_helper, "get_command_streamlit", streamlit_command)
     command = fire_jobs_impl._build_python_exe_line(
         module=False, cmd=False, interactive=False, optimized=optimized, frozen=False, streamlit=True, jupyter=False,
         choice_file=source / "app.py", repo_root=source
@@ -137,9 +137,8 @@ def test_streamlit_preserves_dashboard_lifecycle_command(tmp_path: Path, monkeyp
     tokens = shlex.split(command)
     assert tokens[tokens.index("--project") + 1] == str(owner)
     assert tokens[tokens.index("--python") + 1] == str(owner / ".venv/bin/python")
-    interpreter_arguments = ["python", "-OO"] if optimized else ["python"]
-    dashboard_arguments = [*interpreter_arguments, "-m", "stackops.utils.dashboard_streamlit", "--port", "41000", "--"]
-    assert tokens[-len(dashboard_arguments):] == dashboard_arguments
+    streamlit_arguments = shlex.split(streamlit_command(source / "app.py"))
+    assert tokens[-len(streamlit_arguments):] == streamlit_arguments
     assert "--no-sync" in tokens
 
 
