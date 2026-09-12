@@ -28,8 +28,8 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 ## Common Layout Source Rules
 
-- `run` and `run-all` default to `~/dotfiles/stackops/layouts.json` when `--layouts-file` is omitted.
-- `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `--layouts-file`.
+- `run` and `run-all` default to `~/dotfiles/stackops/layouts.json` when the optional `LAYOUTS_FILE` argument is omitted.
+- `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `LAYOUTS_FILE`.
 - `--choose-layouts ""` opens interactive layout selection.
 - `--choose-tabs ""` opens interactive tab selection.
 - Explicit tab selectors can be either `tabName` or `layoutName::tabName`.
@@ -39,12 +39,12 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 Launch selected layouts from a layout configuration file.
 
 ```bash
-terminal run [OPTIONS]
+terminal run [OPTIONS] [LAYOUTS_FILE]
 ```
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--layouts-file` | `-f` | Override the default layout file |
+| Argument / Option | Short | Description |
+|-------------------|-------|-------------|
+| `LAYOUTS_FILE` | - | Optional path that overrides the default layout file |
 | `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--choose-layouts` | `-l` | Comma-separated layout names, or `""` for interactive selection |
 | `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection across all layouts |
@@ -66,22 +66,22 @@ Examples:
 terminal run
 
 # Run only selected layouts from an explicit file
-terminal run --layouts-file layouts.json --choose-layouts "dev,build"
+terminal run layouts.json --choose-layouts "dev,build"
 
 # Run a generated test layout
 terminal run --test-layout --parallel-layouts 2 --monitor
 
 # Select tabs by name or layout-qualified name
-terminal run --layouts-file layouts.json --choose-tabs "server,build::tests"
+terminal run layouts.json --choose-tabs "server,build::tests"
 
 # Restart matching sessions before relaunching
-terminal run --layouts-file layouts.json --on-conflict restart
+terminal run layouts.json --on-conflict restart
 
 # Launch selected layouts through Herdr
-terminal run --layouts-file layouts.json --backend herdr
+terminal run layouts.json --backend herdr
 
 # Launch selected layout tabs through Agent of Empires
-terminal run --layouts-file layout.json --backend aoe
+terminal run layout.json --backend aoe
 ```
 
 ## run-all
@@ -89,12 +89,12 @@ terminal run --layouts-file layout.json --backend aoe
 Merge every tab from every layout into one paced run.
 
 ```bash
-terminal run-all [OPTIONS]
+terminal run-all [OPTIONS] [LAYOUTS_FILE]
 ```
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--layouts-file` | `-f` | Override the default layout file |
+| Argument / Option | Short | Description |
+|-------------------|-------|-------------|
+| `LAYOUTS_FILE` | - | Optional path that overrides the default layout file |
 | `--test-layout` | `-T` | Use the generated mock layout instead of reading a file |
 | `--max-parallel-tabs` | `-t` | Required cap for concurrently active tabs |
 | `--poll-seconds` | `-p` | Polling interval for finished-tab detection |
@@ -106,7 +106,7 @@ Examples:
 
 ```bash
 # Keep at most eight tabs active while working through the whole file
-terminal run-all --layouts-file layouts.json --max-parallel-tabs 8
+terminal run-all layouts.json --max-parallel-tabs 8
 
 # Use the generated test layout and close finished tabs as work drains
 terminal run-all --test-layout --max-parallel-tabs 6 --kill-finished-tabs
@@ -204,11 +204,11 @@ terminal export --sessions "dev,build" --output-path exported_layout.json
 
 # Export every running tmux session, then replay it with run
 terminal export --all --output-path exported_layout.json --overwrite
-terminal run --layouts-file exported_layout.json
+terminal run exported_layout.json
 
 # Export Herdr workspaces, then replay them with run
 terminal export --backend herdr --all --output-path exported_layout.json --overwrite
-terminal run --backend herdr --layouts-file exported_layout.json
+terminal run exported_layout.json --backend herdr
 ```
 
 ## trace

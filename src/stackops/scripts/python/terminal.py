@@ -33,8 +33,8 @@ def balance_load(
 
 def run(
     ctx: typer.Context,
-    layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
-    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
+    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to use the configured default.")] = None,
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
 
     choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
     choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
@@ -85,8 +85,8 @@ def run(
 def run_all(
     ctx: typer.Context,
     *,
-    layouts_file: Annotated[str | None, typer.Option(..., "--layouts-file", "-f", help="Path to the layout.json file")] = None,
-    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --layouts-file.")] = False,
+    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to use the configured default.")] = None,
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
@@ -294,9 +294,9 @@ def export(
         raise typer.Exit(code=1) from error
     typer.echo(f"Exported {resolved_backend} layout to {exported_path}")
     if resolved_backend == "tmux":
-        typer.echo(f"Run it with: stackops terminal run --layouts-file {exported_path}")
+        typer.echo(f"Run it with: stackops terminal run {exported_path}")
     else:
-        typer.echo(f"Run it with: stackops terminal run --backend herdr --layouts-file {exported_path}")
+        typer.echo(f"Run it with: stackops terminal run {exported_path} --backend herdr")
 
 
 

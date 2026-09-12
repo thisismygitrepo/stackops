@@ -39,7 +39,7 @@ def _resolve_layouts_file_path(ctx: typer.Context | None, layouts_file: str | No
         f"❌ Layouts file not found: {layouts_file_resolved}\n\n"
         "Install the example layouts and JSON schema:\n"
         "  devops config setup layouts\n\n"
-        "Or provide another file with --layouts-file PATH.",
+        "Or provide another file as the LAYOUTS_FILE argument.",
         err=True,
     )
     raise typer.Exit(code=1)
@@ -52,7 +52,7 @@ def resolve_layout_source(
 ) -> LayoutSource:
     if test_layout:
         if layouts_file is not None:
-            raise ValueError("--test-layout cannot be used together with --layouts-file.")
+            raise ValueError("--test-layout cannot be used together with LAYOUTS_FILE.")
         from stackops.scripts.python.helpers.helpers_sessions.sessions_test_layouts import (
             build_test_layouts,
             count_tabs_in_layouts,
