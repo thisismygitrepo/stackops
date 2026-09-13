@@ -4,6 +4,7 @@ from sys import executable as python_executable
 from typing import Literal, TypeAlias, cast
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
+from stackops.scripts.python.helpers.helpers_agents.constants import CODEX_EXEC_PERMISSION_ARGS
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
@@ -124,13 +125,14 @@ def build_agent_command(
             reasoning_arg = _build_copilot_reasoning_arg(reasoning_effort=normalized_reasoning_effort, is_windows=resolved_is_windows)
             return f"{agent_cli}{model_arg}{reasoning_arg} -p {prompt_content_expr} --yolo"
         case "codex":
+            permission_args = _format_shell_args(list(CODEX_EXEC_PERMISSION_ARGS), is_windows=resolved_is_windows)
             model_arg = ""
             if model is not None:
                 model_arg = f" --model {agent_shell.quote_for_shell(model, is_windows=resolved_is_windows)}"
             reasoning_arg = _build_codex_reasoning_arg(reasoning_effort=normalized_reasoning_effort, is_windows=resolved_is_windows)
             if resolved_is_windows:
-                return f"Get-Content -Raw {prompt_file_q} | {agent_cli} exec{model_arg}{reasoning_arg} -"
-            return f"{agent_cli} exec{model_arg}{reasoning_arg} - < {prompt_file_q}"
+                return f"""Get-Content -Raw {prompt_file_q} | {agent_cli} exec{permission_args}{model_arg}{reasoning_arg} -"""
+            return f"""{agent_cli} exec{permission_args}{model_arg}{reasoning_arg} - < {prompt_file_q}"""
         case "forge":
             return f"{agent_cli} -p {prompt_content_expr}"
         case "crush":

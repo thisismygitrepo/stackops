@@ -1,6 +1,7 @@
 from pathlib import Path
 import shlex
 
+from stackops.scripts.python.helpers.helpers_agents.constants import CODEX_EXEC_PERMISSION_ARGS
 from stackops.utils.schemas.fire_agents.fire_agents_types import AI_SPEC
 
 
@@ -9,7 +10,7 @@ def fire_codex(ai_spec: AI_SPEC, prompt_path: Path, repo_root: Path) -> str:
     safe_prompt_path = shlex.quote(str(prompt_rel))
     model_value = ai_spec["model"]
     reasoning_effort = ai_spec["reasoning_effort"]
-    command_parts: list[str] = ["codex", "exec"]
+    command_parts: list[str] = ["codex", "exec", *CODEX_EXEC_PERMISSION_ARGS]
     if model_value is not None:
         command_parts.extend(["--model", shlex.quote(model_value)])
     if reasoning_effort is not None:
