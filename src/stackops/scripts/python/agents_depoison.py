@@ -18,6 +18,7 @@ def depoison(
     interactive: Annotated[
         bool, typer.Option("--interactive", "-i", help="Choose targets, inspect status, and confirm a reset step by step (even with --apply).")
     ] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show every resource, state, command, and source path.")] = False,
 ) -> None:
     """Preview or reset hooks, plugins, MCP servers, skills, instructions, and configuration."""
     from stackops.utils.meta import lambda_to_python_script
@@ -31,6 +32,7 @@ def depoison(
             match=match,
             apply=apply,
             interactive=interactive,
+            verbose=verbose,
         ),
         in_global=True,
         import_module=False,
@@ -43,11 +45,14 @@ def depoison(
 
 
 def _run_depoison(
-    *, agent: str, directory: str, scope: CleanupScope, resource: str, match: str | None, apply: bool, interactive: bool,
+    *, agent: str, directory: str, scope: CleanupScope, resource: str, match: str | None, apply: bool, interactive: bool, verbose: bool,
 ) -> None:
     from pathlib import Path
 
     import typer
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.text import Text
 
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_apply import apply_cleanup_plan
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import (
@@ -55,6 +60,7 @@ def _run_depoison(
         choose_cleanup_action,
         prompt_cleanup_selection,
     )
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_output import render_cleanup_plan, render_cleanup_result
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_plan import build_cleanup_plan
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import resolve_resource_focuses
@@ -63,62 +69,56 @@ def _run_depoison(
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import resolve_doctor_definitions
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning import create_doctor_context
 
+    console = Console()
+    error_console = Console(stderr=True)
     try:
         selection = CleanupSelection(agent=agent, directory=directory, scope=scope, resource=resource, match=match)
         while True:
             if interactive:
-                selection = prompt_cleanup_selection(selection=selection)
-                typer.echo("Step 2/4: Inspect current resource status.")
+                selection = prompt_cleanup_selection(selection=selection, console=console)
+                console.rule("Step 2/4 · Inspect current resources", style="cyan")
             context = create_doctor_context(working_directory=Path(selection.directory))
             definitions = resolve_doctor_definitions(requested_agent=selection.agent)
             focuses = resolve_resource_focuses(requested_resources=selection.resource)
+            with console.status("Inspecting resources...") as status:
+                inventories: list[HookInventory] = []
+                for definition in definitions:
+                    status.update(Text(f"""Inspecting {definition.display_name}..."""))
+                    if "all" in focuses or "hook" in focuses:
+                        inventories.append(collect_hooks(agent=definition.agent, context=context))
+                    if focuses != ("hook",):
+                        inventories.append(collect_cleanup_resources(agent=definition.agent, context=context, resource_focuses=focuses))
+                inventory = HookInventory(
+                    entries=tuple(entry for item in inventories for entry in item.entries),
+                    diagnostics=tuple(diagnostic for item in inventories for diagnostic in item.diagnostics),
+                )
+                status.update("Building reset plan...")
+                plan = build_cleanup_plan(inventory=inventory, scope=selection.scope, match=selection.match, home_directory=context.home_directory)
             if interactive:
-                typer.echo(f"""Project: {context.project_root}; scope: {selection.scope}; resources: {selection.resource}.""")
-            inventories: list[HookInventory] = []
-            for definition in definitions:
-                if interactive:
-                    typer.echo(f"""Inspecting {definition.display_name}...""")
-                if "all" in focuses or "hook" in focuses:
-                    inventories.append(collect_hooks(agent=definition.agent, context=context))
-                if focuses != ("hook",):
-                    inventories.append(collect_cleanup_resources(agent=definition.agent, context=context, resource_focuses=focuses))
-            inventory = HookInventory(
-                entries=tuple(entry for item in inventories for entry in item.entries),
-                diagnostics=tuple(diagnostic for item in inventories for diagnostic in item.diagnostics),
+                console.rule("Step 3/4 · Review the reset plan", style="cyan")
+            render_cleanup_plan(
+                console=console, error_console=error_console, plan=plan, inventory=inventory,
+                context=context, selection=selection, applying=apply and not interactive, verbose=verbose,
             )
-            plan = build_cleanup_plan(inventory=inventory, scope=selection.scope, match=selection.match, home_directory=context.home_directory)
-            typer.echo(f"""{'Apply' if apply and not interactive else 'Preview'}: {len(plan.entries)} resource(s), {len(plan.changes)} path(s).""")
-            for entry in plan.entries:
-                action = "read-only" if entry.removal is None else entry.removal.action
-                typer.echo(f"""  {entry.agent} {entry.origin}: {entry.name} — {entry.state} — {action} — {entry.path}""")
-                if entry.command:
-                    typer.echo(f"""    {entry.command}""")
             if interactive:
-                typer.echo("Step 3/4: Review the reset plan.")
-            for change in plan.changes:
-                action = "quarantine" if change.replacement is None else "edit configuration"
-                typer.echo(f"""  Will {action}: {change.snapshot.path}""")
-            for diagnostic in inventory.diagnostics:
-                if selection.scope != "all" and diagnostic.origin != selection.scope:
-                    continue
-                if diagnostic.severity == "notice":
-                    typer.echo(f"""Notice: {diagnostic.path}: {diagnostic.message}""")
-                elif f"""{diagnostic.path}: {diagnostic.message}""" not in plan.blockers:
-                    typer.echo(f"""Inspection error covered by whole-source reset: {diagnostic.path}: {diagnostic.message}""")
-            for blocker in plan.blockers:
-                typer.echo(f"""Blocked: {blocker}""", err=True)
-            if interactive:
-                action = choose_cleanup_action(plan=plan, backup_root=context.home_directory / ".local" / "state" / "stackops" / "depoison")
+                action = choose_cleanup_action(
+                    plan=plan, backup_root=context.home_directory / ".local" / "state" / "stackops" / "depoison", console=console,
+                )
                 if action == "revise":
                     continue
                 if action == "exit":
-                    typer.echo("Step 4/4: Finished. No files changed.")
+                    console.rule("Step 4/4 · Finished", style="cyan")
+                    console.print("[dim]No files changed.[/dim]")
                     raise SystemExit(1 if plan.blockers else 0)
-                typer.echo("Step 4/4: Back up originals and apply the reset.")
+                console.rule("Step 4/4 · Back up originals and apply", style="cyan")
             elif plan.blockers:
                 raise SystemExit(1)
             elif not apply:
-                typer.echo("Preview only. Add --apply to perform this reset and preserve backups.")
+                if plan.changes:
+                    console.print(Panel(
+                        "Preview only. Add [bold]--apply[/bold] to perform this reset and preserve backups.",
+                        title="Next step", border_style="cyan",
+                    ))
                 raise SystemExit(0)
             break
         result = apply_cleanup_plan(
@@ -126,17 +126,10 @@ def _run_depoison(
             backup_root=context.home_directory / ".local" / "state" / "stackops" / "depoison",
             home_directory=context.home_directory,
         )
-        typer.echo(f"Reset {len(result.changed_paths)} path(s).")
-        if interactive:
-            for path in result.changed_paths:
-                typer.echo(f"""  Reset complete: {path}""")
-        if result.backup_directory is not None:
-            typer.echo(f"Originals and restore manifest: {result.backup_directory}")
-        if result.changed_paths:
-            typer.echo("Restart the agent to load the reset configuration.")
+        render_cleanup_result(console=console, result=result)
     except (typer.Abort, KeyboardInterrupt) as error:
-        typer.echo("Cancelled.", err=True)
+        error_console.print("[yellow]Cancelled.[/yellow]")
         raise SystemExit(1) from error
     except (OSError, ValueError) as error:
-        typer.echo(f"""Error: {error}""", err=True)
+        error_console.print(Panel(Text(str(error)), title="Error: reset failed", border_style="red"))
         raise SystemExit(2) from error
