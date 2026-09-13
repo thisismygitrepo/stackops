@@ -19,8 +19,19 @@ def depoison(
         bool, typer.Option("--interactive", "-i", help="Choose targets, inspect status, and confirm a reset step by step (even with --apply).")
     ] = False,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show every resource, state, command, and source path.")] = False,
+    tui: Annotated[
+        bool, typer.Option("--tui", "-t", help="Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.")
+    ] = False,
 ) -> None:
     """Preview or reset hooks, plugins, MCP servers, skills, instructions, and configuration."""
+    if tui:
+        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
+
+        launch_agent_tui(
+            mode="depoison", agent=agent, directory=str(directory if directory is not None else Path.cwd()),
+            resource=resource, scope=scope, match=match,
+        )
+        return
     from stackops.utils.meta import lambda_to_python_script
 
     worker_source = lambda_to_python_script(

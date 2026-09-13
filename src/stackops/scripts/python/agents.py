@@ -576,11 +576,19 @@ def doctor(
             help="Comma-separated resource focuses: all, configuration, mcp, hook, plugin, skill, or instructions.",
         ),
     ] = "all",
+    tui: Annotated[bool, typer.Option("--tui", "-t", help="Browse agent health and resources in a terminal app.")] = False,
 ) -> None:
     """Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance."""
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor
 
     working_directory = directory if directory is not None else Path.cwd()
+    if tui:
+        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
+
+        launch_agent_tui(
+            mode="doctor", agent=agent, directory=str(working_directory), resource=resource, scope="all", match=None,
+        )
+        return
     try:
         complete = run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)
     except ValueError as error:
