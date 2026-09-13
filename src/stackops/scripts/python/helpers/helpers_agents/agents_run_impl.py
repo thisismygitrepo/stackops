@@ -6,6 +6,7 @@ from typing import Literal, TypeAlias, cast
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.scripts.python.helpers.helpers_agents.constants import CODEX_EXEC_PERMISSION_ARGS
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER
+from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
     copilot_reasoning_args,
@@ -197,7 +198,9 @@ def run(
     edit: bool,
     show_prompts_yaml_format: bool,
     working_directory: Path | None,
+    sandbox_options: SandboxOptions,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_agents.agents_run_sandbox import validate_prompt_sandbox
     from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
         edit_prompts_yaml,
         ensure_prompts_yaml_exists,
@@ -206,6 +209,7 @@ def run(
         resolve_prompts_yaml_paths,
     )
 
+    validate_prompt_sandbox(agent=agent, options=sandbox_options)
     if _should_prepare_prompts_yaml(
         context=context,
         context_path=context_path,
@@ -252,7 +256,14 @@ def run(
     prompt_text = prompt if prompt is not None else ""
     prompt_file = make_prompt_file(prompt=prompt_text, context=resolved_context, skill_reference=skill_reference)
     _print_prompt_file_preview(prompt_file=prompt_file)
-    command_line = build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
+    if sandbox_options.backend == SandboxBackend.NONE:
+        command_line = build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
+    else:
+        from stackops.scripts.python.helpers.helpers_agents.agents_run_sandbox import build_sandboxed_prompt_script
+
+        command_line = build_sandboxed_prompt_script(
+            agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort, options=sandbox_options,
+        )
     if working_directory is not None:
         command_line = agent_shell.render_command_in_directory(command=command_line, directory=working_directory)
 

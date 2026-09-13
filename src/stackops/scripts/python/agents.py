@@ -12,6 +12,7 @@ from typer.core import TyperGroup
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS, DEFAULT_AGENT
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
@@ -247,6 +248,31 @@ def run_interactive(
         bool,
         typer.Option(..., "--fork", "-F", help="Fork the selected follow-up into a new session instead of resuming it."),
     ] = False,
+    sandbox: Annotated[
+        SandboxBackend,
+        typer.Option(
+            "--sandbox", "-S",
+            help=(
+                "Sandbox provider (default: none). Docker/Podman need Linux containers and --sandbox-image; "
+                "bwrap provides Linux write isolation with host reads/network allowed; ai-jail supports Linux/macOS (Windows via WSL2); "
+                "srt needs --sandbox-settings (native Windows is alpha and requires a native .exe agent)."
+            ),
+        ),
+    ] = SandboxBackend.NONE,
+    sandbox_image: Annotated[
+        str | None,
+        typer.Option(
+            "--sandbox-image",
+            help="Docker/Podman Linux image with agent/tools installed globally on PATH, outside HOME. Workspace and agent state are mounted writable.",
+        ),
+    ] = None,
+    sandbox_settings: Annotated[
+        Path | None,
+        typer.Option(
+            "--sandbox-settings", exists=True, dir_okay=False, resolve_path=True,
+            help="SRT JSON policy granting agent network, executable, workspace and state access. Windows also needs srt windows-install.",
+        ),
+    ] = None,
 ) -> None:
     """Launch an agent with reasonable defaults."""
     import shlex
@@ -254,6 +280,15 @@ def run_interactive(
     try:
         if fork and not followup:
             raise ValueError("--fork requires --followup.")
+        from stackops.scripts.python.helpers.helpers_agents.agents_shell import is_windows_host
+        from stackops.utils.sandbox.launch import build_sandbox_command, validate_sandbox_options
+
+        sandbox_options = SandboxOptions(backend=sandbox, image=sandbox_image, settings=sandbox_settings)
+        validate_sandbox_options(sandbox_options)
+        if headroom and sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN, SandboxBackend.AI_JAIL):
+            raise ValueError("--headroom can be sandboxed with bwrap or an srt policy granting both headroom and agent access.")
+        if followup and sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN) and is_windows_host():
+            raise ValueError("Container follow-up on Windows cannot reuse host session paths. Run agents inside WSL2.")
 
         with _agent_working_directory(second_brain=second_brain or followup) as working_directory:
             if followup:
@@ -271,7 +306,24 @@ def run_interactive(
                 command = _interactive_agent_command(agent=resolved_agent, caveman=caveman)
 
             command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)
-            script = shlex.join(command)
+            if sandbox != SandboxBackend.NONE:
+                import sys
+
+                from stackops.scripts.python.helpers.helpers_agents.agents_sandbox import resolve_sandbox_access
+                from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
+
+                access = resolve_sandbox_access(agent=resolved_agent)
+                command = build_sandbox_command(
+                    command=command, options=sandbox_options, directory=Path.cwd(),
+                    access=access, read_only_paths=(),
+                    interactive=sys.stdin.isatty() and sys.stdout.isatty(),
+                )
+                if is_windows_host():
+                    script = "& " + " ".join(quote_for_shell(argument, is_windows=True) for argument in command)
+                else:
+                    script = shlex.join(command)
+            else:
+                script = shlex.join(command)
             if working_directory is not None:
                 from stackops.scripts.python.helpers.helpers_agents.agents_shell import render_command_in_directory
 
@@ -332,7 +384,7 @@ def run_prompt(
         typer.Option(
             ...,
             "--skill",
-            "-S",
+            "-k",
             help="Reference a supported agent skill on the fly (see agents add-skill). The skill is referenced, never installed. Pass an empty value to pick interactively.",
         ),
     ] = None,
@@ -358,6 +410,27 @@ def run_prompt(
             help="Open prompts YAML in an editor (hx preferred, nano fallback). If no prompt/context input is provided, exits after editing.",
         ),
     ] = False,
+    sandbox: Annotated[
+        SandboxBackend,
+        typer.Option(
+            "--sandbox", "-S",
+            help=(
+                "Sandbox provider (default: none). Docker/Podman require --sandbox-image; bwrap requires Linux; "
+                "ai-jail supports Linux/macOS (Windows via WSL2); srt requires --sandbox-settings."
+            ),
+        ),
+    ] = SandboxBackend.NONE,
+    sandbox_image: Annotated[
+        str | None,
+        typer.Option("--sandbox-image", help="Linux image with agent/tools installed globally on PATH, outside HOME."),
+    ] = None,
+    sandbox_settings: Annotated[
+        Path | None,
+        typer.Option(
+            "--sandbox-settings", exists=True, dir_okay=False, resolve_path=True,
+            help="SRT JSON policy granting network, workspace, agent state and prompt/config-file access. Native Windows needs srt windows-install and an agent .exe.",
+        ),
+    ] = None,
 ) -> None:
     """Run one prompt via selected agent."""
     from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
@@ -377,6 +450,7 @@ def run_prompt(
                 edit=edit,
                 show_prompts_yaml_format=show_prompts_yaml_format,
                 working_directory=working_directory,
+                sandbox_options=SandboxOptions(backend=sandbox, image=sandbox_image, settings=sandbox_settings),
             )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
@@ -558,7 +632,8 @@ def get_app() -> typer.Typer:
     agents_app.command(name="C", no_args_is_help=False, hidden=True)(clean)
     agents_app.command(name="doctor", no_args_is_help=False, short_help="<d> Inspect agent health and resource provenance")(doctor)
     agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
-    agents_app.command(name="depoison", no_args_is_help=False, short_help="Preview or reset agent customizations")(depoison)
+    agents_app.command(name="depoison", no_args_is_help=False, short_help="<D> Preview or reset agent customizations")(depoison)
+    agents_app.command(name="D", no_args_is_help=False, hidden=True)(depoison)
 
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)
@@ -566,6 +641,7 @@ def get_app() -> typer.Typer:
         run_interactive
     )
     agents_app.command(name="i", no_args_is_help=False, hidden=True)(run_interactive)
+    agents_app.command(name="run", no_args_is_help=False, hidden=True)(run_interactive)
     agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
     return apply_alias_markers(agents_app)

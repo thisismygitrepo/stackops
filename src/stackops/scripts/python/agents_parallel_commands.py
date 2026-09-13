@@ -245,6 +245,7 @@ def create_context(
 
     from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
     from stackops.utils.accessories import get_repo_root
+    from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions
 
     repo_root = get_repo_root(Path.cwd())
     if repo_root is None:
@@ -276,6 +277,7 @@ def create_context(
                 edit=False,
                 show_prompts_yaml_format=False,
                 working_directory=repo_root,
+                sandbox_options=SandboxOptions(backend=SandboxBackend.NONE, image=None, settings=None),
             )
     except SystemExit as e:
         exit_code = e.code if isinstance(e.code, int) else 0 if e.code is None else 1
