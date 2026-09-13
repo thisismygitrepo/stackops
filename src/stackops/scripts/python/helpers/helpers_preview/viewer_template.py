@@ -89,12 +89,12 @@
 # with col1:
 #     st.button("⏮ **Previous**", on_click=prev_figure,
 #               disabled=(st.session_state.current_index <= 0),
-#               use_container_width=True)
+#               width="stretch")
 
 # with col2:
 #     st.button("**Next** ⏭", on_click=next_figure,
 #               disabled=(st.session_state.current_index >= total_figures - 1),
-#               use_container_width=True)
+#               width="stretch")
 
 # with col3:
 #     st.text_input("""
@@ -104,7 +104,7 @@
 #                   on_change=go_to_index)
 
 # with col4:
-#     if st.button("🎲 **Random**", use_container_width=True):
+#     if st.button("🎲 **Random**", width="stretch"):
 #         import random
 #         change_index(random.randint(0, total_figures - 1))
 
@@ -123,7 +123,7 @@
 #     try:
 #         current_data = data[st.session_state.current_index]
 #         fig = get_figure(current_data)
-#         st.plotly_chart(fig, use_container_width=True, theme="streamlit")
+#         st.plotly_chart(fig, width="stretch", theme="streamlit")
 #     except Exception as e:
 #         st.error(f"""
 # ❌ **Error Displaying Figure:**
