@@ -6,10 +6,10 @@ This repository is configured with a GitHub Action that automatically builds and
 
 The workflow triggers on every push to the `main` branch and:
 
-1. **Version Check**: Compares the current version in `pyproject.toml` with the previous commit
-2. **Build & Publish**: If the version changed, it builds the package using `uv` and publishes to PyPI
+1. **Version Check**: Checks whether the version in `pyproject.toml` is already on PyPI
+2. **Build & Publish**: Runs checks and builds the package, then publishes an unpublished version to PyPI
 3. **GitHub Release**: Creates a GitHub release with the new version tag
-4. **Test Build**: If version hasn't changed or on PRs, it only tests the build process
+4. **Test Build**: Already published versions and pull requests run checks without publishing
 
 ## Setup Instructions
 
@@ -34,45 +34,35 @@ You need to configure a PyPI API token as a GitHub secret:
 
 ### 2. Publishing a new version
 
-To publish a new version:
+The developer-only `release` command is available when `~/code/stackops` is a StackOps Git checkout. It always operates on that checkout.
 
-1. Update the version in `pyproject.toml`:
-   ```toml
-   version = "2.99"  # Increment from current version
-   ```
+To prepare a release for local review:
 
-2. Commit and push to main:
-   ```bash
-   git add pyproject.toml
-   git commit -m "Bump version to 2.99"
-   git push origin main
-   ```
+```bash
+devops self release
+```
 
-3. The GitHub Action will automatically:
-   - Detect the version change
-   - Build the package using `uv build`
-   - Publish to PyPI using `uv publish`
-   - Create a GitHub release with tag `v2.99`
+This increments the calendar version through `uv`, updates the lockfile and managed source references, and syncs dependencies. Versions use `YY.M` for the first release of a month, followed by `YY.M.1`, `YY.M.2`, and so on.
+
+To prepare and push a release in one command, start with a clean `main` branch synchronized with `origin`:
+
+```bash
+devops self release --publish
+```
+
+This commits the release changes, creates `v<version>`, and pushes `main` and that tag together. The existing workflow publishes after its checks pass; no manual workflow invocation is needed. The `main` push triggers publication, so pushing only a tag does not publish.
+
+These are alternative flows: after preparing locally, review and commit those changes and push `main` yourself. Running `release` again would increment the version again.
 
 ### 3. Monitoring the workflow
 
 - Check the "Actions" tab in your GitHub repository to monitor workflow runs
-- The workflow will fail if the PyPI token is missing or invalid
+- Publication uses `PYPI_TOKEN` when configured, otherwise PyPI trusted publishing
 - Build artifacts are attached to GitHub releases
-
-### 4. Manual publishing
-
-If you need to publish manually, you can still use the existing script:
-
-```bash
-./build_and_publish.sh
-```
-
-This script reads the PyPI token from `~/dotfiles/creds/pypi/.pypirc` as before.
 
 ## Workflow Features
 
-- **Version Detection**: Only publishes when version in `pyproject.toml` changes
+- **Version Detection**: Only publishes versions absent from PyPI
 - **Pull Request Testing**: Tests builds on PRs without publishing
 - **GitHub Releases**: Automatically creates releases with build artifacts
 - **Modern tooling**: Uses `uv` for fast, reliable builds and publishing
@@ -80,7 +70,7 @@ This script reads the PyPI token from `~/dotfiles/creds/pypi/.pypirc` as before.
 
 ## Troubleshooting
 
-- **"Version unchanged"**: The workflow only publishes when the version in `pyproject.toml` changes compared to the previous commit
+- **Version already published**: Run `devops self release` to prepare the next version
 - **"PyPI token not found"**: Ensure `PYPI_TOKEN` secret is properly set in GitHub repository settings
 - **Build failures**: Check the Actions log for detailed error messages
 - **Permission errors**: Ensure your PyPI token has sufficient permissions for the package

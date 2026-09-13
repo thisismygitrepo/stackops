@@ -198,6 +198,8 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_self_assets
     from stackops.scripts.python.helpers.helpers_devops.cli_self_clone import clone
     from stackops.scripts.python.helpers.helpers_devops.cli_self_export import download_installer, export
+    from stackops.scripts.python.helpers.helpers_devops.cli_self_release import release
+    from stackops.scripts.python.helpers.helpers_devops.stackops_release import is_stackops_repository
     from stackops.scripts.python.helpers.helpers_devops.cli_self_info import (
         build_docker,
         build_graph,
@@ -254,6 +256,8 @@ def get_app() -> typer.Typer:
     )
 
     if dev_repo_root is not None:
+        if is_stackops_repository(repo_root=dev_repo_root):
+            cli_app.command(name="release", no_args_is_help=False)(release)
         cli_app.command(name="build-docker", no_args_is_help=False, help="🧱 <d> Build docker images (wraps jobs/shell/docker_build_and_publish.sh)")(
             build_docker
         )
