@@ -4285,20 +4285,20 @@
       "repoURL": "https://github.com/Chleba/netscanner",
       "lastCommitDate": "2026-07-06T16:36:54Z",
       "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
-      "doc": "📡 Terminal network scanner & diagnostic tool with TUI (v0.6.3)",
+      "doc": "📡 Terminal network scanner & diagnostic tool with TUI",
       "categoryLabels": [
         "networking-diagnostics"
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": null,
-          "darwin": null,
-          "windows": null
+          "linux": "cargo install netscanner",
+          "darwin": "cargo install netscanner",
+          "windows": "cargo install netscanner"
         },
         "arm64": {
-          "linux": null,
-          "darwin": null,
-          "windows": null
+          "linux": "cargo install netscanner",
+          "darwin": "cargo install netscanner",
+          "windows": "cargo install netscanner"
         }
       }
     },
