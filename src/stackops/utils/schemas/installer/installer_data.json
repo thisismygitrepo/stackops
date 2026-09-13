@@ -4002,6 +4002,135 @@
       }
     },
     {
+      "appName": "podman",
+      "license": "Apache-2.0",
+      "repoURL": "https://github.com/podman-container-tools/podman",
+      "doc": "Podman: agent-agnostic OCI containers with namespaces and rootless isolation. On macOS and Windows, run podman machine init and podman machine start after installation; Windows requires WSL2 or Hyper-V.",
+      "categoryLabels": [
+        "build-devops-containers",
+        "ai-agents-assistants",
+        "security-credentials-privacy"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache podman",
+            "apt": "sudo apt-get update && sudo apt-get install -y podman",
+            "dnf": "sudo dnf install -y podman",
+            "pacman": "sudo pacman -S --needed --noconfirm podman"
+          },
+          "darwin": "brew install podman",
+          "windows": "winget install --exact --id RedHat.Podman --accept-package-agreements --accept-source-agreements"
+        },
+        "arm64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache podman",
+            "apt": "sudo apt-get update && sudo apt-get install -y podman",
+            "dnf": "sudo dnf install -y podman",
+            "pacman": "sudo pacman -S --needed --noconfirm podman"
+          },
+          "darwin": "brew install podman",
+          "windows": "winget install --exact --id RedHat.Podman --accept-package-agreements --accept-source-agreements"
+        }
+      }
+    },
+    {
+      "appName": "bwrap",
+      "license": "LGPL-2.1-or-later",
+      "repoURL": "https://github.com/containers/bubblewrap",
+      "doc": "Bubblewrap (bwrap): agent-agnostic Linux sandboxing with user, mount, PID, and network namespaces and optional seccomp. Requires available unprivileged user namespaces.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "security-credentials-privacy"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache bubblewrap",
+            "apt": "sudo apt-get update && sudo apt-get install -y bubblewrap",
+            "dnf": "sudo dnf install -y bubblewrap",
+            "pacman": "sudo pacman -S --needed --noconfirm bubblewrap"
+          },
+          "darwin": null,
+          "windows": null
+        },
+        "arm64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache bubblewrap",
+            "apt": "sudo apt-get update && sudo apt-get install -y bubblewrap",
+            "dnf": "sudo dnf install -y bubblewrap",
+            "pacman": "sudo pacman -S --needed --noconfirm bubblewrap"
+          },
+          "darwin": null,
+          "windows": null
+        }
+      }
+    },
+    {
+      "appName": "srt",
+      "license": "Apache-2.0",
+      "repoURL": "https://github.com/anthropics/sandbox-runtime",
+      "doc": "Anthropic Sandbox Runtime (srt): agent-agnostic filesystem and network isolation using native OS sandboxing, including bubblewrap on Linux. Requires Node.js >=20.11.0 and npm. Native Windows support is alpha and needs one-time elevated setup: npx @anthropic-ai/sandbox-runtime windows-install.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "security-credentials-privacy"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache bubblewrap socat ripgrep && npm install -g @anthropic-ai/sandbox-runtime",
+            "apt": "sudo apt-get update && sudo apt-get install -y bubblewrap socat ripgrep && npm install -g @anthropic-ai/sandbox-runtime",
+            "dnf": "sudo dnf install -y bubblewrap socat ripgrep && npm install -g @anthropic-ai/sandbox-runtime",
+            "pacman": "sudo pacman -S --needed --noconfirm bubblewrap socat ripgrep && npm install -g @anthropic-ai/sandbox-runtime"
+          },
+          "darwin": "brew install ripgrep && npm install -g @anthropic-ai/sandbox-runtime",
+          "windows": "npm install -g @anthropic-ai/sandbox-runtime"
+        },
+        "arm64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache bubblewrap socat ripgrep && npm install -g @anthropic-ai/sandbox-runtime",
+            "apt": "sudo apt-get update && sudo apt-get install -y bubblewrap socat ripgrep && npm install -g @anthropic-ai/sandbox-runtime",
+            "dnf": "sudo dnf install -y bubblewrap socat ripgrep && npm install -g @anthropic-ai/sandbox-runtime",
+            "pacman": "sudo pacman -S --needed --noconfirm bubblewrap socat ripgrep && npm install -g @anthropic-ai/sandbox-runtime"
+          },
+          "darwin": "brew install ripgrep && npm install -g @anthropic-ai/sandbox-runtime",
+          "windows": "npm install -g @anthropic-ai/sandbox-runtime"
+        }
+      }
+    },
+    {
+      "appName": "ai-jail",
+      "license": "GPL-3.0-only",
+      "repoURL": "https://github.com/akitaonrails/ai-jail",
+      "doc": "Agent-agnostic sandbox with AI-oriented defaults: bubblewrap, Landlock, and seccomp on Linux; sandbox-exec on macOS. Linux installation requires a current Rust/Cargo toolchain. On Windows, install inside WSL2 using the Linux backend.",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "security-credentials-privacy"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache bubblewrap && cargo install --locked ai-jail",
+            "apt": "sudo apt-get update && sudo apt-get install -y bubblewrap && cargo install --locked ai-jail",
+            "dnf": "sudo dnf install -y bubblewrap && cargo install --locked ai-jail",
+            "pacman": "sudo pacman -S --needed --noconfirm bubblewrap && cargo install --locked ai-jail"
+          },
+          "darwin": "brew tap akitaonrails/tap && brew install ai-jail",
+          "windows": null
+        },
+        "arm64": {
+          "linux": {
+            "apk": "sudo apk add --no-cache bubblewrap && cargo install --locked ai-jail",
+            "apt": "sudo apt-get update && sudo apt-get install -y bubblewrap && cargo install --locked ai-jail",
+            "dnf": "sudo dnf install -y bubblewrap && cargo install --locked ai-jail",
+            "pacman": "sudo pacman -S --needed --noconfirm bubblewrap && cargo install --locked ai-jail"
+          },
+          "darwin": "brew tap akitaonrails/tap && brew install ai-jail",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "docker",
       "license": "Apache License 2.0 for Docker Engine; Docker Desktop is licensed under the Docker Subscription Service Agreement",
       "repoURL": "CMD",
