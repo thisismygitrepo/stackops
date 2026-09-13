@@ -65,7 +65,8 @@ def selected_cleanup_inventory(*, inventory: HookInventory, selected: set[HookRe
 
 
 def build_selected_cleanup_plan(*, inventory: HookInventory, context: DoctorContext) -> CleanupPlan:
-    refreshed = tuple(inspect_cleanup_agent(agent=agent, context=context) for agent in dict.fromkeys(entry.agent for entry in inventory.entries))
+    selected_agents: dict[DoctorAgent, None] = {entry.agent: None for entry in inventory.entries}
+    refreshed = tuple(inspect_cleanup_agent(agent=agent, context=context) for agent in selected_agents)
     entries = {entry for item in refreshed for entry in item.entries}
     if any(entry not in entries for entry in inventory.entries):
         raise ValueError("Selected resources changed since inspection. Refresh and select them again.")

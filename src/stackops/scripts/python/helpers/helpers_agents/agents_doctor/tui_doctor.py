@@ -33,7 +33,7 @@ class DoctorApp(App[None]):
         self.doctor_definitions = (*requested_definitions, *(
             definition for definition in DOCTOR_AGENT_DEFINITIONS if definition not in requested_definitions
         ))
-        self.doctor_initial_agent = "all" if len(requested_definitions) > 1 else requested_definitions[0].agent
+        self.doctor_initial_agent = requested_definitions[0].agent if len(requested_definitions) == 1 else "all"
         self.doctor_focuses = resolve_resource_focuses(requested_resources=requested_resources)
         self.doctor_directory = Path(directory).expanduser().absolute()
         self.doctor_inspecting = False
