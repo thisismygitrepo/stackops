@@ -20,7 +20,7 @@ def apply_cleanup_plan(*, plan: CleanupPlan, backup_root: Path, home_directory: 
         if backup_root == path or backup_root.is_relative_to(path):
             raise ValueError(f"Backup directory cannot be inside a cleanup target: {path}")
         if capture_cleanup_snapshot(path=path, home_directory=home_directory) != change.snapshot:
-            raise ValueError(f"Configuration changed since inspection; run depoison again: {path}")
+            raise ValueError(f"Resource changed since inspection; run depoison again: {path}")
     backup_root.mkdir(parents=True, exist_ok=True)
     backup_directory = Path(tempfile.mkdtemp(prefix="run-", dir=backup_root))
     destinations = tuple(backup_directory / f"{index:04d}-{change.snapshot.path.name}" for index, change in enumerate(plan.changes))

@@ -7,6 +7,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import 
 
 type HookFormat = Literal["json", "toml", "file", "directory", "yaml"]
 type HookSelector = tuple[str | int, ...]
+type HookAgent = DoctorAgent | Literal["shared"]
 
 
 @dataclass(frozen=True)
@@ -19,7 +20,7 @@ class HookRemoval:
 
 @dataclass(frozen=True)
 class HookEntry:
-    agent: DoctorAgent
+    agent: HookAgent
     origin: DoctorOrigin
     path: Path
     name: str
@@ -31,7 +32,7 @@ class HookEntry:
 
 @dataclass(frozen=True)
 class HookDiagnostic:
-    agent: DoctorAgent
+    agent: HookAgent
     origin: DoctorOrigin
     path: Path
     message: str

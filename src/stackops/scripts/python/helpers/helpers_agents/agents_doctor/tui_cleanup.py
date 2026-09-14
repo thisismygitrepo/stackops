@@ -1,6 +1,7 @@
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_plan import build_cleanup_plan
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import collect_workspace_resources
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.discovery import collect_hooks
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookEntry, HookInventory, HookRemoval
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorContext
@@ -19,7 +20,7 @@ def inspect_cleanup_agent(*, agent: DoctorAgent, context: DoctorContext) -> Hook
 
 
 def cleanup_kind(entry: HookEntry) -> str:
-    if entry.event in ("configuration", "mcp", "plugin", "skill", "instructions"):
+    if entry.event in ("configuration", "mcp", "plugin", "skill", "instructions", "workspace"):
         return entry.event
     return "hook"
 
@@ -64,9 +65,11 @@ def selected_cleanup_inventory(*, inventory: HookInventory, selected: set[HookRe
     )
 
 
-def build_selected_cleanup_plan(*, inventory: HookInventory, context: DoctorContext) -> CleanupPlan:
-    selected_agents: dict[DoctorAgent, None] = {entry.agent: None for entry in inventory.entries}
-    refreshed = tuple(inspect_cleanup_agent(agent=agent, context=context) for agent in selected_agents)
+def build_selected_cleanup_plan(*, inventory: HookInventory, context: DoctorContext, recursive: bool) -> CleanupPlan:
+    selected_agents: dict[DoctorAgent, None] = {entry.agent: None for entry in inventory.entries if entry.agent != "shared"}
+    refreshed = [inspect_cleanup_agent(agent=agent, context=context) for agent in selected_agents]
+    if any(entry.agent == "shared" for entry in inventory.entries):
+        refreshed.append(collect_workspace_resources(context=context, recursive=recursive))
     entries = {entry for item in refreshed for entry in item.entries}
     if any(entry not in entries for entry in inventory.entries):
         raise ValueError("Selected resources changed since inspection. Refresh and select them again.")

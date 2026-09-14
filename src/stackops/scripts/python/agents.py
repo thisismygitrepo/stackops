@@ -58,7 +58,6 @@ _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
     "ask",
     "parallel",
     "iter",
-    "clean",
 )
 
 
@@ -539,18 +538,6 @@ def add_skill(
     raise typer.Exit(code=return_code)
 
 
-def clean(
-    directory: Annotated[str | None, typer.Argument(help="Directory containing repositories to clean.")] = None,
-    recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recurse into nested repositories.")] = False,
-) -> None:
-    """Delete the .ai directory from each selected repository."""
-    from stackops.scripts.python.helpers.helpers_agents.agents_clean import clean_agent_directories
-
-    repositories_found = clean_agent_directories(directory=directory, recursive=recursive)
-    if not repositories_found:
-        raise typer.Exit(code=1)
-
-
 def doctor(
     agent: Annotated[
         str,
@@ -586,7 +573,7 @@ def doctor(
         from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
 
         launch_agent_tui(
-            mode="doctor", agent=agent, directory=str(working_directory), resource=resource, scope="all", match=None,
+            mode="doctor", agent=agent, directory=str(working_directory), resource=resource, scope="all", match=None, recursive=False,
         )
         return
     try:
@@ -636,12 +623,13 @@ def get_app() -> typer.Typer:
         "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<c> Initialize AI configurations in the current repository"
     )(init_config)
     agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
-    agents_app.command(name="clean", no_args_is_help=False, short_help="<C> Delete .ai directories from repositories")(clean)
-    agents_app.command(name="C", no_args_is_help=False, hidden=True)(clean)
+    agents_app.command(
+        name="depoison", no_args_is_help=False, short_help="<D> Preview or reset agent customizations and .ai folders",
+        help="Preview or reset agent customizations and repository .ai folders. Use --resource workspace for .ai folders only. Changes require --apply or interactive confirmation and preserve backups.",
+    )(depoison)
+    agents_app.command(name="D", no_args_is_help=False, hidden=True)(depoison)
     agents_app.command(name="doctor", no_args_is_help=False, short_help="<d> Inspect agent health and resource provenance")(doctor)
     agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
-    agents_app.command(name="depoison", no_args_is_help=False, short_help="<D> Preview or reset agent customizations")(depoison)
-    agents_app.command(name="D", no_args_is_help=False, hidden=True)(depoison)
 
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)

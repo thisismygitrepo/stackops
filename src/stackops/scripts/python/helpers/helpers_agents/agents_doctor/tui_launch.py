@@ -15,6 +15,7 @@ def launch_agent_tui(
     resource: str,
     scope: CleanupScope,
     match: str | None,
+    recursive: bool,
 ) -> None:
     from stackops.utils.meta import lambda_to_python_script
 
@@ -26,6 +27,7 @@ def launch_agent_tui(
             resource=resource,
             scope=scope,
             match=match,
+            recursive=recursive,
         ),
         in_global=True,
         import_module=False,
@@ -46,6 +48,7 @@ def _run_agent_tui(
     resource: str,
     scope: CleanupScope,
     match: str | None,
+    recursive: bool,
 ) -> None:
     import typer
 
@@ -57,7 +60,7 @@ def _run_agent_tui(
         else:
             from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_depoison import run_depoison_tui
 
-            run_depoison_tui(agent=agent, directory=directory, scope=scope, resource=resource, match=match)
+            run_depoison_tui(agent=agent, directory=directory, scope=scope, resource=resource, match=match, recursive=recursive)
     except (OSError, ValueError) as error:
         typer.echo(f"""Error: {error}""", err=True)
         raise SystemExit(2) from error

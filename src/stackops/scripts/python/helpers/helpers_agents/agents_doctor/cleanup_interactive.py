@@ -10,8 +10,8 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupScope
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import resolve_resource_focuses
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorResourceFocus
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import resolve_cleanup_resources
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_RESOURCE_CHOICES
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import DOCTOR_AGENT_ALIASES, DOCTOR_DEFINITION_BY_AGENT
 
 
@@ -22,6 +22,7 @@ class CleanupSelection:
     scope: CleanupScope
     resource: str
     match: str | None
+    recursive: bool
 
 
 def _prompt_choice(*, label: str, choices: tuple[str, ...], default: str) -> str:
@@ -56,8 +57,9 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
     guidance.add_column(style="bold cyan", no_wrap=True)
     guidance.add_column(overflow="fold")
     guidance.add_row("Scope", Text("local: project · global: user · all: both + managed resources"))
-    guidance.add_row("Resources", Text(", ".join(get_args(DoctorResourceFocus))))
-    guidance.add_row("Full reset", Text("all resets whole configuration files and plugin directories", style="yellow"))
+    guidance.add_row("Resources", Text(", ".join(CLEANUP_RESOURCE_CHOICES)))
+    guidance.add_row("Workspace", Text("workspace removes shared .ai folders from repositories"))
+    guidance.add_row("Full reset", Text("all resets configuration, plugin directories, and .ai folders", style="yellow"))
     console.print(Panel(guidance, title="Selection guide", border_style="blue"))
     scope = cast(CleanupScope, _prompt_choice(
         label="Scope", default=selection.scope, choices=get_args(CleanupScope),
@@ -65,10 +67,13 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
     while True:
         resource: str = typer.prompt("Resources", default=selection.resource)
         try:
-            resolve_resource_focuses(requested_resources=resource)
+            _focuses, include_workspace = resolve_cleanup_resources(requested_resources=resource)
             break
         except ValueError as error:
             console.print(Text(f"""Invalid selection: {error}""", style="red"))
+    recursive = selection.recursive
+    if include_workspace and scope != "global":
+        recursive = typer.confirm("Recurse into nested repositories for .ai folders?", default=recursive)
     match: str | None = None
     if typer.confirm("Filter by name, command, or source path?", default=selection.match is not None):
         while True:
@@ -76,7 +81,7 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
             if match.strip():
                 break
             console.print(Text("Enter a nonempty name, command, or source path.", style="red"))
-    return CleanupSelection(agent=agent, directory=directory, scope=scope, resource=resource, match=match)
+    return CleanupSelection(agent=agent, directory=directory, scope=scope, resource=resource, match=match, recursive=recursive)
 
 
 def choose_cleanup_action(*, console: Console, plan: CleanupPlan, backup_root: Path) -> Literal["apply", "revise", "exit"]:

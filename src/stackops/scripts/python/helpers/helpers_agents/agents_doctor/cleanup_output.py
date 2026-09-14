@@ -9,8 +9,8 @@ from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import CleanupSelection
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupResult
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookEntry, HookInventory
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorContext, DoctorOrigin
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookAgent, HookEntry, HookInventory
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext, DoctorOrigin
 
 
 def _display_path(*, path: Path, context: DoctorContext) -> str:
@@ -57,9 +57,11 @@ def render_cleanup_plan(
     overview.add_row("Selection", Text(f"""{selection.agent} · {selection.scope} · {selection.resource}"""))
     if selection.match is not None:
         overview.add_row("Match", Text(selection.match))
+    if selection.scope != "global" and any(kind.strip().casefold() in ("all", "workspace") for kind in selection.resource.split(",")):
+        overview.add_row("Workspace scan", Text("recursive repositories" if selection.recursive else "current repository or direct child repositories"))
     console.print(Panel(overview, title="Depoison · Apply" if applying else "Depoison · Preview", border_style=status_style))
 
-    grouped: dict[tuple[DoctorAgent, DoctorOrigin], list[HookEntry]] = {}
+    grouped: dict[tuple[HookAgent, DoctorOrigin], list[HookEntry]] = {}
     for entry in plan.entries:
         grouped.setdefault((entry.agent, entry.origin), []).append(entry)
     if grouped:
@@ -70,7 +72,7 @@ def render_cleanup_plan(
         summary.add_column("Resources", overflow="fold", ratio=1)
         for (agent, origin), entries in sorted(grouped.items()):
             counts = Counter(
-                entry.event if entry.event in ("configuration", "mcp", "plugin", "skill", "instructions") else "hook"
+                entry.event if entry.event in ("workspace", "configuration", "mcp", "plugin", "skill", "instructions") else "hook"
                 for entry in entries
             )
             summary.add_row(

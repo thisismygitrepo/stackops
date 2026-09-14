@@ -11,7 +11,7 @@ from textual.widgets import Button, Footer, Header, Input, Static, TextArea
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_apply import apply_cleanup_plan
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import CleanupSelection
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupScope
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import resolve_resource_focuses
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import collect_workspace_resources, resolve_cleanup_resources
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import DOCTOR_AGENT_DEFINITIONS, resolve_doctor_definitions
@@ -26,7 +26,7 @@ class DepoisonApp(App[int]):
     BINDINGS = [
         Binding("f5", "refresh_inventory", "Refresh"),
         Binding("ctrl+f", "search", "Search", priority=True),
-        Binding("ctrl+r", "review", "Review reset", priority=True),
+        Binding("ctrl+r", "review", "Review cleanup", priority=True),
         Binding("ctrl+q", "close", "Quit", priority=True),
         Binding("ctrl+c", "close", show=False, priority=True),
     ]
@@ -54,7 +54,7 @@ class DepoisonApp(App[int]):
         with Horizontal(id="cleanup-actions"):
             yield Static("Select resources with Space or Enter.", id="cleanup-count")
             yield Button("Refresh", id="cleanup-refresh")
-            yield Button("Review reset…", variant="primary", id="cleanup-review", disabled=True)
+            yield Button("Review cleanup…", variant="primary", id="cleanup-review", disabled=True)
         yield Static("Preparing inspection…", id="cleanup-status", markup=False)
         yield Footer()
 
@@ -81,7 +81,9 @@ class DepoisonApp(App[int]):
     async def scan_inventory(self) -> None:
         try:
             self.cleanup_context = await asyncio.to_thread(create_doctor_context, working_directory=Path(self.cleanup_selection.directory))
-            inventories: list[HookInventory] = []
+            inventories = [await asyncio.to_thread(
+                collect_workspace_resources, context=self.cleanup_context, recursive=self.cleanup_selection.recursive,
+            )]
             definitions = sorted(DOCTOR_AGENT_DEFINITIONS, key=lambda item: item.agent != self.cleanup_selection.agent)
             for index, definition in enumerate(definitions, start=1):
                 self.query_one("#cleanup-status", Static).update(f"""Inspecting {definition.display_name} · {index}/{len(definitions)}…""")
@@ -133,7 +135,7 @@ class DepoisonApp(App[int]):
     async def review_cleanup(self, inventory: HookInventory, context: DoctorContext) -> None:
         try:
             self.cleanup_plan = await asyncio.to_thread(
-                build_selected_cleanup_plan, inventory=inventory, context=context,
+                build_selected_cleanup_plan, inventory=inventory, context=context, recursive=self.cleanup_selection.recursive,
             )
             self.cleanup_exit_code = 1 if self.cleanup_plan.blockers else 0
             self.push_screen(CleanupReview(
@@ -147,7 +149,7 @@ class DepoisonApp(App[int]):
     def reset_reviewed(self, confirmed: bool | None) -> None:
         if confirmed and self.cleanup_plan is not None and self.cleanup_context is not None:
             self.cleanup_applying = True
-            self.query_one("#cleanup-status", Static).update("Saving originals and applying the reviewed reset…")
+            self.query_one("#cleanup-status", Static).update("Saving originals and applying the reviewed cleanup…")
             self.apply_reviewed_cleanup(self.cleanup_plan, self.cleanup_context)
         else:
             self.set_cleanup_busy(False)
@@ -167,13 +169,13 @@ class DepoisonApp(App[int]):
             browser.cleanup_selected.clear()
             browser.update_marks()
             browser.query_one("#cleanup-detail", TextArea).load_text(
-                f"""Reset {len(result.changed_paths)} path(s).
+                f"""Cleaned {len(result.changed_paths)} path(s).
 
 Originals and restore manifest: {result.backup_directory}
 
 Refresh to inspect the current configuration. Restart the agent to load it.""",
             )
-            self.query_one("#cleanup-status", Static).update("Reset complete. Refresh before selecting another reset.")
+            self.query_one("#cleanup-status", Static).update("Cleanup complete. Refresh before selecting another cleanup.")
         except (OSError, ValueError) as error:
             self.cleanup_exit_code = 2
             self.query_one("#cleanup-status", Static).update(Text(str(error), style="red"))
@@ -187,10 +189,12 @@ Refresh to inspect the current configuration. Restart the agent to load it.""",
             self.exit(self.cleanup_exit_code)
 
 
-def run_depoison_tui(*, agent: str, directory: str, scope: CleanupScope, resource: str, match: str | None) -> None:
+def run_depoison_tui(*, agent: str, directory: str, scope: CleanupScope, resource: str, match: str | None, recursive: bool) -> None:
     definitions = resolve_doctor_definitions(requested_agent=agent)
+    resolve_cleanup_resources(requested_resources=resource)
     selection = CleanupSelection(
         agent=definitions[0].agent if len(definitions) == 1 else "all", directory=directory,
-        scope=scope, resource=",".join(resolve_resource_focuses(requested_resources=resource)), match=match,
+        scope=scope, resource=",".join(dict.fromkeys(value.strip().casefold() for value in resource.split(","))),
+        match=match, recursive=recursive,
     )
     raise SystemExit(DepoisonApp(selection=selection).run())

@@ -9,6 +9,7 @@ from textual.message import Message
 from textual.widgets import Button, DataTable, Input, Select, TabbedContent, TabPane, TextArea
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import CleanupSelection
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_RESOURCE_CHOICES
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory, HookRemoval
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import DOCTOR_AGENT_DEFINITIONS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_cleanup import cleanup_action, cleanup_details, cleanup_kind
@@ -42,7 +43,7 @@ class CleanupBrowser(Vertical):
         self.cleanup_visible: list[int] = []
 
     def compose(self) -> ComposeResult:
-        kinds = ["all", "hook", "mcp", "plugin", "skill", "instructions", "configuration"]
+        kinds = list(CLEANUP_RESOURCE_CHOICES)
         if self.cleanup_initial.resource not in kinds:
             kinds.append(self.cleanup_initial.resource)
         with Horizontal(classes="filters"):
@@ -92,7 +93,7 @@ class CleanupBrowser(Vertical):
         search = self.query_one("#cleanup-search", Input).value.casefold()
         self.cleanup_visible = [
             index for index, entry in enumerate(self.cleanup_inventory.entries)
-            if (agent == "all" or entry.agent == agent) and (scope == "all" or entry.origin == scope)
+            if (agent == "all" or entry.agent in (agent, "shared")) and (scope == "all" or entry.origin == scope)
             and ("all" in kinds or cleanup_kind(entry) in kinds)
             and search in f"""{entry.name} {entry.event} {entry.command} {entry.path}""".casefold()
         ]

@@ -10,9 +10,10 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models
 
 def depoison(
     agent: Annotated[str, typer.Argument(help="Agent to reset, or all.")] = "all",
-    directory: Annotated[Path | None, typer.Option("--directory", "-d", exists=True, file_okay=False, help="Inspect this project directory.")] = None,
-    scope: Annotated[CleanupScope, typer.Option("--scope", "-s", help="Select local, global, or all configuration.")] = "all",
-    resource: Annotated[str, typer.Option("--resource", "-r", help="Comma-separated resources: all, hook, plugin, mcp, skill, instructions, configuration.")] = "all",
+    directory: Annotated[Path | None, typer.Option("--directory", "-d", exists=True, file_okay=False, help="Inspect a project or a directory containing repositories.")] = None,
+    scope: Annotated[CleanupScope, typer.Option("--scope", "-s", help="Select local, global, or all resources. Workspace folders are local.")] = "all",
+    resource: Annotated[str, typer.Option("--resource", "-r", help="Comma-separated resources: all, workspace (.ai folders), hook, plugin, mcp, skill, instructions, configuration.")] = "all",
+    recursive: Annotated[bool, typer.Option("--recursive", "-R", help="Recurse into nested repositories when collecting .ai folders.")] = False,
     match: Annotated[str | None, typer.Option("--match", "-m", help="Select resources by name, command, or source path substring.")] = None,
     apply: Annotated[bool, typer.Option("--apply", "-a", help="Apply the displayed reset and keep original files in quarantine.")] = False,
     interactive: Annotated[
@@ -23,13 +24,12 @@ def depoison(
         bool, typer.Option("--tui", "-t", help="Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.")
     ] = False,
 ) -> None:
-    """Preview or reset hooks, plugins, MCP servers, skills, instructions, and configuration."""
     if tui:
         from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
 
         launch_agent_tui(
             mode="depoison", agent=agent, directory=str(directory if directory is not None else Path.cwd()),
-            resource=resource, scope=scope, match=match,
+            resource=resource, scope=scope, match=match, recursive=recursive,
         )
         return
     from stackops.utils.meta import lambda_to_python_script
@@ -40,6 +40,7 @@ def depoison(
             directory=str(directory if directory is not None else Path.cwd()),
             scope=scope,
             resource=resource,
+            recursive=recursive,
             match=match,
             apply=apply,
             interactive=interactive,
@@ -56,7 +57,8 @@ def depoison(
 
 
 def _run_depoison(
-    *, agent: str, directory: str, scope: CleanupScope, resource: str, match: str | None, apply: bool, interactive: bool, verbose: bool,
+    *, agent: str, directory: str, scope: CleanupScope, resource: str, recursive: bool,
+    match: str | None, apply: bool, interactive: bool, verbose: bool,
 ) -> None:
     from pathlib import Path
 
@@ -74,7 +76,7 @@ def _run_depoison(
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_output import render_cleanup_plan, render_cleanup_result
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_plan import build_cleanup_plan
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources
-    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import resolve_resource_focuses
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import collect_workspace_resources, resolve_cleanup_resources
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.discovery import collect_hooks
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import resolve_doctor_definitions
@@ -83,22 +85,25 @@ def _run_depoison(
     console = Console()
     error_console = Console(stderr=True)
     try:
-        selection = CleanupSelection(agent=agent, directory=directory, scope=scope, resource=resource, match=match)
+        selection = CleanupSelection(agent=agent, directory=directory, scope=scope, resource=resource, match=match, recursive=recursive)
         while True:
             if interactive:
                 selection = prompt_cleanup_selection(selection=selection, console=console)
                 console.rule("Step 2/4 · Inspect current resources", style="cyan")
             context = create_doctor_context(working_directory=Path(selection.directory))
             definitions = resolve_doctor_definitions(requested_agent=selection.agent)
-            focuses = resolve_resource_focuses(requested_resources=selection.resource)
+            focuses, include_workspace = resolve_cleanup_resources(requested_resources=selection.resource)
             with console.status("Inspecting resources...") as status:
                 inventories: list[HookInventory] = []
                 for definition in definitions:
                     status.update(Text(f"""Inspecting {definition.display_name}..."""))
                     if "all" in focuses or "hook" in focuses:
                         inventories.append(collect_hooks(agent=definition.agent, context=context))
-                    if focuses != ("hook",):
+                    if focuses and focuses != ("hook",):
                         inventories.append(collect_cleanup_resources(agent=definition.agent, context=context, resource_focuses=focuses))
+                if include_workspace and selection.scope != "global":
+                    status.update("Inspecting repository .ai folders...")
+                    inventories.append(collect_workspace_resources(context=context, recursive=selection.recursive))
                 inventory = HookInventory(
                     entries=tuple(entry for item in inventories for entry in item.entries),
                     diagnostics=tuple(diagnostic for item in inventories for diagnostic in item.diagnostics),
