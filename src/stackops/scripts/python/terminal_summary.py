@@ -321,7 +321,7 @@ def _collect_tmux_summary(session_name: str) -> SessionSummary:
     )
 
 
-def _print_tmux_summary() -> None:
+def _print_tmux_summary(show_tabs: bool) -> None:
     from rich import box
     from rich.console import Console
     from rich.table import Table
@@ -359,6 +359,9 @@ def _print_tmux_summary() -> None:
             session.process_names,
         )
     console.print(table)
+    if show_tabs:
+        for session_name in session_names:
+            _print_tmux_session_details(session_name=session_name)
 
 
 def _print_tmux_session_details(session_name: str) -> None:
@@ -456,7 +459,7 @@ def _collect_herdr_summary(workspace: JsonObject) -> HerdrWorkspaceSummary:
     )
 
 
-def _print_herdr_summary() -> None:
+def _print_herdr_summary(show_tabs: bool) -> None:
     from rich import box
     from rich.console import Console
     from rich.table import Table
@@ -477,7 +480,8 @@ def _print_herdr_summary() -> None:
     table.add_column("Agent Status", overflow="fold")
     table.add_column("CWD", overflow="fold")
 
-    for workspace in [_collect_herdr_summary(workspace=workspace) for workspace in workspaces]:
+    summaries = [_collect_herdr_summary(workspace=workspace) for workspace in workspaces]
+    for workspace in summaries:
         table.add_row(
             workspace.name,
             workspace.workspace_id,
@@ -490,6 +494,9 @@ def _print_herdr_summary() -> None:
             workspace.cwd,
         )
     Console().print(table)
+    if show_tabs:
+        for workspace in summaries:
+            _print_herdr_workspace_details(workspace_name=workspace.workspace_id)
 
 
 def _tab_id_to_display(tabs: list[JsonObject]) -> dict[str, str]:
@@ -703,22 +710,26 @@ def summary(
     backend: Annotated[SummaryBackend, typer.Option("--backend", "-b", help="Backend to summarize: tmux, herdr, aoe, or auto.")] = "tmux",
     session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one tmux session, Herdr workspace, or AoE session by name.")] = None,
     choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one tmux session, Herdr workspace, or AoE session interactively and show details.")] = False,
+    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include tab/window and pane details for every session (tmux and Herdr).")] = False,
 ) -> None:
     """Print running terminal session summaries or details for one session."""
     match _resolve_summary_backend(backend):
         case "tmux":
             session_name = _resolve_tmux_session_name(session_name=session, choose_session=choose_session)
             if session_name is None:
-                _print_tmux_summary()
+                _print_tmux_summary(show_tabs=show_tabs)
                 return
             _print_tmux_session_details(session_name=session_name)
         case "herdr":
             workspace_name = _resolve_herdr_workspace_name(workspace_name=session, choose_session=choose_session)
             if workspace_name is None:
-                _print_herdr_summary()
+                _print_herdr_summary(show_tabs=show_tabs)
                 return
             _print_herdr_workspace_details(workspace_name=workspace_name)
         case "aoe":
+            if show_tabs:
+                typer.echo("Error: --tabs is only supported by tmux and Herdr; AoE sessions are already listed individually.", err=True, color=True)
+                raise typer.Exit(code=1)
             session_name = _resolve_aoe_session_name(session_name=session, choose_session=choose_session)
             if session_name is None:
                 _print_aoe_summary()

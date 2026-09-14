@@ -28,6 +28,7 @@ def summarize(
         LegacySummarizeBackend | None,
         typer.Option("--backend", "-b", help="Deprecated alias for --vocabulary.", hidden=True),
     ] = None,
+    show_tabs: Annotated[bool, typer.Option("--tabs", help="Show tab names, directories, commands, and weights.")] = False,
 ) -> None:
     """Summarize a layout file with counts for layouts and tabs."""
     import json
@@ -35,7 +36,9 @@ def summarize(
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
+    from rich.text import Text
     from stackops.utils.files.read import remove_c_style_comments
+    from stackops.utils.schemas.layouts.layout_types import TabConfig
 
     console = Console()
     layout_path_obj = Path(layout_path).expanduser().absolute()
@@ -97,6 +100,7 @@ def summarize(
         raise typer.Exit(code=1)
 
     rows: list[tuple[int, str, int]] = []
+    tab_rows: list[tuple[str, int, TabConfig]] = []
     total_tabs = 0
     for index, layout_raw in enumerate(layouts_raw, start=1):
         if not isinstance(layout_raw, dict):
@@ -121,6 +125,8 @@ def summarize(
         tab_count = len(layout_tabs)
         rows.append((index, layout_name, tab_count))
         total_tabs += tab_count
+        if show_tabs:
+            tab_rows.extend((layout_name, tab_index, tab) for tab_index, tab in enumerate(cast(list[TabConfig], layout_tabs), start=1))
 
     total_layouts = len(rows)
     avg_tabs = (total_tabs / total_layouts) if total_layouts > 0 else 0.0
@@ -157,6 +163,25 @@ def summarize(
         summary_lines.append(f"[bold]{min_label}:[/bold] {min_row[1]} ({min_row[2]})")
 
     console.print(Panel("\n".join(summary_lines), title=summary_title, border_style="blue"))
+
+    if show_tabs:
+        tabs_table = Table(title=f"""[bold cyan]Tabs ({total_tabs})[/bold cyan]""")
+        tabs_table.add_column(name_column, style="white")
+        tabs_table.add_column("#", justify="right")
+        tabs_table.add_column("Tab Name", style="green")
+        tabs_table.add_column("Start Directory")
+        tabs_table.add_column("Command")
+        tabs_table.add_column("Weight", justify="right")
+        for layout_name, tab_index, tab in tab_rows:
+            tabs_table.add_row(
+                Text(layout_name),
+                str(tab_index),
+                Text(tab["tabName"]),
+                Text(tab["startDir"]),
+                Text(tab["command"]),
+                str(tab["tabWeight"]) if "tabWeight" in tab else "—",
+            )
+        console.print(tabs_table)
 
     table = Table(title=table_title)
     table.add_column("#", justify="right")
