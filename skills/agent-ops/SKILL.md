@@ -1,6 +1,14 @@
 ---
 name: agent-ops
-description: Manage external interactive agent operations through herdr and wt/Worktrunk isolated worktrees. Use when the user invokes handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents, asks to hand off current work, asks for goal-directed iterative improvement, asks for multiple scope-separated iter chains, asks for parallel agents, asks to delegate messages to herdr-managed agent sessions, or wants Codex/OpenCode/Pi/another CLI agent to continue or coordinate work.
+description: >
+  Use ONLY when the user explicitly names agent-ops together with one of its commands
+  (handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents), e.g.
+  "agent-ops parallel-agents", or invokes /skill:agent-ops; then it coordinates external
+  CLI agents (Codex, OpenCode, Pi) through the herdr CLI and wt/Worktrunk worktrees.
+  NEVER for a command name alone ("parallel-agents", "iter", "handover"), merely
+  mentioning herdr or tmux, checking or debugging them, code-level parallelism or
+  concurrency, loops or iteration over data, background jobs, or harness-native
+  subagents and parallel tool calls.
 ---
 
 # Agent-Ops
