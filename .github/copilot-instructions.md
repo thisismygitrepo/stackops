@@ -84,7 +84,7 @@ def example_usage() -> None:
 * Your code is minimal, no unrequested features, no bloat.
 * Please avoid writing README files and avoid docstring and comments in code unless absolutely necessary. Use clear naming conventions instead of documenting.
 * Always prefer to functional style of programming over OOP.
-* Please avoid making files longer ~ 200 lines or so, always cosider breaking to meaningful self-contained nicely related modules.
+* Please avoid making large files with thousand lines or so, always cosider breaking to meaningful self-contained nicely related modules.
 
 # Privacy:
 * No matter what, never ever open/read/write/list anything under ~/dotfiles
