@@ -2,8 +2,7 @@
 """Devops Devapps Install
 """
 
-import json
-from typing import Annotated, Final, Literal, TypedDict
+from typing import Annotated, Final
 
 import typer
 
@@ -13,16 +12,6 @@ from stackops.utils.schemas.installer.installer_types import InstallRequest, Ins
 INSTALLER_NAME_ALIASES: Final[dict[str, str]] = {
     "agy": "antigravity",
 }
-
-
-class InteractiveGroupPreview(TypedDict):
-    type: Literal["package_group"]
-    groupName: str
-    apps: list[str]
-
-
-def _render_preview_json(value: InstallerData | InteractiveGroupPreview) -> str:
-    return json.dumps(value, indent=2, ensure_ascii=False)
 
 
 def _build_installer_option_to_data(installers: list[InstallerData]) -> dict[str, InstallerData]:
@@ -40,26 +29,28 @@ def _build_installer_option_to_data(installers: list[InstallerData]) -> dict[str
 def _build_interactive_option_previews(
     category_display_to_name: dict[str, str],
     installer_option_to_data: dict[str, InstallerData],
-    available_app_names: set[str],
+    preview_size_percent: float,
 ) -> dict[str, str]:
+    from stackops.utils.installer_utils.installer_explore_preview import render_category_preview, render_installer_preview
     from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
 
+    installers_by_name = {installer_data["appName"].casefold(): installer_data for installer_data in installer_option_to_data.values()}
     option_previews: dict[str, str] = {}
     for display_label, group_name in category_display_to_name.items():
         group_name_typed: PACKAGE_NAME = next(package_name for package_name in PACKAGE_GROUP2NAMES if package_name == group_name)
-        option_previews[display_label] = _render_preview_json(
-            InteractiveGroupPreview(
-                type="package_group",
-                groupName=group_name_typed,
-                apps=[
-                    app_name
-                    for app_name in PACKAGE_GROUP2NAMES[group_name_typed]
-                    if app_name.casefold() in available_app_names
-                ],
-            )
+        option_previews[display_label] = render_category_preview(
+            category_label=group_name_typed,
+            label=f"""📦 Package group: {group_name_typed}""",
+            description="Selecting this group installs the apps below.",
+            installers=[
+                installers_by_name[app_name.casefold()]
+                for app_name in PACKAGE_GROUP2NAMES[group_name_typed]
+                if app_name.casefold() in installers_by_name
+            ],
+            preview_size_percent=preview_size_percent,
         )
     for option_label, installer_data in installer_option_to_data.items():
-        option_previews[option_label] = _render_preview_json(installer_data)
+        option_previews[option_label] = render_installer_preview(installer_data=installer_data, preview_size_percent=preview_size_percent)
     return option_previews
 
 
@@ -155,16 +146,17 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
     options = list(category_display_to_name.keys()) + list(installer_option_to_data.keys())
 
     if check_tool_exists("tv"):
+        preview_size_percent = 55.0
         option_previews = _build_interactive_option_previews(
             category_display_to_name=category_display_to_name,
             installer_option_to_data=installer_option_to_data,
-            available_app_names=available_app_names,
+            preview_size_percent=preview_size_percent,
         )
         program_names = choose_from_dict_with_preview(
             options_to_preview_mapping=option_previews,
-            extension="json",
+            extension="txt",
             multi=True,
-            preview_size_percent=55.0,
+            preview_size_percent=preview_size_percent,
         )
     else:
         program_names = choose_from_options(

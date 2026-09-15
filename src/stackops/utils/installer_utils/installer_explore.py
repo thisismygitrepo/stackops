@@ -1,36 +1,16 @@
 """Category-label explorer for `devops install --explore`."""
 
-import json
-from typing import Any, Literal, TypedDict
+from typing import Any, TypedDict
 
 import typer
 
+from stackops.utils.installer_utils.installer_explore_preview import render_category_preview, render_installer_preview
 from stackops.utils.schemas.installer.installer_types import InstallRequest, InstallationResult, InstallerData, InstallerDataSource
 
 
 class CategoryLabelDefinition(TypedDict):
     label: str
     description: str
-
-
-class CategoryLabelAppPreview(TypedDict):
-    appName: str
-    doc: str
-    repoURL: str
-    categoryLabels: list[str]
-
-
-class CategoryLabelPreview(TypedDict):
-    type: Literal["category_label"]
-    categoryLabel: str
-    label: str
-    description: str
-    installerCount: int
-    installers: list[CategoryLabelAppPreview]
-
-
-def _render_preview_json(value: object) -> str:
-    return json.dumps(value, indent=2, ensure_ascii=False)
 
 
 def _build_installer_option_to_data(installers: list[InstallerData]) -> dict[str, InstallerData]:
@@ -106,44 +86,21 @@ def _build_category_label_options(
     return category_option_to_label
 
 
-def _build_category_label_preview(
-    category_label: str,
-    installers: list[InstallerData],
-    category_definitions: dict[str, CategoryLabelDefinition],
-) -> CategoryLabelPreview:
-    metadata = category_definitions.get(category_label)
-    app_previews = [
-        CategoryLabelAppPreview(
-            appName=installer_data["appName"],
-            doc=installer_data["doc"],
-            repoURL=installer_data["repoURL"],
-            categoryLabels=list(installer_data["categoryLabels"]),
-        )
-        for installer_data in sorted(installers, key=lambda installer_data: installer_data["appName"].lower())
-    ]
-    return CategoryLabelPreview(
-        type="category_label",
-        categoryLabel=category_label,
-        label=metadata["label"] if metadata is not None else category_label,
-        description=metadata["description"] if metadata is not None else "",
-        installerCount=len(app_previews),
-        installers=app_previews,
-    )
-
-
 def _build_category_label_option_previews(
     category_option_to_label: dict[str, str],
     category_to_installers: dict[str, list[InstallerData]],
     category_definitions: dict[str, CategoryLabelDefinition],
+    preview_size_percent: float,
 ) -> dict[str, str]:
     option_previews: dict[str, str] = {}
     for option_label, category_label in category_option_to_label.items():
-        option_previews[option_label] = _render_preview_json(
-            _build_category_label_preview(
-                category_label=category_label,
-                installers=category_to_installers[category_label],
-                category_definitions=category_definitions,
-            )
+        metadata = category_definitions.get(category_label)
+        option_previews[option_label] = render_category_preview(
+            category_label=category_label,
+            label=metadata["label"] if metadata is not None else category_label,
+            description=metadata["description"] if metadata is not None else "",
+            installers=category_to_installers[category_label],
+            preview_size_percent=preview_size_percent,
         )
     return option_previews
 
@@ -182,15 +139,17 @@ def explore_installers_by_category_labels(
 
     if category_labels is None:
         if check_tool_exists("tv"):
+            category_preview_size_percent = 60.0
             selected_category_options = choose_from_dict_with_preview(
                 options_to_preview_mapping=_build_category_label_option_previews(
                     category_option_to_label=category_option_to_label,
                     category_to_installers=category_to_installers,
                     category_definitions=category_definitions,
+                    preview_size_percent=category_preview_size_percent,
                 ),
-                extension="json",
+                extension="txt",
                 multi=True,
-                preview_size_percent=60.0,
+                preview_size_percent=category_preview_size_percent,
             )
         else:
             selected_category_options = choose_from_options(
@@ -225,14 +184,15 @@ def explore_installers_by_category_labels(
     installer_option_to_data = _build_installer_option_to_data(selected_installers)
 
     if check_tool_exists("tv"):
+        installer_preview_size_percent = 55.0
         selected_installer_options = choose_from_dict_with_preview(
             options_to_preview_mapping={
-                option_label: _render_preview_json(installer_data)
+                option_label: render_installer_preview(installer_data=installer_data, preview_size_percent=installer_preview_size_percent)
                 for option_label, installer_data in installer_option_to_data.items()
             },
-            extension="json",
+            extension="txt",
             multi=True,
-            preview_size_percent=55.0,
+            preview_size_percent=installer_preview_size_percent,
         )
     else:
         selected_installer_options = choose_from_options(
