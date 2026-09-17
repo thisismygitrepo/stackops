@@ -12,6 +12,10 @@ Columns are: agent, session-id, topic, actionsTaken, date
 create the file if it doesn't exist.
 session id is the agent session id, you probably have it in env variables or somewhere, its agent dependent. This allows user to follow up on discussion or get more context on work done.
 
+# Ethos of maintinance of second-brain
+* The second-brain is meant to be a mirror of the human user. Thus, if the agent was creating and dumping files around the place, we quickly run a risk of developing a place that the human user cannot recognize nor associate with, even though, those files are absolutely necessary context to get the jobs done, or keep track of details of how the job was done etc. To solve this dilemma, we either put those byproduct files in a space relevant to the job, e.g. a repo, or (more preferrably) we put those files in `.agents` directories across the relevant folders in second-brain, in order to distinguish them from md files that contain kknowledge that the human user is aware of of, because they talked about it. Still, even within .agents dir, please make sure to behave and keep it a clean spaces, so other agents in the future can find there way around easily.
+
+
 # Specialized agents, skills, connectors, and other resources:
 They live under `~/code/agents`. For a matching task, use the relevant project and read its local `AGENTS.md`, `SKILL.md`, or `README.md` before starting. When it comes to outlook, confluence or slack, please never every use standard browser/chrome skills, always make sure to use the specialized connections instead of using generic browser-use or computer-use capability if that's under your disposal.
 

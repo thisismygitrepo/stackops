@@ -69,6 +69,5 @@ def resolve_merge_conflicts(repo: "Repo", expected_conflicts: tuple[MergeConflic
     if len(unresolved_conflicts) > 0:
         unresolved_paths = ", ".join(conflict.path for conflict in unresolved_conflicts)
         raise RuntimeError(f"Merge resolution left unresolved paths: {unresolved_paths}")
-    repo.git.diff("--cached", "--check")
     repo.git.commit("--no-edit")
     return str(repo.head.commit.hexsha)

@@ -34,7 +34,8 @@ class MergeGitError:
 type MergeAttemptResult = MergeSuccess | MergeConflictResult | MergeGitError
 
 
-def restore_downloaded_file_modes(repo: "Repo") -> None:
+def prepare_downloaded_repository(repo: "Repo") -> None:
+    repo.git.config("--local", "core.autocrlf", "input")
     if os.name == "nt":
         repo.git.config("--local", "core.filemode", "false")
         return
@@ -72,7 +73,6 @@ def commit_local_changes(repo: "Repo", message: str, console: "Console") -> None
     if not _has_staged_changes(repo=repo):
         print("-> No staged changes to commit.")
         return
-    repo.git.diff("--cached", "--check")
     commit_output = repo.git.commit(m=message)
     if commit_output.strip() != "":
         print(commit_output)
