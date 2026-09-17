@@ -5,19 +5,20 @@ import subprocess
 from git import Repo
 from collections import defaultdict
 from datetime import datetime, date
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 from pathlib import Path
 
+from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repository_syncs
 
 
-def count_historical_line_edits(repo_path: str) -> int:
+def count_historical_line_edits(repo_path: str, specs_path: str | Path | None) -> int:
 
     repo = Repo(repo_path)
     last_commit = next(repo.iter_commits())
     total_lines, total_files = count_python_lines(last_commit)
     print(f"Total lines of Python code in latest commit ({last_commit.hexsha[:8]}): {total_lines} across {total_files} files")
 
-    gitcs_viz(repo_path=repo_path, pull_full_history=True)
+    gitcs_viz(repo_path=repo_path, email=None, pull_full_history=True, specs_path=specs_path)
 
     file_line_counts: "Dict[str, int]" = defaultdict(int)
     total_commits: int = sum(1 for _ in repo.iter_commits())
@@ -90,7 +91,7 @@ def get_default_branch(repo: Repo) -> str:
 
 
 
-def gitcs_viz(repo_path: Union[str, Path], email: str | None = None, pull_full_history: bool = False) -> None:
+def gitcs_viz(repo_path: str | Path, email: str | None, pull_full_history: bool, specs_path: str | Path | None) -> None:
     """Invoke the gitcs CLI across 6-month windows covering the repo history.
     
     Args:
@@ -107,7 +108,11 @@ def gitcs_viz(repo_path: Union[str, Path], email: str | None = None, pull_full_h
     # Check if repo is shallow and optionally unshallow it
     if pull_full_history:
         shallow_file = Path(repo.git_dir) / "shallow"
-        if shallow_file.exists():
+        repository_syncs = load_repository_syncs(specs_path=specs_path)
+        sync = repository_syncs.get(Path(repo.working_dir).resolve(), {"mode": "git"})
+        if shallow_file.exists() and sync["mode"] == "guard":
+            print("ℹ️ Guard repository has shallow history; counting available local history without fetching Git remotes")
+        elif shallow_file.exists():
             print("🔄 Detected shallow clone. Fetching full history...")
             try:
                 repo.git.fetch("--unshallow")

@@ -65,6 +65,20 @@ def publish_local_repository(
     delete_path(repo_remote_root.parent, verbose=True)
 
 
+def validate_downloaded_repository(repo_remote_root: Path, cloud: str, remote_path: Path) -> None:
+    from git.repo import Repo
+
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import prepare_downloaded_repository
+
+    with Repo(repo_remote_root) as repo:
+        prepare_downloaded_repository(repo=repo)
+        if repo.is_dirty(untracked_files=True):
+            raise RuntimeError(
+                f"Downloaded repository is dirty and was preserved at {repo_remote_root}. "
+                f"Remote location: {cloud}:{remote_path.as_posix()}"
+            )
+
+
 def restore_local_repository(repo_local_root: Path, repo_remote_root: Path) -> None:
     if os.path.lexists(repo_local_root):
         raise FileExistsError(f"Refusing to restore over an existing path: {repo_local_root}")

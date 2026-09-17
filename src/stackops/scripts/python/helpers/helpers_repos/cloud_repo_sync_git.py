@@ -12,9 +12,6 @@ if TYPE_CHECKING:
     from rich.console import Console
 
 
-REMOTE_BRANCH_NAME = "master"
-
-
 @dataclass(frozen=True)
 class MergeSuccess:
     details: str
@@ -85,7 +82,7 @@ def merge_remote_copy(repo: "Repo", remote_path: Path, console: "Console") -> Me
 
     _print_section(console=console, title="INTEGRATING LATEST REMOTE COMMIT")
     try:
-        repo.git.fetch(str(remote_path), REMOTE_BRANCH_NAME)
+        repo.git.fetch("--no-recurse-submodules", str(remote_path), "HEAD")
         merge_output = repo.git.merge("FETCH_HEAD", no_edit=True)
     except GitCommandError as exc:
         conflicts = get_merge_conflicts(repo=repo)

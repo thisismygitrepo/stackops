@@ -1,6 +1,8 @@
 from enum import StrEnum
 from typing import Literal, TypedDict
 
+from stackops.utils.schemas.repos.repos_types import RepoSync
+
 
 class RemoteBranchSnapshot(TypedDict):
     name: str
@@ -19,6 +21,7 @@ class RepositorySnapshot(TypedDict):
     commit: str
     isDirty: bool
     remotes: list[RemoteSnapshot]
+    sync: RepoSync
 
 
 class DeclaredVersion(TypedDict):
@@ -28,7 +31,7 @@ class DeclaredVersion(TypedDict):
 
 
 class VersionsFile(TypedDict):
-    schemaVersion: Literal["1"]
+    schemaVersion: Literal["2"]
     versions: list[DeclaredVersion]
 
 

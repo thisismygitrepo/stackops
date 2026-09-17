@@ -8,7 +8,9 @@ from git.remote import Remote
 from git.repo import Repo
 
 from stackops.scripts.python.helpers.helpers_repos.discovery import repository_candidates
+from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repository_syncs
 from stackops.scripts.python.helpers.helpers_repos.version_models import DeclaredVersion, RemoteBranchSnapshot, RemoteSnapshot, RepositorySnapshot
+from stackops.utils.schemas.repos.repos_types import RepoSync
 
 
 class VersionOperationError(RuntimeError):
@@ -44,7 +46,7 @@ def _capture_remote(repository: Repo, repository_path: Path, remote: Remote) -> 
     }
 
 
-def capture_repository(repos_root: Path, repository_path: Path) -> RepositorySnapshot:
+def capture_repository(repos_root: Path, repository_path: Path, sync: RepoSync, query_remotes: bool) -> RepositorySnapshot:
     try:
         repository = Repo(repository_path, search_parent_directories=False)
     except (InvalidGitRepositoryError, NoSuchPathError) as error:
@@ -65,6 +67,7 @@ def capture_repository(repos_root: Path, repository_path: Path) -> RepositorySna
     remotes = [
         _capture_remote(repository=repository, repository_path=resolved_repository_path, remote=remote)
         for remote in sorted(repository.remotes, key=lambda item: item.name)
+        if sync["mode"] == "git" and query_remotes
     ]
     return {
         "path": relative_path,
@@ -72,18 +75,19 @@ def capture_repository(repos_root: Path, repository_path: Path) -> RepositorySna
         "commit": commit,
         "isDirty": repository.is_dirty(untracked_files=True, submodules=True),
         "remotes": remotes,
+        "sync": sync,
     }
 
 
-def _capture_candidate(repos_root: Path, repository_path: Path) -> RepositorySnapshot | None:
+def _capture_candidate(repos_root: Path, repository_path: Path, sync: RepoSync) -> RepositorySnapshot | None:
     try:
         Repo(repository_path, search_parent_directories=False)
     except (InvalidGitRepositoryError, NoSuchPathError):
         return None
-    return capture_repository(repos_root=repos_root, repository_path=repository_path)
+    return capture_repository(repos_root=repos_root, repository_path=repository_path, sync=sync, query_remotes=True)
 
 
-def capture_declared_version(repos_root: Path, version: str, message: str, recursive: bool) -> DeclaredVersion:
+def capture_declared_version(repos_root: Path, version: str, message: str, recursive: bool, specs_path: str | Path | None) -> DeclaredVersion:
     normalized_version = version.strip()
     normalized_message = message.strip()
     if not normalized_version:
@@ -91,9 +95,13 @@ def capture_declared_version(repos_root: Path, version: str, message: str, recur
     if not normalized_message:
         raise VersionOperationError("Version message must not be empty")
     candidates = repository_candidates(repos_root=repos_root, recursive=recursive)
+    repository_syncs = load_repository_syncs(specs_path=specs_path)
     max_workers = min(32, (os.cpu_count() or 1) * 5, len(candidates) or 1)
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(_capture_candidate, repos_root, path) for path in candidates]
+        futures = [
+            executor.submit(_capture_candidate, repos_root, path, repository_syncs.get(path.resolve(), {"mode": "git"}))
+            for path in candidates
+        ]
         snapshots = [snapshot for future in concurrent.futures.as_completed(futures) if (snapshot := future.result()) is not None]
     snapshots.sort(key=lambda snapshot: snapshot["path"])
     if not snapshots:

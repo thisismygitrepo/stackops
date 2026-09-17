@@ -15,6 +15,7 @@ from stackops.scripts.python.helpers.helpers_repos.action_helper import (
 )
 from stackops.scripts.python.helpers.helpers_repos.discovery import repository_candidates
 from stackops.scripts.python.helpers.helpers_repos.git_action import git_action
+from stackops.utils.schemas.repos.repos_types import RepoSync
 
 
 class RepositoryOperationPayload(TypedDict):
@@ -40,7 +41,7 @@ def render_repository_command_script(repos_root: Path, recursive: bool, command:
 
 
 def _process_repository_path(
-    path: Path, actions: tuple[GitAction, ...], commit_message: str | None, auto_uv_sync: bool, dry_run: bool
+    path: Path, actions: tuple[GitAction, ...], commit_message: str | None, auto_uv_sync: bool, dry_run: bool, sync: RepoSync, pwd: str | None
 ) -> RepositoryOperationPayload:
     try:
         Repo(path, search_parent_directories=False)
@@ -49,7 +50,7 @@ def _process_repository_path(
 
     results: list[GitOperationResult] = []
     for action in actions:
-        result = git_action(path=path, action=action, message=commit_message, auto_uv_sync=auto_uv_sync, dry_run=dry_run)
+        result = git_action(path=path, action=action, message=commit_message, auto_uv_sync=auto_uv_sync, dry_run=dry_run, sync=sync, pwd=pwd)
         results.append(result)
         if not result.success:
             break
@@ -96,6 +97,8 @@ def perform_git_operations(
     auto_uv_sync: bool,
     commit_message: str | None,
     dry_run: bool,
+    syncs: dict[Path, RepoSync],
+    pwd: str | None,
 ) -> GitOperationSummary:
     print(f"\n🔄 Performing Git actions on repositories @ `{repos_root}`...")
     requested_actions = tuple(
@@ -107,7 +110,12 @@ def perform_git_operations(
     summary = GitOperationSummary(dry_run=dry_run)
     max_workers = min(32, (os.cpu_count() or 1) * 5, len(paths) or 1)
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(_process_repository_path, path, requested_actions, commit_message, auto_uv_sync, dry_run) for path in paths]
+        futures = [
+            executor.submit(
+                _process_repository_path, path, requested_actions, commit_message, auto_uv_sync, dry_run, syncs.get(path.resolve(), {"mode": "git"}), pwd
+            )
+            for path in paths
+        ]
         payloads = sorted((future.result() for future in concurrent.futures.as_completed(futures)), key=lambda item: item["path"])
 
     for payload in payloads:

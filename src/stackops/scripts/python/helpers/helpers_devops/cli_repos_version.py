@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_repos.version_checkout import check
 from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
 from stackops.scripts.python.helpers.helpers_repos.version_models import (
     DeclaredVersion,
-    RemoteSnapshot,
+    RepositorySnapshot,
     RepositoryVersionStatus,
     VersionsFile,
     VersionRepositoryState,
@@ -26,14 +26,17 @@ from stackops.scripts.python.helpers.helpers_repos.version_store import (
 )
 
 
-def _abort(error: ValueError | VersionOperationError) -> Never:
+def _abort(error: OSError | ValueError | VersionOperationError) -> Never:
     typer.echo(f"❌ {error}", err=True)
     raise typer.Exit(code=1) from error
 
 
-def _remote_label(remotes: list[RemoteSnapshot]) -> str:
+def _remote_label(snapshot: RepositorySnapshot) -> str:
+    sync = snapshot["sync"]
+    if sync["mode"] == "guard":
+        return f"Guard · {sync['cloud']}:{sync['remotePath']} (encrypted)"
     labels: list[str] = []
-    for remote in remotes:
+    for remote in snapshot["remotes"]:
         branches = ", ".join(f"{branch['name']}@{branch['commit'][:8]}" for branch in remote["branches"])
         labels.append(f"{remote['name']} [{branches or 'no branches'}]")
     return "; ".join(labels) if labels else "local only"
@@ -72,7 +75,7 @@ def _print_version_status(declared_version: DeclaredVersion, statuses: list[Repo
     table.add_column("Repository", style="cyan")
     table.add_column("Captured", no_wrap=True)
     table.add_column("State", no_wrap=True)
-    table.add_column("Advertised remotes", overflow="fold")
+    table.add_column("Sync target", overflow="fold")
     table.add_column("Details", overflow="fold")
     for status in statuses:
         snapshot = status["snapshot"]
@@ -82,7 +85,7 @@ def _print_version_status(declared_version: DeclaredVersion, statuses: list[Repo
             snapshot["path"],
             f"{branch}@{snapshot['commit'][:12]}{dirty_suffix}",
             _state_label(state=status["state"]),
-            _remote_label(remotes=snapshot["remotes"]),
+            _remote_label(snapshot=snapshot),
             status["detail"],
         )
     Console().print(table)
@@ -93,6 +96,7 @@ def declare(
     message: Annotated[str, typer.Option("--message", "-m", help="Message describing this version.")],
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing repositories.")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recurse into nested repository directories.")] = False,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository registry containing sync settings.")] = None,
 ) -> None:
     try:
         repos_root = resolve_workspace(directory=directory)
@@ -100,10 +104,12 @@ def declare(
         versions_file = load_versions_file(path=path, allow_missing=True)
         if any(existing["version"] == version.strip() for existing in versions_file["versions"]):
             raise VersionStoreError(f"Version {version.strip()!r} is already declared")
-        declared_version = capture_declared_version(repos_root=repos_root, version=version, message=message, recursive=recursive)
+        declared_version = capture_declared_version(
+            repos_root=repos_root, version=version, message=message, recursive=recursive, specs_path=specs_path
+        )
         updated_file = append_declared_version(versions_file=versions_file, declared_version=declared_version)
         save_versions_file(versions_file=updated_file, path=path)
-    except (ValueError, VersionOperationError) as error:
+    except (OSError, ValueError, VersionOperationError) as error:
         _abort(error)
     dirty_count = sum(snapshot["isDirty"] for snapshot in declared_version["repositories"])
     typer.echo(f"✅ Declared version {declared_version['version']!r} with {len(declared_version['repositories'])} repositories in {path}")
@@ -114,6 +120,7 @@ def declare(
 def status(
     version: Annotated[str | None, typer.Argument(help="Version identifier to compare with current repository state.")] = None,
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository registry containing sync settings.")] = None,
 ) -> None:
     try:
         repos_root = resolve_workspace(directory=directory)
@@ -123,8 +130,8 @@ def status(
             _print_versions(versions_file=versions_file, path=path)
             return
         declared_version = find_declared_version(versions_file=versions_file, version=version)
-        statuses = inspect_declared_version(repos_root=repos_root, declared_version=declared_version)
-    except (ValueError, VersionOperationError) as error:
+        statuses = inspect_declared_version(repos_root=repos_root, declared_version=declared_version, specs_path=specs_path)
+    except (OSError, ValueError, VersionOperationError) as error:
         _abort(error)
     _print_version_status(declared_version=declared_version, statuses=statuses)
 
@@ -133,14 +140,18 @@ def checkout(
     version: Annotated[str, typer.Argument(help="Declared version identifier to restore.")],
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Preview checkout without changing repositories.")] = False,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository registry containing current sync settings.")] = None,
+    password: Annotated[str | None, typer.Option("--password", "-p", help="Password for encrypted guard archives.")] = None,
 ) -> None:
     try:
         repos_root = resolve_workspace(directory=directory)
         path = repos_root.joinpath(VERSIONS_FILE_NAME)
         versions_file = load_versions_file(path=path, allow_missing=False)
         declared_version = find_declared_version(versions_file=versions_file, version=version)
-        results = checkout_declared_version(repos_root=repos_root, declared_version=declared_version, dry_run=dry_run)
-    except (ValueError, VersionOperationError) as error:
+        results = checkout_declared_version(
+            repos_root=repos_root, declared_version=declared_version, dry_run=dry_run, specs_path=specs_path, pwd=password
+        )
+    except (OSError, ValueError, VersionOperationError) as error:
         _abort(error)
     table = Table(title=f"{'Checkout preview' if dry_run else 'Checked out'} · {declared_version['version']}")
     table.add_column("Repository", style="cyan")

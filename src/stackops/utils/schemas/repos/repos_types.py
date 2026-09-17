@@ -1,4 +1,18 @@
-from typing import TypedDict
+from typing import Literal, TypedDict
+
+
+class GitRepoSync(TypedDict):
+    mode: Literal["git"]
+
+
+class GuardRepoSync(TypedDict):
+    mode: Literal["guard"]
+    cloud: str
+    remotePath: str
+    ignoreGitignore: bool
+
+
+type RepoSync = GitRepoSync | GuardRepoSync
 
 
 class GitVersionInfo(TypedDict):
@@ -18,6 +32,7 @@ class RepoRecordDict(TypedDict):
     remotes: list[RepoRemote]
     version: GitVersionInfo
     isDirty: bool
+    sync: RepoSync
 
 
 class RepoRecordFile(TypedDict):

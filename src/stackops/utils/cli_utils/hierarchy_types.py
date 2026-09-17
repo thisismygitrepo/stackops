@@ -18,7 +18,7 @@ StackOpsDevopsReposSyncCommand = TypedDict(
     {
         "command_name": Literal["sync"],
         "short_name": Literal["s"],
-        "help": Literal["📥 <s> Clone repositories described by a repos.json specification"],
+        "help": Literal["📥 <s> Clone Git repositories and sync encrypted guard repositories"],
         "subcommands": EmptySubcommands,
     },
 )

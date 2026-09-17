@@ -1,14 +1,15 @@
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TypedDict, cast
 
+from stackops.scripts.python.helpers.helpers_repos.sync_settings import validate_repo_sync
 from stackops.utils.files.read import read_json
 from stackops.utils.io import save_json
-from stackops.utils.schemas.repos.repos_types import RepoRecordDict, RepoRecordFile
+from stackops.utils.schemas.repos.repos_types import RepoRecordDict, RepoRecordFile, RepoSync
 from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT
 
 
 DEFAULT_REPOS_SPEC_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "repos.json")
-REPOS_SPEC_VERSION = "0.1"
+REPOS_SPEC_VERSION = "0.2"
 
 
 class RepoRecordMergeEntry(TypedDict):
@@ -25,19 +26,23 @@ class RepoRecordMergeReport(TypedDict):
     removed: list[RepoRecordMergeEntry]
 
 
-def resolve_repos_spec_path(specs_path: str | Path | None = None) -> Path:
+def resolve_repos_spec_path(specs_path: str | Path | None) -> Path:
     if specs_path is None:
         return DEFAULT_REPOS_SPEC_PATH
     return Path(specs_path).expanduser().absolute().resolve()
 
 
-def _validate_repos_spec(data: Any, path: Path) -> RepoRecordFile:
+def _validate_repos_spec(data: object, path: Path) -> RepoRecordFile:
     if not isinstance(data, dict):
         raise ValueError(f"Repository specification must be a JSON object: {path}")
-    if not isinstance(data.get("version"), str):
-        raise ValueError(f"Repository specification is missing string field 'version': {path}")
+    if data.get("version") != REPOS_SPEC_VERSION:
+        raise ValueError(f"""Repository specification must use format {REPOS_SPEC_VERSION}: {path}""")
     if not isinstance(data.get("repos"), list):
         raise ValueError(f"Repository specification is missing list field 'repos': {path}")
+    for record in data["repos"]:
+        if not isinstance(record, dict):
+            raise ValueError(f"""Invalid repository record: {path}""")
+        validate_repo_sync(value=record.get("sync"))
     return cast(RepoRecordFile, data)
 
 
@@ -64,6 +69,14 @@ def repo_record_path(repo_record: RepoRecordDict) -> Path:
     return parent_dir.joinpath(repo_record["name"]).absolute().resolve()
 
 
+def load_repository_syncs(specs_path: str | Path | None) -> dict[Path, RepoSync]:
+    path = resolve_repos_spec_path(specs_path=specs_path)
+    if specs_path is None and not path.exists():
+        return {}
+    spec = load_repos_spec(path=path)
+    return {repo_record_path(record): record["sync"] for record in spec["repos"]}
+
+
 def _is_relative_to(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
@@ -82,7 +95,7 @@ def _repo_merge_entry(repo_record: RepoRecordDict, changed_fields: list[str] | N
 
 
 def _changed_repo_fields(existing_repo: RepoRecordDict, scanned_repo: RepoRecordDict) -> list[str]:
-    fields = ("name", "parentDir", "currentBranch", "remotes", "version", "isDirty")
+    fields = ("name", "parentDir", "currentBranch", "remotes", "version", "isDirty", "sync")
     return [field for field in fields if existing_repo[field] != scanned_repo[field]]
 
 

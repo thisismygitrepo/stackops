@@ -7,10 +7,12 @@ from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError
 from git.remote import Remote
 from git.repo import Repo
 
+from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repository_syncs
 from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
 from stackops.scripts.python.helpers.helpers_repos.version_constants import CHECKOUT_BACKUP_REF_PREFIX, IN_PROGRESS_GIT_MARKERS
 from stackops.scripts.python.helpers.helpers_repos.version_models import DeclaredVersion, RemoteSnapshot, RepositoryCheckoutResult, RepositorySnapshot
 from stackops.scripts.python.helpers.helpers_repos.version_paths import snapshot_repository_path
+from stackops.utils.schemas.repos.repos_types import RepoSync
 
 
 @dataclass(frozen=True, slots=True)
@@ -18,6 +20,7 @@ class _CheckoutPlan:
     snapshot: RepositorySnapshot
     path: Path
     repository: Repo
+    sync: RepoSync
     needs_fetch: bool
     requires_checkout: bool
     recovery_points: tuple[tuple[str, str], ...]
@@ -50,7 +53,17 @@ def _current_remote(repository: Repo, snapshot: RemoteSnapshot, repository_path:
     return remote
 
 
-def _fetch_missing_commit(plan: _CheckoutPlan) -> None:
+def _fetch_missing_commit(plan: _CheckoutPlan, pwd: str | None) -> None:
+    if plan.sync["mode"] == "guard":
+        from stackops.scripts.python.helpers.helpers_repos.guard_transport import fetch_guard_repository
+
+        try:
+            fetch_guard_repository(repo_root=plan.path, sync=plan.sync, pwd=pwd)
+        except Exception as error:
+            raise VersionOperationError(f"Failed to fetch guard archive for {plan.path}: {error}") from error
+        if not _commit_exists(repository=plan.repository, commit=plan.snapshot["commit"]):
+            raise VersionOperationError(f"Commit {plan.snapshot['commit']} is unavailable in the guard archive for {plan.path}")
+        return
     if not plan.snapshot["remotes"]:
         raise VersionOperationError(f"Commit {plan.snapshot['commit']} is unavailable in local-only repository {plan.path}")
     for remote_snapshot in plan.snapshot["remotes"]:
@@ -83,7 +96,7 @@ def _local_branch_commit(repository: Repo, branch: str) -> str | None:
     return matching_heads[0].commit.hexsha.lower()
 
 
-def _preflight_repository(repos_root: Path, snapshot: RepositorySnapshot) -> _CheckoutPlan:
+def _preflight_repository(repos_root: Path, snapshot: RepositorySnapshot, repository_syncs: dict[Path, RepoSync]) -> _CheckoutPlan:
     path = snapshot_repository_path(repos_root=repos_root, snapshot=snapshot)
     if not path.exists():
         raise VersionOperationError(f"Repository not found: {path}")
@@ -124,6 +137,7 @@ def _preflight_repository(repos_root: Path, snapshot: RepositorySnapshot) -> _Ch
         snapshot=snapshot,
         path=path,
         repository=repository,
+        sync=repository_syncs.get(path, snapshot["sync"]),
         needs_fetch=not _commit_exists(repository=repository, commit=snapshot["commit"]),
         requires_checkout=current_branch != snapshot["branch"] or current_commit != snapshot["commit"],
         recovery_points=tuple(recovery_points),
@@ -139,17 +153,23 @@ def _checkout_repository(plan: _CheckoutPlan) -> None:
     plan.repository.git.switch("--force-create", branch, commit)
 
 
-def checkout_declared_version(repos_root: Path, declared_version: DeclaredVersion, dry_run: bool) -> list[RepositoryCheckoutResult]:
+def checkout_declared_version(
+    repos_root: Path, declared_version: DeclaredVersion, dry_run: bool, specs_path: str | Path | None, pwd: str | None
+) -> list[RepositoryCheckoutResult]:
     dirty_snapshots = [snapshot["path"] for snapshot in declared_version["repositories"] if snapshot["isDirty"]]
     if dirty_snapshots:
         raise VersionOperationError(
             f"Version {declared_version['version']!r} cannot be restored because it captured dirty repositories: {', '.join(dirty_snapshots)}"
         )
-    plans = [_preflight_repository(repos_root=repos_root, snapshot=snapshot) for snapshot in declared_version["repositories"]]
+    repository_syncs = load_repository_syncs(specs_path=specs_path)
+    plans = [
+        _preflight_repository(repos_root=repos_root, snapshot=snapshot, repository_syncs=repository_syncs)
+        for snapshot in declared_version["repositories"]
+    ]
     if not dry_run:
         for plan in plans:
             if plan.needs_fetch:
-                _fetch_missing_commit(plan=plan)
+                _fetch_missing_commit(plan=plan, pwd=pwd)
 
     operation_id = str(time.time_ns())
     backup_ref = f"{CHECKOUT_BACKUP_REF_PREFIX}/{operation_id}"

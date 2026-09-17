@@ -4,7 +4,10 @@ from typing import Annotated
 import typer
 
 
-def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(help="Path to the git repository")] = ".") -> None:
+def count_lines_in_repo(
+    repo_path: Annotated[str, typer.Argument(help="Path to the git repository")] = ".",
+    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository registry containing sync settings.")] = None,
+) -> None:
     resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
     if not resolved_repo_path.exists():
         typer.echo(f"❌ Repository path does not exist: {resolved_repo_path}", err=True)
@@ -28,7 +31,7 @@ def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(help="Path to t
     from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1
 
     try:
-        repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix())
+        repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix(), specs_path=specs_path)
     except Exception as exc:
         typer.echo(f"❌ Error counting lines in repo {resolved_repo_path}: {exc}", err=True)
         raise typer.Exit(code=1) from exc

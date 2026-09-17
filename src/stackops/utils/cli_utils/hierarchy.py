@@ -185,7 +185,7 @@ STACKOPS_DEVOPS_INSTALL_COMMAND: "StackOpsDevopsInstallCommand" = {
 STACKOPS_DEVOPS_REPOS_SYNC_COMMAND: "StackOpsDevopsReposSyncCommand" = {
     "command_name": "sync",
     "short_name": "s",
-    "help": "📥 <s> Clone repositories described by a repos.json specification",
+    "help": "📥 <s> Clone Git repositories and sync encrypted guard repositories",
     "subcommands": {},
 }
 

@@ -6,6 +6,7 @@ from typing import Literal, TypedDict
 
 import git
 
+from stackops.utils.schemas.repos.repos_types import RepoSync
 
 RepositoryUpdateStatus = Literal["success", "error", "skipped", "auth_failed"]
 
@@ -64,7 +65,7 @@ def get_file_hash(file_path: Path) -> str | None:
     return hashlib.sha256(file_path.read_bytes()).hexdigest()
 
 
-def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt: bool) -> RepositoryUpdateResult:
+def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt: bool, sync: RepoSync, pwd: str | None) -> RepositoryUpdateResult:
     """Update a single repository and return detailed information about what happened."""
     repo_path = Path(repo.working_dir)
 
@@ -110,11 +111,27 @@ def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt:
     pyproject_hash_before = get_file_hash(pyproject_path)
 
     # Get current commit hash before pull
-    result["commit_before"] = repo.head.commit.hexsha
+    result["commit_before"] = "" if sync["mode"] == "guard" and not repo.head.is_valid() else repo.head.commit.hexsha
 
     try:
-        remotes = list(repo.remotes)
-        if not remotes:
+        remotes = list(repo.remotes) if sync["mode"] == "git" else []
+        if sync["mode"] == "guard":
+            from stackops.scripts.python.helpers.helpers_repos.guard_transport import run_guard_repository
+
+            run_guard_repository(
+                repo_root=repo_path,
+                cloud=sync["cloud"],
+                remote_path=Path(sync["remotePath"]),
+                operation="pull",
+                pwd=pwd,
+                message=None,
+                on_conflict="stop-on-conflict",
+                ignore_gitignore=sync["ignoreGitignore"],
+            )
+            result["remotes_processed"].append(f"""{sync['cloud']}:{sync['remotePath']}""")
+            result["commit_after"] = repo.head.commit.hexsha if repo.head.is_valid() else ""
+            result["commits_changed"] = result["commit_before"] != result["commit_after"]
+        elif not remotes:
             result["status"] = "skipped"
             result["error_message"] = "No remotes configured for this repository"
             return result

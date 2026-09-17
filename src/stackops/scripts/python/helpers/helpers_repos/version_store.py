@@ -2,6 +2,7 @@ import json
 from pathlib import Path, PurePosixPath
 from typing import cast
 
+from stackops.scripts.python.helpers.helpers_repos.sync_settings import validate_repo_sync
 from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_SCHEMA_VERSION
 from stackops.scripts.python.helpers.helpers_repos.version_models import (
     DeclaredVersion,
@@ -75,7 +76,7 @@ def _remote(value: object, context: str) -> RemoteSnapshot:
 
 
 def _repository(value: object, context: str) -> RepositorySnapshot:
-    data = _json_object(value=value, expected_keys={"path", "branch", "commit", "isDirty", "remotes"}, context=context)
+    data = _json_object(value=value, expected_keys={"path", "branch", "commit", "isDirty", "remotes", "sync"}, context=context)
     path = _non_empty_string(value=data["path"], context=f"{context}.path")
     parsed_path = PurePosixPath(path)
     if parsed_path.is_absolute() or ".." in parsed_path.parts:
@@ -93,12 +94,19 @@ def _repository(value: object, context: str) -> RepositorySnapshot:
     remote_names = [remote["name"] for remote in remotes]
     if remote_names != sorted(set(remote_names)):
         raise VersionStoreError(f"{context}.remotes must be sorted by unique remote name")
+    try:
+        sync = validate_repo_sync(value=data["sync"])
+    except ValueError as error:
+        raise VersionStoreError(f"{context}.sync: {error}") from error
+    if sync["mode"] == "guard" and remotes:
+        raise VersionStoreError(f"{context}.remotes must be empty for a guard repository")
     return {
         "path": parsed_path.as_posix(),
         "branch": branch_value,
         "commit": _commit(value=data["commit"], context=f"{context}.commit"),
         "isDirty": dirty_value,
         "remotes": remotes,
+        "sync": sync,
     }
 
 

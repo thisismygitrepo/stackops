@@ -24,6 +24,7 @@ _MERGE_FIELD_LABELS = {
     "remotes": "remotes",
     "version": "commit/branch pin",
     "isDirty": "dirty status",
+    "sync": "sync destination",
 }
 
 
@@ -77,7 +78,9 @@ def build_tree_structure(repos: list[RepoRecordDict], repos_root: Path) -> str:
             status_indicators = []
             if repo["isDirty"]:
                 status_indicators.append("🔶 DIRTY")
-            if not repo["remotes"]:
+            if repo["sync"]["mode"] == "guard":
+                status_indicators.append(f"""🔐 GUARD ({repo['sync']['cloud']})""")
+            elif not repo["remotes"]:
                 status_indicators.append("⚠️ NO_REMOTE")
             if repo["currentBranch"] == "DETACHED":
                 status_indicators.append("🔀 DETACHED")
@@ -171,6 +174,7 @@ def record_a_repo(path: Path, search_parent_directories: bool, preferred_remote:
         "remotes": remotes,
         "version": version_info,
         "isDirty": is_dirty,
+        "sync": {"mode": "git"},
     }
     return res
 
@@ -274,9 +278,15 @@ def _resolve_directory(directory: str | None) -> Path:
     return Path(directory).expanduser().absolute().resolve()
 
 
-def main_record(repos_root_str: str | None, specs_path: str | Path | None = None) -> Path:
+def main_record(
+    repos_root_str: str | None, specs_path: str | Path | None, guard: bool | None, cloud: str | None, ignore_gitignore: bool | None
+) -> Path:
+    from stackops.scripts.python.helpers.helpers_repos.registration_sync import configure_repository_sync
+
     print("\n📝 Recording repositories...")
     repos_root = _resolve_directory(directory=repos_root_str)
+    spec_path_resolved = resolve_repos_spec_path(specs_path=specs_path)
+    existing_spec = load_or_create_repos_spec(path=spec_path_resolved)
 
     # Count total directories and repositories for accurate progress tracking
     print("🔍 Analyzing directory structure...")
@@ -295,9 +305,14 @@ def main_record(repos_root_str: str | None, specs_path: str | Path | None = None
             repos_root=str(repos_root), r=True, progress=progress, scan_task_id=scan_task, process_task_id=process_task
         )
 
+    configure_repository_sync(
+        records=repo_records, existing_records=existing_spec["repos"], guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore
+    )
+
     # Summary with warnings
     total_repos = len(repo_records)
-    repos_with_no_remotes = [repo for repo in repo_records if len(repo["remotes"]) == 0]
+    repos_with_no_remotes = [repo for repo in repo_records if repo["sync"]["mode"] == "git" and len(repo["remotes"]) == 0]
+    guard_repos = [repo for repo in repo_records if repo["sync"]["mode"] == "guard"]
     repos_with_remotes = [repo for repo in repo_records if len(repo["remotes"]) > 0]
     dirty_repos = [repo for repo in repo_records if repo["isDirty"]]
     clean_repos = [repo for repo in repo_records if not repo["isDirty"]]
@@ -305,6 +320,7 @@ def main_record(repos_root_str: str | None, specs_path: str | Path | None = None
     print("\n📊 Repository Summary:")
     print(f"   Total repositories found: {total_repos}")
     print(f"   Repositories with remotes: {len(repos_with_remotes)}")
+    print(f"""   Guard repositories: {len(guard_repos)}""")
     print(f"   Repositories without remotes: {len(repos_with_no_remotes)}")
     print(f"   Clean repositories: {len(clean_repos)}")
     print(f"   Dirty repositories: {len(dirty_repos)}")
@@ -316,7 +332,7 @@ def main_record(repos_root_str: str | None, specs_path: str | Path | None = None
             print(f"   • {repo['name']} ({repo_path})")
         print("   These repositories may be local-only or have configuration issues.")
     else:
-        print("\n✅ All repositories have remote configurations.")
+        print("\n✅ All repositories have sync destinations.")
 
     if dirty_repos:
         print(f"\n⚠️  WARNING: {len(dirty_repos)} repositories have uncommitted changes:")
@@ -332,8 +348,6 @@ def main_record(repos_root_str: str | None, specs_path: str | Path | None = None
     tree_structure = build_tree_structure(repos=repo_records, repos_root=repos_root)
     print(tree_structure)
 
-    spec_path_resolved = resolve_repos_spec_path(specs_path=specs_path)
-    existing_spec = load_or_create_repos_spec(path=spec_path_resolved)
     merged_repos, merge_summary = merge_repo_records(existing_repos=existing_spec["repos"], scanned_repos=repo_records, scanned_root=repos_root)
     res: RepoRecordFile = {"version": existing_spec["version"], "repos": merged_repos}
     save_repos_spec(spec=res, path=spec_path_resolved)

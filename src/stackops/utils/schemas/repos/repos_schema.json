@@ -7,6 +7,7 @@
   "properties": {
     "version": {
       "type": "string",
+      "const": "0.2",
       "description": "Version of the repository records format"
     },
     "repos": {
@@ -20,6 +21,27 @@
   "required": ["version", "repos"],
   "additionalProperties": false,
   "$defs": {
+    "RepoSync": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {"mode": {"const": "git"}},
+          "required": ["mode"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {"const": "guard"},
+            "cloud": {"type": "string", "minLength": 1},
+            "remotePath": {"type": "string", "minLength": 1},
+            "ignoreGitignore": {"type": "boolean"}
+          },
+          "required": ["mode", "cloud", "remotePath", "ignoreGitignore"],
+          "additionalProperties": false
+        }
+      ]
+    },
     "GitVersionInfo": {
       "type": "object",
       "description": "Git version information containing branch and commit details",
@@ -60,11 +82,11 @@
           "type": "string",
           "description": "Name of the repository"
         },
-        "parent_dir": {
+        "parentDir": {
           "type": "string",
           "description": "Parent directory path where the repository is located"
         },
-        "current_branch": {
+        "currentBranch": {
           "type": "string",
           "description": "Currently checked out branch name"
         },
@@ -78,9 +100,15 @@
         "version": {
           "$ref": "#/$defs/GitVersionInfo",
           "description": "Current git version information"
+        },
+        "isDirty": {
+          "type": "boolean"
+        },
+        "sync": {
+          "$ref": "#/$defs/RepoSync"
         }
       },
-      "required": ["name", "parent_dir", "current_branch", "remotes", "version"],
+      "required": ["name", "parentDir", "currentBranch", "remotes", "version", "isDirty", "sync"],
       "additionalProperties": false
     }
   }

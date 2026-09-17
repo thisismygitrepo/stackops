@@ -71,6 +71,14 @@ def integrate_remote_repository(
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import MergeConflictResult, MergeGitError, merge_remote_copy
 
     repo_local_root = Path(local_repo.working_dir)
+    with Repo(repo_remote_root) as remote_repo:
+        if not remote_repo.head.is_valid():
+            return
+    if not local_repo.head.is_valid():
+        validate_integration_transport(repo_local_root=repo_local_root, integration_root=repo_remote_root, cloud=cloud)
+        local_repo.git.fetch("--no-recurse-submodules", str(repo_remote_root), "HEAD")
+        local_repo.git.merge("FETCH_HEAD", no_edit=True)
+        return
     integration_worktree = create_integration_worktree(repo=local_repo, worktree_root=integration_root)
     integration_repo = Repo(integration_worktree.root)
     merge_result = merge_remote_copy(repo=integration_repo, remote_path=repo_remote_root, console=console)

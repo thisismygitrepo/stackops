@@ -26,8 +26,10 @@ def _resolve_spec_path(specs_path: str | Path | None) -> Path:
     return resolved_spec_path
 
 
-def _prompt_capture_options(directory: str | None, specs_path: str | None) -> tuple[str, str]:
-    from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_text, confirm_summary
+def _prompt_capture_options(
+    directory: str | None, specs_path: str | None, guard: bool | None, cloud: str | None, ignore_gitignore: bool | None
+) -> tuple[str, str, bool | None, str | None, bool | None]:
+    from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
 
     from stackops.scripts.python.helpers.helpers_repos.spec_store import DEFAULT_REPOS_SPEC_PATH
 
@@ -45,8 +47,16 @@ def _prompt_capture_options(directory: str | None, specs_path: str | None) -> tu
     )
     assert prompted_directory is not None
     assert prompted_specs_path is not None
-    confirm_summary("Repository Register Review", [f"directory: {prompted_directory}", f"specs_path: {prompted_specs_path}"])
-    return prompted_directory, prompted_specs_path
+    mode = ask_choice(
+        "Sync destination", help_text="Keep saved settings, use Git hosts, or use encrypted guard storage.",
+        choices=("keep", "git", "guard"), default="keep" if guard is None else "guard" if guard else "git",
+    )
+    guard = None if mode == "keep" else mode == "guard"
+    if guard:
+        cloud = ask_text("Cloud profile", help_text="Rclone storage profile. Leave empty to use the saved or default profile.", default=cloud, allow_empty=True)
+        ignore_gitignore = ask_bool("Include ignored files", help_text="Include files excluded by Git ignore rules in the encrypted archive.", default=ignore_gitignore is True)
+    confirm_summary("Repository Register Review", [f"directory: {prompted_directory}", f"specs_path: {prompted_specs_path}", f"sync: {mode}", f"cloud: {cloud or 'saved/default'}"])
+    return prompted_directory, prompted_specs_path, guard, cloud, ignore_gitignore
 
 
 def action(
@@ -60,6 +70,8 @@ def action(
     push: Annotated[bool, typer.Option("--push", "-p", help="🚀 Push changes across repositories.")] = False,
     message: Annotated[str | None, typer.Option("--message", "-m", help="Commit message. Required with --commit.")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Preview mutating actions without changing repositories.")] = False,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository specification containing sync destinations.")] = None,
+    pwd: Annotated[str | None, typer.Option("--password", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """🔄 Run Git actions or a shell command across repositories."""
     git_action_selected = status or pull or commit or push
@@ -93,6 +105,7 @@ def action(
 
     repos_root = _resolve_directory(directory)
     from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations, render_repository_command_script
+    from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repository_syncs
 
     if command is not None:
         script = render_repository_command_script(repos_root=repos_root, recursive=recursive, command=command)
@@ -114,6 +127,8 @@ def action(
         auto_uv_sync=auto_uv_sync,
         commit_message=message.strip() if message is not None else None,
         dry_run=dry_run,
+        syncs=load_repository_syncs(specs_path=specs_path),
+        pwd=pwd,
     )
     if summary.git_repos_found == 0 or summary.failed_operations:
         raise typer.Exit(code=1)
@@ -123,13 +138,26 @@ def capture(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
+    guard: Annotated[bool | None, typer.Option("--guard/--git", help="Use encrypted storage or Git hosts for all repos in this scan; otherwise keep saved settings.")] = None,
+    cloud: Annotated[str | None, typer.Option("--cloud", "-C", help="Rclone storage profile for --guard; otherwise use saved/default profile.")] = None,
+    ignore_gitignore: Annotated[bool | None, typer.Option("--ignore-gitignore/--respect-gitignore", help="Set whether guard archives include Git-ignored files.")] = None,
 ) -> None:
     """📝 Record repositories into a repos.json specification."""
     from stackops.scripts.python.helpers.helpers_repos.record import main_record as record_repos
 
     if interactive:
-        directory, specs_path = _prompt_capture_options(directory=directory, specs_path=specs_path)
-    save_path = record_repos(repos_root_str=directory, specs_path=specs_path)
+        directory, specs_path, guard, cloud, ignore_gitignore = _prompt_capture_options(
+            directory=directory, specs_path=specs_path, guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore
+        )
+    if guard is not True and (cloud is not None or ignore_gitignore is not None):
+        raise typer.BadParameter("--cloud and archive inclusion options require --guard.")
+    if cloud is not None and not cloud.strip():
+        raise typer.BadParameter("--cloud must not be empty.")
+    try:
+        save_path = record_repos(repos_root_str=directory, specs_path=specs_path, guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore)
+    except (ValueError, OSError) as error:
+        typer.echo(f"""❌ {error}""", err=True)
+        raise typer.Exit(code=1) from error
     print(f"\n✅ Saved repository specification to {save_path}")
 
 
@@ -141,8 +169,9 @@ def clone(
     checkout_to_branch: Annotated[
         bool, typer.Option("--checkout-to-branch", "-b", help="Check out the branch recorded in the specification.")
     ] = False,
+    pwd: Annotated[str | None, typer.Option("--password", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
-    """📥 Clone repositories described by a repos.json specification."""
+    """📥 Clone Git repositories and sync guard repositories from a specification."""
     if checkout_to_commit and checkout_to_branch:
         typer.echo("❌ Choose only one checkout mode: --checkout-to-commit or --checkout-to-branch.")
         raise typer.Exit(code=1)
@@ -153,7 +182,8 @@ def clone(
     from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
 
     results = clone_repos(
-        spec_path=spec_path_self_managed, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag
+        spec_path=spec_path_self_managed, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag,
+        pwd=pwd,
     )
     if any(status == "failed" for status, _message in results):
         raise typer.Exit(code=1)
@@ -161,16 +191,18 @@ def clone(
 
 def checkout_command(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
+    pwd: Annotated[str | None, typer.Option("--password", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """🔀 Check out specific commits listed in the specification."""
-    clone(specs_path=specs_path, checkout_to_commit=True, checkout_to_branch=False)
+    clone(specs_path=specs_path, checkout_to_commit=True, checkout_to_branch=False, pwd=pwd)
 
 
 def checkout_to_branch_command(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
+    pwd: Annotated[str | None, typer.Option("--password", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """🔀 Check out the branch recorded in the specification."""
-    clone(specs_path=specs_path, checkout_to_commit=False, checkout_to_branch=True)
+    clone(specs_path=specs_path, checkout_to_commit=False, checkout_to_branch=True, pwd=pwd)
 
 
 def get_app() -> typer.Typer:
@@ -180,8 +212,8 @@ def get_app() -> typer.Typer:
 
     repos_apps = typer.Typer(help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False)
 
-    repos_apps.command(name="sync", help="📥 <s> Clone repositories described by a repos.json specification")(clone)
-    repos_apps.command(name="s", help="Clone repositories described by a repos.json specification", hidden=True)(clone)
+    repos_apps.command(name="sync", help="📥 <s> Clone Git repositories and sync encrypted guard repositories")(clone)
+    repos_apps.command(name="s", help="Clone Git repositories and sync encrypted guard repositories", hidden=True)(clone)
 
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)

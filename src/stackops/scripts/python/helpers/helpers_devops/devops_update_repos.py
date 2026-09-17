@@ -10,17 +10,20 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_repos.update import RepositoryUpdateResult, run_uv_sync, update_repository
+from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repository_syncs
+from stackops.utils.schemas.repos.repos_types import RepoSync
 
 
 console = Console()
 
 
-def _process_single_repo(expanded_path: Path, allow_password_prompt: bool) -> tuple[RepositoryUpdateResult, Path | None]:
+def _process_single_repo(expanded_path: Path, allow_password_prompt: bool, syncs: dict[Path, RepoSync]) -> tuple[RepositoryUpdateResult, Path | None]:
     """Process a single repository and return the result."""
     try:
         repo = git.Repo(str(expanded_path), search_parent_directories=True)
         # Update repository and get detailed results
-        result = update_repository(repo, allow_password_prompt=allow_password_prompt, auto_uv_sync=True)
+        sync = syncs.get(Path(repo.working_dir).resolve(), {"mode": "git"})
+        result = update_repository(repo, allow_password_prompt=allow_password_prompt, auto_uv_sync=True, sync=sync, pwd=None)
         
         # Keep track of repos with dependency changes for additional uv sync
         repo_path = None
@@ -204,13 +207,14 @@ def update_repos(repos: list[Path], allow_password_prompt: bool) -> None:
         console.print(Panel("No repositories configured for bulk update.", border_style="yellow", padding=(1, 2)))
         return
 
+    syncs = load_repository_syncs(specs_path=None)
     # Process repositories in parallel
     results: list[RepositoryUpdateResult] = []
     repos_with_changes = []
     with ThreadPoolExecutor(max_workers=min(len(repos), 8)) as executor:
         # Submit all tasks
         future_to_repo = {
-            executor.submit(_process_single_repo, expanded_path, allow_password_prompt): expanded_path 
+            executor.submit(_process_single_repo, expanded_path, allow_password_prompt, syncs): expanded_path 
             for expanded_path in repos
         }
         

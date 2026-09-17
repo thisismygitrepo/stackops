@@ -7,6 +7,7 @@ from git.repo import Repo
 
 from stackops.scripts.python.helpers.helpers_repos.action_helper import GitAction, GitOperationResult
 from stackops.scripts.python.helpers.helpers_repos.update import update_repository
+from stackops.utils.schemas.repos.repos_types import RepoSync
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,20 +31,25 @@ def _result(context: OperationContext, *, success: bool, message: str, is_git_re
     )
 
 
-def _status(repo: Repo, context: OperationContext) -> GitOperationResult:
+def _status(repo: Repo, context: OperationContext, sync: RepoSync) -> GitOperationResult:
     status_output = cast(str, repo.git.status("--short", "--branch")).strip()
+    if sync["mode"] == "guard":
+        status_output = f"""Guard: encrypted storage {sync['cloud']}:{sync['remotePath']}\n{status_output}"""
     return _result(context, success=True, message=status_output, is_git_repo=True, had_changes=repo.is_dirty(untracked_files=True))
 
 
-def _pull(repo: Repo, context: OperationContext, auto_uv_sync: bool) -> GitOperationResult:
+def _pull(repo: Repo, context: OperationContext, auto_uv_sync: bool, sync: RepoSync, pwd: str | None) -> GitOperationResult:
     if context.dry_run:
-        if not repo.remotes:
-            return _result(context, success=False, message="No remotes configured", is_git_repo=True, had_changes=False)
-        remote_names = ", ".join(remote.name for remote in repo.remotes)
-        detail = f"Would pull {repo.active_branch.name} from: {remote_names}"
+        if sync["mode"] == "guard":
+            detail = f"""Would pull from encrypted storage {sync['cloud']}:{sync['remotePath']}"""
+        else:
+            if not repo.remotes:
+                return _result(context, success=False, message="No remotes configured", is_git_repo=True, had_changes=False)
+            remote_names = ", ".join(remote.name for remote in repo.remotes)
+            detail = f"Would pull {repo.active_branch.name} from: {remote_names}"
         return _result(context, success=True, message=detail, is_git_repo=True, had_changes=False)
 
-    update = update_repository(repo, auto_uv_sync=auto_uv_sync, allow_password_prompt=False)
+    update = update_repository(repo, auto_uv_sync=auto_uv_sync, allow_password_prompt=False, sync=sync, pwd=pwd)
     if update["status"] != "success":
         detail = update["error_message"] or f"Pull finished with status: {update['status']}"
         return _result(context, success=False, message=detail, is_git_repo=True, had_changes=False)
@@ -72,7 +78,24 @@ def _commit(repo: Repo, context: OperationContext, message: str | None) -> GitOp
     return _result(context, success=True, message=detail, is_git_repo=True, had_changes=True)
 
 
-def _push(repo: Repo, context: OperationContext) -> GitOperationResult:
+def _push(repo: Repo, context: OperationContext, sync: RepoSync, pwd: str | None) -> GitOperationResult:
+    if sync["mode"] == "guard":
+        destination = f"""{sync['cloud']}:{sync['remotePath']}"""
+        if context.dry_run:
+            return _result(context, success=True, message=f"""Would push to encrypted storage {destination}""", is_git_repo=True, had_changes=False)
+        from stackops.scripts.python.helpers.helpers_repos.guard_transport import run_guard_repository
+
+        run_guard_repository(
+            repo_root=context.repo_path,
+            cloud=sync["cloud"],
+            remote_path=Path(sync["remotePath"]),
+            operation="push",
+            pwd=pwd,
+            message=None,
+            on_conflict="stop-on-conflict",
+            ignore_gitignore=sync["ignoreGitignore"],
+        )
+        return _result(context, success=True, message=f"""Pushed to encrypted storage {destination}""", is_git_repo=True, had_changes=False)
     if not repo.remotes:
         return _result(context, success=False, message="No remotes configured", is_git_repo=True, had_changes=False)
     branch_name = repo.active_branch.name
@@ -96,24 +119,24 @@ def _push(repo: Repo, context: OperationContext) -> GitOperationResult:
     return _result(context, success=True, message=detail, is_git_repo=True, had_changes=False)
 
 
-def git_action(path: Path, action: GitAction, message: str | None, auto_uv_sync: bool, dry_run: bool) -> GitOperationResult:
+def git_action(path: Path, action: GitAction, message: str | None, auto_uv_sync: bool, dry_run: bool, sync: RepoSync, pwd: str | None) -> GitOperationResult:
     context = OperationContext(repo_path=path, action=action, remote_count=0, dry_run=dry_run)
     try:
         repo = Repo(path, search_parent_directories=False)
     except InvalidGitRepositoryError:
         return _result(context, success=False, message="Not a git repository", is_git_repo=False, had_changes=False)
 
-    context = OperationContext(repo_path=path, action=action, remote_count=len(repo.remotes), dry_run=dry_run)
+    context = OperationContext(repo_path=path, action=action, remote_count=1 if sync["mode"] == "guard" else len(repo.remotes), dry_run=dry_run)
     try:
         match action:
             case GitAction.status:
-                return _status(repo=repo, context=context)
+                return _status(repo=repo, context=context, sync=sync)
             case GitAction.pull:
-                return _pull(repo=repo, context=context, auto_uv_sync=auto_uv_sync)
+                return _pull(repo=repo, context=context, auto_uv_sync=auto_uv_sync, sync=sync, pwd=pwd)
             case GitAction.commit:
                 return _commit(repo=repo, context=context, message=message)
             case GitAction.push:
-                return _push(repo=repo, context=context)
+                return _push(repo=repo, context=context, sync=sync, pwd=pwd)
         assert_never(action)
     except Exception as error:
         return _result(context, success=False, message=str(error), is_git_repo=True, had_changes=False)
