@@ -160,6 +160,8 @@ def zip_path(
             if not content and not any(source_resolved.iterdir()):
                 archive.writestr(f"{archive_root.as_posix().rstrip('/')}/", "")
             for member in _iter_archive_members(source_resolved, included_relative_paths=included_relative_paths):
+                if member.is_socket():
+                    continue
                 relative_member = member.relative_to(source_resolved)
                 archive_name = relative_member if content else archive_root / relative_member
                 if member.is_dir():
