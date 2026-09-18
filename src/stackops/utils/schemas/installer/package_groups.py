@@ -2,6 +2,7 @@
 from typing import TypeAlias, Literal
 GUI = [
     "brave",
+    "chatgpt",
     "code",
     # "zoomit",
     "wezterm",
@@ -17,7 +18,6 @@ AGENTS = [
     "antigravity",
     "crush",
     "opencode-ai",
-    "chatgpt",
     "deer-flow",
     "forge",
     "headroom",
