@@ -3,6 +3,7 @@ from pathlib import Path
 import platform
 import shlex
 import shutil
+import subprocess
 from typing import TYPE_CHECKING, Literal
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionAction
@@ -100,6 +101,12 @@ def overwrite_local_with_remote(repo_local_root: Path, repo_remote_root: Path) -
     remote_path = str(repo_remote_root)
     home_path = str(Path.home())
     if platform.system() == "Windows":
+        gpg_home = subprocess.run(
+            ["gpgconf", "--list-dirs", "homedir"], check=True, capture_output=True, text=True
+        ).stdout.strip()
+        gpg_keybox_path = Path(gpg_home).joinpath("public-keys.d", "pubring.db")
+        if gpg_keybox_path.resolve().is_relative_to(repo_local_root.resolve()):
+            subprocess.run(["gpgconf", "--homedir", gpg_home, "--kill", "all"], check=True)
         home_path_quoted = "'" + home_path.replace("'", "''") + "'"
         local_path_quoted = "'" + local_path.replace("'", "''") + "'"
         remote_path_quoted = "'" + remote_path.replace("'", "''") + "'"
