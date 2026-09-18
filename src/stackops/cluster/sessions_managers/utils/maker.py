@@ -6,7 +6,7 @@ from typing import Final, Literal
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
 
-PYTHON_PROCESS_LAUNCHERS: Final[frozenset[str]] = frozenset({"uv", "python", "python3", "fire", "b", "bi", "bo", "bp"})
+PYTHON_PROCESS_LAUNCHERS: Final[frozenset[str]] = frozenset({"uv", "python", "python3", "fire", "f", "b", "bi", "bo", "bp"})
 WRAP_STACKOPS_PYTHON_SUBCOMMANDS: Final[frozenset[str]] = frozenset({"fire", "uv"})
 
 
@@ -35,11 +35,11 @@ def _prepend_random_stagger(command: str, max_stagger: float | None) -> str:
     system = platform.system().lower()
     if system == "windows":
         sleep_milliseconds = round(random_time * 1000)
-        ps_script = f"Start-Sleep -Milliseconds {sleep_milliseconds}\n{command}"
+        ps_script = f"$env:UV_NO_SYNC = '1'\nStart-Sleep -Milliseconds {sleep_milliseconds}\n{command}"
         encoded_script = base64.b64encode(ps_script.encode("utf-16-le")).decode("ascii")
         return f"powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {encoded_script}"
     if system == "linux" or system == "darwin":
-        shell_script = f"sleep {random_time:.6f}; {command}"
+        shell_script = f"export UV_NO_SYNC=1; sleep {random_time:.6f}; {command}"
         return f"bash -lc {shlex.quote(shell_script)}"
     raise ValueError(f"Unsupported platform: {platform.system()}")
 
@@ -53,7 +53,8 @@ def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bo
         py_script =  lambda_to_python_script(lambda: func(),
                                              in_global=True, import_module=import_module)
     from stackops.utils.code import get_uv_command_executing_python_script
-    command_to_run, py_script_path = get_uv_command_executing_python_script(python_script=py_script, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)
+    no_sync_uv_run_flags = "--no-sync" if uv_run_flags == "" else f"--no-sync {uv_run_flags}"
+    command_to_run, py_script_path = get_uv_command_executing_python_script(python_script=py_script, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=no_sync_uv_run_flags)
     tab_config: TabConfig = {
         "command": command_to_run,
         "startDir": start_dir,
