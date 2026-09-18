@@ -50,10 +50,11 @@ def main(
     ] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository specification containing saved guard settings.")] = None,
 ) -> str | None:
-    from git.exc import NoSuchPathError
+    from git.exc import InvalidGitRepositoryError, NoSuchPathError
     from git.repo import Repo
     from rich.console import Console
     from rich.panel import Panel
+    from rich.text import Text
 
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import get_repo_remote_archive_path
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import resolve_conflict_action
@@ -73,15 +74,23 @@ def main(
 
     console = Console()
     requested_repo_root = Path(os.path.abspath(Path.cwd() if repo == "." else Path(repo).expanduser()))
+    step = "Opening the local Git repository"
     try:
         try:
             with Repo(requested_repo_root, search_parent_directories=requested_repo_root == Path.cwd()) as local_repo:
                 repo_root = Path(local_repo.working_dir)
+        except InvalidGitRepositoryError as error:
+            raise InvalidGitRepositoryError(
+                f"""Git does not recognize {requested_repo_root} as a repository. """
+                """Check the repository path and whether its .git metadata is missing or invalid."""
+            ) from error
         except NoSuchPathError:
             if os.path.lexists(requested_repo_root):
                 raise
             repo_root = requested_repo_root
+        step = "Loading repository settings"
         sync = load_repository_syncs(specs_path=specs_path).get(repo_root.resolve())
+        step = "Resolving cloud storage"
         if cloud is not None:
             cloud_resolved = cloud
         elif sync is not None and sync["mode"] == "guard":
@@ -92,6 +101,7 @@ def main(
             except DefaultRcloneRemoteConfigError as exc:
                 raise ValueError(f"""{exc}. Use devops repos guard REPO --cloud REMOTE.""") from exc
             console.print(Panel(f"Using default cloud `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}", title="Default Cloud"))
+        step = "Resolving the remote archive path"
         if sync is not None and sync["mode"] == "guard":
             remote_path = Path(sync["remotePath"])
             include_ignored = sync["ignoreGitignore"] if ignore_gitignore is None else ignore_gitignore
@@ -99,6 +109,7 @@ def main(
             repo_root.resolve().relative_to(Path.home().resolve())
             remote_path = get_repo_remote_archive_path(repo_root=repo_root)
             include_ignored = ignore_gitignore is True
+        step = f"""Running repository operation: {operation}"""
         result = run_guard_repository(
             repo_root=repo_root,
             cloud=cloud_resolved,
@@ -114,7 +125,12 @@ def main(
     except typer.Exit:
         raise
     except Exception as error:
-        console.print(Panel(f"❌ {error}", title="Guard Failed", border_style="red"))
+        details = Text(f"""❌ {step}
+Repository: {requested_repo_root}
+Mode: {mode}
+
+{type(error).__name__}: {error}""")
+        console.print(Panel(details, title="Guard Failed", border_style="red"))
         raise typer.Exit(code=1) from error
     console.print(Panel(f"✅ Guard repository {result}: {repo_root}", title="Repo Guard", border_style="green"))
     return result
