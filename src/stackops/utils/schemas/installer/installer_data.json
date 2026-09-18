@@ -997,24 +997,32 @@
     },
     {
       "appName": "chatgpt",
-      "license": "MIT",
-      "repoURL": "https://github.com/j178/chatgpt",
-      "lastCommitDate": "2025-07-08T03:14:05Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
-      "doc": "🤖 chagpt cli",
+      "license": "Proprietary",
+      "repoURL": "CMD",
+      "doc": "Official OpenAI ChatGPT desktop app with Chat and Work.",
       "categoryLabels": [
         "ai-agents-assistants"
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "chatgpt_Linux_x86_64.tar.gz",
-          "darwin": "chatgpt_Darwin_x86_64.tar.gz",
-          "windows": "chatgpt_Windows_x86_64.zip"
+          "linux": {
+            "apk": null,
+            "apt": "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb",
+            "dnf": "https://persistent.oaistatic.com/codex-app-prod/linux/rpm/latest/chatgpt.x86_64.rpm",
+            "pacman": "chatgpt_installer=\"$(mktemp)\" && curl --proto '=https' --tlsv1.2 -fsSL https://persistent.oaistatic.com/codex-app-prod/linux/install-arch.sh -o \"$chatgpt_installer\" && sudo bash \"$chatgpt_installer\" && rm \"$chatgpt_installer\""
+          },
+          "darwin": null,
+          "windows": "winget install --no-upgrade --exact --id 9PLM9XGG6VKS --source msstore --accept-package-agreements --accept-source-agreements"
         },
         "arm64": {
-          "linux": "chatgpt_Linux_arm64.tar.gz",
-          "darwin": "chatgpt_Darwin_arm64.tar.gz",
-          "windows": "chatgpt_Windows_arm64.zip"
+          "linux": {
+            "apk": null,
+            "apt": "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_arm64.deb",
+            "dnf": "https://persistent.oaistatic.com/codex-app-prod/linux/rpm/latest/chatgpt.aarch64.rpm",
+            "pacman": "chatgpt_installer=\"$(mktemp)\" && curl --proto '=https' --tlsv1.2 -fsSL https://persistent.oaistatic.com/codex-app-prod/linux/install-arch.sh -o \"$chatgpt_installer\" && sudo bash \"$chatgpt_installer\" && rm \"$chatgpt_installer\""
+          },
+          "darwin": "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg",
+          "windows": "winget install --no-upgrade --exact --id 9PLM9XGG6VKS --source msstore --accept-package-agreements --accept-source-agreements"
         }
       }
     },
