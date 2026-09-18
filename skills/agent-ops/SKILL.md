@@ -23,7 +23,7 @@ Coordinate external agents through the latest `herdr` CLI. Only the latest relea
 
 ## References
 
-Before acting, read [Herdr mechanics](references/herdr.md) and the command reference:
+Before acting, run `herdr --skill`, read its full output, then read [Herdr for Agent-Ops](references/herdr.md) and the command reference:
 
 - `handover`: [references/handover.md](references/handover.md)
 - `iter`: [references/iter.md](references/iter.md)
