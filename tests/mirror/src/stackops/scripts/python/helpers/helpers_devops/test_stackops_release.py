@@ -43,8 +43,8 @@ def mock_uv(monkeypatch: pytest.MonkeyPatch, failure: str | None) -> list[list[s
 
 
 def test_bump_refreshes_stale_tracked_references_and_preserves_unmanaged_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    source = b"""STACKOPS_VERSION: str = '26.9.1'\r\nrequirements = ["stackops>=26.9.2", "stackops[plot,dev]>=26.8"]\r\n"""
-    untouched = b'values = ["my-stackops>=26.9.2", "stackops>=26.9.2a1", "stackops>=26.9.2.post1"]\n'
+    source = b"""STACKOPS_VERSION: str = '26.9.1'\r\nrequirements = ["stackops>=26.9.3", "stackops[plot,dev]>=26.8"]\r\n"""
+    untouched = b'values = ["my-stackops>=26.9.3", "stackops>=26.9.3a1", "stackops>=26.9.3.post1"]\n'
     repository = initialize_repository(
         repo_root=tmp_path,
         files={
