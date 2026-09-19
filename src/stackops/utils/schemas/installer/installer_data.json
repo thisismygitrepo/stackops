@@ -5421,6 +5421,37 @@
       }
     },
     {
+      "appName": "minimax-code",
+      "license": "MIT License",
+      "repoURL": "https://github.com/MiniMax-AI/minimax-code",
+      "doc": "Terminal coding agent powered by MiniMax.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": null,
+            "apt": "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash",
+            "dnf": "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash",
+            "pacman": "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash"
+          },
+          "windows": "powershell -c \"irm https://filecdn.minimax.chat/public/install.ps1 | iex\"",
+          "darwin": "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash"
+        },
+        "arm64": {
+          "linux": {
+            "apk": null,
+            "apt": "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash",
+            "dnf": "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash",
+            "pacman": "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash"
+          },
+          "windows": "powershell -c \"irm https://filecdn.minimax.chat/public/install.ps1 | iex\"",
+          "darwin": "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash"
+        }
+      }
+    },
+    {
       "appName": "crush",
       "license": "FSL-1.1-MIT",
       "repoURL": "CMD",
@@ -7601,6 +7632,27 @@
           "linux": "DBX_{version}_arm64.AppImage",
           "windows": "DBX_{version}_arm64-portable.zip",
           "darwin": "DBX_{version}_arm64.dmg"
+        }
+      }
+    },
+    {
+      "appName": "deepseek-harness",
+      "license": "MIT License",
+      "repoURL": "https://github.com/deepseek-ai/deepseek-harness",
+      "doc": "Plugin-based agent harness by DeepSeek.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "npm install -g @deepseek-ai/dsh",
+          "darwin": "npm install -g @deepseek-ai/dsh",
+          "windows": "npm install -g @deepseek-ai/dsh"
+        },
+        "arm64": {
+          "linux": "npm install -g @deepseek-ai/dsh",
+          "darwin": "npm install -g @deepseek-ai/dsh",
+          "windows": "npm install -g @deepseek-ai/dsh"
         }
       }
     }

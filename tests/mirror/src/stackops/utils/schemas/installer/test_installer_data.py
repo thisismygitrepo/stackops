@@ -55,6 +55,65 @@ def test_browser_use_catalog_uses_upstream_uv_tool_contract() -> None:
     assert resolved_update_command == f"{expected_command} --upgrade"
 
 
+def test_minimax_code_catalog_uses_official_scripts_and_mcode_executable() -> None:
+    matching_installers = [
+        installer
+        for installer in installer_runner.get_installers(os="darwin", arch="arm64", which_cats=None)
+        if installer["appName"] == "minimax-code"
+    ]
+    assert len(matching_installers) == 1
+    minimax_code_installer = matching_installers[0]
+    expected_unix_command = "curl -fsSL https://filecdn.minimax.chat/public/install.sh | bash"
+    expected_windows_command = "powershell -c \"irm https://filecdn.minimax.chat/public/install.ps1 | iex\""
+    expected_linux_pattern = {
+        "apk": None,
+        "apt": expected_unix_command,
+        "dnf": expected_unix_command,
+        "pacman": expected_unix_command,
+    }
+
+    assert minimax_code_installer["license"] == "MIT License"
+    assert minimax_code_installer["repoURL"] == "https://github.com/MiniMax-AI/minimax-code"
+    assert minimax_code_installer["categoryLabels"] == ["ai-agents-assistants"]
+    assert minimax_code_installer["fileNamePattern"]["amd64"]["linux"] == expected_linux_pattern
+    assert minimax_code_installer["fileNamePattern"]["amd64"]["darwin"] == expected_unix_command
+    assert minimax_code_installer["fileNamePattern"]["amd64"]["windows"] == expected_windows_command
+    assert minimax_code_installer["fileNamePattern"]["arm64"] == minimax_code_installer["fileNamePattern"]["amd64"]
+    assert Installer(installer_data=minimax_code_installer).get_exe_name() == "mcode"
+
+
+def test_deepseek_harness_catalog_uses_published_npm_cli() -> None:
+    matching_installers = [
+        installer
+        for installer in installer_runner.get_installers(os="darwin", arch="arm64", which_cats=None)
+        if installer["appName"] == "deepseek-harness"
+    ]
+    assert len(matching_installers) == 1
+    deepseek_harness_installer = matching_installers[0]
+    expected_command = "npm install -g @deepseek-ai/dsh"
+    operating_systems: tuple[OPERATING_SYSTEMS, ...] = ("windows", "linux", "darwin")
+    architectures: tuple[CPU_ARCHITECTURES, ...] = ("amd64", "arm64")
+
+    assert deepseek_harness_installer["license"] == "MIT License"
+    assert deepseek_harness_installer["repoURL"] == "https://github.com/deepseek-ai/deepseek-harness"
+    assert deepseek_harness_installer["categoryLabels"] == ["ai-agents-assistants"]
+    agent_installers = installer_runner.get_installers(os="darwin", arch="arm64", which_cats=["agents"])
+    assert any(installer["appName"] == "deepseek-harness" for installer in agent_installers)
+    resolved_patterns = {
+        install_request_logic.resolve_installer_pattern(
+            installer_data=deepseek_harness_installer, operating_system=operating_system, architecture=architecture
+        )
+        for operating_system in operating_systems
+        for architecture in architectures
+    }
+    assert resolved_patterns == {expected_command}
+    install_target = install_request_logic.build_install_target(
+        repo_url=deepseek_harness_installer["repoURL"], installer_value=expected_command
+    )
+    assert install_target.installer_kind == "package_manager"
+    assert Installer(installer_data=deepseek_harness_installer).get_exe_name() == "dsh"
+
+
 @pytest.fixture(scope="module")
 def rustdesk_installer_data() -> InstallerData:
     matching_installers = [

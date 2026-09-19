@@ -16,6 +16,8 @@ AGENTS = [
     "aichat",
     "copilot",
     "antigravity",
+    "minimax-code",
+    "deepseek-harness",
     "crush",
     "opencode-ai",
     "deer-flow",
