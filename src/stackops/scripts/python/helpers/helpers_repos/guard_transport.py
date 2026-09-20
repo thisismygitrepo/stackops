@@ -56,9 +56,9 @@ def run_guard_repository(
         if local_repo is not None:
             if os.name == "nt":
                 local_repo.git.config("--local", "core.filemode", "false")
-            if operation in {"sync", "overwrite-remote"}:
+            if operation == "overwrite-remote":
                 commit_local_changes(repo=local_repo, message=message if message is not None and message.strip() else "sync", console=console)
-            elif operation != "overwrite-local" and local_repo.is_dirty(untracked_files=True):
+            elif operation in {"pull", "push"} and local_repo.is_dirty(untracked_files=True):
                 raise RuntimeError("Commit or stash local changes before pulling or pushing a guard repository.")
 
         if operation == "overwrite-remote":
@@ -76,6 +76,8 @@ def run_guard_repository(
             delete_path(remote_root.parent, verbose=False)
             if local_repo is None or operation not in {"sync", "push"}:
                 raise FileNotFoundError(f"No remote archive exists at {cloud}:{remote_path.as_posix()}") from error
+            if operation == "sync":
+                commit_local_changes(repo=local_repo, message=message if message is not None and message.strip() else "sync", console=console)
             upload_repo_archive(repo_root=repo_root, cloud=cloud, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore)
             return "created"
 
@@ -84,6 +86,8 @@ def run_guard_repository(
             validate_integration_transport(repo_local_root=repo_root, integration_root=remote_root, cloud=cloud)
             restore_local_repository(repo_local_root=repo_root, repo_remote_root=remote_root)
             return "restored"
+        if operation == "sync":
+            commit_local_changes(repo=local_repo, message=message if message is not None and message.strip() else "sync", console=console)
         if operation == "push":
             with Repo(remote_root) as remote_repo:
                 remote_has_commit = remote_repo.head.is_valid()

@@ -32,7 +32,12 @@ def fast_forward_local_repo(local_repo: "Repo", integration_repo: "Repo", expect
     if current_local_head != expected_local_head:
         raise RuntimeError(f"Local HEAD changed during repository integration: expected {expected_local_head}, found {current_local_head}.")
     if local_repo.is_dirty(untracked_files=True):
-        raise RuntimeError("Local repository changed during repository integration.")
+        raise RuntimeError(
+            f"""Local repository has uncommitted changes; the resolved merge was not applied.
+{local_repo.git.status("--short")}
+
+Resolved merge remains at {integration_repo.working_dir}."""
+        )
     if integration_repo.is_dirty(untracked_files=True):
         raise RuntimeError("Integration worktree must be clean before updating the local repository.")
     if len(get_merge_conflicts(repo=integration_repo)) > 0:
