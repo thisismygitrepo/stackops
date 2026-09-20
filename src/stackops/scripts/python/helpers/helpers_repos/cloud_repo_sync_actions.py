@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from git.repo import Repo
 
 
-type SelectedConflictAction = ConflictResolutionAction | Literal["inspect"]
+type SelectedConflictAction = ConflictResolutionAction | Literal["inspect", "overwrite-local", "overwrite-remote"]
 
 
 def select_conflict_action(on_conflict: ConflictResolutionAction) -> SelectedConflictAction:
@@ -26,6 +26,8 @@ def select_conflict_action(on_conflict: ConflictResolutionAction) -> SelectedCon
         "Inspect local repository and isolated merge worktree": "inspect",
         "Finish merge and accept remote versions for conflicting paths": "merge-accept-remote",
         "Finish merge and accept local versions for conflicting paths": "merge-accept-local",
+        "Overwrite local repository with remote copy (no merge)": "overwrite-local",
+        "Overwrite remote repository with local copy (no merge)": "overwrite-remote",
         "Stop on conflict": "stop-on-conflict",
     }
     choice = questionary.select("Choose one option:", choices=tuple(choices)).ask()

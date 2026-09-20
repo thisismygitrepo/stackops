@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionAction
 
@@ -57,7 +57,7 @@ def remove_integration_worktree(local_repo: "Repo", integration_worktree: Integr
 
 def integrate_remote_repository(
     local_repo: "Repo", repo_remote_root: Path, integration_root: Path, cloud: str, on_conflict: ConflictResolutionAction, console: "Console"
-) -> None:
+) -> Literal["overwrite-local", "overwrite-remote"] | None:
     from git.repo import Repo
     from rich.panel import Panel
     import typer
@@ -115,6 +115,9 @@ def integrate_remote_repository(
             case "merge-accept-remote" | "merge-accept-local":
                 accepted_side: MergeConflictResolutionSide = "remote" if selected_action == "merge-accept-remote" else "local"
                 resolve_merge_conflicts(repo=integration_repo, expected_conflicts=merge_result.conflicts, accept_side=accepted_side)
+            case "overwrite-local" | "overwrite-remote":
+                remove_integration_state(local_repo=local_repo, integration_repo=integration_repo, integration_worktree=integration_worktree)
+                return selected_action
             case "ask":
                 raise RuntimeError("Interactive conflict action was not resolved.")
 

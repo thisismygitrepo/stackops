@@ -84,10 +84,6 @@ def run_guard_repository(
             validate_integration_transport(repo_local_root=repo_root, integration_root=remote_root, cloud=cloud)
             restore_local_repository(repo_local_root=repo_root, repo_remote_root=remote_root)
             return "restored"
-        if operation == "overwrite-local":
-            local_repo.close()
-            overwrite_local_with_remote(repo_local_root=repo_root, repo_remote_root=remote_root)
-            return "overwritten-local"
         if operation == "push":
             with Repo(remote_root) as remote_repo:
                 remote_has_commit = remote_repo.head.is_valid()
@@ -95,8 +91,8 @@ def run_guard_repository(
                 local_repo.git.fetch("--no-recurse-submodules", str(remote_root), "HEAD")
                 if not local_repo.head.is_valid() or not local_repo.is_ancestor(local_repo.commit("FETCH_HEAD"), local_repo.head.commit):
                     raise RuntimeError("Guard archive contains changes missing locally; pull or sync before pushing.")
-        else:
-            integrate_remote_repository(
+        elif operation != "overwrite-local":
+            overwrite_action = integrate_remote_repository(
                 local_repo=local_repo,
                 repo_remote_root=remote_root,
                 integration_root=integration_root,
@@ -104,6 +100,12 @@ def run_guard_repository(
                 on_conflict=on_conflict,
                 console=console,
             )
+            if overwrite_action is not None:
+                operation = overwrite_action
+        if operation == "overwrite-local":
+            local_repo.close()
+            overwrite_local_with_remote(repo_local_root=repo_root, repo_remote_root=remote_root)
+            return "overwritten-local"
         if operation == "pull":
             delete_path(remote_root.parent, verbose=False)
             return "pulled"
@@ -116,6 +118,8 @@ def run_guard_repository(
             pwd=pwd,
             ignore_gitignore=ignore_gitignore,
         )
+        if operation == "overwrite-remote":
+            return "overwritten-remote"
         return "pushed" if operation == "push" else "success"
     finally:
         if local_repo is not None:
