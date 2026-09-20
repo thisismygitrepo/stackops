@@ -27,7 +27,6 @@ def run_guard_repository(
     from rich.console import Console
 
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_actions import (
-        overwrite_local_with_remote,
         publish_local_repository,
         restore_local_repository,
         validate_downloaded_repository,
@@ -36,6 +35,7 @@ def run_guard_repository(
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import download_repo_archive, upload_repo_archive
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import commit_local_changes
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_integration import integrate_remote_repository
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_replacement import overwrite_local_with_remote
     from stackops.utils.accessories import randstr
     from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
     from stackops.utils.path_core import delete_path
@@ -107,6 +107,7 @@ def run_guard_repository(
             if overwrite_action is not None:
                 operation = overwrite_action
         if operation == "overwrite-local":
+            validate_integration_transport(repo_local_root=repo_root, integration_root=remote_root, cloud=cloud)
             local_repo.close()
             overwrite_local_with_remote(repo_local_root=repo_root, repo_remote_root=remote_root)
             return "overwritten-local"

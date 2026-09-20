@@ -1,9 +1,6 @@
 import os
 from pathlib import Path
-import platform
-import shlex
 import shutil
-import subprocess
 from typing import TYPE_CHECKING, Literal
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionAction
@@ -94,40 +91,3 @@ def restore_local_repository(repo_local_root: Path, repo_remote_root: Path) -> N
     if temporary_parent.exists() and not any(temporary_parent.iterdir()):
         temporary_parent.rmdir()
 
-
-def overwrite_local_with_remote(repo_local_root: Path, repo_remote_root: Path) -> str:
-    if repo_local_root == Path.home():
-        raise RuntimeError("Refusing to replace the home directory as a repository.")
-    os.chdir(Path.home())
-    local_path = str(repo_local_root)
-    remote_path = str(repo_remote_root)
-    home_path = str(Path.home())
-    if platform.system() == "Windows":
-        gpg_home = subprocess.run(
-            ["gpgconf", "--list-dirs", "homedir"], check=True, capture_output=True, text=True
-        ).stdout.strip()
-        gpg_keybox_path = Path(gpg_home).joinpath("public-keys.d", "pubring.db")
-        if gpg_keybox_path.resolve().is_relative_to(repo_local_root.resolve()):
-            subprocess.run(["gpgconf", "--homedir", gpg_home, "--kill", "all"], check=True)
-        home_path_quoted = "'" + home_path.replace("'", "''") + "'"
-        local_path_quoted = "'" + local_path.replace("'", "''") + "'"
-        remote_path_quoted = "'" + remote_path.replace("'", "''") + "'"
-        script = f"""
-$ErrorActionPreference = 'Stop'
-Set-Location -LiteralPath {home_path_quoted}
-Remove-Item -LiteralPath {local_path_quoted} -Recurse -Force
-Move-Item -LiteralPath {remote_path_quoted} -Destination {local_path_quoted} -Force
-"""
-    else:
-        script = f"""
-set -euo pipefail
-cd {shlex.quote(home_path)}
-rm -rf -- {shlex.quote(local_path)}
-mv -- {shlex.quote(remote_path)} {shlex.quote(local_path)}
-"""
-    from stackops.utils.code import run_shell_script
-
-    result = run_shell_script(script=script, display_script=True, clean_env=False)
-    if result.returncode != 0:
-        raise RuntimeError(f"Replacing the local repository failed with exit code {result.returncode}.")
-    return script
