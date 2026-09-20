@@ -7,6 +7,7 @@ from stackops.utils.schemas.repos.repos_types import RepoRecordFile
 from stackops.scripts.python.helpers.helpers_repos.spec_store import (
     load_or_create_repos_spec,
     merge_repo_records,
+    repo_record_path,
     resolve_repos_spec_path,
     save_repos_spec,
     RepoRecordMergeEntry,
@@ -223,19 +224,23 @@ def count_total_directories(repos_root: str, r: bool) -> int:
 
 
 def record_repos_recursively(
-    repos_root: str, r: bool, progress: Progress | None, scan_task_id: TaskID | None, process_task_id: TaskID | None
+    repos_root: str, r: bool, progress: Progress | None, scan_task_id: TaskID | None, process_task_id: TaskID | None,
+    registered_paths: set[Path],
 ) -> list[RepoRecordDict]:
     path_obj = Path(repos_root).expanduser().absolute()
     if path_obj.is_file():
         return []
     if path_obj.joinpath(".git").exists():
+        already_registered = path_obj.resolve() in registered_paths
         if progress is not None and process_task_id is not None:
-            progress.update(process_task_id, description=f"Recording: {path_obj.name}")
+            label = "Checking registered" if already_registered else "Registering new"
+            progress.update(process_task_id, description=f"""{label}: {path_obj.name}""")
 
         repo_record = record_a_repo(path_obj, search_parent_directories=False, preferred_remote=None)
 
         if progress is not None and process_task_id is not None:
-            progress.update(process_task_id, advance=1, description=f"Recorded: {repo_record['name']}")
+            label = "Checked registered" if already_registered else "Recorded new"
+            progress.update(process_task_id, advance=1, description=f"""{label}: {repo_record['name']}""")
         return [repo_record]
 
     search_res = sorted(
@@ -249,19 +254,25 @@ def record_repos_recursively(
 
         if a_search_res.joinpath(".git").exists():
             try:
+                already_registered = a_search_res.resolve() in registered_paths
                 if progress is not None and process_task_id is not None:
-                    progress.update(process_task_id, description=f"Recording: {a_search_res.name}")
+                    label = "Checking registered" if already_registered else "Registering new"
+                    progress.update(process_task_id, description=f"""{label}: {a_search_res.name}""")
 
                 repo_record = record_a_repo(a_search_res, search_parent_directories=False, preferred_remote=None)
                 res.append(repo_record)
 
                 if progress is not None and process_task_id is not None:
-                    progress.update(process_task_id, advance=1, description=f"Recorded: {repo_record['name']}")
+                    label = "Checked registered" if already_registered else "Recorded new"
+                    progress.update(process_task_id, advance=1, description=f"""{label}: {repo_record['name']}""")
             except Exception as e:
                 print(f"⚠️ Failed to record {a_search_res}: {e}")
         else:
             if r:
-                res += record_repos_recursively(str(a_search_res), r=r, progress=progress, scan_task_id=scan_task_id, process_task_id=process_task_id)
+                res += record_repos_recursively(
+                    str(a_search_res), r=r, progress=progress, scan_task_id=scan_task_id,
+                    process_task_id=process_task_id, registered_paths=registered_paths,
+                )
 
         if progress is not None and scan_task_id is not None:
             progress.update(scan_task_id, advance=1)
@@ -283,31 +294,42 @@ def main_record(
 ) -> Path:
     from stackops.scripts.python.helpers.helpers_repos.registration_sync import configure_repository_sync
 
-    print("\n📝 Recording repositories...")
     repos_root = _resolve_directory(directory=repos_root_str)
     spec_path_resolved = resolve_repos_spec_path(specs_path=specs_path)
     existing_spec = load_or_create_repos_spec(path=spec_path_resolved)
+    registered_paths = {repo_record_path(repo) for repo in existing_spec["repos"]}
 
-    # Count total directories and repositories for accurate progress tracking
-    print("🔍 Analyzing directory structure...")
-    total_dirs = count_total_directories(str(repos_root), r=True)
-    total_repos = count_git_repositories(str(repos_root), r=True)
-    print(f"📊 Found {total_dirs} directories to scan and {total_repos} git repositories to record")
+    if repos_root in registered_paths and repos_root.joinpath(".git").exists():
+        print(f"""ℹ️ Already registered: {repos_root.name} ({repos_root}). Checking for changes...""")
+        repo_records = [record_a_repo(repos_root, search_parent_directories=False, preferred_remote=None)]
+    else:
+        print("\n📝 Registering repositories...")
+        registered_count = sum(path.is_relative_to(repos_root) for path in registered_paths)
+        if registered_count:
+            print(f"""ℹ️ Already registered under this directory: {registered_count}. Checking for changes...""")
+        print("🔍 Analyzing directory structure...")
+        total_dirs = count_total_directories(str(repos_root), r=True)
+        total_repos = count_git_repositories(str(repos_root), r=True)
+        print(f"""📊 Found {total_dirs} directories to scan and {total_repos} Git repositories to check""")
 
-    # Setup progress bars
-    with Progress(
-        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), MofNCompleteColumn(), TimeElapsedColumn()
-    ) as progress:
-        scan_task = progress.add_task("Scanning directories...", total=total_dirs)
-        process_task = progress.add_task("Recording repositories...", total=total_repos)
+        with Progress(
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), MofNCompleteColumn(), TimeElapsedColumn()
+        ) as progress:
+            scan_task = progress.add_task("Scanning directories...", total=total_dirs)
+            process_task = progress.add_task("Checking repositories...", total=total_repos)
 
-        repo_records = record_repos_recursively(
-            repos_root=str(repos_root), r=True, progress=progress, scan_task_id=scan_task, process_task_id=process_task
-        )
+            repo_records = record_repos_recursively(
+                repos_root=str(repos_root), r=True, progress=progress, scan_task_id=scan_task,
+                process_task_id=process_task, registered_paths=registered_paths,
+            )
 
     configure_repository_sync(
         records=repo_records, existing_records=existing_spec["repos"], guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore
     )
+    merged_repos, merge_summary = merge_repo_records(existing_repos=existing_spec["repos"], scanned_repos=repo_records, scanned_root=repos_root)
+    if not (merge_summary["added"] or merge_summary["updated"] or merge_summary["removed"]) and spec_path_resolved.exists():
+        print(f"""✅ No changes to registered repositories ({len(merge_summary['unchanged'])} unchanged). Specification left unchanged: {spec_path_resolved}""")
+        return spec_path_resolved
 
     # Summary with warnings
     total_repos = len(repo_records)
@@ -348,7 +370,6 @@ def main_record(
     tree_structure = build_tree_structure(repos=repo_records, repos_root=repos_root)
     print(tree_structure)
 
-    merged_repos, merge_summary = merge_repo_records(existing_repos=existing_spec["repos"], scanned_repos=repo_records, scanned_root=repos_root)
     res: RepoRecordFile = {"version": existing_spec["version"], "repos": merged_repos}
     save_repos_spec(spec=res, path=spec_path_resolved)
     pprint(f"📁 Result saved at {spec_path_resolved}")

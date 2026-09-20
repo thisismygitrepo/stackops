@@ -154,11 +154,10 @@ def capture(
     if cloud is not None and not cloud.strip():
         raise typer.BadParameter("--cloud must not be empty.")
     try:
-        save_path = record_repos(repos_root_str=directory, specs_path=specs_path, guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore)
+        record_repos(repos_root_str=directory, specs_path=specs_path, guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore)
     except (ValueError, OSError) as error:
         typer.echo(f"""❌ {error}""", err=True)
         raise typer.Exit(code=1) from error
-    print(f"\n✅ Saved repository specification to {save_path}")
 
 
 def clone(
@@ -227,6 +226,7 @@ def checkout_to_branch_command(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
     from stackops.scripts.python.helpers.helpers_devops import cli_repos_version
+    from stackops.scripts.python.helpers.helpers_devops.cli_repos_list import list_repositories
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_viz import analyze_repo_development, count_lines_in_repo, gource_viz
 
     repos_apps = typer.Typer(
@@ -239,6 +239,9 @@ def get_app() -> typer.Typer:
 
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
+
+    repos_apps.command(name="list", help="📋 <l> List registered repositories and sync counts")(list_repositories)
+    repos_apps.command(name="l", help="List registered repositories and sync counts", hidden=True)(list_repositories)
 
     repos_apps.command(name="action", help="🔄 <a> Run Git actions or a shell command across repositories", no_args_is_help=True)(action)
     repos_apps.command(name="a", help="Run Git actions or a shell command across repositories", hidden=True, no_args_is_help=True)(action)
