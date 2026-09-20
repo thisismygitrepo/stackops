@@ -34,6 +34,4 @@ def edit_deepseek_patch(*, text: str, removals: tuple[HookRemoval, ...]) -> byte
         except (IndexError, StopIteration) as error:
             raise ValueError("DeepSeek patch changed or has an invalid cleanup selector") from error
     serialized = yaml.serialize(document)
-    if not isinstance(serialized, str):
-        raise ValueError("Could not serialize DeepSeek patch")
     return serialized.encode("utf-8")
