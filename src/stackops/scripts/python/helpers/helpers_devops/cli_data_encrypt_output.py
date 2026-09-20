@@ -1,6 +1,8 @@
+import shutil
 from pathlib import Path
+from tempfile import mkdtemp
 
-from stackops.utils.cloud.target_conflict import apply_target_conflict_action
+from stackops.utils.path_core import tmp
 
 
 def validate_output(*, source: Path, output_path: Path, overwrite: bool) -> None:
@@ -18,7 +20,30 @@ def validate_output(*, source: Path, output_path: Path, overwrite: bool) -> None
 
 def publish_output(*, source: Path, staged_path: Path, output_path: Path, overwrite: bool) -> None:
     validate_output(source=source, output_path=output_path, overwrite=overwrite)
-    if overwrite:
-        apply_target_conflict_action(staged_path=staged_path, target_path=output_path, on_conflict="overwrite-target")
-    else:
-        staged_path.replace(output_path)
+    if not (output_path.exists() or output_path.is_symlink()):
+        _move_output(staged_path=staged_path, output_path=output_path)
+        return
+
+    backup_root = Path(mkdtemp(prefix=".stackops-replaced-", dir=tmp(folder="stackops/data", file=None, root="~/tmp_results")))
+    backup_path = backup_root / "output"
+    shutil.move(output_path, backup_path)
+    try:
+        _move_output(staged_path=staged_path, output_path=output_path)
+    except BaseException:
+        if output_path.exists() or output_path.is_symlink():
+            raise RuntimeError(f"""Could not remove incomplete output: {output_path}. Previous output is preserved at {backup_path}.""")
+        shutil.move(backup_path, output_path)
+        shutil.rmtree(backup_root)
+        raise
+    shutil.rmtree(backup_root)
+
+
+def _move_output(*, staged_path: Path, output_path: Path) -> None:
+    try:
+        shutil.move(staged_path, output_path)
+    except BaseException:
+        if output_path.is_symlink() or output_path.is_file():
+            output_path.unlink()
+        elif output_path.exists():
+            shutil.rmtree(output_path)
+        raise

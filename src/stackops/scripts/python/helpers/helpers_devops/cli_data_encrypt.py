@@ -8,6 +8,7 @@ import typer
 from stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output import publish_output, validate_output
 from stackops.utils.cloud.encryption import ENCRYPTION_MODES_DISPLAY, EncryptionMode, EncryptionModeChoice, parse_encryption_mode
 from stackops.utils.files.compression import DECOMPRESS_SUPPORTED_FORMATS
+from stackops.utils.path_core import tmp
 
 DATA_ENCRYPT_HELP = "🔐 <x> Encrypt a file or folder with symmetric or asymmetric GPG."
 DATA_DECRYPT_HELP = "🔓 <y> Decrypt a GPG file; folder archives are extracted."
@@ -144,7 +145,7 @@ def _encrypt_to_output(
 ) -> None:
     from stackops.utils.io import encrypt_file_asymmetric, encrypt_file_symmetric
 
-    with TemporaryDirectory(prefix=".stackops-encrypt-", dir=output_path.parent) as temporary_directory:
+    with TemporaryDirectory(prefix=".stackops-encrypt-", dir=tmp(folder="stackops/data", file=None, root="~/tmp_results")) as temporary_directory:
         staging_root = Path(temporary_directory)
         staged_input = _stage_input(source, compression=compression, staging_root=staging_root)
         match mode:
@@ -196,7 +197,7 @@ def _decrypt_to_output(
 ) -> None:
     from stackops.utils.io import decrypt_file_asymmetric, decrypt_file_symmetric
 
-    with TemporaryDirectory(prefix=".stackops-decrypt-", dir=output_path.parent) as temporary_directory:
+    with TemporaryDirectory(prefix=".stackops-decrypt-", dir=tmp(folder="stackops/data", file=None, root="~/tmp_results")) as temporary_directory:
         staging_root = Path(temporary_directory)
         staged_encrypted = staging_root / source.name
         shutil.copy2(source, staged_encrypted)
