@@ -248,6 +248,12 @@ def prep_agent_launch(
                     from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_pi import fire_pi
 
                     cmd = fire_pi(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
+            case "deepseek":
+                from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_deepseek import fire_deepseek
+
+                api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
+                ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)
+                cmd = fire_deepseek(ai_spec=ai_spec, prompt_path=prompt_path, repo_root=repo_root)
             case _:
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)

@@ -9,6 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.codex i
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.copilot import DEFINITION as COPILOT
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.crush import DEFINITION as CRUSH
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.cursor_agent import DEFINITION as CURSOR_AGENT
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.deepseek import DEFINITION as DEEPSEEK
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.droid import DEFINITION as DROID
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.forge import DEFINITION as FORGE
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.kilocode import DEFINITION as KILOCODE
@@ -23,6 +24,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 DOCTOR_AGENT_DEFINITIONS: Final[tuple[DoctorAgentDefinition, ...]] = (
     CODEX,
+    DEEPSEEK,
     PI,
     OMP,
     OPENCODE,
@@ -49,6 +51,8 @@ DOCTOR_AGENT_ALIASES: Final[dict[str, DoctorAgent]] = {
     "augment": "auggie",
     "claude-code": "claude",
     "cursor": "cursor-agent",
+    "deepseek-harness": "deepseek",
+    "dsh": "deepseek",
     "factory-droid": "droid",
     "github-copilot": "copilot",
     "kilo": "kilocode",

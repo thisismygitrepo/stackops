@@ -5,7 +5,7 @@ from typing import Literal
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorOrigin, DoctorResourceState
 
 
-type HookFormat = Literal["json", "toml", "file", "directory", "yaml"]
+type HookFormat = Literal["json", "toml", "file", "directory", "yaml", "deepseek-yaml"]
 type HookSelector = tuple[str | int, ...]
 type HookAgent = DoctorAgent | Literal["shared"]
 

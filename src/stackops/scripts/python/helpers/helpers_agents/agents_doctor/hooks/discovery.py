@@ -10,6 +10,18 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import 
 
 
 def collect_hooks(*, agent: DoctorAgent, context: DoctorContext) -> HookInventory:
+    if agent == "deepseek":
+        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.deepseek_config import deepseek_patch_inventory, deepseek_patch_paths
+
+        inventory = deepseek_patch_inventory(context=context, paths=deepseek_patch_paths(context=context), focuses=("hook",))
+        return HookInventory(
+            tuple(replace(entry, event="DeepSeek hook bridge") for entry in inventory.entries),
+            (*inventory.diagnostics, HookDiagnostic(
+                agent, "local", context.project_root,
+                "Reports configured Codex and Claude hook bridges. Cleanup removes their patch declarations; other dynamic hooks, bundled plugins and additional CLI overlays require inspection in DeepSeek.",
+                "notice",
+            )),
+        )
     if agent == "codex":
         from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.codex_hooks import collect_codex_hooks
 

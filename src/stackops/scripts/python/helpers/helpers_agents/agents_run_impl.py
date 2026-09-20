@@ -136,6 +136,17 @@ def build_agent_command(
             return f"""{agent_cli} exec{permission_args}{model_arg}{reasoning_arg} - < {prompt_file_q}"""
         case "forge":
             return f"{agent_cli} -p {prompt_content_expr}"
+        case "deepseek":
+            from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import (
+                build_deepseek_command, deepseek_patch_paths, render_deepseek_prompt_command,
+            )
+
+            if model is not None or provider is not None:
+                raise ValueError("DeepSeek selects its model and provider through settings.yaml or its web interface; CLI overrides are unsupported.")
+            command = build_deepseek_command(
+                profile="headless", patch_paths=deepseek_patch_paths(directory=Path.cwd()), container=False, is_windows=resolved_is_windows
+            )
+            return render_deepseek_prompt_command(command=command, prompt_file=prompt_file, is_windows=resolved_is_windows)
         case "crush":
             return f"{agent_cli} run {prompt_file_q}"
         case "claude":

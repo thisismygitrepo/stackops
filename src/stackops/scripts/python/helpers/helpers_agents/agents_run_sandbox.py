@@ -57,6 +57,13 @@ def build_sandboxed_prompt_script(
             command.append("-")
         case "copilot":
             command = [agent, *copilot_reasoning_args(reasoning_effort=reasoning), "-p", prompt_text, "--yolo"]
+        case "deepseek":
+            from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import build_deepseek_command, deepseek_patch_paths
+
+            patch_paths = deepseek_patch_paths(directory=Path.cwd())
+            input_paths.extend(patch_paths)
+            command = build_deepseek_command(profile="headless", patch_paths=patch_paths, container=container, is_windows=is_windows)
+            command.extend(["--", "--", prompt_text])
         case "pi":
             command = [agent, "--mode", "json"]
             if reasoning is not None:

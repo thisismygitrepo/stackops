@@ -20,12 +20,12 @@ _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "p
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
-_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "pi", "opencode", "omp"]
+_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "pi", "opencode", "omp", "deepseek"]
 
 _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
-INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "pi", "p", "opencode", "oc", "omp", "o"]
+INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh"]
 _CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $caveman wenyan-full for this entire session."
 _HEADROOM_COMMAND: Final[str] = "headroom"
 _HEADROOM_AGENTS: Final[tuple[_HEADROOM_AGENT, ...]] = ("codex", "copilot")
@@ -40,6 +40,8 @@ _INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, _INTERACTIVE_CANONICAL
     "oc": "opencode",
     "omp": "omp",
     "o": "omp",
+    "deepseek": "deepseek",
+    "dsh": "deepseek",
 }
 _INIT_CONFIG_AGENT_HELP: Final[str] = (
     f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
@@ -206,6 +208,14 @@ def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, caveman: boo
             if caveman:
                 command.append(_CAVEMAN_INITIAL_PROMPT)
             return command
+        case "deepseek":
+            from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import build_deepseek_command, deepseek_patch_paths
+
+            if caveman:
+                raise ValueError("DeepSeek's web interface does not accept an initial CLI prompt; enter the caveman prompt in the web session.")
+            return build_deepseek_command(
+                profile="web", patch_paths=deepseek_patch_paths(directory=Path.cwd()), container=False, is_windows=False
+            )
         case _:
             raise ValueError(f"Unsupported interactive agent: {agent}")
 
@@ -226,7 +236,7 @@ def _apply_headroom(command: list[str], agent: _INTERACTIVE_CANONICAL_AGENT, hea
 def run_interactive(
     agent: Annotated[
         INTERACTIVE_AGENT,
-        typer.Option(..., "--agent", "-a", help="Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, or omp/o."),
+        typer.Option(..., "--agent", "-a", help="Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, omp/o, or deepseek/dsh (web interface)."),
     ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),
     second_brain: Annotated[
         bool,
@@ -313,9 +323,16 @@ def run_interactive(
                 from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
 
                 access = resolve_sandbox_access(agent=resolved_agent)
+                read_only_paths: tuple[Path, ...] = ()
+                if resolved_agent == "deepseek":
+                    from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import deepseek_patch_paths
+
+                    if sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN):
+                        raise ValueError("DeepSeek's web interface needs a reachable listening port; use a host sandbox or run-prompt with a container.")
+                    read_only_paths = deepseek_patch_paths(directory=Path.cwd())
                 command = build_sandbox_command(
                     command=command, options=sandbox_options, directory=Path.cwd(),
-                    access=access, read_only_paths=(),
+                    access=access, read_only_paths=read_only_paths,
                     interactive=sys.stdin.isatty() and sys.stdout.isatty(),
                 )
                 if is_windows_host():
@@ -323,7 +340,12 @@ def run_interactive(
                 else:
                     script = shlex.join(command)
             else:
-                script = shlex.join(command)
+                if resolved_agent == "deepseek" and is_windows_host():
+                    from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
+
+                    script = "& " + " ".join(quote_for_shell(argument, is_windows=True) for argument in command)
+                else:
+                    script = shlex.join(command)
             if working_directory is not None:
                 from stackops.scripts.python.helpers.helpers_agents.agents_shell import render_command_in_directory
 

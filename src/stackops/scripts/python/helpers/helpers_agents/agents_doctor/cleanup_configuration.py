@@ -55,6 +55,10 @@ def configuration_cleanup(
         removal = HookRemoval(path, "file", (), "delete") if resource.origin in ("local", "global") else None
         entry = HookEntry(agent, resource.origin, path, resource.name, "configuration", "Reset configuration file", resource.state, removal)
         return HookInventory((entry,), ())
+    if agent == "deepseek" and path.name == "cordis.patch.yml":
+        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.deepseek_config import deepseek_patch_inventory
+
+        return deepseek_patch_inventory(context=context, paths=((resource.origin, path),), focuses=focuses)
     mapping = load_config_mapping(path=path, config_format=config_format)
     if isinstance(mapping, str):
         return HookInventory((), (HookDiagnostic(agent, resource.origin, path, mapping, "error"),))

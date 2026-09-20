@@ -35,6 +35,7 @@ _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
         efforts=("none", "low", "medium", "high", "xhigh"),
         note="actual model support can be a narrower subset",
     ),
+    "deepseek": AgentReasoningSupport(efforts=(), note="Configure model and reasoning in DeepSeek settings.yaml or its web interface"),
     "forge": AgentReasoningSupport(efforts=(), note=None),
     "crush": AgentReasoningSupport(efforts=(), note=None),
     "q": AgentReasoningSupport(efforts=(), note=None),

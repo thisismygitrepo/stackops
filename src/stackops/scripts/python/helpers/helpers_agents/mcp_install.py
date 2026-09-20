@@ -7,6 +7,7 @@ from typing import Final, Literal, cast, get_args
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import build_agent_skill_preview_mapping
+from stackops.scripts.python.helpers.helpers_agents.deepseek_mcp import write_deepseek_mcp_config
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names, resolve_requested_mcp_servers
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation, ResolvedMcpServer
 from stackops.utils.files.read import remove_c_style_comments
@@ -128,6 +129,8 @@ def install_resolved_mcp_servers(
             _write_crush_config(path=path, resolved_servers=resolved_servers)
         case "pi":
             _write_pi_mcp_adapter_config(path=path, resolved_servers=resolved_servers)
+        case "deepseek":
+            write_deepseek_mcp_config(path=path, resolved_servers=resolved_servers)
     return path
 
 
@@ -174,6 +177,8 @@ def resolve_install_path(
                 return repo_root / ".crush.json"
             case "pi":
                 return repo_root / ".pi" / "mcp.json"
+            case "deepseek":
+                return repo_root / ".dsh" / "cordis.patch.yml"
 
     match agent:
         case "agy":
@@ -212,6 +217,10 @@ def resolve_install_path(
             return home_dir / ".config" / "crush" / "crush.json"
         case "pi":
             return home_dir / ".pi" / "agent" / "mcp.json"
+        case "deepseek":
+            configured_home = os.environ.get("DSH_HOME", "").strip()
+            dsh_home = Path(configured_home).expanduser() if configured_home else home_dir / ".dsh"
+            return dsh_home / "cordis.patch.yml"
 
 
 def _resolve_copilot_cli_user_config_path(*, home_dir: Path) -> Path:

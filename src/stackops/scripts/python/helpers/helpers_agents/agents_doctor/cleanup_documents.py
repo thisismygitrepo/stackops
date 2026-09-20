@@ -79,6 +79,11 @@ def edit_cleanup_document(*, original: bytes, removals: tuple[HookRemoval, ...])
         raise ValueError("Conflicting configuration formats in cleanup plan")
     document_format = removals[0].format
     text = original.decode("utf-8")
+    if document_format == "deepseek-yaml":
+        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.deepseek_cleanup import edit_deepseek_patch
+
+        _validate_yaml_keys(text=text)
+        return edit_deepseek_patch(text=text, removals=removals)
     match document_format:
         case "json":
             document: object = json.loads(remove_c_style_comments(text), object_pairs_hook=_unique_json_keys)

@@ -75,6 +75,16 @@ def resolve_sandbox_access(*, agent: str) -> SandboxAccess:
                 "COPILOT_PROVIDER_API_KEY",
                 "COPILOT_MODEL",
             )
+        case "deepseek":
+            directories = (
+                _environment_directory(name="DSH_HOME", default_directory=home_directory / ".dsh"),
+                _environment_directory(name="DSH_AGENTS_HOME", default_directory=home_directory / ".agents"),
+            )
+            environment = ("DSH_HOME", "DSH_AGENTS_HOME", "DSH_PERMISSION_MODE", *_PROVIDER_ENVIRONMENT)
+            return SandboxAccess(
+                writable_paths=directories, environment_names=environment,
+                environment_overrides={"DSH_TELEMETRY_DISABLED": "1", "DSH_TELEMETRY_MODE": "DISABLED"},
+            )
         case "pi":
             directories = (_environment_directory(name="PI_CODING_AGENT_DIR", default_directory=home_directory / ".pi/agent"),)
             environment = ("PI_CODING_AGENT_DIR", *_PROVIDER_ENVIRONMENT)
