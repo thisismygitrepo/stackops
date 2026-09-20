@@ -144,6 +144,7 @@ if TYPE_CHECKING:
         StackOpsUtilsMachineGetMachineSpecsCommand,
         StackOpsUtilsMachineListDevicesCommand,
         StackOpsUtilsMachineMountCommand,
+        StackOpsUtilsMachineAutostartCommand,
         StackOpsUtilsMachineSubcommands,
         StackOpsUtilsMachineCommand,
         StackOpsUtilsPyprojectInitProjectCommand,
@@ -1199,12 +1200,20 @@ STACKOPS_UTILS_MACHINE_MOUNT_COMMAND: "StackOpsUtilsMachineMountCommand" = {
     "subcommands": {},
 }
 
+STACKOPS_UTILS_MACHINE_AUTOSTART_COMMAND: "StackOpsUtilsMachineAutostartCommand" = {
+    "command_name": "autostart",
+    "short_name": "a",
+    "help": "🚀 <a> List services and programs that start automatically.",
+    "subcommands": {},
+}
+
 STACKOPS_UTILS_MACHINE_SUBCOMMANDS: "StackOpsUtilsMachineSubcommands" = {
     "kill-process": STACKOPS_UTILS_MACHINE_KILL_PROCESS_COMMAND,
     "environment": STACKOPS_UTILS_MACHINE_ENVIRONMENT_COMMAND,
     "get-machine-specs": STACKOPS_UTILS_MACHINE_GET_MACHINE_SPECS_COMMAND,
     "list-devices": STACKOPS_UTILS_MACHINE_LIST_DEVICES_COMMAND,
     "mount": STACKOPS_UTILS_MACHINE_MOUNT_COMMAND,
+    "autostart": STACKOPS_UTILS_MACHINE_AUTOSTART_COMMAND,
 }
 
 STACKOPS_UTILS_MACHINE_COMMAND: "StackOpsUtilsMachineCommand" = {

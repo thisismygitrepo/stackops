@@ -1408,6 +1408,16 @@ StackOpsUtilsMachineMountCommand = TypedDict(
     },
 )
 
+StackOpsUtilsMachineAutostartCommand = TypedDict(
+    "StackOpsUtilsMachineAutostartCommand",
+    {
+        "command_name": Literal["autostart"],
+        "short_name": Literal["a"],
+        "help": Literal["🚀 <a> List services and programs that start automatically."],
+        "subcommands": EmptySubcommands,
+    },
+)
+
 StackOpsUtilsMachineSubcommands = TypedDict(
     "StackOpsUtilsMachineSubcommands",
     {
@@ -1416,6 +1426,7 @@ StackOpsUtilsMachineSubcommands = TypedDict(
         "get-machine-specs": StackOpsUtilsMachineGetMachineSpecsCommand,
         "list-devices": StackOpsUtilsMachineListDevicesCommand,
         "mount": StackOpsUtilsMachineMountCommand,
+        "autostart": StackOpsUtilsMachineAutostartCommand,
     },
 )
 

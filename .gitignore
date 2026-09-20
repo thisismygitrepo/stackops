@@ -194,3 +194,7 @@ CLAUDE.local.md
 
 # bv (beads viewer) local config and caches
 .bv/
+
+# Bun / Node files
+bun.lock
+package.json

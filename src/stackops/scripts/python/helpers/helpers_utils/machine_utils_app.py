@@ -131,6 +131,18 @@ def list_devices() -> None:
     cli_config_mount.list_devices()
 
 
+def list_autostart(
+    show_all: Annotated[bool, typer.Option("--all", help="Include standard OS services alongside notable ones.")] = False,
+) -> None:
+    from stackops.scripts.python.helpers.helpers_utils.autostart import print_autostart_report
+
+    try:
+        print_autostart_report(show_all=show_all)
+    except RuntimeError as exc:
+        typer.echo(f"Autostart listing failed: {exc}", err=True)
+        raise typer.Exit(1)
+
+
 def mount_device(
     device_query: Annotated[str | None, typer.Option("--device", "-d", help="Device query (path, key, or label).")] = None,
     mount_point: Annotated[
@@ -178,6 +190,10 @@ def get_app() -> typer.Typer:
     machine_app.command(name="s", no_args_is_help=False, hidden=True)(get_machine_specs)
     machine_app.command(name="list-devices", no_args_is_help=False, help="💽 <l> List available devices for mounting.")(list_devices)
     machine_app.command(name="l", no_args_is_help=False, hidden=True)(list_devices)
+    machine_app.command(
+        name="autostart", no_args_is_help=False, help="🚀 <a> List services and programs that start automatically."
+    )(list_autostart)
+    machine_app.command(name="a", no_args_is_help=False, hidden=True)(list_autostart)
     machine_app.command(name="mount", no_args_is_help=True, help="🔌 <m> Mount a device to a mount point.")(mount_device)
     machine_app.command(name="m", no_args_is_help=True, hidden=True)(mount_device)
     return machine_app
