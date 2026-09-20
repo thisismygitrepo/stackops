@@ -51,6 +51,7 @@ _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
     "add-config",
     "browser",
     "second-brain",
+    "local",
     "doctor",
     "depoison",
     "run-prompt",
@@ -588,6 +589,7 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
     from stackops.scripts.python.agents_depoison import depoison
     from stackops.scripts.python.agents_iter import get_app as get_iter_app
+    from stackops.scripts.python.agents_local import get_app as get_local_app
     from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
     from stackops.scripts.python.agents_second_brain import get_app as get_second_brain_app
 
@@ -614,6 +616,8 @@ def get_app() -> typer.Typer:
         get_second_brain_app(), name="second-brain", help="🧠 <B> Second Brain commands", short_help="<B> Second Brain commands"
     )
     agents_app.add_typer(get_second_brain_app(), name="B", help="Second Brain commands", hidden=True)
+    agents_app.add_typer(get_local_app(), name="local", help="<l> Local models through Ollama", short_help="<l> Local models through Ollama")
+    agents_app.add_typer(get_local_app(), name="l", help="Local models through Ollama", hidden=True)
 
     agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries or supported skills")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)
