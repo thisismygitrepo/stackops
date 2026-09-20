@@ -2,7 +2,8 @@
 
 import typer
 from typing import Annotated, Literal
-from typer.completion import completion_init, install_callback, show_callback
+from typer._completion_classes import completion_init
+from typer.completion import install_callback, show_callback
 
 
 def get_rclone_config():

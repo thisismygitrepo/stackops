@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from typer.completion import completion_init, install_callback, show_callback
+from typer._completion_classes import completion_init
+from typer.completion import install_callback, show_callback
 
 from stackops.scripts.python.helpers.helpers_devops.cli_share_file import share_file_receive, share_file_send
 
