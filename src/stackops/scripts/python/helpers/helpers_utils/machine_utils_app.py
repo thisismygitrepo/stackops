@@ -1,7 +1,9 @@
 from typing import Annotated, Literal, TypeAlias
 
+import click
 import typer
 
+from stackops.scripts.python.helpers.helpers_utils.autostart_common import CATEGORY_FILTERS
 from stackops.scripts.python.helpers.helpers_utils.process_models import (
     build_process_selector,
 )
@@ -133,12 +135,37 @@ def list_devices() -> None:
 
 def list_autostart(
     show_all: Annotated[bool, typer.Option("--all", help="Include standard OS services alongside notable ones.")] = False,
+    category: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--category", "-c", click_type=click.Choice(list(CATEGORY_FILTERS), case_sensitive=False),
+            help="Filter by the displayed category. Repeat to include multiple categories.",
+        ),
+    ] = None,
+    scope: Annotated[
+        Literal["boot", "login"] | None,
+        typer.Option("--scope", "-s", case_sensitive=False, help="Filter by startup scope."),
+    ] = None,
+    name: Annotated[
+        str | None,
+        typer.Option("--name", "-n", help="Match part of an entry's name, ignoring case."),
+    ] = None,
+    source: Annotated[
+        str | None,
+        typer.Option("--source", "-S", help="Match part of the source, ignoring case (e.g. launchd, systemd, startup)."),
+    ] = None,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.autostart import print_autostart_report
 
     try:
-        print_autostart_report(show_all=show_all)
-    except RuntimeError as exc:
+        print_autostart_report(
+            show_all=show_all,
+            categories=[CATEGORY_FILTERS[value] for value in category or []],
+            scope=scope,
+            name=name,
+            source=source,
+        )
+    except (OSError, RuntimeError) as exc:
         typer.echo(f"Autostart listing failed: {exc}", err=True)
         raise typer.Exit(1)
 
