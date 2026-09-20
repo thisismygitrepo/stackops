@@ -38,7 +38,7 @@ def add_account(
     ] = None,
     client_id: Annotated[
         str | None,
-        typer.Option("--client-id", help="Microsoft Application (client) ID. Omit to enter it interactively."),
+        typer.Option("--client-id", "-c", help="Microsoft Application (client) ID. Omit to enter it interactively."),
     ] = None,
 ) -> None:
     resolved_account_name = str(typer.prompt("OneDrive account name")) if account_name is None else account_name
@@ -119,7 +119,13 @@ def config_path() -> None:
 
 
 def get_app() -> typer.Typer:
-    app = typer.Typer(add_completion=False, help="Access OneDrive through Microsoft Graph.", no_args_is_help=True, pretty_exceptions_enable=False)
+    app = typer.Typer(
+        add_completion=False,
+        help="Access OneDrive through Microsoft Graph.",
+        no_args_is_help=True,
+        pretty_exceptions_enable=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
 
     app.command("auth", short_help="Authenticate with Microsoft.")(authenticate)
     app.command("a", hidden=True)(authenticate)

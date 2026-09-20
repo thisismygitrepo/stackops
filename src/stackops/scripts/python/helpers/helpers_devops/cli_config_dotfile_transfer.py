@@ -12,7 +12,7 @@ def _format_home_relative_path(path: Path) -> str:
 
 
 def export_dotfiles(
-    _prompt_password: Annotated[bool, typer.Option("--prompt-password", help="Prompt securely for the zip encryption password")] = False,
+    _prompt_password: Annotated[bool, typer.Option("--prompt-password", "-p", help="Prompt securely for the zip encryption password")] = False,
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Use internet-based transfer (wormhole-magic)")] = False,
     over_ssh: Annotated[bool, typer.Option("--over-ssh", "-s", help="Use SSH-based transfer (scp) to a remote machine")] = False,
 ) -> None:

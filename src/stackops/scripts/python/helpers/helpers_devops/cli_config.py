@@ -380,7 +380,10 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import edit_dotfile, register_dotfile
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_transfer import export_dotfiles, import_dotfiles
 
-    config_apps = typer.Typer(help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    config_apps = typer.Typer(
+        help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     ctx_settings: dict[str, object] = {
         "allow_extra_args": True,
         "allow_interspersed_args": True,

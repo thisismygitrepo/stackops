@@ -73,7 +73,10 @@ def align(
 
 
 def get_app() -> typer.Typer:
-    second_brain_app = typer.Typer(help="Second Brain commands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    second_brain_app = typer.Typer(
+        help="Second Brain commands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     second_brain_app.command(name="config", no_args_is_help=False, short_help="<c> Configure the Second Brain repository")(config)
     second_brain_app.command(name="c", no_args_is_help=False, hidden=True)(config)
     second_brain_app.command(name="status", no_args_is_help=False, short_help="<s> Show Second Brain statistics and invalid updates")(status)

@@ -111,7 +111,10 @@ sudo warp-cli connect
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_cloudflare_tunnel
 
-    cloudflare_app = typer.Typer(help="☁ Cloudflare subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    cloudflare_app = typer.Typer(
+        help="☁ Cloudflare subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     cloudflare_app.command(name="switch-public-ip", help="🔁 <s> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
     cloudflare_app.command(name="s", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
     cloudflare_app.command(name="reset-cloudflare-tunnel", help="☁ <r> Reset Cloudflare tunnel service")(reset_cloudflare_tunnel)

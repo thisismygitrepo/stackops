@@ -2,6 +2,7 @@
 
 import typer
 from typing import Annotated
+from typer.completion import completion_init, install_callback, show_callback
 
 
 def _is_remote_path(path: str) -> bool:
@@ -35,6 +36,12 @@ def ftpx(
     zip_first: Annotated[bool, typer.Option("--zip-first", "-z", help="Zip before sending.")] = False,
     cloud: Annotated[bool, typer.Option("--cloud", "-c", help="Transfer through the cloud.")] = False,
     overwrite_existing: Annotated[bool, typer.Option("--overwrite-existing", "-o", help="Overwrite existing files on remote when sending from local to remote.")] = False,
+    _install_completion: Annotated[
+        bool, typer.Option("--install-completion", "-I", callback=install_callback, expose_value=False, help="Install completion for the current shell.")
+    ] = False,
+    _show_completion: Annotated[
+        bool, typer.Option("--show-completion", "-S", callback=show_callback, expose_value=False, help="Show completion for the current shell, to copy it or customize the installation.")
+    ] = False,
 ) -> None:
     """File transfer utility through SSH."""
     if not _is_remote_path(source) and not _is_remote_path(target):
@@ -62,7 +69,8 @@ def ftpx(
 
 def main() -> None:
     """Entry point function that uses typer to parse arguments and call main."""
-    app = typer.Typer()
+    completion_init()
+    app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
     app.command(no_args_is_help=True, help=ftpx.__doc__, short_help="File transfer utility through SSH.")(ftpx)
     app()
 

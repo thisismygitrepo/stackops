@@ -186,7 +186,10 @@ def vault(ctx: typer.Context) -> None:
 
 
 def get_app() -> typer.Typer:
-    cli_app = typer.Typer(help="🔧 DevOps operations", no_args_is_help=True, add_help_option=True, add_completion=False)
+    cli_app = typer.Typer(
+        help="🔧 DevOps operations", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     ctx_settings: dict[str, object] = {
         "allow_extra_args": True,
         "allow_interspersed_args": True,

@@ -295,7 +295,10 @@ def edit(
 
 
 def get_app() -> typer.Typer:
-    app = typer.Typer(name="secrets", help=f"🔐 <S> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False)
+    app = typer.Typer(
+        name="secrets", help=f"🔐 <S> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     app.command("search", no_args_is_help=True, help=f"🔎 <s> {SECRETS_SEARCH_HELP}", epilog=SECRETS_SEARCH_EPILOG)(search)
     app.command("s", no_args_is_help=True, help="Alias for search.", epilog=SECRETS_SEARCH_EPILOG, hidden=True)(search)
 

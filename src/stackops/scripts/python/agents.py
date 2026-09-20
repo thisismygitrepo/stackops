@@ -109,15 +109,15 @@ def init_config(
     ] = None,
     add_config: Annotated[
         bool,
-        typer.Option("--add-config/--no-add-config", "-C", help="Include private agent config files/directories"),
+        typer.Option("--add-config/--no-add-config", "-C/-c", help="Include private agent config files/directories"),
     ] = True,
     add_instructions: Annotated[
         bool,
-        typer.Option("--add-instructions/--no-add-instructions", "-I", help="Include agent instruction files (e.g. AGENTS.md)"),
+        typer.Option("--add-instructions/--no-add-instructions", "-I/-i", help="Include agent instruction files (e.g. AGENTS.md)"),
     ] = True,
     add_agent_ops_skill: Annotated[
         bool,
-        typer.Option("--agent-ops-skill/--no-agent-ops-skill", "-A", help="Copy the latest bundled Agent-Ops skill"),
+        typer.Option("--agent-ops-skill/--no-agent-ops-skill", "-A/-a", help="Copy the latest bundled Agent-Ops skill"),
     ] = True,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
@@ -238,7 +238,7 @@ def run_interactive(
     ] = False,
     headroom: Annotated[
         bool,
-        typer.Option(..., "--headroom", "-h", help="Launch the session through headroom."),
+        typer.Option(..., "--headroom", "-H", help="Launch the session through headroom."),
     ] = False,
     followup: Annotated[
         bool,
@@ -262,14 +262,14 @@ def run_interactive(
     sandbox_image: Annotated[
         str | None,
         typer.Option(
-            "--sandbox-image",
+            "--sandbox-image", "-I",
             help="Docker/Podman Linux image with agent/tools installed globally on PATH, outside HOME. Workspace and agent state are mounted writable.",
         ),
     ] = None,
     sandbox_settings: Annotated[
         Path | None,
         typer.Option(
-            "--sandbox-settings", exists=True, dir_okay=False, resolve_path=True,
+            "--sandbox-settings", "-J", exists=True, dir_okay=False, resolve_path=True,
             help="SRT JSON policy granting agent network, executable, workspace and state access. Windows also needs srt windows-install.",
         ),
     ] = None,
@@ -422,12 +422,12 @@ def run_prompt(
     ] = SandboxBackend.NONE,
     sandbox_image: Annotated[
         str | None,
-        typer.Option("--sandbox-image", help="Linux image with agent/tools installed globally on PATH, outside HOME."),
+        typer.Option("--sandbox-image", "-I", help="Linux image with agent/tools installed globally on PATH, outside HOME."),
     ] = None,
     sandbox_settings: Annotated[
         Path | None,
         typer.Option(
-            "--sandbox-settings", exists=True, dir_okay=False, resolve_path=True,
+            "--sandbox-settings", "-J", exists=True, dir_okay=False, resolve_path=True,
             help="SRT JSON policy granting network, workspace, agent state and prompt/config-file access. Native Windows needs srt windows-install and an agent .exe.",
         ),
     ] = None,
@@ -599,6 +599,7 @@ def get_app() -> typer.Typer:
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     agents_app.add_typer(
         get_parallel_app(), name="parallel", help="🧵 <p> Parallel agent workflow commands", short_help="<p> Parallel agent workflow commands"

@@ -101,7 +101,9 @@ def preview(
 
 
 def main() -> None:
-    typer.run(preview)
+    app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
+    app.command()(preview)
+    app()
 
 
 if __name__ == "__main__":

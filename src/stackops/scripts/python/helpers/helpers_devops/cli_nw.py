@@ -61,7 +61,7 @@ def vscode_share(
     directory: Annotated[
         str | None, typer.Option("--directory", "-d", help="Folder to open in local web mode (share-local), defaults to the current working directory")
     ] = None,
-    cli_data_dir: Annotated[str | None, typer.Option("--cli-data-dir", help="VS Code CLI data directory to use for every generated command")] = None,
+    cli_data_dir: Annotated[str | None, typer.Option("--cli-data-dir", "-D", help="VS Code CLI data directory to use for every generated command")] = None,
     extra_args: Annotated[str | None, typer.Option("--extra-args", "-e", help="Extra args to append to the generated VS Code command")] = None,
 ) -> None:
     """🧑‍💻 Share workspace using VS Code CLI ("code tunnel" / "code serve-web")
@@ -131,7 +131,10 @@ def get_app() -> typer.Typer:
         cli_ssh,
     )
 
-    nw_apps = typer.Typer(help="🔐 <n> Network subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    nw_apps = typer.Typer(
+        help="🔐 <n> Network subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     nw_apps.command(name="share-terminal", help="📡 <t> Share terminal via web browser")(cli_share_terminal.share_terminal)
     nw_apps.command(name="t", help="Share terminal via web browser", hidden=True)(cli_share_terminal.share_terminal)
 

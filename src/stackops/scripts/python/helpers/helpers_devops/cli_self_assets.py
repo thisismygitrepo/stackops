@@ -41,6 +41,7 @@ def get_app() -> typer.Typer:
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     cli_app.command(
         name="update-cli-graph",

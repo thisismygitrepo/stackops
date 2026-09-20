@@ -117,6 +117,7 @@ def get_app() -> typer.Typer:
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.command("search", no_args_is_help=True, help="<s> Retrieve credentials from Bitwarden CLI and optionally copy them to the clipboard.")(search)
     app.command("s", no_args_is_help=True, help="Alias for search.", hidden=True)(search)

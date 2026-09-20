@@ -21,6 +21,7 @@ Recursively Searched Predefined Directories:
 import typer
 from pathlib import Path
 from typing import Annotated
+from typer.completion import completion_init, install_callback, show_callback
 
 from stackops.scripts.python.helpers.helpers_search.script_help import SCRIPT_SOURCE
 
@@ -306,17 +307,27 @@ def copy_script_to_local(ctx: typer.Context,
     typer.echo(typer.style(f"✅ Script '{name}.py' has been copied to '{local_path}'.", fg=typer.colors.GREEN))
 
 
-def _run_system_compute_analyzer() -> None:
+def _run_system_compute_analyzer(
+    _install_completion: Annotated[
+        bool, typer.Option("--install-completion", "-I", callback=install_callback, expose_value=False, help="Install completion for the current shell.")
+    ] = False,
+    _show_completion: Annotated[
+        bool, typer.Option("--show-completion", "-S", callback=show_callback, expose_value=False, help="Show completion for the current shell, to copy it or customize the installation.")
+    ] = False,
+) -> None:
     from stackops.jobs.scripts_dynamic import system_compute_analyzer
 
     system_compute_analyzer.main()
 
 
 def get_app() -> typer.Typer:
+    completion_init()
     app = typer.Typer(
         name="dynamic-scripts",
         help="Helper to run dynamic scripts stored in stackops/jobs/scripts_dynamic",
         no_args_is_help=True,
+        add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.command(name="system-compute-analyzer")(_run_system_compute_analyzer)
     return app

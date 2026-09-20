@@ -89,18 +89,19 @@ def build_pattern_row(platform_buckets: dict[PlatformName, list[str]]) -> Platfo
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build installer_data.json config entry from GitHub release assets.")
-    parser.add_argument("--repo-url", required=True, help="GitHub repository URL")
-    parser.add_argument("--app-name", required=True, help="Lowercase app name")
-    parser.add_argument("--doc", required=True, help="Short description")
+    parser.add_argument("--repo-url", "-r", required=True, help="GitHub repository URL")
+    parser.add_argument("--app-name", "-a", required=True, help="Lowercase app name")
+    parser.add_argument("--doc", "-d", required=True, help="Short description")
     parser.add_argument(
         "--license",
+        "-L",
         required=False,
         default=None,
         help="Override license string instead of inferring it from GitHub metadata",
     )
-    parser.add_argument("--limit", required=False, default=8, type=int, help="Number of releases to inspect")
-    parser.add_argument("--output", required=False, default="-", help="Output path for JSON object, or '-' for stdout")
-    parser.add_argument("--strict-latest-check", action="store_true", help="Fail if any non-null pattern does not match latest release assets")
+    parser.add_argument("--limit", "-l", required=False, default=8, type=int, help="Number of releases to inspect")
+    parser.add_argument("--output", "-o", required=False, default="-", help="Output path for JSON object, or '-' for stdout")
+    parser.add_argument("--strict-latest-check", "-s", action="store_true", help="Fail if any non-null pattern does not match latest release assets")
     return parser
 
 

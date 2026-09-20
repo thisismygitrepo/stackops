@@ -117,7 +117,7 @@ class CommandDetail(Static):
                 flag_text = f"{flag_text} <{placeholder}>"
             table.add_row(flag_text, opt.description or "")
 
-        table.add_row("--help", "Show this message and exit.")
+        table.add_row("--help, -h", "Show this message and exit.")
         table.title = "Options"
         table.title_style = "bold magenta"
         return table

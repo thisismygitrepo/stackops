@@ -72,12 +72,12 @@ def main() -> int:
             "the settings must allow the agent's network, workspace, executable and state paths."
         )
     )
-    parser.add_argument("--executable", required=True)
-    parser.add_argument("--settings", type=Path, required=True)
-    parser.add_argument("--directory", type=Path, required=True)
-    parser.add_argument("--environment-names", required=True)
-    parser.add_argument("--environment-overrides", required=True)
-    parser.add_argument("--command-json", required=True)
+    parser.add_argument("--executable", "-e", required=True)
+    parser.add_argument("--settings", "-s", type=Path, required=True)
+    parser.add_argument("--directory", "-d", type=Path, required=True)
+    parser.add_argument("--environment-names", "-n", required=True)
+    parser.add_argument("--environment-overrides", "-o", required=True)
+    parser.add_argument("--command-json", "-c", required=True)
     arguments = parser.parse_args()
     if sys.platform != "win32":
         parser.error("This SRT adapter requires native Windows.")

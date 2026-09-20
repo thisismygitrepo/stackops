@@ -119,7 +119,7 @@ def seek(ctx: typer.Context) -> None:
 
 
 def cli(
-    version: Annotated[bool, typer.Option("--version", is_eager=True, help="Show the StackOps version and exit.")] = False,
+    version: Annotated[bool, typer.Option("--version", "-V", is_eager=True, help="Show the StackOps version and exit.")] = False,
 ) -> None:
     if version:
         from stackops.version import get_stackops_version
@@ -129,7 +129,10 @@ def cli(
 
 
 def get_app() -> typer.Typer:
-    app = typer.Typer(help="StackOps CLI - Manage your machine configurations and workflows", no_args_is_help=True, add_help_option=True, add_completion=False)
+    app = typer.Typer(
+        help="StackOps CLI - Manage your machine configurations and workflows", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     app.callback(invoke_without_command=True)(cli)
 
     ctx_settings: dict[str, object] = {"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True, "help_option_names": []}

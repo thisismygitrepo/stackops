@@ -2,6 +2,7 @@
 
 import typer
 from typing import Annotated, Literal
+from typer.completion import completion_init, install_callback, show_callback
 
 
 def get_rclone_config():
@@ -52,6 +53,12 @@ def mount(
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
+    _install_completion: Annotated[
+        bool, typer.Option("--install-completion", "-I", callback=install_callback, expose_value=False, help="Install completion for the current shell.")
+    ] = False,
+    _show_completion: Annotated[
+        bool, typer.Option("--show-completion", "-S", callback=show_callback, expose_value=False, help="Show completion for the current shell, to copy it or customize the installation.")
+    ] = False,
 ) -> None:
     from stackops.utils.options_utils.options import choose_from_options
     from pathlib import Path
@@ -173,7 +180,8 @@ def mount(
 
 
 def get_app():
-    app = typer.Typer(name="cloud-mount", help="Cloud mount utility")
+    completion_init()
+    app = typer.Typer(name="cloud-mount", help="Cloud mount utility", add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
     app.command(name="mount")(mount)
     return app
 

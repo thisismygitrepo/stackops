@@ -41,7 +41,10 @@ def inspect_utils_help_emojis() -> list["EmojiDisplayDiagnostic"]:
 
 
 def get_app() -> typer.Typer:
-    app = typer.Typer(help="⚙ utilities operations", no_args_is_help=True, add_help_option=True, add_completion=False)
+    app = typer.Typer(
+        help="⚙ utilities operations", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     from stackops.scripts.python.helpers.helpers_utils.file_utils_app import get_app as get_file_app
     from stackops.scripts.python.helpers.helpers_utils.machine_utils_app import get_app as get_machine_app
     from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app import get_app as get_pyproject_app

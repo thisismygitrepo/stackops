@@ -21,7 +21,7 @@ def build_cli_graph_app() -> "typer.Typer":
     plotly_views = ("sunburst", "treemap", "icicle")
 
     def tree(
-        show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", "-H", help="Show help text in labels")] = True,
+        show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", "-H/-N", help="Show help text in labels")] = True,
         show_aliases: Annotated[bool, typer.Option("--show-aliases", "-a", help="Include aliases in labels")] = False,
         max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the tree")] = None,
     ) -> None:
@@ -29,7 +29,7 @@ def build_cli_graph_app() -> "typer.Typer":
 
     def dot(
         output: Annotated[Path | None, typer.Option("--output", "-o", help="Write DOT output to a file")] = None,
-        include_help: Annotated[bool, typer.Option("--include-help/--no-include-help", "-H", help="Show help text in labels")] = True,
+        include_help: Annotated[bool, typer.Option("--include-help/--no-include-help", "-H/-N", help="Show help text in labels")] = True,
         max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
     ) -> None:
         run_dot_command(output=output, include_help=include_help, max_depth=max_depth)
@@ -58,7 +58,8 @@ def build_cli_graph_app() -> "typer.Typer":
         run_search_command(graph_path=graph_path, json_output=json_output)
 
     cli_app = typer.Typer(
-        help="🧭 <g> Visualize the StackOps CLI graph in multiple formats.", no_args_is_help=True, add_help_option=True, add_completion=False
+        help="🧭 <g> Visualize the StackOps CLI graph in multiple formats.", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     cli_app.command(name="search", no_args_is_help=False, help="🔎 <s> Search CLI graph entries and show the selected command summary.")(search)
     cli_app.command(name="s", no_args_is_help=False, help="Search CLI graph entries and show the selected command summary.", hidden=True)(search)

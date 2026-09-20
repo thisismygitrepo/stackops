@@ -201,7 +201,14 @@ def report(
 
 
 def get_app() -> typer.Typer:
-    app = typer.Typer(name="security-cli", help="Security related CLI tools.", no_args_is_help=True, add_help_option=True, add_completion=False)
+    app = typer.Typer(
+        name="security-cli",
+        help="Security related CLI tools.",
+        no_args_is_help=True,
+        add_help_option=True,
+        add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
 
     app.command(name="scan", help="<s> Scan installed apps or a single file path with VirusTotal", no_args_is_help=True)(scan)
     app.command(name="s", help="<s> Scan installed apps or a single file path with VirusTotal", hidden=True, no_args_is_help=True)(scan)

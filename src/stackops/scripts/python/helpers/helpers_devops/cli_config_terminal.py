@@ -149,7 +149,10 @@ def shell_group(ctx: typer.Context) -> None:
 def get_app() -> typer.Typer:
     import stackops.scripts.python.helpers.helpers_devops.cli_config_tmux as cli_config_tmux
 
-    shell_app = typer.Typer(help="Configure your terminal profile.", no_args_is_help=False, add_help_option=True, add_completion=False)
+    shell_app = typer.Typer(
+        help="Configure your terminal profile.", no_args_is_help=False, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     shell_app.callback(invoke_without_command=True)(shell_group)
     shell_app.command("config-shell", no_args_is_help=False, help="<s> Create or configure a shell profile.")(configure_shell_profile)
     shell_app.command("s", no_args_is_help=False, help="Create or configure a shell profile.", hidden=True)(configure_shell_profile)

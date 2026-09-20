@@ -68,7 +68,7 @@ def fire(
 
 
 def get_app() -> typer.Typer:
-    app = typer.Typer(add_completion=False)
+    app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
     app.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
     return app
 

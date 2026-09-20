@@ -73,7 +73,12 @@ fi
 ).strip()
 
 console = Console()
-app = typer.Typer(add_completion=False, no_args_is_help=True, help="Convenient GitHub Codespaces CLI over gh.")
+app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Convenient GitHub Codespaces CLI over gh.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -661,7 +666,7 @@ def render_machines_table(summaries: Sequence[MachineSummary]) -> None:
 @app.command("list", help="List codespaces with table, JSON, or names output.", short_help="<l> List codespaces")
 def list_cmd(
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces to list.")] = DEFAULT_LIST_LIMIT,
     output_format: Annotated[OutputFormat, typer.Option("--format", "-f", help="Output format.", case_sensitive=False)] = "table",
 ) -> None:
@@ -691,7 +696,7 @@ def machines_cmd(
     ] = None,
     branch: Annotated[str | None, typer.Option("--branch", "-b", help="Branch or commit to check for repo machines.")] = None,
     location: Annotated[CodespaceLocation | None, typer.Option("--location", "-l", help="Location to check for repo machines.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner when choosing an existing codespace.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner when choosing an existing codespace.")] = None,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
     output_format: Annotated[OutputFormat, typer.Option("--format", "-f", help="Output format.", case_sensitive=False)] = "table",
 ) -> None:
@@ -728,14 +733,14 @@ def create(
     ] = None,
     branch: Annotated[str | None, typer.Option("--branch", "-b", help="Repository branch.")] = None,
     display_name: Annotated[str | None, typer.Option("--display-name", "-d", help="Codespace display name.")] = None,
-    devcontainer_path: Annotated[str | None, typer.Option("--devcontainer-path", help="Path to devcontainer.json.")] = None,
+    devcontainer_path: Annotated[str | None, typer.Option("--devcontainer-path", "-p", help="Path to devcontainer.json.")] = None,
     location: Annotated[CodespaceLocation | None, typer.Option("--location", "-l", help="Codespace location.")] = None,
-    idle_timeout: Annotated[str | None, typer.Option("--idle-timeout", help='Allowed inactivity, for example "10m" or "1h".')] = None,
-    retention_period: Annotated[str | None, typer.Option("--retention-period", help='Retention after shutdown, for example "72h".')] = None,
-    default_permissions: Annotated[bool, typer.Option("--default-permissions", help="Do not prompt for extra permissions.")] = False,
+    idle_timeout: Annotated[str | None, typer.Option("--idle-timeout", "-i", help='Allowed inactivity, for example "10m" or "1h".')] = None,
+    retention_period: Annotated[str | None, typer.Option("--retention-period", "-r", help='Retention after shutdown, for example "72h".')] = None,
+    default_permissions: Annotated[bool, typer.Option("--default-permissions", "-P", help="Do not prompt for extra permissions.")] = False,
     status: Annotated[bool, typer.Option("--status", "-s", help="Show post-create and dotfiles status.")] = False,
     web: Annotated[bool, typer.Option("--web", "-w", help="Create codespace from browser.")] = False,
-    ssh_after: Annotated[bool, typer.Option("--ssh", help="SSH into the newest matching codespace after creation.")] = False,
+    ssh_after: Annotated[bool, typer.Option("--ssh", "-S", help="SSH into the newest matching codespace after creation.")] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Limit used to find newest codespace after --ssh.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     if web and (display_name is not None or idle_timeout is not None or retention_period is not None):
@@ -777,7 +782,7 @@ def ssh(
     ctx: typer.Context,
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     filters = CodespaceFilters(repo=repo, repo_owner=repo_owner, limit=limit)
@@ -800,7 +805,7 @@ def exec_cmd(
     command: Annotated[str, typer.Argument(help="Remote command to run through bash -lic.")],
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     filters = CodespaceFilters(repo=repo, repo_owner=repo_owner, limit=limit)
@@ -827,7 +832,7 @@ def run_script(
     script: Annotated[Path, typer.Argument(help="Local script file to pipe into the codespace.")],
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     shell: Annotated[str, typer.Option("--shell", "-S", help="Remote shell used as '<shell> -s --'.")] = "bash",
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
@@ -847,7 +852,7 @@ def run_script(
 def stop(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     all_: Annotated[bool, typer.Option("--all", "-a", help="Stop every codespace matching the filters.")] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
@@ -864,9 +869,9 @@ def stop(
 def delete(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     all_: Annotated[bool, typer.Option("--all", "-a", help="Delete all codespaces matching gh filters.")] = False,
-    days: Annotated[int | None, typer.Option("--days", min=1, help="Delete codespaces older than N days.")] = None,
+    days: Annotated[int | None, typer.Option("--days", "-d", min=1, help="Delete codespaces older than N days.")] = None,
     force: Annotated[bool, typer.Option("--force", "-f", help="Skip confirmation for unsaved changes.")] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
@@ -910,7 +915,7 @@ def upload(
     ] = None,
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recursively copy directories.")] = False,
     expand: Annotated[
         bool,
@@ -948,7 +953,7 @@ def download(
     local: Annotated[Path, typer.Option("--local", "-l", help="Local destination.")] = DEFAULT_DOWNLOAD_LOCAL,
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recursively copy directories.")] = False,
     expand: Annotated[bool, typer.Option("--expand", "-e", help="Expand remote path on the remote shell.")] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
@@ -973,7 +978,7 @@ def download(
 def view(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     filters = CodespaceFilters(repo=repo, repo_owner=repo_owner, limit=limit)
@@ -989,9 +994,9 @@ def view(
 def code(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     web: Annotated[bool, typer.Option("--web", "-w", help="Open in VS Code web.")] = False,
-    insiders: Annotated[bool, typer.Option("--insiders", help="Use VS Code Insiders.")] = False,
+    insiders: Annotated[bool, typer.Option("--insiders", "-i", help="Use VS Code Insiders.")] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     filters = CodespaceFilters(repo=repo, repo_owner=repo_owner, limit=limit)
@@ -1009,7 +1014,7 @@ def code(
 def jupyter(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     filters = CodespaceFilters(repo=repo, repo_owner=repo_owner, limit=limit)
@@ -1024,7 +1029,7 @@ def jupyter(
 def logs(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     follow: Annotated[bool, typer.Option("--follow", "-f", help="Follow logs.")] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
@@ -1042,8 +1047,8 @@ def logs(
 def ports(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
-    raw_json: Annotated[bool, typer.Option("--json", help="Print gh JSON output.")] = False,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
+    raw_json: Annotated[bool, typer.Option("--json", "-j", help="Print gh JSON output.")] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     filters = CodespaceFilters(repo=repo, repo_owner=repo_owner, limit=limit)
@@ -1061,8 +1066,8 @@ def ports(
 def rebuild(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
-    full: Annotated[bool, typer.Option("--full", help="Perform a full rebuild.")] = False,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
+    full: Annotated[bool, typer.Option("--full", "-f", help="Perform a full rebuild.")] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     filters = CodespaceFilters(repo=repo, repo_owner=repo_owner, limit=limit)
@@ -1082,7 +1087,7 @@ def rebuild(
 def edit(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     display_name: Annotated[str | None, typer.Option("--display-name", "-d", help="New display name.")] = None,
     machine: Annotated[str | None, typer.Option("--machine", "-m", help="New machine type.")] = None,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
@@ -1105,7 +1110,7 @@ def edit(
 def config_cmd(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
-    repo_owner: Annotated[str | None, typer.Option("--repo-owner", help="Filter by repository owner.")] = None,
+    repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write OpenSSH config to this file.")] = None,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:

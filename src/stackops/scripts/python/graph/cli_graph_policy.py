@@ -57,7 +57,7 @@ SHORT_OVERRIDES: dict[tuple[str, str], str] = {
     ("utils file ocr", "--package-spec"): "-P",
     ("fire", "--remote"): "-R",
     ("devops config terminal tmux-style set-option", "--raw"): "-R",
-    ("devops self status", "--ssh"): "-h",
+    ("devops self status", "--ssh"): "-H",
     ("terminal export", "--overwrite"): "-w",
 }
 

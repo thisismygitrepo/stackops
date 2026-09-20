@@ -103,4 +103,6 @@ def make_todo_files(
 
 
 if __name__ == "__main__":
-    typer.run(make_todo_files)
+    app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
+    app.command()(make_todo_files)
+    app()

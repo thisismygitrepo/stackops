@@ -70,8 +70,8 @@ def action(
     push: Annotated[bool, typer.Option("--push", "-p", help="🚀 Push changes across repositories.")] = False,
     message: Annotated[str | None, typer.Option("--message", "-m", help="Commit message. Required with --commit.")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Preview mutating actions without changing repositories.")] = False,
-    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository specification containing sync destinations.")] = None,
-    pwd: Annotated[str | None, typer.Option("--password", help="Password for guard archives; otherwise use GPG keys.")] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-S", help="Repository specification containing sync destinations.")] = None,
+    pwd: Annotated[str | None, typer.Option("--password", "-w", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """🔄 Run Git actions or a shell command across repositories."""
     git_action_selected = status or pull or commit or push
@@ -138,9 +138,9 @@ def capture(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
-    guard: Annotated[bool | None, typer.Option("--guard/--git", help="Use encrypted storage or Git hosts for all repos in this scan; otherwise keep saved settings.")] = None,
+    guard: Annotated[bool | None, typer.Option("--guard/--git", "-g/-G", help="Use encrypted storage or Git hosts for all repos in this scan; otherwise keep saved settings.")] = None,
     cloud: Annotated[str | None, typer.Option("--cloud", "-C", help="Rclone storage profile for --guard; otherwise use saved/default profile.")] = None,
-    ignore_gitignore: Annotated[bool | None, typer.Option("--ignore-gitignore/--respect-gitignore", help="Set whether guard archives include Git-ignored files.")] = None,
+    ignore_gitignore: Annotated[bool | None, typer.Option("--ignore-gitignore/--respect-gitignore", "-I/-R", help="Set whether guard archives include Git-ignored files.")] = None,
 ) -> None:
     """📝 Record repositories into a repos.json specification."""
     from stackops.scripts.python.helpers.helpers_repos.record import main_record as record_repos
@@ -163,26 +163,45 @@ def capture(
 
 def clone(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
+    which: Annotated[
+        str | None, typer.Option("--which", "-w", help="Comma-separated repository names or full destination paths, or 'all' (default).")
+    ] = None,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose repositories with the TV multi-select picker.")] = False,
     checkout_to_commit: Annotated[
         bool, typer.Option("--checkout-to-commit", "-c", help="Check out specific commits listed in the specification.")
     ] = False,
     checkout_to_branch: Annotated[
         bool, typer.Option("--checkout-to-branch", "-b", help="Check out the branch recorded in the specification.")
     ] = False,
-    pwd: Annotated[str | None, typer.Option("--password", help="Password for guard archives; otherwise use GPG keys.")] = None,
+    pwd: Annotated[str | None, typer.Option("--password", "-p", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """📥 Clone Git repositories and sync guard repositories from a specification."""
     if checkout_to_commit and checkout_to_branch:
         typer.echo("❌ Choose only one checkout mode: --checkout-to-commit or --checkout-to-branch.")
         raise typer.Exit(code=1)
+    if which is not None and interactive:
+        typer.echo("❌ --which/-w cannot be combined with --interactive/-i.", err=True)
+        raise typer.Exit(code=1)
 
     checkout_branch_flag = checkout_to_branch
     checkout_commit_flag = checkout_to_commit
     spec_path_self_managed = _resolve_spec_path(specs_path)
+    from stackops.scripts.python.helpers.helpers_devops.cli_repos_selection import select_repositories
     from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos
+    from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec
+
+    try:
+        spec_file = load_repos_spec(path=spec_path_self_managed)
+        repos = select_repositories(repos=spec_file["repos"], which=which, interactive=interactive)
+    except (ValueError, OSError) as error:
+        typer.echo(f"""❌ {error}""", err=True)
+        raise typer.Exit(code=1) from error
+    if not repos:
+        typer.echo("No repositories selected; nothing to sync.")
+        return
 
     results = clone_repos(
-        spec_path=spec_path_self_managed, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag,
+        repos=repos, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag,
         pwd=pwd,
     )
     if any(status == "failed" for status, _message in results):
@@ -191,18 +210,18 @@ def clone(
 
 def checkout_command(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
-    pwd: Annotated[str | None, typer.Option("--password", help="Password for guard archives; otherwise use GPG keys.")] = None,
+    pwd: Annotated[str | None, typer.Option("--password", "-p", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """🔀 Check out specific commits listed in the specification."""
-    clone(specs_path=specs_path, checkout_to_commit=True, checkout_to_branch=False, pwd=pwd)
+    clone(specs_path=specs_path, which=None, interactive=False, checkout_to_commit=True, checkout_to_branch=False, pwd=pwd)
 
 
 def checkout_to_branch_command(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
-    pwd: Annotated[str | None, typer.Option("--password", help="Password for guard archives; otherwise use GPG keys.")] = None,
+    pwd: Annotated[str | None, typer.Option("--password", "-p", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """🔀 Check out the branch recorded in the specification."""
-    clone(specs_path=specs_path, checkout_to_commit=False, checkout_to_branch=True, pwd=pwd)
+    clone(specs_path=specs_path, which=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True, pwd=pwd)
 
 
 def get_app() -> typer.Typer:
@@ -210,7 +229,10 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_repos_version
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_viz import analyze_repo_development, count_lines_in_repo, gource_viz
 
-    repos_apps = typer.Typer(help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False)
+    repos_apps = typer.Typer(
+        help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
 
     repos_apps.command(name="sync", help="📥 <s> Clone Git repositories and sync encrypted guard repositories")(clone)
     repos_apps.command(name="s", help="Clone Git repositories and sync encrypted guard repositories", hidden=True)(clone)

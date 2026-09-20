@@ -209,7 +209,9 @@ def share_terminal(
 
 
 def main_with_parser() -> None:
-    typer.run(share_terminal)
+    app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
+    app.command()(share_terminal)
+    app()
 
 
 if __name__ == "__main__":

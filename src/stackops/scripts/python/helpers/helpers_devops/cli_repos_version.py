@@ -96,7 +96,7 @@ def declare(
     message: Annotated[str, typer.Option("--message", "-m", help="Message describing this version.")],
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing repositories.")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recurse into nested repository directories.")] = False,
-    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository registry containing sync settings.")] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
 ) -> None:
     try:
         repos_root = resolve_workspace(directory=directory)
@@ -120,7 +120,7 @@ def declare(
 def status(
     version: Annotated[str | None, typer.Argument(help="Version identifier to compare with current repository state.")] = None,
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
-    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository registry containing sync settings.")] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
 ) -> None:
     try:
         repos_root = resolve_workspace(directory=directory)
@@ -140,7 +140,7 @@ def checkout(
     version: Annotated[str, typer.Argument(help="Declared version identifier to restore.")],
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Preview checkout without changing repositories.")] = False,
-    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository registry containing current sync settings.")] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing current sync settings.")] = None,
     password: Annotated[str | None, typer.Option("--password", "-p", help="Password for encrypted guard archives.")] = None,
 ) -> None:
     try:
@@ -176,7 +176,8 @@ def checkout(
 
 def get_app() -> typer.Typer:
     app = typer.Typer(
-        help="🏷️ <V> Capture, inspect, and restore repository versions", no_args_is_help=True, add_help_option=True, add_completion=False
+        help="🏷️ <V> Capture, inspect, and restore repository versions", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.command(name="declare", help="🏷️ <d> Capture repository states as a named version")(declare)
     app.command(name="d", help="Capture repository states as a named version", hidden=True)(declare)

@@ -31,7 +31,7 @@ def update(
     copy_assets: Annotated[
         bool,
         typer.Option(
-            "--copy-assets/--no-copy-assets", "-a",
+            "--copy-assets/--no-copy-assets", "-a/-A",
             help="Copy scripts and settings after update (enabled by default; overwrites local assets)."
         ),
     ] = True,
@@ -177,7 +177,7 @@ def status(
     machine: Annotated[bool, typer.Option("--machine", "-m", help="Show the machine/system information section.")] = False,
     shell: Annotated[bool, typer.Option("--shell", "-s", help="Show the shell profile section.")] = False,
     repos: Annotated[bool, typer.Option("--repos", "-r", help="Show the configured repositories section.")] = False,
-    ssh: Annotated[bool, typer.Option("--ssh", "-h", help="Show the SSH configuration section.")] = False,
+    ssh: Annotated[bool, typer.Option("--ssh", "-H", help="Show the SSH configuration section.")] = False,
     configs: Annotated[
         bool, typer.Option("--configs", "--dotfiles", "--symlinks", "-c", "-d", "-l", help="Show the linked config, dotfile, and symlink section.")
     ] = False,
@@ -210,7 +210,10 @@ def get_app() -> typer.Typer:
         security,
     )
 
-    cli_app = typer.Typer(help="🔄 <s> self operations subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    cli_app = typer.Typer(
+        help="🔄 <s> self operations subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     ctx_settings: dict[str, object] = {
         "allow_extra_args": True,
         "allow_interspersed_args": True,

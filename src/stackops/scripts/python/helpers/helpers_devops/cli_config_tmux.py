@@ -221,7 +221,10 @@ def tmux_style_group(ctx: typer.Context) -> None:
 
 
 def get_app() -> typer.Typer:
-    tmux_app = typer.Typer(help="Style tmux through the Oh My Tmux framework.", no_args_is_help=False, add_help_option=True, add_completion=False)
+    tmux_app = typer.Typer(
+        help="Style tmux through the Oh My Tmux framework.", no_args_is_help=False, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     tmux_app.callback(invoke_without_command=True)(tmux_style_group)
     for name, short, help_text, fn in (
         ("install-oh-my-tmux", "i", "<i> Install Oh My Tmux and link tmux to it.", install_oh_my_tmux),

@@ -42,12 +42,12 @@ def parse_arguments(arguments: Sequence[str]) -> tuple[Path, bool]:
     launch_ui = False
     positional_arguments: list[str] = []
     for argument in arguments:
-        if argument == "--ui":
+        if argument in {"--ui", "-u"}:
             launch_ui = True
             continue
         positional_arguments.append(argument)
     if len(positional_arguments) != 1:
-        raise ValueError("Usage: open_db_readonly.py [--ui] <database-path>")
+        raise ValueError("Usage: open_db_readonly.py [--ui/-u] <database-path>")
     return Path(positional_arguments[0]).resolve(), launch_ui
 
 

@@ -7,7 +7,6 @@ from git.exc import GitCommandError
 from rich import print as pprint
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
-from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec
 from stackops.utils.schemas.repos.repos_types import RepoRecordDict, RepoRemote
 
 
@@ -116,10 +115,8 @@ def clone_single_repo(
 
 
 def clone_repos(
-    spec_path: Path, preferred_remote: str | None, checkout_branch_flag: bool, checkout_commit_flag: bool, pwd: str | None
+    repos: list[RepoRecordDict], preferred_remote: str | None, checkout_branch_flag: bool, checkout_commit_flag: bool, pwd: str | None
 ) -> list[tuple[CloneStatus, str]]:
-    spec_file = load_repos_spec(path=spec_path)
-    repos = spec_file["repos"]
     results: list[tuple[CloneStatus, str]] = []
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), MofNCompleteColumn(), TimeElapsedColumn()) as progress:
         task_id = progress.add_task("Processing repositories...", total=len(repos))

@@ -15,9 +15,9 @@ from skill_lib import parse_repo_url
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Scan GitHub releases and classify binary assets by platform/arch.")
-    parser.add_argument("--repo-url", required=True, help="GitHub repository URL, e.g. https://github.com/owner/repo")
-    parser.add_argument("--limit", required=False, default=8, type=int, help="Number of recent releases to inspect")
-    parser.add_argument("--output", required=False, default="-", help="Output JSON path, or '-' for stdout")
+    parser.add_argument("--repo-url", "-r", required=True, help="GitHub repository URL, e.g. https://github.com/owner/repo")
+    parser.add_argument("--limit", "-l", required=False, default=8, type=int, help="Number of recent releases to inspect")
+    parser.add_argument("--output", "-o", required=False, default="-", help="Output JSON path, or '-' for stdout")
     return parser
 
 

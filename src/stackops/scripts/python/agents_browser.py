@@ -374,7 +374,8 @@ def _format_mebibytes(*, byte_count: int) -> str:
 
 def get_app() -> typer.Typer:
     browser_app = typer.Typer(
-        help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False
+        help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, MCP configs, or agents")(
         install_tech

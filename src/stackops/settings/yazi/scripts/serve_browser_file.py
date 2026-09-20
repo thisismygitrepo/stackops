@@ -226,9 +226,9 @@ def serve_browser_target(target_path: Path, host: str, port: int, open_browser: 
 def parse_arguments(arguments: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Serve a local browser-viewable file or directory.")
     parser.add_argument("target", type=Path, help="Browser-viewable file or directory to serve")
-    parser.add_argument("--host", default=DEFAULT_HOST, help="Bind address. Defaults to 0.0.0.0 for LAN access.")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Port to bind. Defaults to a free port.")
-    parser.add_argument("--no-browser", action="store_true", help="Print URLs without opening the default browser.")
+    parser.add_argument("--host", "-H", default=DEFAULT_HOST, help="Bind address. Defaults to 0.0.0.0 for LAN access.")
+    parser.add_argument("--port", "-p", type=int, default=DEFAULT_PORT, help="Port to bind. Defaults to a free port.")
+    parser.add_argument("--no-browser", "-n", action="store_true", help="Print URLs without opening the default browser.")
     return parser.parse_args(arguments)
 
 

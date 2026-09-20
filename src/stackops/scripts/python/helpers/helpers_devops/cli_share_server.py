@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from typer.completion import completion_init, install_callback, show_callback
 
 from stackops.scripts.python.helpers.helpers_devops.cli_share_file import share_file_receive, share_file_send
 
@@ -152,7 +153,24 @@ def web_file_explorer(
 
 
 def get_share_file_app() -> typer.Typer:
-    app = typer.Typer(name="share-file", help="Send or receive files using croc with relay server.")
+    completion_init()
+    app = typer.Typer(
+        name="share-file", help="Send or receive files using croc with relay server.",
+        add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
+
+    @app.callback()
+    def _completion_options(
+        _install_completion: Annotated[
+            bool, typer.Option("--install-completion", "-I", callback=install_callback, expose_value=False, help="Install completion for the current shell.")
+        ] = False,
+        _show_completion: Annotated[
+            bool, typer.Option("--show-completion", "-S", callback=show_callback, expose_value=False, help="Show completion for the current shell, to copy it or customize the installation.")
+        ] = False,
+    ) -> None:
+        pass
+
     app.command(name="send", no_args_is_help=True, hidden=False, help="<s> send files from here.")(share_file_send)
     app.command(name="s", no_args_is_help=True, hidden=True, help="<s> send files from here.")(share_file_send)
     app.command(name="receive", no_args_is_help=True, hidden=False, help="<r> receive files to here.")(share_file_receive)
@@ -160,7 +178,9 @@ def get_share_file_app() -> typer.Typer:
     return app
 
 def main_with_parser() -> None:
-    typer.run(web_file_explorer)
+    app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
+    app.command()(web_file_explorer)
+    app()
 
 
 if __name__ == "__main__":

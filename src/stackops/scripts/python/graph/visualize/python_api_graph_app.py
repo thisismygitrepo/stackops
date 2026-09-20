@@ -42,7 +42,7 @@ def explain_filter() -> None:
 
 def tree(
     graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Use an existing Python API graph JSON file.")] = None,
-    show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", "-H", help="Show help text in labels")] = True,
+    show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", "-H/-N", help="Show help text in labels")] = True,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the tree")] = None,
 ) -> None:
     """Render a rich tree view in the terminal."""
@@ -67,7 +67,7 @@ def tree(
 def dot(
     graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Use an existing Python API graph JSON file.")] = None,
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write DOT output to a file")] = None,
-    include_help: Annotated[bool, typer.Option("--include-help/--no-include-help", "-H", help="Show help text in labels")] = True,
+    include_help: Annotated[bool, typer.Option("--include-help/--no-include-help", "-H/-N", help="Show help text in labels")] = True,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
 ) -> None:
     """Export the graph as Graphviz DOT."""
@@ -184,6 +184,7 @@ def get_app() -> typer.Typer:
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     cli_app.command(name="search", no_args_is_help=False, help="🔎 <s> Search Python API entries and show the selected import summary.")(search)
     cli_app.command(name="s", no_args_is_help=False, help="Search Python API entries and show the selected import summary.", hidden=True)(search)

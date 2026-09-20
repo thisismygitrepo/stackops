@@ -88,10 +88,10 @@ async def _pipe(*, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -
 
 def parse_relay_config(*, argv: Sequence[str]) -> RelayConfig:
     parser = argparse.ArgumentParser(prog="stackops-cdp-relay")
-    parser.add_argument("--listen-host", required=True)
-    parser.add_argument("--listen-port", required=True, type=int)
-    parser.add_argument("--target-host", required=True)
-    parser.add_argument("--target-port", required=True, type=int)
+    parser.add_argument("--listen-host", "-l", required=True)
+    parser.add_argument("--listen-port", "-p", required=True, type=int)
+    parser.add_argument("--target-host", "-t", required=True)
+    parser.add_argument("--target-port", "-P", required=True, type=int)
     namespace = parser.parse_args(argv)
     return RelayConfig(
         listen_host=cast(str, namespace.listen_host),

@@ -104,7 +104,7 @@ def tui_env(
 
 
 def get_machine_specs(
-    hardware: Annotated[bool, typer.Option(..., "--hardware", "-h", help="Show compute capability")] = False,
+    hardware: Annotated[bool, typer.Option(..., "--hardware", "-H", help="Show compute capability")] = False,
 ) -> None:
     import json
 
@@ -162,7 +162,10 @@ def mount_device(
 
 
 def get_app() -> typer.Typer:
-    machine_app = typer.Typer(help="🖥 <m> Machine and device utilities", no_args_is_help=True, add_help_option=True, add_completion=False)
+    machine_app = typer.Typer(
+        help="🖥 <m> Machine and device utilities", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     machine_app.command(name="kill-process", no_args_is_help=False, help="⚔ <k> Choose a process to kill")(kill_process)
     machine_app.command(name="k", no_args_is_help=False, hidden=True)(kill_process)
     machine_app.command(

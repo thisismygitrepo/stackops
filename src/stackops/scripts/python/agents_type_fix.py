@@ -66,6 +66,7 @@ def get_app() -> typer.Typer:
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
     )
     cli_app.callback(invoke_without_command=True)(launch_type_fix)
     return cli_app

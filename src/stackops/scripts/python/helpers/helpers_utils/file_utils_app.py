@@ -269,7 +269,10 @@ def read_db_cli_tui(
 
 
 def get_app() -> typer.Typer:
-    file_app = typer.Typer(help="📁 <f> File, document, and database utilities", no_args_is_help=True, add_help_option=True, add_completion=False)
+    file_app = typer.Typer(
+        help="📁 <f> File, document, and database utilities", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     file_app.command(name="edit", no_args_is_help=False, help="✏ <e> Open a file in the default editor.")(edit_file_with_hx)
     file_app.command(name="e", no_args_is_help=False, hidden=True)(edit_file_with_hx)
     file_app.command(name="download", no_args_is_help=True, help="↓ <d> Download a file from a URL and optionally decompress it.")(download)

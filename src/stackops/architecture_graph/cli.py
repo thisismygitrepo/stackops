@@ -62,9 +62,9 @@ def build_parser() -> argparse.ArgumentParser:
         prog="python -m stackops.architecture_graph",
         description="Generate an interactive HTML dependency graph for StackOps.",
     )
-    parser.add_argument("--source-root", type=Path, default=DEFAULT_SOURCE_ROOT)
-    parser.add_argument("--package-name", default=DEFAULT_PACKAGE_NAME)
-    parser.add_argument("--output", dest="output_path", type=Path, default=DEFAULT_OUTPUT_PATH)
-    parser.add_argument("--depth", type=int, default=DEFAULT_DEPTH)
-    parser.add_argument("--max-depth", type=int, default=DEFAULT_MAX_DEPTH)
+    parser.add_argument("--source-root", "-s", type=Path, default=DEFAULT_SOURCE_ROOT)
+    parser.add_argument("--package-name", "-p", default=DEFAULT_PACKAGE_NAME)
+    parser.add_argument("--output", "-o", dest="output_path", type=Path, default=DEFAULT_OUTPUT_PATH)
+    parser.add_argument("--depth", "-d", type=int, default=DEFAULT_DEPTH)
+    parser.add_argument("--max-depth", "-m", type=int, default=DEFAULT_MAX_DEPTH)
     return parser

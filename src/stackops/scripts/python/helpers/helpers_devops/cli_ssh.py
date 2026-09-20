@@ -90,11 +90,11 @@ def add_ssh_key(
 
 
 def debug_ssh(
-    client_host: Annotated[str | None, typer.Option("--client-host", help="Resolved SSH client host name for Match rules")] = None,
-    client_address: Annotated[str | None, typer.Option("--client-address", help="SSH client source IP address for Match rules")] = None,
-    local_address: Annotated[str | None, typer.Option("--local-address", help="Server local IP address receiving the connection")] = None,
-    local_port: Annotated[int | None, typer.Option("--local-port", help="Server local TCP port receiving the connection", min=1, max=65535)] = None,
-    routing_domain: Annotated[str | None, typer.Option("--routing-domain", help="Optional routing domain for Match RDomain rules")] = None,
+    client_host: Annotated[str | None, typer.Option("--client-host", "-H", help="Resolved SSH client host name for Match rules")] = None,
+    client_address: Annotated[str | None, typer.Option("--client-address", "-c", help="SSH client source IP address for Match rules")] = None,
+    local_address: Annotated[str | None, typer.Option("--local-address", "-a", help="Server local IP address receiving the connection")] = None,
+    local_port: Annotated[int | None, typer.Option("--local-port", "-p", help="Server local TCP port receiving the connection", min=1, max=65535)] = None,
+    routing_domain: Annotated[str | None, typer.Option("--routing-domain", "-r", help="Optional routing domain for Match RDomain rules")] = None,
 ) -> None:
     """🐛 Debug SSH connection"""
     from platform import system
@@ -144,7 +144,10 @@ def debug_ssh(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_ssh_port
 
-    ssh_app = typer.Typer(help="🔐 SSH subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    ssh_app = typer.Typer(
+        help="🔐 SSH subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     ssh_app.command(name="install-server", help="📡 <i> Install SSH server")(install_ssh_server)
     ssh_app.command(name="i", help="Install SSH server", hidden=True)(install_ssh_server)
     ssh_app.command(name="change-port", help="🔌 <p> Change SSH port (Linux/WSL only)")(change_ssh_port)

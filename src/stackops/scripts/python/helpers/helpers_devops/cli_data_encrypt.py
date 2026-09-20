@@ -5,6 +5,7 @@ from typing import Annotated, Literal, NoReturn, TypeAlias
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output import publish_output, validate_output
 from stackops.utils.cloud.encryption import ENCRYPTION_MODES_DISPLAY, EncryptionMode, EncryptionModeChoice, parse_encryption_mode
 from stackops.utils.files.compression import DECOMPRESS_SUPPORTED_FORMATS
 
@@ -69,17 +70,19 @@ def encrypt(
         Path | None,
         typer.Option("--output", "-o", help="📦 Encrypted output path. Defaults to <path>.parent/<name>[.<compression>].gpg."),
     ] = None,
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Replace the existing output file or entire folder.")] = False,
 ) -> None:
     mode = _resolve_encryption(encryption, pwd=pwd, recipient=recipient)
     source = path.expanduser().absolute()
     if not source.exists():
         _fail(f"Path does not exist: {source}")
     output_path = output.expanduser().absolute() if output is not None else _default_encrypted_output(source, compression=compression)
-    if output_path.exists() or output_path.is_symlink():
-        _fail(f"Output path already exists: {output_path}")
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        _encrypt_to_output(source=source, mode=mode, pwd=pwd, recipient=recipient, compression=compression, output_path=output_path)
+        validate_output(source=source, output_path=output_path, overwrite=overwrite)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        _encrypt_to_output(
+            source=source, mode=mode, pwd=pwd, recipient=recipient, compression=compression, output_path=output_path, overwrite=overwrite
+        )
     except (OSError, ValueError, RuntimeError) as exc:
         _fail(str(exc))
     typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Encrypted {source} ==> {output_path}")
@@ -96,6 +99,7 @@ def decrypt(
         Path | None,
         typer.Option("--output", "-o", help="📦 Decrypted output path. Defaults next to the encrypted file with .gpg and archive suffixes stripped."),
     ] = None,
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Replace the existing output file or entire folder.")] = False,
 ) -> None:
     mode = parse_encryption_mode(encryption, label="encryption")
     source = path.expanduser().absolute()
@@ -106,11 +110,10 @@ def decrypt(
     inner_name = source.name.removesuffix(".gpg")
     archive_suffix = _match_archive_suffix(inner_name)
     output_path = output.expanduser().absolute() if output is not None else source.parent / _stripped_artifact_name(inner_name, archive_suffix=archive_suffix)
-    if output_path.exists() or output_path.is_symlink():
-        _fail(f"Output path already exists: {output_path}")
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        _decrypt_to_output(source=source, mode=mode, pwd=pwd, archive_suffix=archive_suffix, output_path=output_path)
+        validate_output(source=source, output_path=output_path, overwrite=overwrite)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        _decrypt_to_output(source=source, mode=mode, pwd=pwd, archive_suffix=archive_suffix, output_path=output_path, overwrite=overwrite)
     except (OSError, ValueError, RuntimeError) as exc:
         _fail(str(exc))
     typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Decrypted {source} ==> {output_path}")
@@ -137,6 +140,7 @@ def _encrypt_to_output(
     recipient: str | None,
     compression: FolderArchiveFormat,
     output_path: Path,
+    overwrite: bool,
 ) -> None:
     from stackops.utils.io import encrypt_file_asymmetric, encrypt_file_symmetric
 
@@ -148,7 +152,7 @@ def _encrypt_to_output(
                 encrypt_file_symmetric(file_path=staged_input, pwd=_symmetric_password(pwd, prompt="🔑 Enter symmetric GPG encryption password: "))
             case "asymmetric":
                 encrypt_file_asymmetric(file_path=staged_input, recipient=recipient)
-        (staging_root / f"{staged_input.name}.gpg").replace(output_path)
+        publish_output(source=source, staged_path=staging_root / f"{staged_input.name}.gpg", output_path=output_path, overwrite=overwrite)
 
 
 def _stage_input(source: Path, *, compression: FolderArchiveFormat, staging_root: Path) -> Path:
@@ -187,7 +191,9 @@ def _stage_input(source: Path, *, compression: FolderArchiveFormat, staging_root
             )
 
 
-def _decrypt_to_output(*, source: Path, mode: EncryptionMode, pwd: str | None, archive_suffix: str | None, output_path: Path) -> None:
+def _decrypt_to_output(
+    *, source: Path, mode: EncryptionMode, pwd: str | None, archive_suffix: str | None, output_path: Path, overwrite: bool
+) -> None:
     from stackops.utils.io import decrypt_file_asymmetric, decrypt_file_symmetric
 
     with TemporaryDirectory(prefix=".stackops-decrypt-", dir=output_path.parent) as temporary_directory:
@@ -201,13 +207,11 @@ def _decrypt_to_output(*, source: Path, mode: EncryptionMode, pwd: str | None, a
                 )
             case "asymmetric":
                 decrypted_artifact = decrypt_file_asymmetric(file_path=staged_encrypted)
-        if archive_suffix is None:
-            decrypted_artifact.replace(output_path)
-            return
-        _restore_archive(artifact=decrypted_artifact, staging_root=staging_root, output_path=output_path)
+        staged_output = decrypted_artifact if archive_suffix is None else _restore_archive(artifact=decrypted_artifact, staging_root=staging_root)
+        publish_output(source=source, staged_path=staged_output, output_path=output_path, overwrite=overwrite)
 
 
-def _restore_archive(*, artifact: Path, staging_root: Path, output_path: Path) -> None:
+def _restore_archive(*, artifact: Path, staging_root: Path) -> Path:
     import stackops.utils.files.compression as path_compression
 
     extraction_root = staging_root / "extracted"
@@ -228,21 +232,12 @@ def _restore_archive(*, artifact: Path, staging_root: Path, output_path: Path) -
             pattern=None,
             merge=False,
         )
-        _place_extracted_entries(sorted(extraction_root.iterdir(), key=lambda entry: entry.name), output_path=output_path)
-        return
-    payload = path_compression.decompress_path(artifact, folder=extraction_root, name=None, path=None, inplace=False, orig=False, verbose=False)
+        payload = extraction_root
+    else:
+        payload = path_compression.decompress_path(artifact, folder=extraction_root, name=None, path=None, inplace=False, orig=False, verbose=False)
     if payload.is_file():
-        payload.replace(output_path)
-        return
-    _place_extracted_entries(sorted(payload.iterdir(), key=lambda entry: entry.name), output_path=output_path)
-
-
-def _place_extracted_entries(entries: list[Path], *, output_path: Path) -> None:
+        return payload
+    entries = sorted(payload.iterdir(), key=lambda entry: entry.name)
     if len(entries) == 0:
         raise ValueError("Archive is empty; nothing to restore.")
-    if len(entries) == 1:
-        entries[0].replace(output_path)
-        return
-    output_path.mkdir(parents=True, exist_ok=False)
-    for entry in entries:
-        entry.replace(output_path / entry.name)
+    return entries[0] if len(entries) == 1 else payload

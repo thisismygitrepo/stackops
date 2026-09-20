@@ -132,7 +132,9 @@ def main(
 
 
 def arg_parser() -> None:
-    typer.run(main)
+    app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
+    app.command()(main)
+    app()
 
 
 if __name__ == "__main__":

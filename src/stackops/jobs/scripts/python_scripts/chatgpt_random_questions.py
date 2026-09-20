@@ -39,7 +39,11 @@ DEFAULT_QUESTIONS = [
 ]
 
 
-app = typer.Typer(add_completion=False, help=("Send random local questions to ChatGPT through an existing logged-in Chrome/Chromium CDP session."))
+app = typer.Typer(
+    add_completion=False,
+    help="Send random local questions to ChatGPT through an existing logged-in Chrome/Chromium CDP session.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 console = Console()
 
 
@@ -281,9 +285,9 @@ async def run_loop(
 @app.command()
 def main(
     cdp_url: Annotated[
-        str, typer.Option("--cdp-url", help="Chrome DevTools Protocol endpoint for the already-running browser.")
+        str, typer.Option("--cdp-url", "-c", help="Chrome DevTools Protocol endpoint for the already-running browser.")
     ] = "http://192.168.0.13:9999",
-    chatgpt_url: Annotated[str, typer.Option("--chatgpt-url", help="ChatGPT URL to open in each new tab.")] = "https://chatgpt.com/",
+    chatgpt_url: Annotated[str, typer.Option("--chatgpt-url", "-u", help="ChatGPT URL to open in each new tab.")] = "https://chatgpt.com/",
     interval_minutes: Annotated[
         float, typer.Option("--interval-minutes", "-i", min=0.0, help="Minutes to wait between cycles. Default is 10 minutes.")
     ] = 10.0,
@@ -297,19 +301,19 @@ def main(
             "--questions-file", "-f", exists=False, dir_okay=False, help="Newline-delimited question file. Empty lines and # comments are ignored."
         ),
     ] = None,
-    seed: Annotated[int | None, typer.Option("--seed", help="Random seed for reproducible question selection.")] = None,
+    seed: Annotated[int | None, typer.Option("--seed", "-s", help="Random seed for reproducible question selection.")] = None,
     pre_submit_wait_seconds: Annotated[
-        float, typer.Option("--pre-submit-wait-seconds", min=0.0, help="Seconds to wait after opening ChatGPT before typing.")
+        float, typer.Option("--pre-submit-wait-seconds", "-w", min=0.0, help="Seconds to wait after opening ChatGPT before typing.")
     ] = 3.0,
     response_timeout_seconds: Annotated[
-        float, typer.Option("--response-timeout-seconds", min=1.0, help="Maximum seconds to wait for a response per cycle.")
+        float, typer.Option("--response-timeout-seconds", "-t", min=1.0, help="Maximum seconds to wait for a response per cycle.")
     ] = 180.0,
-    poll_seconds: Annotated[float, typer.Option("--poll-seconds", min=0.25, help="How often to poll the page while waiting for the response.")] = 1.0,
+    poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", min=0.25, help="How often to poll the page while waiting for the response.")] = 1.0,
     stable_seconds: Annotated[
-        float, typer.Option("--stable-seconds", min=0.5, help="Response text must stay unchanged this long before it is considered done.")
+        float, typer.Option("--stable-seconds", "-S", min=0.5, help="Response text must stay unchanged this long before it is considered done.")
     ] = 2.0,
-    keep_tabs: Annotated[bool, typer.Option("--keep-tabs/--close-tabs", help="Keep each ChatGPT tab open after a cycle.")] = False,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Pick and print a question without connecting to the browser.")] = False,
+    keep_tabs: Annotated[bool, typer.Option("--keep-tabs/--close-tabs", "-k/-K", help="Keep each ChatGPT tab open after a cycle.")] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run", "-d", help="Pick and print a question without connecting to the browser.")] = False,
 ) -> None:
     """Open ChatGPT in a new tab, send a random question, print the response, and repeat."""
 

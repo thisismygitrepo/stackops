@@ -6,7 +6,7 @@ import typer
 
 def count_lines_in_repo(
     repo_path: Annotated[str, typer.Argument(help="Path to the git repository")] = ".",
-    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository registry containing sync settings.")] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
 ) -> None:
     resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
     if not resolved_repo_path.exists():
@@ -78,7 +78,7 @@ def gource_viz(
     hide_items: Annotated[
         list[str] | None,
         typer.Option(
-            ..., "--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames"
+            ..., "--hide", "-H", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames"
         ),
     ] = None,
     key_items: Annotated[bool, typer.Option(..., "--key", "-k", help="Show file extension key")] = False,

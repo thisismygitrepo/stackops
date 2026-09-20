@@ -46,9 +46,9 @@ def main(
     pwd: Annotated[str | None, typer.Option(..., "--password", "-p", help="Password for encryption/decryption of the remote repository.")] = None,
     ignore_gitignore: Annotated[
         bool | None,
-        typer.Option("--ignore-gitignore/--respect-gitignore", help="Override whether the archive includes Git-ignored files."),
+        typer.Option("--ignore-gitignore/--respect-gitignore", "-I/-R", help="Override whether the archive includes Git-ignored files."),
     ] = None,
-    specs_path: Annotated[str | None, typer.Option("--specs-path", help="Repository specification containing saved guard settings.")] = None,
+    specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository specification containing saved guard settings.")] = None,
 ) -> str | None:
     from git.exc import InvalidGitRepositoryError, NoSuchPathError
     from git.repo import Repo

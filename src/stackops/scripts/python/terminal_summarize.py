@@ -28,7 +28,7 @@ def summarize(
         LegacySummarizeBackend | None,
         typer.Option("--backend", "-b", help="Deprecated alias for --vocabulary.", hidden=True),
     ] = None,
-    show_tabs: Annotated[bool, typer.Option("--tabs", help="Show tab names, directories, commands, and weights.")] = False,
+    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Show tab names, directories, commands, and weights.")] = False,
 ) -> None:
     """Summarize a layout file with counts for layouts and tabs."""
     import json

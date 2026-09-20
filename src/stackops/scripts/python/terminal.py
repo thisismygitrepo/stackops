@@ -400,7 +400,10 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.terminal_summary import summary
     from stackops.scripts.python.terminal_summarize import summarize
 
-    layouts_app = typer.Typer(help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False)
+    layouts_app = typer.Typer(
+        help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
 
     layouts_app.command("run", no_args_is_help=False, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)
     layouts_app.command("r", no_args_is_help=False, help=run.__doc__, hidden=True)(run)

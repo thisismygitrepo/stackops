@@ -322,8 +322,8 @@ def register_dotfile(
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name in mapper/dotfiles.yaml. Defaults to the file stem.")] = None,
     section: Annotated[str, typer.Option("--section", "-S", help="Section name in mapper/dotfiles.yaml to record this mapping.")] = "default",
     os_filter: Annotated[str, typer.Option("--os", "-o", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
-    shared: Annotated[bool, typer.Option("--shared", "-h", help="Whether the config file is shared across destinations directory.")] = False,
-    record: Annotated[bool, typer.Option("--record/--no-record", "-r", help="Record the mapping in user's mapper.yaml")] = True,
+    shared: Annotated[bool, typer.Option("--shared", "-H", help="Whether the config file is shared across destinations directory.")] = False,
+    record: Annotated[bool, typer.Option("--record/--no-record", "-r/-R", help="Record the mapping in user's mapper.yaml")] = True,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     from rich.console import Console
@@ -449,7 +449,9 @@ def edit_dotfile(
 
 
 def arg_parser() -> None:
-    typer.run(register_dotfile)
+    app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
+    app.command()(register_dotfile)
+    app()
 
 
 if __name__ == "__main__":

@@ -106,7 +106,7 @@ def visualize(
     title: Annotated[str | None, typer.Option("--title", "-t", help="Title for the visualization")] = None,
     hide_items: Annotated[
         list[str] | None,
-        typer.Option("--hide", "-h", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames"),
+        typer.Option("--hide", "-H", help="Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames"),
     ] = None,
     key_items: Annotated[bool, typer.Option("--key", "-k", help="Show file extension key")] = False,
     fullscreen: Annotated[bool, typer.Option("--fullscreen", "-f", help="Run in fullscreen mode")] = False,
@@ -334,7 +334,10 @@ def install(version: Annotated[str | None, typer.Option(..., "--version", "-v", 
 
 
 if __name__ == "__main__":
-    app = typer.Typer(help="Gource visualization tool for git repositories", add_help_option=False, add_completion=False)
+    app = typer.Typer(
+        help="Gource visualization tool for git repositories", add_help_option=False, add_completion=False,
+        context_settings={"help_option_names": ["-h", "--help"]},
+    )
     app.command()(install)
     app.command()(visualize)
     app()

@@ -17,10 +17,10 @@ ENTRY_KEYS: frozenset[str] = frozenset({"appName", "license", "repoURL", "doc", 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Safely upsert one installer entry into installer_data.json.")
-    parser.add_argument("--installer-data", required=False, default="src/stackops/jobs/installer/installer_data.json", help="Path to installer_data.json")
-    parser.add_argument("--entry-json", required=True, help="Path to JSON produced by build_installer_config.py (contains {entry, checks})")
-    parser.add_argument("--dry-run", action="store_true", help="Show action but do not write")
-    parser.add_argument("--fail-on-check-warnings", action="store_true", help="Abort if build checks contain warnings")
+    parser.add_argument("--installer-data", "-i", required=False, default="src/stackops/jobs/installer/installer_data.json", help="Path to installer_data.json")
+    parser.add_argument("--entry-json", "-e", required=True, help="Path to JSON produced by build_installer_config.py (contains {entry, checks})")
+    parser.add_argument("--dry-run", "-d", action="store_true", help="Show action but do not write")
+    parser.add_argument("--fail-on-check-warnings", "-f", action="store_true", help="Abort if build checks contain warnings")
     return parser
 
 
