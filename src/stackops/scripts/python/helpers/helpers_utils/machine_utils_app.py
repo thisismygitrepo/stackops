@@ -1,6 +1,6 @@
+from enum import StrEnum
 from typing import Annotated, Literal, TypeAlias
 
-import click
 import typer
 
 from stackops.scripts.python.helpers.helpers_utils.autostart_common import CATEGORY_FILTERS
@@ -29,6 +29,16 @@ ProcessSearchField: TypeAlias = Literal[
 ]
 EnvironmentSelector: TypeAlias = Literal["PATH", "p", "ENV", "e"]
 MountBackendOption: TypeAlias = Literal["mount", "dislocker", "udisksctl"]
+
+
+class AutostartCategoryOption(StrEnum):
+    NETWORK = "network"
+    STORAGE = "storage"
+    APPS = "apps"
+    MONITORING = "monitoring"
+    DESKTOP = "desktop"
+    SYSTEM = "system"
+    OTHER = "other"
 
 
 def kill_process(
@@ -136,9 +146,9 @@ def list_devices() -> None:
 def list_autostart(
     show_all: Annotated[bool, typer.Option("--all", help="Include standard OS services alongside notable ones.")] = False,
     category: Annotated[
-        list[str] | None,
+        list[AutostartCategoryOption] | None,
         typer.Option(
-            "--category", "-c", click_type=click.Choice(list(CATEGORY_FILTERS), case_sensitive=False),
+            "--category", "-c", case_sensitive=False,
             help="Filter by the displayed category. Repeat to include multiple categories.",
         ),
     ] = None,
