@@ -9,13 +9,13 @@ from stackops.cluster.sessions_managers.session_conflict import (
 )
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from stackops.cluster.sessions_managers.monitoring_types import StartResult
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 
 BackendName = Literal["tmux", "herdr"]
 
 
 def select_layout(layouts_json_file: str, selected_layouts_names: list[str], select_interactively: bool) -> list["LayoutConfig"]:
     """Select layout(s) from a layout file."""
-    from stackops.utils.schemas.layouts.layout_types import LayoutConfig
     from stackops.utils.schemas.yaml_schema import JsonValue
 
     json_str = Path(layouts_json_file).read_text(encoding="utf-8")
@@ -162,8 +162,3 @@ def run_layouts(
                     time.sleep(sleep_inbetween)
         case _:
             raise ValueError(f"Unsupported backend: {backend}")
-
-
-if __name__ == "__main__":
-    from stackops.utils.schemas.layouts.layout_types import LayoutConfig
-    _ = LayoutConfig
