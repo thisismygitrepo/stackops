@@ -58,8 +58,8 @@
       "appName": "nub",
       "license": "MIT License",
       "repoURL": "https://github.com/nubjs/nub",
-      "lastCommitDate": "2026-09-04T12:29:30Z",
-      "lastCommitDateCheckDate": "2026-09-04T13:53:29Z",
+      "lastCommitDate": "2026-09-21T21:34:22Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "All-in-one Node.js toolkit: TypeScript-first runtime, fast package manager, script runner, and Node version manager in one Rust binary.",
       "categoryLabels": [
         "languages-runtimes"
@@ -102,8 +102,8 @@
       "appName": "mise",
       "license": "MIT License",
       "repoURL": "https://github.com/jdx/mise",
-      "lastCommitDate": "2026-08-15T00:14:11Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:30:44Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Dev tools, env vars, and tasks in one CLI.",
       "categoryLabels": [
         "system-setup",
@@ -126,8 +126,8 @@
       "appName": "pkgx",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/pkgxdev/pkgx",
-      "lastCommitDate": "2026-08-10T16:13:03Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-26T00:23:26Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Run any package, command, or project dependency on demand.",
       "categoryLabels": [
         "system-setup",
@@ -150,8 +150,8 @@
       "appName": "scrcpy",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/Genymobile/scrcpy",
-      "lastCommitDate": "2026-07-12T18:10:40Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-05T10:06:07Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "This application mirrors Android devices",
       "categoryLabels": [
         "qr-mobile-device-tools"
@@ -173,8 +173,8 @@
       "appName": "fx",
       "license": "MIT License",
       "repoURL": "https://github.com/antonmedv/fx",
-      "lastCommitDate": "2026-07-28T11:36:44Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-26T14:49:31Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧙‍♂️ Command-line JSON viewer",
       "categoryLabels": [
         "data-format-tools"
@@ -227,8 +227,8 @@
       "appName": "jq",
       "license": "MIT License",
       "repoURL": "https://github.com/jqlang/jq",
-      "lastCommitDate": "2026-08-12T19:02:39Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T06:21:29Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧙‍♂️ Command-line JSON processor",
       "categoryLabels": [
         "data-format-tools"
@@ -250,8 +250,8 @@
       "appName": "yq",
       "license": "MIT License",
       "repoURL": "https://github.com/mikefarah/yq",
-      "lastCommitDate": "2026-08-03T03:31:47Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-15T23:30:12Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧙‍♂️ Command-line YAML, JSON, XML, CSV processor",
       "categoryLabels": [
         "data-format-tools"
@@ -274,7 +274,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/ys-l/csvlens",
       "lastCommitDate": "2026-07-04T16:40:19Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧙‍♂️ Command-line CSV viewer",
       "categoryLabels": [
         "data-format-tools"
@@ -296,8 +296,8 @@
       "appName": "magick",
       "license": "ImageMagick License",
       "repoURL": "https://github.com/ImageMagick/ImageMagick",
-      "lastCommitDate": "2026-08-14T23:07:38Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T02:19:34Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧙‍♂️ Command-line image manipulation tool",
       "categoryLabels": [
         "graphics-images-ocr-diagrams"
@@ -340,8 +340,8 @@
       "appName": "pistol",
       "license": "MIT License",
       "repoURL": "https://github.com/doronbehar/pistol",
-      "lastCommitDate": "2026-08-12T10:05:27Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-18T08:23:58Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "👁️ file previewer.",
       "categoryLabels": [
         "file-operations-archives"
@@ -364,7 +364,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/imsnif/diskonaut",
       "lastCommitDate": "2022-02-19T09:11:54Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💾 like dua, diskonaut is a terminal disk space navigator.",
       "categoryLabels": [
         "storage-backup-sync",
@@ -387,8 +387,8 @@
       "appName": "xplr",
       "license": "MIT License",
       "repoURL": "https://github.com/sayanarijit/xplr",
-      "lastCommitDate": "2026-08-06T08:11:14Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-16T10:32:48Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 A terminal file explorer with vi keybindings",
       "categoryLabels": [
         "file-managers"
@@ -410,8 +410,8 @@
       "appName": "btop",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/aristocratos/btop",
-      "lastCommitDate": "2026-08-08T19:49:45Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T10:05:57Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📊 btop is a resource monitor for Linux, FreeBSD and MacOS.",
       "categoryLabels": [
         "monitoring-performance"
@@ -434,7 +434,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/sorenisanerd/gotty",
       "lastCommitDate": "2026-05-24T20:23:20Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🌐 gotty is a simple command line tool that turns your CLI tools into web applications.",
       "categoryLabels": [
         "terminal-workspaces",
@@ -457,8 +457,8 @@
       "appName": "joshuto",
       "license": "GNU Lesser General Public License v3.0",
       "repoURL": "https://github.com/kamiyaa/joshuto",
-      "lastCommitDate": "2026-07-19T02:00:50Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-17T14:54:56Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 A terminal file manager written in Rust.",
       "categoryLabels": [
         "file-managers"
@@ -480,8 +480,8 @@
       "appName": "mprocs",
       "license": "MIT License",
       "repoURL": "https://github.com/pvolok/mprocs",
-      "lastCommitDate": "2026-07-20T21:59:54Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-13T19:37:35Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🖥️ Windows/Linux/macOS terminal process manager",
       "categoryLabels": [
         "terminal-workspaces"
@@ -503,8 +503,8 @@
       "appName": "process-compose",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/F1bonacc1/process-compose",
-      "lastCommitDate": "2026-07-31T21:54:32Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-17T22:59:01Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Process Compose is a simple and flexible scheduler and orchestrator to manage non-containerized applications.",
       "categoryLabels": [
         "build-devops-containers"
@@ -642,8 +642,8 @@
       "appName": "croc",
       "license": "MIT",
       "repoURL": "https://github.com/schollz/croc",
-      "lastCommitDate": "2026-08-12T18:25:51Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T12:21:59Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🦎 Easily and securely send and share things from one computer to another",
       "categoryLabels": [
         "file-transfer-sharing"
@@ -666,7 +666,7 @@
       "license": "EUPL-1.2",
       "repoURL": "https://github.com/magic-wormhole/magic-wormhole.rs",
       "lastCommitDate": "2026-07-22T14:18:57Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🐛 Get things from one computer to another, safely (Rust implementation)",
       "categoryLabels": [
         "file-transfer-sharing"
@@ -731,7 +731,7 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/asciinema/asciinema",
       "lastCommitDate": "2026-08-14T09:03:51Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎥 Terminal session recorder",
       "categoryLabels": [
         "presentations-recording"
@@ -775,7 +775,7 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/cowboy8625/rusty-rain",
       "lastCommitDate": "2026-05-11T23:58:17Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🌧️ cross-platform cmatrix-like terminal rain animation",
       "categoryLabels": [
         "terminal-fun-visuals"
@@ -839,8 +839,8 @@
       "appName": "ugrep",
       "license": "BSD-3-Clause",
       "repoURL": "https://github.com/Genivia/ugrep",
-      "lastCommitDate": "2026-08-05T14:31:46Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-15T11:41:49Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 A fast, portable, feature-rich command-line search tool",
       "categoryLabels": [
         "search-navigation"
@@ -885,7 +885,7 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/gsass1/NTop",
       "lastCommitDate": "2024-12-23T08:38:23Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📊 Like htop, for Windows",
       "categoryLabels": [
         "monitoring-performance",
@@ -929,8 +929,8 @@
       "appName": "bat",
       "license": "MIT OR Apache-2.0",
       "repoURL": "https://github.com/sharkdp/bat",
-      "lastCommitDate": "2026-08-11T14:39:20Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-04T19:10:30Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🦇 A cat(1) clone with wings.",
       "categoryLabels": [
         "file-operations-archives"
@@ -952,8 +952,8 @@
       "appName": "broot",
       "license": "MIT",
       "repoURL": "https://github.com/Canop/broot",
-      "lastCommitDate": "2026-08-13T06:55:41Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T17:49:25Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🌳 broot is an fzf variant for folder structure and layered search.",
       "categoryLabels": [
         "search-navigation",
@@ -976,8 +976,8 @@
       "appName": "btm",
       "license": "MIT",
       "repoURL": "https://github.com/ClementTsang/bottom",
-      "lastCommitDate": "2026-08-13T17:53:32Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:23:09Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📊 bottom is a cross-platform graphical process/system monitor with a customizable interface and a multitude of features.",
       "categoryLabels": [
         "monitoring-performance"
@@ -1030,8 +1030,8 @@
       "appName": "cloudflared",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/cloudflare/cloudflared",
-      "lastCommitDate": "2026-08-14T11:22:52Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T15:54:54Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "☁️ Cloudflared installer. Should only be installed at main computer and servers of tunnels.",
       "categoryLabels": [
         "tunnels-remote-access",
@@ -1133,8 +1133,8 @@
       "appName": "headscale",
       "license": "BSD-3-Clause",
       "repoURL": "https://github.com/juanfont/headscale",
-      "lastCommitDate": "2026-07-29T09:03:23Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-15T12:37:20Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🏠 Self-hosted Tailscale control server.",
       "categoryLabels": [
         "tunnels-remote-access",
@@ -1158,7 +1158,7 @@
       "license": "GPL-2.0 license",
       "repoURL": "https://github.com/Dr-Noob/cpufetch",
       "lastCommitDate": "2025-11-01T08:17:02Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💻 cpufetch is a small yet fancy CPU architecture fetching tool, like fastfetch but for CPUs.",
       "categoryLabels": [
         "monitoring-performance"
@@ -1180,8 +1180,8 @@
       "appName": "delta",
       "license": "MIT license",
       "repoURL": "https://github.com/dandavison/delta",
-      "lastCommitDate": "2026-07-30T04:11:51Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T14:00:26Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "👀 A viewer for git and diff output",
       "categoryLabels": [
         "version-control"
@@ -1203,8 +1203,8 @@
       "appName": "hunk",
       "license": "MIT License",
       "repoURL": "https://github.com/modem-dev/hunk",
-      "lastCommitDate": "2026-08-14T23:06:31Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T13:45:04Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Review-first terminal diff viewer for agent-authored changesets.",
       "categoryLabels": [
         "version-control",
@@ -1227,8 +1227,8 @@
       "appName": "tuicr",
       "license": "MIT License",
       "repoURL": "https://github.com/agavra/tuicr",
-      "lastCommitDate": "2026-08-13T19:02:48Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T23:42:45Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Code review TUI with vim keybindings and GitHub or GitLab export.",
       "categoryLabels": [
         "version-control"
@@ -1250,8 +1250,8 @@
       "appName": "diffnav",
       "license": "MIT license",
       "repoURL": "https://github.com/dlvhdr/diffnav",
-      "lastCommitDate": "2026-08-08T10:42:08Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-01T13:05:27Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧭 A git diff pager based on delta with a file tree.",
       "categoryLabels": [
         "version-control"
@@ -1273,8 +1273,8 @@
       "appName": "dua",
       "license": "MIT license",
       "repoURL": "https://github.com/Byron/dua-cli",
-      "lastCommitDate": "2026-08-14T14:36:05Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-12T16:19:13Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💾 Rust-based cli tool to get a quick overview of disk usage.",
       "categoryLabels": [
         "storage-backup-sync",
@@ -1297,8 +1297,8 @@
       "appName": "fastfetch",
       "license": "MIT license",
       "repoURL": "https://github.com/fastfetch-cli/fastfetch",
-      "lastCommitDate": "2026-08-14T16:00:27Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T16:45:40Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💻 fastfetch is a system information tool written in C.",
       "categoryLabels": [
         "monitoring-performance"
@@ -1320,8 +1320,8 @@
       "appName": "fd",
       "license": "Apache-2.0 license / MIT license",
       "repoURL": "https://github.com/sharkdp/fd",
-      "lastCommitDate": "2026-08-09T07:42:46Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T06:50:40Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 fd is a simple, fast and user-friendly alternative to find.",
       "categoryLabels": [
         "search-navigation"
@@ -1343,8 +1343,8 @@
       "appName": "fzf",
       "license": "MIT license",
       "repoURL": "https://github.com/junegunn/fzf",
-      "lastCommitDate": "2026-08-14T10:16:31Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-14T03:16:10Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 a general-purpose cli fuzzy finder.",
       "categoryLabels": [
         "search-navigation"
@@ -1366,8 +1366,8 @@
       "appName": "tv",
       "license": "MIT license",
       "repoURL": "https://github.com/alexpasmantier/television",
-      "lastCommitDate": "2026-07-30T22:34:09Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T13:02:04Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 A fast and hackable fuzzy finder for the terminal.",
       "categoryLabels": [
         "search-navigation"
@@ -1390,7 +1390,7 @@
       "license": "MIT license",
       "repoURL": "https://github.com/gitui-org/gitui",
       "lastCommitDate": "2026-07-31T10:39:02Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🐙 gitui is a terminal ui for git written in rust.",
       "categoryLabels": [
         "version-control"
@@ -1412,8 +1412,8 @@
       "appName": "aptui",
       "license": "MIT License",
       "repoURL": "https://github.com/mexirica/aptui",
-      "lastCommitDate": "2026-06-29T11:14:06Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-14T21:08:00Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "APT package manager TUI for Debian and Ubuntu-based Linux distributions.",
       "categoryLabels": [
         "system-setup"
@@ -1445,8 +1445,8 @@
       "appName": "glow",
       "license": "MIT license",
       "repoURL": "https://github.com/charmbracelet/glow/",
-      "lastCommitDate": "2026-08-12T20:56:12Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-01T13:59:13Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "✨ Render markdown on the CLI, with pizzazz!",
       "categoryLabels": [
         "documents-markdown-latex"
@@ -1468,8 +1468,8 @@
       "appName": "gum",
       "license": "MIT license",
       "repoURL": "https://github.com/charmbracelet/gum",
-      "lastCommitDate": "2026-08-12T20:39:39Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-11T05:25:14Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎯 Prompt user to select from options, written in golang.",
       "categoryLabels": [
         "productivity-knowledge"
@@ -1491,8 +1491,8 @@
       "appName": "lf",
       "license": "MIT license",
       "repoURL": "https://github.com/gokcehan/lf",
-      "lastCommitDate": "2026-08-13T23:43:39Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-15T06:25:47Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 lf is a terminal file manager written in go.",
       "categoryLabels": [
         "file-managers"
@@ -1514,8 +1514,8 @@
       "appName": "clifm",
       "license": "GPL version 2 (or later)",
       "repoURL": "https://github.com/leo-arch/clifm",
-      "lastCommitDate": "2026-08-14T00:08:43Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T02:05:59Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 A terminal file manager with vim-like keybindings.",
       "categoryLabels": [
         "file-managers"
@@ -1537,8 +1537,8 @@
       "appName": "lsd",
       "license": "Apache-2.0 license",
       "repoURL": "https://github.com/lsd-rs/lsd",
-      "lastCommitDate": "2026-07-25T17:01:57Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-17T07:13:43Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 A modern replacement for ls written in Rust.",
       "categoryLabels": [
         "file-managers"
@@ -1603,8 +1603,8 @@
       "appName": "mcfly",
       "license": "MIT license",
       "repoURL": "https://github.com/cantino/mcfly",
-      "lastCommitDate": "2026-03-27T18:32:00Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-01T03:36:03Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🚀 Fly through your shell history. Great Scott!",
       "categoryLabels": [
         "terminals-shells",
@@ -1627,8 +1627,8 @@
       "appName": "ouch",
       "license": "MIT License",
       "repoURL": "https://github.com/ouch-org/ouch",
-      "lastCommitDate": "2026-07-29T03:26:04Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-17T05:34:45Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📦 A cli for extracting and creating archives in unified way.",
       "categoryLabels": [
         "file-operations-archives"
@@ -1650,8 +1650,8 @@
       "appName": "procs",
       "license": "MIT license",
       "repoURL": "https://github.com/dalance/procs/",
-      "lastCommitDate": "2026-08-10T20:05:40Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-16T20:11:21Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📊 procs is a modern replacement for ps written in Rust.",
       "categoryLabels": [
         "monitoring-performance"
@@ -1673,8 +1673,8 @@
       "appName": "rclone",
       "license": "MIT license",
       "repoURL": "https://github.com/rclone/rclone",
-      "lastCommitDate": "2026-08-14T18:18:26Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T17:19:15Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "☁️ cli to sync to cloud storage providers.",
       "categoryLabels": [
         "storage-backup-sync",
@@ -1697,8 +1697,8 @@
       "appName": "meilisearch",
       "license": "MIT AND BUSL-1.1",
       "repoURL": "https://github.com/meilisearch/meilisearch",
-      "lastCommitDate": "2026-08-13T09:36:25Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-17T12:53:20Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 semantic search at lightening speed",
       "categoryLabels": [
         "search-navigation",
@@ -1722,7 +1722,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/run-llama/semtools",
       "lastCommitDate": "2026-03-11T14:29:17Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Semantic search and document parsing tools for the command line",
       "categoryLabels": [
         "search-navigation",
@@ -1745,8 +1745,8 @@
       "appName": "ast-grep",
       "license": "MIT License",
       "repoURL": "https://github.com/ast-grep/ast-grep",
-      "lastCommitDate": "2026-08-14T13:55:13Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-18T13:31:53Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 grep for code - search and rewrite code with ASTs",
       "categoryLabels": [
         "search-navigation"
@@ -1769,7 +1769,7 @@
       "license": "MIT License OR The Unlicense",
       "repoURL": "https://github.com/BurntSushi/ripgrep",
       "lastCommitDate": "2026-08-04T14:00:08Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 recursively searches directories for a regex pattern while respecting your gitignore rules",
       "categoryLabels": [
         "search-navigation"
@@ -1791,8 +1791,8 @@
       "appName": "rga",
       "license": "GNU Affero General Public License v3.0",
       "repoURL": "https://github.com/phiresky/ripgrep-all",
-      "lastCommitDate": "2026-03-25T15:21:58Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-17T11:25:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 ripgrep, but also search in PDFs, E-Books, Office documents, zip, tar.gz, etc.",
       "categoryLabels": [
         "search-navigation"
@@ -1836,8 +1836,8 @@
       "appName": "starship",
       "license": "ISC License",
       "repoURL": "https://github.com/starship/starship",
-      "lastCommitDate": "2026-08-14T23:54:16Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T10:15:07Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "⭐ The minimal, blazing-fast, and infinitely customizable prompt for any shell!",
       "categoryLabels": [
         "terminals-shells"
@@ -1860,7 +1860,7 @@
       "license": "European Union Public License 1.2",
       "repoURL": "https://github.com/mgunyho/tere",
       "lastCommitDate": "2026-03-09T09:38:02Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 Tere is a terminal file explorer written in Rust. No more ls + cd",
       "categoryLabels": [
         "search-navigation",
@@ -1883,8 +1883,8 @@
       "appName": "topgrade",
       "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/topgrade-rs/topgrade",
-      "lastCommitDate": "2026-08-09T11:55:22Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T18:30:21Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "⬆️ Keeping your system up to date usually involves invoking multiple package managers.",
       "categoryLabels": [
         "system-setup"
@@ -1907,7 +1907,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/tsl0922/ttyd",
       "lastCommitDate": "2026-08-12T03:39:18Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🌐 ttyd shares your terminal on the web.",
       "categoryLabels": [
         "terminal-workspaces",
@@ -1930,8 +1930,8 @@
       "appName": "upterm",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/owenthereal/upterm",
-      "lastCommitDate": "2026-07-13T04:42:10Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T04:50:27Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🌐 upterm is a terminal multiplexer that allows you to share your terminal session over the web.",
       "categoryLabels": [
         "terminal-workspaces",
@@ -1955,7 +1955,7 @@
       "license": "MIT",
       "repoURL": "https://github.com/atanunq/viu",
       "lastCommitDate": "2025-12-15T10:20:03Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🖼️ A cli image viewer for the terminal (like chafa & ueberzugpp but in Rust)",
       "categoryLabels": [
         "graphics-images-ocr-diagrams",
@@ -2042,8 +2042,8 @@
       "appName": "poppler",
       "license": "MIT",
       "repoURL": "https://github.com/oschwartz10612/poppler-windows",
-      "lastCommitDate": "2026-05-04T04:35:27Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-15T15:49:29Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "PDF rendering library - Windows builds.",
       "categoryLabels": [
         "documents-markdown-latex",
@@ -2076,8 +2076,8 @@
       "appName": "resvg",
       "license": "Apache-2.0 OR MIT",
       "repoURL": "https://github.com/linebender/resvg",
-      "lastCommitDate": "2026-08-13T12:38:06Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-16T04:36:38Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "SVG rendering library - Windows builds.",
       "categoryLabels": [
         "graphics-images-ocr-diagrams"
@@ -2099,8 +2099,8 @@
       "appName": "watchexec",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/watchexec/watchexec",
-      "lastCommitDate": "2026-08-12T07:47:10Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-15T10:34:31Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "👀 Executes commands in response to file modifications.",
       "categoryLabels": [
         "build-devops-containers"
@@ -2143,8 +2143,8 @@
       "appName": "zoxide",
       "license": "MIT",
       "repoURL": "https://github.com/ajeetdsouza/zoxide",
-      "lastCommitDate": "2026-08-10T18:53:35Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T19:30:14Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🚀 A cd command that learns - easily navigate directories from the command-line",
       "categoryLabels": [
         "terminals-shells",
@@ -2168,7 +2168,7 @@
       "license": "GPL-2.0-only",
       "repoURL": "https://github.com/sudipghimire533/ytui-music",
       "lastCommitDate": "2025-03-03T20:21:40Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎵 A terminal based YouTube music player written in Rust.",
       "categoryLabels": [
         "media-audio-video"
@@ -2196,7 +2196,7 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/Siriusmart/youtube-tui",
       "lastCommitDate": "2026-05-29T20:44:37Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎵 An aesthetically pleasing YouTube TUI written in Rust.",
       "categoryLabels": [
         "media-audio-video"
@@ -2270,8 +2270,8 @@
       "appName": "ostt",
       "license": "MIT License",
       "repoURL": "https://github.com/kristoferlund/ostt",
-      "lastCommitDate": "2026-08-12T11:37:36Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T07:57:15Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Open source voice-to-text for the terminal.",
       "categoryLabels": [
         "media-audio-video",
@@ -2325,8 +2325,8 @@
       "appName": "termusic",
       "license": "MIT and GPL-3.0",
       "repoURL": "https://github.com/tramhao/termusic",
-      "lastCommitDate": "2026-08-01T18:34:42Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T00:31:30Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎵 A terminal-based music player written in Rust.",
       "categoryLabels": [
         "media-audio-video"
@@ -2359,7 +2359,7 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/TrevorSatori/kronos",
       "lastCommitDate": "2024-12-22T00:50:43Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎵 A Customizable Terminal Music Player For Offline Listening",
       "categoryLabels": [
         "media-audio-video"
@@ -2381,8 +2381,8 @@
       "appName": "transmission",
       "license": "GNU GPLv2 or GNU GPLv3",
       "repoURL": "https://github.com/transmission/transmission",
-      "lastCommitDate": "2026-08-03T14:57:37Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-04T16:40:20Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📥 A fast, easy, and free BitTorrent client.",
       "categoryLabels": [
         "file-transfer-sharing"
@@ -2404,8 +2404,8 @@
       "appName": "nnn",
       "license": "BSD-2-Clause",
       "repoURL": "https://github.com/jarun/nnn",
-      "lastCommitDate": "2026-08-11T20:36:15Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T15:09:26Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 A terminal-based file manager.",
       "categoryLabels": [
         "file-managers"
@@ -2428,7 +2428,7 @@
       "license": "EUPL-1.2",
       "repoURL": "https://github.com/eza-community/eza",
       "lastCommitDate": "2026-07-09T09:35:56Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 A modern replacement for ls. lsd alternative.",
       "categoryLabels": [
         "file-managers"
@@ -2451,7 +2451,7 @@
       "license": "Apache-2.0 or MIT",
       "repoURL": "https://github.com/koute/bytehound",
       "lastCommitDate": "2023-07-28T13:24:26Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 Inspecting the memory usage of a running process",
       "categoryLabels": [
         "monitoring-performance"
@@ -2495,8 +2495,8 @@
       "appName": "atuin",
       "license": "MIT License",
       "repoURL": "https://github.com/atuinsh/atuin",
-      "lastCommitDate": "2026-08-14T04:35:01Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T22:04:14Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 Shell history search tool. Mcfly alternative",
       "categoryLabels": [
         "terminals-shells",
@@ -2520,7 +2520,7 @@
       "license": "GNU Lesser General Public License v2.1",
       "repoURL": "https://github.com/browsh-org/browsh",
       "lastCommitDate": "2025-07-11T16:32:49Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🌐 browser in the shell",
       "categoryLabels": [
         "browsers-web-access"
@@ -2543,7 +2543,7 @@
       "license": "BSD 3-Clause License",
       "repoURL": "https://github.com/fathyb/carbonyl",
       "lastCommitDate": "2023-02-26T21:31:10Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "A Chromium based browser built to run in a terminal",
       "categoryLabels": [
         "browsers-web-access"
@@ -2566,7 +2566,7 @@
       "license": "GNU General Public License v2.0",
       "repoURL": "https://github.com/jaspervdj/patat",
       "lastCommitDate": "2026-06-25T17:49:57Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎯 Terminal-based presentations using Pandoc. Presenterm alternative.",
       "categoryLabels": [
         "documents-markdown-latex",
@@ -2683,8 +2683,8 @@
       "appName": "sqliteBrowser",
       "license": "Mozilla Public License 2.0 OR GNU General Public License v3.0 or later",
       "repoURL": "https://github.com/sqlitebrowser/sqlitebrowser",
-      "lastCommitDate": "2026-08-09T10:11:16Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T13:04:12Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ A visual tool to create, design, and edit database files compatible with SQLite.",
       "categoryLabels": [
         "databases"
@@ -2706,8 +2706,8 @@
       "appName": "dbeaver",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/dbeaver/dbeaver",
-      "lastCommitDate": "2026-08-14T17:16:26Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T17:41:10Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ Free universal database tool and SQL client.",
       "categoryLabels": [
         "databases"
@@ -2730,7 +2730,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/sosedoff/pgweb/",
       "lastCommitDate": "2026-07-03T15:46:49Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ Web-based PostgreSQL database browser written in Go",
       "categoryLabels": [
         "databases"
@@ -2752,8 +2752,8 @@
       "appName": "dbgate",
       "license": "GPL-3.0 license",
       "repoURL": "https://github.com/dbgate/dbgate",
-      "lastCommitDate": "2026-08-13T12:37:36Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T12:26:36Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ Cross-platform database manager for developers and database administrators",
       "categoryLabels": [
         "databases"
@@ -2775,8 +2775,8 @@
       "appName": "rainfrog",
       "license": "MIT license",
       "repoURL": "https://github.com/achristmascarl/rainfrog",
-      "lastCommitDate": "2026-08-08T06:03:42Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-17T04:04:36Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ TUI DB Visualizer",
       "categoryLabels": [
         "databases"
@@ -2798,8 +2798,8 @@
       "appName": "lazysql",
       "license": "MIT license",
       "repoURL": "https://github.com/jorgerojas26/lazysql",
-      "lastCommitDate": "2026-07-24T00:26:15Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-17T21:33:28Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ TUI DB Visualizer",
       "categoryLabels": [
         "databases"
@@ -2821,8 +2821,8 @@
       "appName": "dblab",
       "license": "MIT license",
       "repoURL": "https://github.com/danvergara/dblab",
-      "lastCommitDate": "2026-08-14T20:36:02Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-09T04:05:14Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ TUI database client",
       "categoryLabels": [
         "databases"
@@ -2844,8 +2844,8 @@
       "appName": "usql",
       "license": "MIT license",
       "repoURL": "https://github.com/xo/usql",
-      "lastCommitDate": "2026-04-01T00:30:48Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:38:09Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ Universal command-line database client",
       "categoryLabels": [
         "databases"
@@ -2867,8 +2867,8 @@
       "appName": "harlequin",
       "license": "MIT license",
       "repoURL": "https://github.com/tconbeer/harlequin",
-      "lastCommitDate": "2026-08-13T17:55:39Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T06:49:36Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ Universal command-line database client",
       "categoryLabels": [
         "databases"
@@ -2890,8 +2890,8 @@
       "appName": "sqlit",
       "license": "MIT license",
       "repoURL": "https://github.com/Maxteabag/sqlit",
-      "lastCommitDate": "2026-08-07T14:25:38Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-10T04:04:22Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ Universal command-line database client",
       "categoryLabels": [
         "databases"
@@ -2913,8 +2913,8 @@
       "appName": "duckdb",
       "license": "MIT license",
       "repoURL": "https://github.com/duckdb/duckdb",
-      "lastCommitDate": "2026-08-14T15:21:26Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T12:27:26Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ An in-process SQL OLAP database management system",
       "categoryLabels": [
         "databases"
@@ -2936,8 +2936,8 @@
       "appName": "gonzo",
       "license": "MIT license",
       "repoURL": "https://github.com/control-theory/gonzo",
-      "lastCommitDate": "2026-07-15T13:29:51Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-11T15:51:13Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🕶️ Gonzo is a Go-based TUI for real-time log analysis, like nerdlog, caps-log and lnav.",
       "categoryLabels": [
         "monitoring-performance"
@@ -2959,8 +2959,8 @@
       "appName": "cpz",
       "license": "Apache-2.0 license",
       "repoURL": "https://github.com/SUPERCILEX/fuc",
-      "lastCommitDate": "2026-07-13T00:13:44Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-16T18:46:33Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📋 Fast copy",
       "categoryLabels": [
         "file-operations-archives"
@@ -2982,8 +2982,8 @@
       "appName": "rmz",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/SUPERCILEX/fuc",
-      "lastCommitDate": "2026-07-13T00:13:44Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-16T18:46:33Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗑️ Fast remove",
       "categoryLabels": [
         "file-operations-archives"
@@ -3028,7 +3028,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/JohannesKaufmann/html-to-markdown",
       "lastCommitDate": "2026-06-07T12:48:53Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📜 Convert HTML to Markdown (no LLM, very fast, very cheap)",
       "categoryLabels": [
         "data-format-tools",
@@ -3052,7 +3052,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/hueristiq/xcrawl3r",
       "lastCommitDate": "2025-11-17T09:35:33Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🕷️ A command line tool to crawl and scrape websites",
       "categoryLabels": [
         "web-scraping-conversion"
@@ -3074,8 +3074,8 @@
       "appName": "obsidian",
       "license": "Proprietary / terms-based license",
       "repoURL": "https://github.com/obsidianmd/obsidian-releases",
-      "lastCommitDate": "2026-08-15T00:29:58Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T20:26:50Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧠 Obsidian is a powerful knowledge base that works on top of a local folder of plain text Markdown files.",
       "categoryLabels": [
         "productivity-knowledge"
@@ -3120,7 +3120,7 @@
       "license": "BSD 2-Clause \"Simplified\" License",
       "repoURL": "https://github.com/mfontanini/presenterm",
       "lastCommitDate": "2026-05-22T15:43:12Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎭 present from temrinal",
       "categoryLabels": [
         "documents-markdown-latex",
@@ -3143,8 +3143,8 @@
       "appName": "pandoc",
       "license": "GNU General Public License v2.0 or later",
       "repoURL": "https://github.com/jgm/pandoc",
-      "lastCommitDate": "2026-08-14T16:07:07Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T20:35:55Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📝 The universal markup converter",
       "categoryLabels": [
         "data-format-tools",
@@ -3209,8 +3209,8 @@
       "appName": "OBS Background removal",
       "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/royshil/obs-backgroundremoval",
-      "lastCommitDate": "2026-08-13T18:47:42Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-03T14:56:42Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎥 A plugin for OBS Studio to remove background from a video",
       "categoryLabels": [
         "media-audio-video",
@@ -3238,8 +3238,8 @@
       "appName": "rustdesk",
       "license": "GNU Affero General Public License v3.0",
       "repoURL": "https://github.com/rustdesk/rustdesk",
-      "lastCommitDate": "2026-08-14T10:52:03Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T09:58:35Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🖥️ Yet another remote desktop software, written in Rust. Works out of the box, no configuration required",
       "categoryLabels": [
         "tunnels-remote-access"
@@ -3272,7 +3272,7 @@
       "license": "GNU Affero General Public License v3.0",
       "repoURL": "https://github.com/rustdesk/rustdesk-server",
       "lastCommitDate": "2026-08-07T08:56:36Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🖥️ Self-hosted RustDesk ID/rendezvous and relay server.",
       "categoryLabels": [
         "tunnels-remote-access"
@@ -3294,8 +3294,8 @@
       "appName": "evcxr",
       "license": "MIT License and Apache License 2.0",
       "repoURL": "https://github.com/evcxr/evcxr",
-      "lastCommitDate": "2026-08-11T23:55:49Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-15T23:43:25Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧪 A Jupyter Kernel for Rust",
       "categoryLabels": [
         "languages-runtimes"
@@ -3318,7 +3318,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/axetroy/forward-cli",
       "lastCommitDate": "2022-04-06T13:24:22Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔄 Reverse Proxy port forwarding cli tool",
       "categoryLabels": [
         "tunnels-remote-access"
@@ -3340,8 +3340,8 @@
       "appName": "frpc",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/fatedier/frp",
-      "lastCommitDate": "2026-08-12T17:12:34Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-09T17:28:26Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔄 Fast reverse proxy client for exposing local services behind NAT or firewalls.",
       "categoryLabels": [
         "tunnels-remote-access"
@@ -3363,8 +3363,8 @@
       "appName": "frps",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/fatedier/frp",
-      "lastCommitDate": "2026-08-12T17:12:34Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-09T17:28:26Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔄 Fast reverse proxy server for exposing local services behind NAT or firewalls.",
       "categoryLabels": [
         "tunnels-remote-access"
@@ -3387,7 +3387,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/imsnif/bandwhich",
       "lastCommitDate": "2026-05-14T09:47:38Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📊 monitor network usage from cli",
       "categoryLabels": [
         "networking-diagnostics",
@@ -3411,7 +3411,7 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/ipinfo/cli",
       "lastCommitDate": "2026-04-28T17:00:36Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🌐 cli to get info of ips",
       "categoryLabels": [
         "networking-diagnostics"
@@ -3433,8 +3433,8 @@
       "appName": "dust",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/bootandy/dust",
-      "lastCommitDate": "2026-08-14T19:11:28Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-16T21:37:40Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📊 A more intuitive version of du in rust. It is a dua alternative.",
       "categoryLabels": [
         "storage-backup-sync",
@@ -3458,7 +3458,7 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/KSXGitHub/parallel-disk-usage",
       "lastCommitDate": "2026-08-09T08:23:57Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💾 Highly parallelized, blazing fast directory tree analyzer.",
       "categoryLabels": [
         "storage-backup-sync",
@@ -3481,8 +3481,8 @@
       "appName": "ots",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/Luzifer/ots",
-      "lastCommitDate": "2026-08-14T19:09:50Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T15:53:56Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔒 A command line tool for generating and verifying one-time secrets.",
       "categoryLabels": [
         "security-credentials-privacy"
@@ -3505,7 +3505,7 @@
       "license": "GNU General Public License v3.0",
       "repoURL": "https://github.com/timvisee/ffsend",
       "lastCommitDate": "2025-11-20T08:44:32Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📤 Send files in secure encrypted way over the internet.",
       "categoryLabels": [
         "file-transfer-sharing",
@@ -3529,7 +3529,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/SpatiumPortae/portal",
       "lastCommitDate": "2024-05-29T22:11:41Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔄 A terminal-based file transfer between two computers.",
       "categoryLabels": [
         "file-transfer-sharing"
@@ -3552,7 +3552,7 @@
       "license": "MIT license",
       "repoURL": "https://github.com/claudiodangelis/qrcp",
       "lastCommitDate": "2026-03-11T21:20:54Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📱 Transfer files over WiFi from your computer to mobile device by scanning a QR code without leaving the terminal.",
       "categoryLabels": [
         "file-transfer-sharing",
@@ -3576,7 +3576,7 @@
       "license": "MIT license",
       "repoURL": "https://github.com/sayanarijit/qrscan",
       "lastCommitDate": "2023-07-03T07:46:44Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📷 qr code scanner",
       "categoryLabels": [
         "qr-mobile-device-tools"
@@ -3598,8 +3598,8 @@
       "appName": "qrterminal",
       "license": "MIT license",
       "repoURL": "https://github.com/mdp/qrterminal",
-      "lastCommitDate": "2025-03-19T17:51:09Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-08T16:23:07Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📷 qr code terminal from string",
       "categoryLabels": [
         "qr-mobile-device-tools"
@@ -3621,8 +3621,8 @@
       "appName": "termscp",
       "license": "MIT license",
       "repoURL": "https://github.com/veeso/termscp",
-      "lastCommitDate": "2026-07-29T20:41:06Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-16T17:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 A TUI like winscp",
       "categoryLabels": [
         "file-managers",
@@ -3667,7 +3667,7 @@
       "license": "Apache-2.0 license",
       "repoURL": "https://github.com/filebrowser/filebrowser",
       "lastCommitDate": "2026-07-28T05:53:06Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗂️ filebrowser provides a file managing interface within a specified directory",
       "categoryLabels": [
         "file-managers",
@@ -3690,8 +3690,8 @@
       "appName": "miniserve",
       "license": "MIT license",
       "repoURL": "https://github.com/svenstaro/miniserve",
-      "lastCommitDate": "2026-08-01T02:51:00Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-18T22:44:36Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📂 A small, self-contained file server with directory listings",
       "categoryLabels": [
         "file-managers",
@@ -3714,8 +3714,8 @@
       "appName": "cloudreve",
       "license": "GPL-3.0 license",
       "repoURL": "https://github.com/cloudreve/Cloudreve",
-      "lastCommitDate": "2026-08-02T01:59:50Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T06:15:15Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "☁️ Self-hosted file management system with muilt-cloud support.",
       "categoryLabels": [
         "storage-backup-sync",
@@ -3738,8 +3738,8 @@
       "appName": "restic",
       "license": "BSD-2-Clause license",
       "repoURL": "https://github.com/restic/restic",
-      "lastCommitDate": "2026-08-01T20:24:27Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T20:05:21Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💾 backup program that is fast, efficient and secure. It supports the three major operating systems",
       "categoryLabels": [
         "storage-backup-sync"
@@ -3761,8 +3761,8 @@
       "appName": "syncthing",
       "license": "MPL-2.0 license",
       "repoURL": "https://github.com/syncthing/syncthing",
-      "lastCommitDate": "2026-08-11T11:17:09Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-14T12:46:03Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔄 Syncthing is a continuous file synchronization program. It synchronizes files between two or more computers.",
       "categoryLabels": [
         "storage-backup-sync"
@@ -3784,8 +3784,8 @@
       "appName": "istio",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/istio/istio",
-      "lastCommitDate": "2026-08-14T22:18:10Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T19:32:21Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🌐 Istio is an open source service mesh that layers transparently onto existing distributed applications",
       "categoryLabels": [
         "build-devops-containers"
@@ -3807,8 +3807,8 @@
       "appName": "kubectl",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/kubernetes/kubectl",
-      "lastCommitDate": "2026-08-12T13:02:01Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:07:13Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Kubernetes command-line tool for controlling Kubernetes clusters.",
       "categoryLabels": [
         "build-devops-containers"
@@ -3831,7 +3831,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/open-pomodoro/openpomodoro-cli",
       "lastCommitDate": "2025-11-20T15:04:54Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "⏲️ Pomodoro timer for the command-line",
       "categoryLabels": [
         "productivity-knowledge"
@@ -3853,8 +3853,8 @@
       "appName": "rust-analyzer",
       "license": "MIT License and Apache License 2.0",
       "repoURL": "https://github.com/rust-lang/rust-analyzer",
-      "lastCommitDate": "2026-08-13T22:50:53Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T04:31:54Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🦀 Rust Language Server (LSP)",
       "categoryLabels": [
         "languages-runtimes"
@@ -3876,8 +3876,8 @@
       "appName": "vscode-json-languageserver",
       "license": "MIT License",
       "repoURL": "https://github.com/microsoft/vscode-json-languageservice",
-      "lastCommitDate": "2026-07-12T18:55:48Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-14T15:54:13Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "JSON Language Server for editor and LSP integrations.",
       "categoryLabels": [
         "languages-runtimes"
@@ -3899,8 +3899,8 @@
       "appName": "yaml-language-server",
       "license": "MIT License",
       "repoURL": "https://github.com/redhat-developer/yaml-language-server",
-      "lastCommitDate": "2026-08-13T20:54:04Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-18T19:40:55Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "YAML Language Server for editor and LSP integrations.",
       "categoryLabels": [
         "languages-runtimes"
@@ -3923,7 +3923,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/tbillington/kondo",
       "lastCommitDate": "2026-01-28T12:21:29Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧹 cleans projects from litter files.",
       "categoryLabels": [
         "file-operations-archives"
@@ -3966,8 +3966,8 @@
       "appName": "wt",
       "license": "MIT License and Apache License 2.0",
       "repoURL": "https://github.com/max-sixty/worktrunk",
-      "lastCommitDate": "2026-08-15T00:15:46Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:25:41Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Git worktree manager for parallel AI agent workflows.",
       "categoryLabels": [
         "version-control",
@@ -3990,8 +3990,8 @@
       "appName": "lazygit",
       "license": "MIT License",
       "repoURL": "https://github.com/jesseduffield/lazygit",
-      "lastCommitDate": "2026-08-14T20:51:59Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T15:22:45Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🐙 A simple terminal UI for git commands",
       "categoryLabels": [
         "version-control"
@@ -4013,6 +4013,8 @@
       "appName": "podman",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/podman-container-tools/podman",
+      "lastCommitDate": "2026-09-21T19:32:04Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Podman: agent-agnostic OCI containers with namespaces and rootless isolation. On macOS and Windows, run podman machine init and podman machine start after installation; Windows requires WSL2 or Hyper-V.",
       "categoryLabels": [
         "build-devops-containers",
@@ -4046,6 +4048,8 @@
       "appName": "bwrap",
       "license": "LGPL-2.1-or-later",
       "repoURL": "https://github.com/containers/bubblewrap",
+      "lastCommitDate": "2026-09-21T19:48:10Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Bubblewrap (bwrap): agent-agnostic Linux sandboxing with user, mount, PID, and network namespaces and optional seccomp. Requires available unprivileged user namespaces.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -4078,6 +4082,8 @@
       "appName": "srt",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/anthropics/sandbox-runtime",
+      "lastCommitDate": "2026-09-21T11:09:36Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Anthropic Sandbox Runtime (srt): agent-agnostic filesystem and network isolation using native OS sandboxing, including bubblewrap on Linux. Requires Node.js >=20.11.0 and npm. Native Windows support is alpha and needs one-time elevated setup: npx @anthropic-ai/sandbox-runtime windows-install.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -4110,6 +4116,8 @@
       "appName": "ai-jail",
       "license": "GPL-3.0-only",
       "repoURL": "https://github.com/akitaonrails/ai-jail",
+      "lastCommitDate": "2026-09-21T21:31:20Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Agent-agnostic sandbox with AI-oriented defaults: bubblewrap, Landlock, and seccomp on Linux; sandbox-exec on macOS. Linux installation requires a current Rust/Cargo toolchain. On Windows, install inside WSL2 using the Linux backend.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -4164,7 +4172,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/jesseduffield/lazydocker",
       "lastCommitDate": "2026-04-19T02:50:06Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🐋 A simple terminal UI for both docker and docker-compose",
       "categoryLabels": [
         "build-devops-containers"
@@ -4186,8 +4194,8 @@
       "appName": "dtop",
       "license": "MIT License",
       "repoURL": "https://github.com/amir20/dtop",
-      "lastCommitDate": "2026-08-12T01:42:47Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-10T13:35:27Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🖥️ Terminal dashboard for Docker monitoring across multiple hosts with Dozzle integration.",
       "categoryLabels": [
         "build-devops-containers",
@@ -4210,8 +4218,8 @@
       "appName": "onefetch",
       "license": "MIT License",
       "repoURL": "https://github.com/o2sh/onefetch",
-      "lastCommitDate": "2026-08-09T16:41:25Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T22:12:44Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📊 Git repository summary on your terminal",
       "categoryLabels": [
         "version-control",
@@ -4235,7 +4243,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/knbr13/gitcs",
       "lastCommitDate": "2026-07-24T04:09:01Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📈 analyze Git repositories and generate a visual contributions graph",
       "categoryLabels": [
         "version-control",
@@ -4258,8 +4266,8 @@
       "appName": "just",
       "license": "CC0-1.0",
       "repoURL": "https://github.com/casey/just",
-      "lastCommitDate": "2026-08-12T23:47:49Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-01T20:47:55Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🎯 A command runner",
       "categoryLabels": [
         "build-devops-containers"
@@ -4281,8 +4289,8 @@
       "appName": "navi",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/denisidoro/navi",
-      "lastCommitDate": "2026-07-28T09:05:10Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T10:07:15Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📚 An interactive cheatsheet tool for the command-line",
       "categoryLabels": [
         "productivity-knowledge"
@@ -4304,8 +4312,8 @@
       "appName": "tealdeer",
       "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/tealdeer-rs/tealdeer",
-      "lastCommitDate": "2026-08-12T23:03:02Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-24T15:15:51Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "⚡ A very fast implementation of tldr in Rust",
       "categoryLabels": [
         "productivity-knowledge"
@@ -4327,8 +4335,8 @@
       "appName": "sniffnet",
       "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/GyulyVGC/sniffnet",
-      "lastCommitDate": "2026-08-12T13:30:36Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T06:04:05Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🔍 A simple network sniffer in Rust",
       "categoryLabels": [
         "networking-diagnostics"
@@ -4350,8 +4358,8 @@
       "appName": "trippy",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/fujiapple852/trippy",
-      "lastCommitDate": "2026-07-25T02:04:21Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-12T04:33:04Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧭 A network diagnostic tool combining traceroute and ping)",
       "categoryLabels": [
         "networking-diagnostics"
@@ -4373,8 +4381,8 @@
       "appName": "oryx",
       "license": "GPL-3.0",
       "repoURL": "https://github.com/pythops/oryx",
-      "lastCommitDate": "2026-07-17T17:33:15Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-28T20:14:52Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🕵️‍♂️ TUI for sniffing network traffic using eBPF on Linux",
       "categoryLabels": [
         "networking-diagnostics"
@@ -4397,7 +4405,7 @@
       "license": "MIT",
       "repoURL": "https://github.com/peltho/tufw",
       "lastCommitDate": "2026-06-08T11:49:18Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📋 Terminal UI for UFW (Uncomplicated Firewall) on Linux",
       "categoryLabels": [
         "networking-diagnostics",
@@ -4421,7 +4429,7 @@
       "license": "MIT",
       "repoURL": "https://github.com/Chleba/netscanner",
       "lastCommitDate": "2026-07-06T16:36:54Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "📡 Terminal network scanner & diagnostic tool with TUI",
       "categoryLabels": [
         "networking-diagnostics"
@@ -4444,7 +4452,7 @@
       "license": "Apache-2.0, MIT",
       "repoURL": "https://github.com/sharkdp/hyperfine",
       "lastCommitDate": "2026-04-30T08:23:22Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "⚡ A command-line benchmarking tool",
       "categoryLabels": [
         "monitoring-performance"
@@ -4488,7 +4496,7 @@
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/cointop-sh/cointop",
       "lastCommitDate": "2024-04-07T22:45:52Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💰 Cointop is a fast and lightweight interactive terminal based UI application for tracking and monitoring cryptocurrency coin stats in real-time.",
       "categoryLabels": [
         "finance-markets"
@@ -4510,8 +4518,8 @@
       "appName": "vtm",
       "license": "MIT License",
       "repoURL": "https://github.com/directvt/vtm",
-      "lastCommitDate": "2026-07-31T14:47:04Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T23:47:43Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🖥️ Text-based desktop environment inside your terminal",
       "categoryLabels": [
         "terminal-workspaces",
@@ -4535,7 +4543,7 @@
       "license": "GPL-3.0",
       "repoURL": "https://github.com/GitSquared/edex-ui",
       "lastCommitDate": "2021-10-19T22:38:10Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🚀 fullscreen, cross-platform terminal emulator and system monitor that looks and feels like a sci-fi computer interface",
       "categoryLabels": [
         "terminals-shells",
@@ -4559,7 +4567,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/sedwards2009/extraterm/",
       "lastCommitDate": "2026-05-17T18:26:28Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💻 Terminal emulator",
       "categoryLabels": [
         "terminals-shells"
@@ -4581,8 +4589,8 @@
       "appName": "nu",
       "license": "MIT License",
       "repoURL": "https://github.com/nushell/nushell",
-      "lastCommitDate": "2026-08-14T15:00:07Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T15:56:35Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🐚 Nushell, a cross-platform shell in Rust.",
       "categoryLabels": [
         "terminals-shells"
@@ -4604,8 +4612,8 @@
       "appName": "powershellWinget",
       "license": "MIT License",
       "repoURL": "https://github.com/powershell/powershell",
-      "lastCommitDate": "2026-08-13T21:26:05Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T20:09:31Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🐚 PowerShell, a cross-platform shell in C#.",
       "categoryLabels": [
         "system-setup",
@@ -4630,7 +4638,7 @@
       "license": "Mozilla Public License 2.0",
       "repoURL": "https://github.com/mozilla/geckodriver",
       "lastCommitDate": "2024-08-08T13:24:41Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🦊 WebDriver for Firefox.",
       "categoryLabels": [
         "build-devops-containers",
@@ -4715,8 +4723,8 @@
       "appName": "zed",
       "license": "AGPL-3.0-or-later, GPL-3.0-or-later, Apache-2.0",
       "repoURL": "https://github.com/zed-industries/zed",
-      "lastCommitDate": "2026-08-14T22:42:27Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T19:24:38Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "High-performance, multiplayer code editor from the creators of Atom and Tree-sitter.",
       "categoryLabels": [
         "editors-ides"
@@ -4738,8 +4746,8 @@
       "appName": "t3",
       "license": "MIT",
       "repoURL": "https://github.com/pingdotgg/t3code",
-      "lastCommitDate": "2026-08-14T23:32:33Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:58:23Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Minimal web GUI for coding agents.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -4783,8 +4791,8 @@
       "appName": "openhands",
       "license": "MIT License",
       "repoURL": "https://github.com/OpenHands/OpenHands",
-      "lastCommitDate": "2026-08-15T00:20:19Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T14:21:48Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "OpenHands AI-driven development CLI and local GUI.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -4806,8 +4814,8 @@
       "appName": "deer-flow",
       "license": "MIT License",
       "repoURL": "https://github.com/bytedance/deer-flow",
-      "lastCommitDate": "2026-08-14T16:08:39Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T14:06:41Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Long-horizon super-agent harness with subagents, memory, sandboxes, tools, and skills.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -4829,8 +4837,8 @@
       "appName": "headroom",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/chopratejas/headroom",
-      "lastCommitDate": "2026-08-14T21:40:45Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:41:30Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Context compression layer for AI agents, with CLI, proxy, MCP server, and agent wrappers.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -4852,8 +4860,8 @@
       "appName": "rtk",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/rtk-ai/rtk",
-      "lastCommitDate": "2026-08-14T23:49:56Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T14:58:44Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "CLI proxy that reduces LLM token consumption on common development commands.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -4875,8 +4883,8 @@
       "appName": "tokensave",
       "license": "MIT License",
       "repoURL": "https://github.com/aovestdipaperino/tokensave",
-      "lastCommitDate": "2026-08-08T18:38:09Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T10:13:52Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Local semantic code intelligence MCP server for AI coding agents.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -4898,8 +4906,8 @@
       "appName": "ai-devkit",
       "license": "MIT",
       "repoURL": "https://github.com/codeaholicguy/ai-devkit",
-      "lastCommitDate": "2026-08-14T19:44:38Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T00:09:50Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Repeatable engineering workflow, memory, verification, skills, and agent setup for AI coding agents.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -4922,8 +4930,8 @@
       "appName": "beads",
       "license": "MIT License",
       "repoURL": "https://github.com/gastownhall/beads",
-      "lastCommitDate": "2026-08-14T13:58:04Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T09:49:05Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Persistent issue tracker and memory layer for coding agents.",
       "categoryLabels": [
         "version-control",
@@ -4947,7 +4955,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/charmbracelet/mods/",
       "lastCommitDate": "2026-03-09T15:06:08Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🤖 AI for the command line, built for pipelines",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -4970,7 +4978,7 @@
       "license": "MIT OR Apache-2.0",
       "repoURL": "https://github.com/sigoden/aichat",
       "lastCommitDate": "2026-02-23T11:16:27Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Terminal-based CLI agents and tools for productivity and coding.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5141,8 +5149,8 @@
       "appName": "pinchtab",
       "license": "MIT License",
       "repoURL": "https://github.com/pinchtab/pinchtab",
-      "lastCommitDate": "2026-08-12T10:45:30Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-13T23:31:43Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Browser control for AI agents",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -5165,8 +5173,8 @@
       "appName": "agent-deck",
       "license": "MIT",
       "repoURL": "https://github.com/asheshgoplani/agent-deck",
-      "lastCommitDate": "2026-08-14T22:56:31Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T08:45:01Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Terminal UI for AI coding agents",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5189,7 +5197,7 @@
       "license": "MIT",
       "repoURL": "https://github.com/bnomei/tmux-mcp",
       "lastCommitDate": "2026-07-11T22:02:46Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Tmux MCP server for AI assistants. Requires tmux on PATH.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5211,8 +5219,8 @@
       "appName": "aoe",
       "license": "MIT",
       "repoURL": "https://github.com/njbrake/agent-of-empires",
-      "lastCommitDate": "2026-08-14T17:47:22Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T20:39:09Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Agent of Empires terminal session manager for AI coding agents",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5234,8 +5242,8 @@
       "appName": "cagent",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/docker/docker-agent",
-      "lastCommitDate": "2026-08-14T23:14:52Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T11:58:11Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Docker terminal coding agent",
       "categoryLabels": [
         "build-devops-containers",
@@ -5258,8 +5266,8 @@
       "appName": "pi",
       "license": "MIT",
       "repoURL": "https://github.com/badlogic/pi-mono",
-      "lastCommitDate": "2026-08-14T13:46:34Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T22:07:34Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "AI agent toolkit: coding agent CLI, unified LLM API, TUI and web UI libraries.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5281,8 +5289,8 @@
       "appName": "omp",
       "license": "MIT",
       "repoURL": "https://github.com/can1357/oh-my-pi",
-      "lastCommitDate": "2026-08-14T12:38:16Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:23:14Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "AI coding agent for the terminal with browser tooling, LSP, Python, and subagents.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5304,8 +5312,8 @@
       "appName": "orca",
       "license": "MIT",
       "repoURL": "https://github.com/stablyai/orca",
-      "lastCommitDate": "2026-08-15T00:18:14Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T22:05:31Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "AI agent IDE with a bundled CLI for worktrees, terminals, automations, and browser control.",
       "categoryLabels": [
         "editors-ides",
@@ -5359,8 +5367,8 @@
       "appName": "hermes",
       "license": "MIT License",
       "repoURL": "https://github.com/NousResearch/hermes-agent",
-      "lastCommitDate": "2026-08-15T00:07:02Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T22:07:39Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Self-improving AI agent with CLI, TUI, gateway, memory, and subagents.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5424,6 +5432,8 @@
       "appName": "minimax-code",
       "license": "MIT License",
       "repoURL": "https://github.com/MiniMax-AI/minimax-code",
+      "lastCommitDate": "2026-09-21T16:31:28Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Terminal coding agent powered by MiniMax.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5518,8 +5528,8 @@
       "appName": "forge",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/antinomyhq/forgecode",
-      "lastCommitDate": "2026-08-08T01:53:57Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-20T22:51:27Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "AI-enabled terminal pair programmer for many model providers.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -5562,8 +5572,8 @@
       "appName": "dmux",
       "license": "MIT",
       "repoURL": "https://github.com/standardagents/dmux",
-      "lastCommitDate": "2026-07-09T03:18:46Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-08-16T17:09:19Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Dev agent multiplexer for git worktrees and coding agents.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -5587,8 +5597,8 @@
       "appName": "workmux",
       "license": "MIT License",
       "repoURL": "https://github.com/raine/workmux",
-      "lastCommitDate": "2026-09-11T05:45:54Z",
-      "lastCommitDateCheckDate": "2026-09-11T21:35:03Z",
+      "lastCommitDate": "2026-09-21T06:21:41Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "git worktrees + tmux windows for zero-friction parallel dev",
       "categoryLabels": [
         "terminal-workspaces",
@@ -5866,8 +5876,8 @@
       "appName": "chrome-agent",
       "license": "MIT License",
       "repoURL": "https://github.com/captivus/chrome-agent",
-      "lastCommitDate": "2026-07-26T02:03:22Z",
-      "lastCommitDateCheckDate": "2026-08-19T11:51:30Z",
+      "lastCommitDate": "2026-09-06T21:27:50Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🧰 Chrome DevTools protocol CLI for AI agents.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -5944,7 +5954,7 @@
       "license": "Apache-2.0",
       "repoURL": "https://github.com/ShishirPatil/gorilla",
       "lastCommitDate": "2026-03-23T11:40:47Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "natural language to API",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -6072,8 +6082,8 @@
       "appName": "gh",
       "license": "MIT License",
       "repoURL": "https://github.com/cli/cli",
-      "lastCommitDate": "2026-08-14T14:40:40Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T19:03:16Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "GitHub CLI",
       "categoryLabels": [
         "version-control"
@@ -6934,7 +6944,7 @@
       "license": "MIT",
       "repoURL": "https://github.com/Polymarket/polymarket-cli",
       "lastCommitDate": "2026-05-26T15:37:55Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Polymarket CLI for market interactions",
       "categoryLabels": [
         "finance-markets"
@@ -6956,8 +6966,8 @@
       "appName": "himalaya",
       "license": "MIT",
       "repoURL": "https://github.com/pimalaya/himalaya",
-      "lastCommitDate": "2026-08-14T14:41:53Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-08T16:28:42Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "CLI email client",
       "categoryLabels": [
         "email-communications"
@@ -6979,8 +6989,8 @@
       "appName": "meli",
       "license": "EUPL-1.2 OR GPL-3.0-or-later",
       "repoURL": "https://github.com/meli/meli",
-      "lastCommitDate": "2026-08-14T10:43:58Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T10:26:15Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Terminal mail client",
       "categoryLabels": [
         "email-communications"
@@ -7002,8 +7012,8 @@
       "appName": "powershellGithub",
       "license": "MIT License",
       "repoURL": "https://github.com/PowerShell/PowerShell",
-      "lastCommitDate": "2026-08-13T21:26:05Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T20:09:31Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "PowerShell via GitHub release MSI",
       "categoryLabels": [
         "system-setup",
@@ -7050,7 +7060,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/psmux/psnet",
       "lastCommitDate": "2026-08-10T18:52:20Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Real-time TUI network monitor for Windows PowerShell",
       "categoryLabels": [
         "networking-diagnostics",
@@ -7075,7 +7085,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/psmux/pstop",
       "lastCommitDate": "2026-07-18T07:57:17Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "TUI system monitor for Windows PowerShell",
       "categoryLabels": [
         "monitoring-performance",
@@ -7098,8 +7108,8 @@
       "appName": "psmux",
       "license": "MIT License",
       "repoURL": "https://github.com/psmux/psmux",
-      "lastCommitDate": "2026-08-14T14:01:44Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T12:31:35Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Native Windows tmux built in Rust.",
       "categoryLabels": [
         "terminal-workspaces",
@@ -7122,8 +7132,8 @@
       "appName": "superfile",
       "license": "MIT License",
       "repoURL": "https://github.com/yorukot/superfile",
-      "lastCommitDate": "2026-08-03T14:23:55Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-06T15:47:33Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Pretty fancy and modern terminal file manager",
       "categoryLabels": [
         "file-managers"
@@ -7145,8 +7155,8 @@
       "appName": "goose",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/aaif-goose/goose",
-      "lastCommitDate": "2026-08-14T19:57:03Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T15:28:28Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Open-source AI agent for code and workflows.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -7168,8 +7178,8 @@
       "appName": "terax",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/crynta/terax-ai",
-      "lastCommitDate": "2026-08-14T23:21:29Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:53:15Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Lightweight cross-platform AI-native terminal",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -7192,8 +7202,8 @@
       "appName": "herdr",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/herdrdev/herdr",
-      "lastCommitDate": "2026-08-20T20:09:42Z",
-      "lastCommitDateCheckDate": "2026-08-21T04:32:11Z",
+      "lastCommitDate": "2026-09-21T17:47:14Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "agent multiplexer that lives in your terminal.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -7216,8 +7226,8 @@
       "appName": "amq",
       "license": "MIT License",
       "repoURL": "https://github.com/avivsinai/agent-message-queue",
-      "lastCommitDate": "2026-08-18T20:19:24Z",
-      "lastCommitDateCheckDate": "2026-08-19T01:12:58Z",
+      "lastCommitDate": "2026-09-20T16:23:28Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Local file-based interoperability bus for agent sessions and adapters.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -7239,8 +7249,8 @@
       "appName": "dolt",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/dolthub/dolt",
-      "lastCommitDate": "2026-08-13T22:57:16Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T09:47:18Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Git for data SQL database.",
       "categoryLabels": [
         "databases",
@@ -7264,7 +7274,7 @@
       "license": "MIT License",
       "repoURL": "https://github.com/gastownhall/gastown",
       "lastCommitDate": "2026-07-23T13:03:02Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Multi-agent workspace manager.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -7287,8 +7297,8 @@
       "appName": "beads_viewer",
       "license": "No license asserted",
       "repoURL": "https://github.com/Dicklesworthstone/beads_viewer",
-      "lastCommitDate": "2026-08-14T23:45:23Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T19:39:07Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Graph-aware TUI for the Beads issue tracker.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -7310,8 +7320,8 @@
       "appName": "difft",
       "license": "MIT License",
       "repoURL": "https://github.com/wilfred/difftastic",
-      "lastCommitDate": "2026-08-12T09:24:50Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-18T21:57:19Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Structural diff tool that understands code syntax.",
       "fileNamePattern": {
         "amd64": {
@@ -7333,8 +7343,8 @@
       "appName": "scc",
       "license": "MIT License",
       "repoURL": "https://github.com/boyter/scc",
-      "lastCommitDate": "2026-08-11T00:08:59Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-15T05:35:10Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Sloc Cloc and Code - fast code counter and complexity estimator.",
       "fileNamePattern": {
         "amd64": {
@@ -7356,8 +7366,8 @@
       "appName": "specify-cli",
       "license": "MIT",
       "repoURL": "https://github.com/github/spec-kit",
-      "lastCommitDate": "2026-08-14T16:44:41Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T21:44:29Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "GitHub Spec Kit CLI for specifying and scaffolding projects.",
       "categoryLabels": [
         "build-devops-containers",
@@ -7380,8 +7390,8 @@
       "appName": "openspec",
       "license": "MIT",
       "repoURL": "https://github.com/Fission-AI/openspec",
-      "lastCommitDate": "2026-08-13T15:22:19Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-17T06:31:19Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Spec-driven development framework for AI coding assistants.",
       "categoryLabels": [
         "ai-agents-assistants",
@@ -7404,8 +7414,8 @@
       "appName": "AdGuardHome",
       "license": "GPL-3.0-only",
       "repoURL": "https://github.com/AdguardTeam/AdGuardHome",
-      "lastCommitDate": "2026-08-14T12:43:21Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-18T10:49:35Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "AdGuard Home network-wide ad and tracker blocking DNS server.",
       "categoryLabels": [
         "networking-diagnostics",
@@ -7450,8 +7460,8 @@
       "appName": "nmap",
       "license": "Nmap Public Source License 0.95",
       "repoURL": "https://github.com/nmap/nmap",
-      "lastCommitDate": "2026-08-14T19:04:39Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-19T18:54:50Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Network exploration and security auditing utility.",
       "categoryLabels": [
         "networking-diagnostics"
@@ -7483,8 +7493,8 @@
       "appName": "rustscan",
       "license": "GPL-3.0-only",
       "repoURL": "https://github.com/bee-san/RustScan",
-      "lastCommitDate": "2026-06-10T10:33:31Z",
-      "lastCommitDateCheckDate": "2026-08-15T00:32:06Z",
+      "lastCommitDate": "2026-09-21T10:26:33Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Fast port scanner that automatically pipes discovered ports into Nmap.",
       "categoryLabels": [
         "networking-diagnostics"
@@ -7568,8 +7578,8 @@
       "appName": "freellmapi",
       "license": "MIT License",
       "repoURL": "https://github.com/tashfeenahmed/freellmapi",
-      "lastCommitDate": "2026-08-20T21:06:48Z",
-      "lastCommitDateCheckDate": "2026-08-21T18:35:10Z",
+      "lastCommitDate": "2026-09-21T07:54:46Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🤖 OpenAI-compatible proxy that stacks free tiers of 28 LLM providers behind one /v1 endpoint, with smart routing and failover.",
       "categoryLabels": [
         "ai-agents-assistants"
@@ -7591,8 +7601,8 @@
       "appName": "gdu",
       "license": "MIT License",
       "repoURL": "https://github.com/dundee/gdu",
-      "lastCommitDate": "2026-08-27T12:06:29Z",
-      "lastCommitDateCheckDate": "2026-08-27T23:28:52Z",
+      "lastCommitDate": "2026-09-21T16:46:16Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "💾 Fast disk usage analyzer with console interface written in Go.",
       "categoryLabels": [
         "storage-backup-sync",
@@ -7615,8 +7625,8 @@
       "appName": "dbx",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/t8y2/dbx",
-      "lastCommitDate": "2026-09-08T18:04:54Z",
-      "lastCommitDateCheckDate": "2026-09-09T00:10:21Z",
+      "lastCommitDate": "2026-09-21T19:34:33Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "🗃️ Lightweight cross-platform database client for 90+ databases with built-in AI, CLI, MCP server, and desktop app.",
       "categoryLabels": [
         "databases",
@@ -7639,6 +7649,8 @@
       "appName": "deepseek-harness",
       "license": "MIT License",
       "repoURL": "https://github.com/deepseek-ai/deepseek-harness",
+      "lastCommitDate": "2026-09-17T13:19:19Z",
+      "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
       "doc": "Plugin-based agent harness by DeepSeek.",
       "categoryLabels": [
         "ai-agents-assistants"
