@@ -42,6 +42,27 @@ def _require_os_name(value: str, *, os_filter: str) -> OsName:
     return token
 
 
+def resolve_backup_registration_options(
+    *,
+    local_path: Path,
+    os_filter: str,
+    rel2home: bool | None,
+) -> tuple[list[OsName], bool]:
+    os_tokens_unsorted: set[OsName] = set()
+    for part in os_filter.split(","):
+        if part.strip():
+            os_tokens_unsorted.add(_require_os_name(part, os_filter=os_filter))
+    os_tokens = sorted(os_tokens_unsorted, key=ALL_OS_VALUES.index)
+    if not os_tokens:
+        raise ValueError(f"""Invalid os value: {os_filter!r}. Expected one of: {sorted(VALID_OS)}""")
+
+    in_home = local_path.is_relative_to(Path.home())
+    resolved_rel2home = in_home if rel2home is None else rel2home
+    if resolved_rel2home and not in_home:
+        raise ValueError("rel2home is true, but the local path is not under the home directory.")
+    return os_tokens, resolved_rel2home
+
+
 def register_backup_entry(
     *,
     path_local: str,
@@ -58,21 +79,11 @@ def register_backup_entry(
     local_path = Path(path_local).expanduser().absolute()
     if not local_path.exists():
         raise ValueError(f"Local path does not exist: {local_path}")
-    os_parts = [part.strip() for part in os.split(",")]
-    os_tokens_unsorted: set[OsName] = set()
-    for part in os_parts:
-        if not part:
-            continue
-        os_tokens_unsorted.add(_require_os_name(part, os_filter=os))
-    os_tokens = sorted(os_tokens_unsorted, key=ALL_OS_VALUES.index)
-    if not os_tokens:
-        raise ValueError(f"Invalid os value: {os!r}. Expected one of: {sorted(VALID_OS)}")
-
-    home = Path.home()
-    in_home = local_path.is_relative_to(home)
-    resolved_rel2home = in_home if rel2home is None else rel2home
-    if resolved_rel2home and not in_home:
-        raise ValueError("rel2home is true, but the local path is not under the home directory.")
+    os_tokens, resolved_rel2home = resolve_backup_registration_options(
+        local_path=local_path,
+        os_filter=os,
+        rel2home=rel2home,
+    )
 
     group_name = sanitize_entry_name(group) if group and group.strip() else "default"
     if entry_name is None or not entry_name.strip():
@@ -81,8 +92,8 @@ def register_backup_entry(
     else:
         resolved_entry_name = sanitize_entry_name(entry_name)
 
-    if resolved_rel2home and in_home:
-        local_display = str(Path("~") / local_path.relative_to(home))
+    if resolved_rel2home:
+        local_display = str(Path("~") / local_path.relative_to(Path.home()))
     else:
         local_display = str(local_path)
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES

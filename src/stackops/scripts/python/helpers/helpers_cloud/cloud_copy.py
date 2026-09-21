@@ -4,6 +4,8 @@ CC
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
+from zipfile import BadZipFile
+from zlib import error as ZlibError
 
 from stackops.scripts.python.helpers.helpers_cloud.cloud_copy_artifacts import (
     prepared_upload_path,
@@ -23,7 +25,7 @@ from stackops.utils.cloud.rclone import (
     parse_share_scope,
 )
 from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
-from stackops.utils.cloud.target_conflict import TargetConflictAction, apply_target_conflict_action
+from stackops.utils.cloud.target_conflict import TargetConflictAction, TargetConflictError, apply_target_conflict_action
 
 if TYPE_CHECKING:
     from stackops.scripts.python.helpers.helpers_cloud.backup_registration import BackupRegistrationResult
@@ -214,6 +216,7 @@ def main(
     from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES, parse_cloud_source_target
     from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError
     console = Console()
+    error_console = Console(stderr=True)
     original_source = source
     original_target = target
 
@@ -222,8 +225,8 @@ def main(
         encryption_mode = _resolve_encryption_mode(encryption=encryption, pwd=resolved_pwd)
         share_options = _resolve_share_options(share_scope=share_scope, share_type=share_type)
         resolved_record_name = _resolve_record_name(record_name)
-    except (TypeError, ValueError) as error:
-        console.print(Text(f"""❌ Invalid cloud copy configuration: {error}""", style="red"))
+    except (OSError, TypeError, ValueError) as error:
+        error_console.print(Text(f"""❌ Invalid cloud copy configuration: {error}""", style="red"))
         raise SystemExit(1) from None
 
     cloud_config_explicit = CloudConfig(
@@ -245,7 +248,7 @@ def main(
             target=target,
         )
     except DefaultRcloneRemoteConfigError as error:
-        console.print(
+        error_console.print(
             Text(
                 f"""❌ {error}
 For this command, replace a leading :path with REMOTE:path.""",
@@ -254,22 +257,31 @@ For this command, replace a leading :path with REMOTE:path.""",
         )
         raise SystemExit(1) from None
     except ValueError as error:
-        console.print(Text(f"""❌ Invalid cloud copy paths: {error}""", style="red"))
+        error_console.print(Text(f"""❌ Invalid cloud copy paths: {error}""", style="red"))
         raise SystemExit(1) from None
 
     operation: Literal["download", "upload"]
     if cloud in source:
         operation = "download"
         if resolved_record_name is not None:
-            console.print(Text("❌ --record-name is only supported for uploads to cloud targets.", style="red"))
+            error_console.print(Text("❌ --record-name is only supported for uploads to cloud targets.", style="red"))
             raise SystemExit(1)
         target = str(Path(target).expanduser().absolute())
     elif cloud in target:
         operation = "upload"
         source = str(Path(source).expanduser().absolute())
     else:
-        console.print(Text(f"""❌ Cloud '{cloud}' not found in source or target""", style="red"))
+        error_console.print(Text(f"""❌ Cloud '{cloud}' not found in source or target""", style="red"))
         raise SystemExit(1)
+
+    if resolved_record_name is not None:
+        from stackops.scripts.python.helpers.helpers_cloud.backup_registration import resolve_backup_registration_options
+
+        try:
+            resolve_backup_registration_options(local_path=Path(source), os_filter=record_os, rel2home=rel2home)
+        except ValueError as error:
+            error_console.print(Text(f"""❌ Invalid upload recording options: {error}""", style="red"))
+            raise SystemExit(1) from None
 
     console.print(
         cloud_copy_summary(
@@ -313,8 +325,17 @@ For this command, replace a leading :path with REMOTE:path.""",
                     target_path=staged.target_path,
                     on_conflict="overwrite-target" if cloud_config_explicit["overwrite"] else "throw-error",
                 )
-        except (GpgCommandError, RcloneCommandError) as error:
-            console.print(Text(f"""❌ Download failed: {error}""", style="red"))
+        except TargetConflictError:
+            error_console.print(
+                Text(
+                    f"""❌ Download failed: Target contains conflicting files: {target_path}
+Use --overwrite to replace the target, or choose a different target.""",
+                    style="red",
+                )
+            )
+            raise SystemExit(1) from None
+        except (BadZipFile, GpgCommandError, OSError, RcloneCommandError, RcloneConfigError, ValueError, ZlibError) as error:
+            error_console.print(Text(f"""❌ Download failed: {error}""", style="red"))
             raise SystemExit(1) from None
         console.print(Text(f"""✅ Download completed. Saved to: {downloaded_path}""", style="green"))
 
@@ -340,28 +361,32 @@ For this command, replace a leading :path with REMOTE:path.""",
                     show_progress=True,
                     transfers=transfers,
                 )
-        except (GpgCommandError, RcloneCommandError, RcloneConfigError) as error:
-            console.print(Text(f"""❌ Upload failed: {error}""", style="red"))
+        except (GpgCommandError, OSError, RcloneCommandError, RcloneConfigError) as error:
+            error_console.print(Text(f"""❌ Upload failed: {error}""", style="red"))
             raise SystemExit(1) from None
         console.print(Text(f"""✅ Upload completed. Saved to: {target}""", style="green"))
 
         if cloud_config_explicit["share"] and share_url is None:
             raise RuntimeError("Share was requested but rclone did not return a share URL.")
         if resolved_record_name is not None:
-            registration = _record_upload(
-                source_path=source_path,
-                original_target=original_target,
-                cloud=cloud,
-                remote_path=remote_path,
-                share_url=share_url,
-                zip_requested=cloud_config_explicit["zip"],
-                encryption_mode=cloud_config_explicit["encryption"],
-                rel2home=cloud_config_explicit["rel2home"],
-                record_group=record_group,
-                record_name=resolved_record_name,
-                record_os=record_os,
-                expand_symbol=ES,
-            )
+            try:
+                registration = _record_upload(
+                    source_path=source_path,
+                    original_target=original_target,
+                    cloud=cloud,
+                    remote_path=remote_path,
+                    share_url=share_url,
+                    zip_requested=cloud_config_explicit["zip"],
+                    encryption_mode=cloud_config_explicit["encryption"],
+                    rel2home=cloud_config_explicit["rel2home"],
+                    record_group=record_group,
+                    record_name=resolved_record_name,
+                    record_os=record_os,
+                    expand_symbol=ES,
+                )
+            except (OSError, ValueError) as error:
+                error_console.print(Text(f"""❌ Upload succeeded, but recording failed: {error}""", style="red"))
+                raise SystemExit(1) from None
             action = "Updated" if registration["replaced"] else "Added"
             console.print(Text(f"""📝 {action} backup entry: {registration['entry_name']}
 Data file: {registration['backup_path']}"""))

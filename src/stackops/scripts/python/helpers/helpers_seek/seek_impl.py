@@ -180,15 +180,21 @@ def _run_semantic_search(path: str, query: str, extension: str | None, max_files
     else:
         if extension is not None:
             # Find files with the given extension
-            text_files = list(map(str, path_obj.rglob(f"*{extension}")))
+            text_files = [str(candidate) for candidate in path_obj.rglob(f"*{extension}") if candidate.is_file()]
         else:
             import subprocess
 
             def get_text_files(root: str) -> list[str]:
-                result = subprocess.run(["rg", "--files", "-0", root], stdout=subprocess.PIPE, check=True)
-                return result.stdout.decode().split("\0")[:-1]
+                result = subprocess.run(["rg", "--files", "-0", root], capture_output=True, encoding="utf-8", check=False)
+                if result.returncode == 1:
+                    return []
+                result.check_returncode()
+                return result.stdout.split("\0")[:-1]
 
             text_files = get_text_files(str(path_obj))
+
+    if not text_files:
+        raise FileNotFoundError(f"""No searchable files found under: {path_obj}""")
 
     from typing import TypedDict
 
@@ -204,10 +210,10 @@ def _run_semantic_search(path: str, query: str, extension: str | None, max_files
         import subprocess
 
         command = ["semtools", "search", query, *text_files, "--json", "--top-k", "5", "--n-lines", "10"]
-        result = subprocess.run(command, stdout=subprocess.PIPE, check=True)
+        result = subprocess.run(command, capture_output=True, encoding="utf-8", check=True)
         import json
 
-        results_json = result.stdout.decode()
+        results_json = result.stdout
         results: list[SemanticSearchResult] = json.loads(results_json)["results"]
         return results
 

@@ -165,8 +165,14 @@ def compress_pdf(
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.pdf import compress_pdf as impl
 
+    input_path = Path(pdf_input).expanduser().resolve()
+    if not input_path.exists():
+        raise typer.BadParameter(f"""Input PDF file not found: {input_path}""", param_hint="pdf_input")
+    if not input_path.is_file():
+        raise typer.BadParameter(f"""Input path is not a regular file: {input_path}""", param_hint="pdf_input")
+
     impl(
-        pdf_input=pdf_input,
+        pdf_input=str(input_path),
         output=output,
         quality=quality,
         image_dpi=image_dpi,

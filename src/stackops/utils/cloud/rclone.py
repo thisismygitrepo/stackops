@@ -6,6 +6,8 @@ import shlex
 import subprocess
 import sys
 
+from rich.text import Text
+
 ShareScope: TypeAlias = Literal["anonymous", "organization"]
 ShareScopeChoice: TypeAlias = Literal["anonymous", "a", "organization", "o"]
 ShareLinkType: TypeAlias = Literal["view", "edit", "embed"]
@@ -100,7 +102,7 @@ def _format_command(command: list[str]) -> str:
 
 
 def _format_process_output(output: str) -> str:
-    normalized = output.strip()
+    normalized = Text.from_ansi(output).plain.strip()
     if normalized == "":
         return "<empty>"
     return normalized
@@ -122,6 +124,12 @@ def _rclone_hint(stdout: str, stderr: str) -> str | None:
 
 
 def _run_rclone(command: list[str], *, show_command: bool, show_progress: bool) -> subprocess.CompletedProcess[str]:
+    if show_progress:
+        command = [*command, "--stats-one-line"]
+        if sys.stdout.isatty():
+            command.extend(["--progress", "--color=ALWAYS"])
+        else:
+            command.extend(["--stats=30s", "--stats-log-level=NOTICE", "--color=NEVER"])
     if show_command:
         print(_format_command(command))
 
@@ -268,8 +276,6 @@ def copyto(*, in_path: str, out_path: str, transfers: int, overwrite: bool, show
     command = ["rclone", "copyto", in_path, out_path, f"--transfers={transfers}"]
     if not overwrite:
         command.extend(["--immutable", "--check-first"])
-    if show_progress:
-        command.append("--progress")
     _run_rclone(command, show_command=show_command, show_progress=show_progress)
 
 
@@ -288,8 +294,6 @@ def link(*, target: str, remote_name: str, share_options: ShareLinkOptions | Non
 
 def sync(*, source: str, target: str, transfers: int, delete: bool, show_command: bool, show_progress: bool) -> None:
     command = ["rclone", "sync" if delete else "copy", source, target, f"--transfers={transfers}", "--verbose"]
-    if show_progress:
-        command.append("--progress")
     _run_rclone(command, show_command=show_command, show_progress=show_progress)
 
 
@@ -301,8 +305,6 @@ def bisync(
         command.append("--resync")
     if remove_empty_dirs:
         command.append("--remove-empty-dirs")
-    if show_progress:
-        command.append("--progress")
     if delete_during:
         command.append("--delete-during")
     _run_rclone(command, show_command=show_command, show_progress=show_progress)

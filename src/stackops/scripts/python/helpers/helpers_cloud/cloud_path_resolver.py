@@ -14,12 +14,12 @@ def parse_cloud_source_target(
 ) -> tuple[str, str, str]:
     if source.startswith(":"):
         if ES in target:
-            raise NotImplementedError("Not Implemented here yet.")
+            raise ValueError("Cannot infer a local target using '^'. Specify the local target path explicitly.")
         default_cloud = read_default_rclone_remote()
         source = default_cloud + ":" + source[1:]
     if target.startswith(":"):
         if ES in source:
-            raise NotImplementedError("Not Implemented here yet.")
+            raise ValueError("Cannot infer a local source using '^'. Specify the local source path explicitly.")
         default_cloud = read_default_rclone_remote()
         target = default_cloud + ":" + target[1:]
 
@@ -27,7 +27,8 @@ def parse_cloud_source_target(
         source_parts: list[str] = source.split(":")
         cloud = source_parts[0]
         if len(source_parts) > 1 and source_parts[1] == ES:  # the source path is to be inferred from target.
-            assert ES not in target, f"You can't use expand symbol `{ES}` in both source and target. Cyclical inference dependency arised."
+            if ES in target:
+                raise ValueError("Cannot use '^' in both source and target. Specify the local target path explicitly.")
             target_obj = my_abs(target)
             remote_path = get_remote_path(
                 local_path=target_obj,
@@ -38,7 +39,7 @@ def parse_cloud_source_target(
             )
             source = f"{cloud}:{remote_path.as_posix()}"
         elif target == ES:  # target path is to be inferred from source.
-            raise NotImplementedError("There is no .get_local_path method yet")
+            raise ValueError("Cannot infer a local target using '^'. Specify the local target path explicitly.")
         else:  # source path is mentioned, target? maybe.
             _ = my_abs(target)
         if cloud_config_explicit["zip"] and not source.endswith(".zip"):
@@ -49,7 +50,8 @@ def parse_cloud_source_target(
         target_parts: list[str] = target.split(":")
         cloud = target.split(":")[0]
         if len(target_parts) > 1 and target_parts[1] == ES:  # the target path is to be inferred from source.
-            assert ES not in source, "You can't use $ in both source and target. Cyclical inference dependency arised."
+            if ES in source:
+                raise ValueError("Cannot use '^' in both source and target. Specify the local source path explicitly.")
             source_obj = my_abs(source)
             remote_path = get_remote_path(
                 local_path=source_obj,
@@ -60,7 +62,7 @@ def parse_cloud_source_target(
             )
             target = f"{cloud}:{remote_path.as_posix()}"
         elif source == ES:
-            raise NotImplementedError("There is no .get_local_path method yet")
+            raise ValueError("Cannot infer a local source using '^'. Specify the local source path explicitly.")
         else:  # target path is mentioned, source? maybe.
             target = str(target)
             _ = my_abs(source)

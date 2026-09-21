@@ -20,7 +20,7 @@ def _run_ftpx_impl(source: str, target: str, recursive: bool, zip_first: bool, c
 
         print(str(err), file=sys.stderr)
         sys.exit(2)
-    except RuntimeError as err:
+    except (OSError, RuntimeError) as err:
         import sys
 
         message = str(err).strip()

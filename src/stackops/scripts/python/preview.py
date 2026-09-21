@@ -81,6 +81,11 @@ def preview(
                 uv_with = f""" --with "{STACKOPS_PLOT_REQUIREMENT}" """
             else:
                 uv_with += f""" --with "{STACKOPS_PLOT_REQUIREMENT}" """
+    if frozen and uv_with is not None:
+        raise typer.BadParameter(
+            "Cannot add packages in frozen mode. Remove --frozen or use an existing --project without --uv-with.",
+            param_hint="--frozen",
+        )
     resolved_backend: BACKENDS | None
     if interactive:
         resolved_backend = _choose_backend_interactively()
@@ -90,14 +95,19 @@ def preview(
         resolved_backend = _resolve_backend_choice(backend=backend)
 
     from stackops.scripts.python.helpers.helpers_preview.preview_impl import preview as impl
-    impl(
-        path=path,
-        project_path=project_path,
-        uv_with=uv_with,
-        backend=resolved_backend,
-        profile=profile,
-        frozen=frozen,
-    )
+
+    try:
+        impl(
+            path=path,
+            project_path=project_path,
+            uv_with=uv_with,
+            backend=resolved_backend,
+            profile=profile,
+            frozen=frozen,
+        )
+    except (OSError, ValueError) as error:
+        typer.echo(f"""Preview failed: {error}""", err=True)
+        raise typer.Exit(code=1) from error
 
 
 def main() -> None:

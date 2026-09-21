@@ -160,29 +160,34 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
 def _create_ssh_connection(machine: str, console: Console) -> SSH:
     """Create SSH connection, handling authentication."""
     from stackops.utils.ssh_utils.ssh import SSH
-    from paramiko.ssh_exception import AuthenticationException
+    from paramiko.ssh_exception import AuthenticationException, SSHException
     from rich.panel import Panel
 
     try:
-        ssh = SSH(host=rf"{machine}", username=None, hostname=None, ssh_key_path=None, password=None, port=22, enable_compression=True)
-    except AuthenticationException:
-        console.print(
-            Panel(
-                "\n".join(
-                    [
-                        "🔑 Authentication failed. Trying manual authentication...",
-                        "⚠️  Ensure that the username is provided correctly; only password prompts are handled here.",
-                    ]
-                ),
-                title="Authentication Required",
-                border_style="yellow",
-                padding=(1, 2),
+        try:
+            ssh = SSH(host=rf"{machine}", username=None, hostname=None, ssh_key_path=None, password=None, port=22, enable_compression=True)
+        except AuthenticationException:
+            console.print(
+                Panel(
+                    "\n".join(
+                        [
+                            "🔑 Authentication failed. Trying manual authentication...",
+                            "⚠️  Ensure that the username is provided correctly; only password prompts are handled here.",
+                        ]
+                    ),
+                    title="Authentication Required",
+                    border_style="yellow",
+                    padding=(1, 2),
+                )
             )
-        )
-        import getpass
+            import getpass
 
-        pwd = getpass.getpass()
-        ssh = SSH(host=rf"{machine}", username=None, hostname=None, ssh_key_path=None, password=pwd, port=22, enable_compression=True)
+            pwd = getpass.getpass()
+            ssh = SSH(host=rf"{machine}", username=None, hostname=None, ssh_key_path=None, password=pwd, port=22, enable_compression=True)
+    except AuthenticationException as error:
+        raise RuntimeError(f"""SSH authentication failed for '{machine}'. Check your username, password, or SSH key.""") from error
+    except (OSError, SSHException) as error:
+        raise RuntimeError(f"""Could not connect to SSH host '{machine}': {error}""") from error
 
     return ssh
 

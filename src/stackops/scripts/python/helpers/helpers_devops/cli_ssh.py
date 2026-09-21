@@ -41,7 +41,8 @@ def install_ssh_server() -> None:
         print(f"❌ Error: Platform {system} is not supported.")
         raise typer.Exit(code=1)
     if result.returncode != 0:
-        raise RuntimeError(f"SSH server installation failed with exit code {result.returncode}")
+        typer.echo(f"""SSH server installation failed with exit code {result.returncode}.""", err=True)
+        raise typer.Exit(code=result.returncode)
 
 
 def change_ssh_port(port: Annotated[int, typer.Option("--port", "-p", help="SSH port to use", min=1, max=65535)] = 2222) -> None:

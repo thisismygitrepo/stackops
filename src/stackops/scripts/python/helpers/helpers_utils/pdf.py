@@ -57,7 +57,8 @@ def compress_pdf(
     def compress_pdf_internal(pdf_input: str, output: str | None, quality: int, image_dpi: int, compress_streams: bool, use_objstms: bool) -> None:
         import pymupdf
         from pathlib import Path
-        output_path = output if output else pdf_input.replace(".pdf", "_compressed.pdf")
+        input_path = Path(pdf_input)
+        output_path = output if output is not None else str(input_path.with_stem(f"""{input_path.stem}_compressed"""))
         doc = pymupdf.open(pdf_input)
         try:
             # if remove_images:
@@ -77,7 +78,7 @@ def compress_pdf(
                 garbage=3,
                 use_objstms=1 if use_objstms else 0,
             )
-            input_size = Path(pdf_input).stat().st_size
+            input_size = input_path.stat().st_size
             output_size = Path(output_path).stat().st_size
             ratio = (1 - output_size / input_size) * 100
             print(f"✅ Compressed PDF saved to: {output_path}")
@@ -94,4 +95,6 @@ def compress_pdf(
     )
     from stackops.utils.code import run_shell_script, get_uv_command_executing_python_script
     uv_command, _py_file = get_uv_command_executing_python_script(python_script=code, uv_with=["pymupdf"], uv_project_dir=None)
-    run_shell_script(uv_command, display_script=True, clean_env=False)
+    proc = run_shell_script(uv_command, display_script=True, clean_env=False)
+    if proc.returncode != 0:
+        raise typer.Exit(code=proc.returncode)

@@ -476,6 +476,9 @@ def run_prompt(
             )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
+    except RuntimeError as error:
+        typer.echo(f"""Error: {error}""", err=True)
+        raise typer.Exit(code=1) from error
 
 
 def ask(

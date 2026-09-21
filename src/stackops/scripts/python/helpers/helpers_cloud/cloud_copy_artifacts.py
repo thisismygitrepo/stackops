@@ -48,7 +48,10 @@ def prepared_upload_path(
 ) -> Generator[Path, None, None]:
     source_path = local_path.expanduser().absolute()
     if not source_path.exists():
-        raise FileNotFoundError(source_path)
+        raise FileNotFoundError(
+            f"""Source path does not exist: {source_path}
+Use "." as the source to upload the current directory."""
+        )
     if not zip_requested and encryption_mode is None:
         yield source_path
         return
@@ -71,7 +74,10 @@ def prepared_upload_path(
             )
         else:
             if not source_path.is_file():
-                raise IsADirectoryError("Encryption without ZIP compression requires a file source.")
+                raise IsADirectoryError(
+                    f"""Cannot encrypt a directory without ZIP compression: {source_path}
+Use --zip (-z) to compress the directory before encryption."""
+                )
             upload_path = staging_root / source_path.name
             shutil.copy2(source_path, upload_path)
 

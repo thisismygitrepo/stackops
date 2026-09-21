@@ -43,23 +43,38 @@ def seek(
     ] = 50,
 ) -> None:
     """seek across files, text matches, and code symbols."""
+    import subprocess
+
     from stackops.scripts.python.helpers.helpers_seek.seek_impl import seek as impl
 
     path, resolved_search_term = _resolve_seek_arguments(first_argument=path_or_search_term, search_term=search_term)
 
-    impl(
-        path=path,
-        search_term=resolved_search_term,
-        ast=ast,
-        semantic=semantic,
-        max_files=max_files,
-        extension=extension,
-        file=file,
-        dotfiles=dotfiles,
-        rga=rga,
-        edit=edit,
-        install_dependencies=install_dependencies,
-    )
+    try:
+        impl(
+            path=path,
+            search_term=resolved_search_term,
+            ast=ast,
+            semantic=semantic,
+            max_files=max_files,
+            extension=extension,
+            file=file,
+            dotfiles=dotfiles,
+            rga=rga,
+            edit=edit,
+            install_dependencies=install_dependencies,
+        )
+    except OSError as error:
+        typer.echo(f"""Search failed: {error}""", err=True)
+        raise typer.Exit(code=1) from error
+    except subprocess.CalledProcessError as error:
+        detail = error.stderr
+        if isinstance(detail, bytes):
+            detail = detail.decode("utf-8", errors="replace")
+        message = f"""Search command failed with exit code {error.returncode}."""
+        if detail:
+            message += f""" {detail.strip()}"""
+        typer.echo(message, err=True)
+        raise typer.Exit(code=1) from error
 
 
 def get_app() -> typer.Typer:

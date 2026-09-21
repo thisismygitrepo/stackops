@@ -1,22 +1,28 @@
 """Cloud mount script"""
 
+from configparser import ConfigParser, Error as ConfigParserError
+
 import typer
 from typing import Annotated, Literal
 from typer._completion_classes import completion_init
 from typer.completion import install_callback, show_callback
 
 
-def get_rclone_config():
+def get_rclone_config() -> ConfigParser:
     from stackops.utils.io import read_ini
     from pathlib import Path
     import platform
     if platform.system() == "Windows":
-        config = read_ini(Path.home().joinpath("AppData/Roaming/rclone/rclone.conf"))
+        config_path = Path.home().joinpath("AppData/Roaming/rclone/rclone.conf")
     elif platform.system() in ["Linux", "Darwin"]:
-        config = read_ini(Path.home().joinpath(".config/rclone/rclone.conf"))
+        config_path = Path.home().joinpath(".config/rclone/rclone.conf")
     else:
         raise ValueError("unsupported platform")
-    return config
+    try:
+        return read_ini(config_path)
+    except (OSError, ConfigParserError, UnicodeDecodeError) as error:
+        raise ValueError(f"""Could not read rclone configuration at {config_path}: {error}
+Run 'rclone config' to configure or repair your remotes.""") from error
 
 
 def get_mprocs_mount_txt(cloud: str, rclone_cmd: str, cloud_brand: str):  # cloud_brand = config[cloud]["type"]
@@ -67,14 +73,20 @@ def mount(
     import subprocess
     from rich.console import Console
     from rich.panel import Panel
+    from rich.text import Text
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux import build_tmux_launch_command
     console = Console()
+    error_console = Console(stderr=True)
     DEFAULT_MOUNT = "~/data/rclone"
 
     title = "☁️  Cloud Mount Utility"
     console.print(Panel(title, title_align="left", border_style="blue"))
 
-    config = get_rclone_config()
+    try:
+        config = get_rclone_config()
+    except ValueError as error:
+        error_console.print(Text(f"""❌ {error}""", style="red"))
+        raise typer.Exit(code=1) from None
     if clouds is None:
         res = choose_from_options(multi=True, msg="which cloud", options=config.sections(), header="CLOUD MOUNT", default=None, tv=True)
         if res is None or len(res) == 0:
@@ -172,7 +184,16 @@ def mount(
         print("❌ Error: Unsupported platform")
         raise typer.Exit(code=1)
 
-    subprocess.run(txt, shell=True, check=True)
+    launcher = "mprocs" if system_name == "Windows" else "tmux"
+    try:
+        subprocess.run(txt, shell=True, check=True)
+    except subprocess.CalledProcessError as error:
+        error_console.print(Text(f"""❌ Cloud mount could not launch {launcher} (exit code {error.returncode}).
+Check the command output above and verify that {launcher} is installed and available in this terminal.""", style="red"))
+        raise typer.Exit(code=error.returncode) from None
+    except OSError as error:
+        error_console.print(Text(f"""❌ Could not launch cloud mount with {launcher}: {error}""", style="red"))
+        raise typer.Exit(code=1) from None
     # draw success box dynamically
     title1 = "✅ Cloud mount command prepared successfully"
     title2 = "🔄 Running mount process..."

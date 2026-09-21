@@ -76,8 +76,15 @@ def create_template(name: str | None, num_tabs: int) -> None:
         default_command = "powershell"
     else:
         default_command = "bash"
+    current_directory = Path.cwd()
+    home_directory = Path.home()
+    start_directory = (
+        f"""~/{current_directory.relative_to(home_directory).as_posix()}"""
+        if current_directory.is_relative_to(home_directory)
+        else str(current_directory)
+    )
     for i in range(1, num_tabs + 1):
-        tab: TabConfig = {"tabName": f"Tab{i}", "startDir": "~/" + str(Path.cwd().relative_to(Path.home())), "command": default_command}
+        tab: TabConfig = {"tabName": f"Tab{i}", "startDir": start_directory, "command": default_command}
         tabs.append(tab)
     layouts: list[LayoutConfig] = [{"layoutName": f"{Path.cwd().name}Layout", "layoutTabs": tabs}]
     file: LayoutsFile = {
