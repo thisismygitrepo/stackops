@@ -241,7 +241,7 @@
         },
         "arm64": {
           "linux": "jq-linux-arm64",
-          "windows": null,
+          "windows": "jq-windows-arm64.exe",
           "darwin": "jq-macos-arm64"
         }
       }
@@ -1235,12 +1235,12 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "tuicr-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "linux": "tuicr-{version}-x86_64-unknown-linux-musl.tar.gz",
           "darwin": "tuicr-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "tuicr-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "tuicr-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "linux": "tuicr-{version}-aarch64-unknown-linux-musl.tar.gz",
           "darwin": "tuicr-{version}-aarch64-apple-darwin.tar.gz",
           "windows": null
         }
@@ -1288,8 +1288,8 @@
         },
         "arm64": {
           "linux": "dua-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "darwin": null,
-          "windows": null
+          "darwin": "dua-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "dua-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
     },
@@ -1329,7 +1329,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "fd-{version}-x86_64-unknown-linux-musl.tar.gz",
-          "darwin": null,
+          "darwin": "fd-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "fd-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
@@ -1781,7 +1781,7 @@
           "windows": "ripgrep-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "ripgrep-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "linux": "ripgrep-{version}-aarch64-unknown-linux-musl.tar.gz",
           "darwin": "ripgrep-{version}-aarch64-apple-darwin.tar.gz",
           "windows": "ripgrep-{version}-aarch64-pc-windows-msvc.zip"
         }
@@ -2084,7 +2084,7 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "windows": "resvg-win64.zip",
+          "windows": null,
           "linux": "resvg-linux-x86_64.tar.gz",
           "darwin": "resvg-macos-x86_64.zip"
         },
@@ -2114,7 +2114,7 @@
         "arm64": {
           "linux": "watchexec-{version}-aarch64-unknown-linux-musl.tar.xz",
           "darwin": "watchexec-{version}-aarch64-apple-darwin.tar.xz",
-          "windows": null
+          "windows": "watchexec-{version}-aarch64-pc-windows-msvc.zip"
         }
       }
     },
@@ -2505,7 +2505,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "atuin-x86_64-unknown-linux-musl.tar.gz",
-          "darwin": null,
+          "darwin": "atuin-x86_64-apple-darwin.tar.gz",
           "windows": "atuin-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
@@ -3448,8 +3448,8 @@
         },
         "arm64": {
           "linux": "dust-{version}-aarch64-unknown-linux-musl.tar.gz",
-          "windows": null,
-          "darwin": null
+          "windows": "dust-{version}-aarch64-pc-windows-msvc.zip",
+          "darwin": "dust-{version}-aarch64-apple-darwin.tar.gz"
         }
       }
     },
@@ -3630,12 +3630,12 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "termscp-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "linux": "termscp-{version}-x86_64-unknown-linux-musl.tar.gz",
           "darwin": "termscp-{version}-x86_64-apple-darwin.tar.gz",
           "windows": "termscp-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "termscp-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "linux": "termscp-{version}-aarch64-unknown-linux-musl.tar.gz",
           "darwin": "termscp-{version}-aarch64-apple-darwin.tar.gz",
           "windows": "termscp-{version}-aarch64-pc-windows-msvc.zip"
         }
@@ -4319,7 +4319,7 @@
         "arm64": {
           "linux": "tealdeer-linux-aarch64-musl",
           "darwin": "tealdeer-macos-aarch64",
-          "windows": null
+          "windows": "tealdeer-windows-aarch64-msvc.exe"
         }
       }
     },
@@ -4567,7 +4567,7 @@
       "fileNamePattern": {
         "amd64": {
           "linux": "ExtratermQt-{version}.glibc2.38-x86_64.AppImage",
-          "darwin": "ExtratermQt_{version}.dmg",
+          "darwin": null,
           "windows": "extratermqt-setup-{version}.exe"
         },
         "arm64": {
@@ -5198,7 +5198,7 @@
         "amd64": {
           "linux": "tmux-mcp-rs-{version}-x86_64-unknown-linux-musl.tar.gz",
           "darwin": "tmux-mcp-rs-{version}-x86_64-apple-darwin.tar.gz",
-          "windows": "tmux-mcp-rs-{version}-x86_64-pc-windows-msvc.zip"
+          "windows": null
         },
         "arm64": {
           "linux": "tmux-mcp-rs-{version}-aarch64-unknown-linux-musl.tar.gz",
@@ -7295,13 +7295,13 @@
       ],
       "fileNamePattern": {
         "amd64": {
-          "linux": "bv_linux_amd64.tar.gz",
-          "darwin": "bv_darwin_amd64.tar.gz",
-          "windows": "bv_windows_amd64.zip"
+          "linux": "bv_{version}_linux_amd64.tar.gz",
+          "darwin": "bv_{version}_darwin_amd64.tar.gz",
+          "windows": "bv_{version}_windows_amd64.zip"
         },
         "arm64": {
-          "linux": "bv_linux_arm64.tar.gz",
-          "darwin": "bv_darwin_arm64.tar.gz",
+          "linux": "bv_{version}_linux_arm64.tar.gz",
+          "darwin": "bv_{version}_darwin_arm64.tar.gz",
           "windows": null
         }
       }
@@ -7315,14 +7315,14 @@
       "doc": "Structural diff tool that understands code syntax.",
       "fileNamePattern": {
         "amd64": {
-          "linux": "difft-x86_64-unknown-linux-musl.tar.gz",
-          "darwin": "difft-x86_64-apple-darwin.tar.gz",
-          "windows": "difft-x86_64-pc-windows-msvc.zip"
+          "linux": "difft-{version}-x86_64-unknown-linux-musl.tar.gz",
+          "darwin": "difft-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "difft-{version}-x86_64-pc-windows-msvc.zip"
         },
         "arm64": {
-          "linux": "difft-aarch64-unknown-linux-gnu.tar.gz",
-          "darwin": "difft-aarch64-apple-darwin.tar.gz",
-          "windows": "difft-aarch64-pc-windows-msvc.zip"
+          "linux": "difft-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "difft-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "difft-{version}-aarch64-pc-windows-msvc.zip"
         }
       },
       "categoryLabels": [
@@ -7578,7 +7578,7 @@
         "amd64": {
           "linux": "FreeLLMAPI-{version}.AppImage",
           "windows": "freellmapi.py",
-          "darwin": null
+          "darwin": "FreeLLMAPI-{version}-x64.dmg"
         },
         "arm64": {
           "linux": null,
