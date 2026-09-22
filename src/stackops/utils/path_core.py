@@ -47,9 +47,7 @@ def _emit(message: str, *, verbose: bool) -> None:
 
 def delete_path(target: PathLike, *, verbose: bool) -> None:
     target_path = Path(target).expanduser()
-    if not target_path.exists():
-        target_path.unlink(missing_ok=True)
-        _emit(f"❌ Could NOT DELETE nonexisting file {target_path!r}.", verbose=verbose)
+    if not target_path.exists() and not target_path.is_symlink():
         return
     if target_path.is_file() or target_path.is_symlink():
         target_path.unlink(missing_ok=True)
