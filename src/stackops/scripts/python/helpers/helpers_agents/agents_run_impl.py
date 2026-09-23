@@ -199,6 +199,7 @@ def build_agent_command(
 def run(
     prompt: str | None,
     agent: AGENTS,
+    interactive: bool,
     reasoning_effort: ReasoningEffort | None,
     context: str | None,
     context_path: str | None,
@@ -220,6 +221,10 @@ def run(
         resolve_prompts_yaml_paths,
     )
 
+    if interactive:
+        from stackops.scripts.python.helpers.helpers_agents.agents_run_interactive import validate_interactive_prompt_agent
+
+        validate_interactive_prompt_agent(agent=agent)
     validate_prompt_sandbox(agent=agent, options=sandbox_options)
     if _should_prepare_prompts_yaml(
         context=context,
@@ -267,7 +272,13 @@ def run(
     prompt_text = prompt if prompt is not None else ""
     prompt_file = make_prompt_file(prompt=prompt_text, context=resolved_context, skill_reference=skill_reference)
     _print_prompt_file_preview(prompt_file=prompt_file)
-    if sandbox_options.backend == SandboxBackend.NONE:
+    if interactive:
+        from stackops.scripts.python.helpers.helpers_agents.agents_run_interactive_script import build_interactive_prompt_script
+
+        command_line = build_interactive_prompt_script(
+            agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort, options=sandbox_options,
+        )
+    elif sandbox_options.backend == SandboxBackend.NONE:
         command_line = build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
     else:
         from stackops.scripts.python.helpers.helpers_agents.agents_run_sandbox import build_sandboxed_prompt_script

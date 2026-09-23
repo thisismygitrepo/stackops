@@ -267,6 +267,7 @@ def create_context(
             impl(
                 prompt=full_prompt,
                 agent=agent,
+                interactive=False,
                 reasoning_effort=None,
                 context="",
                 context_path=None,

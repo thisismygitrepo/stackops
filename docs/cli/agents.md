@@ -20,7 +20,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
 | `second-brain` | Configure the Second Brain repository and its agent instructions |
 | `doctor` | Inspect agent binaries, configuration, plugins, skills, and instruction provenance |
-| `run-prompt` | Run one prompt through a selected agent, with inline, file, or YAML-backed context |
+| `run-prompt` | Run a prompt through a selected agent, with context and an optional interactive session |
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
 | `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
@@ -143,10 +143,11 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 `run-prompt` is the structured workflow entrypoint. It supports:
 
 - `--agent`
+- `--interactive`/`-i` to start the selected agent's native chat with the prepared prompt and continue with follow-up messages
 - `--reasoning` for codex, copilot, and pi agents; unsupported agents ignore it
 - `--context` or `--context-path`
 - `--context-yaml-path` plus `--context-name`
-- `--skill`/`-S` to reference one supported agent skill (same catalog as `agents add-skill`) on the fly: the prompt file tells the agent to read the skill's `SKILL.md` from its source repository and follow it; the skill is never installed. Pass an empty value (`--skill ""`) to pick the skill interactively
+- `--skill`/`-k` to reference one supported agent skill (same catalog as `agents add-skill`) on the fly: the prompt file tells the agent to read the skill's `SKILL.md` from its source repository and follow it; the skill is never installed. Pass an empty value (`--skill ""`) to pick the skill interactively
 - `--source`, `-s` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, or `library`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
 - free-form prompt parts after `--`; option-looking tokens after the delimiter are prompt text, not StackOps flags
@@ -154,10 +155,16 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 For `run-prompt`, `--agent` defaults to `codex`. `--source repo` or `-s repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
 Shell metacharacters such as `|`, `>`, `$`, and `*` are still interpreted by your shell before StackOps receives the prompt.
 
+Interactive mode sends the same prompt, context, and skill reference as the first message, then leaves the agent's chat open. It supports `agy`, `cursor-agent`, `claude`, `qwen`, `copilot`, `codex`, `opencode`, `auggie`, `droid`, and `pi`. Other agents report an error before preparing context. Reasoning, Second Brain, and sandbox options still apply; container sandboxes allocate a terminal. Without `--interactive`, the existing prompt-running behavior is unchanged.
+
+Context selection works the same in either mode. Pass `--context ""` to run without context or a YAML picker. Use `agents i` to open an empty chat without preparing a prompt.
+
 Examples:
 
 ```bash
 agents run-prompt --agent codex --reasoning high --context-path ./context.md "inspect this repo"
+agents r -i --context-path ./context.md "inspect this repo"
+agents r --interactive --agent copilot --context "" "help me debug this"
 agents run-prompt --agent codex --reasoning high --context-path ./context.md -- inspect this repo --include-hidden
 agents run-prompt --agent copilot --reasoning high --context-path ./context.md "inspect this repo"
 agents run-prompt --agent copilot --context-name docs.cli -s all "update the assigned docs"
