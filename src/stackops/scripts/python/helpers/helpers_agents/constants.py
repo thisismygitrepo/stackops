@@ -8,4 +8,5 @@ CODEX_EXEC_PERMISSION_ARGS: Final[tuple[str, ...]] = (
     "workspace-write",
     "-c",
     "sandbox_workspace_write.network_access=true",
+    "--skip-git-repo-check",
 )
