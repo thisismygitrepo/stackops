@@ -12,6 +12,7 @@ GUI = [
 # AI/LLM Tools - AI-powered coding and chat assistants
 AGENTS = [
     "aider",
+    "agent-git",
     "aoe",
     "aichat",
     "copilot",
@@ -153,6 +154,7 @@ PACKAGES_DEV_UTILS = [
 # Code Analysis, Git & Docs - Code analysis, statistics, documentation, and Git tools
 PACKAGES_CODE_ANALYSIS = [
     "nano",
+    "agent-git",
     "lazygit",
     "onefetch",
     "gitcs",

@@ -366,6 +366,10 @@ def run_prompt(
         ),
     ],
     agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = DEFAULT_AGENT,
+    interactive: Annotated[
+        bool,
+        typer.Option("--interactive", "-i", help="Start a native agent chat with the prepared prompt and keep it open for follow-up messages."),
+    ] = False,
     second_brain: Annotated[
         bool,
         typer.Option(..., "--second-brain", "-b", help="Run from the Second Brain repository."),
@@ -454,7 +458,7 @@ def run_prompt(
         ),
     ] = None,
 ) -> None:
-    """Run one prompt via selected agent."""
+    """Run a prompt via the selected agent, optionally continuing interactively."""
     from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
 
     try:
@@ -462,6 +466,7 @@ def run_prompt(
             impl(
                 prompt=" ".join(prompt) if prompt else None,
                 agent=agent,
+                interactive=interactive,
                 reasoning_effort=reasoning_effort,
                 context=context,
                 context_path=context_path,

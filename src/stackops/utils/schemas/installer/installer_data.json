@@ -7667,6 +7667,30 @@
           "windows": "npm install -g @deepseek-ai/dsh"
         }
       }
+    },
+    {
+      "appName": "agent-git",
+      "license": "MIT License",
+      "repoURL": "https://github.com/Einsia/agent-git",
+      "lastCommitDate": "2026-09-22T20:25:40Z",
+      "lastCommitDateCheckDate": "2026-09-23T02:27:54Z",
+      "doc": "Version control for agent sessions: snapshot, resume, and share Claude Code, Codex, OpenCode, and Cursor conversations.",
+      "categoryLabels": [
+        "version-control",
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "npm install -g @einsia/agent-git",
+          "darwin": "npm install -g @einsia/agent-git",
+          "windows": "npm install -g @einsia/agent-git"
+        },
+        "arm64": {
+          "linux": "npm install -g @einsia/agent-git",
+          "darwin": "npm install -g @einsia/agent-git",
+          "windows": "npm install -g @einsia/agent-git"
+        }
+      }
     }
   ]
 }
