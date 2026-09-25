@@ -79,10 +79,15 @@ def merge_remote_copy(repo: "Repo", remote_path: Path, console: "Console") -> Me
     from git.exc import GitCommandError
 
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import get_merge_conflicts
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_status import print_repository_comparison
 
     _print_section(console=console, title="INTEGRATING LATEST REMOTE COMMIT")
     try:
         repo.git.fetch("--no-recurse-submodules", str(remote_path), "HEAD")
+        print_repository_comparison(
+            repo=repo, local_commit=repo.head.commit, remote_commit=repo.commit("FETCH_HEAD"),
+            console=console, title="Before integration",
+        )
         merge_output = repo.git.merge("FETCH_HEAD", no_edit=True)
     except GitCommandError as exc:
         conflicts = get_merge_conflicts(repo=repo)

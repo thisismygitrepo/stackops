@@ -36,6 +36,7 @@ def run_guard_repository(
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import commit_local_changes
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_integration import integrate_remote_repository
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_replacement import overwrite_local_with_remote
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_status import print_matching_repositories, print_repository_comparison
     from stackops.utils.accessories import randstr
     from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error
     from stackops.utils.path_core import delete_path
@@ -63,6 +64,7 @@ def run_guard_repository(
 
         if operation == "overwrite-remote":
             upload_repo_archive(repo_root=repo_root, cloud=cloud, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore)
+            print_matching_repositories(repo_root=repo_root, console=console, title="Remote archive overwritten with local repository")
             return "overwritten-remote"
 
         run_name = randstr(8)
@@ -79,12 +81,14 @@ def run_guard_repository(
             if operation == "sync":
                 commit_local_changes(repo=local_repo, message=message if message is not None and message.strip() else "sync", console=console)
             upload_repo_archive(repo_root=repo_root, cloud=cloud, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore)
+            print_matching_repositories(repo_root=repo_root, console=console, title="New remote archive uploaded")
             return "created"
 
         validate_downloaded_repository(repo_remote_root=remote_root, cloud=cloud, remote_path=remote_path)
         if local_repo is None:
             validate_integration_transport(repo_local_root=repo_root, integration_root=remote_root, cloud=cloud)
             restore_local_repository(repo_local_root=repo_root, repo_remote_root=remote_root)
+            print_matching_repositories(repo_root=repo_root, console=console, title="Local repository restored from remote archive")
             return "restored"
         if operation == "sync":
             commit_local_changes(repo=local_repo, message=message if message is not None and message.strip() else "sync", console=console)
@@ -93,6 +97,12 @@ def run_guard_repository(
                 remote_has_commit = remote_repo.head.is_valid()
             if remote_has_commit:
                 local_repo.git.fetch("--no-recurse-submodules", str(remote_root), "HEAD")
+            print_repository_comparison(
+                repo=local_repo, local_commit=local_repo.head.commit if local_repo.head.is_valid() else None,
+                remote_commit=local_repo.commit("FETCH_HEAD") if remote_has_commit else None,
+                console=console, title="Before push",
+            )
+            if remote_has_commit:
                 if not local_repo.head.is_valid() or not local_repo.is_ancestor(local_repo.commit("FETCH_HEAD"), local_repo.head.commit):
                     raise RuntimeError("Guard archive contains changes missing locally; pull or sync before pushing.")
         elif operation != "overwrite-local":
@@ -110,8 +120,15 @@ def run_guard_repository(
             validate_integration_transport(repo_local_root=repo_root, integration_root=remote_root, cloud=cloud)
             local_repo.close()
             overwrite_local_with_remote(repo_local_root=repo_root, repo_remote_root=remote_root)
+            print_matching_repositories(repo_root=repo_root, console=console, title="Local repository overwritten with remote archive")
             return "overwritten-local"
         if operation == "pull":
+            with Repo(remote_root) as remote_repo:
+                print_repository_comparison(
+                    repo=local_repo, local_commit=local_repo.head.commit if local_repo.head.is_valid() else None,
+                    remote_commit=remote_repo.head.commit if remote_repo.head.is_valid() else None,
+                    console=console, title="After pull (remote archive unchanged)",
+                )
             delete_path(remote_root.parent, verbose=False)
             return "pulled"
 
@@ -122,6 +139,10 @@ def run_guard_repository(
             remote_path=remote_path,
             pwd=pwd,
             ignore_gitignore=ignore_gitignore,
+        )
+        print_matching_repositories(
+            repo_root=repo_root, console=console,
+            title="Remote archive overwritten with local repository" if operation == "overwrite-remote" else "After upload",
         )
         if operation == "overwrite-remote":
             return "overwritten-remote"

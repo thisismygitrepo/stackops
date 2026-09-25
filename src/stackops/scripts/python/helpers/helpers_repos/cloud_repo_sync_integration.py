@@ -74,15 +74,27 @@ def integrate_remote_repository(
     )
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import MergeConflictResolutionSide, resolve_merge_conflicts
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import MergeConflictResult, MergeGitError, merge_remote_copy
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_status import print_integration_result, print_repository_comparison
 
     repo_local_root = Path(local_repo.working_dir)
     with Repo(repo_remote_root) as remote_repo:
         if not remote_repo.head.is_valid():
+            print_repository_comparison(
+                repo=local_repo, local_commit=local_repo.head.commit if local_repo.head.is_valid() else None,
+                remote_commit=None, console=console, title="Before integration",
+            )
+            console.print("Remote archive has no commits; local history is unchanged.")
             return
+        remote_commit = remote_repo.head.commit.hexsha
     if not local_repo.head.is_valid():
         validate_integration_transport(repo_local_root=repo_local_root, integration_root=repo_remote_root, cloud=cloud)
         local_repo.git.fetch("--no-recurse-submodules", str(repo_remote_root), "HEAD")
+        print_repository_comparison(
+            repo=local_repo, local_commit=None, remote_commit=local_repo.commit("FETCH_HEAD"),
+            console=console, title="Before integration",
+        )
         local_repo.git.merge("FETCH_HEAD", no_edit=True)
+        print_integration_result(repo=local_repo, previous_commit=None, remote_commit=remote_commit, console=console)
         return
     integration_worktree = create_integration_worktree(repo=local_repo, worktree_root=integration_root)
     integration_repo = Repo(integration_worktree.root)
@@ -120,6 +132,7 @@ def integrate_remote_repository(
             case "merge-accept-remote" | "merge-accept-local":
                 accepted_side: MergeConflictResolutionSide = "remote" if selected_action == "merge-accept-remote" else "local"
                 resolve_merge_conflicts(repo=integration_repo, expected_conflicts=merge_result.conflicts, accept_side=accepted_side)
+                console.print(f"""Resolved {len(merge_result.conflicts)} conflicting paths using {accepted_side} versions.""")
             case "overwrite-local" | "overwrite-remote":
                 remove_integration_state(local_repo=local_repo, integration_repo=integration_repo, integration_worktree=integration_worktree)
                 return selected_action
@@ -128,4 +141,7 @@ def integrate_remote_repository(
 
     validate_integration_transport(repo_local_root=repo_local_root, integration_root=integration_root, cloud=cloud)
     fast_forward_local_repo(local_repo=local_repo, integration_repo=integration_repo, expected_local_head=integration_worktree.base_commit)
+    print_integration_result(
+        repo=local_repo, previous_commit=integration_worktree.base_commit, remote_commit=remote_commit, console=console,
+    )
     remove_integration_state(local_repo=local_repo, integration_repo=integration_repo, integration_worktree=integration_worktree)
