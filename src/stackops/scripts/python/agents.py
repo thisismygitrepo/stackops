@@ -127,7 +127,7 @@ def init_config(
         bool, typer.Option("--add-gitignore", "-g", help="Track all files touched by init-config and add them to .gitignore")
     ] = False,
 ) -> None:
-    """Initialize AI configurations in the current repository."""
+    """Initialize AI configurations, set supported OpenRouter ZDR controls, and report account enforcement requirements."""
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import init_config as impl
 
     try:

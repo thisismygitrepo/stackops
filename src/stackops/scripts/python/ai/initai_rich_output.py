@@ -9,6 +9,7 @@ from rich.status import Status
 from rich.table import Table
 from rich.text import Text
 
+from stackops.scripts.python.ai.constants import OPENROUTER_ZDR_CONFIGURATION
 from stackops.scripts.python.ai.initai_models import ArtifactAction, ArtifactChange, InitConfigPlan, InitConfigResult
 
 _CONSOLE: Final[Console] = Console()
@@ -106,11 +107,34 @@ def build_init_config_result_panel(*, result: InitConfigResult) -> Panel:
     summary.add_row("Written", Text(str(action_counts["written"]), style="bold yellow"))
     summary.add_row("Removed", Text(str(action_counts["removed"]), style="bold red"))
     summary.add_row("Elapsed", Text(f"{result.elapsed_seconds:.3f}s", style="bright_white"))
-    return Panel(summary, title="[bold green]✓ Configuration complete[/]", border_style="green")
+    return Panel(summary, title="[bold green]✓ Repository configuration complete[/]", border_style="green")
 
 
 def show_init_config_result(*, result: InitConfigResult) -> None:
     _CONSOLE.print(build_init_config_result_panel(result=result))
+    openrouter_configurations = {
+        framework: configuration
+        for framework in result.plan.frameworks
+        if (configuration := OPENROUTER_ZDR_CONFIGURATION[framework]) is not None
+    }
+    if result.plan.add_private_config and openrouter_configurations:
+        routing = Table(box=box.ROUNDED, show_header=True, expand=True)
+        routing.add_column("Agent", style="bold cyan")
+        routing.add_column("Repository OpenRouter ZDR configuration")
+        for framework, configuration in openrouter_configurations.items():
+            routing.add_row(framework, configuration)
+        _CONSOLE.print(routing)
+        _CONSOLE.print(Panel(
+            Text(
+                "To enforce ZDR for all OpenRouter requests, enable it for every model group at "
+                "https://openrouter.ai/settings/privacy or attach an equivalent ZDR guardrail to every API key in use. "
+                "Keep OpenRouter input/output logging disabled. "
+                "Repository settings do not cover every client, global model configuration, or request override. "
+                "OpenRouter account settings were not changed or verified."
+            ),
+            title="OpenRouter account enforcement",
+            border_style="yellow",
+        ))
     if len(result.artifact_changes) == 0:
         _CONSOLE.print(Panel("[dim]No files were created, rewritten, or removed.[/]", title="Filesystem changes", border_style="yellow"))
         return

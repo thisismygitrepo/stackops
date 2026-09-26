@@ -1,8 +1,14 @@
 import json
 from pathlib import Path
+from typing import cast
 
 from stackops.scripts.python.ai.initai_artifacts import write_text_artifact
 from stackops.scripts.python.ai.initai_models import ArtifactChange
+from stackops.scripts.python.ai.solutions.pi.constants import (
+    OPENROUTER_ZDR_EXTENSION,
+    OPENROUTER_ZDR_EXTENSION_PATH,
+    OPENROUTER_ZDR_EXTENSION_SETTING,
+)
 from stackops.scripts.python.ai.utils.shared import get_generic_instructions_path
 
 
@@ -32,27 +38,50 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
             changes.append(change)
 
     if add_private_config:
-        settings_change = _write_json_if_missing(
-            repo_root=repo_root,
-            path=repo_root.joinpath(".pi/settings.json"),
-            content={
-                "defaultThinkingLevel": "max",
-                "enableInstallTelemetry": False,
-                "retry": {
-                    "enabled": True,
-                    "maxRetries": 10,
-                    "baseDelayMs": 2_000,
-                    "provider": {
-                        "maxRetries": 0,
-                        "maxRetryDelayMs": 60_000,
-                    },
+        settings_path = repo_root.joinpath(".pi/settings.json")
+        settings_content: dict[str, object] = {
+            "defaultThinkingLevel": "max",
+            "enableInstallTelemetry": False,
+            "retry": {
+                "enabled": True,
+                "maxRetries": 10,
+                "baseDelayMs": 2_000,
+                "provider": {
+                    "maxRetries": 0,
+                    "maxRetryDelayMs": 60_000,
                 },
             },
-        )
+        }
+        settings_text = settings_path.read_text(encoding="utf-8") if settings_path.exists() else ""
+        if settings_text:
+            loaded_settings: object = json.loads(settings_text)
+            if not isinstance(loaded_settings, dict):
+                raise ValueError(f"""Expected a JSON object in {settings_path}""")
+            settings_content = cast(dict[str, object], loaded_settings)
+        extensions = settings_content.get("extensions", [])
+        if not isinstance(extensions, list) or not all(isinstance(path, str) for path in extensions):
+            raise ValueError(f"""Expected extensions to be a list of paths in {settings_path}""")
+        if OPENROUTER_ZDR_EXTENSION_SETTING not in extensions:
+            settings_content["extensions"] = [*extensions, OPENROUTER_ZDR_EXTENSION_SETTING]
+        updated_settings = json.dumps(settings_content, indent=2) + "\n"
+        settings_change = None
+        if updated_settings != settings_text:
+            settings_change = write_text_artifact(
+                repo_root=repo_root,
+                path=settings_path,
+                content=updated_settings,
+                write_mode="always",
+            )
         mcp_change = _write_json_if_missing(
             repo_root=repo_root,
             path=repo_root.joinpath(".pi/mcp.json"),
             content={"mcpServers": {}},
         )
-        changes.extend(change for change in (settings_change, mcp_change) if change is not None)
+        zdr_change = write_text_artifact(
+            repo_root=repo_root,
+            path=repo_root.joinpath(OPENROUTER_ZDR_EXTENSION_PATH),
+            content=OPENROUTER_ZDR_EXTENSION,
+            write_mode="always",
+        )
+        changes.extend(change for change in (settings_change, mcp_change, zdr_change) if change is not None)
     return tuple(changes)

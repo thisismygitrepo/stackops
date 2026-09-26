@@ -2,6 +2,17 @@
   "$schema": "./opencode.schema.json",
   "share": "disabled",
   "autoupdate": false,
+  "provider": {
+    "openrouter": {
+      "options": {
+        "extraBody": {
+          "provider": {
+            "zdr": true
+          }
+        }
+      }
+    }
+  },
   "instructions": [
     "AGENTS.md"
   ],

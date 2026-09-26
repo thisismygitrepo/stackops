@@ -1,5 +1,8 @@
 import json
+import os
 from pathlib import Path
+from typing import cast
+from urllib.parse import urlsplit
 
 from stackops.scripts.python.ai.initai_artifacts import write_text_artifact
 from stackops.scripts.python.ai.initai_models import ArtifactChange
@@ -49,6 +52,33 @@ def _private_local_settings() -> dict[str, object]:
     }
 
 
+def _enforce_openrouter_zdr(repo_root: Path) -> ArtifactChange | None:
+    local_path = repo_root.joinpath(".claude/settings.local.json")
+    shared_path = repo_root.joinpath(".claude/settings.json")
+    shared_settings = cast(dict[str, object], json.loads(shared_path.read_text(encoding="utf-8")))
+    local_settings = cast(dict[str, object], json.loads(local_path.read_text(encoding="utf-8")))
+    shared_env = cast(dict[str, str], shared_settings.get("env", {}))
+    local_env = cast(dict[str, str], local_settings.get("env", {}))
+    effective_env = {**shared_env, **local_env}
+    base_url = os.path.expandvars(effective_env.get("ANTHROPIC_BASE_URL", ""))
+    host = urlsplit(base_url).hostname or ""
+    if host != "openrouter.ai" and not host.endswith(".openrouter.ai"):
+        return None
+    extra_body = cast(dict[str, object], json.loads(effective_env.get("CLAUDE_CODE_EXTRA_BODY", "{}")))
+    provider = cast(dict[str, object], extra_body.setdefault("provider", {}))
+    provider["zdr"] = True
+    updated_body = json.dumps(extra_body)
+    if local_env.get("CLAUDE_CODE_EXTRA_BODY") == updated_body:
+        return None
+    local_settings["env"] = {**local_env, "CLAUDE_CODE_EXTRA_BODY": updated_body}
+    return write_text_artifact(
+        repo_root=repo_root,
+        path=local_path,
+        content=json.dumps(local_settings, indent=2) + "\n",
+        write_mode="always",
+    )
+
+
 def build_configuration(repo_root: Path, add_private_config: bool, add_instructions: bool) -> tuple[ArtifactChange, ...]:
     changes: list[ArtifactChange] = []
     if add_instructions:
@@ -83,6 +113,9 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
             for change in (shared_settings_change, local_settings_change, mcp_change)
             if change is not None
         )
+        zdr_change = _enforce_openrouter_zdr(repo_root)
+        if zdr_change is not None:
+            changes.append(zdr_change)
 
         claude_local_path = repo_root.joinpath("CLAUDE.local.md")
         local_instructions_change = write_text_artifact(

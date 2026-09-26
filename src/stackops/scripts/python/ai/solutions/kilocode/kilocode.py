@@ -4,6 +4,7 @@ from pathlib import Path
 import stackops.scripts.python.ai.solutions.kilocode as kilocode_assets
 from stackops.scripts.python.ai.initai_artifacts import write_text_artifact
 from stackops.scripts.python.ai.initai_models import ArtifactChange
+from stackops.scripts.python.ai.solutions.opencode.openrouter_config import enforce_openrouter_zdr, read_openrouter_config
 from stackops.scripts.python.ai.utils.shared import get_generic_instructions_path
 from stackops.utils.path_reference import get_path_reference_path
 
@@ -57,6 +58,25 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
             changes.append(agents_change)
 
     if add_private_config:
+        config_paths = [
+            path
+            for directory in (repo_root, repo_root.joinpath(".kilo"))
+            for name in ("kilo.json", "kilo.jsonc")
+            if (path := directory.joinpath(name)).exists()
+        ]
+        if not config_paths:
+            config_paths.append(repo_root.joinpath(".kilo/kilo.jsonc"))
+        for config_path in config_paths:
+            config = read_openrouter_config(config_path) if config_path.exists() else {}
+            enforce_openrouter_zdr(config)
+            config_change = write_text_artifact(
+                repo_root=repo_root,
+                path=config_path,
+                content=json.dumps(config, indent=2) + "\n",
+                write_mode="always",
+            )
+            assert config_change is not None
+            changes.append(config_change)
         mcp_change = _write_json_if_missing(
             repo_root=repo_root,
             path=repo_root.joinpath(".kilocode/mcp.json"),

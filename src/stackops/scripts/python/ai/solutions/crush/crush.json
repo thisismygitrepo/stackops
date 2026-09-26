@@ -83,8 +83,15 @@
       "id": "openrouter",
       "name": "OpenRouter",
       "base_url": "https://openrouter.ai/api/v1",
-      "type": "openai",
+      "type": "openrouter",
       "api_key": "$OPENROUTER_API_KEY",
+      "provider_options": {
+        "extra_body": {
+          "provider": {
+            "zdr": true
+          }
+        }
+      },
       "models": [
         {
           "id": "deepseek/deepseek-chat",
