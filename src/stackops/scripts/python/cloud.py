@@ -72,14 +72,14 @@ def copy(
     record_os: Annotated[str, typer.Option("--record-os", "-F", help="💻 OS filter for recorded uploads. Comma-separated: linux,darwin,windows. Defaults to all.")] = "linux,darwin,windows",
     rel2home: Annotated[bool, typer.Option("--rel2home/--no-rel2home", "-r/-a", help="🏠 Relative to `myhome` folder")] = defaults["rel2home"],
     root: Annotated[str, typer.Option("--root", "-R", help="🌳 Remote root.")] = defaults["root"],
-    pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password. Requires --encryption symmetric.")] = defaults["pwd"],
+    pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔒 Symmetric GPG encryption password. Implies --encryption symmetric when omitted.")] = defaults["pwd"],
     password_name: Annotated[
         str | None,
-        typer.Option("--password-name", "-P", help="🔐 Exact StackOps secrets login name containing PASSWORD. Requires --encryption symmetric."),
+        typer.Option("--password-name", "-P", help="🔐 Exact StackOps secrets login name containing PASSWORD. Implies --encryption symmetric when omitted."),
     ] = None,
     encryption: Annotated[
         EncryptionModeChoice | None,
-        typer.Option("--encryption", "-e", help="🔐 Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."),
+        typer.Option("--encryption", "-e", help="🔐 Encryption mode: symmetric/s or asymmetric/a. Defaults to symmetric with --password or --password-name, otherwise plaintext."),
     ] = defaults["encryption"],
     zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z/-Z", help="📦 unzip after receiving.")] = defaults["zip"],
     os_specific: Annotated[bool, typer.Option("--os-specific/--no-os-specific", "-O/-A", help="💻 choose path specific for this OS.")] = defaults["os_specific"],

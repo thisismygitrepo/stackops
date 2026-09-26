@@ -43,8 +43,9 @@ def _resolve_encryption_mode(*, encryption: EncryptionModeChoice | None, pwd: st
     if pwd is not None:
         if pwd == "":
             raise ValueError("--password must be non-empty.")
-        if encryption_mode != "symmetric":
-            raise ValueError("--password requires --encryption symmetric.")
+        if encryption_mode == "asymmetric":
+            raise ValueError("--password cannot be used with --encryption asymmetric.")
+        encryption_mode = "symmetric"
     return encryption_mode
 
 
