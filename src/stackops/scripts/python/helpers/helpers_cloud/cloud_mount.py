@@ -56,7 +56,10 @@ mprocs "echo 'see {DEFAULT_MOUNT}/{cloud} for the mounted cloud'; rclone about {
 
 
 def mount(
-    clouds: Annotated[list[str] | None, typer.Argument(help="cloud remotes to mount, omit for interactive selection")] = None,
+    clouds: Annotated[
+        list[str] | None,
+        typer.Argument(help="Comma-separated cloud names to mount, for example drive,dropbox. Omit to select multiple interactively."),
+    ] = None,
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
@@ -88,12 +91,23 @@ def mount(
         error_console.print(Text(f"""❌ {error}""", style="red"))
         raise typer.Exit(code=1) from None
     if clouds is None:
-        res = choose_from_options(multi=True, msg="which cloud", options=config.sections(), header="CLOUD MOUNT", default=None, tv=True)
+        res = choose_from_options(
+            multi=True,
+            msg="Select clouds (Tab to select multiple, Enter to confirm)",
+            options=config.sections(),
+            header="CLOUD MOUNT",
+            default=None,
+            tv=True,
+        )
         if res is None or len(res) == 0:
             print("❌ Error: No cloud selected")
             raise typer.Exit(code=1)
         clouds = res
     else:
+        clouds = [cloud_name.strip() for cloud_group in clouds for cloud_name in cloud_group.split(",")]
+        if not clouds or any(not cloud_name for cloud_name in clouds):
+            print("❌ Error: Provide nonempty cloud names separated by commas, for example drive,dropbox")
+            raise typer.Exit(code=1)
         missing = [cloud_name for cloud_name in clouds if cloud_name not in config.sections()]
         if missing:
             print(f"❌ Error: Cloud(s) not found in config: {', '.join(missing)}")
@@ -168,10 +182,6 @@ def mount(
             cloud_brand=cloud_brand,
         )
     elif system_name in ["Linux", "Darwin"]:
-        import string
-        import random
-        three_random_letters = ''.join(random.choices(string.ascii_lowercase, k=3))
-        session_name = "cloud-mount-" + three_random_letters
         match backend:
             case "tmux" | "t" | "auto" | "a":
                 pass
@@ -179,7 +189,7 @@ def mount(
                 print(f"❌ Error: Unsupported backend '{backend}'")
                 raise typer.Exit(code=1)
 
-        txt = build_tmux_launch_command(mount_commands=mount_commands, mount_locations=mount_locations, session_name=session_name)
+        txt = build_tmux_launch_command(mount_commands=mount_commands, mount_locations=mount_locations, session_name="cloud-mount")
     else:
         print("❌ Error: Unsupported platform")
         raise typer.Exit(code=1)

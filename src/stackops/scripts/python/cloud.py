@@ -108,7 +108,10 @@ def copy(
 
 
 def mount(
-    clouds: Annotated[list[str] | None, typer.Argument(help="cloud remotes to mount, omit for interactive selection")] = None,
+    clouds: Annotated[
+        list[str] | None,
+        typer.Argument(help="Comma-separated cloud names to mount, for example drive,dropbox. Omit to select multiple interactively."),
+    ] = None,
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
