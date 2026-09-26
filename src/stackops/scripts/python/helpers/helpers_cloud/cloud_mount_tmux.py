@@ -5,6 +5,14 @@ from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
 )
 
 
+def build_mount_pane_command(mount_command: str) -> str:
+    script = f"""trap 'trap "" HUP INT TERM; if [ -n "$!" ]; then kill -TERM "$!"; wait "$!"; fi; exit' HUP INT TERM
+{mount_command} <&0 &
+wait "$!"
+"""
+    return f"""bash -lc {shlex.quote(script)}"""
+
+
 def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: dict[str, str], session_name: str) -> str:
     commands: list[str] = ["set -e"]
     session_target = f"={session_name}:"
@@ -13,7 +21,7 @@ def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: d
         window_target = f"={session_name}:={cloud_name}"
         mount_loc = mount_locations[cloud_name]
 
-        mount_pane_cmd = f"bash -lc {shlex.quote(mount_cmd)}"
+        mount_pane_cmd = build_mount_pane_command(mount_command=mount_cmd)
         about_pane_cmd = f"bash -lc {shlex.quote(f'rclone about {cloud_name}:; exec bash')}"
         explorer_pane_cmd = f"bash -lc {shlex.quote(f'yazi {shlex.quote(mount_loc)}')}"
         monitor_pane_cmd = f"bash -lc {shlex.quote('btm --default_widget_type net --expanded')}"

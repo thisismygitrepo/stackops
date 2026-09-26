@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux import build_tmux_launch_command
+from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux import build_mount_pane_command, build_tmux_launch_command
 
 
 @dataclass(frozen=True)
@@ -118,7 +118,7 @@ def test_mount_windows_use_actual_panes_and_preserve_existing_windows(
             _run_tmux(server=server, arguments=["wait-for", f"""{pane.identifier}-ready"""])
             commands[pane.identifier] = (server.directory / f"""{pane.identifier}.command""").read_text(encoding="utf-8")
         assert set(commands.values()) == {
-            mount_commands[remote],
+            shlex.split(build_mount_pane_command(mount_command=mount_commands[remote]))[2],
             f"""rclone about {remote}:; exec bash""",
             f"""yazi {shlex.quote(location)}""",
             "btm --default_widget_type net --expanded",

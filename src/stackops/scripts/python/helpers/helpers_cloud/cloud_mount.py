@@ -25,7 +25,7 @@ def get_rclone_config() -> ConfigParser:
 Run 'rclone config' to configure or repair your remotes.""") from error
 
 
-def get_mprocs_mount_txt(cloud: str, rclone_cmd: str, cloud_brand: str):  # cloud_brand = config[cloud]["type"]
+def get_mprocs_mount_txt(cloud: str, rclone_cmd: str, cloud_brand: str) -> str:  # cloud_brand = config[cloud]["type"]
     from stackops.utils.accessories import randstr
     from stackops.utils.path_core import tmpfile
     import platform
@@ -63,6 +63,7 @@ def mount(
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
+    daemon: Annotated[bool, typer.Option("--daemon", "-D", help="Keep mounts running in the background independently of tmux (Linux/macOS).")] = False,
     _install_completion: Annotated[
         bool, typer.Option("--install-completion", "-I", callback=install_callback, expose_value=False, help="Install completion for the current shell.")
     ] = False,
@@ -73,6 +74,7 @@ def mount(
     from stackops.utils.options_utils.options import choose_from_options
     from pathlib import Path
     import platform
+    import shlex
     import subprocess
     from rich.console import Console
     from rich.panel import Panel
@@ -84,6 +86,10 @@ def mount(
 
     title = "☁️  Cloud Mount Utility"
     console.print(Panel(title, title_align="left", border_style="blue"))
+    system_name = platform.system()
+    if daemon and system_name == "Windows":
+        error_console.print(Text("❌ --daemon is only supported on Linux/macOS.", style="red"))
+        raise typer.Exit(code=1)
 
     try:
         config = get_rclone_config()
@@ -112,8 +118,6 @@ def mount(
         if missing:
             print(f"❌ Error: Cloud(s) not found in config: {', '.join(missing)}")
             raise typer.Exit(code=1)
-
-    system_name = platform.system()
 
     if network and len(clouds) > 1:
         print("❌ Error: Network mode supports only one cloud at a time")
@@ -157,19 +161,30 @@ def mount(
 
     elif network and system_name == "Windows":
         only_cloud = clouds[0]
-        mount_locations[only_cloud] = f"{network} --network-mode"
+        mount_locations[only_cloud] = network
         print(f"🔌 Setting up network mount at {mount_locations[only_cloud]}")
     else:
         print("❌ Error: Network mount only supported on Windows")
         raise typer.Exit(code=1)
 
-    mount_commands: dict[str, str] = {
-        cloud_name: f"rclone mount {cloud_name}: {mount_locations[cloud_name]} --vfs-cache-mode full --file-perms=0777" for cloud_name in clouds
+    mount_arguments: dict[str, list[str]] = {
+        cloud_name: [
+            "rclone", "mount", f"""{cloud_name}:""", mount_locations[cloud_name], "--vfs-cache-mode", "full", "--file-perms=0777",
+            *(["--network-mode"] if network else []), *(["--daemon"] if daemon else []),
+        ]
+        for cloud_name in clouds
+    }
+    mount_commands = {
+        cloud_name: subprocess.list2cmdline(arguments) if system_name == "Windows" else shlex.join(arguments)
+        for cloud_name, arguments in mount_arguments.items()
     }
     mount_command_info = "\n".join([f"{cloud_name}: {mount_commands[cloud_name]}" for cloud_name in clouds])
     console.print(Panel(f"🚀 Preparing mount command(s):\n{mount_command_info}", border_style="blue"))
 
-    if system_name == "Windows":
+    launch_commands: list[str | list[str]]
+    if daemon:
+        launch_commands = list(mount_arguments.values())
+    elif system_name == "Windows":
         if len(clouds) > 1:
             print("❌ Error: Multiple clouds in one command is only supported on Linux/macOS")
             raise typer.Exit(code=1)
@@ -181,6 +196,7 @@ def mount(
             rclone_cmd=mount_cmd,
             cloud_brand=cloud_brand,
         )
+        launch_commands = [txt]
     elif system_name in ["Linux", "Darwin"]:
         match backend:
             case "tmux" | "t" | "auto" | "a":
@@ -190,13 +206,15 @@ def mount(
                 raise typer.Exit(code=1)
 
         txt = build_tmux_launch_command(mount_commands=mount_commands, mount_locations=mount_locations, session_name="cloud-mount")
+        launch_commands = [txt]
     else:
         print("❌ Error: Unsupported platform")
         raise typer.Exit(code=1)
 
-    launcher = "mprocs" if system_name == "Windows" else "tmux"
+    launcher = "rclone" if daemon else "mprocs" if system_name == "Windows" else "tmux"
     try:
-        subprocess.run(txt, shell=True, check=True)
+        for command in launch_commands:
+            subprocess.run(command, shell=not daemon, check=True)
     except subprocess.CalledProcessError as error:
         error_console.print(Text(f"""❌ Cloud mount could not launch {launcher} (exit code {error.returncode}).
 Check the command output above and verify that {launcher} is installed and available in this terminal.""", style="red"))
@@ -205,13 +223,13 @@ Check the command output above and verify that {launcher} is installed and avail
         error_console.print(Text(f"""❌ Could not launch cloud mount with {launcher}: {error}""", style="red"))
         raise typer.Exit(code=1) from None
     # draw success box dynamically
-    title1 = "✅ Cloud mount command prepared successfully"
-    title2 = "🔄 Running mount process..."
+    title1 = "✅ Cloud mount command completed successfully"
+    title2 = "Mounts are running in the background." if daemon else "Returned from cloud mount session."
     console.print(Panel(f"{title1}\n{title2}", title="Success", border_style="green"))
 
 
 
-def get_app():
+def get_app() -> typer.Typer:
     completion_init()
     app = typer.Typer(name="cloud-mount", help="Cloud mount utility", add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
     app.command(name="mount")(mount)
