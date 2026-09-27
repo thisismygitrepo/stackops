@@ -13,8 +13,30 @@ def _local_repository_status(destination: Path) -> tuple[Text, Text]:
 
     try:
         with Repo(destination.expanduser(), search_parent_directories=False) as repository:
-            dirty = repository.is_dirty(untracked_files=True)
-            status = Text("Dirty", style="yellow") if dirty else Text("Clean", style="green")
+            counts: dict[str, int] = {"m": 0, "n": 0, "d": 0, "r": 0, "u": 0}
+            status_output = "" if repository.bare else repository.git.status(porcelain="v1", z=True, untracked_files="all", ignore_submodules="none")
+            entries = iter(status_output.split("\0"))
+            for entry in entries:
+                if not entry:
+                    continue
+                change = entry[:2]
+                if "R" in change or "C" in change:
+                    next(entries)
+                if "U" in change or change in {"AA", "DD"}:
+                    counts["u"] += 1
+                elif "D" in change:
+                    counts["d"] += 1
+                elif change == "??" or "A" in change or "C" in change:
+                    counts["n"] += 1
+                elif "R" in change:
+                    counts["r"] += 1
+                else:
+                    counts["m"] += 1
+            summary = "/".join(f"""{count}{kind}""" for kind, count in counts.items() if count)
+            if repository.bare:
+                status = Text("Bare", style="dim")
+            else:
+                status = Text(summary, style="red" if counts["u"] else "yellow") if summary else Text("Clean", style="green")
             if not repository.head.is_valid():
                 return status, Text("No commits", style="dim")
             committed_at = repository.head.commit.committed_datetime.astimezone()
@@ -27,6 +49,7 @@ def _local_repository_status(destination: Path) -> tuple[Text, Text]:
 
 def list_repositories(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
+    guarded: Annotated[bool, typer.Option("--guarded", "-g", help="Show only registered repositories using encrypted guard sync.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec, resolve_repos_spec_path
 
@@ -43,7 +66,10 @@ def list_repositories(
         typer.echo(f"""❌ {error}""", err=True)
         raise typer.Exit(code=1) from error
 
-    repositories = sorted(spec["repos"], key=lambda record: (record["name"].casefold(), record["parentDir"], record["name"]))
+    repositories = sorted(
+        (record for record in spec["repos"] if not guarded or record["sync"]["mode"] == "guard"),
+        key=lambda record: (record["name"].casefold(), record["parentDir"], record["name"]),
+    )
     git_count = sum(record["sync"]["mode"] == "git" for record in repositories)
     guard_count = len(repositories) - git_count
     console = Console()
@@ -55,16 +81,16 @@ def list_repositories(
     )
     console.print(f"""Specification: {path}""", markup=False, highlight=False)
     if not repositories:
-        console.print("No repositories registered. Run devops repos register to add repositories.")
+        console.print("No guarded repositories registered." if guarded else "No repositories registered. Run devops repos register to add repositories.")
         return
 
     table = Table(
-        title="Registered repositories", header_style="bold cyan",
-        caption="Status reflects local working trees; commit dates use local time.",
+        title="Guarded repositories" if guarded else "Registered repositories", header_style="bold cyan",
+        caption="Files: m modified · n new · d deleted · r renamed · u conflicted. Commit dates use local time.",
     )
     table.add_column("Repository", style="cyan")
     table.add_column("Destination", overflow="fold")
-    table.add_column("Status")
+    table.add_column("Status", no_wrap=True)
     table.add_column("Last commit", no_wrap=True)
     table.add_column("Sync mode")
     table.add_column("Cloud profile")

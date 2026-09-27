@@ -240,8 +240,8 @@ def get_app() -> typer.Typer:
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
 
-    repos_apps.command(name="list", help="📋 <l> List registered repositories and sync counts")(list_repositories)
-    repos_apps.command(name="l", help="List registered repositories and sync counts", hidden=True)(list_repositories)
+    repos_apps.command(name="list", help="📋 <l> List all registered repositories with change counts; optionally filter with --guarded")(list_repositories)
+    repos_apps.command(name="l", help="List all registered repositories with change counts; optionally filter with --guarded", hidden=True)(list_repositories)
 
     repos_apps.command(name="action", help="🔄 <a> Run Git actions or a shell command across repositories", no_args_is_help=True)(action)
     repos_apps.command(name="a", help="Run Git actions or a shell command across repositories", hidden=True, no_args_is_help=True)(action)
