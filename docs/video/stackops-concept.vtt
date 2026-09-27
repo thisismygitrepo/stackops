@@ -1,0 +1,77 @@
+WEBVTT
+
+1-1
+00:00:00.350 --> 00:00:07.347
+StackOps is your OS-agnostic digital life manager. It covers 99% of your digital footprint.
+
+1-2
+00:00:07.497 --> 00:00:12.873
+The applications you use. The way you configure them. Your secrets, your data, and your code.
+
+1-3
+00:00:13.023 --> 00:00:14.687
+All wrapped into one solution.
+
+2-1
+00:00:15.717 --> 00:00:17.551
+Start with a fresh, bare machine.
+
+2-2
+00:00:17.701 --> 00:00:21.157
+Now bring back the environment you've spent ten years making your own.
+
+2-3
+00:00:21.307 --> 00:00:26.555
+That's the goal: one command, five minutes, and your familiar digital life ready to use.
+
+3-1
+00:00:27.583 --> 00:00:30.314
+Installing the software is only one part of it.
+
+3-2
+00:00:30.464 --> 00:00:37.013
+The personal setup matters too: public and private configurations, dotfiles, credentials, and passwords.
+
+3-3
+00:00:37.163 --> 00:00:42.689
+Then there are your files and data, and the repositories you've mapped out for backup and retrieval.
+
+4-1
+00:00:43.717 --> 00:00:51.226
+StackOps brings package installation, configuration, secrets, and data and code synchronization into one solution.
+
+4-2
+00:00:51.376 --> 00:00:58.245
+It also launches commands and orchestrates processes, so the same system helps you put that environment to work.
+
+4-3
+00:00:58.395 --> 00:01:01.958
+Setup, maintenance, and the work you do every day, all connected.
+
+5-1
+00:01:02.983 --> 00:01:06.098
+Your stack is awesome, but you need a way to manage it all.
+
+5-2
+00:01:06.248 --> 00:01:11.197
+StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
+
+5-3
+00:01:11.347 --> 00:01:16.894
+Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
+
+5-4
+00:01:17.044 --> 00:01:22.612
+It brings that approach across Linux, macOS, and Windows through a command-line interface.
+
+6-1
+00:01:23.617 --> 00:01:26.241
+That's StackOps. Your digital life, sorted.
+
+6-2
+00:01:26.391 --> 00:01:29.697
+Bring the setup you've spent years building to the machine in front of you.
+
+6-3
+00:01:29.847 --> 00:01:32.279
+Explore the documentation to get started.

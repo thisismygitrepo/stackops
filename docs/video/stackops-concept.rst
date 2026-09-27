@@ -1,162 +1,150 @@
-StackOps introduction
-=====================
+StackOps: Digital Life Manager
+==============================
 
-This video explains StackOps commands with synthetic narration and captions.
-The diagrams use public documentation examples and invented project names.
-They illustrate the commands without running them.
+This introduction follows the original Digital Life Manager presentation in
+the README and homepage at ``41aae8d08^``, using the user's current wording:
+"99% of your digital footprint." The story centers on that breadth and the
+transformation from a bare machine to a familiar digital life.
 
-Edit the scene fields below, then render on macOS with Node.js, the Xcode command
-line tools, and ``rsvg-convert`` installed::
+The before/after images are the original README assets. Diagrams illustrate
+the concept; they are not recordings of an automated setup. The one-command,
+five-minute line presents the original setup goal. Narration uses Kokoro's
+synthetic Sarah voice.
+
+Render on macOS with Node.js, uv, the Xcode command line tools,
+``rsvg-convert``, and FFmpeg with ``libx264`` on your PATH. Set ``FFMPEG`` to an
+executable path if needed. Download the public Kokoro model assets once::
 
     cd /path/to/stackops
+    mkdir -p .ai/tmp_scripts/stackops-video
+    curl -fL https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx -o .ai/tmp_scripts/stackops-video/kokoro-v1.0.onnx
+    curl -fL https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin -o .ai/tmp_scripts/stackops-video/voices-v1.0.bin
     node docs/video/render.mjs
 
-The renderer reads this file. ``Say`` fields supply speech and captions.
-``Card`` fields use ``title | detail``. ``Title`` uses ``|`` for a line break.
-Git tracks this file and the rendering tools. It ignores the output at
-``docs/video/stackops-concept.mp4``. The renderer writes temporary files to
-``.ai/tmp_scripts/stackops-video/`` and needs no personal configuration.
+``uv`` manages the narrator's isolated Python 3.13 dependencies from its script
+metadata. Each ``Focus`` / ``Say`` pair is one visual beat and its spoken
+caption. ``Card`` fields use ``title | detail``; ``|`` in other text makes a
+line break.
 
-Scene 01. What StackOps does
----------------------------
+The outputs are ``docs/video/stackops-concept.mp4`` and matching
+``stackops-concept.vtt`` captions. The MP4 is ignored by Git. Intermediate
+artwork, audio, timing metadata, and previews go under
+``.ai/tmp_scripts/stackops-video/``. Rendering uses no personal configuration.
 
-:Layout: intro
-:Eyebrow: OVERVIEW
+Scene 01. Your digital life
+--------------------------
+
+:Layout: footprint
+:Eyebrow: DIGITAL LIFE MANAGER
 :Title: StackOps
-:Subtitle: Install developer tools and manage their configuration.
-:Card: Packages | Install tools by name
-:Card: Configuration | Copy or link settings
-:Card: Repositories | Clone listed projects
-:Card: Data | Back up named files
-:Card: Terminals | Open saved layouts
-:Card: Coding agents | Run prompts in parallel
-:Say: StackOps is a Python package with commands for setting up a development machine.
-:Say: It can install tools, sync configuration files, and open terminal sessions from a saved layout.
-:Source: README.md; docs/index.md
+:Subtitle: 99% of your|digital footprint.
+:Card: Applications | The software you use
+:Card: Configuration | Public and private settings
+:Card: Secrets | Credentials and passwords
+:Card: Data | Your files and directories
+:Card: Code | Your repositories
+:Card: Processes | The work you run
+:Takeaway: Your digital life, managed together.
+:Focus: identity
+:Say: StackOps is your OS-agnostic digital life manager. It covers 99% of your digital footprint.
+:Focus: footprint
+:Say: The applications you use. The way you configure them. Your secrets, your data, and your code.
+:Focus: together
+:Say: All wrapped into one solution.
+:Source: User's current 99% wording; README.md at 41aae8d08^; docs/index.md at 41aae8d08^
 
-Scene 02. Install tools
-----------------------
+Scene 02. A fresh machine, your familiar world
+--------------------------------------------
 
-:Layout: packages
-:Eyebrow: PACKAGES
-:Title: Install developer|tools
-:Subtitle: Use devops install to select a tool or package group.
-:Card: By name | Install a program such as Television
-:Card: From a menu | Select the programs to install
-:Card: By group | Install a set such as the search tools
-:Command: devops install tv --source library
-:Footnote: This installs Television. Available installers depend on the operating system.
-:Say: This command installs Television, a terminal search tool, using the installer included with StackOps.
-:Say: You can choose other programs by name, select them from a menu, or install a package group.
-:Source: docs/quickstart.md; docs/guide/packages.md; docs/api/jobs/installer.md
+:Layout: transformation
+:Eyebrow: THE PROMISE
+:Title: A fresh machine.|Ten years of making it yours.
+:Subtitle: From a bare system to your familiar digital life.
+:Takeaway: Bring years of customization to a fresh machine in minutes.
+:Focus: bare
+:Say: Start with a fresh, bare machine.
+:Focus: familiar
+:Say: Now bring back the environment you've spent ten years making your own.
+:Focus: minutes
+:Say: That's the goal: one command, five minutes, and your familiar digital life ready to use.
+:Source: README.md at 41aae8d08^; docs/index.md at 41aae8d08^; docs/assets/before.png; docs/assets/after.png
 
-Scene 03. Sync configuration files
----------------------------------
-
-:Layout: config
-:Eyebrow: CONFIGURATION
-:Title: Sync configuration|files
-:Subtitle: A mapping records the source file and its destination.
-:Card: Stored file | settings/editor.toml
-:Card: Sync method | Copy the file or create a symlink
-:Card: Destination | ~/.config/editor/config.toml
-:Command: devops config sync --help
-:Footnote: Illustrative paths. Select the files, direction, sync method, and conflict policy.
-:Say: A configuration mapping records a file and where it belongs on your machine.
-:Say: StackOps can copy the file or create a symlink.
-:Say: You select the files and decide what happens if a destination already exists.
-:Source: docs/guide/configuration.md; docs/quickstart.md; docs_fragments/cli/devops/_config.md
-
-Scene 04. Open a saved terminal layout
+Scene 03. What makes up that footprint
 -------------------------------------
 
-:Layout: terminal
-:Eyebrow: TERMINALS
-:Title: Open a saved|terminal layout
-:Subtitle: layout.json stores tab names, directories, and commands.
-:Card: editor | hx .
-:Card: server | python -m http.server 8000
-:Card: shell | bash
-:Command: terminal run layout.json --backend tmux
-:Footnote: This example requires a layout.json file and tmux.
-:Say: Put the tab names, working directories, and commands in a layout file.
-:Say: This example opens an editor, a local server, and a shell in tmux.
-:Say: Run the same layout when you need those terminals again.
-:Source: docs/cli/terminal.md; docs/api/cluster/layouts.md; docs/api/cluster/sessions.md
+:Layout: scope
+:Eyebrow: THE WHOLE PICTURE
+:Title: Your tools. Your settings.|Your data. Your code.
+:Subtitle: The pieces that make a machine feel like yours.
+:Card: Applications | Install the tools you rely on
+:Card: Configuration | Bring back public and private settings
+:Card: Secrets | Manage credentials and passwords
+:Card: Data | Back up, synchronize, and retrieve files
+:Card: Repositories | Map out your code for backup and retrieval
+:Takeaway: The software, the personal setup, and the work itself.
+:Focus: software
+:Say: Installing the software is only one part of it.
+:Focus: personal
+:Say: The personal setup matters too: public and private configurations, dotfiles, credentials, and passwords.
+:Focus: work
+:Say: Then there are your files and data, and the repositories you've mapped out for backup and retrieval.
+:Source: README.md at 41aae8d08^; docs/index.md at 41aae8d08^; docs/guide/configuration.md; docs/guide/data-sync.md
 
-Scene 05. Repositories and data
-------------------------------
+Scene 04. All wrapped into one solution
+--------------------------------------
 
-:Layout: movement
-:Eyebrow: REPOSITORIES AND DATA
-:Title: Repositories and data
-:Subtitle: Separate commands for repository lists, backups, and direct transfers.
-:Card: devops repos | Clone the projects listed in repos.json
-:Card: devops data | Back up files registered by name
-:Card: cloud | Copy files between a source and destination
-:Command: cloud copy ./report.pdf remote:reports/report.pdf
-:Footnote: Example paths. The cloud command requires a configured remote.
-:Say: A repos.json file lists the repositories to clone and where to put them.
-:Say: For backups, register files or directories by name, then sync those entries to your configured cloud storage.
-:Say: For a direct transfer, cloud copy takes a source and destination.
-:Source: docs_fragments/cli/devops/_repos.md; docs/guide/data-sync.md; docs/cli/cloud.md
+:Layout: unified
+:Eyebrow: ONE SOLUTION
+:Title: Set it up.|Keep it in sync. Put it to work.
+:Subtitle: Installation, configuration, synchronization, and orchestration.
+:Card: Install | Applications and tools
+:Card: Configure | Settings, dotfiles, and secrets
+:Card: Synchronize | Data and code
+:Card: Launch | Commands, files, and workspaces
+:Card: Orchestrate | Processes and parallel work
+:Takeaway: Setup, maintenance, and everyday work belong together.
+:Focus: setup
+:Say: StackOps brings package installation, configuration, secrets, and data and code synchronization into one solution.
+:Focus: run
+:Say: It also launches commands and orchestrates processes, so the same system helps you put that environment to work.
+:Focus: together
+:Say: Setup, maintenance, and the work you do every day, all connected.
+:Source: README.md at 41aae8d08^; README.md CLI overview; docs/cli/fire.md; docs/cli/terminal.md; docs/cli/agents.md
 
-Scene 06. Coding agents
-----------------------
+Scene 05. The stack you are comfortable with
+-------------------------------------------
 
-:Layout: agents
-:Eyebrow: CODING AGENTS
-:Title: Set up and run|coding agents
-:Subtitle: Configure supported agents and run prompts with context.
-:Card: agents add-config | Create agent configuration files
-:Card: agents run-prompt | Run a prompt with supplied context
-:Card: agents parallel | Prepare jobs and collect outputs
-:Command: agents parallel --help
-:Footnote: Check each command's help for supported agents and backends.
-:Say: The agents commands install configuration, skills, and MCP server entries for supported coding agents.
-:Say: You can run a prompt with a context file, or prepare parallel jobs and collect their outputs.
-:Source: docs/cli/agents.md; README.md
+:Layout: familiar
+:Eyebrow: YOUR STACK
+:Title: Your stack is awesome,|but you need a way to manage it all.
+:Subtitle: StackOps manages the stack you are comfortable with.
+:Card: Linux | Your tools and configuration
+:Card: macOS | Your tools and configuration
+:Card: Windows | Your tools and configuration
+:Takeaway: A cross-platform approach to managing your digital life.
+:Focus: punchline
+:Say: Your stack is awesome, but you need a way to manage it all.
+:Focus: glue
+:Say: StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
+:Focus: yours
+:Say: Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
+:Focus: platforms
+:Say: It brings that approach across Linux, macOS, and Windows through a command-line interface.
+:Source: docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
 
-Scene 07. File commands
-----------------------
-
-:Layout: helpers
-:Eyebrow: FILE COMMANDS
-:Title: Search and run files
-:Subtitle: StackOps also includes these standalone commands.
-:Card: seek | Search files, text, and symbols
-:Card: preview | Open a file in a preview tool
-:Card: fire | Run files, functions, notebooks, and apps
-:Card: utils | Merge PDFs and inspect databases
-:Say: Seek searches files, text, and symbols.
-:Say: Preview opens files in a preview tool, such as VisiData for a CSV file.
-:Say: Fire runs files, functions, notebooks, and apps.
-:Say: Utils includes commands to merge PDFs and inspect local databases.
-:Source: docs/cli/seek.md; docs/cli/preview.md; docs/cli/fire.md; docs/cli/utils.md
-
-Scene 08. Install StackOps
--------------------------
+Scene 06. Your digital life, sorted
+----------------------------------
 
 :Layout: closing
-:Eyebrow: INSTALLATION
-:Title: Install StackOps
-:Subtitle: Requires uv. The documentation includes installation instructions.
-:Command: uv tool install --upgrade --python 3.14 stackops
-:Command: stackops --help
-:Footnote: thisismygitrepo.github.io/stackops/
-:Say: Install StackOps with uv, then run StackOps help to see the available commands.
-:Say: Each command has its own help page. The documentation includes setup instructions and examples.
-:Source: README.md; docs/installation.md; docs/quickstart.md
-
-Sources
--------
-
-The scene sources identify the documentation behind each example. The package
-README, guides, CLI references, and API documentation describe more commands
-than this introduction covers. Examples follow this checkout. Installed
-releases can differ.
-
-The data-sync guide matches the current implementation in
-``src/stackops/scripts/python/helpers/helpers_devops/cli_backup_retrieve.py``.
-Data sync performs transfers. The older CLI fragment that describes printing
-scripts is stale.
+:Eyebrow: STACKOPS
+:Title: Your digital life.|Sorted.
+:Subtitle: StackOps · Digital Life Manager
+:Takeaway: 99% of your digital footprint. One solution.
+:Link: thisismygitrepo.github.io/stackops/
+:Focus: life
+:Say: That's StackOps. Your digital life, sorted.
+:Focus: explore
+:Say: Bring the setup you've spent years building to the machine in front of you.
+:Focus: docs
+:Say: Explore the documentation to get started.
+:Source: User's current 99% wording; README.md at 41aae8d08^; docs/index.md at 41aae8d08^
