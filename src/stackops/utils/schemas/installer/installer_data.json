@@ -4702,7 +4702,8 @@
             "apk": null,
             "apt": "code.py",
             "dnf": "code.py",
-            "pacman": null
+            "pacman": null,
+            "omarchy": "code.py"
           },
           "windows": "code.py",
           "darwin": "code.py"
@@ -5834,7 +5835,8 @@
             "apk": null,
             "apt": "brave.py",
             "dnf": "brave.py",
-            "pacman": null
+            "pacman": null,
+            "omarchy": "brave.py"
           },
           "windows": "brave.py",
           "darwin": "brave.py"
@@ -6497,7 +6499,8 @@
             "apk": null,
             "apt": "sudo apt-get update && sudo apt-get install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt-get install -y ./google-chrome-stable_current_amd64.deb && rm google-chrome-stable_current_amd64.deb",
             "dnf": "sudo dnf install -y wget && wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && sudo dnf install -y ./google-chrome-stable_current_x86_64.rpm && rm google-chrome-stable_current_x86_64.rpm",
-            "pacman": null
+            "pacman": null,
+            "omarchy": "sudo pacman -S --needed --noconfirm google-chrome"
           },
           "windows": "winget install --no-upgrade --name \"Google Chrome\" --Id \"Google.Chrome\" --source winget --accept-package-agreements --accept-source-agreements",
           "darwin": "brew install --cask google-chrome"

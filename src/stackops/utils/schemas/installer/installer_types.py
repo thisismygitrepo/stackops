@@ -56,6 +56,7 @@ class LinuxPackageManagerInstallerPattern(TypedDict):
     apt: str | None
     dnf: str | None
     pacman: str | None
+    omarchy: NotRequired[str | None]
 
 
 LinuxInstallerPattern: TypeAlias = str | None | LinuxPackageManagerInstallerPattern

@@ -330,7 +330,7 @@
     },
     "LinuxPackageManagerInstallerPattern": {
       "type": "object",
-      "description": "Native Linux installer patterns keyed by the canonical package manager.",
+      "description": "Native Linux installer patterns keyed by the canonical package manager, with an optional Omarchy override.",
       "additionalProperties": false,
       "properties": {
         "apk": {
@@ -343,6 +343,9 @@
           "$ref": "#/definitions/DnfInstallerPatternValue"
         },
         "pacman": {
+          "$ref": "#/definitions/PacmanInstallerPatternValue"
+        },
+        "omarchy": {
           "$ref": "#/definitions/PacmanInstallerPatternValue"
         }
       },

@@ -69,20 +69,20 @@ sudo dnf config-manager addrepo --from-repofile "https://download.docker.com/lin
 """
             install_command = "sudo dnf install -y"
             package_names = "docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
-        case ("arch", "pacman"):
+        case ("arch" | "omarchy", "pacman"):
             repository_setup = """
 echo "📦 Using Arch Linux's official repositories..."
 """.strip()
             install_command = "sudo pacman -S --needed --noconfirm"
             package_names = "docker docker-buildx docker-compose"
-        case ("alpine" | "arch" | "ubuntu" | "debian" | "rhel" | "fedora" | "centos" | "ol", _):
+        case ("alpine" | "arch" | "omarchy" | "ubuntu" | "debian" | "rhel" | "fedora" | "centos" | "ol", _):
             raise ValueError(
                 f"Invalid package-manager metadata for Linux distribution '{distribution.distribution_id}': manager={distribution.package_manager}"
             )
         case (unsupported_distribution_id, _):
             raise NotImplementedError(
                 "Docker Engine's official repositories do not support Linux distribution "
-                f"'{unsupported_distribution_id}'. Supported distributions: alpine, arch, ubuntu, debian, rhel, fedora, centos, ol."
+                f"'{unsupported_distribution_id}'. Supported distributions: alpine, arch, omarchy, ubuntu, debian, rhel, fedora, centos, ol."
             )
 
     match distribution.package_manager:

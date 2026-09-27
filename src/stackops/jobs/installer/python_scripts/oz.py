@@ -8,7 +8,7 @@ from stackops.utils.code import run_shell_script
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import (
     LinuxDistribution,
-    build_metadata_refresh_command,
+    build_distribution_refresh_command,
     build_package_install_command,
     detect_current_linux_distribution,
 )
@@ -45,23 +45,38 @@ EOF
 """.strip()
         case "pacman":
             dependency_packages = ("ca-certificates", "wget", "gnupg")
-            repository_setup = """
+            repository_configuration = r"""
 if ! grep -qxF '[warpdotdev]' /etc/pacman.conf; then
     printf '%s\n' '' '[warpdotdev]' 'Server = https://releases.warp.dev/linux/pacman/$repo/$arch' \
         | sudo tee -a /etc/pacman.conf >/dev/null
 fi
+""".strip()
+            if distribution.distribution_id == "omarchy":
+                repository_configuration = f"""
+mkdir -p "$HOME/.config/omarchy/hooks/pre-refresh-pacman.d"
+cat > "$HOME/.config/omarchy/hooks/pre-refresh-pacman.d/stackops-oz" <<'STACKOPS_OZ_HOOK'
+#!/usr/bin/env bash
+set -euo pipefail
+{repository_configuration}
+STACKOPS_OZ_HOOK
+chmod +x "$HOME/.config/omarchy/hooks/pre-refresh-pacman.d/stackops-oz"
+"$HOME/.config/omarchy/hooks/pre-refresh-pacman.d/stackops-oz"
+""".strip()
+            repository_setup = f"""
+{repository_configuration}
 sudo pacman-key -r linux-maintainers@warp.dev
 sudo pacman-key --lsign-key linux-maintainers@warp.dev
 """.strip()
         case _:
             assert_never(distribution.package_manager)
-    refresh = shlex.join(("sudo", *build_metadata_refresh_command(distribution.package_manager)))
+    refresh = shlex.join(build_distribution_refresh_command(distribution=distribution))
+    initial_refresh = "" if distribution.distribution_id == "omarchy" else refresh
     install_dependencies = shlex.join(
         ("sudo", *build_package_install_command(package_manager=distribution.package_manager, packages=dependency_packages))
     )
     install_oz = shlex.join(("sudo", *build_package_install_command(package_manager=distribution.package_manager, packages=("oz-stable",))))
     return f"""set -euo pipefail
-{refresh}
+{initial_refresh}
 {install_dependencies}
 {repository_setup}
 {refresh}

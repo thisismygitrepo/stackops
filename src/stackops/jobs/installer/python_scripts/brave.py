@@ -55,6 +55,9 @@ sudo dnf config-manager --add-repo https://brave-browser-rpm-release.s3.brave.co
                 "Brave's official RPM instructions do not support Linux distribution "
                 f"'{unsupported_distribution_id}'. Supported RPM distributions: fedora, rhel, rocky, centos."
             )
+        case ("omarchy", "pacman"):
+            repository_setup = 'echo "📦 Using Omarchy repositories..."'
+            install_command = "sudo pacman -S --needed --noconfirm brave-bin"
         case ("arch", "pacman"):
             raise NotImplementedError("Brave Browser is only available through the AUR on Arch Linux; pacman cannot install it.")
         case (unsupported_distribution_id, "pacman"):
@@ -94,7 +97,7 @@ winget install --no-upgrade --name "Brave" --Id "Brave.Brave" --source winget --
 """
         case "Linux":
             distribution = detect_current_linux_distribution()
-            console.print(f"🐧 Installing Brave Browser on {distribution.distribution_id} with its official repository...", style="bold")
+            console.print(f"🐧 Installing Brave Browser on {distribution.distribution_id} with {distribution.package_manager}...", style="bold")
             program = _build_linux_install_script(distribution)
         case "Darwin":
             console.print("🍎 Installing Brave Browser on macOS...", style="bold")

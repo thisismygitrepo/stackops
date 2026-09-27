@@ -91,7 +91,11 @@ def resolve_installer_pattern(installer_data: InstallerData, operating_system: O
         case "dnf":
             resolved_pattern = linux_pattern["dnf"]
         case "pacman":
-            resolved_pattern = linux_pattern["pacman"]
+            resolved_pattern = (
+                linux_pattern["omarchy"]
+                if distribution.distribution_id == "omarchy" and "omarchy" in linux_pattern
+                else linux_pattern["pacman"]
+            )
         case _:
             assert_never(package_manager)
 
@@ -109,22 +113,28 @@ def resolve_installer_pattern(installer_data: InstallerData, operating_system: O
 def _validate_linux_package_manager_mapping(installer_pattern: LinuxPackageManagerInstallerPattern, app_name: str) -> None:
     actual_keys = set(installer_pattern)
     required_keys = set(LINUX_PACKAGE_MANAGERS)
-    if actual_keys != required_keys:
+    if not required_keys.issubset(actual_keys) or actual_keys - required_keys - {"omarchy"}:
         required_manager_names = ", ".join(LINUX_PACKAGE_MANAGERS)
         raise ValueError(
-            f"Linux package-manager installer pattern for {app_name} must contain exactly {required_manager_names}; received {sorted(actual_keys)}."
+            f"Linux package-manager installer pattern for {app_name} must contain {required_manager_names} "
+            f"with only an optional omarchy override; received {sorted(actual_keys)}."
         )
     for package_manager, pattern in installer_pattern.items():
         if pattern is not None and not isinstance(pattern, str):
             raise TypeError(f"Linux {package_manager} installer pattern for {app_name} must be a string or null, received {type(pattern).__name__}.")
-    for package_manager in LINUX_PACKAGE_MANAGERS:
-        pattern = installer_pattern[package_manager]
+    patterns: list[tuple[str, LinuxPackageManager, str | None]] = [
+        (package_manager, package_manager, installer_pattern[package_manager])
+        for package_manager in LINUX_PACKAGE_MANAGERS
+    ]
+    if "omarchy" in installer_pattern:
+        patterns.append(("omarchy", "pacman", installer_pattern["omarchy"]))
+    for pattern_name, package_manager, pattern in patterns:
         if pattern is None:
             continue
         incompatible_reason = _get_incompatible_linux_pattern_reason(installer_pattern=pattern, package_manager=package_manager)
         if incompatible_reason is not None:
             raise ValueError(
-                f"Linux {package_manager} installer pattern for {app_name} is incompatible with {package_manager} ({incompatible_reason})."
+                f"Linux {pattern_name} installer pattern for {app_name} is incompatible with {package_manager} ({incompatible_reason})."
             )
 
 

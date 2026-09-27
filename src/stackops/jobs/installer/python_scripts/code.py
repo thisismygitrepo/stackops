@@ -58,7 +58,10 @@ sudo dnf makecache --refresh
 """
             install_command = "sudo dnf install -y code"
         case "pacman":
-            raise NotImplementedError("Microsoft Visual Studio Code is only available through the AUR on Arch Linux; pacman cannot install it.")
+            if distribution.distribution_id != "omarchy":
+                raise NotImplementedError("Microsoft Visual Studio Code is only available through the AUR on Arch Linux; pacman cannot install it.")
+            repository_setup = 'echo "📦 Using Omarchy repositories..."'
+            install_command = "sudo pacman -S --needed --noconfirm visual-studio-code-bin"
         case _:
             assert_never(distribution.package_manager)
 
@@ -91,7 +94,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     match system:
         case "Linux":
             distribution = detect_current_linux_distribution()
-            console.print(f"🐧 Installing VS Code on {distribution.distribution_id} with Microsoft's official repository...", style="bold")
+            console.print(f"🐧 Installing VS Code on {distribution.distribution_id} with {distribution.package_manager}...", style="bold")
             install_script = _build_linux_install_script(distribution)
         case "Darwin":
             console.print("🍎 Installing VS Code on macOS using Homebrew...", style="bold")

@@ -64,7 +64,9 @@ def render_installer_preview(installer_data: InstallerData, preview_size_percent
         for architecture, architecture_label in architectures.items():
             pattern = installer_data["fileNamePattern"][architecture][operating_system]
             if isinstance(pattern, dict):
-                package_managers = [package_manager for package_manager in LINUX_PACKAGE_MANAGERS if pattern[package_manager] is not None]
+                package_managers: list[str] = [package_manager for package_manager in LINUX_PACKAGE_MANAGERS if pattern[package_manager] is not None]
+                if pattern.get("omarchy") is not None:
+                    package_managers.append("Omarchy")
                 if package_managers:
                     available_architectures.append(f"""{architecture_label} ({', '.join(package_managers)})""")
             elif pattern is not None:

@@ -62,13 +62,16 @@ def _normalize_linux_pattern(value: object, context: str) -> LinuxInstallerPatte
         return value
     mapping = _require_mapping(value=value, context=context)
     package_manager_keys = {"apk", "apt", "dnf", "pacman"}
-    _require_exact_keys(mapping=mapping, required=package_manager_keys, optional=set(), context=context)
-    return LinuxPackageManagerInstallerPattern(
+    _require_exact_keys(mapping=mapping, required=package_manager_keys, optional={"omarchy"}, context=context)
+    normalized = LinuxPackageManagerInstallerPattern(
         apk=_require_installer_pattern(mapping["apk"], f"{context}.apk"),
         apt=_require_installer_pattern(mapping["apt"], f"{context}.apt"),
         dnf=_require_installer_pattern(mapping["dnf"], f"{context}.dnf"),
         pacman=_require_installer_pattern(mapping["pacman"], f"{context}.pacman"),
     )
+    if "omarchy" in mapping:
+        normalized["omarchy"] = _require_installer_pattern(mapping["omarchy"], f"{context}.omarchy")
+    return normalized
 
 
 def _normalize_architecture_pattern(value: object, context: str) -> ArchitectureInstallerPattern:

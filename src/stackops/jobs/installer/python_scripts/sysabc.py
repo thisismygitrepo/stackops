@@ -11,7 +11,7 @@ import stackops.jobs.installer.powershell_scripts as powershell_scripts
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import (
     LinuxDistribution,
-    build_metadata_refresh_command,
+    build_distribution_refresh_command,
     build_package_install_command,
     detect_current_linux_distribution,
 )
@@ -108,13 +108,13 @@ def _build_linux_install_script(distribution: LinuxDistribution) -> str:
         case "pacman":
             packages = PACMAN_PACKAGES
 
-    refresh_command = build_metadata_refresh_command(distribution.package_manager)
+    refresh_command = build_distribution_refresh_command(distribution=distribution)
     install_command = build_package_install_command(distribution.package_manager, packages)
     return "\n".join(
         (
             "#!/usr/bin/env bash",
             "set -euo pipefail",
-            shlex.join(("sudo", *refresh_command)),
+            shlex.join(refresh_command),
             shlex.join(("sudo", *install_command)),
             "curl -fsSL https://bun.com/install | bash",
             'sudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node',

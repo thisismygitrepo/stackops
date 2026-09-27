@@ -4,14 +4,16 @@
 # https://github.com/alacritty/alacritty/issues/6999#issuecomment-1765513924
 # cargo install alacritty
 
+[general]
 import = [
-    "~/.config/alacritty/themes/themes/campbell.toml"
+    "~/.config/alacritty/themes/themes/campbell.toml",
+    "~/.local/state/omarchy/current/theme/alacritty.toml"
 ]
 
 [font]
 size = 14
 
-[shell]
+[terminal.shell]
 program = "/bin/bash"
 
 [window]
@@ -21,9 +23,6 @@ decorations = "None"
 opacity = 0.99
 decorations_theme_variant = "Dark"
 resize_increments = true
-
-[colors.primary]
-background = "#000000"
 
 [cursor]
 style = {shape = "Beam", blinking = "Always"}

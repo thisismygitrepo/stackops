@@ -19,6 +19,7 @@ type LinuxDistributionId = Literal[
     "mx",
     "neon",
     "ol",
+    "omarchy",
     "parrot",
     "peppermint",
     "pop",
@@ -45,6 +46,7 @@ class LinuxDistribution:
 _LINUX_DISTRIBUTION_PACKAGE_MANAGERS: Final[dict[LinuxDistributionId, LinuxPackageManager]] = {
     "alpine": "apk",
     "arch": "pacman",
+    "omarchy": "pacman",
     "debian": "apt",
     "deepin": "apt",
     "devuan": "apt",
@@ -67,7 +69,7 @@ _LINUX_DISTRIBUTION_PACKAGE_MANAGERS: Final[dict[LinuxDistributionId, LinuxPacka
     "rhel": "dnf",
     "rocky": "dnf",
 }
-_LINUX_DISTRIBUTION_ALIASES: Final[dict[str, LinuxDistributionId]] = {"omarchy": "arch", "redhat": "rhel"}
+_LINUX_DISTRIBUTION_ALIASES: Final[dict[str, LinuxDistributionId]] = {"redhat": "rhel"}
 _FEDORA_IMMUTABLE_VARIANTS: Final[frozenset[str]] = frozenset({"coreos", "kinoite", "onyx", "sericea", "silverblue"})
 
 
@@ -133,6 +135,12 @@ def detect_current_linux_distribution() -> LinuxDistribution:
     if operating_system != "Linux":
         raise UnsupportedOperatingSystemError(operating_system=operating_system)
     return classify_linux_distribution(platform.freedesktop_os_release())
+
+
+def build_distribution_refresh_command(distribution: LinuxDistribution) -> tuple[str, ...]:
+    if distribution.distribution_id == "omarchy":
+        return ("omarchy", "update", "-y")
+    return ("sudo", *build_metadata_refresh_command(distribution.package_manager))
 
 
 def build_metadata_refresh_command(package_manager: LinuxPackageManager) -> tuple[str, ...]:
