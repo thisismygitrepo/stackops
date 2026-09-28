@@ -82,7 +82,25 @@ Scene 02. A fresh machine, your familiar world
 :Say: That's the goal: one command, five minutes, and your familiar digital life ready to use.
 :Source: README.md at 41aae8d08^; docs/index.md at 41aae8d08^; docs/assets/before.png; docs/assets/after.png
 
-Scene 03. What makes up that footprint
+Scene 03. While casually inspecting a machine
+--------------------------------------------
+
+:Layout: store
+:Eyebrow: IN THE STORE
+:Title: Literally.
+:Statement: You can install and configure your entire dev environment while casually inspecting a machine in the store.
+:Payoff: By the time they notice something is unusual, we are done.
+:Note: (This config is based on public setup, and ignores private setup and files.)
+:Takeaway: Your dev environment, ready while you browse.
+:Focus: browsing
+:Say: Literally, you can install and configure your entire dev environment while casually inspecting a machine in the store.
+:Focus: done
+:Say: By the time they notice you are doing something unusual, the setup is done.
+:Focus: public
+:Say: This config is based on public setup, and ignores private setup and files.
+:Source: User-provided photo and wording; docs/assets/stackops.jpeg
+
+Scene 04. What makes up that footprint
 -------------------------------------
 
 :Layout: scope
@@ -103,7 +121,7 @@ Scene 03. What makes up that footprint
 :Say: Then there are your files and data, and the repositories you've mapped out for backup and retrieval.
 :Source: README.md at 41aae8d08^; docs/index.md at 41aae8d08^; docs/guide/configuration.md; docs/guide/data-sync.md
 
-Scene 04. All wrapped into one solution
+Scene 05. All wrapped into one solution
 --------------------------------------
 
 :Layout: unified
@@ -124,7 +142,7 @@ Scene 04. All wrapped into one solution
 :Say: Setup, maintenance, and the work you do every day, all connected.
 :Source: README.md at 41aae8d08^; README.md CLI overview; docs/cli/fire.md; docs/cli/terminal.md; docs/cli/agents.md
 
-Scene 05. The stack you are comfortable with
+Scene 06. The stack you are comfortable with
 -------------------------------------------
 
 :Layout: familiar
@@ -143,7 +161,7 @@ Scene 05. The stack you are comfortable with
 :Say: It brings that approach across Linux, macOS, and Windows through a command-line interface.
 :Source: docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
 
-Scene 06. Your digital life, sorted
+Scene 07. Your digital life, sorted
 ----------------------------------
 
 :Layout: closing

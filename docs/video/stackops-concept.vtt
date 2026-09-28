@@ -49,53 +49,65 @@ Now bring back the environment you've spent ten years making your own.
 That's the goal: one command, five minutes, and your familiar digital life ready to use.
 
 3-1
-00:00:35.517 --> 00:00:38.247
-Installing the software is only one part of it.
+00:00:35.517 --> 00:00:42.258
+Literally, you can install and configure your entire dev environment while casually inspecting a machine in the store.
 
 3-2
-00:00:38.397 --> 00:00:44.947
-The personal setup matters too: public and private configurations, dotfiles, credentials, and passwords.
+00:00:42.408 --> 00:00:46.547
+By the time they notice you are doing something unusual, the setup is done.
 
 3-3
-00:00:45.097 --> 00:00:50.622
-Then there are your files and data, and the repositories you've mapped out for backup and retrieval.
+00:00:46.697 --> 00:00:51.454
+This config is based on public setup, and ignores private setup and files.
 
 4-1
-00:00:51.650 --> 00:00:59.159
-StackOps brings package installation, configuration, secrets, and data and code synchronization into one solution.
+00:00:52.483 --> 00:00:55.214
+Installing the software is only one part of it.
 
 4-2
-00:00:59.309 --> 00:01:06.179
-It also launches commands and orchestrates processes, so the same system helps you put that environment to work.
+00:00:55.364 --> 00:01:01.913
+The personal setup matters too: public and private configurations, dotfiles, credentials, and passwords.
 
 4-3
-00:01:06.329 --> 00:01:09.891
-Setup, maintenance, and the work you do every day, all connected.
+00:01:02.063 --> 00:01:07.589
+Then there are your files and data, and the repositories you've mapped out for backup and retrieval.
 
 5-1
-00:01:10.917 --> 00:01:15.866
-StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
+00:01:08.617 --> 00:01:16.126
+StackOps brings package installation, configuration, secrets, and data and code synchronization into one solution.
 
 5-2
-00:01:16.016 --> 00:01:21.563
-Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
+00:01:16.276 --> 00:01:23.145
+It also launches commands and orchestrates processes, so the same system helps you put that environment to work.
 
 5-3
-00:01:21.713 --> 00:01:27.281
-It brings that approach across Linux, macOS, and Windows through a command-line interface.
+00:01:23.295 --> 00:01:26.858
+Setup, maintenance, and the work you do every day, all connected.
 
 6-1
-00:01:28.283 --> 00:01:30.907
-That's StackOps. Your digital life, sorted.
+00:01:27.883 --> 00:01:32.833
+StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
 
 6-2
-00:01:31.057 --> 00:01:34.364
-Bring the setup you've spent years building to the machine in front of you.
+00:01:32.983 --> 00:01:38.529
+Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
 
 6-3
-00:01:34.514 --> 00:01:36.946
+00:01:38.679 --> 00:01:44.247
+It brings that approach across Linux, macOS, and Windows through a command-line interface.
+
+7-1
+00:01:45.250 --> 00:01:47.874
+That's StackOps. Your digital life, sorted.
+
+7-2
+00:01:48.024 --> 00:01:51.331
+Bring the setup you've spent years building to the machine in front of you.
+
+7-3
+00:01:51.481 --> 00:01:53.913
 Explore the documentation to get started.
 
-6-4
-00:01:37.096 --> 00:01:41.192
+7-4
+00:01:54.063 --> 00:01:58.159
 All of it, OS-agnostic. Linux, macOS, and Windows.

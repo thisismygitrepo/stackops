@@ -1,5 +1,6 @@
 import { C, box, text, lines, card, link, pill, frame } from './drawing.mjs';
 import { transformation } from './transformation.mjs';
+import { store } from './store.mjs';
 
 function footprint(scene, focus) {
   if (focus === 'opening') {
@@ -73,7 +74,7 @@ function closing(scene, focus) {
   return body;
 }
 
-const layouts = { footprint, transformation, scope, unified, familiar, closing };
+const layouts = { footprint, transformation, store, scope, unified, familiar, closing };
 
 export function artwork(scene, index, count, beat) {
   const draw = layouts[scene.Layout[0]];
