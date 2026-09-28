@@ -198,3 +198,6 @@ CLAUDE.local.md
 # Bun / Node files
 bun.lock
 package.json
+
+# Rendered concept video; keep the .rst and rendering sources.
+/docs/video/*.mp4

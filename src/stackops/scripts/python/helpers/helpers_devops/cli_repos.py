@@ -3,6 +3,8 @@ from typing import Annotated
 
 import typer
 
+from stackops.utils.cli_utils.ordered_group import ordered_group
+
 
 def _resolve_directory(directory: str | None) -> Path:
     if directory is None:
@@ -230,6 +232,7 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_viz import analyze_repo_development, count_lines_in_repo, gource_viz
 
     repos_apps = typer.Typer(
+        cls=ordered_group(("sync", "register", "list", "action", "version", "analyze", "guard", "viz", "count-lines")),
         help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
@@ -240,8 +243,8 @@ def get_app() -> typer.Typer:
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
 
-    repos_apps.command(name="list", help="📋 <l> List registered repositories and sync counts")(list_repositories)
-    repos_apps.command(name="l", help="List registered repositories and sync counts", hidden=True)(list_repositories)
+    repos_apps.command(name="list", help="📋 <l> List all registered repositories with change counts; optionally filter with --guarded")(list_repositories)
+    repos_apps.command(name="l", help="List all registered repositories with change counts; optionally filter with --guarded", hidden=True)(list_repositories)
 
     repos_apps.command(name="action", help="🔄 <a> Run Git actions or a shell command across repositories", no_args_is_help=True)(action)
     repos_apps.command(name="a", help="Run Git actions or a shell command across repositories", hidden=True, no_args_is_help=True)(action)

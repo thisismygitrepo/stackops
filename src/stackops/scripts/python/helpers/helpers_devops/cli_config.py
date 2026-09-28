@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, TypeAlias
 import typer
 
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+from stackops.utils.cli_utils.ordered_group import ordered_group
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -381,6 +382,10 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_transfer import export_dotfiles, import_dotfiles
 
     config_apps = typer.Typer(
+        cls=ordered_group((
+            "sync", "register", "edit", "export-dotfiles", "import-dotfiles", "terminal",
+            "interactive", "copy-assets", "secrets", "setup", "dump",
+        )),
         help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )

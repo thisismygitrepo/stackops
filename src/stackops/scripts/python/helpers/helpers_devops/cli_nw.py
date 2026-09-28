@@ -2,6 +2,8 @@ from typing import Annotated, Literal
 
 import typer
 
+from stackops.utils.cli_utils.ordered_group import ordered_group
+
 
 def show_address() -> None:
     """📌 Show this computer addresses on network"""
@@ -132,6 +134,10 @@ def get_app() -> typer.Typer:
     )
 
     nw_apps = typer.Typer(
+        cls=ordered_group((
+            "share-terminal", "share-server", "send", "receive", "share-temp-file",
+            "ssh", "cloudflare", "device", "show-address", "vscode-share",
+        )),
         help="🔐 <n> Network subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
