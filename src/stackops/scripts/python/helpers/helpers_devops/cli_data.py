@@ -305,13 +305,13 @@ def get_app() -> typer.Typer:
     app.command(name="r", no_args_is_help=True, hidden=True)(register_data)
 
     app.command(
-        name="display",
+        name="list",
         no_args_is_help=False,
         hidden=False,
-        help="📋 <d> Display registered backup entries from user mapper/data.yaml.",
+        help="📋 <l> List registered backup entries from user mapper/data.yaml.",
     )(cli_data_display.display_data)
 
-    app.command(name="d", no_args_is_help=False, hidden=True)(cli_data_display.display_data)
+    app.command(name="l", no_args_is_help=False, hidden=True)(cli_data_display.display_data)
 
     app.command(name="subset", no_args_is_help=True, hidden=False, help=f"📦 <u> {cli_data_subset.DATA_SUBSET_HELP}")(cli_data_subset.subset)
 

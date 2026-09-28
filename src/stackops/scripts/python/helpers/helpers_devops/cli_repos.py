@@ -3,6 +3,8 @@ from typing import Annotated
 
 import typer
 
+from stackops.utils.cli_utils.ordered_group import ordered_group
+
 
 def _resolve_directory(directory: str | None) -> Path:
     if directory is None:
@@ -230,6 +232,7 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_viz import analyze_repo_development, count_lines_in_repo, gource_viz
 
     repos_apps = typer.Typer(
+        cls=ordered_group(("sync", "register", "list", "action", "version", "analyze", "guard", "viz", "count-lines")),
         help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )

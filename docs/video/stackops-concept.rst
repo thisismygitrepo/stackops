@@ -47,8 +47,18 @@ Scene 01. Your digital life
 :Takeaway: Your digital life, managed together.
 :Focus: identity
 :Say: StackOps is your OS-agnostic digital life manager. It covers 99% of your digital footprint.
-:Focus: footprint
-:Say: The applications you use. The way you configure them. Your secrets, your data, and your code.
+:Focus: applications
+:Say: The applications you use.
+:Focus: configuration
+:Say: The way you configure them.
+:Focus: secrets
+:Say: Your secrets and credentials.
+:Focus: data
+:Say: Your files and data.
+:Focus: code
+:Say: Your code and repositories.
+:Focus: processes
+:Say: And the processes you run.
 :Focus: together
 :Say: All wrapped into one solution.
 :Source: User's current 99% wording; README.md at 41aae8d08^; docs/index.md at 41aae8d08^
@@ -147,4 +157,6 @@ Scene 06. Your digital life, sorted
 :Say: Bring the setup you've spent years building to the machine in front of you.
 :Focus: docs
 :Say: Explore the documentation to get started.
+:Focus: platforms
+:Say: All of it, OS-agnostic. Linux, macOS, and Windows.
 :Source: User's current 99% wording; README.md at 41aae8d08^; docs/index.md at 41aae8d08^

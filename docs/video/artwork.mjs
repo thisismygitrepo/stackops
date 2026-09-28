@@ -7,7 +7,8 @@ function footprint(scene, focus) {
     + text('99%', 92, 590, 226, C.accent, 650, false)
     + text('of your digital footprint.', 104, 665, 48, C.ink, 500, false);
   if (focus === 'together') body += box(1058, 172, 784, 594, 'none', C.accent, 24);
-  body += scene.Card.map((value, i) => card(value, 1080 + i % 2 * 380, 194 + Math.floor(i / 2) * 190, 358, 168, focus !== 'identity')).join('');
+  body += scene.Card.map((value, i) => card(value, 1080 + i % 2 * 380, 194 + Math.floor(i / 2) * 190, 358, 168, focus === value.split(' | ')[0].toLowerCase())).join('');
+  if (focus === 'together') body += pill('OS-agnostic · Linux · macOS · Windows', 104, 715, 690, true);
   return body;
 }
 
@@ -65,6 +66,7 @@ function closing(scene, focus) {
     + text('of your digital footprint', 382, 687, 37, C.ink, 500, false)
     + text('All wrapped into one solution.', 383, 731, 28, C.muted, 400, false);
   if (focus !== 'life') body += text(scene.Link[0], 1065, 697, 34, C.accent, 500, false);
+  if (focus === 'platforms') body += pill('OS-agnostic · Linux · macOS · Windows', 104, 555, 690, true);
   return body;
 }
 
