@@ -38,6 +38,7 @@ Scene 01. Your digital life
 :Eyebrow: DIGITAL LIFE MANAGER
 :Title: StackOps
 :Subtitle: 99% of your|digital footprint.
+:Opening: Your stack is awesome,|but you need a way to manage it.
 :Card: Applications | The software you use
 :Card: Configuration | Public and private settings
 :Card: Secrets | Credentials and passwords
@@ -45,6 +46,8 @@ Scene 01. Your digital life
 :Card: Code | Your repositories
 :Card: Processes | The work you run
 :Takeaway: Your digital life, managed together.
+:Focus: opening
+:Say: Your stack is awesome, but you need a way to manage it.
 :Focus: identity
 :Say: StackOps is your OS-agnostic digital life manager. It covers 99% of your digital footprint.
 :Focus: applications
@@ -126,14 +129,12 @@ Scene 05. The stack you are comfortable with
 
 :Layout: familiar
 :Eyebrow: YOUR STACK
-:Title: Your stack is awesome,|but you need a way to manage it all.
+:Title: The stack you are|comfortable with.
 :Subtitle: StackOps manages the stack you are comfortable with.
 :Card: Linux | Your tools and configuration
 :Card: macOS | Your tools and configuration
 :Card: Windows | Your tools and configuration
 :Takeaway: A cross-platform approach to managing your digital life.
-:Focus: punchline
-:Say: Your stack is awesome, but you need a way to manage it all.
 :Focus: glue
 :Say: StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
 :Focus: yours

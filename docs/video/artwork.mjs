@@ -2,6 +2,9 @@ import { C, box, text, lines, card, link, pill, frame } from './drawing.mjs';
 import { transformation } from './transformation.mjs';
 
 function footprint(scene, focus) {
+  if (focus === 'opening') {
+    return lines(scene.Opening[0], 100, 345, 88, C.ink, 1720, 650);
+  }
   let body = text(scene.Title[0], 100, 255, 102, C.ink, 650, false)
     + text('Digital Life Manager', 104, 330, 42, C.muted, 400, false)
     + text('99%', 92, 590, 226, C.accent, 650, false)
