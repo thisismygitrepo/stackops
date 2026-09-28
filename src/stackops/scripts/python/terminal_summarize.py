@@ -6,13 +6,13 @@ import typer
 
 
 SummarizeVocabulary: TypeAlias = Literal["layout", "l", "herdr", "h"]
-LegacySummarizeBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "auto", "a"]
+LegacySummarizeBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u", "auto", "a"]
 ResolvedSummarizeVocabulary: TypeAlias = Literal["layout", "herdr"]
 
 
 def _resolve_vocabulary(vocabulary: SummarizeVocabulary | LegacySummarizeBackend) -> ResolvedSummarizeVocabulary:
     match vocabulary:
-        case "layout" | "l" | "tmux" | "t" | "auto" | "a":
+        case "layout" | "l" | "tmux" | "t" | "tuios" | "u" | "auto" | "a":
             return "layout"
         case "herdr" | "h":
             return "herdr"

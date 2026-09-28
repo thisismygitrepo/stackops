@@ -98,7 +98,7 @@ def interactive_choose_with_preview(
 
 
 def choose_session(
-    backend: Literal["tmux", "herdr", "aoe"],
+    backend: Literal["tmux", "herdr", "tuios", "aoe"],
     name: str | None,
     new_session: bool,
     kill_all: bool,
@@ -114,6 +114,10 @@ def choose_session(
             from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import choose_session as _herdr
 
             return _herdr(name=name, new_session=new_session, kill_all=kill_all, window=window)
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import choose_session as _tuios
+
+            return _tuios(name=name, new_session=new_session, kill_all=kill_all, first=first, window=window)
         case "aoe":
             from stackops.scripts.python.helpers.helpers_sessions._aoe_backend import choose_session as _aoe
 

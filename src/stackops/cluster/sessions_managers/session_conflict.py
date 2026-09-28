@@ -5,7 +5,7 @@ import subprocess
 from typing import Literal, NotRequired, TypedDict
 
 
-SessionBackend = Literal["tmux", "herdr"]
+SessionBackend = Literal["tmux", "herdr", "tuios"]
 SessionConflictActionLoose = Literal[
     "restart", "r",
     "rename", "n",
@@ -54,7 +54,7 @@ MERGE_SESSION_CONFLICT_ACTIONS = frozenset(
         "mergeSkip",
     }
 )
-MERGE_SUPPORTED_BACKENDS = frozenset({"tmux"})
+MERGE_SUPPORTED_BACKENDS = frozenset({"tmux", "tuios"})
 
 
 class SessionLaunchPlan(TypedDict):
@@ -122,6 +122,10 @@ def _duplicate_conflict_hint(backend: SessionBackend) -> str:
 
 
 def list_existing_sessions(backend: SessionBackend) -> set[str]:
+    if backend == "tuios":
+        from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import list_session_entries
+
+        return {entry.name for entry in list_session_entries()}
     try:
         if backend == "tmux":
             result = subprocess.run(
@@ -302,6 +306,11 @@ def build_session_launch_plan(
 
 
 def kill_existing_session(backend: SessionBackend, session_name: str) -> None:
+    if backend == "tuios":
+        from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import run_tuios
+
+        run_tuios(["kill-session", "--", session_name])
+        return
     try:
         if backend == "tmux":
             subprocess.run(

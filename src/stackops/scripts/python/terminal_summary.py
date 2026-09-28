@@ -8,8 +8,8 @@ import typer
 
 
 PaneCategory: TypeAlias = Literal["idle", "running", "exited", "unknown"]
-SummaryBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "aoe", "a", "auto"]
-ResolvedSummaryBackend: TypeAlias = Literal["tmux", "herdr", "aoe"]
+SummaryBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "aoe", "a", "tuios", "u", "auto"]
+ResolvedSummaryBackend: TypeAlias = Literal["tmux", "herdr", "aoe", "tuios"]
 
 
 @dataclass(frozen=True)
@@ -85,6 +85,8 @@ def _resolve_summary_backend(backend: SummaryBackend) -> ResolvedSummaryBackend:
             return "herdr"
         case "aoe" | "a":
             return "aoe"
+        case "tuios" | "u":
+            return "tuios"
 
 
 def _format_counts(counts: Counter[str]) -> str:
@@ -707,10 +709,10 @@ def _resolve_herdr_workspace_name(workspace_name: str | None, choose_session: bo
 
 
 def summary(
-    backend: Annotated[SummaryBackend, typer.Option("--backend", "-b", help="Backend to summarize: tmux, herdr, aoe, or auto.")] = "tmux",
-    session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one tmux session, Herdr workspace, or AoE session by name.")] = None,
-    choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one tmux session, Herdr workspace, or AoE session interactively and show details.")] = False,
-    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include tab/window and pane details for every session (tmux and Herdr).")] = False,
+    backend: Annotated[SummaryBackend, typer.Option("--backend", "-b", help="Backend to summarize: tmux, herdr, aoe, tuios, or auto.")] = "tmux",
+    session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one backend session or workspace by name.")] = None,
+    choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one backend session or workspace interactively and show details.")] = False,
+    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include tab/window and pane details for every session (tmux, Herdr, and TUIOS).")] = False,
 ) -> None:
     """Print running terminal session summaries or details for one session."""
     match _resolve_summary_backend(backend):
@@ -728,10 +730,14 @@ def summary(
             _print_herdr_workspace_details(workspace_name=workspace_name)
         case "aoe":
             if show_tabs:
-                typer.echo("Error: --tabs is only supported by tmux and Herdr; AoE sessions are already listed individually.", err=True, color=True)
+                typer.echo("Error: --tabs is only supported by tmux, Herdr, and TUIOS; AoE sessions are already listed individually.", err=True, color=True)
                 raise typer.Exit(code=1)
             session_name = _resolve_aoe_session_name(session_name=session, choose_session=choose_session)
             if session_name is None:
                 _print_aoe_summary()
                 return
             _print_aoe_session_details(session_name=session_name)
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.tuios_summary import print_tuios_summary
+
+            print_tuios_summary(session_name=session, choose_session=choose_session, show_tabs=show_tabs)

@@ -54,6 +54,12 @@ def _build_trace_kill_command(
             argv = ("aoe", "session", "stop", target)
         case "aoe", "window" | "pane":
             raise ValueError("AoE only supports session-level trace cleanup.")
+        case "tuios", "session":
+            argv = ("tuios", "kill-session", "--", target)
+        case "tuios", "window" | "pane":
+            from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import kill_window_command
+
+            argv = tuple(kill_window_command(session_name=session_name, window_id=target))
 
     summary = KilledTarget(
         action=action,

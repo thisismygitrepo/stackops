@@ -73,13 +73,15 @@ def print_kill_summary(
 
 
 def resolve_session_backend(
-    backend: Literal["tmux", "t", "herdr", "h", "aoe", "e", "auto", "a"],
-) -> Literal["tmux", "herdr", "aoe"]:
+    backend: Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e", "auto", "a"],
+) -> Literal["tmux", "herdr", "tuios", "aoe"]:
     import platform
     system = platform.system().lower()
     match backend:
         case "tmux" | "t":
             return "tmux"
+        case "tuios" | "u":
+            return "tuios"
         case "herdr" | "h":
             if system == "windows":
                 typer.echo("Error: StackOps Herdr session commands require macOS or Linux.", err=True, color=True)

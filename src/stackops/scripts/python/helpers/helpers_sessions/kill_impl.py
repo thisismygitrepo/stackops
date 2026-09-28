@@ -6,7 +6,7 @@ from stackops.scripts.python.helpers.helpers_sessions.session_trace_selection im
 )
 
 
-type KillBackend = Literal["tmux", "herdr", "aoe"]
+type KillBackend = Literal["tmux", "herdr", "tuios", "aoe"]
 
 
 def _choose_exact_kill_target(
@@ -28,6 +28,12 @@ def _choose_exact_kill_target(
             from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import choose_kill_target as _herdr
 
             return _herdr(name=name, kill_all=kill_all, idle=idle, window=window, delete=delete)
+        case "tuios":
+            if delete:
+                return ("error", "--delete is only supported by the Herdr backend.", [])
+            from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_kill import choose_kill_target as _tuios
+
+            return _tuios(name=name, kill_all=kill_all, idle=idle, window=window)
         case "aoe":
             if delete:
                 return ("error", "--delete is only supported by the Herdr backend.", [])
@@ -39,6 +45,10 @@ def _choose_exact_kill_target(
 
 def _list_killable_session_names(backend: KillBackend, delete: bool) -> list[str] | None:
     match backend:
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import list_session_names
+
+            return list_session_names()
         case "tmux":
             from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import list_session_names
 

@@ -11,11 +11,12 @@ if TYPE_CHECKING:
 type SessionBackendOption = Literal[
     "tmux", "t",
     "herdr", "h",
+    "tuios", "u",
     "aoe", "a",
     "auto",
 ]
-type DynamicSessionBackendOption = Literal["tmux", "t", "auto", "a"]
-type ResolvedSessionBackend = Literal["tmux", "herdr", "aoe"]
+type DynamicSessionBackendOption = Literal["tmux", "t", "tuios", "u", "auto", "a"]
+type ResolvedSessionBackend = Literal["tmux", "herdr", "tuios", "aoe"]
 
 
 def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:
@@ -169,6 +170,8 @@ def resolve_standard_backend(
     match backend:
         case "tmux" | "t":
             return "tmux"
+        case "tuios" | "u":
+            return "tuios"
         case "herdr" | "h":
             if platform.system().lower() == "windows":
                 typer.echo(

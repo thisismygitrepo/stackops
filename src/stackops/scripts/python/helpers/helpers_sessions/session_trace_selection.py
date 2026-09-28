@@ -44,6 +44,10 @@ def _load_trace_targets(backend: TraceBackend) -> list[TraceTarget]:
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_aoe import list_trace_targets
 
             targets, error = list_trace_targets()
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.session_trace_tuios import list_trace_targets
+
+            targets, error = list_trace_targets()
     if targets is None:
         raise ValueError(error or f"Unable to list {backend} sessions.")
     return targets
@@ -86,3 +90,7 @@ def choose_trace_session_names(backend: TraceBackend) -> TraceSessionChoice:
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_aoe import choose_existing_session_names
 
             return choose_existing_session_names(msg="Choose AoE sessions to trace:")
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import choose_existing_session_names
+
+            return choose_existing_session_names(msg="Choose TUIOS sessions to trace:")

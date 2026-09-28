@@ -13,11 +13,11 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_layouts impo
 from stackops.utils.schemas.layouts.layout_types import TabConfig
 
 
-AgentParallelBackend: TypeAlias = Literal["tmux", "herdr", "aoe"]
-AgentParallelBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "aoe", "e"]
+AgentParallelBackend: TypeAlias = Literal["tmux", "herdr", "tuios", "aoe"]
+AgentParallelBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e"]
 DEFAULT_AGENT_PARALLEL_BACKEND: Final[AgentParallelBackend] = "tmux"
-AGENT_PARALLEL_BACKENDS: Final[tuple[AgentParallelBackend, ...]] = ("tmux", "herdr", "aoe")
-AGENT_PARALLEL_BACKEND_HELP: Final[str] = "tmux, herdr, or aoe"
+AGENT_PARALLEL_BACKENDS: Final[tuple[AgentParallelBackend, ...]] = ("tmux", "herdr", "tuios", "aoe")
+AGENT_PARALLEL_BACKEND_HELP: Final[str] = "tmux, herdr, tuios, or aoe"
 
 JsonObject: TypeAlias = dict[str, object]
 
@@ -42,6 +42,8 @@ def resolve_agent_parallel_backend(backend: AgentParallelBackendOption | AgentPa
             return "tmux"
         case "herdr" | "h":
             return "herdr"
+        case "tuios" | "u":
+            return "tuios"
         case "aoe" | "e":
             return "aoe"
         case _:
@@ -52,6 +54,19 @@ def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBack
     match backend:
         case "tmux":
             _run_generated_layout_with_tmux(layout_output_path=layout_output_path)
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
+
+            run_layouts(
+                sleep_inbetween=0,
+                monitor=False,
+                parallel_layouts=None,
+                kill_upon_completion=False,
+                backend="tuios",
+                on_conflict="restart",
+                exit_mode="backToShell",
+                layouts_selected=read_generated_layouts(layout_output_path=layout_output_path),
+            )
         case "herdr":
             summary = run_generated_layout_with_herdr(layout_output_path=layout_output_path)
             _show_herdr_launch_summary(summary=summary)

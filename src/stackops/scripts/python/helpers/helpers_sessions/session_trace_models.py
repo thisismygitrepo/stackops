@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Literal
 
 
-type TraceBackend = Literal["tmux", "herdr", "aoe"]
-type TraceBackendOption = Literal["tmux", "t", "herdr", "h", "aoe", "a", "e"]
+type TraceBackend = Literal["tmux", "herdr", "aoe", "tuios"]
+type TraceBackendOption = Literal["tmux", "t", "herdr", "h", "aoe", "a", "e", "tuios", "u"]
 type TraceUntil = Literal["idle-shell", "all-exited", "exit-code", "session-missing"]
 type PaneCategory = Literal["idle-shell", "running", "exited", "unknown"]
 

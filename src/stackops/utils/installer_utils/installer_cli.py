@@ -291,7 +291,7 @@ def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bo
 
 
 _CHECK_GROUP2NAMES: Final[dict[str, tuple[str, ...]]] = {
-    "agents": ("beads", "gastown", "headroom", "herdr", "tmux", "wt"),
+    "agents": ("beads", "gastown", "headroom", "herdr", "tmux", "tuios", "wt"),
 }
 
 

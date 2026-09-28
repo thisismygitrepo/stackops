@@ -11,7 +11,7 @@ from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from stackops.cluster.sessions_managers.monitoring_types import StartResult
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 
-BackendName = Literal["tmux", "herdr"]
+BackendName = Literal["tmux", "herdr", "tuios"]
 
 
 def select_layout(layouts_json_file: str, selected_layouts_names: list[str], select_interactively: bool) -> list["LayoutConfig"]:
@@ -158,6 +158,27 @@ def run_layouts(
                     on_conflict=on_conflict,
                 )
                 raise_on_failed_start(start_results, "Herdr")
+                if i < len(iterable) - 1:
+                    time.sleep(sleep_inbetween)
+        case "tuios":
+            from stackops.cluster.sessions_managers.session_conflict import kill_existing_session
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_tuios import (
+                monitor_launched_windows,
+                run_layouts_with_tuios,
+            )
+
+            for i, a_layouts in enumerate(iterable):
+                start_results, launched_windows = run_layouts_with_tuios(
+                    layouts_selected=a_layouts,
+                    on_conflict=on_conflict,
+                    exit_mode=exit_mode,
+                )
+                raise_on_failed_start(start_results, "TUIOS")
+                if monitor or kill_upon_completion:
+                    monitor_launched_windows(launched_windows=launched_windows, poll_seconds=2.0)
+                    if kill_upon_completion:
+                        for session_name in launched_windows:
+                            kill_existing_session("tuios", session_name)
                 if i < len(iterable) - 1:
                     time.sleep(sleep_inbetween)
         case _:

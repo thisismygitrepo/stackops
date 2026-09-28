@@ -40,30 +40,48 @@ def _start_backend_session(
     match backend:
         case "tmux":
             return sessions_dynamic_tmux.start_initial_session(layout_name=layout_name, initial_tasks=initial_tasks, on_conflict=on_conflict)
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tuios import start_initial_session
+
+            return start_initial_session(initial_layout=initial_layout, on_conflict=on_conflict)
 
 
 def _spawn_backend_tab(backend: DynamicSessionBackend, session_name: str, task: DynamicTabTask) -> None:
     match backend:
         case "tmux":
             sessions_dynamic_tmux.spawn_tab(session_name=session_name, task=task)
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tuios import spawn_tab
+
+            spawn_tab(session_name=session_name, task=task)
 
 
 def _close_backend_tab(backend: DynamicSessionBackend, session_name: str, runtime_tab_name: str) -> None:
     match backend:
         case "tmux":
             sessions_dynamic_tmux.close_tab(session_name=session_name, runtime_tab_name=runtime_tab_name)
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tuios import close_tab
+
+            close_tab(session_name=session_name, runtime_tab_name=runtime_tab_name)
 
 
 def _is_dynamic_task_running(backend: DynamicSessionBackend, session_name: str, task: DynamicTabTask) -> bool:
     match backend:
         case "tmux":
             return sessions_dynamic_tmux.is_task_running(session_name=session_name, task=task)
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tuios import is_task_running
+
+            return is_task_running(session_name=session_name, task=task)
 
 
-def _validate_backend(backend: Literal["tmux", "t", "auto", "a"]) -> Literal["tmux"]:
+def _validate_backend(backend: Literal["tmux", "t", "tuios", "u", "auto", "a"]) -> DynamicSessionBackend:
     backend_lower = backend.lower()
     if backend_lower in {"tmux", "t"}:
         return "tmux"
+    if backend_lower in {"tuios", "u"}:
+        return "tuios"
     if backend_lower in {"auto", "a"}:
         return "tmux"
     raise ValueError(f"Unsupported backend for dynamic tabs: {backend}")
@@ -73,7 +91,7 @@ def run_dynamic(
     layout: LayoutConfig,
     max_parallel_tabs: int,
     kill_finished_tabs: bool,
-    backend: Literal["tmux", "t", "auto", "a"],
+    backend: Literal["tmux", "t", "tuios", "u", "auto", "a"],
     on_conflict: SessionConflictAction,
     poll_seconds: float,
 ) -> None:

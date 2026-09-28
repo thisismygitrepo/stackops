@@ -5,8 +5,8 @@ from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants impo
     TmuxExportCommandSource,
 )
 
-TerminalExportBackend: TypeAlias = Literal["tmux", "herdr"]
-TerminalExportBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h"]
+TerminalExportBackend: TypeAlias = Literal["tmux", "herdr", "tuios"]
+TerminalExportBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u"]
 
 
 def resolve_export_backend(
@@ -21,6 +21,8 @@ def resolve_export_backend(
             if platform.system().lower() == "windows":
                 raise ValueError("Herdr export is not supported on Windows.")
             return "herdr"
+        case "tuios" | "u":
+            return "tuios"
         case _:
             raise ValueError(f"Unsupported export backend: {backend}")
 
@@ -67,6 +69,20 @@ def export_terminal_sessions(
             )
             layouts = build_layouts_from_herdr_workspaces(
                 workspaces=resolved_workspaces,
+                command_source=command_source,
+            )
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.tuios_export import (
+                build_layouts_from_tuios_sessions,
+                resolve_tuios_sessions_for_export,
+            )
+
+            resolved_session_names = resolve_tuios_sessions_for_export(
+                session_names=session_names,
+                export_all_sessions=export_all_sessions,
+            )
+            layouts = build_layouts_from_tuios_sessions(
+                session_names=resolved_session_names,
                 command_source=command_source,
             )
     resolved_output_path = resolve_export_output_path(output_path=output_path)

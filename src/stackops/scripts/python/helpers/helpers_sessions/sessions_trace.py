@@ -28,6 +28,8 @@ def resolve_trace_backend(backend: TraceBackendOption) -> TraceBackend:
                 typer.echo("Error: AoE is not supported on Windows.", err=True, color=True)
                 raise typer.Exit(code=1)
             return "aoe"
+        case "tuios" | "u":
+            return "tuios"
         case _:
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
             raise typer.Exit(code=1)
@@ -49,6 +51,11 @@ def _get_trace_loader(
             return loader
         case "aoe":
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_aoe import (
+                load_trace_snapshot as loader,
+            )
+            return loader
+        case "tuios":
+            from stackops.scripts.python.helpers.helpers_sessions.session_trace_tuios import (
                 load_trace_snapshot as loader,
             )
             return loader

@@ -44,8 +44,8 @@ def run(
     monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
     parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
 
-    backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "a", "auto"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use: tmux, herdr, aoe, or auto")] = "tmux",
-    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux.")] = "error",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "a", "auto"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use: tmux, herdr, tuios, aoe, or auto")] = "tmux",
+    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and TUIOS.")] = "error",
     exit_mode: Annotated[Literal["backToShell", "terminate", "killWindow"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "backToShell",
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
@@ -55,7 +55,7 @@ def run(
     Use --on-conflict to choose behavior when a target session already exists:
     error, restart, rename, mergeOverwrite, or
     mergeSkip. Those two merge policies are
-    supported for tmux.
+    supported for tmux and TUIOS.
     Use `run-all` for the paced whole-file dynamic scheduler.
 
     The type of parallelization here is constrained by layouts. It asumes that every layout is a self-contained unit that must be launched in its entirety before the next one is launched, but multiple layouts can be launched at the same time if --parallel-layouts is set. If you want to launch every tab as soon as possible without waiting for the whole layout to launch, use `run-all` instead.
@@ -92,7 +92,7 @@ def run_all(
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
     poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
-    backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "tuios", "u", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use: tmux or tuios")] = "tmux",
     on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.")] = "error",
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 ) -> None:
@@ -134,9 +134,9 @@ def attach_to_session(
         name: Annotated[str | None, typer.Argument(help="Name of the session to attach to. If not provided, a list will be shown to choose from.")] = None,
         new_session: Annotated[bool, typer.Option("--new-session", "-n", help="Create a new session instead of attaching to an existing one.", show_default=True)] = False,
         kill_all: Annotated[bool, typer.Option("--kill-all", "-k", help="Kill all existing sessions before creating a new one.", show_default=True)] = False,
-        first: Annotated[bool, typer.Option("--first", "-f", help="Attach non-interactively to the first available tmux session.", show_default=True)] = False,
+        first: Annotated[bool, typer.Option("--first", "-f", help="Attach non-interactively to the first available tmux or TUIOS session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Choose a window/tab or pane target instead of only choosing from sessions.", show_default=True)] = False,
-        backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use: tmux, herdr, aoe, or auto")] = "tmux",
+        backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use: tmux, herdr, tuios, aoe, or auto")] = "tmux",
         ) -> None:
     """Choose a session or deeper target to attach to."""
     if name is not None and new_session:
@@ -162,8 +162,8 @@ def attach_to_session(
         raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import resolve_session_backend
     backend_resolved = resolve_session_backend(backend)
-    if first and backend_resolved != "tmux":
-        typer.echo("Error: --first is only supported by the tmux backend.", err=True, color=True)
+    if first and backend_resolved not in {"tmux", "tuios"}:
+        typer.echo("Error: --first is only supported by the tmux and TUIOS backends.", err=True, color=True)
         raise typer.Exit(code=1)
     from stackops.scripts.python.helpers.helpers_sessions.attach_impl import choose_session as impl
     action, payload = impl(backend=backend_resolved, name=name, new_session=new_session, kill_all=kill_all, first=first, window=window)
@@ -188,7 +188,7 @@ def kill_session_target(
         idle: Annotated[bool, typer.Option("--idle", "-i", help="Kill idle-shell panes/windows. With --kill-all, inspect all sessions; otherwise inspect NAME or a chosen session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
         delete: Annotated[bool, typer.Option("--delete", "-D", help="Delete stopped Herdr session records instead of killing running sessions.", show_default=True)] = False,
-        backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use: tmux, herdr, aoe, or auto")] = "tmux",
+        backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend multiplexer to use: tmux, herdr, tuios, aoe, or auto")] = "tmux",
         ) -> None:
     """Choose one or more session targets to kill."""
     if kill_all and name is not None:
@@ -273,7 +273,7 @@ def export(
     output_path: Annotated[str | None, typer.Option("--output-path", "-o", help="Path to write the generated layout file. Defaults to ./tmux_export_layout.json.")] = None,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-w", help="Replace the output file if it already exists.", show_default=True)] = False,
     merge: Annotated[bool, typer.Option("--merge", "-m", help="Merge exported sessions into an existing layout file by layoutName.", show_default=True)] = False,
-    backend: Annotated[Literal["tmux", "t", "herdr", "h"], typer.Option("--backend", "-b", help="Backend to export from: tmux/t or herdr/h.")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u"], typer.Option("--backend", "-b", help="Backend to export from: tmux/t, herdr/h, or tuios/u.")] = "tmux",
     command_source: Annotated[Literal["shell", "current-command", "start-command"], typer.Option("--command-source", "-c", help="Command to put in each exported tab: shell, current-command, or start-command.")] = "shell",
 ) -> None:
     """Export running backend sessions/workspaces as a layout file runnable by `run`."""
@@ -298,7 +298,7 @@ def export(
     if resolved_backend == "tmux":
         typer.echo(f"Run it with: stackops terminal run {exported_path}")
     else:
-        typer.echo(f"Run it with: stackops terminal run {exported_path} --backend herdr")
+        typer.echo(f"Run it with: stackops terminal run {exported_path} --backend {resolved_backend}")
 
 
 
@@ -328,13 +328,13 @@ def create_from_function(
 
 
 def trace(
-    session_names: Annotated[str | None, typer.Argument(help="Comma-separated tmux sessions, Herdr workspaces, or AoE sessions to trace. Supports * and ? selectors. Required unless --interactive is set.")] = None,
+    session_names: Annotated[str | None, typer.Argument(help="Comma-separated tmux, TUIOS, or AoE sessions, or Herdr workspaces to trace. Supports * and ? selectors. Required unless --interactive is set.")] = None,
     every: Annotated[float, typer.Option("--every", "-e", help="Polling interval in seconds between backend checks")] = 10.0,
     until: Annotated[Literal["idle-shell", "all-exited", "exit-code", "session-missing"], typer.Option("--until", "-u", help="Stop only when the selected criterion is satisfied")] = "idle-shell",
     exit_code: Annotated[int | None, typer.Option("--exit-code", "-c", help="Required pane exit code when `--until exit-code` is selected")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose an existing backend session/workspace interactively")] = False,
     kill: Annotated[bool, typer.Option("--kill", "-k", help="Kill finalized panes, windows, and sessions as they satisfy the selected criterion")] = False,
-    backend: Annotated[Literal["tmux", "t", "herdr", "h", "aoe", "a", "e"], typer.Option("--backend", "-b", help="Backend to trace: tmux/t, herdr/h, or aoe/a/e")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "a", "e"], typer.Option("--backend", "-b", help="Backend to trace: tmux/t, herdr/h, tuios/u, or aoe/a/e")] = "tmux",
 ) -> None:
     """Trace terminal backend sessions until every selected target is finalized."""
     from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import (
