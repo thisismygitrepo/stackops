@@ -7694,6 +7694,29 @@
           "windows": "npm install -g @einsia/agent-git"
         }
       }
+    },
+    {
+      "appName": "tuios",
+      "license": "MIT License",
+      "repoURL": "https://github.com/Gaurav-Gosain/tuios",
+      "lastCommitDate": "2026-09-28T04:23:55Z",
+      "lastCommitDateCheckDate": "2026-09-28T10:13:19Z",
+      "doc": "Terminal window manager with tiling panes, workspaces, and sessions for coding agents.",
+      "categoryLabels": [
+        "terminal-workspaces"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "tuios_{version}_Linux_x86_64.tar.gz",
+          "darwin": "tuios_{version}_Darwin_x86_64.tar.gz",
+          "windows": "tuios_{version}_Windows_x86_64.tar.gz"
+        },
+        "arm64": {
+          "linux": "tuios_{version}_Linux_arm64.tar.gz",
+          "darwin": "tuios_{version}_Darwin_arm64.tar.gz",
+          "windows": "tuios-ghostty_{version}_Windows_arm64.tar.gz"
+        }
+      }
     }
   ]
 }

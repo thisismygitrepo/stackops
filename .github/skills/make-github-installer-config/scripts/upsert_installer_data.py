@@ -12,12 +12,14 @@ PLATFORMS: tuple[PlatformName, ...] = ("linux", "darwin", "windows")
 ARCHES: tuple[ArchName, ...] = ("amd64", "arm64")
 PLATFORM_KEYS: frozenset[str] = frozenset(PLATFORMS)
 ARCH_KEYS: frozenset[str] = frozenset(ARCHES)
-ENTRY_KEYS: frozenset[str] = frozenset({"appName", "license", "repoURL", "doc", "fileNamePattern"})
+REQUIRED_ENTRY_KEYS: frozenset[str] = frozenset({"appName", "license", "repoURL", "doc", "categoryLabels", "fileNamePattern"})
+OPTIONAL_ENTRY_KEYS: frozenset[str] = frozenset({"lastCommitDate", "lastCommitDateCheckDate"})
+ALLOWED_ENTRY_KEYS: frozenset[str] = REQUIRED_ENTRY_KEYS | OPTIONAL_ENTRY_KEYS
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Safely upsert one installer entry into installer_data.json.")
-    parser.add_argument("--installer-data", "-i", required=False, default="src/stackops/jobs/installer/installer_data.json", help="Path to installer_data.json")
+    parser.add_argument("--installer-data", "-i", required=False, default="src/stackops/utils/schemas/installer/installer_data.json", help="Path to installer_data.json")
     parser.add_argument("--entry-json", "-e", required=True, help="Path to JSON produced by build_installer_config.py (contains {entry, checks})")
     parser.add_argument("--dry-run", "-d", action="store_true", help="Show action but do not write")
     parser.add_argument("--fail-on-check-warnings", "-f", action="store_true", help="Abort if build checks contain warnings")
@@ -59,8 +61,8 @@ def validate_pattern_row(value: object, label: str) -> None:
 
 def validate_entry_shape(entry: object) -> tuple[str, str]:
     entry_map = expect_string_key_dict(value=entry, label="entry")
-    missing_keys = sorted(ENTRY_KEYS - set(entry_map))
-    unexpected_keys = sorted(set(entry_map) - ENTRY_KEYS)
+    missing_keys = sorted(REQUIRED_ENTRY_KEYS - set(entry_map))
+    unexpected_keys = sorted(set(entry_map) - ALLOWED_ENTRY_KEYS)
     if len(missing_keys) > 0 or len(unexpected_keys) > 0:
         raise ValueError(f"entry keys mismatch, missing={missing_keys}, unexpected={unexpected_keys}")
 
@@ -68,6 +70,12 @@ def validate_entry_shape(entry: object) -> tuple[str, str]:
     expect_non_empty_string(value=entry_map["license"], label="entry.license")
     repo_url = expect_non_empty_string(value=entry_map["repoURL"], label="entry.repoURL")
     expect_non_empty_string(value=entry_map["doc"], label="entry.doc")
+
+    category_labels_any = entry_map["categoryLabels"]
+    if not isinstance(category_labels_any, list) or len(category_labels_any) == 0:
+        raise ValueError("entry.categoryLabels must be a non-empty array of non-empty strings")
+    for index, label in enumerate(category_labels_any):
+        expect_non_empty_string(value=label, label=f"entry.categoryLabels[{index}]")
 
     pattern_map = expect_string_key_dict(value=entry_map["fileNamePattern"], label="entry.fileNamePattern")
     missing_arches = sorted(ARCH_KEYS - set(pattern_map))

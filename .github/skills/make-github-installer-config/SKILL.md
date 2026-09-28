@@ -3,7 +3,7 @@ name: make-github-installer-config
 description: Create a stackops installer_data.json entry from a GitHub repository releases page. Use this when asked to add a new GitHub binary installer config.
 ---
 
-Goal: produce one JSON object compatible with the live `InstallerData` shape used by `src/stackops/jobs/installer/installer_data.json` and safely upsert it into the `installers` array.
+Goal: produce one JSON object compatible with the live `InstallerData` shape used by `src/stackops/utils/schemas/installer/installer_data.json` and safely upsert it into the `installers` array.
 
 Mandatory execution rule:
 
@@ -60,7 +60,7 @@ uv run .github/skills/make-github-installer-config/scripts/build_installer_confi
 
 ```bash
 uv run .github/skills/make-github-installer-config/scripts/upsert_installer_data.py \
-  --installer-data src/stackops/jobs/installer/installer_data.json \
+  --installer-data src/stackops/utils/schemas/installer/installer_data.json \
   --entry-json ./.ai/tmp_scripts/make-github-installer-config/entry.json \
   --dry-run
 ```
@@ -69,14 +69,14 @@ uv run .github/skills/make-github-installer-config/scripts/upsert_installer_data
 
 ```bash
 uv run .github/skills/make-github-installer-config/scripts/upsert_installer_data.py \
-  --installer-data src/stackops/jobs/installer/installer_data.json \
+  --installer-data src/stackops/utils/schemas/installer/installer_data.json \
   --entry-json ./.ai/tmp_scripts/make-github-installer-config/entry.json
 ```
 
 8. Validate resulting JSON file:
 
 ```bash
-jq empty src/stackops/jobs/installer/installer_data.json
+jq empty src/stackops/utils/schemas/installer/installer_data.json
 ```
 
 Output JSON entry must use this exact shape:
@@ -87,6 +87,7 @@ Output JSON entry must use this exact shape:
   "license": "...",
   "repoURL": "https://github.com/OWNER/REPO",
   "doc": "...",
+  "categoryLabels": ["..."],
   "fileNamePattern": {
     "amd64": {
       "linux": "... or null",
@@ -104,6 +105,8 @@ Output JSON entry must use this exact shape:
 
 Requirements:
 
+- `categoryLabels` is required and must be non-empty. Pick from the `InstallerCategory` enum in `src/stackops/utils/schemas/installer/installer_type.schema.json`. `build_installer_config.py` does not emit it, so add it to `entry.json` before upserting.
+- `lastCommitDate` and `lastCommitDateCheckDate` are optional; the commit-date refresh keeps them up to date.
 - `license` is required. Prefer the GitHub repo license metadata unless the user explicitly overrides it.
 - If GitHub does not declare a license, use `"No license asserted"` and call that out explicitly.
 - If binaries are unavailable for a platform/architecture, set that value to `null`.
