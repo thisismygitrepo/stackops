@@ -7,6 +7,7 @@ from stackops.scripts.python.helpers.helpers_utils.autostart_common import CATEG
 from stackops.scripts.python.helpers.helpers_utils.process_models import (
     build_process_selector,
 )
+from stackops.scripts.python.helpers.helpers_utils.window import window
 
 
 ProcessSearchField: TypeAlias = Literal[
@@ -233,4 +234,9 @@ def get_app() -> typer.Typer:
     machine_app.command(name="a", no_args_is_help=False, hidden=True)(list_autostart)
     machine_app.command(name="mount", no_args_is_help=True, help="🔌 <m> Mount a device to a mount point.")(mount_device)
     machine_app.command(name="m", no_args_is_help=True, hidden=True)(mount_device)
+    machine_app.command(
+        name="window", no_args_is_help=False,
+        help="◫ <w> Manage desktop windows on macOS, Windows, and Linux X11. Select a window and action using tv.",
+    )(window)
+    machine_app.command(name="w", no_args_is_help=False, hidden=True)(window)
     return machine_app
