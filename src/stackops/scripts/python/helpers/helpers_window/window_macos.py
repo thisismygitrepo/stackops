@@ -5,8 +5,10 @@ import weakref
 from functools import partial
 from typing import TypedDict, cast
 
+import typer
+
 from stackops.scripts.python.helpers.helpers_window import window_macos_api as api
-from stackops.scripts.python.helpers.helpers_window.constants import AX_TIMEOUT_SECONDS
+from stackops.scripts.python.helpers.helpers_window.constants import AX_CANNOT_COMPLETE, AX_TIMEOUT_SECONDS
 from stackops.scripts.python.helpers.helpers_window.window_models import WindowAction, WindowEntry
 
 
@@ -57,6 +59,7 @@ def collect_windows() -> list[WindowEntry]:
     if not api.AX.AXIsProcessTrusted():
         raise RuntimeError("Allow your terminal or launcher in System Settings > Privacy & Security > Accessibility, then rerun the command.")
     entries: list[WindowEntry] = []
+    unavailable_apps: list[str] = []
     for app in _desktop_info()["apps"]:
         application = api.AX.AXUIElementCreateApplication(app["pid"])
         try:
@@ -73,8 +76,16 @@ def collect_windows() -> list[WindowEntry]:
                     api.CORE.CFRetain(window)
                     weakref.finalize(entry, api.CORE.CFRelease, window)
                     entries.append(entry)
+        except api.AccessibilityError as error:
+            if error.code != AX_CANNOT_COMPLETE:
+                raise
+            app_label = f"""{app['name']} (PID {app['pid']})"""
+            unavailable_apps.append(app_label)
+            typer.echo(f"""Warning: Could not finish listing windows for {app_label}: {error}""", err=True)
         finally:
             api.CORE.CFRelease(application)
+    if unavailable_apps and not entries:
+        raise RuntimeError(f"""No windows could be read. Accessibility queries failed for: {', '.join(unavailable_apps)}.""")
     return entries
 
 

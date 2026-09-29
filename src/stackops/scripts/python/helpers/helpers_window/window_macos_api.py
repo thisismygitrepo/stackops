@@ -46,9 +46,15 @@ CF_TRUE = ct.c_void_p.in_dll(CORE, "kCFBooleanTrue").value
 CF_FALSE = ct.c_void_p.in_dll(CORE, "kCFBooleanFalse").value
 
 
+class AccessibilityError(RuntimeError):
+    def __init__(self, code: int, operation: str) -> None:
+        self.code = code
+        super().__init__(f"""macOS could not {operation} (Accessibility error {code}).""")
+
+
 def check_error(error: int, operation: str) -> None:
     if error != 0:
-        raise RuntimeError(f"""macOS could not {operation} (Accessibility error {error}).""")
+        raise AccessibilityError(code=error, operation=operation)
 
 
 @contextmanager

@@ -9,3 +9,4 @@ ACTION_DESCRIPTIONS: dict[WindowAction, str] = {
     "close": "Request that the window close. The application may ask to save changes.",
 }
 AX_TIMEOUT_SECONDS = 3.0
+AX_CANNOT_COMPLETE = -25204
