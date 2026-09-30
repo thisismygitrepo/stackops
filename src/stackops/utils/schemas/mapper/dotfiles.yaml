@@ -305,6 +305,37 @@ rofi_linux:
     - darwin
 
 # ============ File Managers And Previewers ============
+superfile:
+  config_linux:
+    original: ~/.config/superfile/config.toml
+    self_managed: CONFIG_ROOT/settings/superfile/config.toml
+    os:
+    - linux
+  hotkeys_linux:
+    original: ~/.config/superfile/hotkeys.toml
+    self_managed: CONFIG_ROOT/settings/superfile/hotkeys.toml
+    os:
+    - linux
+  config_darwin:
+    original: ~/Library/Application Support/superfile/config.toml
+    self_managed: CONFIG_ROOT/settings/superfile/config.toml
+    os:
+    - darwin
+  hotkeys_darwin:
+    original: ~/Library/Application Support/superfile/hotkeys.toml
+    self_managed: CONFIG_ROOT/settings/superfile/hotkeys.toml
+    os:
+    - darwin
+  config_windows:
+    original: ~/AppData/Local/superfile/config.toml
+    self_managed: CONFIG_ROOT/settings/superfile/config.toml
+    os:
+    - windows
+  hotkeys_windows:
+    original: ~/AppData/Local/superfile/hotkeys.toml
+    self_managed: CONFIG_ROOT/settings/superfile/hotkeys.toml
+    os:
+    - windows
 yazi:
   yazi_windows:
     original: ~/AppData/Roaming/yazi/config/yazi.toml

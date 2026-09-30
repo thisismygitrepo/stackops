@@ -36,8 +36,8 @@ def run(
     layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.")] = None,
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
 
-    choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", help="Comma separated layout names. Pass empty string to select layouts interactively.")] = None,
-    choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", help="Comma separated tab names. Pass empty string to select tabs interactively from all layouts.")] = None,
+    choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", metavar="[NAMES]", help="Comma separated layout names. Use -l without a value to select layouts interactively.")] = None,
+    choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", metavar="[NAMES]", help="Comma separated tab names. Use -t without a value to select tabs interactively from all layouts, or from layouts selected with -l.")] = None,
     sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between launching layouts")] = 1.0,
     max_tabs: Annotated[int, typer.Option(..., "--max-tabs-per-layout", "-T", help="A Sanity checker that throws an error if any layout exceeds the maximum number of tabs to launch.")] = 25,
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
@@ -397,6 +397,7 @@ def trace(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_sessions.terminal_run_command import TerminalRunCommand
     from stackops.scripts.python.terminal_summary import summary
     from stackops.scripts.python.terminal_summarize import summarize
 
@@ -405,8 +406,8 @@ def get_app() -> typer.Typer:
         context_settings={"help_option_names": ["-h", "--help"]},
     )
 
-    layouts_app.command("run", no_args_is_help=False, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)
-    layouts_app.command("r", no_args_is_help=False, help=run.__doc__, hidden=True)(run)
+    layouts_app.command("run", cls=TerminalRunCommand, no_args_is_help=False, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)
+    layouts_app.command("r", cls=TerminalRunCommand, no_args_is_help=False, help=run.__doc__, hidden=True)(run)
 
     layouts_app.command("run-all", no_args_is_help=True, help=run_all.__doc__, short_help="<R> Dynamically run every layout in a file")(run_all)
     layouts_app.command("R", no_args_is_help=True, help=run_all.__doc__, hidden=True)(run_all)
