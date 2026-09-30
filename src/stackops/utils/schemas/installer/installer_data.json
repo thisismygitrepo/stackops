@@ -24,6 +24,28 @@
       }
     },
     {
+      "appName": "winutil",
+      "license": "MIT License",
+      "repoURL": "https://github.com/ChrisTitusTech/winutil",
+      "doc": "Launch Chris Titus Tech's Windows utility to install apps, apply tweaks, and configure Windows; requires administrator access.",
+      "categoryLabels": [
+        "system-setup",
+        "windows-platform"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": null,
+          "windows": "powershell -NoProfile -Command \"irm https://christitus.com/win | iex\"",
+          "darwin": null
+        },
+        "arm64": {
+          "linux": null,
+          "windows": null,
+          "darwin": null
+        }
+      }
+    },
+    {
       "appName": "bun",
       "license": "MIT License",
       "repoURL": "CMD",
