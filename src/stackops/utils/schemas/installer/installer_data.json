@@ -4525,6 +4525,37 @@
       }
     },
     {
+      "appName": "sie-server",
+      "license": "Apache License 2.0",
+      "repoURL": "https://github.com/superlinked/sie",
+      "doc": "Superlinked Inference Engine (SIE): self-hosted model server for embeddings, reranking, and extraction. Native install uses Python 3.12; start with sie-server serve.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": null,
+            "apt": "uv tool install --python 3.12 \"sie-server[local]\"",
+            "dnf": "uv tool install --python 3.12 \"sie-server[local]\"",
+            "pacman": "uv tool install --python 3.12 \"sie-server[local]\""
+          },
+          "darwin": null,
+          "windows": null
+        },
+        "arm64": {
+          "linux": {
+            "apk": null,
+            "apt": "uv tool install --python 3.12 \"sie-server[local]\"",
+            "dnf": "uv tool install --python 3.12 \"sie-server[local]\"",
+            "pacman": "uv tool install --python 3.12 \"sie-server[local]\""
+          },
+          "darwin": "uv tool install --python 3.12 \"sie-server[local]\"",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "cointop",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/cointop-sh/cointop",
