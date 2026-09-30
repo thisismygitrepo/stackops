@@ -79,8 +79,9 @@ Minimized: {entry.minimized}"""
             if not sys.stdin.isatty():
                 raise RuntimeError("Action selection requires an interactive terminal. Pass --action.")
             typer.echo(f"""Select an action for {selected_window.app} — {selected_window.title or '(untitled)'}:""")
+            action_previews: dict[str, str] = {candidate: description for candidate, description in ACTION_DESCRIPTIONS.items()}
             selected_action = choose_from_dict_with_preview(
-                options_to_preview_mapping=dict(ACTION_DESCRIPTIONS),
+                options_to_preview_mapping=action_previews,
                 extension="txt",
                 multi=False,
                 preview_size_percent=50.0,

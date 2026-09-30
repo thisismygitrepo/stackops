@@ -1,13 +1,17 @@
 import ctypes
+import sys
 from ctypes import wintypes
 from functools import partial
-from typing import ClassVar
 
 from stackops.scripts.python.helpers.helpers_window.window_models import WindowAction, WindowEntry
 
 
+if sys.platform != "win32":
+    raise ImportError("Windows window management is only available on Windows.")
+
+
 class _WindowPlacement(ctypes.Structure):
-    _fields_: ClassVar[list[tuple[str, type[object]]]] = [
+    _fields_ = [
         ("length", wintypes.UINT),
         ("flags", wintypes.UINT),
         ("show_command", wintypes.UINT),

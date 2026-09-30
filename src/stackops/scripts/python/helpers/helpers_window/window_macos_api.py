@@ -1,5 +1,5 @@
 import ctypes as ct
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 
 
@@ -58,7 +58,7 @@ def check_error(error: int, operation: str) -> None:
 
 
 @contextmanager
-def attribute(element: int, name: str) -> Iterator[int | None]:
+def attribute(element: int, name: str) -> Generator[int | None, None, None]:
     key = CORE.CFStringCreateWithCString(None, name.encode(), CF_UTF8)
     value = ct.c_void_p()
     try:
