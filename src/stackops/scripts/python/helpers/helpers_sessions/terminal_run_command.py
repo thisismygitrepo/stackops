@@ -1,4 +1,4 @@
-from typer import Context
+from click import Context
 from typer.core import TyperCommand
 
 
