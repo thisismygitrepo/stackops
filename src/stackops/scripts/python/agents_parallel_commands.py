@@ -278,7 +278,10 @@ def create_context(
                 edit=False,
                 show_prompts_yaml_format=False,
                 working_directory=repo_root,
-                sandbox_options=SandboxOptions(backend=SandboxBackend.NONE, image=None, settings=None),
+                sandbox_options=SandboxOptions(
+                    backend=SandboxBackend.NONE, image=None, settings=None,
+                    providers=(), name=None, sync=None,
+                ),
             )
     except SystemExit as e:
         exit_code = e.code if isinstance(e.code, int) else 0 if e.code is None else 1

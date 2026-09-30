@@ -10,6 +10,12 @@ class SandboxBackend(StrEnum):
     BWRAP = "bwrap"
     SRT = "srt"
     AI_JAIL = "ai-jail"
+    OPENSHELL = "openshell"
+
+
+class SandboxSync(StrEnum):
+    COPY_BACK = "copy-back"
+    MANUAL = "manual"
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,6 +23,9 @@ class SandboxOptions:
     backend: SandboxBackend
     image: str | None
     settings: Path | None
+    providers: tuple[str, ...]
+    name: str | None
+    sync: SandboxSync | None
 
 
 @dataclass(frozen=True, slots=True)

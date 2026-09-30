@@ -96,6 +96,8 @@ def build_sandboxed_prompt_script(
                 )
                 if container:
                     prefix[1] = container_path(config_directory, is_windows=is_windows)
+                elif options.backend == SandboxBackend.OPENSHELL:
+                    input_paths.append(config_directory)
             command = [agent, *prefix, "--yolo", prompt_text]
         case "auggie":
             command = [agent, "--print", prompt_text]

@@ -4113,6 +4113,39 @@
       }
     },
     {
+      "appName": "openshell",
+      "license": "Apache-2.0",
+      "repoURL": "CMD",
+      "doc": "NVIDIA OpenShell: policy-controlled sandboxes for AI agents. The official installer installs the CLI, policy prover, and local gateway and starts its service. Requires Homebrew on Apple Silicon macOS, or Debian/RPM Linux with glibc >=2.28 and a systemd user session. Sandbox runtimes need Docker >=28, Linux Podman >=5 with cgroups v2 and a user socket, or host virtualization. Agent CLIs must be installed in the sandbox image. Windows requires WSL2; Intel macOS and Alpine are unsupported. https://docs.nvidia.com/openshell/about/installation",
+      "categoryLabels": [
+        "ai-agents-assistants",
+        "security-credentials-privacy",
+        "build-devops-containers"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": null,
+            "apt": "curl -LsSf https://raw.githubusercontent.com/NVIDIA/OpenShell/main/install.sh | sh",
+            "dnf": "curl -LsSf https://raw.githubusercontent.com/NVIDIA/OpenShell/main/install.sh | sh",
+            "pacman": null
+          },
+          "darwin": null,
+          "windows": null
+        },
+        "arm64": {
+          "linux": {
+            "apk": null,
+            "apt": "curl -LsSf https://raw.githubusercontent.com/NVIDIA/OpenShell/main/install.sh | sh",
+            "dnf": "curl -LsSf https://raw.githubusercontent.com/NVIDIA/OpenShell/main/install.sh | sh",
+            "pacman": null
+          },
+          "darwin": "curl -LsSf https://raw.githubusercontent.com/NVIDIA/OpenShell/main/install.sh | sh",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "ai-jail",
       "license": "GPL-3.0-only",
       "repoURL": "https://github.com/akitaonrails/ai-jail",

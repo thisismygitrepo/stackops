@@ -8,6 +8,8 @@ from stackops.utils.sandbox.options import SandboxAccess, SandboxBackend, Sandbo
 
 def validate_sandbox_options(options: SandboxOptions) -> None:
     host_system = platform.system()
+    if options.backend != SandboxBackend.OPENSHELL and (options.providers or options.name is not None or options.sync is not None):
+        raise ValueError("--sandbox-provider, --sandbox-name and --sandbox-sync require --sandbox openshell.")
     if options.backend == SandboxBackend.NONE:
         if options.image is not None or options.settings is not None:
             raise ValueError("--sandbox-image and --sandbox-settings require --sandbox.")
@@ -18,16 +20,26 @@ def validate_sandbox_options(options: SandboxOptions) -> None:
         raise ValueError("bwrap requires Linux. On Windows, run agents inside WSL2.")
     if options.backend == SandboxBackend.AI_JAIL and host_system == "Windows":
         raise ValueError("ai-jail requires Linux or macOS. On Windows, run agents inside WSL2.")
-    if options.backend in (SandboxBackend.DOCKER, SandboxBackend.PODMAN):
+    if options.backend == SandboxBackend.OPENSHELL and host_system == "Windows":
+        raise ValueError("OpenShell requires Linux or macOS. On Windows, run agents inside WSL2.")
+    if options.backend == SandboxBackend.OPENSHELL:
+        if options.name is not None and (not options.name.strip() or options.name.startswith("-")):
+            raise ValueError("--sandbox-name must be a nonempty OpenShell sandbox name.")
+        if any(not provider.strip() or provider.startswith("-") for provider in options.providers):
+            raise ValueError("--sandbox-provider must name an existing OpenShell provider.")
+    if options.backend in (SandboxBackend.DOCKER, SandboxBackend.PODMAN, SandboxBackend.OPENSHELL):
         if options.image is None or not options.image.strip() or options.image.startswith("-"):
             raise ValueError("--sandbox-image must name a Linux image with the agent installed globally on PATH, outside HOME.")
     elif options.image is not None:
-        raise ValueError("--sandbox-image is only supported with docker or podman.")
+        raise ValueError("--sandbox-image is only supported with docker, podman or openshell.")
     if options.backend == SandboxBackend.SRT:
         if options.settings is None or not options.settings.is_file():
             raise ValueError("srt requires --sandbox-settings pointing to a policy allowing the agent's network, workspace and state paths.")
+    elif options.backend == SandboxBackend.OPENSHELL:
+        if options.settings is not None and not options.settings.is_file():
+            raise ValueError("--sandbox-settings must point to an OpenShell policy YAML file.")
     elif options.settings is not None:
-        raise ValueError("--sandbox-settings is only supported with srt.")
+        raise ValueError("--sandbox-settings is only supported with srt or openshell.")
     if shutil.which(options.backend.value) is None:
         raise ValueError(f"""Required sandbox command not found: {options.backend.value}. Install it before selecting this sandbox.""")
 
@@ -52,6 +64,13 @@ def build_sandbox_command(
     directory = directory.resolve()
     if not directory.is_dir():
         raise ValueError(f"""Sandbox working directory does not exist: {directory}""")
+    if options.backend == SandboxBackend.OPENSHELL:
+        from stackops.utils.sandbox.openshell import build_openshell_command
+
+        return build_openshell_command(
+            executable=executable, command=command, options=options, directory=directory,
+            read_only_paths=read_only_paths, environment=access.environment_overrides, interactive=interactive,
+        )
     if options.backend not in (SandboxBackend.DOCKER, SandboxBackend.PODMAN) and shutil.which(command[0]) is None:
         raise ValueError(f"""Required command not found: {command[0]}. Install it on the host before sandboxing it.""")
     if options.backend != SandboxBackend.SRT:

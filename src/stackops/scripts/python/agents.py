@@ -12,7 +12,7 @@ from typer.core import TyperGroup
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
-from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions
+from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions, SandboxSync
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS, DEFAULT_AGENT
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
@@ -263,7 +263,8 @@ def run_interactive(
         typer.Option(
             "--sandbox", "-S",
             help=(
-                "Sandbox provider (default: none). Docker/Podman need Linux containers and --sandbox-image; "
+                "Sandbox provider (default: none). Docker/Podman/OpenShell need Linux containers and --sandbox-image; "
+                "OpenShell uses a project snapshot, image configuration and registered providers on a configured gateway; "
                 "bwrap provides Linux write isolation with host reads/network allowed; ai-jail supports Linux/macOS (Windows via WSL2); "
                 "srt needs --sandbox-settings (native Windows is alpha and requires a native .exe agent)."
             ),
@@ -273,15 +274,27 @@ def run_interactive(
         str | None,
         typer.Option(
             "--sandbox-image", "-I",
-            help="Docker/Podman Linux image with agent/tools installed globally on PATH, outside HOME. Workspace and agent state are mounted writable.",
+            help="Linux image with agent/tools on PATH outside HOME. OpenShell also needs sh, sleep, tar and git. Docker/Podman mount workspace and agent state writable.",
         ),
     ] = None,
     sandbox_settings: Annotated[
         Path | None,
         typer.Option(
             "--sandbox-settings", "-J", exists=True, dir_okay=False, resolve_path=True,
-            help="SRT JSON policy granting agent network, executable, workspace and state access. Windows also needs srt windows-install.",
+            help="Required SRT JSON access policy, or optional OpenShell policy YAML. Native Windows SRT also needs srt windows-install.",
         ),
+    ] = None,
+    sandbox_provider: Annotated[
+        list[str] | None,
+        typer.Option("--sandbox-provider", help="Configured OpenShell provider to attach. Repeat for multiple providers."),
+    ] = None,
+    sandbox_name: Annotated[
+        str | None,
+        typer.Option("--sandbox-name", help="Name for a new OpenShell sandbox. Generated automatically when omitted."),
+    ] = None,
+    sandbox_sync: Annotated[
+        SandboxSync | None,
+        typer.Option("--sandbox-sync", help="OpenShell project snapshot with fresh Git history: copy-back (default) preserves local conflicts and deletes successful sandboxes; manual retains the sandbox for download."),
     ] = None,
 ) -> None:
     """Launch an agent with reasonable defaults."""
@@ -293,8 +306,13 @@ def run_interactive(
         from stackops.scripts.python.helpers.helpers_agents.agents_shell import is_windows_host
         from stackops.utils.sandbox.launch import build_sandbox_command, validate_sandbox_options
 
-        sandbox_options = SandboxOptions(backend=sandbox, image=sandbox_image, settings=sandbox_settings)
+        sandbox_options = SandboxOptions(
+            backend=sandbox, image=sandbox_image, settings=sandbox_settings,
+            providers=tuple(sandbox_provider or ()), name=sandbox_name, sync=sandbox_sync,
+        )
         validate_sandbox_options(sandbox_options)
+        if sandbox == SandboxBackend.OPENSHELL and (headroom or followup):
+            raise ValueError("OpenShell cannot reuse host sessions or headroom configuration. Run without --followup and --headroom.")
         if headroom and sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN, SandboxBackend.AI_JAIL):
             raise ValueError("--headroom can be sandboxed with bwrap or an srt policy granting both headroom and agent access.")
         if followup and sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN) and is_windows_host():
@@ -327,7 +345,7 @@ def run_interactive(
                 if resolved_agent == "deepseek":
                     from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import deepseek_patch_paths
 
-                    if sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN):
+                    if sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN, SandboxBackend.OPENSHELL):
                         raise ValueError("DeepSeek's web interface needs a reachable listening port; use a host sandbox or run-prompt with a container.")
                     read_only_paths = deepseek_patch_paths(directory=Path.cwd())
                 command = build_sandbox_command(
@@ -441,21 +459,34 @@ def run_prompt(
         typer.Option(
             "--sandbox", "-S",
             help=(
-                "Sandbox provider (default: none). Docker/Podman require --sandbox-image; bwrap requires Linux; "
+                "Sandbox provider (default: none). Docker/Podman/OpenShell require --sandbox-image; "
+                "OpenShell uses a project snapshot, image configuration and registered providers on a configured gateway; bwrap requires Linux; "
                 "ai-jail supports Linux/macOS (Windows via WSL2); srt requires --sandbox-settings."
             ),
         ),
     ] = SandboxBackend.NONE,
     sandbox_image: Annotated[
         str | None,
-        typer.Option("--sandbox-image", "-I", help="Linux image with agent/tools installed globally on PATH, outside HOME."),
+        typer.Option("--sandbox-image", "-I", help="Linux image with agent/tools on PATH outside HOME. OpenShell also needs sh, sleep, tar and git."),
     ] = None,
     sandbox_settings: Annotated[
         Path | None,
         typer.Option(
             "--sandbox-settings", "-J", exists=True, dir_okay=False, resolve_path=True,
-            help="SRT JSON policy granting network, workspace, agent state and prompt/config-file access. Native Windows needs srt windows-install and an agent .exe.",
+            help="Required SRT JSON access policy, or optional OpenShell policy YAML. Native Windows SRT needs srt windows-install and an agent .exe.",
         ),
+    ] = None,
+    sandbox_provider: Annotated[
+        list[str] | None,
+        typer.Option("--sandbox-provider", help="Configured OpenShell provider to attach. Repeat for multiple providers."),
+    ] = None,
+    sandbox_name: Annotated[
+        str | None,
+        typer.Option("--sandbox-name", help="Name for a new OpenShell sandbox. Generated automatically when omitted."),
+    ] = None,
+    sandbox_sync: Annotated[
+        SandboxSync | None,
+        typer.Option("--sandbox-sync", help="OpenShell project snapshot with fresh Git history: copy-back (default) preserves local conflicts and deletes successful sandboxes; manual retains the sandbox for download."),
     ] = None,
 ) -> None:
     """Run a prompt via the selected agent, optionally continuing interactively."""
@@ -477,7 +508,10 @@ def run_prompt(
                 edit=edit,
                 show_prompts_yaml_format=show_prompts_yaml_format,
                 working_directory=working_directory,
-                sandbox_options=SandboxOptions(backend=sandbox, image=sandbox_image, settings=sandbox_settings),
+                sandbox_options=SandboxOptions(
+                    backend=sandbox, image=sandbox_image, settings=sandbox_settings,
+                    providers=tuple(sandbox_provider or ()), name=sandbox_name, sync=sandbox_sync,
+                ),
             )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
