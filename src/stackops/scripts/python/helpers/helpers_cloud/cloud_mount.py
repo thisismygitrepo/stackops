@@ -79,6 +79,7 @@ def mount(
     from rich.console import Console
     from rich.panel import Panel
     from rich.text import Text
+    from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_directory import prepare_unix_mount_directory
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux import build_tmux_launch_command
     console = Console()
     error_console = Console(stderr=True)
@@ -127,6 +128,7 @@ def mount(
         raise typer.Exit(code=1)
 
     mount_locations: dict[str, str] = {}
+    unmounted_clouds: set[str] = set()
     if network is None:
         mount_lines: list[str] = []
         for cloud_name in clouds:
@@ -142,15 +144,18 @@ def mount(
             if system_name == "Windows":
                 print("🪟 Creating mount directory on Windows...")
                 mount_loc_path.parent.mkdir(parents=True, exist_ok=True)
-            elif system_name in ["Linux", "Darwin"]:
+            elif system_name == "Linux" or system_name == "Darwin":
                 printable_name = "Linux" if system_name == "Linux" else "macOS"
                 print(f"🐧 Creating mount directory on {printable_name}...")
                 try:
-                    mount_loc_path.mkdir(parents=True, exist_ok=True)
-                except (FileExistsError, OSError) as err:
-                    warning_line = "⚠️  WARNING: Mount directory issue"
-                    err_line = f"{err}"
-                    console.print(Panel(f"{warning_line}\n{err_line}", title="Warning", border_style="yellow"))
+                    recovered = prepare_unix_mount_directory(mount_path=mount_loc_path, system_name=system_name)
+                    if recovered:
+                        console.print(Text(f"""Detached disconnected mount at {mount_loc_path}.""", style="yellow"))
+                    if not mount_loc_path.is_mount():
+                        unmounted_clouds.add(cloud_name)
+                except (OSError, subprocess.CalledProcessError) as error:
+                    error_console.print(Text(f"""❌ Could not prepare mount directory {mount_loc_path}: {error}""", style="red"))
+                    raise typer.Exit(code=1) from None
             else:
                 print("❌ Error: Unsupported platform")
                 raise typer.Exit(code=1)
@@ -205,7 +210,9 @@ def mount(
                 print(f"❌ Error: Unsupported backend '{backend}'")
                 raise typer.Exit(code=1)
 
-        txt = build_tmux_launch_command(mount_commands=mount_commands, mount_locations=mount_locations, session_name="cloud-mount")
+        txt = build_tmux_launch_command(
+            mount_commands=mount_commands, mount_locations=mount_locations, session_name="cloud-mount", unmounted_clouds=unmounted_clouds
+        )
         launch_commands = [txt]
     else:
         print("❌ Error: Unsupported platform")

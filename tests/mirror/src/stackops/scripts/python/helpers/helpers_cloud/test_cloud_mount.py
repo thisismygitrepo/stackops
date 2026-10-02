@@ -1,3 +1,4 @@
+import errno
 import platform
 import shlex
 import subprocess
@@ -10,7 +11,7 @@ import pytest
 from typer.testing import CliRunner
 
 from stackops.scripts.python.cloud import get_app
-from stackops.scripts.python.helpers.helpers_cloud import cloud_mount, cloud_mount_tmux
+from stackops.scripts.python.helpers.helpers_cloud import cloud_mount, cloud_mount_directory, cloud_mount_tmux
 from stackops.utils.options_utils import options
 
 
@@ -19,6 +20,7 @@ class MountDependencies:
     run: MagicMock
     tmux: MagicMock
     choose: MagicMock
+    directory: MagicMock
 
 
 @pytest.fixture
@@ -29,11 +31,14 @@ def mount_dependencies(monkeypatch: pytest.MonkeyPatch) -> MountDependencies:
         run=MagicMock(spec=subprocess.run),
         tmux=MagicMock(return_value="tmux attach"),
         choose=MagicMock(return_value=["odOracle", "team's drive"]),
+        directory=MagicMock(return_value=False),
     )
     monkeypatch.setattr(cloud_mount, "get_rclone_config", MagicMock(return_value=config))
     monkeypatch.setattr(cloud_mount_tmux, "build_tmux_launch_command", dependencies.tmux)
+    monkeypatch.setattr(cloud_mount_directory, "prepare_unix_mount_directory", dependencies.directory)
     monkeypatch.setattr(subprocess, "run", dependencies.run)
     monkeypatch.setattr(Path, "mkdir", MagicMock())
+    monkeypatch.setattr(Path, "is_mount", MagicMock(return_value=False))
     monkeypatch.setattr(platform, "system", MagicMock(return_value="Linux"))
     monkeypatch.setattr(options, "choose_from_options", dependencies.choose)
     return dependencies
@@ -80,6 +85,7 @@ def test_mount_uses_tmux_by_default_and_quotes_shell_arguments(mount_dependencie
         },
         mount_locations={"team's drive": destination},
         session_name="cloud-mount",
+        unmounted_clouds={"team's drive"},
     )
     mount_dependencies.run.assert_called_once_with("tmux attach", shell=True, check=True)
 
@@ -91,6 +97,41 @@ def test_daemon_mounts_interactive_selection(mount_dependencies: MountDependenci
     assert mount_dependencies.run.call_count == 2
     mount_dependencies.choose.assert_called_once()
     mount_dependencies.tmux.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [OSError(errno.EACCES, "Permission denied"), subprocess.CalledProcessError(returncode=1, cmd="fusermount3")],
+)
+def test_mount_directory_failure_aborts_before_launch(mount_dependencies: MountDependencies, failure: Exception) -> None:
+    mount_dependencies.directory.side_effect = failure
+
+    result = CliRunner().invoke(get_app(), ["mount", "odOracle", "--destination", "/mounts"])
+
+    assert result.exit_code == 1, result.output
+    assert "Could not prepare mount directory" in result.output
+    assert "completed successfully" not in result.output
+    mount_dependencies.run.assert_not_called()
+    mount_dependencies.tmux.assert_not_called()
+
+
+def test_recovered_mount_restarts_its_existing_tmux_service(mount_dependencies: MountDependencies) -> None:
+    mount_dependencies.directory.return_value = True
+
+    result = CliRunner().invoke(get_app(), ["mount", "odOracle", "--destination", "/mounts"])
+
+    assert result.exit_code == 0, result.output
+    assert "Detached disconnected mount" in result.output
+    assert mount_dependencies.tmux.call_args.kwargs["unmounted_clouds"] == {"odOracle"}
+
+
+def test_existing_mount_preserves_its_tmux_window(mount_dependencies: MountDependencies, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(Path, "is_mount", MagicMock(return_value=True))
+
+    result = CliRunner().invoke(get_app(), ["mount", "odOracle", "--destination", "/mounts"])
+
+    assert result.exit_code == 0, result.output
+    assert mount_dependencies.tmux.call_args.kwargs["unmounted_clouds"] == set()
 
 
 def test_windows_rejects_daemon_before_starting_mounts(

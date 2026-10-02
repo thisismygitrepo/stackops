@@ -13,7 +13,9 @@ wait "$!"
     return f"""bash -lc {shlex.quote(script)}"""
 
 
-def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: dict[str, str], session_name: str) -> str:
+def build_tmux_launch_command(
+    mount_commands: dict[str, str], mount_locations: dict[str, str], session_name: str, unmounted_clouds: set[str]
+) -> str:
     commands: list[str] = ["set -e"]
     session_target = f"={session_name}:"
 
@@ -35,6 +37,7 @@ def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: d
         commands.append("fi")
         commands.append("""window_id=$(tmux display-message -p -t "$mount_pane" '#{window_id}')""")
         commands.append("""tmux set-window-option -t "$window_id" allow-rename off""")
+        commands.append('tmux set-window-option -t "$window_id" @cloud-mount-service "$mount_pane"')
 
         commands.append(f"""about_pane=$(tmux split-window -d -h -P -F '#{{pane_id}}' -t "$mount_pane" {shlex.quote(about_pane_cmd)})""")
         commands.append(f"""explorer_pane=$(tmux split-window -d -v -P -F '#{{pane_id}}' -t "$mount_pane" {shlex.quote(explorer_pane_cmd)})""")
@@ -42,6 +45,20 @@ def build_tmux_launch_command(mount_commands: dict[str, str], mount_locations: d
         commands.append(f"""shell_pane=$(tmux split-window -d -v -P -F '#{{pane_id}}' -t "$explorer_pane" {shlex.quote(shell_pane_cmd)})""")
         commands.append('tmux select-pane -t "$shell_pane"')
         commands.append("""tmux select-layout -t "$window_id" tiled""")
+        if cloud_name in unmounted_clouds:
+            commands.append("else")
+            commands.append(f"""window_id=$(tmux display-message -p -t {shlex.quote(window_target)} '#{{window_id}}')""")
+            commands.append('mount_lock="cloud-mount-service-$window_id"')
+            commands.append('tmux wait-for -L "$mount_lock"')
+            commands.append("""trap 'tmux wait-for -U "$mount_lock"' EXIT""")
+            commands.append('mount_pane=$(tmux show-options -wqv -t "$window_id" @cloud-mount-service)')
+            commands.append("""if [ -z "$mount_pane" ] || [ "$(tmux display-message -p -t "$mount_pane" '#{pane_dead}' 2>/dev/null)" != 0 ]; then""")
+            commands.append(f"""mount_pane=$(tmux split-window -d -h -P -F '#{{pane_id}}' -t "$window_id" {shlex.quote(mount_pane_cmd)})""")
+            commands.append('tmux set-window-option -t "$window_id" @cloud-mount-service "$mount_pane"')
+            commands.append("""tmux select-layout -t "$window_id" tiled""")
+            commands.append("fi")
+            commands.append('tmux wait-for -U "$mount_lock"')
+            commands.append("trap - EXIT")
         commands.append("fi")
 
     first_cloud = next(iter(mount_commands))
