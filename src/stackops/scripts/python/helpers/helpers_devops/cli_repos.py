@@ -227,12 +227,12 @@ def checkout_to_branch_command(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
-    from stackops.scripts.python.helpers.helpers_devops import cli_repos_version
+    from stackops.scripts.python.helpers.helpers_devops import cli_repos_stats, cli_repos_version
+    from stackops.scripts.python.helpers.helpers_devops.cli_repos_edit import edit_repositories
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_list import list_repositories
-    from stackops.scripts.python.helpers.helpers_devops.cli_repos_viz import analyze_repo_development, count_lines_in_repo, gource_viz
 
     repos_apps = typer.Typer(
-        cls=ordered_group(("sync", "register", "list", "action", "version", "analyze", "guard", "viz", "count-lines")),
+        cls=ordered_group(("sync", "register", "edit", "list", "action", "version", "guard", "stats")),
         help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
@@ -243,6 +243,9 @@ def get_app() -> typer.Typer:
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
 
+    repos_apps.command(name="edit", help="📝 <e> Edit and validate the repos.json specification")(edit_repositories)
+    repos_apps.command(name="e", help="Edit and validate the repos.json specification", hidden=True)(edit_repositories)
+
     repos_apps.command(name="list", help="📋 <l> List all registered repositories with change counts; optionally filter with --guarded")(list_repositories)
     repos_apps.command(name="l", help="List all registered repositories with change counts; optionally filter with --guarded", hidden=True)(list_repositories)
 
@@ -250,16 +253,11 @@ def get_app() -> typer.Typer:
     repos_apps.command(name="a", help="Run Git actions or a shell command across repositories", hidden=True, no_args_is_help=True)(action)
     repos_apps.add_typer(cli_repos_version.get_app(), name="version", help="🏷️ <V> Capture, inspect, and restore repository versions")
     repos_apps.add_typer(cli_repos_version.get_app(), name="V", hidden=True)
-    repos_apps.command(name="analyze", help="📊 <z> Analyze repository development over time")(analyze_repo_development)
-    repos_apps.command(name="z", help="Analyze repository development over time", hidden=True)(analyze_repo_development)
 
     repos_apps.command(name="guard", help="🔐 <g> Securely sync git repository to/from cloud with encryption")(secure_repo_main)
     repos_apps.command(name="g", help="Securely sync git repository to/from cloud with encryption", hidden=True)(secure_repo_main)
 
-    repos_apps.command(name="viz", help="🎬 <v> Visualize repository activity using Gource")(gource_viz)
-    repos_apps.command(name="v", help="Visualize repository activity using Gource", hidden=True)(gource_viz)
-
-    repos_apps.command(name="count-lines", help="📄 <c> Count python lines of code in current repo + historical edits.")(count_lines_in_repo)
-    repos_apps.command(name="c", help="Count python lines of code in current repo + historical edits.", hidden=True)(count_lines_in_repo)
+    repos_apps.add_typer(cli_repos_stats.get_app(), name="stats", help="📊 <S> Visualize and analyze repository statistics")
+    repos_apps.add_typer(cli_repos_stats.get_app(), name="S", hidden=True)
 
     return repos_apps

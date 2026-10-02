@@ -92,16 +92,6 @@ StackOpsDevopsReposVersionCommand = TypedDict(
     },
 )
 
-StackOpsDevopsReposAnalyzeCommand = TypedDict(
-    "StackOpsDevopsReposAnalyzeCommand",
-    {
-        "command_name": Literal["analyze"],
-        "short_name": Literal["z"],
-        "help": Literal["📊 <z> Analyze repository development over time"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
 StackOpsDevopsReposGuardCommand = TypedDict(
     "StackOpsDevopsReposGuardCommand",
     {
@@ -112,8 +102,8 @@ StackOpsDevopsReposGuardCommand = TypedDict(
     },
 )
 
-StackOpsDevopsReposVizCommand = TypedDict(
-    "StackOpsDevopsReposVizCommand",
+StackOpsDevopsReposStatsVizCommand = TypedDict(
+    "StackOpsDevopsReposStatsVizCommand",
     {
         "command_name": Literal["viz"],
         "short_name": Literal["v"],
@@ -122,13 +112,42 @@ StackOpsDevopsReposVizCommand = TypedDict(
     },
 )
 
-StackOpsDevopsReposCountLinesCommand = TypedDict(
-    "StackOpsDevopsReposCountLinesCommand",
+StackOpsDevopsReposStatsCountLinesCommand = TypedDict(
+    "StackOpsDevopsReposStatsCountLinesCommand",
     {
         "command_name": Literal["count-lines"],
         "short_name": Literal["c"],
         "help": Literal["📄 <c> Count python lines of code in current repo + historical edits."],
         "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsDevopsReposStatsAnalyzeCommand = TypedDict(
+    "StackOpsDevopsReposStatsAnalyzeCommand",
+    {
+        "command_name": Literal["analyze"],
+        "short_name": Literal["z"],
+        "help": Literal["📊 <z> Analyze repository development over time"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsDevopsReposStatsSubcommands = TypedDict(
+    "StackOpsDevopsReposStatsSubcommands",
+    {
+        "viz": StackOpsDevopsReposStatsVizCommand,
+        "count-lines": StackOpsDevopsReposStatsCountLinesCommand,
+        "analyze": StackOpsDevopsReposStatsAnalyzeCommand,
+    },
+)
+
+StackOpsDevopsReposStatsCommand = TypedDict(
+    "StackOpsDevopsReposStatsCommand",
+    {
+        "command_name": Literal["stats"],
+        "short_name": Literal["S"],
+        "help": Literal["📊 <S> Visualize and analyze repository statistics"],
+        "subcommands": StackOpsDevopsReposStatsSubcommands,
     },
 )
 
@@ -139,10 +158,8 @@ StackOpsDevopsReposSubcommands = TypedDict(
         "register": StackOpsDevopsReposRegisterCommand,
         "action": StackOpsDevopsReposActionCommand,
         "version": StackOpsDevopsReposVersionCommand,
-        "analyze": StackOpsDevopsReposAnalyzeCommand,
         "guard": StackOpsDevopsReposGuardCommand,
-        "viz": StackOpsDevopsReposVizCommand,
-        "count-lines": StackOpsDevopsReposCountLinesCommand,
+        "stats": StackOpsDevopsReposStatsCommand,
     },
 )
 

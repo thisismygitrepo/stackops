@@ -1596,7 +1596,7 @@
                 "name": "sync",
                 "fullPath": "devops repos sync",
                 "shortPath": "d r s",
-                "help": "📥 <s> Clone repositories described by a repos.json specification",
+                "help": "📥 <s> Clone Git repositories and sync encrypted guard repositories",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
@@ -1606,25 +1606,46 @@
                   "raw_lines": [
                     "def clone(",
                     "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")] = None,",
+                    "    which: Annotated[",
+                    "        str | None, typer.Option(\"--which\", \"-w\", help=\"Comma-separated repository names or full destination paths, or 'all' (default).\")",
+                    "    ] = None,",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose repositories with the TV multi-select picker.\")] = False,",
                     "    checkout_to_commit: Annotated[",
                     "        bool, typer.Option(\"--checkout-to-commit\", \"-c\", help=\"Check out specific commits listed in the specification.\")",
                     "    ] = False,",
                     "    checkout_to_branch: Annotated[",
                     "        bool, typer.Option(\"--checkout-to-branch\", \"-b\", help=\"Check out the branch recorded in the specification.\")",
                     "    ] = False,",
+                    "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"Password for guard archives; otherwise use GPG keys.\")] = None,",
                     ") -> None:",
-                    "    \"\"\"📥 Clone repositories described by a repos.json specification.\"\"\"",
+                    "    \"\"\"📥 Clone Git repositories and sync guard repositories from a specification.\"\"\"",
                     "    if checkout_to_commit and checkout_to_branch:",
                     "        typer.echo(\"❌ Choose only one checkout mode: --checkout-to-commit or --checkout-to-branch.\")",
+                    "        raise typer.Exit(code=1)",
+                    "    if which is not None and interactive:",
+                    "        typer.echo(\"❌ --which/-w cannot be combined with --interactive/-i.\", err=True)",
                     "        raise typer.Exit(code=1)",
                     "",
                     "    checkout_branch_flag = checkout_to_branch",
                     "    checkout_commit_flag = checkout_to_commit",
                     "    spec_path_self_managed = _resolve_spec_path(specs_path)",
+                    "    from stackops.scripts.python.helpers.helpers_devops.cli_repos_selection import select_repositories",
                     "    from stackops.scripts.python.helpers.helpers_repos.clone import clone_repos",
+                    "    from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec",
+                    "",
+                    "    try:",
+                    "        spec_file = load_repos_spec(path=spec_path_self_managed)",
+                    "        repos = select_repositories(repos=spec_file[\"repos\"], which=which, interactive=interactive)",
+                    "    except (ValueError, OSError) as error:",
+                    "        typer.echo(f\"\"\"❌ {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    if not repos:",
+                    "        typer.echo(\"No repositories selected; nothing to sync.\")",
+                    "        return",
                     "",
                     "    results = clone_repos(",
-                    "        spec_path=spec_path_self_managed, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag",
+                    "        repos=repos, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag,",
+                    "        pwd=pwd,",
                     "    )",
                     "    if any(status == \"failed\" for status, _message in results):",
                     "        raise typer.Exit(code=1)"
@@ -1651,6 +1672,50 @@
                           "-s"
                         ],
                         "help": "Path to repos.json specification file."
+                      }
+                    },
+                    {
+                      "name": "which",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"Comma-separated repository names or full destination paths, or 'all' (default).\")]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--which",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--which"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Comma-separated repository names or full destination paths, or 'all' (default)."
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose repositories with the TV multi-select picker.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Choose repositories with the TV multi-select picker."
                       }
                     },
                     {
@@ -1696,16 +1761,38 @@
                         ],
                         "help": "Check out the branch recorded in the specification."
                       }
+                    },
+                    {
+                      "name": "pwd",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='Password for guard archives; otherwise use GPG keys.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--password",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--password"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Password for guard archives; otherwise use GPG keys."
+                      }
                     }
                   ],
                   "return": "None"
                 },
-                "doc": "📥 Clone repositories described by a repos.json specification.",
+                "doc": "📥 Clone Git repositories and sync guard repositories from a specification.",
                 "aliases": [
                   {
                     "name": "s",
                     "hidden": true,
-                    "help": "Clone repositories described by a repos.json specification"
+                    "help": "Clone Git repositories and sync encrypted guard repositories"
                   }
                 ]
               },
@@ -1726,14 +1813,26 @@
                     "    directory: Annotated[str | None, typer.Argument(help=\"📁 Directory containing repo(s).\")] = None,",
                     "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")] = None,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
+                    "    guard: Annotated[bool | None, typer.Option(\"--guard/--git\", \"-g/-G\", help=\"Use encrypted storage or Git hosts for all repos in this scan; otherwise keep saved settings.\")] = None,",
+                    "    cloud: Annotated[str | None, typer.Option(\"--cloud\", \"-C\", help=\"Rclone storage profile for --guard; otherwise use saved/default profile.\")] = None,",
+                    "    ignore_gitignore: Annotated[bool | None, typer.Option(\"--ignore-gitignore/--respect-gitignore\", \"-I/-R\", help=\"Set whether guard archives include Git-ignored files.\")] = None,",
                     ") -> None:",
                     "    \"\"\"📝 Record repositories into a repos.json specification.\"\"\"",
                     "    from stackops.scripts.python.helpers.helpers_repos.record import main_record as record_repos",
                     "",
                     "    if interactive:",
-                    "        directory, specs_path = _prompt_capture_options(directory=directory, specs_path=specs_path)",
-                    "    save_path = record_repos(repos_root_str=directory, specs_path=specs_path)",
-                    "    print(f\"\\n✅ Saved repository specification to {save_path}\")"
+                    "        directory, specs_path, guard, cloud, ignore_gitignore = _prompt_capture_options(",
+                    "            directory=directory, specs_path=specs_path, guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore",
+                    "        )",
+                    "    if guard is not True and (cloud is not None or ignore_gitignore is not None):",
+                    "        raise typer.BadParameter(\"--cloud and archive inclusion options require --guard.\")",
+                    "    if cloud is not None and not cloud.strip():",
+                    "        raise typer.BadParameter(\"--cloud must not be empty.\")",
+                    "    try:",
+                    "        record_repos(repos_root_str=directory, specs_path=specs_path, guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore)",
+                    "    except (ValueError, OSError) as error:",
+                    "        typer.echo(f\"\"\"❌ {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error"
                   ],
                   "name": "capture",
                   "parameters": [
@@ -1795,6 +1894,76 @@
                         ],
                         "help": "Prompt for register fields one step at a time."
                       }
+                    },
+                    {
+                      "name": "guard",
+                      "kind": "positional_or_keyword",
+                      "type": "bool | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool | None, typer.Option('--guard/--git', '-g/-G', help='Use encrypted storage or Git hosts for all repos in this scan; otherwise keep saved settings.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--guard/--git",
+                          "-g/-G"
+                        ],
+                        "long_flags": [
+                          "--guard",
+                          "--git"
+                        ],
+                        "short_flags": [
+                          "-g",
+                          "-G"
+                        ],
+                        "help": "Use encrypted storage or Git hosts for all repos in this scan; otherwise keep saved settings."
+                      }
+                    },
+                    {
+                      "name": "cloud",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--cloud', '-C', help='Rclone storage profile for --guard; otherwise use saved/default profile.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--cloud",
+                          "-C"
+                        ],
+                        "long_flags": [
+                          "--cloud"
+                        ],
+                        "short_flags": [
+                          "-C"
+                        ],
+                        "help": "Rclone storage profile for --guard; otherwise use saved/default profile."
+                      }
+                    },
+                    {
+                      "name": "ignore_gitignore",
+                      "kind": "positional_or_keyword",
+                      "type": "bool | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool | None, typer.Option('--ignore-gitignore/--respect-gitignore', '-I/-R', help='Set whether guard archives include Git-ignored files.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--ignore-gitignore/--respect-gitignore",
+                          "-I/-R"
+                        ],
+                        "long_flags": [
+                          "--ignore-gitignore",
+                          "--respect-gitignore"
+                        ],
+                        "short_flags": [
+                          "-I",
+                          "-R"
+                        ],
+                        "help": "Set whether guard archives include Git-ignored files."
+                      }
                     }
                   ],
                   "return": "None"
@@ -1805,6 +1974,247 @@
                     "name": "r",
                     "hidden": true,
                     "help": "Record repositories into a repos.json specification"
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "edit",
+                "fullPath": "devops repos edit",
+                "shortPath": "d r e",
+                "help": "📝 <e> Edit and validate the repos.json specification",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_edit.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_edit",
+                  "callable": "edit_repositories"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def edit_repositories(",
+                    "    specs_path: Annotated[",
+                    "        Path | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")",
+                    "    ] = None,",
+                    "    editor: Annotated[",
+                    "        Literal[\"nano\", \"hx\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open repos.json. Defaults to hx.\")",
+                    "    ] = \"hx\",",
+                    ") -> None:",
+                    "    try:",
+                    "        spec_path = resolve_repos_spec_path(specs_path=specs_path)",
+                    "        if not spec_path.exists():",
+                    "            typer.echo(",
+                    "                f\"\"\"❌ Specification file not found: {spec_path}. Run devops repos register first, or provide another file using --specs-path.\"\"\",",
+                    "                err=True,",
+                    "            )",
+                    "            raise typer.Exit(code=1)",
+                    "        if not spec_path.is_file():",
+                    "            typer.echo(f\"\"\"❌ Specification path is not a file: {spec_path}\"\"\", err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        editor_bin = shutil.which(editor)",
+                    "        if editor_bin is None:",
+                    "            typer.echo(f\"\"\"❌ Editor '{editor}' is not available on PATH.\"\"\", err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        editor_command = [editor_bin, \"--wait\"] if editor == \"code\" else [editor_bin]",
+                    "        editor_command.append(spec_path.as_posix())",
+                    "        typer.echo(f\"\"\"📝 Editing repository specification: {spec_path}\"\"\")",
+                    "        result = subprocess.run(editor_command, check=False)",
+                    "    except OSError as error:",
+                    "        typer.echo(f\"\"\"❌ Could not edit repository specification: {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    if result.returncode != 0:",
+                    "        typer.echo(f\"\"\"❌ Editor exited with status code {result.returncode}.\"\"\", err=True)",
+                    "        raise typer.Exit(code=result.returncode if result.returncode > 0 else 1)",
+                    "    try:",
+                    "        load_repos_spec(path=spec_path)",
+                    "    except (ValueError, OSError) as error:",
+                    "        typer.echo(f\"\"\"❌ Invalid repository specification after editing: {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    typer.echo(f\"\"\"✅ Repository specification validated: {spec_path}\"\"\")"
+                  ],
+                  "name": "edit_repositories",
+                  "parameters": [
+                    {
+                      "name": "specs_path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--specs-path', '-s', help='Path to repos.json specification file.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--specs-path",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--specs-path"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Path to repos.json specification file."
+                      }
+                    },
+                    {
+                      "name": "editor",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['nano', 'hx', 'code']",
+                      "default": "hx",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['nano', 'hx', 'code'], typer.Option('--editor', '-e', help='Editor to open repos.json. Defaults to hx.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--editor",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--editor"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ],
+                        "help": "Editor to open repos.json. Defaults to hx."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "e",
+                    "hidden": true,
+                    "help": "Edit and validate the repos.json specification"
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "list",
+                "fullPath": "devops repos list",
+                "shortPath": "d r l",
+                "help": "📋 <l> List all registered repositories with change counts; optionally filter with --guarded",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_list.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_list",
+                  "callable": "list_repositories"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def list_repositories(",
+                    "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")] = None,",
+                    "    guarded: Annotated[bool, typer.Option(\"--guarded\", \"-g\", help=\"Show only registered repositories using encrypted guard sync.\")] = False,",
+                    ") -> None:",
+                    "    from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec, resolve_repos_spec_path",
+                    "",
+                    "    try:",
+                    "        path = resolve_repos_spec_path(specs_path=specs_path)",
+                    "        spec = load_repos_spec(path=path)",
+                    "    except FileNotFoundError as error:",
+                    "        typer.echo(",
+                    "            f\"\"\"❌ {error}. Run devops repos register first, or provide another file using --specs-path.\"\"\",",
+                    "            err=True,",
+                    "        )",
+                    "        raise typer.Exit(code=1) from error",
+                    "    except (OSError, ValueError) as error:",
+                    "        typer.echo(f\"\"\"❌ {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    repositories = sorted(",
+                    "        (record for record in spec[\"repos\"] if not guarded or record[\"sync\"][\"mode\"] == \"guard\"),",
+                    "        key=lambda record: (record[\"name\"].casefold(), record[\"parentDir\"], record[\"name\"]),",
+                    "    )",
+                    "    git_count = sum(record[\"sync\"][\"mode\"] == \"git\" for record in repositories)",
+                    "    guard_count = len(repositories) - git_count",
+                    "    console = Console()",
+                    "    console.print(",
+                    "        f\"\"\"Registered: {len(repositories)} · Git sync: {git_count} · Encrypted guard sync: {guard_count}\"\"\",",
+                    "        style=\"bold\",",
+                    "        markup=False,",
+                    "        highlight=False,",
+                    "    )",
+                    "    console.print(f\"\"\"Specification: {path}\"\"\", markup=False, highlight=False)",
+                    "    if not repositories:",
+                    "        console.print(\"No guarded repositories registered.\" if guarded else \"No repositories registered. Run devops repos register to add repositories.\")",
+                    "        return",
+                    "",
+                    "    table = Table(",
+                    "        title=\"Guarded repositories\" if guarded else \"Registered repositories\", header_style=\"bold cyan\",",
+                    "        caption=\"Files: m modified · n new · d deleted · r renamed · u conflicted. Commit dates use local time.\",",
+                    "    )",
+                    "    table.add_column(\"Repository\", style=\"cyan\")",
+                    "    table.add_column(\"Destination\", overflow=\"fold\")",
+                    "    table.add_column(\"Status\", no_wrap=True)",
+                    "    table.add_column(\"Last commit\", no_wrap=True)",
+                    "    table.add_column(\"Sync mode\")",
+                    "    table.add_column(\"Cloud profile\")",
+                    "    for record in repositories:",
+                    "        sync = record[\"sync\"]",
+                    "        destination = Path(record[\"parentDir\"]).joinpath(record[\"name\"])",
+                    "        status, last_commit = _local_repository_status(destination=destination)",
+                    "        table.add_row(",
+                    "            Text(record[\"name\"]),",
+                    "            Text(destination.as_posix()),",
+                    "            status,",
+                    "            last_commit,",
+                    "            \"Encrypted guard\" if sync[\"mode\"] == \"guard\" else \"Git\",",
+                    "            Text(sync[\"cloud\"]) if sync[\"mode\"] == \"guard\" else \"—\",",
+                    "        )",
+                    "    console.print(table)"
+                  ],
+                  "name": "list_repositories",
+                  "parameters": [
+                    {
+                      "name": "specs_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help='Path to repos.json specification file.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--specs-path",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--specs-path"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Path to repos.json specification file."
+                      }
+                    },
+                    {
+                      "name": "guarded",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--guarded', '-g', help='Show only registered repositories using encrypted guard sync.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--guarded",
+                          "-g"
+                        ],
+                        "long_flags": [
+                          "--guarded"
+                        ],
+                        "short_flags": [
+                          "-g"
+                        ],
+                        "help": "Show only registered repositories using encrypted guard sync."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "l",
+                    "hidden": true,
+                    "help": "List all registered repositories with change counts; optionally filter with --guarded"
                   }
                 ]
               },
@@ -1832,6 +2242,8 @@
                     "    push: Annotated[bool, typer.Option(\"--push\", \"-p\", help=\"🚀 Push changes across repositories.\")] = False,",
                     "    message: Annotated[str | None, typer.Option(\"--message\", \"-m\", help=\"Commit message. Required with --commit.\")] = None,",
                     "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-n\", help=\"Preview mutating actions without changing repositories.\")] = False,",
+                    "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-S\", help=\"Repository specification containing sync destinations.\")] = None,",
+                    "    pwd: Annotated[str | None, typer.Option(\"--password\", \"-w\", help=\"Password for guard archives; otherwise use GPG keys.\")] = None,",
                     ") -> None:",
                     "    \"\"\"🔄 Run Git actions or a shell command across repositories.\"\"\"",
                     "    git_action_selected = status or pull or commit or push",
@@ -1865,6 +2277,7 @@
                     "",
                     "    repos_root = _resolve_directory(directory)",
                     "    from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations, render_repository_command_script",
+                    "    from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repository_syncs",
                     "",
                     "    if command is not None:",
                     "        script = render_repository_command_script(repos_root=repos_root, recursive=recursive, command=command)",
@@ -1886,6 +2299,8 @@
                     "        auto_uv_sync=auto_uv_sync,",
                     "        commit_message=message.strip() if message is not None else None,",
                     "        dry_run=dry_run,",
+                    "        syncs=load_repository_syncs(specs_path=specs_path),",
+                    "        pwd=pwd,",
                     "    )",
                     "    if summary.git_repos_found == 0 or summary.failed_operations:",
                     "        raise typer.Exit(code=1)"
@@ -2104,6 +2519,50 @@
                         ],
                         "help": "Preview mutating actions without changing repositories."
                       }
+                    },
+                    {
+                      "name": "specs_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-S', help='Repository specification containing sync destinations.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--specs-path",
+                          "-S"
+                        ],
+                        "long_flags": [
+                          "--specs-path"
+                        ],
+                        "short_flags": [
+                          "-S"
+                        ],
+                        "help": "Repository specification containing sync destinations."
+                      }
+                    },
+                    {
+                      "name": "pwd",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-w', help='Password for guard archives; otherwise use GPG keys.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--password",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--password"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Password for guard archives; otherwise use GPG keys."
+                      }
                     }
                   ],
                   "return": "None"
@@ -2135,7 +2594,13 @@
                   "help": "🏷️ <V> Capture, inspect, and restore repository versions",
                   "no_args_is_help": true,
                   "add_help_option": true,
-                  "add_completion": false
+                  "add_completion": false,
+                  "context_settings": {
+                    "help_option_names": [
+                      "-h",
+                      "--help"
+                    ]
+                  }
                 },
                 "children": [
                   {
@@ -2156,6 +2621,7 @@
                         "    message: Annotated[str, typer.Option(\"--message\", \"-m\", help=\"Message describing this version.\")],",
                         "    directory: Annotated[str | None, typer.Option(\"--directory\", \"-d\", help=\"Workspace containing repositories.\")] = None,",
                         "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-r\", help=\"Recurse into nested repository directories.\")] = False,",
+                        "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Repository registry containing sync settings.\")] = None,",
                         ") -> None:",
                         "    try:",
                         "        repos_root = resolve_workspace(directory=directory)",
@@ -2163,10 +2629,12 @@
                         "        versions_file = load_versions_file(path=path, allow_missing=True)",
                         "        if any(existing[\"version\"] == version.strip() for existing in versions_file[\"versions\"]):",
                         "            raise VersionStoreError(f\"Version {version.strip()!r} is already declared\")",
-                        "        declared_version = capture_declared_version(repos_root=repos_root, version=version, message=message, recursive=recursive)",
+                        "        declared_version = capture_declared_version(",
+                        "            repos_root=repos_root, version=version, message=message, recursive=recursive, specs_path=specs_path",
+                        "        )",
                         "        updated_file = append_declared_version(versions_file=versions_file, declared_version=declared_version)",
                         "        save_versions_file(versions_file=updated_file, path=path)",
-                        "    except (ValueError, VersionOperationError) as error:",
+                        "    except (OSError, ValueError, VersionOperationError) as error:",
                         "        _abort(error)",
                         "    dirty_count = sum(snapshot[\"isDirty\"] for snapshot in declared_version[\"repositories\"])",
                         "    typer.echo(f\"✅ Declared version {declared_version['version']!r} with {len(declared_version['repositories'])} repositories in {path}\")",
@@ -2255,6 +2723,28 @@
                             ],
                             "help": "Recurse into nested repository directories."
                           }
+                        },
+                        {
+                          "name": "specs_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help='Repository registry containing sync settings.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--specs-path",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--specs-path"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Repository registry containing sync settings."
+                          }
                         }
                       ],
                       "return": "None"
@@ -2283,6 +2773,7 @@
                         "def status(",
                         "    version: Annotated[str | None, typer.Argument(help=\"Version identifier to compare with current repository state.\")] = None,",
                         "    directory: Annotated[str | None, typer.Option(\"--directory\", \"-d\", help=\"Workspace containing versions.json.\")] = None,",
+                        "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Repository registry containing sync settings.\")] = None,",
                         ") -> None:",
                         "    try:",
                         "        repos_root = resolve_workspace(directory=directory)",
@@ -2292,8 +2783,8 @@
                         "            _print_versions(versions_file=versions_file, path=path)",
                         "            return",
                         "        declared_version = find_declared_version(versions_file=versions_file, version=version)",
-                        "        statuses = inspect_declared_version(repos_root=repos_root, declared_version=declared_version)",
-                        "    except (ValueError, VersionOperationError) as error:",
+                        "        statuses = inspect_declared_version(repos_root=repos_root, declared_version=declared_version, specs_path=specs_path)",
+                        "    except (OSError, ValueError, VersionOperationError) as error:",
                         "        _abort(error)",
                         "    _print_version_status(declared_version=declared_version, statuses=statuses)"
                       ],
@@ -2335,6 +2826,28 @@
                             ],
                             "help": "Workspace containing versions.json."
                           }
+                        },
+                        {
+                          "name": "specs_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help='Repository registry containing sync settings.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--specs-path",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--specs-path"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Repository registry containing sync settings."
+                          }
                         }
                       ],
                       "return": "None"
@@ -2364,14 +2877,18 @@
                         "    version: Annotated[str, typer.Argument(help=\"Declared version identifier to restore.\")],",
                         "    directory: Annotated[str | None, typer.Option(\"--directory\", \"-d\", help=\"Workspace containing versions.json.\")] = None,",
                         "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-n\", help=\"Preview checkout without changing repositories.\")] = False,",
+                        "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Repository registry containing current sync settings.\")] = None,",
+                        "    password: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"Password for encrypted guard archives.\")] = None,",
                         ") -> None:",
                         "    try:",
                         "        repos_root = resolve_workspace(directory=directory)",
                         "        path = repos_root.joinpath(VERSIONS_FILE_NAME)",
                         "        versions_file = load_versions_file(path=path, allow_missing=False)",
                         "        declared_version = find_declared_version(versions_file=versions_file, version=version)",
-                        "        results = checkout_declared_version(repos_root=repos_root, declared_version=declared_version, dry_run=dry_run)",
-                        "    except (ValueError, VersionOperationError) as error:",
+                        "        results = checkout_declared_version(",
+                        "            repos_root=repos_root, declared_version=declared_version, dry_run=dry_run, specs_path=specs_path, pwd=password",
+                        "        )",
+                        "    except (OSError, ValueError, VersionOperationError) as error:",
                         "        _abort(error)",
                         "    table = Table(title=f\"{'Checkout preview' if dry_run else 'Checked out'} · {declared_version['version']}\")",
                         "    table.add_column(\"Repository\", style=\"cyan\")",
@@ -2453,6 +2970,50 @@
                             ],
                             "help": "Preview checkout without changing repositories."
                           }
+                        },
+                        {
+                          "name": "specs_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help='Repository registry containing current sync settings.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--specs-path",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--specs-path"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Repository registry containing current sync settings."
+                          }
+                        },
+                        {
+                          "name": "password",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='Password for encrypted guard archives.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--password",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--password"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "Password for encrypted guard archives."
+                          }
                         }
                       ],
                       "return": "None"
@@ -2475,68 +3036,6 @@
               },
               {
                 "kind": "command",
-                "name": "analyze",
-                "fullPath": "devops repos analyze",
-                "shortPath": "d r z",
-                "help": "📊 <z> Analyze repository development over time",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_viz",
-                  "callable": "analyze_repo_development"
-                },
-                "signature": {
-                  "raw_lines": [
-                    "def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help=\"Path to the git repository\")]) -> None:",
-                    "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
-                    "    if not resolved_repo_path.exists():",
-                    "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\")",
-                    "        raise typer.Exit(code=1)",
-                    "    if not resolved_repo_path.is_dir():",
-                    "        typer.echo(f\"❌ Repository path is not a directory: {resolved_repo_path}\")",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    def func(repo_path: str) -> None:",
-                    "        from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time",
-                    "",
-                    "        analyze_over_time(repo_path=repo_path)",
-                    "",
-                    "    from stackops.utils.code import run_lambda_function",
-                    "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
-                    "",
-                    "    stackops_plot_requirement = f\"stackops[plot]>={STACKOPS_VERSION}\"",
-                    "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[stackops_plot_requirement, \"polars\"])"
-                  ],
-                  "name": "analyze_repo_development",
-                  "parameters": [
-                    {
-                      "name": "repo_path",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to the git repository')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Path to the git repository",
-                        "default": "..."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "aliases": [
-                  {
-                    "name": "z",
-                    "hidden": true,
-                    "help": "Analyze repository development over time"
-                  }
-                ]
-              },
-              {
-                "kind": "command",
                 "name": "guard",
                 "fullPath": "devops repos guard",
                 "shortPath": "d r g",
@@ -2551,7 +3050,7 @@
                     "def main(",
                     "    repo: Annotated[str, typer.Argument(help=\"Path to the local repository. Defaults to current working directory.\")] = \".\",",
                     "    cloud: Annotated[",
-                    "        str | None, typer.Option(..., \"--cloud\", \"-C\", help=\"Cloud storage profile name. If not provided, uses default from config.\")",
+                    "        str | None, typer.Option(..., \"--cloud\", \"-C\", help=\"Cloud storage profile; otherwise use the registered or default profile.\")",
                     "    ] = None,",
                     "    message: Annotated[str | None, typer.Option(..., \"--message\", \"-m\", help=\"Commit message for local changes.\")] = None,",
                     "    mode: Annotated[",
@@ -2574,208 +3073,95 @@
                     "    ] = \"ask\",",
                     "    pwd: Annotated[str | None, typer.Option(..., \"--password\", \"-p\", help=\"Password for encryption/decryption of the remote repository.\")] = None,",
                     "    ignore_gitignore: Annotated[",
-                    "        bool,",
-                    "        typer.Option(\"--ignore-gitignore\", help=\"Include files excluded by Git ignore rules in the repository archive.\"),",
-                    "    ] = False,",
+                    "        bool | None,",
+                    "        typer.Option(\"--ignore-gitignore/--respect-gitignore\", \"-I/-R\", help=\"Override whether the archive includes Git-ignored files.\"),",
+                    "    ] = None,",
+                    "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Repository specification containing saved guard settings.\")] = None,",
                     ") -> str | None:",
-                    "    from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError",
+                    "    from git.exc import InvalidGitRepositoryError, NoSuchPathError",
                     "    from git.repo import Repo",
                     "    from rich.console import Console",
                     "    from rich.panel import Panel",
+                    "    from rich.text import Text",
                     "",
-                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_actions import (",
-                    "        overwrite_local_with_remote,",
-                    "        publish_local_repository,",
-                    "        restore_local_repository,",
-                    "        validate_integration_transport,",
-                    "    )",
-                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import (",
-                    "        download_repo_archive,",
-                    "        get_repo_remote_archive_path,",
-                    "        upload_repo_archive,",
-                    "    )",
+                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import get_repo_remote_archive_path",
                     "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import resolve_conflict_action",
-                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import commit_local_changes, restore_downloaded_file_modes",
-                    "    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_integration import integrate_remote_repository",
-                    "    from stackops.utils.accessories import randstr",
+                    "    from stackops.scripts.python.helpers.helpers_repos.guard_transport import run_guard_repository",
+                    "    from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repository_syncs",
                     "    from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError, read_default_rclone_remote",
-                    "    from stackops.utils.cloud.rclone import RcloneCommandError, is_missing_remote_path_error",
-                    "    from stackops.utils.path_core import delete_path",
-                    "    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_CONFIG_PATH",
+                    "    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH",
                     "",
+                    "    operation: GuardOperation",
                     "    match mode:",
                     "        case \"m\" | \"merge\":",
-                    "            mode = \"merge\"",
+                    "            operation = \"sync\"",
                     "        case \"l\" | \"overwrite-local\":",
-                    "            mode = \"overwrite-local\"",
+                    "            operation = \"overwrite-local\"",
                     "        case \"r\" | \"overwrite-remote\":",
-                    "            mode = \"overwrite-remote\"",
+                    "            operation = \"overwrite-remote\"",
                     "",
                     "    console = Console()",
-                    "    if cloud is None:",
-                    "        try:",
-                    "            cloud_resolved = read_default_rclone_remote()",
-                    "        except DefaultRcloneRemoteConfigError as exc:",
-                    "            console.print(Panel(f\"❌ {exc}\\n\\nUse: devops repos guard REPO --cloud REMOTE\", title=\"Cloud Configuration Required\", border_style=\"red\"))",
-                    "            raise typer.Exit(code=1) from exc",
-                    "        console.print(",
-                    "            Panel(f\"⚠️  Using default cloud `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}\", title=\"Default Cloud\", border_style=\"yellow\")",
-                    "        )",
-                    "    else:",
-                    "        cloud_resolved = cloud",
-                    "",
                     "    requested_repo_root = Path(os.path.abspath(Path.cwd() if repo == \".\" else Path(repo).expanduser()))",
+                    "    step = \"Opening the local Git repository\"",
                     "    try:",
-                    "        repo_local_obj = Repo(requested_repo_root, search_parent_directories=requested_repo_root == Path.cwd())",
-                    "    except InvalidGitRepositoryError as exc:",
-                    "        typer.echo(typer.style(\"Error: \", fg=typer.colors.RED) + f\"'{requested_repo_root}' is not a git repository.\")",
-                    "        raise typer.Exit(code=1) from exc",
-                    "    except NoSuchPathError as exc:",
-                    "        if os.path.lexists(requested_repo_root):",
-                    "            typer.echo(typer.style(\"Error: \", fg=typer.colors.RED) + f\"'{requested_repo_root}' is not a git repository.\")",
-                    "            raise typer.Exit(code=1) from exc",
-                    "        repo_local_obj = None",
-                    "        repo_local_root = requested_repo_root",
-                    "    else:",
-                    "        repo_local_root = Path(repo_local_obj.working_dir)",
-                    "    try:",
-                    "        repo_local_root.resolve().relative_to(Path.home().resolve())",
-                    "    except ValueError as exc:",
-                    "        console.print(Panel(f\"Repository must live under {Path.home()}\\nLocation: {repo_local_root}\", title=\"Error\", border_style=\"red\"))",
-                    "        raise typer.Exit(code=1) from exc",
-                    "",
-                    "    if repo_local_obj is not None and os.name == \"nt\":",
-                    "        repo_local_obj.git.config(\"--local\", \"core.filemode\", \"false\")",
-                    "",
-                    "    message_resolved = \"sync\" if message is None or message.strip() == \"\" else message",
-                    "    run_name = randstr(8)",
-                    "    repo_remote_root = Path(CONFIG_ROOT).joinpath(\"remote\", run_name, repo_local_root.name)",
-                    "    integration_root = Path(CONFIG_ROOT).joinpath(\"integration\", run_name, repo_local_root.name)",
-                    "    remote_path = get_repo_remote_archive_path(repo_root=repo_local_root)",
-                    "    if mode == \"overwrite-remote\":",
-                    "        if repo_local_obj is None:",
-                    "            console.print(Panel(f\"No local repository exists at {repo_local_root}\", title=\"Repository Not Found\", border_style=\"red\"))",
-                    "            raise typer.Exit(code=1)",
                     "        try:",
-                    "            commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)",
-                    "        except GitCommandError as exc:",
-                    "            console.print(Panel(f\"❌ COMMIT FAILED\\n{exc}\", title=\"Commit Failed\", border_style=\"red\"))",
-                    "            raise typer.Exit(code=1) from exc",
-                    "        try:",
-                    "            upload_repo_archive(",
-                    "                repo_root=repo_local_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore",
-                    "            )",
-                    "        except GpgCommandError as error:",
-                    "            _exit_after_gpg_error(error=error)",
-                    "        console.print(Panel(\"✅ Cloud repository replaced with the local repository.\", title=\"Overwrite Remote\", border_style=\"green\"))",
-                    "        return \"overwritten-remote\"",
-                    "",
-                    "    if repo_local_obj is None:",
-                    "        console.print(",
-                    "            Panel(",
-                    "                f\"Local repository does not exist at {repo_local_root}\\nLooking for {cloud_resolved}:{remote_path.as_posix()}\",",
-                    "                title=\"First Sync\",",
-                    "                border_style=\"blue\",",
-                    "            )",
-                    "        )",
-                    "    try:",
-                    "        console.print(Panel(\"📥 DOWNLOADING REMOTE REPOSITORY\", title_align=\"left\", border_style=\"blue\"))",
-                    "        download_repo_archive(repo_remote_root=repo_remote_root, cloud=cloud_resolved, remote_path=remote_path, pwd=pwd)",
-                    "    except GpgCommandError as error:",
-                    "        _exit_after_gpg_error(error=error)",
-                    "    except RcloneCommandError as error:",
-                    "        if not is_missing_remote_path_error(error):",
-                    "            raise",
-                    "        delete_path(repo_remote_root.parent, verbose=False)",
-                    "        if repo_local_obj is None or mode == \"overwrite-local\":",
-                    "            missing_source = f\"No remote archive exists at {cloud_resolved}:{remote_path.as_posix()}\"",
-                    "            if repo_local_obj is None:",
-                    "                missing_source = f\"No local repository exists at {repo_local_root}\\n{missing_source}\"",
-                    "            console.print(",
-                    "                Panel(",
-                    "                    missing_source,",
-                    "                    title=\"Repository Not Found\",",
-                    "                    border_style=\"red\",",
-                    "                )",
-                    "            )",
-                    "            raise typer.Exit(code=1) from error",
-                    "        console.print(Panel(\"🆕 Remote repository does not exist; creating it from local.\", border_style=\"green\"))",
-                    "        try:",
-                    "            commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)",
-                    "        except GitCommandError as exc:",
-                    "            console.print(Panel(f\"❌ COMMIT FAILED\\n{exc}\", title=\"Commit Failed\", border_style=\"red\"))",
-                    "            raise typer.Exit(code=1) from exc",
-                    "        try:",
-                    "            publish_local_repository(",
-                    "                repo_local_root=repo_local_root,",
-                    "                repo_remote_root=repo_remote_root,",
-                    "                cloud=cloud_resolved,",
-                    "                remote_path=remote_path,",
-                    "                pwd=pwd,",
-                    "                ignore_gitignore=ignore_gitignore,",
-                    "            )",
-                    "        except GpgCommandError as gpg_error:",
-                    "            _exit_after_gpg_error(error=gpg_error)",
-                    "        return \"created\"",
-                    "",
-                    "    repo_remote_obj = Repo(repo_remote_root)",
-                    "    try:",
-                    "        restore_downloaded_file_modes(repo=repo_remote_obj)",
-                    "        remote_repo_is_dirty = repo_remote_obj.is_dirty(untracked_files=True)",
-                    "    finally:",
-                    "        repo_remote_obj.close()",
-                    "    if remote_repo_is_dirty:",
-                    "        console.print(",
-                    "            Panel(",
-                    "                f\"Downloaded repository is dirty and was preserved at {repo_remote_root}\\n\\n\"",
-                    "                f\"Remote location: {cloud_resolved}:{remote_path.as_posix()}\\n\"",
-                    "                f\"Delete remote: rclone deletefile {cloud_resolved}:{remote_path.as_posix()}\",",
-                    "                title=\"Invalid Remote Archive\",",
-                    "                border_style=\"red\",",
-                    "            )",
-                    "        )",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    if repo_local_obj is None:",
-                    "        validate_integration_transport(repo_local_root=repo_local_root, integration_root=repo_remote_root, cloud=cloud_resolved)",
-                    "        restore_local_repository(repo_local_root=repo_local_root, repo_remote_root=repo_remote_root)",
-                    "        console.print(Panel(f\"✅ Repository restored to {repo_local_root}\", title=\"First Sync\", border_style=\"green\"))",
-                    "        return \"restored\"",
-                    "",
-                    "    if mode == \"overwrite-local\":",
-                    "        repo_local_obj.close()",
-                    "        result = overwrite_local_with_remote(repo_local_root=repo_local_root, repo_remote_root=repo_remote_root)",
-                    "        console.print(Panel(\"✅ Local repository replaced with the cloud repository.\", title=\"Overwrite Local\", border_style=\"green\"))",
-                    "        return result",
-                    "",
-                    "    try:",
-                    "        commit_local_changes(repo=repo_local_obj, message=message_resolved, console=console)",
-                    "    except GitCommandError as exc:",
-                    "        console.print(Panel(f\"❌ COMMIT FAILED\\n{exc}\", title=\"Commit Failed\", border_style=\"red\"))",
-                    "        raise typer.Exit(code=1) from exc",
-                    "",
-                    "    integrate_remote_repository(",
-                    "        local_repo=repo_local_obj,",
-                    "        repo_remote_root=repo_remote_root,",
-                    "        integration_root=integration_root,",
-                    "        cloud=cloud_resolved,",
-                    "        on_conflict=resolve_conflict_action(on_conflict=on_conflict),",
-                    "        console=console,",
-                    "    )",
-                    "",
-                    "    try:",
-                    "        publish_local_repository(",
-                    "            repo_local_root=repo_local_root,",
-                    "            repo_remote_root=repo_remote_root,",
+                    "            with Repo(requested_repo_root, search_parent_directories=requested_repo_root == Path.cwd()) as local_repo:",
+                    "                repo_root = Path(local_repo.working_dir)",
+                    "        except InvalidGitRepositoryError as error:",
+                    "            raise InvalidGitRepositoryError(",
+                    "                f\"\"\"Git does not recognize {requested_repo_root} as a repository. \"\"\"",
+                    "                \"\"\"Check the repository path and whether its .git metadata is missing or invalid.\"\"\"",
+                    "            ) from error",
+                    "        except NoSuchPathError:",
+                    "            if os.path.lexists(requested_repo_root):",
+                    "                raise",
+                    "            repo_root = requested_repo_root",
+                    "        step = \"Loading repository settings\"",
+                    "        sync = load_repository_syncs(specs_path=specs_path).get(repo_root.resolve())",
+                    "        step = \"Resolving cloud storage\"",
+                    "        if cloud is not None:",
+                    "            cloud_resolved = cloud",
+                    "        elif sync is not None and sync[\"mode\"] == \"guard\":",
+                    "            cloud_resolved = sync[\"cloud\"]",
+                    "        else:",
+                    "            try:",
+                    "                cloud_resolved = read_default_rclone_remote()",
+                    "            except DefaultRcloneRemoteConfigError as exc:",
+                    "                raise ValueError(f\"\"\"{exc}. Use devops repos guard REPO --cloud REMOTE.\"\"\") from exc",
+                    "            console.print(Panel(f\"Using default cloud `{cloud_resolved}` from {DOTFILES_STACKOPS_CONFIG_PATH}\", title=\"Default Cloud\"))",
+                    "        step = \"Resolving the remote archive path\"",
+                    "        if sync is not None and sync[\"mode\"] == \"guard\":",
+                    "            remote_path = Path(sync[\"remotePath\"])",
+                    "            include_ignored = sync[\"ignoreGitignore\"] if ignore_gitignore is None else ignore_gitignore",
+                    "        else:",
+                    "            repo_root.resolve().relative_to(Path.home().resolve())",
+                    "            remote_path = get_repo_remote_archive_path(repo_root=repo_root)",
+                    "            include_ignored = ignore_gitignore is True",
+                    "        step = f\"\"\"Running repository operation: {operation}\"\"\"",
+                    "        result = run_guard_repository(",
+                    "            repo_root=repo_root,",
                     "            cloud=cloud_resolved,",
                     "            remote_path=remote_path,",
+                    "            operation=operation,",
                     "            pwd=pwd,",
-                    "            ignore_gitignore=ignore_gitignore,",
+                    "            message=message,",
+                    "            on_conflict=resolve_conflict_action(on_conflict=on_conflict),",
+                    "            ignore_gitignore=include_ignored,",
                     "        )",
                     "    except GpgCommandError as error:",
                     "        _exit_after_gpg_error(error=error)",
-                    "    console.print(Panel(\"✅ Repository integrated and published successfully.\", title=\"Repo Sync\", border_style=\"green\"))",
-                    "    return \"success\""
+                    "    except typer.Exit:",
+                    "        raise",
+                    "    except Exception as error:",
+                    "        details = Text(f\"\"\"❌ {step}",
+                    "Repository: {requested_repo_root}",
+                    "Mode: {mode}",
+                    "",
+                    "{type(error).__name__}: {error}\"\"\")",
+                    "        console.print(Panel(details, title=\"Guard Failed\", border_style=\"red\"))",
+                    "        raise typer.Exit(code=1) from error",
+                    "    console.print(Panel(f\"✅ Guard repository {result}: {repo_root}\", title=\"Repo Guard\", border_style=\"green\"))",
+                    "    return result"
                   ],
                   "name": "main",
                   "parameters": [
@@ -2800,7 +3186,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--cloud', '-C', help='Cloud storage profile name. If not provided, uses default from config.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--cloud', '-C', help='Cloud storage profile; otherwise use the registered or default profile.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -2813,7 +3199,7 @@
                         "short_flags": [
                           "-C"
                         ],
-                        "help": "Cloud storage profile name. If not provided, uses default from config.",
+                        "help": "Cloud storage profile; otherwise use the registered or default profile.",
                         "default": "..."
                       }
                     },
@@ -2911,20 +3297,47 @@
                     {
                       "name": "ignore_gitignore",
                       "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
+                      "type": "bool | None",
+                      "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--ignore-gitignore', help='Include files excluded by Git ignore rules in the repository archive.')]",
+                      "annotation_raw": "Annotated[bool | None, typer.Option('--ignore-gitignore/--respect-gitignore', '-I/-R', help='Override whether the archive includes Git-ignored files.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--ignore-gitignore"
+                          "--ignore-gitignore/--respect-gitignore",
+                          "-I/-R"
                         ],
                         "long_flags": [
-                          "--ignore-gitignore"
+                          "--ignore-gitignore",
+                          "--respect-gitignore"
                         ],
-                        "short_flags": [],
-                        "help": "Include files excluded by Git ignore rules in the repository archive."
+                        "short_flags": [
+                          "-I",
+                          "-R"
+                        ],
+                        "help": "Override whether the archive includes Git-ignored files."
+                      }
+                    },
+                    {
+                      "name": "specs_path",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help='Repository specification containing saved guard settings.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--specs-path",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--specs-path"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Repository specification containing saved guard settings."
                       }
                     }
                   ],
@@ -2939,648 +3352,768 @@
                 ]
               },
               {
-                "kind": "command",
-                "name": "viz",
-                "fullPath": "devops repos viz",
-                "shortPath": "d r v",
-                "help": "🎬 <v> Visualize repository activity using Gource",
+                "kind": "group",
+                "name": "stats",
+                "fullPath": "devops repos stats",
+                "shortPath": "d r S",
+                "help": "📊 <S> Visualize and analyze repository statistics",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_viz",
-                  "callable": "gource_viz"
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos",
+                  "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_repos_stats.get_app"
                 },
-                "signature": {
-                  "raw_lines": [
-                    "def gource_viz(",
-                    "    repo: Annotated[str, typer.Option(..., \"--repo\", \"-r\", help=\"Path to git repository to visualize\")] = \".\",",
-                    "    output_file: Annotated[",
-                    "        Path | None, typer.Option(..., \"--output\", \"-o\", help=\"Output video file (e.g., output.mp4). If specified, gource will render to video.\")",
-                    "    ] = None,",
-                    "    resolution: Annotated[str, typer.Option(..., \"--resolution\", \"-R\", help=\"Video resolution (e.g., 1920x1080, 1280x720)\")] = \"1920x1080\",",
-                    "    seconds_per_day: Annotated[float, typer.Option(..., \"--seconds-per-day\", \"-D\", help=\"Speed of simulation (lower = faster)\")] = 0.1,",
-                    "    auto_skip_seconds: Annotated[",
-                    "        float, typer.Option(..., \"--auto-skip-seconds\", \"-A\", help=\"Skip to next entry if nothing happens for X seconds\")",
-                    "    ] = 1.0,",
-                    "    title: Annotated[str | None, typer.Option(..., \"--title\", \"-t\", help=\"Title for the visualization\")] = None,",
-                    "    hide_items: Annotated[",
-                    "        list[str] | None,",
-                    "        typer.Option(",
-                    "            ..., \"--hide\", \"-h\", help=\"Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames\"",
-                    "        ),",
-                    "    ] = None,",
-                    "    key_items: Annotated[bool, typer.Option(..., \"--key\", \"-k\", help=\"Show file extension key\")] = False,",
-                    "    fullscreen: Annotated[bool, typer.Option(..., \"--fullscreen\", \"-f\", help=\"Run in fullscreen mode\")] = False,",
-                    "    viewport: Annotated[str | None, typer.Option(..., \"--viewport\", \"-v\", help=\"Camera viewport (e.g., '1000x1000')\")] = None,",
-                    "    start_date: Annotated[str | None, typer.Option(..., \"--start-date\", \"-S\", help=\"Start date (YYYY-MM-DD)\")] = None,",
-                    "    stop_date: Annotated[str | None, typer.Option(..., \"--stop-date\", \"-E\", help=\"Stop date (YYYY-MM-DD)\")] = None,",
-                    "    user_image_dir: Annotated[Path | None, typer.Option(..., \"--user-image-dir\", \"-i\", help=\"Directory with user avatar images\")] = None,",
-                    "    max_files: Annotated[int, typer.Option(..., \"--max-files\", \"-m\", help=\"Maximum number of files to show (0 = no limit)\")] = 0,",
-                    "    max_file_lag: Annotated[float, typer.Option(..., \"--max-file-lag\", \"-L\", help=\"Max time files remain on screen after last change\")] = 5.0,",
-                    "    file_idle_time: Annotated[int, typer.Option(..., \"--file-idle-time\", \"-I\", help=\"Time in seconds files remain idle before being removed\")] = 0,",
-                    "    framerate: Annotated[int, typer.Option(..., \"--framerate\", \"-F\", help=\"Frames per second for video output\")] = 60,",
-                    "    background_color: Annotated[str, typer.Option(..., \"--background-color\", \"-B\", help=\"Background color in hex (e.g., 000000 for black)\")] = \"000000\",",
-                    "    font_size: Annotated[int, typer.Option(..., \"--font-size\", \"-z\", help=\"Font size\")] = 22,",
-                    "    camera_mode: Annotated[str, typer.Option(..., \"--camera-mode\", \"-C\", help=\"Camera mode: overview or track\")] = \"overview\",",
-                    "    self: Annotated[bool, typer.Option(..., \"--self\", \"-s\", help=\"Clone stackops repository and act on it\")] = False,",
-                    ") -> None:",
-                    "    \"\"\"🎬 Visualize repository activity using Gource.\"\"\"",
-                    "    from stackops.scripts.python.helpers.helpers_repos.grource import visualize",
-                    "",
-                    "    if self:",
-                    "        repo_path = Path.home().joinpath(\"stackops\")",
-                    "        if not repo_path.exists():",
-                    "            import git",
-                    "",
-                    "            repo_url = \"https://github.com/thisismygitrepo/stackops.git\"",
-                    "            git.Repo.clone_from(repo_url, to_path=repo_path.as_posix())",
-                    "        repo = repo_path.as_posix()",
-                    "    visualize(",
-                    "        repo=repo,",
-                    "        output_file=output_file,",
-                    "        resolution=resolution,",
-                    "        seconds_per_day=seconds_per_day,",
-                    "        auto_skip_seconds=auto_skip_seconds,",
-                    "        title=title,",
-                    "        hide_items=hide_items,",
-                    "        key_items=key_items,",
-                    "        fullscreen=fullscreen,",
-                    "        viewport=viewport,",
-                    "        start_date=start_date,",
-                    "        stop_date=stop_date,",
-                    "        user_image_dir=user_image_dir,",
-                    "        max_files=max_files,",
-                    "        max_file_lag=max_file_lag,",
-                    "        file_idle_time=file_idle_time,",
-                    "        framerate=framerate,",
-                    "        background_color=background_color,",
-                    "        font_size=font_size,",
-                    "        camera_mode=camera_mode,",
-                    "    )"
-                  ],
-                  "name": "gource_viz",
-                  "parameters": [
-                    {
-                      "name": "repo",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": ".",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--repo', '-r', help='Path to git repository to visualize')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--repo",
-                          "-r"
-                        ],
-                        "long_flags": [
-                          "--repo"
-                        ],
-                        "short_flags": [
-                          "-r"
-                        ],
-                        "help": "Path to git repository to visualize",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "output_file",
-                      "kind": "positional_or_keyword",
-                      "type": "Path | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option(..., '--output', '-o', help='Output video file (e.g., output.mp4). If specified, gource will render to video.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--output",
-                          "-o"
-                        ],
-                        "long_flags": [
-                          "--output"
-                        ],
-                        "short_flags": [
-                          "-o"
-                        ],
-                        "help": "Output video file (e.g., output.mp4). If specified, gource will render to video.",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "resolution",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": "1920x1080",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--resolution', '-R', help='Video resolution (e.g., 1920x1080, 1280x720)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--resolution",
-                          "-R"
-                        ],
-                        "long_flags": [
-                          "--resolution"
-                        ],
-                        "short_flags": [
-                          "-R"
-                        ],
-                        "help": "Video resolution (e.g., 1920x1080, 1280x720)",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "seconds_per_day",
-                      "kind": "positional_or_keyword",
-                      "type": "float",
-                      "default": 0.1,
-                      "required": false,
-                      "annotation_raw": "Annotated[float, typer.Option(..., '--seconds-per-day', '-D', help='Speed of simulation (lower = faster)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--seconds-per-day",
-                          "-D"
-                        ],
-                        "long_flags": [
-                          "--seconds-per-day"
-                        ],
-                        "short_flags": [
-                          "-D"
-                        ],
-                        "help": "Speed of simulation (lower = faster)",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "auto_skip_seconds",
-                      "kind": "positional_or_keyword",
-                      "type": "float",
-                      "default": 1.0,
-                      "required": false,
-                      "annotation_raw": "Annotated[float, typer.Option(..., '--auto-skip-seconds', '-A', help='Skip to next entry if nothing happens for X seconds')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--auto-skip-seconds",
-                          "-A"
-                        ],
-                        "long_flags": [
-                          "--auto-skip-seconds"
-                        ],
-                        "short_flags": [
-                          "-A"
-                        ],
-                        "help": "Skip to next entry if nothing happens for X seconds",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "title",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--title', '-t', help='Title for the visualization')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--title",
-                          "-t"
-                        ],
-                        "long_flags": [
-                          "--title"
-                        ],
-                        "short_flags": [
-                          "-t"
-                        ],
-                        "help": "Title for the visualization",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "hide_items",
-                      "kind": "positional_or_keyword",
-                      "type": "list[str] | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option(..., '--hide', '-h', help='Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--hide",
-                          "-h"
-                        ],
-                        "long_flags": [
-                          "--hide"
-                        ],
-                        "short_flags": [
-                          "-h"
-                        ],
-                        "help": "Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "key_items",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--key', '-k', help='Show file extension key')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--key",
-                          "-k"
-                        ],
-                        "long_flags": [
-                          "--key"
-                        ],
-                        "short_flags": [
-                          "-k"
-                        ],
-                        "help": "Show file extension key",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "fullscreen",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--fullscreen', '-f', help='Run in fullscreen mode')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--fullscreen",
-                          "-f"
-                        ],
-                        "long_flags": [
-                          "--fullscreen"
-                        ],
-                        "short_flags": [
-                          "-f"
-                        ],
-                        "help": "Run in fullscreen mode",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "viewport",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--viewport', '-v', help=\"Camera viewport (e.g., '1000x1000')\")]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--viewport",
-                          "-v"
-                        ],
-                        "long_flags": [
-                          "--viewport"
-                        ],
-                        "short_flags": [
-                          "-v"
-                        ],
-                        "help": "Camera viewport (e.g., '1000x1000')",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "start_date",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--start-date', '-S', help='Start date (YYYY-MM-DD)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--start-date",
-                          "-S"
-                        ],
-                        "long_flags": [
-                          "--start-date"
-                        ],
-                        "short_flags": [
-                          "-S"
-                        ],
-                        "help": "Start date (YYYY-MM-DD)",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "stop_date",
-                      "kind": "positional_or_keyword",
-                      "type": "str | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--stop-date', '-E', help='Stop date (YYYY-MM-DD)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--stop-date",
-                          "-E"
-                        ],
-                        "long_flags": [
-                          "--stop-date"
-                        ],
-                        "short_flags": [
-                          "-E"
-                        ],
-                        "help": "Stop date (YYYY-MM-DD)",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "user_image_dir",
-                      "kind": "positional_or_keyword",
-                      "type": "Path | None",
-                      "default": null,
-                      "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option(..., '--user-image-dir', '-i', help='Directory with user avatar images')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--user-image-dir",
-                          "-i"
-                        ],
-                        "long_flags": [
-                          "--user-image-dir"
-                        ],
-                        "short_flags": [
-                          "-i"
-                        ],
-                        "help": "Directory with user avatar images",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "max_files",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": 0,
-                      "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--max-files', '-m', help='Maximum number of files to show (0 = no limit)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--max-files",
-                          "-m"
-                        ],
-                        "long_flags": [
-                          "--max-files"
-                        ],
-                        "short_flags": [
-                          "-m"
-                        ],
-                        "help": "Maximum number of files to show (0 = no limit)",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "max_file_lag",
-                      "kind": "positional_or_keyword",
-                      "type": "float",
-                      "default": 5.0,
-                      "required": false,
-                      "annotation_raw": "Annotated[float, typer.Option(..., '--max-file-lag', '-L', help='Max time files remain on screen after last change')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--max-file-lag",
-                          "-L"
-                        ],
-                        "long_flags": [
-                          "--max-file-lag"
-                        ],
-                        "short_flags": [
-                          "-L"
-                        ],
-                        "help": "Max time files remain on screen after last change",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "file_idle_time",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": 0,
-                      "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--file-idle-time', '-I', help='Time in seconds files remain idle before being removed')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--file-idle-time",
-                          "-I"
-                        ],
-                        "long_flags": [
-                          "--file-idle-time"
-                        ],
-                        "short_flags": [
-                          "-I"
-                        ],
-                        "help": "Time in seconds files remain idle before being removed",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "framerate",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": 60,
-                      "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--framerate', '-F', help='Frames per second for video output')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--framerate",
-                          "-F"
-                        ],
-                        "long_flags": [
-                          "--framerate"
-                        ],
-                        "short_flags": [
-                          "-F"
-                        ],
-                        "help": "Frames per second for video output",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "background_color",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": "000000",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--background-color', '-B', help='Background color in hex (e.g., 000000 for black)')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--background-color",
-                          "-B"
-                        ],
-                        "long_flags": [
-                          "--background-color"
-                        ],
-                        "short_flags": [
-                          "-B"
-                        ],
-                        "help": "Background color in hex (e.g., 000000 for black)",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "font_size",
-                      "kind": "positional_or_keyword",
-                      "type": "int",
-                      "default": 22,
-                      "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option(..., '--font-size', '-z', help='Font size')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--font-size",
-                          "-z"
-                        ],
-                        "long_flags": [
-                          "--font-size"
-                        ],
-                        "short_flags": [
-                          "-z"
-                        ],
-                        "help": "Font size",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "camera_mode",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": "overview",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option(..., '--camera-mode', '-C', help='Camera mode: overview or track')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--camera-mode",
-                          "-C"
-                        ],
-                        "long_flags": [
-                          "--camera-mode"
-                        ],
-                        "short_flags": [
-                          "-C"
-                        ],
-                        "help": "Camera mode: overview or track",
-                        "default": "..."
-                      }
-                    },
-                    {
-                      "name": "self",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--self', '-s', help='Clone stackops repository and act on it')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--self",
-                          "-s"
-                        ],
-                        "long_flags": [
-                          "--self"
-                        ],
-                        "short_flags": [
-                          "-s"
-                        ],
-                        "help": "Clone stackops repository and act on it",
-                        "default": "..."
-                      }
-                    }
-                  ],
-                  "return": "None"
-                },
-                "doc": "🎬 Visualize repository activity using Gource.",
-                "aliases": [
-                  {
-                    "name": "v",
-                    "hidden": true,
-                    "help": "Visualize repository activity using Gource"
+                "app": {
+                  "cls": "ordered_group(('viz', 'count-lines', 'analyze'))",
+                  "help": "📊 <S> Visualize and analyze repository statistics",
+                  "no_args_is_help": true,
+                  "add_help_option": true,
+                  "add_completion": false,
+                  "context_settings": {
+                    "help_option_names": [
+                      "-h",
+                      "--help"
+                    ]
                   }
-                ]
-              },
-              {
-                "kind": "command",
-                "name": "count-lines",
-                "fullPath": "devops repos count-lines",
-                "shortPath": "d r c",
-                "help": "📄 <c> Count python lines of code in current repo + historical edits.",
-                "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py",
-                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_viz",
-                  "callable": "count_lines_in_repo"
                 },
-                "signature": {
-                  "raw_lines": [
-                    "def count_lines_in_repo(repo_path: Annotated[str, typer.Argument(help=\"Path to the git repository\")] = \".\") -> None:",
-                    "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
-                    "    if not resolved_repo_path.exists():",
-                    "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\", err=True)",
-                    "        raise typer.Exit(code=1)",
-                    "    if not resolved_repo_path.is_dir():",
-                    "        typer.echo(f\"❌ Repository path is not a directory: {resolved_repo_path}\", err=True)",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    from git import InvalidGitRepositoryError, Repo",
-                    "",
-                    "    try:",
-                    "        repo = Repo(resolved_repo_path)",
-                    "    except InvalidGitRepositoryError as exc:",
-                    "        typer.echo(f\"❌ {resolved_repo_path} is not within a git repository. Pass a path inside a git repo and retry.\", err=True)",
-                    "        raise typer.Exit(code=1) from exc",
-                    "",
-                    "    if repo.bare or repo.working_tree_dir is None:",
-                    "        typer.echo(f\"❌ {resolved_repo_path} is inside a bare git repository. Pass a working tree path and retry.\", err=True)",
-                    "        raise typer.Exit(code=1)",
-                    "",
-                    "    from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
-                    "",
-                    "    try:",
-                    "        repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix())",
-                    "    except Exception as exc:",
-                    "        typer.echo(f\"❌ Error counting lines in repo {resolved_repo_path}: {exc}\", err=True)",
-                    "        raise typer.Exit(code=1) from exc"
-                  ],
-                  "name": "count_lines_in_repo",
-                  "parameters": [
-                    {
-                      "name": "repo_path",
-                      "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": ".",
-                      "required": false,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='Path to the git repository')]",
-                      "typer": {
-                        "kind": "argument",
-                        "param_decls": [],
-                        "long_flags": [],
-                        "short_flags": [],
-                        "help": "Path to the git repository"
+                "children": [
+                  {
+                    "kind": "command",
+                    "name": "viz",
+                    "fullPath": "devops repos stats viz",
+                    "shortPath": "d r S v",
+                    "help": "🎬 <v> Visualize repository activity using Gource",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_viz",
+                      "callable": "gource_viz"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def gource_viz(",
+                        "    repo: Annotated[str, typer.Option(..., \"--repo\", \"-r\", help=\"Path to git repository to visualize\")] = \".\",",
+                        "    output_file: Annotated[",
+                        "        Path | None, typer.Option(..., \"--output\", \"-o\", help=\"Output video file (e.g., output.mp4). If specified, gource will render to video.\")",
+                        "    ] = None,",
+                        "    resolution: Annotated[str, typer.Option(..., \"--resolution\", \"-R\", help=\"Video resolution (e.g., 1920x1080, 1280x720)\")] = \"1920x1080\",",
+                        "    seconds_per_day: Annotated[float, typer.Option(..., \"--seconds-per-day\", \"-D\", help=\"Speed of simulation (lower = faster)\")] = 0.1,",
+                        "    auto_skip_seconds: Annotated[",
+                        "        float, typer.Option(..., \"--auto-skip-seconds\", \"-A\", help=\"Skip to next entry if nothing happens for X seconds\")",
+                        "    ] = 1.0,",
+                        "    title: Annotated[str | None, typer.Option(..., \"--title\", \"-t\", help=\"Title for the visualization\")] = None,",
+                        "    hide_items: Annotated[",
+                        "        list[str] | None,",
+                        "        typer.Option(",
+                        "            ..., \"--hide\", \"-H\", help=\"Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames\"",
+                        "        ),",
+                        "    ] = None,",
+                        "    key_items: Annotated[bool, typer.Option(..., \"--key\", \"-k\", help=\"Show file extension key\")] = False,",
+                        "    fullscreen: Annotated[bool, typer.Option(..., \"--fullscreen\", \"-f\", help=\"Run in fullscreen mode\")] = False,",
+                        "    viewport: Annotated[str | None, typer.Option(..., \"--viewport\", \"-v\", help=\"Camera viewport (e.g., '1000x1000')\")] = None,",
+                        "    start_date: Annotated[str | None, typer.Option(..., \"--start-date\", \"-S\", help=\"Start date (YYYY-MM-DD)\")] = None,",
+                        "    stop_date: Annotated[str | None, typer.Option(..., \"--stop-date\", \"-E\", help=\"Stop date (YYYY-MM-DD)\")] = None,",
+                        "    user_image_dir: Annotated[Path | None, typer.Option(..., \"--user-image-dir\", \"-i\", help=\"Directory with user avatar images\")] = None,",
+                        "    max_files: Annotated[int, typer.Option(..., \"--max-files\", \"-m\", help=\"Maximum number of files to show (0 = no limit)\")] = 0,",
+                        "    max_file_lag: Annotated[float, typer.Option(..., \"--max-file-lag\", \"-L\", help=\"Max time files remain on screen after last change\")] = 5.0,",
+                        "    file_idle_time: Annotated[int, typer.Option(..., \"--file-idle-time\", \"-I\", help=\"Time in seconds files remain idle before being removed\")] = 0,",
+                        "    framerate: Annotated[int, typer.Option(..., \"--framerate\", \"-F\", help=\"Frames per second for video output\")] = 60,",
+                        "    background_color: Annotated[str, typer.Option(..., \"--background-color\", \"-B\", help=\"Background color in hex (e.g., 000000 for black)\")] = \"000000\",",
+                        "    font_size: Annotated[int, typer.Option(..., \"--font-size\", \"-z\", help=\"Font size\")] = 22,",
+                        "    camera_mode: Annotated[str, typer.Option(..., \"--camera-mode\", \"-C\", help=\"Camera mode: overview or track\")] = \"overview\",",
+                        "    self: Annotated[bool, typer.Option(..., \"--self\", \"-s\", help=\"Clone stackops repository and act on it\")] = False,",
+                        ") -> None:",
+                        "    \"\"\"🎬 Visualize repository activity using Gource.\"\"\"",
+                        "    from stackops.scripts.python.helpers.helpers_repos.grource import visualize",
+                        "",
+                        "    if self:",
+                        "        repo_path = Path.home().joinpath(\"stackops\")",
+                        "        if not repo_path.exists():",
+                        "            import git",
+                        "",
+                        "            repo_url = \"https://github.com/thisismygitrepo/stackops.git\"",
+                        "            git.Repo.clone_from(repo_url, to_path=repo_path.as_posix())",
+                        "        repo = repo_path.as_posix()",
+                        "    visualize(",
+                        "        repo=repo,",
+                        "        output_file=output_file,",
+                        "        resolution=resolution,",
+                        "        seconds_per_day=seconds_per_day,",
+                        "        auto_skip_seconds=auto_skip_seconds,",
+                        "        title=title,",
+                        "        hide_items=hide_items,",
+                        "        key_items=key_items,",
+                        "        fullscreen=fullscreen,",
+                        "        viewport=viewport,",
+                        "        start_date=start_date,",
+                        "        stop_date=stop_date,",
+                        "        user_image_dir=user_image_dir,",
+                        "        max_files=max_files,",
+                        "        max_file_lag=max_file_lag,",
+                        "        file_idle_time=file_idle_time,",
+                        "        framerate=framerate,",
+                        "        background_color=background_color,",
+                        "        font_size=font_size,",
+                        "        camera_mode=camera_mode,",
+                        "    )"
+                      ],
+                      "name": "gource_viz",
+                      "parameters": [
+                        {
+                          "name": "repo",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": ".",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option(..., '--repo', '-r', help='Path to git repository to visualize')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--repo",
+                              "-r"
+                            ],
+                            "long_flags": [
+                              "--repo"
+                            ],
+                            "short_flags": [
+                              "-r"
+                            ],
+                            "help": "Path to git repository to visualize",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "output_file",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option(..., '--output', '-o', help='Output video file (e.g., output.mp4). If specified, gource will render to video.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--output",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--output"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Output video file (e.g., output.mp4). If specified, gource will render to video.",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "resolution",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "1920x1080",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option(..., '--resolution', '-R', help='Video resolution (e.g., 1920x1080, 1280x720)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--resolution",
+                              "-R"
+                            ],
+                            "long_flags": [
+                              "--resolution"
+                            ],
+                            "short_flags": [
+                              "-R"
+                            ],
+                            "help": "Video resolution (e.g., 1920x1080, 1280x720)",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "seconds_per_day",
+                          "kind": "positional_or_keyword",
+                          "type": "float",
+                          "default": 0.1,
+                          "required": false,
+                          "annotation_raw": "Annotated[float, typer.Option(..., '--seconds-per-day', '-D', help='Speed of simulation (lower = faster)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--seconds-per-day",
+                              "-D"
+                            ],
+                            "long_flags": [
+                              "--seconds-per-day"
+                            ],
+                            "short_flags": [
+                              "-D"
+                            ],
+                            "help": "Speed of simulation (lower = faster)",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "auto_skip_seconds",
+                          "kind": "positional_or_keyword",
+                          "type": "float",
+                          "default": 1.0,
+                          "required": false,
+                          "annotation_raw": "Annotated[float, typer.Option(..., '--auto-skip-seconds', '-A', help='Skip to next entry if nothing happens for X seconds')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--auto-skip-seconds",
+                              "-A"
+                            ],
+                            "long_flags": [
+                              "--auto-skip-seconds"
+                            ],
+                            "short_flags": [
+                              "-A"
+                            ],
+                            "help": "Skip to next entry if nothing happens for X seconds",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "title",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option(..., '--title', '-t', help='Title for the visualization')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--title",
+                              "-t"
+                            ],
+                            "long_flags": [
+                              "--title"
+                            ],
+                            "short_flags": [
+                              "-t"
+                            ],
+                            "help": "Title for the visualization",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "hide_items",
+                          "kind": "positional_or_keyword",
+                          "type": "list[str] | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[list[str] | None, typer.Option(..., '--hide', '-H', help='Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--hide",
+                              "-H"
+                            ],
+                            "long_flags": [
+                              "--hide"
+                            ],
+                            "short_flags": [
+                              "-H"
+                            ],
+                            "help": "Items to hide: bloom, date, dirnames, files, filenames, mouse, progress, root, tree, users, usernames",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "key_items",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option(..., '--key', '-k', help='Show file extension key')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--key",
+                              "-k"
+                            ],
+                            "long_flags": [
+                              "--key"
+                            ],
+                            "short_flags": [
+                              "-k"
+                            ],
+                            "help": "Show file extension key",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "fullscreen",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option(..., '--fullscreen', '-f', help='Run in fullscreen mode')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--fullscreen",
+                              "-f"
+                            ],
+                            "long_flags": [
+                              "--fullscreen"
+                            ],
+                            "short_flags": [
+                              "-f"
+                            ],
+                            "help": "Run in fullscreen mode",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "viewport",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option(..., '--viewport', '-v', help=\"Camera viewport (e.g., '1000x1000')\")]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--viewport",
+                              "-v"
+                            ],
+                            "long_flags": [
+                              "--viewport"
+                            ],
+                            "short_flags": [
+                              "-v"
+                            ],
+                            "help": "Camera viewport (e.g., '1000x1000')",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "start_date",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option(..., '--start-date', '-S', help='Start date (YYYY-MM-DD)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--start-date",
+                              "-S"
+                            ],
+                            "long_flags": [
+                              "--start-date"
+                            ],
+                            "short_flags": [
+                              "-S"
+                            ],
+                            "help": "Start date (YYYY-MM-DD)",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "stop_date",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option(..., '--stop-date', '-E', help='Stop date (YYYY-MM-DD)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--stop-date",
+                              "-E"
+                            ],
+                            "long_flags": [
+                              "--stop-date"
+                            ],
+                            "short_flags": [
+                              "-E"
+                            ],
+                            "help": "Stop date (YYYY-MM-DD)",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "user_image_dir",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option(..., '--user-image-dir', '-i', help='Directory with user avatar images')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--user-image-dir",
+                              "-i"
+                            ],
+                            "long_flags": [
+                              "--user-image-dir"
+                            ],
+                            "short_flags": [
+                              "-i"
+                            ],
+                            "help": "Directory with user avatar images",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "max_files",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 0,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option(..., '--max-files', '-m', help='Maximum number of files to show (0 = no limit)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-files",
+                              "-m"
+                            ],
+                            "long_flags": [
+                              "--max-files"
+                            ],
+                            "short_flags": [
+                              "-m"
+                            ],
+                            "help": "Maximum number of files to show (0 = no limit)",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "max_file_lag",
+                          "kind": "positional_or_keyword",
+                          "type": "float",
+                          "default": 5.0,
+                          "required": false,
+                          "annotation_raw": "Annotated[float, typer.Option(..., '--max-file-lag', '-L', help='Max time files remain on screen after last change')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--max-file-lag",
+                              "-L"
+                            ],
+                            "long_flags": [
+                              "--max-file-lag"
+                            ],
+                            "short_flags": [
+                              "-L"
+                            ],
+                            "help": "Max time files remain on screen after last change",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "file_idle_time",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 0,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option(..., '--file-idle-time', '-I', help='Time in seconds files remain idle before being removed')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--file-idle-time",
+                              "-I"
+                            ],
+                            "long_flags": [
+                              "--file-idle-time"
+                            ],
+                            "short_flags": [
+                              "-I"
+                            ],
+                            "help": "Time in seconds files remain idle before being removed",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "framerate",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 60,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option(..., '--framerate', '-F', help='Frames per second for video output')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--framerate",
+                              "-F"
+                            ],
+                            "long_flags": [
+                              "--framerate"
+                            ],
+                            "short_flags": [
+                              "-F"
+                            ],
+                            "help": "Frames per second for video output",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "background_color",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "000000",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option(..., '--background-color', '-B', help='Background color in hex (e.g., 000000 for black)')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--background-color",
+                              "-B"
+                            ],
+                            "long_flags": [
+                              "--background-color"
+                            ],
+                            "short_flags": [
+                              "-B"
+                            ],
+                            "help": "Background color in hex (e.g., 000000 for black)",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "font_size",
+                          "kind": "positional_or_keyword",
+                          "type": "int",
+                          "default": 22,
+                          "required": false,
+                          "annotation_raw": "Annotated[int, typer.Option(..., '--font-size', '-z', help='Font size')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--font-size",
+                              "-z"
+                            ],
+                            "long_flags": [
+                              "--font-size"
+                            ],
+                            "short_flags": [
+                              "-z"
+                            ],
+                            "help": "Font size",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "camera_mode",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "overview",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Option(..., '--camera-mode', '-C', help='Camera mode: overview or track')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--camera-mode",
+                              "-C"
+                            ],
+                            "long_flags": [
+                              "--camera-mode"
+                            ],
+                            "short_flags": [
+                              "-C"
+                            ],
+                            "help": "Camera mode: overview or track",
+                            "default": "..."
+                          }
+                        },
+                        {
+                          "name": "self",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option(..., '--self', '-s', help='Clone stackops repository and act on it')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--self",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--self"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Clone stackops repository and act on it",
+                            "default": "..."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "doc": "🎬 Visualize repository activity using Gource.",
+                    "aliases": [
+                      {
+                        "name": "v",
+                        "hidden": true,
+                        "help": "Visualize repository activity using Gource"
                       }
-                    }
-                  ],
-                  "return": "None"
-                },
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "count-lines",
+                    "fullPath": "devops repos stats count-lines",
+                    "shortPath": "d r S c",
+                    "help": "📄 <c> Count python lines of code in current repo + historical edits.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_viz",
+                      "callable": "count_lines_in_repo"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def count_lines_in_repo(",
+                        "    repo_path: Annotated[str, typer.Argument(help=\"Path to the git repository\")] = \".\",",
+                        "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Repository registry containing sync settings.\")] = None,",
+                        ") -> None:",
+                        "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
+                        "    if not resolved_repo_path.exists():",
+                        "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\", err=True)",
+                        "        raise typer.Exit(code=1)",
+                        "    if not resolved_repo_path.is_dir():",
+                        "        typer.echo(f\"❌ Repository path is not a directory: {resolved_repo_path}\", err=True)",
+                        "        raise typer.Exit(code=1)",
+                        "",
+                        "    from git import InvalidGitRepositoryError, Repo",
+                        "",
+                        "    try:",
+                        "        repo = Repo(resolved_repo_path)",
+                        "    except InvalidGitRepositoryError as exc:",
+                        "        typer.echo(f\"❌ {resolved_repo_path} is not within a git repository. Pass a path inside a git repo and retry.\", err=True)",
+                        "        raise typer.Exit(code=1) from exc",
+                        "",
+                        "    if repo.bare or repo.working_tree_dir is None:",
+                        "        typer.echo(f\"❌ {resolved_repo_path} is inside a bare git repository. Pass a working tree path and retry.\", err=True)",
+                        "        raise typer.Exit(code=1)",
+                        "",
+                        "    from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1",
+                        "",
+                        "    try:",
+                        "        repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix(), specs_path=specs_path)",
+                        "    except Exception as exc:",
+                        "        typer.echo(f\"❌ Error counting lines in repo {resolved_repo_path}: {exc}\", err=True)",
+                        "        raise typer.Exit(code=1) from exc"
+                      ],
+                      "name": "count_lines_in_repo",
+                      "parameters": [
+                        {
+                          "name": "repo_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": ".",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Argument(help='Path to the git repository')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Path to the git repository"
+                          }
+                        },
+                        {
+                          "name": "specs_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--specs-path', '-s', help='Repository registry containing sync settings.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--specs-path",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--specs-path"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Repository registry containing sync settings."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "aliases": [
+                      {
+                        "name": "c",
+                        "hidden": true,
+                        "help": "Count python lines of code in current repo + historical edits."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "analyze",
+                    "fullPath": "devops repos stats analyze",
+                    "shortPath": "d r S z",
+                    "help": "📊 <z> Analyze repository development over time",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_repos_viz.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_repos_viz",
+                      "callable": "analyze_repo_development"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help=\"Path to the git repository\")]) -> None:",
+                        "    resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()",
+                        "    if not resolved_repo_path.exists():",
+                        "        typer.echo(f\"❌ Repository path does not exist: {resolved_repo_path}\")",
+                        "        raise typer.Exit(code=1)",
+                        "    if not resolved_repo_path.is_dir():",
+                        "        typer.echo(f\"❌ Repository path is not a directory: {resolved_repo_path}\")",
+                        "        raise typer.Exit(code=1)",
+                        "",
+                        "    def func(repo_path: str) -> None:",
+                        "        from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time",
+                        "",
+                        "        analyze_over_time(repo_path=repo_path)",
+                        "",
+                        "    from stackops.utils.code import run_lambda_function",
+                        "    from stackops.utils.ssh_utils.abc import STACKOPS_VERSION",
+                        "",
+                        "    stackops_plot_requirement = f\"stackops[plot]>={STACKOPS_VERSION}\"",
+                        "    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[stackops_plot_requirement, \"polars\"])"
+                      ],
+                      "name": "analyze_repo_development",
+                      "parameters": [
+                        {
+                          "name": "repo_path",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": null,
+                          "required": true,
+                          "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to the git repository')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Path to the git repository",
+                            "default": "..."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "aliases": [
+                      {
+                        "name": "z",
+                        "hidden": true,
+                        "help": "Analyze repository development over time"
+                      }
+                    ]
+                  }
+                ],
                 "aliases": [
                   {
-                    "name": "c",
-                    "hidden": true,
-                    "help": "Count python lines of code in current repo + historical edits."
+                    "name": "S",
+                    "hidden": true
                   }
                 ]
               }

@@ -14,11 +14,10 @@ Current `devops repos --help` exposes:
 |---------|-------------|
 | `sync` | Clone repositories described by a `repos.json` specification |
 | `register` | Record repositories into a `repos.json` specification |
+| `edit` | Edit and validate the `repos.json` specification |
 | `action` | Run pull/commit/push actions across repositories |
-| `analyze` | Analyze repository development over time |
 | `guard` | Securely sync a git repository to and from cloud storage with encryption |
-| `viz` | Visualize repository activity using Gource |
-| `count-lines` | Count current Python lines and historical edits |
+| `stats` | Visualize activity, count Python lines, and analyze development over time |
 
 ### sync
 
@@ -72,6 +71,19 @@ devops repos register ~/code
 devops repos register ~/code --specs-path ~/backups/work/repos.json
 ```
 
+### edit
+
+Open the existing `repos.json` specification to adjust repository destinations, sync settings, or records.
+
+```bash
+devops repos edit
+devops repos edit --specs-path ./repos.json --editor code
+```
+
+The alias is `e`. `--specs-path` (`-s`) selects another specification. `--editor` (`-e`) accepts `nano`, `hx`, or `code`, with `hx` as the default. VS Code waits until the file closes before validation runs.
+
+The command validates JSON and repository fields after the editor exits. Invalid edits produce an error and a nonzero exit status. If the specification is missing, run `devops repos register` first.
+
 ### action
 
 Run pull, commit, and push actions across one repository or a whole tree of repositories.
@@ -105,22 +117,6 @@ devops repos action ~/code --recursive --pull --uv-sync
 devops repos action ~/code/stackops --commit --push
 ```
 
-### analyze
-
-Analyze repository development over time.
-
-```bash
-devops repos analyze REPO_PATH
-```
-
-This delegates to the plotting-oriented repository analyzer.
-
-Example:
-
-```bash
-devops repos analyze ~/code/stackops
-```
-
 ### guard
 
 Securely sync a git repository to or from cloud storage with encryption.
@@ -146,12 +142,22 @@ devops repos guard ~/code/private-repo --cloud myremote --message "sync before t
 
 `merge-accept-remote` and `merge-accept-local` keep the merge in progress, then resolve only the conflicted files by accepting the remote (`--theirs`) or local (`--ours`) side before finalizing the merge commit.
 
-### viz
+### stats
+
+Inspect repository activity, Python line counts, and development history.
+
+```bash
+devops repos stats [SUBCOMMAND] [ARGS]...
+```
+
+The group alias is `S`. Its commands are `viz` (`v`), `count-lines` (`c`), and `analyze` (`z`).
+
+#### viz
 
 Visualize repository history with Gource, either live or rendered to video.
 
 ```bash
-devops repos viz [OPTIONS]
+devops repos stats viz [OPTIONS]
 ```
 
 Commonly used options from current help:
@@ -173,24 +179,40 @@ Examples:
 
 ```bash
 # Interactive visualization
-devops repos viz --repo ~/code/stackops
+devops repos stats viz --repo ~/code/stackops
 
 # Render to video
-devops repos viz --repo ~/code/stackops --output stackops.mp4 --resolution 1280x720
+devops repos stats viz --repo ~/code/stackops --output stackops.mp4 --resolution 1280x720
 ```
 
-### count-lines
+#### count-lines
 
 Count Python lines of code in the current state and through repository history.
 
 ```bash
-devops repos count-lines REPO_PATH
+devops repos stats count-lines REPO_PATH
 ```
 
 Example:
 
 ```bash
-devops repos count-lines ~/code/stackops
+devops repos stats count-lines ~/code/stackops
+```
+
+#### analyze
+
+Analyze repository development over time.
+
+```bash
+devops repos stats analyze REPO_PATH
+```
+
+This delegates to the plotting-oriented repository analyzer.
+
+Example:
+
+```bash
+devops repos stats analyze ~/code/stackops
 ```
 
 ---

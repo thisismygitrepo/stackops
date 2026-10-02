@@ -12,10 +12,12 @@ if TYPE_CHECKING:
         StackOpsDevopsReposVersionCheckoutCommand,
         StackOpsDevopsReposVersionSubcommands,
         StackOpsDevopsReposVersionCommand,
-        StackOpsDevopsReposAnalyzeCommand,
         StackOpsDevopsReposGuardCommand,
-        StackOpsDevopsReposVizCommand,
-        StackOpsDevopsReposCountLinesCommand,
+        StackOpsDevopsReposStatsVizCommand,
+        StackOpsDevopsReposStatsCountLinesCommand,
+        StackOpsDevopsReposStatsAnalyzeCommand,
+        StackOpsDevopsReposStatsSubcommands,
+        StackOpsDevopsReposStatsCommand,
         StackOpsDevopsReposSubcommands,
         StackOpsDevopsReposCommand,
         StackOpsDevopsConfigSyncCommand,
@@ -238,13 +240,6 @@ STACKOPS_DEVOPS_REPOS_VERSION_COMMAND: "StackOpsDevopsReposVersionCommand" = {
     "subcommands": STACKOPS_DEVOPS_REPOS_VERSION_SUBCOMMANDS,
 }
 
-STACKOPS_DEVOPS_REPOS_ANALYZE_COMMAND: "StackOpsDevopsReposAnalyzeCommand" = {
-    "command_name": "analyze",
-    "short_name": "z",
-    "help": "📊 <z> Analyze repository development over time",
-    "subcommands": {},
-}
-
 STACKOPS_DEVOPS_REPOS_GUARD_COMMAND: "StackOpsDevopsReposGuardCommand" = {
     "command_name": "guard",
     "short_name": "g",
@@ -252,18 +247,38 @@ STACKOPS_DEVOPS_REPOS_GUARD_COMMAND: "StackOpsDevopsReposGuardCommand" = {
     "subcommands": {},
 }
 
-STACKOPS_DEVOPS_REPOS_VIZ_COMMAND: "StackOpsDevopsReposVizCommand" = {
+STACKOPS_DEVOPS_REPOS_STATS_VIZ_COMMAND: "StackOpsDevopsReposStatsVizCommand" = {
     "command_name": "viz",
     "short_name": "v",
     "help": "🎬 <v> Visualize repository activity using Gource",
     "subcommands": {},
 }
 
-STACKOPS_DEVOPS_REPOS_COUNT_LINES_COMMAND: "StackOpsDevopsReposCountLinesCommand" = {
+STACKOPS_DEVOPS_REPOS_STATS_COUNT_LINES_COMMAND: "StackOpsDevopsReposStatsCountLinesCommand" = {
     "command_name": "count-lines",
     "short_name": "c",
     "help": "📄 <c> Count python lines of code in current repo + historical edits.",
     "subcommands": {},
+}
+
+STACKOPS_DEVOPS_REPOS_STATS_ANALYZE_COMMAND: "StackOpsDevopsReposStatsAnalyzeCommand" = {
+    "command_name": "analyze",
+    "short_name": "z",
+    "help": "📊 <z> Analyze repository development over time",
+    "subcommands": {},
+}
+
+STACKOPS_DEVOPS_REPOS_STATS_SUBCOMMANDS: "StackOpsDevopsReposStatsSubcommands" = {
+    "viz": STACKOPS_DEVOPS_REPOS_STATS_VIZ_COMMAND,
+    "count-lines": STACKOPS_DEVOPS_REPOS_STATS_COUNT_LINES_COMMAND,
+    "analyze": STACKOPS_DEVOPS_REPOS_STATS_ANALYZE_COMMAND,
+}
+
+STACKOPS_DEVOPS_REPOS_STATS_COMMAND: "StackOpsDevopsReposStatsCommand" = {
+    "command_name": "stats",
+    "short_name": "S",
+    "help": "📊 <S> Visualize and analyze repository statistics",
+    "subcommands": STACKOPS_DEVOPS_REPOS_STATS_SUBCOMMANDS,
 }
 
 STACKOPS_DEVOPS_REPOS_SUBCOMMANDS: "StackOpsDevopsReposSubcommands" = {
@@ -271,10 +286,8 @@ STACKOPS_DEVOPS_REPOS_SUBCOMMANDS: "StackOpsDevopsReposSubcommands" = {
     "register": STACKOPS_DEVOPS_REPOS_REGISTER_COMMAND,
     "action": STACKOPS_DEVOPS_REPOS_ACTION_COMMAND,
     "version": STACKOPS_DEVOPS_REPOS_VERSION_COMMAND,
-    "analyze": STACKOPS_DEVOPS_REPOS_ANALYZE_COMMAND,
     "guard": STACKOPS_DEVOPS_REPOS_GUARD_COMMAND,
-    "viz": STACKOPS_DEVOPS_REPOS_VIZ_COMMAND,
-    "count-lines": STACKOPS_DEVOPS_REPOS_COUNT_LINES_COMMAND,
+    "stats": STACKOPS_DEVOPS_REPOS_STATS_COMMAND,
 }
 
 STACKOPS_DEVOPS_REPOS_COMMAND: "StackOpsDevopsReposCommand" = {

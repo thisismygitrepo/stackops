@@ -1,10 +1,10 @@
+import json
 from pathlib import Path
 from typing import TypedDict, cast
 
 from stackops.scripts.python.helpers.helpers_repos.sync_settings import validate_repo_sync
-from stackops.utils.files.read import read_json
 from stackops.utils.io import save_json
-from stackops.utils.schemas.repos.repos_types import RepoRecordDict, RepoRecordFile, RepoSync
+from stackops.utils.schemas.repos.repos_types import GitVersionInfo, RepoRecordDict, RepoRecordFile, RepoRemote, RepoSync
 from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT
 
 
@@ -32,18 +32,71 @@ def resolve_repos_spec_path(specs_path: str | Path | None) -> Path:
     return Path(specs_path).expanduser().absolute().resolve()
 
 
-def _validate_repos_spec(data: object, path: Path) -> RepoRecordFile:
+def _validate_object_fields(data: object, *, string_fields: set[str], other_fields: set[str], field_path: str, path: Path) -> dict[str, object]:
     if not isinstance(data, dict):
-        raise ValueError(f"Repository specification must be a JSON object: {path}")
-    if data.get("version") != REPOS_SPEC_VERSION:
+        raise ValueError(f"""Repository specification field {field_path} must be an object: {path}""")
+    fields = cast(dict[str, object], data)
+    expected_fields = string_fields | other_fields
+    missing_fields = expected_fields - fields.keys()
+    unexpected_fields = fields.keys() - expected_fields
+    if missing_fields:
+        raise ValueError(f"""Missing repository fields at {field_path}: {", ".join(sorted(missing_fields))}: {path}""")
+    if unexpected_fields:
+        raise ValueError(f"""Unexpected repository fields at {field_path}: {", ".join(sorted(unexpected_fields))}: {path}""")
+    for field in sorted(string_fields):
+        if not isinstance(fields[field], str):
+            raise ValueError(f"""Repository specification field {field_path}.{field} must be a string: {path}""")
+    return fields
+
+
+def _validate_repos_spec(data: object, path: Path) -> RepoRecordFile:
+    spec = _validate_object_fields(data, string_fields={"version"}, other_fields={"repos"}, field_path="$", path=path)
+    if spec["version"] != REPOS_SPEC_VERSION:
         raise ValueError(f"""Repository specification must use format {REPOS_SPEC_VERSION}: {path}""")
-    if not isinstance(data.get("repos"), list):
-        raise ValueError(f"Repository specification is missing list field 'repos': {path}")
-    for record in data["repos"]:
-        if not isinstance(record, dict):
-            raise ValueError(f"""Invalid repository record: {path}""")
-        validate_repo_sync(value=record.get("sync"))
-    return cast(RepoRecordFile, data)
+    repos = spec["repos"]
+    if not isinstance(repos, list):
+        raise ValueError(f"""Repository specification field $.repos must be a list: {path}""")
+    validated_records: list[RepoRecordDict] = []
+    for index, value in enumerate(repos):
+        field_path = f"""$.repos[{index}]"""
+        record = _validate_object_fields(
+            value,
+            string_fields={"name", "parentDir", "currentBranch"},
+            other_fields={"remotes", "version", "isDirty", "sync"},
+            field_path=field_path,
+            path=path,
+        )
+        if not isinstance(record["isDirty"], bool):
+            raise ValueError(f"""Repository specification field {field_path}.isDirty must be a boolean: {path}""")
+        version_fields = _validate_object_fields(
+            record["version"], string_fields={"branch", "commit"}, other_fields=set(), field_path=f"""{field_path}.version""", path=path
+        )
+        version: GitVersionInfo = {"branch": cast(str, version_fields["branch"]), "commit": cast(str, version_fields["commit"])}
+        remotes = record["remotes"]
+        if not isinstance(remotes, list):
+            raise ValueError(f"""Repository specification field {field_path}.remotes must be a list: {path}""")
+        validated_remotes: list[RepoRemote] = []
+        for remote_index, remote in enumerate(remotes):
+            remote_fields = _validate_object_fields(
+                remote, string_fields={"name", "url"}, other_fields=set(), field_path=f"""{field_path}.remotes[{remote_index}]""", path=path
+            )
+            validated_remotes.append({"name": cast(str, remote_fields["name"]), "url": cast(str, remote_fields["url"])})
+        try:
+            sync = validate_repo_sync(value=record["sync"])
+        except ValueError as error:
+            raise ValueError(f"""Invalid repository field {field_path}.sync: {error}: {path}""") from error
+        validated_records.append(
+            {
+                "name": cast(str, record["name"]),
+                "parentDir": cast(str, record["parentDir"]),
+                "currentBranch": cast(str, record["currentBranch"]),
+                "remotes": validated_remotes,
+                "version": version,
+                "isDirty": record["isDirty"],
+                "sync": sync,
+            }
+        )
+    return {"version": REPOS_SPEC_VERSION, "repos": validated_records}
 
 
 def load_repos_spec(path: Path) -> RepoRecordFile:
@@ -51,7 +104,7 @@ def load_repos_spec(path: Path) -> RepoRecordFile:
         raise FileNotFoundError(f"Repository specification file not found: {path}")
     if not path.is_file():
         raise IsADirectoryError(f"Repository specification path is not a file: {path}")
-    return _validate_repos_spec(read_json(path=path), path=path)
+    return _validate_repos_spec(json.loads(path.read_text(encoding="utf-8")), path=path)
 
 
 def load_or_create_repos_spec(path: Path) -> RepoRecordFile:

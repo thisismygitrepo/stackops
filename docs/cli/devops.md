@@ -62,10 +62,14 @@ These are the child commands exposed by the current live help.
 - `register`
 - `action`
 - `version`
-- `analyze`
 - `guard`
+- `stats`
+
+`repos stats`:
+
 - `viz`
 - `count-lines`
+- `analyze`
 
 `config`:
 
