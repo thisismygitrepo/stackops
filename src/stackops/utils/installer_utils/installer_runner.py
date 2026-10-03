@@ -84,7 +84,7 @@ def check_latest():
     console.rule(style="bold blue")
 
 
-def get_installed_cli_apps():
+def get_installed_cli_apps() -> list[Path]:
     print("🔍 LISTING INSTALLED CLI APPS 🔍")
     if platform.system() == "Windows":
         print("🪟 Searching for Windows executables...")
@@ -99,7 +99,7 @@ def get_installed_cli_apps():
         error_msg = f"❌ ERROR: System {platform.system()} not supported"
         print(error_msg)
         raise NotImplementedError(error_msg)
-    apps = [app for app in apps if (app.stat().st_size / 1024) > 0.1 and not app.is_symlink()]  # no symlinks like paint and wsl and bash
+    apps = [app for app in apps if not app.is_symlink() and (app.stat().st_size / 1024) > 0.1]  # no symlinks like paint and wsl and bash
     print(f"✅ Found {len(apps)} installed applications")
     return apps
 

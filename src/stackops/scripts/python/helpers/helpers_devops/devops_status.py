@@ -25,7 +25,7 @@ def resolve_sections(
         "apps": apps,
         "backup": backup,
     }
-    selected_sections = tuple(section for section in ALL_STATUS_SECTIONS if section_flags[section])
+    selected_sections: tuple[StatusSection, ...] = tuple(section for section in ALL_STATUS_SECTIONS if section_flags[section])
     return selected_sections or ALL_STATUS_SECTIONS
 
 

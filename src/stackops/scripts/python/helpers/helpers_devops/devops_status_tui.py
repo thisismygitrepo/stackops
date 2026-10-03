@@ -51,7 +51,7 @@ class StatusApp(App[None]):
     def __init__(self, *, sections: tuple[StatusSection, ...]) -> None:
         super().__init__()
         self.sections = sections
-        self.selected_section = sections[0]
+        self.selected_section: StatusSection = sections[0]
         self.snapshots: dict[StatusSection, StatusSnapshot] = {}
         self.refreshing = False
         self.checked = 0
