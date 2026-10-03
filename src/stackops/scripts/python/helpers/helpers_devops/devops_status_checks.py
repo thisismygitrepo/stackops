@@ -22,10 +22,8 @@ def check_shell_profile_status() -> dict[str, Any]:
 
     try:
         profile_path = get_shell_profile_path()
-        if not profile_path.exists():
-            profile_path.parent.mkdir(parents=True, exist_ok=True)
-            profile_path.touch()
-        profile_content = profile_path.read_text(encoding="utf-8")
+        profile_exists = profile_path.exists()
+        profile_content = profile_path.read_text(encoding="utf-8") if profile_exists else ""
         system_name = platform.system()
         if system_name == "Windows":
             init_script = Path(CONFIG_ROOT).joinpath(
@@ -47,7 +45,7 @@ def check_shell_profile_status() -> dict[str, Any]:
 
         return {
             "profile_path": str(profile_path),
-            "exists": True,
+            "exists": profile_exists,
             "configured": configured,
             "method": method,
             "init_script_exists": init_script.exists(),

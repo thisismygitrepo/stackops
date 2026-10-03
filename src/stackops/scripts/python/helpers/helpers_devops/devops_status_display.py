@@ -3,8 +3,10 @@
 from typing import Any
 
 from rich import box
-from rich.console import Console
+from rich.columns import Columns
+from rich.console import Console, Group
 from rich.panel import Panel
+from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
@@ -28,39 +30,30 @@ def display_report_footer() -> None:
     console.print("\n")
 
 
-def display_system_info(info: dict[str, str]) -> None:
-    """Display system information panel."""
-    console.rule("[bold blue]💻 System Information[/bold blue]")
-
+def render_system_info(info: dict[str, str]) -> Panel:
     table = Table(show_header=False, box=None, padding=(0, 1), expand=False)
     table.add_column("Property", style="cyan", no_wrap=True)
     table.add_column("Value", style="white")
 
-    table.add_row("🏠 Hostname", info["hostname"])
-    table.add_row("💿 System", f"{info['system']} {info['release']}")
-    table.add_row("🖥️  Machine", info["machine"])
-    table.add_row("⚙️  Processor", info["processor"])
-    table.add_row("🐍 Python", info["python_version"])
-    table.add_row("👤 User", info["user"])
+    table.add_row("🏠 Hostname", Text(info["hostname"]))
+    table.add_row("💿 System", Text(f"""{info['system']} {info['release']}"""))
+    table.add_row("🖥️  Machine", Text(info["machine"]))
+    table.add_row("⚙️  Processor", Text(info["processor"]))
+    table.add_row("🐍 Python", Text(info["python_version"]))
+    table.add_row("👤 User", Text(info["user"]))
 
-    console.print(Panel(table, title="System", border_style="blue", padding=(1, 2), expand=False))
+    return Panel(table, title="System", border_style="blue", padding=(1, 2), expand=False)
 
 
-def display_shell_status(status: dict[str, Any]) -> None:
-    """Display shell profile status panel."""
-    console.rule("[bold green]🐚 Shell Profile[/bold green]")
-
+def render_shell_status(status: dict[str, Any]) -> Panel:
     if "error" in status:
-        console.print(Panel(f"❌ Error: {status['error']}", title="Shell Profile", border_style="red", padding=(1, 2), expand=False))
-        return
-
-    from rich.columns import Columns
+        return Panel(Text(f"""❌ Error: {status['error']}"""), title="Shell Profile", border_style="red", padding=(1, 2), expand=False)
 
     left_table = Table(show_header=False, box=None, padding=(0, 1))
     left_table.add_column("Item", style="cyan", no_wrap=True)
     left_table.add_column("Status")
 
-    left_table.add_row("📄 Profile", status["profile_path"])
+    left_table.add_row("📄 Profile", Text(str(status["profile_path"])))
     left_table.add_row(f"{'✅' if status['exists'] else '❌'} Exists", str(status["exists"]))
     left_table.add_row(f"{'✅' if status['configured'] else '❌'} Configured", str(status["configured"]))
 
@@ -68,33 +61,26 @@ def display_shell_status(status: dict[str, Any]) -> None:
     right_table.add_column("Item", style="cyan", no_wrap=True)
     right_table.add_column("Status")
 
-    right_table.add_row("🔧 Method", status["method"])
+    right_table.add_row("🔧 Method", Text(str(status["method"])))
     right_table.add_row(f"{'✅' if status['init_script_exists'] else '❌'} Init (source)", str(status["init_script_exists"]))
     right_table.add_row(f"{'✅' if status['init_script_copy_exists'] else '❌'} Init (copy)", str(status["init_script_copy_exists"]))
 
     border_style = "green" if status["configured"] else "yellow"
-    console.print(
-        Panel(
-            Columns([left_table, right_table], equal=True, expand=True),
-            title="Shell Profile",
-            border_style=border_style,
-            padding=(1, 2),
-            expand=False,
-        )
+    return Panel(
+        Columns([left_table, right_table], equal=True, expand=True),
+        title="Shell Profile",
+        border_style=border_style,
+        padding=(1, 2),
+        expand=False,
     )
 
 
-def display_repos_status(status: dict[str, Any]) -> None:
-    """Display configured repositories status."""
-    console.rule("[bold cyan]📚 Configured Repositories[/bold cyan]")
-
+def render_repos_status(status: dict[str, Any]) -> Panel:
     if not status["configured"]:
-        console.print(Panel(f"⚠️  No repositories configured in {DOTFILES_STACKOPS_CONFIG_PATH}", title="Repositories", border_style="yellow", padding=(1, 2)))
-        return
+        return Panel(Text(f"""⚠️  No repositories configured in {DOTFILES_STACKOPS_CONFIG_PATH}"""), title="Repositories", border_style="yellow", padding=(1, 2))
 
     if status["count"] == 0:
-        console.print(Panel("ℹ️  No repositories configured", title="Repositories", border_style="blue", padding=(1, 2)))
-        return
+        return Panel("ℹ️  No repositories configured", title="Repositories", border_style="blue", padding=(1, 2))
 
     table = Table(show_lines=True, header_style="bold cyan")
     table.add_column("Repository", style="bold")
@@ -104,32 +90,26 @@ def display_repos_status(status: dict[str, Any]) -> None:
     for repo in status["repos"]:
         name = repo["name"]
         if not repo["exists"]:
-            table.add_row(f"❌ {name}", "Missing", f"Path: {repo['path']}")
+            table.add_row(Text(f"""❌ {name}"""), "Missing", Text(f"""Path: {repo['path']}"""))
         elif not repo["is_repo"]:
-            table.add_row(f"⚠️  {name}", "Not a repo", f"Path: {repo['path']}")
+            table.add_row(Text(f"""⚠️  {name}"""), "Not a repo", Text(f"""Path: {repo['path']}"""))
         else:
             status_icon = "✅" if repo["clean"] else "⚠️"
             status_text = "Clean" if repo["clean"] else "Uncommitted changes"
-            table.add_row(f"{status_icon} {name}", status_text, f"Branch: {repo['branch']}")
+            table.add_row(Text(f"""{status_icon} {name}"""), status_text, Text(f"""Branch: {repo['branch']}"""))
 
-    console.print(Panel(table, title=f"Repositories ({status['count']})", border_style="cyan", padding=(1, 2)))
+    return Panel(table, title=f"""Repositories ({status['count']})""", border_style="cyan", padding=(1, 2))
 
 
-def display_ssh_status(status: dict[str, Any]) -> None:
-    """Display SSH configuration status."""
-    console.rule("[bold yellow]🔐 SSH Configuration[/bold yellow]")
-
+def render_ssh_status(status: dict[str, Any]) -> Panel | Columns:
     if not status["ssh_dir_exists"]:
-        console.print(Panel("❌ SSH directory (~/.ssh) does not exist", title="SSH Status", border_style="red", padding=(1, 2), expand=False))
-        return
-
-    from rich.columns import Columns
+        return Panel("❌ SSH directory (~/.ssh) does not exist", title="SSH Status", border_style="red", padding=(1, 2), expand=False)
 
     config_table = Table(show_header=False, box=None, padding=(0, 1))
     config_table.add_column("Item", style="cyan", no_wrap=True)
     config_table.add_column("Status")
 
-    config_table.add_row("📁 Directory", status["ssh_dir_path"])
+    config_table.add_row("📁 Directory", Text(str(status["ssh_dir_path"])))
     config_table.add_row(f"{'✅' if status['config_exists'] else '❌'} Config", str(status["config_exists"]))
     config_table.add_row(f"{'✅' if status['authorized_keys_exists'] else '❌'} Auth Keys", str(status["authorized_keys_exists"]))
     config_table.add_row(f"{'✅' if status['known_hosts_exists'] else '❌'} Known Hosts", str(status["known_hosts_exists"]))
@@ -145,24 +125,19 @@ def display_ssh_status(status: dict[str, Any]) -> None:
         for key in status["keys"]:
             pub_status = "✅" if key["public_exists"] else "❌"
             priv_status = "✅" if key["private_exists"] else "❌"
-            keys_table.add_row(key["name"], pub_status, priv_status)
+            keys_table.add_row(Text(str(key["name"])), pub_status, priv_status)
 
         keys_panel = Panel(keys_table, title=f"SSH Keys ({len(status['keys'])})", border_style="yellow", padding=(1, 2), expand=False)
 
-        console.print(Columns([config_panel, keys_panel], equal=False, expand=True))
-    else:
-        console.print(config_panel)
+        return Columns([config_panel, keys_panel], equal=False, expand=True)
+    return config_panel
 
 
-def display_config_files_status(status: dict[str, Any]) -> None:
-    """Display configuration files status."""
-    console.rule("[bold bright_blue]⚙️  Configuration Files[/bold bright_blue]")
-
+def render_config_files_status(status: dict[str, Any]) -> Panel:
     if "error" in status:
-        console.print(
-            Panel(f"❌ Error reading configuration: {status['error']}", title="Configuration Files", border_style="red", padding=(1, 2), expand=False)
+        return Panel(
+            Text(f"""❌ Error reading configuration: {status['error']}"""), title="Configuration Files", border_style="red", padding=(1, 2), expand=False
         )
-        return
 
     public_percentage = (status["public_linked"] / status["public_count"] * 100) if status["public_count"] > 0 else 0
     private_percentage = (status["private_linked"] / status["private_count"] * 100) if status["private_count"] > 0 else 0
@@ -182,13 +157,10 @@ def display_config_files_status(status: dict[str, Any]) -> None:
 
     border_style = "green" if overall_percentage > 80 else ("yellow" if overall_percentage > 50 else "red")
 
-    console.print(
-        Panel(table, title=f"Configuration Files ({overall_percentage:.0f}% configured)", border_style=border_style, padding=(1, 2), expand=False)
-    )
+    return Panel(table, title=f"""Configuration Files ({overall_percentage:.0f}% configured)""", border_style=border_style, padding=(1, 2), expand=False)
 
 
-def display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
-    """Display important tools installation status organized by groups."""
+def render_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> Group:
     unique_tool_status = {tool: installed for tools in grouped_tools.values() for tool, installed in tools.items()}
     installed_tool_count = sum(unique_tool_status.values())
     total_tool_count = len(unique_tool_status)
@@ -199,7 +171,6 @@ def display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
         f" · {installed_tool_count}/{total_tool_count} unique installed ({overall_percentage:.0f}%)",
         style="bright_magenta",
     )
-    console.rule(section_title)
 
     table = Table(box=box.SIMPLE_HEAD, header_style="bold bright_magenta", padding=(0, 1))
     table.add_column("Group", style="bold cyan", no_wrap=True)
@@ -215,31 +186,60 @@ def display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
         group_display_name = group_name.replace("_", " ").title()
 
         table.add_row(
-            group_display_name,
+            Text(group_display_name),
             str(installed_count),
             str(missing_count),
             Text(f"{installed_percentage:.0f}%", style=coverage_style),
         )
 
-    console.print(table)
-
     missing_tool_names = sorted(tool for tool, installed in unique_tool_status.items() if not installed)
     missing_summary = Text(f"Missing tools ({len(missing_tool_names)}): ", style="bold red")
     missing_summary.append(", ".join(missing_tool_names) if missing_tool_names else "None", style="red" if missing_tool_names else "green")
-    console.print(missing_summary)
+    return Group(Rule(section_title), table, missing_summary)
 
 
-def display_backup_status(status: dict[str, Any]) -> None:
-    """Display backup configuration status."""
-    console.rule("[bold bright_cyan]💾 Backup Configuration[/bold bright_cyan]")
-
+def render_backup_status(status: dict[str, Any]) -> Panel:
     table = Table(show_header=False, box=None, padding=(0, 1), expand=False)
     table.add_column("Property", style="cyan", no_wrap=True)
     table.add_column("Value", style="white")
 
-    table.add_row("🌥️  Cloud Config", status["cloud_config"])
+    table.add_row("🌥️  Cloud Config", Text(str(status["cloud_config"])))
     table.add_row("📦 Backup Items", str(status["backup_items_count"]))
 
     border_style = "green" if status["cloud_config"] != "Not configured" else "yellow"
 
-    console.print(Panel(table, title="Backup Configuration", border_style=border_style, padding=(1, 2), expand=False))
+    return Panel(table, title="Backup Configuration", border_style=border_style, padding=(1, 2), expand=False)
+
+
+def display_system_info(info: dict[str, str]) -> None:
+    console.rule("[bold blue]💻 System Information[/bold blue]")
+    console.print(render_system_info(info))
+
+
+def display_shell_status(status: dict[str, Any]) -> None:
+    console.rule("[bold green]🐚 Shell Profile[/bold green]")
+    console.print(render_shell_status(status))
+
+
+def display_repos_status(status: dict[str, Any]) -> None:
+    console.rule("[bold cyan]📚 Configured Repositories[/bold cyan]")
+    console.print(render_repos_status(status))
+
+
+def display_ssh_status(status: dict[str, Any]) -> None:
+    console.rule("[bold yellow]🔐 SSH Configuration[/bold yellow]")
+    console.print(render_ssh_status(status))
+
+
+def display_config_files_status(status: dict[str, Any]) -> None:
+    console.rule("[bold bright_blue]⚙️  Configuration Files[/bold bright_blue]")
+    console.print(render_config_files_status(status))
+
+
+def display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
+    console.print(render_tools_status(grouped_tools))
+
+
+def display_backup_status(status: dict[str, Any]) -> None:
+    console.rule("[bold bright_cyan]💾 Backup Configuration[/bold bright_cyan]")
+    console.print(render_backup_status(status))

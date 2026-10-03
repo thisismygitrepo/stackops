@@ -183,15 +183,16 @@ def status(
     ] = False,
     apps: Annotated[bool, typer.Option("--apps", "--tools", "-a", "-t", help="Show the installed apps/tools section.")] = False,
     backup: Annotated[bool, typer.Option("--backup", "-b", help="Show the backup configuration section.")] = False,
+    plain: Annotated[bool, typer.Option("--plain", help="Print a report instead of opening the interactive dashboard.")] = False,
 ) -> None:
-    """📊 STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.
+    """📊 Interactive machine status dashboard.
 
-    Pass one or more section flags to limit the report to those sections.
+    Pass section flags to limit the dashboard. Piped output is a printed report.
     """
     import stackops.scripts.python.helpers.helpers_devops.devops_status as helper
 
     sections = helper.resolve_sections(machine=machine, shell=shell, repos=repos, ssh=ssh, configs=configs, apps=apps, backup=backup)
-    helper.main(sections=sections)
+    helper.main(sections=sections, plain=plain)
 
 
 def get_app() -> typer.Typer:
@@ -226,8 +227,8 @@ def get_app() -> typer.Typer:
     cli_app.command(name="c", no_args_is_help=False, help="Clone the StackOps source checkout.", hidden=True)(clone)
     cli_app.command(name="update", no_args_is_help=False, help="🔄 <u> UPDATE stackops")(update)
     cli_app.command(name="u", no_args_is_help=False, hidden=True)(update)
-    cli_app.command(name="status", no_args_is_help=False, help="📊 <s> STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.")(status)
-    cli_app.command(name="s", no_args_is_help=False, help="STATUS of machine, shell profile, apps, symlinks, dotfiles, etc.", hidden=True)(status)
+    cli_app.command(name="status", no_args_is_help=False, help="📊 <s> Interactive machine status dashboard.")(status)
+    cli_app.command(name="s", no_args_is_help=False, help="Interactive machine status dashboard.", hidden=True)(status)
 
     cli_app.command(name="security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
     cli_app.command(name="y", help="🔐 <y> Security related CLI tools.", hidden=True, context_settings=ctx_settings)(security)
