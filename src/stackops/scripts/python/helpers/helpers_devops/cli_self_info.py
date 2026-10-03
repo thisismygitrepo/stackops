@@ -196,13 +196,6 @@ def explore_python_api(ctx: typer.Context) -> None:
     apply_alias_markers(python_api_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
 
 
-def security(ctx: typer.Context) -> None:
-    """🔐 <y> Security related CLI tools."""
-    import stackops.jobs.installer.checks.security_cli as security_cli_module
-
-    apply_alias_markers(security_cli_module.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
-
-
 def docs(
     rebuild: Annotated[bool, typer.Option("--rebuild", "-b", help="Rebuild docs before starting the preview server.")] = False,
     create_artifacts: Annotated[

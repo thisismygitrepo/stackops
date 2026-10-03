@@ -178,8 +178,15 @@ def execute(
     )
 
 
+def security(ctx: typer.Context) -> None:
+    """🔐 <y> Security related CLI tools."""
+    from stackops.jobs.installer.checks import security_cli
+
+    _run_nested_app(ctx, security_cli.get_app)
+
+
 def vault(ctx: typer.Context) -> None:
-    """🔐 <v> Search Bitwarden credentials and manage vault sessions."""
+    """🔐 <v> Manage credentials, secrets, and vault sessions."""
     from stackops.scripts.python.helpers.helpers_devops import cli_vault
 
     _run_nested_app(ctx, cli_vault.get_app)
@@ -209,7 +216,10 @@ def get_app() -> typer.Typer:
     cli_app.command("config", help="🔩 <c> Configuration management", context_settings=ctx_settings)(config)
     cli_app.command("c", hidden=True, context_settings=ctx_settings)(config)
 
-    cli_app.command("vault", help="🔐 <v> Search Bitwarden credentials and manage vault sessions", context_settings=ctx_settings)(vault)
+    cli_app.command("security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
+    cli_app.command("y", hidden=True, context_settings=ctx_settings)(security)
+
+    cli_app.command("vault", help="🔐 <v> Manage credentials, secrets, and vault sessions", context_settings=ctx_settings)(vault)
     cli_app.command("v", hidden=True, context_settings=ctx_settings)(vault)
 
     cli_app.command("network", help="🌐 <n> Network management", context_settings=ctx_settings)(network)

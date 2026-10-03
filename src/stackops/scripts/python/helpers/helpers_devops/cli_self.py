@@ -208,7 +208,6 @@ def get_app() -> typer.Typer:
         explore_cli,
         explore_python_api,
         readme,
-        security,
     )
 
     cli_app = typer.Typer(
@@ -229,9 +228,6 @@ def get_app() -> typer.Typer:
     cli_app.command(name="u", no_args_is_help=False, hidden=True)(update)
     cli_app.command(name="status", no_args_is_help=False, help="📊 <s> Interactive machine status dashboard.")(status)
     cli_app.command(name="s", no_args_is_help=False, help="Interactive machine status dashboard.", hidden=True)(status)
-
-    cli_app.command(name="security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
-    cli_app.command(name="y", help="🔐 <y> Security related CLI tools.", hidden=True, context_settings=ctx_settings)(security)
 
     cli_app.command(name="explore-cli", help="🧭 <x> Explore the StackOps CLI graph.", context_settings=ctx_settings)(explore_cli)
     cli_app.command(name="explore", help="Explore the StackOps CLI graph.", hidden=True, context_settings=ctx_settings)(explore_cli)

@@ -29,27 +29,27 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support i
     resolve_single_secret_source,
 )
 
-SECRETS_HELP = "Manage StackOps secrets files and define env vars."
+SECRETS_HELP = "Manage StackOps secrets JSON files and define env vars."
 SECRETS_SEARCH_HELP = "Select secret bundles for environment variables or JSON output."
 SECRETS_STATS_HELP = "Show aggregate StackOps secrets inventory stats without printing secret values."
 SECRETS_SUBSET_HELP = "Create a StackOps secrets subset and choose output conflicts with --on-conflict."
 SECRETS_SEARCH_EPILOG = """Examples:
-  devops config secrets search aws dev iam-access-key
-  devops config secrets s github personal-access-token
-  devops config secrets s AWS_ACCESS_KEY_ID
-  devops config secrets search --interactive
-  devops config secrets s -i aws
-  devops config secrets search --verbose aws dev iam-access-key
-  devops config secrets search --name aws-dev --tag iam-access-key
-  devops config secrets search --name aws-dev --tag session-token
-  devops config secrets search --source global bitwarden
-  devops config secrets s --source g bitwarden
-  devops config secrets s --all-matches --source g cloudf
-  devops config secrets search mail --all-matches --json
-  devops config secrets search --source both github token
-  devops config secrets s --source b github token
-  devops config secrets s -i -P github
-  devops config secrets search --path ~/private/team-secrets.json aws dev
+  devops vault secrets search aws dev iam-access-key
+  devops vault secrets s github personal-access-token
+  devops vault secrets s AWS_ACCESS_KEY_ID
+  devops vault secrets search --interactive
+  devops vault secrets s -i aws
+  devops vault secrets search --verbose aws dev iam-access-key
+  devops vault secrets search --name aws-dev --tag iam-access-key
+  devops vault secrets search --name aws-dev --tag session-token
+  devops vault secrets search --source global bitwarden
+  devops vault secrets s --source g bitwarden
+  devops vault secrets s --all-matches --source g cloudf
+  devops vault secrets search mail --all-matches --json
+  devops vault secrets search --source both github token
+  devops vault secrets s --source b github token
+  devops vault secrets s -i -P github
+  devops vault secrets search --path ~/private/team-secrets.json aws dev
 
 Terms are case-insensitive substring matches. All terms must match somewhere across login
 name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.
@@ -296,7 +296,7 @@ def edit(
 
 def get_app() -> typer.Typer:
     app = typer.Typer(
-        name="secrets", help=f"🔐 <S> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False,
+        name="secrets", help=f"🔐 <k> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.command("search", no_args_is_help=True, help=f"🔎 <s> {SECRETS_SEARCH_HELP}", epilog=SECRETS_SEARCH_EPILOG)(search)

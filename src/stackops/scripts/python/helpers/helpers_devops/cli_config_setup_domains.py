@@ -132,7 +132,7 @@ def setup_secrets() -> None:
         typer.echo(
             f"Global secrets and schema are ready: {SECRETS_DOFILE}\n"
             "Add another login with:\n"
-            "  devops config secrets add --source global"
+            "  devops vault secrets add --source global"
         )
         return
 

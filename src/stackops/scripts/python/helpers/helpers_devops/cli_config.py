@@ -374,7 +374,6 @@ def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all",
 
 
 def get_app() -> typer.Typer:
-    import stackops.scripts.python.helpers.helpers_devops.cli_config_secrets as secrets_module
     import stackops.scripts.python.helpers.helpers_devops.cli_config_setup as setup_module
 
     from stackops.profile import create_links_export
@@ -384,7 +383,7 @@ def get_app() -> typer.Typer:
     config_apps = typer.Typer(
         cls=ordered_group((
             "sync", "register", "edit", "export-dotfiles", "import-dotfiles", "terminal",
-            "interactive", "copy-assets", "secrets", "setup", "dump",
+            "interactive", "copy-assets", "setup", "dump",
         )),
         help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
@@ -417,18 +416,6 @@ def get_app() -> typer.Typer:
 
     config_apps.command("copy-assets", no_args_is_help=True, help="📋 <c> Copy asset files from library to machine.", hidden=False)(copy_assets)
     config_apps.command("c", no_args_is_help=True, help="Copy asset files from library to machine.", hidden=True)(copy_assets)
-
-    config_apps.add_typer(
-        secrets_module.get_app(),
-        name="secrets",
-        help=f"🔐 <S> {secrets_module.SECRETS_HELP}",
-    )
-    config_apps.add_typer(
-        secrets_module.get_app(),
-        name="S",
-        help=secrets_module.SECRETS_HELP,
-        hidden=True,
-    )
 
     config_apps.add_typer(setup_module.get_app(), name="setup", help=f"🧭 <u> {setup_module.SETUP_HELP}")
     config_apps.add_typer(setup_module.get_app(), name="u", help=setup_module.SETUP_HELP, hidden=True)
