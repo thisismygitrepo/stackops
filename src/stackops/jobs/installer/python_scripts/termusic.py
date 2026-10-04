@@ -13,10 +13,12 @@ import stackops.utils.path_core as path_core
 from rich.console import Console
 from rich.panel import Panel
 
+from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 from stackops.utils.installer_utils.linux_package_manager import LinuxPackageManager, build_package_install_command, detect_current_linux_distribution
+from stackops.utils.meta import print_code
 from stackops.utils.path_core import delete_path
 from stackops.utils.schemas.installer.installer_types import InstallerData, get_os_name
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
@@ -105,7 +107,9 @@ def _sudo_prefix() -> list[str]:
 
 
 def _run_command(command: list[str], console: Console, description: str, *, required: bool) -> bool:
-    console.print(Panel(shlex.join(command), title=description, expand=False))
+    console.print(description)
+    if IS_REPO_DEVELOPER:
+        print_code(code=shlex.join(command), lexer="shell", desc=description)
     result = subprocess.run(command, text=True, check=False)
     if result.returncode == 0:
         return True

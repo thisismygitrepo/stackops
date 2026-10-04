@@ -4,6 +4,7 @@ import platform
 import tomllib
 from pathlib import Path
 from stackops.utils.accessories import randstr
+from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.options_utils.options import choose_from_options
 
 
@@ -91,7 +92,8 @@ def get_command_streamlit(choice_file: Path) -> str:
     # from stackops.utils.code import run_shell_script
     # run_shell_script(script)
     from stackops.utils.meta import print_code
-    print_code(code=script, lexer="shell", desc="Streamlit QR Codes and URLs")
+    if IS_REPO_DEVELOPER:
+        print_code(code=script, lexer="shell", desc="Streamlit QR Codes and URLs")
 
     numbered_access_urls = "\n".join(f"{index}- {url}" for index, url in enumerate(access_urls, start=1))
     message = f"Streamlit access URLs (availability checked at launch):\n{numbered_access_urls}"

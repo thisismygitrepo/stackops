@@ -11,6 +11,7 @@ from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_environment 
     build_uv_run_shell_prefix,
     resolve_fire_environment,
 )
+from stackops.utils.constants import IS_REPO_DEVELOPER
 
 RandStrFunc = Callable[[int], str]
 type SupportedPlatformSystem = Literal["Windows", "Linux", "Darwin"]
@@ -226,10 +227,14 @@ def _create_import_script(
         in_global=True,
         import_module=False,
     )
-    code_printing = lambda_to_python_script(
-        lambda: print_code(code=import_code_robust, lexer="python", desc="import as module code"), in_global=True, import_module=False
-    )
-    print(f"🧩 Preparing import code for module import:\n{import_code}")
+    code_printing = ""
+    if IS_REPO_DEVELOPER:
+        code_printing = lambda_to_python_script(
+            lambda: print_code(code=import_code_robust, lexer="python", desc="import as module code"), in_global=True, import_module=False
+        )
+    print("🧩 Preparing import code for module import")
+    if IS_REPO_DEVELOPER:
+        print_code(code=import_code, lexer="python", desc="Module import")
     if choice_function is not None:
         calling = f"""res = {choice_function}({("**" + str(kwargs_dict)) if kwargs_dict else ""})"""
     else:

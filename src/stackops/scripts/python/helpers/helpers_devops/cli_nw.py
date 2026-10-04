@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 import typer
 
 from stackops.utils.cli_utils.ordered_group import ordered_group
+from stackops.utils.constants import IS_REPO_DEVELOPER
 
 
 def show_address() -> None:
@@ -112,7 +113,8 @@ def vscode_share(
         from stackops.scripts.python.helpers.helpers_devops.vscode_tunnel_auth import print_vscode_tunnel_credential_context
 
         print_vscode_tunnel_credential_context(cli_data_dir)
-    print_code(cmd, lexer="bash", desc=desc)
+    if IS_REPO_DEVELOPER:
+        print_code(cmd, lexer="bash", desc=desc)
     if action_normalized == "share-local":
         from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls
 

@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from stackops.utils.code import run_shell_script
+from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import LinuxDistribution, detect_current_linux_distribution
 from stackops.utils.meta import print_code
@@ -178,7 +179,8 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
             console.print(Panel.fit(error_msg, title="❌ Error", subtitle="⚠️ Unsupported platform", border_style="red", box=box.ROUNDED))
             raise NotImplementedError(error_msg)
 
-    print_code(code=program, lexer="shell", desc="Installation Script Preview")
+    if IS_REPO_DEVELOPER:
+        print_code(code=program, lexer="shell", desc="Installation Script Preview")
     result = run_shell_script(program, display_script=True, clean_env=False)
     if result.returncode != 0:
         console.print(f"❌ Docker installation failed with exit code {result.returncode}", style="bold red")

@@ -7,6 +7,7 @@ from typing import Literal
 from rich.console import Console
 from rich.panel import Panel
 
+from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.source_of_truth import read_stackops_config_string
 from stackops.utils.meta import print_code
 from stackops.utils.options_utils.options import choose_cloud_interactively
@@ -320,7 +321,8 @@ def main_backup_retrieve(
         _run_cloud_copy(source_path=copy_source, target_path=copy_target, item=copy_item, pwd=pwd)
     if program.strip():
         script_desc = f"{direction} post-processing script"
-        print_code(code=program, lexer="shell", desc=script_desc)
+        if IS_REPO_DEVELOPER:
+            print_code(code=program, lexer="shell", desc=script_desc)
         from stackops.utils.code import run_shell_script
         run_shell_script(program, display_script=True, clean_env=False)
     if link_download_count:

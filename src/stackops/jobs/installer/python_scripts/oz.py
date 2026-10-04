@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, assert_never
 from rich.console import Console
 
 from stackops.utils.code import run_shell_script
+from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import (
     LinuxDistribution,
@@ -92,7 +93,8 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     program = _build_linux_install_script(distribution=distribution)
     console = Console()
     console.print(f"Installing Oz on {distribution.distribution_id} with {distribution.package_manager}.")
-    print_code(code=program, lexer="shell", desc="Oz installation")
+    if IS_REPO_DEVELOPER:
+        print_code(code=program, lexer="shell", desc="Oz installation")
     result = run_shell_script(program, display_script=True, clean_env=False)
     if result.returncode != 0:
         raise RuntimeError(f"Oz installation failed with exit code {result.returncode}")

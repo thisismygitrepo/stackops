@@ -2,6 +2,8 @@ from typing import Annotated, Literal
 
 import typer
 
+from stackops.utils.constants import IS_REPO_DEVELOPER
+
 
 def switch_public_ip_address(
     wait_seconds: Annotated[float, typer.Option(..., "--wait", "-w", min=0.0, help="Seconds to wait between steps")] = 2.0,
@@ -66,8 +68,9 @@ sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service instal
     from stackops.utils.code import exit_then_run_shell_script
     from stackops.utils.meta import print_code
 
-    print_code(code, lexer="bash", desc="code to achieve the goal")
-    yes = typer.confirm("Do you want to run the above commands now?", default=False)
+    if IS_REPO_DEVELOPER:
+        print_code(code, lexer="bash", desc="code to achieve the goal")
+    yes = typer.confirm("Reset the Cloudflare tunnel now?", default=False)
     if yes:
         exit_then_run_shell_script(code)
 
@@ -102,8 +105,9 @@ sudo warp-cli connect
     from stackops.utils.code import exit_then_run_shell_script
     from stackops.utils.meta import print_code
 
-    print_code(code, lexer="bash", desc="code to achieve the goal")
-    yes = typer.confirm("Do you want to run the above commands now?", default=False)
+    if IS_REPO_DEVELOPER:
+        print_code(code, lexer="bash", desc="code to achieve the goal")
+    yes = typer.confirm("Add the IP exclusions and restart WARP now?", default=False)
     if yes:
         exit_then_run_shell_script(code)
 

@@ -8,6 +8,7 @@ from rich.panel import Panel
 
 import stackops.jobs.installer.linux_scripts as linux_scripts
 import stackops.jobs.installer.powershell_scripts as powershell_scripts
+from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import (
     LinuxDistribution,
@@ -155,7 +156,8 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     from stackops.utils.code import run_shell_script
     from stackops.utils.meta import print_code
 
-    print_code(code=program, lexer="shell", desc="Installation Script Preview")
+    if IS_REPO_DEVELOPER:
+        print_code(code=program, lexer="shell", desc="Installation Script Preview")
     result = run_shell_script(program, display_script=True, clean_env=False)
     if result.returncode != 0:
         raise RuntimeError(f"ABC installation failed with exit code {result.returncode}")

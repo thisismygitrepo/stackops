@@ -9,6 +9,8 @@ from typing import Annotated, TYPE_CHECKING
 
 import typer
 
+from stackops.utils.constants import IS_REPO_DEVELOPER
+
 if TYPE_CHECKING:
     from stackops.utils.cli_utils.terminal import Response
 
@@ -121,7 +123,8 @@ def start_slidev(directory: str | None, jupyter_file: str | None) -> None:
     subprocess.run(program, shell=True, cwd=slidev_repo)
     from stackops.utils.meta import print_code
 
-    print_code(code=program, lexer="bash", desc="Run the following command to start the presentation")
+    if IS_REPO_DEVELOPER:
+        print_code(code=program, lexer="bash", desc="Run the following command to start the presentation")
 
 
 def main(

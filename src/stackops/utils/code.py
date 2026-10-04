@@ -5,6 +5,7 @@ import subprocess
 from typing import Literal, cast
 
 from stackops.utils.accessories import randstr
+from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.meta import lambda_to_python_script, print_code
 
 
@@ -45,6 +46,7 @@ def get_uv_command_executing_python_file(python_file: str, uv_with: list[str] | 
 
 def get_uv_command_executing_python_script(python_script: str, uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "",
                                            prepend_print: bool = True, ) -> tuple[str, Path]:
+    prepend_print = prepend_print and IS_REPO_DEVELOPER
     python_file = Path.home().joinpath("tmp_results", "tmp_scripts", "python", randstr() + ".py")
     python_file.parent.mkdir(parents=True, exist_ok=True)
     if prepend_print:
@@ -92,13 +94,15 @@ def run_python_script_in_marimo(py_script: str, uv_project_with: str | None) -> 
         requirements = f"""--with "marimo" --project {uv_project_with} """
     else:
         requirements = """--with "marimo" """
+    preview_command = "bat marimo_nb.py" if IS_REPO_DEVELOPER else ""
     fire_line = f"""
 cd {tmp_dir}
 uv run {requirements} marimo convert {pyfile.name} -o marimo_nb.py
-bat marimo_nb.py
+{preview_command}
 uv run  {requirements} marimo edit --host 0.0.0.0 marimo_nb.py
 """
-    print_code(code=py_script, desc="Generated Marimo DB Explore Script", lexer="python")
+    if IS_REPO_DEVELOPER:
+        print_code(code=py_script, desc="Generated Marimo DB Explore Script", lexer="python")
     exit_then_run_shell_script(fire_line)
 
 
@@ -131,12 +135,10 @@ def run_shell_script(script: str, display_script: bool, clean_env: bool) -> subp
     with tempfile.NamedTemporaryFile(mode='w', suffix=suffix, delete=False, encoding='utf-8') as temp_file:
         temp_file.write(script)
         temp_shell_script_path = Path(temp_file.name)
-    from rich.panel import Panel
-    from rich.syntax import Syntax
     from rich.console import Console
     console = Console()
-    if display_script:
-        console.print(Panel(Syntax(code=script, lexer=lexer), title=f"📄 shell script @ {temp_shell_script_path}", subtitle="shell script being executed"), style="bold red")
+    if display_script and IS_REPO_DEVELOPER:
+        print_code(code=script, lexer=lexer, desc=f"""shell script @ {temp_shell_script_path}""", subtitle="shell script being executed")
     proc = run_shell_file(script_path=str(temp_shell_script_path), clean_env=clean_env)
     if proc.returncode == 130:
         console.print(f"❓  [yellow]Script execution cancelled:[/yellow] [blue]{temp_shell_script_path}[/blue]")
@@ -172,7 +174,8 @@ def exit_then_run_shell_script(script: str, strict: bool = False) -> None:
             manual_script_path = Path.home().joinpath("tmp_results", "tmp_scripts", "manual_run", f"manual_script_{randstr()}{suffix}")
             manual_script_path.parent.mkdir(parents=True, exist_ok=True)
             manual_script_path.write_text(script, encoding="utf-8")
-            print_code(code=script, lexer=lexer, desc="script to run manually")
+            if IS_REPO_DEVELOPER:
+                print_code(code=script, lexer=lexer, desc="script to run manually")
             console.print("[bold yellow]⚠️  STRICT MODE:[/bold yellow] [cyan]Please run the script manually via your shell by executing:[/cyan]")
             console.print(f"[green]{str(manual_script_path)}[/green]")
             console.print("[red]❌ OP_PROGRAM_PATH environment variable is not set in strict mode.[/red]")
@@ -185,7 +188,8 @@ def exit_then_run_shell_script(script: str, strict: bool = False) -> None:
         op_program_path.write_text(script, encoding="utf-8")
         console.print("[cyan]🚀 Handing over to shell script runner via OP_PROGRAM_PATH:[/cyan]")
         console.print(f"[bold green]{str(op_program_path)}[/bold green]")
-        print_code(code=script, lexer="shell", desc="script to run via OP_PROGRAM_PATH")
+        if IS_REPO_DEVELOPER:
+            print_code(code=script, lexer="shell", desc="script to run via OP_PROGRAM_PATH")
         exit_code = 0
     else:
         if op_program_path_raw is not None and exists:

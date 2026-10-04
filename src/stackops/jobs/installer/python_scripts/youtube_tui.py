@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
+from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.installer_utils.installer_cli import install_if_missing
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import (
@@ -20,6 +21,7 @@ from stackops.utils.installer_utils.linux_package_manager import (
     build_package_install_command,
     detect_current_linux_distribution,
 )
+from stackops.utils.meta import print_code
 from stackops.utils.schemas.installer.installer_types import InstallerData, get_os_name
 from stackops.utils.source_of_truth import LINUX_INSTALL_PATH
 
@@ -56,7 +58,9 @@ def _format_command(command: Sequence[str] | str) -> str:
 def _run(
     command: Sequence[str] | str, console: Console, description: str, *, required: bool, env: dict[str, str] | None = None, shell: bool = False
 ) -> bool:
-    console.print(Panel(_format_command(command), title=description, expand=False))
+    console.print(description)
+    if IS_REPO_DEVELOPER:
+        print_code(code=_format_command(command), lexer="shell", desc=description)
     result = subprocess.run(command, shell=shell, text=True, check=False, env=env)
     if result.returncode == 0:
         return True
