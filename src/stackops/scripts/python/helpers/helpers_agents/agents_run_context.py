@@ -69,8 +69,8 @@ def _resolve_named_yaml_entry(raw_data: Any, entry_name: str, *, entry_label: st
     return _format_prompt_entry(cursor)
 
 
-def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | None) -> dict[str, str]:
-    candidates: dict[str, str] = {}
+def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | None) -> dict[str, tuple[str | None, str]]:
+    candidates: dict[str, tuple[str | None, str]] = {}
     if not isinstance(raw_data, dict):
         return candidates
 
@@ -86,7 +86,7 @@ def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | No
             if any(not isinstance(child, dict) for child in value.values()):
                 # Entry object with metadata fields (prompt/description/...): its children are metadata, not entries.
                 if group is None or value.get("group") == group:
-                    candidates[dotted_key] = _format_prompt_entry(value)
+                    candidates[dotted_key] = (value.get("group"), _format_prompt_entry(value))
                 continue
             # Namespace containing only nested entries: recurse.
             nested_candidates = collect_named_yaml_candidates(raw_data=value, prefix=dotted_key, group=group)
@@ -95,7 +95,7 @@ def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | No
             continue
 
         if group is None:
-            candidates[dotted_key] = _format_prompt_entry(value)
+            candidates[dotted_key] = (None, _format_prompt_entry(value))
 
     return candidates
 
@@ -109,19 +109,13 @@ def build_named_prompt_selection_maps(
     *,
     group: str | None,
 ) -> tuple[dict[str, str], dict[str, str]]:
-    candidate_name_counts: dict[str, int] = {}
-    for _, _, yaml_data in yaml_data_by_location:
-        for candidate_name in collect_named_yaml_candidates(raw_data=yaml_data, prefix="", group=group):
-            candidate_name_counts[candidate_name] = candidate_name_counts.get(candidate_name, 0) + 1
-
     preview_map: dict[str, str] = {}
     value_map: dict[str, str] = {}
     for location_name, yaml_path, yaml_data in yaml_data_by_location:
         entry_candidates = collect_named_yaml_candidates(raw_data=yaml_data, prefix="", group=group)
-        for candidate_name, candidate_preview in entry_candidates.items():
-            label = candidate_name
-            if candidate_name_counts[candidate_name] > 1:
-                label = f"{candidate_name}@{location_name}"
+        for candidate_name, (candidate_group, candidate_preview) in entry_candidates.items():
+            group_label = candidate_group if candidate_group is not None else "(ungrouped)"
+            label = f"""{location_name}:{group_label}:{candidate_name}"""
             preview_map[label] = _preview_prompt_entry_from_path(preview=candidate_preview, yaml_path=yaml_path)
             value_map[label] = candidate_preview
     return preview_map, value_map
