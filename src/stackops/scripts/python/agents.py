@@ -553,7 +553,13 @@ def add_skill(
     skill_name: Annotated[
         str | None,
         typer.Argument(
-            help="Name(s) of the skills to add, comma-separated. If omitted without --reference, opens an interactive multi-select picker."
+            help="Name(s) of the skills to add, comma-separated. If omitted without --reference, opens an interactive group:name multi-select picker."
+        ),
+    ] = None,
+    group: Annotated[
+        str | None,
+        typer.Option(
+            "--group", "-g", help="Filter skills by exact group, including interactive choices and reference output."
         ),
     ] = None,
     agent: Annotated[
@@ -596,6 +602,7 @@ def add_skill(
 
         return_code = impl(
             skill_name=skill_name,
+            group=group,
             agent=agent,
             scope=scope,
             directory=directory,
