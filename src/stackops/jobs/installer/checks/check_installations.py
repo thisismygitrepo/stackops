@@ -7,6 +7,7 @@ It also provides functionality to download and install pre-checked applications.
 """
 
 import csv
+from contextlib import closing
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
@@ -15,6 +16,7 @@ from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
 import stackops.utils.path_core as path_core
+from stackops.jobs.installer.checks.constants import DEFAULT_APPS_PER_KEY
 from stackops.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH, upload_app
 from stackops.jobs.installer.checks.report_utils import (
     APP_METADATA_KEYS,
@@ -26,7 +28,10 @@ from stackops.jobs.installer.checks.report_utils import (
     build_latest_scan_panel,
     build_summary_group,
 )
-from stackops.jobs.installer.checks.vt_utils import ScanResult, ScanSummary, get_vt_client, scan_file
+from stackops.jobs.installer.checks.vt_display import build_vt_parallelism_panel
+from stackops.jobs.installer.checks.vt_utils import ScanResult, ScanSummary
+from stackops.jobs.installer.checks.vt_workers import scan_files_with_vt
+from stackops.secrets.readers import read_virus_total_api_keys
 from stackops.utils.installer_utils.installer_runner import get_installed_cli_apps
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
 
@@ -133,65 +138,49 @@ def _extract_app_data(scan_records: list[ScannedAppRecord]) -> list[AppData]:
     return [scan_record["app_data"] for scan_record in scan_records]
 
 
-def scan_apps_with_vt(apps_to_scan: list[tuple[Path, str | None]]) -> list[ScannedAppRecord]:
-    scan_records: list[ScannedAppRecord] = []
+def scan_apps_with_vt(apps_to_scan: list[tuple[Path, str | None]], apps_per_key: int) -> list[ScannedAppRecord]:
     if not apps_to_scan:
-        return scan_records
-    try:
-        progress = Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            console=console,
-        )
-        scan_task = progress.add_task("[cyan]Scanning apps...", total=len(apps_to_scan))
-        last_scanned: AppData | None = None
-        with Live(_build_scan_progress_renderable(progress, last_scanned, 0, len(apps_to_scan)), console=console, refresh_per_second=8) as live:
-            progress.start()
-            try:
-                with get_vt_client() as client:
-                    for app_path, version in apps_to_scan:
-                        progress.update(scan_task, description=f"Scanning {app_path.name}...")
-                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(scan_records), len(apps_to_scan)))
-                        scan_summary, scan_results = scan_file(app_path, client, progress, scan_task)
-                        progress.update(scan_task, description=f"Uploading {app_path.name}...")
-                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(scan_records), len(apps_to_scan)))
-                        app_url = upload_app(app_path) or ""
-                        scan_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-                        scan_record = build_scan_record(
-                            app_path=app_path,
-                            version=version,
-                            scan_time=scan_time,
-                            app_url=app_url,
-                            scan_summary=scan_summary,
-                            scan_results=scan_results,
-                            fallback_notes="VirusTotal scan failed or returned no summary.",
-                        )
-                        last_scanned = scan_record["app_data"]
-                        scan_records.append(scan_record)
-                        progress.advance(scan_task)
-                        live.update(_build_scan_progress_renderable(progress, last_scanned, len(scan_records), len(apps_to_scan)))
-            finally:
-                progress.stop()
-    except FileNotFoundError as e:
-        console.print(f"[bold red]{e}[/bold red]")
-        console.print("[yellow]Skipping scanning due to missing credentials.[/yellow]")
-        for app_path, version in apps_to_scan:
-            scan_records.append(
-                build_scan_record(
-                    app_path=app_path,
-                    version=version,
+        return []
+    credentials = read_virus_total_api_keys()
+    records_by_index: dict[int, ScannedAppRecord] = {}
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        console=console,
+    )
+    worker_count = min(len(credentials) * apps_per_key, len(apps_to_scan))
+    console.print(build_vt_parallelism_panel(api_key_count=len(credentials), worker_count=worker_count, apps_per_key=apps_per_key))
+    scan_task = progress.add_task(f"[cyan]Scanning with {worker_count} VirusTotal workers...", total=len(apps_to_scan))
+    last_scanned: AppData | None = None
+    with (
+        Live(_build_scan_progress_renderable(progress, last_scanned, 0, len(apps_to_scan)), console=console, refresh_per_second=8) as live,
+        closing(scan_files_with_vt(apps_to_scan=apps_to_scan, credentials=credentials, apps_per_key=apps_per_key)) as scanned_files,
+    ):
+        progress.start()
+        try:
+            for scanned_file in scanned_files:
+                progress.update(scan_task, description=f"Uploading {scanned_file.path.name}...")
+                live.update(_build_scan_progress_renderable(progress, last_scanned, len(records_by_index), len(apps_to_scan)))
+                app_url = upload_app(scanned_file.path) or ""
+                scan_record = build_scan_record(
+                    app_path=scanned_file.path,
+                    version=scanned_file.version,
                     scan_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    app_url="",
-                    scan_summary=None,
-                    scan_results=[],
-                    fallback_notes="VirusTotal credentials missing.",
+                    app_url=app_url,
+                    scan_summary=scanned_file.summary,
+                    scan_results=scanned_file.results,
+                    fallback_notes="VirusTotal scan failed or returned no summary.",
                 )
-            )
-    except Exception as e:
-        console.print(f"[bold red]An unexpected error occurred during scanning: {e}[/bold red]")
-    return scan_records
+                last_scanned = scan_record["app_data"]
+                records_by_index[scanned_file.index] = scan_record
+                progress.advance(scan_task)
+                progress.update(scan_task, description=f"[cyan]Scanning with {worker_count} VirusTotal workers...")
+                live.update(_build_scan_progress_renderable(progress, last_scanned, len(records_by_index), len(apps_to_scan)))
+        finally:
+            progress.stop()
+    return [records_by_index[index] for index in range(len(apps_to_scan))]
 
 
 def write_reports(scan_records: list[ScannedAppRecord]) -> tuple[Path, Path]:
@@ -213,11 +202,11 @@ def write_reports(scan_records: list[ScannedAppRecord]) -> tuple[Path, Path]:
     return APP_METADATA_PATH, ENGINE_RESULTS_PATH
 
 
-def scan_installed_apps(app_names: list[str] | None, write_reports_to_repo: bool) -> list[AppData]:
+def scan_installed_apps(app_names: list[str] | None, write_reports_to_repo: bool, apps_per_key: int) -> list[AppData]:
     console.rule("[bold blue]StackOps Installation Checker[/bold blue]")
     apps_to_scan = collect_apps_to_scan(app_names)
     console.print(f"[green]Found {len(apps_to_scan)} applications to check.[/green]")
-    scan_records = scan_apps_with_vt(apps_to_scan)
+    scan_records = scan_apps_with_vt(apps_to_scan, apps_per_key=apps_per_key)
     app_data_list = _extract_app_data(scan_records)
     if app_data_list:
         console.print(build_summary_group(app_data_list))
@@ -230,12 +219,12 @@ def scan_installed_apps(app_names: list[str] | None, write_reports_to_repo: bool
     return app_data_list
 
 
-def scan_and_write_reports(app_names: list[str] | None) -> list[AppData]:
-    return scan_installed_apps(app_names, write_reports_to_repo=True)
+def scan_and_write_reports(app_names: list[str] | None, apps_per_key: int) -> list[AppData]:
+    return scan_installed_apps(app_names, write_reports_to_repo=True, apps_per_key=apps_per_key)
 
 
 def main() -> None:
-    scan_and_write_reports(None)
+    scan_and_write_reports(app_names=None, apps_per_key=DEFAULT_APPS_PER_KEY)
 
 
 if __name__ == "__main__":

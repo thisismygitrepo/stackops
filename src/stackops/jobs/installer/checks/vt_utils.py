@@ -7,13 +7,13 @@ This module provides functionality to interact with VirusTotal API.
 
 import time
 from collections.abc import Iterable, Mapping
+from contextlib import nullcontext
 import io
 from pathlib import Path
+from threading import Event, Lock
 from typing import TYPE_CHECKING, TypedDict
 
 from rich.progress import Progress, TaskID
-
-from stackops.secrets.readers import read_virus_total_api_key
 
 if TYPE_CHECKING:
     import vt
@@ -44,11 +44,10 @@ class ScanSummary(TypedDict):
 VERDICT_CATEGORIES: tuple[str, ...] = ("malicious", "suspicious", "harmless", "undetected")
 
 
-def get_vt_client() -> "vt.Client":
-    token = read_virus_total_api_key()
+def get_vt_client(api_key: str) -> "vt.Client":
     import vt
 
-    return vt.Client(token)
+    return vt.Client(api_key)
 
 
 def _build_empty_scan_summary(notes: str) -> ScanSummary:
@@ -143,9 +142,13 @@ def summarize_scan_results(results_data: list[ScanResult]) -> ScanSummary:
 def scan_file(
     path: Path,
     client: "vt.Client",
-    progress: Progress | None = None,
-    task_id: TaskID | None = None,
+    progress: Progress | None,
+    task_id: TaskID | None,
+    stop: Event | None,
+    request_lock: Lock | None,
 ) -> tuple[ScanSummary | None, list[ScanResult]]:
+    if stop is not None and stop.is_set():
+        return None, []
     if path.is_dir():
         if progress is not None and task_id is not None:
             progress.console.print(f"[yellow]📁 Skipping directory: {path}[/yellow]")
@@ -153,27 +156,41 @@ def scan_file(
 
     try:
         with io.BytesIO(path.read_bytes()) as file_handle:
-            analysis = client.scan_file(file_handle)
+            with request_lock if request_lock is not None else nullcontext():
+                if stop is not None and stop.is_set():
+                    return None, []
+                analysis = client.scan_file(file_handle)
 
         repeat_counter = 0
         while True:
+            if stop is not None and stop.is_set():
+                return None, []
             try:
-                anal = client.get_object("/analyses/{}", analysis.id)
-                if anal.status == "completed":
-                    break
+                with request_lock if request_lock is not None else nullcontext():
+                    if stop is not None and stop.is_set():
+                        return None, []
+                    anal = client.get_object("/analyses/{}", analysis.id)
+                    if anal.status == "completed":
+                        break
             except Exception as exc:
                 repeat_counter += 1
                 if repeat_counter > 3:
-                    raise ValueError(f"❌ Error scanning {path}: {exc}") from exc
+                    raise ValueError(f"❌ Error scanning {path}: {type(exc).__name__}") from None
                 if progress is not None and task_id is not None:
                     progress.console.print(f"[red]⚠️  Error scanning {path}, retrying... ({repeat_counter}/3)[/red]")
-                time.sleep(5)
+                if stop is None:
+                    time.sleep(5)
+                elif stop.wait(5):
+                    return None, []
 
-            time.sleep(10)
+            if stop is None:
+                time.sleep(10)
+            elif stop.wait(10):
+                return None, []
 
         results_data = _normalize_scan_results(getattr(anal, "results", {}))
         return summarize_scan_results(results_data), results_data
     except Exception as exc:
         if progress is not None and task_id is not None:
-            progress.console.print(f"[bold red]❌ Failed to scan {path}: {exc}[/bold red]")
+            progress.console.print(f"[bold red]❌ Failed to scan {path}: {type(exc).__name__}[/bold red]")
         return None, []

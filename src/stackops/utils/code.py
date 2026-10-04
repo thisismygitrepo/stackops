@@ -1,7 +1,8 @@
 
+from collections.abc import Callable
 from pathlib import Path
 import subprocess
-from typing import Any, Literal, Callable, cast
+from typing import Literal, cast
 
 from stackops.utils.accessories import randstr
 from stackops.utils.meta import lambda_to_python_script, print_code
@@ -56,13 +57,29 @@ def get_uv_command_executing_python_script(python_script: str, uv_with: list[str
     return shell_script, python_file
 
 
-def get_shell_script_running_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "") -> tuple[str, Path]:
-    code = lambda_to_python_script(lmb,
-                                            in_global=True, import_module=False)
-    uv_command, py_file = get_uv_command_executing_python_script(python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)
+def get_shell_script_running_lambda_function(
+    lmb: Callable[[], object], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = ""
+) -> tuple[str, Path]:
+    if uv_project_dir is None:
+        import platform
+        import shlex
+        import sys
+
+        python_argument = "'" + sys.executable.replace("'", "''") + "'" if platform.system() == "Windows" else shlex.quote(sys.executable)
+        uv_run_flags = f"""--python {python_argument} {uv_run_flags}"""
+    code = lambda_to_python_script(lmb, in_global=True, import_module=False)
+    uv_command, py_file = get_uv_command_executing_python_script(
+        python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags
+    )
     return uv_command, py_file
-def run_lambda_function(lmb: Callable[[], Any], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "") -> subprocess.CompletedProcess[bytes]:
-    uv_command, _py_file = get_shell_script_running_lambda_function(lmb=lmb, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags)
+
+
+def run_lambda_function(
+    lmb: Callable[[], object], uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = ""
+) -> subprocess.CompletedProcess[bytes]:
+    uv_command, _py_file = get_shell_script_running_lambda_function(
+        lmb=lmb, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags
+    )
     return run_shell_script(uv_command, display_script=True, clean_env=False)
 
 

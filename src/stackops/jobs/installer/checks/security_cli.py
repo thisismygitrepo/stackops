@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Annotated, Literal
 
 import typer
 
+from stackops.jobs.installer.checks.constants import DEFAULT_APPS_PER_KEY, SCAN_HELP
 from stackops.jobs.installer.checks.security_helper import parse_apps_argument
 
 if TYPE_CHECKING:
@@ -28,17 +29,17 @@ def _resolve_report_view(view: ReportView | None, summarize: bool) -> ReportView
     return "app-summary" if summarize else "engines"
 
 
-def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool) -> None:
+def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, apps_per_key: int) -> None:
     if path_value is not None:
         from pathlib import Path
 
         from stackops.jobs.installer.checks.security_helper import scan_single_path
 
-        scan_single_path(Path(path_value), record)
+        scan_single_path(path=Path(path_value), record=record, apps_per_key=apps_per_key)
     else:
         from stackops.jobs.installer.checks.check_installations import scan_installed_apps
 
-        scan_installed_apps(app_names, write_reports_to_repo=record)
+        scan_installed_apps(app_names, write_reports_to_repo=record, apps_per_key=apps_per_key)
 
 
 def scan(
@@ -46,20 +47,27 @@ def scan(
     path: Annotated[
         Path | None,
         typer.Option(
-            "--path", "-p", help="Optional file path to scan instead of installed apps", exists=True, file_okay=True, dir_okay=False, resolve_path=True
+            "--path",
+            "-p",
+            help="Optional file path to scan instead of installed apps",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            resolve_path=True,
         ),
     ] = None,
     record: Annotated[
         bool | None,
-        typer.Option(
-            "--record",
-            "-r",
-            help="Write scan results to the saved repo reports. Installed-app scans already record by default.",
-        ),
+        typer.Option("--record", "-r", help="Write scan results to the saved repo reports. Installed-app scans already record by default."),
     ] = None,
+    apps_per_key: Annotated[
+        int, typer.Option("--apps-per-key", min=1, help="Maximum concurrent apps per API key; each key makes one API request at a time.")
+    ] = DEFAULT_APPS_PER_KEY,
 ) -> None:
     if apps is not None and path is not None:
         raise typer.BadParameter("Use either APPS or --path, not both.")
+    if apps_per_key < 1:
+        raise typer.BadParameter("Must be at least 1.", param_hint="--apps-per-key")
     app_names = parse_apps_argument(apps)
     path_value = str(path) if path is not None else None
     resolved_record = record if record is not None else path is None
@@ -67,7 +75,7 @@ def scan(
     from stackops.utils.code import run_lambda_function
 
     proc = run_lambda_function(
-        lambda: _run_scan(app_names=app_names, path_value=path_value, record=resolved_record),
+        lambda: _run_scan(app_names=app_names, path_value=path_value, record=resolved_record, apps_per_key=apps_per_key),
         uv_with=["vt-py"],
         uv_project_dir=None,
     )
@@ -148,10 +156,7 @@ def report(
     if resolved_view not in {"apps", "engines"} and format_type != "table":
         raise typer.BadParameter("--format csv is only supported with --view apps or --view engines.")
 
-    from stackops.jobs.installer.checks.security_helper import (
-        load_filtered_report_rows,
-        normalize_app_names,
-    )
+    from stackops.jobs.installer.checks.security_helper import load_filtered_report_rows, normalize_app_names
 
     apps_names = parse_apps_argument(apps)
     normalized_app_names = normalize_app_names(apps_names)
@@ -210,8 +215,8 @@ def get_app() -> typer.Typer:
         context_settings={"help_option_names": ["-h", "--help"]},
     )
 
-    app.command(name="scan", help="<s> Scan installed apps or a single file path with VirusTotal", no_args_is_help=True)(scan)
-    app.command(name="s", help="<s> Scan installed apps or a single file path with VirusTotal", hidden=True, no_args_is_help=True)(scan)
+    app.command(name="scan", help=SCAN_HELP, no_args_is_help=True)(scan)
+    app.command(name="s", help=SCAN_HELP, hidden=True, no_args_is_help=True)(scan)
     app.command(name="list", help="<l> List installed apps, optionally filtered by comma-separated app names")(list_apps)
     app.command(name="l", help="<l> List installed apps, optionally filtered by comma-separated app names", hidden=True)(list_apps)
     app.command(name="upload", help="<u> Upload a local file to cloud storage", no_args_is_help=True)(upload)

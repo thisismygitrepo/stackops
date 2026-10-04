@@ -281,17 +281,23 @@ def build_report_options_text() -> str:
 
 
 
-def scan_single_path(path: Path, record: bool) -> None:
+def scan_single_path(path: Path, record: bool, apps_per_key: int) -> None:
+    from asyncio import Runner
+
     from stackops.jobs.installer.checks.check_installations import build_scan_record, write_reports
+    from stackops.jobs.installer.checks.vt_display import build_vt_parallelism_panel
     from stackops.jobs.installer.checks.vt_utils import get_vt_client, scan_file
+    from stackops.secrets.readers import read_virus_total_api_keys
 
     from rich.console import Console
     import typer
     from datetime import datetime
     console = Console()
     try:
-        with get_vt_client() as client:
-            scan_summary, scan_results = scan_file(path, client)
+        credentials = read_virus_total_api_keys()
+        console.print(build_vt_parallelism_panel(api_key_count=len(credentials), worker_count=1, apps_per_key=apps_per_key))
+        with Runner(), get_vt_client(api_key=credentials[0].api_key) as client:
+            scan_summary, scan_results = scan_file(path=path, client=client, progress=None, task_id=None, stop=None, request_lock=None)
 
     except FileNotFoundError as e:
         console.print(f"[bold red]{e}[/bold red]")
