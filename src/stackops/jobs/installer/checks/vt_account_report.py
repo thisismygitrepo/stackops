@@ -62,7 +62,7 @@ def build_account_report(stats: VirusTotalAccountStats) -> Group:
     return Group(*parts)
 
 
-def write_account_report(stats: VirusTotalAccountStats, path: Path) -> Path:
+def render_account_csv(stats: VirusTotalAccountStats) -> str:
     buffer = StringIO(newline="")
     writer = csv.writer(buffer)
     writer.writerow(("account_name", "requests", "success", "expected", "failed", "in_flight", "retries", "failovers", "disabled_reason", "errors", "expected_codes"))
@@ -82,6 +82,10 @@ def write_account_report(stats: VirusTotalAccountStats, path: Path) -> Path:
                 json.dumps(dict(account.expected_codes), sort_keys=True),
             )
         )
+    return buffer.getvalue()
+
+
+def write_account_report(stats: VirusTotalAccountStats, path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(buffer.getvalue(), encoding="utf-8")
+    path.write_text(render_account_csv(stats), encoding="utf-8")
     return path

@@ -1,3 +1,9 @@
+import platform
+
+from stackops.utils.source_of_truth import CONFIG_ROOT
+
+SECURITY_RECORDS_ROOT = CONFIG_ROOT / "profile" / "records" / platform.system().lower() / "security"
+
 VT_ANALYSIS_TIMEOUT_SECONDS: float = 600.0
 VT_POLL_INTERVAL_SECONDS: float = 15.0
 VT_REQUEST_TIMEOUT_SECONDS: int = 60
@@ -17,5 +23,7 @@ SCAN_HELP: str = (
     """to another available account. --path uses the same retry and account-switching rules. Existing reports are """
     """retrieved by SHA256 with their original analysis date; unknown files are submitted for analysis. """
     """The final report includes request and failure statistics by account name, without API keys. """
-    """Scan failures are reported explicitly and cause a nonzero exit."""
+    """Every scan records a separate run, including file scans; --no-record opts out. Results are saved as files """
+    """finish. Use --all to scan all installed apps, history to list runs, report --run ID to inspect a run, """
+    """and export --run ID --output DIR for CSV files. Scan failures cause a nonzero exit."""
 )

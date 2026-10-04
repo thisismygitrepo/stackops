@@ -312,7 +312,8 @@ def build_latest_scan_panel(last_scanned: AppData | None, completed_count: int, 
     details.add_row("Verdicts", _build_verdicts_cell(last_scanned))
     details.add_row("Breakdown", _build_breakdown_cell(last_scanned))
     details.add_row("Notes", _build_notes_cell(last_scanned["notes"]))
-    details.add_row("Attempted" if _get_row_status(last_scanned) == "failed" else "Scanned", Text(last_scanned["scan_time"], style="dim"))
+    if last_scanned["scan_time"]:
+        details.add_row("VT analyzed (UTC)", Text(last_scanned["scan_time"], style="dim"))
     if last_scanned["app_url"]:
         upload_state = Text("Open uploaded copy", style=Style(color="cyan", underline=True, link=last_scanned["app_url"]))
     elif _get_row_status(last_scanned) == "failed":

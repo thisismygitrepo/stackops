@@ -14,6 +14,7 @@ class ScanSuccess:
     results: list[ScanResult]
     scanned_at: datetime
     source: ScanSource
+    sha256: str
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class ScanFailure:
     stage: ScanStage
     error_type: str
     error_code: str | None
+    sha256: str | None
 
 
 @dataclass(frozen=True)

@@ -5,8 +5,6 @@ Installation Utilities
 This module provides functionality to download and install pre-checked applications.
 """
 
-import csv
-from io import StringIO
 import platform
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -15,21 +13,13 @@ from typing import cast
 import stackops.utils.path_core as path_core
 from rich.console import Console
 
-from stackops.jobs.installer.checks.vt_utils import ScanResult, summarize_scan_results
+from stackops.jobs.installer.checks.scan_history import ScanRun
 from stackops.utils.cloud.default_remote import read_default_rclone_remote
 from stackops.utils.cloud.rclone_wrapper import get_remote_path, to_cloud
-from stackops.utils.source_of_truth import CONFIG_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
-
-# Constants
-APP_METADATA_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_metadata_report.csv")
-ENGINE_RESULTS_PATH = CONFIG_ROOT.joinpath(f"profile/records/{platform.system().lower()}/apps_engine_results_report.csv")
+from stackops.utils.source_of_truth import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 console = Console()
 
-
-def _load_csv_report(path: Path) -> list[dict[str, str]]:
-    csv_text = path.read_text(encoding="utf-8")
-    return list(csv.DictReader(StringIO(csv_text)))
 
 def upload_app(path: Path) -> str | None:
     """Uploads the app to cloud storage and returns the shareable link."""
@@ -116,61 +106,20 @@ def install_cli_app(app_url: str) -> bool:
         console.print(f"[red]Failed to install app from {app_url}: {e}[/red]")
         return False
 
-def load_app_metadata_report() -> list[dict[str, str]]:
-    """Loads the app metadata report from CSV."""
-    if APP_METADATA_PATH.exists():
-        return _load_csv_report(APP_METADATA_PATH)
-    console.print(f"[yellow]Warning: App metadata report not found at {APP_METADATA_PATH}[/yellow]")
-    return []
-
-
-def load_engine_results_report() -> list[dict[str, str]]:
-    """Loads the engine results report from CSV."""
-    if ENGINE_RESULTS_PATH.exists():
-        return _load_csv_report(ENGINE_RESULTS_PATH)
-    console.print(f"[yellow]Warning: Engine results report not found at {ENGINE_RESULTS_PATH}[/yellow]")
-    return []
-
-
-def _build_scan_results_by_app(rows: list[dict[str, str]]) -> dict[str, list[ScanResult]]:
-    scan_results_by_app: dict[str, list[ScanResult]] = {}
-    for row in rows:
-        app_name = (row.get("app_name") or "").strip()
-        engine_name = (row.get("engine_name") or "").strip()
-        if not app_name or not engine_name:
-            continue
-        scan_results_by_app.setdefault(app_name, []).append(
-            {
-                "engine_name": engine_name,
-                "category": (row.get("engine_category") or "").strip(),
-                "result": row.get("engine_result") or None,
-            }
-        )
-    return scan_results_by_app
-
-
-def _is_safe_app_report_row(row: dict[str, str], scan_results_by_app: dict[str, list[ScanResult]]) -> bool:
-    app_name = (row.get("app_name") or "").strip()
-    scan_summary_available = (row.get("scan_summary_available") or "").strip().casefold() == "true"
-    if not app_name or not scan_summary_available:
+def download_safe_apps(name: str, run: ScanRun) -> bool:
+    if run["status"] not in {"completed", "completed_with_errors"}:
+        console.print("[red]Select a finished scan run before installing apps.[/red]")
         return False
-    scan_summary = summarize_scan_results(scan_results_by_app.get(app_name, []))
-    return scan_summary["verdict_engines"] > 0 and scan_summary["flagged_engines"] == 0
-
-
-def download_safe_apps(name: str = "essentials") -> bool:
-    """Downloads and installs safe apps."""
-    data = load_app_metadata_report()
-    if not data:
-        console.print("[red]No app data available to install.[/red]")
-        return False
-
-    scan_results_by_app = _build_scan_results_by_app(load_engine_results_report())
-    safe_apps = [item for item in data if _is_safe_app_report_row(item, scan_results_by_app)]
-    if name == "essentials":
-        apps_to_install = [item["app_url"] for item in safe_apps if item.get("app_url")]
-    else:
-        apps_to_install = [item["app_url"] for item in safe_apps if item.get("app_name") == name and item.get("app_url")]
+    safe_apps = [
+        target["record"]["app_data"] for target in run["targets"]
+        if target["record"] is not None
+        and target["record"]["app_data"]["positive_pct"] == 0.0
+        and target["record"]["app_data"]["verdict_engines"] > 0
+    ]
+    apps_to_install = [
+        item["app_url"] for item in safe_apps
+        if item["app_url"] and (name == "essentials" or item["app_name"].casefold() == name.casefold())
+    ]
 
     if not apps_to_install:
         console.print(f"[yellow]No safe apps found to install for '{name}'.[/yellow]")

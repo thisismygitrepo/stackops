@@ -1,5 +1,5 @@
 from asyncio import Runner
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,7 +34,7 @@ class _PendingFile:
 
 @dataclass(frozen=True)
 class _WorkerFailure:
-    stage: Literal["client creation", "file scan", "client closure"]
+    stage: Literal["client creation", "file scan", "result recording", "client closure"]
     error_type: str
 
 
@@ -53,6 +53,7 @@ def _scan_worker(
     pending_files: Queue[_PendingFile],
     messages: Queue[_WorkerMessage],
     stop: Event,
+    on_result: Callable[[ScannedFile], None],
 ) -> None:
     client: "VtRequestClient | None" = None
     runner = Runner()
@@ -79,9 +80,14 @@ def _scan_worker(
                 case ScanCancelled():
                     break
                 case ScanSuccess() | ScanFailure():
-                    messages.put(
-                        ScannedFile(index=pending_file.index, path=pending_file.path, version=pending_file.version, outcome=outcome)
-                    )
+                    scanned_file = ScannedFile(index=pending_file.index, path=pending_file.path, version=pending_file.version, outcome=outcome)
+                    try:
+                        on_result(scanned_file)
+                    except BaseException as exc:
+                        stop.set()
+                        messages.put(_WorkerFailure(stage="result recording", error_type=type(exc).__name__))
+                        return
+                    messages.put(scanned_file)
                 case _:
                     assert_never(outcome)
             try:
@@ -108,6 +114,7 @@ def scan_files_with_vt(
     credentials: tuple[VirusTotalApiKey, ...],
     concurrency: int | None,
     stats: VirusTotalAccountStats,
+    on_result: Callable[[ScannedFile], None],
 ) -> Generator[ScannedFile, None, None]:
     from stackops.jobs.installer.checks.vt_accounts import VtAccountPool
 
@@ -132,7 +139,7 @@ def scan_files_with_vt(
         for worker_index, initial_file in enumerate(indexed_files[:worker_count]):
             credential_index = worker_index % len(credentials)
             executor.submit(
-                _scan_worker, pool, credential_index, initial_file, pending_files, messages, stop
+                _scan_worker, pool, credential_index, initial_file, pending_files, messages, stop, on_result
             )
         stopped_workers = 0
         processed_files = 0
