@@ -4,16 +4,17 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from queue import Empty, Queue
-from threading import Event, Lock
+from threading import Event
 from typing import TYPE_CHECKING, Literal, assert_never
 
 from stackops.jobs.installer.checks.scan_outcomes import ScanCancelled, ScanFailure, ScanSuccess
+from stackops.jobs.installer.checks.vt_account_stats import VirusTotalAccountStats
 from stackops.jobs.installer.checks.vt_scanner import scan_file
-from stackops.jobs.installer.checks.vt_utils import get_vt_client
 from stackops.secrets.readers import VirusTotalApiKey
 
 if TYPE_CHECKING:
-    import vt
+    from stackops.jobs.installer.checks.vt_accounts import VtAccountPool
+    from stackops.jobs.installer.checks.vt_requests import VtRequestClient
 
 
 @dataclass(frozen=True)
@@ -46,19 +47,21 @@ type _WorkerMessage = ScannedFile | _WorkerFailure | _WorkerStopped
 
 
 def _scan_worker(
-    credential: VirusTotalApiKey,
+    pool: "VtAccountPool",
+    preferred_account_index: int,
     initial_file: _PendingFile,
     pending_files: Queue[_PendingFile],
     messages: Queue[_WorkerMessage],
     stop: Event,
-    request_lock: Lock,
 ) -> None:
-    client: "vt.Client | None" = None
+    client: "VtRequestClient | None" = None
     runner = Runner()
     try:
         try:
+            from stackops.jobs.installer.checks.vt_requests import VtRequestClient
+
             runner.get_loop()
-            client = get_vt_client(api_key=credential.api_key)
+            client = VtRequestClient(pool=pool, preferred_account_index=preferred_account_index, stop=stop)
         except BaseException as exc:
             stop.set()
             messages.put(_WorkerFailure(stage="client creation", error_type=type(exc).__name__))
@@ -67,7 +70,7 @@ def _scan_worker(
         pending_file = initial_file
         while not stop.is_set():
             try:
-                outcome = scan_file(path=pending_file.path, client=client, stop=stop, request_lock=request_lock)
+                outcome = scan_file(path=pending_file.path, client=client, stop=stop, request_lock=None)
             except BaseException as exc:
                 stop.set()
                 messages.put(_WorkerFailure(stage="file scan", error_type=type(exc).__name__))
@@ -103,18 +106,21 @@ def _scan_worker(
 def scan_files_with_vt(
     apps_to_scan: list[tuple[Path, str | None]],
     credentials: tuple[VirusTotalApiKey, ...],
-    apps_per_key: int,
+    concurrency: int | None,
+    stats: VirusTotalAccountStats,
 ) -> Generator[ScannedFile, None, None]:
-    if apps_per_key < 1:
-        raise ValueError("Apps per VirusTotal API key must be at least one.")
+    from stackops.jobs.installer.checks.vt_accounts import VtAccountPool
+
+    if concurrency is not None and concurrency < 1:
+        raise ValueError("VirusTotal scan concurrency must be at least one.")
     if not credentials:
         raise ValueError("At least one VirusTotal API key is required.")
     if not apps_to_scan:
         return
 
     indexed_files = [_PendingFile(index=index, path=path, version=version) for index, (path, version) in enumerate(apps_to_scan)]
-    worker_count = min(len(credentials) * apps_per_key, len(indexed_files))
-    request_locks = tuple(Lock() for _credential in credentials)
+    worker_count = min(len(credentials) if concurrency is None else concurrency, len(indexed_files))
+    pool = VtAccountPool(credentials=credentials, stats=stats)
     pending_files: Queue[_PendingFile] = Queue()
     for pending_file in indexed_files[worker_count:]:
         pending_files.put(pending_file)
@@ -126,7 +132,7 @@ def scan_files_with_vt(
         for worker_index, initial_file in enumerate(indexed_files[:worker_count]):
             credential_index = worker_index % len(credentials)
             executor.submit(
-                _scan_worker, credentials[credential_index], initial_file, pending_files, messages, stop, request_locks[credential_index]
+                _scan_worker, pool, credential_index, initial_file, pending_files, messages, stop
             )
         stopped_workers = 0
         processed_files = 0

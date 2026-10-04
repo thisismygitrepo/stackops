@@ -13,6 +13,7 @@ from stackops.jobs.installer.checks.vt_utils import normalize_scan_results, summ
 
 if TYPE_CHECKING:
     import vt
+    from stackops.jobs.installer.checks.vt_requests import ScanClient
 
 
 def _completed_report(response: "vt.Object", source: ScanSource) -> ScanSuccess | None:
@@ -40,7 +41,7 @@ def _completed_report(response: "vt.Object", source: ScanSource) -> ScanSuccess 
 
 
 def _poll_results(
-    client: "vt.Client",
+    client: "ScanClient",
     object_id: str,
     source: ScanSource,
     initial_response: "vt.Object | None",
@@ -51,6 +52,7 @@ def _poll_results(
 ) -> ScanOutcome:
     import aiohttp
     import vt
+    from stackops.jobs.installer.checks.vt_requests import VtRequestClient
 
     response = initial_response
     endpoint = "/files/{}" if source == "existing_report" else "/analyses/{}"
@@ -62,6 +64,8 @@ def _poll_results(
         stage: ScanStage = "analysis polling"
         try:
             if response is None:
+                if isinstance(client, VtRequestClient):
+                    client.set_request_context(stage=stage, deadline=deadline)
                 with request_lock if request_lock is not None else nullcontext():
                     if stop is not None and stop.is_set():
                         return ScanCancelled()
@@ -76,6 +80,8 @@ def _poll_results(
             if exc.code != "NotAvailableYet" and not (pending_not_found and exc.code == "NotFoundError"):
                 return ScanFailure(stage=stage, error_type=type(exc).__name__, error_code=exc.code)
         except (OSError, ValueError, TypeError, AttributeError, OverflowError, aiohttp.ClientError) as exc:
+            if stop is not None and stop.is_set():
+                return ScanCancelled()
             return ScanFailure(stage=stage, error_type=type(exc).__name__, error_code=None)
         response = None
         wait_seconds = min(VT_POLL_INTERVAL_SECONDS, max(0.0, deadline - time.monotonic()))
@@ -85,11 +91,12 @@ def _poll_results(
             return ScanCancelled()
 
 
-def scan_file(path: Path, client: "vt.Client", stop: Event | None, request_lock: Lock | None) -> ScanOutcome:
+def scan_file(path: Path, client: "ScanClient", stop: Event | None, request_lock: Lock | None) -> ScanOutcome:
     if stop is not None and stop.is_set():
         return ScanCancelled()
     import aiohttp
     import vt
+    from stackops.jobs.installer.checks.vt_requests import VtRequestClient
 
     stage: ScanStage = "file read"
     try:
@@ -98,6 +105,8 @@ def scan_file(path: Path, client: "vt.Client", stop: Event | None, request_lock:
         deadline = time.monotonic() + VT_ANALYSIS_TIMEOUT_SECONDS
         stage = "report lookup"
         try:
+            if isinstance(client, VtRequestClient):
+                client.set_request_context(stage=stage, deadline=deadline)
             with request_lock if request_lock is not None else nullcontext():
                 if stop is not None and stop.is_set():
                     return ScanCancelled()
@@ -112,6 +121,8 @@ def scan_file(path: Path, client: "vt.Client", stop: Event | None, request_lock:
 
         stage = "file upload"
         try:
+            if isinstance(client, VtRequestClient):
+                client.set_request_context(stage=stage, deadline=deadline)
             with BytesIO(file_bytes) as file_handle, request_lock if request_lock is not None else nullcontext():
                 if stop is not None and stop.is_set():
                     return ScanCancelled()
@@ -128,4 +139,6 @@ def scan_file(path: Path, client: "vt.Client", stop: Event | None, request_lock:
     except vt.APIError as exc:
         return ScanFailure(stage=stage, error_type=type(exc).__name__, error_code=exc.code)
     except (OSError, ValueError, TypeError, AttributeError, OverflowError, aiohttp.ClientError) as exc:
+        if stop is not None and stop.is_set():
+            return ScanCancelled()
         return ScanFailure(stage=stage, error_type=type(exc).__name__, error_code=None)

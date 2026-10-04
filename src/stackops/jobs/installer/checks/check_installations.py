@@ -19,7 +19,6 @@ from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
 import stackops.utils.path_core as path_core
-from stackops.jobs.installer.checks.constants import DEFAULT_APPS_PER_KEY
 from stackops.jobs.installer.checks.install_utils import APP_METADATA_PATH, ENGINE_RESULTS_PATH, upload_app
 from stackops.jobs.installer.checks.report_utils import (
     APP_METADATA_KEYS,
@@ -32,9 +31,11 @@ from stackops.jobs.installer.checks.report_utils import (
     build_summary_group,
 )
 from stackops.jobs.installer.checks.scan_outcomes import ScanFailure, ScanSuccess, format_scan_failure
+from stackops.jobs.installer.checks.vt_account_report import build_account_report, write_account_report
+from stackops.jobs.installer.checks.vt_account_stats import VirusTotalAccountStats
 from stackops.jobs.installer.checks.vt_display import build_vt_parallelism_panel
 from stackops.jobs.installer.checks.vt_workers import scan_files_with_vt
-from stackops.secrets.readers import read_virus_total_api_keys
+from stackops.secrets.readers import VirusTotalApiKey, read_virus_total_api_keys
 from stackops.utils.installer_utils.installer_runner import get_installed_cli_apps
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
 
@@ -136,10 +137,14 @@ def _extract_app_data(scan_records: list[ScannedAppRecord]) -> list[AppData]:
     return [scan_record["app_data"] for scan_record in scan_records]
 
 
-def scan_apps_with_vt(apps_to_scan: list[tuple[Path, str | None]], apps_per_key: int) -> list[ScannedAppRecord]:
+def scan_apps_with_vt(
+    apps_to_scan: list[tuple[Path, str | None]],
+    concurrency: int | None,
+    credentials: tuple[VirusTotalApiKey, ...],
+    stats: VirusTotalAccountStats,
+) -> list[ScannedAppRecord]:
     if not apps_to_scan:
         return []
-    credentials = read_virus_total_api_keys()
     records_by_index: dict[int, ScannedAppRecord] = {}
     progress = Progress(
         SpinnerColumn(),
@@ -148,13 +153,13 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[Path, str | None]], apps_per_key:
         TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         console=console,
     )
-    worker_count = min(len(credentials) * apps_per_key, len(apps_to_scan))
-    console.print(build_vt_parallelism_panel(api_key_count=len(credentials), worker_count=worker_count, apps_per_key=apps_per_key))
+    worker_count = min(len(credentials) if concurrency is None else concurrency, len(apps_to_scan))
+    console.print(build_vt_parallelism_panel(account_count=len(credentials), concurrency=worker_count))
     scan_task = progress.add_task(f"[cyan]Processing apps with {worker_count} VirusTotal workers...", total=len(apps_to_scan))
     last_scanned: AppData | None = None
     with (
         Live(_build_scan_progress_renderable(progress, last_scanned, 0, len(apps_to_scan)), console=console, refresh_per_second=8) as live,
-        closing(scan_files_with_vt(apps_to_scan=apps_to_scan, credentials=credentials, apps_per_key=apps_per_key)) as scanned_files,
+        closing(scan_files_with_vt(apps_to_scan=apps_to_scan, credentials=credentials, concurrency=concurrency, stats=stats)) as scanned_files,
     ):
         progress.start()
         try:
@@ -199,13 +204,17 @@ def write_reports(scan_records: list[ScannedAppRecord]) -> tuple[Path, Path]:
     return APP_METADATA_PATH, ENGINE_RESULTS_PATH
 
 
-def scan_installed_apps(app_names: list[str] | None, write_reports_to_repo: bool, apps_per_key: int) -> list[AppData]:
+def scan_installed_apps(app_names: list[str] | None, write_reports_to_repo: bool, concurrency: int | None) -> list[AppData]:
     console.rule("[bold blue]StackOps Installation Checker[/bold blue]")
     apps_to_scan = collect_apps_to_scan(app_names)
     console.print(f"[green]Found {len(apps_to_scan)} applications to check.[/green]")
-    scan_records = scan_apps_with_vt(apps_to_scan, apps_per_key=apps_per_key)
-    app_data_list = _extract_app_data(scan_records)
-    if app_data_list:
+    if not apps_to_scan:
+        return []
+    credentials = read_virus_total_api_keys()
+    stats = VirusTotalAccountStats(tuple(credential.account_name for credential in credentials))
+    try:
+        scan_records = scan_apps_with_vt(apps_to_scan, concurrency=concurrency, credentials=credentials, stats=stats)
+        app_data_list = _extract_app_data(scan_records)
         console.print(build_summary_group(app_data_list))
         if write_reports_to_repo:
             app_metadata_csv_path, engine_csv_path = write_reports(scan_records)
@@ -213,19 +222,24 @@ def scan_installed_apps(app_names: list[str] | None, write_reports_to_repo: bool
             console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
         else:
             console.print("[yellow]Scan results were not saved to the repo reports.[/yellow]")
-    failed_count = sum(app_data["positive_pct"] is None for app_data in app_data_list)
-    if failed_count:
-        console.print(f"[bold red]{failed_count} of {len(app_data_list)} VirusTotal scans failed. See report notes for the errors.[/bold red]")
-        raise typer.Exit(code=1)
-    return app_data_list
+        failed_count = sum(app_data["positive_pct"] is None for app_data in app_data_list)
+        if failed_count:
+            console.print(f"[bold red]{failed_count} of {len(app_data_list)} VirusTotal scans failed. See report notes for the errors.[/bold red]")
+            raise typer.Exit(code=1)
+        return app_data_list
+    finally:
+        console.print(build_account_report(stats))
+        if write_reports_to_repo:
+            report_path = write_account_report(stats, APP_METADATA_PATH.with_name("apps_vt_accounts_report.csv"))
+            console.print(f"[green]VirusTotal account CSV report saved to: {report_path}[/green]")
 
 
-def scan_and_write_reports(app_names: list[str] | None, apps_per_key: int) -> list[AppData]:
-    return scan_installed_apps(app_names, write_reports_to_repo=True, apps_per_key=apps_per_key)
+def scan_and_write_reports(app_names: list[str] | None, concurrency: int | None) -> list[AppData]:
+    return scan_installed_apps(app_names, write_reports_to_repo=True, concurrency=concurrency)
 
 
 def main() -> None:
-    scan_and_write_reports(app_names=None, apps_per_key=DEFAULT_APPS_PER_KEY)
+    scan_and_write_reports(app_names=None, concurrency=None)
 
 
 if __name__ == "__main__":

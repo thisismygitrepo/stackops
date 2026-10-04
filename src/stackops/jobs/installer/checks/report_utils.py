@@ -151,6 +151,24 @@ def _get_row_status(row: AppData) -> RowStatus:
     return "flagged"
 
 
+def app_safety_sort_key(row: AppData) -> tuple[int, float, str, str]:
+    row_status = _get_row_status(row)
+    match row_status:
+        case "failed":
+            priority = 0
+        case "no_verdict":
+            priority = 1
+        case "flagged" | "review":
+            priority = 2
+        case "clean":
+            priority = 3
+        case _:
+            assert_never(row_status)
+    positive_pct = row["positive_pct"]
+    positive_order = -positive_pct if priority == 2 and positive_pct is not None else 0.0
+    return priority, positive_order, row["app_name"].casefold(), row["app_path"]
+
+
 def _build_safety_label(row: AppData) -> str:
     row_status = _get_row_status(row)
     match row_status:
@@ -348,7 +366,7 @@ def _build_rich_table(data: list[AppData]) -> Table:
     table.add_column("Notes", overflow="ellipsis", max_width=44)
     table.add_column("Path", overflow="ellipsis", max_width=36)
 
-    for row in data:
+    for row in sorted(data, key=app_safety_sort_key):
         table.add_row(
             _build_app_name_cell(row["app_name"], row["app_url"]),
             row["version"] or "-",

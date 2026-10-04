@@ -283,15 +283,16 @@ def build_report_options_text() -> str:
 
 
 
-def scan_single_path(path: Path, record: bool, apps_per_key: int) -> None:
-    from asyncio import Runner
+def scan_single_path(path: Path, record: bool, concurrency: int | None) -> None:
+    from contextlib import closing
 
-    from stackops.jobs.installer.checks.check_installations import build_scan_record, write_reports
+    from stackops.jobs.installer.checks.check_installations import APP_METADATA_PATH, build_scan_record, write_reports
     from stackops.jobs.installer.checks.report_utils import build_latest_scan_panel
-    from stackops.jobs.installer.checks.scan_outcomes import ScanCancelled, ScanFailure
+    from stackops.jobs.installer.checks.scan_outcomes import ScanFailure
+    from stackops.jobs.installer.checks.vt_account_report import build_account_report, write_account_report
+    from stackops.jobs.installer.checks.vt_account_stats import VirusTotalAccountStats
     from stackops.jobs.installer.checks.vt_display import build_vt_parallelism_panel
-    from stackops.jobs.installer.checks.vt_scanner import scan_file
-    from stackops.jobs.installer.checks.vt_utils import get_vt_client
+    from stackops.jobs.installer.checks.vt_workers import scan_files_with_vt
     from stackops.secrets.readers import read_virus_total_api_keys
 
     from rich.console import Console
@@ -299,31 +300,29 @@ def scan_single_path(path: Path, record: bool, apps_per_key: int) -> None:
     console = Console()
     try:
         credentials = read_virus_total_api_keys()
-        console.print(build_vt_parallelism_panel(api_key_count=len(credentials), worker_count=1, apps_per_key=apps_per_key))
-        with Runner() as runner:
-            runner.get_loop()
-            with get_vt_client(api_key=credentials[0].api_key) as client:
-                outcome = scan_file(path=path, client=client, stop=None, request_lock=None)
-
     except FileNotFoundError as e:
         console.print(f"[bold red]{e}[/bold red]")
         raise typer.Exit(code=1) from e
-    if isinstance(outcome, ScanCancelled):
-        console.print("[yellow]VirusTotal scan cancelled.[/yellow]")
-        raise typer.Exit(code=1)
-    scan_record = build_scan_record(
-        app_path=path,
-        version=None,
-        app_url="",
-        outcome=outcome,
-    )
-    console.print(build_latest_scan_panel(scan_record["app_data"], completed_count=1, total_count=1))
-    if record:
-        app_metadata_csv_path, engine_csv_path = write_reports([scan_record])
-        console.print(f"[green]App metadata CSV report saved to: {app_metadata_csv_path}[/green]")
-        console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
-    else:
-        console.print("[yellow]Scan results were not saved to the repo reports.[/yellow]")
-    if isinstance(outcome, ScanFailure):
-        console.print("[bold red]1 of 1 VirusTotal scans failed. See the scan notes for the error.[/bold red]")
-        raise typer.Exit(code=1)
+    stats = VirusTotalAccountStats(tuple(credential.account_name for credential in credentials))
+    console.print(build_vt_parallelism_panel(account_count=len(credentials), concurrency=1))
+    try:
+        with closing(scan_files_with_vt(apps_to_scan=[(path, None)], credentials=credentials, concurrency=concurrency, stats=stats)) as scanned_files:
+            scanned_file = next(scanned_files)
+            for _extra_result in scanned_files:
+                raise RuntimeError("VirusTotal single-path scan returned multiple results.")
+        scan_record = build_scan_record(app_path=path, version=None, app_url="", outcome=scanned_file.outcome)
+        console.print(build_latest_scan_panel(scan_record["app_data"], completed_count=1, total_count=1))
+        if record:
+            app_metadata_csv_path, engine_csv_path = write_reports([scan_record])
+            console.print(f"[green]App metadata CSV report saved to: {app_metadata_csv_path}[/green]")
+            console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
+        else:
+            console.print("[yellow]Scan results were not saved to the repo reports.[/yellow]")
+        if isinstance(scanned_file.outcome, ScanFailure):
+            console.print("[bold red]1 of 1 VirusTotal scans failed. See the scan notes for the error.[/bold red]")
+            raise typer.Exit(code=1)
+    finally:
+        console.print(build_account_report(stats))
+        if record:
+            report_path = write_account_report(stats, APP_METADATA_PATH.with_name("apps_vt_accounts_report.csv"))
+            console.print(f"[green]VirusTotal account CSV report saved to: {report_path}[/green]")

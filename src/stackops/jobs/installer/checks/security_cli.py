@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Annotated, Literal
 
 import typer
 
-from stackops.jobs.installer.checks.constants import DEFAULT_APPS_PER_KEY, SCAN_HELP
+from stackops.jobs.installer.checks.constants import SCAN_HELP
 from stackops.jobs.installer.checks.security_helper import parse_apps_argument
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ def _resolve_report_view(view: ReportView | None, summarize: bool) -> ReportView
     return "app-summary" if summarize else "engines"
 
 
-def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, apps_per_key: int) -> None:
+def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, concurrency: int | None) -> None:
     import typer
 
     try:
@@ -38,11 +38,11 @@ def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool,
 
             from stackops.jobs.installer.checks.security_helper import scan_single_path
 
-            scan_single_path(path=Path(path_value), record=record, apps_per_key=apps_per_key)
+            scan_single_path(path=Path(path_value), record=record, concurrency=concurrency)
         else:
             from stackops.jobs.installer.checks.check_installations import scan_installed_apps
 
-            scan_installed_apps(app_names, write_reports_to_repo=record, apps_per_key=apps_per_key)
+            scan_installed_apps(app_names, write_reports_to_repo=record, concurrency=concurrency)
     except typer.Exit as exc:
         raise SystemExit(exc.exit_code) from None
 
@@ -65,14 +65,14 @@ def scan(
         bool | None,
         typer.Option("--record", "-r", help="Write scan results to the saved repo reports. Installed-app scans already record by default."),
     ] = None,
-    apps_per_key: Annotated[
-        int, typer.Option("--apps-per-key", min=1, help="Maximum concurrent apps per API key; each key makes one API request at a time.")
-    ] = DEFAULT_APPS_PER_KEY,
+    concurrency: Annotated[
+        int | None, typer.Option("--concurrency", min=1, help="Maximum files scanned concurrently; defaults to the number of configured accounts.")
+    ] = None,
 ) -> None:
     if apps is not None and path is not None:
         raise typer.BadParameter("Use either APPS or --path, not both.")
-    if apps_per_key < 1:
-        raise typer.BadParameter("Must be at least 1.", param_hint="--apps-per-key")
+    if concurrency is not None and concurrency < 1:
+        raise typer.BadParameter("Must be at least 1.", param_hint="--concurrency")
     app_names = parse_apps_argument(apps)
     path_value = str(path) if path is not None else None
     resolved_record = record if record is not None else path is None
@@ -80,7 +80,7 @@ def scan(
     from stackops.utils.code import run_lambda_function
 
     proc = run_lambda_function(
-        lambda: _run_scan(app_names=app_names, path_value=path_value, record=resolved_record, apps_per_key=apps_per_key),
+        lambda: _run_scan(app_names=app_names, path_value=path_value, record=resolved_record, concurrency=concurrency),
         uv_with=["vt-py"],
         uv_project_dir=None,
     )
