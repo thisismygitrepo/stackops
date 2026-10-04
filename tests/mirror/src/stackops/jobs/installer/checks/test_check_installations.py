@@ -1,12 +1,16 @@
 from collections.abc import Generator
+import csv
+from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
 import re
 
 import pytest
+import typer
 from rich.console import Console
 
 from stackops.jobs.installer.checks import check_installations
+from stackops.jobs.installer.checks.scan_outcomes import ScanFailure, ScanSuccess
 from stackops.jobs.installer.checks.vt_utils import ScanResult, summarize_scan_results
 from stackops.jobs.installer.checks.vt_workers import ScannedFile
 from stackops.secrets.readers import VirusTotalApiKey
@@ -32,8 +36,18 @@ def test_parallel_results_keep_app_metadata_and_input_order(api_key_count: int, 
         assert apps_to_scan == apps
         assert len(credentials) == api_key_count
         assert apps_per_key == 2
-        yield ScannedFile(index=1, path=apps[1][0], version=apps[1][1], summary=summarize_scan_results(beta_results), results=beta_results)
-        yield ScannedFile(index=0, path=apps[0][0], version=apps[0][1], summary=summarize_scan_results(alpha_results), results=alpha_results)
+        for index, results in [(1, beta_results), (0, alpha_results)]:
+            yield ScannedFile(
+                index=index,
+                path=apps[index][0],
+                version=apps[index][1],
+                outcome=ScanSuccess(
+                    summary=summarize_scan_results(results),
+                    results=results,
+                    scanned_at=datetime(2026, 10, 4, 6, 44, tzinfo=UTC),
+                    source="submitted_file",
+                ),
+            )
 
     def upload_dummy_app(path: Path) -> str:
         uploaded.append(path)
@@ -78,3 +92,79 @@ def test_invalid_credentials_fail_the_scan(monkeypatch: pytest.MonkeyPatch) -> N
 
     with pytest.raises(ValueError, match="Invalid dummy credentials"):
         check_installations.scan_apps_with_vt([(Path("alpha"), None)], apps_per_key=1)
+
+
+def test_mixed_scan_saves_errors_and_results_before_failing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    apps = [(Path("alpha"), "1"), (Path("beta"), "2")]
+    credentials = (VirusTotalApiKey(account_name="dummy-account", api_key="dummy-key"),)
+    results: list[ScanResult] = [{"engine_name": "sample-engine", "category": "undetected", "result": None}]
+    uploaded: list[Path] = []
+    output = StringIO()
+    metadata_path = tmp_path / "metadata.csv"
+    engine_path = tmp_path / "engines.csv"
+
+    def collect_dummy_apps(app_names: list[str] | None) -> list[tuple[Path, str | None]]:
+        assert app_names == ["alpha", "beta"]
+        return apps
+
+    def read_dummy_keys() -> tuple[VirusTotalApiKey, ...]:
+        return credentials
+
+    def completed_scans(
+        apps_to_scan: list[tuple[Path, str | None]], credentials: tuple[VirusTotalApiKey, ...], apps_per_key: int
+    ) -> Generator[ScannedFile, None, None]:
+        assert apps_to_scan == apps
+        assert len(credentials) == 1
+        assert apps_per_key == 1
+        yield ScannedFile(
+            index=0,
+            path=apps[0][0],
+            version=apps[0][1],
+            outcome=ScanFailure(stage="report lookup", error_type="APIError", error_code="QuotaExceededError"),
+        )
+        yield ScannedFile(
+            index=1,
+            path=apps[1][0],
+            version=apps[1][1],
+            outcome=ScanSuccess(
+                summary=summarize_scan_results(results),
+                results=results,
+                scanned_at=datetime(2026, 10, 3, 1, 2, tzinfo=UTC),
+                source="existing_report",
+            ),
+        )
+
+    def upload_dummy_app(path: Path) -> str:
+        uploaded.append(path)
+        return f"""https://example.invalid/{path.name}"""
+
+    monkeypatch.setattr(check_installations, "collect_apps_to_scan", collect_dummy_apps)
+    monkeypatch.setattr(check_installations, "read_virus_total_api_keys", read_dummy_keys)
+    monkeypatch.setattr(check_installations, "scan_files_with_vt", completed_scans)
+    monkeypatch.setattr(check_installations, "upload_app", upload_dummy_app)
+    monkeypatch.setattr(check_installations, "APP_METADATA_PATH", metadata_path)
+    monkeypatch.setattr(check_installations, "ENGINE_RESULTS_PATH", engine_path)
+    monkeypatch.setattr(check_installations, "console", Console(file=output, width=220))
+
+    with pytest.raises(typer.Exit) as raised_exit:
+        check_installations.scan_installed_apps(app_names=["alpha", "beta"], write_reports_to_repo=True, apps_per_key=1)
+
+    assert raised_exit.value.exit_code == 1
+    assert uploaded == [Path("beta")]
+    with metadata_path.open(newline="") as metadata_file:
+        metadata_rows = list(csv.DictReader(metadata_file))
+    with engine_path.open(newline="") as engine_file:
+        engine_rows = list(csv.DictReader(engine_file))
+    assert [row["app_name"] for row in metadata_rows] == ["alpha", "beta"]
+    assert metadata_rows[0]["scan_summary_available"] == "False"
+    assert "QuotaExceededError" in metadata_rows[0]["notes"]
+    assert "report lookup" in metadata_rows[0]["notes"]
+    assert metadata_rows[0]["app_url"] == ""
+    assert metadata_rows[1]["scan_time"] == datetime(2026, 10, 3, 1, 2, tzinfo=UTC).astimezone().strftime("%Y-%m-%d %H:%M")
+    assert metadata_rows[1]["notes"].startswith("Existing VirusTotal report. ")
+    assert [row["app_name"] for row in engine_rows] == ["beta"]
+    displayed = output.getvalue()
+    assert "1 of 2 VirusTotal scans failed" in displayed
+    assert "Failed" in displayed
+    assert "Pending" not in displayed
+    assert displayed.index("Engine CSV report saved") < displayed.index("1 of 2 VirusTotal scans failed")

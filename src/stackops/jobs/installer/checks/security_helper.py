@@ -144,7 +144,6 @@ def build_app_data_list(app_rows: Sequence[AppMetadataRow], engine_rows: Sequenc
             app_data["timeout_engines"] = scan_summary["timeout_engines"]
             app_data["failure_engines"] = scan_summary["failure_engines"]
             app_data["other_engines"] = scan_summary["other_engines"]
-            app_data["notes"] = scan_summary["notes"]
         app_data_list.append(app_data)
     return app_data_list
 
@@ -226,9 +225,11 @@ def build_report_stats_lines(app_data_list: Sequence[AppData], app_metadata_path
     review: list[AppData] = []
     flagged: list[AppData] = []
     no_verdict: list[AppData] = []
+    failed: list[AppData] = []
     for row in app_data_list:
         positive_pct = row["positive_pct"]
         if positive_pct is None:
+            failed.append(row)
             continue
         scanned.append(row)
         if row["verdict_engines"] == 0:
@@ -246,6 +247,7 @@ def build_report_stats_lines(app_data_list: Sequence[AppData], app_metadata_path
     return [
         f"Apps in report: {len(app_data_list)}",
         f"Scanned: {len(scanned)}",
+        f"Failed: {len(failed)}",
         f"Clean: {len(clean)}",
         f"Review (<5%): {len(review)}",
         f"Flagged (>=5%): {len(flagged)}",
@@ -285,48 +287,43 @@ def scan_single_path(path: Path, record: bool, apps_per_key: int) -> None:
     from asyncio import Runner
 
     from stackops.jobs.installer.checks.check_installations import build_scan_record, write_reports
+    from stackops.jobs.installer.checks.report_utils import build_latest_scan_panel
+    from stackops.jobs.installer.checks.scan_outcomes import ScanCancelled, ScanFailure
     from stackops.jobs.installer.checks.vt_display import build_vt_parallelism_panel
-    from stackops.jobs.installer.checks.vt_utils import get_vt_client, scan_file
+    from stackops.jobs.installer.checks.vt_scanner import scan_file
+    from stackops.jobs.installer.checks.vt_utils import get_vt_client
     from stackops.secrets.readers import read_virus_total_api_keys
 
     from rich.console import Console
     import typer
-    from datetime import datetime
     console = Console()
     try:
         credentials = read_virus_total_api_keys()
         console.print(build_vt_parallelism_panel(api_key_count=len(credentials), worker_count=1, apps_per_key=apps_per_key))
-        with Runner(), get_vt_client(api_key=credentials[0].api_key) as client:
-            scan_summary, scan_results = scan_file(path=path, client=client, progress=None, task_id=None, stop=None, request_lock=None)
+        with Runner() as runner:
+            runner.get_loop()
+            with get_vt_client(api_key=credentials[0].api_key) as client:
+                outcome = scan_file(path=path, client=client, stop=None, request_lock=None)
 
     except FileNotFoundError as e:
         console.print(f"[bold red]{e}[/bold red]")
         raise typer.Exit(code=1) from e
-    if scan_summary is None:
+    if isinstance(outcome, ScanCancelled):
+        console.print("[yellow]VirusTotal scan cancelled.[/yellow]")
         raise typer.Exit(code=1)
-
-    console.print(
-        f"{path.name}: {scan_summary['flagged_engines']}/{scan_summary['verdict_engines']} flagged "
-        f"({scan_summary['positive_pct']:.1f}%) | "
-        f"M:{scan_summary['malicious_engines']} S:{scan_summary['suspicious_engines']} "
-        f"H:{scan_summary['harmless_engines']} U:{scan_summary['undetected_engines']}"
-    )
-    notes = str(scan_summary["notes"])
-    if notes:
-        console.print(f"Notes: {notes}")
-    if not record:
-        console.print("[yellow]Scan results were not saved to the repo reports.[/yellow]")
-        return
-
     scan_record = build_scan_record(
         app_path=path,
         version=None,
-        scan_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
         app_url="",
-        scan_summary=scan_summary,
-        scan_results=scan_results,
-        fallback_notes="VirusTotal scan failed or returned no summary.",
+        outcome=outcome,
     )
-    app_metadata_csv_path, engine_csv_path = write_reports([scan_record])
-    console.print(f"[green]App metadata CSV report saved to: {app_metadata_csv_path}[/green]")
-    console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
+    console.print(build_latest_scan_panel(scan_record["app_data"], completed_count=1, total_count=1))
+    if record:
+        app_metadata_csv_path, engine_csv_path = write_reports([scan_record])
+        console.print(f"[green]App metadata CSV report saved to: {app_metadata_csv_path}[/green]")
+        console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
+    else:
+        console.print("[yellow]Scan results were not saved to the repo reports.[/yellow]")
+    if isinstance(outcome, ScanFailure):
+        console.print("[bold red]1 of 1 VirusTotal scans failed. See the scan notes for the error.[/bold red]")
+        raise typer.Exit(code=1)

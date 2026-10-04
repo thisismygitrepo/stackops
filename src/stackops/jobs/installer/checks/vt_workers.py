@@ -5,9 +5,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from queue import Empty, Queue
 from threading import Event, Lock
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, assert_never
 
-from stackops.jobs.installer.checks.vt_utils import ScanResult, ScanSummary, get_vt_client, scan_file
+from stackops.jobs.installer.checks.scan_outcomes import ScanCancelled, ScanFailure, ScanSuccess
+from stackops.jobs.installer.checks.vt_scanner import scan_file
+from stackops.jobs.installer.checks.vt_utils import get_vt_client
 from stackops.secrets.readers import VirusTotalApiKey
 
 if TYPE_CHECKING:
@@ -19,8 +21,7 @@ class ScannedFile:
     index: int
     path: Path
     version: str | None
-    summary: ScanSummary | None
-    results: list[ScanResult]
+    outcome: ScanSuccess | ScanFailure
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ class _PendingFile:
 @dataclass(frozen=True)
 class _WorkerFailure:
     stage: Literal["client creation", "file scan", "client closure"]
+    error_type: str
 
 
 @dataclass(frozen=True)
@@ -57,30 +59,28 @@ def _scan_worker(
         try:
             runner.get_loop()
             client = get_vt_client(api_key=credential.api_key)
-        except BaseException:
+        except BaseException as exc:
             stop.set()
-            messages.put(_WorkerFailure(stage="client creation"))
+            messages.put(_WorkerFailure(stage="client creation", error_type=type(exc).__name__))
             return
 
         pending_file = initial_file
         while not stop.is_set():
             try:
-                summary, results = scan_file(
-                    path=pending_file.path, client=client, progress=None, task_id=None, stop=stop, request_lock=request_lock
-                )
-            except BaseException:
+                outcome = scan_file(path=pending_file.path, client=client, stop=stop, request_lock=request_lock)
+            except BaseException as exc:
                 stop.set()
-                messages.put(_WorkerFailure(stage="file scan"))
+                messages.put(_WorkerFailure(stage="file scan", error_type=type(exc).__name__))
                 return
-            messages.put(
-                ScannedFile(
-                    index=pending_file.index,
-                    path=pending_file.path,
-                    version=pending_file.version,
-                    summary=summary,
-                    results=results,
-                )
-            )
+            match outcome:
+                case ScanCancelled():
+                    break
+                case ScanSuccess() | ScanFailure():
+                    messages.put(
+                        ScannedFile(index=pending_file.index, path=pending_file.path, version=pending_file.version, outcome=outcome)
+                    )
+                case _:
+                    assert_never(outcome)
             try:
                 pending_file = pending_files.get_nowait()
             except Empty:
@@ -89,14 +89,14 @@ def _scan_worker(
         if client is not None:
             try:
                 client.close()
-            except BaseException:
+            except BaseException as exc:
                 stop.set()
-                messages.put(_WorkerFailure(stage="client closure"))
+                messages.put(_WorkerFailure(stage="client closure", error_type=type(exc).__name__))
         try:
             runner.close()
-        except BaseException:
+        except BaseException as exc:
             stop.set()
-            messages.put(_WorkerFailure(stage="client closure"))
+            messages.put(_WorkerFailure(stage="client closure", error_type=type(exc).__name__))
         messages.put(_WorkerStopped())
 
 
@@ -129,15 +129,21 @@ def scan_files_with_vt(
                 _scan_worker, credentials[credential_index], initial_file, pending_files, messages, stop, request_locks[credential_index]
             )
         stopped_workers = 0
+        processed_files = 0
         while stopped_workers < worker_count:
             message = messages.get()
             match message:
                 case ScannedFile():
+                    processed_files += 1
                     yield message
                 case _WorkerFailure():
-                    raise RuntimeError(f"""VirusTotal {message.stage} failed.""") from None
+                    raise RuntimeError(f"""VirusTotal {message.stage} failed ({message.error_type}).""") from None
                 case _WorkerStopped():
                     stopped_workers += 1
+                case _:
+                    assert_never(message)
+        if processed_files != len(indexed_files):
+            raise RuntimeError("VirusTotal scanning stopped before all files were processed.")
         completed = True
     finally:
         stop.set()

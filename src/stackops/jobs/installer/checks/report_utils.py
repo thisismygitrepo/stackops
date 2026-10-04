@@ -5,7 +5,7 @@ Report Utilities
 This module provides functionality to generate reports for installed applications.
 """
 
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, TypedDict, assert_never
 
 from rich import box
 from rich.console import Console, Group
@@ -18,7 +18,7 @@ from stackops.jobs.installer.checks.vt_utils import ScanResult
 
 console = Console()
 
-RowStatus: TypeAlias = Literal["pending", "no_verdict", "clean", "review", "flagged"]
+type RowStatus = Literal["failed", "no_verdict", "clean", "review", "flagged"]
 
 APP_METADATA_KEYS: tuple[str, ...] = (
     "app_name",
@@ -97,7 +97,7 @@ class ReportSummary(TypedDict):
     review_apps: int
     flagged_apps: int
     no_verdict_apps: int
-    pending_apps: int
+    failed_apps: int
     total_engines: int
     verdict_engines: int
     flagged_engines: int
@@ -141,7 +141,7 @@ def _build_verdict_ratio(row: AppData) -> str:
 
 def _get_row_status(row: AppData) -> RowStatus:
     if row["positive_pct"] is None:
-        return "pending"
+        return "failed"
     if row["verdict_engines"] == 0:
         return "no_verdict"
     if row["positive_pct"] == 0.0:
@@ -154,8 +154,8 @@ def _get_row_status(row: AppData) -> RowStatus:
 def _build_safety_label(row: AppData) -> str:
     row_status = _get_row_status(row)
     match row_status:
-        case "pending":
-            return "Pending"
+        case "failed":
+            return "Failed"
         case "no_verdict":
             return f"No verdicts ({row['total_engines']} engines)"
         case "clean":
@@ -164,14 +164,14 @@ def _build_safety_label(row: AppData) -> str:
             return f"Review {_build_verdict_ratio(row)} ({row['positive_pct']:.1f}%)"
         case "flagged":
             return f"Flagged {_build_verdict_ratio(row)} ({row['positive_pct']:.1f}%)"
-    raise AssertionError(f"Unhandled row status: {row_status}")
+    assert_never(row_status)
 
 
 def _build_safety_cell(row: AppData) -> Text:
     row_status = _get_row_status(row)
     match row_status:
-        case "pending":
-            return Text(_build_safety_label(row), style="bold yellow")
+        case "failed":
+            return Text(_build_safety_label(row), style="bold red")
         case "no_verdict":
             return Text(_build_safety_label(row), style="bold yellow")
         case "clean":
@@ -180,14 +180,14 @@ def _build_safety_cell(row: AppData) -> Text:
             return Text(_build_safety_label(row), style="bold yellow")
         case "flagged":
             return Text(_build_safety_label(row), style="bold red")
-    raise AssertionError(f"Unhandled row status: {row_status}")
+    assert_never(row_status)
 
 
 def _build_latest_scan_border_style(row: AppData) -> str:
     row_status = _get_row_status(row)
     match row_status:
-        case "pending":
-            return "yellow"
+        case "failed":
+            return "red"
         case "no_verdict":
             return "yellow"
         case "clean":
@@ -196,7 +196,7 @@ def _build_latest_scan_border_style(row: AppData) -> str:
             return "yellow"
         case "flagged":
             return "red"
-    raise AssertionError(f"Unhandled row status: {row_status}")
+    assert_never(row_status)
 
 
 def _build_verdicts_cell(row: AppData) -> Text:
@@ -254,15 +254,16 @@ def _summarize_report(data: list[AppData]) -> ReportSummary:
         "review_apps": 0,
         "flagged_apps": 0,
         "no_verdict_apps": 0,
-        "pending_apps": 0,
+        "failed_apps": 0,
         "total_engines": 0,
         "verdict_engines": 0,
         "flagged_engines": 0,
     }
     for row in data:
-        match _get_row_status(row):
-            case "pending":
-                summary["pending_apps"] += 1
+        row_status = _get_row_status(row)
+        match row_status:
+            case "failed":
+                summary["failed_apps"] += 1
             case "no_verdict":
                 summary["no_verdict_apps"] += 1
             case "clean":
@@ -271,6 +272,8 @@ def _summarize_report(data: list[AppData]) -> ReportSummary:
                 summary["review_apps"] += 1
             case "flagged":
                 summary["flagged_apps"] += 1
+            case _:
+                assert_never(row_status)
         summary["total_engines"] += row["total_engines"]
         summary["verdict_engines"] += row["verdict_engines"]
         summary["flagged_engines"] += row["flagged_engines"]
@@ -278,9 +281,9 @@ def _summarize_report(data: list[AppData]) -> ReportSummary:
 
 
 def build_latest_scan_panel(last_scanned: AppData | None, completed_count: int, total_count: int) -> Panel:
-    subtitle = f"{completed_count}/{total_count} complete"
+    subtitle = f"{completed_count}/{total_count} processed"
     if last_scanned is None:
-        return Panel(Text("Waiting for the first completed scan...", style="dim"), title="Latest Scan Result", subtitle=subtitle, border_style="blue", expand=False)
+        return Panel(Text("Waiting for the first scan result...", style="dim"), title="Latest Scan Result", subtitle=subtitle, border_style="blue", expand=False)
 
     details = Table.grid(padding=(0, 1), expand=False)
     details.add_column(style="bold cyan", justify="right", no_wrap=True)
@@ -291,11 +294,13 @@ def build_latest_scan_panel(last_scanned: AppData | None, completed_count: int, 
     details.add_row("Verdicts", _build_verdicts_cell(last_scanned))
     details.add_row("Breakdown", _build_breakdown_cell(last_scanned))
     details.add_row("Notes", _build_notes_cell(last_scanned["notes"]))
-    details.add_row("Scanned", Text(last_scanned["scan_time"], style="dim"))
+    details.add_row("Attempted" if _get_row_status(last_scanned) == "failed" else "Scanned", Text(last_scanned["scan_time"], style="dim"))
     if last_scanned["app_url"]:
         upload_state = Text("Open uploaded copy", style=Style(color="cyan", underline=True, link=last_scanned["app_url"]))
+    elif _get_row_status(last_scanned) == "failed":
+        upload_state = Text("Skipped because scan failed", style="dim")
     else:
-        upload_state = Text("Upload unavailable", style="bold red")
+        upload_state = Text("No uploaded copy", style="dim")
     details.add_row("Upload", upload_state)
     details.add_row("Path", Text(last_scanned["app_path"], style="dim"))
 
@@ -315,8 +320,8 @@ def _build_report_overview_panel(data: list[AppData]) -> Panel:
         (str(summary["flagged_apps"]), "bold white"),
         (" | no verdict ", "bold yellow"),
         (str(summary["no_verdict_apps"]), "bold white"),
-        (" | pending ", "bold yellow"),
-        (str(summary["pending_apps"]), "bold white"),
+        (" | failed ", "bold red"),
+        (str(summary["failed_apps"]), "bold white"),
         (" | engines ", "bold cyan"),
         (str(summary["total_engines"]), "bold white"),
         (" | verdicts ", "bold cyan"),

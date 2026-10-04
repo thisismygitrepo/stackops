@@ -1,6 +1,7 @@
 from asyncio import AbstractEventLoop, get_event_loop
 from collections import Counter
 from dataclasses import dataclass, field
+from datetime import datetime, UTC
 from pathlib import Path
 from threading import Barrier, Event, Lock, get_ident
 from typing import TYPE_CHECKING, cast
@@ -8,12 +9,12 @@ from typing import TYPE_CHECKING, cast
 import pytest
 
 from stackops.jobs.installer.checks import vt_workers
-from stackops.jobs.installer.checks.vt_utils import ScanResult, ScanSummary, summarize_scan_results
+from stackops.jobs.installer.checks.scan_outcomes import ScanCancelled, ScanFailure, ScanOutcome, ScanSuccess
+from stackops.jobs.installer.checks.vt_utils import ScanResult, summarize_scan_results
 from stackops.secrets.readers import VirusTotalApiKey
 
 if TYPE_CHECKING:
     import vt
-    from rich.progress import Progress, TaskID
 
 
 @dataclass
@@ -55,10 +56,9 @@ def test_scans_overlap_per_key_and_preserve_file_identity(apps_per_key: int, dis
         return cast("vt.Client", client)
 
     def scan_file(
-        path: Path, client: "vt.Client", progress: "Progress | None", task_id: "TaskID | None", stop: Event | None, request_lock: Lock | None
-    ) -> tuple[ScanSummary, list[ScanResult]]:
+        path: Path, client: "vt.Client", stop: Event | None, request_lock: Lock | None
+    ) -> ScanOutcome:
         nonlocal peak_parallel
-        assert progress is None and task_id is None
         assert stop is not None
         assert request_lock is not None
         recorded_client = cast(_RecordedClient, client)
@@ -85,7 +85,7 @@ def test_scans_overlap_per_key_and_preserve_file_identity(apps_per_key: int, dis
                     with lock:
                         active_requests[recorded_client.api_key] -= 1
             results: list[ScanResult] = [{"engine_name": path.name, "category": "undetected", "result": None}]
-            return summarize_scan_results(results), results
+            return ScanSuccess(summary=summarize_scan_results(results), results=results, scanned_at=datetime.now(UTC), source="submitted_file")
         finally:
             with lock:
                 active[recorded_client.api_key] -= 1
@@ -103,7 +103,8 @@ def test_scans_overlap_per_key_and_preserve_file_identity(apps_per_key: int, dis
     assert sorted(result.index for result in scanned) == list(range(len(apps)))
     for result in scanned:
         assert (result.path, result.version) == apps[result.index]
-        assert result.results[0]["engine_name"] == result.path.name
+        assert isinstance(result.outcome, ScanSuccess)
+        assert result.outcome.results[0]["engine_name"] == result.path.name
     assert {client.api_key for client in clients} == {credential.api_key for credential in credentials[:worker_count]}
     assert all(client.closed.is_set() and client.closed_thread == client.created_thread != get_ident() for client in clients)
     assert len(event_loops) == worker_count and all(loop.is_closed() for loop in event_loops)
@@ -128,9 +129,8 @@ def test_scan_failure_is_prompt_and_in_flight_clients_close(monkeypatch: pytest.
         return cast("vt.Client", client)
 
     def scan_file(
-        path: Path, client: "vt.Client", progress: "Progress | None", task_id: "TaskID | None", stop: Event | None, request_lock: Lock | None
-    ) -> tuple[None, list[ScanResult]]:
-        assert progress is None and task_id is None
+        path: Path, client: "vt.Client", stop: Event | None, request_lock: Lock | None
+    ) -> ScanOutcome:
         assert stop is not None
         assert request_lock is not None
         with lock:
@@ -138,7 +138,7 @@ def test_scan_failure_is_prompt_and_in_flight_clients_close(monkeypatch: pytest.
         if path.name == "blocked.bin":
             scan_started.set()
             assert release_scan.wait(timeout=5)
-            return None, []
+            return ScanCancelled()
         assert scan_started.wait(timeout=5)
         recorded_client = cast(_RecordedClient, client)
         raise ValueError(f"""{recorded_client.api_key} dummy-account-b""")
@@ -176,14 +176,13 @@ def test_client_lifecycle_failures_are_reported_without_credentials(stage: str, 
         raise ValueError(f"""{recorded_client.api_key} {credential.account_name}""")
 
     def scan_file(
-        path: Path, client: "vt.Client", progress: "Progress | None", task_id: "TaskID | None", stop: Event | None, request_lock: Lock | None
-    ) -> tuple[None, list[ScanResult]]:
+        path: Path, client: "vt.Client", stop: Event | None, request_lock: Lock | None
+    ) -> ScanOutcome:
         assert path == Path("sample.bin")
         assert cast(_RecordedClient, client).api_key == credential.api_key
-        assert progress is None and task_id is None
         assert stop is not None
         assert request_lock is not None
-        return None, []
+        return ScanFailure(stage="report lookup", error_type="APIError", error_code="ForbiddenError")
 
     monkeypatch.setattr(vt_workers, "get_vt_client", create_client)
     monkeypatch.setattr(vt_workers, "scan_file", scan_file)
@@ -210,16 +209,18 @@ def test_closing_iterator_stops_pending_work_and_closes_client(monkeypatch: pyte
         return cast("vt.Client", client)
 
     def scan_file(
-        path: Path, client: "vt.Client", progress: "Progress | None", task_id: "TaskID | None", stop: Event | None, request_lock: Lock | None
-    ) -> tuple[None, list[ScanResult]]:
-        assert progress is None and task_id is None and stop is not None
+        path: Path, client: "vt.Client", stop: Event | None, request_lock: Lock | None
+    ) -> ScanOutcome:
+        assert stop is not None
         assert request_lock is not None
         assert cast(_RecordedClient, client).api_key == credential.api_key
         scanned_paths.append(path)
         if len(scanned_paths) == 2:
             waiting.set()
             assert stop.wait(timeout=5)
-        return None, []
+            return ScanCancelled()
+        results: list[ScanResult] = [{"engine_name": "dummy-engine", "category": "undetected", "result": None}]
+        return ScanSuccess(summary=summarize_scan_results(results), results=results, scanned_at=datetime.now(UTC), source="submitted_file")
 
     monkeypatch.setattr(vt_workers, "get_vt_client", create_client)
     monkeypatch.setattr(vt_workers, "scan_file", scan_file)

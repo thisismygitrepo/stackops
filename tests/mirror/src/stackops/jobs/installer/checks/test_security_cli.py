@@ -1,6 +1,8 @@
 from collections.abc import Callable
+import importlib
 from pathlib import Path
 import subprocess
+import sys
 
 import pytest
 import typer
@@ -65,6 +67,38 @@ def test_scan_propagates_serialized_worker_failure(monkeypatch: pytest.MonkeyPat
         security_cli.scan(apps="alpha", path=None, record=True, apps_per_key=1)
 
     assert raised_exit.value.exit_code == 17
+
+
+def test_scan_worker_turns_scan_failure_into_process_exit(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fail_scan(app_names: list[str] | None, write_reports_to_repo: bool, apps_per_key: int) -> list[AppData]:
+        assert app_names == ["alpha"]
+        assert write_reports_to_repo is True
+        assert apps_per_key == 1
+        raise typer.Exit(code=1)
+
+    monkeypatch.setattr(check_installations, "scan_installed_apps", fail_scan)
+    with pytest.raises(SystemExit) as raised_exit:
+        security_cli._run_scan(app_names=["alpha"], path_value=None, record=True, apps_per_key=1)
+
+    assert raised_exit.value.code == 1
+
+
+def test_list_apps_does_not_require_optional_scan_dependencies(monkeypatch: pytest.MonkeyPatch) -> None:
+    from stackops.jobs.installer.checks import vt_scanner
+
+    def collect_apps(app_names: list[str] | None) -> list[tuple[Path, str | None]]:
+        assert app_names == ["rg"]
+        return [(Path("/dummy/rg"), "dummy-version")]
+
+    monkeypatch.setitem(sys.modules, "vt", None)
+    monkeypatch.setitem(sys.modules, "aiohttp", None)
+    importlib.reload(vt_scanner)
+    monkeypatch.setattr(check_installations, "collect_apps_to_scan", collect_apps)
+    result = CliRunner().invoke(security_cli.get_app(), ["list", "rg"])
+
+    assert result.exit_code == 0
+    assert "dummy-version" in result.output
+    assert "/dummy/rg" in result.output
 
 
 @pytest.mark.parametrize("apps_per_key", [0, -1])

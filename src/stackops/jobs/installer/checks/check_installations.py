@@ -11,6 +11,9 @@ from contextlib import closing
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
+from typing import assert_never
+
+import typer
 from rich.console import Console, Group, RenderableType
 from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
@@ -28,8 +31,8 @@ from stackops.jobs.installer.checks.report_utils import (
     build_latest_scan_panel,
     build_summary_group,
 )
+from stackops.jobs.installer.checks.scan_outcomes import ScanFailure, ScanSuccess, format_scan_failure
 from stackops.jobs.installer.checks.vt_display import build_vt_parallelism_panel
-from stackops.jobs.installer.checks.vt_utils import ScanResult, ScanSummary
 from stackops.jobs.installer.checks.vt_workers import scan_files_with_vt
 from stackops.secrets.readers import read_virus_total_api_keys
 from stackops.utils.installer_utils.installer_runner import get_installed_cli_apps
@@ -69,14 +72,12 @@ def _build_scan_progress_renderable(progress: Progress, last_scanned: AppData | 
     return Group(progress, build_latest_scan_panel(last_scanned, completed_count, total_count))
 
 
-def _build_app_data(
+def build_scan_record(
     app_path: Path,
     version: str | None,
-    scan_time: str,
     app_url: str,
-    scan_summary: ScanSummary | None,
-    fallback_notes: str,
-) -> AppData:
+    outcome: ScanSuccess | ScanFailure,
+) -> ScannedAppRecord:
     app_data: AppData = {
         "app_name": app_path.stem,
         "version": version,
@@ -92,46 +93,43 @@ def _build_app_data(
         "timeout_engines": 0,
         "failure_engines": 0,
         "other_engines": 0,
-        "notes": fallback_notes,
-        "scan_time": scan_time,
+        "notes": "",
+        "scan_time": "",
         "app_path": path_core.collapseuser(app_path, strict=False).as_posix(),
         "app_url": app_url,
     }
-    if scan_summary is not None:
-        app_data["positive_pct"] = scan_summary["positive_pct"]
-        app_data["flagged_engines"] = scan_summary["flagged_engines"]
-        app_data["verdict_engines"] = scan_summary["verdict_engines"]
-        app_data["total_engines"] = scan_summary["total_engines"]
-        app_data["malicious_engines"] = scan_summary["malicious_engines"]
-        app_data["suspicious_engines"] = scan_summary["suspicious_engines"]
-        app_data["harmless_engines"] = scan_summary["harmless_engines"]
-        app_data["undetected_engines"] = scan_summary["undetected_engines"]
-        app_data["unsupported_engines"] = scan_summary["unsupported_engines"]
-        app_data["timeout_engines"] = scan_summary["timeout_engines"]
-        app_data["failure_engines"] = scan_summary["failure_engines"]
-        app_data["other_engines"] = scan_summary["other_engines"]
-        app_data["notes"] = scan_summary["notes"]
-    return app_data
-
-
-def build_scan_record(
-    app_path: Path,
-    version: str | None,
-    scan_time: str,
-    app_url: str,
-    scan_summary: ScanSummary | None,
-    scan_results: list[ScanResult],
-    fallback_notes: str,
-) -> ScannedAppRecord:
-    app_data = _build_app_data(
-        app_path=app_path,
-        version=version,
-        scan_time=scan_time,
-        app_url=app_url,
-        scan_summary=scan_summary,
-        fallback_notes=fallback_notes,
-    )
-    return {"app_data": app_data, "engine_results": build_engine_report_rows(app_data, scan_results)}
+    match outcome:
+        case ScanSuccess():
+            scan_summary = outcome.summary
+            app_data["positive_pct"] = scan_summary["positive_pct"]
+            app_data["flagged_engines"] = scan_summary["flagged_engines"]
+            app_data["verdict_engines"] = scan_summary["verdict_engines"]
+            app_data["total_engines"] = scan_summary["total_engines"]
+            app_data["malicious_engines"] = scan_summary["malicious_engines"]
+            app_data["suspicious_engines"] = scan_summary["suspicious_engines"]
+            app_data["harmless_engines"] = scan_summary["harmless_engines"]
+            app_data["undetected_engines"] = scan_summary["undetected_engines"]
+            app_data["unsupported_engines"] = scan_summary["unsupported_engines"]
+            app_data["timeout_engines"] = scan_summary["timeout_engines"]
+            app_data["failure_engines"] = scan_summary["failure_engines"]
+            app_data["other_engines"] = scan_summary["other_engines"]
+            match outcome.source:
+                case "existing_report":
+                    source_note = "Existing VirusTotal report. "
+                case "submitted_file":
+                    source_note = ""
+                case _:
+                    assert_never(outcome.source)
+            app_data["notes"] = source_note + scan_summary["notes"]
+            app_data["scan_time"] = outcome.scanned_at.astimezone().strftime("%Y-%m-%d %H:%M")
+            engine_results = build_engine_report_rows(app_data, outcome.results)
+        case ScanFailure():
+            app_data["notes"] = format_scan_failure(outcome)
+            app_data["scan_time"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+            engine_results = []
+        case _:
+            assert_never(outcome)
+    return {"app_data": app_data, "engine_results": engine_results}
 
 
 def _extract_app_data(scan_records: list[ScannedAppRecord]) -> list[AppData]:
@@ -152,7 +150,7 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[Path, str | None]], apps_per_key:
     )
     worker_count = min(len(credentials) * apps_per_key, len(apps_to_scan))
     console.print(build_vt_parallelism_panel(api_key_count=len(credentials), worker_count=worker_count, apps_per_key=apps_per_key))
-    scan_task = progress.add_task(f"[cyan]Scanning with {worker_count} VirusTotal workers...", total=len(apps_to_scan))
+    scan_task = progress.add_task(f"[cyan]Processing apps with {worker_count} VirusTotal workers...", total=len(apps_to_scan))
     last_scanned: AppData | None = None
     with (
         Live(_build_scan_progress_renderable(progress, last_scanned, 0, len(apps_to_scan)), console=console, refresh_per_second=8) as live,
@@ -161,22 +159,21 @@ def scan_apps_with_vt(apps_to_scan: list[tuple[Path, str | None]], apps_per_key:
         progress.start()
         try:
             for scanned_file in scanned_files:
-                progress.update(scan_task, description=f"Uploading {scanned_file.path.name}...")
-                live.update(_build_scan_progress_renderable(progress, last_scanned, len(records_by_index), len(apps_to_scan)))
-                app_url = upload_app(scanned_file.path) or ""
+                app_url = ""
+                if isinstance(scanned_file.outcome, ScanSuccess):
+                    progress.update(scan_task, description=f"Uploading {scanned_file.path.name}...")
+                    live.update(_build_scan_progress_renderable(progress, last_scanned, len(records_by_index), len(apps_to_scan)))
+                    app_url = upload_app(scanned_file.path) or ""
                 scan_record = build_scan_record(
                     app_path=scanned_file.path,
                     version=scanned_file.version,
-                    scan_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
                     app_url=app_url,
-                    scan_summary=scanned_file.summary,
-                    scan_results=scanned_file.results,
-                    fallback_notes="VirusTotal scan failed or returned no summary.",
+                    outcome=scanned_file.outcome,
                 )
                 last_scanned = scan_record["app_data"]
                 records_by_index[scanned_file.index] = scan_record
                 progress.advance(scan_task)
-                progress.update(scan_task, description=f"[cyan]Scanning with {worker_count} VirusTotal workers...")
+                progress.update(scan_task, description=f"[cyan]Processing apps with {worker_count} VirusTotal workers...")
                 live.update(_build_scan_progress_renderable(progress, last_scanned, len(records_by_index), len(apps_to_scan)))
         finally:
             progress.stop()
@@ -216,6 +213,10 @@ def scan_installed_apps(app_names: list[str] | None, write_reports_to_repo: bool
             console.print(f"[green]Engine CSV report saved to: {engine_csv_path}[/green]")
         else:
             console.print("[yellow]Scan results were not saved to the repo reports.[/yellow]")
+    failed_count = sum(app_data["positive_pct"] is None for app_data in app_data_list)
+    if failed_count:
+        console.print(f"[bold red]{failed_count} of {len(app_data_list)} VirusTotal scans failed. See report notes for the errors.[/bold red]")
+        raise typer.Exit(code=1)
     return app_data_list
 
 

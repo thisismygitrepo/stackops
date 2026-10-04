@@ -1,19 +1,7 @@
-"""
-VirusTotal Utilities
-====================
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, TypedDict, cast
 
-This module provides functionality to interact with VirusTotal API.
-"""
-
-import time
-from collections.abc import Iterable, Mapping
-from contextlib import nullcontext
-import io
-from pathlib import Path
-from threading import Event, Lock
-from typing import TYPE_CHECKING, TypedDict
-
-from rich.progress import Progress, TaskID
+from stackops.jobs.installer.checks.constants import VT_REQUEST_TIMEOUT_SECONDS
 
 if TYPE_CHECKING:
     import vt
@@ -41,13 +29,10 @@ class ScanSummary(TypedDict):
     notes: str
 
 
-VERDICT_CATEGORIES: tuple[str, ...] = ("malicious", "suspicious", "harmless", "undetected")
-
-
 def get_vt_client(api_key: str) -> "vt.Client":
     import vt
 
-    return vt.Client(api_key)
+    return vt.Client(api_key, timeout=VT_REQUEST_TIMEOUT_SECONDS)
 
 
 def _build_empty_scan_summary(notes: str) -> ScanSummary:
@@ -68,26 +53,20 @@ def _build_empty_scan_summary(notes: str) -> ScanSummary:
     }
 
 
-def _normalize_scan_result(engine_name: str, result_item: object) -> ScanResult:
-    if isinstance(result_item, Mapping):
-        category_raw = result_item.get("category", "unknown")
-        result_raw = result_item.get("result")
-    else:
-        category_raw = getattr(result_item, "category", "unknown")
-        result_raw = getattr(result_item, "result", None)
-    category_value = getattr(category_raw, "value", category_raw)
-    result_value = getattr(result_raw, "value", result_raw)
-    category = str(category_value or "unknown")
-    result = None if result_value is None else str(result_value)
-    return {"engine_name": engine_name, "category": category, "result": result}
-
-
-def _normalize_scan_results(raw_results: object) -> list[ScanResult]:
-    if isinstance(raw_results, Mapping):
-        return [_normalize_scan_result(str(engine_name), result_item) for engine_name, result_item in raw_results.items()]
-    if isinstance(raw_results, Iterable) and not isinstance(raw_results, (str, bytes, bytearray)):
-        return [_normalize_scan_result(f"engine_{index:03d}", result_item) for index, result_item in enumerate(raw_results, start=1)]
-    return []
+def normalize_scan_results(raw_results: object) -> list[ScanResult]:
+    if not isinstance(raw_results, Mapping):
+        raise ValueError("VirusTotal engine results must be a mapping.")
+    results_data: list[ScanResult] = []
+    for engine_name, result_item in cast(Mapping[object, object], raw_results).items():
+        if not isinstance(engine_name, str) or not engine_name or not isinstance(result_item, Mapping):
+            raise ValueError("VirusTotal engine entries must have names and mapped results.")
+        engine_result = cast(Mapping[object, object], result_item)
+        category = engine_result.get("category")
+        result = engine_result.get("result")
+        if not isinstance(category, str) or not category or (result is not None and not isinstance(result, str)):
+            raise ValueError("VirusTotal engine category and result fields are malformed.")
+        results_data.append({"engine_name": engine_name, "category": category, "result": result})
+    return results_data
 
 
 def _build_scan_notes(summary: ScanSummary) -> str:
@@ -137,60 +116,3 @@ def summarize_scan_results(results_data: list[ScanResult]) -> ScanSummary:
         summary["positive_pct"] = round(summary["flagged_engines"] / summary["verdict_engines"] * 100, 1)
     summary["notes"] = _build_scan_notes(summary)
     return summary
-
-
-def scan_file(
-    path: Path,
-    client: "vt.Client",
-    progress: Progress | None,
-    task_id: TaskID | None,
-    stop: Event | None,
-    request_lock: Lock | None,
-) -> tuple[ScanSummary | None, list[ScanResult]]:
-    if stop is not None and stop.is_set():
-        return None, []
-    if path.is_dir():
-        if progress is not None and task_id is not None:
-            progress.console.print(f"[yellow]📁 Skipping directory: {path}[/yellow]")
-        return None, []
-
-    try:
-        with io.BytesIO(path.read_bytes()) as file_handle:
-            with request_lock if request_lock is not None else nullcontext():
-                if stop is not None and stop.is_set():
-                    return None, []
-                analysis = client.scan_file(file_handle)
-
-        repeat_counter = 0
-        while True:
-            if stop is not None and stop.is_set():
-                return None, []
-            try:
-                with request_lock if request_lock is not None else nullcontext():
-                    if stop is not None and stop.is_set():
-                        return None, []
-                    anal = client.get_object("/analyses/{}", analysis.id)
-                    if anal.status == "completed":
-                        break
-            except Exception as exc:
-                repeat_counter += 1
-                if repeat_counter > 3:
-                    raise ValueError(f"❌ Error scanning {path}: {type(exc).__name__}") from None
-                if progress is not None and task_id is not None:
-                    progress.console.print(f"[red]⚠️  Error scanning {path}, retrying... ({repeat_counter}/3)[/red]")
-                if stop is None:
-                    time.sleep(5)
-                elif stop.wait(5):
-                    return None, []
-
-            if stop is None:
-                time.sleep(10)
-            elif stop.wait(10):
-                return None, []
-
-        results_data = _normalize_scan_results(getattr(anal, "results", {}))
-        return summarize_scan_results(results_data), results_data
-    except Exception as exc:
-        if progress is not None and task_id is not None:
-            progress.console.print(f"[bold red]❌ Failed to scan {path}: {type(exc).__name__}[/bold red]")
-        return None, []

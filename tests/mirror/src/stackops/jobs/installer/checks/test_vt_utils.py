@@ -1,60 +1,56 @@
-from dataclasses import dataclass
-from io import BytesIO
-from pathlib import Path
-from threading import Event
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from stackops.jobs.installer.checks.vt_utils import scan_file
+import pytest
+import vt
 
-if TYPE_CHECKING:
-    import vt
+from stackops.jobs.installer.checks.scan_outcomes import ScanFailure, format_scan_failure
+from stackops.jobs.installer.checks.vt_utils import normalize_scan_results, summarize_scan_results
 
 
-@dataclass(frozen=True)
-class _QueuedAnalysis:
-    id: str
-    status: str
+def test_sdk_engine_results_use_only_verdicts_for_detection_percentage() -> None:
+    report = vt.Object(
+        "file",
+        "sample",
+        {
+            "last_analysis_results": {
+                "A": {"category": "malicious", "result": "Detected"},
+                "B": {"category": "undetected", "result": None},
+                "C": {"category": "type-unsupported", "result": None},
+                "D": {"category": "timeout", "result": None},
+            }
+        },
+    )
+    results = normalize_scan_results(cast(object, report.last_analysis_results))
+    summary = summarize_scan_results(results)
+
+    assert summary["total_engines"] == 4
+    assert summary["verdict_engines"] == 2
+    assert summary["flagged_engines"] == 1
+    assert summary["positive_pct"] == 50.0
+    assert summary["unsupported_engines"] == 1
+    assert summary["timeout_engines"] == 1
 
 
-class _CancellingClient:
-    def __init__(self, stop: Event) -> None:
-        self.stop = stop
-        self.uploads = 0
-        self.polls = 0
-
-    def scan_file(self, file: BytesIO) -> _QueuedAnalysis:
-        assert file.read() == b"dummy-file"
-        self.uploads += 1
-        return _QueuedAnalysis(id="dummy-analysis", status="queued")
-
-    def get_object(self, path: str, analysis_id: str) -> _QueuedAnalysis:
-        assert path == "/analyses/{}"
-        assert analysis_id == "dummy-analysis"
-        self.polls += 1
-        self.stop.set()
-        return _QueuedAnalysis(id=analysis_id, status="queued")
+@pytest.mark.parametrize(
+    "raw_results",
+    [None, [], "broken", {"A": []}, {7: {"category": "undetected"}}, {"A": {"result": None}}, {"A": {"category": 4}}, {"A": {"category": "undetected", "result": 9}}],
+)
+def test_malformed_results_are_not_treated_as_empty_reports(raw_results: object) -> None:
+    with pytest.raises(ValueError):
+        normalize_scan_results(raw_results)
 
 
-def test_cancelled_scan_never_reads_file_or_sends_requests() -> None:
-    stop = Event()
-    stop.set()
-    client = _CancellingClient(stop)
+def test_completed_empty_results_have_no_verdict() -> None:
+    summary = summarize_scan_results(normalize_scan_results({}))
 
-    result = scan_file(path=Path("missing-dummy-file"), client=cast("vt.Client", client), progress=None, task_id=None, stop=stop, request_lock=None)
-
-    assert result == (None, [])
-    assert client.uploads == 0
-    assert client.polls == 0
+    assert summary["total_engines"] == 0
+    assert summary["verdict_engines"] == 0
+    assert summary["notes"] == "VirusTotal returned no engine results."
 
 
-def test_cancellation_interrupts_analysis_polling(tmp_path: Path) -> None:
-    sample_path = tmp_path / "dummy-file"
-    sample_path.write_bytes(b"dummy-file")
-    stop = Event()
-    client = _CancellingClient(stop)
+def test_failure_format_keeps_only_stage_type_and_safe_api_code() -> None:
+    failure = ScanFailure(stage="report lookup", error_type="APIError", error_code="WrongCredentialsError")
+    unsafe = ScanFailure(stage="file upload", error_type="[unsafe]", error_code="failure\nsecret=value")
 
-    result = scan_file(path=sample_path, client=cast("vt.Client", client), progress=None, task_id=None, stop=stop, request_lock=None)
-
-    assert result == (None, [])
-    assert client.uploads == 1
-    assert client.polls == 1
+    assert format_scan_failure(failure) == "VirusTotal report lookup failed: APIError (WrongCredentialsError)."
+    assert format_scan_failure(unsafe) == "VirusTotal file upload failed: UnknownError (InvalidErrorCode)."

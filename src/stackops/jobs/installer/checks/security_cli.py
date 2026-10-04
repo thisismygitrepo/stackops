@@ -30,16 +30,21 @@ def _resolve_report_view(view: ReportView | None, summarize: bool) -> ReportView
 
 
 def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, apps_per_key: int) -> None:
-    if path_value is not None:
-        from pathlib import Path
+    import typer
 
-        from stackops.jobs.installer.checks.security_helper import scan_single_path
+    try:
+        if path_value is not None:
+            from pathlib import Path
 
-        scan_single_path(path=Path(path_value), record=record, apps_per_key=apps_per_key)
-    else:
-        from stackops.jobs.installer.checks.check_installations import scan_installed_apps
+            from stackops.jobs.installer.checks.security_helper import scan_single_path
 
-        scan_installed_apps(app_names, write_reports_to_repo=record, apps_per_key=apps_per_key)
+            scan_single_path(path=Path(path_value), record=record, apps_per_key=apps_per_key)
+        else:
+            from stackops.jobs.installer.checks.check_installations import scan_installed_apps
+
+            scan_installed_apps(app_names, write_reports_to_repo=record, apps_per_key=apps_per_key)
+    except typer.Exit as exc:
+        raise SystemExit(exc.exit_code) from None
 
 
 def scan(
