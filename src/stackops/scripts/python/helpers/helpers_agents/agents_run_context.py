@@ -231,17 +231,17 @@ def resolve_named_prompts_yaml_entry(
 
     group_detail = f""" in group '{group}'""" if group is not None else ""
     typer.echo(f"""{entry_label} '{entry_name}' was not found{group_detail}. Opening interactive fuzzy selector...""")
-    chosen_key = choose_from_dict_with_preview(
+    chosen_keys = choose_from_dict_with_preview(
         options_to_preview_mapping=fuzzy_preview_map,
         extension="yaml",
-        multi=False,
+        multi=True,
         preview_size_percent=PROMPTS_PREVIEW_SIZE_PERCENT,
     )
-    if chosen_key is None:
+    if not chosen_keys:
         raise ValueError(
             f"""{entry_label} '{entry_name}' was not found{group_detail} in prompts YAML files: {searched} (interactive selection canceled)"""
         )
-    return fuzzy_value_map[chosen_key]
+    return "\n\n".join(fuzzy_value_map[key] for key in chosen_keys)
 
 
 def _prompts_yaml_template() -> str:
@@ -345,12 +345,12 @@ def resolve_context(
             raise ValueError(f"""No prompt entries found for group '{group}' in prompts YAML files: {searched}""")
         raise ValueError(f"No prompt entries found in prompts YAML files: {searched}")
 
-    chosen_key = choose_from_dict_with_preview(
+    chosen_keys = choose_from_dict_with_preview(
         options_to_preview_mapping=preview_map,
         extension="yaml",
-        multi=False,
+        multi=True,
         preview_size_percent=PROMPTS_PREVIEW_SIZE_PERCENT,
     )
-    if chosen_key is None:
+    if not chosen_keys:
         raise SystemExit(1)
-    return context_map[chosen_key]
+    return "\n\n".join(context_map[key] for key in chosen_keys)

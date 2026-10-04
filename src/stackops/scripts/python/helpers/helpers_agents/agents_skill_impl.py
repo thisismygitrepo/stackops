@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -20,25 +20,26 @@ ORCA_SKILL_SOURCE: Final[str] = "https://github.com/stablyai/orca"
 @dataclass(frozen=True)
 class AgentSkillSource:
     source: str
+    group: str
     skill: str | None = None
 
 
 _OPEN_SOURCE_SKILL_SOURCES: Final[dict[str, AgentSkillSource]] = {
-    "agent-browser": AgentSkillSource("vercel-labs/agent-browser"),
-    "agent-skills": AgentSkillSource("addyosmani/agent-skills"),
-    "amq": AgentSkillSource("avivsinai/agent-message-queue"),
-    "archify": AgentSkillSource("tt-a1i/archify"),
-    "caveman": AgentSkillSource("JuliusBrussee/caveman", skill="caveman"),
-    "computer-use": AgentSkillSource(ORCA_SKILL_SOURCE, skill="computer-use"),
-    "grill-with-docs": AgentSkillSource("mattpocock/skills", skill="grill-with-docs"),
-    "last30days": AgentSkillSource("mvanhorn/last30days-skill"),
-    "orca-cli": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-cli"),
-    "orca-emulator": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-emulator"),
-    "orca-linear": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orca-linear"),
-    "orchestration": AgentSkillSource(ORCA_SKILL_SOURCE, skill="orchestration"),
-    AGENT_OPS_SKILL_NAME: AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill=AGENT_OPS_SKILL_NAME),
-    "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", skill="stackops"),
-    "unslop": AgentSkillSource("https://github.com/cursor/plugins", skill="unslop"),
+    "agent-browser": AgentSkillSource("vercel-labs/agent-browser", group="automation"),
+    "agent-skills": AgentSkillSource("addyosmani/agent-skills", group="development"),
+    "amq": AgentSkillSource("avivsinai/agent-message-queue", group="orchestration"),
+    "archify": AgentSkillSource("tt-a1i/archify", group="development"),
+    "caveman": AgentSkillSource("JuliusBrussee/caveman", group="communication", skill="caveman"),
+    "computer-use": AgentSkillSource(ORCA_SKILL_SOURCE, group="automation", skill="computer-use"),
+    "grill-with-docs": AgentSkillSource("mattpocock/skills", group="development", skill="grill-with-docs"),
+    "last30days": AgentSkillSource("mvanhorn/last30days-skill", group="research"),
+    "orca-cli": AgentSkillSource(ORCA_SKILL_SOURCE, group="automation", skill="orca-cli"),
+    "orca-emulator": AgentSkillSource(ORCA_SKILL_SOURCE, group="automation", skill="orca-emulator"),
+    "orca-linear": AgentSkillSource(ORCA_SKILL_SOURCE, group="automation", skill="orca-linear"),
+    "orchestration": AgentSkillSource(ORCA_SKILL_SOURCE, group="orchestration", skill="orchestration"),
+    AGENT_OPS_SKILL_NAME: AgentSkillSource("https://github.com/thisismygitrepo/stackops", group="orchestration", skill=AGENT_OPS_SKILL_NAME),
+    "stackops": AgentSkillSource("https://github.com/thisismygitrepo/stackops", group="devops", skill="stackops"),
+    "unslop": AgentSkillSource("https://github.com/cursor/plugins", group="development", skill="unslop"),
 }
 
 
@@ -57,16 +58,16 @@ def supported_agent_skill_names() -> tuple[str, ...]:
     return tuple(_OPEN_SOURCE_SKILL_SOURCES)
 
 
-def render_supported_agent_skills_reference() -> str:
+def render_supported_agent_skills_reference(*, skill_sources: Mapping[str, AgentSkillSource]) -> str:
     lines = [
         "# Supported agent skills",
         "",
-        "| Skill | Source | Source skill |",
-        "| --- | --- | --- |",
+        "| Group | Skill | Source | Source skill |",
+        "| --- | --- | --- | --- |",
     ]
-    for skill_name, source in _OPEN_SOURCE_SKILL_SOURCES.items():
+    for skill_name, source in skill_sources.items():
         source_skill_cell = "—" if source.skill is None else f"`{source.skill}`"
-        lines.append(f"| `{skill_name}` | `{source.source}` | {source_skill_cell} |")
+        lines.append(f"""| `{source.group}` | `{skill_name}` | `{source.source}` | {source_skill_cell} |""")
     return "\n".join(lines) + "\n"
 
 
@@ -86,23 +87,28 @@ def build_agent_skill_preview_mapping() -> dict[str, str]:
     preview_mapping: dict[str, str] = {}
     for skill_name, source in _OPEN_SOURCE_SKILL_SOURCES.items():
         preview_mapping[skill_name] = json.dumps(
-            {"type": "agent-skill", "name": skill_name, "source": source.source, "skill": source.skill}, indent=2
+            {"type": "agent-skill", "name": skill_name, "group": source.group, "source": source.source, "skill": source.skill}, indent=2
         )
     return preview_mapping
 
 
-def choose_requested_skill_names() -> tuple[str, ...]:
+def choose_requested_skill_names(*, skill_sources: Mapping[str, AgentSkillSource]) -> tuple[str, ...]:
     from stackops.utils.options_utils import tv_options
 
+    skill_names_by_label = {
+        f"""{source.group}:{skill_name}""": skill_name
+        for skill_name, source in sorted(skill_sources.items(), key=lambda item: (item[1].group, item[0]))
+    }
+    preview_mapping = build_agent_skill_preview_mapping()
     selection = tv_options.choose_from_dict_with_preview(
-        options_to_preview_mapping=build_agent_skill_preview_mapping(),
+        options_to_preview_mapping={label: preview_mapping[skill_name] for label, skill_name in skill_names_by_label.items()},
         extension="json",
         multi=True,
         preview_size_percent=AGENT_SKILL_PREVIEW_SIZE_PERCENT,
     )
     if len(selection) == 0:
         raise ValueError("Selection cancelled for agent skill")
-    return tuple(selection)
+    return tuple(skill_names_by_label[label] for label in selection)
 
 
 def parse_requested_skill_names(*, raw_value: str) -> tuple[str, ...]:
@@ -199,6 +205,7 @@ def print_stackops_skill_install_fallback(*, error: ValueError, fallback_backend
 def add_skill(
     *,
     skill_name: str | None,
+    group: str | None,
     agent: str | None,
     scope: SKILL_INSTALL_SCOPE,
     directory: str | None,
@@ -207,14 +214,25 @@ def add_skill(
     yes: bool,
 ) -> int:
     install_root = resolve_agent_skill_install_root(directory=directory)
+    skill_sources = {name: source for name, source in _OPEN_SOURCE_SKILL_SOURCES.items() if group is None or source.group == group}
+    if not skill_sources:
+        supported_groups = ", ".join(sorted({source.group for source in _OPEN_SOURCE_SKILL_SOURCES.values()}))
+        raise ValueError(f"""Skill group '{group}' is not recognized. Supported groups: {supported_groups}""")
     if reference:
         reference_path = install_root.joinpath(AGENT_SKILLS_REFERENCE_FILE_NAME)
-        reference_path.write_text(render_supported_agent_skills_reference(), encoding="utf-8")
+        reference_path.write_text(render_supported_agent_skills_reference(skill_sources=skill_sources), encoding="utf-8")
         print(f"Supported skill reference written to: {reference_path}")
         return 0
 
     agent_targets = parse_requested_skill_agent_targets(raw_value=agent)
-    resolved_skill_names = choose_requested_skill_names() if skill_name is None else parse_requested_skill_names(raw_value=skill_name)
+    resolved_skill_names = (
+        choose_requested_skill_names(skill_sources=skill_sources) if skill_name is None else parse_requested_skill_names(raw_value=skill_name)
+    )
+    if group is not None:
+        for requested_skill_name in resolved_skill_names:
+            source = get_agent_skill_source(skill_name=requested_skill_name)
+            if source.group != group:
+                raise ValueError(f"""Skill '{requested_skill_name}' belongs to group '{source.group}', not '{group}'.""")
     resolved_backend = resolve_agent_skill_install_backend(backend=backend)
     if resolved_backend == "stackops":
         from stackops.scripts.python.helpers.helpers_agents import agents_skill_stackops_backend
