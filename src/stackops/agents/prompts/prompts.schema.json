@@ -37,6 +37,13 @@
                 "null"
               ]
             },
+            "group": {
+              "description": "Optional category used to filter prompt selection with `agents run-prompt --group`. Ignored when StackOps builds prompt text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "agent": {
               "description": "Optional preferred agent label. Ignored when StackOps builds prompt text.",
               "enum": [

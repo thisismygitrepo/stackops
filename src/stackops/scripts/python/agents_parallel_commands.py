@@ -273,6 +273,7 @@ def create_context(
                 context_path=None,
                 prompts_yaml_path=None,
                 context_name=None,
+                group=None,
                 skill=None,
                 source="all",
                 edit=False,

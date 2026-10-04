@@ -423,6 +423,10 @@ def run_prompt(
             help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.",
         ),
     ] = None,
+    group: Annotated[
+        str | None,
+        typer.Option("--group", "-g", help="Select only YAML prompts whose group exactly matches this value."),
+    ] = None,
     skill: Annotated[
         str | None,
         typer.Option(
@@ -503,6 +507,7 @@ def run_prompt(
                 context_path=context_path,
                 prompts_yaml_path=context_yaml_path,
                 context_name=context_name,
+                group=group,
                 skill=skill,
                 source=source,
                 edit=edit,

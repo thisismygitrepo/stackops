@@ -71,6 +71,7 @@ def resolve_prompt_input(*, prompt: str | None, prompt_path: str | None, prompt_
             entry_name=prompt_name,
             source="all",
             entry_label="Prompt name",
+            group=None,
         )
         return ResolvedPromptInput(
             prompt_text=prompt_text,

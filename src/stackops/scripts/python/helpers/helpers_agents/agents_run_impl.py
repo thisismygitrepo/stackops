@@ -205,6 +205,7 @@ def run(
     context_path: str | None,
     prompts_yaml_path: str | None,
     context_name: str | None,
+    group: str | None,
     skill: str | None,
     source: PROMPTS_SOURCE,
     edit: bool,
@@ -267,6 +268,7 @@ def run(
         context_path=context_path,
         prompts_yaml_path=prompts_yaml_path,
         context_name=context_name,
+        group=group,
         source=source,
     )
     prompt_text = prompt if prompt is not None else ""

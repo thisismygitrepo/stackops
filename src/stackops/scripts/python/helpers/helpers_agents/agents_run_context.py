@@ -18,7 +18,7 @@ def _format_prompt_entry(value: Any) -> str:
     if not isinstance(value, dict):
         return _value_to_text(value)
 
-    ignored_keys = {"description", "desciption", "desc", "agent"}
+    ignored_keys = {"description", "desciption", "desc", "agent", "group"}
     filtered_items = [(str(key), item) for key, item in value.items() if str(key).lower() not in ignored_keys and item is not None]
 
     prompt_text = None
@@ -54,7 +54,7 @@ def _format_prompt_entry(value: Any) -> str:
     return "No prompt content configured."
 
 
-def _resolve_named_yaml_entry(raw_data: Any, entry_name: str, *, entry_label: str) -> str:
+def _resolve_named_yaml_entry(raw_data: Any, entry_name: str, *, entry_label: str, group: str | None) -> str:
     cursor: Any = raw_data
     for segment in (part.strip() for part in entry_name.split(".")):
         if segment == "":
@@ -64,10 +64,12 @@ def _resolve_named_yaml_entry(raw_data: Any, entry_name: str, *, entry_label: st
         cursor = cursor[segment]
     if cursor is None:
         raise ValueError(f"{entry_label} '{entry_name}' points to null in prompts YAML")
+    if group is not None and (not isinstance(cursor, dict) or cursor.get("group") != group):
+        raise ValueError(f"""{entry_label} '{entry_name}' does not belong to prompt group '{group}'""")
     return _format_prompt_entry(cursor)
 
 
-def collect_named_yaml_candidates(raw_data: Any, prefix: str = "") -> dict[str, str]:
+def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | None) -> dict[str, str]:
     candidates: dict[str, str] = {}
     if not isinstance(raw_data, dict):
         return candidates
@@ -83,15 +85,17 @@ def collect_named_yaml_candidates(raw_data: Any, prefix: str = "") -> dict[str, 
         if isinstance(value, dict):
             if any(not isinstance(child, dict) for child in value.values()):
                 # Entry object with metadata fields (prompt/description/...): its children are metadata, not entries.
-                candidates[dotted_key] = _format_prompt_entry(value)
+                if group is None or value.get("group") == group:
+                    candidates[dotted_key] = _format_prompt_entry(value)
                 continue
             # Namespace containing only nested entries: recurse.
-            nested_candidates = collect_named_yaml_candidates(raw_data=value, prefix=dotted_key)
+            nested_candidates = collect_named_yaml_candidates(raw_data=value, prefix=dotted_key, group=group)
             for nested_key, nested_value in nested_candidates.items():
                 candidates[nested_key] = nested_value
             continue
 
-        candidates[dotted_key] = _format_prompt_entry(value)
+        if group is None:
+            candidates[dotted_key] = _format_prompt_entry(value)
 
     return candidates
 
@@ -102,16 +106,18 @@ def _preview_prompt_entry_from_path(*, preview: str, yaml_path: Path) -> str:
 
 def build_named_prompt_selection_maps(
     yaml_data_by_location: list[tuple[str, Path, Any]],
+    *,
+    group: str | None,
 ) -> tuple[dict[str, str], dict[str, str]]:
     candidate_name_counts: dict[str, int] = {}
     for _, _, yaml_data in yaml_data_by_location:
-        for candidate_name in collect_named_yaml_candidates(raw_data=yaml_data):
+        for candidate_name in collect_named_yaml_candidates(raw_data=yaml_data, prefix="", group=group):
             candidate_name_counts[candidate_name] = candidate_name_counts.get(candidate_name, 0) + 1
 
     preview_map: dict[str, str] = {}
     value_map: dict[str, str] = {}
     for location_name, yaml_path, yaml_data in yaml_data_by_location:
-        entry_candidates = collect_named_yaml_candidates(raw_data=yaml_data)
+        entry_candidates = collect_named_yaml_candidates(raw_data=yaml_data, prefix="", group=group)
         for candidate_name, candidate_preview in entry_candidates.items():
             label = candidate_name
             if candidate_name_counts[candidate_name] > 1:
@@ -167,7 +173,7 @@ def _echo_prompts_yaml_locations(
     table.add_column("entries", justify="right", no_wrap=True)
     table.add_column("path", overflow="fold")
     for location_name, yaml_path, yaml_data in picked_with_data:
-        entry_count = len(collect_named_yaml_candidates(raw_data=yaml_data))
+        entry_count = len(collect_named_yaml_candidates(raw_data=yaml_data, prefix="", group=None))
         table.add_row("[green]✓[/green]", location_name, f"[green]{entry_count}[/green]", display_path(yaml_path))
     for location_name, yaml_path in skipped:
         table.add_row("[red]✗[/red]", location_name, "[dim]0[/dim]", f"[dim]{display_path(yaml_path)}[/dim]")
@@ -199,7 +205,9 @@ def _no_prompts_yaml_files_error(prompts_yaml_path: str | None, yaml_locations: 
     return ValueError(f"No prompts YAML files found for --source '{source}'. Searched: {searched}")
 
 
-def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_name: str, source: PROMPTS_SOURCE, entry_label: str) -> str:
+def resolve_named_prompts_yaml_entry(
+    *, prompts_yaml_path: str | None, entry_name: str, source: PROMPTS_SOURCE, entry_label: str, group: str | None,
+) -> str:
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
@@ -210,22 +218,25 @@ def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_nam
     found_entry = None
     for _, _, yaml_data in yaml_data_by_location:
         try:
-            found_entry = _resolve_named_yaml_entry(raw_data=yaml_data, entry_name=entry_name, entry_label=entry_label)
+            found_entry = _resolve_named_yaml_entry(raw_data=yaml_data, entry_name=entry_name, entry_label=entry_label, group=group)
             break
         except ValueError:
             pass
     if found_entry is not None:
         return found_entry
 
-    fuzzy_preview_map, fuzzy_value_map = build_named_prompt_selection_maps(yaml_data_by_location=yaml_data_by_location)
+    fuzzy_preview_map, fuzzy_value_map = build_named_prompt_selection_maps(yaml_data_by_location=yaml_data_by_location, group=group)
 
     searched = ", ".join(str(yaml_path) for _, yaml_path, _ in yaml_data_by_location)
     if len(fuzzy_preview_map) == 0:
+        if group is not None:
+            raise ValueError(f"""No prompt entries found for group '{group}' in prompts YAML files: {searched}""")
         raise ValueError(f"{entry_label} '{entry_name}' was not found in prompts YAML files: {searched}")
 
     import typer
 
-    typer.echo(f"{entry_label} '{entry_name}' was not found. Opening interactive fuzzy selector...")
+    group_detail = f""" in group '{group}'""" if group is not None else ""
+    typer.echo(f"""{entry_label} '{entry_name}' was not found{group_detail}. Opening interactive fuzzy selector...""")
     chosen_key = choose_from_dict_with_preview(
         options_to_preview_mapping=fuzzy_preview_map,
         extension="yaml",
@@ -233,7 +244,9 @@ def resolve_named_prompts_yaml_entry(*, prompts_yaml_path: str | None, entry_nam
         preview_size_percent=PROMPTS_PREVIEW_SIZE_PERCENT,
     )
     if chosen_key is None:
-        raise ValueError(f"{entry_label} '{entry_name}' was not found in prompts YAML files: {searched} (interactive selection canceled)")
+        raise ValueError(
+            f"""{entry_label} '{entry_name}' was not found{group_detail} in prompts YAML files: {searched} (interactive selection canceled)"""
+        )
     return fuzzy_value_map[chosen_key]
 
 
@@ -248,7 +261,7 @@ def _prompts_yaml_template_for_path(*, yaml_path: Path) -> str:
 # prompts.yaml used by `agents run-prompt`
 # Top-level and nested keys show up in interactive selection (nested via dot-path, e.g. 'team.backend').
 # Each entry can be a plain string or an object with prompt metadata.
-{_PROMPTS_YAML_TEMPLATE_ENTRY_NAME}: {{prompt: replace me, description: short label}}
+{_PROMPTS_YAML_TEMPLATE_ENTRY_NAME}: {{prompt: replace me, description: short label, group: general}}
 """
 
 
@@ -294,7 +307,8 @@ def edit_prompts_yaml(yaml_path: Path) -> None:
 
 
 def resolve_context(
-    context: str | None, context_path: str | None, prompts_yaml_path: str | None, context_name: str | None, source: PROMPTS_SOURCE
+    context: str | None, context_path: str | None, prompts_yaml_path: str | None, context_name: str | None,
+    source: PROMPTS_SOURCE, group: str | None,
 ) -> str:
     if context is not None and context_path is not None:
         raise ValueError("Provide only one of --context or --context-path")
@@ -302,6 +316,8 @@ def resolve_context(
         raise ValueError("Provide only one of --context-name or --context-path")
     if context_name is not None and context is not None:
         raise ValueError("Provide only one of --context-name or --context")
+    if group is not None and (context is not None or context_path is not None):
+        raise ValueError("--group filters YAML prompts and cannot be combined with --context or --context-path")
 
     if context is not None:
         return context
@@ -320,6 +336,7 @@ def resolve_context(
             entry_name=context_name,
             source=source,
             entry_label="Context name",
+            group=group,
         )
 
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
@@ -327,9 +344,11 @@ def resolve_context(
     if len(yaml_data_by_location) == 0:
         raise _no_prompts_yaml_files_error(prompts_yaml_path=prompts_yaml_path, yaml_locations=yaml_locations, source=source)
 
-    preview_map, context_map = build_named_prompt_selection_maps(yaml_data_by_location=yaml_data_by_location)
+    preview_map, context_map = build_named_prompt_selection_maps(yaml_data_by_location=yaml_data_by_location, group=group)
     if len(preview_map) == 0:
         searched = ", ".join(str(yaml_path) for _, yaml_path, _ in yaml_data_by_location)
+        if group is not None:
+            raise ValueError(f"""No prompt entries found for group '{group}' in prompts YAML files: {searched}""")
         raise ValueError(f"No prompt entries found in prompts YAML files: {searched}")
 
     chosen_key = choose_from_dict_with_preview(
