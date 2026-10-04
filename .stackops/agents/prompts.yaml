@@ -4,3 +4,125 @@
 # Nested keys can be selected via --context-name with dot-path syntax (example: team.backend).
 # Each entry can be a plain string or an object with prompt metadata.
 entryExample: {prompt: replace me, description: short label}
+
+maintainPakageManager:
+  group: stackopsDev
+  description: Use agent-ops parallel-agents to update installer filename patterns.
+  prompt: |
+    Use the `$agent-ops` skill with the `parallel-agents` command.
+
+    Goal: coordinate external agents to update GitHub release filename patterns in `src/stackops/utils/schemas/installer/installer_data.json`.
+    Split installer entries across agents, with 10 entries per agent. Tell agents to edit only entries assigned to them.
+
+    Tell each agent:
+    - If `repoURL` is not a GitHub repository, skip that entry.
+    - Verify current release asset names before changing a `fileNamePattern`.
+    - Never add a literal `v` before `{version}` just because release tags or assets contain one.
+    - Do not touch values that are custom Python installer scripts such as `<name>.py`.
+    - Do not touch custom package install commands.
+    - Only edit `fileNamePattern` fields.
+    - Prefer musl Linux binaries over gnu binaries when both are available.
+
+    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
+
+UpdateTest:
+  group: stackopsDev
+  description: Use agent-ops parallel-agents to write mirrored runtime tests.
+  prompt: |
+    Use the `$agent-ops` skill with the `parallel-agents` command.
+
+    Goal: coordinate external agents to add focused runtime tests for StackOps Python files.
+    Build the work list from git-visible `.py` files, excluding `tests` and ignored/generated directories. Give each agent about 10 files.
+
+    Tell each agent:
+    - Use `$caveman wenyan`.
+    - Create one test file per assigned Python file.
+    - Put tests under `tests/mirror/<same repo-relative path>`.
+    - Test runtime behavior that static type checking cannot catch.
+    - Do not write tests whose only value is checking type correctness.
+    - Keep edits scoped to assigned tests unless a tiny source fix is clearly necessary.
+
+    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
+
+UpdateDocs:
+  group: stackopsDev
+  description: Use agent-ops parallel-agents to update CLI and API docs.
+  prompt: |
+    Use the `$agent-ops` skill with the `parallel-agents` command.
+
+    Goal: coordinate external agents to update documentation under `docs/cli` and `docs/api`.
+    Build the work list from git-visible Markdown files in those two directories. Give agents clear file chunks.
+
+    Tell each agent:
+    - Only edit files under `docs/cli` and `docs/api`.
+    - Do not edit `docs/index.md`, `docs/quickstart.md`, `docs/guide/**`, Home, User Guide, or other documentation tabs.
+    - Treat assigned context entries as docs files to update directly.
+    - Inspect current Python sources and CLI/API behavior as needed.
+    - Prefer current implemented behavior. Remove stale wording instead of documenting legacy behavior.
+
+    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
+
+UpdateLogic:
+  group: stackopsDev
+  description: Use agent-ops parallel-agents to review command logic.
+  prompt: |
+    Use the `$agent-ops` skill with the `parallel-agents` command.
+
+    Goal: coordinate external agents to review StackOps CLI command logic and fix real issues.
+    Build the work list from CLI command source locations, with each task naming the repo-relative source file and command path.
+
+    Tell each agent:
+    - Use the assigned file and command path to find the command.
+    - Fix actual logic bugs, inconsistent behavior, or meaningful failure modes.
+    - If the command works as is, leave it alone.
+    - Keep CLI files fast by moving unnecessary heavy imports into the functions that need them.
+    - Do not over-split into tiny shim modules.
+    - Use modern Python style, including `| None` instead of `Optional`.
+    - Expect other external agents may edit nearby command code.
+
+    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
+
+UpdateAgentsConfig:
+  group: stackopsDev
+  description: Use agent-ops parallel-agents to update agents add-config outputs, one external agent per supported target.
+  prompt: |
+    Use the `$agent-ops` skill with the `parallel-agents` command.
+
+    Please update StackOps `agents add-config` support against the latest official docs for every supported agent.
+
+    This is an orchestration prompt. Start by inspecting the live command, then discover the relevant implementation, templates, privacy helpers, and tests from the repository:
+    - `uv run stackops agents add-config --help`
+    - Use fast repository search to find the command registration, implementation, generated templates, privacy config helpers, and tests.
+    - Do not assume file locations from this prompt; verify the current source layout before editing.
+
+    Determine the supported `agents add-config --agent` values from the live command and current source. Do not rely on this prompt for a hardcoded agent list.
+
+    After determining the supported values, launch Herdr-managed interactive agents through `$agent-ops parallel-agents`:
+    - Start exactly one external agent per supported `agents add-config --agent` value.
+    - Give each spawned agent one supported target only, and name the Herdr target after that assigned target.
+    - Do not group multiple supported targets into one spawned agent.
+    - Do not split one supported target across multiple spawned agents unless the user explicitly asks for that later.
+    - Do not use internal subagents, `agents parallel create`, `agents parallel run-parallel`, generated layout workflows, `--run`, `--Run`, or `-R`.
+    - Submit every spawned-agent prompt and verify each agent accepted it before reporting launch status.
+
+    Tell each spawned agent to handle only its assigned supported target:
+    - Look up the latest official documentation for repository config, user config, instruction files, ignore files, privacy/telemetry controls, and any required config file names or locations.
+    - Prefer primary sources: official docs, official repos, and current CLI `--help` output.
+    - Compare the docs against what StackOps currently writes through `agents add-config`.
+    - Update generated config/instruction templates only where current StackOps output is stale, missing, or wrong.
+    - Configure maximum privacy wherever the agent supports it: disable telemetry, analytics, training/data sharing, prompt logging, crash/upload reporting, and remote diagnostics.
+    - Give the local agent maximum execution autonomy wherever the agent supports it: full tool/file/shell powers, no permission prompts, and no approval prompts.
+    - Keep generated defaults minimal, portable, and safe to commit unless the file is intentionally private.
+    - Preserve existing tests where behavior is still correct, and add focused tests for changed generated outputs or content.
+    - Do not make cosmetic rewrites unrelated to agent config correctness.
+    - Expect other external agents may edit adjacent agent config code or shared tests; keep changes scoped to the assigned target and reconcile conflicts conservatively.
+
+    Final response:
+    - List each agent checked.
+    - Report the Herdr target for each spawned agent and whether its prompt was accepted.
+    - Summarize which config outputs changed.
+    - Cite or name the official documentation used for any behavior change.
