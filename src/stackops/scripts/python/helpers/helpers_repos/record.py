@@ -139,9 +139,15 @@ def _print_merge_report(report: RepoRecordMergeReport) -> None:
 
 
 def record_a_repo(path: Path, search_parent_directories: bool, preferred_remote: str | None) -> RepoRecordDict:
+    from git.exc import InvalidGitRepositoryError, NoSuchPathError
     from git.repo import Repo
 
-    repo = Repo(path, search_parent_directories=search_parent_directories)  # get list of remotes using git python
+    try:
+        repo = Repo(path, search_parent_directories=search_parent_directories)
+    except (InvalidGitRepositoryError, NoSuchPathError) as error:
+        raise ValueError(
+            f"""Cannot register {path}: not a valid Git repository. Check its .git directory or worktree link."""
+        ) from error
     repo_root = Path(repo.working_dir).absolute()
     # remotes: = {remote.name: remote.url for remote in repo.remotes}
     remotes: list[RepoRemote] = [{"name": remote.name, "url": remote.url} for remote in repo.remotes]
@@ -253,20 +259,17 @@ def record_repos_recursively(
             progress.update(scan_task_id, description=f"Scanning: {a_search_res.name}")
 
         if a_search_res.joinpath(".git").exists():
-            try:
-                already_registered = a_search_res.resolve() in registered_paths
-                if progress is not None and process_task_id is not None:
-                    label = "Checking registered" if already_registered else "Registering new"
-                    progress.update(process_task_id, description=f"""{label}: {a_search_res.name}""")
+            already_registered = a_search_res.resolve() in registered_paths
+            if progress is not None and process_task_id is not None:
+                label = "Checking registered" if already_registered else "Registering new"
+                progress.update(process_task_id, description=f"""{label}: {a_search_res.name}""")
 
-                repo_record = record_a_repo(a_search_res, search_parent_directories=False, preferred_remote=None)
-                res.append(repo_record)
+            repo_record = record_a_repo(a_search_res, search_parent_directories=False, preferred_remote=None)
+            res.append(repo_record)
 
-                if progress is not None and process_task_id is not None:
-                    label = "Checked registered" if already_registered else "Recorded new"
-                    progress.update(process_task_id, advance=1, description=f"""{label}: {repo_record['name']}""")
-            except Exception as e:
-                print(f"⚠️ Failed to record {a_search_res}: {e}")
+            if progress is not None and process_task_id is not None:
+                label = "Checked registered" if already_registered else "Recorded new"
+                progress.update(process_task_id, advance=1, description=f"""{label}: {repo_record['name']}""")
         else:
             if r:
                 res += record_repos_recursively(
