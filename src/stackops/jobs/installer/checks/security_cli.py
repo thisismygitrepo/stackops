@@ -83,11 +83,9 @@ def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-se
 
 
 def upload(path: Annotated[Path, typer.Argument(help="Path to a local file to upload")]) -> None:
-    from stackops.jobs.installer.checks.install_utils import upload_app
+    from stackops.jobs.installer.checks.app_upload import upload_app
 
-    link = upload_app(path)
-    if not link:
-        raise typer.Exit(code=1)
+    link = upload_app(path=path, expected_sha256=None)
     typer.echo(link)
 
 

@@ -3,6 +3,9 @@ import platform
 from stackops.utils.source_of_truth import CONFIG_ROOT
 
 SECURITY_RECORDS_ROOT = CONFIG_ROOT / "profile" / "records" / platform.system().lower() / "security"
+SECURITY_UPLOAD_ROOT: str = "myhome/security"
+SECURITY_UPLOAD_TMP_PREFIX: str = "stackops-security-upload-"
+SECURITY_UPLOAD_TRANSFERS: int = 10
 
 VT_ANALYSIS_TIMEOUT_SECONDS: float = 600.0
 VT_POLL_INTERVAL_SECONDS: float = 15.0
@@ -22,6 +25,8 @@ SCAN_HELP: str = (
     """Temporary failures receive bounded retries; inactive or invalid accounts are disabled and requests switch """
     """to another available account. --path uses the same retry and account-switching rules. Existing reports are """
     """retrieved by SHA256 with their original analysis date; unknown files are submitted for analysis. """
+    """Installed-app scans upload completed files to myhome/security/<os>/<home-relative-directory>/<app>/<sha256>/<filename> """
+    """without overwriting previous copies. --path skips cloud uploads. """
     """The final report includes request and failure statistics by account name, without API keys. """
     """Every scan records a separate run, including file scans; --no-record opts out. Results are saved as files """
     """finish. Use --all to scan all installed apps, history to list runs, report --run ID to inspect a run, """

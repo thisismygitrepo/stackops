@@ -8,7 +8,7 @@ from rich.console import Console, Group
 from rich.live import Live
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
-from stackops.jobs.installer.checks.install_utils import upload_app
+from stackops.jobs.installer.checks.app_upload import upload_app
 from stackops.jobs.installer.checks.report_utils import AppData, ScannedAppRecord, build_latest_scan_panel, build_summary_group
 from stackops.jobs.installer.checks.scan_history import RunScope, RunStatus, create_run, save_run
 from stackops.jobs.installer.checks.scan_outcomes import ScanSuccess
@@ -96,7 +96,7 @@ def execute_scan(
                     if scope != "path" and isinstance(scanned_file.outcome, ScanSuccess):
                         progress.update(scan_task, description=f"""Uploading {scanned_file.path.name}...""")
                         operation = "Cloud upload"
-                        app_url = upload_app(scanned_file.path) or ""
+                        app_url = upload_app(path=scanned_file.path, expected_sha256=scanned_file.outcome.sha256)
                         with record_lock:
                             scan_record["app_data"]["app_url"] = app_url
                             if run is not None:

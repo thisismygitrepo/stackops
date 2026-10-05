@@ -14,38 +14,10 @@ import stackops.utils.path_core as path_core
 from rich.console import Console
 
 from stackops.jobs.installer.checks.scan_history import ScanRun
-from stackops.utils.cloud.default_remote import read_default_rclone_remote
-from stackops.utils.cloud.rclone_wrapper import get_remote_path, to_cloud
 from stackops.utils.source_of_truth import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 console = Console()
 
-
-def upload_app(path: Path) -> str | None:
-    """Uploads the app to cloud storage and returns the shareable link."""
-    try:
-        local_path = path.expanduser().absolute()
-        remote_path = get_remote_path(
-            local_path=local_path,
-            root="myhome",
-            os_specific=True,
-            rel2home=True,
-            strict=True,
-        )
-        return to_cloud(
-            local_path=local_path,
-            cloud=read_default_rclone_remote(),
-            remote_path=remote_path,
-            overwrite=False,
-            share=True,
-            share_options=None,
-            verbose=False,
-            show_progress=False,
-            transfers=10,
-        )
-    except Exception as e:
-        console.print(f"[red]Failed to upload {path}: {e}[/red]")
-        return None
 
 def download_google_drive_file(url: str) -> Path:
     """Downloads a file from Google Drive using gdown."""
