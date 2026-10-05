@@ -2,9 +2,7 @@ from typing import Annotated, Literal, TypeAlias
 
 import typer
 
-from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
-from stackops.scripts.python.terminal import run as terminal_run_command
 
 
 CheckerName: TypeAlias = Literal["mypy", "ruff", "pylint", "pyright", "ty", "pyrefly"]
@@ -39,6 +37,8 @@ def launch_type_fix(
         typer.Option("--max-agents", "-m", help="Maximum agents allowed in the generated layout."),
     ] = 50,
 ) -> None:
+    from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
+
     job_name = _get_job_name(checker_name=which_checker)
     agents_create_command(
         agent=agent,
@@ -52,6 +52,8 @@ def launch_type_fix(
     if not proceed:
         typer.echo("Agents not luanched.")
         return
+    from stackops.scripts.python.terminal import run as terminal_run_command
+
     terminal_run_command(
         ctx=ctx,
         layouts_file=_get_layout_path(checker_name=which_checker),

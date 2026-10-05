@@ -12,7 +12,7 @@ from typer.core import TyperGroup
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
-from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions, SandboxSync
+from stackops.utils.sandbox.options import SandboxBackend, SandboxSync
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS, DEFAULT_AGENT
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
@@ -109,18 +109,18 @@ def init_config(
         str | None,
         typer.Option("--root", "-R", help="Root directory of the repository to initialize AI configs in. Defaults to current directory."),
     ] = None,
-    add_config: Annotated[
+    no_add_config: Annotated[
         bool,
-        typer.Option("--add-config/--no-add-config", "-C/-c", help="Include private agent config files/directories"),
-    ] = True,
-    add_instructions: Annotated[
+        typer.Option("--no-add-config", "-c", help="Skip private agent config files/directories."),
+    ] = False,
+    no_add_instructions: Annotated[
         bool,
-        typer.Option("--add-instructions/--no-add-instructions", "-I/-i", help="Include agent instruction files (e.g. AGENTS.md)"),
-    ] = True,
-    add_agent_ops_skill: Annotated[
+        typer.Option("--no-add-instructions", "-i", help="Skip agent instruction files (e.g. AGENTS.md)."),
+    ] = False,
+    no_agent_ops_skill: Annotated[
         bool,
-        typer.Option("--agent-ops-skill/--no-agent-ops-skill", "-A/-a", help="Copy the latest bundled Agent-Ops skill"),
-    ] = True,
+        typer.Option("--no-agent-ops-skill", "-a", help="Skip the latest bundled Agent-Ops skill."),
+    ] = False,
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
     add_to_gitignore: Annotated[
@@ -139,9 +139,9 @@ def init_config(
             include_common=add_scripts,
             add_all_configs_to_gitignore=add_to_gitignore,
             add_lint_task=add_vscode_tasks,
-            add_config=add_config,
-            add_instructions=add_instructions,
-            add_agent_ops_skill=add_agent_ops_skill,
+            add_config=not no_add_config,
+            add_instructions=not no_add_instructions,
+            add_agent_ops_skill=not no_agent_ops_skill,
         )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
@@ -286,15 +286,15 @@ def run_interactive(
     ] = None,
     sandbox_provider: Annotated[
         list[str] | None,
-        typer.Option("--sandbox-provider", help="Configured OpenShell provider to attach. Repeat for multiple providers."),
+        typer.Option("--sandbox-provider", "-p", help="Configured OpenShell provider to attach. Repeat for multiple providers."),
     ] = None,
     sandbox_name: Annotated[
         str | None,
-        typer.Option("--sandbox-name", help="Name for a new OpenShell sandbox. Generated automatically when omitted."),
+        typer.Option("--sandbox-name", "-n", help="Name for a new OpenShell sandbox. Generated automatically when omitted."),
     ] = None,
     sandbox_sync: Annotated[
         SandboxSync | None,
-        typer.Option("--sandbox-sync", help="OpenShell project snapshot with fresh Git history: copy-back (default) preserves local conflicts and deletes successful sandboxes; manual retains the sandbox for download."),
+        typer.Option("--sandbox-sync", "-s", help="OpenShell project snapshot with fresh Git history: copy-back (default) preserves local conflicts and deletes successful sandboxes; manual retains the sandbox for download."),
     ] = None,
 ) -> None:
     """Launch an agent with reasonable defaults."""
@@ -305,6 +305,7 @@ def run_interactive(
             raise ValueError("--fork requires --followup.")
         from stackops.scripts.python.helpers.helpers_agents.agents_shell import is_windows_host
         from stackops.utils.sandbox.launch import build_sandbox_command, validate_sandbox_options
+        from stackops.utils.sandbox.options import SandboxOptions
 
         sandbox_options = SandboxOptions(
             backend=sandbox, image=sandbox_image, settings=sandbox_settings,
@@ -482,19 +483,20 @@ def run_prompt(
     ] = None,
     sandbox_provider: Annotated[
         list[str] | None,
-        typer.Option("--sandbox-provider", help="Configured OpenShell provider to attach. Repeat for multiple providers."),
+        typer.Option("--sandbox-provider", "-p", help="Configured OpenShell provider to attach. Repeat for multiple providers."),
     ] = None,
     sandbox_name: Annotated[
         str | None,
-        typer.Option("--sandbox-name", help="Name for a new OpenShell sandbox. Generated automatically when omitted."),
+        typer.Option("--sandbox-name", "-N", help="Name for a new OpenShell sandbox. Generated automatically when omitted."),
     ] = None,
     sandbox_sync: Annotated[
         SandboxSync | None,
-        typer.Option("--sandbox-sync", help="OpenShell project snapshot with fresh Git history: copy-back (default) preserves local conflicts and deletes successful sandboxes; manual retains the sandbox for download."),
+        typer.Option("--sandbox-sync", "-z", help="OpenShell project snapshot with fresh Git history: copy-back (default) preserves local conflicts and deletes successful sandboxes; manual retains the sandbox for download."),
     ] = None,
 ) -> None:
     """Run a prompt via the selected agent, optionally continuing interactively."""
     from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
+    from stackops.utils.sandbox.options import SandboxOptions
 
     try:
         with _agent_working_directory(second_brain=second_brain) as working_directory:
@@ -643,8 +645,6 @@ def doctor(
     tui: Annotated[bool, typer.Option("--tui", "-t", help="Browse agent health and resources in a terminal app.")] = False,
 ) -> None:
     """Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance."""
-    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor
-
     working_directory = directory if directory is not None else Path.cwd()
     if tui:
         from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
@@ -653,6 +653,8 @@ def doctor(
             mode="doctor", agent=agent, directory=str(working_directory), resource=resource, scope="all", match=None, recursive=False,
         )
         return
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor
+
     try:
         complete = run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)
     except ValueError as error:

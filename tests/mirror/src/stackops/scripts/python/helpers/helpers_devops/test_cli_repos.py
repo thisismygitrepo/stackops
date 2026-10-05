@@ -70,3 +70,53 @@ def test_commit_dry_run_does_not_create_commit(tmp_path: Path) -> None:
     assert "DRY RUN" in result.output
     assert repository.head.commit.hexsha == commit_before
     assert repository.index.diff("HEAD")
+
+
+@pytest.mark.parametrize(
+    ("arguments", "expected_guard", "expected_ignore_gitignore"),
+    [
+        ([], None, None),
+        (["--sync-mode", "git"], False, None),
+        (["--sync-mode", "guard"], True, None),
+        (["-g", "guard", "-I", "include"], True, True),
+        (["--sync-mode", "guard", "--gitignore", "respect"], True, False),
+    ],
+)
+def test_register_preserves_saved_or_explicit_choices(
+    arguments: list[str],
+    expected_guard: bool | None,
+    expected_ignore_gitignore: bool | None,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from stackops.scripts.python.helpers.helpers_repos import record
+
+    recorded: list[tuple[bool | None, bool | None]] = []
+
+    def capture_registration(
+        repos_root_str: str | None,
+        specs_path: str | Path | None,
+        guard: bool | None,
+        cloud: str | None,
+        ignore_gitignore: bool | None,
+    ) -> Path:
+        assert repos_root_str is None
+        assert specs_path is None
+        assert cloud is None
+        recorded.append((guard, ignore_gitignore))
+        return tmp_path
+
+    monkeypatch.setattr(record, "main_record", capture_registration)
+
+    result = CliRunner().invoke(get_app(), ["register", *arguments])
+
+    assert result.exit_code == 0, result.output
+    assert recorded == [(expected_guard, expected_ignore_gitignore)]
+
+
+@pytest.mark.parametrize("arguments", [["--gitignore", "respect"], ["--sync-mode", "git", "--gitignore", "include"]])
+def test_register_archive_choice_requires_guard(arguments: list[str]) -> None:
+    result = CliRunner().invoke(get_app(), ["register", *arguments])
+
+    assert result.exit_code == 2
+    assert "--cloud and --gitignore require --sync-mode guard" in result.output

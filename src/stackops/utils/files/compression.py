@@ -3,13 +3,14 @@
 import bz2
 import gzip
 import lzma
-from pathlib import Path
 import tarfile
-from typing import Literal
 import zipfile
+from pathlib import Path
+from typing import Literal
 
 from stackops.utils.accessories import randstr
 from stackops.utils.code import run_lambda_function
+from stackops.utils.files.compression_constants import DECOMPRESS_SUPPORTED_FORMATS
 from stackops.utils.path_core import delete_path
 
 type FileMode = Literal["r", "w", "x", "a"]
@@ -19,20 +20,7 @@ type TarOpenMode = Literal["w", "w:gz", "w:bz2", "w:xz"]
 TAR_FORMAT_OPEN_MODES: dict[TarFormat, TarOpenMode] = {"tar": "w", "tar.gz": "w:gz", "tar.bz2": "w:bz2", "tar.xz": "w:xz"}
 TAR_FORMAT_SUFFIXES: dict[TarFormat, str] = {"tar": ".tar", "tar.gz": ".tar.gz", "tar.bz2": ".tar.bz2", "tar.xz": ".tar.xz"}
 
-DECOMPRESS_SUPPORTED_FORMATS: tuple[str, ...] = (
-    ".tar.gz",
-    ".tgz",
-    ".tar",
-    ".gz",
-    ".tar.bz",
-    ".tbz",
-    ".tar.xz",
-    ".zip",
-    ".7z",
-    ".tar.bz2",
-    ".tbz2",
-    ".xz",
-)
+
 
 
 def _emit(message: str, verbose: bool) -> None:

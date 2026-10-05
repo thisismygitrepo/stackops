@@ -1,8 +1,9 @@
-import typer
 from pathlib import Path
 from typing import Annotated, Literal
 
-from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, DEFAULT_OS_FILTER
+import typer
+
+from stackops.profile.dotfiles_constants import ALL_OS_VALUES, DEFAULT_OS_FILTER
 from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_MAP, CONFIG_SOURCE_LOOSE
 from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
 
@@ -163,7 +164,7 @@ def register_data(
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in mapper/data.yaml.")] = None,
     path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,
     share_url: Annotated[str | None, typer.Option("--share-url", "-u", help="Optional http(s) share URL for sync down --use-link.")] = None,
-    zip_: Annotated[bool, typer.Option("--zip/--no-zip", "-z/-Z", help="Zip the backup entry before upload.")] = True,
+    no_zip: Annotated[bool, typer.Option("--no-zip", "-z", help="Skip zipping the backup entry before upload.")] = False,
     encryption: Annotated[
         EncryptionModeChoice | None,
         typer.Option("--encryption", "-e", help="Encryption mode: symmetric/s or asymmetric/a. Omit for plaintext."),
@@ -171,12 +172,14 @@ def register_data(
     pwd: Annotated[
         str | None, typer.Option("--password", "-p", help="Symmetric GPG encryption password. Requires --encryption symmetric and is not stored.")
     ] = None,
-    rel2home: Annotated[bool | None, typer.Option("--rel2home/--no-rel2home", "-r/-R", help="Store the local path relative to home when it is under home.")] = None,
+    no_rel2home: Annotated[bool, typer.Option("--no-rel2home", "-r", help="Store an absolute path instead of a home-relative path.")] = False,
     os: Annotated[
         str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")
     ] = DEFAULT_OS_FILTER,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
+    zip_ = not no_zip
+    rel2home: bool | None = False if no_rel2home else None
     from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry
     from stackops.scripts.python.helpers.helpers_devops.cli_data_display import show_registration_summary
 
@@ -230,9 +233,9 @@ def edit_data(
     import subprocess
 
     from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
+        DEFAULT_BACKUP_HEADER,
         LIBRARY_BACKUP_PATH,
         USER_BACKUP_PATH,
-        DEFAULT_BACKUP_HEADER,
     )
 
     source_key = CONFIG_FILE_SOURCE_MAP[source]

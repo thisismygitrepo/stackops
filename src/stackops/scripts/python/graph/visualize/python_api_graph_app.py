@@ -42,7 +42,7 @@ def explain_filter() -> None:
 
 def tree(
     graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Use an existing Python API graph JSON file.")] = None,
-    show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", "-H/-N", help="Show help text in labels")] = True,
+    no_show_help: Annotated[bool, typer.Option("--no-show-help", "-H", help="Hide help text in labels")] = False,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the tree")] = None,
 ) -> None:
     """Render a rich tree view in the terminal."""
@@ -57,7 +57,7 @@ def tree(
 
     uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
     shell_script, _pyfile = get_shell_script_running_lambda_function(
-        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_help=show_help, max_depth=max_depth),
+        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_help=not no_show_help, max_depth=max_depth),
         uv_with=uv_with,
         uv_project_dir=uv_project_dir,
     )
@@ -67,7 +67,7 @@ def tree(
 def dot(
     graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Use an existing Python API graph JSON file.")] = None,
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write DOT output to a file")] = None,
-    include_help: Annotated[bool, typer.Option("--include-help/--no-include-help", "-H/-N", help="Show help text in labels")] = True,
+    no_include_help: Annotated[bool, typer.Option("--no-include-help", "-H", help="Hide help text in labels")] = False,
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
 ) -> None:
     """Export the graph as Graphviz DOT."""
@@ -93,7 +93,7 @@ def dot(
         lambda: func(
             graph_path_str=str(graph_path) if graph_path else None,
             output_str=str(output) if output else None,
-            include_help=include_help,
+            include_help=not no_include_help,
             max_depth=max_depth,
         ),
         uv_with=uv_with,

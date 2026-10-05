@@ -398,8 +398,7 @@ def trace(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_sessions.terminal_run_command import TerminalRunCommand
-    from stackops.scripts.python.terminal_summary import summary
-    from stackops.scripts.python.terminal_summarize import summarize
+    from stackops.scripts.python.terminal_summary_commands import summary, summarize
 
     layouts_app = typer.Typer(
         help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,

@@ -1,6 +1,8 @@
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import git
+if TYPE_CHECKING:
+    import git
 import typer
 
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
@@ -15,6 +17,8 @@ def developer_repo_root() -> Path | None:
 
 
 def pull_repo_before_update(repo_root: Path) -> None:
+    import git
+
     try:
         with git.Repo(repo_root) as repo:
             pull_output = repo.git.pull("--ff-only", "--no-rebase", "--no-autostash")
@@ -24,13 +28,15 @@ def pull_repo_before_update(repo_root: Path) -> None:
     typer.echo(pull_output)
 
 
-def _abort_rebase_if_in_progress(repo: git.Repo) -> None:
+def _abort_rebase_if_in_progress(repo: "git.Repo") -> None:
     git_dir = Path(repo.git_dir)
     if git_dir.joinpath("rebase-merge").exists() or git_dir.joinpath("rebase-apply").exists():
         repo.git.rebase(abort=True)
 
 
 def sync_dev_repo_before_update(dev_repo_root: Path) -> None:
+    import git
+
     repo = git.Repo(str(dev_repo_root))
     if repo.head.is_detached:
         typer.echo(f"❌ --dev sync requires a checked-out branch, HEAD in {str(dev_repo_root)} is detached.")

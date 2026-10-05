@@ -1,35 +1,20 @@
 """Dotfile mapper registration commands."""
 
 import hashlib
-from pathlib import Path
 import shutil
 import subprocess
-from typing import Annotated, Literal, cast
+from pathlib import Path
+from typing import TYPE_CHECKING, Annotated, Literal, cast
+
+if TYPE_CHECKING:
+    from stackops.profile.dotfiles_mapper import RawMapperEntry
 
 import typer
 
-from stackops.profile.dotfiles_mapper import (
-    DEFAULT_DOTFILE_MAPPER_HEADER,
-    DEFAULT_OS_FILTER,
-    LIBRARY_MAPPER_PATH,
-    USER_MAPPER_PATH,
-    RawMapperEntry,
-    dump_dotfiles_mapper,
-    load_dotfiles_mapper,
-    normalize_os_filter,
-    write_dotfiles_mapper,
-)
-from stackops.profile.linking.options import (
-    CONFIG_FILE_SOURCE_LOOSE,
-    CONFIG_FILE_SOURCE_MAP,
-    METHOD_LOOSE,
-    METHOD_MAP,
-)
-from stackops.profile.linking.conflict import (
-    ON_CONFLICT_LOOSE,
-    ON_CONFLICT_MAPPER,
-)
-from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_MAPPER_FILES_ROOT, DOTFILES_ROOT
+from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
+from stackops.profile.linking.conflict import ON_CONFLICT_LOOSE
+from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE, METHOD_LOOSE
+from stackops.utils.source_of_truth import DOTFILES_MAPPER_FILES_ROOT
 
 BACKUP_ROOT_FLAT = DOTFILES_MAPPER_FILES_ROOT
 FLAT_PATH_HASH_LENGTH = 16
@@ -43,6 +28,8 @@ def _format_home_relative_path(path: Path) -> str:
 
 
 def _format_self_managed_mapper_path(path: Path) -> str:
+    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_ROOT
+
     config_root = Path(CONFIG_ROOT).expanduser().resolve()
     dotfiles_root = Path(DOTFILES_ROOT).expanduser().resolve()
     resolved_path = path.expanduser().resolve(strict=False)
@@ -82,7 +69,9 @@ def _build_mapper_entry(
     method: Literal["symlink", "copy"],
     is_contents: bool,
     os_filter: str,
-) -> RawMapperEntry:
+) -> "RawMapperEntry":
+    from stackops.profile.dotfiles_mapper import normalize_os_filter
+
     entry: RawMapperEntry = {
         "original": _format_home_relative_path(original_path),
         "self_managed": _format_self_managed_mapper_path(self_managed_path),
@@ -95,7 +84,9 @@ def _build_mapper_entry(
     return entry
 
 
-def _build_mapper_preview(section: str, entry_name: str, entry: RawMapperEntry) -> str:
+def _build_mapper_preview(section: str, entry_name: str, entry: "RawMapperEntry") -> str:
+    from stackops.profile.dotfiles_mapper import dump_dotfiles_mapper
+
     preview = dump_dotfiles_mapper(
         mapper={section: {entry_name: entry}},
         header="",
@@ -115,7 +106,9 @@ def _write_to_user_mapper(
     method: Literal["symlink", "copy"],
     is_contents: bool,
     os_filter: str,
-) -> tuple[Path, RawMapperEntry]:
+) -> "tuple[Path, RawMapperEntry]":
+    from stackops.profile.dotfiles_mapper import DEFAULT_DOTFILE_MAPPER_HEADER, USER_MAPPER_PATH, load_dotfiles_mapper, write_dotfiles_mapper
+
     mapper_path = USER_MAPPER_PATH
     mapper_path.parent.mkdir(parents=True, exist_ok=True)
     mapper = load_dotfiles_mapper(mapper_path) if mapper_path.exists() else {}
@@ -138,6 +131,8 @@ def _write_to_user_mapper(
 
 
 def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, section: str, os_filter: str, entry_name: str | None = None) -> None:
+    from stackops.profile.linking.options import METHOD_MAP
+
     resolved_entry_name = _resolve_entry_name(orig_path, entry_name)
     method_resolved = METHOD_MAP[method]
     mapper_file, entry = _write_to_user_mapper(
@@ -215,6 +210,8 @@ def _prompt_register_dotfile_options(
     record: bool,
     entry_name: str | None,
 ) -> tuple[str, METHOD_LOOSE, ON_CONFLICT_LOOSE, Literal["private", "public"], str | None, str, str, bool, bool, str]:
+    from stackops.profile.linking.conflict import ON_CONFLICT_MAPPER
+    from stackops.profile.linking.options import METHOD_MAP
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
 
     file_default = file or Path.cwd().as_posix()
@@ -323,14 +320,18 @@ def register_dotfile(
     section: Annotated[str, typer.Option("--section", "-S", help="Section name in mapper/dotfiles.yaml to record this mapping.")] = "default",
     os_filter: Annotated[str, typer.Option("--os", "-o", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
     shared: Annotated[bool, typer.Option("--shared", "-H", help="Whether the config file is shared across destinations directory.")] = False,
-    record: Annotated[bool, typer.Option("--record/--no-record", "-r/-R", help="Record the mapping in user's mapper.yaml")] = True,
+    no_record: Annotated[bool, typer.Option("--no-record", "-r", help="Skip recording the mapping in the user mapper.yaml")] = False,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     from rich.console import Console
     from rich.panel import Panel
-    from stackops.profile.linking.operations import symlink_map, copy_map
+
+    from stackops.profile.linking.conflict import ON_CONFLICT_MAPPER
+    from stackops.profile.linking.operations import copy_map, symlink_map
+    from stackops.profile.linking.options import METHOD_MAP
 
     console = Console()
+    record = not no_record
     if interactive:
         file, method, on_conflict, sensitivity, destination, section, os_filter, shared, record, name = _prompt_register_dotfile_options(
             file=file,
@@ -422,6 +423,9 @@ def edit_dotfile(
         typer.Option("--source", "-s", help="📁 Which mapper file to edit: 'user' or 'library'."),
     ] = "user",
 ) -> None:
+    from stackops.profile.dotfiles_mapper import DEFAULT_DOTFILE_MAPPER_HEADER, LIBRARY_MAPPER_PATH, USER_MAPPER_PATH, write_dotfiles_mapper
+    from stackops.profile.linking.options import CONFIG_FILE_SOURCE_MAP
+
     source_key = CONFIG_FILE_SOURCE_MAP[source]
     if source_key == "user":
         file_path = USER_MAPPER_PATH

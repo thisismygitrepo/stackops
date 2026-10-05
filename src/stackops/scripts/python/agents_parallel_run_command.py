@@ -7,11 +7,11 @@ import typer
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
     AgentParallelBackendOption,
-    resolve_agent_parallel_backend,
 )
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 
 _PARALLEL_RUNS_SOURCE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+_BooleanOverride = Literal["true", "false"]
 
 
 def run_parallel(
@@ -67,20 +67,21 @@ def run_parallel(
         str | None, typer.Option(..., "--job-name", "-n", help="Override job label. Also used as generated layout name and default output directory.")
     ] = None,
     join_prompt_and_context: Annotated[
-        bool | None,
-        typer.Option("--joined-prompt-context", "-j", help="Override generated config to join the prompt file to the context."),
+        _BooleanOverride | None,
+        typer.Option("--joined-prompt-context", "-j", help="Override whether the prompt file is joined to the context. Omit to use YAML."),
     ] = None,
     run: Annotated[
-        bool | None,
-        typer.Option("--run", "-R", help="Override generated config to immediately launch the layout through terminal run."),
+        _BooleanOverride | None,
+        typer.Option("--run", "-R", help="Override whether the layout launches immediately. Omit to use YAML."),
     ] = None,
     output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Override layout.json output path.")] = None,
     agents_dir: Annotated[str | None, typer.Option(..., "--agents-dir", "-d", help="Override exact directory to store agent files in.")] = None,
     interactive: Annotated[
-        bool | None, typer.Option("--interactive", "-i", help="Override generated config to run create in interactive mode.")
+        _BooleanOverride | None, typer.Option("--interactive", "-i", help="Override whether create runs interactively. Omit to use YAML.")
     ] = None,
 ) -> None:
     """Run a named parallel agent workflow from YAML, with create-option overrides."""
+    from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import resolve_agent_parallel_backend
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ParallelCreateValues
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_impl import run_parallel_from_yaml
 
@@ -105,11 +106,11 @@ def run_parallel(
                 prompt_path=prompt_path,
                 prompt_name=prompt_name,
                 job_name=job_name,
-                join_prompt_and_context=join_prompt_and_context,
-                run=run,
+                join_prompt_and_context=None if join_prompt_and_context is None else join_prompt_and_context == "true",
+                run=None if run is None else run == "true",
                 output_path=output_path,
                 agents_dir=agents_dir,
-                interactive=interactive,
+                interactive=None if interactive is None else interactive == "true",
             ),
             edit=edit,
             add_entry=add_entry,

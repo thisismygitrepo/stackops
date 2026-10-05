@@ -6,6 +6,7 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_prompts as secret_prompts
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_validation as secret_validation
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SECRETS_SCHEMA_FILENAME
 from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import (
     InteractivePickerOption,
     choose_interactive_options,
@@ -13,8 +14,6 @@ from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker impor
 from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import SubsetOutputConflictAction
 from stackops.secrets.constants import SECRETS_FILE_VERSION
 from stackops.secrets.models import Login, SecretsFile
-
-SECRETS_SCHEMA_FILENAME = "secrets.schema.json"
 
 
 def edit_secrets_file(secrets_path: Path, editor: str, *, create: bool = False) -> None:

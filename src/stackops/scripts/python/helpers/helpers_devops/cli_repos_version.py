@@ -1,32 +1,22 @@
 from pathlib import Path
-from typing import Annotated, Never, assert_never
+from typing import TYPE_CHECKING, Annotated, Never, assert_never
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError, capture_declared_version
-from stackops.scripts.python.helpers.helpers_repos.version_checkout import checkout_declared_version
-from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
+if TYPE_CHECKING:
+    from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
 from stackops.scripts.python.helpers.helpers_repos.version_models import (
     DeclaredVersion,
     RepositorySnapshot,
     RepositoryVersionStatus,
-    VersionsFile,
     VersionRepositoryState,
-)
-from stackops.scripts.python.helpers.helpers_repos.version_paths import resolve_workspace
-from stackops.scripts.python.helpers.helpers_repos.version_status import inspect_declared_version
-from stackops.scripts.python.helpers.helpers_repos.version_store import (
-    VersionStoreError,
-    append_declared_version,
-    find_declared_version,
-    load_versions_file,
-    save_versions_file,
+    VersionsFile,
 )
 
 
-def _abort(error: OSError | ValueError | VersionOperationError) -> Never:
+def _abort(error: "OSError | ValueError | VersionOperationError") -> Never:
     typer.echo(f"❌ {error}", err=True)
     raise typer.Exit(code=1) from error
 
@@ -98,6 +88,16 @@ def declare(
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recurse into nested repository directories.")] = False,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError, capture_declared_version
+    from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
+    from stackops.scripts.python.helpers.helpers_repos.version_paths import resolve_workspace
+    from stackops.scripts.python.helpers.helpers_repos.version_store import (
+        VersionStoreError,
+        append_declared_version,
+        load_versions_file,
+        save_versions_file,
+    )
+
     try:
         repos_root = resolve_workspace(directory=directory)
         path = repos_root.joinpath(VERSIONS_FILE_NAME)
@@ -122,6 +122,12 @@ def status(
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
+    from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
+    from stackops.scripts.python.helpers.helpers_repos.version_paths import resolve_workspace
+    from stackops.scripts.python.helpers.helpers_repos.version_status import inspect_declared_version
+    from stackops.scripts.python.helpers.helpers_repos.version_store import find_declared_version, load_versions_file
+
     try:
         repos_root = resolve_workspace(directory=directory)
         path = repos_root.joinpath(VERSIONS_FILE_NAME)
@@ -143,6 +149,12 @@ def checkout(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing current sync settings.")] = None,
     password: Annotated[str | None, typer.Option("--password", "-p", help="Password for encrypted guard archives.")] = None,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
+    from stackops.scripts.python.helpers.helpers_repos.version_checkout import checkout_declared_version
+    from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
+    from stackops.scripts.python.helpers.helpers_repos.version_paths import resolve_workspace
+    from stackops.scripts.python.helpers.helpers_repos.version_store import find_declared_version, load_versions_file
+
     try:
         repos_root = resolve_workspace(directory=directory)
         path = repos_root.joinpath(VERSIONS_FILE_NAME)

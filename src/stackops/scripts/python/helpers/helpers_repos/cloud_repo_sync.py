@@ -1,15 +1,15 @@
 import os
 from pathlib import Path
-from typing import Annotated, Literal, Never
+from typing import TYPE_CHECKING, Annotated, Literal, Never
 
 import typer
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionOption
-from stackops.scripts.python.helpers.helpers_repos.guard_transport import GuardOperation
-from stackops.utils.io import GpgCommandError
+if TYPE_CHECKING:
+    from stackops.utils.io import GpgCommandError
 
 
-def _exit_after_gpg_error(error: GpgCommandError) -> Never:
+def _exit_after_gpg_error(error: "GpgCommandError") -> Never:
     from rich.console import Console
     from rich.panel import Panel
 
@@ -44,9 +44,9 @@ def main(
         ),
     ] = "ask",
     pwd: Annotated[str | None, typer.Option(..., "--password", "-p", help="Password for encryption/decryption of the remote repository.")] = None,
-    ignore_gitignore: Annotated[
-        bool | None,
-        typer.Option("--ignore-gitignore/--respect-gitignore", "-I/-R", help="Override whether the archive includes Git-ignored files."),
+    gitignore: Annotated[
+        Literal["include", "respect"] | None,
+        typer.Option("--gitignore", "-I", help="Include or respect Git-ignored files; omit to keep the saved archive setting."),
     ] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository specification containing saved guard settings.")] = None,
 ) -> str | None:
@@ -58,9 +58,10 @@ def main(
 
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_archive import get_repo_remote_archive_path
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import resolve_conflict_action
-    from stackops.scripts.python.helpers.helpers_repos.guard_transport import run_guard_repository
+    from stackops.scripts.python.helpers.helpers_repos.guard_transport import GuardOperation, run_guard_repository
     from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repository_syncs
     from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError, read_default_rclone_remote
+    from stackops.utils.io import GpgCommandError
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH
 
     operation: GuardOperation
@@ -104,11 +105,11 @@ def main(
         step = "Resolving the remote archive path"
         if sync is not None and sync["mode"] == "guard":
             remote_path = Path(sync["remotePath"])
-            include_ignored = sync["ignoreGitignore"] if ignore_gitignore is None else ignore_gitignore
+            include_ignored = sync["ignoreGitignore"] if gitignore is None else gitignore == "include"
         else:
             repo_root.resolve().relative_to(Path.home().resolve())
             remote_path = get_repo_remote_archive_path(repo_root=repo_root)
-            include_ignored = ignore_gitignore is True
+            include_ignored = gitignore == "include"
         step = f"""Running repository operation: {operation}"""
         result = run_guard_repository(
             repo_root=repo_root,

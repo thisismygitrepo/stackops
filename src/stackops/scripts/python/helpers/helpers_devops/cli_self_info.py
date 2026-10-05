@@ -5,16 +5,14 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
-from stackops.utils.cli_utils.alias_markers import apply_alias_markers
-from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
-
 
 def readme() -> None:
     from email import message_from_string
 
     from rich.console import Console
     from rich.markdown import Markdown
+
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 
     repo_root = cli_self_repo.developer_repo_root()
     console = Console()
@@ -91,6 +89,9 @@ def build_docker(
     ] = None,
 ) -> None:
     """🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`"""
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
+    from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
+
     repo_root = cli_self_repo.developer_repo_root()
     if repo_root is None:
         typer.echo(f"❌ Developer repo not found: {STACKOPS_REPO_DIR}")
@@ -111,8 +112,8 @@ def build_docker(
         typer.echo(f"❌ Registry upload canceled. Local image: stackops-{variant}:latest")
         return
 
-    from stackops.secrets.search import render_secret_value
     from stackops.scripts.python.helpers.helpers_devops import cli_self_docker
+    from stackops.secrets.search import render_secret_value
 
     try:
         credentials = cli_self_docker.resolve_docker_credentials(
@@ -156,6 +157,9 @@ def build_graph(
     ] = False,
 ) -> None:
     """🕸 <g> Build the architecture dependency graph."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
+    from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
+
     repo_root = cli_self_repo.developer_repo_root()
     if repo_root is None:
         typer.echo(f"❌ Developer repo not found: {STACKOPS_REPO_DIR}")
@@ -185,6 +189,7 @@ def build_graph(
 def explore_cli(ctx: typer.Context) -> None:
     """🧭 <x> Explore the StackOps CLI graph."""
     from stackops.scripts.python.graph.visualize import cli_graph_app
+    from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
     apply_alias_markers(cli_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
 
@@ -192,6 +197,7 @@ def explore_cli(ctx: typer.Context) -> None:
 def explore_python_api(ctx: typer.Context) -> None:
     """🧭 <p> Explore the StackOps Python API graph."""
     from stackops.scripts.python.graph.visualize import python_api_graph_app
+    from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
     apply_alias_markers(python_api_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
 

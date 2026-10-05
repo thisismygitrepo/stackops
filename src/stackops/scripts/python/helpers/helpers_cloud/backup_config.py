@@ -4,12 +4,12 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TypedDict, cast
 
+import yaml
 from rich.console import Console
 from rich.panel import Panel
-import stackops.utils.schemas.mapper as mapper_assets
-import yaml
 
-from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
+import stackops.utils.schemas.mapper as mapper_assets
+from stackops.profile.dotfiles_constants import ALL_OS_VALUES, OsName
 from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
 from stackops.utils.cloud.encryption import EncryptionMode
 from stackops.utils.path_reference import get_path_reference_path

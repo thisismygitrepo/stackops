@@ -3,15 +3,6 @@ from typing import Annotated
 
 import typer
 
-from stackops.utils.installer_utils.linux_package_manager import detect_current_linux_distribution
-from stackops.utils.ssh_utils.server_install import (
-    build_linux_ssh_server_install_script as _get_linux_ssh_server_install_script,
-    build_macos_ssh_server_install_script as _get_macos_ssh_server_install_script,
-)
-from stackops.utils.ssh_utils.windows_server_install import (
-    build_windows_ssh_server_install_script as _get_windows_ssh_server_install_script,
-)
-
 
 def _run_add_ssh_key_with_paramiko(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str) -> None:
     import stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key as helper
@@ -22,6 +13,11 @@ def _run_add_ssh_key_with_paramiko(pub_path: str | None, pub_choose: bool, pub_v
 def install_ssh_server() -> None:
     """📡 Install SSH server"""
     import platform
+
+    from stackops.utils.installer_utils.linux_package_manager import detect_current_linux_distribution
+    from stackops.utils.ssh_utils.server_install import build_linux_ssh_server_install_script as _get_linux_ssh_server_install_script
+    from stackops.utils.ssh_utils.server_install import build_macos_ssh_server_install_script as _get_macos_ssh_server_install_script
+    from stackops.utils.ssh_utils.windows_server_install import build_windows_ssh_server_install_script as _get_windows_ssh_server_install_script
 
     system = platform.system()
     if system == "Windows":

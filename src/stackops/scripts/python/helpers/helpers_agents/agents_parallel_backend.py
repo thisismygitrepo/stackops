@@ -1,16 +1,11 @@
 """Backend helpers for launching generated parallel agent layouts."""
 
-import json
-import shlex
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Literal, TypeAlias, cast
+from typing import TYPE_CHECKING, Final, Literal, TypeAlias, cast
 
-import typer
-
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_layouts import read_generated_layouts
-from stackops.utils.schemas.layouts.layout_types import TabConfig
+if TYPE_CHECKING:
+    from stackops.utils.schemas.layouts.layout_types import TabConfig
 
 
 AgentParallelBackend: TypeAlias = Literal["tmux", "herdr", "tuios", "aoe"]
@@ -55,6 +50,7 @@ def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBack
         case "tmux":
             _run_generated_layout_with_tmux(layout_output_path=layout_output_path)
         case "tuios":
+            from stackops.scripts.python.helpers.helpers_agents.agents_parallel_layouts import read_generated_layouts
             from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
 
             run_layouts(
@@ -79,6 +75,8 @@ def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBack
 
 
 def run_generated_layout_with_herdr(*, layout_output_path: Path) -> HerdrLaunchSummary:
+    from stackops.scripts.python.helpers.helpers_agents.agents_parallel_layouts import read_generated_layouts
+
     layouts = read_generated_layouts(layout_output_path=layout_output_path)
     if len(layouts) != 1:
         raise RuntimeError(f"Herdr backend expects one generated layout, found {len(layouts)} in {layout_output_path}")
@@ -117,7 +115,7 @@ def run_generated_layout_with_herdr(*, layout_output_path: Path) -> HerdrLaunchS
     return HerdrLaunchSummary(workspace_id=workspace_id, workspace_label=layout["layoutName"], tabs=tuple(launched_tabs))
 
 
-def _run_tab_command(*, tab: TabConfig, pane_id: str) -> None:
+def _run_tab_command(*, tab: "TabConfig", pane_id: str) -> None:
     _run_herdr(["herdr", "pane", "run", pane_id, tab["command"]])
 
 
@@ -144,6 +142,9 @@ def _run_generated_layout_with_tmux(*, layout_output_path: Path) -> None:
 
 
 def _run_herdr(args: list[str]) -> str:
+    import shlex
+    import subprocess
+
     try:
         result = subprocess.run(args, capture_output=True, check=False, text=True)
     except FileNotFoundError as exc:
@@ -155,6 +156,9 @@ def _run_herdr(args: list[str]) -> str:
 
 
 def _run_herdr_json(args: list[str]) -> JsonObject:
+    import json
+    import shlex
+
     stdout = _run_herdr(args).strip()
     if stdout == "":
         raise RuntimeError(f"Herdr command did not return JSON: {shlex.join(args)}")
@@ -185,6 +189,8 @@ def _required_string(*, mapping: JsonObject, key: str) -> str:
 
 
 def _show_herdr_launch_summary(*, summary: HerdrLaunchSummary) -> None:
+    import typer
+
     typer.echo(f"Started Herdr workspace '{summary.workspace_label}' ({summary.workspace_id}) with {len(summary.tabs)} agent tab(s).")
     for tab in summary.tabs:
         typer.echo(f"- {tab.name}: tab={tab.tab_id} pane={tab.pane_id}")

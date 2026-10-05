@@ -4,10 +4,7 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
-from stackops.scripts.python.terminal import run as terminal_run_command
-from stackops.utils.accessories import get_repo_root
 
 
 JOB_NAME = "test_runtime"
@@ -46,6 +43,8 @@ def _get_layout_path(*, workspace_root: Path) -> str:
 
 
 def _resolve_workspace_root(*, current_dir: Path) -> Path | None:
+    from stackops.utils.accessories import get_repo_root
+
     repo_root = get_repo_root(current_dir)
     if repo_root is not None:
         return repo_root
@@ -89,6 +88,8 @@ def _is_repo_test_file(*, repo_root: Path, file_path: Path) -> bool:
 
 
 def _write_context_file(*, workspace_root: Path, search_root: Path, context_path: Path) -> ContextBuildResult:
+    from stackops.utils.accessories import get_repo_root
+
     python_files = _collect_python_files(search_root=search_root)
     if len(python_files) == 0:
         raise RuntimeError("No Python files found under the current directory after excluding hidden paths and .venv.")
@@ -129,6 +130,8 @@ def launch_test_runtime(
         typer.Option("--max-agents", "-m", help="Maximum agents allowed in the generated layout."),
     ] = 50,
 ) -> None:
+    from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
+
     search_root = Path.cwd().resolve()
     try:
         workspace_root = _resolve_workspace_root(current_dir=search_root)
@@ -161,6 +164,8 @@ def launch_test_runtime(
     if not proceed:
         typer.echo("Agents not launched.")
         return
+    from stackops.scripts.python.terminal import run as terminal_run_command
+
     terminal_run_command(
         ctx=ctx,
         layouts_file=_get_layout_path(workspace_root=workspace_root),

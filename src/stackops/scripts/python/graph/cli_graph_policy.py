@@ -43,9 +43,13 @@ CANONICAL_SHORTS: dict[str, str] = {
 }
 
 SHORT_OVERRIDES: dict[tuple[str, str], str] = {
+    ("devops data encrypt", "--overwrite"): "-f",
+    ("devops data decrypt", "--overwrite"): "-f",
+    ("devops repos register", "--cloud"): "-C",
     ("devops repos guard", "--cloud"): "-C",
     ("devops repos action", "--command"): "-C",
     ("devops repos action", "--pull"): "-P",
+    ("devops repos action", "--password"): "-w",
     ("devops config sync", "--source"): "-S",
     ("devops vault secrets search", "--scope"): "-S",
     ("agents add-mcp", "--source"): "-S",
@@ -55,6 +59,7 @@ SHORT_OVERRIDES: dict[tuple[str, str], str] = {
     ("utils file download", "--output-dir"): "-O",
     ("utils pyproject check-deps", "--output-path"): "-O",
     ("utils file ocr", "--package-spec"): "-P",
+    ("utils machine autostart", "--source"): "-S",
     ("fire", "--remote"): "-R",
     ("devops config terminal tmux-style set-option", "--raw"): "-R",
     ("devops self status", "--ssh"): "-H",
@@ -62,6 +67,7 @@ SHORT_OVERRIDES: dict[tuple[str, str], str] = {
 }
 
 REQUIRED_OPTION_ALLOWLIST: set[tuple[str, str]] = {
+    ("devops security export", "--output"),
     ("devops repos version declare", "--message"),
     ("devops network cloudflare sync-cloudflare-routes", "--hostname"),
     ("devops network cloudflare add-ip-exclusion-to-warp", "--ip"),
@@ -107,8 +113,12 @@ def validate_cli_graph(payload: dict[str, Any]) -> None:
             has_secondary = any("/" in d for d in longs + shorts)
             name: str = param["name"]
 
-            if param.get("type") == "bool" and not has_secondary and param.get("default") is True:
-                violations.append(f"{path}: {name} bool flag {primary_long or name} defaults True without a --x/--no-x pair (inert flag)")
+            if has_secondary:
+                violations.append(f"{path}: {name} declares paired flags; expose only the flag that changes the default")
+            if param.get("type") == "bool" and param.get("default") is True:
+                violations.append(f"{path}: {name} bool flag {primary_long or name} defaults True; use a disabling flag with default False")
+            if not any(len(short) == 2 and short.startswith("-") and short[1].isalpha() for short in shorts):
+                violations.append(f"{path}: {name} option {primary_long or name} needs a single-letter short alias")
 
             if param.get("required") and (path, primary_long) not in REQUIRED_OPTION_ALLOWLIST:
                 violations.append(f"{path}: {name} required option {primary_long}; primary operands must be positional arguments")

@@ -3,7 +3,6 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 from stackops.utils.installer_utils import installer_offline_constants
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
@@ -13,14 +12,14 @@ def export(
         Path,
         typer.Option("--output-root", "-o", help="Directory where the installer folder and zip archive will be written."),
     ] = installer_offline_constants.DEFAULT_OUTPUT_ROOT,
-    include_configs: Annotated[
+    no_include_configs: Annotated[
         bool,
-        typer.Option("--include-configs/--no-include-configs", "-c/-C", help="Include the StackOps config tree in the offline installer."),
-    ] = True,
-    include_uv_bundle: Annotated[
+        typer.Option("--no-include-configs", "-c", help="Exclude the StackOps config tree from the offline installer."),
+    ] = False,
+    no_include_uv_bundle: Annotated[
         bool,
-        typer.Option("--include-uv-bundle/--no-include-uv-bundle", "-b/-B", help="Include the uv-managed StackOps runtime bundle."),
-    ] = True,
+        typer.Option("--no-include-uv-bundle", "-b", help="Exclude the uv-managed StackOps runtime bundle."),
+    ] = False,
     keep_unpacked: Annotated[
         bool,
         typer.Option("--keep-unpacked", "-k", help="Keep the unpacked installer directory after writing the zip archive."),
@@ -37,6 +36,8 @@ def export(
     """📤 export the installation files to get an offline image."""
     output_root = output_root.expanduser()
     if upload_to_cloud:
+        from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
+
         dev_repo_root = cli_self_repo.developer_repo_root()
         if dev_repo_root is None:
             typer.echo(
@@ -76,8 +77,8 @@ def export(
     installer_offline.export(
         options=installer_offline.OfflineInstallerOptions(
             output_root=output_root,
-            include_configs=include_configs,
-            include_uv_bundle=include_uv_bundle,
+            include_configs=not no_include_configs,
+            include_uv_bundle=not no_include_uv_bundle,
             keep_unpacked=keep_unpacked,
             upload_to_cloud=upload_to_cloud,
         ),

@@ -3,31 +3,8 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
 from stackops.scripts.python.helpers.helpers_devops import cli_subset_support
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
-    SecretSelectionMode,
-    SecretSelectors,
-    merge_candidate_key_values,
-    resolve_secret_candidates,
-)
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_json import render_secret_search_json
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import (
-    SECRETS_SCHEMA_FILENAME,
-    SecretsSource,
-    WritableSecretsSource,
-    candidate_source_path,
-    clean_optional_selector,
-    clean_selector_values,
-    echo_jq_login_entry_hint,
-    echo_verbose_selection,
-    fail,
-    load_secret_candidates_from_sources,
-    load_secret_stats_from_sources,
-    render_secret_stats,
-    resolve_secret_sources,
-    resolve_single_secret_source,
-)
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SECRETS_SCHEMA_FILENAME, SecretsSource, WritableSecretsSource
 
 SECRETS_HELP = "Manage StackOps secrets JSON files and define env vars."
 SECRETS_SEARCH_HELP = "Select secret bundles for environment variables or JSON output."
@@ -142,6 +119,25 @@ def search(
     ] = None,
 ) -> None:
     """🔐 <S> Select secret bundles for environment variables or JSON output."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
+        SecretSelectionMode,
+        SecretSelectors,
+        merge_candidate_key_values,
+        resolve_secret_candidates,
+    )
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_json import render_secret_search_json
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import (
+        candidate_source_path,
+        clean_optional_selector,
+        clean_selector_values,
+        echo_jq_login_entry_hint,
+        echo_verbose_selection,
+        fail,
+        load_secret_candidates_from_sources,
+        resolve_secret_sources,
+    )
+
     if all_matches and interactive:
         fail("--all-matches/-a cannot be combined with --interactive/-i.")
     if preview_secrets and not interactive:
@@ -211,6 +207,12 @@ def stats(
     top: Annotated[int, typer.Option("--top", "-t", min=1, max=50, help="Number of tag/scope labels to show with --details.")] = 8,
 ) -> None:
     """📊 <t> Show aggregate StackOps secrets inventory stats without printing secret values."""
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import (
+        load_secret_stats_from_sources,
+        render_secret_stats,
+        resolve_secret_sources,
+    )
+
     secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
     stats_rows = load_secret_stats_from_sources(secret_sources=secret_sources, show_paths=show_paths)
     render_secret_stats(stats_rows=stats_rows, details=details, show_paths=show_paths, top=top)
@@ -241,6 +243,9 @@ def subset(
     preview_secrets: Annotated[bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview.")] = False,
 ) -> None:
     """📦 <u> Create a StackOps secrets subset and choose output conflicts with --on-conflict."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
+
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
     resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)
     resolved_on_conflict = cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]
@@ -267,6 +272,9 @@ def add(
     ] = False,
 ) -> None:
     """➕ <a> Append a new login entry to a StackOps secrets file."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
+
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
     secret_actions.add_secrets_entry(secrets_path=secret_source.path, create=create)
 
@@ -290,6 +298,9 @@ def edit(
     editor: Annotated[str, typer.Option("--editor", "-e", help="Editor to use. Defaults to hx.")] = "hx",
 ) -> None:
     """📝 <e> Open a StackOps secrets file for editing."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
+
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
     secret_actions.edit_secrets_file(secrets_path=secret_source.path, editor=editor, create=create)
 

@@ -8,12 +8,6 @@ from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models i
     DualDependency,
     JsonValue,
 )
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render_css import (
-    DEPENDENCY_REPORT_CSS,
-)
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render_js import (
-    DEPENDENCY_REPORT_JS,
-)
 
 
 def report_to_payload(report: DependencyReport) -> dict[str, JsonValue]:
@@ -52,6 +46,9 @@ def report_to_json(report: DependencyReport) -> str:
 
 
 def render_dependency_report_html(report: DependencyReport) -> str:
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render_css import DEPENDENCY_REPORT_CSS
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render_js import DEPENDENCY_REPORT_JS
+
     payload = _json_script_text(report)
     nodes_rows = _render_node_rows(report.nodes)
     edge_rows = _render_edge_rows(report.edges)

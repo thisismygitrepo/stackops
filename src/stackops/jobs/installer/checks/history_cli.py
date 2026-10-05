@@ -1,21 +1,19 @@
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 import typer
-from rich.console import Console
-
 from stackops.jobs.installer.checks.constants import SECURITY_RECORDS_ROOT
-from stackops.jobs.installer.checks.report_utils import build_summary_group
-from stackops.jobs.installer.checks.run_reports import APP_EXPORT_KEYS, APP_TABLE_KEYS, ENGINE_EXPORT_KEYS, build_run_rows, export_run
-from stackops.jobs.installer.checks.scan_history import ScanRun, list_runs, load_run
-from stackops.jobs.installer.checks.security_helper import build_raw_csv_table, parse_apps_argument, render_csv_text
 
-console = Console()
+if TYPE_CHECKING:
+    from stackops.jobs.installer.checks.scan_history import ScanRun
+
 ReportView = Literal["engines", "app-summary", "apps", "options", "stats", "accounts"]
 ReportFormat = Literal["table", "csv"]
 
 
-def selected_run(records_dir: Path, run_id: str | None) -> ScanRun:
+def selected_run(records_dir: Path, run_id: str | None) -> "ScanRun":
+    from stackops.jobs.installer.checks.scan_history import load_run
+
     try:
         return load_run(records_dir.expanduser().absolute(), run_id)
     except (FileNotFoundError, ValueError) as exc:
@@ -25,10 +23,13 @@ def selected_run(records_dir: Path, run_id: str | None) -> ScanRun:
 
 def history(
     apps: Annotated[str | None, typer.Argument(help="Only runs targeting these comma-separated app names")] = None,
-    limit: Annotated[int, typer.Option("--limit", min=1, help="Maximum runs to show, newest first")] = 20,
+    limit: Annotated[int, typer.Option("--limit", "-l", min=1, help="Maximum runs to show, newest first")] = 20,
     format_type: Annotated[ReportFormat, typer.Option("--format", "-f", help="Table or raw CSV")] = "table",
-    records_dir: Annotated[Path, typer.Option("--records-dir", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
+    records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
+    from stackops.jobs.installer.checks.scan_history import list_runs
+    from stackops.jobs.installer.checks.security_helper import parse_apps_argument, render_csv_text
+
     records_dir = records_dir.expanduser().absolute()
     try:
         app_names = parse_apps_argument(apps)
@@ -59,16 +60,20 @@ def history(
     if not rows:
         typer.echo(f"""No matching scan runs in {records_dir}.""")
         return
-    console.print(build_raw_csv_table("Scan History", rows, columns))
+    from rich.console import Console
+
+    from stackops.jobs.installer.checks.security_helper import build_raw_csv_table
+
+    Console().print(build_raw_csv_table("Scan History", rows, columns))
     typer.echo("Unfinished means no final status was recorded; the scan may still be running or may have stopped abruptly.")
 
 
 def report(
     apps: Annotated[str | None, typer.Argument(help="Filter targets within the selected run by comma-separated app names")] = None,
-    run: Annotated[str | None, typer.Option("--run", help="Exact run ID; defaults to the latest started run")] = None,
+    run: Annotated[str | None, typer.Option("--run", "-R", help="Exact run ID; defaults to the latest started run")] = None,
     view: Annotated[ReportView, typer.Option("--view", "-v", help="Report view")] = "engines",
     format_type: Annotated[ReportFormat, typer.Option("--format", "-f", help="Table or raw CSV")] = "table",
-    records_dir: Annotated[Path, typer.Option("--records-dir", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
+    records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
     records_dir = records_dir.expanduser().absolute()
     if view == "options":
@@ -83,6 +88,9 @@ def report(
         raise typer.BadParameter("CSV is supported for apps, engines, and accounts.")
     if view == "accounts" and apps is not None:
         raise typer.BadParameter("Account statistics cover the whole run; omit APPS.")
+    from stackops.jobs.installer.checks.run_reports import APP_EXPORT_KEYS, APP_TABLE_KEYS, ENGINE_EXPORT_KEYS, build_run_rows
+    from stackops.jobs.installer.checks.security_helper import parse_apps_argument, render_csv_text
+
     try:
         app_names = parse_apps_argument(apps)
     except ValueError as exc:
@@ -100,6 +108,11 @@ def report(
             rows, columns = (app_rows, APP_EXPORT_KEYS) if view == "apps" else (engine_rows, ENGINE_EXPORT_KEYS)
             typer.echo(render_csv_text(rows, columns))
         return
+    from rich.console import Console
+
+    from stackops.jobs.installer.checks.security_helper import build_raw_csv_table
+
+    console = Console()
     status = "unfinished (running or stopped without finalization)" if saved["status"] == "running" else saved["status"]
     typer.echo("\n".join((
         f"""Run: {saved['run_id']}""",
@@ -128,10 +141,14 @@ def report(
             f"""Without a result: {len(app_rows) - len(data)}""", f"""Engine results: {len(engine_rows)}""",
         )))
         if data:
+            from stackops.jobs.installer.checks.report_utils import build_summary_group
+
             console.print(build_summary_group(data))
         return
     console.print(build_raw_csv_table("Run Targets (timestamps in UTC)", app_rows, APP_TABLE_KEYS))
     if view == "app-summary" and data:
+        from stackops.jobs.installer.checks.report_utils import build_summary_group
+
         console.print(build_summary_group(data))
     elif view == "engines":
         if engine_rows:
@@ -142,9 +159,11 @@ def report(
 
 def export(
     output: Annotated[Path, typer.Option("--output", "-o", help="New directory for run.json, apps.csv, engines.csv, and accounts.csv")],
-    run: Annotated[str | None, typer.Option("--run", help="Exact run ID; defaults to the latest started run")] = None,
-    records_dir: Annotated[Path, typer.Option("--records-dir", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
+    run: Annotated[str | None, typer.Option("--run", "-R", help="Exact run ID; defaults to the latest started run")] = None,
+    records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
+    from stackops.jobs.installer.checks.run_reports import export_run
+
     saved = selected_run(records_dir, run)
     output = output.expanduser().absolute()
     try:

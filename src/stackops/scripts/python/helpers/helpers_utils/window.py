@@ -4,7 +4,6 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_window.constants import ACTION_DESCRIPTIONS
 from stackops.scripts.python.helpers.helpers_window.window_models import WindowAction
 
 
@@ -76,6 +75,8 @@ Minimized: {entry.minimized}"""
             selected_window = labels[selected_label]
 
         if action is None:
+            from stackops.scripts.python.helpers.helpers_window.constants import ACTION_DESCRIPTIONS
+
             if not sys.stdin.isatty():
                 raise RuntimeError("Action selection requires an interactive terminal. Pass --action.")
             typer.echo(f"""Select an action for {selected_window.app} — {selected_window.title or '(untitled)'}:""")

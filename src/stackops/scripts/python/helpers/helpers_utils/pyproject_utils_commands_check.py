@@ -3,12 +3,6 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_helpers import (
-    DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES,
-    build_type_check_environment,
-    resolve_pyproject_root,
-    resolve_type_check_excluded_directories,
-)
 
 
 def type_check(
@@ -39,6 +33,12 @@ def type_check(
     import sys
 
     import stackops.scripts.python.ai.scripts as ai_scripts
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_helpers import (
+        DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES,
+        build_type_check_environment,
+        resolve_pyproject_root,
+        resolve_type_check_excluded_directories,
+    )
     from stackops.utils.path_reference import get_path_reference_path
 
     try:

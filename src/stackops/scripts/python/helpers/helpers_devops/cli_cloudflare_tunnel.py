@@ -7,7 +7,7 @@ def cloudflare_tunnel_status(
     tunnel_name: Annotated[str, typer.Argument(..., help="Named Cloudflare tunnel to inspect")],
     hosts: Annotated[list[str] | None, typer.Option("--host", "-H", help="SSH connector host; repeat for multiple hosts")] = None,
     hostnames: Annotated[list[str] | None, typer.Option("--hostname", "-n", help="Published hostname to check on each connector")] = None,
-    include_local: Annotated[bool, typer.Option("--local/--no-local", "-l/-L", help="Inspect the local connector service and routes")] = True,
+    no_local: Annotated[bool, typer.Option("--no-local", "-l", help="Skip inspecting the local connector service and routes")] = False,
     cloudflared_binary: Annotated[
         str, typer.Option("--cloudflared", "-f", help="cloudflared executable path on every connector")
     ] = "~/.local/bin/cloudflared",
@@ -23,7 +23,7 @@ def cloudflare_tunnel_status(
     console = Console()
     try:
         health = get_tunnel_health(tunnel_name=tunnel_name, cloudflared_binary=cloudflared_binary)
-        targets: list[str | None] = [None] if include_local else []
+        targets: list[str | None] = [None] if not no_local else []
         targets.extend(hosts or [])
         statuses = [
             inspect_connector_host(
@@ -63,7 +63,7 @@ def cloudflare_tunnel_status(
 
 def update_cloudflare_connectors(
     hosts: Annotated[list[str] | None, typer.Option("--host", "-H", help="SSH connector host; repeat for rolling updates")] = None,
-    include_local: Annotated[bool, typer.Option("--local/--no-local", "-l/-L", help="Include the local connector in the rolling update")] = True,
+    no_local: Annotated[bool, typer.Option("--no-local", "-l", help="Exclude the local connector from the rolling update")] = False,
     cloudflared_binary: Annotated[
         str, typer.Option("--cloudflared", "-f", help="cloudflared executable path on every connector")
     ] = "~/.local/bin/cloudflared",
@@ -76,16 +76,16 @@ def update_cloudflare_connectors(
 
     from stackops.scripts.python.helpers.helpers_devops.cloudflare_tunnel_maintenance import rolling_update_connectors
 
-    targets = (["local"] if include_local else []) + list(hosts or [])
+    targets = (["local"] if not no_local else []) + list(hosts or [])
     if len(targets) == 0:
-        raise typer.BadParameter("Select --local or provide at least one --host.")
+        raise typer.BadParameter("Provide at least one --host when --no-local is set.")
     if not yes and not typer.confirm(f"Update connectors sequentially on: {', '.join(targets)}?", default=False):
         raise typer.Abort()
 
     try:
         rolling_update_connectors(
             hosts=tuple(hosts or []),
-            include_local=include_local,
+            include_local=not no_local,
             cloudflared_binary=cloudflared_binary,
             service_name=service_name,
             timeout_seconds=timeout_seconds,

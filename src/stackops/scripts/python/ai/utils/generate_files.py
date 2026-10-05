@@ -6,19 +6,6 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.scripts.python.ai.utils.generate_files_content import generate_content
-from stackops.scripts.python.ai.utils.generate_files_utils import (
-    filter_files_by_content,
-    filter_files_by_name,
-    get_python_files,
-    get_shell_files,
-    resolve_output_base,
-    resolve_scan_root,
-    split_files_into_chunks,
-    validate_split_options,
-)
-
-
 def make_todo_files(
     pattern: Annotated[str, typer.Argument(help="Pattern or keyword to match files by")],
     repo: Annotated[
@@ -26,7 +13,7 @@ def make_todo_files(
         typer.Argument(help="Repository or workspace path. If inside a git repo, its root is used; otherwise the directory itself is scanned."),
     ] = str(Path.cwd()),
     strategy: Annotated[Literal["name", "keywords"], typer.Option("-s", "--strategy", help="Strategy to filter files: 'name' for filename matching, 'keywords' for content matching")] = "name",
-    exclude_init: Annotated[bool, typer.Option("-x", "--exclude-init", help="Exclude __init__.py files from the checklist")] = True,
+    include_init: Annotated[bool, typer.Option("--include-init", "-x", help="Include __init__.py files in the checklist")] = False,
     include_line_count: Annotated[bool, typer.Option("-l", "--line-count", help="Include line count column in the output")] = False,
     output_path: Annotated[str, typer.Option("-o", "--output-path", help="Base path for output files relative to repo root")] = ".ai/todo/files",
     format_type: Annotated[Literal["csv", "md", "txt"], typer.Option("-f", "--format", help="Output format: csv, md (markdown), or txt")] = "md",
@@ -38,6 +25,18 @@ def make_todo_files(
 
     from rich.console import Console
     from rich.panel import Panel
+
+    from stackops.scripts.python.ai.utils.generate_files_content import generate_content
+    from stackops.scripts.python.ai.utils.generate_files_utils import (
+        filter_files_by_content,
+        filter_files_by_name,
+        get_python_files,
+        get_shell_files,
+        resolve_output_base,
+        resolve_scan_root,
+        split_files_into_chunks,
+        validate_split_options,
+    )
 
     console = Console()
     try:
@@ -54,7 +53,7 @@ def make_todo_files(
 
     output_base.parent.mkdir(parents=True, exist_ok=True)
 
-    python_files = get_python_files(repo_path, exclude_init=exclude_init)
+    python_files = get_python_files(repo_path, exclude_init=not include_init)
     shell_files = get_shell_files(repo_path)
 
     if strategy == "name":

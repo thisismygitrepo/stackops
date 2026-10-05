@@ -5,8 +5,9 @@ from pathlib import Path
 import shlex
 from typing import Final, Literal, TypeAlias
 
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_types import SKILL_INSTALL_COMMAND_BACKEND
+
 SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
-SKILL_INSTALL_COMMAND_BACKEND: TypeAlias = Literal["bunx", "npx"]
 SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 RESOLVED_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"

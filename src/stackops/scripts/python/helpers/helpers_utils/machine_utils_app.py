@@ -3,10 +3,6 @@ from typing import Annotated, Literal, TypeAlias
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_utils.autostart_common import CATEGORY_FILTERS
-from stackops.scripts.python.helpers.helpers_utils.process_models import (
-    build_process_selector,
-)
 from stackops.scripts.python.helpers.helpers_utils.window import window
 
 
@@ -63,6 +59,8 @@ def kill_process(
         typer.Option("--yes", "-y", help="Non-interactively kill every process matching the direct selector."),
     ] = False,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_utils.process_models import build_process_selector
+
     try:
         selector = build_process_selector(
             command=command,
@@ -145,7 +143,7 @@ def list_devices() -> None:
 
 
 def list_autostart(
-    show_all: Annotated[bool, typer.Option("--all", help="Include standard OS services alongside notable ones.")] = False,
+    show_all: Annotated[bool, typer.Option("--all", "-a", help="Include standard OS services alongside notable ones.")] = False,
     category: Annotated[
         list[AutostartCategoryOption] | None,
         typer.Option(
@@ -167,6 +165,7 @@ def list_autostart(
     ] = None,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.autostart import print_autostart_report
+    from stackops.scripts.python.helpers.helpers_utils.autostart_common import CATEGORY_FILTERS
 
     try:
         print_autostart_report(

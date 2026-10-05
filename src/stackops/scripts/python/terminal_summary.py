@@ -2,14 +2,11 @@
 
 from collections import Counter
 from dataclasses import dataclass
-from typing import Annotated, Any, Literal, TypeAlias
+from typing import Any, TypeAlias
 
 import typer
 
-
-PaneCategory: TypeAlias = Literal["idle", "running", "exited", "unknown"]
-SummaryBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "aoe", "a", "tuios", "u", "auto"]
-ResolvedSummaryBackend: TypeAlias = Literal["tmux", "herdr", "aoe", "tuios"]
+from stackops.scripts.python.terminal_summary_models import PaneCategory, ResolvedSummaryBackend, SummaryBackend
 
 
 @dataclass(frozen=True)
@@ -709,10 +706,11 @@ def _resolve_herdr_workspace_name(workspace_name: str | None, choose_session: bo
 
 
 def summary(
-    backend: Annotated[SummaryBackend, typer.Option("--backend", "-b", help="Backend to summarize: tmux, herdr, aoe, tuios, or auto.")] = "tmux",
-    session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one backend session or workspace by name.")] = None,
-    choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one backend session or workspace interactively and show details.")] = False,
-    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include tab/window and pane details for every session (tmux, Herdr, and TUIOS).")] = False,
+    *,
+    backend: SummaryBackend,
+    session: str | None,
+    choose_session: bool,
+    show_tabs: bool,
 ) -> None:
     """Print running terminal session summaries or details for one session."""
     match _resolve_summary_backend(backend):

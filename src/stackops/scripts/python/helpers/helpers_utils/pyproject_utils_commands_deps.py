@@ -5,27 +5,12 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps import (
-    normalize_excludes,
-    resolve_dependency_check_context,
-    run_backend_dependency_graph,
-)
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_graph import (
-    filter_dependency_graph_edges,
-    find_cycle_groups,
-    find_dual_dependencies,
-    focus_dependency_graph,
-)
 from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import (
     DependencyBackend,
     DependencyEdgeFilter,
     DependencyOutput,
     DependencyRankDirection,
     DependencyReport,
-)
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render import (
-    render_dependency_report_html,
-    report_to_json,
 )
 
 
@@ -93,6 +78,18 @@ def build_dependency_report(
     focus: tuple[str, ...],
     excludes: tuple[str, ...],
 ) -> DependencyReport:
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps import (
+        normalize_excludes,
+        resolve_dependency_check_context,
+        run_backend_dependency_graph,
+    )
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_graph import (
+        filter_dependency_graph_edges,
+        find_cycle_groups,
+        find_dual_dependencies,
+        focus_dependency_graph,
+    )
+
     context = resolve_dependency_check_context(target)
     normalized_excludes = normalize_excludes(excludes)
     graph = run_backend_dependency_graph(
@@ -119,6 +116,8 @@ def build_dependency_report(
 
 
 def _write_json_output(report: DependencyReport, output_path: str | None) -> None:
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render import report_to_json
+
     payload = report_to_json(report)
     if output_path is None:
         typer.echo(payload, nl=False)
@@ -130,6 +129,8 @@ def _write_json_output(report: DependencyReport, output_path: str | None) -> Non
 
 
 def _write_html_output(report: DependencyReport, output_path: str | None) -> Path:
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render import render_dependency_report_html
+
     resolved_output_path = _resolve_output_path(report=report, output_path=output_path, suffix=".html")
     resolved_output_path.parent.mkdir(parents=True, exist_ok=True)
     resolved_output_path.write_text(render_dependency_report_html(report), encoding="utf-8")

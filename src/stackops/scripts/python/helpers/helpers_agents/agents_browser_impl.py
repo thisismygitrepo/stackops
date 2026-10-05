@@ -22,7 +22,8 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     PLAYWRIGHT_CLI_PACKAGE_NAME,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_guides import get_browser_tech_mcp_servers, write_browser_tech_files
-from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILLS_CLI_PACKAGE, SKILL_INSTALL_COMMAND_BACKEND
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILLS_CLI_PACKAGE
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_types import SKILL_INSTALL_COMMAND_BACKEND
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 

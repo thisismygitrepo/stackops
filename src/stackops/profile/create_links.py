@@ -4,36 +4,25 @@ This script Takes away all config files from the computer, place them in one dir
 
 """
 
+import io
+import platform
+import subprocess
 from pathlib import Path
+from typing import Any, Literal, TypedDict
 
 import yaml
-
-from stackops.profile.linking.operations import ActionType, OperationRecord, OperationResult
 from rich.console import Console
 from rich.panel import Panel
 from rich.pretty import Pretty
-from rich.text import Text
 from rich.table import Table
+from rich.text import Text
 
-from stackops.profile.linking.operations import symlink_map, copy_map
-from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT
+from stackops.profile.dotfiles_constants import VALID_OS_VALUES, OsName
+from stackops.profile.dotfiles_mapper import LIBRARY_MAPPER_PATH, USER_MAPPER_PATH, MapperDocument, OsField, load_dotfiles_mapper
 from stackops.profile.linking.conflict import ON_CONFLICT_STRICT
-from stackops.profile.dotfiles_mapper import (
-    LIBRARY_MAPPER_PATH,
-    USER_MAPPER_PATH,
-    MapperDocument,
-    OsField,
-    OsName,
-    VALID_OS_VALUES,
-    load_dotfiles_mapper,
-)
+from stackops.profile.linking.operations import ActionType, OperationRecord, OperationResult, copy_map, symlink_map
+from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT
 from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_SSH_CREDS_ROOT, resolve_source_of_truth_path
-
-import platform
-import subprocess
-import io
-from typing import Any, TypedDict, Literal
-
 
 system = platform.system()  # Linux or Windows
 ERROR_LIST: list[Any] = []  # append to this after every exception captured.

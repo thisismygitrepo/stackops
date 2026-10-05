@@ -10,29 +10,25 @@ def build_cli_graph_app() -> "typer.Typer":
 
     import typer
 
-    from stackops.scripts.python.graph.visualize.cli_graph_app import (
-        chart as run_chart_command,
-        dot as run_dot_command,
-        navigate as run_navigate_command,
-        search as run_search_command,
-        tree as run_tree_command,
-    )
-
     plotly_views = ("sunburst", "treemap", "icicle")
 
     def tree(
-        show_help: Annotated[bool, typer.Option("--show-help/--no-show-help", "-H/-N", help="Show help text in labels")] = True,
+        no_show_help: Annotated[bool, typer.Option("--no-show-help", "-H", help="Hide help text in labels")] = False,
         show_aliases: Annotated[bool, typer.Option("--show-aliases", "-a", help="Include aliases in labels")] = False,
         max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", min=0, help="Limit depth of the tree")] = None,
     ) -> None:
-        run_tree_command(show_help=show_help, show_aliases=show_aliases, max_depth=max_depth)
+        from stackops.scripts.python.graph.visualize.cli_graph_app import tree as run_tree_command
+
+        run_tree_command(no_show_help=no_show_help, show_aliases=show_aliases, max_depth=max_depth)
 
     def dot(
         output: Annotated[Path | None, typer.Option("--output", "-o", help="Write DOT output to a file")] = None,
-        include_help: Annotated[bool, typer.Option("--include-help/--no-include-help", "-H/-N", help="Show help text in labels")] = True,
+        no_include_help: Annotated[bool, typer.Option("--no-include-help", "-H", help="Hide help text in labels")] = False,
         max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
     ) -> None:
-        run_dot_command(output=output, include_help=include_help, max_depth=max_depth)
+        from stackops.scripts.python.graph.visualize.cli_graph_app import dot as run_dot_command
+
+        run_dot_command(output=output, no_include_help=no_include_help, max_depth=max_depth)
 
     def chart(
         view: Annotated[
@@ -44,9 +40,13 @@ def build_cli_graph_app() -> "typer.Typer":
         height: Annotated[int, typer.Option("--height", "-H", help="Image height (for static output)")] = 900,
         width: Annotated[int, typer.Option("--width", "-w", help="Image width (for static output)")] = 1200,
     ) -> None:
+        from stackops.scripts.python.graph.visualize.cli_graph_app import chart as run_chart_command
+
         run_chart_command(view=view, output=output, max_depth=max_depth, template=template, height=height, width=width)
 
     def navigate() -> None:
+        from stackops.scripts.python.graph.visualize.cli_graph_app import navigate as run_navigate_command
+
         run_navigate_command()
 
     def search(
@@ -55,6 +55,8 @@ def build_cli_graph_app() -> "typer.Typer":
             bool, typer.Option("--json", "-j", help="Print the selected cli_graph.json entry instead of the rendered summary.")
         ] = False,
     ) -> None:
+        from stackops.scripts.python.graph.visualize.cli_graph_app import search as run_search_command
+
         run_search_command(graph_path=graph_path, json_output=json_output)
 
     cli_app = typer.Typer(

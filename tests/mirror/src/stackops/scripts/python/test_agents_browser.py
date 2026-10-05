@@ -20,6 +20,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import BrowserLaunchResult, DetachedBrowserLaunchResult
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import BrowserProfileDeclutterResult, BrowserProfileReplicationResult
 from stackops.utils.network.address import InterfaceIPv4Address
+from stackops.utils.network import address
 
 
 type LaunchCall = tuple[BrowserName, int, str | None, bool, bool, bool]
@@ -51,7 +52,7 @@ def test_launch_browser_lan_selects_address_before_launch_and_renders_it(monkeyp
             relay_process_id=17176,
         )
 
-    monkeypatch.setattr(agents_browser, "select_lan_interface_ipv4", select_address)
+    monkeypatch.setattr(address, "select_lan_interface_ipv4", select_address)
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
     result = CliRunner().invoke(
@@ -78,7 +79,7 @@ def test_launch_browser_lan_exits_before_launch_when_address_selection_fails(mon
         launch_calls.append((browser, port, profile_name, temporary, lan, detached))
         raise AssertionError("Browser launch must not run without a selected LAN address")
 
-    monkeypatch.setattr(agents_browser, "select_lan_interface_ipv4", select_address)
+    monkeypatch.setattr(address, "select_lan_interface_ipv4", select_address)
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
     result = CliRunner().invoke(agents_browser.get_app(), ["launch", "--lan"])

@@ -1,4 +1,4 @@
-from typing import Final, Literal, TypedDict, TypeAlias
+from typing import Final
 import json
 import os
 from pathlib import Path
@@ -8,10 +8,8 @@ import sys
 
 from rich.text import Text
 
-ShareScope: TypeAlias = Literal["anonymous", "organization"]
-ShareScopeChoice: TypeAlias = Literal["anonymous", "a", "organization", "o"]
-ShareLinkType: TypeAlias = Literal["view", "edit", "embed"]
-ShareLinkTypeChoice: TypeAlias = Literal["view", "v", "edit", "e", "embed", "m"]
+from stackops.utils.cloud.share_models import ShareLinkOptions, ShareLinkType, ShareScope
+
 SHARE_SCOPES_DISPLAY: Final[str] = "anonymous, a, organization, o"
 SHARE_LINK_TYPES_DISPLAY: Final[str] = "view, v, edit, e, embed, m"
 
@@ -25,11 +23,6 @@ _CONFIG_ERROR_MARKERS: Final[tuple[str, ...]] = (
 )
 _MISSING_PATH_MARKERS: Final[tuple[str, ...]] = ("directory not found", "object not found", "file not found", "no such file or directory")
 _REMOTE_WRAPPER_BACKENDS: Final[frozenset[str]] = frozenset({"alias", "crypt", "chunker", "hasher"})
-
-
-class ShareLinkOptions(TypedDict):
-    scope: ShareScope | None
-    link_type: ShareLinkType | None
 
 
 class RcloneConfigError(RuntimeError):

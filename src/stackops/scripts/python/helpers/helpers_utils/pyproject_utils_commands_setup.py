@@ -3,11 +3,6 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_helpers import (
-    normalize_init_project_groups,
-    normalize_init_project_libraries,
-    resolve_pyproject_root,
-)
 
 
 def upgrade_packages(
@@ -44,6 +39,7 @@ def upgrade_packages(
 ) -> None:
     import subprocess
 
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_helpers import resolve_pyproject_root
     from stackops.scripts.python.helpers.helpers_utils.upgrade_packages import (
         clean_dependency_groups,
         delete_project_venv,
@@ -96,6 +92,10 @@ def init_project(
     ] = "p,t,l,i,d",
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.python_init import init_project as impl
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_helpers import (
+        normalize_init_project_groups,
+        normalize_init_project_libraries,
+    )
 
     try:
         normalized_group = normalize_init_project_groups(group=group)

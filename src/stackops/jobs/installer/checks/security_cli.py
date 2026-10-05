@@ -5,7 +5,6 @@ import typer
 
 from stackops.jobs.installer.checks.constants import SCAN_HELP, SECURITY_RECORDS_ROOT
 from stackops.jobs.installer.checks.history_cli import export, history, report, selected_run
-from stackops.jobs.installer.checks.security_helper import parse_apps_argument
 
 
 def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, concurrency: int | None, records_dir: str) -> None:
@@ -32,11 +31,13 @@ def scan(
     apps: Annotated[str | None, typer.Argument(help="Comma-separated installed app names")] = None,
     path: Annotated[Path | None, typer.Option("--path", "-p", help="Scan a single file", exists=True,
                                            file_okay=True, dir_okay=False, resolve_path=True)] = None,
-    all_apps: Annotated[bool, typer.Option("--all", help="Scan all installed apps")] = False,
-    record: Annotated[bool, typer.Option("--record/--no-record", help="Save this scan as a separate history run")] = True,
-    concurrency: Annotated[int | None, typer.Option("--concurrency", min=1, help="Maximum concurrent files; defaults to account count")] = None,
-    records_dir: Annotated[Path, typer.Option("--records-dir", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
+    all_apps: Annotated[bool, typer.Option("--all", "-a", help="Scan all installed apps")] = False,
+    no_record: Annotated[bool, typer.Option("--no-record", "-n", help="Do not save this scan as a history run")] = False,
+    concurrency: Annotated[int | None, typer.Option("--concurrency", "-c", min=1, help="Maximum concurrent files; defaults to account count")] = None,
+    records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
+    from stackops.jobs.installer.checks.security_helper import parse_apps_argument
+
     if sum((apps is not None, path is not None, all_apps)) != 1:
         raise typer.BadParameter("Choose exactly one of APPS, --path FILE, or --all.")
     if concurrency is not None and concurrency < 1:
@@ -51,7 +52,7 @@ def scan(
     from stackops.utils.code import run_lambda_function
 
     proc = run_lambda_function(
-        lambda: _run_scan(app_names=app_names, path_value=path_value, record=record, concurrency=concurrency, records_dir=records_value),
+        lambda: _run_scan(app_names=app_names, path_value=path_value, record=not no_record, concurrency=concurrency, records_dir=records_value),
         uv_with=["vt-py"], uv_project_dir=None,
     )
     if proc.returncode != 0:
@@ -63,6 +64,7 @@ def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-se
     from rich.table import Table
 
     from stackops.jobs.installer.checks.check_installations import collect_apps_to_scan
+    from stackops.jobs.installer.checks.security_helper import parse_apps_argument
 
     try:
         app_names = parse_apps_argument(apps)
@@ -98,8 +100,8 @@ def download(url: Annotated[str, typer.Argument(help="Google Drive URL or file i
 
 def install(
     name: Annotated[str, typer.Argument(help="App name from the selected run, or 'essentials'")],
-    run: Annotated[str | None, typer.Option("--run", help="Exact run ID; defaults to the latest started run")] = None,
-    records_dir: Annotated[Path, typer.Option("--records-dir", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
+    run: Annotated[str | None, typer.Option("--run", "-R", help="Exact run ID; defaults to the latest started run")] = None,
+    records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
     from stackops.jobs.installer.checks.install_utils import download_safe_apps
 

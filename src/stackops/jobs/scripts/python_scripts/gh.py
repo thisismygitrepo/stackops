@@ -917,10 +917,10 @@ def upload(
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
     repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Recursively copy directories.")] = False,
-    expand: Annotated[
+    no_expand: Annotated[
         bool,
-        typer.Option("--expand", "-e", help="Expand remote paths on the remote shell (enabled by default)."),
-    ] = True,
+        typer.Option("--no-expand", "-e", help="Disable expansion of remote paths on the remote shell."),
+    ] = False,
     limit: Annotated[int, typer.Option("--limit", "-L", min=1, help="Maximum codespaces in picker.")] = DEFAULT_LIST_LIMIT,
 ) -> None:
     local_sources = resolved_existing_paths(paths=sources)
@@ -941,7 +941,7 @@ def upload(
     create_remote_upload_directory(codespace_name=codespace_name, remote_directory=remote_directory)
     args = ["codespace", "cp", "--codespace", codespace_name]
     append_bool_flag(args=args, flag="--recursive", enabled=recursive)
-    append_bool_flag(args=args, flag="--expand", enabled=expand)
+    append_bool_flag(args=args, flag="--expand", enabled=not no_expand)
     args.extend(str(source) for source in local_sources)
     args.append(remote_spec(path=resolved_remote))
     run_gh_stream(args=args)

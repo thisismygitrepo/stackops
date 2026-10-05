@@ -1,13 +1,13 @@
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 import yaml
 
 import stackops.utils.schemas.mapper as mapper_assets
+from stackops.profile.dotfiles_constants import ALL_OS_VALUES, OS_OUTPUT_ORDER, OsName
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.source_of_truth import DOTFILES_USER_MAPPER_PATH
-
 
 LIBRARY_MAPPER_PATH = get_path_reference_path(
     module=mapper_assets,
@@ -21,15 +21,9 @@ DEFAULT_DOTFILE_MAPPER_HEADER = (
     "# os must be an explicit YAML list containing one or more of: linux, darwin, windows"
 )
 
-type OsName = Literal["linux", "darwin", "windows"]
 type OsField = list[OsName]
 type MapperSection = dict[str, "RawMapperEntry"]
 type MapperDocument = dict[str, MapperSection]
-
-ALL_OS_VALUES: tuple[OsName, OsName, OsName] = ("linux", "darwin", "windows")
-DEFAULT_OS_FILTER = ",".join(ALL_OS_VALUES)
-VALID_OS_VALUES: frozenset[OsName] = frozenset(ALL_OS_VALUES)
-OS_OUTPUT_ORDER: dict[OsName, int] = {value: index for index, value in enumerate(ALL_OS_VALUES)}
 
 
 class RawMapperEntry(TypedDict):

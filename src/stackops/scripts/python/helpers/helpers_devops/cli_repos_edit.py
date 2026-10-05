@@ -5,8 +5,6 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec, resolve_repos_spec_path
-
 
 def edit_repositories(
     specs_path: Annotated[
@@ -16,6 +14,8 @@ def edit_repositories(
         Literal["nano", "hx", "code"], typer.Option("--editor", "-e", help="Editor to open repos.json. Defaults to hx.")
     ] = "hx",
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec, resolve_repos_spec_path
+
     try:
         spec_path = resolve_repos_spec_path(specs_path=specs_path)
         if not spec_path.exists():

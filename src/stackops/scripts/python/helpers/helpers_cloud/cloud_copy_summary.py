@@ -8,7 +8,7 @@ from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
 from stackops.utils.cloud.defaults import CloudConfig
-from stackops.utils.cloud.rclone import ShareLinkOptions
+from stackops.utils.cloud.share_models import ShareLinkOptions
 
 
 def cloud_copy_summary(

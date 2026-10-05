@@ -5,10 +5,8 @@ from typing import Annotated, Literal, NoReturn, TypeAlias
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output import publish_output, validate_output
-from stackops.utils.cloud.encryption import ENCRYPTION_MODES_DISPLAY, EncryptionMode, EncryptionModeChoice, parse_encryption_mode
-from stackops.utils.files.compression import DECOMPRESS_SUPPORTED_FORMATS
-from stackops.utils.path_core import tmp
+from stackops.utils.cloud.encryption import ENCRYPTION_MODES_DISPLAY, EncryptionMode, EncryptionModeChoice
+from stackops.utils.files.compression_constants import DECOMPRESS_SUPPORTED_FORMATS
 
 DATA_ENCRYPT_HELP = "🔐 <x> Encrypt a file or folder with symmetric or asymmetric GPG."
 DATA_DECRYPT_HELP = "🔓 <y> Decrypt a GPG file; folder archives are extracted."
@@ -37,6 +35,8 @@ def _symmetric_password(pwd: str | None, *, prompt: str) -> str:
 
 
 def _resolve_encryption(encryption: EncryptionModeChoice, *, pwd: str | None, recipient: str | None) -> EncryptionMode:
+    from stackops.utils.cloud.encryption import parse_encryption_mode
+
     mode = parse_encryption_mode(encryption, label="encryption")
     if mode == "symmetric" and recipient is not None:
         _fail(f"--recipient requires asymmetric encryption ({ENCRYPTION_MODES_DISPLAY}).")
@@ -73,6 +73,8 @@ def encrypt(
     ] = None,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Replace the existing output file or entire folder.")] = False,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output import validate_output
+
     mode = _resolve_encryption(encryption, pwd=pwd, recipient=recipient)
     source = path.expanduser().absolute()
     if not source.exists():
@@ -102,6 +104,9 @@ def decrypt(
     ] = None,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Replace the existing output file or entire folder.")] = False,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output import validate_output
+    from stackops.utils.cloud.encryption import parse_encryption_mode
+
     mode = parse_encryption_mode(encryption, label="encryption")
     source = path.expanduser().absolute()
     if not source.is_file():
@@ -143,7 +148,9 @@ def _encrypt_to_output(
     output_path: Path,
     overwrite: bool,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output import publish_output
     from stackops.utils.io import encrypt_file_asymmetric, encrypt_file_symmetric
+    from stackops.utils.path_core import tmp
 
     with TemporaryDirectory(prefix=".stackops-encrypt-", dir=tmp(folder="stackops/data", file=None, root="~/tmp_results")) as temporary_directory:
         staging_root = Path(temporary_directory)
@@ -195,7 +202,9 @@ def _stage_input(source: Path, *, compression: FolderArchiveFormat, staging_root
 def _decrypt_to_output(
     *, source: Path, mode: EncryptionMode, pwd: str | None, archive_suffix: str | None, output_path: Path, overwrite: bool
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output import publish_output
     from stackops.utils.io import decrypt_file_asymmetric, decrypt_file_symmetric
+    from stackops.utils.path_core import tmp
 
     with TemporaryDirectory(prefix=".stackops-decrypt-", dir=tmp(folder="stackops/data", file=None, root="~/tmp_results")) as temporary_directory:
         staging_root = Path(temporary_directory)

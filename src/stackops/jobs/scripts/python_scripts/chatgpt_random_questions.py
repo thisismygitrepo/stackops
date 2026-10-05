@@ -14,15 +14,17 @@ import re
 import signal
 import time
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
-from playwright.async_api import Locator, Page, TimeoutError as PlaywrightTimeoutError, async_playwright
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
 from rich.text import Text
+
+if TYPE_CHECKING:
+    from playwright.async_api import Locator, Page
 
 
 DEFAULT_QUESTIONS = [
@@ -51,7 +53,7 @@ class StopRequested(Exception):
     pass
 
 
-async def find_composer(page: Page) -> Locator:
+async def find_composer(page: "Page") -> "Locator":
     candidates = [
         page.get_by_role("textbox", name=re.compile(r"(chat with chatgpt|message)", re.I)).last,
         page.locator('[contenteditable="true"]').last,
@@ -73,7 +75,7 @@ async def find_composer(page: Page) -> Locator:
     raise RuntimeError(f"Could not find the ChatGPT message composer: {last_error}")
 
 
-async def extract_last_assistant_message(page: Page) -> str:
+async def extract_last_assistant_message(page: "Page") -> str:
     text = await page.evaluate(
         """
         () => {
@@ -96,7 +98,7 @@ async def extract_last_assistant_message(page: Page) -> str:
     return str(text or "").strip()
 
 
-async def is_generating(page: Page) -> bool:
+async def is_generating(page: "Page") -> bool:
     return bool(
         await page.evaluate(
             """
@@ -116,7 +118,7 @@ async def is_generating(page: Page) -> bool:
     )
 
 
-async def wait_for_response(page: Page, *, timeout_seconds: float, poll_seconds: float, stable_seconds: float) -> str:
+async def wait_for_response(page: "Page", *, timeout_seconds: float, poll_seconds: float, stable_seconds: float) -> str:
     deadline = time.monotonic() + timeout_seconds
     last_text = ""
     stable_since = time.monotonic()
@@ -140,7 +142,7 @@ async def wait_for_response(page: Page, *, timeout_seconds: float, poll_seconds:
 
 async def send_question(
     *,
-    page: Page,
+    page: "Page",
     question: str,
     chatgpt_url: str,
     pre_submit_wait_seconds: float,
@@ -222,6 +224,8 @@ async def run_loop(
         question = rng.choice(questions)
         console.print(Panel(question, title="Dry run question", border_style="yellow"))
         return
+
+    from playwright.async_api import TimeoutError as PlaywrightTimeoutError, async_playwright
 
     stop = asyncio.Event()
 
@@ -312,7 +316,7 @@ def main(
     stable_seconds: Annotated[
         float, typer.Option("--stable-seconds", "-S", min=0.5, help="Response text must stay unchanged this long before it is considered done.")
     ] = 2.0,
-    keep_tabs: Annotated[bool, typer.Option("--keep-tabs/--close-tabs", "-k/-K", help="Keep each ChatGPT tab open after a cycle.")] = False,
+    keep_tabs: Annotated[bool, typer.Option("--keep-tabs", "-k", help="Keep each ChatGPT tab open after a cycle.")] = False,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-d", help="Pick and print a question without connecting to the browser.")] = False,
 ) -> None:
     """Open ChatGPT in a new tab, send a random question, print the response, and repeat."""

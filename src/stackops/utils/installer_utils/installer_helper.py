@@ -1,9 +1,11 @@
-from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES
+from pathlib import Path
+
+from stackops.utils.files.compression import decompress_path
+from stackops.utils.files.compression_constants import DECOMPRESS_SUPPORTED_FORMATS
+from stackops.utils.installer_utils.linux_package_file import is_linux_package_file
 from stackops.utils.path_core import delete_path
 from stackops.utils.schemas.installer.installer_types import InstallerData
-from pathlib import Path
-from stackops.utils.files.compression import DECOMPRESS_SUPPORTED_FORMATS, decompress_path
-from stackops.utils.installer_utils.linux_package_file import is_linux_package_file
+from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES
 from stackops.utils.source_of_truth import INSTALL_TMP_DIR
 
 
@@ -94,11 +96,12 @@ def handle_installer_not_found(search_term: str, app_apps: list[InstallerData]) 
 
 
 def install_msi_package(downloaded: Path) -> None:
+    import platform
+    import subprocess
+
     from rich import print as rprint
     from rich.console import Group
     from rich.panel import Panel
-    import platform
-    import subprocess
 
     assert platform.system() == "Windows"
     print(f"📦 Installing .msi package: {downloaded}")

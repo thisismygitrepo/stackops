@@ -4,7 +4,6 @@ from typing import Annotated
 
 import typer
 
-
 DATA_SETUP_HELP = "Interactively add a backup entry and install its YAML schema."
 DOTFILES_SETUP_HELP = "Interactively register a dotfile and install its YAML schema."
 LAYOUTS_SETUP_HELP = "Install starter terminal layouts and their JSON schema."
@@ -31,7 +30,7 @@ def _ensure_packaged_schema(*, module: ModuleType, path_reference: str, schema_p
 
 def setup_data() -> None:
     import stackops.utils.schemas.mapper as mapper_assets
-    from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER
+    from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
     from stackops.scripts.python.helpers.helpers_cloud.backup_config import USER_BACKUP_PATH
     from stackops.scripts.python.helpers.helpers_devops.cli_data import register_data
 
@@ -46,10 +45,10 @@ def setup_data() -> None:
         name=None,
         path_cloud=None,
         share_url=None,
-        zip_=True,
+        no_zip=False,
         encryption=None,
         pwd=None,
-        rel2home=None,
+        no_rel2home=False,
         os=DEFAULT_OS_FILTER,
         interactive=True,
     )
@@ -57,7 +56,8 @@ def setup_data() -> None:
 
 def setup_dotfiles() -> None:
     import stackops.utils.schemas.mapper as mapper_assets
-    from stackops.profile.dotfiles_mapper import DEFAULT_OS_FILTER, USER_MAPPER_PATH
+    from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
+    from stackops.profile.dotfiles_mapper import USER_MAPPER_PATH
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import register_dotfile
 
     _ensure_packaged_schema(
@@ -75,7 +75,7 @@ def setup_dotfiles() -> None:
         section="default",
         os_filter=DEFAULT_OS_FILTER,
         shared=False,
-        record=True,
+        no_record=False,
         interactive=True,
     )
 

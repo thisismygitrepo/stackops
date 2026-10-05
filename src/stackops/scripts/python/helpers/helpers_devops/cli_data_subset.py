@@ -1,31 +1,15 @@
 from copy import deepcopy
 from pathlib import Path
-from typing import Annotated, NoReturn
+from typing import TYPE_CHECKING, Annotated, NoReturn
+
+if TYPE_CHECKING:
+    from stackops.scripts.python.helpers.helpers_cloud.backup_config import BackupConfig, BackupItem
+    from stackops.scripts.python.helpers.helpers_cloud.backup_selection import BackupEntryKey
 
 import typer
 
-from stackops.profile.dotfiles_mapper import ALL_OS_VALUES
-from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_MAP
-from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
-    LIBRARY_BACKUP_PATH,
-    USER_BACKUP_PATH,
-    BackupConfig,
-    BackupItem,
-    load_backup_config_file,
-)
-from stackops.scripts.python.helpers.helpers_cloud.backup_selection import (
-    BackupEntryKey,
-    parse_backup_entry_selectors,
-    resolve_backup_entry_keys,
-)
-from stackops.scripts.python.helpers.helpers_devops.cli_data_subset_io import load_existing_subset_output, write_subset_output
-from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import InteractivePickerOption, choose_interactive_options
-from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import (
-    SUBSET_OUTPUT_CONFLICT_ACTIONS,
-    SubsetOutputConflictAction,
-    SubsetOutputConflictOption,
-    resolve_subset_output_path,
-)
+from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE
+from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import SubsetOutputConflictAction, SubsetOutputConflictOption
 
 DATA_SUBSET_HELP = "Create a backup configuration from selected data entries."
 
@@ -52,6 +36,10 @@ def subset(
     ] = "throw-error",
 ) -> None:
     """📦 <u> Create a backup configuration from selected data entries."""
+    from stackops.profile.linking.options import CONFIG_FILE_SOURCE_MAP
+    from stackops.scripts.python.helpers.helpers_cloud.backup_config import LIBRARY_BACKUP_PATH, USER_BACKUP_PATH
+    from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import SUBSET_OUTPUT_CONFLICT_ACTIONS, resolve_subset_output_path
+
     source_key = CONFIG_FILE_SOURCE_MAP[source]
     match source_key:
         case "library":
@@ -67,6 +55,9 @@ def subset(
 
 
 def subset_data_file(source_path: Path, output_path: Path, *, on_conflict: SubsetOutputConflictAction, which: str | None) -> None:
+    from stackops.scripts.python.helpers.helpers_cloud.backup_selection import parse_backup_entry_selectors, resolve_backup_entry_keys
+    from stackops.scripts.python.helpers.helpers_devops.cli_data_subset_io import load_existing_subset_output, write_subset_output
+
     source_config = _load_source_config(source_path)
     load_existing_subset_output(source_path=source_path, output_path=output_path, on_conflict=on_conflict)
     if which is None:
@@ -90,7 +81,9 @@ def subset_data_file(source_path: Path, output_path: Path, *, on_conflict: Subse
     )
 
 
-def _load_source_config(source_path: Path) -> BackupConfig:
+def _load_source_config(source_path: Path) -> "BackupConfig":
+    from stackops.scripts.python.helpers.helpers_cloud.backup_config import load_backup_config_file
+
     try:
         source_config = load_backup_config_file(source_path, empty_as_config=False)
     except ValueError as exc:
@@ -100,7 +93,10 @@ def _load_source_config(source_path: Path) -> BackupConfig:
     return source_config
 
 
-def _choose_subset_entry_keys(*, config: BackupConfig, source_path: Path) -> list[BackupEntryKey]:
+def _choose_subset_entry_keys(*, config: "BackupConfig", source_path: Path) -> "list[BackupEntryKey]":
+    from stackops.scripts.python.helpers.helpers_cloud.backup_selection import BackupEntryKey
+    from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import InteractivePickerOption, choose_interactive_options
+
     picker_options = [
         InteractivePickerOption(
             value=BackupEntryKey(group_name=group_name, item_name=item_name),
@@ -118,7 +114,9 @@ def _choose_subset_entry_keys(*, config: BackupConfig, source_path: Path) -> lis
     )
 
 
-def _entry_preview(*, group_name: str, item_name: str, item: BackupItem, source_path: Path) -> str:
+def _entry_preview(*, group_name: str, item_name: str, item: "BackupItem", source_path: Path) -> str:
+    from stackops.profile.dotfiles_constants import ALL_OS_VALUES
+
     os_values = ", ".join(value for value in ALL_OS_VALUES if value in item["os"])
     path_cloud = item["path_cloud"] if item["path_cloud"] is not None else "null"
     share_url = item["share_url"] if item["share_url"] is not None else "null"
@@ -140,7 +138,9 @@ def _entry_preview(*, group_name: str, item_name: str, item: BackupItem, source_
     )
 
 
-def _build_selected_config(*, source_config: BackupConfig, selected_keys: list[BackupEntryKey]) -> BackupConfig:
+def _build_selected_config(*, source_config: "BackupConfig", selected_keys: "list[BackupEntryKey]") -> "BackupConfig":
+    from stackops.scripts.python.helpers.helpers_cloud.backup_selection import BackupEntryKey
+
     if not selected_keys:
         _fail("No backup configuration entries selected.")
     selected_key_set = set(selected_keys)
@@ -159,7 +159,7 @@ def _build_selected_config(*, source_config: BackupConfig, selected_keys: list[B
     return selected_config
 
 
-def _merge_output_config(*, existing_output_config: BackupConfig | None, selected_config: BackupConfig) -> BackupConfig:
+def _merge_output_config(*, existing_output_config: "BackupConfig | None", selected_config: "BackupConfig") -> "BackupConfig":
     if existing_output_config is None:
         return selected_config
     collisions = [

@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import typer
 from rich import box
 from rich.console import Console
@@ -5,16 +7,13 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from stackops.profile.dotfiles_mapper import ALL_OS_VALUES
-from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
-    USER_BACKUP_PATH,
-    describe_missing_backup_config,
-    load_backup_config_file,
-)
-from stackops.scripts.python.helpers.helpers_cloud.backup_registration import BackupRegistrationResult
+if TYPE_CHECKING:
+    from stackops.scripts.python.helpers.helpers_cloud.backup_registration import BackupRegistrationResult
 
 
-def show_registration_summary(registration: BackupRegistrationResult) -> None:
+def show_registration_summary(registration: "BackupRegistrationResult") -> None:
+    from stackops.profile.dotfiles_constants import ALL_OS_VALUES
+
     entry = registration["entry"]
     os_values = ", ".join(value for value in ALL_OS_VALUES if value in entry["os"])
     path_cloud = entry["path_cloud"] if entry["path_cloud"] is not None else "null"
@@ -48,6 +47,9 @@ def show_registration_summary(registration: BackupRegistrationResult) -> None:
 
 
 def display_data() -> None:
+    from stackops.profile.dotfiles_constants import ALL_OS_VALUES
+    from stackops.scripts.python.helpers.helpers_cloud.backup_config import USER_BACKUP_PATH, describe_missing_backup_config, load_backup_config_file
+
     try:
         config = load_backup_config_file(USER_BACKUP_PATH, empty_as_config=True)
     except ValueError as exc:

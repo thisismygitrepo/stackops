@@ -3,6 +3,7 @@ import platform
 from urllib.parse import parse_qs, quote, urlparse
 
 from stackops.utils.cloud import rclone as rclone_utils
+from stackops.utils.cloud.share_models import ShareLinkOptions
 
 
 def _absolute_path(path: Path) -> Path:
@@ -73,7 +74,7 @@ def to_cloud(
     remote_path: Path,
     overwrite: bool,
     share: bool,
-    share_options: rclone_utils.ShareLinkOptions | None,
+    share_options: ShareLinkOptions | None,
     verbose: bool,
     show_progress: bool,
     transfers: int,

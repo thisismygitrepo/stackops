@@ -2,7 +2,6 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
@@ -28,13 +27,13 @@ def configure_default_shell() -> None:
 
 
 def update(
-    copy_assets: Annotated[
+    no_copy_assets: Annotated[
         bool,
         typer.Option(
-            "--copy-assets/--no-copy-assets", "-a/-A",
-            help="Copy scripts and settings after update (enabled by default; overwrites local assets)."
+            "--no-copy-assets", "-a",
+            help="Skip copying scripts and settings after update."
         ),
-    ] = True,
+    ] = False,
     sync_public: Annotated[
         bool,
         typer.Option(
@@ -60,13 +59,16 @@ def update(
 
     Assets are copied by default; --no-copy-assets skips copying.
     Post-update actions:
-    --copy-assets        -> devops config copy-assets all
+    Copy scripts and settings unless --no-copy-assets is passed.
     --link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
     --config-shell       -> devops config terminal config-shell --which default
 
     --dev is a pre-update action (requires a repo checkout):
     --dev                -> commit local changes, git pull --rebase, git push (stops safely on any failure)
     """
+    copy_assets = not no_copy_assets
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
+
     dev_repo_root = cli_self_repo.developer_repo_root()
     if dev and dev_repo_root is None:
         typer.echo(f"❌ --dev requires a stackops repo checkout at {STACKOPS_REPO_DIR}; run 'devops s i --dev' first.")
@@ -127,9 +129,10 @@ uv tool install --no-cache --upgrade stackops
 
 
 def _install_stackops(dev: bool) -> None:
+    import platform
+
     from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function, get_uv_command
     from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
-    import platform
 
     stackops_path = STACKOPS_REPO_DIR
     if dev and not stackops_path.exists():
@@ -183,7 +186,7 @@ def status(
     ] = False,
     apps: Annotated[bool, typer.Option("--apps", "--tools", "-a", "-t", help="Show the installed apps/tools section.")] = False,
     backup: Annotated[bool, typer.Option("--backup", "-b", help="Show the backup configuration section.")] = False,
-    plain: Annotated[bool, typer.Option("--plain", help="Print a report instead of opening the interactive dashboard.")] = False,
+    plain: Annotated[bool, typer.Option("--plain", "-p", help="Print a report instead of opening the interactive dashboard.")] = False,
 ) -> None:
     """📊 Interactive machine status dashboard.
 
@@ -199,8 +202,6 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_self_assets
     from stackops.scripts.python.helpers.helpers_devops.cli_self_clone import clone
     from stackops.scripts.python.helpers.helpers_devops.cli_self_export import download_installer, export
-    from stackops.scripts.python.helpers.helpers_devops.cli_self_release import release
-    from stackops.scripts.python.helpers.helpers_devops.stackops_release import is_stackops_repository
     from stackops.scripts.python.helpers.helpers_devops.cli_self_info import (
         build_docker,
         build_graph,
@@ -209,6 +210,8 @@ def get_app() -> typer.Typer:
         explore_python_api,
         readme,
     )
+    from stackops.scripts.python.helpers.helpers_devops.cli_self_release import release
+    from stackops.scripts.python.helpers.helpers_devops.stackops_release import is_stackops_repository
 
     cli_app = typer.Typer(
         help="🔄 <s> self operations subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
@@ -242,6 +245,8 @@ def get_app() -> typer.Typer:
 
     cli_app.command(name="readme", no_args_is_help=False, help="📚 <r> render readme markdown in terminal.")(readme)
     cli_app.command(name="r", no_args_is_help=False, hidden=True)(readme)
+
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 
     dev_repo_root = cli_self_repo.developer_repo_root()
     if dev_repo_root is not None:

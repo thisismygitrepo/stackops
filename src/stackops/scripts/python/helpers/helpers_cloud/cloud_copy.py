@@ -18,12 +18,10 @@ import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
 from stackops.utils.cloud.rclone import (
     RcloneCommandError,
     RcloneConfigError,
-    ShareLinkOptions,
-    ShareLinkTypeChoice,
-    ShareScopeChoice,
     parse_share_link_type,
     parse_share_scope,
 )
+from stackops.utils.cloud.share_models import ShareLinkOptions, ShareLinkTypeChoice, ShareScopeChoice
 from stackops.utils.cloud.defaults import CloudConfig, read_default_cloud_config
 from stackops.utils.cloud.target_conflict import TargetConflictAction, TargetConflictError, apply_target_conflict_action
 

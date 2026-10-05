@@ -38,10 +38,10 @@ def scrape(
     wait_selector: Annotated[str | None, typer.Option("--wait-selector", "-W", help="CSS selector to wait for before extracting.")] = "article",
     wait: Annotated[int | None, typer.Option("--wait", "-w", min=0, help="Milliseconds to wait after the page is ready.")] = 2000,
     timeout: Annotated[int | None, typer.Option("--timeout", "-t", min=1, help="Scrapling timeout in milliseconds.")] = 60000,
-    enable_resources: Annotated[
+    no_enable_resources: Annotated[
         bool,
-        typer.Option("--enable-resources/--no-enable-resources", "-e/-E", help="Enable browser resources while fetching."),
-    ] = True,
+        typer.Option("--no-enable-resources", "-e", help="Disable browser resources while fetching."),
+    ] = False,
     package_spec: Annotated[str, typer.Option("--package-spec", "-p", help="uvx package spec used to provide Scrapling.")] = "scrapling[shell]",
 ) -> None:
     if url is None:
@@ -65,7 +65,7 @@ def scrape(
         wait_selector=wait_selector,
         wait=wait,
         timeout=timeout,
-        enable_resources=enable_resources,
+        enable_resources=not no_enable_resources,
         package_spec=package_spec.strip(),
         extra_args=list(ctx.args),
     )
@@ -176,8 +176,8 @@ def compress_pdf(
         output=output,
         quality=quality,
         image_dpi=image_dpi,
-        compress_streams=not no_compress_streams,
-        use_objstms=not no_object_streams,
+        no_compress_streams=no_compress_streams,
+        no_object_streams=no_object_streams,
     )
 
 

@@ -2,17 +2,17 @@ import re
 from pathlib import Path
 from typing import TypedDict
 
-from stackops.profile.dotfiles_mapper import ALL_OS_VALUES, OsName
-from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
+from stackops.profile.dotfiles_constants import ALL_OS_VALUES, OsName
 from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
-    BackupConfig,
-    BackupItem,
     USER_BACKUP_PATH,
     VALID_OS,
+    BackupConfig,
+    BackupItem,
     describe_missing_backup_config,
     read_user_backup_config_for_update,
     write_backup_config,
 )
+from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
 from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
 
 

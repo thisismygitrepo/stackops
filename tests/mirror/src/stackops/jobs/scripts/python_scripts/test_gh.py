@@ -4,8 +4,26 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+from typer.testing import CliRunner
 
 from stackops.jobs.scripts.python_scripts import gh
+
+
+@pytest.mark.parametrize("arguments", [[], ["--no-expand"], ["-e"]])
+def test_upload_remote_path_expansion_can_be_disabled(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, arguments: list[str]
+) -> None:
+    source = tmp_path / "upload.txt"
+    source.write_text("upload", encoding="utf-8")
+    run_gh_stream = Mock()
+    monkeypatch.setattr(gh, "resolve_codespace_name", Mock(return_value="target"))
+    monkeypatch.setattr(gh, "create_remote_upload_directory", Mock())
+    monkeypatch.setattr(gh, "run_gh_stream", run_gh_stream)
+
+    result = CliRunner().invoke(gh.app, ["upload", str(source), "--remote", "/target/upload.txt", *arguments])
+
+    assert result.exit_code == 0, result.output
+    assert ("--expand" in run_gh_stream.call_args.kwargs["args"]) is (len(arguments) == 0)
 
 
 def test_resolve_codespace_name_skips_picker_for_single_target(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -1,5 +1,7 @@
 import json
+import importlib
 from pathlib import Path
+import sys
 
 import pytest
 from typer.testing import CliRunner
@@ -63,3 +65,14 @@ def test_help_exposes_account_creation_and_listing_commands() -> None:
     assert "accounts" in result.output
     assert "<r>" in result.output
     assert "List defined OneDrive CLI accounts" in result.output
+
+
+def test_help_does_not_import_command_implementations(monkeypatch: pytest.MonkeyPatch) -> None:
+    for module_name in ("accounts", "auth", "errors", "file_ops", "items", "output"):
+        monkeypatch.setitem(sys.modules, f"""stackops.utils.cloud.onedrive.{module_name}""", None)
+    importlib.reload(onedrive_cli)
+
+    result = CliRunner().invoke(onedrive_cli.get_app(), ["--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "Authenticate with Microsoft" in result.output

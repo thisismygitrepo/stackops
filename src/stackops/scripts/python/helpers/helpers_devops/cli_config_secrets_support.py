@@ -5,19 +5,16 @@ from typing import Literal, NoReturn, TypeAlias
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_validation as secret_validation
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
     SecretCandidate,
     load_secret_candidates,
 )
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SecretsSource, WritableSecretsSource
 from stackops.secrets.models import Login, SecretsFile
 
 SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
-SECRETS_SCHEMA_FILENAME = secret_actions.SECRETS_SCHEMA_FILENAME
 
-SecretsSource: TypeAlias = Literal["local", "l", "global", "g", "both", "b"]
-WritableSecretsSource: TypeAlias = Literal["local", "l", "global", "g"]
 ResolvedSecretsSource: TypeAlias = Literal["local", "global", "both"]
 SecretsFileSourceName: TypeAlias = Literal["local", "global"]
 

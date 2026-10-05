@@ -1,13 +1,10 @@
 """Summarize a layout file with counts for layouts and tabs."""
 
-from typing import Annotated, Literal, TypeAlias, cast
+from typing import cast
 
 import typer
 
-
-SummarizeVocabulary: TypeAlias = Literal["layout", "l", "herdr", "h"]
-LegacySummarizeBackend: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u", "auto", "a"]
-ResolvedSummarizeVocabulary: TypeAlias = Literal["layout", "herdr"]
+from stackops.scripts.python.terminal_summary_models import LegacySummarizeBackend, ResolvedSummarizeVocabulary, SummarizeVocabulary
 
 
 def _resolve_vocabulary(vocabulary: SummarizeVocabulary | LegacySummarizeBackend) -> ResolvedSummarizeVocabulary:
@@ -19,16 +16,11 @@ def _resolve_vocabulary(vocabulary: SummarizeVocabulary | LegacySummarizeBackend
 
 
 def summarize(
-    layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.json file")],
-    vocabulary: Annotated[
-        SummarizeVocabulary,
-        typer.Option("--vocabulary", "-v", help="Output vocabulary to use: layout or herdr."),
-    ] = "layout",
-    backend: Annotated[
-        LegacySummarizeBackend | None,
-        typer.Option("--backend", "-b", help="Deprecated alias for --vocabulary.", hidden=True),
-    ] = None,
-    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Show tab names, directories, commands, and weights.")] = False,
+    *,
+    layout_path: str,
+    vocabulary: SummarizeVocabulary,
+    backend: LegacySummarizeBackend | None,
+    show_tabs: bool,
 ) -> None:
     """Summarize a layout file with counts for layouts and tabs."""
     import json

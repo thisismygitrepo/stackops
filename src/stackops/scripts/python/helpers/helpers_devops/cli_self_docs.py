@@ -3,11 +3,10 @@ from pathlib import Path
 from typing import Literal
 
 import typer
+
 import stackops.scripts.python.graph as graph_assets
 from stackops.scripts.python.graph import CLI_GRAPH_PATH_REFERENCE
-from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
 from stackops.utils.path_reference import get_path_reference_library_relative_path
-
 
 DOCS_BIND_ADDRESS = "0.0.0.0"
 DOCS_PORT = 8000
@@ -37,6 +36,7 @@ def _build_docs_url(host: str) -> str:
 
 
 def get_docs_repo_root() -> Path:
+    from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
     from stackops.utils.source_of_truth import REPO_ROOT
 
     repo_root = cli_self_repo.developer_repo_root()

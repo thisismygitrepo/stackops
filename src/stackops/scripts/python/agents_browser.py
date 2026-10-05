@@ -1,7 +1,6 @@
-from typing import Annotated, cast, get_args
+from typing import TYPE_CHECKING, Annotated, cast, get_args
 
 import typer
-from rich.console import Console
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     BROWSER_TECH_NAMES,
@@ -13,11 +12,11 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     DEFAULT_BROWSER_PROFILE_PORT_START,
     ProfileBrowserName,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary
-from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import SKILL_INSTALL_COMMAND_BACKEND
-from stackops.utils.network.address import InterfaceIPv4Address, select_lan_interface_ipv4
+from stackops.scripts.python.helpers.helpers_agents.agents_skill_types import SKILL_INSTALL_COMMAND_BACKEND
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
+
+if TYPE_CHECKING:
+    from stackops.utils.network.address import InterfaceIPv4Address
 
 
 def install_tech(
@@ -114,12 +113,19 @@ def launch_browser(
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
     """Launch browser automation endpoints with isolated profiles when supported."""
+    from rich.console import Console
+
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary
+
     profile_names: tuple[str | None, ...] = (None,) if profile is None else _parse_profile_names(raw_profile=profile)
     lan_address: InterfaceIPv4Address | None = None
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl
 
         if lan:
+            from stackops.utils.network.address import select_lan_interface_ipv4
+
             lan_address = select_lan_interface_ipv4(prefer_vpn=False)
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoint.")
@@ -219,6 +225,11 @@ def batch_launch(
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
 ) -> None:
     """Launch every saved profile for one browser on its assigned port."""
+    from rich.console import Console
+
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launches_summary
+
     lan_address: InterfaceIPv4Address | None = None
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_batch import build_browser_profile_launch_specs
@@ -228,6 +239,8 @@ def batch_launch(
         if max_profiles is not None:
             specs = specs[:max_profiles]
         if lan:
+            from stackops.utils.network.address import select_lan_interface_ipv4
+
             lan_address = select_lan_interface_ipv4(prefer_vpn=False)
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoints.")

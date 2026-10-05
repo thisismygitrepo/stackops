@@ -64,7 +64,7 @@ def main_installer_cli(
     explore: Annotated[bool, typer.Option(..., "--explore", "-x", help="Explore installer categoryLabels before installing.")] = False,
     update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
     version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
-    source: InstallerDataSource = "all",
+    source: Annotated[InstallerDataSource, typer.Option("--source", "-s", help="Installer definitions to use.")] = "all",
     ctx: typer.Context | None = None,
 ) -> None:
     install_request = InstallRequest(version=version, update=update)

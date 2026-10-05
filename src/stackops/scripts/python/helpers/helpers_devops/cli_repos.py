@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
@@ -32,7 +32,6 @@ def _prompt_capture_options(
     directory: str | None, specs_path: str | None, guard: bool | None, cloud: str | None, ignore_gitignore: bool | None
 ) -> tuple[str, str, bool | None, str | None, bool | None]:
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
-
     from stackops.scripts.python.helpers.helpers_repos.spec_store import DEFAULT_REPOS_SPEC_PATH
 
     directory_default = directory or Path.cwd().as_posix()
@@ -140,11 +139,13 @@ def capture(
     directory: Annotated[str | None, typer.Argument(help="📁 Directory containing repo(s).")] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
-    guard: Annotated[bool | None, typer.Option("--guard/--git", "-g/-G", help="Use encrypted storage or Git hosts for all repos in this scan; otherwise keep saved settings.")] = None,
-    cloud: Annotated[str | None, typer.Option("--cloud", "-C", help="Rclone storage profile for --guard; otherwise use saved/default profile.")] = None,
-    ignore_gitignore: Annotated[bool | None, typer.Option("--ignore-gitignore/--respect-gitignore", "-I/-R", help="Set whether guard archives include Git-ignored files.")] = None,
+    sync_mode: Annotated[Literal["guard", "git"] | None, typer.Option("--sync-mode", "-g", help="Sync destination for scanned repos: guard or git. Omit to keep saved settings.")] = None,
+    cloud: Annotated[str | None, typer.Option("--cloud", "-C", help="Rclone storage profile for --sync-mode guard; otherwise use saved/default profile.")] = None,
+    gitignore: Annotated[Literal["include", "respect"] | None, typer.Option("--gitignore", "-I", help="Whether guard archives include or respect Git-ignored files. Omit to keep saved settings.")] = None,
 ) -> None:
     """📝 Record repositories into a repos.json specification."""
+    guard = None if sync_mode is None else sync_mode == "guard"
+    ignore_gitignore = None if gitignore is None else gitignore == "include"
     from stackops.scripts.python.helpers.helpers_repos.record import main_record as record_repos
 
     if interactive:
@@ -152,7 +153,7 @@ def capture(
             directory=directory, specs_path=specs_path, guard=guard, cloud=cloud, ignore_gitignore=ignore_gitignore
         )
     if guard is not True and (cloud is not None or ignore_gitignore is not None):
-        raise typer.BadParameter("--cloud and archive inclusion options require --guard.")
+        raise typer.BadParameter("--cloud and --gitignore require --sync-mode guard.")
     if cloud is not None and not cloud.strip():
         raise typer.BadParameter("--cloud must not be empty.")
     try:
@@ -226,10 +227,10 @@ def checkout_to_branch_command(
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
     from stackops.scripts.python.helpers.helpers_devops import cli_repos_stats, cli_repos_version
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_edit import edit_repositories
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_list import list_repositories
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
 
     repos_apps = typer.Typer(
         cls=ordered_group(("sync", "register", "edit", "list", "action", "version", "guard", "stats")),
