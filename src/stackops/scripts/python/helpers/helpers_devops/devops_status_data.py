@@ -5,23 +5,20 @@ from rich.console import RenderableType
 from rich.panel import Panel
 from rich.text import Text
 
+from stackops.scripts.python.helpers.helpers_devops.devops_status_apps import check_important_tools, render_tools_status
+from stackops.scripts.python.helpers.helpers_devops.devops_status_backup import check_backup_config, render_backup_status
 from stackops.scripts.python.helpers.helpers_devops.devops_status_checks import (
-    check_backup_config,
-    check_config_files_status,
-    check_important_tools,
     check_repos_status,
     check_shell_profile_status,
     check_ssh_status,
 )
+from stackops.scripts.python.helpers.helpers_devops.devops_status_config import check_config_files_status, render_config_files_status
 from stackops.scripts.python.helpers.helpers_devops.devops_status_constants import STATUS_TITLES, StatusLevel, StatusSection
 from stackops.scripts.python.helpers.helpers_devops.devops_status_display import (
-    render_backup_status,
-    render_config_files_status,
     render_repos_status,
     render_shell_status,
     render_ssh_status,
     render_system_info,
-    render_tools_status,
 )
 
 
@@ -65,15 +62,15 @@ def collect_status_section(section: StatusSection) -> StatusSnapshot:
                 configs = check_config_files_status()
                 linked = configs["public_linked"] + configs["private_linked"]
                 total = configs["public_count"] + configs["private_count"]
-                level = "error" if "error" in configs else ("ready" if linked == total and total else "attention")
-                summary = "Check failed" if level == "error" else f"""{linked}/{total} configured"""
+                level = "ready" if linked == total and total else "attention"
+                summary = f"""{linked}/{total} configured"""
                 return StatusSnapshot(summary, level, render_config_files_status(configs))
             case "apps":
                 tools = check_important_tools()
                 unique = {name: installed for group in tools.values() for name, installed in group.items()}
                 installed = sum(unique.values())
-                summary = f"""{installed}/{len(unique)} installed"""
-                return StatusSnapshot(summary, "ready" if installed == len(unique) else "attention", render_tools_status(tools))
+                summary = f"""{installed} installed · {len(unique)} in catalog"""
+                return StatusSnapshot(summary, "ready", render_tools_status(tools))
             case "backup":
                 backup = check_backup_config()
                 configured = backup["cloud_config"] != "Not configured"

@@ -2,14 +2,15 @@
 
 from typing import Any
 
-from rich import box
 from rich.columns import Columns
-from rich.console import Console, Group
+from rich.console import Console
 from rich.panel import Panel
-from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
+from stackops.scripts.python.helpers.helpers_devops.devops_status_apps import render_tools_status
+from stackops.scripts.python.helpers.helpers_devops.devops_status_backup import BackupStatus, render_backup_status
+from stackops.scripts.python.helpers.helpers_devops.devops_status_config import ConfigFilesStatus, render_config_files_status
 from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH
 
 
@@ -133,84 +134,6 @@ def render_ssh_status(status: dict[str, Any]) -> Panel | Columns:
     return config_panel
 
 
-def render_config_files_status(status: dict[str, Any]) -> Panel:
-    if "error" in status:
-        return Panel(
-            Text(f"""❌ Error reading configuration: {status['error']}"""), title="Configuration Files", border_style="red", padding=(1, 2), expand=False
-        )
-
-    public_percentage = (status["public_linked"] / status["public_count"] * 100) if status["public_count"] > 0 else 0
-    private_percentage = (status["private_linked"] / status["private_count"] * 100) if status["private_count"] > 0 else 0
-
-    table = Table(show_header=True, box=None, padding=(0, 2), expand=False)
-    table.add_column("Type", style="cyan", no_wrap=True)
-    table.add_column("Configured", justify="right")
-    table.add_column("Mapped", justify="right")
-    table.add_column("Progress", justify="right")
-
-    table.add_row("📂 Public", str(status["public_linked"]), str(status["public_count"]), f"{public_percentage:.0f}%")
-    table.add_row("🔒 Private", str(status["private_linked"]), str(status["private_count"]), f"{private_percentage:.0f}%")
-
-    overall_linked = status["public_linked"] + status["private_linked"]
-    overall_total = status["public_count"] + status["private_count"]
-    overall_percentage = (overall_linked / overall_total * 100) if overall_total > 0 else 0
-
-    border_style = "green" if overall_percentage > 80 else ("yellow" if overall_percentage > 50 else "red")
-
-    return Panel(table, title=f"""Configuration Files ({overall_percentage:.0f}% configured)""", border_style=border_style, padding=(1, 2), expand=False)
-
-
-def render_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> Group:
-    unique_tool_status = {tool: installed for tools in grouped_tools.values() for tool, installed in tools.items()}
-    installed_tool_count = sum(unique_tool_status.values())
-    total_tool_count = len(unique_tool_status)
-    overall_percentage = (installed_tool_count / total_tool_count * 100) if total_tool_count else 0
-
-    section_title = Text("🛠️  Important Tools", style="bold bright_magenta")
-    section_title.append(
-        f" · {installed_tool_count}/{total_tool_count} unique installed ({overall_percentage:.0f}%)",
-        style="bright_magenta",
-    )
-
-    table = Table(box=box.SIMPLE_HEAD, header_style="bold bright_magenta", padding=(0, 1))
-    table.add_column("Group", style="bold cyan", no_wrap=True)
-    table.add_column("Installed", justify="right")
-    table.add_column("Missing", justify="right")
-    table.add_column("Coverage", justify="right")
-
-    for group_name, tools in grouped_tools.items():
-        installed_count = sum(tools.values())
-        missing_count = len(tools) - installed_count
-        installed_percentage = (installed_count / len(tools) * 100) if tools else 0
-        coverage_style = "green" if installed_percentage > 80 else ("yellow" if installed_percentage > 50 else "red")
-        group_display_name = group_name.replace("_", " ").title()
-
-        table.add_row(
-            Text(group_display_name),
-            str(installed_count),
-            str(missing_count),
-            Text(f"{installed_percentage:.0f}%", style=coverage_style),
-        )
-
-    missing_tool_names = sorted(tool for tool, installed in unique_tool_status.items() if not installed)
-    missing_summary = Text(f"Missing tools ({len(missing_tool_names)}): ", style="bold red")
-    missing_summary.append(", ".join(missing_tool_names) if missing_tool_names else "None", style="red" if missing_tool_names else "green")
-    return Group(Rule(section_title), table, missing_summary)
-
-
-def render_backup_status(status: dict[str, Any]) -> Panel:
-    table = Table(show_header=False, box=None, padding=(0, 1), expand=False)
-    table.add_column("Property", style="cyan", no_wrap=True)
-    table.add_column("Value", style="white")
-
-    table.add_row("🌥️  Cloud Config", Text(str(status["cloud_config"])))
-    table.add_row("📦 Backup Items", str(status["backup_items_count"]))
-
-    border_style = "green" if status["cloud_config"] != "Not configured" else "yellow"
-
-    return Panel(table, title="Backup Configuration", border_style=border_style, padding=(1, 2), expand=False)
-
-
 def display_system_info(info: dict[str, str]) -> None:
     console.rule("[bold blue]💻 System Information[/bold blue]")
     console.print(render_system_info(info))
@@ -231,7 +154,7 @@ def display_ssh_status(status: dict[str, Any]) -> None:
     console.print(render_ssh_status(status))
 
 
-def display_config_files_status(status: dict[str, Any]) -> None:
+def display_config_files_status(status: ConfigFilesStatus) -> None:
     console.rule("[bold bright_blue]⚙️  Configuration Files[/bold bright_blue]")
     console.print(render_config_files_status(status))
 
@@ -240,6 +163,6 @@ def display_tools_status(grouped_tools: dict[str, dict[str, bool]]) -> None:
     console.print(render_tools_status(grouped_tools))
 
 
-def display_backup_status(status: dict[str, Any]) -> None:
+def display_backup_status(status: BackupStatus) -> None:
     console.rule("[bold bright_cyan]💾 Backup Configuration[/bold bright_cyan]")
     console.print(render_backup_status(status))
