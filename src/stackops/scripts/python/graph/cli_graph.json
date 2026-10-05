@@ -7165,7 +7165,7 @@
                 "name": "scan",
                 "fullPath": "devops security scan",
                 "shortPath": "d y s",
-                "help": "<s> Scan installed apps or a single file path with VirusTotal.\n\nAutomatically uses configured VirusTotal accounts. --concurrency controls parallel files and defaults to the configured account count. Requests are serialized and spaced at least 15 seconds apart per account. Temporary failures receive bounded retries; inactive or invalid accounts are disabled and requests switch to another available account. --path uses the same retry and account-switching rules. Existing reports are retrieved by SHA256 with their original analysis date; unknown files are submitted for analysis. The final report includes request and failure statistics by account name, without API keys. Every scan records a separate run, including file scans; --no-record opts out. Results are saved as files finish. Use --all to scan all installed apps, history to list runs, report --run ID to inspect a run, and export --run ID --output DIR for CSV files. Scan failures cause a nonzero exit.",
+                "help": "<s> Scan installed apps or a single file path with VirusTotal.\n\nAutomatically uses configured VirusTotal accounts. --concurrency controls parallel files and defaults to the configured account count. Requests are serialized and spaced at least 15 seconds apart per account. Temporary failures receive bounded retries; inactive or invalid accounts are disabled and requests switch to another available account. --path uses the same retry and account-switching rules. Existing reports are retrieved by SHA256 with their original analysis date; unknown files are submitted for analysis. Cloud uploads are disabled by default. --upload (-u) uploads each file after its VirusTotal check completes, including --path scans, to myhome/security/<os>/<home-relative-directory>/<app>/<sha256>/<filename> without overwriting previous copies. The final report includes request and failure statistics by account name, without API keys. Every scan records a separate run, including file scans; --no-record opts out. Results are saved as files finish. Use --all to scan all installed apps, history to list runs, report --run ID to inspect a run, and export --run ID --output DIR for CSV files. Scan failures cause a nonzero exit.",
                 "source": {
                   "file": "src/stackops/jobs/installer/checks/security_cli.py",
                   "module": "stackops.jobs.installer.checks.security_cli",
@@ -7179,6 +7179,7 @@
                     "                                           file_okay=True, dir_okay=False, resolve_path=True)] = None,",
                     "    all_apps: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Scan all installed apps\")] = False,",
                     "    no_record: Annotated[bool, typer.Option(\"--no-record\", \"-n\", help=\"Do not save this scan as a history run\")] = False,",
+                    "    upload: Annotated[bool, typer.Option(\"--upload\", \"-u\", help=\"Upload each file after its VirusTotal check completes\")] = False,",
                     "    concurrency: Annotated[int | None, typer.Option(\"--concurrency\", \"-c\", min=1, help=\"Maximum concurrent files; defaults to account count\")] = None,",
                     "    records_dir: Annotated[Path, typer.Option(\"--records-dir\", \"-d\", help=\"Scan history directory\")] = SECURITY_RECORDS_ROOT,",
                     ") -> None:",
@@ -7198,7 +7199,8 @@
                     "    from stackops.utils.code import run_lambda_function",
                     "",
                     "    proc = run_lambda_function(",
-                    "        lambda: _run_scan(app_names=app_names, path_value=path_value, record=not no_record, concurrency=concurrency, records_dir=records_value),",
+                    "        lambda: _run_scan(app_names=app_names, path_value=path_value, record=not no_record, upload=upload,",
+                    "                          concurrency=concurrency, records_dir=records_value),",
                     "        uv_with=[\"vt-py\"], uv_project_dir=None,",
                     "    )",
                     "    if proc.returncode != 0:",
@@ -7288,6 +7290,28 @@
                       }
                     },
                     {
+                      "name": "upload",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--upload', '-u', help='Upload each file after its VirusTotal check completes')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--upload",
+                          "-u"
+                        ],
+                        "long_flags": [
+                          "--upload"
+                        ],
+                        "short_flags": [
+                          "-u"
+                        ],
+                        "help": "Upload each file after its VirusTotal check completes"
+                      }
+                    },
+                    {
                       "name": "concurrency",
                       "kind": "positional_or_keyword",
                       "type": "int | None",
@@ -7341,7 +7365,7 @@
                   {
                     "name": "s",
                     "hidden": true,
-                    "help": "<s> Scan installed apps or a single file path with VirusTotal.\n\nAutomatically uses configured VirusTotal accounts. --concurrency controls parallel files and defaults to the configured account count. Requests are serialized and spaced at least 15 seconds apart per account. Temporary failures receive bounded retries; inactive or invalid accounts are disabled and requests switch to another available account. --path uses the same retry and account-switching rules. Existing reports are retrieved by SHA256 with their original analysis date; unknown files are submitted for analysis. The final report includes request and failure statistics by account name, without API keys. Every scan records a separate run, including file scans; --no-record opts out. Results are saved as files finish. Use --all to scan all installed apps, history to list runs, report --run ID to inspect a run, and export --run ID --output DIR for CSV files. Scan failures cause a nonzero exit."
+                    "help": "<s> Scan installed apps or a single file path with VirusTotal.\n\nAutomatically uses configured VirusTotal accounts. --concurrency controls parallel files and defaults to the configured account count. Requests are serialized and spaced at least 15 seconds apart per account. Temporary failures receive bounded retries; inactive or invalid accounts are disabled and requests switch to another available account. --path uses the same retry and account-switching rules. Existing reports are retrieved by SHA256 with their original analysis date; unknown files are submitted for analysis. Cloud uploads are disabled by default. --upload (-u) uploads each file after its VirusTotal check completes, including --path scans, to myhome/security/<os>/<home-relative-directory>/<app>/<sha256>/<filename> without overwriting previous copies. The final report includes request and failure statistics by account name, without API keys. Every scan records a separate run, including file scans; --no-record opts out. Results are saved as files finish. Use --all to scan all installed apps, history to list runs, report --run ID to inspect a run, and export --run ID --output DIR for CSV files. Scan failures cause a nonzero exit."
                   }
                 ]
               },
@@ -7421,11 +7445,9 @@
                 "signature": {
                   "raw_lines": [
                     "def upload(path: Annotated[Path, typer.Argument(help=\"Path to a local file to upload\")]) -> None:",
-                    "    from stackops.jobs.installer.checks.install_utils import upload_app",
+                    "    from stackops.jobs.installer.checks.app_upload import upload_app",
                     "",
-                    "    link = upload_app(path)",
-                    "    if not link:",
-                    "        raise typer.Exit(code=1)",
+                    "    link = upload_app(path=path, expected_sha256=None)",
                     "    typer.echo(link)"
                   ],
                   "name": "upload",
@@ -7826,8 +7848,8 @@
                 "kind": "command",
                 "name": "history",
                 "fullPath": "devops security history",
-                "shortPath": "d y history",
-                "help": "List saved scan runs, newest first",
+                "shortPath": "d y h",
+                "help": "<h> List saved scan runs, newest first",
                 "source": {
                   "file": "src/stackops/jobs/installer/checks/history_cli.py",
                   "module": "stackops.jobs.installer.checks.history_cli",
@@ -7966,14 +7988,20 @@
                     }
                   ],
                   "return": "None"
-                }
+                },
+                "aliases": [
+                  {
+                    "name": "h",
+                    "hidden": true
+                  }
+                ]
               },
               {
                 "kind": "command",
                 "name": "export",
                 "fullPath": "devops security export",
-                "shortPath": "d y export",
-                "help": "Export one run to a new directory",
+                "shortPath": "d y e",
+                "help": "<e> Export one run to a new directory",
                 "source": {
                   "file": "src/stackops/jobs/installer/checks/history_cli.py",
                   "module": "stackops.jobs.installer.checks.history_cli",
@@ -8069,7 +8097,13 @@
                 },
                 "typer": {
                   "no_args_is_help": true
-                }
+                },
+                "aliases": [
+                  {
+                    "name": "e",
+                    "hidden": true
+                  }
+                ]
               }
             ],
             "command_context_settings": {

@@ -7,7 +7,7 @@ from stackops.jobs.installer.checks.constants import SCAN_HELP, SECURITY_RECORDS
 from stackops.jobs.installer.checks.history_cli import export, history, report, selected_run
 
 
-def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, concurrency: int | None, records_dir: str) -> None:
+def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, upload: bool, concurrency: int | None, records_dir: str) -> None:
     from pathlib import Path
 
     import typer
@@ -16,13 +16,13 @@ def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool,
 
     try:
         if path_value is not None:
-            execute_scan([(Path(path_value), None)], scope="path", requested=[path_value], record=record,
+            execute_scan([(Path(path_value), None)], scope="path", requested=[path_value], record=record, upload=upload,
                          concurrency=concurrency, records_root=Path(records_dir))
         else:
             from stackops.jobs.installer.checks.check_installations import collect_apps_to_scan
 
             execute_scan(collect_apps_to_scan(app_names), scope="all" if app_names is None else "apps",
-                         requested=app_names or [], record=record, concurrency=concurrency, records_root=Path(records_dir))
+                         requested=app_names or [], record=record, upload=upload, concurrency=concurrency, records_root=Path(records_dir))
     except typer.Exit as exc:
         raise SystemExit(exc.exit_code) from None
 
@@ -33,6 +33,7 @@ def scan(
                                            file_okay=True, dir_okay=False, resolve_path=True)] = None,
     all_apps: Annotated[bool, typer.Option("--all", "-a", help="Scan all installed apps")] = False,
     no_record: Annotated[bool, typer.Option("--no-record", "-n", help="Do not save this scan as a history run")] = False,
+    upload: Annotated[bool, typer.Option("--upload", "-u", help="Upload each file after its VirusTotal check completes")] = False,
     concurrency: Annotated[int | None, typer.Option("--concurrency", "-c", min=1, help="Maximum concurrent files; defaults to account count")] = None,
     records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
@@ -52,7 +53,8 @@ def scan(
     from stackops.utils.code import run_lambda_function
 
     proc = run_lambda_function(
-        lambda: _run_scan(app_names=app_names, path_value=path_value, record=not no_record, concurrency=concurrency, records_dir=records_value),
+        lambda: _run_scan(app_names=app_names, path_value=path_value, record=not no_record, upload=upload,
+                          concurrency=concurrency, records_dir=records_value),
         uv_with=["vt-py"], uv_project_dir=None,
     )
     if proc.returncode != 0:
@@ -124,6 +126,8 @@ def get_app() -> typer.Typer:
     app.command(name="i", hidden=True, no_args_is_help=True)(install)
     app.command(name="report", help="<r> Inspect one run; defaults to the latest started run")(report)
     app.command(name="r", hidden=True)(report)
-    app.command(name="history", help="List saved scan runs, newest first")(history)
-    app.command(name="export", help="Export one run to a new directory", no_args_is_help=True)(export)
+    app.command(name="history", help="<h> List saved scan runs, newest first")(history)
+    app.command(name="h", hidden=True)(history)
+    app.command(name="export", help="<e> Export one run to a new directory", no_args_is_help=True)(export)
+    app.command(name="e", hidden=True, no_args_is_help=True)(export)
     return app

@@ -27,6 +27,7 @@ def execute_scan(
     scope: RunScope,
     requested: list[str],
     record: bool,
+    upload: bool,
     concurrency: int | None,
     records_root: Path,
 ) -> list[AppData]:
@@ -67,6 +68,7 @@ def execute_scan(
             console.print(f"""[cyan]Recording scan run: {run['run_id']}[/cyan]""")
         else:
             console.print("[yellow]Recording disabled for this scan.[/yellow]")
+        console.print("[cyan]Cloud uploads enabled.[/cyan]" if upload else "[dim]Cloud uploads disabled; use --upload (-u) to enable.[/dim]")
         if not apps_to_scan:
             status = "empty"
             message = "No applications matched the requested scan."
@@ -93,7 +95,7 @@ def execute_scan(
                 for completed_count, scanned_file in enumerate(scanned_files, start=1):
                     with record_lock:
                         scan_record = records_by_index[scanned_file.index]
-                    if scope != "path" and isinstance(scanned_file.outcome, ScanSuccess):
+                    if upload and isinstance(scanned_file.outcome, ScanSuccess):
                         progress.update(scan_task, description=f"""Uploading {scanned_file.path.name}...""")
                         operation = "Cloud upload"
                         app_url = upload_app(path=scanned_file.path, expected_sha256=scanned_file.outcome.sha256)
