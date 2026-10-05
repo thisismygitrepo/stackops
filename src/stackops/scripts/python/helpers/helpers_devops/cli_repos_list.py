@@ -6,45 +6,8 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-
-def _local_repository_status(destination: Path) -> tuple[Text, Text]:
-    from git.exc import InvalidGitRepositoryError, NoSuchPathError
-    from git.repo import Repo
-
-    try:
-        with Repo(destination.expanduser(), search_parent_directories=False) as repository:
-            counts: dict[str, int] = {"m": 0, "n": 0, "d": 0, "r": 0, "u": 0}
-            status_output = "" if repository.bare else repository.git.status(porcelain="v1", z=True, untracked_files="all", ignore_submodules="none")
-            entries = iter(status_output.split("\0"))
-            for entry in entries:
-                if not entry:
-                    continue
-                change = entry[:2]
-                if "R" in change or "C" in change:
-                    next(entries)
-                if "U" in change or change in {"AA", "DD"}:
-                    counts["u"] += 1
-                elif "D" in change:
-                    counts["d"] += 1
-                elif change == "??" or "A" in change or "C" in change:
-                    counts["n"] += 1
-                elif "R" in change:
-                    counts["r"] += 1
-                else:
-                    counts["m"] += 1
-            summary = "/".join(f"""{count}{kind}""" for kind, count in counts.items() if count)
-            if repository.bare:
-                status = Text("Bare", style="dim")
-            else:
-                status = Text(summary, style="red" if counts["u"] else "yellow") if summary else Text("Clean", style="green")
-            if not repository.head.is_valid():
-                return status, Text("No commits", style="dim")
-            committed_at = repository.head.commit.committed_datetime.astimezone()
-            return status, Text(committed_at.strftime("%Y-%m-%d %H:%M"))
-    except NoSuchPathError:
-        return Text("Missing", style="yellow"), Text("—", style="dim")
-    except InvalidGitRepositoryError:
-        return Text("Not a Git repo", style="red"), Text("—", style="dim")
+from stackops.scripts.python.helpers.helpers_devops.devops_status_repos import render_local_repository_status
+from stackops.scripts.python.helpers.helpers_repos.local_status import inspect_local_repository
 
 
 def list_repositories(
@@ -97,7 +60,8 @@ def list_repositories(
     for record in repositories:
         sync = record["sync"]
         destination = Path(record["parentDir"]).joinpath(record["name"])
-        status, last_commit = _local_repository_status(destination=destination)
+        local = inspect_local_repository(destination=destination)
+        status, last_commit = render_local_repository_status(status=local)
         table.add_row(
             Text(record["name"]),
             Text(destination.as_posix()),

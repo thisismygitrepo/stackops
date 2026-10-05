@@ -23,25 +23,11 @@ from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
 )
 from stackops.scripts.python.helpers.helpers_cloud.backup_selection import parse_backup_entry_selectors, resolve_backup_entry_keys
 from stackops.scripts.python.helpers.helpers_cloud.backup_registration import all_os_values
+from stackops.scripts.python.helpers.helpers_cloud.backup_remote import backup_path_needs_default_cloud, split_backup_remote_spec
 from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
 
 DIRECTION = Literal["BACKUP", "RETRIEVE"]
 
-
-
-def _split_remote_spec(value: str) -> tuple[str, str] | None:
-    if ":" not in value or (len(value) > 1 and value[1] == ":"):
-        return None
-    cloud_name, remote_value = value.split(":", 1)
-    if not cloud_name or not remote_value:
-        return None
-    return cloud_name, remote_value
-
-
-def _path_cloud_needs_default_cloud(path_cloud: str | None) -> bool:
-    if path_cloud in (None, ES):
-        return True
-    return _split_remote_spec(path_cloud) is None
 
 
 def _is_http_url(value: str) -> bool:
@@ -232,7 +218,7 @@ def main_backup_retrieve(
         not use_link_retrieve
         and cloud_override is None
         and fallback_cloud is None
-        and any(_path_cloud_needs_default_cloud(item["path_cloud"]) for group_items in items.values() for item in group_items.values())
+        and any(backup_path_needs_default_cloud(item["path_cloud"]) for group_items in items.values() for item in group_items.values())
     )
     if needs_fallback_cloud:
         console.print(Panel("🔍 CLOUD NOT FOUND\n🔄 Please select a cloud configuration from the options below", title="[bold red]Error: Cloud Not Found[/bold red]", border_style="red"))
@@ -278,7 +264,7 @@ def main_backup_retrieve(
                     program += """\nchmod 700 ~/.ssh/*\n"""
                     console.print(Panel("🔒 SPECIAL HANDLING: SSH PERMISSIONS\n🛠️  Setting secure permissions for SSH files\n📝 Command: chmod 700 ~/.ssh/*", title="[bold blue]Special Handling: SSH Permissions[/bold blue]", border_style="blue"))
                 continue
-            remote_spec_parts = _split_remote_spec(path_cloud) if path_cloud not in (None, ES) else None
+            remote_spec_parts = split_backup_remote_spec(path_cloud) if path_cloud not in (None, ES) else None
             if remote_spec_parts is not None and cloud_override is None:
                 item_cloud, remote_path = remote_spec_parts
                 remote_display = f"{item_cloud}:{remote_path}"

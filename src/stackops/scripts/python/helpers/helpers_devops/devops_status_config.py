@@ -23,6 +23,7 @@ type ConfigMappingState = Literal[
     "Expected directories",
     "Link mismatch",
     "Copy differs",
+    "Contents differ",
     "Not configured",
 ]
 
@@ -51,29 +52,50 @@ class ConfigFilesStatus(TypedDict):
     items: list[ConfigFileStatus]
 
 
+def _copied_paths_are_identical(default_path: Path, managed_path: Path) -> bool:
+    if default_path.is_file() and managed_path.is_file():
+        return files_are_identical(default_path, managed_path)
+    if not default_path.is_dir() or not managed_path.is_dir():
+        return False
+    default_children = {child.name: child for child in default_path.iterdir()}
+    managed_children = {child.name: child for child in managed_path.iterdir()}
+    return default_children.keys() == managed_children.keys() and all(
+        _copied_paths_are_identical(default_children[name], managed_child)
+        for name, managed_child in managed_children.items()
+    )
+
+
+def _check_mapping_paths(default_path: Path, managed_path: Path, *, contents: bool, copy: bool) -> ConfigMappingState:
+    default_exists = default_path.exists()
+    managed_exists = managed_path.exists()
+    if not default_exists and not managed_exists:
+        return "Missing both paths"
+    if not default_exists:
+        return "Missing default path"
+    if not managed_exists:
+        return "Missing managed path"
+    if contents:
+        if not default_path.is_dir() or not managed_path.is_dir():
+            return "Expected directories"
+        configured = all(
+            _check_mapping_paths(default_path.joinpath(child.name), child, contents=False, copy=copy) == "Configured"
+            for child in managed_path.iterdir()
+        )
+        return "Configured" if configured else "Contents differ"
+    if path_core.resolve(default_path, strict=False) == path_core.resolve(managed_path, strict=False):
+        return "Configured"
+    if default_path.is_symlink():
+        return "Link mismatch"
+    if copy:
+        return "Configured" if _copied_paths_are_identical(default_path, managed_path) else "Copy differs"
+    return "Not configured"
+
+
 def _check_config_file(program: str, scope: ConfigScope, config_item: ConfigMapper) -> ConfigFileStatus:
     default_path = Path(config_item["config_file_default_path"]).expanduser()
     managed_path = resolve_source_of_truth_path(config_item["config_file_self_managed_path"])
-    default_exists = default_path.exists()
-    managed_exists = managed_path.exists()
     method: ConfigMethod = "contents" if config_item["contents"] else ("copy" if config_item["copy"] else "link")
-    state: ConfigMappingState
-    if not default_exists and not managed_exists:
-        state = "Missing both paths"
-    elif not default_exists:
-        state = "Missing default path"
-    elif not managed_exists:
-        state = "Missing managed path"
-    elif config_item["contents"]:
-        state = "Configured" if default_path.is_dir() and managed_path.is_dir() else "Expected directories"
-    elif path_core.resolve(default_path, strict=False) == path_core.resolve(managed_path, strict=False):
-        state = "Configured"
-    elif default_path.is_symlink():
-        state = "Link mismatch"
-    elif config_item["copy"] and default_path.is_file() and managed_path.is_file():
-        state = "Configured" if files_are_identical(default_path, managed_path) else "Copy differs"
-    else:
-        state = "Not configured"
+    state = _check_mapping_paths(default_path, managed_path, contents=bool(config_item["contents"]), copy=bool(config_item["copy"]))
     return ConfigFileStatus(
         program=program,
         file_name=config_item["file_name"],

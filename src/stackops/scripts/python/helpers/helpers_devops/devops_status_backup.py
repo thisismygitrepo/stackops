@@ -1,3 +1,5 @@
+from pathlib import Path
+from platform import system
 from typing import TypedDict
 
 from rich import box
@@ -7,28 +9,41 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.profile.dotfiles_constants import ALL_OS_VALUES
-from stackops.scripts.python.helpers.helpers_cloud.backup_config import LIBRARY_BACKUP_PATH, BackupConfig, load_backup_config_file
+from stackops.scripts.python.helpers.helpers_cloud.backup_config import USER_BACKUP_PATH, BackupConfig, load_backup_config_file, os_applies
+from stackops.scripts.python.helpers.helpers_cloud.backup_remote import backup_path_needs_default_cloud
 from stackops.utils.source_of_truth import read_stackops_config_string
 
 
 class BackupStatus(TypedDict):
-    cloud_config: str
+    cloud_config: str | None
+    cloud_selection_required: bool
+    source_path: Path
     backup_items_count: int
     backup_items: BackupConfig
 
 
 def check_backup_config() -> BackupStatus:
     try:
-        cloud_config = read_stackops_config_string("default_rclone_config")
+        cloud_config = read_stackops_config_string("default_rclone_config").strip() or None
     except (FileNotFoundError, KeyError):
-        cloud_config = "Not configured"
+        cloud_config = None
 
-    backup_items = load_backup_config_file(LIBRARY_BACKUP_PATH, empty_as_config=True)
+    backup_items = load_backup_config_file(USER_BACKUP_PATH, empty_as_config=True)
     if backup_items is None:
-        raise ValueError(f"""Could not load library backup configuration: {LIBRARY_BACKUP_PATH}""")
+        if USER_BACKUP_PATH.exists():
+            raise ValueError(f"""Could not load user backup configuration: {USER_BACKUP_PATH}""")
+        backup_items = {}
 
+    current_system = system()
     return {
         "cloud_config": cloud_config,
+        "cloud_selection_required": cloud_config is None and any(
+            backup_path_needs_default_cloud(entry["path_cloud"])
+            for entries in backup_items.values()
+            for entry in entries.values()
+            if os_applies(entry["os"], system_name=current_system)
+        ),
+        "source_path": USER_BACKUP_PATH,
         "backup_items_count": sum(len(entries) for entries in backup_items.values()),
         "backup_items": backup_items,
     }
@@ -38,9 +53,11 @@ def render_backup_status(status: BackupStatus) -> Panel:
     summary = Table(show_header=False, box=None, padding=(0, 1), expand=False)
     summary.add_column("Property", style="cyan", no_wrap=True)
     summary.add_column("Value", style="white")
-    summary.add_row("🌥️  Cloud Config", Text(status["cloud_config"]))
+    summary.add_row("🌥️  Default Cloud", Text(status["cloud_config"] or "No default remote"))
     summary.add_row("📦 Backup Items", str(status["backup_items_count"]))
-    summary.add_row("📚 Source", "Library")
+    summary.add_row("📚 Source", Text(str(status["source_path"])))
+    if status["cloud_selection_required"]:
+        summary.add_row("Cloud selection", "Required for entries without an explicit remote")
 
     items = Table(title="Backup items", box=box.SIMPLE_HEAD, header_style="bold cyan", expand=True, show_lines=True)
     items.add_column("Entry", ratio=2, overflow="fold")
@@ -64,5 +81,5 @@ def render_backup_status(status: BackupStatus) -> Panel:
             )
 
     details = items if status["backup_items_count"] else Text("No backup items configured.", style="dim")
-    border_style = "green" if status["cloud_config"] != "Not configured" else "yellow"
+    border_style = "green" if status["backup_items_count"] and not status["cloud_selection_required"] else "yellow"
     return Panel(Group(summary, Text(""), details), title="Backup Configuration", border_style=border_style, padding=(1, 1))
