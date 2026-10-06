@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import ConflictResolutionAction
+from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_gpg import stop_repository_gpg_daemons
 
 
 if TYPE_CHECKING:
@@ -55,6 +56,8 @@ def run_guard_repository(
         if local_repo is None and operation in {"push", "overwrite-remote"}:
             raise FileNotFoundError(f"No local repository exists at {repo_root}")
         if local_repo is not None:
+            # An earlier GPG command may have left a daemon holding the keyring lock.
+            stop_repository_gpg_daemons(repo_root=repo_root)
             if os.name == "nt":
                 local_repo.git.config("--local", "core.filemode", "false")
             if operation == "overwrite-remote":
@@ -84,6 +87,8 @@ def run_guard_repository(
             print_matching_repositories(repo_root=repo_root, console=console, title="New remote archive uploaded")
             return "created"
 
+        # Archive decryption can restart GnuPG after the initial shutdown.
+        stop_repository_gpg_daemons(repo_root=repo_root)
         validate_downloaded_repository(repo_remote_root=remote_root, cloud=cloud, remote_path=remote_path)
         if local_repo is None:
             validate_integration_transport(repo_local_root=repo_root, integration_root=remote_root, cloud=cloud)
@@ -150,6 +155,8 @@ def run_guard_repository(
     finally:
         if local_repo is not None:
             local_repo.close()
+        # Upload encryption can restart GnuPG too; release its locks even on failure.
+        stop_repository_gpg_daemons(repo_root=repo_root)
 
 
 def fetch_guard_repository(repo_root: Path, sync: "GuardRepoSync", pwd: str | None) -> None:
@@ -163,7 +170,11 @@ def fetch_guard_repository(repo_root: Path, sync: "GuardRepoSync", pwd: str | No
 
     remote_root = Path(CONFIG_ROOT).joinpath("remote", randstr(8), repo_root.name)
     remote_path = Path(sync["remotePath"])
-    download_repo_archive(repo_remote_root=remote_root, cloud=sync["cloud"], remote_path=remote_path, pwd=pwd)
+    try:
+        download_repo_archive(repo_remote_root=remote_root, cloud=sync["cloud"], remote_path=remote_path, pwd=pwd)
+    finally:
+        # Fetch also decrypts with the live keyring and must release its locks.
+        stop_repository_gpg_daemons(repo_root=repo_root)
     validate_downloaded_repository(repo_remote_root=remote_root, cloud=sync["cloud"], remote_path=remote_path)
     try:
         reference_specs: list[str] = ["+refs/heads/*:refs/remotes/guard/*", "+refs/tags/*:refs/guard/tags/*"]

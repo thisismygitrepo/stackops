@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
-import platform
 import shutil
-import subprocess
 import tempfile
+
+from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_gpg import stop_repository_gpg_daemons
 
 
 def _replacement_repository_head(repo_root: Path) -> str | None:
@@ -53,13 +53,7 @@ def overwrite_local_with_remote(repo_local_root: Path, repo_remote_root: Path) -
         ) from error
 
     os.chdir(repo_local_root.parent)
-    if platform.system() == "Windows":
-        gpg_home = subprocess.run(
-            ["gpgconf", "--list-dirs", "homedir"], check=True, capture_output=True, text=True
-        ).stdout.strip()
-        gpg_keybox_path = Path(gpg_home).joinpath("public-keys.d", "pubring.db")
-        if gpg_keybox_path.resolve().is_relative_to(local_resolved):
-            subprocess.run(["gpgconf", "--homedir", gpg_home, "--kill", "all"], check=True)
+    stop_repository_gpg_daemons(repo_root=repo_local_root)
 
     try:
         repo_local_root.rename(backup_root)
