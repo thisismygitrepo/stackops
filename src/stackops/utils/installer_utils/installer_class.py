@@ -11,6 +11,7 @@ from stackops.utils.installer_utils.install_request_logic import (
     validate_install_request,
 )
 from stackops.utils.installer_utils.installer_main_protocol import load_installer_python_script_main
+from stackops.utils.installer_utils.package_manager_installation import install_with_package_manager
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT, LIBRARY_ROOT
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
@@ -164,20 +165,11 @@ class Installer:
 
         if (repo_url == "CMD") or package_manager_installer or script_installer or binary_download_link:
             if package_manager_installer:
-                from rich import print as rprint
-                from rich.panel import Panel
-                from rich.console import Group
-
-                package_manager = installer_arch_os.split(" ", maxsplit=1)[0]
-                print(f"📦 Using package manager: {installer_arch_os}")
-                desc = package_manager + " installation"
+                result = install_with_package_manager(command=installer_arch_os, requested_version=version)
+                if result == "no_applicable_update":
+                    return
+                package_manager = installer_arch_os.split(maxsplit=1)[0]
                 version_to_be_installed = version or package_manager + "Latest"
-                result = subprocess.run(installer_arch_os, shell=True, capture_output=False, text=True, encoding="utf-8", check=False)
-                success = result.returncode == 0
-                if not success:
-                    group_content = Group(f"❌ {desc} failed\nReturn code: {result.returncode}")
-                    rprint(Panel(group_content, title=desc, style="red"))
-                    raise RuntimeError(f"{desc} failed with return code {result.returncode}")
             elif script_installer:
                 search_root = LIBRARY_ROOT / "jobs" / "installer"
                 search_results = list(search_root.rglob(installer_arch_os))

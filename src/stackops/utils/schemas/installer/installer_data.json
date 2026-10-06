@@ -4710,12 +4710,12 @@
         "amd64": {
           "linux": "powershell-{version}-linux-musl-x64.tar.gz",
           "darwin": "powershell-{version}-osx-x64.tar.gz",
-          "windows": "winget install --no-upgrade --name \"Powershell\"                   --Id \"Microsoft.PowerShell\"       --source winget --scope user --accept-package-agreements --accept-source-agreements"
+          "windows": "winget install --no-upgrade --id Microsoft.PowerShell --exact --source winget --installer-type wix --scope machine --accept-package-agreements --accept-source-agreements"
         },
         "arm64": {
           "linux": "powershell-{version}-linux-arm64.tar.gz",
           "darwin": "powershell-{version}-osx-arm64.tar.gz",
-          "windows": "winget install --no-upgrade --name \"Powershell\"                   --Id \"Microsoft.PowerShell\"       --source winget --scope user --accept-package-agreements --accept-source-agreements"
+          "windows": "winget install --no-upgrade --id Microsoft.PowerShell --exact --source winget --installer-type wix --scope machine --accept-package-agreements --accept-source-agreements"
         }
       }
     },
