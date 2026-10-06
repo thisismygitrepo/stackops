@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeAlias
 
 
 if TYPE_CHECKING:
     from git.repo import Repo
+    from rich.console import Console
 
 
 type ConflictResolutionAction = Literal["ask", "stop-on-conflict", "merge-accept-remote", "merge-accept-local"]
@@ -41,6 +43,27 @@ def resolve_conflict_action(on_conflict: ConflictResolutionOption) -> ConflictRe
         "merge-accept-local": "merge-accept-local",
     }
     return on_conflict_mapper[on_conflict]
+
+
+def continue_manual_merge(repo: "Repo", remote_commit: str, console: "Console") -> bool:
+    conflicts = get_merge_conflicts(repo=repo)
+    if conflicts:
+        conflict_paths = "\n".join(f"""• {conflict.path}""" for conflict in conflicts)
+        console.print(f"""Unresolved paths remain. Resolve and stage them in {repo.working_dir}, then recheck.
+{conflict_paths}""", markup=False)
+        return False
+    if repo.is_dirty(index=False, untracked_files=True):
+        console.print(f"""Unstaged or untracked changes remain in {repo.working_dir}. Finish and stage your changes, then recheck.""", markup=False)
+        return False
+    if Path(repo.git_dir).joinpath("MERGE_HEAD").is_file():
+        repo.git.commit("--no-edit")
+    if repo.is_dirty(untracked_files=True):
+        console.print(f"""Uncommitted changes remain in {repo.working_dir}. Finish committing your changes, then recheck.""", markup=False)
+        return False
+    if not repo.is_ancestor(repo.commit(remote_commit), repo.head.commit):
+        console.print("The isolated worktree does not contain the remote commit. Complete the merge, then recheck.")
+        return False
+    return True
 
 
 def resolve_merge_conflicts(repo: "Repo", expected_conflicts: tuple[MergeConflict, ...], accept_side: MergeConflictResolutionSide) -> str:
