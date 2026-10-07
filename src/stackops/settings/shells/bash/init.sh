@@ -45,7 +45,7 @@ alias d='wrap_in_shell_script devops'
 alias c='wrap_in_shell_script cloud'
 alias a='wrap_in_shell_script agents'
 alias t='wrap_in_shell_script terminal'
-alias fx='wrap_in_shell_script ftpx'
+unalias fx 2>/dev/null
 alias f='wrap_in_shell_script fire'
 alias p='wrap_in_shell_script preview'
 alias u='wrap_in_shell_script utils'
