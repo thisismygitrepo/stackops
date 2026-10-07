@@ -110,6 +110,10 @@ on   = ["R", "p"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops preview "$0"'
 desc = "Read with preview"
 [[mgr.prepend_keymap]]
+on   = ["R", "d"]
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops preview -b v %h'
+desc = "Read with VisiData"
+[[mgr.prepend_keymap]]
 on   = ["R", "f"]
 run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire "$0"'
 desc = "Read with fire"

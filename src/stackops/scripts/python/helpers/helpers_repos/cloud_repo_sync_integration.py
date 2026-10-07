@@ -72,7 +72,12 @@ def integrate_remote_repository(
         select_conflict_action,
         validate_integration_transport,
     )
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import MergeConflictResolutionSide, resolve_merge_conflicts
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import (
+        MergeConflictResolutionSide,
+        continue_manual_merge,
+        get_merge_conflicts,
+        resolve_merge_conflicts,
+    )
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import MergeConflictResult, MergeGitError, merge_remote_copy
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_status import print_integration_result, print_repository_comparison
 
@@ -120,24 +125,32 @@ def integrate_remote_repository(
             )
         )
         console.print(Panel("🔄 RESOLVE MERGE CONFLICT", border_style="blue"))
-        selected_action = select_conflict_action(on_conflict=on_conflict)
-        match selected_action:
-            case "stop-on-conflict":
-                raise typer.Exit(code=1)
-            case "inspect":
-                from stackops.scripts.python.helpers.helpers_repos.sync import inspect_repos
+        if on_conflict == "ask":
+            console.print("Resolve and stage conflicts in the isolated merge worktree, then choose 'Recheck and continue'.")
+        while True:
+            conflicts = get_merge_conflicts(repo=integration_repo)
+            selected_action = select_conflict_action(on_conflict=on_conflict)
+            match selected_action:
+                case "stop-on-conflict":
+                    raise typer.Exit(code=1)
+                case "inspect":
+                    from stackops.scripts.python.helpers.helpers_repos.sync import inspect_repos
 
-                inspect_repos(repo_local_root=str(repo_local_root), repo_remote_root=str(integration_root))
-                raise typer.Exit(code=1)
-            case "merge-accept-remote" | "merge-accept-local":
-                accepted_side: MergeConflictResolutionSide = "remote" if selected_action == "merge-accept-remote" else "local"
-                resolve_merge_conflicts(repo=integration_repo, expected_conflicts=merge_result.conflicts, accept_side=accepted_side)
-                console.print(f"""Resolved {len(merge_result.conflicts)} conflicting paths using {accepted_side} versions.""")
-            case "overwrite-local" | "overwrite-remote":
-                remove_integration_state(local_repo=local_repo, integration_repo=integration_repo, integration_worktree=integration_worktree)
-                return selected_action
-            case "ask":
-                raise RuntimeError("Interactive conflict action was not resolved.")
+                    inspect_repos(repo_local_root=str(repo_local_root), repo_remote_root=str(integration_root))
+                    continue
+                case "recheck":
+                    if not continue_manual_merge(repo=integration_repo, remote_commit=remote_commit, console=console):
+                        continue
+                case "merge-accept-remote" | "merge-accept-local":
+                    accepted_side: MergeConflictResolutionSide = "remote" if selected_action == "merge-accept-remote" else "local"
+                    resolve_merge_conflicts(repo=integration_repo, expected_conflicts=conflicts, accept_side=accepted_side)
+                    console.print(f"""Resolved {len(conflicts)} conflicting paths using {accepted_side} versions.""")
+                case "overwrite-local" | "overwrite-remote":
+                    remove_integration_state(local_repo=local_repo, integration_repo=integration_repo, integration_worktree=integration_worktree)
+                    return selected_action
+                case "ask":
+                    raise RuntimeError("Interactive conflict action was not resolved.")
+            break
 
     validate_integration_transport(repo_local_root=repo_local_root, integration_root=integration_root, cloud=cloud)
     fast_forward_local_repo(local_repo=local_repo, integration_repo=integration_repo, expected_local_head=integration_worktree.base_commit)
