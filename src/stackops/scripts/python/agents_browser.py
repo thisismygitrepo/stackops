@@ -352,23 +352,55 @@ def declutter(
 
 
 def replicate(
-    count: Annotated[int, typer.Argument(min=1, help="Number of copies to create as p1, p2, ... pN.")],
+    count: Annotated[int, typer.Option("--count", min=1, help="Number of copies to create as p1, p2, ... pN when --target is omitted.")] = 1,
+    target: Annotated[
+        str | None, typer.Option("--target", "-t", help="Destination profile name or comma-separated names, e.g. work,personal. Copy count is inferred.")
+    ] = None,
     browser: Annotated[
         ProfileBrowserName,
-        typer.Option("--browser", "-b", help="Browser whose base profile should be replicated.", case_sensitive=False, show_choices=True),
+        typer.Option("--browser", "-b", help="Browser whose profile should be replicated.", case_sensitive=False, show_choices=True),
     ] = "chrome",
     profile: Annotated[
-        str, typer.Option("--profile", "-r", help="Source StackOps profile under ~/data/browsers-profiles/<browser>/<profile>.")
-    ] = "base",
+        str | None,
+        typer.Option(
+            "--profile",
+            "-r",
+            help="Source StackOps profile (default: base). With --native, use a browser profile name or folder; omit to choose from a table.",
+        ),
+    ] = None,
+    native: Annotated[
+        bool, typer.Option("--native", "-n", help="Copy a profile from the browser's normal location. Quit the browser before copying.")
+    ] = False,
     overwrite: Annotated[
-        bool, typer.Option("--overwrite", "-o", help="Delete existing p1 through pN copies completely before copying the source profile.")
+        bool, typer.Option("--overwrite", "-o", help="Delete existing destination profiles completely before copying the source profile.")
     ] = False,
 ) -> None:
-    """Copy a closed base profile to p1 through pN, replacing existing copies with --overwrite."""
+    """Copy a closed StackOps or native browser profile to named destinations."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import replicate_browser_profile
 
-        result = replicate_browser_profile(browser=browser, profile_name=profile, count=count, overwrite=overwrite)
+        if target is None:
+            target_names = tuple(f"""p{index}""" for index in range(1, count + 1))
+        else:
+            if count != 1:
+                raise typer.BadParameter("Use either --target or --count; --target sets the number of copies")
+            target_names = tuple(name.strip() for name in target.split(","))
+            if any(name == "" for name in target_names):
+                raise typer.BadParameter("--target entries cannot be empty")
+            if len(set(target_names)) != len(target_names):
+                raise typer.BadParameter("--target entries must be unique")
+
+        if native:
+            from stackops.scripts.python.helpers.helpers_agents.agents_browser_native_replication import replicate_native_browser_profile
+            from stackops.scripts.python.helpers.helpers_agents.agents_browser_native_selection import select_native_browser_profile
+
+            selected_profile = select_native_browser_profile(browser=browser, profile_name=profile)
+            typer.echo(f"Native source: {selected_profile.name} ({selected_profile.profile_path})")
+            result = replicate_native_browser_profile(browser=browser, profile=selected_profile, target_names=target_names, overwrite=overwrite)
+        else:
+            result = replicate_browser_profile(
+                browser=browser, profile_name="base" if profile is None else profile, target_names=target_names, overwrite=overwrite
+            )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
@@ -406,6 +438,6 @@ def get_app() -> typer.Typer:
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     browser_app.command(name="declutter", no_args_is_help=False, short_help="<d> Remove rebuildable browser profile data")(declutter)
     browser_app.command(name="d", no_args_is_help=False, hidden=True)(declutter)
-    browser_app.command(name="replicate", no_args_is_help=False, short_help="<r> Copy a base profile to p1 through pN")(replicate)
+    browser_app.command(name="replicate", no_args_is_help=False, short_help="<r> Copy a StackOps or native profile to named destinations")(replicate)
     browser_app.command(name="r", no_args_is_help=False, hidden=True)(replicate)
     return browser_app
