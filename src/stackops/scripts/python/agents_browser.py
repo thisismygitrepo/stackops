@@ -438,6 +438,6 @@ def get_app() -> typer.Typer:
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     browser_app.command(name="declutter", no_args_is_help=False, short_help="<d> Remove rebuildable browser profile data")(declutter)
     browser_app.command(name="d", no_args_is_help=False, hidden=True)(declutter)
-    browser_app.command(name="replicate", no_args_is_help=False, short_help="<r> Copy a StackOps or native profile to named destinations")(replicate)
-    browser_app.command(name="r", no_args_is_help=False, hidden=True)(replicate)
+    browser_app.command(name="replicate", no_args_is_help=True, short_help="<r> Copy a StackOps or native profile to named destinations")(replicate)
+    browser_app.command(name="r", no_args_is_help=True, hidden=True)(replicate)
     return browser_app
