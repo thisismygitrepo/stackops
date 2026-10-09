@@ -8,28 +8,27 @@ transformation from a bare machine to a familiar digital life.
 
 The before/after images are the original README assets. Diagrams illustrate
 the concept; they are not recordings of an automated setup. The one-command,
-five-minute line presents the original setup goal. Narration uses Kokoro's
-synthetic Sarah voice.
+five-minute line presents the original setup goal. Narration uses OpenAI's
+``gpt-audio-1.5`` or ``gpt-live-1`` model with the AI-generated Marin voice.
 
 Render on macOS with Node.js, uv, the Xcode command line tools,
 ``rsvg-convert``, and FFmpeg with ``libx264`` on your PATH. Set ``FFMPEG`` to an
-executable path if needed. Download the public Kokoro model assets once::
+executable path if needed. Export ``OPENAI_API_KEY`` before rendering::
 
     cd /path/to/stackops
-    mkdir -p .ai/tmp_scripts/stackops-video
-    curl -fL https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx -o .ai/tmp_scripts/stackops-video/kokoro-v1.0.onnx
-    curl -fL https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin -o .ai/tmp_scripts/stackops-video/voices-v1.0.bin
-    node docs/video/render.mjs
+    node docs/video/render.mjs --narrator=audio
+    node docs/video/render.mjs --narrator=live
 
 ``uv`` manages the narrator's isolated Python 3.13 dependencies from its script
 metadata. Each ``Focus`` / ``Say`` pair is one visual beat and its spoken
 caption. ``Card`` fields use ``title | detail``; ``|`` in other text makes a
 line break.
 
-The outputs are ``docs/video/stackops-concept.mp4`` and matching
-``stackops-concept.vtt`` captions. The MP4 is ignored by Git. Intermediate
+The outputs are ``docs/video/stackops-concept-audio.mp4`` or
+``stackops-concept-live.mp4`` and matching VTT captions. MP4 files are ignored
+by Git. Intermediate
 artwork, audio, timing metadata, and previews go under
-``.ai/tmp_scripts/stackops-video/``. Rendering uses no personal configuration.
+``.ai/tmp_scripts/stackops-video/``. Narration sends the script to OpenAI.
 
 Scene 01. Your digital life
 --------------------------
