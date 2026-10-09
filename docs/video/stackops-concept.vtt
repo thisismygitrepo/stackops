@@ -68,34 +68,30 @@ StackOps doesn't reinvent the wheel. It glues together the best open-source tool
 00:01:04.964 --> 00:01:10.511
 Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
 
-4-3
-00:01:10.661 --> 00:01:16.229
-It brings that approach across Linux, macOS, and Windows through a command-line interface.
-
 5-1
-00:01:17.250 --> 00:01:23.650
-One command hierarchy covers machine setup, cloud services, terminals, agents, and everyday tools.
+00:01:11.517 --> 00:01:16.338
+One CLI covers setup, cloud, terminals, agents, and everyday tools.
 
 5-2
-00:01:23.800 --> 00:01:28.856
-DevOps brings together installation, configuration, networking, and security.
+00:01:16.488 --> 00:01:21.096
+DevOps handles installation, configuration, networking, and security.
 
 5-3
-00:01:29.006 --> 00:01:35.449
-Here, configuration brings back public and private settings, including dotfiles and terminal profiles.
+00:01:21.246 --> 00:01:25.662
+Restore public and private settings, dotfiles, and terminal profiles.
 
 5-4
-00:01:35.599 --> 00:01:42.063
-Alongside it, repository and data commands handle backup, synchronization, and retrieval of your work.
+00:01:25.812 --> 00:01:29.140
+Back up, sync, and retrieve your repositories and data.
 
 5-5
-00:01:42.213 --> 00:01:48.570
-Across the hierarchy, you can launch commands and workspaces, and orchestrate processes for everyday work.
+00:01:29.290 --> 00:01:32.746
+Launch workspaces and orchestrate everyday processes.
 
 6-1
-00:01:49.583 --> 00:01:52.207
+00:01:33.750 --> 00:01:36.374
 That's StackOps. Your digital life, sorted.
 
 6-2
-00:01:52.357 --> 00:01:56.816
+00:01:36.524 --> 00:01:40.983
 Think of it as a Dockerfile: a recipe for how to reproduce your computer.

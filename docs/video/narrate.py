@@ -1,9 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "espeakng-loader>=0.2.4",
-#     "kokoro-onnx>=0.6.1",
-#     "soundfile>=0.14.0",
+#     "openai>=3.28.0",
 # ]
 # ///
 import json

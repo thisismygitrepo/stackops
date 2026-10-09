@@ -127,15 +127,15 @@ Scene 05. The command hierarchy
 :Title: One CLI.|A command hierarchy.
 :Takeaway: Setup, maintenance, and everyday work under one CLI.
 :Focus: overview
-:Say: One command hierarchy covers machine setup, cloud services, terminals, agents, and everyday tools.
+:Say: One CLI covers setup, cloud, terminals, agents, and everyday tools.
 :Focus: devops
-:Say: DevOps brings together installation, configuration, networking, and security.
+:Say: DevOps handles installation, configuration, networking, and security.
 :Focus: config
-:Say: Here, configuration brings back public and private settings, including dotfiles and terminal profiles.
+:Say: Restore public and private settings, dotfiles, and terminal profiles.
 :Focus: back
-:Say: Alongside it, repository and data commands handle backup, synchronization, and retrieval of your work.
+:Say: Back up, sync, and retrieve your repositories and data.
 :Focus: root
-:Say: Across the hierarchy, you can launch commands and workspaces, and orchestrate processes for everyday work.
+:Say: Launch workspaces and orchestrate everyday processes.
 :Source: src/stackops/scripts/python/graph/cli_graph.json; animated command hierarchy; docs/guide/configuration.md; docs/guide/data-sync.md; docs/cli/fire.md; docs/cli/terminal.md; docs/cli/agents.md
 
 Scene 06. Your digital life, sorted
