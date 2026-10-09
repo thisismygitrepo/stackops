@@ -15,6 +15,8 @@ enum VideoError: Error { case failed(String) }
 
 @main
 struct Encoder {
+    static let playbackSpeed = 1.25
+
     static func main() async throws {
         guard CommandLine.arguments.count == 2 else { throw VideoError.failed("Usage: encode <manifest.json>") }
         let manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])))
@@ -172,9 +174,11 @@ struct Encoder {
             }
         }
         let duration = scenes.reduce(0.0) { $0 + Double($1.frames) / 30 }
-        filters.append("\(audioLabels.joined())amix=inputs=\(audioLabels.count):duration=longest:dropout_transition=0:normalize=0,apad,atrim=duration=\(duration)[narration]")
-        arguments += ["-filter_complex", filters.joined(separator: ";"), "-map", "0:v:0", "-map", "[narration]",
-            "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", output.path]
+        filters.append("[0:v]setpts=(PTS-STARTPTS)/\(playbackSpeed),fps=30[video]")
+        filters.append("\(audioLabels.joined())amix=inputs=\(audioLabels.count):duration=longest:dropout_transition=0:normalize=0,atempo=\(playbackSpeed),apad,atrim=duration=\(duration / playbackSpeed)[narration]")
+        arguments += ["-filter_complex", filters.joined(separator: ";"), "-map", "[video]", "-map", "[narration]",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", output.path]
         try finishFFmpeg(startFFmpeg(arguments: arguments, input: nil))
     }
 
@@ -182,8 +186,8 @@ struct Encoder {
         var cues = ["WEBVTT\n"]
         for (sceneIndex, scene) in scenes.enumerated() {
             for (beatIndex, clip) in scene.clips.enumerated() {
-                let start = scene.start + clip.offset
-                cues.append("\(sceneIndex + 1)-\(beatIndex + 1)\n\(timestamp(start)) --> \(timestamp(start + clip.duration))\n\(clip.text.string)\n")
+                let start = (scene.start + clip.offset) / playbackSpeed
+                cues.append("\(sceneIndex + 1)-\(beatIndex + 1)\n\(timestamp(start)) --> \(timestamp(start + clip.duration / playbackSpeed))\n\(clip.text.string)\n")
             }
         }
         try cues.joined(separator: "\n").write(to: output, atomically: true, encoding: .utf8)
@@ -213,16 +217,16 @@ struct Encoder {
         for (sceneIndex, scene) in scenes.enumerated() {
             var beats: [BeatMetadata] = []
             for (beatIndex, clip) in scene.clips.enumerated() {
-                let start = scene.start + clip.offset
-                let previewTime = start + min(1.5, clip.duration / 2)
+                let start = (scene.start + clip.offset) / playbackSpeed
+                let previewTime = start + min(1.5, clip.duration / 2) / playbackSpeed
                 let name = String(format: "preview-%02d-%02d.png", sceneIndex + 1, beatIndex + 1)
                 let url = scratch.appendingPathComponent(name)
                 try finishFFmpeg(startFFmpeg(arguments: ["-ss", "\(previewTime)", "-i", output.path,
                     "-frames:v", "1", "-update", "1", url.path], input: nil))
-                beats.append(BeatMetadata(index: beatIndex + 1, text: clip.text.string, start: start, duration: clip.duration,
-                    visualStart: beatIndex == 0 ? scene.start : start, preview: name))
+                beats.append(BeatMetadata(index: beatIndex + 1, text: clip.text.string, start: start, duration: clip.duration / playbackSpeed,
+                    visualStart: beatIndex == 0 ? scene.start / playbackSpeed : start, preview: name))
             }
-            sceneMetadata.append(SceneMetadata(index: sceneIndex + 1, start: scene.start, duration: Double(scene.frames) / 30, beats: beats))
+            sceneMetadata.append(SceneMetadata(index: sceneIndex + 1, start: scene.start / playbackSpeed, duration: Double(scene.frames) / 30 / playbackSpeed, beats: beats))
         }
         let metadata = MovieMetadata(output: output.path, captions: output.deletingPathExtension().appendingPathExtension("vtt").path,
             durationSeconds: duration, tracks: tracks, scenes: sceneMetadata)

@@ -50,17 +50,17 @@ Scene 01. Your digital life
 :Focus: identity
 :Say: StackOps is your OS-agnostic digital life manager. It covers 99% of your digital footprint.
 :Focus: applications
-:Say: The applications you use.
+:Say: Applications.
 :Focus: configuration
-:Say: The way you configure them.
+:Say: Configuration.
 :Focus: secrets
-:Say: Your secrets and credentials.
+:Say: Secrets and credentials.
 :Focus: data
-:Say: Your files and data.
+:Say: Files and data.
 :Focus: code
-:Say: Your code and repositories.
+:Say: Your repositories.
 :Focus: processes
-:Say: And the processes you run.
+:Say: Processes.
 :Focus: together
 :Say: All wrapped into one solution.
 :Source: User's current 99% wording; README.md at 41aae8d08^; docs/index.md at 41aae8d08^
@@ -94,7 +94,7 @@ Scene 03. While casually inspecting a machine
 :Focus: browsing
 :Say: Literally, you can install and configure your entire dev environment while casually inspecting a machine in the store.
 :Focus: done
-:Say: By the time they notice you are doing something unusual, the setup is done.
+:Say: By the time they notice you are doing something unusual, your setup is done.
 :Focus: public
 :Say: This config is based on public setup, and ignores private setup and files.
 :Source: AI-generated JB Hi-Fi scene (GPT Image 2.5 Sunburst), option 01 with cmatrix; user-provided wording; docs/assets/stackops.jpeg
@@ -114,8 +114,6 @@ Scene 04. The stack you are comfortable with
 :Takeaway: A cross-platform approach to managing your digital life.
 :Focus: roles
 :Say: StackOps doesn't reinvent the wheel. It glues together the best open-source tools. It's a configurator, a package manager, a dotfile manager, a data sync solution, a digital life manager.
-:Focus: yours
-:Say: Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
 :Source: User-provided description; docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
 
 Scene 05. The command hierarchy

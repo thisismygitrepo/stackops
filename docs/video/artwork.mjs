@@ -16,20 +16,12 @@ function footprint(scene, focus) {
   return body;
 }
 
-function familiar(scene, focus) {
+function familiar(scene) {
   let body = lines(scene.Title[0], 100, 230, 70, C.ink, 1720, 650)
-    + text(scene.Subtitle[0], 104, 410, 33, C.muted, 400, false);
-  if (focus === 'roles') {
-    body += box(100, 470, 1720, 112, C.selected, C.accent, 18)
-      + `<g text-anchor="middle">${text(scene.Role[4], 960, 543, 49, C.ink, 600, false)}</g>`;
-    body += scene.Role.slice(0, 4).map((value, i) => pill(value, 100 + i * 440, 653, 400, true)).join('');
-    return body;
-  }
-  body += box(100, 470, 1720, 112, C.selected, C.accent, 18)
-    + text('The stack you are comfortable with', 390, 543, 49, C.ink, 600, false)
-    + pill('Your applications', 100, 653, 540, true)
-    + pill('Your preferences', 690, 653, 540, true)
-    + pill('Your way of working', 1280, 653, 540, true);
+    + text(scene.Subtitle[0], 104, 410, 33, C.muted, 400, false)
+    + box(100, 470, 1720, 112, C.selected, C.accent, 18)
+    + `<g text-anchor="middle">${text(scene.Role[4], 960, 543, 49, C.ink, 600, false)}</g>`;
+  body += scene.Role.slice(0, 4).map((value, i) => pill(value, 100 + i * 440, 653, 400, true)).join('');
   return body;
 }
 
