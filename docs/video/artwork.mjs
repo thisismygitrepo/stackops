@@ -1,4 +1,4 @@
-import { C, box, text, lines, card, link, pill, frame } from './drawing.mjs';
+import { C, box, text, lines, card, pill, frame } from './drawing.mjs';
 import { transformation } from './transformation.mjs';
 import { store } from './store.mjs';
 
@@ -25,29 +25,22 @@ function familiar(scene, focus) {
     body += scene.Role.slice(0, 4).map((value, i) => pill(value, 100 + i * 440, 653, 400, true)).join('');
     return body;
   }
-  if (focus === 'recipe') {
-    return body + box(100, 470, 1720, 278, C.selected, C.accent, 22)
-      + text(scene.Recipe[0], 142, 564, 58, C.ink, 600, false)
-      + text(scene['Recipe-detail'][0], 144, 652, 40, C.muted, 400, false);
-  }
   body += box(100, 470, 1720, 112, C.selected, C.accent, 18)
-    + text('The stack you are comfortable with', 390, 543, 49, C.ink, 600, false);
-  if (focus === 'platforms') {
-    scene.Card.forEach((value, i) => {
-      const x = 100 + i * 590;
-      body += link(x + 270, 582, x + 270, 627, true) + card(value, x, 627, 540, 150, true);
-    });
-  } else {
-    body += pill('Your applications', 100, 653, 540, true)
-      + pill('Your preferences', 690, 653, 540, true)
-      + pill('Your way of working', 1280, 653, 540, true);
-  }
+    + text('The stack you are comfortable with', 390, 543, 49, C.ink, 600, false)
+    + pill('Your applications', 100, 653, 540, true)
+    + pill('Your preferences', 690, 653, 540, true)
+    + pill('Your way of working', 1280, 653, 540, true);
   return body;
 }
 
 function closing(scene, focus) {
-  let body = lines(scene.Title[0], 100, 292, 100, C.ink, 1720, 650)
-    + text(scene.Subtitle[0], 104, 537, 42, C.muted, 400, false);
+  let body = lines(scene.Title[0], 100, 292, 100, C.ink, 1720, 650);
+  if (focus === 'recipe') {
+    body += text(scene.Recipe[0], 104, 517, 48, C.ink, 600, false)
+      + text(scene['Recipe-detail'][0], 104, 571, 36, C.muted, 400, false);
+  } else {
+    body += text(scene.Subtitle[0], 104, 537, 42, C.muted, 400, false);
+  }
   body += box(100, 611, 1720, 142, C.selected, C.accent, 22)
     + text('99%', 134, 713, 91, C.accent, 650, false)
     + text('of your digital footprint', 382, 687, 37, C.ink, 500, false)

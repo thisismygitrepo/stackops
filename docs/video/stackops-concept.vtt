@@ -61,53 +61,41 @@ By the time they notice you are doing something unusual, the setup is done.
 This config is based on public setup, and ignores private setup and files.
 
 4-1
-00:00:52.483 --> 00:00:57.433
-StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
+00:00:52.483 --> 00:01:04.814
+StackOps doesn't reinvent the wheel. It glues together the best open-source tools. It's a configurator, a package manager, a dotfile manager, a data sync solution, a digital life manager.
 
 4-2
-00:00:57.583 --> 00:01:04.260
-It's a configurator, a package manager, a dotfile manager, a data sync solution, a digital life manager.
-
-4-3
-00:01:04.410 --> 00:01:08.869
-Think of it as a Dockerfile: a recipe for how to reproduce your computer.
-
-4-4
-00:01:09.019 --> 00:01:14.565
+00:01:04.964 --> 00:01:10.511
 Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
 
-4-5
-00:01:14.715 --> 00:01:20.283
+4-3
+00:01:10.661 --> 00:01:16.229
 It brings that approach across Linux, macOS, and Windows through a command-line interface.
 
 5-1
-00:01:21.283 --> 00:01:27.683
+00:01:17.250 --> 00:01:23.650
 One command hierarchy covers machine setup, cloud services, terminals, agents, and everyday tools.
 
 5-2
-00:01:27.833 --> 00:01:32.889
+00:01:23.800 --> 00:01:28.856
 DevOps brings together installation, configuration, networking, and security.
 
 5-3
-00:01:33.039 --> 00:01:39.482
+00:01:29.006 --> 00:01:35.449
 Here, configuration brings back public and private settings, including dotfiles and terminal profiles.
 
 5-4
-00:01:39.632 --> 00:01:46.096
+00:01:35.599 --> 00:01:42.063
 Alongside it, repository and data commands handle backup, synchronization, and retrieval of your work.
 
 5-5
-00:01:46.246 --> 00:01:52.603
+00:01:42.213 --> 00:01:48.570
 Across the hierarchy, you can launch commands and workspaces, and orchestrate processes for everyday work.
 
 6-1
-00:01:53.617 --> 00:01:56.241
+00:01:49.583 --> 00:01:52.207
 That's StackOps. Your digital life, sorted.
 
 6-2
-00:01:56.391 --> 00:01:59.697
-Bring the setup you've spent years building to the machine in front of you.
-
-6-3
-00:01:59.847 --> 00:02:02.279
-Explore the documentation to get started.
+00:01:52.357 --> 00:01:56.816
+Think of it as a Dockerfile: a recipe for how to reproduce your computer.

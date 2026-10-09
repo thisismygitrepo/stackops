@@ -112,23 +112,12 @@ Scene 04. The stack you are comfortable with
 :Role: Dotfile manager
 :Role: Data sync solution
 :Role: Digital life manager
-:Recipe: Think of it as a Dockerfile.
-:Recipe-detail: A recipe for reproducing your computer.
-:Card: Linux | Your tools and configuration
-:Card: macOS | Your tools and configuration
-:Card: Windows | Your tools and configuration
 :Takeaway: A cross-platform approach to managing your digital life.
-:Focus: glue
-:Say: StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
 :Focus: roles
-:Say: It's a configurator, a package manager, a dotfile manager, a data sync solution, a digital life manager.
-:Focus: recipe
-:Say: Think of it as a Dockerfile: a recipe for how to reproduce your computer.
+:Say: StackOps doesn't reinvent the wheel. It glues together the best open-source tools. It's a configurator, a package manager, a dotfile manager, a data sync solution, a digital life manager.
 :Focus: yours
 :Say: Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
-:Focus: platforms
-:Say: It brings that approach across Linux, macOS, and Windows through a command-line interface.
-:Source: User-provided description and Dockerfile analogy; docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
+:Source: User-provided description; docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
 
 Scene 05. The command hierarchy
 -------------------------------
@@ -156,12 +145,12 @@ Scene 06. Your digital life, sorted
 :Eyebrow: STACKOPS
 :Title: Your digital life.|Sorted.
 :Subtitle: StackOps · Digital Life Manager
+:Recipe: Think of it as a Dockerfile.
+:Recipe-detail: A recipe for reproducing your computer.
 :Takeaway: 99% of your digital footprint. One solution.
 :Link: thisismygitrepo.github.io/stackops/
 :Focus: life
 :Say: That's StackOps. Your digital life, sorted.
-:Focus: explore
-:Say: Bring the setup you've spent years building to the machine in front of you.
-:Focus: docs
-:Say: Explore the documentation to get started.
-:Source: User's current 99% wording; README.md at 41aae8d08^; docs/index.md at 41aae8d08^
+:Focus: recipe
+:Say: Think of it as a Dockerfile: a recipe for how to reproduce your computer.
+:Source: User's current 99% wording and Dockerfile analogy; README.md at 41aae8d08^; docs/index.md at 41aae8d08^
