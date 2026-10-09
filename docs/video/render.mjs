@@ -7,9 +7,7 @@ import { renderSunburst } from './sunburst.mjs';
 
 const folder = dirname(fileURLToPath(import.meta.url));
 const root = resolve(folder, '../..');
-const narrator = process.argv.find(value => value.startsWith('--narrator='))?.split('=')[1] ?? 'audio';
-if (!['audio', 'live'].includes(narrator)) throw new Error('Use --narrator=audio or --narrator=live');
-const scratch = resolve(root, '.ai/tmp_scripts/stackops-video', narrator);
+const scratch = resolve(root, '.ai/tmp_scripts/stackops-video/live');
 mkdirSync(scratch, { recursive: true });
 const scenes = [];
 let scene;
@@ -18,7 +16,7 @@ for (const line of readFileSync(resolve(folder, 'stackops-concept.rst'), 'utf8')
   const field = line.match(/^:([\w-]+): (.*)$/);
   if (field && scene) (scene[field[1]] ??= []).push(field[2]);
 }
-const manifest = { output: resolve(folder, `stackops-concept-${narrator}.mp4`), scratch, scenes: [] };
+const manifest = { output: resolve(folder, 'stackops-concept-live.mp4'), scratch, scenes: [] };
 for (const [index, current] of scenes.entries()) {
   if (current.Focus.length !== current.Say.length) throw new Error(`Scene ${index + 1} needs one Focus per Say field`);
   const images = [];
@@ -38,7 +36,7 @@ for (const [index, current] of scenes.entries()) {
   console.log(`Prepared scene ${index + 1}: ${current.Title[0].replaceAll('|', ' ')}`);
 }
 writeFileSync(resolve(scratch, 'manifest.json'), JSON.stringify(manifest, null, 2));
-execFileSync('uv', ['run', '--python', '3.13', resolve(folder, narrator === 'live' ? 'narrate_live.py' : 'narrate.py'), resolve(scratch, 'manifest.json')], { cwd: scratch, stdio: 'inherit' });
+execFileSync('uv', ['run', '--python', '3.13', resolve(folder, 'narrate_live.py'), resolve(scratch, 'manifest.json')], { cwd: scratch, stdio: 'inherit' });
 if (!process.argv.includes('--prepare-only')) {
   execFileSync('swiftc', ['-parse-as-library', '-O', '-module-cache-path', resolve(scratch, 'module-cache'), resolve(folder, 'encode.swift'), '-o', resolve(scratch, 'encode')], { stdio: 'inherit' });
   execFileSync(resolve(scratch, 'encode'), [resolve(scratch, 'manifest.json')], { stdio: 'inherit' });

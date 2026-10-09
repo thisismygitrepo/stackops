@@ -16,12 +16,15 @@ function footprint(scene, focus) {
   return body;
 }
 
-function familiar(scene) {
+function familiar(scene, focus) {
+  const roleFocus = ['configurator', 'package-manager', 'dotfile-manager', 'data-sync'];
+  const digitalLife = focus === 'digital-life';
   let body = lines(scene.Title[0], 100, 230, 70, C.ink, 1720, 650)
     + text(scene.Subtitle[0], 104, 410, 33, C.muted, 400, false)
-    + box(100, 470, 1720, 112, C.selected, C.accent, 18)
-    + `<g text-anchor="middle">${text(scene.Role[4], 960, 543, 49, C.ink, 600, false)}</g>`;
-  body += scene.Role.slice(0, 4).map((value, i) => pill(value, 100 + i * 440, 653, 400, true)).join('');
+    + box(100, 470, 1720, 112, digitalLife ? C.selected : C.panel, digitalLife ? C.accent : C.edge, 18)
+    + `<g text-anchor="middle">${text(scene.Role[4], 960, 543, 49, digitalLife ? C.ink : C.muted, 600, false)}</g>`;
+  body += scene.Role.slice(0, 4).map((value, i) => pill(value, 100 + i * 440, 653, 400, focus === roleFocus[i])).join('');
+  body += scene.Platform.map((value, i) => pill(value, 490 + i * 320, 726, 300, focus === 'platforms')).join('');
   return body;
 }
 

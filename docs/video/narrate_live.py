@@ -12,7 +12,7 @@ import sys
 import wave
 from array import array
 from pathlib import Path
-from typing import cast
+from typing import TypedDict, cast
 
 from openai import AsyncOpenAI
 from openai.resources.live.live import AsyncLiveConnection
@@ -31,7 +31,22 @@ from live_constants import (
     LIVE_TRAILING_SECONDS,
     LIVE_VOICE,
 )
-from narrate import Manifest
+
+
+class Caption(TypedDict):
+    text: str
+    audio: str
+
+
+class Scene(TypedDict):
+    images: list[str]
+    captions: list[Caption]
+
+
+class Manifest(TypedDict):
+    output: str
+    scratch: str
+    scenes: list[Scene]
 
 
 def normalize_transcript(text: str) -> str:

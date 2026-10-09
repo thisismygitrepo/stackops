@@ -9,23 +9,22 @@ transformation from a bare machine to a familiar digital life.
 The before/after images are the original README assets. Diagrams illustrate
 the concept; they are not recordings of an automated setup. The one-command,
 five-minute line presents the original setup goal. Narration uses OpenAI's
-``gpt-audio-1.5`` or ``gpt-live-1`` model with the AI-generated Marin voice.
+``gpt-live-1`` model with the AI-generated Marin voice.
 
 Render on macOS with Node.js, uv, the Xcode command line tools,
 ``rsvg-convert``, and FFmpeg with ``libx264`` on your PATH. Set ``FFMPEG`` to an
 executable path if needed. Export ``OPENAI_API_KEY`` before rendering::
 
     cd /path/to/stackops
-    node docs/video/render.mjs --narrator=audio
-    node docs/video/render.mjs --narrator=live
+    node docs/video/render.mjs
 
 ``uv`` manages the narrator's isolated Python 3.13 dependencies from its script
 metadata. Each ``Focus`` / ``Say`` pair is one visual beat and its spoken
 caption. ``Card`` fields use ``title | detail``; ``|`` in other text makes a
 line break.
 
-The outputs are ``docs/video/stackops-concept-audio.mp4`` or
-``stackops-concept-live.mp4`` and matching VTT captions. MP4 files are ignored
+The output is ``docs/video/stackops-concept-live.mp4`` with matching VTT
+captions. MP4 files are ignored
 by Git. Intermediate
 artwork, audio, timing metadata, and previews go under
 ``.ai/tmp_scripts/stackops-video/``. Narration sends the script to OpenAI.
@@ -54,9 +53,9 @@ Scene 01. Your digital life
 :Focus: configuration
 :Say: Configuration.
 :Focus: secrets
-:Say: Secrets and credentials.
+:Say: Your secrets.
 :Focus: data
-:Say: Files and data.
+:Say: Your files.
 :Focus: code
 :Say: Your repositories.
 :Focus: processes
@@ -111,9 +110,24 @@ Scene 04. The stack you are comfortable with
 :Role: Dotfile manager
 :Role: Data sync solution
 :Role: Digital life manager
+:Platform: Linux
+:Platform: macOS
+:Platform: Windows
 :Takeaway: A cross-platform approach to managing your digital life.
-:Focus: roles
-:Say: StackOps doesn't reinvent the wheel. It glues together the best open-source tools. It's a configurator, a package manager, a dotfile manager, a data sync solution, a digital life manager.
+:Focus: intro
+:Say: StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
+:Focus: configurator
+:Say: It's a configurator,
+:Focus: package-manager
+:Say: a package manager,
+:Focus: dotfile-manager
+:Say: a dotfile manager,
+:Focus: data-sync
+:Say: a data sync solution,
+:Focus: digital-life
+:Say: a digital life manager.
+:Focus: platforms
+:Say: One experience, across all operating systems.
 :Source: User-provided description; docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
 
 Scene 05. The command hierarchy
