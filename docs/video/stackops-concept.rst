@@ -100,87 +100,56 @@ Scene 03. While casually inspecting a machine
 :Say: This config is based on public setup, and ignores private setup and files.
 :Source: AI-generated JB Hi-Fi scene (GPT Image 2.5 Sunburst), option 01 with cmatrix; user-provided wording; docs/assets/stackops.jpeg
 
-Scene 04. What makes up that footprint
--------------------------------------
-
-:Layout: scope
-:Eyebrow: THE WHOLE PICTURE
-:Title: Your tools. Your settings.|Your data. Your code.
-:Subtitle: The pieces that make a machine feel like yours.
-:Card: Applications | Install the tools you rely on
-:Card: Configuration | Bring back public and private settings
-:Card: Secrets | Manage credentials and passwords
-:Card: Data | Back up, synchronize, and retrieve files
-:Card: Repositories | Map out your code for backup and retrieval
-:Takeaway: The software, the personal setup, and the work itself.
-:Focus: software
-:Say: Installing the software is only one part of it.
-:Focus: personal
-:Say: The personal setup matters too: public and private configurations, dotfiles, credentials, and passwords.
-:Focus: work
-:Say: Then there are your files and data, and the repositories you've mapped out for backup and retrieval.
-:Source: README.md at 41aae8d08^; docs/index.md at 41aae8d08^; docs/guide/configuration.md; docs/guide/data-sync.md
-
-Scene 05. All wrapped into one solution
---------------------------------------
-
-:Layout: unified
-:Eyebrow: ONE SOLUTION
-:Title: Set it up.|Keep it in sync. Put it to work.
-:Subtitle: Installation, configuration, synchronization, and orchestration.
-:Card: Install | Applications and tools
-:Card: Configure | Settings, dotfiles, and secrets
-:Card: Synchronize | Data and code
-:Card: Launch | Commands, files, and workspaces
-:Card: Orchestrate | Processes and parallel work
-:Takeaway: Setup, maintenance, and everyday work belong together.
-:Focus: setup
-:Say: StackOps brings package installation, configuration, secrets, and data and code synchronization into one solution.
-:Focus: run
-:Say: It also launches commands and orchestrates processes, so the same system helps you put that environment to work.
-:Focus: together
-:Say: Setup, maintenance, and the work you do every day, all connected.
-:Source: README.md at 41aae8d08^; README.md CLI overview; docs/cli/fire.md; docs/cli/terminal.md; docs/cli/agents.md
-
-Scene 06. The stack you are comfortable with
+Scene 04. The stack you are comfortable with
 -------------------------------------------
 
 :Layout: familiar
 :Eyebrow: YOUR STACK
 :Title: The stack you are|comfortable with.
-:Subtitle: StackOps manages the stack you are comfortable with.
+:Subtitle: StackOps doesn't reinvent the wheel.
+:Role: Configurator
+:Role: Package manager
+:Role: Dotfile manager
+:Role: Data sync solution
+:Role: Digital life manager
+:Recipe: Think of it as a Dockerfile.
+:Recipe-detail: A recipe for reproducing your computer.
 :Card: Linux | Your tools and configuration
 :Card: macOS | Your tools and configuration
 :Card: Windows | Your tools and configuration
 :Takeaway: A cross-platform approach to managing your digital life.
 :Focus: glue
 :Say: StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
+:Focus: roles
+:Say: It's a configurator, a package manager, a dotfile manager, a data sync solution, a digital life manager.
+:Focus: recipe
+:Say: Think of it as a Dockerfile: a recipe for how to reproduce your computer.
 :Focus: yours
 :Say: Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
 :Focus: platforms
 :Say: It brings that approach across Linux, macOS, and Windows through a command-line interface.
-:Source: docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
+:Source: User-provided description and Dockerfile analogy; docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
 
-Scene 07. The command hierarchy
+Scene 05. The command hierarchy
 -------------------------------
 
 :Layout: sunburst
 :Eyebrow: THE COMMAND HIERARCHY
 :Title: One CLI.|A command hierarchy.
-:Takeaway: Command groups, subgroups, and actions under one CLI.
+:Takeaway: Setup, maintenance, and everyday work under one CLI.
 :Focus: overview
-:Say: StackOps organizes its commands into a hierarchy for machine setup, cloud services, terminals, agents, and everyday tools.
+:Say: One command hierarchy covers machine setup, cloud services, terminals, agents, and everyday tools.
 :Focus: devops
-:Say: DevOps groups installation, configuration, repositories, data, networking, and security.
+:Say: DevOps brings together installation, configuration, networking, and security.
 :Focus: config
-:Say: Configuration branches into dotfile management, terminal profiles, and guided setup.
+:Say: Here, configuration brings back public and private settings, including dotfiles and terminal profiles.
 :Focus: back
-:Say: Those configuration commands sit alongside the other tools for managing your machine.
+:Say: Alongside it, repository and data commands handle backup, synchronization, and retrieval of your work.
 :Focus: root
-:Say: Broad groups lead to specific commands, all organized under StackOps.
-:Source: src/stackops/scripts/python/graph/cli_graph.json; animated command hierarchy
+:Say: Across the hierarchy, you can launch commands and workspaces, and orchestrate processes for everyday work.
+:Source: src/stackops/scripts/python/graph/cli_graph.json; animated command hierarchy; docs/guide/configuration.md; docs/guide/data-sync.md; docs/cli/fire.md; docs/cli/terminal.md; docs/cli/agents.md
 
-Scene 08. Your digital life, sorted
+Scene 06. Your digital life, sorted
 ----------------------------------
 
 :Layout: closing
@@ -195,6 +164,4 @@ Scene 08. Your digital life, sorted
 :Say: Bring the setup you've spent years building to the machine in front of you.
 :Focus: docs
 :Say: Explore the documentation to get started.
-:Focus: platforms
-:Say: All of it, OS-agnostic. Linux, macOS, and Windows.
 :Source: User's current 99% wording; README.md at 41aae8d08^; docs/index.md at 41aae8d08^

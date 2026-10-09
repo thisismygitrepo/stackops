@@ -61,73 +61,53 @@ By the time they notice you are doing something unusual, the setup is done.
 This config is based on public setup, and ignores private setup and files.
 
 4-1
-00:00:52.483 --> 00:00:55.214
-Installing the software is only one part of it.
-
-4-2
-00:00:55.364 --> 00:01:01.913
-The personal setup matters too: public and private configurations, dotfiles, credentials, and passwords.
-
-4-3
-00:01:02.063 --> 00:01:07.589
-Then there are your files and data, and the repositories you've mapped out for backup and retrieval.
-
-5-1
-00:01:08.617 --> 00:01:16.126
-StackOps brings package installation, configuration, secrets, and data and code synchronization into one solution.
-
-5-2
-00:01:16.276 --> 00:01:23.145
-It also launches commands and orchestrates processes, so the same system helps you put that environment to work.
-
-5-3
-00:01:23.295 --> 00:01:26.858
-Setup, maintenance, and the work you do every day, all connected.
-
-6-1
-00:01:27.883 --> 00:01:32.833
+00:00:52.483 --> 00:00:57.433
 StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
 
-6-2
-00:01:32.983 --> 00:01:38.529
+4-2
+00:00:57.583 --> 00:01:04.260
+It's a configurator, a package manager, a dotfile manager, a data sync solution, a digital life manager.
+
+4-3
+00:01:04.410 --> 00:01:08.869
+Think of it as a Dockerfile: a recipe for how to reproduce your computer.
+
+4-4
+00:01:09.019 --> 00:01:14.565
 Keep the stack you're comfortable with. StackOps manages the tools and settings that make it yours.
 
-6-3
-00:01:38.679 --> 00:01:44.247
+4-5
+00:01:14.715 --> 00:01:20.283
 It brings that approach across Linux, macOS, and Windows through a command-line interface.
 
-7-1
-00:01:45.250 --> 00:01:53.677
-StackOps organizes its commands into a hierarchy for machine setup, cloud services, terminals, agents, and everyday tools.
+5-1
+00:01:21.283 --> 00:01:27.683
+One command hierarchy covers machine setup, cloud services, terminals, agents, and everyday tools.
 
-7-2
-00:01:53.827 --> 00:01:59.864
-DevOps groups installation, configuration, repositories, data, networking, and security.
+5-2
+00:01:27.833 --> 00:01:32.889
+DevOps brings together installation, configuration, networking, and security.
 
-7-3
-00:02:00.014 --> 00:02:05.625
-Configuration branches into dotfile management, terminal profiles, and guided setup.
+5-3
+00:01:33.039 --> 00:01:39.482
+Here, configuration brings back public and private settings, including dotfiles and terminal profiles.
 
-7-4
-00:02:05.775 --> 00:02:10.831
-Those configuration commands sit alongside the other tools for managing your machine.
+5-4
+00:01:39.632 --> 00:01:46.096
+Alongside it, repository and data commands handle backup, synchronization, and retrieval of your work.
 
-7-5
-00:02:10.981 --> 00:02:15.333
-Broad groups lead to specific commands, all organized under StackOps.
+5-5
+00:01:46.246 --> 00:01:52.603
+Across the hierarchy, you can launch commands and workspaces, and orchestrate processes for everyday work.
 
-8-1
-00:02:16.350 --> 00:02:18.974
+6-1
+00:01:53.617 --> 00:01:56.241
 That's StackOps. Your digital life, sorted.
 
-8-2
-00:02:19.124 --> 00:02:22.431
+6-2
+00:01:56.391 --> 00:01:59.697
 Bring the setup you've spent years building to the machine in front of you.
 
-8-3
-00:02:22.581 --> 00:02:25.013
+6-3
+00:01:59.847 --> 00:02:02.279
 Explore the documentation to get started.
-
-8-4
-00:02:25.163 --> 00:02:29.259
-All of it, OS-agnostic. Linux, macOS, and Windows.

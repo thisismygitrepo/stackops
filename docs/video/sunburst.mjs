@@ -65,10 +65,10 @@ function chart(view) {
 function slide(scene, index, count, beat, view, cursor, pulse) {
   const states = [
     ['COMMAND GROUPS', 'stackops', 'Machine setup, cloud, terminals,|agents, and everyday tools.'],
-    ['DEVOPS', 'stackops  ›  devops', 'install · config · repos|data · network · security'],
-    ['CONFIGURATION', 'stackops  ›  devops  ›  config', 'Dotfile management|Terminal profiles · Guided setup'],
-    ['RELATED TASKS', 'stackops  ›  devops', 'Configuration is one branch|of machine management.'],
-    ['ONE COMMAND HIERARCHY', 'stackops', 'Broad groups.|Specific commands.'],
+    ['DEVOPS', 'stackops  ›  devops', 'Install tools · Configure settings|Networking · Security'],
+    ['CONFIGURATION', 'stackops  ›  devops  ›  config', 'Public and private settings|Dotfiles · Terminal profiles'],
+    ['RELATED TASKS', 'stackops  ›  devops', 'Repositories and data|Back up · Synchronize · Retrieve'],
+    ['EVERYDAY WORK', 'stackops', 'Launch commands and workspaces|Orchestrate everyday processes'],
   ];
   const [label, path, detail] = states[beat];
   let body = lines(scene.Title[0], 100, 222, 61, C.ink, 750, 650)
