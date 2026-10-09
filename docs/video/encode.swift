@@ -3,9 +3,9 @@ import AVFoundation
 import ImageIO
 
 struct CaptionSpec: Decodable { let text: String; let audio: String }
-struct SceneSpec: Decodable { let images: [String]; let captions: [CaptionSpec] }
+struct SceneSpec: Decodable { let images: [String]; let captions: [CaptionSpec]; let animations: [[String]] }
 struct Manifest: Decodable { let output: String; let scratch: String; let scenes: [SceneSpec] }
-struct Clip { let image: CGImage; let text: NSAttributedString; let asset: AVURLAsset; let duration: Double; let offset: Double }
+struct Clip { let image: CGImage; let finalImage: CGImage; let animation: [String]; let text: NSAttributedString; let asset: AVURLAsset; let duration: Double; let offset: Double }
 struct Scene { let clips: [Clip]; let start: Double; let frames: Int }
 struct TrackMetadata: Encodable { let mediaType: String; let codecs: String; let size: String; let fps: Float }
 struct BeatMetadata: Encodable { let index: Int; let text: String; let start: Double; let duration: Double; let visualStart: Double; let preview: String }
@@ -30,12 +30,14 @@ struct Encoder {
         shadow.shadowBlurRadius = 5
         shadow.shadowOffset = NSSize(width: 0, height: -2)
         for spec in manifest.scenes {
-            guard !spec.captions.isEmpty, spec.images.count == spec.captions.count else {
+            guard !spec.captions.isEmpty, spec.images.count == spec.captions.count, spec.animations.count == spec.images.count else {
                 throw VideoError.failed("Each scene needs one image per spoken caption")
             }
             var clips: [Clip] = []
             var offset = 0.35
-            for (imagePath, caption) in zip(spec.images, spec.captions) {
+            for (beat, imagePath) in spec.images.enumerated() {
+                let caption = spec.captions[beat]
+                let animation = spec.animations[beat]
                 guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: imagePath) as CFURL, nil),
                       let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
                     throw VideoError.failed("Cannot read beat image: \(imagePath)")
@@ -50,7 +52,15 @@ struct Encoder {
                     .foregroundColor: NSColor(red: 0.94, green: 0.96, blue: 0.99, alpha: 1),
                     .paragraphStyle: paragraph, .shadow: shadow
                 ])
-                clips.append(Clip(image: image, text: text, asset: asset, duration: duration, offset: offset))
+                var finalImage = image
+                if let finalPath = animation.last {
+                    guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: finalPath) as CFURL, nil),
+                          let final = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+                        throw VideoError.failed("Cannot read final animation frame: \(finalPath)")
+                    }
+                    finalImage = final
+                }
+                clips.append(Clip(image: image, finalImage: finalImage, animation: animation, text: text, asset: asset, duration: duration, offset: offset))
                 offset += duration + 0.15
             }
             let frames = Int(ceil((offset - 0.15 + 0.65) * 30))
@@ -94,6 +104,8 @@ struct Encoder {
             "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
             "-movflags", "+faststart", destination.path], input: input)
         defer { if encoder.isRunning { encoder.terminate() } }
+        var animationPath = ""
+        var animationImage: CGImage?
         for (sceneIndex, scene) in scenes.enumerated() {
             for localFrame in 0..<scene.frames {
                 try autoreleasepool {
@@ -102,15 +114,29 @@ struct Encoder {
                     let clip = scene.clips[beatIndex]
                     let visualStart = beatIndex == 0 ? 0 : clip.offset
                     let dissolve = min(1, (time - visualStart) / 0.2)
-                    let previousImage = beatIndex > 0 ? scene.clips[beatIndex - 1].image
-                        : sceneIndex > 0 ? scenes[sceneIndex - 1].clips.last?.image : nil
+                    let previousImage = beatIndex > 0 ? scene.clips[beatIndex - 1].finalImage
+                        : sceneIndex > 0 ? scenes[sceneIndex - 1].clips.last?.finalImage : nil
+                    var currentImage = clip.image
+                    if !clip.animation.isEmpty {
+                        let position = min(clip.animation.count - 1, max(0, Int((time - clip.offset) * 30)))
+                        let path = clip.animation[position]
+                        if path != animationPath {
+                            guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil),
+                                  let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+                                throw VideoError.failed("Cannot read animation frame: \(path)")
+                            }
+                            animationImage = image
+                            animationPath = path
+                        }
+                        currentImage = animationImage!
+                    }
                     let frame = CGRect(x: 0, y: 0, width: 1920, height: 1080)
                     context.setFillColor(CGColor(red: 0.031, green: 0.055, blue: 0.094, alpha: 1))
                     context.fill(frame)
                     if dissolve < 1, let previousImage { context.draw(previousImage, in: frame) }
                     context.saveGState()
                     context.setAlpha(dissolve)
-                    context.draw(clip.image, in: frame)
+                    context.draw(currentImage, in: frame)
                     context.restoreGState()
                     if time >= clip.offset && time < clip.offset + clip.duration {
                         NSGraphicsContext.saveGraphicsState()

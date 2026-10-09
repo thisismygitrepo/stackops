@@ -98,7 +98,7 @@ Scene 03. While casually inspecting a machine
 :Say: By the time they notice you are doing something unusual, the setup is done.
 :Focus: public
 :Say: This config is based on public setup, and ignores private setup and files.
-:Source: User-provided photo and wording; docs/assets/stackops.jpeg
+:Source: AI-generated JB Hi-Fi scene (GPT Image 2.5 Sunburst), option 01 with cmatrix; user-provided wording; docs/assets/stackops.jpeg
 
 Scene 04. What makes up that footprint
 -------------------------------------
@@ -161,7 +161,26 @@ Scene 06. The stack you are comfortable with
 :Say: It brings that approach across Linux, macOS, and Windows through a command-line interface.
 :Source: docs/index.md at 41aae8d08^; README.md at 41aae8d08^; docs/installation.md
 
-Scene 07. Your digital life, sorted
+Scene 07. The command hierarchy
+-------------------------------
+
+:Layout: sunburst
+:Eyebrow: THE COMMAND HIERARCHY
+:Title: One CLI.|A command hierarchy.
+:Takeaway: Command groups, subgroups, and actions under one CLI.
+:Focus: overview
+:Say: StackOps organizes its commands into a hierarchy for machine setup, cloud services, terminals, agents, and everyday tools.
+:Focus: devops
+:Say: DevOps groups installation, configuration, repositories, data, networking, and security.
+:Focus: config
+:Say: Configuration branches into dotfile management, terminal profiles, and guided setup.
+:Focus: back
+:Say: Those configuration commands sit alongside the other tools for managing your machine.
+:Focus: root
+:Say: Broad groups lead to specific commands, all organized under StackOps.
+:Source: src/stackops/scripts/python/graph/cli_graph.json; animated command hierarchy
+
+Scene 08. Your digital life, sorted
 ----------------------------------
 
 :Layout: closing

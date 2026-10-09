@@ -97,17 +97,37 @@ Keep the stack you're comfortable with. StackOps manages the tools and settings 
 It brings that approach across Linux, macOS, and Windows through a command-line interface.
 
 7-1
-00:01:45.250 --> 00:01:47.874
-That's StackOps. Your digital life, sorted.
+00:01:45.250 --> 00:01:53.677
+StackOps organizes its commands into a hierarchy for machine setup, cloud services, terminals, agents, and everyday tools.
 
 7-2
-00:01:48.024 --> 00:01:51.331
-Bring the setup you've spent years building to the machine in front of you.
+00:01:53.827 --> 00:01:59.864
+DevOps groups installation, configuration, repositories, data, networking, and security.
 
 7-3
-00:01:51.481 --> 00:01:53.913
-Explore the documentation to get started.
+00:02:00.014 --> 00:02:05.625
+Configuration branches into dotfile management, terminal profiles, and guided setup.
 
 7-4
-00:01:54.063 --> 00:01:58.159
+00:02:05.775 --> 00:02:10.831
+Those configuration commands sit alongside the other tools for managing your machine.
+
+7-5
+00:02:10.981 --> 00:02:15.333
+Broad groups lead to specific commands, all organized under StackOps.
+
+8-1
+00:02:16.350 --> 00:02:18.974
+That's StackOps. Your digital life, sorted.
+
+8-2
+00:02:19.124 --> 00:02:22.431
+Bring the setup you've spent years building to the machine in front of you.
+
+8-3
+00:02:22.581 --> 00:02:25.013
+Explore the documentation to get started.
+
+8-4
+00:02:25.163 --> 00:02:29.259
 All of it, OS-agnostic. Linux, macOS, and Windows.
