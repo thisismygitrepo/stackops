@@ -7,7 +7,7 @@ After [installation](installation.md), inspect the command families and the work
 ```bash
 stackops --help
 devops install --help
-devops config sync --help
+devops config dotfiles sync --help
 terminal run --help
 ```
 
@@ -48,7 +48,7 @@ devops install --help
 Configuration sync uses declared mappings. Inspect its options and the [configuration guide](guide/configuration.md) before choosing a mapping:
 
 ```bash
-devops config sync --help
+devops config dotfiles sync --help
 devops data sync --help
 ```
 
@@ -61,7 +61,7 @@ This broader sequence installs system and terminal package groups, copies bundle
 ```bash
 devops install --group sysabc
 devops config copy-assets all
-devops config sync down \
+devops config dotfiles sync down \
   --sensitivity public \
   --method copy \
   --on-conflict throw-error \

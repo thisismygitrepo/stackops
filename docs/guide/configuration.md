@@ -20,7 +20,7 @@ Start here:
 
 ```bash
 devops config --help
-devops config sync --help
+devops config dotfiles --help
 ```
 
 ---
@@ -42,7 +42,7 @@ Use `devops config terminal config-shell --which default` or `devops config term
 The current sync workflow is:
 
 ```bash
-devops config sync --help
+devops config dotfiles sync --help
 ```
 
 Current help shows these key concepts:
@@ -53,7 +53,7 @@ Current help shows these key concepts:
 - `--source`, `-S` chooses which mapper source to use
 - `--which` narrows the operation to specific items
 
-That makes `devops config sync` the main high-level replacement for older configuration, dotfiles, and links documentation.
+That makes `devops config dotfiles sync` the main high-level replacement for older configuration, dotfiles, and links documentation.
 
 For packaged library settings, use `devops config copy-assets settings` explicitly before syncing `down`.
 
@@ -63,8 +63,10 @@ For packaged library settings, use `devops config copy-assets settings` explicit
 
 Use these commands when you need to add new managed dotfiles or inspect the active mapping configuration:
 
-- `devops config register`
-- `devops config edit`
+- `devops config dotfiles register`
+- `devops config edit dotfiles`
+
+`devops config edit` takes the kind of StackOps user file to open: `config`, `layouts`, `dotfiles`, `data`, or `secrets`.
 
 ---
 
@@ -72,8 +74,8 @@ Use these commands when you need to add new managed dotfiles or inspect the acti
 
 For machine migration or archive-style workflows, use:
 
-- `devops config export-dotfiles`
-- `devops config import-dotfiles`
+- `devops config dotfiles export`
+- `devops config dotfiles import`
 
 These commands replace the older push, backup, and restore flow.
 

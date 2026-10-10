@@ -102,11 +102,10 @@ These commands perform the transfers; they do not only print a plan.
 ```bash
 devops data display
 devops data subset ./laptop-data.yaml --which dotfiles.wezterm
-devops data edit -s user
-devops data edit -s library
+devops config edit data
 ```
 
-`display` renders the registered user entries. `subset` writes selected entries to a standalone YAML file and has its own output-file `--on-conflict` policy. Use `--source`, `-s` on data sync, subset, and edit commands to choose the configuration source where supported.
+`display` renders the registered user entries. `subset` writes selected entries to a standalone YAML file and has its own output-file `--on-conflict` policy. `devops config edit data` opens the user backup file, creating it with its schema when missing. Use `--source`, `-s` on data sync and subset to choose the configuration source where supported.
 
 ---
 

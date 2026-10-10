@@ -16,7 +16,6 @@ Current `devops data --help` exposes:
 | `register` | Add or update a backup entry in the user data-mapping file |
 | `display` | Display registered entries from the user data-mapping file |
 | `subset` | Select entries interactively or with `--which` and write a standalone data-mapping file |
-| `edit` | Open the user or library backup configuration file |
 
 ### sync
 
@@ -136,15 +135,9 @@ devops data subset ./laptop-data.yaml --which dotfiles.wezterm,history
 devops data subset ./laptop-data.yaml --on-conflict append
 ```
 
-### edit
+### Editing the backup file
 
-Open the backup configuration file in `nano`, `hx`, or `code`.
-
-```bash
-devops data edit --editor hx -s user
-```
-
-Use `--source`, `-s` to choose `user` or `library`. The user backup config is created automatically if it does not exist yet.
+Open the user backup file with `devops config edit data`. It is created with its YAML header and schema if it does not exist yet. To edit the packaged library file, pass its path with `--path`.
 
 ### Backup File Layout
 

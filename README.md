@@ -70,7 +70,7 @@ Inspect the commands for the workflow you need:
 
 ```bash
 devops install --help
-devops config sync --help
+devops config dotfiles sync --help
 terminal run --help
 ```
 
@@ -83,7 +83,7 @@ This broader setup installs system and terminal package groups, copies bundled a
 ```bash
 devops install --group sysabc
 devops config copy-assets all
-devops config sync down \
+devops config dotfiles sync down \
   --sensitivity public \
   --method copy \
   --on-conflict throw-error \
