@@ -59,19 +59,6 @@ alias p='wrap_in_shell_script preview'
 alias u='wrap_in_shell_script utils'
 alias s='wrap_in_shell_script seek'
 
-unalias xx 2>/dev/null
-xx() {
-    local session_id_pattern='^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$'
-
-    if (( $# > 0 )) && [[ $1 =~ $session_id_pattern ]]; then
-        command codex resume --dangerously-bypass-approvals-and-sandbox -m gpt-6.1-sol -c 'model_reasoning_effort="ultra"' "$@"
-    else
-        command codex --dangerously-bypass-approvals-and-sandbox -m gpt-6.1-sol -c 'model_reasoning_effort="ultra"' "$@"
-    fi
-}
-alias xa='agy --dangerously-skip-permissions'
-alias xc='copilot --yolo'
-
 # alias gcs='gh copilot suggest -t shell'
 # alias gcg='gh copilot suggest -t git'
 # alias gce='gh copilot explain'

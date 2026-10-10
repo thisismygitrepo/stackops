@@ -7,10 +7,12 @@ description: Teach, execute, troubleshoot, and extend the StackOps CLI/library t
 
 Use this skill to move from a StackOps command request to the current Typer surface and implementation files without copying details that the CLI can report itself.
 
+Resolve the StackOps source checkout before using repository paths or commands. In this Bytesense workspace it is `../stackops` relative to the workspace root; verify that checkout contains `pyproject.toml` and `src/stackops/`. Resolve `src/stackops/...` paths and run repo-local commands, including reference regeneration, from that checkout. Resolve `references/...` paths from this skill's directory.
+
 ## Quick Workflow
 
 1. Choose the execution form.
-- In this repository, run StackOps commands as `UV_CACHE_DIR=/tmp/uv-cache uv run <entrypoint> ...`.
+- In the resolved StackOps checkout, run commands as `UV_CACHE_DIR=/tmp/uv-cache uv run <entrypoint> ...`.
 - For installed usage outside the repo, use direct entrypoints: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `preview`, and `seek`.
 - Use `stackops <entrypoint> ...` only when the user specifically wants the umbrella dispatcher or when testing the dispatcher itself.
 
@@ -36,7 +38,7 @@ Use this skill to move from a StackOps command request to the current Typer surf
 - When adding or changing commands, update the Typer registration and the helper implementation together, then re-check `--help`.
 
 6. Refresh generated references after CLI shape changes.
-- Run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets update-skill-refs` from the repo root.
+- Run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets update-skill-refs` from the resolved StackOps checkout, then refresh the generated references in installed skill copies.
 
 7. Run safely.
 - Commands that install, update, configure, sync, share, mount, or edit local files may mutate system state.

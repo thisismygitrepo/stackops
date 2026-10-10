@@ -43,17 +43,6 @@ Add-ToPathIfNotAlready -Directories @(
     "C:\Program Files\Git\bin"  # gives sh.exe bash.exe & git.exe
 )
 
-function xx {
-    if ($args.Count -gt 0 -and $args[0] -match '^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$') {
-        codex resume --dangerously-bypass-approvals-and-sandbox -m gpt-6.1-sol -c 'model_reasoning_effort="ultra"' @args
-    }
-    else {
-        codex --dangerously-bypass-approvals-and-sandbox -m gpt-6.1-sol -c 'model_reasoning_effort="ultra"' @args
-    }
-}
-function xa { agy --dangerously-skip-permissions @args }
-function xc { copilot --yolo @args }
-
 
 # sources  ================================================================
 if (Test-Path "$CONFIG_ROOT\scripts\wrap_stackops.ps1") {

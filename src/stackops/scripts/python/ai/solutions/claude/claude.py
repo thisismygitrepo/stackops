@@ -44,10 +44,7 @@ def _private_local_settings() -> dict[str, object]:
         "$schema": SETTINGS_SCHEMA_URL,
         "env": {
             "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-            "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
-            "DISABLE_TELEMETRY": "1",
-            "DISABLE_ERROR_REPORTING": "1",
-            "DISABLE_BUG_COMMAND": "1",
+            "DISABLE_FEEDBACK_COMMAND": "1",
         },
     }
 
