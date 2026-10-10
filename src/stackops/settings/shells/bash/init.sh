@@ -14,11 +14,19 @@ add_to_path_if_not_already() {
 CONFIG_ROOT="$HOME/.config/stackops"
 DOTFILES_ROOT="${DOTFILES_ROOT:-$HOME/dotfiles}"
 DOTFILES_STACKOPS_ROOT="${DOTFILES_STACKOPS_ROOT:-$DOTFILES_ROOT/stackops}"
+DOTFILES_STACKOPS_PLATFORM="$(uname -s)"
+case "$DOTFILES_STACKOPS_PLATFORM" in
+    Linux) DOTFILES_STACKOPS_PLATFORM="linux" ;;
+    Darwin) DOTFILES_STACKOPS_PLATFORM="macos" ;;
+    CYGWIN*|MINGW*|MSYS*) DOTFILES_STACKOPS_PLATFORM="windows" ;;
+    *) printf 'Unsupported operating system: %s\n' "$DOTFILES_STACKOPS_PLATFORM" >&2; return 1 ;;
+esac
+DOTFILES_STACKOPS_SCRIPTS_ROOT="$DOTFILES_STACKOPS_ROOT/scripts/$DOTFILES_STACKOPS_PLATFORM"
 
 # 📂 Add directories to PATH
 add_to_path_if_not_already \
     "$CONFIG_ROOT/scripts" \
-    "$DOTFILES_STACKOPS_ROOT/scripts/linux" \
+    "$DOTFILES_STACKOPS_SCRIPTS_ROOT" \
     "$HOME/.local/bin" \
     "$HOME/.cargo/bin" \
     "$HOME/.duckdb/cli/latest" \
@@ -36,8 +44,8 @@ add_to_path_if_not_already \
 . $CONFIG_ROOT/scripts/wrap_stackops  # gives wrap_in_shell_script
 
 # check if the private StackOps shell init exists and source it
-if [ -f "$DOTFILES_STACKOPS_ROOT/init_linux.sh" ]; then
-    source "$DOTFILES_STACKOPS_ROOT/init_linux.sh"
+if [ -f "$DOTFILES_STACKOPS_SCRIPTS_ROOT/init.sh" ]; then
+    source "$DOTFILES_STACKOPS_SCRIPTS_ROOT/init.sh"
 fi
 
 alias l='lsd -la'

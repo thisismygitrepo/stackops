@@ -163,12 +163,11 @@ __stackops_init_zoxide
 __stackops_init_starship
 __stackops_init_atuin
 
-const stackops_user_init = if (($nu.home-dir | path join "dotfiles" "stackops" "init_nu.nu") | path exists) {
-    ($nu.home-dir | path join "dotfiles" "stackops" "init_nu.nu")
+const stackops_user_init_path = ($nu.home-dir | path join "dotfiles" "stackops" "scripts" $nu.os-info.name "init.nu")
+const stackops_user_init = if ($stackops_user_init_path | path exists) {
+    $stackops_user_init_path
 } else {
     null
 }
 
-if $stackops_user_init != null {
-    source $stackops_user_init
-}
+source $stackops_user_init

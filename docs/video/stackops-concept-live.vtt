@@ -1,0 +1,117 @@
+WEBVTT
+
+1-1
+00:00:00.280 --> 00:00:02.815
+Your stack is awesome, but you need a way to manage it.
+
+1-2
+00:00:02.935 --> 00:00:08.079
+StackOps is your OS-agnostic digital life manager. It covers 99% of your digital footprint.
+
+1-3
+00:00:08.199 --> 00:00:09.083
+Applications.
+
+1-4
+00:00:09.203 --> 00:00:10.133
+Configuration.
+
+1-5
+00:00:10.253 --> 00:00:11.166
+Your secrets.
+
+1-6
+00:00:11.286 --> 00:00:12.278
+Your files.
+
+1-7
+00:00:12.398 --> 00:00:13.544
+Your repositories.
+
+1-8
+00:00:13.664 --> 00:00:14.375
+Processes.
+
+1-9
+00:00:14.495 --> 00:00:16.181
+All wrapped into one solution.
+
+2-1
+00:00:17.000 --> 00:00:18.744
+Start with a fresh, bare machine.
+
+2-2
+00:00:18.864 --> 00:00:21.836
+Now bring back the environment you've spent ten years making your own.
+
+2-3
+00:00:21.956 --> 00:00:26.337
+That's the goal: one command, five minutes, and your familiar digital life ready to use.
+
+3-1
+00:00:27.160 --> 00:00:32.478
+Literally, you can install and configure your entire dev environment while casually inspecting a machine in the store.
+
+3-2
+00:00:32.598 --> 00:00:35.670
+By the time they notice you are doing something unusual, your setup is done.
+
+3-3
+00:00:35.790 --> 00:00:39.728
+This config is based on public setup, and ignores private setup and files.
+
+4-1
+00:00:40.547 --> 00:00:44.560
+StackOps doesn't reinvent the wheel. It glues together the best open-source tools.
+
+4-2
+00:00:44.680 --> 00:00:45.735
+It's a configurator,
+
+4-3
+00:00:45.855 --> 00:00:46.972
+a package manager,
+
+4-4
+00:00:47.092 --> 00:00:48.244
+a dotfile manager,
+
+4-5
+00:00:48.364 --> 00:00:49.409
+a data sync solution,
+
+4-6
+00:00:49.529 --> 00:00:50.922
+a digital life manager.
+
+4-7
+00:00:51.042 --> 00:00:53.441
+One experience, across all operating systems.
+
+5-1
+00:00:54.253 --> 00:00:57.986
+One CLI covers setup, cloud, terminals, agents, and everyday tools.
+
+5-2
+00:00:58.106 --> 00:01:01.752
+DevOps handles installation, configuration, networking, and security.
+
+5-3
+00:01:01.872 --> 00:01:05.674
+Restore public and private settings, dotfiles, and terminal profiles.
+
+5-4
+00:01:05.794 --> 00:01:08.237
+Back up, sync, and retrieve your repositories and data.
+
+5-5
+00:01:08.357 --> 00:01:10.924
+Launch workspaces and orchestrate everyday processes.
+
+6-1
+00:01:11.747 --> 00:01:14.020
+That's StackOps. Your digital life, sorted.
+
+6-2
+00:01:14.140 --> 00:01:18.096
+Think of it as a Dockerfile: a recipe for how to reproduce your computer.

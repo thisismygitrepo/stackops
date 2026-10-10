@@ -82,50 +82,88 @@ def declutter_all_browser_profiles(*, browser: ProfileBrowserName) -> tuple[Brow
     return tuple(declutter_browser_profile(browser=browser, profile_name=profile_path.name) for profile_path in profile_paths)
 
 
-def replicate_browser_profile(*, browser: BrowserName, profile_name: str, count: int, overwrite: bool) -> BrowserProfileReplicationResult:
-    if count < 1:
-        raise ValueError("COUNT must be at least 1")
+def replicate_browser_profile(
+    *, browser: BrowserName, profile_name: str, target_names: tuple[str, ...], overwrite: bool
+) -> BrowserProfileReplicationResult:
     source_path = resolve_named_profile_path(browser=browser, profile_name=profile_name)
-    destination_paths = tuple(resolve_named_profile_path(browser=browser, profile_name=f"p{index}") for index in range(1, count + 1))
-    source_path_key = os.path.normcase(str(source_path))
-    if any(os.path.normcase(str(destination_path)) == source_path_key for destination_path in destination_paths):
-        raise ValueError(f"""Source profile must not be one of the replication destinations: {source_path}""")
     with browser_launch_lock():
         require_browser_profile_directory(profile_path=source_path)
         require_browser_profile_not_in_use(browser=browser, profile_path=source_path)
-        excluded_root_directory_names = frozenset({TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME})
-        require_tree_without_filesystem_boundaries(
-            directory=source_path, include_root=False, excluded_root_directory_names=excluded_root_directory_names
+        return copy_browser_profile_to_replicas(
+            browser=browser,
+            source_path=source_path,
+            target_names=target_names,
+            overwrite=overwrite,
+            chromium_local_state=None,
+            excluded_root_directory_names=frozenset({TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME}),
         )
-        collisions = tuple(path for path in destination_paths if path.exists() or path.is_symlink())
-        if overwrite:
-            _remove_existing_destination_profiles(browser=browser, destination_paths=collisions)
-        elif len(collisions) > 0:
-            collision_list = ", ".join(str(path) for path in collisions)
-            raise ValueError(f"""Refusing to overwrite existing browser profile copies: {collision_list}. Pass --overwrite to replace them.""")
-        source_size_bytes = directory_size_bytes(directory=source_path, excluded_root_directory_names=excluded_root_directory_names)
-        reserved_paths: list[Path] = []
-        destination_path = destination_paths[0]
-        try:
-            for destination_path in destination_paths:
-                reserved_paths.append(destination_path)
-                try:
-                    destination_path.mkdir()
-                except FileExistsError:
-                    reserved_paths.pop()
-                    raise
-            for destination_path in destination_paths:
-                copy_directory_tree_excluding(
-                    source_directory=source_path, destination_directory=destination_path, excluded_root_directory_names=excluded_root_directory_names
-                )
-        except BaseException as error:
-            cleanup_failures = remove_owned_profile_directories(directories=tuple(reserved_paths))
-            if isinstance(error, OSError):
-                cleanup_note = "" if len(cleanup_failures) == 0 else f" Rollback failures: {'; '.join(cleanup_failures)}"
-                raise RuntimeError(f"""Could not replicate browser profile to {destination_path}: {error}.{cleanup_note}""") from error
-            for cleanup_failure in cleanup_failures:
-                error.add_note(f"""Browser profile rollback failed: {cleanup_failure}""")
-            raise
+
+
+def copy_browser_profile_to_replicas(
+    *,
+    browser: BrowserName,
+    source_path: Path,
+    target_names: tuple[str, ...],
+    overwrite: bool,
+    chromium_local_state: bytes | None,
+    excluded_root_directory_names: frozenset[str],
+) -> BrowserProfileReplicationResult:
+    if len(target_names) == 0:
+        raise ValueError("At least one destination profile name is required")
+    try:
+        destination_paths = tuple(resolve_named_profile_path(browser=browser, profile_name=name) for name in target_names)
+    except ValueError as error:
+        raise ValueError(f"""Invalid --target: {error}""") from error
+    source_path_key = Path(os.path.normcase(str(source_path.resolve())))
+    destination_path_keys = tuple(Path(os.path.normcase(str(path.resolve()))) for path in destination_paths)
+    existing_destination_stats = tuple(path.stat() for path in destination_paths if path.exists())
+    existing_destination_ids = {(entry.st_dev, entry.st_ino) for entry in existing_destination_stats}
+    if len(set(destination_path_keys)) != len(destination_path_keys) or len(existing_destination_ids) != len(existing_destination_stats):
+        raise ValueError("Destination profile names must be unique")
+    source_stat = source_path.stat()
+    if source_path_key in destination_path_keys or (source_stat.st_dev, source_stat.st_ino) in existing_destination_ids:
+        raise ValueError(f"""Source profile must not be one of the replication destinations: {source_path}""")
+    if any(source_path_key.is_relative_to(path) or path.is_relative_to(source_path_key) for path in destination_path_keys):
+        raise ValueError(f"""Source profile and replication destinations must not contain one another: {source_path}""")
+    require_tree_without_filesystem_boundaries(
+        directory=source_path, include_root=False, excluded_root_directory_names=excluded_root_directory_names
+    )
+    source_size_bytes = directory_size_bytes(directory=source_path, excluded_root_directory_names=excluded_root_directory_names)
+    if chromium_local_state is not None:
+        source_size_bytes += len(chromium_local_state)
+    collisions = tuple(path for path in destination_paths if path.exists() or path.is_symlink())
+    if overwrite:
+        _remove_existing_destination_profiles(browser=browser, destination_paths=collisions)
+    elif len(collisions) > 0:
+        collision_list = ", ".join(str(path) for path in collisions)
+        raise ValueError(f"""Refusing to overwrite existing browser profile copies: {collision_list}. Pass --overwrite to replace them.""")
+    reserved_paths: list[Path] = []
+    destination_path = destination_paths[0]
+    try:
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        for destination_path in destination_paths:
+            reserved_paths.append(destination_path)
+            try:
+                destination_path.mkdir()
+            except FileExistsError:
+                reserved_paths.pop()
+                raise
+        for destination_path in destination_paths:
+            copy_directory_tree_excluding(
+                source_directory=source_path,
+                destination_directory=destination_path if chromium_local_state is None else destination_path.joinpath(source_path.name),
+                excluded_root_directory_names=excluded_root_directory_names,
+            )
+            if chromium_local_state is not None:
+                destination_path.joinpath("Local State").write_bytes(chromium_local_state)
+    except BaseException as error:
+        cleanup_failures = remove_owned_profile_directories(directories=tuple(reserved_paths))
+        if isinstance(error, OSError):
+            cleanup_note = "" if len(cleanup_failures) == 0 else f" Rollback failures: {'; '.join(cleanup_failures)}"
+            raise RuntimeError(f"""Could not replicate browser profile to {destination_path}: {error}.{cleanup_note}""") from error
+        for cleanup_failure in cleanup_failures:
+            error.add_note(f"""Browser profile rollback failed: {cleanup_failure}""")
+        raise
     return BrowserProfileReplicationResult(
         browser=browser, source_path=source_path, destination_paths=destination_paths, source_size_bytes=source_size_bytes
     )

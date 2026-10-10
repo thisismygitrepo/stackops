@@ -1,6 +1,16 @@
 
 
 $CONFIG_ROOT = "$HOME\.config\stackops"
+$DOTFILES_OS = if ($IsWindows) {
+    "windows"
+} elseif ($IsMacOS) {
+    "macos"
+} elseif ($IsLinux) {
+    "linux"
+} else {
+    throw "Unsupported operating system: $($PSVersionTable.OS)"
+}
+$DOTFILES_SCRIPTS_ROOT = Join-Path $HOME "dotfiles/stackops/scripts/$DOTFILES_OS"
 
 function Add-ToPathIfNotAlready {
     param (
@@ -24,7 +34,7 @@ Add-ToPathIfNotAlready -Directories @(
     "$HOME\.local\share\poppler\Library\bin",
     "$HOME\.bun\bin",
     "$CONFIG_ROOT\scripts",
-    "$HOME\dotfiles\stackops\scripts\windows",
+    $DOTFILES_SCRIPTS_ROOT,
     "C:\Program Files (x86)\GnuWin32\bin",
     "C:\Program Files\CodeBlocks\MinGW\bin",
     "C:\Program Files\nu\bin",
@@ -160,4 +170,9 @@ try {
 }
 catch {
     # Do nothing
+}
+
+$DOTFILES_INIT_PATH = Join-Path $DOTFILES_SCRIPTS_ROOT "init.ps1"
+if (Test-Path -LiteralPath $DOTFILES_INIT_PATH -PathType Leaf) {
+    . $DOTFILES_INIT_PATH
 }
