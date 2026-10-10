@@ -161,9 +161,9 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
             subtitle_text = Text("Configuration transfer options", style="italic yellow")
             instructions = """
             On remote, run:
-            devops config export-dotfiles --password pwd
+            devops config dotfiles export --password pwd
             On new machine, run:
-            devops config import-dotfiles --password pwd
+            devops config dotfiles import --password pwd
             """
             console.print(Panel(f"📂 {header_text}\n{subtitle_text}\n\n{instructions}", border_style="yellow", padding=(1, 2)))
             i_sorted_it_out = "I have sorted out dotfiles migration already and want to proceed."

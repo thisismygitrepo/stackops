@@ -44,7 +44,7 @@ def ask_bool(label: str, *, help_text: str, default: bool) -> bool:
     return bool(typer.confirm(label, default=default))
 
 
-def ask_choice(label: str, *, help_text: str, choices: Sequence[str], default: str) -> str:
+def ask_choice[ChoiceT: str](label: str, *, help_text: str, choices: Sequence[ChoiceT], default: ChoiceT) -> ChoiceT:
     console = _get_console()
     normalized_choices = tuple(choice.lower() for choice in choices)
     if default.lower() not in normalized_choices:

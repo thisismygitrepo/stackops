@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 import typer
 
 from stackops.profile.dotfiles_constants import ALL_OS_VALUES, DEFAULT_OS_FILTER
-from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE, CONFIG_FILE_SOURCE_MAP, CONFIG_SOURCE_LOOSE
+from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
 from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
 
 
@@ -219,72 +219,6 @@ def register_data(
     show_registration_summary(registration)
 
 
-def edit_data(
-    editor: Annotated[
-        Literal["nano", "hx", "code"],
-        typer.Option("--editor", "-e", help="📝 Editor to open the backup config file."),
-    ] = "hx",
-    source: Annotated[
-        CONFIG_FILE_SOURCE_LOOSE,
-        typer.Option("--source", "-s", help="📁 Which backup configuration file to edit: 'user' or 'library'."),
-    ] = "user",
-) -> None:
-    import shutil
-    import subprocess
-
-    from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
-        DEFAULT_BACKUP_HEADER,
-        LIBRARY_BACKUP_PATH,
-        USER_BACKUP_PATH,
-    )
-
-    source_key = CONFIG_FILE_SOURCE_MAP[source]
-
-    if source_key == "user":
-        file_path = USER_BACKUP_PATH
-        try:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            if file_path.exists():
-                if not file_path.is_file():
-                    msg = typer.style("Error: ", fg=typer.colors.RED) + f"User backup path is not a file: {file_path}"
-                    typer.echo(msg)
-                    raise typer.Exit(code=1)
-            else:
-                file_path.write_text(DEFAULT_BACKUP_HEADER, encoding="utf-8")
-        except OSError as exc:
-            msg = typer.style("Error: ", fg=typer.colors.RED) + f"Could not prepare user backup file {file_path}: {exc}"
-            typer.echo(msg)
-            raise typer.Exit(code=1) from exc
-    else:
-        file_path = LIBRARY_BACKUP_PATH
-        if not file_path.exists():
-            msg = typer.style("Error: ", fg=typer.colors.RED) + f"Library backup file not found: {file_path}"
-            typer.echo(msg)
-            raise typer.Exit(code=1)
-        if not file_path.is_file():
-            msg = typer.style("Error: ", fg=typer.colors.RED) + f"Library backup path is not a file: {file_path}"
-            typer.echo(msg)
-            raise typer.Exit(code=1)
-
-    editor_bin = shutil.which(editor)
-    if editor_bin is None:
-        msg = typer.style("Error: ", fg=typer.colors.RED) + f"Editor '{editor}' is not available on PATH."
-        typer.echo(msg)
-        raise typer.Exit(code=1)
-
-    try:
-        result = subprocess.run([editor_bin, str(file_path)], check=False)
-    except OSError as exc:
-        msg = typer.style("Error: ", fg=typer.colors.RED) + f"Could not start editor '{editor}': {exc}"
-        typer.echo(msg)
-        raise typer.Exit(code=1) from exc
-
-    if result.returncode != 0:
-        msg = typer.style("Error: ", fg=typer.colors.RED) + f"Editor exited with status code {result.returncode}."
-        typer.echo(msg)
-        raise typer.Exit(code=result.returncode if result.returncode > 0 else 1)
-
-
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_data_display, cli_data_encrypt, cli_data_subset
 
@@ -319,10 +253,6 @@ def get_app() -> typer.Typer:
     app.command(name="subset", no_args_is_help=True, hidden=False, help=f"📦 <u> {cli_data_subset.DATA_SUBSET_HELP}")(cli_data_subset.subset)
 
     app.command(name="u", no_args_is_help=True, hidden=True)(cli_data_subset.subset)
-
-    app.command(name="edit", no_args_is_help=False, hidden=False, help="✏️ <e> Open backup configuration file in nano, hx, or code.")(edit_data)
-
-    app.command(name="e", no_args_is_help=False, hidden=True)(edit_data)
 
     app.command(name="encrypt", no_args_is_help=True, hidden=False, help=cli_data_encrypt.DATA_ENCRYPT_HELP)(cli_data_encrypt.encrypt)
 

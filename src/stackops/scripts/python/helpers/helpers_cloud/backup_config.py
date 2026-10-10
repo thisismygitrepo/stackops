@@ -222,20 +222,20 @@ def _user_backup_config_guidance() -> str:
             "Create a real backup entry interactively:\n"
             "  devops config setup data\n"
             "Or install the example and schema for manual editing:\n"
-            "  devops config dump --which data --default-path"
+            "  devops config dump data --default-path"
         )
     if USER_BACKUP_PATH.is_file():
         return (
             "Open the invalid file for correction:\n"
-            "  devops data edit\n"
+            "  devops config edit data\n"
             "Create a separate example and schema for reference:\n"
-            "  devops config dump --which data"
+            "  devops config dump data"
         )
     return (
         "Resolve the non-file path shown above, then create a real entry:\n"
         "  devops config setup data\n"
         "Create a separate example and schema for reference:\n"
-        "  devops config dump --which data"
+        "  devops config dump data"
     )
 
 

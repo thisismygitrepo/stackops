@@ -7,7 +7,6 @@ EMAIL_SETUP_HELP = "Select or create an SMTP profile and save the default recipi
 
 
 def setup_email() -> None:
-    import stackops.utils.schemas.config as config_assets
     from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import (
         exit_with_setup_error,
         load_stackops_config_for_setup,
@@ -21,13 +20,10 @@ def setup_email() -> None:
     )
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_choice, ask_text
     from stackops.secrets.paths import SECRETS_DOFILE
-    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH
+    from stackops.utils.managed_files import get_managed_file_spec
 
-    config_path = DOTFILES_STACKOPS_CONFIG_PATH
-    schema_path = config_path.with_name(config_assets.CONFIG_SCHEMA_PATH_REFERENCE)
-    if schema_path.exists() and not schema_path.is_file():
-        exit_with_setup_error(f"StackOps schema path exists but is not a file: {schema_path}")
-    existing_config = load_stackops_config_for_setup(config_path=config_path)
+    config_path = get_managed_file_spec("config").user_path
+    existing_config = load_stackops_config_for_setup()
     configured_profile = existing_config.get("default_email_config") if existing_config is not None else None
     configured_recipient = existing_config.get("default_email_address") if existing_config is not None else None
     secrets_file, email_profiles = load_email_profiles(secrets_path=SECRETS_DOFILE)
@@ -80,8 +76,6 @@ def setup_email() -> None:
         except (OSError, ValueError) as exc:
             exit_with_setup_error(f"Could not write the email profile: {exc}")
     write_stackops_config(
-        config_path=config_path,
-        schema_path=schema_path,
         existing_config=existing_config,
         values={
             "default_email_config": selected_profile,

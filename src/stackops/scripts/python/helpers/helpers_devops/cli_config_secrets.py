@@ -4,7 +4,7 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops import cli_subset_support
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SECRETS_SCHEMA_FILENAME, SecretsSource, WritableSecretsSource
+from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SecretsSource, WritableSecretsSource
 
 SECRETS_HELP = "Manage StackOps secrets JSON files and define env vars."
 SECRETS_SEARCH_HELP = "Select secret bundles for environment variables or JSON output."
@@ -268,7 +268,7 @@ def add(
         ),
     ] = "local",
     create: Annotated[
-        bool, typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.")
+        bool, typer.Option("--create", "-c", help="Allow creating a missing secrets JSON file and its schema.")
     ] = False,
 ) -> None:
     """➕ <a> Append a new login entry to a StackOps secrets file."""
@@ -277,32 +277,6 @@ def add(
 
     secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
     secret_actions.add_secrets_entry(secrets_path=secret_source.path, create=create)
-
-
-def edit(
-    secrets_path: Annotated[
-        Path | None,
-        typer.Option(
-            "--path", "-p", help="Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
-        ),
-    ] = None,
-    secrets_source: Annotated[
-        WritableSecretsSource,
-        typer.Option(
-            "--source", "-s", case_sensitive=False, help="Secrets file source to edit: local/l or global/g. --path overrides the local source."
-        ),
-    ] = "local",
-    create: Annotated[
-        bool, typer.Option("--create", "-c", help=f"Allow creating a missing secrets JSON file and {SECRETS_SCHEMA_FILENAME}.")
-    ] = False,
-    editor: Annotated[str, typer.Option("--editor", "-e", help="Editor to use. Defaults to hx.")] = "hx",
-) -> None:
-    """📝 <e> Open a StackOps secrets file for editing."""
-    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
-
-    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
-    secret_actions.edit_secrets_file(secrets_path=secret_source.path, editor=editor, create=create)
 
 
 def get_app() -> typer.Typer:
@@ -321,8 +295,5 @@ def get_app() -> typer.Typer:
 
     app.command("add", no_args_is_help=False, help="➕ <a> Append a new login entry to a StackOps secrets file.")(add)
     app.command("a", no_args_is_help=False, help="Alias for add.", hidden=True)(add)
-
-    app.command("edit", no_args_is_help=False, help="📝 <e> Open a StackOps secrets file for editing.")(edit)
-    app.command("e", no_args_is_help=False, help="Alias for edit.", hidden=True)(edit)
 
     return app

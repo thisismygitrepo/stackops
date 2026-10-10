@@ -60,7 +60,7 @@ def update(
     Assets are copied by default; --no-copy-assets skips copying.
     Post-update actions:
     Copy scripts and settings unless --no-copy-assets is passed.
-    --link-public-configs -> devops config sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
+    --link-public-configs -> devops config dotfiles sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
     --config-shell       -> devops config terminal config-shell --which default
 
     --dev is a pre-update action (requires a repo checkout):

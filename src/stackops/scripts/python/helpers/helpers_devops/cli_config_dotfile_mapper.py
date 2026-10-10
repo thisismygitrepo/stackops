@@ -1,8 +1,6 @@
 """Dotfile mapper registration commands."""
 
 import hashlib
-import shutil
-import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Literal, cast
 
@@ -13,7 +11,7 @@ import typer
 
 from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
 from stackops.profile.linking.conflict import ON_CONFLICT_LOOSE
-from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE, METHOD_LOOSE
+from stackops.profile.linking.options import METHOD_LOOSE
 from stackops.utils.source_of_truth import DOTFILES_MAPPER_FILES_ROOT
 
 BACKUP_ROOT_FLAT = DOTFILES_MAPPER_FILES_ROOT
@@ -411,45 +409,6 @@ def register_dotfile(
             padding=(1, 2),
         )
     )
-
-
-def edit_dotfile(
-    editor: Annotated[
-        Literal["nano", "hx", "code"],
-        typer.Option("--editor", "-e", help="📝 Editor to open the dotfiles mapper.yaml file."),
-    ] = "hx",
-    source: Annotated[
-        CONFIG_FILE_SOURCE_LOOSE,
-        typer.Option("--source", "-s", help="📁 Which mapper file to edit: 'user' or 'library'."),
-    ] = "user",
-) -> None:
-    from stackops.profile.dotfiles_mapper import DEFAULT_DOTFILE_MAPPER_HEADER, LIBRARY_MAPPER_PATH, USER_MAPPER_PATH, write_dotfiles_mapper
-    from stackops.profile.linking.options import CONFIG_FILE_SOURCE_MAP
-
-    source_key = CONFIG_FILE_SOURCE_MAP[source]
-    if source_key == "user":
-        file_path = USER_MAPPER_PATH
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        if not file_path.exists():
-            write_dotfiles_mapper(path=file_path, mapper={}, header=DEFAULT_DOTFILE_MAPPER_HEADER)
-    else:
-        file_path = LIBRARY_MAPPER_PATH
-        if not file_path.exists():
-            msg = typer.style("Error: ", fg=typer.colors.RED) + f"Library mapper file not found: {file_path}"
-            typer.echo(msg)
-            raise typer.Exit(code=1)
-
-    editor_bin = shutil.which(editor)
-    if editor_bin is None:
-        msg = typer.style("Error: ", fg=typer.colors.RED) + f"Editor '{editor}' is not available on PATH."
-        typer.echo(msg)
-        raise typer.Exit(code=1)
-
-    result = subprocess.run([editor_bin, str(file_path)], check=False)
-    if result.returncode != 0:
-        msg = typer.style("Error: ", fg=typer.colors.RED) + f"Editor exited with status code {result.returncode}."
-        typer.echo(msg)
-        raise typer.Exit(code=result.returncode)
 
 
 def arg_parser() -> None:

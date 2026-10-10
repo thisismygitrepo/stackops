@@ -5,7 +5,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+
 CLOUD_SETUP_HELP = "Select an rclone remote and create or update the StackOps config and schema."
+AGENT_SETUP_HELP = "Select the default coding agent and save it in the StackOps config."
 SETUP_HELP = "Guided creation of StackOps user configuration files."
 
 
@@ -31,14 +34,13 @@ def setup_cloud(
     ] = None,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Write without confirmation. Requires --cloud.")] = False,
 ) -> None:
-    import stackops.utils.schemas.config as config_assets
     from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import (
         exit_with_setup_error,
         load_stackops_config_for_setup,
         write_stackops_config,
     )
     from stackops.utils.cloud.rclone import list_remote_names
-    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH
+    from stackops.utils.managed_files import get_managed_file_spec, managed_schema_path
 
     if yes and cloud is None:
         exit_with_setup_error("--yes requires --cloud so the selected remote is explicit.")
@@ -60,12 +62,10 @@ def setup_cloud(
             "  devops config setup cloud"
         )
 
-    config_path = DOTFILES_STACKOPS_CONFIG_PATH
-    schema_path = config_path.with_name(config_assets.CONFIG_SCHEMA_PATH_REFERENCE)
-    if schema_path.exists() and not schema_path.is_file():
-        exit_with_setup_error(f"StackOps schema path exists but is not a file: {schema_path}")
-
-    existing_config = load_stackops_config_for_setup(config_path=config_path)
+    config_spec = get_managed_file_spec("config")
+    config_path = config_spec.user_path
+    schema_path = managed_schema_path(spec=config_spec, data_path=config_path)
+    existing_config = load_stackops_config_for_setup()
     configured_remote = existing_config.get("default_rclone_config") if existing_config is not None else None
     if cloud is None:
         selected_remote = _select_remote(remote_names=remote_names, configured_remote=configured_remote)
@@ -96,16 +96,43 @@ def setup_cloud(
     if not yes and not typer.confirm("Write this configuration?", default=True):
         raise typer.Exit(code=0)
 
-    write_stackops_config(
-        config_path=config_path,
-        schema_path=schema_path,
-        existing_config=existing_config,
-        values={"default_rclone_config": selected_remote},
-    )
+    write_stackops_config(existing_config=existing_config, values={"default_rclone_config": selected_remote})
     console.print(
         Panel(
             f"Default cloud is now [bold]{selected_remote}[/bold].\n"
             "Commands that omit --cloud will use this rclone remote.",
+            title="Configuration Saved",
+            border_style="green",
+            padding=(1, 2),
+        )
+    )
+
+
+def setup_agent(
+    agent: Annotated[
+        AGENTS | None,
+        typer.Option("--agent", "-a", help="Use this agent instead of prompting."),
+    ] = None,
+) -> None:
+    from typing import get_args
+
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import load_stackops_config_for_setup, write_stackops_config
+    from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_choice
+    from stackops.utils.managed_files import get_managed_file_spec
+
+    existing_config = load_stackops_config_for_setup()
+    configured_agent = existing_config.get("default_agent") if existing_config is not None else None
+    agent_choices: tuple[AGENTS, ...] = get_args(AGENTS)
+    selected_agent: AGENTS = agent if agent is not None else ask_choice(
+        "Default agent",
+        help_text="Agent commands that omit --agent use this one.",
+        choices=agent_choices,
+        default=configured_agent if configured_agent is not None else agent_choices[0],
+    )
+    write_stackops_config(existing_config=existing_config, values={"default_agent": selected_agent})
+    Console().print(
+        Panel(
+            f"Default agent is now [bold]{selected_agent}[/bold] in {get_managed_file_spec("config").user_path}.",
             title="Configuration Saved",
             border_style="green",
             padding=(1, 2),
@@ -125,6 +152,8 @@ def get_app() -> typer.Typer:
     app.command("c", no_args_is_help=False, help=CLOUD_SETUP_HELP, hidden=True)(setup_cloud)
     app.command("email", no_args_is_help=False, help=f"📧 <e> {setup_email.EMAIL_SETUP_HELP}")(setup_email.setup_email)
     app.command("e", no_args_is_help=False, help=setup_email.EMAIL_SETUP_HELP, hidden=True)(setup_email.setup_email)
+    app.command("agent", no_args_is_help=False, help=f"🤖 <a> {AGENT_SETUP_HELP}")(setup_agent)
+    app.command("a", no_args_is_help=False, help=AGENT_SETUP_HELP, hidden=True)(setup_agent)
     app.command("data", no_args_is_help=False, help=f"💾 <d> {setup_domains.DATA_SETUP_HELP}")(setup_domains.setup_data)
     app.command("d", no_args_is_help=False, help=setup_domains.DATA_SETUP_HELP, hidden=True)(setup_domains.setup_data)
     app.command("dotfiles", no_args_is_help=False, help=f"📄 <f> {setup_domains.DOTFILES_SETUP_HELP}")(setup_domains.setup_dotfiles)

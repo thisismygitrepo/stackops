@@ -6,34 +6,12 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_prompts as secret_prompts
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_validation as secret_validation
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SECRETS_SCHEMA_FILENAME
 from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import (
     InteractivePickerOption,
     choose_interactive_options,
 )
 from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import SubsetOutputConflictAction
-from stackops.secrets.constants import SECRETS_FILE_VERSION
 from stackops.secrets.models import Login, SecretsFile
-
-
-def edit_secrets_file(secrets_path: Path, editor: str, *, create: bool = False) -> None:
-    import shutil
-    import subprocess
-
-    if not secrets_path.exists():
-        if not create:
-            _fail(f"Secrets file not found: {secrets_path}. Pass --create with --edit to create it from the packaged example.")
-        secrets_path.parent.mkdir(parents=True, exist_ok=True)
-        secrets_path.write_text(_read_default_secrets_template(), encoding="utf-8")
-        _write_default_secrets_schema(secrets_path.parent / SECRETS_SCHEMA_FILENAME)
-    elif create:
-        _write_default_secrets_schema(secrets_path.parent / SECRETS_SCHEMA_FILENAME)
-    editor_bin = shutil.which(editor)
-    if editor_bin is None:
-        _fail(f"Editor '{editor}' is not available on PATH.")
-    result = subprocess.run([editor_bin, str(secrets_path)], check=False)
-    if result.returncode != 0:
-        _fail(f"Editor exited with status code {result.returncode}.")
 
 
 def add_secrets_entry(
@@ -48,7 +26,9 @@ def add_secrets_entry(
     _secrets_entries(secrets_file).append(entry)
     _write_secrets_file(secrets_path=secrets_path, secrets_file=secrets_file, created_file=created_file)
     if create:
-        _write_default_secrets_schema(secrets_path.parent / SECRETS_SCHEMA_FILENAME)
+        from stackops.utils.managed_files import ensure_managed_schema, get_managed_file_spec
+
+        ensure_managed_schema(spec=get_managed_file_spec("secrets"), data_path=secrets_path)
     typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Added secrets entry '{entry['name']}' to {secrets_path}")
 
 
@@ -164,8 +144,11 @@ def _load_or_initialize_add_target(*, secrets_path: Path, create: bool) -> tuple
 
     if not secrets_path.exists():
         if not create:
-            _fail(f"Secrets file not found: {secrets_path}. Pass --create with --add to create it.")
-        return {"$schema": f"./{SECRETS_SCHEMA_FILENAME}", "version": SECRETS_FILE_VERSION, "entries": []}, True
+            _fail(f"Secrets file not found: {secrets_path}. Pass --create to create it.")
+        import stackops.secrets.assets as secrets_assets
+        from stackops.secrets.constants import SECRETS_FILE_VERSION
+
+        return {"$schema": f"./{secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE}", "version": SECRETS_FILE_VERSION, "entries": []}, True
     try:
         load_secrets_file(secrets_path)
     except SecretsSchemaError as exc:
@@ -280,24 +263,6 @@ def _subset_login_env_var_names(*, entry: Login) -> tuple[str, ...]:
                 seen.add(env_var_name)
                 result.append(env_var_name)
     return tuple(result)
-
-
-def _read_default_secrets_template() -> str:
-    import stackops.secrets.assets as secrets_assets
-    from stackops.utils.path_reference import get_path_reference_path
-
-    template_path = get_path_reference_path(module=secrets_assets, path_reference=secrets_assets.SECRETS_EXAMPLE_PATH_REFERENCE)
-    return template_path.read_text(encoding="utf-8")
-
-
-def _write_default_secrets_schema(schema_path: Path) -> None:
-    if schema_path.exists():
-        return
-    import stackops.secrets.assets as secrets_assets
-    from stackops.utils.path_reference import get_path_reference_path
-
-    source_path = get_path_reference_path(module=secrets_assets, path_reference=secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE)
-    schema_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def _render_env_file(key_values: Mapping[str, object], powershell: bool) -> str:
