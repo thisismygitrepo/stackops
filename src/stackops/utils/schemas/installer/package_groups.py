@@ -3,6 +3,7 @@ from typing import TypeAlias, Literal
 GUI = [
     "brave",
     "chatgpt",
+    "claude-desktop",
     "code",
     # "zoomit",
     "wezterm",

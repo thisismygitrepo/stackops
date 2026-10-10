@@ -5516,6 +5516,37 @@
       }
     },
     {
+      "appName": "claude-desktop",
+      "license": "Proprietary",
+      "repoURL": "CMD",
+      "doc": "Official Anthropic Claude desktop app with Chat, Cowork and Claude Code (Linux build is beta, Debian/Ubuntu only).",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": {
+            "apk": null,
+            "apt": "sudo curl -fsSLo /usr/share/keyrings/claude-desktop-archive-keyring.asc https://downloads.claude.ai/claude-desktop/key.asc && echo \"deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main\" | sudo tee /etc/apt/sources.list.d/claude-desktop.list && sudo apt update && sudo apt install -y claude-desktop",
+            "dnf": null,
+            "pacman": null
+          },
+          "windows": "winget install --no-upgrade --exact --id Anthropic.Claude --source winget --accept-package-agreements --accept-source-agreements",
+          "darwin": "brew install --cask claude"
+        },
+        "arm64": {
+          "linux": {
+            "apk": null,
+            "apt": "sudo curl -fsSLo /usr/share/keyrings/claude-desktop-archive-keyring.asc https://downloads.claude.ai/claude-desktop/key.asc && echo \"deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main\" | sudo tee /etc/apt/sources.list.d/claude-desktop.list && sudo apt update && sudo apt install -y claude-desktop",
+            "dnf": null,
+            "pacman": null
+          },
+          "windows": "winget install --no-upgrade --exact --id Anthropic.Claude --source winget --accept-package-agreements --accept-source-agreements",
+          "darwin": "brew install --cask claude"
+        }
+      }
+    },
+    {
       "appName": "minimax-code",
       "license": "MIT License",
       "repoURL": "https://github.com/MiniMax-AI/minimax-code",
