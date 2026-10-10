@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     ProfileBrowserName,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_types import SKILL_INSTALL_COMMAND_BACKEND
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 if TYPE_CHECKING:
     from stackops.utils.network.address import InterfaceIPv4Address
@@ -55,11 +55,12 @@ def install_tech(
         resolved_agent = agent
         if resolved_agent is None and any(technology not in BROWSER_TECH_NAMES_WITHOUT_AGENT for technology in selected_technologies):
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import choose_required_option, order_current_first
+            from stackops.utils.default_agent import resolve_agent
 
             agent_options = cast(tuple[AGENTS, ...], get_args(AGENTS))
             resolved_agent = cast(
                 AGENTS,
-                choose_required_option(options=order_current_first(options=agent_options, current=DEFAULT_AGENT), msg="Choose agent", header="Agent"),
+                choose_required_option(options=order_current_first(options=agent_options, current=resolve_agent(agent=None)), msg="Choose agent", header="Agent"),
             )
         results = tuple(
             install_browser_tech(which=selected_technology, agent=resolved_agent, backend=backend) for selected_technology in selected_technologies

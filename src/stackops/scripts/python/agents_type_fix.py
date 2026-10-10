@@ -2,7 +2,8 @@ from typing import Annotated, Literal, TypeAlias
 
 import typer
 
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT
+from stackops.utils.default_agent import DEFAULT_AGENT_HELP
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
 CheckerName: TypeAlias = Literal["mypy", "ruff", "pylint", "pyright", "ty", "pyrefly"]
@@ -26,7 +27,7 @@ def _get_layout_path(*, checker_name: CheckerName) -> str:
 
 def launch_type_fix(
     ctx: typer.Context,
-    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent type.")] = DEFAULT_AGENT,
+    agent: Annotated[AGENTS | None, typer.Option("--agent", "-a", help=f"Agent type. {DEFAULT_AGENT_HELP}")] = None,
     agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of diagnostics per prompt.")] = 10,
     which_checker: Annotated[
         CheckerName,

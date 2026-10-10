@@ -13,7 +13,8 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.sandbox.options import SandboxBackend, SandboxSync
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS, DEFAULT_AGENT
+from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
@@ -177,8 +178,14 @@ def add_mcp(
         raise typer.BadParameter(str(e)) from e
 
 
-def _resolve_interactive_agent(agent: INTERACTIVE_AGENT) -> _INTERACTIVE_CANONICAL_AGENT:
-    return _INTERACTIVE_AGENT_ALIASES[agent]
+def _resolve_interactive_agent(agent: INTERACTIVE_AGENT | None) -> _INTERACTIVE_CANONICAL_AGENT:
+    if agent is not None:
+        return _INTERACTIVE_AGENT_ALIASES[agent]
+    default_agent = resolve_agent(agent=None)
+    canonical_agents = cast(tuple[_INTERACTIVE_CANONICAL_AGENT, ...], get_args(_INTERACTIVE_CANONICAL_AGENT))
+    if default_agent not in canonical_agents:
+        raise ValueError(f"""Default agent '{default_agent}' is not supported by run-interactive. Pass --agent with one of: {", ".join(canonical_agents)}.""")
+    return cast(_INTERACTIVE_CANONICAL_AGENT, default_agent)
 
 
 def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, caveman: bool) -> list[str]:
@@ -235,9 +242,12 @@ def _apply_headroom(command: list[str], agent: _INTERACTIVE_CANONICAL_AGENT, hea
 
 def run_interactive(
     agent: Annotated[
-        INTERACTIVE_AGENT,
-        typer.Option(..., "--agent", "-a", help="Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, omp/o, or deepseek/dsh (web interface)."),
-    ] = cast(INTERACTIVE_AGENT, DEFAULT_AGENT),
+        INTERACTIVE_AGENT | None,
+        typer.Option(
+            ..., "--agent", "-a",
+            help=f"Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, omp/o, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}",
+        ),
+    ] = None,
     second_brain: Annotated[
         bool,
         typer.Option(..., "--second-brain", "-b", help="Run from the Second Brain repository."),
@@ -384,7 +394,7 @@ def run_prompt(
             help="Prompt text. Use -- before the prompt to pass option-looking text as prompt content.",
         ),
     ],
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = DEFAULT_AGENT,
+    agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help=f"Agent to launch. {DEFAULT_AGENT_HELP}")] = None,
     interactive: Annotated[
         bool,
         typer.Option("--interactive", "-i", help="Start a native agent chat with the prepared prompt and keep it open for follow-up messages."),
@@ -502,7 +512,7 @@ def run_prompt(
         with _agent_working_directory(second_brain=second_brain) as working_directory:
             impl(
                 prompt=" ".join(prompt) if prompt else None,
-                agent=agent,
+                agent=resolve_agent(agent=agent),
                 interactive=interactive,
                 reasoning_effort=reasoning_effort,
                 context=context,
@@ -529,7 +539,7 @@ def run_prompt(
 
 def ask(
     prompt: Annotated[list[str], typer.Argument(help="Prompt text to pass to the selected agent.")],
-    agent: Annotated[AGENTS, typer.Option("--agent", "-a", help="Agent to ask directly.")] = DEFAULT_AGENT,
+    agent: Annotated[AGENTS | None, typer.Option("--agent", "-a", help=f"Agent to ask directly. {DEFAULT_AGENT_HELP}")] = None,
     second_brain: Annotated[
         bool,
         typer.Option("--second-brain", "-b", help="Run from the Second Brain repository."),
@@ -545,7 +555,7 @@ def ask(
         with _agent_working_directory(second_brain=second_brain):
             from stackops.scripts.python.helpers.helpers_agents.agents_ask_impl import run_ask as impl
 
-            return_code = impl(prompt_parts=prompt, agent=agent, reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)
+            return_code = impl(prompt_parts=prompt, agent=resolve_agent(agent=agent), reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     raise typer.Exit(code=return_code)

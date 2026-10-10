@@ -25,7 +25,6 @@ CONFIG_AGENT_VALUES: Final[tuple[CONFIG_AGENTS, ...]] = (
     *cast(tuple[AGENTS, ...], get_args(AGENTS)),
     "omp",
 )
-DEFAULT_AGENT: Final[AGENTS] = "codex"
 HOST: TypeAlias = Literal["local", "docker"]
 PROVIDER: TypeAlias = Literal[
     "azure",

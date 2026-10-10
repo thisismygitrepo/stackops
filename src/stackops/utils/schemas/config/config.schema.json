@@ -32,6 +32,11 @@
       "description": "Default recipient email address used for notifications.",
       "format": "email",
       "minLength": 1
+    },
+    "default_agent": {
+      "type": "string",
+      "description": "Default agent used by agents commands when --agent is not passed.",
+      "enum": ["agy", "cursor-agent", "claude", "qwen", "copilot", "codex", "deepseek", "forge", "crush", "q", "opencode", "kilocode", "cline", "auggie", "oz", "droid", "pi"]
     }
   },
   "required": ["version"]

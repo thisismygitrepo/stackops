@@ -5,7 +5,8 @@ from typing import Annotated, get_args
 
 import typer
 
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_AGENT, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
     AGENT_PARALLEL_BACKEND_HELP,
     DEFAULT_AGENT_PARALLEL_BACKEND,
@@ -63,7 +64,7 @@ Concept:
 
 
 def agents_create(
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent type.")] = DEFAULT_AGENT,
+    agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help=f"Agent type. {DEFAULT_AGENT_HELP}")] = None,
     model: Annotated[str | None, typer.Option(..., "--model", "-m", help="Model to use, agent will use its default otherwise.")] = None,
     reasoning_effort: Annotated[
         ReasoningEffort | None,
@@ -134,12 +135,13 @@ def agents_create(
             typer.echo(PARALLEL_CREATE_EXAMPLE)
             return
 
+        resolved_agent = resolve_agent(agent=agent)
         normalized_separator = _decode_separator(separator=separator)
         if interactive:
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
 
             main(
-                agent=agent,
+                agent=resolved_agent,
                 host=host,
                 backend=backend,
                 model=model,
@@ -165,7 +167,7 @@ def agents_create(
         from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
 
         impl(
-            agent=agent,
+            agent=resolved_agent,
             host=host,
             backend=backend,
             model=model,
@@ -235,7 +237,7 @@ def _decode_separator(separator: str) -> str:
 def create_context(
     prompt: Annotated[str, typer.Argument(help="Prompt text to send to the selected agent.")],
     job_name: Annotated[str, typer.Argument(help="Job name used in ./.ai/agents/<jobName>/context.md output path.")],
-    agent: Annotated[AGENTS, typer.Option(..., "--agent", "-a", help="Agent to launch.")] = DEFAULT_AGENT,
+    agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help=f"Agent to launch. {DEFAULT_AGENT_HELP}")] = None,
     separator: Annotated[
         str, typer.Option(..., "--separator", "-s", help="Separator between individual results in context.md. Supports escaped values like '\\n'.")
     ] = DEFAULT_SEAPRATOR,
@@ -266,7 +268,7 @@ def create_context(
         with chdir(repo_root):
             impl(
                 prompt=full_prompt,
-                agent=agent,
+                agent=resolve_agent(agent=agent),
                 interactive=False,
                 reasoning_effort=None,
                 context="",
