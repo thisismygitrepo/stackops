@@ -1,6 +1,7 @@
 from collections import Counter
 from datetime import date
 from pathlib import Path
+from typing import Literal
 
 from rich import box
 from rich.columns import Columns
@@ -16,6 +17,34 @@ from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constant
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_progress import show_second_brain_progress
 from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import UpdateFile
+
+
+def show_second_brain_config_result(*, instructions_path: Path, action: Literal["created", "kept", "overwritten"]) -> None:
+    console = Console()
+    match action:
+        case "created":
+            message = "Created AGENTS.md from the bundled instructions."
+        case "kept":
+            message = "Kept existing AGENTS.md. No changes made."
+        case "overwritten":
+            message = "Replaced AGENTS.md with the bundled instructions."
+    result_style = "yellow" if action == "kept" else "green"
+    details = Table.grid(padding=(0, 2))
+    details.add_column(style="bold", no_wrap=True)
+    details.add_column(overflow="fold")
+    details.add_row("Directory", Text(str(instructions_path.parent)))
+    details.add_row("Instructions", Text(str(instructions_path)))
+    console.print(
+        Panel(
+            Group(Text(message, style=f"""bold {result_style}"""), Text(), details),
+            title=Text("Second Brain configuration", style="bold"),
+            title_align="left",
+            border_style=result_style,
+            padding=(0, 1),
+        )
+    )
+    if action == "kept":
+        console.print(Text.assemble("To replace these instructions: ", ("agents B config --overwrite", "bold cyan")))
 
 
 def show_second_brain_status(
@@ -78,27 +107,6 @@ def show_second_brain_status(
     console.print(Columns([summary, agents], padding=(0, 2)))
     if invalid_file_count:
         console.print(Text("Update totals exclude invalid logs.", style="dim"))
-
-    if invalid_row_count or invalid_file_count:
-        console.print()
-        console.rule(Text("Invalid updates", style="bold yellow"), style="dim")
-        for update_file in update_files:
-            if update_file.error is None and not update_file.invalid_rows:
-                continue
-            issues = Table(box=box.SIMPLE_HEAD, expand=True, header_style="bold", padding=(0, 1))
-            issues.add_column("Line", justify="right", no_wrap=True)
-            issues.add_column("Problem", overflow="fold", ratio=1)
-            if update_file.error is not None:
-                issues.add_row("-", Text(update_file.error, style="red", overflow="fold"))
-            for invalid_row in update_file.invalid_rows:
-                issues.add_row(str(invalid_row.line_number), Text(invalid_row.reason, overflow="fold"))
-            console.print(
-                Panel(
-                    Group(Text(str(update_file.path.relative_to(second_brain_root)), style="bold", overflow="fold"), issues),
-                    border_style="red" if update_file.error is not None else "yellow",
-                    padding=(0, 1),
-                )
-            )
 
 
 def show_second_brain_align_result(

@@ -4944,6 +4944,27 @@
       }
     },
     {
+      "appName": "caveman",
+      "license": "Apache-2.0",
+      "repoURL": "https://github.com/JuliusBrussee/caveman",
+      "doc": "Local context compression CLI with proxy, command-output compression, browsing, and usage analysis. Requires Node.js and npm on PATH; installs companion binaries. Configure agent integration separately.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "node -e \"if (process.versions.bun) throw new Error('Caveman requires Node.js; node currently resolves to Bun')\" && npm install --engine-strict -g @caveman-ai/cli && caveman setup --install",
+          "windows": "node -e \"if (process.versions.bun) throw new Error('Caveman requires Node.js; node currently resolves to Bun')\" && npm install --engine-strict -g @caveman-ai/cli && caveman setup --install",
+          "darwin": "node -e \"if (process.versions.bun) throw new Error('Caveman requires Node.js; node currently resolves to Bun')\" && npm install --engine-strict -g @caveman-ai/cli && caveman setup --install"
+        },
+        "arm64": {
+          "linux": "node -e \"if (process.versions.bun) throw new Error('Caveman requires Node.js; node currently resolves to Bun')\" && npm install --engine-strict -g @caveman-ai/cli && caveman setup --install",
+          "windows": "node -e \"if (process.versions.bun) throw new Error('Caveman requires Node.js; node currently resolves to Bun')\" && npm install --engine-strict -g @caveman-ai/cli && caveman setup --install",
+          "darwin": "node -e \"if (process.versions.bun) throw new Error('Caveman requires Node.js; node currently resolves to Bun')\" && npm install --engine-strict -g @caveman-ai/cli && caveman setup --install"
+        }
+      }
+    },
+    {
       "appName": "rtk",
       "license": "Apache License 2.0",
       "repoURL": "https://github.com/rtk-ai/rtk",
@@ -5326,12 +5347,12 @@
       }
     },
     {
-      "appName": "cagent",
+      "appName": "docker-agent",
       "license": "Apache-2.0",
       "repoURL": "https://github.com/docker/docker-agent",
       "lastCommitDate": "2026-09-21T11:58:11Z",
       "lastCommitDateCheckDate": "2026-09-21T22:08:58Z",
-      "doc": "Docker terminal coding agent",
+      "doc": "Docker Agent builds, runs, and shares teams of AI agents configured in YAML.",
       "categoryLabels": [
         "build-devops-containers",
         "ai-agents-assistants"

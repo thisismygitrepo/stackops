@@ -27,7 +27,7 @@ _ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; sup
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
 INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh"]
-_CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $caveman wenyan-full for this entire session."
+_CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $megacave for this entire session."
 _HEADROOM_COMMAND: Final[str] = "headroom"
 _HEADROOM_AGENTS: Final[tuple[_HEADROOM_AGENT, ...]] = ("codex", "copilot")
 _INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, _INTERACTIVE_CANONICAL_AGENT]] = {
@@ -254,7 +254,7 @@ def run_interactive(
     ] = False,
     caveman: Annotated[
         bool,
-        typer.Option(..., "--caveman", "-c", help="Start the session with the caveman wenyan-full prompt."),
+        typer.Option(..., "--caveman", "-c", help="Start the session with megacave Wenyan compression."),
     ] = False,
     headroom: Annotated[
         bool,
