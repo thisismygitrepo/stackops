@@ -76,7 +76,7 @@ run  = 'shell --block -- bat "$0"'
 desc = "bat the file"
 [[mgr.prepend_keymap]]
 on   = "e"
-run  = 'shell --block -- hx "$0"'
+run  = 'shell --block -- hx %h'
 desc = "edit the file with helix"
 [[mgr.prepend_keymap]]
 on   = "v"
@@ -108,8 +108,13 @@ desc = "Read with OS default app"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "h"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops utils file edit "$0"'
-desc = "Read with helix"
+run  = 'shell --block -- hx %h'
+desc = "Read with Helix (simple)"
+
+[[mgr.prepend_keymap]]
+on   = ["R", "H"]
+run  = 'shell --block -- "$HOME/.config/stackops/scripts/wrap_stackops" utils file edit --lsp %h'
+desc = "Edit with Helix (Python LSP setup)"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "p"]

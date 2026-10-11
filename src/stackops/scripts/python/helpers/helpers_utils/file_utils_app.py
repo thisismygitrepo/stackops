@@ -12,10 +12,11 @@ SCRAPE_CONTEXT_SETTINGS = {"allow_extra_args": True, "ignore_unknown_options": T
 
 def edit_file_with_hx(
     path: Annotated[str | None, typer.Argument(..., help="The root directory of the project to edit, or a file path.")] = None,
+    lsp: Annotated[bool, typer.Option("--lsp", help="Install Python LSP tooling in the repository before opening Helix.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.python import edit_file_with_hx as impl
 
-    impl(path=path)
+    impl(path=path, lsp=lsp)
 
 
 def download(

@@ -141,35 +141,36 @@ def tui_env(which: Annotated[Literal["PATH", "p", "ENV", "e"], typer.Argument(he
     _run_textual_env(which=which)
 
 
-def edit_file_with_hx(
-    path: Annotated[str | None, typer.Argument(..., help="The root directory of the project to edit, or a file path.")] = None,
-) -> None:
-    from pathlib import Path
+def edit_file_with_hx(path: str | None, lsp: bool) -> None:
+    import os
+    from shlex import quote
 
-    if path is None:
-        root_path = Path.cwd()
-        print(f"No path provided. Using current working directory: {root_path}")
-    else:
-        root_path = Path(path).expanduser().resolve()
-        print(f"Using provided path: {root_path}")
-    from stackops.utils.accessories import get_repo_root
-
-    repo_root = get_repo_root(root_path)
-    if repo_root is not None and repo_root.joinpath("pyproject.toml").exists():
-        code = f"""
-cd {repo_root}
-uv add --dev pylsp-mypy python-lsp-server[mypy] pyright ruff-lsp  # for helix editor.
-source ./.venv/bin/activate
-"""
-    else:
-        code = ""
-    if root_path.is_file():
-        code += f"hx {root_path}"
-    else:
-        code += "hx"
     from stackops.utils.code import exit_then_run_shell_script
 
-    exit_then_run_shell_script(code)
+    target_path = Path.cwd() if path is None else Path(path).expanduser().resolve()
+    command = "hx"
+    if path is not None:
+        target_argument = f"""'{str(target_path).replace("'", "''")}'""" if os.name == "nt" else quote(str(target_path))
+        command += f""" {target_argument}"""
+    if lsp:
+        from stackops.utils.accessories import get_repo_root
+
+        repo_search_path = target_path
+        while not repo_search_path.exists():
+            repo_search_path = repo_search_path.parent
+        repo_root = get_repo_root(repo_search_path)
+        if repo_root is not None and repo_root.joinpath("pyproject.toml").exists():
+            repo_argument = f"""'{str(repo_root).replace("'", "''")}'""" if os.name == "nt" else quote(str(repo_root))
+            install_command = f"""uv add --project {repo_argument} --dev python-lsp-server pylsp-mypy pyright ruff-lsp pyrefly black"""
+            editor_command = f"""uv run --project {repo_argument} {command}"""
+            if os.name == "nt":
+                command = f"""{install_command}
+if ($LASTEXITCODE -ne 0) {{ exit $LASTEXITCODE }}
+{editor_command}
+"""
+            else:
+                command = f"""{install_command} && {editor_command}"""
+    exit_then_run_shell_script(script=command, strict=False)
 
 
 if __name__ == "__main__":
