@@ -28,5 +28,7 @@ def render_cortex_prompt_command(*, command: list[str], prompt_file: Path, is_wi
     prompt_path = quote_for_shell(str(prompt_file), is_windows=is_windows)
     if is_windows:
         invocation = "& " + " ".join(quote_for_shell(argument, is_windows=True) for argument in command)
-        return f"""{invocation} -p (Get-Content -Raw {prompt_path})"""
+        # On Windows, cortex -p only reads the first line of a multi-line argument (and rejects stdin),
+        # so we flatten newlines to spaces. Design choice: markdown layout is lost, but every word reaches the model.
+        return f"""{invocation} -p ((Get-Content -Raw {prompt_path}) -replace "`r?`n", ' ')"""
     return f'''{shlex.join(command)} -p "$(cat {prompt_path})"'''
