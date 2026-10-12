@@ -5589,6 +5589,27 @@
       }
     },
     {
+      "appName": "ecc",
+      "license": "MIT License",
+      "repoURL": "https://github.com/affaan-m/ECC",
+      "doc": "Agent harness system of skills, agents, commands, hooks, and memory for Claude Code, Codex, Cursor, OpenCode, Gemini, Zed, and more. Installs the ecc CLI only; apply it per harness with ecc install --guided or ecc install --target <harness> --profile <name>.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g ecc-universal@latest",
+          "windows": "bun install -g ecc-universal@latest",
+          "darwin": "bun install -g ecc-universal@latest"
+        },
+        "arm64": {
+          "linux": "bun install -g ecc-universal@latest",
+          "windows": "bun install -g ecc-universal@latest",
+          "darwin": "bun install -g ecc-universal@latest"
+        }
+      }
+    },
+    {
       "appName": "minimax-code",
       "license": "MIT License",
       "repoURL": "https://github.com/MiniMax-AI/minimax-code",

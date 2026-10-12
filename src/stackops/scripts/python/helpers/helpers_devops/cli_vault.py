@@ -121,26 +121,26 @@ def get_app() -> typer.Typer:
         add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    app.command("search", no_args_is_help=True, help="<s> Retrieve credentials from Bitwarden CLI and optionally copy them to the clipboard.")(search)
+    app.command("search", no_args_is_help=True, help="🔎 <s> Retrieve credentials from Bitwarden CLI and optionally copy them to the clipboard.")(search)
     app.command("s", no_args_is_help=True, help="Alias for search.", hidden=True)(search)
 
     app.command(
         "login-and-unlock",
         no_args_is_help=False,
-        help="<l> Log in with Bitwarden API credentials from StackOps secrets, unlock the vault, and persist BW_SESSION locally.",
+        help="🔑 <l> Log in with Bitwarden API credentials from StackOps secrets, unlock the vault, and persist BW_SESSION locally.",
     )(login_and_unlock)
     app.command("l", no_args_is_help=False, help="Alias for login-and-unlock.", hidden=True)(login_and_unlock)
 
     app.command(
         "unlock",
-        help='<u> Print an eval-able script exporting the saved BW_SESSION (usage: eval "$(devops vault unlock)").',
+        help='🔓 <u> Print an eval-able script exporting the saved BW_SESSION (usage: eval "$(devops vault unlock)").',
     )(unlock)
     app.command("u", help="Alias for unlock.", hidden=True)(unlock)
 
-    app.command("sync", help="<S> Sync the Bitwarden vault with the server and refresh cached searches.")(sync)
+    app.command("sync", help="🔄 <S> Sync the Bitwarden vault with the server and refresh cached searches.")(sync)
     app.command("S", help="Alias for sync.", hidden=True)(sync)
 
-    app.command("clean-cache", help="<c> Remove encrypted vault cache stored under ~/tmp_results.")(clean_cache)
+    app.command("clean-cache", help="🧹 <c> Remove encrypted vault cache stored under ~/tmp_results.")(clean_cache)
     app.command("c", help="Alias for clean-cache.", hidden=True)(clean_cache)
 
     app.add_typer(cli_config_secrets.get_app(), name="secrets", help=f"🔐 <k> {cli_config_secrets.SECRETS_HELP}")
