@@ -7,6 +7,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.claude 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.cline import DEFINITION as CLINE
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.codex import DEFINITION as CODEX
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.copilot import DEFINITION as COPILOT
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.cortex import DEFINITION as CORTEX
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.crush import DEFINITION as CRUSH
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.cursor_agent import DEFINITION as CURSOR_AGENT
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.deepseek import DEFINITION as DEEPSEEK
@@ -24,6 +25,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 DOCTOR_AGENT_DEFINITIONS: Final[tuple[DoctorAgentDefinition, ...]] = (
     CODEX,
+    CORTEX,
     DEEPSEEK,
     PI,
     OMP,
@@ -50,6 +52,7 @@ DOCTOR_AGENT_ALIASES: Final[dict[str, DoctorAgent]] = {
     "amazon-q": "q",
     "augment": "auggie",
     "claude-code": "claude",
+    "cortex-code": "cortex",
     "cursor": "cursor-agent",
     "deepseek-harness": "deepseek",
     "dsh": "deepseek",

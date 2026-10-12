@@ -108,7 +108,7 @@ def _resolve_ask_reasoning(agent: AGENTS, reasoning: ReasoningShortcut | None) -
     if reasoning is None:
         return None
     if len(reasoning_support(agent=agent).efforts) == 0:
-        raise ValueError("--reasoning is only supported for --agent codex, --agent copilot, or --agent pi")
+        raise ValueError("--reasoning is only supported for --agent codex, --agent copilot, --agent cortex, or --agent pi")
     return resolve_reasoning(shortcut=reasoning, agent=agent)
 
 

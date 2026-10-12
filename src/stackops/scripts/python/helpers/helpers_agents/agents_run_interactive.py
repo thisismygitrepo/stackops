@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import assert_never
 
 from stackops.scripts.python.helpers.helpers_agents.constants import CODEX_WORKSPACE_PERMISSION_ARGS
@@ -29,6 +30,11 @@ def build_interactive_prompt_command(
             command.extend(["--", prompt])
         case "copilot":
             command.extend([*copilot_reasoning_args(reasoning_effort=reasoning), "--yolo", "--interactive", prompt])
+        case "cortex":
+            from stackops.scripts.python.helpers.helpers_agents.cortex_launch import build_cortex_command
+
+            command = build_cortex_command(model=None, provider=None, reasoning_effort=reasoning, directory=Path.cwd())
+            command.extend(["--", prompt])
         case "pi":
             if reasoning is not None:
                 command.extend(["--thinking", "off" if reasoning == "none" else reasoning])
@@ -49,7 +55,7 @@ def build_interactive_prompt_command(
         case "forge" | "crush" | "q" | "kilocode" | "cline" | "oz":
             raise ValueError(
                 f"""--interactive is not supported for agent '{agent}'. """
-                "Choose codex, copilot, pi, opencode, agy, qwen, claude, cursor-agent, auggie, or droid, or omit --interactive."
+                "Choose codex, copilot, cortex, pi, opencode, agy, qwen, claude, cursor-agent, auggie, or droid, or omit --interactive."
             )
         case _:
             assert_never(agent)

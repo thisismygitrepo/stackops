@@ -6,6 +6,7 @@ from stackops.scripts.python.ai.solutions.claude import claude
 from stackops.scripts.python.ai.solutions.cline import cline
 from stackops.scripts.python.ai.solutions.codex import codex
 from stackops.scripts.python.ai.solutions.copilot import github_copilot
+from stackops.scripts.python.ai.solutions.cortex import cortex
 from stackops.scripts.python.ai.solutions.crush import crush
 from stackops.scripts.python.ai.solutions.cursor import cursors
 from stackops.scripts.python.ai.solutions.deepseek import deepseek
@@ -56,6 +57,10 @@ def build_framework_config(
             )
         case "codex":
             return codex.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
+        case "cortex":
+            return cortex.build_configuration(
                 repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
             )
         case "deepseek":

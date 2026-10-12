@@ -5,6 +5,7 @@ from pathlib import Path
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookDiagnostic, HookSource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths import hook_directory_files
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorContext, DoctorOrigin
+from stackops.scripts.python.helpers.helpers_agents.cortex_paths import resolve_cortex_home
 
 
 def json_hook_sources(*, agent: DoctorAgent, context: DoctorContext) -> tuple[tuple[HookSource, ...], tuple[HookDiagnostic, ...]]:
@@ -13,6 +14,19 @@ def json_hook_sources(*, agent: DoctorAgent, context: DoctorContext) -> tuple[tu
     diagnostics: list[HookDiagnostic] = []
     settings_roots: list[tuple[DoctorOrigin, Path, tuple[str, ...]]] = []
     match agent:
+        case "cortex":
+            cortex_home = resolve_cortex_home(home_dir=context.home_directory)
+            if not cortex_home.is_absolute():
+                cortex_home = context.working_directory / cortex_home
+            sources.append(HookSource(agent, "global", cortex_home / "hooks.json", ("hooks",)))
+            settings_roots.extend(
+                ("global", context.home_directory / directory, ("settings.json",))
+                for directory in (".claude", ".cortex")
+            )
+            settings_roots.extend(
+                ("local", context.working_directory / directory, ("settings.json", "settings.local.json"))
+                for directory in (".cortex", ".claude")
+            )
         case "claude":
             settings_roots.append(("global", context.claude_home, ("settings.json",)))
             settings_roots.extend(("local", root / ".claude", ("settings.json", "settings.local.json")) for root in context.ancestor_directories)

@@ -151,6 +151,14 @@ def build_agent_command(
             return f"{agent_cli} run {prompt_file_q}"
         case "claude":
             return f"{agent_cli} -p {prompt_content_expr}"
+        case "cortex":
+            from stackops.scripts.python.helpers.helpers_agents.cortex_launch import build_cortex_command, render_cortex_prompt_command
+
+            command = build_cortex_command(
+                model=model, provider=provider, reasoning_effort=normalized_reasoning_effort,
+                directory=Path.cwd(),
+            )
+            return render_cortex_prompt_command(command=command, prompt_file=prompt_file, is_windows=resolved_is_windows)
         case "qwen":
             return f"{agent_cli} --yolo --prompt {prompt_file_q}"
         case "q":

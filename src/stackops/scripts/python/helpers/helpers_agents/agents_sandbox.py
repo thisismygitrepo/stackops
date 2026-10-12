@@ -62,6 +62,13 @@ def resolve_sandbox_access(*, agent: str) -> SandboxAccess:
         case "codex":
             directories = (_environment_directory(name="CODEX_HOME", default_directory=home_directory / ".codex"),)
             environment = ("CODEX_HOME", "OPENAI_API_KEY", "OPENAI_BASE_URL")
+        case "cortex":
+            directories = (_environment_directory(name="SNOWFLAKE_HOME", default_directory=home_directory / ".snowflake"),)
+            environment = (
+                "SNOWFLAKE_HOME", "SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_PRIVATE_KEY_RAW",
+                "SNOWFLAKE_AUTHENTICATOR", "SNOWFLAKE_TOKEN", "SNOWFLAKE_ROLE", "SNOWFLAKE_WAREHOUSE", "SNOWFLAKE_DATABASE", "SNOWFLAKE_SCHEMA",
+                "CORTEX_AGENT_MODEL", "CORTEX_ENABLE_MEMORY", "COCO_DANGEROUS_MODE_REQUIRE_SQL_WRITE_PERMISSION", "COCO_LOG_LEVEL", "COCO_DEBUG",
+            )
         case "copilot":
             directories = (_environment_directory(name="COPILOT_HOME", default_directory=home_directory / ".copilot"),)
             environment = (

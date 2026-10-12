@@ -71,7 +71,7 @@ def collect_cleanup_resources(
         if not target.is_symlink() and resource.kind == "skill" and target.name == "SKILL.md":
             target = target.parent
         elif resource.kind == "plugin" and target.name in ("plugin.json", "package.json", "qwen-extension.json", "gemini-extension.json"):
-            target = target.parent.parent if target.parent.name in (".codex-plugin", ".claude-plugin") else target.parent
+            target = target.parent.parent if target.parent.name in (".codex-plugin", ".claude-plugin", ".cortex-plugin") else target.parent
         removal = (
             HookRemoval(target, "directory" if not target.is_symlink() and target.is_dir() else "file", (), "delete")
             if resource.origin in ("local", "global") else None

@@ -7,6 +7,7 @@ from typing import Final, Literal, cast, get_args
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import build_agent_skill_preview_mapping
+from stackops.scripts.python.helpers.helpers_agents.cortex_paths import resolve_cortex_home
 from stackops.scripts.python.helpers.helpers_agents.deepseek_mcp import write_deepseek_mcp_config
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names, resolve_requested_mcp_servers
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation, ResolvedMcpServer
@@ -94,6 +95,12 @@ def resolve_agent_launch_prefix(*, agent: AGENTS, repo_root: Path | None) -> lis
         cline_dir = repo_root / ".cline"
         if cline_dir.is_dir():
             return ["--config", str(cline_dir)]
+    if agent == "cortex":
+        cortex_mcp_path = repo_root / ".cortex" / "mcp.json"
+        if cortex_mcp_path.is_file():
+            configuration = _load_json_object(path=cortex_mcp_path)
+            _ensure_object_member(root=configuration, key="mcpServers", path=cortex_mcp_path)
+            return ["--mcp-config", json.dumps(configuration)]
     return []
 
 
@@ -113,6 +120,8 @@ def install_resolved_mcp_servers(
             _write_codex_config(path=path, resolved_servers=resolved_servers)
         case "copilot":
             _write_copilot_cli_config(path=path, resolved_servers=resolved_servers)
+        case "cortex":
+            _write_cortex_mcp_config(path=path, scope=scope, resolved_servers=resolved_servers)
         case "claude" | "cursor-agent" | "forge" | "kilocode":
             _write_mcp_servers_file(path=path, resolved_servers=resolved_servers)
         case "oz":
@@ -149,6 +158,8 @@ def resolve_install_path(
                 return repo_root / ".agents" / "mcp_config.json"
             case "codex":
                 return repo_root / ".codex" / "config.toml"
+            case "cortex":
+                return repo_root / ".cortex" / "mcp.json"
             case "copilot":
                 return repo_root / ".mcp.json"
             case "claude":
@@ -185,6 +196,8 @@ def resolve_install_path(
             return home_dir / ".gemini" / "antigravity-cli" / "mcp_config.json"
         case "codex":
             return home_dir / ".codex" / "config.toml"
+        case "cortex":
+            return resolve_cortex_home(home_dir=home_dir) / "mcp.json"
         case "copilot":
             return _resolve_copilot_cli_user_config_path(home_dir=home_dir)
         case "claude":
@@ -296,6 +309,36 @@ def _write_mcp_servers_file(*, path: Path, resolved_servers: tuple[ResolvedMcpSe
     for resolved_server in resolved_servers:
         mcp_servers[resolved_server["name"]] = _resolved_server_to_generic_entry(resolved_server=resolved_server)
     _write_json_object(path=path, root=root)
+
+
+def _write_cortex_mcp_config(*, path: Path, scope: MCP_INSTALL_SCOPE, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
+    root = _load_json_object(path=path)
+    mcp_servers = _ensure_object_member(root=root, key="mcpServers", path=path)
+    disabled_path = path.with_name("mcp-disabled.json")
+    disabled_names: set[str] = set()
+    if scope == "global" and disabled_path.exists():
+        disabled_value: object = json.loads(disabled_path.read_text(encoding="utf-8"))
+        if not isinstance(disabled_value, list) or not all(isinstance(name, str) for name in disabled_value):
+            raise ValueError(f"""Cortex disabled MCP servers must be a JSON array of names in {disabled_path}""")
+        disabled_names.update(cast(list[str], disabled_value))
+    for server in resolved_servers:
+        enabled = server["definition"]["enabled"]
+        if scope == "local" and not enabled:
+            raise ValueError(
+                f"""Cortex stores disabled MCP servers globally; install disabled server '{server['name']}' with global scope"""
+            )
+        entry = _resolved_server_to_generic_entry(resolved_server=server)
+        entry["type"] = server["definition"]["transport"]
+        del entry["enabled"]
+        entry.pop("description", None)
+        mcp_servers[server["name"]] = entry
+        if enabled:
+            disabled_names.discard(server["name"])
+        else:
+            disabled_names.add(server["name"])
+    _write_json_object(path=path, root=root)
+    if scope == "global" and (disabled_names or disabled_path.exists()):
+        disabled_path.write_text(json.dumps(sorted(disabled_names), indent=2) + "\n", encoding="utf-8")
 
 
 def _load_oz_mcp_root(*, path: Path) -> dict[str, object]:

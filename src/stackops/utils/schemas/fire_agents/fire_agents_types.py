@@ -8,6 +8,7 @@ AGENTS: TypeAlias = Literal[
     "qwen",
     "copilot",
     "codex",
+    "cortex",
     "deepseek",
     "forge",
     "crush",

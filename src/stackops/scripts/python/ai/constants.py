@@ -10,6 +10,7 @@ OPENROUTER_ZDR_CONFIGURATION: Final[dict[CONFIG_AGENTS, str | None]] = {
     "qwen": "ZDR added to existing repository OpenRouter model settings",
     "copilot": "Requires OpenRouter account/API-key enforcement",
     "codex": "Requires OpenRouter account/API-key enforcement",
+    "cortex": None,
     "deepseek": "Requires OpenRouter account/API-key enforcement",
     "forge": "Requires OpenRouter account/API-key enforcement",
     "crush": "OpenRouter provider request defaults",

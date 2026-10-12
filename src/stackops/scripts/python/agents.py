@@ -21,12 +21,12 @@ _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "p
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
-_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "pi", "opencode", "omp", "deepseek"]
+_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "cortex", "pi", "opencode", "omp", "deepseek"]
 
-_ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, and pi"
+_ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, cortex, and pi (agent-specific levels)"
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
-INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh"]
+INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "cortex", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh"]
 _CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $megacave for this entire session."
 _HEADROOM_COMMAND: Final[str] = "headroom"
 _HEADROOM_AGENTS: Final[tuple[_HEADROOM_AGENT, ...]] = ("codex", "copilot")
@@ -35,6 +35,7 @@ _INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, _INTERACTIVE_CANONICAL
     "x": "codex",
     "copilot": "copilot",
     "c": "copilot",
+    "cortex": "cortex",
     "pi": "pi",
     "p": "pi",
     "opencode": "opencode",
@@ -200,6 +201,13 @@ def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, caveman: boo
             if caveman:
                 command.extend(["--interactive", _CAVEMAN_INITIAL_PROMPT])
             return command
+        case "cortex":
+            from stackops.scripts.python.helpers.helpers_agents.cortex_launch import build_cortex_command
+
+            command = build_cortex_command(model=None, provider=None, reasoning_effort=None, directory=Path.cwd())
+            if caveman:
+                command.extend(["--", _CAVEMAN_INITIAL_PROMPT])
+            return command
         case "pi":
             command = ["pi"]
             if caveman:
@@ -245,7 +253,7 @@ def run_interactive(
         INTERACTIVE_AGENT | None,
         typer.Option(
             ..., "--agent", "-a",
-            help=f"Agent to launch: codex/x, copilot/c, pi/p, opencode/oc, omp/o, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}",
+            help=f"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}",
         ),
     ] = None,
     second_brain: Annotated[
@@ -369,7 +377,7 @@ def run_interactive(
                 else:
                     script = shlex.join(command)
             else:
-                if resolved_agent == "deepseek" and is_windows_host():
+                if resolved_agent in ("deepseek", "cortex") and is_windows_host():
                     from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
 
                     script = "& " + " ".join(quote_for_shell(argument, is_windows=True) for argument in command)
@@ -409,7 +417,7 @@ def run_prompt(
             ...,
             "--reasoning",
             "-r",
-            help="Reasoning effort for codex, copilot, and pi agents. Unsupported agents ignore it and use their default.",
+            help="Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default.",
         ),
     ] = None,
     context: Annotated[str | None, typer.Option(..., "--context", "-c", help="Context string. Mutually exclusive with --context-path.")] = None,

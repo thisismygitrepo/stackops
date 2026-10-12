@@ -7,6 +7,10 @@ SHELL ["/bin/bash", "-lc"]
 
 RUN /root/.local/bin/devops install --group agents
 
+RUN cortex_install_dir="$(dirname "$(readlink /root/.local/bin/cortex)")" && \
+    mv "$cortex_install_dir" /opt/cortex && \
+    ln -s /opt/cortex/cortex /usr/local/bin/cortex
+
 # Clean up of installer files.
 RUN rm -rfd /root/tmp_results
 RUN /root/.local/bin/uv clean && \

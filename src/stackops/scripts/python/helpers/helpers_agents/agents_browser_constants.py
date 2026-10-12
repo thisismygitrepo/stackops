@@ -95,6 +95,7 @@ BROWSER_SKILLS_CLI_AGENT_BY_STACKOPS_AGENT: Final[dict[AGENTS, str]] = {
     "copilot": "github-copilot",
     "codex": "codex",
     "forge": "forgecode",
+    "cortex": "cortex",
     "deepseek": "universal",
     "crush": "crush",
     "opencode": "opencode",

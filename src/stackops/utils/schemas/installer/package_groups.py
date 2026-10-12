@@ -17,6 +17,7 @@ AGENTS = [
     "aoe",
     "aichat",
     "copilot",
+    "cortex",
     "antigravity",
     "minimax-code",
     "deepseek-harness",

@@ -56,7 +56,7 @@ def collect_hooks(*, agent: DoctorAgent, context: DoctorContext) -> HookInventor
         scripts = collect_cline_hooks(context=context)
         entries.extend(scripts.entries)
         diagnostics.extend(scripts.diagnostics)
-    if agent not in ("claude", "cursor-agent", "copilot", "droid", "qwen", "q", "cline"):
+    if agent not in ("claude", "cortex", "cursor-agent", "copilot", "droid", "qwen", "q", "cline"):
         diagnostics.append(
             HookDiagnostic(
                 agent,
@@ -76,7 +76,7 @@ def collect_hooks(*, agent: DoctorAgent, context: DoctorContext) -> HookInventor
                 "notice",
             )
         )
-    if agent in ("cursor-agent", "copilot", "droid", "qwen", "cline"):
+    if agent in ("cortex", "cursor-agent", "copilot", "droid", "qwen", "cline"):
         diagnostics.append(
             HookDiagnostic(
                 agent,

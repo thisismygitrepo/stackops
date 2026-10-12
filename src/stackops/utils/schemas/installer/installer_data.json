@@ -5371,6 +5371,27 @@
       }
     },
     {
+      "appName": "cortex",
+      "license": "Snowflake terms",
+      "repoURL": "CMD",
+      "doc": "Snowflake Cortex Code terminal coding agent with Snowflake data and MCP integration.",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "curl -qLsS https://ai.snowflake.com/static/cc-scripts/install.sh | sh",
+          "darwin": "curl -qLsS https://ai.snowflake.com/static/cc-scripts/install.sh | sh",
+          "windows": "powershell -NoProfile -Command \"irm https://ai.snowflake.com/static/cc-scripts/install.ps1 | iex\""
+        },
+        "arm64": {
+          "linux": "curl -qLsS https://ai.snowflake.com/static/cc-scripts/install.sh | sh",
+          "darwin": "curl -qLsS https://ai.snowflake.com/static/cc-scripts/install.sh | sh",
+          "windows": null
+        }
+      }
+    },
+    {
       "appName": "pi",
       "license": "MIT",
       "repoURL": "https://github.com/badlogic/pi-mono",

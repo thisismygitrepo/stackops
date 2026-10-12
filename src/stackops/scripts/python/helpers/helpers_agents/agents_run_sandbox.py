@@ -73,6 +73,13 @@ def build_sandboxed_prompt_script(
             command = [agent, "--print", "--dangerously-skip-permissions", prompt_text]
         case "forge" | "claude":
             command = [agent, "-p", prompt_text]
+        case "cortex":
+            from stackops.scripts.python.helpers.helpers_agents.cortex_launch import build_cortex_command
+
+            command = build_cortex_command(
+                model=None, provider=None, reasoning_effort=reasoning, directory=Path.cwd(),
+            )
+            command.extend(["-p", prompt_text])
         case "crush":
             command = [agent, "run", prompt_argument]
         case "qwen":

@@ -29,6 +29,7 @@ _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
     "agy": AgentReasoningSupport(efforts=(), note=None),
     "cursor-agent": AgentReasoningSupport(efforts=(), note=None),
     "claude": AgentReasoningSupport(efforts=(), note=None),
+    "cortex": AgentReasoningSupport(efforts=("low", "medium", "high", "xhigh"), note="StackOps xhigh maps to Cortex --effort max"),
     "qwen": AgentReasoningSupport(efforts=(), note=None),
     "copilot": AgentReasoningSupport(efforts=("low", "medium", "high", "xhigh"), note=None),
     "codex": AgentReasoningSupport(
