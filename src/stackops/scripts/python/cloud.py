@@ -155,7 +155,7 @@ def get_app() -> typer.Typer:
     app.command(name="ftpx", no_args_is_help=True, short_help="📦 <f> File transfer utility through SSH.")(ftpx)
     app.command(name="f", no_args_is_help=True, hidden=True)(ftpx)
 
-    app.add_typer(get_onedrive_app(), name="onedrive", help="☁ <o> Access OneDrive through Microsoft Graph.")
+    app.add_typer(get_onedrive_app(), name="onedrive", help="🔷 <o> Access OneDrive through Microsoft Graph.")
     app.add_typer(get_onedrive_app(), name="o", help="Access OneDrive through Microsoft Graph.", hidden=True)
 
     return apply_alias_markers(app)

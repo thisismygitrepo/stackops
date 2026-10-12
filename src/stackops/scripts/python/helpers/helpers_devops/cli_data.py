@@ -224,7 +224,7 @@ def get_app() -> typer.Typer:
 
     app = typer.Typer(
         name="data",
-        help="🗄 <d> Backup and retrieve configuration files and directories to/from cloud storage.",
+        help="💾 <d> Backup and retrieve configuration files and directories to/from cloud storage.",
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,

@@ -353,7 +353,7 @@ def declutter(
 
 
 def replicate(
-    count: Annotated[int, typer.Option("--count", min=1, help="Number of copies to create as p1, p2, ... pN when --target is omitted.")] = 1,
+    count: Annotated[int, typer.Option("--count", "-c", min=1, help="Number of copies to create as p1, p2, ... pN when --target is omitted.")] = 1,
     target: Annotated[
         str | None, typer.Option("--target", "-t", help="Destination profile name or comma-separated names, e.g. work,personal. Copy count is inferred.")
     ] = None,
@@ -423,22 +423,22 @@ def get_app() -> typer.Typer:
         help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    browser_app.command(name="install-tech", no_args_is_help=False, short_help="<i> Install browser CLIs, skills, MCP configs, or agents")(
+    browser_app.command(name="install-tech", no_args_is_help=False, short_help="📦 <i> Install browser CLIs, skills, MCP configs, or agents")(
         install_tech
     )
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
-    browser_app.command(name="launch", no_args_is_help=False, short_help="<l> Launch browser automation endpoint")(launch_browser)
+    browser_app.command(name="launch", no_args_is_help=False, short_help="🚀 <l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
-    browser_app.command(name="close", no_args_is_help=False, short_help="<c> Close one tracked browser endpoint")(close_browser)
+    browser_app.command(name="close", no_args_is_help=False, short_help="❌ <c> Close one tracked browser endpoint")(close_browser)
     browser_app.command(name="c", no_args_is_help=False, hidden=True)(close_browser)
-    browser_app.command(name="batch-launch", no_args_is_help=False, short_help="<L> Launch every saved profile for one browser")(batch_launch)
+    browser_app.command(name="batch-launch", no_args_is_help=False, short_help="🚀 <L> Launch every saved profile for one browser")(batch_launch)
     browser_app.command(name="L", no_args_is_help=False, hidden=True)(batch_launch)
-    browser_app.command(name="batch-close", no_args_is_help=False, short_help="<C> Close tracked saved-profile browser launches")(batch_close)
+    browser_app.command(name="batch-close", no_args_is_help=False, short_help="❌ <C> Close tracked saved-profile browser launches")(batch_close)
     browser_app.command(name="C", no_args_is_help=False, hidden=True)(batch_close)
-    browser_app.command(name="status", no_args_is_help=False, short_help="<s> Show active browser launches")(status)
+    browser_app.command(name="status", no_args_is_help=False, short_help="📊 <s> Show active browser launches")(status)
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
-    browser_app.command(name="declutter", no_args_is_help=False, short_help="<d> Remove rebuildable browser profile data")(declutter)
+    browser_app.command(name="declutter", no_args_is_help=False, short_help="🧹 <d> Remove rebuildable browser profile data")(declutter)
     browser_app.command(name="d", no_args_is_help=False, hidden=True)(declutter)
-    browser_app.command(name="replicate", no_args_is_help=True, short_help="<r> Copy a StackOps or native profile to named destinations")(replicate)
+    browser_app.command(name="replicate", no_args_is_help=True, short_help="🧬 <r> Copy a StackOps or native profile to named destinations")(replicate)
     browser_app.command(name="r", no_args_is_help=True, hidden=True)(replicate)
     return browser_app

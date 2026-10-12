@@ -156,7 +156,7 @@ def build_graph(
         typer.Option("--view", "-v", help="Preview the generated HTML graph in the browser."),
     ] = False,
 ) -> None:
-    """🕸 <g> Build the architecture dependency graph."""
+    """🔗 <g> Build the architecture dependency graph."""
     from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
     from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 

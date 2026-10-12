@@ -172,9 +172,9 @@ def get_share_file_app() -> typer.Typer:
     ) -> None:
         pass
 
-    app.command(name="send", no_args_is_help=True, hidden=False, help="<s> send files from here.")(share_file_send)
+    app.command(name="send", no_args_is_help=True, hidden=False, help="📤 <s> send files from here.")(share_file_send)
     app.command(name="s", no_args_is_help=True, hidden=True, help="<s> send files from here.")(share_file_send)
-    app.command(name="receive", no_args_is_help=True, hidden=False, help="<r> receive files to here.")(share_file_receive)
+    app.command(name="receive", no_args_is_help=True, hidden=False, help="📥 <r> receive files to here.")(share_file_receive)
     app.command(name="r", no_args_is_help=True, hidden=True, help="<r> receive files to here.")(share_file_receive)
     return app
 

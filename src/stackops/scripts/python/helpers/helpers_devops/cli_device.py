@@ -102,7 +102,7 @@ def wifi_select(
 
 def get_app() -> typer.Typer:
     device_app = typer.Typer(
-        help="🖥 <d> Device subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        help="📱 <d> Device subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     device_app.command(name="wifi-select", no_args_is_help=False, help="📶 <w> WiFi connection utility.")(wifi_select)

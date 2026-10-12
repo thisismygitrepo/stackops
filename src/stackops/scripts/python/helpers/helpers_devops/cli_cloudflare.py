@@ -121,15 +121,15 @@ def get_app() -> typer.Typer:
     )
     cloudflare_app.command(name="switch-public-ip", help="🔁 <s> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
     cloudflare_app.command(name="s", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
-    cloudflare_app.command(name="reset-cloudflare-tunnel", help="☁ <r> Reset Cloudflare tunnel service")(reset_cloudflare_tunnel)
+    cloudflare_app.command(name="reset-cloudflare-tunnel", help="🔄 <r> Reset Cloudflare tunnel service")(reset_cloudflare_tunnel)
     cloudflare_app.command(name="r", help="Reset Cloudflare tunnel service", hidden=True)(reset_cloudflare_tunnel)
     cloudflare_app.command(name="add-ip-exclusion-to-warp", help="🚫 <p> Add IP exclusion to WARP")(add_ip_exclusion_to_warp)
     cloudflare_app.command(name="p", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
-    cloudflare_app.command(name="cloudflare-tunnel-status", help="☁ <t> Show tunnel redundancy, versions, services, and routes")(
+    cloudflare_app.command(name="cloudflare-tunnel-status", help="📊 <t> Show tunnel redundancy, versions, services, and routes")(
         cli_cloudflare_tunnel.cloudflare_tunnel_status
     )
     cloudflare_app.command(name="t", help="Show Cloudflare Tunnel status", hidden=True)(cli_cloudflare_tunnel.cloudflare_tunnel_status)
-    cloudflare_app.command(name="update-cloudflare-connectors", help="⬆ <u> Rolling-update Cloudflare Tunnel connectors")(
+    cloudflare_app.command(name="update-cloudflare-connectors", help="⏫ <u> Rolling-update Cloudflare Tunnel connectors")(
         cli_cloudflare_tunnel.update_cloudflare_connectors
     )
     cloudflare_app.command(name="u", help="Rolling-update Cloudflare Tunnel connectors", hidden=True)(

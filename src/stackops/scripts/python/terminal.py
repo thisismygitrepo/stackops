@@ -405,37 +405,37 @@ def get_app() -> typer.Typer:
         context_settings={"help_option_names": ["-h", "--help"]},
     )
 
-    layouts_app.command("run", cls=TerminalRunCommand, no_args_is_help=False, help=run.__doc__, short_help="<r> Run the selected layout(s)")(run)
+    layouts_app.command("run", cls=TerminalRunCommand, no_args_is_help=False, help=run.__doc__, short_help="🏃 <r> Run the selected layout(s)")(run)
     layouts_app.command("r", cls=TerminalRunCommand, no_args_is_help=False, help=run.__doc__, hidden=True)(run)
 
-    layouts_app.command("run-all", no_args_is_help=True, help=run_all.__doc__, short_help="<R> Dynamically run every layout in a file")(run_all)
+    layouts_app.command("run-all", no_args_is_help=True, help=run_all.__doc__, short_help="🏁 <R> Dynamically run every layout in a file")(run_all)
     layouts_app.command("R", no_args_is_help=True, help=run_all.__doc__, hidden=True)(run_all)
 
-    layouts_app.command("attach", no_args_is_help=False, help=attach_to_session.__doc__, short_help="<a> Attach to a session target")(attach_to_session)
+    layouts_app.command("attach", no_args_is_help=False, help=attach_to_session.__doc__, short_help="📎 <a> Attach to a session target")(attach_to_session)
     layouts_app.command("a", no_args_is_help=False, help=attach_to_session.__doc__, hidden=True)(attach_to_session)
 
-    layouts_app.command("kill", no_args_is_help=False, help=kill_session_target.__doc__, short_help="<k> Kill a session target")(kill_session_target)
+    layouts_app.command("kill", no_args_is_help=False, help=kill_session_target.__doc__, short_help="💀 <k> Kill a session target")(kill_session_target)
     layouts_app.command("k", no_args_is_help=False, help=kill_session_target.__doc__, hidden=True)(kill_session_target)
 
-    layouts_app.command("export", no_args_is_help=False, help=export.__doc__, short_help="<e> Export sessions as a layout")(export)
+    layouts_app.command("export", no_args_is_help=False, help=export.__doc__, short_help="📤 <e> Export sessions as a layout")(export)
     layouts_app.command("e", no_args_is_help=False, help=export.__doc__, hidden=True)(export)
 
-    layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="<t> Trace a terminal session until it settles")(trace)
+    layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="🔬 <t> Trace a terminal session until it settles")(trace)
     layouts_app.command("t", no_args_is_help=True, help=trace.__doc__, hidden=True)(trace)
 
-    layouts_app.command("create-from-function", no_args_is_help=True, short_help="<c> Create a layout from a function")(create_from_function)
+    layouts_app.command("create-from-function", no_args_is_help=True, short_help="🧩 <c> Create a layout from a function")(create_from_function)
     layouts_app.command("c", no_args_is_help=True, hidden=True)(create_from_function)
 
-    layouts_app.command("balance-load", no_args_is_help=True, help=balance_load.__doc__, short_help="<b> Balance the load across sessions")(balance_load)
+    layouts_app.command("balance-load", no_args_is_help=True, help=balance_load.__doc__, short_help="🔀 <b> Balance the load across sessions")(balance_load)
     layouts_app.command("b", no_args_is_help=True, help=balance_load.__doc__, hidden=True)(balance_load)
 
-    layouts_app.command("create-template", no_args_is_help=False, help=create_template.__doc__, short_help="<p> Create a layout template file")(create_template)
+    layouts_app.command("create-template", no_args_is_help=False, help=create_template.__doc__, short_help="📐 <p> Create a layout template file")(create_template)
     layouts_app.command("p", no_args_is_help=False, help=create_template.__doc__, hidden=True)(create_template)
 
-    layouts_app.command("summary", no_args_is_help=False, help=summary.__doc__, short_help="<s> Print running session summary")(summary)
+    layouts_app.command("summary", no_args_is_help=False, help=summary.__doc__, short_help="📋 <s> Print running session summary")(summary)
     layouts_app.command("s", no_args_is_help=False, help=summary.__doc__, hidden=True)(summary)
 
-    layouts_app.command("summarize", no_args_is_help=True, help=summarize.__doc__, short_help="<S> Summarize a layout file")(summarize)
+    layouts_app.command("summarize", no_args_is_help=True, help=summarize.__doc__, short_help="📝 <S> Summarize a layout file")(summarize)
     layouts_app.command("S", no_args_is_help=True, help=summarize.__doc__, hidden=True)(summarize)
     return apply_alias_markers(layouts_app)
 

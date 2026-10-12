@@ -188,10 +188,10 @@ def checkout(
 
 def get_app() -> typer.Typer:
     app = typer.Typer(
-        help="🏷️ <V> Capture, inspect, and restore repository versions", no_args_is_help=True, add_help_option=True, add_completion=False,
+        help="🔖 <V> Capture, inspect, and restore repository versions", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    app.command(name="declare", help="🏷️ <d> Capture repository states as a named version")(declare)
+    app.command(name="declare", help="📌 <d> Capture repository states as a named version")(declare)
     app.command(name="d", help="Capture repository states as a named version", hidden=True)(declare)
     app.command(name="status", help="📋 <s> Display declared versions or compare one with current repositories")(status)
     app.command(name="s", help="Display declared versions or compare one with current repositories", hidden=True)(status)

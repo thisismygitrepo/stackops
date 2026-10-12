@@ -77,42 +77,42 @@ def preview(
 
 
 def devops(ctx: typer.Context) -> None:
-    """<d> DevOps related commands."""
+    """🔧 <d> DevOps related commands."""
     from stackops.scripts.python.devops import get_app as get_app_devops
 
     _run_nested_app(ctx, get_app_devops)
 
 
 def cloud(ctx: typer.Context) -> None:
-    """<c> Cloud management commands."""
+    """⛅ <c> Cloud management commands."""
     from stackops.scripts.python.cloud import get_app as get_app_cloud
 
     _run_nested_app(ctx, get_app_cloud)
 
 
 def terminal(ctx: typer.Context) -> None:
-    """<t> Terminal and layout management."""
+    """📟 <t> Terminal and layout management."""
     from stackops.scripts.python.terminal import get_app as get_app_terminal
 
     _run_nested_app(ctx, get_app_terminal)
 
 
 def agents(ctx: typer.Context) -> None:
-    """<a> 🤖 AI Agents management commands."""
+    """🤖 <a> AI Agents management commands."""
     from stackops.scripts.python.agents import get_app as get_app_agents
 
     _run_nested_app(ctx, get_app_agents)
 
 
 def utils(ctx: typer.Context) -> None:
-    """<u> Utility commands."""
+    """🧰 <u> Utility commands."""
     from stackops.scripts.python.utils import get_app as get_app_utils
 
     _run_nested_app(ctx, get_app_utils)
 
 
 def seek(ctx: typer.Context) -> None:
-    """<s> Search across files, text matches, and code symbols."""
+    """🔎 <s> Search across files, text matches, and code symbols."""
     from stackops.scripts.python.seek import get_app as get_app_seek
 
     _run_nested_app(ctx, get_app_seek)
@@ -137,22 +137,22 @@ def get_app() -> typer.Typer:
 
     ctx_settings: dict[str, object] = {"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True, "help_option_names": []}
 
-    app.command(name="devops", help="<d> DevOps related commands", context_settings=ctx_settings)(devops)
+    app.command(name="devops", help="🔧 <d> DevOps related commands", context_settings=ctx_settings)(devops)
     app.command(name="d", hidden=True, context_settings=ctx_settings)(devops)
-    app.command(name="cloud", help="<c> Cloud management commands", context_settings=ctx_settings)(cloud)
+    app.command(name="cloud", help="⛅ <c> Cloud management commands", context_settings=ctx_settings)(cloud)
     app.command(name="c", hidden=True, context_settings=ctx_settings)(cloud)
-    app.command(name="terminal", help="<t> Terminal and layout management", context_settings=ctx_settings)(terminal)
+    app.command(name="terminal", help="📟 <t> Terminal and layout management", context_settings=ctx_settings)(terminal)
     app.command(name="t", hidden=True, context_settings=ctx_settings)(terminal)
-    app.command(name="agents", help="<a> 🤖 AI Agents management commands", context_settings=ctx_settings)(agents)
+    app.command(name="agents", help="🤖 <a> AI Agents management commands", context_settings=ctx_settings)(agents)
     app.command(name="a", hidden=True, context_settings=ctx_settings)(agents)
-    app.command(name="utils", help="<u> Utility commands", context_settings=ctx_settings)(utils)
+    app.command(name="utils", help="🧰 <u> Utility commands", context_settings=ctx_settings)(utils)
     app.command(name="u", hidden=True, context_settings=ctx_settings)(utils)
-    app.command(name="seek", help="<s> Search across files, text matches, and code symbols", context_settings=ctx_settings)(seek)
+    app.command(name="seek", help="🔎 <s> Search across files, text matches, and code symbols", context_settings=ctx_settings)(seek)
     app.command(name="s", hidden=True, context_settings=ctx_settings)(seek)
 
-    app.command(name="fire", help="<f> Fire and manage jobs", no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
+    app.command(name="fire", help="🔥 <f> Fire and manage jobs", no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
     app.command(name="f", hidden=True, no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
-    app.command("preview", no_args_is_help=False, help="<p> Preview files and launch reader backends")(preview)
+    app.command("preview", no_args_is_help=False, help="👀 <p> Preview files and launch reader backends")(preview)
     app.command("p", no_args_is_help=False, hidden=True)(preview)
 
     return apply_alias_markers(app)

@@ -33,6 +33,6 @@ def get_app() -> typer.Typer:
         help="Local models through Ollama", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    local_app.command(name="doctor", no_args_is_help=False, short_help="<d> Inspect Ollama health, models, and resource usage")(doctor)
+    local_app.command(name="doctor", no_args_is_help=False, short_help="🩺 <d> Inspect Ollama health, models, and resource usage")(doctor)
     local_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
     return local_app

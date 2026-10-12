@@ -1,8 +1,11 @@
 from collections.abc import Callable
 from importlib import import_module
+import inspect
+import re
 import subprocess
 import sys
 from typing import NotRequired, TypedDict, cast
+import unicodedata
 
 import pytest
 import typer
@@ -27,7 +30,10 @@ class CliGraph(TypedDict):
     root: AppNode
 
 
-def test_registered_options_have_single_flags_and_distinct_letter_shortcuts() -> None:
+HELP_MARKER_PATTERN = re.compile(r"^(?P<emoji>\S) <(?P<alias>[A-Za-z])> \S")
+
+
+def _registered_apps() -> list[tuple[str, typer.Typer]]:
     graph = cast(CliGraph, build_cli_graph())
     pending_nodes = [graph["root"]]
     factories: set[str] = set()
@@ -39,11 +45,52 @@ def test_registered_options_have_single_flags_and_distinct_letter_shortcuts() ->
         if factory is not None:
             factories.add(factory)
 
-    violations: list[str] = []
+    apps: list[tuple[str, typer.Typer]] = []
     for factory_path in sorted(factories):
         module_name, _, factory_name = factory_path.rpartition(".")
         factory = cast(Callable[[], typer.Typer], getattr(import_module(module_name), factory_name))
-        pending_commands = [(factory_path, get_command(factory()))]
+        apps.append((factory_path, factory()))
+    return apps
+
+
+def test_visible_commands_lead_help_with_wide_emoji_and_hidden_alias_marker() -> None:
+    violations: list[str] = []
+    for factory_path, app in _registered_apps():
+        pending_groups = [(factory_path, get_command(app))]
+        while pending_groups:
+            group_path, group = pending_groups.pop()
+            if not isinstance(group, TyperGroup):
+                continue
+            for name, command in group.commands.items():
+                if command.hidden:
+                    continue
+                location = f"""{group_path} {name}"""
+                pending_groups.append((location, command))
+                help_line = (command.short_help or command.help or "").strip().partition("\n")[0]
+                match = HELP_MARKER_PATTERN.match(help_line)
+                if match is None:
+                    violations.append(f"""{location} help is not "<emoji> <letter> <text>": {help_line!r}""")
+                    continue
+                emoji, alias_name = match["emoji"], match["alias"]
+                if unicodedata.east_asian_width(emoji) != "W":
+                    violations.append(f"""{location} leads with narrow symbol {emoji!r}""")
+                alias = group.commands.get(alias_name)
+                if isinstance(command, TyperGroup):
+                    is_alias = isinstance(alias, TyperGroup) and alias.hidden and alias.commands.keys() == command.commands.keys()
+                else:
+                    is_alias = (
+                        alias is not None and alias.hidden and alias.callback is not None and command.callback is not None
+                        and inspect.unwrap(alias.callback) is inspect.unwrap(command.callback)
+                    )
+                if not is_alias:
+                    violations.append(f"""{location} marker <{alias_name}> is not a hidden alias of it""")
+    assert violations == []
+
+
+def test_registered_options_have_single_flags_and_distinct_letter_shortcuts() -> None:
+    violations: list[str] = []
+    for factory_path, app in _registered_apps():
+        pending_commands = [(factory_path, get_command(app))]
         while pending_commands:
             command_path, command = pending_commands.pop()
             used_shorts: set[str] = {"-h"}

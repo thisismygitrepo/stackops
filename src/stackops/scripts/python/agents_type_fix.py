@@ -65,7 +65,7 @@ def launch_type_fix(
 
 def get_app() -> typer.Typer:
     cli_app = typer.Typer(
-        help="🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.",
+        help="🔧 <f> Create and run the type-fix workflow from ./.ai/linters issues files.",
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,

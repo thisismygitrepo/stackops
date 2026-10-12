@@ -27,7 +27,7 @@ def test_network_owns_cloudflare_subcommands_and_device_does_not() -> None:
     assert cloudflare_alias_result.exit_code == 0, cloudflare_alias_result.output
     assert device_result.exit_code == 0, device_result.output
     assert "cloudflare" in network_result.output
-    assert "☁ <c> Cloudflare subcommands" in network_result.output
+    assert "🔶 <c> Cloudflare subcommands" in network_result.output
     assert "\n│ c " not in network_result.output
     for command_name in CLOUDFLARE_COMMAND_NAMES:
         assert command_name in cloudflare_result.output

@@ -72,7 +72,7 @@ def get_app() -> typer.Typer:
         "help_option_names": [],
     }
 
-    config_apps.add_typer(dotfiles_module.get_app(), name="dotfiles", help=f"🗂 <f> {dotfiles_module.DOTFILES_HELP}")
+    config_apps.add_typer(dotfiles_module.get_app(), name="dotfiles", help=f"📂 <f> {dotfiles_module.DOTFILES_HELP}")
     config_apps.add_typer(dotfiles_module.get_app(), name="f", help=dotfiles_module.DOTFILES_HELP, hidden=True)
 
     config_apps.add_typer(setup_module.get_app(), name="setup", help=f"🧭 <u> {setup_module.SETUP_HELP}")

@@ -212,18 +212,18 @@ def mount_device(
 
 def get_app() -> typer.Typer:
     machine_app = typer.Typer(
-        help="🖥 <m> Machine and device utilities", no_args_is_help=True, add_help_option=True, add_completion=False,
+        help="💻 <m> Machine and device utilities", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    machine_app.command(name="kill-process", no_args_is_help=False, help="⚔ <k> Choose a process to kill")(kill_process)
+    machine_app.command(name="kill-process", no_args_is_help=False, help="💀 <k> Choose a process to kill")(kill_process)
     machine_app.command(name="k", no_args_is_help=False, hidden=True)(kill_process)
     machine_app.command(
         name="environment",
         no_args_is_help=False,
-        help="⌘ <v> Navigate ENV/PATH variables. Default: fuzzy picker with preview; use --tui for Textual.",
+        help="🌍 <v> Navigate ENV/PATH variables. Default: fuzzy picker with preview; use --tui for Textual.",
     )(tui_env)
     machine_app.command(name="v", no_args_is_help=False, hidden=True)(tui_env)
-    machine_app.command(name="get-machine-specs", no_args_is_help=False, help="🖥 <s> Get machine specifications.")(get_machine_specs)
+    machine_app.command(name="get-machine-specs", no_args_is_help=False, help="🧾 <s> Get machine specifications.")(get_machine_specs)
     machine_app.command(name="s", no_args_is_help=False, hidden=True)(get_machine_specs)
     machine_app.command(name="list-devices", no_args_is_help=False, help="💽 <l> List available devices for mounting.")(list_devices)
     machine_app.command(name="l", no_args_is_help=False, hidden=True)(list_devices)
@@ -235,7 +235,7 @@ def get_app() -> typer.Typer:
     machine_app.command(name="m", no_args_is_help=True, hidden=True)(mount_device)
     machine_app.command(
         name="window", no_args_is_help=False,
-        help="◫ <w> Manage desktop windows on macOS, Windows, and Linux X11. Select a window and action using tv.",
+        help="🪟 <w> Manage desktop windows on macOS, Windows, and Linux X11. Select a window and action using tv.",
     )(window)
     machine_app.command(name="w", no_args_is_help=False, hidden=True)(window)
     return machine_app

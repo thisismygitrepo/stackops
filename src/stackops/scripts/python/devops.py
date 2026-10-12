@@ -113,7 +113,7 @@ def repos(ctx: typer.Context) -> None:
 
 
 def config(ctx: typer.Context) -> None:
-    """⚙️ <c> Configuration management"""
+    """🔩 <c> Configuration management"""
     from stackops.scripts.python.helpers.helpers_devops import cli_config
 
     _run_nested_app(ctx, cli_config.get_app)

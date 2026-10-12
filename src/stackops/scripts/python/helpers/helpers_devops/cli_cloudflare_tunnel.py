@@ -14,7 +14,7 @@ def cloudflare_tunnel_status(
     config_path: Annotated[str, typer.Option("--config", "-c", help="cloudflared configuration path on every connector")] = "/etc/cloudflared/config.yml",
     service_name: Annotated[str, typer.Option("--service", "-s", help="systemd service name on every connector")] = "cloudflared",
 ) -> None:
-    """☁ <t> Show tunnel redundancy, versions, services, and route coverage."""
+    """📊 <t> Show tunnel redundancy, versions, services, and route coverage."""
     from rich.console import Console
     from rich.table import Table
 
@@ -71,7 +71,7 @@ def update_cloudflare_connectors(
     timeout_seconds: Annotated[int, typer.Option("--timeout", "-t", min=1, help="Seconds to wait for each restarted service")] = 60,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Run without confirmation")] = False,
 ) -> None:
-    """⬆ <u> Rolling-update local and SSH Cloudflare Tunnel connectors."""
+    """⏫ <u> Rolling-update local and SSH Cloudflare Tunnel connectors."""
     from rich.console import Console
 
     from stackops.scripts.python.helpers.helpers_devops.cloudflare_tunnel_maintenance import rolling_update_connectors

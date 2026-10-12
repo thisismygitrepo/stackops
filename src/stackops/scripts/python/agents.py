@@ -698,48 +698,48 @@ def get_app() -> typer.Typer:
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     agents_app.add_typer(
-        get_parallel_app(), name="parallel", help="🧵 <p> Parallel agent workflow commands", short_help="<p> Parallel agent workflow commands"
+        get_parallel_app(), name="parallel", help="🧵 <p> Parallel agent workflow commands", short_help="🧵 <p> Parallel agent workflow commands"
     )
     agents_app.add_typer(get_parallel_app(), name="p", help="Parallel agent workflow commands", hidden=True)
     agents_app.add_typer(
-        get_browser_app(), name="browser", help="🌐 <b> Browser automation for agent CLIs and MCP", short_help="<b> Browser automation for agent CLIs/MCP"
+        get_browser_app(), name="browser", help="🌐 <b> Browser automation for agent CLIs and MCP", short_help="🌐 <b> Browser automation for agent CLIs/MCP"
     )
     agents_app.add_typer(get_browser_app(), name="b", help="Browser automation for agent CLIs and MCP", hidden=True)
     agents_app.add_typer(
-        get_iter_app(), name="iter", help="🔁 <I> Iter maintenance through Herdr", short_help="<I> Current Herdr iter maintenance"
+        get_iter_app(), name="iter", help="🔁 <I> Iter maintenance through Herdr", short_help="🔁 <I> Current Herdr iter maintenance"
     )
     agents_app.add_typer(get_iter_app(), name="I", help="Iter maintenance through Herdr", hidden=True)
     agents_app.add_typer(
-        get_second_brain_app(), name="second-brain", help="🧠 <B> Second Brain commands", short_help="<B> Second Brain commands"
+        get_second_brain_app(), name="second-brain", help="🧠 <B> Second Brain commands", short_help="🧠 <B> Second Brain commands"
     )
     agents_app.add_typer(get_second_brain_app(), name="B", help="Second Brain commands", hidden=True)
-    agents_app.add_typer(get_local_app(), name="local", help="<l> Local models through Ollama", short_help="<l> Local models through Ollama")
+    agents_app.add_typer(get_local_app(), name="local", help="🦙 <l> Local models through Ollama", short_help="🦙 <l> Local models through Ollama")
     agents_app.add_typer(get_local_app(), name="l", help="Local models through Ollama", hidden=True)
 
-    agents_app.command(name="add-mcp", short_help="<m> Resolve catalog MCP entries or supported skills")(add_mcp)
+    agents_app.command(name="add-mcp", short_help="🔌 <m> Resolve catalog MCP entries or supported skills")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)
-    agents_app.command(name="add-skill", short_help="<s> Add a skill to an agent")(add_skill)
+    agents_app.command(name="add-skill", short_help="🧩 <s> Add a skill to an agent")(add_skill)
     agents_app.command(name="s", hidden=True)(add_skill)
     agents_app.command(
-        "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="<c> Initialize AI configurations in the current repository"
+        "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="🔧 <c> Initialize AI configurations in the current repository"
     )(init_config)
     agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
     agents_app.command(
-        name="depoison", no_args_is_help=False, short_help="<D> Preview or reset agent customizations and .ai folders",
+        name="depoison", no_args_is_help=False, short_help="🧼 <D> Preview or reset agent customizations and .ai folders",
         help="Preview or reset agent customizations and repository .ai folders. Use --resource workspace for .ai folders only. Changes require --apply or interactive confirmation and preserve backups.",
     )(depoison)
     agents_app.command(name="D", no_args_is_help=False, hidden=True)(depoison)
-    agents_app.command(name="doctor", no_args_is_help=False, short_help="<d> Inspect agent health and resource provenance")(doctor)
+    agents_app.command(name="doctor", no_args_is_help=False, short_help="🩺 <d> Inspect agent health and resource provenance")(doctor)
     agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
 
-    agents_app.command(name="run-prompt", no_args_is_help=False, short_help="<r> Run one prompt via selected agent")(run_prompt)
+    agents_app.command(name="run-prompt", no_args_is_help=False, short_help="💬 <r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)
-    agents_app.command(name="run-interactive", no_args_is_help=False, short_help="<i> Launch an agent with reasonable defaults")(
+    agents_app.command(name="run-interactive", no_args_is_help=False, short_help="🚀 <i> Launch an agent with reasonable defaults")(
         run_interactive
     )
     agents_app.command(name="i", no_args_is_help=False, hidden=True)(run_interactive)
     agents_app.command(name="run", no_args_is_help=False, hidden=True)(run_interactive)
-    agents_app.command(name="ask", no_args_is_help=True, short_help="<a> Ask a selected agent directly")(ask)
+    agents_app.command(name="ask", no_args_is_help=True, short_help="❓ <a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
     return apply_alias_markers(agents_app)
 

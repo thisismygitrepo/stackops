@@ -148,7 +148,7 @@ def get_app() -> typer.Typer:
         help=SETUP_HELP, no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    app.command("cloud", no_args_is_help=False, help=f"☁️ <c> {CLOUD_SETUP_HELP}")(setup_cloud)
+    app.command("cloud", no_args_is_help=False, help=f"⛅ <c> {CLOUD_SETUP_HELP}")(setup_cloud)
     app.command("c", no_args_is_help=False, help=CLOUD_SETUP_HELP, hidden=True)(setup_cloud)
     app.command("email", no_args_is_help=False, help=f"📧 <e> {setup_email.EMAIL_SETUP_HELP}")(setup_email.setup_email)
     app.command("e", no_args_is_help=False, help=setup_email.EMAIL_SETUP_HELP, hidden=True)(setup_email.setup_email)

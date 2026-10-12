@@ -104,10 +104,10 @@ def get_app() -> typer.Typer:
         help="🔁 <I> Iter maintenance through Herdr", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    iter_app.command(name="clean", no_args_is_help=False, short_help="<c> Remove stale iter records under .ai")(clean)
+    iter_app.command(name="clean", no_args_is_help=False, short_help="🧹 <c> Remove stale iter records under .ai")(clean)
     iter_app.command(name="c", no_args_is_help=False, hidden=True)(clean)
-    iter_app.command(name="close", no_args_is_help=False, short_help="<x> Close verified handed-off iter tabs")(close)
+    iter_app.command(name="close", no_args_is_help=False, short_help="❌ <x> Close verified handed-off iter tabs")(close)
     iter_app.command(name="x", no_args_is_help=False, hidden=True)(close)
-    iter_app.command(name="status", no_args_is_help=False, short_help="<s> Show live state and verified close counts")(status)
+    iter_app.command(name="status", no_args_is_help=False, short_help="📊 <s> Show live state and verified close counts")(status)
     iter_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     return iter_app

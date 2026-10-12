@@ -28,14 +28,14 @@ def get_app() -> typer.Typer:
     pyproject_app.command(
         name="init-project",
         no_args_is_help=False,
-        help="✦ <i> Initialize a project with a uv virtual environment and install dev packages.",
+        help="✨ <i> Initialize a project with a uv virtual environment and install dev packages.",
     )(init_project)
     pyproject_app.command(name="i", no_args_is_help=False, hidden=True)(init_project)
 
     pyproject_app.command(name="config-linters", no_args_is_help=False, help="🧰 <l> Add linter config files to a git repository")(config_linters)
     pyproject_app.command(name="l", no_args_is_help=False, hidden=True)(config_linters)
 
-    pyproject_app.command(name="upgrade-packages", no_args_is_help=False, help="↑ <a> Upgrade project dependencies.")(upgrade_packages)
+    pyproject_app.command(name="upgrade-packages", no_args_is_help=False, help="⏫ <a> Upgrade project dependencies.")(upgrade_packages)
     pyproject_app.command(name="a", no_args_is_help=False, hidden=True)(upgrade_packages)
 
     pyproject_app.command(name="check-deps", no_args_is_help=False, help="🔗 <d> Check Python import dependencies and cycles.")(check_deps)
@@ -44,7 +44,7 @@ def get_app() -> typer.Typer:
     pyproject_app.command(name="type-check", no_args_is_help=False, help="🧪 <c> Run the lint-and-type-check suite for a repository.")(type_check)
     pyproject_app.command(name="c", no_args_is_help=False, hidden=True)(type_check)
 
-    pyproject_app.command(name="type-fix", no_args_is_help=True, help="🛠 <f> Create and run the type-fix workflow from ./.ai/linters issues files.")(type_fix_module.launch_type_fix)
+    pyproject_app.command(name="type-fix", no_args_is_help=True, help="🔧 <f> Create and run the type-fix workflow from ./.ai/linters issues files.")(type_fix_module.launch_type_fix)
     pyproject_app.command(name="f", no_args_is_help=True, hidden=True)(type_fix_module.launch_type_fix)
 
     pyproject_app.command(

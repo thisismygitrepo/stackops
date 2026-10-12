@@ -21,7 +21,7 @@ def update_stackops_skill_refs() -> None:
 
 
 def regenerate_charts() -> None:
-    """☀ <c> Regenerate the checked-in sunburst HTML chart."""
+    """🌞 <c> Regenerate the checked-in sunburst HTML chart."""
     from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
 
     repo_root = cli_self_docs.get_docs_repo_root()
@@ -37,7 +37,7 @@ def regenerate_charts() -> None:
 
 def get_app() -> typer.Typer:
     cli_app = typer.Typer(
-        help="🗂 <a> Regenerate repo-local CLI and skill assets.",
+        help="🧰 <a> Regenerate repo-local CLI and skill assets.",
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
@@ -57,7 +57,7 @@ def get_app() -> typer.Typer:
     cli_app.command(
         name="regenerate-charts",
         no_args_is_help=False,
-        help="☀ <c> Regenerate the checked-in sunburst HTML chart.",
+        help="🌞 <c> Regenerate the checked-in sunburst HTML chart.",
     )(regenerate_charts)
     cli_app.command(
         name="c",

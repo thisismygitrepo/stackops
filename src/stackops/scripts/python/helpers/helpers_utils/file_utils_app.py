@@ -12,7 +12,7 @@ SCRAPE_CONTEXT_SETTINGS = {"allow_extra_args": True, "ignore_unknown_options": T
 
 def edit_file_with_hx(
     path: Annotated[str | None, typer.Argument(..., help="The root directory of the project to edit, or a file path.")] = None,
-    lsp: Annotated[bool, typer.Option("--lsp", help="Install Python LSP tooling in the repository before opening Helix.")] = False,
+    lsp: Annotated[bool, typer.Option("--lsp", "-l", help="Install Python LSP tooling in the repository before opening Helix.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_utils.python import edit_file_with_hx as impl
 
@@ -280,18 +280,18 @@ def get_app() -> typer.Typer:
         help="📁 <f> File, document, and database utilities", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    file_app.command(name="edit", no_args_is_help=False, help="✏ <e> Open a file in the default editor.")(edit_file_with_hx)
+    file_app.command(name="edit", no_args_is_help=False, help="📝 <e> Open a file in the default editor.")(edit_file_with_hx)
     file_app.command(name="e", no_args_is_help=False, hidden=True)(edit_file_with_hx)
-    file_app.command(name="download", no_args_is_help=True, help="↓ <d> Download a file from a URL and optionally decompress it.")(download)
+    file_app.command(name="download", no_args_is_help=True, help="📥 <d> Download a file from a URL and optionally decompress it.")(download)
     file_app.command(name="d", no_args_is_help=True, hidden=True)(download)
-    file_app.command(name="scrape", no_args_is_help=True, help="<s> Scrape a page to Markdown with Scrapling.", context_settings=SCRAPE_CONTEXT_SETTINGS)(scrape)
+    file_app.command(name="scrape", no_args_is_help=True, help="🧲 <s> Scrape a page to Markdown with Scrapling.", context_settings=SCRAPE_CONTEXT_SETTINGS)(scrape)
     file_app.command(name="s", no_args_is_help=True, hidden=True, context_settings=SCRAPE_CONTEXT_SETTINGS)(scrape)
-    file_app.command(name="pdf-merge", no_args_is_help=True, help="◫ <p> Merge PDF files into one.")(merge_pdfs)
+    file_app.command(name="pdf-merge", no_args_is_help=True, help="📑 <p> Merge PDF files into one.")(merge_pdfs)
     file_app.command(name="p", no_args_is_help=True, hidden=True)(merge_pdfs)
-    file_app.command(name="pdf-compress", no_args_is_help=True, help="↧ <c> Compress a PDF file.")(compress_pdf)
+    file_app.command(name="pdf-compress", no_args_is_help=True, help="📉 <c> Compress a PDF file.")(compress_pdf)
     file_app.command(name="c", no_args_is_help=True, hidden=True)(compress_pdf)
-    file_app.command(name="ocr", no_args_is_help=True, help="☀ <o> OCR, layout, detection, and table recognition with Surya.", context_settings=SURYA_CONTEXT_SETTINGS)(surya)
+    file_app.command(name="ocr", no_args_is_help=True, help="🔠 <o> OCR, layout, detection, and table recognition with Surya.", context_settings=SURYA_CONTEXT_SETTINGS)(surya)
     file_app.command(name="o", no_args_is_help=True, hidden=True, context_settings=SURYA_CONTEXT_SETTINGS)(surya)
-    file_app.command(name="read-db", no_args_is_help=False, help="🗃 <r> TUI DB Visualizer.")(read_db_cli_tui)
+    file_app.command(name="read-db", no_args_is_help=False, help="📇 <r> TUI DB Visualizer.")(read_db_cli_tui)
     file_app.command(name="r", no_args_is_help=False, hidden=True)(read_db_cli_tui)
     return file_app

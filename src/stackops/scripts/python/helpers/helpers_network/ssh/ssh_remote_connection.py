@@ -3,12 +3,11 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 import getpass
-import socket
 
 import paramiko
 
-from stackops.scripts.python.helpers.helpers_network.ssh.ssh_known_hosts import configure_known_hosts
 from stackops.utils.ssh_utils.connection_target import SSHConnectionProfile, SSHConnectionTarget, resolve_ssh_connection_profile
+from stackops.utils.ssh_utils.host_key_verification import connect_with_verified_host_key
 from stackops.utils.ssh_utils.open_ssh_command import parse_open_ssh_destination
 from stackops.utils.ssh_utils.open_ssh_config import lookup_open_ssh_config
 
@@ -102,40 +101,16 @@ def _connect_once(
     passphrase: str | None,
     automatic_authentication: bool,
 ) -> ConnectedRemote:
-    target = profile.target
-    client = paramiko.SSHClient()
-    configure_known_hosts(client=client, profile=profile)
-    proxy = paramiko.ProxyCommand(target.proxy_command) if target.proxy_command is not None else None
-    direct_socket: socket.socket | None = None
-    connection_socket: paramiko.ProxyCommand | socket.socket | None = proxy
-    connection_hostname = target.hostname
-    connection_port = target.port
-    if profile.host_key_alias is not None:
-        connection_hostname = profile.host_key_alias
-        connection_port = 22
-        if connection_socket is None:
-            direct_socket = socket.create_connection((target.hostname, target.port))
-            connection_socket = direct_socket
-    try:
-        client.connect(
-            hostname=connection_hostname,
-            username=target.username,
-            password=password,
-            passphrase=passphrase,
-            port=connection_port,
-            key_filename=list(profile.identity_files) if automatic_authentication and profile.identity_files else None,  # type: ignore[arg-type]
-            sock=connection_socket,
-            allow_agent=automatic_authentication and not profile.identities_only,
-            look_for_keys=automatic_authentication and not profile.identities_only,
-        )
-    except Exception:
-        client.close()
-        if proxy is not None:
-            proxy.close()
-        if direct_socket is not None:
-            direct_socket.close()
-        raise
-    return ConnectedRemote(client=client, target=target, proxy=proxy)
+    connection = connect_with_verified_host_key(
+        profile=profile,
+        password=password,
+        passphrase=passphrase,
+        key_filename=list(profile.identity_files) if automatic_authentication and profile.identity_files else None,
+        allow_agent=automatic_authentication and not profile.identities_only,
+        look_for_keys=automatic_authentication and not profile.identities_only,
+        compress=False,
+    )
+    return ConnectedRemote(client=connection.client, target=profile.target, proxy=connection.proxy)
 
 
 def _is_account_authentication_failure(error: paramiko.SSHException) -> bool:

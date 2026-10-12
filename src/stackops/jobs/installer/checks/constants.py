@@ -17,7 +17,7 @@ VT_QUOTA_RETRY_DELAY_SECONDS: float = 30.0
 VT_LOCK_POLL_INTERVAL_SECONDS: float = 0.25
 
 SCAN_HELP: str = (
-    """<s> Scan installed apps or a single file path with VirusTotal.
+    """🦠 <s> Scan installed apps or a single file path with VirusTotal.
 
 """
     """Automatically uses configured VirusTotal accounts. --concurrency controls parallel files and defaults to the """

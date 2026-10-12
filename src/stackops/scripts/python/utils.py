@@ -49,7 +49,7 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_utils.machine_utils_app import get_app as get_machine_app
     from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_app import get_app as get_pyproject_app
 
-    app.add_typer(get_machine_app(), name="machine", help="🖥 <m> Machine and device utilities")
+    app.add_typer(get_machine_app(), name="machine", help="💻 <m> Machine and device utilities")
     app.add_typer(get_machine_app(), name="m", help="Machine and device utilities", hidden=True)
     app.add_typer(get_pyproject_app(), name="pyproject", help="🐍 <p> Pyproject bootstrap and typing utilities")
     app.add_typer(get_pyproject_app(), name="p", help="Pyproject bootstrap and typing utilities", hidden=True)

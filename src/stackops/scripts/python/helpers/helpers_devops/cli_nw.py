@@ -161,14 +161,14 @@ def get_app() -> typer.Typer:
     nw_apps.command(name="receive", no_args_is_help=True, hidden=False, help="📁 <r> receive files to here.")(cli_share_file.share_file_receive)
     nw_apps.command(name="r", no_args_is_help=True, hidden=True, help="📁 receive files to here.")(cli_share_file.share_file_receive)
 
-    nw_apps.command(name="share-temp-file", help="🌡 <T> Share a file via temp.sh", no_args_is_help=True)(cli_share_temp.upload_file)
+    nw_apps.command(name="share-temp-file", help="⏳ <T> Share a file via temp.sh", no_args_is_help=True)(cli_share_temp.upload_file)
     nw_apps.command(name="T", help="Share a file via temp.sh", hidden=True, no_args_is_help=True)(cli_share_temp.upload_file)
 
     nw_apps.add_typer(cli_ssh.get_app(), name="ssh", help="🔐 <S> SSH subcommands")
     nw_apps.add_typer(cli_ssh.get_app(), name="S", help="SSH subcommands", hidden=True)
-    nw_apps.add_typer(cli_cloudflare.get_app(), name="cloudflare", help="☁ <c> Cloudflare subcommands")
+    nw_apps.add_typer(cli_cloudflare.get_app(), name="cloudflare", help="🔶 <c> Cloudflare subcommands")
     nw_apps.add_typer(cli_cloudflare.get_app(), name="c", help="Cloudflare subcommands", hidden=True)
-    nw_apps.add_typer(cli_device.get_app(), name="device", help="🖥 <d> Device subcommands")
+    nw_apps.add_typer(cli_device.get_app(), name="device", help="📱 <d> Device subcommands")
     nw_apps.add_typer(cli_device.get_app(), name="d", help="Device subcommands", hidden=True)
 
     nw_apps.command(name="show-address", help="📌 <a> Show this computer addresses on network")(show_address)

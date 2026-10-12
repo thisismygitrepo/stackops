@@ -252,7 +252,7 @@ def get_app() -> typer.Typer:
 
     repos_apps.command(name="action", help="🔄 <a> Run Git actions or a shell command across repositories", no_args_is_help=True)(action)
     repos_apps.command(name="a", help="Run Git actions or a shell command across repositories", hidden=True, no_args_is_help=True)(action)
-    repos_apps.add_typer(cli_repos_version.get_app(), name="version", help="🏷️ <V> Capture, inspect, and restore repository versions")
+    repos_apps.add_typer(cli_repos_version.get_app(), name="version", help="🔖 <V> Capture, inspect, and restore repository versions")
     repos_apps.add_typer(cli_repos_version.get_app(), name="V", hidden=True)
 
     repos_apps.command(name="guard", help="🔐 <g> Securely sync git repository to/from cloud with encryption")(secure_repo_main)

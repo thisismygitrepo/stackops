@@ -92,12 +92,12 @@ def get_app() -> typer.Typer:
     second_brain_app.command(
         name="config",
         no_args_is_help=False,
-        short_help="<c> Install instructions; --overwrite replaces existing",
+        short_help="📝 <c> Install instructions; --overwrite replaces existing",
         help="Install bundled instructions at ~/code/agents/second-brain/AGENTS.md. Existing instructions are kept unless --overwrite is set.",
     )(config)
     second_brain_app.command(name="c", no_args_is_help=False, hidden=True)(config)
-    second_brain_app.command(name="status", no_args_is_help=False, short_help="<s> Show Second Brain statistics and invalid updates")(status)
+    second_brain_app.command(name="status", no_args_is_help=False, short_help="📊 <s> Show Second Brain statistics and invalid updates")(status)
     second_brain_app.command(name="s", no_args_is_help=False, hidden=True)(status)
-    second_brain_app.command(name="align", no_args_is_help=False, short_help="<a> Preview invalid updates; --force deletes them")(align)
+    second_brain_app.command(name="align", no_args_is_help=False, short_help="🧹 <a> Preview invalid updates; --force deletes them")(align)
     second_brain_app.command(name="a", no_args_is_help=False, hidden=True)(align)
     return second_brain_app
