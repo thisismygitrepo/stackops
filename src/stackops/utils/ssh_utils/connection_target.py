@@ -112,27 +112,6 @@ def resolve_ssh_connection_profile(
     )
 
 
-def resolve_ssh_connection_target(
-    host: str | None,
-    username: str | None,
-    hostname: str | None,
-    ssh_key_path: str | None,
-    port: int,
-    local_username: str,
-    ssh_config_lookup: SSHConfigLookup,
-) -> SSHConnectionTarget:
-    profile = resolve_ssh_connection_profile(
-        host=host,
-        username=username,
-        hostname=hostname,
-        ssh_key_path=ssh_key_path,
-        port=port,
-        local_username=local_username,
-        ssh_config_lookup=ssh_config_lookup,
-    )
-    return profile.target
-
-
 def _optional_config_text(config_options: Mapping[str, object], key: str) -> str | None:
     value = config_options.get(key)
     if value is None:

@@ -75,7 +75,7 @@ def connect_with_verified_host_key(
             password=password,
             passphrase=passphrase,
             port=connection_port,
-            key_filename=key_filename,
+            key_filename=key_filename,  # type: ignore[arg-type]  # paramiko accepts list[str]; types-paramiko declares str | None
             sock=connection_socket,
             compress=compress,
             allow_agent=allow_agent,

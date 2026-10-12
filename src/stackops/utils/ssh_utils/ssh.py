@@ -9,7 +9,7 @@ from stackops.utils.cli_utils.terminal import Response
 from stackops.utils.accessories import pprint, randstr
 from stackops.utils.meta import lambda_to_python_script
 from stackops.utils.ssh_utils.abc import DEFAULT_PICKLE_SUBDIR, STACKOPS_REQUIREMENT
-from stackops.utils.ssh_utils.connection_target import resolve_ssh_connection_target
+from stackops.utils.ssh_utils.connection_target import resolve_ssh_connection_profile
 from stackops.utils.ssh_utils.open_ssh_config import lookup_open_ssh_config
 
 
@@ -45,8 +45,9 @@ class SSH:
         self.proxycommand: str | None = None
         import paramiko
         import getpass
+        from stackops.utils.ssh_utils.host_key_verification import connect_with_verified_host_key
 
-        connection_target = resolve_ssh_connection_target(
+        connection_profile = resolve_ssh_connection_profile(
             host=host,
             username=username,
             hostname=hostname,
@@ -55,6 +56,7 @@ class SSH:
             local_username=getpass.getuser(),
             ssh_config_lookup=lookup_open_ssh_config,
         )
+        connection_target = connection_profile.target
         self.host = connection_target.host
         self.hostname = connection_target.hostname
         self.username = connection_target.username
@@ -63,26 +65,20 @@ class SSH:
         self.ssh_key_path = (
             str(Path(connection_target.ssh_key_path).expanduser().absolute()) if connection_target.ssh_key_path is not None else None
         )
-        self.ssh = paramiko.SSHClient()
-        self.ssh.load_system_host_keys()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         pprint(
             dict(host=self.host, hostname=self.hostname, username=self.username, password="***", port=self.port, key_filename=self.ssh_key_path, proxycommand=self.proxycommand),
             title="SSHing To",
         )
-        sock = paramiko.ProxyCommand(self.proxycommand) if self.proxycommand is not None else None
         use_automatic_authentication = password is None
-        self.ssh.connect(
-            hostname=self.hostname,
-            username=self.username,
+        self.ssh: paramiko.SSHClient = connect_with_verified_host_key(
+            profile=connection_profile,
             password=self.password,
-            port=self.port,
+            passphrase=None,
             key_filename=self.ssh_key_path,
-            compress=self.enable_compression,
-            sock=sock,
             allow_agent=use_automatic_authentication,
             look_for_keys=use_automatic_authentication,
-        )
+            compress=self.enable_compression,
+        ).client
         try:
             self.sftp: paramiko.SFTPClient | None = self.ssh.open_sftp()
         except Exception as err:
@@ -491,6 +487,7 @@ stderr:
                     overwrite_existing=overwrite_existing,
                 )
             return None
+        upload_obj = source_obj
         if compress_with_zip:
             import shutil
             zip_path = Path(str(source_obj) + "_archive")
@@ -498,7 +495,7 @@ stderr:
                 shutil.make_archive(str(zip_path), "zip", source_obj)
             else:
                 shutil.make_archive(str(zip_path), "zip", source_obj.parent, source_obj.name)
-            source_obj = Path(str(zip_path) + ".zip")
+            upload_obj = Path(str(zip_path) + ".zip")
             if not target_rel2home.endswith(".zip"):
                 target_rel2home = target_rel2home + ".zip"
         if Path(target_rel2home).parent.as_posix() not in {"", "."}:
@@ -508,37 +505,59 @@ stderr:
         remote_target_full = self._build_remote_path(
             self.remote_specs["home_dir"], target_rel2home
         )
-        print(f"""[SFTP UPLOAD] Sending file: {repr(source_obj)}  ==>  Remote Path: {remote_target_full}""")
+        print(f"""[SFTP UPLOAD] Sending file: {repr(upload_obj)}  ==>  Remote Path: {remote_target_full}""")
         try:
             with self.tqdm_wrap(ascii=True, unit="b", unit_scale=True) as pbar:
-                print(f"Uploading {source_obj} to\n{remote_target_full}")
+                print(f"Uploading {upload_obj} to\n{remote_target_full}")
                 sftp.put(
-                    localpath=str(source_obj),
+                    localpath=str(upload_obj),
                     remotepath=remote_target_full,
                     callback=pbar.view_bar,
                 )
         except Exception:
-            if compress_with_zip and source_obj.exists() and str(source_obj).endswith("_archive.zip"):
-                source_obj.unlink()
+            if compress_with_zip and upload_obj.exists() and str(upload_obj).endswith("_archive.zip"):
+                upload_obj.unlink()
             raise
         if compress_with_zip:
-            def unzip_archive(zip_file_path: str, overwrite_flag: bool) -> None:
+            import stat
+            archive_root = source_obj if source_obj.is_dir() else source_obj.parent
+            archive_root_posix_mode = (
+                None if "Windows" in (platform.system(), self.remote_specs["system"]) else stat.S_IMODE(archive_root.stat().st_mode)
+            )
+
+            def unzip_archive(zip_file_path: str, overwrite_flag: bool, archive_root_posix_mode: int | None) -> None:
                 from pathlib import Path
                 import shutil
+                import stat
                 import zipfile
                 archive_path = Path(zip_file_path).expanduser()
                 extraction_directory = archive_path.parent / archive_path.stem
                 if overwrite_flag and extraction_directory.exists():
                     shutil.rmtree(extraction_directory)
                 with zipfile.ZipFile(archive_path, "r") as archive_handle:
-                    archive_handle.extractall(extraction_directory)
+                    if archive_root_posix_mode is None:
+                        archive_handle.extractall(extraction_directory)
+                    else:
+                        extraction_directory.mkdir(parents=True, exist_ok=True)
+                        extraction_directory.chmod(0o700)
+                        extracted_directory_modes: list[tuple[Path, int]] = []
+                        for member in archive_handle.infolist():
+                            extracted_path = Path(archive_handle.extract(member, extraction_directory))
+                            member_posix_mode = stat.S_IMODE(member.external_attr >> 16)
+                            if member.is_dir():
+                                extracted_directory_modes.append((extracted_path, member_posix_mode))
+                            else:
+                                extracted_path.chmod(member_posix_mode)
+                        for directory_path, directory_mode in sorted(extracted_directory_modes, key=lambda item: len(item[0].parts), reverse=True):
+                            directory_path.chmod(directory_mode)
+                        extraction_directory.chmod(archive_root_posix_mode)
                 archive_path.unlink()
 
             remote_zip_path = self._build_remote_path(
                 self.remote_specs["home_dir"], target_rel2home
             )
             command = lambda_to_python_script(
-                lambda: unzip_archive(zip_file_path=remote_zip_path, overwrite_flag=overwrite_existing),
+                lambda: unzip_archive(zip_file_path=remote_zip_path, overwrite_flag=overwrite_existing, archive_root_posix_mode=archive_root_posix_mode),
                 in_global=True, import_module=False,
             )
             tmp_py_file = Path.home().joinpath(
@@ -561,7 +580,7 @@ stderr:
                 strict_stderr=False,
                 strict_return_code=True,
             )
-            source_obj.unlink()
+            upload_obj.unlink()
             tmp_py_file.unlink(missing_ok=True)
         return None
 
