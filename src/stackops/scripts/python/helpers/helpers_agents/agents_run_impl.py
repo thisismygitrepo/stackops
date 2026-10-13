@@ -222,6 +222,7 @@ def run(
     sandbox_options: SandboxOptions,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_agents.agents_run_sandbox import validate_prompt_sandbox
+    from stackops.scripts.python.helpers.helpers_agents.agents_edit_source import choose_edit_source
     from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
         edit_prompts_yaml,
         ensure_prompts_yaml_exists,
@@ -235,6 +236,8 @@ def run(
 
         validate_interactive_prompt_agent(agent=agent)
     validate_prompt_sandbox(agent=agent, options=sandbox_options)
+    if edit and prompts_yaml_path is None and source in ("all", "a"):
+        source = choose_edit_source()
     if _should_prepare_prompts_yaml(
         context=context,
         context_path=context_path,

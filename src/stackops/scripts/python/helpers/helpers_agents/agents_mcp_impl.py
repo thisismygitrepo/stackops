@@ -2,6 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Final
 
+from stackops.scripts.python.helpers.helpers_agents.agents_edit_source import choose_edit_source
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import (
     edit_mcp_catalog,
     ensure_mcp_catalog_exists,
@@ -57,6 +58,8 @@ def resolve_local_install_root(*, current_dir: Path) -> Path | None:
 def add_mcp(
     *, requested_mcp_servers: str | None, agents: str, scope: MCP_INSTALL_SCOPE, source: MCP_CATALOG_SOURCE, edit: bool, report: Reporter
 ) -> None:
+    if edit and source in ("all", "a"):
+        source = choose_edit_source()
     search_locations = resolve_mcp_catalog_locations(source=source)
     if edit:
         created_catalog_paths: list[Path] = []

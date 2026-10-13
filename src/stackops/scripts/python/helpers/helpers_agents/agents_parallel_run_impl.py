@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from stackops.scripts.python.helpers.helpers_agents.agents_edit_source import choose_edit_source
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
     PARALLEL_RUNS_SOURCE,
     ParallelCreateValues,
@@ -24,6 +25,8 @@ def run_parallel_from_yaml(
     add_entry: bool,
     show_parallel_yaml_format: bool,
 ) -> None:
+    if edit and parallel_yaml_path is None and source in ("all", "a"):
+        source = choose_edit_source()
     yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, source=source)
     created_yaml_paths: list[Path] = []
     if not add_entry:

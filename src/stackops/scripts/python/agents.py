@@ -166,7 +166,7 @@ def add_mcp(
             ...,
             "--edit",
             "-e",
-            help="Open MCP catalog files in an editor (hx preferred, nano fallback). If no MCP names are provided, exits after editing.",
+            help="Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source is specific. If no MCP names are provided, exits after editing.",
         ),
     ] = False,
 ) -> None:
@@ -474,7 +474,7 @@ def run_prompt(
             ...,
             "--edit",
             "-e",
-            help="Open prompts YAML in an editor (hx preferred, nano fallback). If no prompt/context input is provided, exits after editing.",
+            help="Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --context-yaml-path specifies it. If no prompt/context input is provided, exits after editing.",
         ),
     ] = False,
     sandbox: Annotated[

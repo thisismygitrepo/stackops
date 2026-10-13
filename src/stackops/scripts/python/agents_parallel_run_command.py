@@ -26,7 +26,13 @@ def run_parallel(
     show_parallel_yaml_format: Annotated[
         bool, typer.Option(..., "--show-format", "-Y", help="Show parallel YAML format guidance and resolved file paths.")
     ] = False,
-    edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open parallel YAML in an editor (hx preferred, nano fallback).")] = False,
+    edit: Annotated[
+        bool,
+        typer.Option(
+            ..., "--edit", "-e",
+            help="Edit parallel YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --yaml-path specifies it.",
+        ),
+    ] = False,
     add_entry: Annotated[
         bool,
         typer.Option(
