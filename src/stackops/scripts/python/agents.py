@@ -430,7 +430,7 @@ def run_prompt(
             ...,
             "--context-yaml-path",
             "-y",
-            help="YAML file used for interactive context selection fallback. Auto-created with commented template if missing.",
+            help="YAML file used for context selection. Created with an example and schema only when the missing file is needed or edited.",
         ),
     ] = None,
     context_name: Annotated[

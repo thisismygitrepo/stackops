@@ -178,7 +178,8 @@ def load_prompts_yaml_data(prompts_yaml_path: str | None, source: PROMPTS_SOURCE
     from stackops.utils.files.read import read_yaml
 
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
-    if prompts_yaml_path is not None and len(yaml_locations) == 1:
+    can_create = prompts_yaml_path is not None or source not in ("library", "l")
+    if can_create and not any(yaml_path.is_file() for _, yaml_path in yaml_locations):
         ensure_prompts_yaml_exists(yaml_path=yaml_locations[0][1])
 
     picked_with_data = [
@@ -255,7 +256,10 @@ def _prompts_yaml_template_for_path(*, yaml_path: Path) -> str:
 # prompts.yaml used by `agents run-prompt`
 # Top-level and nested keys show up in interactive selection (nested via dot-path, e.g. 'team.backend').
 # Each entry can be a plain string or an object with prompt metadata.
-{_PROMPTS_YAML_TEMPLATE_ENTRY_NAME}: {{prompt: replace me, description: short label, group: general}}
+{_PROMPTS_YAML_TEMPLATE_ENTRY_NAME}:
+  prompt: replace me
+  description: short label
+  group: general
 """
 
 
