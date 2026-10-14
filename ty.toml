@@ -5,7 +5,7 @@
 all = "warn"
 
 [environment]
-python-version = "3.13"
+python-version = "3.14"
 
 [src]
 exclude = ["**/.ipynb_checkpoints/", "**/*.ipynb"]

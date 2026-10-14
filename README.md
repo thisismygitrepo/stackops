@@ -7,7 +7,7 @@
 <p>
   <a href="https://thisismygitrepo.github.io/stackops/"><img alt="Docs" src="https://img.shields.io/badge/docs-online-2f6f6f"></a>
   <a href="https://pypi.org/project/stackops/"><img alt="PyPI package" src="https://img.shields.io/pypi/v/stackops?color=2f6f6f"></a>
-  <img alt="Python 3.13+" src="https://img.shields.io/badge/python-3.13%2B-3776AB">
+  <img alt="Python 3.14+" src="https://img.shields.io/badge/python-3.14%2B-3776AB">
   <img alt="Installed with uv" src="https://img.shields.io/badge/install-uv-f05d23">
 </p>
 

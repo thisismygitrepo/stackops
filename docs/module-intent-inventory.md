@@ -472,7 +472,7 @@ These **203** modules are package markers, settings/config packages, or executab
 | --- | --- | --- | --- | --- | --- | --- |
 | `stackops` | `package` | `package-marker` | `high` | - | src/stackops/__init__.py |  |
 | `stackops.cluster` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/__init__.py |  |
-| `stackops.cluster.remote` | `package` | `package-marker` | `high` | api-doc, __all__ | src/stackops/cluster/remote/__init__.py |  |
+| `stackops.cluster.remote` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/remote/__init__.py |  |
 | `stackops.cluster.sessions_managers` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/__init__.py |  |
 | `stackops.cluster.sessions_managers.tmux` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/tmux/__init__.py |  |
 | `stackops.cluster.sessions_managers.utils` | `package` | `package-marker` | `high` | api-doc | src/stackops/cluster/sessions_managers/utils/__init__.py |  |
@@ -674,7 +674,7 @@ These **203** modules are package markers, settings/config packages, or executab
 | --- | --- | --- | --- | ---: | ---: | --- | --- | --- |
 | `stackops` | `package` | `package-marker` | `high` | 1 | 0 | - | src/stackops/__init__.py |  |
 | `stackops.cluster` | `package` | `package-marker` | `high` | 0 | 0 | api-doc | src/stackops/cluster/__init__.py |  |
-| `stackops.cluster.remote` | `package` | `package-marker` | `high` | 0 | 44 | api-doc, __all__ | src/stackops/cluster/remote/__init__.py |  |
+| `stackops.cluster.remote` | `package` | `package-marker` | `high` | 0 | 0 | api-doc | src/stackops/cluster/remote/__init__.py |  |
 | `stackops.cluster.remote.cloud_manager` | `api` | `python-api` | `high` | 1 | 372 | api-doc, classes:2, funcs:9 | src/stackops/cluster/remote/cloud_manager.py |  |
 | `stackops.cluster.remote.data_transfer` | `api` | `python-api` | `high` | 1 | 46 | api-doc, funcs:3 | src/stackops/cluster/remote/data_transfer.py |  |
 | `stackops.cluster.remote.distribute` | `api` | `python-api` | `high` | 1 | 303 | api-doc, classes:5, funcs:6 | src/stackops/cluster/remote/distribute.py |  |

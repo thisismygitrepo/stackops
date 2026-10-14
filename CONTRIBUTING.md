@@ -28,7 +28,7 @@
 
 ## Code standards
 
-- Python 3.13+ syntax; use modern features (match/case, type unions, pathlib, etc.).
+- Python 3.14+ syntax; use modern features (match/case, type unions, pathlib, etc.).
 - Fully type-hint all public functions, methods, and module-level variables.
 - Follow the existing project conventions in `AGENTS.md`.
 - Keep modules under ~200 lines; split into cohesive submodules when they grow.

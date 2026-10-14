@@ -1,6 +1,6 @@
 # Installation
 
-StackOps supports Python 3.13+ and is easiest to install with [uv](https://docs.astral.sh/uv/).
+StackOps supports Python 3.14+ and is easiest to install with [uv](https://docs.astral.sh/uv/).
 
 ## Install with uv
 
