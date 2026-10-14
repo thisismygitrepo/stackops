@@ -16,7 +16,7 @@ for (const line of readFileSync(resolve(folder, 'stackops-concept.rst'), 'utf8')
   const field = line.match(/^:([\w-]+): (.*)$/);
   if (field && scene) (scene[field[1]] ??= []).push(field[2]);
 }
-const manifest = { output: resolve(folder, 'stackops-concept-live.mp4'), scratch, scenes: [] };
+const manifest = { output: resolve(folder, 'stackops-concept.mp4'), scratch, scenes: [] };
 for (const [index, current] of scenes.entries()) {
   if (current.Focus.length !== current.Say.length) throw new Error(`Scene ${index + 1} needs one Focus per Say field`);
   const images = [];

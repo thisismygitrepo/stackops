@@ -1,5 +1,6 @@
 from datetime import date
 from pathlib import Path
+import subprocess
 from typing import Literal, NoReturn
 
 import git
@@ -28,6 +29,21 @@ version = "26.9.2"
     return tmp_path
 
 
+@pytest.fixture
+def tool_installs(checkout: Path, monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
+    commands: list[list[str]] = []
+    original_run = subprocess.run
+
+    def run(command: list[str], check: bool, **_options: object) -> subprocess.CompletedProcess[str]:
+        if command[0] == "git":
+            return original_run(command, cwd=checkout, check=check, capture_output=True, text=True)
+        commands.append(command)
+        return subprocess.CompletedProcess(command, returncode=0)
+
+    monkeypatch.setattr(cli_self_release.subprocess, "run", run)
+    return commands
+
+
 @pytest.mark.parametrize("kind", ["missing", "directory", "checkout"])
 def test_release_registration_requires_developer_git_checkout(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: Literal["missing", "directory", "checkout"]
@@ -52,7 +68,9 @@ def test_release_registration_requires_developer_git_checkout(
         assert "No such command 'release'" in result.output
 
 
-def test_local_release_uses_fixed_checkout_without_publishing(checkout: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_local_release_uses_fixed_checkout_without_publishing(
+    checkout: Path, tool_installs: list[list[str]], monkeypatch: pytest.MonkeyPatch
+) -> None:
     invocation_roots: list[Path] = []
     elsewhere = checkout / "elsewhere"
     elsewhere.mkdir()
@@ -75,9 +93,12 @@ def test_local_release_uses_fixed_checkout_without_publishing(checkout: Path, mo
     assert invocation_roots == [checkout]
     assert "26.9.2 → 26.9.3" in result.output
     assert "ready for review" in result.output
+    assert tool_installs == [["uv", "tool", "install", "--no-cache", "--upgrade", "--editable", str(checkout)]]
 
 
-def test_publish_preflights_before_bump_and_reports_tag(checkout: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_publish_preflights_before_bump_and_reports_tag(
+    checkout: Path, tool_installs: list[list[str]], monkeypatch: pytest.MonkeyPatch
+) -> None:
     events: list[str] = []
     prepared_publication = StackOpsPublication(repository="thisismygitrepo/stackops", parent_commit="abc123")
     prepared_release = StackOpsRelease(previous_version="26.9.2", version="26.9.3", changed_files=(Path("pyproject.toml"),))
@@ -99,6 +120,7 @@ def test_publish_preflights_before_bump_and_reports_tag(checkout: Path, monkeypa
         assert repo_root == checkout
         assert release == prepared_release
         assert publication == prepared_publication
+        assert tool_installs == []
         events.append("publish")
         return release_tag
 
@@ -111,9 +133,10 @@ def test_publish_preflights_before_bump_and_reports_tag(checkout: Path, monkeypa
     assert result.exit_code == 0, result.output
     assert events == ["preflight", "bump", "publish"]
     assert f"Pushed {release_tag} and main" in result.output
+    assert tool_installs == [["uv", "tool", "install", "--no-cache", "--upgrade", "--editable", str(checkout)]]
 
 
-def test_failed_preflight_does_not_bump(checkout: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_failed_preflight_does_not_bump(checkout: Path, tool_installs: list[list[str]], monkeypatch: pytest.MonkeyPatch) -> None:
     def reject_dirty_repo(repo_root: Path, today: date) -> NoReturn:
         assert repo_root == checkout
         assert today == date.today()
@@ -129,6 +152,7 @@ def test_failed_preflight_does_not_bump(checkout: Path, monkeypatch: pytest.Monk
 
     assert result.exit_code == 1, result.output
     assert "Commit local changes before publishing" in result.output
+    assert tool_installs == []
 
 
 def test_direct_release_rechecks_missing_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

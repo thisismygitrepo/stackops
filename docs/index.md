@@ -27,6 +27,11 @@ Coordinate selected packages, configuration, repositories, data, terminal layout
 
 </div>
 
+<video controls preload="metadata" width="100%">
+  <source src="video/stackops-concept.mp4" type="video/mp4">
+  <track kind="captions" src="video/stackops-concept.vtt" srclang="en" label="English">
+</video>
+
 ---
 
 ## What you get

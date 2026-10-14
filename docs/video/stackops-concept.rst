@@ -23,9 +23,14 @@ metadata. Each ``Focus`` / ``Say`` pair is one visual beat and its spoken
 caption. ``Card`` fields use ``title | detail``; ``|`` in other text makes a
 line break.
 
-The output is ``docs/video/stackops-concept-live.mp4`` with matching VTT
-captions. MP4 files are ignored
-by Git. Intermediate
+The output is ``docs/video/stackops-concept.mp4`` with matching VTT
+captions. MP4 files are ignored by Git; the docs site pulls the video from the
+``media`` GitHub release at deploy time. Publish a new render with::
+
+    gh release upload media docs/video/stackops-concept.mp4 --clobber
+    gh workflow run docs.yml
+
+Intermediate
 artwork, audio, timing metadata, and previews go under
 ``.ai/tmp_scripts/stackops-video/``. Narration sends the script to OpenAI.
 

@@ -80,6 +80,11 @@ jobs:
       - name: Build site
         run: rm -rf site && uv run zensical build
 
+      - name: Fetch concept video
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download media --pattern stackops-concept.mp4 --dir site/video
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
