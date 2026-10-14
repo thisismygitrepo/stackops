@@ -17,7 +17,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_install import (
     install_resolved_mcp_servers,
     parse_requested_agents,
 )
-from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
+from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE, McpCatalogLocation
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import (
     build_agent_skill_install_commands,
     is_supported_agent_skill_name,
@@ -58,7 +58,7 @@ def resolve_local_install_root(*, current_dir: Path) -> Path | None:
 def add_mcp(
     *, requested_mcp_servers: str | None, agents: str, scope: MCP_INSTALL_SCOPE, source: MCP_CATALOG_SOURCE, edit: bool, report: Reporter
 ) -> None:
-    search_locations = resolve_mcp_catalog_locations(source=source)
+    search_locations: tuple[McpCatalogLocation, ...] = resolve_mcp_catalog_locations(source=source)
     if edit and source in ("all", "a"):
         source, selected_catalog_path = choose_edit_source(locations=[(location["scope"], location["path"]) for location in search_locations])
         search_locations = ({"scope": source, "path": selected_catalog_path},)

@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -58,7 +58,7 @@ class _CleanupProgressHandler(logging.Handler):
 
 
 @contextmanager
-def show_cleanup_progress(*, console: Console) -> Iterator[None]:
+def show_cleanup_progress(*, console: Console) -> Generator[None]:
     progress = Progress(
         SpinnerColumn(),
         TimeElapsedColumn(),
