@@ -11,6 +11,10 @@
   <img alt="Installed with uv" src="https://img.shields.io/badge/install-uv-f05d23">
 </p>
 
+
+https://github.com/user-attachments/assets/c3e68bc4-88b7-4354-8fe5-b56bbfb98ad8
+
+
 </div>
 
 StackOps coordinates packages, configuration, repositories, data, terminal layouts, and coding-agent resources around the tools you already use. Install selected packages, synchronize declared configuration, or launch an authored tmux workspace through focused commands. Available installers and integrations vary by operating system and external tool.
