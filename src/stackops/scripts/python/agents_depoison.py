@@ -75,6 +75,7 @@ def _run_depoison(
     )
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_output import render_cleanup_plan, render_cleanup_result
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_plan import build_cleanup_plan
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_progress import show_cleanup_progress
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import collect_workspace_resources, resolve_cleanup_resources
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.discovery import collect_hooks
@@ -108,7 +109,7 @@ def _run_depoison(
                     entries=tuple(entry for item in inventories for entry in item.entries),
                     diagnostics=tuple(diagnostic for item in inventories for diagnostic in item.diagnostics),
                 )
-                status.update("Building reset plan...")
+            with show_cleanup_progress(console=console):
                 plan = build_cleanup_plan(inventory=inventory, scope=selection.scope, match=selection.match, home_directory=context.home_directory)
             if interactive:
                 console.rule("Step 3/4 · Review the reset plan", style="cyan")

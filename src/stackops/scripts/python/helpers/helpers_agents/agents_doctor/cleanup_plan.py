@@ -5,6 +5,7 @@ import yaml
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_documents import edit_cleanup_document
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupPlan, CleanupScope
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import capture_cleanup_snapshot
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_progress import CleanupTargetProgress, logger
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory, HookRemoval
 
 
@@ -40,9 +41,12 @@ def build_cleanup_plan(*, inventory: HookInventory, scope: CleanupScope, match: 
         ):
             blockers.append(f"Read-only or externally managed resource: {entry.name} ({entry.path})")
     changes: list[CleanupChange] = []
-    for path, raw_removals in grouped.items():
-        if any(path != directory and path.is_relative_to(directory) for directory in directory_paths):
-            continue
+    targets = tuple(
+        (path, removals) for path, removals in grouped.items()
+        if not any(path != directory and path.is_relative_to(directory) for directory in directory_paths)
+    )
+    for index, (path, raw_removals) in enumerate(targets, start=1):
+        logger.info(CleanupTargetProgress(path=path, index=index, total=len(targets)))
         try:
             snapshot = capture_cleanup_snapshot(path=path, home_directory=home_directory)
             removals = tuple(raw_removals)
