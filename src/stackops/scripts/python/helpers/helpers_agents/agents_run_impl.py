@@ -236,10 +236,13 @@ def run(
 
         validate_interactive_prompt_agent(agent=agent)
     validate_prompt_sandbox(agent=agent, options=sandbox_options)
-    if edit and prompts_yaml_path is None and source in ("all", "a"):
-        source = choose_edit_source()
     if edit or show_prompts_yaml_format:
         yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
+        if edit and prompts_yaml_path is None and source in ("all", "a"):
+            source, selected_yaml_path = choose_edit_source(locations=yaml_locations)
+            yaml_locations = [(source, selected_yaml_path)]
+            if source == "repo":
+                prompts_yaml_path = str(selected_yaml_path)
         if edit:
             created_yaml_paths: list[Path] = []
             for location_name, yaml_path in yaml_locations:

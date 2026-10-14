@@ -25,9 +25,10 @@ def run_parallel_from_yaml(
     add_entry: bool,
     show_parallel_yaml_format: bool,
 ) -> None:
-    if edit and parallel_yaml_path is None and source in ("all", "a"):
-        source = choose_edit_source()
     yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, source=source)
+    if edit and parallel_yaml_path is None and source in ("all", "a"):
+        source, selected_yaml_path = choose_edit_source(locations=yaml_locations)
+        yaml_locations = [(source, selected_yaml_path)]
     created_yaml_paths: list[Path] = []
     if not add_entry:
         created_yaml_paths = _ensure_writable_parallel_yaml_files(

@@ -58,9 +58,10 @@ def resolve_local_install_root(*, current_dir: Path) -> Path | None:
 def add_mcp(
     *, requested_mcp_servers: str | None, agents: str, scope: MCP_INSTALL_SCOPE, source: MCP_CATALOG_SOURCE, edit: bool, report: Reporter
 ) -> None:
-    if edit and source in ("all", "a"):
-        source = choose_edit_source()
     search_locations = resolve_mcp_catalog_locations(source=source)
+    if edit and source in ("all", "a"):
+        source, selected_catalog_path = choose_edit_source(locations=[(location["scope"], location["path"]) for location in search_locations])
+        search_locations = ({"scope": source, "path": selected_catalog_path},)
     if edit:
         created_catalog_paths: list[Path] = []
         for location in search_locations:

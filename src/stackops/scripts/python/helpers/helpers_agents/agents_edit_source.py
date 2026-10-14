@@ -1,46 +1,36 @@
 import sys
+from pathlib import Path
 from typing import Literal
 
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.options_utils.options import choose_from_options
 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
 
 
-def choose_edit_source() -> Literal["repo", "private", "public", "library"]:
+def choose_edit_source(*, locations: list[tuple[str, Path]]) -> tuple[Literal["repo", "private", "public", "library"], Path]:
     if not sys.stdin.isatty():
         raise ValueError("--edit requires a specific --source (repo, private, public, or library) when input is not interactive.")
 
-    source_previews: dict[str, str] = {
-        "repo": """repo — Project configuration
-
-Location: <project>/.stackops/
+    source_descriptions: dict[str, str] = {
+        "repo": """Project configuration
 
 Use for prompts, parallel runs and MCP definitions that belong with a project.
 These files can be committed and shared with the project.
-
-Prompt discovery can also include project files in immediate child directories.
 """,
-        "private": f"""private — Personal configuration
-
-Location: {DOTFILES_STACKOPS_ROOT}
+        "private": """Personal configuration
 
 Use for your own prompts, parallel runs and MCP definitions, reused across projects.
 These files are kept in your private dotfiles storage, separately from each project.
 The source name does not set file permissions or encrypt the contents.
 """,
-        "public": f"""public — Reusable local configuration
-
-Location: {CONFIG_ROOT}
+        "public": """Reusable local configuration
 
 Use for prompts, parallel runs and MCP definitions in your local StackOps configuration,
 available across projects on this machine.
 
 Selecting public edits local files; it does not publish or upload them.
 """,
-        "library": f"""library — Built-in StackOps configuration
-
-Location: {LIBRARY_ROOT}
+        "library": """Built-in StackOps configuration
 
 Use when changing the configuration bundled with the installed StackOps package.
 With an editable installation, these files live in the StackOps source checkout.
@@ -48,6 +38,22 @@ With an editable installation, these files live in the StackOps source checkout.
 Edits change the bundled files directly and may be replaced by an upgrade or reinstall.
 """,
     }
+    source_previews: dict[str, str] = {}
+    source_locations: dict[str, tuple[Literal["repo", "private", "public", "library"], Path]] = {}
+    for location_name, path in locations:
+        source = location_name.partition(":")[0]
+        match source:
+            case "repo" | "private" | "public" | "library":
+                label = f"""repo:{path.relative_to(Path.cwd(), walk_up=True).as_posix()}""" if source == "repo" else source
+                source_locations[label] = (source, path)
+                source_previews[label] = f"""{label}
+
+File to edit: {path}
+
+{source_descriptions[source]}
+"""
+            case _:
+                raise ValueError(f"""Unknown edit source: {location_name}""")
     if check_tool_exists("tv"):
         selected_source = choose_from_dict_with_preview(
             options_to_preview_mapping=source_previews,
@@ -68,10 +74,8 @@ Edits change the bundled files directly and may be replaced by an upgrade or rei
             tv=False,
             preview=None,
         )
-    match selected_source:
-        case "repo" | "private" | "public" | "library":
-            return selected_source
-        case None:
-            raise ValueError("Source selection cancelled; no files were edited.")
-        case _:
-            raise ValueError(f"""Unknown edit source: {selected_source}""")
+    if selected_source is None:
+        raise ValueError("Source selection cancelled; no files were edited.")
+    if selected_source not in source_locations:
+        raise ValueError(f"""Unknown edit source: {selected_source}""")
+    return source_locations[selected_source]
