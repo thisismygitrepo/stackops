@@ -65,5 +65,8 @@ def _with_alias_marker(help_text: object, alias_marker: str) -> str | None:
     if not isinstance(help_text, str):
         return None
     if ALIAS_MARKER_PATTERN.search(help_text):
+        prefix, marker, suffix = help_text.partition(alias_marker)
+        if marker:
+            return " ".join(part for part in (marker, prefix.rstrip(), suffix.lstrip()) if part)
         return help_text
-    return f"{alias_marker} {help_text}"
+    return f"""{alias_marker} {help_text}"""
