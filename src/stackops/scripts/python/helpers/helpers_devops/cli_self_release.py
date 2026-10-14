@@ -25,6 +25,7 @@ def release(
 
     Developer only: operates on the Git checkout at ~/code/stackops.
     Without --publish, leaves the release changes uncommitted for review.
+    Finally reinstalls the editable uv tool so `stackops --version` reports the new version.
     """
     try:
         if not is_stackops_repository(repo_root=STACKOPS_REPO_DIR):
@@ -41,15 +42,17 @@ def release(
             typer.echo(f"""Updated {changed_file.as_posix()}""")
         if publication is None:
             typer.echo("Release changes are ready for review and commit.")
-            return
-        from stackops.scripts.python.helpers.helpers_devops.stackops_publish import publish_stackops_release
+        else:
+            from stackops.scripts.python.helpers.helpers_devops.stackops_publish import publish_stackops_release
 
-        release_tag = publish_stackops_release(
-            repo_root=STACKOPS_REPO_DIR,
-            release=prepared_release,
-            publication=publication,
-        )
-        typer.echo(f"""Pushed {release_tag} and main. The existing GitHub workflow will publish the release.""")
+            release_tag = publish_stackops_release(
+                repo_root=STACKOPS_REPO_DIR,
+                release=prepared_release,
+                publication=publication,
+            )
+            typer.echo(f"""Pushed {release_tag} and main. The existing GitHub workflow will publish the release.""")
+        subprocess.run(["uv", "tool", "install", "--no-cache", "--upgrade", "--editable", str(STACKOPS_REPO_DIR)], check=True)
+        typer.echo(f"""Reinstalled the editable stackops tool at {prepared_release.version}.""")
     except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError) as error:
         typer.echo(f"""Release failed: {error}""", err=True)
         raise typer.Exit(code=1) from None
