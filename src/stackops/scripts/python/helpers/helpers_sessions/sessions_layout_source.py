@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import typer
 
@@ -12,6 +13,13 @@ class LayoutEntry:
     selector: str
     layout: LayoutConfig
     source_path: Path | None
+
+
+def default_layout_source_paths() -> dict[Literal["global", "local"], Path]:
+    return {
+        "global": DOTFILES_LAYOUTS_JSON_PATH,
+        "local": Path.cwd().joinpath(".stackops", "config", "layout.json"),
+    }
 
 
 def resolve_layout_source(
@@ -43,10 +51,7 @@ def resolve_layout_source(
 
         source_files = [("", Path(find_layout_file(layout_path=layouts_file)))]
     else:
-        source_files = [
-            ("global", DOTFILES_LAYOUTS_JSON_PATH),
-            ("local", Path.cwd().joinpath(".stackops", "config", "layout.json")),
-        ]
+        source_files = list(default_layout_source_paths().items())
 
     existing_files = [(source_name, path) for source_name, path in source_files if path.is_file()]
     if not existing_files:

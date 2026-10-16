@@ -2,7 +2,7 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.terminal_summary_models import LegacySummarizeBackend, SummarizeVocabulary, SummaryBackend
+from stackops.scripts.python.terminal_summary_models import SummaryBackend
 
 
 def summary(
@@ -15,21 +15,3 @@ def summary(
     from stackops.scripts.python.terminal_summary import summary as print_summary
 
     print_summary(backend=backend, session=session, choose_session=choose_session, show_tabs=show_tabs)
-
-
-def summarize(
-    layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.json file")],
-    vocabulary: Annotated[
-        SummarizeVocabulary,
-        typer.Option("--vocabulary", "-v", help="Output vocabulary to use: layout or herdr."),
-    ] = "layout",
-    backend: Annotated[
-        LegacySummarizeBackend | None,
-        typer.Option("--backend", "-b", help="Deprecated alias for --vocabulary.", hidden=True),
-    ] = None,
-    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Show tab names, directories, commands, and weights.")] = False,
-) -> None:
-    """Summarize a layout file with counts for layouts and tabs."""
-    from stackops.scripts.python.terminal_summarize import summarize as print_layout_summary
-
-    print_layout_summary(layout_path=layout_path, vocabulary=vocabulary, backend=backend, show_tabs=show_tabs)

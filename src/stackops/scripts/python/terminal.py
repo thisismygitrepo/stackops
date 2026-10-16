@@ -398,7 +398,8 @@ def trace(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_sessions.terminal_run_command import TerminalRunCommand
-    from stackops.scripts.python.terminal_summary_commands import summary, summarize
+    from stackops.scripts.python.terminal_layout_commands import edit_layouts, list_layouts
+    from stackops.scripts.python.terminal_summary_commands import summary
 
     layouts_app = typer.Typer(
         help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
@@ -411,14 +412,20 @@ def get_app() -> typer.Typer:
     layouts_app.command("run-all", no_args_is_help=True, help=run_all.__doc__, short_help="🏁 <R> Dynamically run every layout in a file")(run_all)
     layouts_app.command("R", no_args_is_help=True, help=run_all.__doc__, hidden=True)(run_all)
 
+    layouts_app.command("list", no_args_is_help=False, help="📋 <l> List saved layouts and their source files.")(list_layouts)
+    layouts_app.command("l", no_args_is_help=False, hidden=True)(list_layouts)
+
+    layouts_app.command("edit", no_args_is_help=False, help="📝 <e> Edit a layout file, create it if missing, and validate after saving.")(edit_layouts)
+    layouts_app.command("e", no_args_is_help=False, hidden=True)(edit_layouts)
+
     layouts_app.command("attach", no_args_is_help=False, help=attach_to_session.__doc__, short_help="📎 <a> Attach to a session target")(attach_to_session)
     layouts_app.command("a", no_args_is_help=False, help=attach_to_session.__doc__, hidden=True)(attach_to_session)
 
     layouts_app.command("kill", no_args_is_help=False, help=kill_session_target.__doc__, short_help="💀 <k> Kill a session target")(kill_session_target)
     layouts_app.command("k", no_args_is_help=False, help=kill_session_target.__doc__, hidden=True)(kill_session_target)
 
-    layouts_app.command("export", no_args_is_help=False, help=export.__doc__, short_help="📤 <e> Export sessions as a layout")(export)
-    layouts_app.command("e", no_args_is_help=False, help=export.__doc__, hidden=True)(export)
+    layouts_app.command("export", no_args_is_help=False, help=export.__doc__, short_help="📤 <E> Export sessions as a layout")(export)
+    layouts_app.command("E", no_args_is_help=False, help=export.__doc__, hidden=True)(export)
 
     layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="🔬 <t> Trace a terminal session until it settles")(trace)
     layouts_app.command("t", no_args_is_help=True, help=trace.__doc__, hidden=True)(trace)
@@ -435,8 +442,6 @@ def get_app() -> typer.Typer:
     layouts_app.command("summary", no_args_is_help=False, help=summary.__doc__, short_help="📋 <s> Print running session summary")(summary)
     layouts_app.command("s", no_args_is_help=False, help=summary.__doc__, hidden=True)(summary)
 
-    layouts_app.command("summarize", no_args_is_help=True, help=summarize.__doc__, short_help="📝 <S> Summarize a layout file")(summarize)
-    layouts_app.command("S", no_args_is_help=True, help=summarize.__doc__, hidden=True)(summarize)
     return apply_alias_markers(layouts_app)
 
 

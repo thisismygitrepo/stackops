@@ -1,0 +1,147 @@
+from pathlib import Path
+from typing import Annotated, Literal
+
+import typer
+
+
+def list_layouts(
+    layouts_file: Annotated[
+        Path | None,
+        typer.Argument(exists=True, dir_okay=False, help="Layout JSON file. Omit to list layouts from the global and current-directory config files."),
+    ] = None,
+    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include each tab's name, start directory, command, and weight.")] = False,
+    show_stats: Annotated[bool, typer.Option("--stats", "-s", help="Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.")] = False,
+) -> None:
+    from rich.console import Console
+    from rich.table import Table
+    from rich.text import Text
+
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import resolve_layout_source
+
+    try:
+        entries = resolve_layout_source(
+            ctx=None,
+            layouts_file=str(layouts_file) if layouts_file is not None else None,
+            test_layout=False,
+        )
+    except (OSError, ValueError) as error:
+        typer.echo(f"""Error: {error}""", err=True)
+        raise typer.Exit(code=1) from error
+
+    table = Table(title=f"""Saved layouts ({len(entries)})""")
+    table.add_column("Layout", style="cyan")
+    table.add_column("Tabs", justify="right")
+    table.add_column("Source file")
+    for entry in entries:
+        table.add_row(
+            Text(entry.selector),
+            str(len(entry.layout["layoutTabs"])),
+            Text(str(entry.source_path)),
+        )
+    console = Console()
+    console.print(table)
+
+    if show_stats:
+        total_layouts = len(entries)
+        total_tabs = sum(len(entry.layout["layoutTabs"]) for entry in entries)
+        average_tabs = total_tabs / total_layouts if total_layouts else 0.0
+        stats_table = Table(title="Layout statistics")
+        stats_table.add_column("Metric")
+        stats_table.add_column("Value")
+        stats_table.add_row("Layouts", str(total_layouts))
+        stats_table.add_row("Tabs", str(total_tabs))
+        stats_table.add_row("Avg tabs/layout", f"""{average_tabs:.2f}""")
+        if entries:
+            largest = max(entries, key=lambda entry: len(entry.layout["layoutTabs"]))
+            smallest = min(entries, key=lambda entry: len(entry.layout["layoutTabs"]))
+            stats_table.add_row("Max tabs layout", Text(f"""{largest.selector} ({len(largest.layout["layoutTabs"])})"""))
+            stats_table.add_row("Min tabs layout", Text(f"""{smallest.selector} ({len(smallest.layout["layoutTabs"])})"""))
+        console.print(stats_table)
+
+    if show_tabs:
+        tabs_table = Table(title="Layout tabs")
+        tabs_table.add_column("Layout", style="cyan")
+        tabs_table.add_column("Tab")
+        tabs_table.add_column("Start directory")
+        tabs_table.add_column("Command")
+        tabs_table.add_column("Weight", justify="right")
+        for entry in entries:
+            for tab in entry.layout["layoutTabs"]:
+                tabs_table.add_row(
+                    Text(entry.selector), Text(tab["tabName"]), Text(tab["startDir"]), Text(tab["command"]),
+                    str(tab["tabWeight"]) if "tabWeight" in tab else "—",
+                )
+        console.print(tabs_table)
+
+
+def edit_layouts(
+    layouts_file: Annotated[
+        Path | None,
+        typer.Argument(dir_okay=False, help="Layout JSON file to edit. Omit to choose the global or current-directory config file."),
+    ] = None,
+    source: Annotated[
+        Literal["global", "local"] | None,
+        typer.Option("--source", "-s", help="Config file to edit without prompting. Cannot be combined with LAYOUTS_FILE."),
+    ] = None,
+    editor: Annotated[
+        Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the layout file with."),
+    ] = "hx",
+) -> None:
+    import os
+    import shutil
+    import subprocess
+
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import select_layout
+    from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import default_layout_source_paths
+    from stackops.utils.managed_files import ensure_managed_schema, get_managed_file_spec
+
+    if layouts_file is not None and source is not None:
+        raise typer.BadParameter("LAYOUTS_FILE cannot be combined with --source.")
+    if layouts_file is not None:
+        file_path = layouts_file.expanduser().absolute()
+    else:
+        source_paths = default_layout_source_paths()
+        if source is not None:
+            file_path = source_paths[source]
+        else:
+            from stackops.utils.options_utils.options import choose_from_options
+
+            choices = {f"""{name}: {path}""": path for name, path in source_paths.items()}
+            selection = choose_from_options(
+                options=list(choices), multi=False, custom_input=False, tv=True, msg="Choose a layout config file to edit:",
+            )
+            if selection is None:
+                raise typer.Abort()
+            file_path = choices[selection]
+
+    try:
+        if file_path.exists() and not file_path.is_file():
+            raise ValueError(f"""Layout path is not a file: {file_path}""")
+        editor_bin = shutil.which(editor)
+        if editor_bin is None:
+            raise ValueError(f"""Editor '{editor}' is not available on PATH.""")
+        if not file_path.exists():
+            spec = get_managed_file_spec("layouts")
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(spec.initial_content, encoding="utf-8")
+            os.chmod(file_path, spec.file_mode)
+            ensure_managed_schema(spec=spec, data_path=file_path)
+            typer.echo(f"""Created layout file: {file_path}""")
+
+        editor_command = [editor_bin, "--wait"] if editor == "code" else [editor_bin]
+        editor_command.append(str(file_path))
+        typer.echo(f"""Editing layout file: {file_path}""")
+        result = subprocess.run(editor_command, check=False)
+    except (OSError, ValueError) as error:
+        typer.echo(f"""Error: {error}""", err=True)
+        raise typer.Exit(code=1) from error
+    if result.returncode != 0:
+        typer.echo(f"""Error: Editor exited with status code {result.returncode}.""", err=True)
+        raise typer.Exit(code=result.returncode if result.returncode > 0 else 1)
+
+    try:
+        select_layout(layouts_json_file=str(file_path), selected_layouts_names=[], select_interactively=False)
+    except (OSError, ValueError) as error:
+        typer.echo(f"""Error: Invalid layout file after editing: {error}""", err=True)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"""Layout file validated: {file_path}""")
