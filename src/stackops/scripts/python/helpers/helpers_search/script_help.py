@@ -7,30 +7,9 @@ SCRIPT_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "pub
 
 
 def list_available_scripts(source: SCRIPT_SOURCE) -> None:
-    from stackops.utils.source_of_truth import CONFIG_ROOT, LIBRARY_ROOT, SCRIPTS_ROOT_PRIVATE
-    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
+    from stackops.scripts.python.helpers.helpers_devops.script_sources import get_script_locations
 
-    repo_root = current_repo_stackops_path(path_kind="scripts")
-    private_root = SCRIPTS_ROOT_PRIVATE
-    public_root = CONFIG_ROOT.joinpath("scripts")
-    library_root = LIBRARY_ROOT.joinpath("jobs", "scripts")
-    locations: dict[str, Path | str] = {}
-    match source:
-        case "all" | "a":
-            locations = {"private": private_root, "public": public_root, "library": library_root}
-            if repo_root is not None:
-                locations = {"repo": repo_root, **locations}
-            locations["dynamic"] = "https://github.com/thisismygitrepo/stackops/tree/main/src/stackops/jobs/scripts_dynamic"
-        case "repo" | "r":
-            locations = {"repo": require_current_repo_stackops_path(path_kind="scripts")}
-        case "private" | "p":
-            locations = {"private": private_root}
-        case "public" | "b":
-            locations = {"public": public_root}
-        case "library" | "l":
-            locations = {"library": library_root}
-        case "dynamic" | "d":
-            locations = {"dynamic": "https://github.com/thisismygitrepo/stackops/tree/main/src/stackops/jobs/scripts_dynamic"}
+    locations = get_script_locations(source=source)
     def _print_files_by_type(files: list[str] | list[Path]) -> None:
         categories: dict[str, list[str]] = {".py": [], ".sh": [], ".ps1": [], ".cmd": [], ".bat": [], "other": []}
         for f in files:

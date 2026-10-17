@@ -11,22 +11,22 @@ SECRETS_SEARCH_HELP = "Select secret bundles for environment variables or JSON o
 SECRETS_STATS_HELP = "Show aggregate StackOps secrets inventory stats without printing secret values."
 SECRETS_SUBSET_HELP = "Create a StackOps secrets subset and choose output conflicts with --on-conflict."
 SECRETS_SEARCH_EPILOG = """Examples:
-  devops vault secrets search aws dev iam-access-key
-  devops vault secrets s github personal-access-token
-  devops vault secrets s AWS_ACCESS_KEY_ID
-  devops vault secrets search --interactive
-  devops vault secrets s -i aws
-  devops vault secrets search --verbose aws dev iam-access-key
-  devops vault secrets search --name aws-dev --tag iam-access-key
-  devops vault secrets search --name aws-dev --tag session-token
-  devops vault secrets search --source global bitwarden
-  devops vault secrets s --source g bitwarden
-  devops vault secrets s --all-matches --source g cloudf
-  devops vault secrets search mail --all-matches --json
-  devops vault secrets search --source both github token
-  devops vault secrets s --source b github token
-  devops vault secrets s -i -P github
-  devops vault secrets search --path ~/private/team-secrets.json aws dev
+  devops vault search aws dev iam-access-key
+  devops vault s github personal-access-token
+  devops vault s AWS_ACCESS_KEY_ID
+  devops vault search --interactive
+  devops vault s -i aws
+  devops vault search --verbose aws dev iam-access-key
+  devops vault search --name aws-dev --tag iam-access-key
+  devops vault search --name aws-dev --tag session-token
+  devops vault search --source global bitwarden
+  devops vault s --source g bitwarden
+  devops vault s --all-matches --source g cloudf
+  devops vault search mail --all-matches --json
+  devops vault search --source both github token
+  devops vault s --source b github token
+  devops vault s -i -P github
+  devops vault search --path ~/private/team-secrets.json aws dev
 
 Terms are case-insensitive substring matches. All terms must match somewhere across login
 name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.
@@ -280,10 +280,11 @@ def add(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops import cli_vault
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_files import init_secrets, path_secrets, validate_secrets
 
     app = typer.Typer(
-        name="secrets", help=f"🔐 <k> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False,
+        name="vault", help=f"🔐 <v> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.command("search", no_args_is_help=True, help=f"🔎 <s> {SECRETS_SEARCH_HELP}", epilog=SECRETS_SEARCH_EPILOG)(search)
@@ -304,5 +305,8 @@ def get_app() -> typer.Typer:
     app.command("i", hidden=True)(init_secrets)
     app.command("validate", help="✅ <v> Validate a secrets file without opening an editor.")(validate_secrets)
     app.command("v", hidden=True)(validate_secrets)
+
+    app.add_typer(cli_vault.get_app(), name="secrets")
+    app.add_typer(cli_vault.get_app(), name="k", hidden=True)
 
     return app

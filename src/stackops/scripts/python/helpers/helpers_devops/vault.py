@@ -30,7 +30,7 @@ from stackops.secrets.paths import SECRETS_DOFILE
 TMP_RESULTS_ROOT = Path.home() / "tmp_results"
 CACHE_PATH = Path.home() / "tmp_results/cache/pwdmgr/cache.json.gpg"
 DEFAULT_BITWARDEN_LOGIN_NAME = "bitwarden"
-DEFAULT_LOGIN_COMMAND = "devops vault login-and-unlock [--account-name <accountName>] [--login-name <login_name>]"
+DEFAULT_LOGIN_COMMAND = "devops vault secrets login-and-unlock [--account-name <accountName>] [--login-name <login_name>]"
 BITWARDEN_SECRET_KEYS: tuple[str, str, str] = ("BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD")
 
 
@@ -393,7 +393,7 @@ def _report_ambiguous_bitwarden_bundles(*, logins: list[Login], login_name: str)
     if vault_status.user_email:
         err_console.print(f"bw is currently logged in as [bold]{escape(vault_status.user_email)}[/bold] ({vault_status.status}).")
     account_names = ", ".join(str(login.get("accountName", "-")) for login in logins)
-    err_console.print(f"Pick one explicitly, e.g. [bold]devops vault login-and-unlock --account-name <accountName>[/bold]. Accounts: {account_names}")
+    err_console.print(f"Pick one explicitly, e.g. [bold]devops vault secrets login-and-unlock --account-name <accountName>[/bold]. Accounts: {account_names}")
 
 
 def print_process_output(result: subprocess.CompletedProcess[str], *, stderr: bool = False) -> None:

@@ -137,8 +137,9 @@ def get_app() -> typer.Typer:
 
     ctx_settings: dict[str, object] = {"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True, "help_option_names": []}
 
-    app.command(name="devops", help="🔧 <d> DevOps related commands", context_settings=ctx_settings)(devops)
-    app.command(name="d", hidden=True, context_settings=ctx_settings)(devops)
+    devops_context = {**ctx_settings, "allow_interspersed_args": False}
+    app.command(name="devops", help="🔧 <d> DevOps related commands", context_settings=devops_context)(devops)
+    app.command(name="d", hidden=True, context_settings=devops_context)(devops)
     app.command(name="cloud", help="⛅ <c> Cloud management commands", context_settings=ctx_settings)(cloud)
     app.command(name="c", hidden=True, context_settings=ctx_settings)(cloud)
     app.command(name="terminal", help="📟 <t> Terminal and layout management", context_settings=ctx_settings)(terminal)

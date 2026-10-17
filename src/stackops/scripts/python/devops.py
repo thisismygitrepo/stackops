@@ -1,10 +1,9 @@
 """devops with emojis - lazy loading subcommands."""
 
-from typing import Annotated, Callable, TypedDict
+from typing import Callable, TypedDict
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_search.script_help import SCRIPT_SOURCE
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
 
@@ -95,42 +94,10 @@ def network(ctx: typer.Context) -> None:
     _run_nested_app(ctx, cli_network.get_app)
 
 
-def execute(
-    ctx: typer.Context,
-    name: Annotated[
-        str,
-        typer.Argument(help="Name of script to run, e.g., 'system_compute_analyzer' for system_compute_analyzer.py, or command to execute"),
-    ] = "",
-    source: Annotated[
-        SCRIPT_SOURCE,
-        typer.Option("--source", "-s", help="Source to look for the script"),
-    ] = "all",
-    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Interactive selection of scripts to run")] = False,
-    command: Annotated[bool | None, typer.Option("--command", "-c", help="Run as command")] = False,
-    list_scripts: Annotated[bool, typer.Option("--list", "-l", help="List available scripts in all locations")] = False,
-    run_in_subprocess: Annotated[
-        bool,
-        typer.Option("--subprocess", "-S", help="Run shell scripts in a child shell instead of sourcing them in the caller"),
-    ] = False,
-) -> None:
-    """🚀 Execute python/shell scripts from pre-defined directories or as command."""
-    if name == "--help":
-        typer.echo(ctx.get_help())
-        return
+def scripts(ctx: typer.Context) -> None:
+    from stackops.scripts.python.helpers.helpers_devops import cli_scripts
 
-    import stackops.scripts.python.helpers.helpers_devops.run_script as run_py_script_module
-
-    forwarded_args = [str(arg) for arg in ctx.args]
-    run_py_script_module.run_py_script(
-        ctx=ctx,
-        name=name,
-        source=source,
-        interactive=interactive,
-        command=command,
-        list_scripts=list_scripts,
-        run_in_subprocess=run_in_subprocess,
-        forwarded_args=forwarded_args,
-    )
+    _run_nested_app(ctx, cli_scripts.get_app)
 
 
 def security(ctx: typer.Context) -> None:
@@ -142,9 +109,9 @@ def security(ctx: typer.Context) -> None:
 
 def vault(ctx: typer.Context) -> None:
     """🔐 <v> Manage credentials, secrets, and vault sessions."""
-    from stackops.scripts.python.helpers.helpers_devops import cli_vault
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets
 
-    _run_nested_app(ctx, cli_vault.get_app)
+    _run_nested_app(ctx, cli_config_secrets.get_app)
 
 
 def get_app() -> typer.Typer:
@@ -171,22 +138,18 @@ def get_app() -> typer.Typer:
     cli_app.command("config", help="🔩 <c> Configuration management", context_settings=ctx_settings)(config)
     cli_app.command("c", hidden=True, context_settings=ctx_settings)(config)
 
-    cli_app.command("security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
-    cli_app.command("y", hidden=True, context_settings=ctx_settings)(security)
-
     cli_app.command("vault", help="🔐 <v> Manage credentials, secrets, and vault sessions", context_settings=ctx_settings)(vault)
     cli_app.command("v", hidden=True, context_settings=ctx_settings)(vault)
 
+    scripts_context = {**ctx_settings, "allow_interspersed_args": False}
+    cli_app.command("scripts", help="🚀 <x> Run, list, locate, and edit scripts.", context_settings=scripts_context)(scripts)
+    cli_app.command("x", hidden=True, context_settings=scripts_context)(scripts)
+
+    cli_app.command("security", help="🔐 <y> Security related CLI tools.", context_settings=ctx_settings)(security)
+    cli_app.command("y", hidden=True, context_settings=ctx_settings)(security)
+
     cli_app.command("network", help="🌐 <n> Network management", context_settings=ctx_settings)(network)
     cli_app.command("n", hidden=True, context_settings=ctx_settings)(network)
-
-    cli_app.command(
-        "execute",
-        no_args_is_help=True,
-        short_help="🚀 <e> Execute python/shell scripts from pre-defined directories or as command",
-        context_settings=ctx_settings,
-    )(execute)
-    cli_app.command("e", no_args_is_help=True, hidden=True, context_settings=ctx_settings)(execute)
 
     cli_app.command("self", help="🔧 <s> Self management", context_settings=ctx_settings)(self_cmd)
     cli_app.command("s", hidden=True, context_settings=ctx_settings)(self_cmd)

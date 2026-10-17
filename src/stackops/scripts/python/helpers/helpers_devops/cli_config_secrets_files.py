@@ -13,7 +13,7 @@ def resolve_secrets_file(*, path: Path | None, source: WritableSecretsSource | N
             raise typer.BadParameter("--path overrides only the local secrets source; it cannot be combined with --source global.")
         return path.expanduser().absolute()
     if source is None:
-        raise typer.BadParameter("Provide --path or --source local|global. Use devops vault secrets path to see both files.")
+        raise typer.BadParameter("Provide --path or --source local|global. Use devops vault path to see both files.")
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
 
     return resolve_single_secret_source(secrets_path=None, secrets_source=source).path

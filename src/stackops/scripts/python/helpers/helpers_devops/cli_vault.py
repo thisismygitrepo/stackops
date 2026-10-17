@@ -111,11 +111,9 @@ def clean_cache() -> None:
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets
-
     app = typer.Typer(
-        name="vault",
-        help="🔐 <v> Manage credentials, secrets, and vault sessions.",
+        name="secrets",
+        help="🔐 <k> Manage Bitwarden credentials and vault sessions.",
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
@@ -133,7 +131,7 @@ def get_app() -> typer.Typer:
 
     app.command(
         "unlock",
-        help='🔓 <u> Print an eval-able script exporting the saved BW_SESSION (usage: eval "$(devops vault unlock)").',
+        help="""🔓 <u> Print an eval-able script exporting the saved BW_SESSION (usage: eval "$(devops vault secrets unlock)").""",
     )(unlock)
     app.command("u", help="Alias for unlock.", hidden=True)(unlock)
 
@@ -142,8 +140,5 @@ def get_app() -> typer.Typer:
 
     app.command("clean-cache", help="🧹 <c> Remove encrypted vault cache stored under ~/tmp_results.")(clean_cache)
     app.command("c", help="Alias for clean-cache.", hidden=True)(clean_cache)
-
-    app.add_typer(cli_config_secrets.get_app(), name="secrets", help=f"🔐 <k> {cli_config_secrets.SECRETS_HELP}")
-    app.add_typer(cli_config_secrets.get_app(), name="k", help=cli_config_secrets.SECRETS_HELP, hidden=True)
 
     return app
