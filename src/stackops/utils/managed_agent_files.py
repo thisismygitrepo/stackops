@@ -60,11 +60,11 @@ def get_agent_managed_file_spec(kind: AgentManagedFileKind) -> ManagedFileSpec:
         user_path = Path.cwd() / relative_path
     match kind:
         case "prompts":
-            from stackops.scripts.python.helpers.helpers_agents.agents_run_context import _prompts_yaml_template
+            from stackops.scripts.python.helpers.helpers_agents.agents_run_context import prompts_yaml_template
 
             schema_path = get_path_reference_path(module=agent_schema_assets, path_reference="prompts.schema.json")
             example_path = resolve_agent_managed_file_path(kind=kind, source="library")
-            initial_content = _prompts_yaml_template()
+            initial_content = prompts_yaml_template()
         case "parallel":
             schema_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.schema.json")
             example_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.example.yaml")

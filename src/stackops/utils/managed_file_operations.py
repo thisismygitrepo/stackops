@@ -3,7 +3,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from stackops.utils.managed_files import (
     ManagedFileKind,
@@ -12,6 +12,9 @@ from stackops.utils.managed_files import (
     get_managed_file_spec,
     managed_schema_path,
 )
+
+if TYPE_CHECKING:
+    from stackops.utils.schemas.yaml_schema import JsonValue
 
 
 def _validate_schema_document() -> None:
@@ -37,7 +40,7 @@ def _validate_schema_document() -> None:
         print(f"""Invalid {payload['kind']} file {payload['path']}: {error}""", file=sys.stderr)
         raise SystemExit(1) from error
     try:
-        validator_for(schema)(schema).validate(data)
+        validator_for(schema)(schema).validate(cast("JsonValue", data))
     except ValidationError as error:
         detail = f"""failed schema rule '{error.validator}'""" if payload["kind"] == "secrets" else error.message
         print(f"""Invalid {payload['kind']} file {payload['path']} at {error.json_path}: {detail}""", file=sys.stderr)
@@ -100,6 +103,8 @@ def validate_managed_file(*, kind: ManagedFileKind, data_path: Path) -> None:
         raise ValueError(result.stderr.strip() or f"""Schema validation failed with exit code {result.returncode}.""")
     try:
         match kind:
+            case "config":
+                return
             case "software":
                 from stackops.utils.installer_utils.installer_catalog import load_installer_data_file
 

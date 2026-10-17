@@ -245,7 +245,7 @@ def resolve_named_prompts_yaml_entry(
     return "\n\n".join(fuzzy_value_map[key] for key in chosen_keys)
 
 
-def _prompts_yaml_template() -> str:
+def prompts_yaml_template() -> str:
     return _prompts_yaml_template_for_path(yaml_path=Path("prompts.yaml"))
 
 
@@ -281,7 +281,7 @@ def prompts_yaml_format_explanation(yaml_paths: list[tuple[str, Path]]) -> str:
     return f"""prompts YAML paths:
 {formatted_paths}
 Expected format:
-{_prompts_yaml_template().rstrip()}
+{prompts_yaml_template().rstrip()}
 """
 
 
