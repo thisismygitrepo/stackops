@@ -1,13 +1,23 @@
 ---
 name: build-typer-cli
-description: Build, profile, design, refactor, and validate fast Typer CLIs with lazy imports, lightweight routers, nested command groups, discoverable one-letter command shorts, direct entrypoints, and import-regression tests. Use when creating or restructuring a Typer app; when canonical commands need hidden one-letter invocations advertised in help; when a command or help screen has slow startup or high memory use; when heavy database, ML, plotting, cloud, or network dependencies load during command discovery; or when an umbrella CLI must expose many commands without importing every implementation.
+description: Build and change Typer CLIs, including adding, editing, or removing commands, options, and hidden one-letter aliases. Use when tracing command ownership, creating or restructuring a Typer app, or fixing slow startup and heavy imports during command discovery. Preserve lazy routing through lightweight routers and direct entrypoints.
 ---
 
 # Build Typer CLI
 
 Keep command discovery limited to Typer, standard-library modules, and lightweight CLI contracts. Import implementation modules only after the user selects the command that needs them.
 
-## Workflow
+## Add, Edit, or Remove Commands and Options
+
+1. Trace the real invocation through the console entrypoint, parent `get_app()` registrations, any lazy proxy, the selected callback, and its implementation. Use current `--help` and source to identify the owning files.
+2. For additions, register the command in its owning router and implement the selected callback. Define arguments and options in that callback's signature. Add a hidden alias only when requested or established by the surrounding command group, using the same callback or proxy and routing flags.
+3. For edits, change the owning callback signature or implementation and the affected registrations/help together. Preserve behavior outside the requested change; an explicitly requested rename or parsing change replaces that part of the old contract.
+4. For command removals, remove the canonical registration and its aliases together. Remove a callback, proxy, import, or implementation only after checking its other callers. For an option removal, keep the command registered and remove the option definition and its value handling in the callback and implementation.
+5. Verify the affected help path or an existing focused behavior check under the repository's validation rules. Report the command path and changed files. Do not add tests, run profiling, or expand into unrelated routing refactors for a routine change.
+
+Read [references/lazy-routing-patterns.md](references/lazy-routing-patterns.md) when the change involves proxies, nested groups, or aliases. Use the workflow below for creating or restructuring a CLI or investigating startup performance.
+
+## CLI Design and Performance Workflow
 
 1. Trace the real invocation.
 
@@ -17,11 +27,9 @@ Keep command discovery limited to Typer, standard-library modules, and lightweig
 
 2. Establish a baseline or acceptance target.
 
-- For an existing CLI, measure the exact user command with `hyperfine`.
+- For performance work on an existing CLI, measure the exact user command with `hyperfine`.
 - For a new CLI, identify root, group, and representative leaf help paths plus the modules each path may import.
-- Record peak RSS with `/usr/bin/time`.
-- Rank cumulative imports with `PYTHONPROFILEIMPORTTIME=1`.
-- Measure root help and representative leaf help separately.
+- For performance work, record peak RSS with `/usr/bin/time`, rank cumulative imports with `PYTHONPROFILEIMPORTTIME=1`, and measure root help and representative leaf help separately.
 
 Read [references/measurement-and-validation.md](references/measurement-and-validation.md) for commands and regression tests.
 
@@ -50,7 +58,7 @@ Read [references/lazy-routing-patterns.md](references/lazy-routing-patterns.md) 
 
 6. Preserve the CLI contract.
 
-- Preserve canonical names, hidden aliases, option parsing, required arguments, help text, exit behavior, and whether no arguments show help or execute.
+- Preserve canonical names, hidden aliases, option parsing, required arguments, help text, exit behavior, and whether no arguments show help or execute, except where the user explicitly requests a change to that contract.
 - Forward `ctx.args` explicitly and pass `--help` only for commands whose no-argument behavior is help.
 - Set `standalone_mode=False` for nested invocation so the outer application owns process exit behavior.
 - Pass `prog_name=ctx.command_path` so nested usage text shows the selected path.
@@ -59,10 +67,8 @@ Read [references/lazy-routing-patterns.md](references/lazy-routing-patterns.md) 
 
 - Run root, canonical child, hidden alias, and representative leaf help paths.
 - Confirm root help shows each short marker once beside its canonical command and does not show the hidden alias as a separate row.
-- Add a fresh-process test asserting root help does not import leaf modules.
-- Run focused behavior tests for routing and no-argument semantics.
-- Run the repository's formatter/linter and type checker on every touched Python file.
-- Re-run the same benchmark and report time and RSS before versus after.
+- Follow the repository's validation rules and use existing focused checks for the affected behavior. Add import-regression or routing tests only when test work is requested.
+- For performance work, re-run the same benchmark and report time and RSS before versus after.
 
 ## Non-Negotiable Rules
 
@@ -74,8 +80,8 @@ Read [references/lazy-routing-patterns.md](references/lazy-routing-patterns.md) 
 - Do not implement a separate wrapper for a short. Bind the canonical name and hidden short to the same callback or proxy so routing and marker derivation cannot drift.
 - Do not build compatibility routers alongside old eager routers. Keep one strict registration path.
 - Do not execute real jobs, network calls, browser actions, or database work while benchmarking; use help paths.
-- Do not claim success from wall time alone. Check imports, RSS, behavior, lint, and types.
+- For performance work, do not claim success from wall time alone; consider imports, RSS, and behavior within the permitted validation scope.
 
 ## Completion Criteria
 
-Finish only when root help imports no leaf implementation modules, leaf help imports only its own lightweight CLI contract, CLI behavior remains intact, every advertised command short resolves identically and remains hidden when shorts are in scope, and static analysis passes. For performance work, also require measured startup to materially improve or demonstrate that the remaining cost is framework or runner overhead.
+Finish when the requested command or option behavior is implemented, unaffected CLI behavior remains intact, affected aliases stay consistent, and the permitted focused check passes. For CLI design or restructuring, also verify the intended lazy import boundaries. For performance work, require measured startup to materially improve or demonstrate that the remaining cost is framework or runner overhead.

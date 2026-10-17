@@ -1,16 +1,33 @@
 ---
 name: make-github-installer-config
-description: Create a stackops installer_data.json entry from a GitHub repository releases page. Use this when asked to add a new GitHub binary installer config.
+description: Add, edit, or remove GitHub binary installer entries in StackOps software catalogs. Use when changing a bundled or user installer definition, or deriving a new definition from GitHub release assets.
 ---
 
-Goal: produce one JSON object compatible with the live `InstallerData` shape used by `src/stackops/utils/schemas/installer/installer_data.json` and safely upsert it into the `installers` array.
+Change the requested entry in the selected catalog's `installers` array, using the live `InstallerData` schema.
 
 Mandatory execution rule:
 
 - Run all helper scripts with `uv run ...`.
 - Never run these helpers with plain `python`.
 
-When invoked, follow this process:
+## Select the Catalog and Operation
+
+- Resolve the StackOps checkout before using the helper paths below; run them from that checkout. Discover current commands with `uv run devops software --help`.
+- Run `uv run devops software path --source all` to locate the user and bundled catalogs and schemas. For an explicit custom catalog, use `uv run devops software path --source user --path '<catalog-path>'`.
+- Use the user catalog for personal definitions and overrides. Edit the bundled catalog only when the request concerns StackOps's shared definitions, using `src/stackops/utils/schemas/installer/installer_data.json` in the verified checkout rather than an installed package copy. Carry the chosen absolute catalog path through every edit and validation command.
+- Respect repository and session path restrictions before reading or writing a resolved path. Initialize a missing permitted user catalog with `uv run devops software init --path '<catalog-path>'` only when adding an entry.
+- Locate an existing entry by `appName` and `repoURL` before choosing add, edit, or remove. Runtime names are case-insensitive; user entries replace bundled entries with the same name when `--source all` is used.
+
+## Edit or Remove an Existing Entry
+
+- Edit the selected row in place, changing only the requested fields and preserving optional metadata and all other entries. For a personal override of a bundled entry, copy that complete entry into the user catalog and apply the requested changes there.
+- Scan releases only when the requested edit requires new asset patterns or repository information. Do not rebuild an entire entry for a description, category, or other isolated field change.
+- For removal, delete the exact requested row from the selected catalog. Do not scan releases, invoke the upsert helper, or uninstall software. Removing a user override reveals the bundled definition again under `--source all`; removing a bundled definition requires a change to the shared catalog.
+- Validate the selected file with `uv run devops software validate --path '<catalog-path>'`. This checks its schema and runtime catalog rules. Report the target path and the resulting catalog behavior.
+
+## Add a GitHub Release Installer
+
+Use this process for a new definition; if the target already exists, use the edit workflow above.
 
 1. Read target `repoURL`, `appName`, and `doc` from the user request.
 2. Resolve `license`:
@@ -60,7 +77,7 @@ uv run .github/skills/make-github-installer-config/scripts/build_installer_confi
 
 ```bash
 uv run .github/skills/make-github-installer-config/scripts/upsert_installer_data.py \
-  --installer-data src/stackops/utils/schemas/installer/installer_data.json \
+  --installer-data '<catalog-path>' \
   --entry-json ./.ai/tmp_scripts/make-github-installer-config/entry.json \
   --dry-run
 ```
@@ -69,14 +86,14 @@ uv run .github/skills/make-github-installer-config/scripts/upsert_installer_data
 
 ```bash
 uv run .github/skills/make-github-installer-config/scripts/upsert_installer_data.py \
-  --installer-data src/stackops/utils/schemas/installer/installer_data.json \
+  --installer-data '<catalog-path>' \
   --entry-json ./.ai/tmp_scripts/make-github-installer-config/entry.json
 ```
 
-8. Validate resulting JSON file:
+8. Validate the selected catalog:
 
 ```bash
-jq empty src/stackops/utils/schemas/installer/installer_data.json
+uv run devops software validate --path '<catalog-path>'
 ```
 
 Output JSON entry must use this exact shape:
@@ -116,14 +133,13 @@ Requirements:
 - Keep `doc` short and descriptive.
 - Keep `license` short and literal; do not invent SPDX identifiers that upstream does not declare.
 - Ensure selected non-null patterns match at least one asset in the latest inspected release.
-- Return valid JSON only for the object itself (no surrounding prose) unless the user asks for explanation.
+- When the user requests an entry object only, return that JSON without surrounding prose. After a requested file change, report the catalog path, changed entry, and validation result.
 
 Safety and idempotency rules:
 
-- Always check whether an entry with the same `appName` or `repoURL` already exists.
-- If present, update in place instead of duplicating.
-- If duplicate entries already exist, keep one and remove extras.
-- Always perform dry-run before writing.
+- Always check whether an entry with the same case-insensitive `appName` or `repoURL` already exists.
+- The upsert helper replaces whole rows, matches exact `appName` or `repoURL`, and removes additional matches. Use it only after confirming that every match is the requested installer; do not merge distinct installers merely because they share a repository.
+- Perform the helper's dry-run before an upsert. For direct edits or removals, inspect the exact selected row and intended change before writing.
 - Never mutate unrelated installer entries.
 
 Helper scripts available in this skill:

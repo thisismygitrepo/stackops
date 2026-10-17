@@ -1,6 +1,6 @@
 interface:
   display_name: "StackOps"
-  short_description: "Use StackOps CLI and source maps"
-  default_prompt: "Use $stackops to inspect a StackOps command path and map it to source."
+  short_description: "Find and change StackOps configuration or code"
+  default_prompt: "Use $stackops to locate the right configuration file or implementation, make the requested change, and validate it."
 policy:
   allow_implicit_invocation: true
