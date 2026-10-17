@@ -12,7 +12,7 @@ def copy_assets_all() -> None:
     create_helper.copy_assets_to_machine(which="settings")
 
 
-def link_public_configs() -> None:
+def sync_public_configs() -> None:
     from stackops.profile import create_links_export
 
     create_links_export.main_from_parser(
@@ -37,7 +37,7 @@ def update(
     sync_public: Annotated[
         bool,
         typer.Option(
-            "--link-public-configs",
+            "--sync-public-configs",
             "-l",
             help="Sync public configs down after update (overwrites your configs at their default paths).",
         ),
@@ -60,8 +60,8 @@ def update(
     Assets are copied by default; --no-copy-assets skips copying.
     Post-update actions:
     Copy scripts and settings unless --no-copy-assets is passed.
-    --link-public-configs -> devops config dotfiles sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
-    --config-shell       -> devops config terminal config-shell --which default
+    --sync-public-configs -> devops config dotfiles sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
+    --config-shell        -> devops config terminal config-shell --shell default
 
     --dev is a pre-update action (requires a repo checkout):
     --dev                -> commit local changes, git pull --rebase, git push (stops safely on any failure)
@@ -101,7 +101,7 @@ uv tool install --no-cache --upgrade stackops
                 if copy_assets:
                     cli_self.copy_assets_all()
                 if sync_public:
-                    cli_self.link_public_configs()
+                    cli_self.sync_public_configs()
                 if config_shell:
                     cli_self.configure_default_shell()
 
@@ -123,7 +123,7 @@ uv tool install --no-cache --upgrade stackops
         if copy_assets:
             copy_assets_all()
         if sync_public:
-            link_public_configs()
+            sync_public_configs()
         if config_shell:
             configure_default_shell()
 
@@ -172,30 +172,8 @@ cd "{str(stackops_path)}"
 
 
 def install(dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False) -> None:
-    """📋 install stackops locally for nightly updates."""
+    """Install StackOps from PyPI or an editable checkout with --dev."""
     _install_stackops(dev=dev)
-
-
-def status(
-    machine: Annotated[bool, typer.Option("--machine", "-m", help="Show the machine/system information section.")] = False,
-    shell: Annotated[bool, typer.Option("--shell", "-s", help="Show the shell profile section.")] = False,
-    repos: Annotated[bool, typer.Option("--repos", "-r", help="Show the configured repositories section.")] = False,
-    ssh: Annotated[bool, typer.Option("--ssh", "-H", help="Show the SSH configuration section.")] = False,
-    configs: Annotated[
-        bool, typer.Option("--configs", "--dotfiles", "--symlinks", "-c", "-d", "-l", help="Show managed files, schemas, configuration mappings, and symlinks.")
-    ] = False,
-    apps: Annotated[bool, typer.Option("--apps", "--tools", "-a", "-t", help="Show the installed apps/tools section.")] = False,
-    backup: Annotated[bool, typer.Option("--backup", "-b", help="Show the backup configuration section.")] = False,
-    plain: Annotated[bool, typer.Option("--plain", "-p", help="Print a report instead of opening the interactive dashboard.")] = False,
-) -> None:
-    """📊 Interactive machine status dashboard.
-
-    Pass section flags to limit the dashboard. Piped output is a printed report.
-    """
-    import stackops.scripts.python.helpers.helpers_devops.devops_status as helper
-
-    sections = helper.resolve_sections(machine=machine, shell=shell, repos=repos, ssh=ssh, configs=configs, apps=apps, backup=backup)
-    helper.main(sections=sections, plain=plain)
 
 
 def get_app() -> typer.Typer:
@@ -223,14 +201,12 @@ def get_app() -> typer.Typer:
         "ignore_unknown_options": True,
         "help_option_names": [],
     }
-    cli_app.command(name="install", no_args_is_help=False, help="📋 <i> install stackops locally for nightly updates.")(install)
-    cli_app.command(name="i", no_args_is_help=False, help="install stackops locally for nightly updates.", hidden=True)(install)
+    cli_app.command(name="install", no_args_is_help=False, help="📋 <i> Install StackOps from PyPI or an editable checkout with --dev.")(install)
+    cli_app.command(name="i", no_args_is_help=False, hidden=True)(install)
     cli_app.command(name="clone", no_args_is_help=False, help="📥 <c> Clone the StackOps source checkout.")(clone)
     cli_app.command(name="c", no_args_is_help=False, help="Clone the StackOps source checkout.", hidden=True)(clone)
     cli_app.command(name="update", no_args_is_help=False, help="🔄 <u> UPDATE stackops")(update)
     cli_app.command(name="u", no_args_is_help=False, hidden=True)(update)
-    cli_app.command(name="status", no_args_is_help=False, help="📊 <s> Interactive machine status dashboard.")(status)
-    cli_app.command(name="s", no_args_is_help=False, help="Interactive machine status dashboard.", hidden=True)(status)
 
     cli_app.command(name="explore-cli", help="🧭 <x> Explore the StackOps CLI graph.", context_settings=ctx_settings)(explore_cli)
     cli_app.command(name="explore", help="Explore the StackOps CLI graph.", hidden=True, context_settings=ctx_settings)(explore_cli)

@@ -10,8 +10,8 @@ _SessionConflictActionLoose = Literal[
     "rename", "n",
     "error", "e",
     "skip", "s",
-    "mergeOverwrite", "m",
-    "mergeSkip", "M",
+    "merge-overwrite", "m",
+    "merge-skip", "M",
 ]
 
 
@@ -19,13 +19,19 @@ def balance_load(
     layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.json file")],
     max_thresh: Annotated[int, typer.Option(..., "--max-threshold", "-m", help="Maximum tabs per layout")],
     thresh_type: Annotated[Literal["number", "n", "weight", "w"], typer.Option(..., "--threshold-type", "-t", help="Threshold type")] = "number",
-    breaking_method: Annotated[Literal["moreLayouts", "ml", "combineTabs", "ct"], typer.Option(..., "--breaking-method", "-b", help="Breaking method")] = "moreLayouts",
-    output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Path to write the adjusted layout.json file")] = None,
+    breaking_method: Annotated[Literal["more-layouts", "ml", "combine-tabs", "ct"], typer.Option(..., "--breaking-method", "-b", help="Breaking method")] = "more-layouts",
+    output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Path to write the adjusted layout.json file")] = None,
 ) -> None:
     """Adjust layout file to limit max tabs per layout, etc."""
     from stackops.scripts.python.helpers.helpers_sessions.utils import balance_load as impl
+    resolved_breaking_method: Literal["moreLayouts", "combineTabs"]
+    match breaking_method:
+        case "more-layouts" | "ml":
+            resolved_breaking_method = "moreLayouts"
+        case "combine-tabs" | "ct":
+            resolved_breaking_method = "combineTabs"
     try:
-        impl(layout_path=layout_path, max_thresh=max_thresh, thresh_type=thresh_type, breaking_method=breaking_method, output_path=output_path)
+        impl(layout_path=layout_path, max_thresh=max_thresh, thresh_type=thresh_type, breaking_method=resolved_breaking_method, output_path=output_path)
     except ValueError as error:
         typer.echo(f"Error: {error}", err=True, color=True)
         raise typer.Exit(code=1) from error
@@ -38,23 +44,23 @@ def run(
 
     choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", metavar="[NAMES]", help="Comma separated layout names. Use -l without a value to select layouts interactively.")] = None,
     choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", metavar="[NAMES]", help="Comma separated tab names. Use -t without a value to select tabs interactively from all layouts, or from layouts selected with -l.")] = None,
-    sleep_inbetween: Annotated[float, typer.Option(..., "--sleep-inbetween", "-S", help="Sleep time in seconds between launching layouts")] = 1.0,
+    sleep_inbetween: Annotated[float, typer.Option(..., "--launch-delay", "-S", help="Delay in seconds between launching layouts")] = 1.0,
     max_tabs: Annotated[int, typer.Option(..., "--max-tabs-per-layout", "-T", help="A Sanity checker that throws an error if any layout exceeds the maximum number of tabs to launch.")] = 25,
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
     monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
     parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
 
-    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "a", "auto"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use: tmux, herdr, tuios, aoe, or auto")] = "tmux",
-    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. mergeOverwrite and mergeSkip are supported for tmux and TUIOS.")] = "error",
-    exit_mode: Annotated[Literal["backToShell", "terminate", "killWindow"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "backToShell",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer: tmux/t, herdr/h, tuios/u, aoe/e, or auto/a")] = "tmux",
+    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. merge-overwrite and merge-skip are supported for tmux and TUIOS.")] = "error",
+    exit_mode: Annotated[Literal["back-to-shell", "terminate", "kill-window"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "back-to-shell",
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
 ) -> None:
     """Launch selected layouts from a layout configuration file.
 
     Use --on-conflict to choose behavior when a target session already exists:
-    error, restart, rename, mergeOverwrite, or
-    mergeSkip. Those two merge policies are
+    error, restart, rename, merge-overwrite, or
+    merge-skip. Those two merge policies are
     supported for tmux and TUIOS.
     Use `run-all` for the paced whole-file dynamic scheduler.
 
@@ -63,7 +69,17 @@ def run(
     if layouts_file is None and not test_layout and choose_layouts is None and choose_tabs is None:
         choose_layouts = ""
     from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose2Strict
-    on_conflict = SessionConflictActionLoose2Strict[on_conflict]
+    from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
+
+    resolved_on_conflict = SessionConflictActionLoose2Strict[on_conflict]
+    resolved_exit_mode: SessionExitMode
+    match exit_mode:
+        case "back-to-shell":
+            resolved_exit_mode = "backToShell"
+        case "terminate":
+            resolved_exit_mode = "terminate"
+        case "kill-window":
+            resolved_exit_mode = "killWindow"
     from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_run import run_cli as impl
     impl(
         ctx=ctx,
@@ -76,8 +92,8 @@ def run(
         max_tabs=max_tabs,
         max_layouts=max_layouts,
         backend=backend,
-        on_conflict=on_conflict,
-        exit_mode=exit_mode,
+        on_conflict=resolved_on_conflict,
+        exit_mode=resolved_exit_mode,
         monitor=monitor,
         kill_upon_completion=kill_upon_completion,
         subsitute_home=subsitute_home,
@@ -90,7 +106,7 @@ def run_all(
     layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.")] = None,
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
-    poll_seconds: Annotated[float, typer.Option("--poll-seconds", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
+    poll_seconds: Annotated[float, typer.Option("--poll-interval", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
     backend: Annotated[Literal["tmux", "t", "tuios", "u", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use: tmux or tuios")] = "tmux",
     on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.")] = "error",
@@ -104,14 +120,14 @@ def run_all(
         typer.echo("Error: --max-parallel-tabs must be at least 1.", err=True, color=True)
         raise typer.Exit(code=1)
     if poll_seconds <= 0.0:
-        typer.echo("Error: --poll-seconds must be greater than 0.", err=True, color=True)
+        typer.echo("Error: --poll-interval must be greater than 0.", err=True, color=True)
         raise typer.Exit(code=1)
 
     from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose2Strict
-    on_conflict = SessionConflictActionLoose2Strict[on_conflict]
-    if on_conflict in {"mergeOverwrite", "mergeSkip"}:
+    resolved_on_conflict = SessionConflictActionLoose2Strict[on_conflict]
+    if resolved_on_conflict in {"mergeOverwrite", "mergeSkip"}:
         typer.echo(
-            "Error: --on-conflict mergeOverwrite and mergeSkip are not supported for run-all because the dynamic scheduler requires exclusive control of the session.",
+            "Error: --on-conflict merge-overwrite and merge-skip are not supported for run-all because the dynamic scheduler requires exclusive control of the session.",
             err=True,
             color=True,
         )
@@ -125,7 +141,7 @@ def run_all(
         poll_seconds=poll_seconds,
         kill_finished_tabs=kill_finished_tabs,
         backend=backend,
-        on_conflict=on_conflict,
+        on_conflict=resolved_on_conflict,
         subsitute_home=subsitute_home,
     )
 
@@ -270,7 +286,7 @@ def kill_session_target(
 def export(
     sessions: Annotated[str | None, typer.Option("--sessions", "-s", help="Comma-separated backend session/workspace names. Pass an empty value or omit it to select interactively.")] = None,
     all_sessions: Annotated[bool, typer.Option("--all", "-a", help="Export all running backend sessions/workspaces without prompting.", show_default=True)] = False,
-    output_path: Annotated[str | None, typer.Option("--output-path", "-o", help="Path to write the generated layout file. Defaults to ./tmux_export_layout.json.")] = None,
+    output_path: Annotated[str | None, typer.Option("--output", "-o", help="Path to write the generated layout file. Defaults to ./tmux_export_layout.json.")] = None,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-w", help="Replace the output file if it already exists.", show_default=True)] = False,
     merge: Annotated[bool, typer.Option("--merge", "-m", help="Merge exported sessions into an existing layout file by layoutName.", show_default=True)] = False,
     backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u"], typer.Option("--backend", "-b", help="Backend to export from: tmux/t, herdr/h, or tuios/u.")] = "tmux",
@@ -321,7 +337,7 @@ def create_from_function(
     path: Annotated[str, typer.Option(..., "--path", "-p", help="Path to a Python or Shell script file or a directory containing such files")] = ".",
     function: Annotated[str | None, typer.Option(..., "--function", "-f", help="Function to run from the Python file. If not provided, you will be prompted to choose.")] = None,
 ) -> None:
-    """Create a layout from a function to run in multiple processes."""
+    """Launch a function in multiple tmux processes using a generated layout."""
     from stackops.scripts.python.helpers.helpers_sessions.sessions_multiprocess import create_from_function as impl
     impl(num_process=num_process, path=path, function=function)
 
@@ -329,12 +345,12 @@ def create_from_function(
 
 def trace(
     session_names: Annotated[str | None, typer.Argument(help="Comma-separated tmux, TUIOS, or AoE sessions, or Herdr workspaces to trace. Supports * and ? selectors. Required unless --interactive is set.")] = None,
-    every: Annotated[float, typer.Option("--every", "-e", help="Polling interval in seconds between backend checks")] = 10.0,
+    every: Annotated[float, typer.Option("--poll-interval", "-p", help="Polling interval in seconds between backend checks")] = 10.0,
     until: Annotated[Literal["idle-shell", "all-exited", "exit-code", "session-missing"], typer.Option("--until", "-u", help="Stop only when the selected criterion is satisfied")] = "idle-shell",
     exit_code: Annotated[int | None, typer.Option("--exit-code", "-c", help="Required pane exit code when `--until exit-code` is selected")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose an existing backend session/workspace interactively")] = False,
     kill: Annotated[bool, typer.Option("--kill", "-k", help="Kill finalized panes, windows, and sessions as they satisfy the selected criterion")] = False,
-    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "a", "e"], typer.Option("--backend", "-b", help="Backend to trace: tmux/t, herdr/h, tuios/u, or aoe/a/e")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e"], typer.Option("--backend", "-b", help="Backend to trace: tmux/t, herdr/h, tuios/u, or aoe/e")] = "tmux",
 ) -> None:
     """Trace terminal backend sessions until every selected target is finalized."""
     from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import (
@@ -349,7 +365,7 @@ def trace(
     backend_resolved = resolve_trace_backend(backend)
 
     if every <= 0:
-        typer.echo("Error: --every must be greater than 0.", err=True, color=True)
+        typer.echo("Error: --poll-interval must be greater than 0.", err=True, color=True)
         raise typer.Exit(code=1)
     if backend_resolved == "aoe" and until == "exit-code":
         typer.echo("Error: AoE does not expose process exit codes for session tracing.", err=True, color=True)
@@ -438,7 +454,7 @@ def get_app() -> typer.Typer:
     layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="🔬 <t> Trace a terminal session until it settles")(trace)
     layouts_app.command("t", no_args_is_help=True, help=trace.__doc__, hidden=True)(trace)
 
-    layouts_app.command("create-from-function", no_args_is_help=True, short_help="🧩 <c> Create a layout from a function")(create_from_function)
+    layouts_app.command("run-function", no_args_is_help=True, short_help="🧩 <c> Launch a function in multiple tmux processes")(create_from_function)
     layouts_app.command("c", no_args_is_help=True, hidden=True)(create_from_function)
 
     layouts_app.command("balance-load", no_args_is_help=True, help=balance_load.__doc__, short_help="🔀 <b> Balance the load across sessions")(balance_load)

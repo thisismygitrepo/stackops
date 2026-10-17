@@ -36,7 +36,7 @@ def ftpx(
     recursive: Annotated[bool, typer.Option("--recursive", "-r", help="Send recursively.")] = False,
     zip_first: Annotated[bool, typer.Option("--zip-first", "-z", help="Zip before sending.")] = False,
     cloud: Annotated[bool, typer.Option("--cloud", "-c", help="Transfer through the cloud.")] = False,
-    overwrite_existing: Annotated[bool, typer.Option("--overwrite-existing", "-o", help="Overwrite existing files on remote when sending from local to remote.")] = False,
+    overwrite_existing: Annotated[bool, typer.Option("--overwrite", "-o", help="Overwrite existing files on remote when sending from local to remote.")] = False,
     _install_completion: Annotated[
         bool, typer.Option("--install-completion", "-I", callback=install_callback, expose_value=False, help="Install completion for the current shell.")
     ] = False,
@@ -72,7 +72,7 @@ def main() -> None:
     """Entry point function that uses typer to parse arguments and call main."""
     completion_init()
     app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
-    app.command(no_args_is_help=True, help=ftpx.__doc__, short_help="File transfer utility through SSH.")(ftpx)
+    app.command(name="transfer", no_args_is_help=True, help=ftpx.__doc__, short_help="File transfer utility through SSH.")(ftpx)
     app()
 
 

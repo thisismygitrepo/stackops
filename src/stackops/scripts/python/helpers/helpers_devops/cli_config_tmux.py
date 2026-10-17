@@ -65,22 +65,22 @@ def _backup_path(path: Path) -> Path:
     return result
 
 
-def _write_text(path: Path, content: str, *, force: bool) -> None:
+def _write_text(path: Path, content: str, *, overwrite: bool) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if _path_exists(path):
         if path.is_file() and not path.is_symlink() and path.read_text(encoding="utf-8") == content:
             typer.echo(f"Already current: {path}")
             return
-        if not force:
-            typer.echo(f"Error: {path} already exists. Rerun with --force to replace it.", err=True)
+        if not overwrite:
+            typer.echo(f"Error: {path} already exists. Rerun with --overwrite to replace it.", err=True)
             raise typer.Exit(code=1)
         typer.echo(f"Backed up {path} to {_backup_path(path)}")
     path.write_text(content, encoding="utf-8")
     typer.echo(f"Wrote {path}")
 
 
-def _write_stackops_local(paths: TmuxStylePaths, *, force: bool) -> None:
-    _write_text(paths.local_config_path, _stackops_local_config_text(), force=force)
+def _write_stackops_local(paths: TmuxStylePaths, *, overwrite: bool) -> None:
+    _write_text(paths.local_config_path, _stackops_local_config_text(), overwrite=overwrite)
 
 
 def _run_checked(command: list[str], *, cwd: Path | None = None) -> None:
@@ -97,24 +97,24 @@ def _run_checked(command: list[str], *, cwd: Path | None = None) -> None:
 def install_oh_my_tmux(
     update: Annotated[bool, typer.Option("--update", "-u", help="Fast-forward an existing Oh My Tmux checkout.")] = False,
     apply_stackops_local_config: Annotated[bool, typer.Option("--apply-stackops-local", "-a", help="Replace ~/.tmux.conf.local with the StackOps Oh My Tmux local config after installation.")] = False,
-    force_local: Annotated[bool, typer.Option("--force-local", "-f", help="Back up and replace an existing ~/.tmux.conf.local.")] = False,
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Back up and replace an existing ~/.tmux.conf.local.")] = False,
 ) -> None:
     """Install Oh My Tmux through the shared StackOps installer."""
     _reject_native_windows()
     from stackops.utils.installer_utils.installer_cli import main_installer_cli
     main_installer_cli(which="oh-my-tmux", group=False, interactive=False, explore=False, update=update, version=None)
     if apply_stackops_local_config:
-        _write_stackops_local(_paths("home"), force=force_local)
+        _write_stackops_local(_paths("home"), overwrite=overwrite)
     typer.echo("Done. Restart tmux or run `devops config terminal tmux-style reload --location home`.")
 
 
 def apply_stackops_local(
     location: Annotated[TmuxInstallLocation, typer.Option("--location", "-l", help="tmux config location to update.")] = "home",
-    force: Annotated[bool, typer.Option("--force", "-f", help="Back up and replace an existing local config.")] = False,
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Back up and replace an existing local config.")] = False,
 ) -> None:
     """Copy StackOps' Oh My Tmux local customization file."""
     _reject_native_windows()
-    _write_stackops_local(_paths(location), force=force)
+    _write_stackops_local(_paths(location), overwrite=overwrite)
 
 
 def _read_local_lines(path: Path) -> list[str]:

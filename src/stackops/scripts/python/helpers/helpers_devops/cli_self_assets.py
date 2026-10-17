@@ -44,7 +44,7 @@ def get_app() -> typer.Typer:
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     cli_app.command(
-        name="update-cli-graph",
+        name="cli-graph",
         no_args_is_help=False,
         help="🧩 <g> Regenerate the checked-in CLI graph snapshot.",
     )(update_cli_graph)
@@ -55,7 +55,7 @@ def get_app() -> typer.Typer:
         hidden=True,
     )(update_cli_graph)
     cli_app.command(
-        name="regenerate-charts",
+        name="charts",
         no_args_is_help=False,
         help="🌞 <c> Regenerate the checked-in sunburst HTML chart.",
     )(regenerate_charts)
@@ -66,7 +66,7 @@ def get_app() -> typer.Typer:
         hidden=True,
     )(regenerate_charts)
     cli_app.command(
-        name="update-skill-refs",
+        name="skill-refs",
         no_args_is_help=False,
         help="📚 <s> Regenerate the StackOps skill CLI reference maps.",
     )(update_stackops_skill_refs)

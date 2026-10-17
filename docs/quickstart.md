@@ -6,7 +6,7 @@ After [installation](installation.md), inspect the command families and the work
 
 ```bash
 stackops --help
-devops install --help
+devops software install --help
 devops config dotfiles sync --help
 terminal run --help
 ```
@@ -16,31 +16,31 @@ terminal run --help
 For example, check whether Television's `tv` binary is available:
 
 ```bash
-devops install tv --check
+devops software install tv --check
 ```
 
 This checks binary status; it does not preview or validate the installer. To install Television using the packaged catalog:
 
 ```bash
-devops install tv --source library
+devops software install tv --source library
 ```
 
 Availability and installer behavior depend on the platform. To select other tools interactively:
 
 ```bash
-devops install --interactive --source library
+devops software install --interactive --source library
 ```
 
 If you already know the bundle you want:
 
 ```bash
-devops install --group <group-name>
+devops software install --group <group-name>
 ```
 
 Check the live help and [package guide](guide/packages.md) before choosing names:
 
 ```bash
-devops install --help
+devops software install --help
 ```
 
 ## Choose configuration changes
@@ -59,15 +59,15 @@ devops data sync --help
 This broader sequence installs system and terminal package groups, copies bundled assets, applies all public configuration mappings, and updates the default shell profile. It is useful when you want StackOps' workstation conventions. On an existing configured machine, choose only the individual actions you need. System package groups can invoke privileged package managers, and their behavior varies by platform.
 
 ```bash
-devops install --group sysabc
+devops software install --group sysabc
 devops config copy-assets all
 devops config dotfiles sync down \
   --sensitivity public \
   --method copy \
   --on-conflict throw-error \
   --which all
-devops config terminal config-shell --which default
-devops install --group termabc
+devops config terminal config-shell --shell default
+devops software install --group termabc
 ```
 
 The sync command copies files; it does not create symlinks. If it reports a conflict, inspect the existing target and choose a conflict policy deliberately. Open a new shell after configuring its profile.

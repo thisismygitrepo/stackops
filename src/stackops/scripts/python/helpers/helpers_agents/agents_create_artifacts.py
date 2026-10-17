@@ -118,7 +118,7 @@ def _build_recreate_command_args(
         f"{stagger_max:g}",
         "--job-name",
         job_name,
-        "--output-path",
+        "--output",
         str(layout_output_path),
         "--agents-dir",
         str(agents_dir),
@@ -136,13 +136,13 @@ def _build_recreate_command_args(
     if provider is not None:
         command.extend(["--provider", provider])
     if join_prompt_and_context:
-        command.append("--joined-prompt-context")
+        command.append("--join-prompt-context")
     if run:
         command.append("--run")
     return command
 
 
-_RECREATE_PATH_FLAGS = frozenset({"--context-path", "--prompt-path", "--output-path", "--agents-dir"})
+_RECREATE_PATH_FLAGS = frozenset({"--context-path", "--prompt-path", "--output", "--agents-dir"})
 
 
 def _render_shell_path(*, path: Path, repo_root: Path, home_dir: Path, allow_repo_relative: bool) -> str:

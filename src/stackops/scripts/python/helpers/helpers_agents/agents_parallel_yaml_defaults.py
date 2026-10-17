@@ -6,7 +6,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 
 
 PARALLEL_CREATE_COMMAND_NAME: Final[str] = "agents parallel create"
-PARALLEL_RUN_COMMAND_NAME: Final[str] = "agents parallel run-parallel"
+PARALLEL_RUN_COMMAND_NAME: Final[str] = "agents parallel run"
 PARALLEL_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
 _ESCAPED_DEFAULT_SEPARATOR: Final[str] = DEFAULT_SEAPRATOR.encode("unicode_escape").decode("ascii")
 
@@ -52,7 +52,7 @@ PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY: Final[ParallelCreateYamlEntry] = {
     "prompt_name": None,
     "job_name": "AI_Agents",
     "join_prompt_and_context": False,
-    "run": False,
+    "run": True,
     "output_path": None,
     "agents_dir": None,
     "interactive": False,

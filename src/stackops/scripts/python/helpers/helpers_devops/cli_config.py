@@ -56,13 +56,13 @@ def copy_assets(which: Annotated[Literal["scripts", "s", "settings", "t", "all",
 def get_app() -> typer.Typer:
     import stackops.scripts.python.helpers.helpers_devops.cli_config_dotfiles as dotfiles_module
     import stackops.scripts.python.helpers.helpers_devops.cli_config_setup as setup_module
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_dump import DUMP_HELP, dump_config
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_dump import EXPORT_EXAMPLE_HELP, export_example
     from stackops.scripts.python.helpers.helpers_devops.cli_config_edit import EDIT_HELP, edit_managed_file
     from stackops.scripts.python.helpers.helpers_devops.cli_config_files import config_path, init_config, validate_config
     from stackops.scripts.python.helpers.helpers_devops.cli_config_init_script import INIT_SCRIPT_HELP, init_script
 
     config_apps = typer.Typer(
-        cls=ordered_group(("dotfiles", "setup", "path", "init", "validate", "edit", "dump", "init-script", "terminal", "interactive", "copy-assets")),
+        cls=ordered_group(("dotfiles", "setup", "path", "init", "validate", "edit", "export-example", "init-script", "terminal", "interactive", "copy-assets")),
         help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
@@ -89,8 +89,8 @@ def get_app() -> typer.Typer:
     config_apps.command("validate", no_args_is_help=True, help="✅ <v> Validate a configuration file against its schema and parser.")(validate_config)
     config_apps.command("v", no_args_is_help=True, hidden=True)(validate_config)
 
-    config_apps.command("dump", no_args_is_help=True, help=f"📦 <d> {DUMP_HELP}")(dump_config)
-    config_apps.command("d", no_args_is_help=True, help=DUMP_HELP, hidden=True)(dump_config)
+    config_apps.command("export-example", no_args_is_help=True, help=f"📦 <d> {EXPORT_EXAMPLE_HELP}")(export_example)
+    config_apps.command("d", no_args_is_help=True, help=EXPORT_EXAMPLE_HELP, hidden=True)(export_example)
 
     config_apps.command("init-script", no_args_is_help=True, help=f"🚀 <n> {INIT_SCRIPT_HELP}")(init_script)
     config_apps.command("n", no_args_is_help=True, help=INIT_SCRIPT_HELP, hidden=True)(init_script)

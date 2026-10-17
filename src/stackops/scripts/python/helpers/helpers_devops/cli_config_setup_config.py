@@ -31,7 +31,7 @@ def load_stackops_config_for_setup() -> StackOpsConfig | None:
         exit_with_setup_error(
             f"StackOps config cannot be safely updated because it is invalid:\n{exc}\n\n"
             "Fix the file, or create a reference copy with:\n"
-            "  devops config dump config"
+            "  devops config export-example config"
         )
 
 

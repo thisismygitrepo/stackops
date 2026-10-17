@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated
 
 import typer
 
@@ -18,28 +18,18 @@ def switch_public_ip_address(
     helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)
 
 
-def reset_cloudflare_tunnel(
-    task: Annotated[
-        Literal["oneoff-shell-process", "oneoff-background-process", "as-service"],
-        typer.Argument(help="Task to perform", case_sensitive=False, show_choices=True),
-    ],
+def run_tunnel(
     tunnel_name: Annotated[str | None, typer.Option("--tunnel-name", "-n", help="Name of the Cloudflare tunnel to run")] = None,
+    background: Annotated[bool, typer.Option("--background", "-b", help="Run as a transient systemd service instead of in the foreground.")] = False,
 ) -> None:
-    code = """
-# cloudflared tunnel route dns glenn  # creates CNAMES in Cloudflare dashboard
-# sudo systemctl stop cloudflared
-"""
-    match task:
-        case "oneoff-shell-process":
-            tunnel_name = tunnel_name or ""
-            code = f"""cloudflared tunnel run {tunnel_name}  #  This is running like a normal command """
-        case "oneoff-background-process":
-            tunnel_name = tunnel_name or ""
-            import getpass
+    import shlex
 
-            user_name = getpass.getuser()
-            code = f"""
-# This verion runs like a deamon, but its not peristent across reboots
+    tunnel_argument = shlex.quote(tunnel_name) if tunnel_name is not None else ""
+    if background:
+        import getpass
+
+        user_name = getpass.getuser()
+        code = f"""
 sudo systemd-run \
   --unit=cloudflared-tunnel \
   --description="Cloudflared Tunnel (transient)" \
@@ -51,27 +41,36 @@ sudo systemd-run \
   --property=WorkingDirectory=/home/{user_name} \
   /home/{user_name}/.local/bin/cloudflared \
     --config /home/{user_name}/.cloudflared/config.yml \
-    tunnel run {tunnel_name}
+    tunnel run {tunnel_argument}
 """
-        case "as-service":
-            code = """
+    else:
+        code = f"""cloudflared tunnel run {tunnel_argument}"""
+
+    from stackops.utils.code import exit_then_run_shell_script
+    from stackops.utils.meta import print_code
+
+    if IS_REPO_DEVELOPER:
+        print_code(code, lexer="bash", desc="Run the Cloudflare tunnel")
+    if typer.confirm("Run the Cloudflare tunnel now?", default=False):
+        exit_then_run_shell_script(code)
+
+
+def reinstall_tunnel_service() -> None:
+    code = """
 devops software install --update cloudflared
-home_dir=$HOME
-cloudflared_path="$home_dir/.local/bin/cloudflared"
+stackops_tunnel_home=$HOME
+cloudflared_path="$stackops_tunnel_home/.local/bin/cloudflared"
 sudo $cloudflared_path service uninstall
 sudo rm /etc/cloudflared/config.yml || true
-sudo $cloudflared_path --config $home_dir/.cloudflared/config.yml service install
-# systemctl status cloudflared.service --no-pager -l
-
+sudo $cloudflared_path --config $stackops_tunnel_home/.cloudflared/config.yml service install
 """
 
     from stackops.utils.code import exit_then_run_shell_script
     from stackops.utils.meta import print_code
 
     if IS_REPO_DEVELOPER:
-        print_code(code, lexer="bash", desc="code to achieve the goal")
-    yes = typer.confirm("Reset the Cloudflare tunnel now?", default=False)
-    if yes:
+        print_code(code, lexer="bash", desc="Reinstall the Cloudflare tunnel service")
+    if typer.confirm("Reinstall the Cloudflare tunnel service now?", default=False):
         exit_then_run_shell_script(code)
 
 
@@ -121,21 +120,23 @@ def get_app() -> typer.Typer:
     )
     cloudflare_app.command(name="switch-public-ip", help="🔁 <s> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
     cloudflare_app.command(name="s", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
-    cloudflare_app.command(name="reset-cloudflare-tunnel", help="🔄 <r> Reset Cloudflare tunnel service")(reset_cloudflare_tunnel)
-    cloudflare_app.command(name="r", help="Reset Cloudflare tunnel service", hidden=True)(reset_cloudflare_tunnel)
+    cloudflare_app.command(name="run-tunnel", help="🚀 <r> Run a Cloudflare tunnel in the foreground or background.")(run_tunnel)
+    cloudflare_app.command(name="r", hidden=True)(run_tunnel)
+    cloudflare_app.command(name="reinstall-tunnel-service", help="🔄 <R> Reinstall the persistent Cloudflare tunnel service.")(reinstall_tunnel_service)
+    cloudflare_app.command(name="R", hidden=True)(reinstall_tunnel_service)
     cloudflare_app.command(name="add-ip-exclusion-to-warp", help="🚫 <p> Add IP exclusion to WARP")(add_ip_exclusion_to_warp)
     cloudflare_app.command(name="p", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
-    cloudflare_app.command(name="cloudflare-tunnel-status", help="📊 <t> Show tunnel redundancy, versions, services, and routes")(
+    cloudflare_app.command(name="tunnel-status", help="📊 <t> Show tunnel redundancy, versions, services, and routes")(
         cli_cloudflare_tunnel.cloudflare_tunnel_status
     )
     cloudflare_app.command(name="t", help="Show Cloudflare Tunnel status", hidden=True)(cli_cloudflare_tunnel.cloudflare_tunnel_status)
-    cloudflare_app.command(name="update-cloudflare-connectors", help="⏫ <u> Rolling-update Cloudflare Tunnel connectors")(
+    cloudflare_app.command(name="update-connectors", help="⏫ <u> Rolling-update Cloudflare Tunnel connectors")(
         cli_cloudflare_tunnel.update_cloudflare_connectors
     )
     cloudflare_app.command(name="u", help="Rolling-update Cloudflare Tunnel connectors", hidden=True)(
         cli_cloudflare_tunnel.update_cloudflare_connectors
     )
-    cloudflare_app.command(name="sync-cloudflare-routes", help="🔀 <y> Copy selected ingress routes without tunnel credentials")(
+    cloudflare_app.command(name="sync-routes", help="🔀 <y> Copy selected ingress routes without tunnel credentials")(
         cli_cloudflare_tunnel.sync_cloudflare_routes
     )
     cloudflare_app.command(name="y", help="Copy selected Cloudflare Tunnel ingress routes", hidden=True)(cli_cloudflare_tunnel.sync_cloudflare_routes)

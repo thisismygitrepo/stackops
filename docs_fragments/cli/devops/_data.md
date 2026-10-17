@@ -14,8 +14,14 @@ Current `devops data --help` exposes:
 |---------|-------------|
 | `sync` | Generate backup or retrieve commands through `cloud copy` |
 | `register` | Add or update a backup entry in the user data-mapping file |
-| `display` | Display registered entries from the user data-mapping file |
+| `list` | List backup entries from library, user, or all configuration sources |
 | `subset` | Select entries interactively or with `--which` and write a standalone data-mapping file |
+| `encrypt` / `decrypt` | Encrypt or decrypt a local file or directory archive |
+| `path` | Print the backup mapping and schema paths |
+| `init` | Create a missing backup mapping and schema |
+| `validate` | Validate the backup mapping |
+
+`path`, `init`, and `validate` accept `--path`, `-p` to select another user mapping file.
 
 ### sync
 
@@ -75,10 +81,10 @@ Key options from current help:
 | `--group`, `-g` | Target group/table name inside the config file |
 | `--name`, `-n` | Override the generated entry name |
 | `--path-cloud`, `-C` | Override the remote path; omit it to let stackops deduce one |
-| `--zip`, `-z` | Zip before upload |
+| `--no-zip`, `-z` | Skip zipping before upload |
 | `--encryption`, `-e` | Enable encryption with `symmetric`/`s` or `asymmetric`/`a`; omit for plaintext |
 | `--password`, `-p` | Symmetric GPG password; requires `--encryption symmetric` and is not stored |
-| `--rel2home`, `-r` | Store the local path relative to your home directory |
+| `--absolute-path`, `-r` | Store an absolute local path instead of a home-relative path |
 | `--os`, `-o` | Restrict the entry to `linux`, `darwin`, `windows`, or a comma-separated list |
 
 Examples:
@@ -93,12 +99,12 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 
 If `--name` is omitted, the command generates one from the local path and OS filter.
 
-### display
+### list
 
-Render the entries in the user backup configuration as a table, including local and cloud paths, OS filters, archive and encryption options, and share URLs.
+Render backup entries as a table, including local and cloud paths, OS filters, archive and encryption options, and share URLs. Like `sync`, `list` defaults to `--source all`; use `--source user` or `--source library` to narrow the inventory.
 
 ```bash
-devops data display
+devops data list
 ```
 
 ### subset

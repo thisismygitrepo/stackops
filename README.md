@@ -77,7 +77,7 @@ bunx skills add thisismygitrepo/stackops --skill stackops --global --agent codex
 Inspect the commands for the workflow you need:
 
 ```bash
-devops install --help
+devops software install --help
 devops config dotfiles sync --help
 terminal run --help
 ```
@@ -89,15 +89,15 @@ The [quickstart](https://thisismygitrepo.github.io/stackops/quickstart/) shows a
 This broader setup installs system and terminal package groups, copies bundled assets, applies public configuration mappings, and configures the default shell. Use it when you want those workstation conventions; existing customized systems can use individual commands instead. Package-group behavior depends on the platform and may invoke privileged package managers.
 
 ```bash
-devops install --group sysabc
+devops software install --group sysabc
 devops config copy-assets all
 devops config dotfiles sync down \
   --sensitivity public \
   --method copy \
   --on-conflict throw-error \
   --which all
-devops config terminal config-shell --which default
-devops install --group termabc
+devops config terminal config-shell --shell default
+devops software install --group termabc
 ```
 
 The scripted sync above copies configuration and stops on conflicts. The public copy/symlink choices in `devops config interactive` use `overwrite-default-path` and can replace existing targets; they are a different setup choice.

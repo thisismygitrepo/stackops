@@ -7,181 +7,26 @@ from stackops.scripts.python.helpers.helpers_devops import cli_subset_support
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SecretsSource, WritableSecretsSource
 
 SECRETS_HELP = "Manage StackOps secrets JSON files and define env vars."
-SECRETS_SEARCH_HELP = "Select secret bundles for environment variables or JSON output."
+SECRETS_SEARCH_HELP = "Inspect matching secret bundles without loading environment variables."
+SECRETS_LOAD_HELP = "Load matching secret bundles into environment variables."
 SECRETS_STATS_HELP = "Show aggregate StackOps secrets inventory stats without printing secret values."
 SECRETS_SUBSET_HELP = "Create a StackOps secrets subset and choose output conflicts with --on-conflict."
 SECRETS_SEARCH_EPILOG = """Examples:
-  devops vault search aws dev iam-access-key
-  devops vault s github personal-access-token
-  devops vault s AWS_ACCESS_KEY_ID
+  devops vault search github personal-access-token
   devops vault search --interactive
-  devops vault s -i aws
-  devops vault search --verbose aws dev iam-access-key
-  devops vault search --name aws-dev --tag iam-access-key
-  devops vault search --name aws-dev --tag session-token
-  devops vault search --source global bitwarden
-  devops vault s --source g bitwarden
-  devops vault s --all-matches --source g cloudf
-  devops vault search mail --all-matches --json
-  devops vault search --source both github token
-  devops vault s --source b github token
-  devops vault s -i -P github
-  devops vault search --path ~/private/team-secrets.json aws dev
+  devops vault search --all-matches --json mail
+  devops vault load --name aws-dev --tag iam-access-key
+  devops vault load --source global github token
 
-Terms are case-insensitive substring matches. All terms must match somewhere across login
-name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.
-Use search --interactive/-i to choose from matching logins with the TV fuzzy picker.
-After interactive selection, StackOps prints a jq command for the selected login entry.
-Use search --preview-secrets/-P with --interactive/-i to include secret values in the picker preview.
-Use search --verbose/-v to print the selected bundle and env var keys without secret values.
-Use search --all-matches/-a to merge env vars from every matching bundle into one environment.
-The merge fails when matching bundles assign different values to the same environment variable.
-Use search --json/-j to print the original secrets JSON structure with only matching entries instead of defining env vars.
-When search --source is omitted, StackOps uses --path when provided; otherwise it uses the local file when present and the global file when local is absent.
-Use search --source to explicitly choose the local file (local/l), global source-of-truth file (global/g), or both (both/b).
-With both, missing source files are warned and skipped as long as at least one source exists.
-Exact selectors are case-sensitive and can be combined with terms for script-stable matching. Selector short aliases:
---secret-name/-N, --login-tag/-l, --secret-tag/-T, --scope/-S.
+Search displays bundle labels and environment keys without loading them.
+Load prepares environment variables for the calling shell.
+Use --json to print matching secrets JSON, including values, without loading variables.
+Terms are case-insensitive substring matches; exact selectors are case-sensitive.
+Use --interactive to select a bundle and --preview-secrets to show values in its preview.
+Use --all-matches to select every matching bundle. Loading rejects conflicting values.
+When --source is omitted, --path takes precedence; otherwise local is preferred over global.
+Use --source local/l, global/g, or both/b to select sources explicitly.
 """
-
-
-def search(
-    terms: Annotated[
-        list[str] | None,
-        typer.Argument(
-            help=(
-                "Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, "
-                "secret name/tags/scopes, metadata, or env var keys."
-            )
-        ),
-    ] = None,
-    secrets_path: Annotated[
-        Path | None,
-        typer.Option(
-            "--path", "-p", help="Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
-        ),
-    ] = None,
-    secrets_source: Annotated[
-        SecretsSource | None,
-        typer.Option(
-            "--source",
-            "-s",
-            case_sensitive=False,
-            help=(
-                "Secrets file source to read: local/l, global/g, or both/b. "
-                "When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent."
-            ),
-        ),
-    ] = None,
-    interactive: Annotated[
-        bool,
-        typer.Option("--interactive", "-i", help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."),
-    ] = False,
-    all_matches: Annotated[
-        bool,
-        typer.Option(
-            "--all-matches",
-            "-a",
-            help=("Merge env vars from every matching secret bundle into one environment. Fails when a variable name has different values."),
-        ),
-    ] = False,
-    json_output: Annotated[
-        bool,
-        typer.Option(
-            "--json", "-j", help="Print the original secrets JSON structure with only matching entries instead of defining environment variables."
-        ),
-    ] = False,
-    preview_secrets: Annotated[
-        bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview. Only applies with --interactive/-i.")
-    ] = False,
-    verbose: Annotated[
-        bool, typer.Option("--verbose", "-v", help="Print the selected secret bundle and env var keys without secret values.")
-    ] = False,
-    login_name: Annotated[
-        str | None,
-        typer.Option("--name", "-n", help="Exact login name at entries[].name to require. Use with --tag/--key when a login has multiple secrets."),
-    ] = None,
-    secret_name: Annotated[str | None, typer.Option("--secret-name", "-N", help="Exact entries[].secrets[].name value to require.")] = None,
-    tags: Annotated[
-        list[str] | None, typer.Option("--tag", "--tags", "-t", help="Exact login or secret tag to require. Repeat for multiple tags.")
-    ] = None,
-    login_tags: Annotated[
-        list[str] | None, typer.Option("--login-tag", "-l", help="Exact login tag at entries[].tags to require. Repeat for multiple tags.")
-    ] = None,
-    secret_tags: Annotated[
-        list[str] | None, typer.Option("--secret-tag", "-T", help="Exact entries[].secrets[].tags value to require. Repeat for multiple tags.")
-    ] = None,
-    scopes: Annotated[
-        list[str] | None, typer.Option("--scope", "-S", help="Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.")
-    ] = None,
-    keys: Annotated[
-        list[str] | None, typer.Option("--key", "-k", help="Exact env var key in keyValues to require. Repeat for multiple keys.")
-    ] = None,
-) -> None:
-    """🔐 <S> Select secret bundles for environment variables or JSON output."""
-    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidates import (
-        SecretSelectionMode,
-        SecretSelectors,
-        merge_candidate_key_values,
-        resolve_secret_candidates,
-    )
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_json import render_secret_search_json
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import (
-        candidate_source_path,
-        clean_optional_selector,
-        clean_selector_values,
-        echo_jq_login_entry_hint,
-        echo_verbose_selection,
-        fail,
-        load_secret_candidates_from_sources,
-        resolve_secret_sources,
-    )
-
-    if all_matches and interactive:
-        fail("--all-matches/-a cannot be combined with --interactive/-i.")
-    if preview_secrets and not interactive:
-        fail("--preview-secrets only applies with --interactive/-i.")
-    if json_output and verbose:
-        fail("--json/-j cannot be combined with --verbose/-v because JSON output must contain only JSON.")
-
-    secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
-    candidates = load_secret_candidates_from_sources(secret_sources)
-    selectors = SecretSelectors(
-        login_name=clean_optional_selector(login_name),
-        secret_name=clean_optional_selector(secret_name),
-        tags=clean_selector_values(tags),
-        login_tags=clean_selector_values(login_tags),
-        secret_tags=clean_selector_values(secret_tags),
-        scopes=clean_selector_values(scopes),
-        keys=clean_selector_values(keys),
-    )
-    selection_mode: SecretSelectionMode = "interactive" if interactive else "all" if all_matches else "unique"
-    selected_candidates = resolve_secret_candidates(
-        candidates=candidates, terms=terms, selectors=selectors, selection_mode=selection_mode, preview_secrets=preview_secrets
-    )
-    if json_output:
-        typer.echo(render_secret_search_json(selected_candidates), nl=False)
-        return
-
-    if interactive:
-        candidate = selected_candidates[0]
-        selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
-        echo_jq_login_entry_hint(candidate=candidate, secrets_path=selected_source_path)
-    key_values = merge_candidate_key_values(selected_candidates)
-    secret_actions.validate_env_names(key_values)
-    secret_actions.write_env_handoff(key_values, verbose=verbose)
-    if verbose:
-        for candidate in selected_candidates:
-            selected_source_path = candidate_source_path(candidate=candidate, secret_sources=secret_sources)
-            echo_verbose_selection(candidate=candidate, secrets_path=selected_source_path)
-
-    variable_noun = "variable" if len(key_values) == 1 else "variables"
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(key_values)} environment {variable_noun}"
-    if all_matches:
-        bundle_noun = "bundle" if len(selected_candidates) == 1 else "bundles"
-        msg += f" from {len(selected_candidates)} matching secret {bundle_noun}"
-    typer.echo(f"{msg}: {', '.join(key_values)}.")
 
 
 def stats(
@@ -282,6 +127,7 @@ def add(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_vault
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_files import init_secrets, path_secrets, validate_secrets
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_search import load, search
 
     app = typer.Typer(
         name="vault", help=f"🔐 <v> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False,
@@ -289,6 +135,9 @@ def get_app() -> typer.Typer:
     )
     app.command("search", no_args_is_help=True, help=f"🔎 <s> {SECRETS_SEARCH_HELP}", epilog=SECRETS_SEARCH_EPILOG)(search)
     app.command("s", no_args_is_help=True, help="Alias for search.", epilog=SECRETS_SEARCH_EPILOG, hidden=True)(search)
+
+    app.command("load", no_args_is_help=True, help=f"🔐 <l> {SECRETS_LOAD_HELP}", epilog=SECRETS_SEARCH_EPILOG)(load)
+    app.command("l", no_args_is_help=True, hidden=True)(load)
 
     app.command("stats", no_args_is_help=False, help=f"📊 <t> {SECRETS_STATS_HELP}")(stats)
     app.command("t", no_args_is_help=False, help="Alias for stats.", hidden=True)(stats)
@@ -306,7 +155,7 @@ def get_app() -> typer.Typer:
     app.command("validate", help="✅ <v> Validate a secrets file without opening an editor.")(validate_secrets)
     app.command("v", hidden=True)(validate_secrets)
 
-    app.add_typer(cli_vault.get_app(), name="secrets")
+    app.add_typer(cli_vault.get_app(), name="bitwarden")
     app.add_typer(cli_vault.get_app(), name="k", hidden=True)
 
     return app

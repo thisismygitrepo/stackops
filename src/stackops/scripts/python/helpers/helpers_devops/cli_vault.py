@@ -80,12 +80,12 @@ def login_and_unlock(
         _raise_typer_exit(exc)
 
 
-def unlock() -> None:
+def export_session() -> None:
     """Print an eval-able script exporting the saved BW_SESSION for the current shell."""
     from stackops.scripts.python.helpers.helpers_devops import vault
 
     try:
-        vault.unlock()
+        vault.export_session()
     except vault.VaultExit as exc:
         _raise_typer_exit(exc)
 
@@ -112,7 +112,7 @@ def clean_cache() -> None:
 
 def get_app() -> typer.Typer:
     app = typer.Typer(
-        name="secrets",
+        name="bitwarden",
         help="🔐 <k> Manage Bitwarden credentials and vault sessions.",
         no_args_is_help=True,
         add_help_option=True,
@@ -130,10 +130,10 @@ def get_app() -> typer.Typer:
     app.command("l", no_args_is_help=False, help="Alias for login-and-unlock.", hidden=True)(login_and_unlock)
 
     app.command(
-        "unlock",
-        help="""🔓 <u> Print an eval-able script exporting the saved BW_SESSION (usage: eval "$(devops vault secrets unlock)").""",
-    )(unlock)
-    app.command("u", help="Alias for unlock.", hidden=True)(unlock)
+        "export-session",
+        help="""🔓 <u> Print shell code exporting the saved BW_SESSION (usage: eval "$(devops vault bitwarden export-session)").""",
+    )(export_session)
+    app.command("u", help="Alias for export-session.", hidden=True)(export_session)
 
     app.command("sync", help="🔄 <S> Sync the Bitwarden vault with the server and refresh cached searches.")(sync)
     app.command("S", help="Alias for sync.", hidden=True)(sync)

@@ -86,7 +86,7 @@ def build_aoe_add_command(
 
 def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunchOptions) -> None:
     if options.sleep_inbetween < 0:
-        raise ValueError("--sleep-inbetween must be >= 0.")
+        raise ValueError("--launch-delay must be >= 0.")
     if not options.dry_run and not _command_exists(options.aoe_bin):
         raise ValueError(
             f"Could not find AoE executable '{options.aoe_bin}'. "

@@ -240,11 +240,12 @@ devops network cloudflare [SUBCOMMAND] [ARGS]...
 | Command | Description |
 |---------|-------------|
 | `switch-public-ip` | Switch the public IP through Cloudflare WARP |
-| `reset-cloudflare-tunnel` | Reconfigure Cloudflare tunnel execution |
+| `run-tunnel` | Run a tunnel in the foreground or as a transient background service |
+| `reinstall-tunnel-service` | Reinstall the persistent Cloudflare tunnel service |
 | `add-ip-exclusion-to-warp` | Add WARP tunnel exclusions |
-| `cloudflare-tunnel-status` | Show tunnel redundancy, connector services, versions, and routes |
-| `update-cloudflare-connectors` | Rolling-update Cloudflare Tunnel connectors |
-| `sync-cloudflare-routes` | Copy selected ingress routes without tunnel credentials |
+| `tunnel-status` | Show tunnel redundancy, connector services, versions, and routes |
+| `update-connectors` | Rolling-update Cloudflare Tunnel connectors |
+| `sync-routes` | Copy selected ingress routes without tunnel credentials |
 
 #### switch-public-ip
 
@@ -268,26 +269,34 @@ Example:
 devops network cloudflare switch-public-ip --max-trials 5 --target-ip 203.0.113.10
 ```
 
-#### reset-cloudflare-tunnel
+#### run-tunnel
 
-Print or run the commands needed to reconfigure Cloudflare tunnel execution.
+Run a Cloudflare tunnel in the foreground, or use a transient systemd service with `--background`. The command confirms before running.
 
 ```bash
-devops network cloudflare reset-cloudflare-tunnel [OPTIONS]
+devops network cloudflare run-tunnel [OPTIONS]
 ```
 
 Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--task`, `-t` | Required mode: `oneoff-shell-process`, `oneoff-background-process`, or `as-service` |
-| `--tunnel-name`, `-n` | Tunnel name for one-off modes |
+| `--background`, `-b` | Run as a transient systemd service |
+| `--tunnel-name`, `-n` | Tunnel name to run |
 
 Examples:
 
 ```bash
-devops network cloudflare reset-cloudflare-tunnel --task oneoff-shell-process --tunnel-name my-tunnel
-devops network cloudflare reset-cloudflare-tunnel --task as-service
+devops network cloudflare run-tunnel --tunnel-name my-tunnel
+devops network cloudflare run-tunnel --tunnel-name my-tunnel --background
+```
+
+#### reinstall-tunnel-service
+
+Update Cloudflared and reinstall its persistent service using the user's Cloudflare configuration. The command confirms before changing the service.
+
+```bash
+devops network cloudflare reinstall-tunnel-service
 ```
 
 #### add-ip-exclusion-to-warp
@@ -298,12 +307,12 @@ Add one or more IP exclusions to Cloudflare WARP.
 devops network cloudflare add-ip-exclusion-to-warp --ip 192.168.20.25,10.0.0.15
 ```
 
-#### cloudflare-tunnel-status
+#### tunnel-status
 
 Inspect Cloudflare Tunnel redundancy and connector state locally and over SSH.
 
 ```bash
-devops network cloudflare cloudflare-tunnel-status TUNNEL_NAME [OPTIONS]
+devops network cloudflare tunnel-status TUNNEL_NAME [OPTIONS]
 ```
 
 Key options:
@@ -312,17 +321,17 @@ Key options:
 |--------|-------------|
 | `--host`, `-H` | SSH connector host; repeat for multiple hosts |
 | `--hostname`, `-n` | Published hostname to verify on each connector |
-| `--local`/`--no-local`, `-l`/`-L` | Include or exclude the local connector |
+| `--no-local`, `-l` | Exclude the local connector, which is included by default |
 | `--cloudflared`, `-f` | Cloudflared executable path on each connector |
 | `--config`, `-c` | Cloudflared configuration path on each connector |
 | `--service`, `-s` | Systemd service name on each connector |
 
-#### update-cloudflare-connectors
+#### update-connectors
 
 Update connectors sequentially, waiting for each service to become healthy before continuing.
 
 ```bash
-devops network cloudflare update-cloudflare-connectors [OPTIONS]
+devops network cloudflare update-connectors [OPTIONS]
 ```
 
 Key options:
@@ -330,18 +339,18 @@ Key options:
 | Option | Description |
 |--------|-------------|
 | `--host`, `-H` | SSH connector host; repeat for a rolling update |
-| `--local`/`--no-local`, `-l`/`-L` | Include or exclude the local connector |
+| `--no-local`, `-l` | Exclude the local connector, which is included by default |
 | `--cloudflared`, `-f` | Cloudflared executable path on each connector |
 | `--service`, `-s` | Systemd service name on each connector |
 | `--timeout`, `-t` | Seconds to wait for each restarted service |
 | `--yes`, `-y` | Run without confirmation |
 
-#### sync-cloudflare-routes
+#### sync-routes
 
 Copy selected ingress routes from one connector configuration to another without copying tunnel credentials.
 
 ```bash
-devops network cloudflare sync-cloudflare-routes --hostname HOSTNAME [OPTIONS]
+devops network cloudflare sync-routes --hostname HOSTNAME [OPTIONS]
 ```
 
 Key options:
@@ -370,17 +379,17 @@ devops network device [SUBCOMMAND] [ARGS]...
 
 | Command | Description |
 |---------|-------------|
-| `wifi-select` | Connect using configured or manually selected WiFi |
+| `connect-wifi` | Connect using configured or manually selected WiFi |
 | `bind-wsl-port` | Bind a WSL port onto the Windows host |
 | `open-wsl-port` | Open Windows Firewall rules for WSL ports |
 | `link-wsl-windows` | Link WSL home and Windows home directories |
 
-#### wifi-select
+#### connect-wifi
 
 Connect to WiFi using the configured SSID or an interactive fallback flow.
 
 ```bash
-devops network device wifi-select [OPTIONS]
+devops network device connect-wifi [OPTIONS]
 ```
 
 Key options from current help:
@@ -394,8 +403,8 @@ Key options from current help:
 Examples:
 
 ```bash
-devops network device wifi-select --list
-devops network device wifi-select --manual
+devops network device connect-wifi --list
+devops network device connect-wifi --manual
 ```
 
 #### bind-wsl-port
@@ -403,7 +412,7 @@ devops network device wifi-select --manual
 Bind a WSL port onto the Windows host using `netsh interface portproxy`.
 
 ```bash
-devops network device bind-wsl-port --port 8080
+devops network device bind-wsl-port 8080
 ```
 
 #### open-wsl-port
@@ -457,9 +466,9 @@ Key options from current help:
 |--------|-------------|
 | `--name`, `-n` | Tunnel or service name |
 | `--path`, `-p` | Server base path for `share-local` |
-| `--host`, `-h` | Host for `share-local` |
-| `--dir`, `-d` | Folder to open in `share-local` mode |
-| `--cli-data-dir` | VS Code CLI data directory used by every generated command |
+| `--host`, `-H` | Host for `share-local` |
+| `--directory`, `-d` | Folder to open in `share-local` mode |
+| `--cli-data-dir`, `-D` | VS Code CLI data directory used by every generated command |
 | `--extra-args`, `-e` | Extra CLI arguments to append |
 
 Examples:
@@ -467,7 +476,7 @@ Examples:
 ```bash
 devops network vscode-share run --name labbox
 devops network vscode-share install-service --name labbox
-devops network vscode-share share-local --dir . --host 0.0.0.0
+devops network vscode-share share-local --directory . --host 0.0.0.0
 ```
 
 Before `run` or `install-service`, StackOps shows whether a VS Code tunnel credential is stored and whether its provider is GitHub or Microsoft. VS Code does not expose the credential's exact username or email. To guarantee which account is used, run `code tunnel user logout`, then `code tunnel user login --provider github` or `code tunnel user login --provider microsoft` before starting the tunnel.

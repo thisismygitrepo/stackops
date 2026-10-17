@@ -4,7 +4,7 @@ import typer
 
 from stackops.utils.managed_files import ManagedFileKind
 
-DATA_SETUP_HELP = "Interactively add a backup entry and install its YAML schema."
+DATA_SETUP_HELP = "Interactively register a backup entry and install its YAML schema."
 DOTFILES_SETUP_HELP = "Interactively register a dotfile and install its YAML schema."
 LAYOUTS_SETUP_HELP = "Install starter terminal layouts and their JSON schema."
 SECRETS_SETUP_HELP = "Interactively create the global secrets file and schema."
@@ -37,7 +37,7 @@ def setup_data() -> None:
         no_zip=False,
         encryption=None,
         pwd=None,
-        no_rel2home=False,
+        absolute_path=False,
         os=DEFAULT_OS_FILTER,
         interactive=True,
     )
@@ -55,21 +55,20 @@ def setup_dotfiles() -> None:
         sensitivity="private",
         destination=None,
         name=None,
-        section="default",
+        group="default",
         os_filter=DEFAULT_OS_FILTER,
         shared=False,
-        no_record=False,
         interactive=True,
     )
 
 
 def setup_layouts(
-    force: Annotated[bool, typer.Option("--force", "-f", help="Overwrite existing layouts and schema.")] = False,
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Overwrite existing layouts and schema.")] = False,
 ) -> None:
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_dump import dump_config
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_dump import export_example
     from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
 
-    dump_config(which="layouts", data=False, schema=False, default_path=True, force=force)
+    export_example(which="layouts", data=False, schema=False, default_path=True, overwrite=overwrite)
     typer.echo(f"Starter layouts are ready at {DOTFILES_LAYOUTS_JSON_PATH}")
 
 

@@ -121,6 +121,7 @@ fire analysis.py -j
 - `--interactive` launches IPython with the default profile.
 - `--jit` (`-J`) sets `PYTHON_JIT=1` before launching the Python-backed command. This opts into CPython's experimental JIT when the selected interpreter supports it.
 - `--watch` prefixes the final command with `watchexec --restart --exts py,sh,ps1`.
+- `--frozen/-F` passes `--frozen` to `uv run`, using the existing lockfile without updating it. File watching remains controlled by `--watch`.
 - `--git-pull` runs `git -C <script-dir> pull` first.
 - `--path-export` prepends a shell snippet that appends the repo root to `PYTHONPATH`.
 - `--loop` reruns after completion or interruption.
@@ -138,7 +139,7 @@ fire nested/tool.py -r -P
 
 ## Notes
 
-- `stackops fire` routes into the same command family, but `fire --help` is the best source for the direct entrypoint's full option surface.
+- `stackops fire` and standalone `fire` expose the same execution options, including `--frozen/-F`.
 
 ---
 

@@ -78,7 +78,7 @@ def install_cli_app(app_url: str) -> bool:
         console.print(f"[red]Failed to install app from {app_url}: {e}[/red]")
         return False
 
-def download_safe_apps(name: str, run: ScanRun) -> bool:
+def download_safe_apps(name: str | None, run: ScanRun) -> bool:
     if run["status"] not in {"completed", "completed_with_errors"}:
         console.print("[red]Select a finished scan run before installing apps.[/red]")
         return False
@@ -90,11 +90,12 @@ def download_safe_apps(name: str, run: ScanRun) -> bool:
     ]
     apps_to_install = [
         item["app_url"] for item in safe_apps
-        if item["app_url"] and (name == "essentials" or item["app_name"].casefold() == name.casefold())
+        if item["app_url"] and (name is None or item["app_name"].casefold() == name.casefold())
     ]
 
     if not apps_to_install:
-        console.print(f"[yellow]No safe apps found to install for '{name}'.[/yellow]")
+        selected_apps = "the selected scan run" if name is None else f"""'{name}'"""
+        console.print(f"""[yellow]No eligible apps found to install for {selected_apps}.[/yellow]""")
         return False
 
     console.print(f"[bold]Installing {len(apps_to_install)} apps...[/bold]")

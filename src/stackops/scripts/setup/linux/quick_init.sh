@@ -7,6 +7,6 @@
 uv tool install --upgrade --python 3.14 stackops
 devops config copy-assets all
 devops config dotfiles sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
-devops config terminal config-shell --which default
+devops config terminal config-shell --shell default
 devops software install --group termabc
 devops software install --group sysabc

@@ -11,7 +11,7 @@ bunx skills@latest add vercel-labs/agent-browser --yes
 Install it from StackOps:
 
 ```bash
-stackops agents browser install-tech --which agent-browser
+stackops agents browser install --tool agent-browser
 ```
 
 Launch a browser with a dedicated CDP profile. By default, StackOps opens the shared `stackops-browser` tmux session and creates a qualified browser endpoint window:

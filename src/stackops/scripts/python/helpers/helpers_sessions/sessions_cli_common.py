@@ -12,8 +12,8 @@ type SessionBackendOption = Literal[
     "tmux", "t",
     "herdr", "h",
     "tuios", "u",
-    "aoe", "a",
-    "auto",
+    "aoe", "e",
+    "auto", "a",
 ]
 type DynamicSessionBackendOption = Literal["tmux", "t", "tuios", "u", "auto", "a"]
 type ResolvedSessionBackend = Literal["tmux", "herdr", "tuios", "aoe"]
@@ -180,7 +180,7 @@ def resolve_standard_backend(
                 )
                 raise typer.Exit(code=1)
             return "herdr"
-        case "aoe" | "a":
+        case "aoe" | "e":
             if platform.system().lower() == "windows":
                 typer.echo(
                     "Error: AoE layouts cannot be started on Windows systems.",
@@ -188,7 +188,7 @@ def resolve_standard_backend(
                 )
                 raise typer.Exit(code=1)
             return "aoe"
-        case "auto":
+        case "auto" | "a":
             return "tmux"
         case _:
             typer.echo(f"Error: Unsupported backend '{backend}'.", err=True)

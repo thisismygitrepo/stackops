@@ -10,7 +10,7 @@ from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 def export(
     output_root: Annotated[
         Path,
-        typer.Option("--output-root", "-o", help="Directory where the installer folder and zip archive will be written."),
+        typer.Option("--output-dir", "-o", help="Directory where the installer folder and zip archive will be written."),
     ] = installer_offline_constants.DEFAULT_OUTPUT_ROOT,
     no_include_configs: Annotated[
         bool,

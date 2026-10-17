@@ -103,7 +103,7 @@ def read_second_brain_updates(*, second_brain_root: Path) -> list[UpdateFile]:
     return update_files
 
 
-def align_second_brain_updates(*, update_files: list[UpdateFile], force: bool) -> dict[Path, int]:
+def prune_second_brain_updates(*, update_files: list[UpdateFile], apply: bool) -> dict[Path, int]:
     file_errors = [f"""{update_file.path}: {update_file.error}""" for update_file in update_files if update_file.error is not None]
     if file_errors:
         details = "\n".join(file_errors)
@@ -113,7 +113,7 @@ def align_second_brain_updates(*, update_files: list[UpdateFile], force: bool) -
     removed_by_path: dict[Path, int] = {}
     for update_file in update_files:
         if update_file.invalid_rows:
-            if force:
+            if apply:
                 update_file.path.write_text(update_file.cleaned_text, encoding="utf-8", newline="")
             removed_by_path[update_file.path] = len(update_file.invalid_rows)
     return removed_by_path

@@ -16,7 +16,7 @@ entryExample:
   prompt_name: null
   job_name: AI_Agents
   join_prompt_and_context: false
-  run: false
+  run: true
   output_path: null
   agents_dir: null
   interactive: false

@@ -131,7 +131,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
         prompt_name=overrides.prompt_name if overrides.prompt_name is not None else base.prompt_name,
         job_name="AI_Agents" if job_name is None else job_name,
         join_prompt_and_context=False if join_prompt_and_context is None else join_prompt_and_context,
-        run=False if run is None else run,
+        run=True if run is None else run,
         output_path=overrides.output_path if overrides.output_path is not None else base.output_path,
         agents_dir=overrides.agents_dir if overrides.agents_dir is not None else base.agents_dir,
         interactive=False if interactive is None else interactive,

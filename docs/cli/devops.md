@@ -14,27 +14,30 @@ devops [OPTIONS] COMMAND [ARGS]...
 
 | Command | Purpose |
 | --- | --- |
-| `install` | Install packages or named groups |
+| `software` | Install software and manage installer catalogs |
 | `repos` | Manage development repositories |
 | `config` | Configuration and dotfile workflows |
 | `data` | Backup and restore configured data paths; encrypt or decrypt local files and folders |
 | `self` | StackOps self-management and developer workflows |
 | `network` | Sharing, transfer, address, SSH, and device helpers |
-| `execute` | Run scripts from predefined locations or as a raw command |
-| `vault` | Search Bitwarden credentials and manage login/unlock state |
+| `scripts` | Run, list, locate, and edit scripts |
+| `vault` | Search and load secrets, manage entries, and access Bitwarden |
+| `status` | Inspect machine, repositories, applications, and configuration state |
+| `security` | Run security and installer-audit helpers |
 
 ---
 
-## `install`
+## `software install`
 
 ```bash
-devops install [OPTIONS] [WHICH]
+devops software install [OPTIONS] [WHICH]
 ```
 
 Current options:
 
 - `--group` to treat `WHICH` as a bundle name
 - `--source` to select `library`, `user`, or `all` installer catalogs; defaults to `all`
+- `--path` to select another user catalog with `--source user` or `all`
 - `--check` to report binary availability without installing or validating catalog entries
 - `--interactive` to choose packages interactively
 - `--explore` / `-x` to browse installer `categoryLabels` before choosing packages
@@ -44,11 +47,13 @@ Current options:
 Example:
 
 ```bash
-devops install --group sysabc
-devops install --explore
-devops install ai-agents-assistants -x
-devops install lazygit,fd --update
+devops software install --group sysabc
+devops software install --explore
+devops software install ai-agents-assistants -x
+devops software install lazygit,fd --update
 ```
+
+Use `software list` to browse definitions, `path` to locate catalogs, `init` to create an empty user catalog, `edit` to modify it, and `validate` to check it.
 
 ---
 
@@ -60,6 +65,11 @@ These are the child commands exposed by the current live help.
 
 - `sync`
 - `register`
+- `list`
+- `edit`
+- `path`
+- `init`
+- `validate`
 - `action`
 - `version`
 - `guard`
@@ -67,47 +77,52 @@ These are the child commands exposed by the current live help.
 
 `repos stats`:
 
-- `viz`
+- `visualize`
 - `count-lines`
 - `analyze`
 
 `config`:
 
 - `interactive`
-- `sync`
-- `register`
+- `dotfiles`
 - `edit`
-- `export-dotfiles`
-- `import-dotfiles`
+- `path`
+- `init`
+- `validate`
 - `copy-assets`
-- `dump`
+- `export-example`
+- `init-script`
 - `terminal`
-- `secrets`
 - `setup`
+
+`config dotfiles` provides `sync`, `register`, `export`, `import`, `path`, `init`, and `validate`. The last three locate, initialize, or validate the managed mapping. They are also available as `config path/init/validate dotfiles`; `config export-example dotfiles` exports its example and schema. Secrets are managed under `vault`.
 
 `data`:
 
 - `sync`
 - `register`
-- `display`
+- `list`
 - `subset`
-- `edit`
 - `encrypt`
 - `decrypt`
+- `path`
+- `init`
+- `validate`
+
+Use `config edit data` to edit the backup mapping.
 
 `self`:
 
 - `install`
 - `clone`
 - `update`
-- `status`
-- `security`
 - `explore-cli`
 - `explore-python-api`
 - `readme`
 - `docs`
 - `build-installer`
 - `download-installer`
+- `release`
 - `build-docker`
 - `build-graph`
 - `build-assets`
@@ -128,10 +143,24 @@ These are the child commands exposed by the current live help.
 `vault`:
 
 - `search`
+- `load`
+- `stats`
+- `subset`
+- `add`
+- `path`
+- `init`
+- `validate`
+- `bitwarden`
+
+`vault bitwarden`:
+
+- `search`
 - `login-and-unlock`
-- `unlock`
+- `export-session`
 - `sync`
 - `clean-cache`
+
+`status` and `security` live directly under `devops`. `self` contains StackOps management commands; its developer commands require a local source checkout. `self build-assets` provides `cli-graph`, `charts`, and `skill-refs`.
 
 ---
 
@@ -186,14 +215,15 @@ Capture and restore named repository states in the workspace's `versions.json`:
 | Command | Behavior |
 | --- | --- |
 | `declare VERSION --message TEXT` | Record repository commits, branches, remote information, and whether each working tree is dirty |
-| `status [VERSION]` | List declared versions, or compare one with the current repositories |
+| `list` | List declared versions |
+| `status VERSION` | Compare a declared version with the current repositories |
 | `checkout VERSION` | Restore an existing repository collection to the declared commits and branches; `--dry-run` previews without fetching or changing repositories |
 
-All three accept `--directory`, `-d` to select the workspace; the default is the current directory. `declare --recursive`, `-r` includes nested repositories. Checkout refuses dirty current repositories and versions captured with dirty repositories; it does not clone missing repositories.
+All four accept `--directory`, `-d` to select the workspace; the default is the current directory. `declare --recursive`, `-r` includes nested repositories. Checkout refuses dirty current repositories and versions captured with dirty repositories; it does not clone missing repositories.
 
 ```bash
 devops repos version declare baseline --message "Before dependency updates" --directory ./workspace
-devops repos version status --directory ./workspace
+devops repos version list --directory ./workspace
 devops repos version status baseline --directory ./workspace
 devops repos version checkout baseline --directory ./workspace --dry-run
 ```
@@ -215,30 +245,33 @@ devops data decrypt ./project.tar.gz.gpg --encryption asymmetric --output ./rest
 
 ---
 
-## `execute`
+## `scripts`
 
 ```bash
-devops execute [OPTIONS] [NAME]
+devops scripts run [OPTIONS] NAME [SCRIPT_ARGS]...
 ```
 
 Current behavior:
 
 - `NAME` can be a predefined script name or a raw command string
-- when `NAME` is a direct script file path, `execute` runs it without searching the configured script roots
+- when `NAME` is a direct script file path, `run` executes it without searching the configured script roots
 - `--source`, `-s` selects search locations: `all`, `repo`, `private`, `public`, `library`, or `dynamic`
 - `--source repo` or `-s repo` searches `<git-root>/.stackops/scripts`
 - `--interactive` enables interactive selection
 - `--command` runs the input as a command
-- `--list` prints the available scripts
+- `scripts list` prints available scripts; `scripts path [NAME]` prints a resolved path or the search locations; `scripts edit NAME` opens a local script
 - `--subprocess`, `-S` runs shell scripts in a child Bash or PowerShell process instead of sourcing them in the caller
+- put StackOps run options before `NAME`; arguments after it are forwarded to the script
 
 Examples:
 
 ```bash
-devops execute --list
-devops execute deploy -s library
-devops execute deploy.sh -S
-devops execute "echo hello" --command
+devops scripts list
+devops scripts run -s library deploy
+devops scripts run -S deploy.sh
+devops scripts run --command "echo hello"
+devops scripts path deploy
+devops scripts edit deploy
 ```
 
 ---
@@ -251,21 +284,28 @@ devops vault COMMAND [ARGS]...
 
 Current behavior:
 
-- `search` retrieves Bitwarden credentials and can copy password, username, TOTP, or raw JSON to clipboard slots
-- `login-and-unlock` loads Bitwarden API credentials from StackOps secrets, unlocks the vault, and saves `BW_SESSION` locally
-- `unlock` prints an eval-able shell script that exports the saved `BW_SESSION`
-- `sync` synchronizes Bitwarden with the server and refreshes cached searches
-- `clean-cache` removes cached search results and any saved session token
+- `search` selects StackOps secret bundles without loading environment variables; `--json` includes secret values
+- `load` selects bundles and loads their environment variables; it uses the same terms and selectors as `search`
+- `add` creates a new login entry; `stats` and `subset` inspect or export selected entries
+- `path`, `init`, and `validate` manage the secrets file and schema
+- `bitwarden search` retrieves Bitwarden credentials and can copy password, username, TOTP, or raw JSON to clipboard slots
+- `bitwarden login-and-unlock` loads Bitwarden API credentials from StackOps secrets, unlocks the vault, and saves `BW_SESSION` locally
+- `bitwarden export-session` prints an eval-able shell script that exports the saved `BW_SESSION`
+- `bitwarden sync` synchronizes Bitwarden with the server and refreshes cached searches
+- `bitwarden clean-cache` removes cached search results and any saved session token
 
 Examples:
 
 ```bash
-devops vault login-and-unlock --account-name dev
-devops vault search github --copy password
+devops vault search github
+devops vault load github --name github
+devops vault add
+devops vault bitwarden login-and-unlock --account-name dev
+devops vault bitwarden search github --copy password
 devops v s github --json
-eval "$(devops vault unlock)"
-devops vault sync
-devops vault clean-cache
+eval "$(devops vault bitwarden export-session)"
+devops vault bitwarden sync
+devops vault bitwarden clean-cache
 ```
 
 ---
@@ -276,11 +316,16 @@ The nested groups above are lazily loaded Typer apps. The exact leaf commands an
 
 ```bash
 devops repos --help
+devops software --help
+devops scripts --help
 devops config --help
 devops data --help
 devops self --help
 devops network --help
 devops vault --help
+devops vault bitwarden --help
+devops status --help
+devops security --help
 devops self docs --help
 devops config terminal --help
 ```

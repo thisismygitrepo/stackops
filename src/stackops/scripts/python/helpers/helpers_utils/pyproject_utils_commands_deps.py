@@ -25,11 +25,11 @@ def check_deps(
     ] = "pyan",
     output: Annotated[
         DependencyOutput,
-        typer.Option("--output", "-o", help="Output format: json, jsonic, or html."),
+        typer.Option("--format", "-F", help="Output format: json, jsonic, or html."),
     ] = "json",
     output_path: Annotated[
         str | None,
-        typer.Option("--output-path", "-O", help="Write output to this path. Defaults to stdout for JSON and ./.ai/check_deps for HTML."),
+        typer.Option("--output", "-o", help="Write output to this path. Defaults to stdout for JSON and ./.ai/check_deps for HTML."),
     ] = None,
     focus: Annotated[
         list[str] | None,

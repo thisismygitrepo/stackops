@@ -1,6 +1,6 @@
 # StackOps Source Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-10-08.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-10-17.
 
 Use this map as a root source index. For command-level source details, inspect Typer registrations and verify the live command with `--help`.
 
@@ -22,4 +22,4 @@ Use this map as a root source index. For command-level source details, inspect T
 2. Run `UV_CACHE_DIR=/tmp/uv-cache uv run <entrypoint> --help` and then repeat with each discovered command segment.
 3. Inspect the Typer registration source only after the live help identifies the command path.
 4. For broad graph debugging, inspect `src/stackops/scripts/python/graph/cli_graph.json`.
-5. After changing command names or registrations, run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets update-skill-refs`.
+5. After changing command names or registrations, run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets skill-refs`.

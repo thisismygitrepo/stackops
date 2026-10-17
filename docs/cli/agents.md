@@ -16,42 +16,44 @@ agents [OPTIONS] COMMAND [ARGS]...
 | --- | --- |
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
 | `add-skill` | Add a supported skill into an agent directory |
-| `add-config` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
+| `init` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
+| `config` | Locate, initialize, and validate StackOps prompts, parallel workflow, and MCP catalogs |
 | `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
 | `second-brain` | Configure the Second Brain repository and its agent instructions |
 | `doctor` | Inspect agent binaries, configuration, plugins, skills, and instruction provenance |
+| `local` | Inspect local Ollama health, models, and resource usage |
 | `run-prompt` | Run a prompt through a selected agent, with context and an optional interactive session |
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
-| `parallel` | Create agent layouts, create a shared context file, collect outputs, or emit a template command |
+| `parallel` | Create or run agent layouts, create shared context, collect outputs, or write starter scripts |
 | `iter` | Inspect and maintain current-format Agent-Ops iteration workspaces through Herdr |
-| `clean` | Remove `.ai` directories from discovered Git repositories |
+| `reset` | Preview and apply resets of agent customizations and repository `.ai` directories |
 
 ---
 
 ## `iter`
 
-`iter` supports only the latest Herdr CLI and server; each command validates the live `herdr api snapshot` shape itself. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-I`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agent-ops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agent-ops` tree to clean. The obsolete polling budget tracker was removed because it could terminate a working successor.
+`iter` supports only the latest Herdr CLI and server; each command validates the live `herdr api snapshot` shape itself. Each maintenance command accepts exactly one targeting mode: an explicit stable `WORKSPACE_ID`, `--all`, or `--interactive`/`-i`. Use `--dry-run`/`-n` to preview `close` or `clean`. The interactive TV picker previews the live status and close plan for `status` and `close`; these commands locate each workspace's exact `.ai/agent-ops/iterations/<slug>/run.json` from Herdr agent cwd ancestry and do not require Git or the caller's cwd. `close` removes only quiet old tabs whose current handoff receipt still matches every stable Herdr identifier. `clean` is records-tree-local because inactive runs no longer exist in Herdr; run it anywhere beneath the project containing the `.ai/agent-ops` tree to clean.
 
 ```bash
 agents iter status --all
-agents iter status -I
+agents iter status -i
 agents iter close w1 --dry-run
 agents iter close --all --dry-run
-agents iter close -I
+agents iter close -i
 agents iter clean --all --dry-run
-agents iter clean -I -n
+agents iter clean -i -n
 ```
 
 ---
 
-## `clean`
+## `reset`
 
-`clean [DIRECTORY]` discovers direct child Git repositories and removes each repository's `.ai` directory. Pass `--recursive/-r` to search nested repositories. The removal is immediate, so point the command at the intended repository root.
+`reset [AGENT]` previews resets of agent customizations and `.ai` workspace directories. Use `--directory/-d` to select the project or directory containing repositories, `--resource workspace` to target `.ai` directories only, and `--recursive/-R` to search nested repositories. `--apply/-a` applies the reset and preserves backups; `--interactive/-i` presents a selection and confirmation flow. `--tui/-t` opens the resource browser and always confirms before applying.
 
 ```bash
-agents clean ~/code
-agents clean ~/code --recursive
+agents reset --directory ~/code --resource workspace
+agents reset --directory ~/code --resource workspace --recursive --apply
 ```
 
 ---
@@ -69,10 +71,13 @@ agents doctor codex --directory . --resource plugin,skill,instructions
 
 ## `second-brain`
 
-`second-brain config` creates `~/code/agents/second-brain` and installs its starter `AGENTS.md` when that file does not already exist. Existing instructions are preserved.
+`second-brain init` creates `~/code/agents/second-brain` and installs its starter `AGENTS.md` when that file does not already exist. Use `--overwrite` to replace existing instructions. `status` reports activity and invalid updates. `prune` previews invalid CSV rows; `--apply` removes them.
 
 ```bash
-agents second-brain config
+agents second-brain init
+agents second-brain status
+agents second-brain prune
+agents second-brain prune --apply
 ```
 
 ---
@@ -85,13 +90,15 @@ Current subcommands:
 | --- | --- |
 | `create` | Build an agent layout file with prompt/context splitting and output paths |
 | `create-context` | Ask one agent to persist a shared `context.md` for a job |
-| `run-parallel` | Run a named parallel workflow from `parallel.yaml`, with `create` option overrides |
+| `run` | Launch a named parallel workflow from `parallel.yaml`, with `create` option overrides |
 | `collect` | Concatenate collected agent material files into one output file |
-| `make-template` | Print a starter template for fire-agent usage |
+| `create-template` | Write a starter shell/PowerShell script, file list, and prompt file |
 
-`agents parallel create` currently accepts the main workflow controls: `--agent`, `--model`, `--reasoning`, `--provider`, `--host`, `--backend`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--stagger-max`, `--separator`, `--joined-prompt-context`, `--run`, `--agents-dir`, `--output-path`, `--save-as-yaml`, and `--interactive`. `--backend` defaults to `tmux`; use `--backend herdr` when `--run` should launch the generated layout through Herdr, or `--backend aoe` when it should launch each generated agent script as an Agent of Empires session. `--save-as-yaml` writes or updates `.stackops/agents/parallel.yaml` using the resolved job name as the top-level entry key.
+`agents parallel create` accepts `--agent`, `--model`, `--reasoning`, `--provider`, `--host`, `--backend`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--stagger-max`, `--separator`, `--join-prompt-context`, `--run`, `--agents-dir`, `--output`, `--save-as-yaml`, and `--interactive`. It creates files without launching unless `--run` is set. `--backend` defaults to `tmux`; use `--backend herdr` or `--backend aoe` to choose another launcher. `--save-as-yaml` writes or updates `.stackops/agents/parallel.yaml` using the resolved job name as the top-level entry key, including the chosen launch behavior.
 
-`agents parallel run-parallel` reads flat top-level named entries from `parallel.yaml`. By default it searches the repo file first, then StackOps private/public/library locations. Use `--source`, `-S` to choose lookup locations, `--yaml-path` for an explicit file, `--show-format` to print the standard, `--edit` to open the YAML, and `--add-entry` to append a template entry before editing. Every `create` option can be overridden on the command line.
+`agents parallel run` reads flat top-level named entries from `parallel.yaml`. It launches when the entry omits `run`; an explicitly saved `run: false` still creates files without launching. By default it searches the repo file first, then StackOps private/public/library locations. Use `--source/-S` to choose lookup locations, `--yaml-path` for an explicit file, `--show-format` to print the standard, `--edit` to open the YAML, and `--add-entry` to append a template entry before editing. Workflow fields can be overridden on the command line.
+
+Both commands accept `--run/--no-run`, `--interactive/--no-interactive`, and `--join-prompt-context/--no-join-prompt-context` as switches without a `true` or `false` argument. Omitting one of these switches on `parallel run` preserves the YAML setting. Use `--no-run` to create the named workflow's files without launching agents.
 
 Standard `parallel.yaml` shape:
 
@@ -113,7 +120,7 @@ entryExample:
   prompt_name: null
   job_name: AI_Agents
   join_prompt_and_context: false
-  run: false
+  run: true
   output_path: null
   agents_dir: null
   interactive: false
@@ -130,9 +137,10 @@ agents parallel create --agent codex --backend herdr --run --context-path ./.ai/
 agents parallel create --agent codex --backend aoe --run --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsAoe
 agents parallel create --agent copilot --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsCopilot
 agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
-agents parallel run-parallel default -S repo --agent-load 5
-agents parallel run-parallel docs_update --yaml-path ./.ai/parallel.yaml --agent pi --reasoning high
-agents parallel create-context --job-name updateDocs "Collect the repo context for this doc task"
+agents parallel run default -S repo --agent-load 5
+agents parallel run docs_update --yaml-path ./.ai/parallel.yaml --agent pi --reasoning high
+agents parallel run docs_update --no-run --no-interactive
+agents parallel create-context "Collect the repo context for this doc task" updateDocs
 agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 ```
 
@@ -144,15 +152,15 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 
 - `--agent`
 - `--interactive`/`-i` to start the selected agent's native chat with the prepared prompt and continue with follow-up messages
-- `--reasoning` for codex, copilot, and pi agents; unsupported agents ignore it
+- `--reasoning` for codex, copilot, cortex, and pi agents; unsupported agents ignore it
 - `--context` or `--context-path`
-- `--context-yaml-path` plus `--context-name`
+- `--prompts-path` plus `--context-name`
 - `--skill`/`-k` to reference one supported agent skill (same catalog as `agents add-skill`) on the fly: the prompt file tells the agent to read the skill's `SKILL.md` from its source repository and follow it; the skill is never installed. Pass an empty value (`--skill ""`) to pick the skill interactively
 - `--source`, `-s` to choose catalog locations for context YAML lookup: `all`, `repo`, `private`, `public`, or `library`
 - `--show-format` and `--edit` for prompts-YAML guidance and editing
 - free-form prompt parts after `--`; option-looking tokens after the delimiter are prompt text, not StackOps flags
 
-For `run-prompt`, `--agent` defaults to `codex`. `--source repo` or `-s repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
+For `run-prompt`, omitting `--agent` uses the configured default agent. `--source repo` or `-s repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
 Shell metacharacters such as `|`, `>`, `$`, and `*` are still interpreted by your shell before StackOps receives the prompt.
 
 Interactive mode sends the same prompt, context, and skill reference as the first message, then leaves the agent's chat open. It supports `agy`, `cursor-agent`, `claude`, `qwen`, `copilot`, `codex`, `opencode`, `auggie`, `droid`, and `pi`. Other agents report an error before preparing context. Reasoning, Second Brain, and sandbox options still apply; container sandboxes allocate a terminal. Without `--interactive`, the existing prompt-running behavior is unchanged.
@@ -176,9 +184,9 @@ agents run-prompt --show-format
 
 `run-interactive` launches an agent directly with sensible defaults. Current options:
 
-- `--agent`/`-a` accepts `codex`/`x`, `copilot`/`c`, `pi`/`p`, or `opencode`/`omp`/`o`
-- `--caveman`/`-c` starts the session with the caveman wenyan-full prompt
-- `--headroom`/`-h` launches `codex` or `copilot` through headroom
+- `--agent`/`-a` accepts `codex`/`x`, `copilot`/`c`, `cortex`, `pi`/`p`, `opencode`/`oc`, `omp`/`o`, or `deepseek`/`dsh`
+- `--caveman`/`-c` starts the session with megacave Wenyan compression
+- `--headroom`/`-H` launches `codex` or `copilot` through headroom
 
 Examples:
 
@@ -190,20 +198,21 @@ agents run-interactive --agent codex --caveman --headroom
 
 `ask` is the lighter-weight direct path. Current behavior to keep in mind:
 
-- default agent is `codex`
-- `--reasoning` accepts `n`, `l`, `m`, `h`, `x`
-- that shortcut is only supported for `codex`, `copilot`, and `pi`
-- `--file-prompt` appends the file contents into the final prompt with explicit file boundary markers
+- omitting `--agent` uses the configured default agent
+- `--reasoning` accepts `none`, `low`, `medium`, `high`, `xhigh`, matching `run-prompt` and `parallel`
+- reasoning is supported for `codex`, `copilot`, `cortex`, and `pi`; unsupported agents or levels use their default
+- prompt tokens are always prompt text; reasoning requires `--reasoning`
+- `--prompt-path` appends the file contents into the final prompt with explicit file boundary markers
 - `--quiet` skips the Rich preflight summary and streams agent output directly
 
 Examples:
 
 ```bash
-agents ask --agent codex --reasoning h "inspect the repo"
-agents ask --agent copilot --reasoning m "summarize the current module"
+agents ask --agent codex --reasoning high "inspect the repo"
+agents ask --agent copilot --reasoning medium "summarize the current module"
 agents ask --agent agy "inspect the repo"
-agents ask --agent pi --reasoning h "inspect the repo"
-agents ask "summarize this file" --file-prompt ./README.md
+agents ask --agent pi --reasoning high "inspect the repo"
+agents ask "summarize this file" --prompt-path ./README.md
 agents ask --quiet "summarize the current directory"
 ```
 
@@ -211,15 +220,17 @@ agents ask --quiet "summarize the current directory"
 
 ## Repository and MCP helpers
 
-`add-config` requires an agent argument and copies the latest Agent-Ops skill bundled with StackOps into `.agents/skills/agent-ops` by default. Pass `--no-agent-ops-skill`/`-A` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `all` to configure every supported agent, or pass a comma-separated list. Pi and OMP configurations include their native ten-attempt exponential retry policies for transient API failures.
+`init` requires an agent argument and copies the latest Agent-Ops skill bundled with StackOps into `.agents/skills/agent-ops` by default. Pass `--no-agent-ops-skill`/`-a` to skip that copy. It can also add private config files, instructions, shared `.ai` assets, VS Code tasks, and `.gitignore` entries. Pass `all` to configure every supported agent, or pass a comma-separated list. Pi and OMP configurations include their native ten-attempt exponential retry policies for transient API failures.
 
 ```bash
-agents add-config all --root .
-agents add-config codex,copilot,agy,pi,omp --root . --include-scripts --add-gitignore
-agents add-config codex --root . -A
+agents init all --root .
+agents init codex,copilot,agy,pi,omp --root . --include-scripts --add-gitignore
+agents init codex --root . -a
 ```
 
-`add-mcp` resolves names from StackOps MCP catalogs and installs them for one or more agents. It also accepts known agent-skill names as a compatibility path; those are installed through the skills CLI and are not written to MCP config. Notes:
+`config path/init/validate` handles StackOps catalogs of kind `prompts`, `parallel`, or `mcp`. These commands use `--source` or an explicit `--path`. They do not initialize native agent configuration; use `agents init` for that.
+
+`add-mcp` resolves MCP server names from StackOps catalogs and installs them for one or more agents. Install ordinary skills with `add-skill`. Notes:
 
 - `--scope local` installs into the enclosing git repository; when run from a multi-repo workspace root, it installs into that workspace directory
 - `--source`, `-S` selects catalog locations: `all`, `repo`, `private`, `public`, or `library`
@@ -228,7 +239,7 @@ agents add-config codex --root . -A
 - `agy` means Google Antigravity CLI. Local MCP config is written to `.agents/mcp_config.json`; global MCP config is written to `~/.gemini/antigravity-cli/mcp_config.json`
 - `oz` means Warp Oz CLI. Local MCP config is written to `.warp/mcp.json` in Oz's direct `--mcp` file shape, and StackOps passes that file to `oz agent run --mcp` when it exists.
 - `pi` local MCP config is written to `.pi/mcp.json`; global MCP config is written to `~/.pi/agent/mcp.json`
-- `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops` are skills/plugins, not MCP servers; those names delegate to the same installer as `add-skill`
+- `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops` are skills/plugins; install them with `add-skill`
 - PostgreSQL is available as `postgres`; replace the generated `DATABASE_URI` value before use
 
 For `add-mcp`, `--source repo` or `-S repo` resolves to `<git-root>/.stackops/mcp.json`.
@@ -236,7 +247,7 @@ For `add-mcp`, `--source repo` or `-S repo` resolves to `<git-root>/.stackops/mc
 ```bash
 agents add-mcp --help
 agents add-mcp postgres,filesystem --agent codex,copilot,agy,oz,pi --scope local
-agents add-mcp caveman --agent codex --scope local
+agents add-skill caveman --agent codex --scope local
 agents add-mcp --edit -S library
 ```
 
@@ -244,16 +255,16 @@ agents add-mcp --edit -S library
 
 ## Browser Automation
 
-`agents browser install-tech` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. `--which` accepts `agent-browser`, `browser-use`, `pinchtab`, `playwright-cli`, `chrome-devtools-mcp`, `playwright-mcp`, or `omp`. `browser-use` installs or upgrades the official Python CLI with uv on Python 3.12 and registers its bundled skill for the selected agent. `pinchtab` installs the current release binary and its official agent skill. `playwright-cli` installs the official Playwright agent CLI and skills. The MCP entries write StackOps guide/config files under `~/code/agents/browser/mcp/...`; CDP and extension MCP entries are cataloged too, and must be paired with browsers launched from StackOps custom profiles. `omp` (Oh My Pi) is an agent with a built-in Puppeteer browser tool; the entry installs it from the installer catalog, writes a guide and a `browser.cdpUrl` config overlay under `~/code/agents/browser/omp/` for attaching to a StackOps CDP endpoint, and does not use `--agent`.
+`agents browser install` prepares browser automation tooling. The default is the direct `agent-browser` CLI and Vercel skill. `--tool` accepts `agent-browser`, `browser-use`, `pinchtab`, `playwright-cli`, `chrome-devtools-mcp`, `playwright-mcp`, `omp`, or `all`. `browser-use` installs or upgrades the official Python CLI and registers its bundled skill for the selected agent. `pinchtab` installs the current release binary and its official agent skill. `playwright-cli` installs the official Playwright agent CLI and skills. The MCP choices write StackOps guide/config files under `~/code/agents/browser/mcp/...`; install their server entries into an agent with `agents add-mcp`. CDP and extension MCP entries must be paired with browsers launched from StackOps custom profiles. `omp` (Oh My Pi) is an agent with a built-in Puppeteer browser tool; the entry installs it from the installer catalog, writes a guide and a `browser.cdpUrl` config overlay under `~/code/agents/browser/omp/` for attaching to a StackOps CDP endpoint, and does not use `--agent`.
 
 ```bash
-agents browser install-tech
-agents browser install-tech --which browser-use
-agents browser install-tech --which pinchtab
-agents browser install-tech --which playwright-cli
-agents browser install-tech --which chrome-devtools-mcp
-agents browser install-tech --which playwright-mcp
-agents browser install-tech --which omp
+agents browser install
+agents browser install --tool browser-use
+agents browser install --tool pinchtab
+agents browser install --tool playwright-cli
+agents browser install --tool chrome-devtools-mcp
+agents browser install --tool playwright-mcp
+agents browser install --tool omp
 agents add-mcp chrome-devtools --agent codex --scope local
 agents add-mcp chrome-devtools-browser-url --agent codex --scope local
 agents add-mcp playwright --agent codex --scope local
@@ -290,21 +301,21 @@ agents browser batch-close --browser brave
 
 `agents browser declutter` removes rebuildable data from a named profile (or from every saved profile of the browser with `--all`) after confirming that the selected browser is closed. Chrome, Brave, and Edge cleanup includes downloaded on-device AI models (including `OptGuideOnDeviceModel`) plus HTTP, code, GPU, shader, and extension-download caches. Firefox cleanup includes its disk, startup, and shader caches. Cookies, history, passwords, extensions, sessions, service-worker data, IndexedDB, and local storage are preserved. The command reports the recovered and remaining profile sizes in MiB.
 
-`agents browser replicate COUNT` copies a closed source profile to `p1` through `pCOUNT`. Chrome is the default browser and `base` is the default source profile. All destination paths are checked before copying; existing copies are refused unless `--overwrite` is passed, which deletes each existing destination completely before recopying. Both profile-maintenance commands use the same `~/data/browsers-profiles/<browser>/<profile>` layout on Windows, macOS, and Linux. They support Chrome, Brave, Edge, and Firefox; Safari is excluded because safaridriver does not support StackOps custom profiles.
+`agents browser replicate --count COUNT` copies a closed source profile to `p1` through `pCOUNT`. Use `--target work,personal` for named destinations instead of a count. Chrome is the default browser and `base` is the default source profile. `--native` copies from a native browser profile. All destination paths are checked before copying; existing copies are refused unless `--overwrite` is passed, which deletes each existing destination completely before recopying. Both profile-maintenance commands use the same `~/data/browsers-profiles/<browser>/<profile>` layout on Windows, macOS, and Linux. They support Chrome, Brave, Edge, and Firefox; Safari is excluded because safaridriver does not support StackOps custom profiles.
 
 ```bash
 agents browser declutter --profile example-copy
 agents browser declutter --browser firefox --all
-agents browser replicate 4
-agents browser replicate 3 --browser brave --profile example-copy
-agents browser replicate 5 --overwrite
+agents browser replicate --count 4
+agents browser replicate --count 3 --browser brave --profile example-copy
+agents browser replicate --count 5 --overwrite
 ```
 
 ---
 
 ## `add-skill`
 
-`add-skill` uses the StackOps backend by default, copying bundled skills directly into `<repo-root>/.agents/skills/<skill>` for local installs. If the StackOps backend cannot handle the request, it reports the reason and falls back to the existing `bunx skills@latest add` path. Use `--backend bunx` to run the upstream skills CLI directly, or `--backend npx` to run `npx skills@latest add` instead. The shipped source aliases are `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops`; omitting the skill name opens the fuzzy picker over those aliases. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping for `bunx`/`npx`; the StackOps backend installs into the shared repo-local skill directory. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install-tech` for the browser-specific installer and MCP setup notes.
+`add-skill` uses the StackOps backend by default, copying bundled skills directly into `<repo-root>/.agents/skills/<skill>` for local installs. If the StackOps backend cannot handle the request, it reports the reason and falls back to the existing `bunx skills@latest add` path. Use `--backend bunx` to run the upstream skills CLI directly, or `--backend npx` to run `npx skills@latest add` instead. The shipped source aliases include `agent-browser`, `agent-skills`, `archify`, `caveman`, `grill-with-docs`, `last30days`, `agent-ops`, and `stackops`; omitting the skill name opens the fuzzy picker. Unknown skill names exit with an error instead of searching for alternatives. `--agent` is passed through to the skills CLI without StackOps mapping for `bunx`/`npx`; the StackOps backend installs into the shared repo-local skill directory. `--directory` chooses the install root and defaults to the current directory. Use `agents browser install` for the browser-specific installer and MCP setup notes.
 
 ```bash
 agents add-skill --scope local
@@ -325,17 +336,19 @@ agents add-skill caveman --agent github-copilot --scope global
 
 ```bash
 agents --help
-agents clean --help
+agents reset --help
+agents config --help
+agents local doctor --help
 agents doctor --help
 agents second-brain --help
 agents parallel --help
-agents add-config --help
+agents init --help
 agents add-mcp --help
 agents run-prompt --help
 agents run-interactive --help
 agents ask --help
 agents add-skill --help
-agents browser install-tech --help
+agents browser install --help
 agents browser launch --help
 agents browser close --help
 agents browser batch-launch --help

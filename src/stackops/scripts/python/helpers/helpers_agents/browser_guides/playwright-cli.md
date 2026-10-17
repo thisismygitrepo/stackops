@@ -12,7 +12,7 @@ playwright-cli install --skills
 Install through StackOps:
 
 ```bash
-stackops agents browser install-tech --which playwright-cli
+stackops agents browser install --tool playwright-cli
 ```
 
 Use it when an agent should drive a browser from terminal commands:

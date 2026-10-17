@@ -28,7 +28,7 @@ utils machine [OPTIONS] COMMAND [ARGS]...
 |---------|---------|
 | `kill-process` | Interactive process picker with configurable filter field |
 | `environment` | Inspect `ENV` or `PATH` using the default fuzzy picker or a Textual TUI |
-| `get-machine-specs` | Print machine specifications |
+| `specs` | Print machine specifications |
 | `list-devices` | List available devices for mounting |
 | `mount` | Mount a device by query or through an interactive picker |
 
@@ -37,7 +37,7 @@ Key behavior:
 - `kill-process` defaults to interactive mode and supports `--filter-by command|ports|name|pid|username|status|memory|cpu`. Direct selectors are `--command`/`-c`, `--port`/`-p`, `--name`/`-n`, `--pid`/`-P`, `--username`/`-u`, `--status`/`-s`, `--memory`/`-m`, and `--cpu`/`-C`. Pass exactly one direct selector; add `--yes`/`-y` to kill every match without prompting. Memory and CPU selectors are inclusive minimums; the other selectors are exact except for command substring matching.
 - `environment` defaults to `ENV`; pass `PATH` as the positional argument to browse `PATH` entries instead.
 - `environment --tui` uses the full-screen Textual UI instead of the default fuzzy picker.
-- `get-machine-specs --hardware` includes compute capability details; without `--hardware`, it prints specs and writes `machine_specs.json` under the StackOps config root.
+- `specs --hardware` includes compute capability details; without `--hardware`, it prints specs and writes `machine_specs.json` under the StackOps config root.
 - `mount` requires `--device` unless `--interactive` is set, and requires `--mount-point` unless `--interactive` is set or `--backend udisksctl` is used.
 - `mount --backend` accepts `mount`, `dislocker`, or `udisksctl`.
 
@@ -49,7 +49,7 @@ utils machine environment ENV --tui
 utils machine kill-process --port 9221
 utils machine kill-process --name uvicorn --yes
 utils machine kill-process --memory 500 --yes
-utils machine get-machine-specs --hardware
+utils machine specs --hardware
 utils machine mount --interactive
 utils machine mount --device sdb1 --mount-point /mnt/data --read-only
 ```
@@ -62,44 +62,44 @@ utils pyproject [OPTIONS] COMMAND [ARGS]...
 
 | Command | Summary |
 |---------|---------|
-| `init-project` | Initialize a project with a uv virtual environment and dev packages |
-| `upgrade-packages` | Regenerate package-add commands for a project, optionally clearing groups first |
+| `init` | Initialize a project with a uv virtual environment and dev packages |
+| `generate-upgrade-script` | Write a dependency upgrade script; optional cleanup flags take effect immediately |
 | `type-check` | Run the lint-and-type-check suite for a repository |
 | `check-deps` | Check Python import dependencies and cycles with `pyan3` or `pydeps` |
-| `config-linters` | Add standard linter configuration files to a git repository |
+| `configure-linters` | Add standard linter configuration files to a git repository |
 | `cleanup` | Clean cache files from one or more git repositories |
 | `test-reference` | Validate `_PATH_REFERENCE` targets in a repository |
 | `type-fix` | Create and optionally launch an agent layout from `./.ai/linters/issues_<checker>.md` |
-| `test-runtime` | Create and optionally launch an agent layout for runtime-test generation |
+| `generate-tests` | Create and optionally launch an agent layout for runtime-test generation |
 
 Key behavior:
 
-- `init-project` defaults to Python `3.13` and package groups `p,t,l,i,d`; `--tmp-dir` creates a temporary project, `--libraries` adds extra packages, and `--group` accepts comma-separated group keys.
-- `upgrade-packages [ROOT]` can repeat `--clean-group`, use `--clean-all-groups` to clear every dependency group and extra, and use `--delete-venv` to remove the project's `.venv` before regenerating `pyproject_init.sh`.
+- `init` defaults to Python `3.13` and package groups `p,t,l,i,d`; `--tmp-dir` creates a temporary project, `--libraries` adds extra packages, and `--group` accepts comma-separated group keys.
+- `generate-upgrade-script [ROOT]` writes `pyproject_init.sh` without running it. After writing the script, `--clean-group` immediately clears selected dependency groups or extras, `--clean-all-groups` clears all groups and extras, and `--delete-venv` deletes the project's `.venv`. Repeat `--clean-group` to select multiple groups. Run the generated script separately to upgrade dependencies.
 - `type-check [REPO]` resolves the repository root from the nearest `pyproject.toml` and passes exclusions through the lint/type-check script.
 - If `--exclude` is omitted, `type-check` currently defaults to excluding `tests`, `.github`, `.codex`, `.ai`, `.links`, and `.venv`.
-- `check-deps [TARGET]` runs either `pyan3` or `pydeps` through `uv run --with`, emits JSON/JSONIC by default, can write interactive HTML under `./.ai/check_deps`, and highlights direct mutual dependencies plus larger cycle groups.
-- `config-linters [DIRECTORY]` writes the standard `ruff`, `mypy`, `pylint`, `flake8`, and `ty` configurations at the git working-tree root. Use `--linter/-t` to select one; existing divergent files are never overwritten.
+- `check-deps [TARGET]` runs either `pyan3` or `pydeps` through `uv run --with`, emits JSON/JSONIC by default, can write interactive HTML under `./.ai/check_deps`, and highlights direct mutual dependencies plus larger cycle groups. Use `--format/-F` for `json`, `jsonic`, or `html`, and `--output/-o` for a destination file.
+- `configure-linters [DIRECTORY]` writes the standard `ruff`, `mypy`, `pylint`, `flake8`, and `ty` configurations at the git working-tree root. Use `--linter/-t` to select one; existing divergent files are never overwritten.
 - `cleanup [REPO]` cleans one git working tree by default. Use `--recursive/-r` to discover and clean repositories below a directory.
 - `test-reference [REPO]` supports `--search-root` and `--verbose`.
 - `type-fix` is a nested app whose callback runs when invoked with no subcommand. It accepts `--agent`, `--agent-load`, `--which-checker`/`--which`, and `--max-agents`, generates a layout under `./.ai/agents/fix_<checker>_issues/`, then prompts to run it.
-- `test-runtime` runs from the current directory, writes context to `.ai/agents/test_runtime/context.md`, skips hidden paths, `.venv`, and existing repo test files, then prompts to run the generated layout.
+- `generate-tests` prepares agents to write runtime tests. It runs from the current directory, writes context to `.ai/agents/test_runtime/context.md`, skips hidden paths, `.venv`, and existing repo test files, then prompts to launch the agents. It does not run an existing test suite.
 
 Examples:
 
 ```bash
-utils pyproject init-project --name sample --python 3.14
-utils pyproject upgrade-packages . --clean-group dev
-utils pyproject upgrade-packages . --clean-all-groups --delete-venv
+utils pyproject init --name sample --python 3.14
+utils pyproject generate-upgrade-script . --clean-group dev
+utils pyproject generate-upgrade-script . --clean-all-groups --delete-venv
 utils pyproject type-check . --exclude tests --exclude .venv
-utils pyproject check-deps . --backend pyan --output html
+utils pyproject check-deps . --backend pyan --format html
 utils pyproject check-deps src/my_package --backend pydeps --focus my_package --edge-filter dual
-utils pyproject config-linters ~/code/myrepo --linter ruff
+utils pyproject configure-linters ~/code/myrepo --linter ruff
 utils pyproject cleanup ~/code/stackops
 utils pyproject cleanup ~/code --recursive
 utils pyproject test-reference . --verbose
 utils pyproject type-fix --which-checker pyright --agent codex
-utils pyproject test-runtime --agent codex --agent-load 5
+utils pyproject generate-tests --agent codex --agent-load 5
 ```
 
 ## file
@@ -113,8 +113,8 @@ utils file [OPTIONS] COMMAND [ARGS]...
 | `edit` | Open a file or project path in the default editor |
 | `download` | Download a file and optionally decompress it |
 | `scrape` | Scrape a page to Markdown with Scrapling |
-| `pdf-merge` | Merge two or more PDF files |
-| `pdf-compress` | Compress a PDF file |
+| `merge-pdf` | Merge two or more PDF files |
+| `compress-pdf` | Compress a PDF file |
 | `ocr` | Run Surya OCR, layout, detection, or table recognition |
 | `read-db` | Launch a terminal database client |
 
@@ -122,8 +122,8 @@ Key behavior:
 
 - `download [URL]` supports `--decompress`, `--output`, and `--output-dir`.
 - `scrape [URL] [OUTPUT_PATH]` wraps `uvx "scrapling[shell]" extract stealthy-fetch`, defaulting to `f.md`, `article` selectors, `--wait 2000`, `--timeout 60000`, and `--enable-resources`. Additional options: `--output/-o` (alternative to positional output path), `--selector/-s` (CSS selector), `--wait-selector/-W` (CSS selector to wait for), `--enable-resources/-e/-E` (toggle browser resources), `--package-spec/-p` (uvx package spec).
-- `pdf-merge PDFS...` requires at least two distinct input files, defaults to `merged.pdf`, refuses to overwrite an existing output, and can `--compress` the merged output.
-- `pdf-compress PDF_INPUT` defaults to `<input>_compressed.pdf` and supports `--quality` and `--image-dpi`. Stream and object-stream compression are enabled by default; use `--no-compress-streams/-C` or `--no-object-streams/-S` to disable either behavior.
+- `merge-pdf PDFS...` requires at least two distinct input files, defaults to `merged.pdf`, refuses to overwrite an existing output, and can `--compress` the merged output.
+- `compress-pdf PDF_INPUT` defaults to `<input>_compressed.pdf` and supports `--quality` and `--image-dpi`. Stream and object-stream compression are enabled by default; use `--no-compress-streams/-C` or `--no-object-streams/-S` to disable either behavior.
 - `ocr DATA_PATH` runs the `surya-ocr` package through `uv run --with ... --no-project` without importing Surya during CLI startup. Use `--task` with `ocr`, `detect`, `layout`, or `table`; common Surya flags include `--output-dir`, `--page-range`, `--images`, `--debug`, `--keep-server`, and `--skip-table-detection` (table task only). `--package-spec/-P` overrides the uv package spec. Extra Surya flags can be passed after `--`.
 - `read-db [PATH]` defaults to the `harlequin` backend. Provide only one of positional `PATH`, `--url/-u`, or `--find/-f`; `--find-root` and `--recursive` refine file discovery.
 - `read-db` supports backends `rainfrog`, `lazysql`, `dblab`, `usql`, `harlequin`, and `sqlit` plus their one-letter aliases. Local databases open read-only by default; `--read-write/-w` disables read-only mode. StackOps rejects a local backend that cannot provide verified read-only access unless `--read-write` is set. `--theme/-t` sets the TUI theme when supported by the backend. `--limit/-l` caps the number of rows loaded when supported by the backend.
@@ -135,8 +135,8 @@ utils file edit .
 utils file download https://example.com/archive.tar.gz --decompress --output-dir ./downloads
 utils file scrape https://example.com/article article.md
 utils f s https://example.com/article
-utils file pdf-merge a.pdf b.pdf c.pdf --output merged.pdf
-utils file pdf-compress report.pdf --output report-small.pdf --quality 75 --image-dpi 144
+utils file merge-pdf a.pdf b.pdf c.pdf --output merged.pdf
+utils file compress-pdf report.pdf --output report-small.pdf --quality 75 --image-dpi 144
 utils file ocr report.pdf --task ocr --output-dir ./surya-results --page-range 0,5-10 --images
 utils f o table.png --task table --skip-table-detection -- --debug
 utils file read-db ./local.db --backend harlequin
@@ -154,11 +154,11 @@ utils machine --help
 utils machine mount --help
 utils pyproject --help
 utils pyproject type-check --help
-utils pyproject config-linters --help
+utils pyproject configure-linters --help
 utils pyproject cleanup --help
 utils pyproject test-reference --help
 utils pyproject type-fix --help
-utils pyproject test-runtime --help
+utils pyproject generate-tests --help
 utils file --help
 utils file read-db --help
 ```

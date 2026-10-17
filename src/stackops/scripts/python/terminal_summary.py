@@ -76,11 +76,11 @@ def _format_process_names(process_counts: Counter[str]) -> str:
 
 def _resolve_summary_backend(backend: SummaryBackend) -> ResolvedSummaryBackend:
     match backend:
-        case "tmux" | "t" | "auto":
+        case "tmux" | "t" | "auto" | "a":
             return "tmux"
         case "herdr" | "h":
             return "herdr"
-        case "aoe" | "a":
+        case "aoe" | "e":
             return "aoe"
         case "tuios" | "u":
             return "tuios"

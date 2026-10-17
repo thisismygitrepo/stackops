@@ -48,7 +48,7 @@ Fields:
 | `license` | License label stored in the installer catalog |
 | `doc` | Description used in interactive selection |
 | `repoURL` | `"CMD"` for command / script driven installs, or a GitHub repository URL |
-| `categoryLabels` | Searchable category labels used by `devops install --explore` |
+| `categoryLabels` | Searchable category labels used by `devops software install --explore` |
 | `fileNamePattern` | `arch -> os -> installer value` mapping |
 
 Linux installer values may be portable strings or native mappings with the exact keys `apk`, `apt`, `dnf`, and `pacman`. A `null` value marks an installer as unsupported by that package manager.

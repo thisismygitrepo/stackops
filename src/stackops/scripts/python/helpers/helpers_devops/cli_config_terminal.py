@@ -7,7 +7,7 @@ import typer
 def configure_shell_profile(
     which: Annotated[
         Literal["default", "d", "nushell", "n"],
-        typer.Option("--which", "-w", help="Which shell profile to create/configure"),
+        typer.Option("--shell", "-w", help="Shell profile to create or configure"),
     ] = "default",
 ) -> None:
     from stackops.profile.create_shell_profile import create_default_shell_profile, create_nu_shell_profile

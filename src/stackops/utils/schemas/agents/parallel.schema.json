@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "StackOps parallel.yaml",
-  "description": "Named parallel agent workflow entries used by `agents parallel run-parallel`.",
+  "description": "Named parallel agent workflow entries used by `agents parallel run`.",
   "type": "object",
   "additionalProperties": {
     "$ref": "#/definitions/runEntry"
@@ -171,7 +171,7 @@
           ]
         },
         "run": {
-          "description": "Whether to immediately launch the generated layout through terminal run.",
+          "description": "Whether to launch the generated layout through the selected backend. Defaults to true when omitted from a named run; an explicit false only creates the layout.",
           "type": [
             "boolean",
             "null"

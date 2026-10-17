@@ -30,7 +30,7 @@ def _load_account(account_name: str) -> tuple[SecretsFile, OneDriveAccount]:
     expected_entry = build_account_login(account_name=account_name, client_id="<client-id>", refresh_token=None)
     expected_json = json.dumps(expected_entry, indent=2, ensure_ascii=False)
     if not matches:
-        setup_command = f"cloud onedrive add {shlex.quote(account_name)}"
+        setup_command = f"cloud onedrive add-account {shlex.quote(account_name)}"
         raise OneDriveError(
             f"No OneDrive CLI OAuth secret matched account {account_name!r} in {SECRETS_DOFILE}.\n"
             f"Create the correctly tagged entry with:\n  {setup_command}\n"

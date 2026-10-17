@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from rich import box
@@ -6,6 +6,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+
+from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
 
 if TYPE_CHECKING:
     from stackops.scripts.python.helpers.helpers_cloud.backup_registration import BackupRegistrationResult
@@ -46,19 +48,18 @@ def show_registration_summary(registration: "BackupRegistrationResult") -> None:
     )
 
 
-def display_data() -> None:
+def display_data(
+    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option("--source", "-s", help="Backup configuration sources: library, user, or all.")] = "all",
+) -> None:
     from stackops.profile.dotfiles_constants import ALL_OS_VALUES
-    from stackops.scripts.python.helpers.helpers_cloud.backup_config import USER_BACKUP_PATH, describe_missing_backup_config, load_backup_config_file
+    from stackops.scripts.python.helpers.helpers_cloud.backup_config import read_backup_config
 
     try:
-        config = load_backup_config_file(USER_BACKUP_PATH, empty_as_config=True)
+        config = read_backup_config(source=source)
     except ValueError as exc:
         typer.echo(typer.style("Error: ", fg=typer.colors.RED) + str(exc), err=True)
         raise typer.Exit(code=1) from exc
     if config is None:
-        if USER_BACKUP_PATH.exists():
-            typer.echo(typer.style("Error: ", fg=typer.colors.RED) + describe_missing_backup_config(source="user"), err=True)
-            raise typer.Exit(code=1)
         config = {}
 
     console = Console()
@@ -66,7 +67,7 @@ def display_data() -> None:
     if entry_count == 0:
         console.print(
             Panel(
-                Text(f"No registered backup entries found in {USER_BACKUP_PATH}"),
+                Text(f"No backup entries found in the selected sources: {source}"),
                 title="No Backup Entries",
                 border_style="yellow",
                 padding=(1, 2),
@@ -75,8 +76,8 @@ def display_data() -> None:
         return
 
     table = Table(
-        title=f"Registered Backup Entries ({entry_count})",
-        caption=Text(f"Data file: {USER_BACKUP_PATH}", style="dim"),
+        title=f"Backup Entries ({entry_count})",
+        caption=Text(f"Configuration sources: {source}", style="dim"),
         caption_justify="left",
         box=box.SIMPLE_HEAVY,
         expand=True,

@@ -99,15 +99,18 @@ def download(url: Annotated[str, typer.Argument(help="Google Drive URL or file i
 
 
 def install(
-    name: Annotated[str, typer.Argument(help="App name from the selected run, or 'essentials'")],
+    name: Annotated[str | None, typer.Argument(help="App name from the selected run. Omit with --all.")] = None,
+    all_apps: Annotated[bool, typer.Option("--all", "-a", help="Install every eligible app from the selected scan run.")] = False,
     run: Annotated[str | None, typer.Option("--run", "-R", help="Exact run ID; defaults to the latest started run")] = None,
     records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
     from stackops.jobs.installer.checks.install_utils import download_safe_apps
 
+    if (name is not None) == all_apps:
+        raise typer.BadParameter("Choose exactly one of NAME or --all.")
     saved = selected_run(records_dir, run)
     typer.echo(f"""Using scan run {saved['run_id']} ({saved['status']}).""")
-    if not download_safe_apps(name, saved):
+    if not download_safe_apps(name=name, run=saved):
         raise typer.Exit(code=1)
 
 

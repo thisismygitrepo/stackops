@@ -14,15 +14,19 @@ terminal [OPTIONS] COMMAND [ARGS]...
 |---------|-------------|
 | `run` | Launch selected layouts from a layout file or generated test layout |
 | `run-all` | Dynamically work through every tab in one merged run |
+| `list` | List saved layouts, with optional tab details and statistics |
+| `edit` | Edit a layout file and validate it after saving |
+| `path` | Print layout configuration and schema paths as JSON |
+| `init` | Create a missing layout configuration and its schema |
+| `validate` | Validate a layout configuration |
 | `attach` | Attach to an existing session, window/tab, or pane |
 | `kill` | Kill a session target |
 | `export` | Export running tmux sessions into a layout file |
 | `trace` | Trace a tmux session until a strict stop condition is met |
 | `summary` | Print running session summaries or one session's details |
-| `create-from-function` | Build and launch a multiprocess layout from a script function |
+| `run-function` | Immediately launch a script function in multiple tmux processes |
 | `balance-load` | Re-split a layout file by tab count or weight |
 | `create-template` | Create a starter layout file in the current directory |
-| `summarize` | Print layout counts and per-layout tab totals |
 
 Hidden one-letter aliases exist, but this page uses canonical command names.
 
@@ -52,13 +56,13 @@ terminal run [OPTIONS] [LAYOUTS_FILE]
 | `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--choose-layouts` | `-l` | Comma-separated layout names, or `""` for interactive selection |
 | `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection across all layouts |
-| `--sleep-inbetween` | `-S` | Delay between launching layouts |
+| `--launch-delay` | `-S` | Delay in seconds between launching layouts |
 | `--parallel-layouts` | `-p` | Maximum number of layouts to launch per monitored batch |
 | `--max-tabs-per-layout` | `-T` | Sanity limit for tabs inside a single selected layout |
 | `--max-parallel-layouts` | `-P` | Sanity limit for total parallel layouts |
-| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `aoe`/`a`, or `auto` |
-| `--on-conflict` | `-c` | `error`, `restart`, `rename`, `mergeOverwrite`, or `mergeSkip` |
-| `--exit` | `-e` | `backToShell`, `terminate`, or `killWindow` after each command exits |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
+| `--on-conflict` | `-c` | `error`, `restart`, `rename`, `merge-overwrite`, or `merge-skip` |
+| `--exit` | `-e` | `back-to-shell`, `terminate`, or `kill-window` after each command exits |
 | `--monitor` | `-m` | Monitor launched sessions for completion |
 | `--kill-upon-completion` | `-k` | Kill sessions after monitored completion |
 | `--substitute-home` | `-H` | Expand `~` and `$HOME` inside the selected layout tabs |
@@ -108,9 +112,10 @@ terminal run-all [OPTIONS] [LAYOUTS_FILE]
 | Argument / Option | Short | Description |
 |-------------------|-------|-------------|
 | `LAYOUTS_FILE` | - | Optional file whose layouts all run; omit to choose layouts from the combined default files |
-| `--test-layout` | `-T` | Use the generated mock layout instead of reading a file |
+| `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--max-parallel-tabs` | `-t` | Required cap for concurrently active tabs |
-| `--poll-seconds` | `-p` | Polling interval for finished-tab detection |
+| `--poll-interval` | `-p` | Polling interval for finished-tab detection |
+| `--backend` | `-b` | `tmux`/`t`, `tuios`/`u`, or `auto`/`a` |
 | `--kill-finished-tabs` | `-k` | Close each tab as soon as its command finishes |
 | `--on-conflict` | `-c` | `error`, `restart`, or `rename`; merge policies are rejected |
 | `--substitute-home` | `-H` | Expand `~` and `$HOME` inside selected tabs |
@@ -143,7 +148,7 @@ terminal attach [OPTIONS] [NAME]
 | `--kill-all` | `-k` | Kill all existing sessions before creating a new one |
 | `--first` | `-f` | Attach to the first available tmux session without prompting |
 | `--window` | `-w` | Choose a window/tab or pane target instead of only sessions |
-| `--backend` | `-b` | `tmux`, `herdr`, `aoe`, or `auto` |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
 
 Example:
 
@@ -172,11 +177,11 @@ terminal kill [OPTIONS] [NAME]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `NAME` | - | Session name to kill; omit for interactive selection |
-| `--all` | `-a` | Kill all sessions; with `--idle`, inspect all sessions for idle panes/windows |
-| `--idle` | `-i` | Kill idle-shell panes/windows in `NAME` or a chosen session; combine with `--all` to inspect all sessions |
+| `--kill-all` | `-k` | Kill all sessions; with `--idle`, inspect all sessions for idle panes/windows |
+| `--idle` | `-i` | Kill idle-shell panes/windows in `NAME` or a chosen session; combine with `--kill-all` to inspect all sessions |
 | `--window` | `-w` | Include sessions, windows/tabs, and panes in the chooser |
 | `--delete` | `-D` | Delete stopped Herdr session records instead of killing running sessions |
-| `--backend` | `-b` | `tmux`, `herdr`, `aoe`, or `auto` |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
 
 Example:
 
@@ -185,7 +190,7 @@ Example:
 terminal kill --window
 
 # Kill idle-shell panes/windows across every tmux session
-terminal kill --idle --all
+terminal kill --idle --kill-all
 
 # Stop an Agent of Empires session
 terminal kill --backend aoe
@@ -202,11 +207,11 @@ terminal export [OPTIONS]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--sessions` | `-s` | Comma-separated tmux session names or Herdr workspace labels/IDs; omit for interactive multi-select |
-| `--all` | `-A` | Export all running backend sessions/workspaces without prompting |
-| `--output-path` | `-o` | Output layout file; defaults to `./tmux_export_layout.json` |
+| `--all` | `-a` | Export all running backend sessions/workspaces without prompting |
+| `--output` | `-o` | Output layout file; defaults to `./tmux_export_layout.json` |
 | `--overwrite` | `-w` | Replace the output file if it already exists |
 | `--merge` | `-m` | Merge exported sessions into an existing layout file by `layoutName` |
-| `--backend` | `-b` | `tmux`/`t` or `herdr`/`h`; defaults to `tmux` |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, or `tuios`/`u`; defaults to `tmux` |
 | `--command-source` | `-c` | `shell`, `current-command`, or `start-command`; defaults to `shell` |
 
 Examples:
@@ -216,14 +221,14 @@ Examples:
 terminal export
 
 # Export specific sessions into a runnable layout file
-terminal export --sessions "dev,build" --output-path exported_layout.json
+terminal export --sessions "dev,build" --output exported_layout.json
 
 # Export every running tmux session, then replay it with run
-terminal export --all --output-path exported_layout.json --overwrite
+terminal export --all --output exported_layout.json --overwrite
 terminal run exported_layout.json
 
 # Export Herdr workspaces, then replay them with run
-terminal export --backend herdr --all --output-path exported_layout.json --overwrite
+terminal export --backend herdr --all --output exported_layout.json --overwrite
 terminal run exported_layout.json --backend herdr
 ```
 
@@ -238,9 +243,9 @@ terminal trace [SESSION_NAME] [OPTIONS]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `SESSION_NAME` | - | tmux session name, Herdr workspace label/id, or AoE session title/id to trace; omit when using `--interactive` |
-| `--backend` | `-b` | Backend to trace; `tmux`/`t`, `herdr`/`h`, or `aoe`/`a`/`e` |
+| `--backend` | `-b` | Backend to trace; `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, or `aoe`/`e` |
 | `--interactive` | `-i` | Choose an existing backend session/workspace interactively |
-| `--every` | `-e` | Polling interval in seconds |
+| `--poll-interval` | `-p` | Polling interval in seconds |
 | `--until` | `-u` | `idle-shell`, `all-exited`, `exit-code`, or `session-missing` |
 | `--exit-code` | `-c` | Required exit code when `--until exit-code` is selected |
 
@@ -256,7 +261,7 @@ terminal trace --interactive
 terminal trace build-session
 
 # Wait until every pane has exited
-terminal trace build-session --every 5 --until all-exited
+terminal trace build-session --poll-interval 5 --until all-exited
 
 # Trace a Herdr workspace by label
 terminal trace build-workspace --backend herdr
@@ -278,7 +283,7 @@ terminal summary [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--backend` | `-b` | Backend to summarize; `tmux`/`t`, `herdr`/`h`, `aoe`/`a`, or `auto` |
+| `--backend` | `-b` | Backend to summarize; `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
 | `--session` | `-s` | Show details for one tmux session, Herdr workspace, or AoE session by name |
 | `--choose-session` | `-c` | Choose one tmux session, Herdr workspace, or AoE session interactively and show details |
 
@@ -301,11 +306,12 @@ terminal summary --backend herdr
 terminal summary --backend aoe
 ```
 
-## create-from-function
+## run-function
 
+Launch a function immediately in multiple tmux processes. Each process receives its index and the total process count.
 
 ```bash
-terminal create-from-function [OPTIONS]
+terminal run-function [OPTIONS]
 ```
 
 | Option | Short | Description |
@@ -323,7 +329,7 @@ uv run python -m fire <file> <function> --idx=<n> --idx_max=<num_process>
 Example:
 
 ```bash
-terminal create-from-function --num-process 4 --path ./my_script.py --function process_data
+terminal run-function --num-process 4 --path ./my_script.py --function process_data
 ```
 
 ## balance-load
@@ -338,10 +344,10 @@ terminal balance-load LAYOUT_PATH [OPTIONS]
 |--------|-------|-------------|
 | `--max-threshold` | `-m` | Required threshold value |
 | `--threshold-type` | `-t` | `number`/`n` or `weight`/`w` |
-| `--breaking-method` | `-b` | `moreLayouts`/`ml` or `combineTabs`/`ct` |
-| `--output-path` | `-o` | Output path for the rewritten file |
+| `--breaking-method` | `-b` | `more-layouts`/`ml` or `combine-tabs`/`ct` |
+| `--output` | `-o` | Output path for the rewritten file |
 
-If `--output-path` is omitted, StackOps writes `<stem>_adjusted_<max>_<threshold>_<method>.json` beside the source file.
+If `--output` is omitted, StackOps writes `<stem>_adjusted_<max>_<threshold>_<method>.json` beside the source file.
 
 ## create-template
 
@@ -362,19 +368,29 @@ Current behavior:
 - The default tab command is `bash` on non-Windows systems and `powershell` on Windows.
 - Existing files are not overwritten.
 
-## summarize
+## list
 
-Print layout counts and per-layout tab totals.
+List saved layouts and their source files. Add `--stats` for aggregate counts and `--tabs` for tab details.
 
 ```bash
-terminal summarize LAYOUT_PATH [OPTIONS]
+terminal list [LAYOUTS_FILE] --stats
+terminal list layout.json --tabs --stats
 ```
 
-Current behavior:
+Omitting `LAYOUTS_FILE` lists layouts from the global and current-directory configuration files. Statistics include layout and tab totals, average tabs per layout, and the largest and smallest layouts.
 
-- Prints the file path, version, total layout count, total tab count, average tabs per layout, and min/max tab counts.
-- Accepts the current wrapped layout-file shape with a top-level `layouts` array.
-- Use `--vocabulary herdr` to summarize the same layout file with Herdr workspace terminology.
+## edit, path, init, validate
+
+`edit` opens a layout file, creates it if missing, and validates it after saving. Omit the file to choose a configuration interactively, or pass `--source global|local`. `--editor` accepts `hx`, `nano`, or `code`.
+
+`path` prints file and schema paths as JSON; with no arguments it shows both global and local paths. `init` creates a missing file and schema. `validate` checks a file without opening an editor. Both `init` and `validate` require a file argument or `--source global|local`.
+
+```bash
+terminal edit --source local
+terminal path
+terminal init --source local
+terminal validate layout.json
+```
 
 ## Layout File Format
 

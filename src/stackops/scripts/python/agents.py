@@ -10,7 +10,7 @@ import typer
 from typer.core import TyperGroup
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort, ReasoningShortcut
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.sandbox.options import SandboxBackend, SandboxSync
 from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
@@ -23,7 +23,7 @@ _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
 _INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "cortex", "pi", "opencode", "omp", "deepseek"]
 
-_ASK_REASONING_HELP: Final[str] = "n=none, l=low, m=medium, h=high, x=xhigh; supported for codex, copilot, cortex, and pi (agent-specific levels)"
+_ASK_REASONING_HELP: Final[str] = "Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default."
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
 INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "cortex", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh"]
@@ -52,10 +52,10 @@ _INIT_CONFIG_AGENT_HELP: Final[str] = (
 _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
     "add-mcp",
     "add-skill",
-    "add-config",
+    "init",
     "config",
     "doctor",
-    "depoison",
+    "reset",
     "browser",
     "second-brain",
     "local",
@@ -127,7 +127,7 @@ def init_config(
     add_scripts: Annotated[bool, typer.Option("--include-scripts", "-s", help="Create shared .ai and scripts/type_checking scaffold")] = False,
     add_vscode_tasks: Annotated[bool, typer.Option("--add-vscode-tasks", "-l", help="Add VS Code lint/type-check task only")] = False,
     add_to_gitignore: Annotated[
-        bool, typer.Option("--add-gitignore", "-g", help="Track all files touched by init-config and add them to .gitignore")
+        bool, typer.Option("--add-gitignore", "-g", help="Track all files touched by init and add them to .gitignore")
     ] = False,
 ) -> None:
     """Initialize AI configurations, set supported OpenRouter ZDR controls, and report account enforcement requirements."""
@@ -152,13 +152,13 @@ def init_config(
 
 def add_mcp(
     requested_mcp_servers: Annotated[
-        str | None, typer.Argument(help="MCP server names or supported agent skills to resolve from stackops catalogs (comma-separated).")
+        str | None, typer.Argument(help="MCP server names to resolve from StackOps catalogs (comma-separated).")
     ] = None,
     agents: Annotated[
         str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
     ] = "",
     scope: Annotated[
-        _MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP config or skill files into repo-local or user-global agent config.")
+        _MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP entries into repo-local or user-global agent config.")
     ] = "local",
     source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., "--source", "-S", help="Source to resolve or edit MCP catalog files.")] = "all",
     edit: Annotated[
@@ -171,7 +171,7 @@ def add_mcp(
         ),
     ] = False,
 ) -> None:
-    """Resolve MCP servers from stackops catalogs, install supported agent skills, or edit catalogs."""
+    """Install MCP servers from StackOps catalogs or edit those catalogs."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl
 
@@ -425,13 +425,13 @@ def run_prompt(
     context_path: Annotated[
         str | None, typer.Option(..., "--context-path", "-C", help="Path to a context file. Mutually exclusive with --context.")
     ] = None,
-    context_yaml_path: Annotated[
+    prompts_path: Annotated[
         str | None,
         typer.Option(
             ...,
-            "--context-yaml-path",
+            "--prompts-path",
             "-y",
-            help="YAML file used for context selection. Created with an example and schema only when the missing file is needed or edited.",
+            help="Prompts YAML file used for context selection. Created with an example and schema only when the missing file is needed or edited.",
         ),
     ] = None,
     context_name: Annotated[
@@ -440,7 +440,7 @@ def run_prompt(
             ...,
             "--context-name",
             "-n",
-            help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --context-yaml-path or default context YAML.",
+            help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --prompts-path or default prompts YAML.",
         ),
     ] = None,
     group: Annotated[
@@ -458,7 +458,7 @@ def run_prompt(
     ] = None,
     source: Annotated[
         _PROMPTS_SOURCE,
-        typer.Option(..., "--source", "-s", help="Source to look for context YAML files when --context-yaml-path is not provided."),
+        typer.Option(..., "--source", "-s", help="Source to look for prompts YAML files when --prompts-path is not provided."),
     ] = "all",
     show_prompts_yaml_format: Annotated[
         bool,
@@ -475,7 +475,7 @@ def run_prompt(
             ...,
             "--edit",
             "-e",
-            help="Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --context-yaml-path specifies it. If no prompt/context input is provided, exits after editing.",
+            help="Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --prompts-path specifies it. If no prompt/context input is provided, exits after editing.",
         ),
     ] = False,
     sandbox: Annotated[
@@ -526,7 +526,7 @@ def run_prompt(
                 reasoning_effort=reasoning_effort,
                 context=context,
                 context_path=context_path,
-                prompts_yaml_path=context_yaml_path,
+                prompts_yaml_path=prompts_path,
                 context_name=context_name,
                 group=group,
                 skill=skill,
@@ -553,9 +553,9 @@ def ask(
         bool,
         typer.Option("--second-brain", "-b", help="Run from the Second Brain repository."),
     ] = False,
-    reasoning: Annotated[ReasoningShortcut | None, typer.Option("--reasoning", "-r", help=_ASK_REASONING_HELP)] = None,
-    file_prompt: Annotated[
-        Path | None, typer.Option("--file-prompt", "-f", help="Append the contents of this file to PROMPT before asking the selected agent.")
+    reasoning: Annotated[ReasoningEffort | None, typer.Option("--reasoning", "-r", help=_ASK_REASONING_HELP)] = None,
+    prompt_path: Annotated[
+        Path | None, typer.Option("--prompt-path", "-f", help="Append the contents of this file to PROMPT before asking the selected agent.")
     ] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Skip the Rich preflight summary and stream agent output directly.")] = False,
 ) -> None:
@@ -564,7 +564,7 @@ def ask(
         with _agent_working_directory(second_brain=second_brain):
             from stackops.scripts.python.helpers.helpers_agents.agents_ask_impl import run_ask as impl
 
-            return_code = impl(prompt_parts=prompt, agent=resolve_agent(agent=agent), reasoning=reasoning, file_prompt=file_prompt, quiet=quiet)
+            return_code = impl(prompt_parts=prompt, agent=resolve_agent(agent=agent), reasoning=reasoning, prompt_path=prompt_path, quiet=quiet)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     raise typer.Exit(code=return_code)
@@ -718,20 +718,20 @@ def get_app() -> typer.Typer:
     agents_app.add_typer(get_local_app(), name="local", help="🦙 <l> Local models through Ollama", short_help="🦙 <l> Local models through Ollama")
     agents_app.add_typer(get_local_app(), name="l", help="Local models through Ollama", hidden=True)
     agents_app.add_typer(
-        get_config_files_app(), name="config", help="📄 <C> Locate, initialize, and validate agent configuration files"
+        get_config_files_app(), name="config", help="📄 <C> Locate, initialize, and validate StackOps agent catalogs"
     )
     agents_app.add_typer(get_config_files_app(), name="C", hidden=True)
 
-    agents_app.command(name="add-mcp", short_help="🔌 <m> Resolve catalog MCP entries or supported skills")(add_mcp)
+    agents_app.command(name="add-mcp", short_help="🔌 <m> Install MCP servers from StackOps catalogs")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)
     agents_app.command(name="add-skill", short_help="🧩 <s> Add a skill to an agent")(add_skill)
     agents_app.command(name="s", hidden=True)(add_skill)
     agents_app.command(
-        "add-config", no_args_is_help=True, help=init_config.__doc__, short_help="🔧 <c> Initialize AI configurations in the current repository"
+        "init", no_args_is_help=True, help=init_config.__doc__, short_help="🔧 <c> Initialize AI configurations in the current repository"
     )(init_config)
     agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
     agents_app.command(
-        name="depoison", no_args_is_help=False, short_help="🧼 <D> Preview or reset agent customizations and .ai folders",
+        name="reset", no_args_is_help=False, short_help="🧼 <D> Preview or reset agent customizations and .ai folders",
         help="Preview or reset agent customizations and repository .ai folders. Use --resource workspace for .ai folders only. Changes require --apply or interactive confirmation and preserve backups.",
     )(depoison)
     agents_app.command(name="D", no_args_is_help=False, hidden=True)(depoison)
@@ -744,7 +744,6 @@ def get_app() -> typer.Typer:
         run_interactive
     )
     agents_app.command(name="i", no_args_is_help=False, hidden=True)(run_interactive)
-    agents_app.command(name="run", no_args_is_help=False, hidden=True)(run_interactive)
     agents_app.command(name="ask", no_args_is_help=True, short_help="❓ <a> Ask a selected agent directly")(ask)
     agents_app.command(name="a", no_args_is_help=True, hidden=True)(ask)
     return apply_alias_markers(agents_app)

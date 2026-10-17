@@ -76,7 +76,7 @@ def show_status(account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_
 
 def list_items(
     remote_path: Annotated[str, typer.Argument(help="Remote folder path.")] = "/",
-    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
+    account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.items import list_items as list_remote_items
@@ -88,7 +88,7 @@ def list_items(
 def search_items(
     query: Annotated[str, typer.Argument(help="Text to search for.")],
     output_json: Annotated[bool, typer.Option("--json", "-j", help="Output JSON.")] = False,
-    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
+    account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.items import search_items as search_remote_items
@@ -100,7 +100,7 @@ def search_items(
 def download_file(
     remote_path: Annotated[str, typer.Argument(help="Remote file path.")],
     local_path: Annotated[Path, typer.Argument(help="New local file path.")],
-    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
+    account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.file_ops import download_file as download_remote_file
@@ -113,7 +113,7 @@ def upload_file(
     local_path: Annotated[Path, typer.Argument(help="Existing local file path.")],
     remote_path: Annotated[str, typer.Argument(help="Remote target path.")],
     overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Replace an existing remote item.")] = False,
-    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
+    account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.file_ops import upload_file as upload_local_file
@@ -125,7 +125,7 @@ def upload_file(
 def delete_item(
     remote_path: Annotated[str, typer.Argument(help="Remote item path.")],
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip the confirmation prompt.")] = False,
-    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
+    account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.file_ops import delete_item as delete_remote_item
@@ -153,7 +153,7 @@ def get_app() -> typer.Typer:
     app.command("t", hidden=True)(show_status)
     app.command("accounts", short_help="👥 <r> List defined OneDrive CLI accounts.")(show_accounts)
     app.command("r", hidden=True)(show_accounts)
-    app.command("ls", short_help="📂 <l> List a remote folder.")(list_items)
+    app.command("list", short_help="📂 <l> List a remote folder.")(list_items)
     app.command("l", hidden=True)(list_items)
     app.command("search", short_help="🔎 <s> Search the drive.")(search_items)
     app.command("s", hidden=True)(search_items)
@@ -165,7 +165,7 @@ def get_app() -> typer.Typer:
     app.command("d", hidden=True)(delete_item)
     app.command("config-path", short_help="📍 <c> Print the global StackOps secrets path.")(config_path)
     app.command("c", hidden=True)(config_path)
-    app.command("add", short_help="➕ <A> Add a OneDrive CLI account. Prompt for omitted values.")(add_account)
+    app.command("add-account", short_help="➕ <A> Add a OneDrive CLI account. Prompt for omitted values.")(add_account)
     app.command("A", hidden=True)(add_account)
 
     return apply_alias_markers(app)

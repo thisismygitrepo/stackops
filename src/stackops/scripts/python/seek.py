@@ -30,7 +30,7 @@ def seek(
     dotfiles: Annotated[bool, typer.Option(..., "--dotfiles", "-d", help="Include dotfiles in search")] = False,
     rga: Annotated[bool, typer.Option(..., "--rga", "-A", help="Use ripgrep-all for searching all (non text files) instead of ripgrep")] = False,
     edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open selection in editor (helix)")] = False,
-    install_dependencies: Annotated[bool, typer.Option(..., "--install-req", "-i", help="Install required dependencies if missing")] = False,
+    install_dependencies: Annotated[bool, typer.Option(..., "--install-dependencies", "-i", help="Install missing helper dependencies and exit.")] = False,
     max_files: Annotated[
         int,
         typer.Option(

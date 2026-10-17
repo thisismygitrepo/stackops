@@ -229,4 +229,4 @@ def render_doctor_reports(
     if len(all_notes) > 0:
         notes = Text("\n".join(f"• {note}" for note in all_notes))
         console.print(Panel(notes, title="Notes", border_style="blue"))
-    console.print("[dim]Preview a full reset: agents depoison <target>. Use --resource hook to limit cleanup to hooks.[/dim]")
+    console.print("[dim]Preview a full reset: agents reset <target>. Use --resource hook to limit cleanup to hooks.[/dim]")

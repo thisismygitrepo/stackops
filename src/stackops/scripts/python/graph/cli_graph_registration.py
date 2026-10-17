@@ -1,7 +1,7 @@
 import ast
 from typing import Any, Sequence
 
-from stackops.scripts.python.graph.cli_graph_eval import evaluate_kwargs
+from stackops.scripts.python.graph.cli_graph_eval import evaluate_expr, evaluate_kwargs
 from stackops.scripts.python.graph.cli_graph_shared import ModuleInfo, Registration
 
 
@@ -30,6 +30,10 @@ def parse_registration(
         app_var = inner.func.value.id
         kwargs = evaluate_kwargs(inner.keywords, module_info, env, function_docs)
         name = registration_name(inner.args, kwargs)
+        if name is None and inner.args:
+            evaluated_name = evaluate_expr(inner.args[0], module_info, env, function_docs)
+            if isinstance(evaluated_name, str):
+                name = evaluated_name
         typer_config = registration_typer_config(kwargs)
         return Registration(
             kind="command",

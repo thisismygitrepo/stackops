@@ -105,7 +105,7 @@ def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
                 "Create a real mapping interactively:\n"
                 "  devops config setup dotfiles\n"
                 "Or install the example and schema for manual editing:\n"
-                "  devops config dump dotfiles --default-path"
+                "  devops config export-example dotfiles --default-path"
             )
         raise FileNotFoundError(f"Packaged dotfiles mapper does not exist: {mapper_path}")
     if not mapper_path.is_file():
@@ -119,7 +119,7 @@ def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
                 "Open it for correction:\n"
                 "  devops config edit dotfiles\n"
                 "Create a separate example and schema for reference:\n"
-                "  devops config dump dotfiles"
+                "  devops config export-example dotfiles"
             ) from exc
         raise ValueError(f"Packaged dotfiles mapper is invalid: {mapper_path}\n{exc}") from exc
     public: dict[str, list[ConfigMapper]] = {}

@@ -12,18 +12,9 @@ def _format_home_relative_path(path: Path) -> str:
 
 
 def export_dotfiles(
-    _prompt_password: Annotated[bool, typer.Option("--prompt-password", "-p", help="Prompt securely for the zip encryption password")] = False,
-    over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Use internet-based transfer (wormhole-magic)")] = False,
-    over_ssh: Annotated[bool, typer.Option("--over-ssh", "-s", help="Use SSH-based transfer (scp) to a remote machine")] = False,
+    ssh: Annotated[bool, typer.Option("--ssh", "-s", help="Use SSH-based transfer (scp) to a remote machine")] = False,
 ) -> None:
     """Export dotfiles for migration to new machine."""
-    if over_internet and over_ssh:
-        print("Choose only one transfer mode: --over-internet or --over-ssh.")
-        raise typer.Exit(code=1)
-    if over_internet:
-        print("Internet-based transfer is not yet implemented.")
-        raise typer.Exit(code=1)
-
     import shutil
 
     from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH
@@ -45,13 +36,13 @@ def export_dotfiles(
     zipfile_path.unlink()
     print(f"Dotfiles exported to: {zipfile_encrypted_path}")
 
-    if over_ssh:
-        code_sample = f"ftpx {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^"
+    if ssh:
+        code_sample = f"cloud transfer {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^"
         print("Exporting dotfiles via SSH-based transfer (scp).")
         print(f"Run the following command on your local machine to copy dotfiles to the remote machine:\n{code_sample}")
         remote_address = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles to ")
         from stackops.utils.code import run_shell_script
-        run_shell_script(f"ftpx {zipfile_encrypted_path} {remote_address}:^", display_script=True, clean_env=False)
+        run_shell_script(f"cloud transfer {zipfile_encrypted_path} {remote_address}:^", display_script=True, clean_env=False)
         return
 
     from stackops.scripts.python.helpers.helpers_devops import cli_share_server
@@ -108,7 +99,7 @@ def _resolve_import_dotfiles_source(url: str) -> Path:
 
 def import_dotfiles(
     url: Annotated[str | None, typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles archive (.zip.gpg)")] = None,
-    use_ssh: Annotated[bool, typer.Option("--use-ssh", "-s", help="Use SSH-based transfer (scp) from a remote machine that has dotfiles.")] = False,
+    ssh: Annotated[bool, typer.Option("--ssh", "-s", help="Use SSH-based transfer (scp) from a remote machine that has dotfiles.")] = False,
 ) -> None:
     import shutil
     import tempfile
@@ -116,14 +107,14 @@ def import_dotfiles(
 
     from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH
 
-    if use_ssh:
+    if ssh:
         print("Importing dotfiles via SSH-based transfer (scp).")
         dotfiles_display_path = _format_home_relative_path(DOTFILES_ROOT)
-        code = f"cloud ftpx $USER@$(hostname):^ {dotfiles_display_path} -z"
+        code = f"cloud transfer $USER@$(hostname):^ {dotfiles_display_path} -z"
         print(f"Run the following command on the remote machine that has the dotfiles:\n{code}")
         url = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles from ")
         from stackops.utils.code import run_shell_script
-        run_shell_script(f"cloud ftpx {url}:^ {dotfiles_display_path} -z", display_script=True, clean_env=False)
+        run_shell_script(f"cloud transfer {url}:^ {dotfiles_display_path} -z", display_script=True, clean_env=False)
         print("Dotfiles copied via SSH.")
         return
 

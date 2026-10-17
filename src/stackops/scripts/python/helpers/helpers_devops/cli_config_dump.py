@@ -5,7 +5,7 @@ import typer
 
 from stackops.utils.managed_files import ManagedFileKind
 
-DUMP_HELP = "Dump a packaged example file and its schema."
+EXPORT_EXAMPLE_HELP = "Export a packaged example file and its schema."
 
 
 def _fail(message: str) -> Never:
@@ -13,15 +13,15 @@ def _fail(message: str) -> Never:
     raise typer.Exit(code=1)
 
 
-def dump_config(
-    which: Annotated[ManagedFileKind, typer.Argument(help="Which managed file to dump.")],
-    data: Annotated[bool, typer.Option("--data", "-d", help="Dump the example data file. Defaults to data and schema when omitted.")] = False,
-    schema: Annotated[bool, typer.Option("--schema", "-s", help="Dump the matching schema file. Defaults to data and schema when omitted.")] = False,
+def export_example(
+    which: Annotated[ManagedFileKind, typer.Argument(help="Which managed file example to export.")],
+    data: Annotated[bool, typer.Option("--data", "-d", help="Export the example data file. Defaults to data and schema when omitted.")] = False,
+    schema: Annotated[bool, typer.Option("--schema", "-s", help="Export the matching schema file. Defaults to data and schema when omitted.")] = False,
     default_path: Annotated[
         bool,
         typer.Option("--default-path", "-p", help="Write to the real user file path instead of ./.stackops/examples."),
     ] = False,
-    force: Annotated[bool, typer.Option("--force", "-f", help="Overwrite existing output files.")] = False,
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Overwrite existing output files.")] = False,
 ) -> None:
     from stackops.utils.managed_files import get_managed_file_spec, managed_schema_path
 
@@ -38,8 +38,8 @@ def dump_config(
     if non_file_paths:
         _fail(f"""Output path exists but is not a file: {", ".join(non_file_paths)}""")
     existing_paths = [str(output_path) for _, output_path in copies if output_path.exists()]
-    if existing_paths and not force:
-        _fail(f"""Refusing to overwrite existing file(s): {", ".join(existing_paths)}. Pass --force/-f to overwrite.""")
+    if existing_paths and not overwrite:
+        _fail(f"""Refusing to overwrite existing file(s): {", ".join(existing_paths)}. Pass --overwrite/-f to overwrite.""")
 
     for source_path, output_path in copies:
         output_path.parent.mkdir(parents=True, exist_ok=True)

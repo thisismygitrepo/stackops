@@ -148,7 +148,7 @@ def run_layouts(
             if kill_upon_completion:
                 raise ValueError("--kill-upon-completion is not supported by the Herdr backend.")
             if exit_mode != "backToShell":
-                raise ValueError("--exit is not supported by the Herdr backend; use backToShell.")
+                raise ValueError("--exit is not supported by the Herdr backend; use back-to-shell.")
             from stackops.scripts.python.helpers.helpers_sessions.sessions_herdr import (
                 run_layouts_with_herdr,
             )

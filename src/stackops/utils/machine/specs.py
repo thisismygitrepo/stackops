@@ -1,7 +1,7 @@
 from typing import Literal, TypedDict, cast
 
 
-MACHINE_SPECS_COMMAND_NAME = "get-machine-specs"
+MACHINE_SPECS_COMMAND_NAME = "specs"
 
 
 class MachineSpecs(TypedDict):

@@ -205,9 +205,8 @@ def _prompt_register_dotfile_options(
     section: str,
     os_filter: str,
     shared: bool,
-    record: bool,
     entry_name: str | None,
-) -> tuple[str, METHOD_LOOSE, ON_CONFLICT_LOOSE, Literal["private", "public"], str | None, str, str, bool, bool, str]:
+) -> tuple[str, METHOD_LOOSE, ON_CONFLICT_LOOSE, Literal["private", "public"], str | None, str, str, bool, str]:
     from stackops.profile.linking.conflict import ON_CONFLICT_MAPPER
     from stackops.profile.linking.options import METHOD_MAP
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
@@ -260,14 +259,11 @@ def _prompt_register_dotfile_options(
         "Shared destination", help_text="When a destination directory is provided, place the file under a shared subdirectory.", default=shared
     )
     default_entry_name = entry_name or _build_entry_name(orig_path)
-    prompted_entry_name = ask_text("Mapper entry name", help_text="YAML key to use inside the selected mapper section.", default=default_entry_name)
+    prompted_entry_name = ask_text("Mapper entry name", help_text="YAML key to use inside the selected mapper group.", default=default_entry_name)
     prompted_section = ask_text(
-        "Mapper section", help_text="Top-level section in mapper/dotfiles.yaml where this entry should be recorded.", default=section
+        "Mapper group", help_text="Top-level group in mapper/dotfiles.yaml where this entry should be recorded.", default=section
     )
     prompted_os_filter = ask_text("OS filter", help_text="Comma-separated OS list. Valid values are linux, darwin, and windows.", default=os_filter)
-    prompted_record = ask_bool(
-        "Record in mapper", help_text="Write the YAML entry to your user mapper. If disabled, StackOps prints a preview instead.", default=record
-    )
     assert prompted_entry_name is not None
     assert prompted_section is not None
     assert prompted_os_filter is not None
@@ -284,8 +280,7 @@ def _prompt_register_dotfile_options(
             f"sensitivity: {prompted_sensitivity}",
             f"destination: {prompted_destination or '(default)'}",
             f"shared: {prompted_shared}",
-            f"record: {prompted_record}",
-            f"section: {prompted_section}",
+            f"group: {prompted_section}",
             f"name: {prompted_entry_name}",
             f"os: {prompted_os_filter}",
         ],
@@ -299,7 +294,6 @@ def _prompt_register_dotfile_options(
         prompted_section,
         prompted_os_filter,
         prompted_shared,
-        prompted_record,
         prompted_entry_name,
     )
 
@@ -315,32 +309,27 @@ def register_dotfile(
         str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")
     ] = None,
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name in mapper/dotfiles.yaml. Defaults to the file stem.")] = None,
-    section: Annotated[str, typer.Option("--section", "-S", help="Section name in mapper/dotfiles.yaml to record this mapping.")] = "default",
+    group: Annotated[str, typer.Option("--group", "-S", help="Group name in mapper/dotfiles.yaml to record this mapping.")] = "default",
     os_filter: Annotated[str, typer.Option("--os", "-o", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
     shared: Annotated[bool, typer.Option("--shared", "-H", help="Whether the config file is shared across destinations directory.")] = False,
-    no_record: Annotated[bool, typer.Option("--no-record", "-r", help="Skip recording the mapping in the user mapper.yaml")] = False,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     from rich.console import Console
-    from rich.panel import Panel
 
     from stackops.profile.linking.conflict import ON_CONFLICT_MAPPER
     from stackops.profile.linking.operations import copy_map, symlink_map
-    from stackops.profile.linking.options import METHOD_MAP
 
     console = Console()
-    record = not no_record
     if interactive:
-        file, method, on_conflict, sensitivity, destination, section, os_filter, shared, record, name = _prompt_register_dotfile_options(
+        file, method, on_conflict, sensitivity, destination, group, os_filter, shared, name = _prompt_register_dotfile_options(
             file=file,
             method=method,
             on_conflict=on_conflict,
             sensitivity=sensitivity,
             destination=destination,
-            section=section,
+            section=group,
             os_filter=os_filter,
             shared=shared,
-            record=record,
             entry_name=name,
         )
     if file is None:
@@ -380,35 +369,7 @@ def register_dotfile(
     if result["action"] == "error":
         raise typer.Exit(code=1)
     entry_name = _resolve_entry_name(orig_path, name)
-    if record:
-        record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=section, os_filter=os_filter, entry_name=entry_name)
-        return
-    preview = _build_mapper_preview(
-        section=section,
-        entry_name=entry_name,
-        entry=_build_mapper_entry(
-            original_path=orig_path,
-            self_managed_path=new_path,
-            method=METHOD_MAP[method],
-            is_contents=False,
-            os_filter=os_filter,
-        ),
-    )
-    console.print(
-        Panel(
-            "\n".join(
-                [
-                    "✅ Dotfile mapping applied successfully.",
-                    "🔄 Add the following YAML to mapper.yaml to persist this mapping:",
-                    "",
-                    preview,
-                ]
-            ),
-            title="Mapping Preview",
-            border_style="green",
-            padding=(1, 2),
-        )
-    )
+    record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=group, os_filter=os_filter, entry_name=entry_name)
 
 
 def arg_parser() -> None:

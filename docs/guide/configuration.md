@@ -33,7 +33,7 @@ Terminal-profile and terminal-theme commands now live under a dedicated subgroup
 devops config terminal --help
 ```
 
-Use `devops config terminal config-shell --which default` or `devops config terminal config-shell --which nushell` to invoke the shell-profile setup action directly.
+Use `devops config terminal config-shell --shell default` or `devops config terminal config-shell --shell nushell` to invoke the shell-profile setup action directly.
 
 ---
 

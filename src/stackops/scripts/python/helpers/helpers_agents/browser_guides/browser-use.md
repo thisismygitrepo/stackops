@@ -12,7 +12,7 @@ browser-use skill install --target <agent> --no-install
 Install it through StackOps:
 
 ```bash
-stackops agents browser install-tech --which browser-use
+stackops agents browser install --tool browser-use
 ```
 
 Check the CLI, browser connection, and daemon:

@@ -61,13 +61,40 @@ def run_parallel_from_yaml(
     resolved_entries: list[tuple[str, ResolvedParallelCreateValues]] = []
     for selected_name, base_values in selected_entries:
         resolved = merge_parallel_create_values(base=base_values, overrides=overrides)
-        require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
+        if not resolved.interactive:
+            require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
         resolved_entries.append((selected_name, resolved))
     _reject_duplicate_multi_run_outputs(resolved_entries=tuple(resolved_entries))
 
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create
 
     for _selected_name, resolved in resolved_entries:
+        if resolved.interactive:
+            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
+
+            main(
+                agent=resolved.agent,
+                model=resolved.model,
+                reasoning_effort=resolved.reasoning_effort,
+                provider=resolved.provider,
+                host=resolved.host,
+                backend=resolved.backend,
+                context=resolved.context,
+                context_path=resolved.context_path,
+                separator=resolved.separator,
+                agent_load=resolved.agent_load,
+                stagger_max=resolved.stagger_max,
+                prompt=resolved.prompt,
+                prompt_path=resolved.prompt_path,
+                prompt_name=resolved.prompt_name,
+                job_name=resolved.job_name,
+                join_prompt_and_context=resolved.join_prompt_and_context,
+                run=resolved.run,
+                output_path=resolved.output_path,
+                agents_dir=resolved.agents_dir,
+                save_as_yaml=False,
+            )
+            continue
         agents_create(
             agent=resolved.agent,
             model=resolved.model,
@@ -89,7 +116,7 @@ def run_parallel_from_yaml(
             output_path=resolved.output_path,
             agents_dir=resolved.agents_dir,
             save_as_yaml=False,
-            interactive=resolved.interactive,
+            interactive=False,
         )
 
 
@@ -111,7 +138,7 @@ def _reject_multi_run_collision_overrides(
     if overrides.job_name is not None:
         colliding_options.append("--job-name")
     if overrides.output_path is not None:
-        colliding_options.append("--output-path")
+        colliding_options.append("--output")
     if overrides.agents_dir is not None:
         colliding_options.append("--agents-dir")
     if len(colliding_options) == 0:

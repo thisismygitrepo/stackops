@@ -29,7 +29,7 @@ def run_cli(
 ) -> None:
     try:
         if sleep_inbetween < 0:
-            raise ValueError("--sleep-inbetween must be >= 0.")
+            raise ValueError("--launch-delay must be >= 0.")
 
         from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
             resolve_standard_backend,
@@ -85,7 +85,7 @@ def run_cli(
             if kill_upon_completion:
                 raise ValueError("--kill-upon-completion is not supported by the AoE backend.")
             if exit_mode != "backToShell":
-                raise ValueError("--exit is not supported by the AoE backend; use backToShell.")
+                raise ValueError("--exit is not supported by the AoE backend; use back-to-shell.")
             if on_conflict != "error":
                 raise ValueError("--on-conflict is not supported by the AoE backend.")
 

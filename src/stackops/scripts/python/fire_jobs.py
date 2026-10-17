@@ -8,7 +8,7 @@ def fire(
     ctx: typer.Context,
     path: Annotated[str, typer.Argument(help="Path to the Python file to run")] = ".",
     function: Annotated[str | None, typer.Argument(help="Function to run")] = None,
-    frozen: Annotated[bool, typer.Option("--frozen", "-F", help="Run in frozen mode (no auto-reload)")] = False,
+    frozen: Annotated[bool, typer.Option("--frozen", "-F", help="Pass --frozen to uv run to use the existing lockfile without updating it.")] = False,
     cmd: Annotated[bool, typer.Option("--cmd", "-B", help="Create a cmd fire command to launch the job asynchronously")] = False,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Whether to run the job interactively using IPython")] = False,
     debug: Annotated[bool, typer.Option("--debug", "-d", help="Enable debug mode")] = False,

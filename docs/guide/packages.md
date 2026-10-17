@@ -1,6 +1,6 @@
 # Package Management
 
-The current package installation workflow is centered on `devops install`.
+The current package installation workflow is centered on `devops software install`.
 
 ---
 
@@ -9,23 +9,23 @@ The current package installation workflow is centered on `devops install`.
 StackOps keeps package installation behind one command surface:
 
 ```bash
-devops install --help
+devops software install --help
 ```
 
-The live help currently describes `devops install [WHICH]` as the supported package entrypoint.
+The live help currently describes `devops software install [WHICH]` as the supported package entrypoint.
 
 ---
 
 ## Installation modes
 
-Current help shows three main ways to use `devops install`:
+Current help shows three main ways to use `devops software install`:
 
 ### Install named programs
 
 Pass `WHICH` as a comma-separated list of program names:
 
 ```bash
-devops install --help
+devops software install --help
 ```
 
 ### Install a group
@@ -33,7 +33,7 @@ devops install --help
 Use the `--group` flag when `WHICH` refers to a group name:
 
 ```bash
-devops install --help
+devops software install --help
 ```
 
 ### Choose interactively
@@ -41,7 +41,7 @@ devops install --help
 Use the interactive picker:
 
 ```bash
-devops install --interactive --help
+devops software install --interactive --help
 ```
 
 ---

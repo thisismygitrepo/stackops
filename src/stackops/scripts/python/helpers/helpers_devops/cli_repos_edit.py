@@ -8,7 +8,7 @@ import typer
 
 def edit_repositories(
     specs_path: Annotated[
-        Path | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")
+        Path | None, typer.Option("--path", "-p", help="Path to repos.json specification file.")
     ] = None,
     editor: Annotated[
         Literal["nano", "hx", "code"], typer.Option("--editor", "-e", help="Editor to open repos.json. Defaults to hx.")

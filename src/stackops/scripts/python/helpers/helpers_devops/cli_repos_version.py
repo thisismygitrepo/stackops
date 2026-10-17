@@ -117,8 +117,24 @@ def declare(
         typer.echo(f"⚠️ {dirty_count} captured repositories were dirty, so this version cannot be checked out exactly.")
 
 
+def list_versions(
+    directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
+) -> None:
+    from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
+    from stackops.scripts.python.helpers.helpers_repos.version_paths import resolve_workspace
+    from stackops.scripts.python.helpers.helpers_repos.version_store import load_versions_file
+
+    try:
+        repos_root = resolve_workspace(directory=directory)
+        path = repos_root.joinpath(VERSIONS_FILE_NAME)
+        versions_file = load_versions_file(path=path, allow_missing=False)
+    except (OSError, ValueError) as error:
+        _abort(error)
+    _print_versions(versions_file=versions_file, path=path)
+
+
 def status(
-    version: Annotated[str | None, typer.Argument(help="Version identifier to compare with current repository state.")] = None,
+    version: Annotated[str, typer.Argument(help="Version identifier to compare with current repository state.")],
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
 ) -> None:
@@ -132,9 +148,6 @@ def status(
         repos_root = resolve_workspace(directory=directory)
         path = repos_root.joinpath(VERSIONS_FILE_NAME)
         versions_file = load_versions_file(path=path, allow_missing=False)
-        if version is None:
-            _print_versions(versions_file=versions_file, path=path)
-            return
         declared_version = find_declared_version(versions_file=versions_file, version=version)
         statuses = inspect_declared_version(repos_root=repos_root, declared_version=declared_version, specs_path=specs_path)
     except (OSError, ValueError, VersionOperationError) as error:
@@ -193,8 +206,10 @@ def get_app() -> typer.Typer:
     )
     app.command(name="declare", help="📌 <d> Capture repository states as a named version")(declare)
     app.command(name="d", help="Capture repository states as a named version", hidden=True)(declare)
-    app.command(name="status", help="📋 <s> Display declared versions or compare one with current repositories")(status)
-    app.command(name="s", help="Display declared versions or compare one with current repositories", hidden=True)(status)
+    app.command(name="list", help="📋 <l> List declared repository versions")(list_versions)
+    app.command(name="l", hidden=True)(list_versions)
+    app.command(name="status", help="📋 <s> Compare a declared version with current repositories")(status)
+    app.command(name="s", help="Compare a declared version with current repositories", hidden=True)(status)
     app.command(name="checkout", help="🔀 <c> Restore repositories to a declared version")(checkout)
     app.command(name="c", help="Restore repositories to a declared version", hidden=True)(checkout)
     return app

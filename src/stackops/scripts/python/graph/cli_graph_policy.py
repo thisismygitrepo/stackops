@@ -19,14 +19,14 @@ CANONICAL_SHORTS: dict[str, str] = {
     "--max-files": "-m",
     "--on-conflict": "-c",
     "--output-dir": "-o",
-    "--output-path": "-o",
+    "--output": "-o",
     "--overwrite": "-o",
     "--package-spec": "-p",
     "--password": "-p",
     "--pull": "-p",
     "--raw": "-r",
     "--record": "-r",
-    "--rel2home": "-r",
+    "--relative-to-home": "-r",
     "--remote": "-r",
     "--root": "-R",
     "--run": "-R",
@@ -52,28 +52,38 @@ SHORT_OVERRIDES: dict[tuple[str, str], str] = {
     ("devops repos action", "--password"): "-w",
     ("devops config dotfiles sync", "--source"): "-S",
     ("devops vault search", "--scope"): "-S",
+    ("devops vault load", "--scope"): "-S",
     ("agents add-mcp", "--source"): "-S",
-    ("agents parallel run-parallel", "--source"): "-S",
+    ("agents parallel run", "--source"): "-S",
     ("devops network share-terminal", "--password"): "-w",
     ("devops network share-server", "--password"): "-w",
     ("utils file download", "--output-dir"): "-O",
-    ("utils pyproject check-deps", "--output-path"): "-O",
     ("utils file ocr", "--package-spec"): "-P",
     ("utils machine autostart", "--source"): "-S",
     ("fire", "--remote"): "-R",
     ("devops config terminal tmux-style set-option", "--raw"): "-R",
-    ("devops self status", "--ssh"): "-H",
+    ("devops status", "--ssh"): "-H",
     ("terminal export", "--overwrite"): "-w",
+    ("devops config export-example", "--overwrite"): "-f",
+    ("devops config setup layouts", "--overwrite"): "-f",
+    ("devops config terminal tmux-style apply-stackops-local", "--overwrite"): "-f",
+    ("devops config terminal tmux-style install-oh-my-tmux", "--overwrite"): "-f",
 }
 
 REQUIRED_OPTION_ALLOWLIST: set[tuple[str, str]] = {
     ("devops security export", "--output"),
     ("devops repos version declare", "--message"),
-    ("devops network cloudflare sync-cloudflare-routes", "--hostname"),
+    ("devops network cloudflare sync-routes", "--hostname"),
     ("devops network cloudflare add-ip-exclusion-to-warp", "--ip"),
     ("terminal balance-load", "--max-threshold"),
     ("terminal run-all", "--max-parallel-tabs"),
-    ("terminal create-from-function", "--num-process"),
+    ("terminal run-function", "--num-process"),
+}
+
+PAIRED_OPTION_ALLOWLIST: set[tuple[str, str]] = {
+    (f"agents parallel {command}", option)
+    for command in ("create", "run")
+    for option in ("--run", "--interactive", "--join-prompt-context")
 }
 
 
@@ -113,7 +123,7 @@ def validate_cli_graph(payload: dict[str, Any]) -> None:
             has_secondary = any("/" in d for d in longs + shorts)
             name: str = param["name"]
 
-            if has_secondary:
+            if has_secondary and (path, primary_long) not in PAIRED_OPTION_ALLOWLIST:
                 violations.append(f"{path}: {name} declares paired flags; expose only the flag that changes the default")
             if param.get("type") == "bool" and param.get("default") is True:
                 violations.append(f"{path}: {name} bool flag {primary_long or name} defaults True; use a disabling flag with default False")

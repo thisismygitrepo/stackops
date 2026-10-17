@@ -23,7 +23,7 @@ def resolve_trace_backend(backend: TraceBackendOption) -> TraceBackend:
                 typer.echo("Error: StackOps Herdr session tracing requires macOS or Linux.", err=True, color=True)
                 raise typer.Exit(code=1)
             return "herdr"
-        case "aoe" | "a" | "e":
+        case "aoe" | "e":
             if platform.system().lower() == "windows":
                 typer.echo("Error: AoE is not supported on Windows.", err=True, color=True)
                 raise typer.Exit(code=1)
@@ -68,7 +68,7 @@ def _validate_trace_options(
     exit_code: int | None,
 ) -> None:
     if every_seconds <= 0:
-        raise typer.BadParameter("`--every` must be greater than 0.")
+        raise typer.BadParameter("`--poll-interval` must be greater than 0.")
     if backend == "herdr" and until in {"all-exited", "exit-code"}:
         raise typer.BadParameter(
             "Herdr does not expose process exit status for session tracing. "

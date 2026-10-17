@@ -18,12 +18,6 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_install import (
     parse_requested_agents,
 )
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE, McpCatalogLocation
-from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import (
-    build_agent_skill_install_commands,
-    is_supported_agent_skill_name,
-    parse_requested_skill_agent_targets,
-    run_agent_skill_install_commands,
-)
 from stackops.utils.accessories import get_repo_root
 
 Reporter = Callable[[str], None]
@@ -85,33 +79,11 @@ def add_mcp(
     else:
         requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
 
-    requested_skill_names = tuple(
-        requested_mcp_name for requested_mcp_name in requested_mcp_names if is_supported_agent_skill_name(skill_name=requested_mcp_name)
-    )
-    requested_mcp_server_names = tuple(
-        requested_mcp_name for requested_mcp_name in requested_mcp_names if not is_supported_agent_skill_name(skill_name=requested_mcp_name)
-    )
     repo_root = resolve_local_install_root(current_dir=Path.cwd()) if scope == "local" else None
     if scope == "local" and repo_root is None:
         raise ValueError(f"Local installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
 
-    if len(requested_skill_names) > 0:
-        install_root = repo_root if repo_root is not None else Path.cwd()
-        agent_targets = parse_requested_skill_agent_targets(raw_value=agents)
-        commands = build_agent_skill_install_commands(
-            skill_names=requested_skill_names,
-            agent_targets=agent_targets,
-            scope=scope,
-            backend="bunx",
-            yes=False,
-        )
-        report(f"Installing agent skills through skills CLI: {', '.join(requested_skill_names)}")
-        run_agent_skill_install_commands(install_root=install_root, commands=commands)
-
-    if len(requested_mcp_server_names) == 0:
-        return
-
-    resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_server_names, locations=search_locations)
+    resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
     selected_agents = parse_requested_agents(raw_value=agents)
 
     report(f"Installing: {format_resolved_mcp_servers(resolved_mcp_servers)}")

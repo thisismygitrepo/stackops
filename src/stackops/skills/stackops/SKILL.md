@@ -38,7 +38,7 @@ Resolve the StackOps source checkout before using repository paths or commands. 
 - When adding or changing commands, update the Typer registration and the helper implementation together, then re-check `--help`.
 
 6. Refresh generated references after CLI shape changes.
-- Run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets update-skill-refs` from the resolved StackOps checkout, then refresh the generated references in installed skill copies.
+- Run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets skill-refs` from the resolved StackOps checkout, then refresh the generated references in installed skill copies.
 
 7. Run safely.
 - Commands that install, update, configure, sync, share, mount, or edit local files may mutate system state.

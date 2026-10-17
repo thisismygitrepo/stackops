@@ -7,11 +7,11 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_activity import read_second_brain_git_activity
 from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import (
-    align_second_brain_updates,
+    prune_second_brain_updates,
     read_second_brain_updates,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import (
-    show_second_brain_align_result,
+    show_second_brain_prune_result,
     show_second_brain_config_result,
     show_second_brain_status,
 )
@@ -63,24 +63,24 @@ def status() -> None:
     show_second_brain_status(second_brain_root=second_brain_root, update_files=update_files, git_activity=git_activity, today=today)
 
 
-def align(
-    force: Annotated[bool, typer.Option("--force", "-f", help="Authorize deletion of invalid updates. Otherwise, preview only.")] = False,
+def prune(
+    apply: Annotated[bool, typer.Option("--apply", "-a", help="Delete the invalid updates shown in the preview.")] = False,
 ) -> None:
     second_brain_root = Path.home().joinpath("code", "agents", "second-brain")
     try:
         update_files = read_second_brain_updates(second_brain_root=second_brain_root)
-        removed_rows = align_second_brain_updates(update_files=update_files, force=force)
+        removed_rows = prune_second_brain_updates(update_files=update_files, apply=apply)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except OSError as error:
-        typer.echo(f"""Could not align Second Brain updates: {error}""", err=True)
+        typer.echo(f"""Could not prune Second Brain updates: {error}""", err=True)
         raise typer.Exit(code=1) from error
 
-    show_second_brain_align_result(
+    show_second_brain_prune_result(
         second_brain_root=second_brain_root,
         removed_rows=removed_rows,
         scanned_file_count=len(update_files),
-        force=force,
+        apply=apply,
     )
 
 
@@ -90,7 +90,7 @@ def get_app() -> typer.Typer:
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     second_brain_app.command(
-        name="config",
+        name="init",
         no_args_is_help=False,
         short_help="📝 <c> Install instructions; --overwrite replaces existing",
         help="Install bundled instructions at ~/code/agents/second-brain/AGENTS.md. Existing instructions are kept unless --overwrite is set.",
@@ -98,6 +98,6 @@ def get_app() -> typer.Typer:
     second_brain_app.command(name="c", no_args_is_help=False, hidden=True)(config)
     second_brain_app.command(name="status", no_args_is_help=False, short_help="📊 <s> Show Second Brain statistics and invalid updates")(status)
     second_brain_app.command(name="s", no_args_is_help=False, hidden=True)(status)
-    second_brain_app.command(name="align", no_args_is_help=False, short_help="🧹 <a> Preview invalid updates; --force deletes them")(align)
-    second_brain_app.command(name="a", no_args_is_help=False, hidden=True)(align)
+    second_brain_app.command(name="prune", no_args_is_help=False, short_help="🧹 <a> Preview invalid updates; --apply deletes them")(prune)
+    second_brain_app.command(name="a", no_args_is_help=False, hidden=True)(prune)
     return second_brain_app

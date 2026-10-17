@@ -11,7 +11,7 @@ bunx skills@latest add pinchtab/pinchtab --skill pinchtab --yes
 Install it from StackOps:
 
 ```bash
-stackops agents browser install-tech --which pinchtab
+stackops agents browser install --tool pinchtab
 ```
 
 For normal local use, install the user-level daemon once:

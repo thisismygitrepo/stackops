@@ -142,7 +142,7 @@ def render_source_map(*, cli_graph_payload: JsonObject, generated_on: date) -> s
             "2. Run `UV_CACHE_DIR=/tmp/uv-cache uv run <entrypoint> --help` and then repeat with each discovered command segment.",
             "3. Inspect the Typer registration source only after the live help identifies the command path.",
             "4. For broad graph debugging, inspect `src/stackops/scripts/python/graph/cli_graph.json`.",
-            "5. After changing command names or registrations, run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets update-skill-refs`.",
+            "5. After changing command names or registrations, run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets skill-refs`.",
             "",
         ]
     )

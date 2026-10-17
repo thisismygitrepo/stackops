@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "StackOps prompts.yaml",
-  "description": "Named prompt and context entries used by `agents run`.",
+  "description": "Named prompt and context entries used by `agents run-prompt`.",
   "type": "object",
   "additionalProperties": {
     "$ref": "#/definitions/promptEntry"

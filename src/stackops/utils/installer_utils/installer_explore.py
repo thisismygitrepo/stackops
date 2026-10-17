@@ -1,4 +1,4 @@
-"""Category-label explorer for `devops install --explore`."""
+"""Category-label explorer for `devops software install --explore`."""
 
 from pathlib import Path
 from typing import Any, TypedDict

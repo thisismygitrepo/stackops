@@ -15,13 +15,18 @@ Current `devops config --help` exposes:
 | `dotfiles` | Sync, register, export, and import dotfiles listed in the user `mapper/dotfiles.yaml` |
 | `setup` | Guided creation of StackOps user configuration files |
 | `edit` | Open one StackOps user file in an editor, creating a minimal one with its schema when missing |
-| `dump` | Write a packaged example file and its schema |
+| `path` | Print the selected configuration file and schema paths |
+| `init` | Create a missing configuration file and its schema |
+| `validate` | Validate the selected configuration file |
+| `export-example` | Write a packaged example file and its schema |
 | `init-script` | Print or run a packaged shell init or machine setup script |
 | `terminal` | Shell profile and terminal theme commands |
 | `interactive` | Run the interactive machine configuration flow |
 | `copy-assets` | Copy packaged scripts and settings onto the machine |
 
-`edit`, `dump`, and `setup` share one set of StackOps user files:
+`devops config dotfiles` also provides `path`, `init`, and `validate` for its managed mapping. Each accepts `--path`, `-p` to select another file. Use `init` to prepare an empty mapping and `register` to copy or symlink an existing dotfile and record its mapping.
+
+`edit`, `export-example`, and `setup` share one set of StackOps user files:
 
 | Kind | User file | Schema |
 |------|-----------|--------|
@@ -54,7 +59,7 @@ devops config setup [SUBCOMMAND] [ARGS]...
 | `cloud` | Select an rclone remote and create or update the StackOps config and schema |
 | `email` | Select or create an SMTP profile and save the default recipient |
 | `agent` | Select the default coding agent and save it in the StackOps config |
-| `data` | Interactively add a backup entry and install its YAML schema |
+| `data` | Interactively register a backup entry and install its YAML schema |
 | `dotfiles` | Interactively register a dotfile and install its YAML schema |
 | `layouts` | Install starter terminal layouts and their JSON schema |
 | `secrets` | Interactively create the global secrets file and schema |
@@ -79,7 +84,7 @@ devops config dotfiles [SUBCOMMAND] [ARGS]...
 | Command | Description |
 |---------|-------------|
 | `sync` | Apply dotfile mappings with `symlink` or `copy` |
-| `register` | Register a file or directory into the user mapper |
+| `register` | Copy or symlink a file into managed storage and register its mapping |
 | `export` | Export `~/dotfiles` for machine migration |
 | `import` | Import an exported dotfiles archive |
 
@@ -124,7 +129,7 @@ devops config dotfiles sync up --sensitivity private --method copy -S user
 
 #### register
 
-Register a new config file or directory into the self-managed dotfiles area and, by default, record that mapping in the user mapper.
+Copy or symlink a config file or directory into the managed dotfiles area and add or update its mapping in the user mapper. Registration always records the mapping.
 
 Without `--destination`, the managed file is stored flat under `~/dotfiles/stackops/mapper/files/` as `<location-hash>.<original-name>`, for example `5781a41fbab95a09.bot-db.md`.
 
@@ -140,19 +145,18 @@ Key options from current help:
 | `--on-conflict`, `-c` | Conflict strategy during the initial transfer |
 | `--sensitivity`, `-s` | Mark the mapping as `private` or `public` |
 | `--destination`, `-d` | Override the default self-managed destination |
-| `--section`, `-S` | Section name to write inside the user mapper |
+| `--group`, `-S` | Group name to write inside the user mapper |
 | `--os`, `-o` | Restrict the mapping to one OS or a comma-separated list |
-| `--shared`, `-h` | Place the managed file under a shared layout when using `--destination` |
-| `--record`, `-r` | Record the mapping in the user mapper file |
+| `--shared`, `-H` | Place the managed file under a shared layout when using `--destination` |
 
 Examples:
 
 ```bash
-# Register a private file and record it in the default mapper section
+# Register a private file and record it in the default mapper group
 devops config dotfiles register ~/.config/htop/htoprc --sensitivity private
 
 # Register a public directory with symlink semantics
-devops config dotfiles register ~/.config/nvim --method symlink --sensitivity public --section editors
+devops config dotfiles register ~/.config/nvim --method symlink --sensitivity public --group editors
 ```
 
 #### export
@@ -160,22 +164,22 @@ devops config dotfiles register ~/.config/nvim --method symlink --sensitivity pu
 Package and encrypt `~/dotfiles` for transfer to another machine.
 
 ```bash
-devops config dotfiles export <password>
+devops config dotfiles export
 ```
 
-Optional transfer flags:
+The command prompts for an encryption password. Use `--ssh` for SSH transfer; otherwise it exposes the encrypted archive on the LAN.
 
 | Option | Description |
 |--------|-------------|
-| `--over-internet`, `-i` | Internet-transfer flag present in the CLI, but the current implementation is not finished |
-| `--over-ssh`, `-s` | Use SSH/SCP-style transfer |
+| `--ssh`, `-s` | Use SSH/SCP-style transfer |
 
 #### import
 
-Import an encrypted dotfiles archive from a local path or URL.
+Import an encrypted dotfiles archive from a local path or URL. The command prompts for the decryption password; `--ssh` selects SSH transfer.
 
 ```bash
-devops config dotfiles import --url /path/to/dotfiles.zip.enc --pwd <password>
+devops config dotfiles import --url /path/to/dotfiles.zip.gpg
+devops config dotfiles import --ssh
 ```
 
 ### edit
@@ -211,62 +215,57 @@ devops config copy-assets all
 
 ### secrets
 
-Secrets commands live under `devops vault secrets`. They manage StackOps secrets files and define environment variables from them. When `search` is run without `--source`, it reads the current directory's `.stackops/secrets/secrets.json` when that file exists and otherwise reads the global source-of-truth secrets file.
+StackOps secrets are managed under `devops vault`. `search` inspects matching bundle labels and environment keys; `load` prepares their values for the calling shell. Neither command prints secret values by default. `--json` explicitly prints matching entries, including their values, without loading the environment.
 
 ```bash
-devops vault secrets search github personal-access-token
-devops vault secrets s aws dev iam-access-key
-devops vault secrets s AWS_ACCESS_KEY_ID
-devops vault secrets search --interactive
-devops vault secrets s -i aws
-devops vault secrets search --verbose aws dev iam-access-key
-devops vault secrets search --name aws-dev --tag iam-access-key
-devops vault secrets search --name aws-dev --tag session-token
-devops vault secrets search -s g bitwarden
-devops vault secrets s -s b github token
-devops vault secrets s --all-matches -s g cloudf
-devops vault secrets s -i -P github
-devops vault secrets search --path ~/private/team-secrets.json aws dev
-devops vault secrets subset ./secrets.json --path ~/private/team-secrets.json
-devops vault secrets subset ./team-secrets.json -s global
-devops vault secrets add
-devops vault secrets a --create
+devops vault search github personal-access-token
+devops vault search --interactive
+devops vault search mail --all-matches --json
+devops vault load --name aws-dev --tag iam-access-key
+devops vault load --source global github token
+devops vault load --all-matches --source both cloudf
+devops vault subset ./team-secrets.json --source global
+devops vault add --source global
+devops vault init --source local
+devops vault validate --source local
 ```
 
-By default, the query terms must identify exactly one `entries[].secrets[].keyValues` object. Terms are case-insensitive substring matches, and all terms must match somewhere across login name/tags/accountName, secret name/tags/scopes, metadata, or environment variable keys. When one `keyValues` object is selected, all variables in that object are loaded together, for example an AWS access key pair plus region.
+The command aliases are `search/s`, `load/l`, `stats/t`, `subset/u`, `add/a`, `path/p`, `init/i`, and `validate/v`. `init` and `validate` require an explicit `--source local|global` or `--path`.
 
-Use `--all-matches`, `-a` to load every matching `keyValues` object. Repeated environment variable names are deduplicated when they resolve to the same environment value; the command fails if matched bundles assign different values to the same name.
+Terms are case-insensitive substring matches across login and secret names, tags, scopes, metadata, and environment keys. By default, selection must identify one bundle. Use `--all-matches`, `-a` for every match or `--interactive`, `-i` to choose with the TV picker. `load --all-matches` rejects conflicting values for the same environment variable. `--preview-secrets`, `-P` shows values in the interactive preview; `--verbose`, `-v` shows metadata without values.
 
-Use `devops vault secrets search` or its alias `devops vault secrets s` to select and load a secret bundle. Use `--interactive`, `-i` to choose a matching secret bundle with the TV fuzzy picker. If terms or exact selectors are provided, they pre-filter the picker list.
+Exact, case-sensitive selectors can be combined with query terms: `--name/-n`, `--secret-name/-N`, `--tag/--tags/-t`, `--login-tag/-l`, `--secret-tag/-T`, `--scope/-S`, and `--key/-k`. Tag, scope, and key options are repeatable.
 
-After an interactive selection, StackOps prints a `jq` command for the selected login entry, for example `jq '.entries[3]' ~/.stackops/secrets/secrets.json`.
+Both `search` and `load` accept `--source/-s local|global|both` (aliases `l/g/b`) and `--path/-p` for another local file. With neither supplied, the local `.stackops/secrets/secrets.json` is preferred; the global file is used when local is absent.
 
-Use `--preview-secrets`, `-P` with `--interactive`, `-i` to include secret values and the full selected login entry in the picker preview. Without it, the preview only shows metadata and environment variable names.
+`subset OUTPUT_PATH` interactively selects login entries from one source and writes a secrets file. `--on-conflict/-c throw-error|overwrite|append` controls an existing output file. `add` prompts for a new login entry and appends it; `--create/-c` also permits creating the file. Use `devops config edit secrets` to edit the global file, or pass `--path` for another file.
 
-Use `--verbose`, `-v` to print the selected bundle and environment variable keys without printing secret values.
+Bitwarden operations have their own provider group:
 
-For script-stable matching, use exact selectors. `--name`, `-n` matches `entries[].name`; `--tag`, `--tags`, `-t` requires an exact login or secret tag and can be repeated; `--key`, `-k` requires an exact environment variable key. More specific selectors are also available: `--secret-name`, `-N`; `--login-tag`, `-l`; `--secret-tag`, `-T`; and `--scope`, `-S` for values inside `entries[].secrets[].scopes`. Exact selectors are case-sensitive and can be combined with query terms.
+```bash
+devops vault bitwarden login-and-unlock
+devops vault bitwarden search github
+devops vault bitwarden sync
+eval "$(devops vault bitwarden export-session)"
+devops vault bitwarden clean-cache
+```
 
-Use `search --source`, `-s` to explicitly choose `local`, `global`, or `both`. The one-letter aliases are `l`, `g`, and `b`. With `both`, missing source files are warned and skipped as long as at least one source exists. Use `--path`, `-p` to explicitly select another local secrets JSON file; a missing `--path` file is an error rather than a reason to use the global source.
+`login-and-unlock` authenticates and saves a session. `export-session` prints shell code for an already unlocked saved session; it does not unlock the vault. Its short alias remains `u`, and the Bitwarden group alias remains `k`.
 
-Use `devops vault secrets subset OUTPUT_PATH` to choose top-level `entries[]` interactively from one source file and write a `secrets.json`. The picker preview shows labels, tags/scopes, secret bundle names, and environment variable names, but not secret values. By default, the command creates a new file and refuses an existing output path. Use `--on-conflict`, `-o` with `append`/`a` to add selected entries to an existing output file, `overwrite`/`o` to replace the output file, or `throw-error`/`t` to keep the default refusal behavior.
-
-Use `devops vault secrets add` or `devops vault secrets a` to step through prompts for a new login entry and append it to one file. It defaults to the local source and accepts `--source`, `-s` with `local|global`, `--path`, and `--create`. To open a secrets file in an editor, use `devops config edit secrets`.
-
-### dump
+### export-example
 
 Write a packaged example file and its schema, by default under `.stackops/examples` in the current working directory.
 
 ```bash
-devops config dump <config|layouts|dotfiles|data|secrets> [OPTIONS]
+devops config export-example <config|layouts|dotfiles|data|secrets> [OPTIONS]
 ```
 
 ```bash
-devops config dump layouts
-devops config dump secrets --data
-devops config dump secrets --schema
-devops config dump config --default-path
-devops config dump config --default-path --force
+devops config export-example layouts
+devops config export-example secrets --data
+devops config export-example secrets --schema
+devops config export-example config --default-path
+devops config export-example config --default-path --overwrite
 ```
 
 Key options:
@@ -276,9 +275,9 @@ Key options:
 | `--data`, `-d` | Write only the example data file |
 | `--schema`, `-s` | Write only the schema file |
 | `--default-path`, `-p` | Write to the real user file path from the table above instead of `.stackops/examples` |
-| `--force`, `-f` | Overwrite existing output files |
+| `--overwrite`, `-f` | Overwrite existing output files |
 
-When neither `--data` nor `--schema` is passed, both files are written. The command refuses to write anything if any selected output already exists, unless `--force` is passed. The `dotfiles` and `data` examples are the packaged library mappers, so dumping them to `--default-path` copies every library entry into the user mapper; use `devops config edit` for an empty user mapper instead.
+When neither `--data` nor `--schema` is passed, both files are written. The command refuses to write anything if any selected output already exists, unless `--overwrite` is passed. The `dotfiles` and `data` examples are the packaged library mappers, so exporting them to `--default-path` copies every library entry into the user mapper; use `devops config edit` for an empty user mapper instead.
 
 ### init-script
 
@@ -319,17 +318,17 @@ devops config terminal [SUBCOMMAND] [ARGS]...
 Examples:
 
 ```bash
-devops config terminal config-shell --which default
-devops config terminal config-shell --which nushell
+devops config terminal config-shell --shell default
+devops config terminal config-shell --shell nushell
 devops config terminal wezterm-theme
 devops config terminal ghostty-theme
 devops config terminal tmux-style install-oh-my-tmux
 devops config terminal t i
-devops config terminal tmux-style apply-stackops-local --force
+devops config terminal tmux-style apply-stackops-local --overwrite
 devops config terminal tmux-style preset catppuccin-mocha --reload
 devops config terminal tmux-style set-option tmux_conf_theme_colour_4 '#89b4fa' --reload
 ```
 
-`tmux-style install-oh-my-tmux` delegates to the shared `devops install oh-my-tmux` installer. The remaining subcommands operate on the Oh My Tmux local customization file, defaulting to the home-dotfile layout (`~/.tmux.conf.local`) created by that installer. Use `--location xdg` for the XDG layout (`$XDG_CONFIG_HOME/tmux/tmux.conf.local`).
+`tmux-style install-oh-my-tmux` delegates to the shared `devops software install oh-my-tmux` installer. The remaining subcommands operate on the Oh My Tmux local customization file, defaulting to the home-dotfile layout (`~/.tmux.conf.local`) created by that installer. Use `--location xdg` for the XDG layout (`$XDG_CONFIG_HOME/tmux/tmux.conf.local`).
 
 ---

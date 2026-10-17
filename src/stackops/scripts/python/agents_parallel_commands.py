@@ -103,9 +103,9 @@ def agents_create(
             help="Job label. Also used as the generated layout name and to build the default output directory when --agents-dir is omitted.",
         ),
     ] = "AI_Agents",
-    join_prompt_and_context: Annotated[bool, typer.Option(..., "--joined-prompt-context", "-j", help="Join prompt file to the context.")] = False,
-    run: Annotated[bool, typer.Option(..., "--run", "-R", help="Immediately launch the generated layout via terminal run.")] = False,
-    output_path: Annotated[str | None, typer.Option(..., "--output-path", "-o", help="Path to write the layout.json file")] = None,
+    join_prompt_and_context: Annotated[bool, typer.Option("--join-prompt-context/--no-join-prompt-context", "-j", help="Join prompt file to the context.")] = False,
+    run: Annotated[bool, typer.Option("--run/--no-run", "-R", help="Immediately launch the generated layout through the selected backend.")] = False,
+    output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Path to write the layout.json file")] = None,
     agents_dir: Annotated[
         str | None,
         typer.Option(
@@ -126,7 +126,7 @@ def agents_create(
     ] = False,
     show_example: Annotated[bool, typer.Option(..., "--show-example", "-e", help="Show a long parallel YAML create configuration example.")] = False,
     interactive: Annotated[
-        bool, typer.Option(..., "--interactive", "-i", help="Whether to run in interactive mode, asking for missing parameters.")
+        bool, typer.Option("--interactive/--no-interactive", "-i", help="Ask for missing parameters interactively.")
     ] = False,
 ) -> None:
     """Create agents layout file, ready to run."""
@@ -215,7 +215,7 @@ def collect(
 
 
 def make_agents_command_template() -> None:
-    """Create a template for fire agents."""
+    """Write a starter parallel script, file list, and prompt file."""
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import make_agents_command_template as impl
 
     try:

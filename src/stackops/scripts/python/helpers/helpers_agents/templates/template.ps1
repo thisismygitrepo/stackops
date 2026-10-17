@@ -22,11 +22,11 @@ agents parallel create `
     --agents-dir $AGENTS_DIR `
     --separator "\n"
 
-sessions balance-load "$AGENTS_DIR/layout.json" `
+terminal balance-load "$AGENTS_DIR/layout.json" `
     --max-threshold 4 `
-    --breaking-method moreLayouts `
+    --breaking-method more-layouts `
     --threshold-type number `
-    --output-path "$AGENTS_DIR/layout_balanced.json"
+    --output "$AGENTS_DIR/layout_balanced.json"
 
-Write-Output "Please run like this `"sessions run `"$AGENTS_DIR/layout_balanced.json`" --kill-upon-completion`""
+Write-Output "Please run like this `"terminal run `"$AGENTS_DIR/layout_balanced.json`" --kill-upon-completion`""
 Write-Output "Then, do this `"agents parallel collect $AGENTS_DIR `"$REPO_ROOT/.ai/agents/$JOB_NAME/collected.txt`"`""

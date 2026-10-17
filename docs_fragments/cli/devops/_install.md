@@ -1,9 +1,9 @@
-## install
+## software
 
-The primary package installation command. Supports single packages, multiple packages, package groups, and interactive selection.
+Install software and manage its catalog. The group provides `install`, `list`, `path`, `init`, `edit`, and `validate`. Installation supports single packages, multiple packages, package groups, and interactive selection.
 
 ```bash
-devops install [OPTIONS] [WHICH]
+devops software install [OPTIONS] [WHICH]
 ```
 
 ### Arguments
@@ -28,19 +28,19 @@ devops install [OPTIONS] [WHICH]
 
 ```bash
 # Install a single package by name
-devops install btop
-devops install fd
-devops install yazi
+devops software install btop
+devops software install fd
+devops software install yazi
 ```
 
 #### Multiple Packages
 
 ```bash
 # Install multiple packages (comma-separated, no spaces)
-devops install btop,fd,bat,rg,fzf
+devops software install btop,fd,bat,rg,fzf
 
 # With spaces (use quotes)
-devops install "btop, fd, bat, rg"
+devops software install "btop, fd, bat, rg"
 ```
 
 #### Package Groups
@@ -49,17 +49,17 @@ Install predefined bundles of related packages:
 
 ```bash
 # Install terminal essentials (40+ tools)
-devops install termabc --group
-devops install termabc -g
+devops software install termabc --group
+devops software install termabc -g
 
 # Install AI coding assistants
-devops install agents -g
+devops software install agents -g
 
 # Install full development environment
-devops install dev -g
+devops software install dev -g
 
 # Install system monitors
-devops install sys-monitor -g
+devops software install sys-monitor -g
 ```
 
 #### Interactive Mode
@@ -67,8 +67,8 @@ devops install sys-monitor -g
 Launch an interactive selector with all available packages:
 
 ```bash
-devops install --interactive
-devops install -i
+devops software install --interactive
+devops software install -i
 ```
 
 Features:
@@ -82,9 +82,9 @@ Features:
 Browse installers by the `categoryLabels` stored in `installer_data.json`, then choose matching installers:
 
 ```bash
-devops install --explore
-devops install -x
-devops install ai-agents-assistants -x
+devops software install --explore
+devops software install -x
+devops software install ai-agents-assistants -x
 ```
 
 #### From GitHub URL
@@ -93,8 +93,8 @@ Install directly from a GitHub repository:
 
 ```bash
 # The installer will show available release assets for selection
-devops install https://github.com/sharkdp/fd
-devops install https://github.com/BurntSushi/ripgrep
+devops software install https://github.com/sharkdp/fd
+devops software install https://github.com/BurntSushi/ripgrep
 ```
 
 #### From Binary URL
@@ -102,7 +102,7 @@ devops install https://github.com/BurntSushi/ripgrep
 Install from a direct download URL:
 
 ```bash
-devops install https://example.com/tool-v1.0-linux-amd64.tar.gz
+devops software install https://example.com/tool-v1.0-linux-amd64.tar.gz
 ```
 
 ### Available Package Groups
@@ -131,7 +131,7 @@ devops install https://example.com/tool-v1.0-linux-amd64.tar.gz
 
 ```bash
 # Show all available groups with their packages
-devops install -g
+devops software install -g
 
 # Output shows:
 # 📦 sysabc              --   sysabc
@@ -143,19 +143,19 @@ devops install -g
 
 ```bash
 # Essential terminal setup (recommended first install)
-devops install sysabc -g && devops install termabc -g
+devops software install sysabc -g && devops software install termabc -g
 
 # Install all AI coding assistants
-devops install agents -g
+devops software install agents -g
 
 # Selective installation
-devops install btop,fd,rg,fzf,bat,zoxide,yazi
+devops software install btop,fd,rg,fzf,bat,zoxide,yazi
 
 # Interactive browse and install
-devops install -i
+devops software install -i
 
 # Install from specific GitHub repo
-devops install https://github.com/jesseduffield/lazygit
+devops software install https://github.com/jesseduffield/lazygit
 ```
 
 ---

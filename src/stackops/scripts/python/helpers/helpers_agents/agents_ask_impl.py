@@ -4,7 +4,6 @@ from platform import system
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
-from typing import Final, cast, get_args
 
 from rich import box
 from rich.console import Console
@@ -16,13 +15,8 @@ from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import build
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
     ReasoningEffort,
-    ReasoningShortcut,
     normalize_reasoning_effort,
-    reasoning_support,
-    resolve_reasoning,
 )
-
-_ASK_REASONING_SHORTCUTS: Final[tuple[str, ...]] = cast(tuple[str, ...], get_args(ReasoningShortcut))
 
 
 def _join_prompt_parts(prompt_parts: Sequence[str]) -> str:
@@ -88,46 +82,9 @@ def _write_temporary_prompt_file(prompt_text: str) -> Path:
         return Path(prompt_file.name)
 
 
-def _split_legacy_ask_reasoning(
-    agent: AGENTS, reasoning: ReasoningShortcut | None, prompt_parts: Sequence[str]
-) -> tuple[ReasoningShortcut | None, list[str]]:
-    normalized_prompt_parts = list(prompt_parts)
-    if reasoning is not None:
-        return reasoning, normalized_prompt_parts
-    if len(reasoning_support(agent=agent).efforts) == 0:
-        return None, normalized_prompt_parts
-    if len(normalized_prompt_parts) <= 1:
-        return None, normalized_prompt_parts
-    first_prompt_part = normalized_prompt_parts[0]
-    if first_prompt_part not in _ASK_REASONING_SHORTCUTS:
-        return None, normalized_prompt_parts
-    return cast(ReasoningShortcut, first_prompt_part), normalized_prompt_parts[1:]
-
-
-def _resolve_ask_reasoning(agent: AGENTS, reasoning: ReasoningShortcut | None) -> ReasoningEffort | None:
-    if reasoning is None:
-        return None
-    if len(reasoning_support(agent=agent).efforts) == 0:
-        raise ValueError("--reasoning is only supported for --agent codex, --agent copilot, --agent cortex, or --agent pi")
-    return resolve_reasoning(shortcut=reasoning, agent=agent)
-
-
-def _format_ask_reasoning(reasoning_shortcut: ReasoningShortcut | None, reasoning_effort: ReasoningEffort | None) -> str:
-    match reasoning_shortcut, reasoning_effort:
-        case None, None:
-            return "agent default"
-        case shortcut, effort if shortcut is not None and effort is not None:
-            return f"{effort} ({shortcut})"
-        case _, effort if effort is not None:
-            return effort
-        case _:
-            return "agent default"
-
-
 def _print_ask_summary(
     *,
     agent: AGENTS,
-    reasoning_shortcut: ReasoningShortcut | None,
     reasoning_effort: ReasoningEffort | None,
     prompt_text: str,
     file_prompt: Path | None,
@@ -138,7 +95,7 @@ def _print_ask_summary(
     table.add_column("Field", style="bold cyan", no_wrap=True)
     table.add_column("Value", style="white", overflow="fold")
     table.add_row("Agent", Text(agent))
-    table.add_row("Reasoning", Text(_format_ask_reasoning(reasoning_shortcut=reasoning_shortcut, reasoning_effort=reasoning_effort)))
+    table.add_row("Reasoning", Text(reasoning_effort if reasoning_effort is not None else "agent default"))
     table.add_row("Prompt", Text(f"{len(prompt_text)} chars, {prompt_text.count('\n') + 1} lines"))
     table.add_row("File prompt", Text("none" if file_prompt is None else str(file_prompt.expanduser().resolve())))
     table.add_row("Temp prompt", Text(str(prompt_path)))
@@ -149,23 +106,21 @@ def _print_ask_summary(
     console.rule("[bold blue]Agent Output")
 
 
-def run_ask(*, prompt_parts: Sequence[str], agent: AGENTS, reasoning: ReasoningShortcut | None, file_prompt: Path | None, quiet: bool) -> int:
-    reasoning_shortcut, normalized_prompt_parts = _split_legacy_ask_reasoning(agent=agent, reasoning=reasoning, prompt_parts=prompt_parts)
-    reasoning_effort = _resolve_ask_reasoning(agent=agent, reasoning=reasoning_shortcut)
-    prompt_text = _compose_ask_prompt_text(prompt_parts=normalized_prompt_parts, file_prompt=file_prompt)
-    prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)
+def run_ask(*, prompt_parts: Sequence[str], agent: AGENTS, reasoning: ReasoningEffort | None, prompt_path: Path | None, quiet: bool) -> int:
+    reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
+    prompt_text = _compose_ask_prompt_text(prompt_parts=prompt_parts, file_prompt=prompt_path)
+    temporary_prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)
     try:
-        command_line = build_ask_command(agent=agent, prompt_file=prompt_path, reasoning_effort=reasoning_effort)
+        command_line = build_ask_command(agent=agent, prompt_file=temporary_prompt_path, reasoning_effort=reasoning_effort)
         if not quiet:
             _print_ask_summary(
                 agent=agent,
-                reasoning_shortcut=reasoning_shortcut,
                 reasoning_effort=reasoning_effort,
                 prompt_text=prompt_text,
-                file_prompt=file_prompt,
-                prompt_path=prompt_path,
+                file_prompt=prompt_path,
+                prompt_path=temporary_prompt_path,
                 command_line=command_line,
             )
         return run_shell_command(command_line=command_line)
     finally:
-        prompt_path.unlink(missing_ok=True)
+        temporary_prompt_path.unlink(missing_ok=True)

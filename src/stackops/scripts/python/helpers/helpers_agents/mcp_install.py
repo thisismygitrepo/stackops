@@ -6,7 +6,6 @@ import re
 from typing import Final, Literal, cast, get_args
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
-from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import build_agent_skill_preview_mapping
 from stackops.scripts.python.helpers.helpers_agents.cortex_paths import resolve_cortex_home
 from stackops.scripts.python.helpers.helpers_agents.deepseek_mcp import write_deepseek_mcp_config
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names, resolve_requested_mcp_servers
@@ -76,7 +75,6 @@ def choose_requested_mcp_names(*, locations: tuple[McpCatalogLocation, ...]) -> 
     from stackops.utils.options_utils import tv_options
 
     selection_preview_mapping = build_mcp_selection_preview_mapping(locations=locations)
-    selection_preview_mapping.update(build_agent_skill_preview_mapping())
     selection = tv_options.choose_from_dict_with_preview(
         options_to_preview_mapping=selection_preview_mapping,
         extension="json",
@@ -84,7 +82,7 @@ def choose_requested_mcp_names(*, locations: tuple[McpCatalogLocation, ...]) -> 
         preview_size_percent=MCP_PREVIEW_SIZE_PERCENT,
     )
     if len(selection) == 0:
-        raise ValueError("Selection cancelled for MCP servers or agent skills")
+        raise ValueError("Selection cancelled for MCP servers")
     return tuple(selection)
 
 

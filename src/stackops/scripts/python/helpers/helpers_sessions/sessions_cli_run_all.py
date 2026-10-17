@@ -23,7 +23,7 @@ def run_all_cli(
     try:
         if on_conflict in {"skip", "mergeOverwrite", "mergeSkip"}:
             raise ValueError(
-                "--on-conflict skip, mergeOverwrite, and mergeSkip are not supported for run-all "
+                "--on-conflict skip, merge-overwrite, and merge-skip are not supported for run-all "
                 "because the dynamic scheduler requires exclusive control of the session."
             )
 

@@ -14,22 +14,21 @@ Current `devops self --help` exposes:
 |---------|-------------|--------------|
 | `install` | Install stackops locally, optionally from a development checkout | Always |
 | `clone` | Clone the StackOps source checkout into a local directory | Always |
-| `update` | Upgrade stackops, refresh packaged assets, and optionally relink public configs | Always |
-| `status` | Inspect machine, shell, repo, SSH, config, app, or backup state | Always |
-| `security` | Run security and installer-audit helpers | Always |
+| `update` | Upgrade stackops, refresh packaged assets, and optionally sync public configs | Always |
 | `explore-cli` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
 | `explore-python-api` | Inspect the documented Python API graph in terminal, DOT, Plotly, or search form | Always |
 | `readme` | Fetch and render the project README in the terminal | Always |
 | `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/stackops` exists |
 | `build-installer` | Export installation files for an offline installer image | Always |
 | `download-installer` | Download and extract a published offline installer image | Always |
+| `release` | Bump the calendar version and update version references | Only in a StackOps source checkout |
 | `build-docker` | Build Docker images from the repo script | Only when `~/code/stackops` exists |
 | `build-graph` | Build the architecture dependency graph | Only when `~/code/stackops` exists |
 | `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/stackops` exists |
 
 ### update
 
-Upgrade the installed tool, refresh packaged assets, and optionally relink public configs.
+Upgrade the installed tool, refresh packaged assets, and optionally copy public configs to their default paths.
 
 ```bash
 devops self update [OPTIONS]
@@ -39,28 +38,31 @@ Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--link-public-configs`, `-b` | Re-link public configs after the update |
+| `--sync-public-configs`, `-l` | Copy public configs down after the update, overwriting their default paths |
+| `--no-copy-assets`, `-a` | Skip copying scripts and settings after the update |
+| `--config-shell`, `-s` | Create or configure the default shell profile after the update |
+| `--dev`, `-d` | Commit and sync the development checkout before updating |
 
 Current behavior:
 
 - If `~/code/stackops` exists, the command runs `uv self update`, `git pull`, and reinstalls the repo checkout as an editable tool.
 - Otherwise it updates `uv` and upgrades the installed `stackops` tool package.
 - After the update succeeds, it copies packaged scripts and settings onto the current machine.
-- On non-Windows platforms, `--link-public-configs` additionally re-links the public config set.
+- `--sync-public-configs` additionally copies the public config set down on all supported platforms.
 
 Examples:
 
 ```bash
 devops self update
-devops self update --link-public-configs
+devops self update --sync-public-configs
 ```
 
-### status
+### Machine status: `devops status`
 
-Run the self-audit report for the current machine, optionally limited to specific sections.
+Inspect the current machine, optionally limited to specific sections. This command lives directly under `devops`.
 
 ```bash
-devops self status [OPTIONS]
+devops status [OPTIONS]
 ```
 
 Key options from current help:
@@ -70,12 +72,13 @@ Key options from current help:
 | `--machine`, `-m` | Show the machine and system information section |
 | `--shell`, `-s` | Show the shell profile section |
 | `--repos`, `-r` | Show the configured repositories section |
-| `--ssh`, `-h` | Show the SSH configuration section |
+| `--ssh`, `-H` | Show the SSH configuration section |
 | `--configs`, `--dotfiles`, `--symlinks`, `-c`, `-d`, `-l` | Show linked config, dotfile, and symlink state |
 | `--apps`, `--tools`, `-a`, `-t` | Show installed apps and tools |
 | `--backup`, `-b` | Show backup configuration status |
+| `--plain`, `-p` | Print a report instead of opening the interactive dashboard |
 
-Without flags, the command prints the full report.
+Without section flags, the command includes all sections. Use `--plain` for a printed report.
 
 ### install
 
@@ -353,15 +356,15 @@ By default, Docker credentials are selected from the login named `docker` with o
 
 This command is only registered when `~/code/stackops` exists locally.
 
-### security
+### Security: `devops security`
 
 Security helpers live under a nested Typer app:
 
 ```bash
-devops self security [SUBCOMMAND] [ARGS]...
+devops security [SUBCOMMAND] [ARGS]...
 ```
 
-Current `devops self security --help` exposes:
+Security is a top-level group. Current `devops security --help` exposes:
 
 | Command | Description |
 |---------|-------------|
@@ -378,7 +381,7 @@ Current `devops self security --help` exposes:
 Scan installed apps or one local file path with VirusTotal.
 
 ```bash
-devops self security scan [OPTIONS] [APPS]
+devops security scan [OPTIONS] [APPS]
 ```
 
 Key options from current help:
@@ -392,9 +395,9 @@ Key options from current help:
 Examples:
 
 ```bash
-devops self security scan
-devops self security scan git,uv
-devops self security scan --path ./downloads/tool.exe --no-record
+devops security scan
+devops security scan git,uv
+devops security scan --path ./downloads/tool.exe --no-record
 ```
 
 #### list
@@ -402,13 +405,13 @@ devops self security scan --path ./downloads/tool.exe --no-record
 List the installed CLI apps that the security tooling knows how to inspect.
 
 ```bash
-devops self security list [APPS]
+devops security list [APPS]
 ```
 
 Example:
 
 ```bash
-devops self security list git,uv
+devops security list git,uv
 ```
 
 #### upload
@@ -416,13 +419,13 @@ devops self security list git,uv
 Upload one local file into the cloud storage used by the security workflow.
 
 ```bash
-devops self security upload PATH
+devops security upload PATH
 ```
 
 Example:
 
 ```bash
-devops self security upload ./dist/tool.exe
+devops security upload ./dist/tool.exe
 ```
 
 #### download
@@ -430,7 +433,7 @@ devops self security upload ./dist/tool.exe
 Download a previously shared file from Google Drive.
 
 ```bash
-devops self security download URL
+devops security download URL
 ```
 
 The argument can be a full Google Drive URL or a raw file id.
@@ -440,7 +443,7 @@ The argument can be a full Google Drive URL or a raw file id.
 Install a safe app from the saved metadata report.
 
 ```bash
-devops self security install NAME
+devops security install NAME
 ```
 
 `NAME` can be one app entry from the report or the special `essentials` bundle.
@@ -450,7 +453,7 @@ devops self security install NAME
 Download GitHub license files for repos referenced by the installer metadata.
 
 ```bash
-devops self security repo-licenses [OPTIONS]
+devops security repo-licenses [OPTIONS]
 ```
 
 Key option:
@@ -464,7 +467,7 @@ Key option:
 Inspect saved report data in full, summary, table, or CSV form. The default invocation shows the full engine-level report.
 
 ```bash
-devops self security report [OPTIONS] [APPS]
+devops security report [OPTIONS] [APPS]
 ```
 
 Key options from current help:
@@ -478,11 +481,11 @@ Key options from current help:
 Examples:
 
 ```bash
-devops self security report
-devops self security report --view app-summary
-devops self security report --view stats
-devops self security report uv --view apps --format csv
-devops self security report git --view engines
+devops security report
+devops security report --view app-summary
+devops security report --view stats
+devops security report uv --view apps --format csv
+devops security report git --view engines
 ```
 
 ### docs
@@ -527,16 +530,16 @@ Current `devops self build-assets --help` exposes:
 
 | Command | Description |
 |---------|-------------|
-| `update-cli-graph` | Rewrite `src/stackops/scripts/python/graph/cli_graph.json` from the current Typer source |
-| `regenerate-charts` | Rewrite `docs/assets/devops-self-explore/sunburst.html` from the current graph snapshot |
-| `update-skill-refs` | Regenerate the StackOps skill CLI reference maps |
+| `cli-graph` | Rewrite `src/stackops/scripts/python/graph/cli_graph.json` from the current Typer source |
+| `charts` | Rewrite `docs/assets/devops-self-explore/sunburst.html` from the current graph snapshot |
+| `skill-refs` | Regenerate the StackOps skill CLI reference maps |
 
 Examples:
 
 ```bash
-devops self build-assets update-cli-graph
-devops self build-assets regenerate-charts
-devops self build-assets update-skill-refs
+devops self build-assets cli-graph
+devops self build-assets charts
+devops self build-assets skill-refs
 ```
 
 This sub-app is only registered when `~/code/stackops` exists locally.

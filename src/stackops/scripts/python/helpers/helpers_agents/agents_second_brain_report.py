@@ -44,7 +44,7 @@ def show_second_brain_config_result(*, instructions_path: Path, action: Literal[
         )
     )
     if action == "kept":
-        console.print(Text.assemble("To replace these instructions: ", ("agents B config --overwrite", "bold cyan")))
+        console.print(Text.assemble("To replace these instructions: ", ("agents second-brain init --overwrite", "bold cyan")))
 
 
 def show_second_brain_status(
@@ -109,13 +109,13 @@ def show_second_brain_status(
         console.print(Text("Update totals exclude invalid logs.", style="dim"))
 
 
-def show_second_brain_align_result(
-    *, second_brain_root: Path, removed_rows: dict[Path, int], scanned_file_count: int, force: bool
+def show_second_brain_prune_result(
+    *, second_brain_root: Path, removed_rows: dict[Path, int], scanned_file_count: int, apply: bool
 ) -> None:
     console = Console()
-    action = "Removed" if force else "Would remove"
+    action = "Removed" if apply else "Would remove"
     removed_row_count = sum(removed_rows.values())
-    result_style = "yellow" if removed_row_count and not force else "green"
+    result_style = "yellow" if removed_row_count and not apply else "green"
     result_message = (
         f"""{action} {removed_row_count} invalid updates from {len(removed_rows)} of {scanned_file_count} update logs."""
         if removed_row_count
@@ -124,7 +124,7 @@ def show_second_brain_align_result(
     console.print(
         Panel(
             Group(Text(str(second_brain_root), style="dim", overflow="fold"), Text(result_message, style=f"""bold {result_style}""")),
-            title=Text("Alignment applied" if force else "Alignment preview", style="bold"),
+            title=Text("Prune applied" if apply else "Prune preview", style="bold"),
             title_align="left",
             border_style=result_style,
             padding=(0, 1),
@@ -133,9 +133,9 @@ def show_second_brain_align_result(
     if removed_rows:
         changes = Table(box=box.ROUNDED, border_style="dim", header_style="bold cyan", expand=True)
         changes.add_column("File", overflow="fold", ratio=1)
-        changes.add_column("Updates removed" if force else "Updates to remove", justify="right", style=result_style)
+        changes.add_column("Updates removed" if apply else "Updates to remove", justify="right", style=result_style)
         for update_path, row_count in sorted(removed_rows.items()):
             changes.add_row(Text(str(update_path.relative_to(second_brain_root)), overflow="fold"), str(row_count))
         console.print(changes)
-        if not force:
-            console.print(Text.assemble("To delete these updates, run: ", ("agents B align --force", "bold cyan")))
+        if not apply:
+            console.print(Text.assemble("To delete these updates, run: ", ("agents second-brain prune --apply", "bold cyan")))

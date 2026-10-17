@@ -242,8 +242,8 @@ def get_app() -> typer.Typer:
     repos_apps.command(name="sync", help="📥 <s> Clone Git repositories and sync encrypted guard repositories")(clone)
     repos_apps.command(name="s", help="Clone Git repositories and sync encrypted guard repositories", hidden=True)(clone)
 
-    repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
-    repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
+    repos_apps.command(name="register", help="📝 <r> Scan repositories, refresh registrations, and prune missing records under the directory.")(capture)
+    repos_apps.command(name="r", help="Scan repositories, refresh registrations, and prune missing records under the directory.", hidden=True)(capture)
 
     repos_apps.command(name="edit", help="📝 <e> Create if missing, edit, and validate the repos.json specification")(edit_repositories)
     repos_apps.command(name="e", help="Create if missing, edit, and validate the repos.json specification", hidden=True)(edit_repositories)

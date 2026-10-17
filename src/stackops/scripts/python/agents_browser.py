@@ -20,10 +20,10 @@ if TYPE_CHECKING:
 
 
 def install_tech(
-    which: Annotated[
+    tool: Annotated[
         BrowserTechSelection,
         typer.Option(
-            "--which",
+            "--tool",
             "-w",
             help=("Browser automation tech: agent-browser, browser-use, pinchtab, playwright-cli, chrome-devtools-mcp, playwright-mcp, omp, or all."),
             case_sensitive=False,
@@ -51,7 +51,7 @@ def install_tech(
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_impl import install_browser_tech
 
     try:
-        selected_technologies: tuple[BrowserTechName, ...] = BROWSER_TECH_NAMES if which == "all" else (which,)
+        selected_technologies: tuple[BrowserTechName, ...] = BROWSER_TECH_NAMES if tool == "all" else (tool,)
         resolved_agent = agent
         if resolved_agent is None and any(technology not in BROWSER_TECH_NAMES_WITHOUT_AGENT for technology in selected_technologies):
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import choose_required_option, order_current_first
@@ -423,13 +423,13 @@ def get_app() -> typer.Typer:
         help="🌐 <b> Browser automation for agent CLIs and MCP", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    browser_app.command(name="install-tech", no_args_is_help=False, short_help="📦 <i> Install browser CLIs, skills, MCP configs, or agents")(
+    browser_app.command(name="install", no_args_is_help=False, short_help="📦 <i> Install browser tools or prepare MCP setup guides")(
         install_tech
     )
     browser_app.command(name="i", no_args_is_help=False, hidden=True)(install_tech)
     browser_app.command(name="launch", no_args_is_help=False, short_help="🚀 <l> Launch browser automation endpoint")(launch_browser)
     browser_app.command(name="l", no_args_is_help=False, hidden=True)(launch_browser)
-    browser_app.command(name="close", no_args_is_help=False, short_help="❌ <c> Close one tracked browser endpoint")(close_browser)
+    browser_app.command(name="close", no_args_is_help=False, short_help="❌ <c> Close tracked endpoints by port or profile names")(close_browser)
     browser_app.command(name="c", no_args_is_help=False, hidden=True)(close_browser)
     browser_app.command(name="batch-launch", no_args_is_help=False, short_help="🚀 <L> Launch every saved profile for one browser")(batch_launch)
     browser_app.command(name="L", no_args_is_help=False, hidden=True)(batch_launch)

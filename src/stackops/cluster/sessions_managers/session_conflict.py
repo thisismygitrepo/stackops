@@ -11,8 +11,8 @@ SessionConflictActionLoose = Literal[
     "rename", "n",
     "error", "e",
     "skip", "s",
-    "mergeOverwrite", "m",
-    "mergeSkip", "M",
+    "merge-overwrite", "m",
+    "merge-skip", "M",
 ]
 SessionConflictAction = Literal[
     "restart",
@@ -31,9 +31,9 @@ SessionConflictActionLoose2Strict: dict[SessionConflictActionLoose, SessionConfl
     "e": "error",
     "skip": "skip",
     "s": "skip",
-    "mergeOverwrite": "mergeOverwrite",
+    "merge-overwrite": "mergeOverwrite",
     "m": "mergeOverwrite",
-    "mergeSkip": "mergeSkip",
+    "merge-skip": "mergeSkip",
     "M": "mergeSkip",
 }
 
@@ -105,8 +105,8 @@ def _existing_conflict_hint(backend: SessionBackend) -> str:
     if backend in MERGE_SUPPORTED_BACKENDS:
         return (
             "Use --on-conflict restart, --on-conflict rename, --on-conflict skip, "
-            "--on-conflict mergeOverwrite, or "
-            "--on-conflict mergeSkip."
+            "--on-conflict merge-overwrite, or "
+            "--on-conflict merge-skip."
         )
     return "Use --on-conflict restart, --on-conflict rename, or --on-conflict skip."
 
@@ -115,8 +115,8 @@ def _duplicate_conflict_hint(backend: SessionBackend) -> str:
     if backend in MERGE_SUPPORTED_BACKENDS:
         return (
             "Use unique layout names, --on-conflict rename, --on-conflict skip, "
-            "--on-conflict mergeOverwrite, or "
-            "--on-conflict mergeSkip."
+            "--on-conflict merge-overwrite, or "
+            "--on-conflict merge-skip."
         )
     return "Use unique layout names, --on-conflict rename, or --on-conflict skip."
 

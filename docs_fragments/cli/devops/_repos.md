@@ -13,7 +13,7 @@ Current `devops repos --help` exposes:
 | Command | Description |
 |---------|-------------|
 | `sync` | Clone repositories described by a `repos.json` specification |
-| `register` | Record repositories into a `repos.json` specification |
+| `register` | Scan repositories, refresh registrations, and prune missing records under the directory |
 | `edit` | Edit and validate the `repos.json` specification |
 | `action` | Run pull/commit/push actions across repositories |
 | `guard` | Securely sync a git repository to and from cloud storage with encryption |
@@ -62,7 +62,7 @@ Scan a directory of repositories and merge those entries into a `repos.json` spe
 devops repos register [DIRECTORY] [OPTIONS]
 ```
 
-By default, `register` updates `~/dotfiles/stackops/mapper/repos.json`. Use `--specs-path` to update another file. Records under the registered directory are refreshed, while records from other roots are preserved.
+By default, `register` updates `~/dotfiles/stackops/mapper/repos.json`. Use `--specs-path` to update another file. Records under the registered directory are refreshed; records missing from that scan are removed from the registry. Records from other roots are preserved. Repository files are not deleted.
 
 Examples:
 
@@ -73,16 +73,16 @@ devops repos register ~/code --specs-path ~/backups/work/repos.json
 
 ### edit
 
-Open the existing `repos.json` specification to adjust repository destinations, sync settings, or records.
+Create if missing and open the `repos.json` specification to adjust repository destinations, sync settings, or records.
 
 ```bash
 devops repos edit
-devops repos edit --specs-path ./repos.json --editor code
+devops repos edit --path ./repos.json --editor code
 ```
 
-The alias is `e`. `--specs-path` (`-s`) selects another specification. `--editor` (`-e`) accepts `nano`, `hx`, or `code`, with `hx` as the default. VS Code waits until the file closes before validation runs.
+The alias is `e`. `--path` (`-p`) selects another specification, matching `repos path`, `repos init`, and `repos validate`. `--editor` (`-e`) accepts `nano`, `hx`, or `code`, with `hx` as the default. VS Code waits until the file closes before validation runs.
 
-The command validates JSON and repository fields after the editor exits. Invalid edits produce an error and a nonzero exit status. If the specification is missing, run `devops repos register` first.
+The command validates JSON and repository fields after the editor exits. Invalid edits produce an error and a nonzero exit status. A missing specification and its schema are initialized before the editor opens.
 
 ### action
 
@@ -142,6 +142,19 @@ devops repos guard ~/code/private-repo --cloud myremote --message "sync before t
 
 `merge-accept-remote` and `merge-accept-local` keep the merge in progress, then resolve only the conflicted files by accepting the remote (`--theirs`) or local (`--ours`) side before finalizing the merge commit.
 
+### version
+
+Capture, list, compare, and restore named repository versions:
+
+```bash
+devops repos version declare release-1 --message "Ready for release" --directory ~/code
+devops repos version list --directory ~/code
+devops repos version status release-1 --directory ~/code
+devops repos version checkout release-1 --directory ~/code --dry-run
+```
+
+`list` (`l`) lists saved versions. `status` (`s`) requires a version identifier and compares it with current repositories. `declare` (`d`) captures a named version, and `checkout` (`c`) restores it.
+
 ### stats
 
 Inspect repository activity, Python line counts, and development history.
@@ -150,14 +163,14 @@ Inspect repository activity, Python line counts, and development history.
 devops repos stats [SUBCOMMAND] [ARGS]...
 ```
 
-The group alias is `S`. Its commands are `viz` (`v`), `count-lines` (`c`), and `analyze` (`z`).
+The group alias is `S`. Its commands are `visualize` (`v`), `count-lines` (`c`), and `analyze` (`z`).
 
-#### viz
+#### visualize
 
 Visualize repository history with Gource, either live or rendered to video.
 
 ```bash
-devops repos stats viz [OPTIONS]
+devops repos stats visualize [OPTIONS]
 ```
 
 Commonly used options from current help:
@@ -179,10 +192,10 @@ Examples:
 
 ```bash
 # Interactive visualization
-devops repos stats viz --repo ~/code/stackops
+devops repos stats visualize --repo ~/code/stackops
 
 # Render to video
-devops repos stats viz --repo ~/code/stackops --output stackops.mp4 --resolution 1280x720
+devops repos stats visualize --repo ~/code/stackops --output stackops.mp4 --resolution 1280x720
 ```
 
 #### count-lines

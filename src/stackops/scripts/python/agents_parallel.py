@@ -40,9 +40,9 @@ AGENT options: {", ".join(get_args(AGENTS))}
     )(create_context)
     parallel_app.command(name="x", no_args_is_help=True, hidden=True)(create_context)
     parallel_app.command(
-        name="run-parallel",
+        name="run",
         no_args_is_help=False,
-        short_help="🏃 <r> Run named parallel workflow from YAML",
+        short_help="🏃 <r> Launch a named parallel workflow from YAML",
     )(run_parallel)
     parallel_app.command(name="r", no_args_is_help=False, hidden=True)(run_parallel)
     parallel_app.command(
@@ -53,10 +53,10 @@ AGENT options: {", ".join(get_args(AGENTS))}
     )(collect)
     parallel_app.command("T", no_args_is_help=True, help=collect.__doc__, hidden=True)(collect)
     parallel_app.command(
-        "make-template",
+        "create-template",
         no_args_is_help=False,
         help=make_agents_command_template.__doc__,
-        short_help="📐 <p> Create a template for fire agents",
+        short_help="📐 <p> Write a starter parallel script and input files",
     )(make_agents_command_template)
     parallel_app.command("p", no_args_is_help=False, help=make_agents_command_template.__doc__, hidden=True)(make_agents_command_template)
     return parallel_app

@@ -47,7 +47,7 @@ def get_app() -> typer.Typer:
     app = typer.Typer(
         no_args_is_help=True,
         add_completion=False,
-        help="Locate, initialize, and validate agent configuration files.",
+        help="Locate, initialize, and validate StackOps prompts, parallel workflow, and MCP catalogs.",
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.command("path", help="📍 <p> Print the configuration and schema paths as JSON.")(config_path)

@@ -1,6 +1,5 @@
 from stackops.utils.cloud import rclone as rclone_utils
 from stackops.utils.cloud.defaults import CloudConfig
-from stackops.utils.cloud.encryption import EncryptionModeChoice
 
 
 def main(
@@ -8,9 +7,6 @@ def main(
     target: str,
     transfers: int,
     root: str,
-    pwd: str | None,
-    encryption: EncryptionModeChoice | None,
-    zip_: bool,
     bisync: bool,
     resync: bool,
     delete: bool,
@@ -28,19 +24,6 @@ def main(
 
     if resync and not bisync:
         raise ValueError("--resync requires --bisync.")
-
-    unsupported_options: list[str] = []
-    if pwd is not None:
-        unsupported_options.append("--password")
-    if encryption is not None:
-        unsupported_options.append("--encryption")
-    if zip_:
-        unsupported_options.append("--zip")
-    if unsupported_options:
-        raise ValueError(
-            f"cloud sync does not support {', '.join(unsupported_options)} because incremental sync cannot stage ZIP or GPG artifacts. "
-            "Use cloud copy for compressed or encrypted transfers."
-        )
 
     cloud_config_explicit = CloudConfig(
         cloud="",

@@ -172,14 +172,14 @@ def register_data(
     pwd: Annotated[
         str | None, typer.Option("--password", "-p", help="Symmetric GPG encryption password. Requires --encryption symmetric and is not stored.")
     ] = None,
-    no_rel2home: Annotated[bool, typer.Option("--no-rel2home", "-r", help="Store an absolute path instead of a home-relative path.")] = False,
+    absolute_path: Annotated[bool, typer.Option("--absolute-path", "-r", help="Store an absolute path instead of a home-relative path.")] = False,
     os: Annotated[
         str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")
     ] = DEFAULT_OS_FILTER,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     zip_ = not no_zip
-    rel2home: bool | None = False if no_rel2home else None
+    rel2home: bool | None = False if absolute_path else None
     from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry
     from stackops.scripts.python.helpers.helpers_devops.cli_data_display import show_registration_summary
 
@@ -238,7 +238,7 @@ def get_app() -> typer.Typer:
 
     app.command(name="s", no_args_is_help=True, hidden=True)(sync)
 
-    app.command(name="register", no_args_is_help=True, hidden=False, help="📝 <r> Register a new backup entry in user mapper/data.yaml.")(register_data)
+    app.command(name="register", no_args_is_help=True, hidden=False, help="📝 <r> Add or update a backup registration in user mapper/data.yaml.")(register_data)
 
     app.command(name="r", no_args_is_help=True, hidden=True)(register_data)
 
@@ -246,7 +246,7 @@ def get_app() -> typer.Typer:
         name="list",
         no_args_is_help=False,
         hidden=False,
-        help="📋 <l> List registered backup entries from user mapper/data.yaml.",
+        help="📋 <l> List backup entries from the selected configuration sources.",
     )(cli_data_display.display_data)
 
     app.command(name="l", no_args_is_help=False, hidden=True)(cli_data_display.display_data)

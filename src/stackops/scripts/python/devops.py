@@ -115,6 +115,8 @@ def vault(ctx: typer.Context) -> None:
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops.cli_status import status
+
     cli_app = typer.Typer(
         help="🔧 DevOps operations", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
@@ -150,6 +152,9 @@ def get_app() -> typer.Typer:
 
     cli_app.command("network", help="🌐 <n> Network management", context_settings=ctx_settings)(network)
     cli_app.command("n", hidden=True, context_settings=ctx_settings)(network)
+
+    cli_app.command("status", help="📊 <S> Show machine, repository, application, and configuration status.")(status)
+    cli_app.command("S", hidden=True)(status)
 
     cli_app.command("self", help="🔧 <s> Self management", context_settings=ctx_settings)(self_cmd)
     cli_app.command("s", hidden=True, context_settings=ctx_settings)(self_cmd)

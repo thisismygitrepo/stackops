@@ -22,7 +22,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_cleanup_re
 
 
 class DepoisonApp(App[int]):
-    TITLE = "Agent depoison"
+    TITLE = "Agent reset"
     BINDINGS = [
         Binding("f5", "refresh_inventory", "Refresh"),
         Binding("ctrl+f", "search", "Search", priority=True),

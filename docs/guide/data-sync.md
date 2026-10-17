@@ -139,7 +139,7 @@ Current top-level commands:
 - `sync`
 - `copy`
 - `mount`
-- `ftpx`
+- `transfer`
 - `onedrive`
 
 ### Copy
@@ -167,7 +167,7 @@ cloud sync ~/documents remote:documents --bisync
 
 `--resync` requires `--bisync` and initializes or recovers its state; omit it for normal bidirectional runs. Bisync propagates deletions. For one-way sync, `--delete` removes destination-only files; with bisync it changes deletion timing.
 
-`cloud sync` rejects `--pwd`, `--encryption`, and `--zip` because incremental sync cannot stage GPG or ZIP artifacts. Use `cloud copy` when a transfer needs encryption or compression.
+Incremental sync does not stage GPG or ZIP artifacts. Use `cloud copy` when a transfer needs encryption or compression.
 
 ### Mount
 
@@ -177,14 +177,14 @@ Mount a configured remote locally:
 cloud mount
 ```
 
-Mount selection is interactive by default. To choose a remote directly, use `cloud mount --cloud remote --no-interactive`.
+Mount selection is interactive when no cloud names are supplied. To choose a remote directly, use `cloud mount remote`.
 
-### FTP-over-SSH
+### SSH transfer
 
 Transfer files between `machine:path` endpoints:
 
 ```bash
-cloud ftpx localmachine:/tmp/archive remotehost:/tmp/archive --recursive
+cloud transfer localmachine:/tmp/archive remotehost:/tmp/archive --recursive
 ```
 
 ### OneDrive through Microsoft Graph
@@ -205,10 +205,10 @@ The `cloud` commands use explicit CLI flags and configured defaults for transfer
 - `--root`
 - `--encryption`
 - `--zip`
-- `--relative2home`
+- `--relative-to-home`
 
 If a remote path starts with `:`, StackOps fills in the cloud name from the configured default cloud.
 
-`cloud copy` uses `--encryption`, `-e` as the sole encryption switch. Accepted CLI values are `symmetric`/`s` and `asymmetric`/`a`; omitting the option keeps the transfer plaintext. Password options require an explicit symmetric mode. These staging options are not supported by `cloud sync`.
+`cloud copy` accepts `symmetric`/`s` and `asymmetric`/`a` for `--encryption/-e`. Password options imply symmetric mode when encryption is omitted; otherwise omitting the encryption option keeps the transfer plaintext. These staging options belong to `cloud copy`.
 
 Use `devops data` when you want durable named backup sets. Use `cloud copy` or `cloud sync` when you already know the exact source and destination you want to move.

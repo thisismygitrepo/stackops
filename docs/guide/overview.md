@@ -4,7 +4,7 @@
 
 | Section | Description |
 |---------|-------------|
-| [Package Management](packages.md) | Install software with the current `devops install` workflow |
+| [Package Management](packages.md) | Install software with the current `devops software install` workflow |
 | [Configuration](configuration.md) | Manage configuration files and dotfiles under `devops config` |
 | [Data Sync](data-sync.md) | Register, back up and retrieve data with `devops data` |
 

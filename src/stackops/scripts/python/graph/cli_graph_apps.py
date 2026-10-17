@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import Any
 
 from stackops.scripts.python.graph.cli_graph_eval import evaluate_typer_config
+from stackops.scripts.python.graph.cli_graph_managed_files import managed_file_registrations
 from stackops.scripts.python.graph.cli_graph_registration import parse_registration
 from stackops.scripts.python.graph.cli_graph_resolver import (
     collect_local_imports,
@@ -74,6 +75,18 @@ def extract_app_model(
         if registration is not None:
             order += 1
             registrations.append(registration)
+        else:
+            helper_registrations = managed_file_registrations(
+                expr,
+                module_info=module_info,
+                env=env,
+                function_docs=function_docs,
+                local_modules=local_modules,
+                local_names=local_names,
+                order=order,
+            )
+            registrations.extend(helper_registrations)
+            order += len(helper_registrations)
 
     def process_statements(statements: list[ast.stmt]) -> None:
         nonlocal return_app_var

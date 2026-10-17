@@ -23,13 +23,13 @@ seek [OPTIONS] [PATH_OR_SEARCH_TERM] [SEARCH_TERM]
 
 The current implementation resolves modes in this order:
 
-1. `--install-req`
+1. `--install-dependencies`
 2. `--semantic`
 3. `--ast`
 4. `--file`
 5. default text search
 
-That means `seek path query --file --ast` will still take the AST path, and `--install-req` exits before running a search.
+That means `seek path query --file --ast` will still take the AST path, and `--install-dependencies` exits before running a search.
 
 ---
 
@@ -44,7 +44,7 @@ That means `seek path query --file --ast` will still take the AST path, and `--i
 | `--dotfiles` | `-d` | Toggle the dotfile-inclusive file-search path |
 | `--rga` | `-A` | Swap `rg` for `rga` in text-search mode |
 | `--edit` | `-e` | Open the selected result in Helix |
-| `--install-req` | `-i` | Install expected helper tools and exit |
+| `--install-dependencies` | `-i` | Install expected helper tools and exit |
 | `--max-files INTEGER` | `-m` | Maximum files for `--semantic`; default is `50`, and `0` disables the limit |
 
 ---
@@ -100,7 +100,7 @@ When standard input is piped in and the first argument is a directory, `seek` ca
 
 ## Dependencies
 
-`seek --install-req` currently installs these helpers:
+`seek --install-dependencies` currently installs these helpers:
 
 - `fzf`
 - `tv`

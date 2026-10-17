@@ -6,7 +6,7 @@ import typer
 
 def path_repositories(
     specs_path: Annotated[
-        Path | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file."),
+        Path | None, typer.Option("--path", "-p", help="Path to repos.json specification file."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action
@@ -16,7 +16,7 @@ def path_repositories(
 
 def init_repositories(
     specs_path: Annotated[
-        Path | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file."),
+        Path | None, typer.Option("--path", "-p", help="Path to repos.json specification file."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action
@@ -26,7 +26,7 @@ def init_repositories(
 
 def validate_repositories(
     specs_path: Annotated[
-        Path | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file."),
+        Path | None, typer.Option("--path", "-p", help="Path to repos.json specification file."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action

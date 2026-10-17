@@ -56,7 +56,7 @@ def link_wsl_and_windows_home(
     wsl_utils.link_wsl_and_windows(windows_username)
 
 
-def wifi_select(
+def connect_wifi(
     ssid: Annotated[str, typer.Option("-n", "--ssid", help="🔗 SSID of WiFi (from config)")] = "MyPhoneHotSpot",
     manual: Annotated[bool, typer.Option("-m", "--manual", help="🔍 Manual network selection mode")] = False,
     list_: Annotated[bool, typer.Option("-l", "--list", help="📡 List available networks only")] = False,
@@ -105,8 +105,8 @@ def get_app() -> typer.Typer:
         help="📱 <d> Device subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    device_app.command(name="wifi-select", no_args_is_help=False, help="📶 <w> WiFi connection utility.")(wifi_select)
-    device_app.command(name="w", no_args_is_help=False, hidden=True)(wifi_select)
+    device_app.command(name="connect-wifi", no_args_is_help=False, help="📶 <w> Connect to a configured or selected WiFi network.")(connect_wifi)
+    device_app.command(name="w", no_args_is_help=False, hidden=True)(connect_wifi)
 
     device_app.command(name="bind-wsl-port", help="🔌 <b> Bind WSL port to Windows host", no_args_is_help=True)(bind_wsl_port)
     device_app.command(name="b", help="Bind WSL port to Windows host", hidden=True, no_args_is_help=True)(bind_wsl_port)

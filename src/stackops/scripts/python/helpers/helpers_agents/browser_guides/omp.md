@@ -7,7 +7,7 @@ Verified from https://github.com/can1357/oh-my-pi on 2026-08-21.
 StackOps installs it from the normal installer catalog:
 
 ```bash
-stackops agents browser install-tech --which omp
+stackops agents browser install --tool omp
 ```
 
 The install writes `omp-browser-cdp.yml` into this directory, a config overlay that attaches the omp browser tool to a StackOps CDP endpoint instead of launching its own browser.

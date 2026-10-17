@@ -27,7 +27,7 @@ def copy_when_inside_wsl(source: Path | str, target: Path | str, overwrite: bool
         raise FileNotFoundError(f"""Local source does not exist: {source_path}. Check the source path and try again.""")
     if target_path.exists():
         if not overwrite:
-            raise FileExistsError(f"""Target already exists: {target_path}. Use --overwrite-existing to replace it.""")
+            raise FileExistsError(f"""Target already exists: {target_path}. Use --overwrite to replace it.""")
         remove_path(target_path)
     target_path.parent.mkdir(parents=True, exist_ok=True)
     if source_path.is_dir():
@@ -47,7 +47,7 @@ def copy_when_inside_windows(source: Path | str, target: Path | str, overwrite: 
         raise FileNotFoundError(f"""Local source does not exist: {source_path}. Check the source path and try again.""")
     if target_path.exists():
         if not overwrite:
-            raise FileExistsError(f"""Target already exists: {target_path}. Use --overwrite-existing to replace it.""")
+            raise FileExistsError(f"""Target already exists: {target_path}. Use --overwrite to replace it.""")
         remove_path(target_path)
     run_windows_copy_command(source_path, target_path)
 
