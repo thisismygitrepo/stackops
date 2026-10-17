@@ -107,8 +107,12 @@ def validate_managed_file(*, kind: ManagedFileKind, data_path: Path) -> None:
                 return
             case "software":
                 from stackops.utils.installer_utils.installer_catalog import load_installer_data_file
+                from stackops.utils.installer_utils.installer_scripts import get_user_installer_scripts_root, validate_installer_script_references
 
-                load_installer_data_file(path=data_path)
+                validate_installer_script_references(
+                    installers=load_installer_data_file(path=data_path)["installers"],
+                    user_scripts_root=get_user_installer_scripts_root(user_catalog_path=data_path),
+                )
             case "repos":
                 from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec
 

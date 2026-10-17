@@ -69,7 +69,16 @@ def main_installer_cli(
     path: Annotated[Path | None, typer.Option("--path", "-p", help="User software catalog path.")] = None,
     ctx: typer.Context | None = None,
 ) -> None:
-    install_request = InstallRequest(version=version, update=update)
+    from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH
+    from stackops.utils.installer_utils.installer_scripts import get_user_installer_scripts_root
+    from stackops.utils.schemas.installer.installer_types import INSTALLER_DATA_SOURCE_MAP
+
+    user_scripts_root = (
+        None
+        if INSTALLER_DATA_SOURCE_MAP[source] == "library"
+        else get_user_installer_scripts_root(user_catalog_path=USER_INSTALLER_DATA_PATH if path is None else path.expanduser().absolute())
+    )
+    install_request = InstallRequest(version=version, update=update, user_scripts_root=user_scripts_root)
     if interactive and explore:
         typer.echo("❌ Use either --interactive/-i or --explore/-x, not both.")
         raise typer.Exit(1)
@@ -284,7 +293,7 @@ def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bo
         return False
 
     result = Installer(installer_data=selected_installer).install_robust(
-        install_request=InstallRequest(version=None, update=False)
+        install_request=InstallRequest(version=None, update=False, user_scripts_root=None)
     )
     if result["kind"] == "failed":
         return False

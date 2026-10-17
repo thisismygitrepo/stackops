@@ -274,7 +274,7 @@ def validate_install_request(install_target: InstallTarget, install_request: Ins
         )
         effective_version = None
 
-    return InstallRequestResolution(install_request=InstallRequest(version=effective_version, update=effective_update), warnings=tuple(warnings))
+    return InstallRequestResolution(install_request=InstallRequest(version=effective_version, update=effective_update, user_scripts_root=install_request.user_scripts_root), warnings=tuple(warnings))
 
 
 def resolve_installer_value(install_target: InstallTarget, install_request: InstallRequest) -> str:

@@ -54,6 +54,8 @@ devops software install lazygit,fd --update
 
 Use `software list` to browse definitions, `path` to locate catalogs, `init` to create an empty user catalog, `edit` to modify it, and `validate` to check it.
 
+User catalog entries may reference `.sh`, `.ps1`, or `.py` installer scripts by file name; place them in an `installer_scripts/` directory next to the catalog (`~/dotfiles/stackops/config/installer_scripts/` by default). `software path` prints both script directories, and `software validate` fails if a referenced script is missing or its name is not unique across the user and library script directories.
+
 ---
 
 ## Current command groups

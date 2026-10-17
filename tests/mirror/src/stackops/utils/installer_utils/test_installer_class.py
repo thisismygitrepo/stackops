@@ -62,7 +62,7 @@ def test_winget_update_with_no_changes_reports_same_version_and_preserves_marker
     monkeypatch.setattr(package_manager_installation.subprocess, "run", run)
     monkeypatch.setattr(Installer, "_read_installed_version", read_installed_version)
 
-    result = powershell_installer.install_robust(install_request=InstallRequest(version=None, update=True))
+    result = powershell_installer.install_robust(install_request=InstallRequest(version=None, update=True, user_scripts_root=None))
 
     assert result["kind"] == "same_version"
     assert result["version"] == installed_version
@@ -84,7 +84,7 @@ def test_winget_no_update_cannot_satisfy_an_explicit_version_request(
     monkeypatch.setattr(package_manager_installation.subprocess, "run", run)
     monkeypatch.setattr(Installer, "_read_installed_version", read_installed_version)
 
-    result = powershell_installer.install_robust(install_request=InstallRequest(version="7.7.0", update=True))
+    result = powershell_installer.install_robust(install_request=InstallRequest(version="7.7.0", update=True, user_scripts_root=None))
 
     assert result["kind"] == "failed"
     assert "2316632107" in result["error"]

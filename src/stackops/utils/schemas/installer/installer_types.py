@@ -1,5 +1,6 @@
 import platform
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Final, Literal, NotRequired, TypeAlias, TypedDict
 
 
@@ -134,6 +135,7 @@ class InstallationResultBuckets(TypedDict):
 class InstallRequest:
     version: str | None
     update: bool
+    user_scripts_root: Path | None
 
 
 def get_os_name() -> OPERATING_SYSTEMS:

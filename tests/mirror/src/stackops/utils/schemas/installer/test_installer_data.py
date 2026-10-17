@@ -50,7 +50,7 @@ def test_browser_use_catalog_uses_upstream_uv_tool_contract() -> None:
 
     install_target = install_request_logic.build_install_target(repo_url=browser_use_installer["repoURL"], installer_value=expected_command)
     resolved_update_command = install_request_logic.resolve_installer_value(
-        install_target=install_target, install_request=InstallRequest(version=None, update=True)
+        install_target=install_target, install_request=InstallRequest(version=None, update=True, user_scripts_root=None)
     )
     assert resolved_update_command == f"{expected_command} --upgrade"
 

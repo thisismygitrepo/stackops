@@ -12,7 +12,8 @@ from stackops.utils.installer_utils.install_request_logic import (
 )
 from stackops.utils.installer_utils.installer_main_protocol import load_installer_python_script_main
 from stackops.utils.installer_utils.package_manager_installation import install_with_package_manager
-from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT, LIBRARY_ROOT
+from stackops.utils.installer_utils.installer_scripts import resolve_installer_script
+from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
 from stackops.utils.schemas.installer.installer_types import (
@@ -123,7 +124,12 @@ class Installer:
             or effective_installer_value.strip().startswith("winget install ")
             else None
         )
-        self._install_from_value(installer_arch_os=effective_installer_value, version=version, update=install_request.update)
+        self._install_from_value(
+            installer_arch_os=effective_installer_value,
+            version=version,
+            update=install_request.update,
+            user_scripts_root=install_request.user_scripts_root,
+        )
 
     def install_requested(self, install_request: InstallRequest) -> None:
         install_target, effective_install_request = self._resolve_install_request(install_request=install_request)
@@ -152,9 +158,9 @@ class Installer:
             return self._build_failed_result(exe_name=exe_name, error=str(ex))
 
     def install(self, version: str | None) -> None:
-        self._install_from_value(installer_arch_os=self._get_installer_value(), version=version, update=False)
+        self._install_from_value(installer_arch_os=self._get_installer_value(), version=version, update=False, user_scripts_root=None)
 
-    def _install_from_value(self, installer_arch_os: str, version: str | None, update: bool) -> None:
+    def _install_from_value(self, installer_arch_os: str, version: str | None, update: bool, user_scripts_root: Path | None) -> None:
         exe_name = self.get_exe_name()
         repo_url = self.installer_data["repoURL"]
         version_to_be_installed: str = "unknown"  # Initialize to ensure it's always bound
@@ -171,13 +177,7 @@ class Installer:
                 package_manager = installer_arch_os.split(maxsplit=1)[0]
                 version_to_be_installed = version or package_manager + "Latest"
             elif script_installer:
-                search_root = LIBRARY_ROOT / "jobs" / "installer"
-                search_results = list(search_root.rglob(installer_arch_os))
-                if len(search_results) == 0:
-                    raise FileNotFoundError(f"Could not find installation script: {installer_arch_os}")
-                if len(search_results) > 1:
-                    raise ValueError(f"Multiple installation scripts found for {installer_arch_os}: {search_results}")
-                installer_path = search_results[0]
+                installer_path = resolve_installer_script(script_name=installer_arch_os, user_scripts_root=user_scripts_root)
                 print(f"📄 Found installation script: {installer_path}")
                 if installer_arch_os.endswith(".sh"):
                     if platform.system() not in ["Linux", "Darwin"]:
