@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-ManagedFileKind: TypeAlias = Literal["config", "layouts", "dotfiles", "data", "secrets"]
+ManagedFileKind: TypeAlias = Literal["config", "layouts", "dotfiles", "data", "secrets", "repos", "prompts", "parallel", "mcp"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +19,21 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
     from stackops.utils.path_reference import get_path_reference_path
 
     match kind:
+        case "prompts" | "parallel" | "mcp":
+            from stackops.utils.managed_agent_files import get_agent_managed_file_spec
+
+            return get_agent_managed_file_spec(kind)
+        case "repos":
+            import stackops.utils.schemas.repos as repos_assets
+            from stackops.scripts.python.helpers.helpers_repos.spec_store import DEFAULT_REPOS_SPEC_PATH, REPOS_SPEC_VERSION
+
+            return ManagedFileSpec(
+                user_path=DEFAULT_REPOS_SPEC_PATH,
+                example_source_path=get_path_reference_path(module=repos_assets, path_reference="repos.json"),
+                schema_source_path=get_path_reference_path(module=repos_assets, path_reference=repos_assets.REPOS_SCHEMA_PATH_REFERENCE),
+                initial_content=json.dumps({"version": REPOS_SPEC_VERSION, "repos": []}, indent=2) + "\n",
+                file_mode=0o644,
+            )
         case "config":
             import stackops.utils.schemas.config as config_assets
             from stackops.utils.schemas.config.config_types import StackOpsConfig
@@ -85,6 +100,8 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
 
 
 def managed_schema_path(*, spec: ManagedFileSpec, data_path: Path) -> Path:
+    if spec.user_path.suffix in {".yaml", ".yml"}:
+        return data_path.with_name(f"""{data_path.stem}.schema.json""")
     return data_path.with_name(spec.schema_source_path.name)
 
 

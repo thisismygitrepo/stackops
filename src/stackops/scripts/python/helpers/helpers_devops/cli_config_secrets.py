@@ -280,6 +280,8 @@ def add(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_files import init_secrets, path_secrets, validate_secrets
+
     app = typer.Typer(
         name="secrets", help=f"🔐 <k> {SECRETS_HELP}", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
@@ -295,5 +297,12 @@ def get_app() -> typer.Typer:
 
     app.command("add", no_args_is_help=False, help="➕ <a> Append a new login entry to a StackOps secrets file.")(add)
     app.command("a", no_args_is_help=False, help="Alias for add.", hidden=True)(add)
+
+    app.command("path", help="📍 <p> Print secrets file and schema paths as JSON.")(path_secrets)
+    app.command("p", hidden=True)(path_secrets)
+    app.command("init", help="🆕 <i> Create a missing secrets file and its schema without opening an editor.")(init_secrets)
+    app.command("i", hidden=True)(init_secrets)
+    app.command("validate", help="✅ <v> Validate a secrets file without opening an editor.")(validate_secrets)
+    app.command("v", hidden=True)(validate_secrets)
 
     return app

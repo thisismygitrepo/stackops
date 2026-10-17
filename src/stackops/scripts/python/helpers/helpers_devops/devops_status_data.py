@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import assert_never, cast
 
-from rich.console import RenderableType
+from rich.console import Group, RenderableType
 from rich.panel import Panel
 from rich.text import Text
 
@@ -19,6 +19,7 @@ from stackops.scripts.python.helpers.helpers_devops.devops_status_display import
     render_system_info,
 )
 from stackops.scripts.python.helpers.helpers_devops.devops_status_repos import check_repos_status, render_repos_status
+from stackops.scripts.python.helpers.helpers_devops.devops_status_managed import check_managed_files_status, render_managed_files_status
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,36 @@ class StatusSnapshot:
     summary: str
     level: StatusLevel
     content: RenderableType
+
+
+def _collect_config_status() -> StatusSnapshot:
+    managed = check_managed_files_status()
+    valid = sum(item.state == "Valid" for item in managed)
+    summary = f"""{valid}/{len(managed)} managed files valid"""
+    inventory = render_managed_files_status(managed)
+    level: StatusLevel = "ready"
+    if any(item.state in {"Invalid", "Unreadable"} or not item.schema_present for item in managed):
+        level = "error"
+    elif valid < len(managed):
+        level = "attention"
+    try:
+        configs = check_config_files_status()
+    except Exception as error:
+        return StatusSnapshot(
+            f"""{summary} · mappings unavailable""", "error",
+            Group(inventory, Panel(
+                Text(f"""Configuration mappings could not be checked ({type(error).__name__}).""", style="red"),
+                title="Configuration mappings", border_style="red",
+            )),
+        )
+    linked = configs["public_linked"] + configs["private_linked"]
+    total = configs["public_count"] + configs["private_count"]
+    if level == "ready" and (linked != total or not total):
+        level = "attention"
+    return StatusSnapshot(
+        f"""{summary} · {linked}/{total} mappings configured""", level,
+        Group(inventory, render_config_files_status(configs)),
+    )
 
 
 def collect_status_section(section: StatusSection) -> StatusSnapshot:
@@ -58,12 +89,7 @@ def collect_status_section(section: StatusSection) -> StatusSnapshot:
                 summary = f"""{len(ssh['keys'])} public keys · {'Config found' if ssh['config_exists'] else 'No config'}""" if ssh["ssh_dir_exists"] else "No SSH directory"
                 return StatusSnapshot(summary, "ready" if complete else "attention", render_ssh_status(ssh))
             case "configs":
-                configs = check_config_files_status()
-                linked = configs["public_linked"] + configs["private_linked"]
-                total = configs["public_count"] + configs["private_count"]
-                level = "ready" if linked == total and total else "attention"
-                summary = f"""{linked}/{total} configured"""
-                return StatusSnapshot(summary, level, render_config_files_status(configs))
+                return _collect_config_status()
             case "apps":
                 tools = check_important_tools()
                 unique = {name: installed for group in tools.values() for name, installed in group.items()}

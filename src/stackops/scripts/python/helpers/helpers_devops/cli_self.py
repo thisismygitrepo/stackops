@@ -182,7 +182,7 @@ def status(
     repos: Annotated[bool, typer.Option("--repos", "-r", help="Show the configured repositories section.")] = False,
     ssh: Annotated[bool, typer.Option("--ssh", "-H", help="Show the SSH configuration section.")] = False,
     configs: Annotated[
-        bool, typer.Option("--configs", "--dotfiles", "--symlinks", "-c", "-d", "-l", help="Show the linked config, dotfile, and symlink section.")
+        bool, typer.Option("--configs", "--dotfiles", "--symlinks", "-c", "-d", "-l", help="Show managed files, schemas, configuration mappings, and symlinks.")
     ] = False,
     apps: Annotated[bool, typer.Option("--apps", "--tools", "-a", "-t", help="Show the installed apps/tools section.")] = False,
     backup: Annotated[bool, typer.Option("--backup", "-b", help="Show the backup configuration section.")] = False,

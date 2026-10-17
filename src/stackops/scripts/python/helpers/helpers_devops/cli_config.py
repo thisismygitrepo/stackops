@@ -58,10 +58,11 @@ def get_app() -> typer.Typer:
     import stackops.scripts.python.helpers.helpers_devops.cli_config_setup as setup_module
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dump import DUMP_HELP, dump_config
     from stackops.scripts.python.helpers.helpers_devops.cli_config_edit import EDIT_HELP, edit_managed_file
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_files import config_path, init_config, validate_config
     from stackops.scripts.python.helpers.helpers_devops.cli_config_init_script import INIT_SCRIPT_HELP, init_script
 
     config_apps = typer.Typer(
-        cls=ordered_group(("dotfiles", "setup", "edit", "dump", "init-script", "terminal", "interactive", "copy-assets")),
+        cls=ordered_group(("dotfiles", "setup", "path", "init", "validate", "edit", "dump", "init-script", "terminal", "interactive", "copy-assets")),
         help="🧰 <c> configuration subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
@@ -80,6 +81,13 @@ def get_app() -> typer.Typer:
 
     config_apps.command("edit", no_args_is_help=True, help=f"📝 <e> {EDIT_HELP}")(edit_managed_file)
     config_apps.command("e", no_args_is_help=True, help=EDIT_HELP, hidden=True)(edit_managed_file)
+
+    config_apps.command("path", no_args_is_help=True, help="📍 <p> Print configuration and schema paths as JSON.")(config_path)
+    config_apps.command("p", no_args_is_help=True, hidden=True)(config_path)
+    config_apps.command("init", no_args_is_help=True, help="📄 <I> Create missing configuration and schema files without opening an editor.")(init_config)
+    config_apps.command("I", no_args_is_help=True, hidden=True)(init_config)
+    config_apps.command("validate", no_args_is_help=True, help="✅ <v> Validate a configuration file against its schema and parser.")(validate_config)
+    config_apps.command("v", no_args_is_help=True, hidden=True)(validate_config)
 
     config_apps.command("dump", no_args_is_help=True, help=f"📦 <d> {DUMP_HELP}")(dump_config)
     config_apps.command("d", no_args_is_help=True, help=DUMP_HELP, hidden=True)(dump_config)

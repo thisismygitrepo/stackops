@@ -38,7 +38,7 @@ def run_parallel_from_yaml(
         )
     _report_created_yaml_paths(created_yaml_paths=created_yaml_paths)
     if add_entry:
-        _add_parallel_yaml_entry(yaml_locations=yaml_locations, config_name=config_name)
+        _add_parallel_yaml_entry(yaml_locations=yaml_locations, config_name=config_name, edit=edit)
         if show_parallel_yaml_format:
             import typer
 
@@ -174,14 +174,15 @@ def _ensure_writable_parallel_yaml_files(
     return created_yaml_paths
 
 
-def _add_parallel_yaml_entry(*, yaml_locations: list[tuple[str, Path]], config_name: str | None) -> None:
+def _add_parallel_yaml_entry(*, yaml_locations: list[tuple[str, Path]], config_name: str | None, edit: bool) -> None:
     import typer
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry import add_parallel_yaml_entry
 
     target_yaml_path = _select_parallel_yaml_entry_target(yaml_locations=yaml_locations)
     added_entry_name = add_parallel_yaml_entry(yaml_path=target_yaml_path, entry_name=config_name)
     typer.echo(f"Added parallel YAML entry '{added_entry_name}' to: {target_yaml_path}")
-    edit_parallel_yaml(yaml_path=target_yaml_path)
+    if edit:
+        edit_parallel_yaml(yaml_path=target_yaml_path)
 
 
 def _report_created_yaml_paths(*, created_yaml_paths: list[Path]) -> None:

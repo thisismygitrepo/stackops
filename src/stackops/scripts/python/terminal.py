@@ -399,6 +399,7 @@ def trace(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_sessions.terminal_run_command import TerminalRunCommand
     from stackops.scripts.python.terminal_layout_commands import edit_layouts, list_layouts
+    from stackops.scripts.python.terminal_layout_files import init_layouts, path_layouts, validate_layouts
     from stackops.scripts.python.terminal_summary_commands import summary
 
     layouts_app = typer.Typer(
@@ -417,6 +418,13 @@ def get_app() -> typer.Typer:
 
     layouts_app.command("edit", no_args_is_help=False, help="📝 <e> Edit a layout file, create it if missing, and validate after saving.")(edit_layouts)
     layouts_app.command("e", no_args_is_help=False, hidden=True)(edit_layouts)
+
+    layouts_app.command("path", help="📍 <P> Print layout file and schema paths as JSON.")(path_layouts)
+    layouts_app.command("P", hidden=True)(path_layouts)
+    layouts_app.command("init", help="🆕 <i> Create a missing layout file and its schema without opening an editor.")(init_layouts)
+    layouts_app.command("i", hidden=True)(init_layouts)
+    layouts_app.command("validate", help="✅ <v> Validate a layout file without opening an editor.")(validate_layouts)
+    layouts_app.command("v", hidden=True)(validate_layouts)
 
     layouts_app.command("attach", no_args_is_help=False, help=attach_to_session.__doc__, short_help="📎 <a> Attach to a session target")(attach_to_session)
     layouts_app.command("a", no_args_is_help=False, help=attach_to_session.__doc__, hidden=True)(attach_to_session)

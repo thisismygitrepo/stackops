@@ -87,32 +87,27 @@ def edit_layouts(
         Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the layout file with."),
     ] = "hx",
 ) -> None:
-    import os
     import shutil
     import subprocess
 
-    from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import select_layout
     from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import default_layout_source_paths
-    from stackops.utils.managed_files import ensure_managed_schema, get_managed_file_spec
+    from stackops.scripts.python.terminal_layout_files import resolve_layout_file
+    from stackops.utils.managed_file_operations import initialize_managed_file, validate_managed_file
+    from stackops.utils.managed_files import get_managed_file_spec
 
-    if layouts_file is not None and source is not None:
-        raise typer.BadParameter("LAYOUTS_FILE cannot be combined with --source.")
-    if layouts_file is not None:
-        file_path = layouts_file.expanduser().absolute()
+    if layouts_file is not None or source is not None:
+        file_path = resolve_layout_file(layouts_file=layouts_file, source=source)
     else:
         source_paths = default_layout_source_paths()
-        if source is not None:
-            file_path = source_paths[source]
-        else:
-            from stackops.utils.options_utils.options import choose_from_options
+        from stackops.utils.options_utils.options import choose_from_options
 
-            choices = {f"""{name}: {path}""": path for name, path in source_paths.items()}
-            selection = choose_from_options(
-                options=list(choices), multi=False, custom_input=False, tv=True, msg="Choose a layout config file to edit:",
-            )
-            if selection is None:
-                raise typer.Abort()
-            file_path = choices[selection]
+        choices = {f"""{name}: {path}""": path for name, path in source_paths.items()}
+        selection = choose_from_options(
+            options=list(choices), multi=False, custom_input=False, tv=True, msg="Choose a layout config file to edit:",
+        )
+        if selection is None:
+            raise typer.Abort()
+        file_path = choices[selection]
 
     try:
         if file_path.exists() and not file_path.is_file():
@@ -120,12 +115,9 @@ def edit_layouts(
         editor_bin = shutil.which(editor)
         if editor_bin is None:
             raise ValueError(f"""Editor '{editor}' is not available on PATH.""")
-        if not file_path.exists():
-            spec = get_managed_file_spec("layouts")
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            file_path.write_text(spec.initial_content, encoding="utf-8")
-            os.chmod(file_path, spec.file_mode)
-            ensure_managed_schema(spec=spec, data_path=file_path)
+        existed = file_path.exists()
+        initialize_managed_file(spec=get_managed_file_spec("layouts"), data_path=file_path)
+        if not existed:
             typer.echo(f"""Created layout file: {file_path}""")
 
         editor_command = [editor_bin, "--wait"] if editor == "code" else [editor_bin]
@@ -140,7 +132,7 @@ def edit_layouts(
         raise typer.Exit(code=result.returncode if result.returncode > 0 else 1)
 
     try:
-        select_layout(layouts_json_file=str(file_path), selected_layouts_names=[], select_interactively=False)
+        validate_managed_file(kind="layouts", data_path=file_path)
     except (OSError, ValueError) as error:
         typer.echo(f"""Error: Invalid layout file after editing: {error}""", err=True)
         raise typer.Exit(code=1) from error

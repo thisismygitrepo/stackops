@@ -229,11 +229,12 @@ def checkout_to_branch_command(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_repos_stats, cli_repos_version
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_edit import edit_repositories
+    from stackops.scripts.python.helpers.helpers_devops.cli_repos_files import init_repositories, path_repositories, validate_repositories
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_list import list_repositories
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
 
     repos_apps = typer.Typer(
-        cls=ordered_group(("sync", "register", "edit", "list", "action", "version", "guard", "stats")),
+        cls=ordered_group(("sync", "register", "edit", "path", "init", "validate", "list", "action", "version", "guard", "stats")),
         help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
@@ -244,8 +245,15 @@ def get_app() -> typer.Typer:
     repos_apps.command(name="register", help="📝 <r> Record repositories into a repos.json specification")(capture)
     repos_apps.command(name="r", help="Record repositories into a repos.json specification", hidden=True)(capture)
 
-    repos_apps.command(name="edit", help="📝 <e> Edit and validate the repos.json specification")(edit_repositories)
-    repos_apps.command(name="e", help="Edit and validate the repos.json specification", hidden=True)(edit_repositories)
+    repos_apps.command(name="edit", help="📝 <e> Create if missing, edit, and validate the repos.json specification")(edit_repositories)
+    repos_apps.command(name="e", help="Create if missing, edit, and validate the repos.json specification", hidden=True)(edit_repositories)
+
+    repos_apps.command(name="path", help="📍 <p> Print repository specification and schema paths as JSON.")(path_repositories)
+    repos_apps.command(name="p", hidden=True)(path_repositories)
+    repos_apps.command(name="init", help="🆕 <i> Create a missing repository specification and its schema without opening an editor.")(init_repositories)
+    repos_apps.command(name="i", hidden=True)(init_repositories)
+    repos_apps.command(name="validate", help="✅ <v> Validate a repository specification without opening an editor.")(validate_repositories)
+    repos_apps.command(name="v", hidden=True)(validate_repositories)
 
     repos_apps.command(name="list", help="📋 <l> List all registered repositories with change counts; optionally filter with --guarded")(list_repositories)
     repos_apps.command(name="l", help="List all registered repositories with change counts; optionally filter with --guarded", hidden=True)(list_repositories)

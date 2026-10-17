@@ -1,0 +1,26 @@
+{
+    "$schema": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json",
+    "version": "0.1",
+    "layouts": [
+        {
+            "layoutName": "stackopsLayout",
+            "layoutTabs": [
+                {
+                    "tabName": "Tab1",
+                    "startDir": "~/code/stackops",
+                    "command": "bash"
+                },
+                {
+                    "tabName": "Tab2",
+                    "startDir": "~/code/stackops",
+                    "command": "bash"
+                },
+                {
+                    "tabName": "Tab3",
+                    "startDir": "~/code/stackops",
+                    "command": "bash"
+                }
+            ]
+        }
+    ]
+}
