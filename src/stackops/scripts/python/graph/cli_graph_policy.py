@@ -62,7 +62,7 @@ SHORT_OVERRIDES: dict[tuple[str, str], str] = {
     ("utils machine autostart", "--source"): "-S",
     ("fire", "--remote"): "-R",
     ("devops config terminal tmux-style set-option", "--raw"): "-R",
-    ("devops status", "--ssh"): "-H",
+    ("devops self status", "--ssh"): "-H",
     ("terminal export", "--overwrite"): "-w",
     ("devops config export-example", "--overwrite"): "-f",
     ("devops config setup layouts", "--overwrite"): "-f",

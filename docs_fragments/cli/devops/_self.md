@@ -15,6 +15,7 @@ Current `devops self --help` exposes:
 | `install` | Install stackops locally, optionally from a development checkout | Always |
 | `clone` | Clone the StackOps source checkout into a local directory | Always |
 | `update` | Upgrade stackops, refresh packaged assets, and optionally sync public configs | Always |
+| `status` | Inspect machine, repository, application, and configuration state | Always |
 | `explore-cli` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
 | `explore-python-api` | Inspect the documented Python API graph in terminal, DOT, Plotly, or search form | Always |
 | `readme` | Fetch and render the project README in the terminal | Always |
@@ -57,12 +58,12 @@ devops self update
 devops self update --sync-public-configs
 ```
 
-### Machine status: `devops status`
+### status
 
-Inspect the current machine, optionally limited to specific sections. This command lives directly under `devops`.
+Inspect the current machine, optionally limited to specific sections.
 
 ```bash
-devops status [OPTIONS]
+devops self status [OPTIONS]
 ```
 
 Key options from current help:

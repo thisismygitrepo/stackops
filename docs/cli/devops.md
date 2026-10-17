@@ -22,7 +22,6 @@ devops [OPTIONS] COMMAND [ARGS]...
 | `network` | Sharing, transfer, address, SSH, and device helpers |
 | `scripts` | Run, list, locate, and edit scripts |
 | `vault` | Search and load secrets, manage entries, and access Bitwarden |
-| `status` | Inspect machine, repositories, applications, and configuration state |
 | `security` | Run security and installer-audit helpers |
 
 ---
@@ -116,6 +115,7 @@ Use `config edit data` to edit the backup mapping.
 - `install`
 - `clone`
 - `update`
+- `status`
 - `explore-cli`
 - `explore-python-api`
 - `readme`
@@ -160,7 +160,7 @@ Use `config edit data` to edit the backup mapping.
 - `sync`
 - `clean-cache`
 
-`status` and `security` live directly under `devops`. `self` contains StackOps management commands; its developer commands require a local source checkout. `self build-assets` provides `cli-graph`, `charts`, and `skill-refs`.
+`security` lives directly under `devops`. `self` contains StackOps management commands and `status` for inspecting machine, repository, application, and configuration state; its developer commands require a local source checkout. `self build-assets` provides `cli-graph`, `charts`, and `skill-refs`.
 
 ---
 
@@ -324,7 +324,7 @@ devops self --help
 devops network --help
 devops vault --help
 devops vault bitwarden --help
-devops status --help
+devops self status --help
 devops security --help
 devops self docs --help
 devops config terminal --help

@@ -189,6 +189,7 @@ def get_app() -> typer.Typer:
         readme,
     )
     from stackops.scripts.python.helpers.helpers_devops.cli_self_release import release
+    from stackops.scripts.python.helpers.helpers_devops.cli_status import status
     from stackops.scripts.python.helpers.helpers_devops.stackops_release import is_stackops_repository
 
     cli_app = typer.Typer(
@@ -207,6 +208,8 @@ def get_app() -> typer.Typer:
     cli_app.command(name="c", no_args_is_help=False, help="Clone the StackOps source checkout.", hidden=True)(clone)
     cli_app.command(name="update", no_args_is_help=False, help="🔄 <u> UPDATE stackops")(update)
     cli_app.command(name="u", no_args_is_help=False, hidden=True)(update)
+    cli_app.command(name="status", no_args_is_help=False, help="📊 <s> Show machine, repository, application, and configuration status.")(status)
+    cli_app.command(name="s", no_args_is_help=False, hidden=True)(status)
 
     cli_app.command(name="explore-cli", help="🧭 <x> Explore the StackOps CLI graph.", context_settings=ctx_settings)(explore_cli)
     cli_app.command(name="explore", help="Explore the StackOps CLI graph.", hidden=True, context_settings=ctx_settings)(explore_cli)

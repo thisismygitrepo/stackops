@@ -15804,236 +15804,6 @@
             ]
           },
           {
-            "kind": "command",
-            "name": "status",
-            "fullPath": "devops status",
-            "shortPath": "d S",
-            "help": "📊 <S> Show machine, repository, application, and configuration status.",
-            "source": {
-              "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_status.py",
-              "module": "stackops.scripts.python.helpers.helpers_devops.cli_status",
-              "callable": "status"
-            },
-            "signature": {
-              "raw_lines": [
-                "def status(",
-                "    machine: Annotated[bool, typer.Option(\"--machine\", \"-m\", help=\"Show the machine/system information section.\")] = False,",
-                "    shell: Annotated[bool, typer.Option(\"--shell\", \"-s\", help=\"Show the shell profile section.\")] = False,",
-                "    repos: Annotated[bool, typer.Option(\"--repos\", \"-r\", help=\"Show the configured repositories section.\")] = False,",
-                "    ssh: Annotated[bool, typer.Option(\"--ssh\", \"-H\", help=\"Show the SSH configuration section.\")] = False,",
-                "    configs: Annotated[",
-                "        bool, typer.Option(\"--configs\", \"--dotfiles\", \"--symlinks\", \"-c\", \"-d\", \"-l\", help=\"Show managed files, schemas, configuration mappings, and symlinks.\")",
-                "    ] = False,",
-                "    apps: Annotated[bool, typer.Option(\"--apps\", \"--tools\", \"-a\", \"-t\", help=\"Show the installed apps/tools section.\")] = False,",
-                "    backup: Annotated[bool, typer.Option(\"--backup\", \"-b\", help=\"Show the backup configuration section.\")] = False,",
-                "    plain: Annotated[bool, typer.Option(\"--plain\", \"-p\", help=\"Print a report instead of opening the interactive dashboard.\")] = False,",
-                ") -> None:",
-                "    from stackops.scripts.python.helpers.helpers_devops import devops_status",
-                "",
-                "    sections = devops_status.resolve_sections(machine=machine, shell=shell, repos=repos, ssh=ssh, configs=configs, apps=apps, backup=backup)",
-                "    devops_status.main(sections=sections, plain=plain)"
-              ],
-              "name": "status",
-              "parameters": [
-                {
-                  "name": "machine",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--machine', '-m', help='Show the machine/system information section.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--machine",
-                      "-m"
-                    ],
-                    "long_flags": [
-                      "--machine"
-                    ],
-                    "short_flags": [
-                      "-m"
-                    ],
-                    "help": "Show the machine/system information section."
-                  }
-                },
-                {
-                  "name": "shell",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--shell', '-s', help='Show the shell profile section.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--shell",
-                      "-s"
-                    ],
-                    "long_flags": [
-                      "--shell"
-                    ],
-                    "short_flags": [
-                      "-s"
-                    ],
-                    "help": "Show the shell profile section."
-                  }
-                },
-                {
-                  "name": "repos",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--repos', '-r', help='Show the configured repositories section.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--repos",
-                      "-r"
-                    ],
-                    "long_flags": [
-                      "--repos"
-                    ],
-                    "short_flags": [
-                      "-r"
-                    ],
-                    "help": "Show the configured repositories section."
-                  }
-                },
-                {
-                  "name": "ssh",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--ssh', '-H', help='Show the SSH configuration section.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--ssh",
-                      "-H"
-                    ],
-                    "long_flags": [
-                      "--ssh"
-                    ],
-                    "short_flags": [
-                      "-H"
-                    ],
-                    "help": "Show the SSH configuration section."
-                  }
-                },
-                {
-                  "name": "configs",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--configs', '--dotfiles', '--symlinks', '-c', '-d', '-l', help='Show managed files, schemas, configuration mappings, and symlinks.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--configs",
-                      "--dotfiles",
-                      "--symlinks",
-                      "-c",
-                      "-d",
-                      "-l"
-                    ],
-                    "long_flags": [
-                      "--configs",
-                      "--dotfiles",
-                      "--symlinks"
-                    ],
-                    "short_flags": [
-                      "-c",
-                      "-d",
-                      "-l"
-                    ],
-                    "help": "Show managed files, schemas, configuration mappings, and symlinks."
-                  }
-                },
-                {
-                  "name": "apps",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--apps', '--tools', '-a', '-t', help='Show the installed apps/tools section.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--apps",
-                      "--tools",
-                      "-a",
-                      "-t"
-                    ],
-                    "long_flags": [
-                      "--apps",
-                      "--tools"
-                    ],
-                    "short_flags": [
-                      "-a",
-                      "-t"
-                    ],
-                    "help": "Show the installed apps/tools section."
-                  }
-                },
-                {
-                  "name": "backup",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--backup', '-b', help='Show the backup configuration section.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--backup",
-                      "-b"
-                    ],
-                    "long_flags": [
-                      "--backup"
-                    ],
-                    "short_flags": [
-                      "-b"
-                    ],
-                    "help": "Show the backup configuration section."
-                  }
-                },
-                {
-                  "name": "plain",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--plain', '-p', help='Print a report instead of opening the interactive dashboard.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--plain",
-                      "-p"
-                    ],
-                    "long_flags": [
-                      "--plain"
-                    ],
-                    "short_flags": [
-                      "-p"
-                    ],
-                    "help": "Print a report instead of opening the interactive dashboard."
-                  }
-                }
-              ],
-              "return": "None"
-            },
-            "aliases": [
-              {
-                "name": "S",
-                "hidden": true
-              }
-            ]
-          },
-          {
             "kind": "group",
             "name": "self",
             "fullPath": "devops self",
@@ -16601,6 +16371,239 @@
                 "aliases": [
                   {
                     "name": "u",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "status",
+                "fullPath": "devops self status",
+                "shortPath": "d s s",
+                "help": "📊 <s> Show machine, repository, application, and configuration status.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_status.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_status",
+                  "callable": "status"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def status(",
+                    "    machine: Annotated[bool, typer.Option(\"--machine\", \"-m\", help=\"Show the machine/system information section.\")] = False,",
+                    "    shell: Annotated[bool, typer.Option(\"--shell\", \"-s\", help=\"Show the shell profile section.\")] = False,",
+                    "    repos: Annotated[bool, typer.Option(\"--repos\", \"-r\", help=\"Show the configured repositories section.\")] = False,",
+                    "    ssh: Annotated[bool, typer.Option(\"--ssh\", \"-H\", help=\"Show the SSH configuration section.\")] = False,",
+                    "    configs: Annotated[",
+                    "        bool, typer.Option(\"--configs\", \"--dotfiles\", \"--symlinks\", \"-c\", \"-d\", \"-l\", help=\"Show managed files, schemas, configuration mappings, and symlinks.\")",
+                    "    ] = False,",
+                    "    apps: Annotated[bool, typer.Option(\"--apps\", \"--tools\", \"-a\", \"-t\", help=\"Show the installed apps/tools section.\")] = False,",
+                    "    backup: Annotated[bool, typer.Option(\"--backup\", \"-b\", help=\"Show the backup configuration section.\")] = False,",
+                    "    plain: Annotated[bool, typer.Option(\"--plain\", \"-p\", help=\"Print a report instead of opening the interactive dashboard.\")] = False,",
+                    ") -> None:",
+                    "    from stackops.scripts.python.helpers.helpers_devops import devops_status",
+                    "",
+                    "    sections = devops_status.resolve_sections(machine=machine, shell=shell, repos=repos, ssh=ssh, configs=configs, apps=apps, backup=backup)",
+                    "    devops_status.main(sections=sections, plain=plain)"
+                  ],
+                  "name": "status",
+                  "parameters": [
+                    {
+                      "name": "machine",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--machine', '-m', help='Show the machine/system information section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--machine",
+                          "-m"
+                        ],
+                        "long_flags": [
+                          "--machine"
+                        ],
+                        "short_flags": [
+                          "-m"
+                        ],
+                        "help": "Show the machine/system information section."
+                      }
+                    },
+                    {
+                      "name": "shell",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--shell', '-s', help='Show the shell profile section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--shell",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--shell"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Show the shell profile section."
+                      }
+                    },
+                    {
+                      "name": "repos",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--repos', '-r', help='Show the configured repositories section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--repos",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--repos"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Show the configured repositories section."
+                      }
+                    },
+                    {
+                      "name": "ssh",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--ssh', '-H', help='Show the SSH configuration section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--ssh",
+                          "-H"
+                        ],
+                        "long_flags": [
+                          "--ssh"
+                        ],
+                        "short_flags": [
+                          "-H"
+                        ],
+                        "help": "Show the SSH configuration section."
+                      }
+                    },
+                    {
+                      "name": "configs",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--configs', '--dotfiles', '--symlinks', '-c', '-d', '-l', help='Show managed files, schemas, configuration mappings, and symlinks.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--configs",
+                          "--dotfiles",
+                          "--symlinks",
+                          "-c",
+                          "-d",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--configs",
+                          "--dotfiles",
+                          "--symlinks"
+                        ],
+                        "short_flags": [
+                          "-c",
+                          "-d",
+                          "-l"
+                        ],
+                        "help": "Show managed files, schemas, configuration mappings, and symlinks."
+                      }
+                    },
+                    {
+                      "name": "apps",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--apps', '--tools', '-a', '-t', help='Show the installed apps/tools section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--apps",
+                          "--tools",
+                          "-a",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--apps",
+                          "--tools"
+                        ],
+                        "short_flags": [
+                          "-a",
+                          "-t"
+                        ],
+                        "help": "Show the installed apps/tools section."
+                      }
+                    },
+                    {
+                      "name": "backup",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--backup', '-b', help='Show the backup configuration section.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--backup",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--backup"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Show the backup configuration section."
+                      }
+                    },
+                    {
+                      "name": "plain",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--plain', '-p', help='Print a report instead of opening the interactive dashboard.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--plain",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--plain"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Print a report instead of opening the interactive dashboard."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "s",
                     "hidden": true
                   }
                 ]
