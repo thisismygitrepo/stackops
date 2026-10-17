@@ -154,10 +154,15 @@ def load_installer_data_file(path: Path) -> InstallerDataFiles:
     if not isinstance(installer_values, list):
         raise InstallerDataFileError(f"Installer data 'installers' must be a list: {path}")
 
-    installers = [
-        _normalize_installer_data(value=installer_value, index=index, path=path)
-        for index, installer_value in enumerate(installer_values)
-    ]
+    installers: list[InstallerData] = []
+    app_names: set[str] = set()
+    for index, installer_value in enumerate(installer_values):
+        installer = _normalize_installer_data(value=installer_value, index=index, path=path)
+        normalized_app_name = installer["appName"].casefold()
+        if normalized_app_name in app_names:
+            raise InstallerDataFileError(f"""Duplicate installer appName in {path}: {installer['appName']}""")
+        app_names.add(normalized_app_name)
+        installers.append(installer)
 
     catalog: InstallerDataFiles = {"version": version, "installers": installers}
     schema_reference = payload.get("$schema")
@@ -168,30 +173,23 @@ def load_installer_data_file(path: Path) -> InstallerDataFiles:
     return catalog
 
 
-def _index_installers(installers: list[InstallerData], path: Path) -> dict[str, InstallerData]:
-    indexed: dict[str, InstallerData] = {}
-    for installer in installers:
-        normalized_app_name = installer["appName"].casefold()
-        if normalized_app_name in indexed:
-            raise InstallerDataFileError(f"Duplicate installer appName in {path}: {installer['appName']}")
-        indexed[normalized_app_name] = installer
-    return indexed
-
-
-def read_installer_data(source: InstallerDataSource) -> list[InstallerData]:
+def read_installer_data(source: InstallerDataSource, user_path: Path | None) -> list[InstallerData]:
     normalized_source = INSTALLER_DATA_SOURCE_MAP[source]
+    if user_path is not None and normalized_source == "library":
+        raise InstallerDataFileError("--path cannot be combined with --source library.")
+    user_catalog_path = USER_INSTALLER_DATA_PATH if user_path is None else user_path.expanduser().absolute()
     match normalized_source:
         case "library":
             library_catalog = load_installer_data_file(path=LIBRARY_INSTALLER_DATA_PATH)
-            return list(_index_installers(library_catalog["installers"], LIBRARY_INSTALLER_DATA_PATH).values())
+            return library_catalog["installers"]
         case "user":
-            user_catalog = load_installer_data_file(path=USER_INSTALLER_DATA_PATH)
-            return list(_index_installers(user_catalog["installers"], USER_INSTALLER_DATA_PATH).values())
+            user_catalog = load_installer_data_file(path=user_catalog_path)
+            return user_catalog["installers"]
         case "all":
             library_catalog = load_installer_data_file(path=LIBRARY_INSTALLER_DATA_PATH)
-            merged_installers = _index_installers(library_catalog["installers"], LIBRARY_INSTALLER_DATA_PATH)
-            if not USER_INSTALLER_DATA_PATH.exists():
+            merged_installers = {installer["appName"].casefold(): installer for installer in library_catalog["installers"]}
+            if user_path is None and not user_catalog_path.exists():
                 return list(merged_installers.values())
-            user_catalog = load_installer_data_file(path=USER_INSTALLER_DATA_PATH)
-            merged_installers.update(_index_installers(user_catalog["installers"], USER_INSTALLER_DATA_PATH))
+            user_catalog = load_installer_data_file(path=user_catalog_path)
+            merged_installers.update({installer["appName"].casefold(): installer for installer in user_catalog["installers"]})
             return list(merged_installers.values())

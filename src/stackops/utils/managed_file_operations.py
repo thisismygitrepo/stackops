@@ -100,6 +100,10 @@ def validate_managed_file(*, kind: ManagedFileKind, data_path: Path) -> None:
         raise ValueError(result.stderr.strip() or f"""Schema validation failed with exit code {result.returncode}.""")
     try:
         match kind:
+            case "software":
+                from stackops.utils.installer_utils.installer_catalog import load_installer_data_file
+
+                load_installer_data_file(path=data_path)
             case "repos":
                 from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec
 

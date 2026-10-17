@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-ManagedFileKind: TypeAlias = Literal["config", "layouts", "dotfiles", "data", "secrets", "repos", "prompts", "parallel", "mcp"]
+ManagedFileKind: TypeAlias = Literal["config", "layouts", "dotfiles", "data", "secrets", "repos", "software", "prompts", "parallel", "mcp"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,6 +23,30 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
             from stackops.utils.managed_agent_files import get_agent_managed_file_spec
 
             return get_agent_managed_file_spec(kind)
+        case "software":
+            import stackops.utils.schemas.installer as installer_assets
+            from stackops.utils.installer_utils.installer_catalog import (
+                LIBRARY_INSTALLER_DATA_PATH,
+                USER_INSTALLER_DATA_PATH,
+                load_installer_data_file,
+            )
+            from stackops.utils.schemas.installer.installer_types import InstallerDataFiles
+
+            initial_catalog: InstallerDataFiles = {
+                "$schema": f"""./{installer_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE}""",
+                "version": load_installer_data_file(path=LIBRARY_INSTALLER_DATA_PATH)["version"],
+                "installers": [],
+            }
+            return ManagedFileSpec(
+                user_path=USER_INSTALLER_DATA_PATH,
+                example_source_path=LIBRARY_INSTALLER_DATA_PATH,
+                schema_source_path=get_path_reference_path(
+                    module=installer_assets,
+                    path_reference=installer_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE,
+                ),
+                initial_content=json.dumps(initial_catalog, indent=2) + "\n",
+                file_mode=0o644,
+            )
         case "repos":
             import stackops.utils.schemas.repos as repos_assets
             from stackops.scripts.python.helpers.helpers_repos.spec_store import DEFAULT_REPOS_SPEC_PATH, REPOS_SPEC_VERSION

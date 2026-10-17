@@ -55,7 +55,7 @@ sudo systemd-run \
 """
         case "as-service":
             code = """
-devops install --update cloudflared
+devops software install --update cloudflared
 home_dir=$HOME
 cloudflared_path="$home_dir/.local/bin/cloudflared"
 sudo $cloudflared_path service uninstall

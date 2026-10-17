@@ -6,7 +6,6 @@ import typer
 
 from stackops.scripts.python.helpers.helpers_search.script_help import SCRIPT_SOURCE
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
-from stackops.utils.schemas.installer.installer_types import InstallerDataSource
 
 
 class EmojiDisplayDiagnostic(TypedDict):
@@ -55,54 +54,10 @@ def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) 
         raise typer.Exit(code=nested_result)
 
 
-def install(
-    ctx: typer.Context,
-    which: Annotated[
-        str | None,
-        typer.Argument(
-            help="Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set."
-        ),
-    ] = None,
-    group: Annotated[bool, typer.Option(..., "--group", "-g", help="Treat 'which' as a group name. A group is bundle of apps.")] = False,
-    check: Annotated[bool, typer.Option(..., "--check", "-c", help="Check installation status instead of installing.")] = False,
-    source: Annotated[
-        InstallerDataSource,
-        typer.Option(
-            ...,
-            "--source",
-            "-s",
-            help="Installer data source to use: 'library', 'user', or 'all'. User file: ~/dotfiles/stackops/mapper/installer_data.json.",
-        ),
-    ] = "all",
-    interactive: Annotated[bool, typer.Option(..., "--interactive", "-i", help="Interactive selection of programs to install.")] = False,
-    explore: Annotated[bool, typer.Option(..., "--explore", "-x", help="Explore installer categoryLabels before installing.")] = False,
-    update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
-    version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
-) -> None:
-    """📦 Install packages."""
-    from stackops.utils.installer_utils import installer_cli as installer_entry_point
-    from stackops.utils.installer_utils.installer_catalog import InstallerDataFileError
+def software(ctx: typer.Context) -> None:
+    from stackops.scripts.python.helpers.helpers_devops import cli_software
 
-    if check:
-        if which is None:
-            raise typer.BadParameter("program name or group name is required when --check is set")
-        installer_entry_point.check_installations(which=which, group=group)
-        return
-
-    try:
-        installer_entry_point.main_installer_cli(
-            ctx=ctx,
-            which=which,
-            group=group,
-            source=source,
-            interactive=interactive,
-            explore=explore,
-            update=update,
-            version=version,
-        )
-    except InstallerDataFileError as exc:
-        typer.echo(f"❌ {exc}", err=True)
-        raise typer.Exit(1) from exc
+    _run_nested_app(ctx, cli_software.get_app)
 
 
 def repos(ctx: typer.Context) -> None:
@@ -204,8 +159,8 @@ def get_app() -> typer.Typer:
         "help_option_names": [],
     }
 
-    cli_app.command("install", no_args_is_help=True, help=install.__doc__, short_help="🔧 <i> Install essential packages")(install)
-    cli_app.command("i", no_args_is_help=True, help=install.__doc__, hidden=True)(install)
+    cli_app.command("software", help="📦 <w> Install software and manage catalogs", context_settings=ctx_settings)(software)
+    cli_app.command("w", hidden=True, context_settings=ctx_settings)(software)
 
     cli_app.command("data", help="💾 <d> Data management", context_settings=ctx_settings)(data)
     cli_app.command("d", hidden=True, context_settings=ctx_settings)(data)

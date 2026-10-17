@@ -2,6 +2,7 @@
 """Devops Devapps Install
 """
 
+from pathlib import Path
 from typing import Annotated, Final
 
 import typer
@@ -65,6 +66,7 @@ def main_installer_cli(
     update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
     version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
     source: Annotated[InstallerDataSource, typer.Option("--source", "-s", help="Installer definitions to use.")] = "all",
+    path: Annotated[Path | None, typer.Option("--path", "-p", help="User software catalog path.")] = None,
     ctx: typer.Context | None = None,
 ) -> None:
     install_request = InstallRequest(version=version, update=update)
@@ -82,9 +84,10 @@ def main_installer_cli(
             install_request=install_request,
             category_labels=category_labels,
             source=source,
+            user_path=path,
         )
     if interactive:
-        return install_interactively(install_request=install_request, source=source)
+        return install_interactively(install_request=install_request, source=source, user_path=path)
     if which is not None:
         requested_names = [item.strip() for item in which.split(",") if item.strip() != ""]
         if len(requested_names) == 0:
@@ -93,9 +96,9 @@ def main_installer_cli(
             raise typer.Exit(1)
         if group:
             for a_group in requested_names:
-                install_group(package_group=a_group, install_request=install_request, source=source)
+                install_group(package_group=a_group, install_request=install_request, source=source, user_path=path)
             return None
-        return install_clis(clis_names=requested_names, install_request=install_request, source=source)
+        return install_clis(clis_names=requested_names, install_request=install_request, source=source, user_path=path)
     else:
         if group:
             from rich.console import Console
@@ -127,7 +130,7 @@ def main_installer_cli(
     raise typer.Exit(1)
 
 
-def install_interactively(install_request: InstallRequest, source: InstallerDataSource) -> None:
+def install_interactively(install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None:
     from stackops.utils.options_utils.options import choose_from_options
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
     from stackops.utils.cli_utils.command_lookup import check_tool_exists
@@ -139,7 +142,7 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
     from rich.console import Console
     from rich.panel import Panel
 
-    installers = get_installers_from_source(source=source, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
+    installers = get_installers_from_source(source=source, user_path=user_path, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
     installer_option_to_data = _build_installer_option_to_data(installers)
     available_app_names = {installer["appName"].casefold() for installer in installers}
     category_display_to_name = get_group_name_to_repr(available_app_names=available_app_names)
@@ -176,7 +179,7 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
         if a_program_name.startswith("📦 "):
             category_name = category_display_to_name.get(a_program_name)
             if category_name:
-                install_group(package_group=category_name, install_request=install_request, source=source)
+                install_group(package_group=category_name, install_request=install_request, source=source, user_path=user_path)
         else:
             an_installer_data = installer_option_to_data[a_program_name]
             installation_result = Installer(an_installer_data).install_robust(install_request=install_request)
@@ -185,7 +188,7 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
         render_installation_summary(results=installation_results, console=Console(), title="📊 Installation Summary")
 
 
-def install_group(package_group: str, install_request: InstallRequest, source: InstallerDataSource) -> None:
+def install_group(package_group: str, install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None:
     from stackops.utils.installer_utils.installer_runner import get_installers_from_source, install_bulk
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from rich.console import Console
@@ -199,6 +202,7 @@ def install_group(package_group: str, install_request: InstallRequest, source: I
         package_group_typed: PACKAGE_NAME = next(group_name for group_name in PACKAGE_GROUP2NAMES if group_name == package_group)
         installers_ = get_installers_from_source(
             source=source,
+            user_path=user_path,
             os=get_os_name(),
             arch=get_normalized_arch(),
             which_cats=[package_group_typed],
@@ -213,13 +217,13 @@ def install_group(package_group: str, install_request: InstallRequest, source: I
     raise typer.Exit(1)
 
 
-def install_clis(clis_names: list[str], install_request: InstallRequest, source: InstallerDataSource) -> None:
+def install_clis(clis_names: list[str], install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None:
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from stackops.utils.installer_utils.installer_summary import render_installation_summary
     from stackops.utils.installer_utils.installer_runner import get_installers_from_source
     from stackops.utils.installer_utils.installer_class import Installer
     from rich.console import Console
-    all_installers_data = get_installers_from_source(source=source, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
+    all_installers_data = get_installers_from_source(source=source, user_path=user_path, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
     total_results: list[InstallationResult] = []
     for a_cli_name in clis_names:
         resolved_cli_name = INSTALLER_NAME_ALIASES.get(a_cli_name.lower(), a_cli_name)
@@ -244,7 +248,7 @@ def install_clis(clis_names: list[str], install_request: InstallRequest, source:
             clis_names_chosen_interactively = handle_installer_not_found(a_cli_name, all_installers_data)
             if len(clis_names_chosen_interactively)  == 0:
                 continue
-            install_clis(clis_names=clis_names_chosen_interactively, install_request=install_request, source=source)
+            install_clis(clis_names=clis_names_chosen_interactively, install_request=install_request, source=source, user_path=user_path)
             continue
         result = Installer(selected_installer).install_robust(install_request=install_request)
         total_results.append(result)

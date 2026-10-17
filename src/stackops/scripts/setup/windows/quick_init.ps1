@@ -9,7 +9,7 @@ irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackop
 
 uv tool install --upgrade --python 3.14 stackops
 
-devops install --group sysabc
+devops software install --group sysabc
 
 # configs
 devops config copy-assets all
@@ -17,6 +17,6 @@ devops config dotfiles sync down --sensitivity public --method copy --on-conflic
 devops config terminal config-shell --which default
 devops config terminal config-shell --which nushell
 
-devops install --group termabc
+devops software install --group termabc
 wt  # start Windows Terminal to pick up config changes
-devops install --group gui
+devops software install --group gui

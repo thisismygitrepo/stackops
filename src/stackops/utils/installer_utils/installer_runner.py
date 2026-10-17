@@ -136,17 +136,18 @@ def _filter_installers(
 
 
 def get_installers(os: OPERATING_SYSTEMS, arch: CPU_ARCHITECTURES, which_cats: list[PACKAGE_NAME] | None) -> list[InstallerData]:
-    library_installers = read_installer_data(source="library")
+    library_installers = read_installer_data(source="library", user_path=None)
     return _filter_installers(installers=library_installers, os=os, arch=arch, which_cats=which_cats)
 
 
 def get_installers_from_source(
     source: InstallerDataSource,
+    user_path: Path | None,
     os: OPERATING_SYSTEMS,
     arch: CPU_ARCHITECTURES,
     which_cats: list[PACKAGE_NAME] | None,
 ) -> list[InstallerData]:
-    installers = read_installer_data(source=source)
+    installers = read_installer_data(source=source, user_path=user_path)
     return _filter_installers(installers=installers, os=os, arch=arch, which_cats=which_cats)
 
 

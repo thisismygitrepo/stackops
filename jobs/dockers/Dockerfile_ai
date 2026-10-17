@@ -5,7 +5,7 @@ FROM statistician/stackops-slim:latest
 # Set bash as default shell
 SHELL ["/bin/bash", "-lc"]
 
-RUN /root/.local/bin/devops install --group agents
+RUN /root/.local/bin/devops software install --group agents
 
 RUN cortex_install_dir="$(dirname "$(readlink /root/.local/bin/cortex)")" && \
     mv "$cortex_install_dir" /opt/cortex && \

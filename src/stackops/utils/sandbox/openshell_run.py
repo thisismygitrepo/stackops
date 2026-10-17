@@ -33,7 +33,7 @@ def run_openshell(
         )
         if "--detach" not in capabilities.stdout:
             raise ValueError(
-                "Update OpenShell before running this backend: devops install openshell --update --source library. "
+                "Update OpenShell before running this backend: devops software install openshell --update --source library. "
                 "The installed CLI does not support detached sandbox creation."
             )
         with TemporaryDirectory(prefix="stackops-openshell-") as temporary:

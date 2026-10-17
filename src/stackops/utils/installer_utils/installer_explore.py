@@ -1,5 +1,6 @@
 """Category-label explorer for `devops install --explore`."""
 
+from pathlib import Path
 from typing import Any, TypedDict
 
 import typer
@@ -116,6 +117,7 @@ def explore_installers_by_category_labels(
     install_request: InstallRequest,
     category_labels: list[str] | None,
     source: InstallerDataSource,
+    user_path: Path | None,
 ) -> None:
     from rich.console import Console
     from rich.panel import Panel
@@ -129,7 +131,7 @@ def explore_installers_by_category_labels(
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
 
     console = Console()
-    installers = get_installers_from_source(source=source, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
+    installers = get_installers_from_source(source=source, user_path=user_path, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
     category_definitions = _load_category_label_definitions()
     category_to_installers = _group_installers_by_category_label(installers=installers)
     category_option_to_label = _build_category_label_options(

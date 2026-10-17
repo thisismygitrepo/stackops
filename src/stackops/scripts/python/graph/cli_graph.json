@@ -79,266 +79,736 @@
         },
         "children": [
           {
-            "kind": "command",
-            "name": "install",
-            "fullPath": "devops install",
-            "shortPath": "d i",
-            "help": "📦 Install packages.",
+            "kind": "group",
+            "name": "software",
+            "fullPath": "devops software",
+            "shortPath": "d w",
+            "help": "📦 <w> Install software and manage catalogs",
             "source": {
               "file": "src/stackops/scripts/python/devops.py",
               "module": "stackops.scripts.python.devops",
-              "callable": "install"
+              "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_software.get_app",
+              "callable": "software"
             },
-            "signature": {
-              "raw_lines": [
-                "def install(",
-                "    ctx: typer.Context,",
-                "    which: Annotated[",
-                "        str | None,",
-                "        typer.Argument(",
-                "            help=\"Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.\"",
-                "        ),",
-                "    ] = None,",
-                "    group: Annotated[bool, typer.Option(..., \"--group\", \"-g\", help=\"Treat 'which' as a group name. A group is bundle of apps.\")] = False,",
-                "    check: Annotated[bool, typer.Option(..., \"--check\", \"-c\", help=\"Check installation status instead of installing.\")] = False,",
-                "    source: Annotated[",
-                "        InstallerDataSource,",
-                "        typer.Option(",
-                "            ...,",
-                "            \"--source\",",
-                "            \"-s\",",
-                "            help=\"Installer data source to use: 'library', 'user', or 'all'. User file: ~/dotfiles/stackops/mapper/installer_data.json.\",",
-                "        ),",
-                "    ] = \"all\",",
-                "    interactive: Annotated[bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Interactive selection of programs to install.\")] = False,",
-                "    explore: Annotated[bool, typer.Option(..., \"--explore\", \"-x\", help=\"Explore installer categoryLabels before installing.\")] = False,",
-                "    update: Annotated[bool, typer.Option(..., \"--update\", \"-u\", help=\"Allow reinstalling or upgrading already installed apps when supported.\")] = False,",
-                "    version: Annotated[str | None, typer.Option(..., \"--version\", \"-v\", help=\"Specific version or tag to install when supported.\")] = None,",
-                ") -> None:",
-                "    \"\"\"📦 Install packages.\"\"\"",
-                "    from stackops.utils.installer_utils import installer_cli as installer_entry_point",
-                "    from stackops.utils.installer_utils.installer_catalog import InstallerDataFileError",
-                "",
-                "    if check:",
-                "        if which is None:",
-                "            raise typer.BadParameter(\"program name or group name is required when --check is set\")",
-                "        installer_entry_point.check_installations(which=which, group=group)",
-                "        return",
-                "",
-                "    try:",
-                "        installer_entry_point.main_installer_cli(",
-                "            ctx=ctx,",
-                "            which=which,",
-                "            group=group,",
-                "            source=source,",
-                "            interactive=interactive,",
-                "            explore=explore,",
-                "            update=update,",
-                "            version=version,",
-                "        )",
-                "    except InstallerDataFileError as exc:",
-                "        typer.echo(f\"❌ {exc}\", err=True)",
-                "        raise typer.Exit(1) from exc"
-              ],
-              "name": "install",
-              "parameters": [
-                {
-                  "name": "ctx",
-                  "kind": "positional_or_keyword",
-                  "type": "typer.Context",
-                  "default": null,
-                  "required": true,
-                  "annotation_raw": "typer.Context"
-                },
-                {
-                  "name": "which",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set.')]",
-                  "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Comma-separated list of program names to install, group name if --group is set, or category label if --explore is set."
-                  }
-                },
-                {
-                  "name": "group",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--group', '-g', help=\"Treat 'which' as a group name. A group is bundle of apps.\")]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--group",
-                      "-g"
-                    ],
-                    "long_flags": [
-                      "--group"
-                    ],
-                    "short_flags": [
-                      "-g"
-                    ],
-                    "help": "Treat 'which' as a group name. A group is bundle of apps.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "check",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--check', '-c', help='Check installation status instead of installing.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--check",
-                      "-c"
-                    ],
-                    "long_flags": [
-                      "--check"
-                    ],
-                    "short_flags": [
-                      "-c"
-                    ],
-                    "help": "Check installation status instead of installing.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "source",
-                  "kind": "positional_or_keyword",
-                  "type": "InstallerDataSource",
-                  "default": "all",
-                  "required": false,
-                  "annotation_raw": "Annotated[InstallerDataSource, typer.Option(..., '--source', '-s', help=\"Installer data source to use: 'library', 'user', or 'all'. User file: ~/dotfiles/stackops/mapper/installer_data.json.\")]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--source",
-                      "-s"
-                    ],
-                    "long_flags": [
-                      "--source"
-                    ],
-                    "short_flags": [
-                      "-s"
-                    ],
-                    "help": "Installer data source to use: 'library', 'user', or 'all'. User file: ~/dotfiles/stackops/mapper/installer_data.json.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "interactive",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--interactive', '-i', help='Interactive selection of programs to install.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--interactive",
-                      "-i"
-                    ],
-                    "long_flags": [
-                      "--interactive"
-                    ],
-                    "short_flags": [
-                      "-i"
-                    ],
-                    "help": "Interactive selection of programs to install.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "explore",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--explore', '-x', help='Explore installer categoryLabels before installing.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--explore",
-                      "-x"
-                    ],
-                    "long_flags": [
-                      "--explore"
-                    ],
-                    "short_flags": [
-                      "-x"
-                    ],
-                    "help": "Explore installer categoryLabels before installing.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "update",
-                  "kind": "positional_or_keyword",
-                  "type": "bool",
-                  "default": false,
-                  "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--update', '-u', help='Allow reinstalling or upgrading already installed apps when supported.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--update",
-                      "-u"
-                    ],
-                    "long_flags": [
-                      "--update"
-                    ],
-                    "short_flags": [
-                      "-u"
-                    ],
-                    "help": "Allow reinstalling or upgrading already installed apps when supported.",
-                    "default": "..."
-                  }
-                },
-                {
-                  "name": "version",
-                  "kind": "positional_or_keyword",
-                  "type": "str | None",
-                  "default": null,
-                  "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--version', '-v', help='Specific version or tag to install when supported.')]",
-                  "typer": {
-                    "kind": "option",
-                    "param_decls": [
-                      "--version",
-                      "-v"
-                    ],
-                    "long_flags": [
-                      "--version"
-                    ],
-                    "short_flags": [
-                      "-v"
-                    ],
-                    "help": "Specific version or tag to install when supported.",
-                    "default": "..."
-                  }
-                }
-              ],
-              "return": "None"
+            "app": {
+              "cls": "ordered_group(('install', 'list', 'path', 'init', 'edit', 'validate'))",
+              "help": "Install software and extend the bundled catalog with user definitions. Matching user names override library entries.",
+              "no_args_is_help": true,
+              "add_completion": false,
+              "context_settings": {
+                "help_option_names": [
+                  "-h",
+                  "--help"
+                ]
+              }
             },
-            "short_help": "🔧 <i> Install essential packages",
-            "typer": {
-              "no_args_is_help": true
+            "children": [
+              {
+                "kind": "command",
+                "name": "install",
+                "fullPath": "devops software install",
+                "shortPath": "d w i",
+                "help": "📦 <i> Install software from the catalog.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_install.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_install",
+                  "callable": "install"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def install(",
+                    "    ctx: typer.Context,",
+                    "    which: Annotated[",
+                    "        str | None,",
+                    "        typer.Argument(help=\"Comma-separated program names, group names with --group, or category labels with --explore.\"),",
+                    "    ] = None,",
+                    "    group: Annotated[bool, typer.Option(\"--group\", \"-g\", help=\"Treat names as package groups.\")] = False,",
+                    "    check: Annotated[bool, typer.Option(\"--check\", \"-c\", help=\"Check installation status instead of installing.\")] = False,",
+                    "    source: Annotated[",
+                    "        InstallerDataSource,",
+                    "        typer.Option(\"--source\", \"-s\", help=\"Catalog: library, user, or all. User entries override matching library names.\"),",
+                    "    ] = \"all\",",
+                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Select programs interactively.\")] = False,",
+                    "    explore: Annotated[bool, typer.Option(\"--explore\", \"-x\", help=\"Browse software by category before installing.\")] = False,",
+                    "    update: Annotated[bool, typer.Option(\"--update\", \"-u\", help=\"Reinstall or upgrade installed apps when supported.\")] = False,",
+                    "    version: Annotated[str | None, typer.Option(\"--version\", \"-v\", help=\"Install a specific version or tag when supported.\")] = None,",
+                    ") -> None:",
+                    "    from stackops.utils.installer_utils import installer_cli",
+                    "    from stackops.utils.installer_utils.installer_catalog import InstallerDataFileError",
+                    "",
+                    "    if check:",
+                    "        if path is not None:",
+                    "            raise typer.BadParameter(\"--path cannot be used with --check; checks inspect installed executables\")",
+                    "        if which is None:",
+                    "            raise typer.BadParameter(\"program name or group name is required when --check is set\")",
+                    "        installer_cli.check_installations(which=which, group=group)",
+                    "        return",
+                    "",
+                    "    try:",
+                    "        installer_cli.main_installer_cli(",
+                    "            ctx=ctx,",
+                    "            which=which,",
+                    "            group=group,",
+                    "            source=source,",
+                    "            path=path,",
+                    "            interactive=interactive,",
+                    "            explore=explore,",
+                    "            update=update,",
+                    "            version=version,",
+                    "        )",
+                    "    except InstallerDataFileError as error:",
+                    "        typer.echo(f\"\"\"❌ {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error"
+                  ],
+                  "name": "install",
+                  "parameters": [
+                    {
+                      "name": "ctx",
+                      "kind": "positional_or_keyword",
+                      "type": "typer.Context",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "typer.Context"
+                    },
+                    {
+                      "name": "which",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Comma-separated program names, group names with --group, or category labels with --explore.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Comma-separated program names, group names with --group, or category labels with --explore."
+                      }
+                    },
+                    {
+                      "name": "group",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--group', '-g', help='Treat names as package groups.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--group",
+                          "-g"
+                        ],
+                        "long_flags": [
+                          "--group"
+                        ],
+                        "short_flags": [
+                          "-g"
+                        ],
+                        "help": "Treat names as package groups."
+                      }
+                    },
+                    {
+                      "name": "check",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--check', '-c', help='Check installation status instead of installing.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--check",
+                          "-c"
+                        ],
+                        "long_flags": [
+                          "--check"
+                        ],
+                        "short_flags": [
+                          "-c"
+                        ],
+                        "help": "Check installation status instead of installing."
+                      }
+                    },
+                    {
+                      "name": "source",
+                      "kind": "positional_or_keyword",
+                      "type": "InstallerDataSource",
+                      "default": "all",
+                      "required": false,
+                      "annotation_raw": "Annotated[InstallerDataSource, typer.Option('--source', '-s', help='Catalog: library, user, or all. User entries override matching library names.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Catalog: library, user, or all. User entries override matching library names."
+                      }
+                    },
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use another user catalog with --source user or all.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Use another user catalog with --source user or all."
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Select programs interactively.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Select programs interactively."
+                      }
+                    },
+                    {
+                      "name": "explore",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--explore', '-x', help='Browse software by category before installing.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--explore",
+                          "-x"
+                        ],
+                        "long_flags": [
+                          "--explore"
+                        ],
+                        "short_flags": [
+                          "-x"
+                        ],
+                        "help": "Browse software by category before installing."
+                      }
+                    },
+                    {
+                      "name": "update",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--update', '-u', help='Reinstall or upgrade installed apps when supported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--update",
+                          "-u"
+                        ],
+                        "long_flags": [
+                          "--update"
+                        ],
+                        "short_flags": [
+                          "-u"
+                        ],
+                        "help": "Reinstall or upgrade installed apps when supported."
+                      }
+                    },
+                    {
+                      "name": "version",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--version', '-v', help='Install a specific version or tag when supported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--version",
+                          "-v"
+                        ],
+                        "long_flags": [
+                          "--version"
+                        ],
+                        "short_flags": [
+                          "-v"
+                        ],
+                        "help": "Install a specific version or tag when supported."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "i",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "list",
+                "fullPath": "devops software list",
+                "shortPath": "d w l",
+                "help": "📋 <l> List software definitions from the selected catalog.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software",
+                  "callable": "list_software"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def list_software(",
+                    "    query: Annotated[str | None, typer.Argument(help=\"Filter software by name, description, or category.\")] = None,",
+                    "    source: Annotated[",
+                    "        InstallerDataSource,",
+                    "        typer.Option(\"--source\", \"-s\", help=\"Catalog: library, user, or all. User entries override matching library names.\"),",
+                    "    ] = \"all\",",
+                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
+                    "    as_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print complete software definitions as JSON.\")] = False,",
+                    ") -> None:",
+                    "    from rich.console import Console",
+                    "    from rich.table import Table",
+                    "    from rich.text import Text",
+                    "",
+                    "    from stackops.utils.installer_utils.installer_catalog import InstallerDataFileError, read_installer_data",
+                    "",
+                    "    try:",
+                    "        installers = read_installer_data(source=source, user_path=path)",
+                    "    except InstallerDataFileError as error:",
+                    "        typer.echo(f\"\"\"❌ {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    if query is not None:",
+                    "        search = query.casefold()",
+                    "        installers = [",
+                    "            installer for installer in installers",
+                    "            if search in \" \".join((installer[\"appName\"], installer[\"doc\"], *installer[\"categoryLabels\"])).casefold()",
+                    "        ]",
+                    "    installers.sort(key=lambda installer: installer[\"appName\"].casefold())",
+                    "    if as_json:",
+                    "        typer.echo(json.dumps(installers, indent=2))",
+                    "        return",
+                    "",
+                    "    console = Console()",
+                    "    if not installers:",
+                    "        console.print(\"No software found in the selected catalog.\")",
+                    "        return",
+                    "    table = Table(title=f\"\"\"Software catalog ({source}): {len(installers)} entries\"\"\")",
+                    "    table.add_column(\"Name\", style=\"cyan\", no_wrap=True)",
+                    "    table.add_column(\"Categories\")",
+                    "    table.add_column(\"Description\", overflow=\"fold\")",
+                    "    for installer in installers:",
+                    "        table.add_row(Text(installer[\"appName\"]), Text(\", \".join(installer[\"categoryLabels\"])), Text(installer[\"doc\"]))",
+                    "    console.print(table)"
+                  ],
+                  "name": "list_software",
+                  "parameters": [
+                    {
+                      "name": "query",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Filter software by name, description, or category.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Filter software by name, description, or category."
+                      }
+                    },
+                    {
+                      "name": "source",
+                      "kind": "positional_or_keyword",
+                      "type": "InstallerDataSource",
+                      "default": "all",
+                      "required": false,
+                      "annotation_raw": "Annotated[InstallerDataSource, typer.Option('--source', '-s', help='Catalog: library, user, or all. User entries override matching library names.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Catalog: library, user, or all. User entries override matching library names."
+                      }
+                    },
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use another user catalog with --source user or all.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Use another user catalog with --source user or all."
+                      }
+                    },
+                    {
+                      "name": "as_json",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print complete software definitions as JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print complete software definitions as JSON."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "l",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "path",
+                "fullPath": "devops software path",
+                "shortPath": "d w p",
+                "help": "📍 <p> Print catalog and schema paths as JSON.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_files.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_files",
+                  "callable": "software_path"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def software_path(",
+                    "    source: Annotated[InstallerDataSource, typer.Option(\"--source\", \"-s\", help=\"Catalog paths to show: library, user, or all.\")] = \"all\",",
+                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
+                    ") -> None:",
+                    "    from stackops.utils.managed_file_operations import describe_managed_file",
+                    "    from stackops.utils.managed_files import get_managed_file_spec",
+                    "",
+                    "    normalized_source = INSTALLER_DATA_SOURCE_MAP[source]",
+                    "    if normalized_source == \"library\" and path is not None:",
+                    "        raise typer.BadParameter(\"--path requires --source user or all\")",
+                    "    spec = get_managed_file_spec(\"software\")",
+                    "    paths: dict[str, dict[str, str]] = {}",
+                    "    if normalized_source in {\"library\", \"all\"}:",
+                    "        paths[\"library\"] = describe_managed_file(spec=spec, data_path=spec.example_source_path)",
+                    "    if normalized_source in {\"user\", \"all\"}:",
+                    "        user_path = spec.user_path if path is None else path.expanduser().absolute()",
+                    "        paths[\"user\"] = describe_managed_file(spec=spec, data_path=user_path)",
+                    "    typer.echo(json.dumps(paths, indent=2))"
+                  ],
+                  "name": "software_path",
+                  "parameters": [
+                    {
+                      "name": "source",
+                      "kind": "positional_or_keyword",
+                      "type": "InstallerDataSource",
+                      "default": "all",
+                      "required": false,
+                      "annotation_raw": "Annotated[InstallerDataSource, typer.Option('--source', '-s', help='Catalog paths to show: library, user, or all.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Catalog paths to show: library, user, or all."
+                      }
+                    },
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use another user catalog with --source user or all.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Use another user catalog with --source user or all."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "p",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "init",
+                "fullPath": "devops software init",
+                "shortPath": "d w I",
+                "help": "📄 <I> Create an empty user catalog and its schema.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_files.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_files",
+                  "callable": "init_software"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def init_software(",
+                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Create the user catalog at another path.\")] = None,",
+                    ") -> None:",
+                    "    from stackops.utils.managed_file_cli import run_managed_file_action",
+                    "",
+                    "    run_managed_file_action(kind=\"software\", action=\"init\", path=path)"
+                  ],
+                  "name": "init_software",
+                  "parameters": [
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Create the user catalog at another path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Create the user catalog at another path."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "I",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "edit",
+                "fullPath": "devops software edit",
+                "shortPath": "d w e",
+                "help": "📝 <e> Create, edit, and validate the user software catalog.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_files.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_files",
+                  "callable": "edit_software"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def edit_software(",
+                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Edit the user catalog at another path.\")] = None,",
+                    "    editor: Annotated[Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the catalog with.\")] = \"hx\",",
+                    ") -> None:",
+                    "    from stackops.scripts.python.helpers.helpers_devops.cli_config_edit import edit_managed_file",
+                    "",
+                    "    edit_managed_file(which=\"software\", path=path, editor=editor)"
+                  ],
+                  "name": "edit_software",
+                  "parameters": [
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Edit the user catalog at another path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Edit the user catalog at another path."
+                      }
+                    },
+                    {
+                      "name": "editor",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['hx', 'nano', 'code']",
+                      "default": "hx",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['hx', 'nano', 'code'], typer.Option('--editor', '-e', help='Editor to open the catalog with.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--editor",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--editor"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ],
+                        "help": "Editor to open the catalog with."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "e",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "validate",
+                "fullPath": "devops software validate",
+                "shortPath": "d w v",
+                "help": "✅ <v> Validate the user software catalog.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_files.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_files",
+                  "callable": "validate_software"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def validate_software(",
+                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Validate the user catalog at another path.\")] = None,",
+                    ") -> None:",
+                    "    from stackops.utils.managed_file_cli import run_managed_file_action",
+                    "",
+                    "    run_managed_file_action(kind=\"software\", action=\"validate\", path=path)"
+                  ],
+                  "name": "validate_software",
+                  "parameters": [
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Validate the user catalog at another path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Validate the user catalog at another path."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "v",
+                    "hidden": true
+                  }
+                ]
+              }
+            ],
+            "command_context_settings": {
+              "allow_extra_args": true,
+              "allow_interspersed_args": true,
+              "ignore_unknown_options": true,
+              "help_option_names": []
             },
-            "doc": "📦 Install packages.",
             "aliases": [
               {
-                "name": "i",
-                "hidden": true,
-                "help": "📦 Install packages."
+                "name": "w",
+                "hidden": true
               }
             ]
           },
@@ -11904,7 +12374,7 @@
                         "\"\"\"",
                         "        case \"as-service\":",
                         "            code = \"\"\"",
-                        "devops install --update cloudflared",
+                        "devops software install --update cloudflared",
                         "home_dir=$HOME",
                         "cloudflared_path=\"$home_dir/.local/bin/cloudflared\"",
                         "sudo $cloudflared_path service uninstall",

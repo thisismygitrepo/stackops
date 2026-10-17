@@ -11,7 +11,7 @@ from stackops.utils.schemas.installer.installer_types import get_normalized_arch
 
 
 def check_important_tools() -> dict[str, dict[str, bool]]:
-    installers = get_installers_from_source(source="all", os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
+    installers = get_installers_from_source(source="all", user_path=None, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
     group_status: dict[str, dict[str, bool]] = {}
     for installer_data in installers:
         executable_name = Installer(installer_data=installer_data).get_exe_name()
