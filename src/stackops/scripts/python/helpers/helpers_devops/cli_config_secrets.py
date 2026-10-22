@@ -15,15 +15,24 @@ SECRETS_SEARCH_EPILOG = """Examples:
   devops vault search github personal-access-token
   devops vault search --interactive
   devops vault search --all-matches --json mail
-  devops vault load --name aws-dev --tag iam-access-key
-  devops vault load --source global github token
 
-Search displays bundle labels and environment keys without loading them.
-Load prepares environment variables for the calling shell.
-Use --json to print matching secrets JSON, including values, without loading variables.
+Search displays bundle labels and environment keys without loading them; use devops vault load to define them.
+Use --json to print matching secrets JSON, including values.
+Use --all-matches to select every matching bundle.
 Terms are case-insensitive substring matches; exact selectors are case-sensitive.
 Use --interactive to select a bundle and --preview-secrets to show values in its preview.
+When --source is omitted, --path takes precedence; otherwise local is preferred over global.
+Use --source local/l, global/g, or both/b to select sources explicitly.
+"""
+SECRETS_LOAD_EPILOG = """Examples:
+  devops vault load --name aws-dev --tag iam-access-key
+  devops vault load --source global github token
+  devops vault load --all-matches --source both cloudf
+
+Load prepares environment variables for the calling shell.
 Use --all-matches to select every matching bundle. Loading rejects conflicting values.
+Terms are case-insensitive substring matches; exact selectors are case-sensitive.
+Use --interactive to select a bundle and --preview-secrets to show values in its preview.
 When --source is omitted, --path takes precedence; otherwise local is preferred over global.
 Use --source local/l, global/g, or both/b to select sources explicitly.
 """
@@ -136,7 +145,7 @@ def get_app() -> typer.Typer:
     app.command("search", no_args_is_help=True, help=f"🔎 <s> {SECRETS_SEARCH_HELP}", epilog=SECRETS_SEARCH_EPILOG)(search)
     app.command("s", no_args_is_help=True, help="Alias for search.", epilog=SECRETS_SEARCH_EPILOG, hidden=True)(search)
 
-    app.command("load", no_args_is_help=True, help=f"🔐 <l> {SECRETS_LOAD_HELP}", epilog=SECRETS_SEARCH_EPILOG)(load)
+    app.command("load", no_args_is_help=True, help=f"🔐 <l> {SECRETS_LOAD_HELP}", epilog=SECRETS_LOAD_EPILOG)(load)
     app.command("l", no_args_is_help=True, hidden=True)(load)
 
     app.command("stats", no_args_is_help=False, help=f"📊 <t> {SECRETS_STATS_HELP}")(stats)

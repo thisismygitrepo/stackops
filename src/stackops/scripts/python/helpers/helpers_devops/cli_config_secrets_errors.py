@@ -33,7 +33,7 @@ def fail_conflicting_environment_merge(
 
     typer.echo()
     typer.echo("Choose what you intended:")
-    typer.echo("  - JSON with every bundle: add --json/-j; bundles remain separate, so repeated names do not collide.")
+    typer.echo("  - JSON with every bundle: use devops vault search with --all-matches/-a --json/-j; bundles remain separate, so repeated names do not collide.")
     typer.echo("  - One bundle: replace --all-matches/-a with --interactive/-i.")
     typer.echo("  - A smaller merge: narrow the search or add exact selectors such as --name/-n and --secret-name/-N.")
     typer.echo("  - All bundles: rename the conflicting keyValues keys so each environment variable has only one value.")
