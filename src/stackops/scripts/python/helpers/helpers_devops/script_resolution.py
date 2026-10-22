@@ -77,7 +77,7 @@ def resolve_script(*, ctx: typer.Context, name: str, source: SCRIPT_SOURCE, inte
             raise typer.Exit(code=1)
         target_file = direct_target_file
 
-    roots = [location for location in get_script_locations(source=source).values() if isinstance(location, Path)]
+    roots = {label: location for label, location in get_script_locations(source=source).items() if isinstance(location, Path)}
     if target_file is not None:
         return target_file
     suffixes = _get_supported_script_suffixes(name=name)
@@ -85,7 +85,7 @@ def resolve_script(*, ctx: typer.Context, name: str, source: SCRIPT_SOURCE, inte
     supported_suffixes = frozenset(suffixes)
     potential_matches: list[Path] = []
     seen_matches: set[Path] = set()
-    for root in roots:
+    for root in roots.values():
         for exact_name in exact_names:
             exact_path = root.joinpath(exact_name)
             if _is_supported_script_match(file_path=exact_path, root=root, supported_suffixes=supported_suffixes):
@@ -104,8 +104,8 @@ def resolve_script(*, ctx: typer.Context, name: str, source: SCRIPT_SOURCE, inte
         typer.echo(err=True)
         typer.echo(typer.style(f"""❌ ERROR: Could not find script '{name}'.""", fg=typer.colors.RED, bold=True), err=True)
         typer.echo("Searched in:", err=True)
-        for root in roots:
-            typer.echo(f"""  - {root}""", err=True)
+        for label, root in roots.items():
+            typer.echo(f"""  - {label}: {root}""", err=True)
         raise typer.Exit(code=1)
 
     typer.echo(typer.style(f"""❌ ERROR: Found {len(potential_matches)} scripts matching '{name}'.""", fg=typer.colors.RED, bold=True), err=True)
