@@ -4,7 +4,6 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SecretsSource
-from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import select_secrets
 
 
 def search(
@@ -39,14 +38,7 @@ def search(
         bool,
         typer.Option("--interactive", "-i", help="Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list."),
     ] = False,
-    all_matches: Annotated[
-        bool,
-        typer.Option(
-            "--all-matches",
-            "-a",
-            help=("Select every matching secret bundle. Loading fails if bundles assign different values to one environment variable."),
-        ),
-    ] = False,
+    all_matches: Annotated[bool, typer.Option("--all-matches", "-a", help="Select every matching secret bundle.")] = False,
     json_output: Annotated[
         bool,
         typer.Option(
@@ -80,13 +72,14 @@ def search(
         list[str] | None, typer.Option("--key", "-k", help="Exact env var key in keyValues to require. Repeat for multiple keys.")
     ] = None,
 ) -> None:
-    select_secrets(
-        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source,
-        interactive=interactive, all_matches=all_matches, json_output=json_output,
-        preview_secrets=preview_secrets, verbose=verbose, login_name=login_name,
-        secret_name=secret_name, tags=tags, login_tags=login_tags, secret_tags=secret_tags,
-        scopes=scopes, keys=keys, load_environment=False,
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import SecretSelectionRequest, search_secrets
+
+    request = SecretSelectionRequest(
+        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,
+        preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,
+        secret_tags=secret_tags, scopes=scopes, keys=keys,
     )
+    search_secrets(request, json_output=json_output, verbose=verbose)
 
 
 def load(
@@ -129,12 +122,6 @@ def load(
             help=("Select every matching secret bundle. Loading fails if bundles assign different values to one environment variable."),
         ),
     ] = False,
-    json_output: Annotated[
-        bool,
-        typer.Option(
-            "--json", "-j", help="Print matching entries as JSON, including secret values, without loading environment variables."
-        ),
-    ] = False,
     preview_secrets: Annotated[
         bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview. Only applies with --interactive/-i.")
     ] = False,
@@ -162,10 +149,11 @@ def load(
         list[str] | None, typer.Option("--key", "-k", help="Exact env var key in keyValues to require. Repeat for multiple keys.")
     ] = None,
 ) -> None:
-    select_secrets(
-        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source,
-        interactive=interactive, all_matches=all_matches, json_output=json_output,
-        preview_secrets=preview_secrets, verbose=verbose, login_name=login_name,
-        secret_name=secret_name, tags=tags, login_tags=login_tags, secret_tags=secret_tags,
-        scopes=scopes, keys=keys, load_environment=True,
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import SecretSelectionRequest, load_secrets
+
+    request = SecretSelectionRequest(
+        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,
+        preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,
+        secret_tags=secret_tags, scopes=scopes, keys=keys,
     )
+    load_secrets(request, verbose=verbose)

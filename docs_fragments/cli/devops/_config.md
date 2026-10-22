@@ -215,7 +215,7 @@ devops config copy-assets all
 
 ### secrets
 
-StackOps secrets are managed under `devops vault`. `search` inspects matching bundle labels and environment keys; `load` prepares their values for the calling shell. Neither command prints secret values by default. `--json` explicitly prints matching entries, including their values, without loading the environment.
+StackOps secrets are managed under `devops vault`. `search` inspects matching bundle labels and environment keys; `load` prepares their values for the calling shell. Neither command prints secret values by default. `search --json` explicitly prints matching entries, including their values; `load` has no `--json` option.
 
 ```bash
 devops vault search github personal-access-token

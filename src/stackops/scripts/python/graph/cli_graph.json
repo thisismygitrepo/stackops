@@ -542,6 +542,7 @@
                     "    source: Annotated[InstallerDataSource, typer.Option(\"--source\", \"-s\", help=\"Catalog paths to show: library, user, or all.\")] = \"all\",",
                     "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
                     ") -> None:",
+                    "    from stackops.utils.installer_utils.installer_scripts import LIBRARY_INSTALLER_SCRIPTS_ROOT, get_user_installer_scripts_root",
                     "    from stackops.utils.managed_file_operations import describe_managed_file",
                     "    from stackops.utils.managed_files import get_managed_file_spec",
                     "",
@@ -551,10 +552,10 @@
                     "    spec = get_managed_file_spec(\"software\")",
                     "    paths: dict[str, dict[str, str]] = {}",
                     "    if normalized_source in {\"library\", \"all\"}:",
-                    "        paths[\"library\"] = describe_managed_file(spec=spec, data_path=spec.example_source_path)",
+                    "        paths[\"library\"] = describe_managed_file(spec=spec, data_path=spec.example_source_path) | {\"scripts\": str(LIBRARY_INSTALLER_SCRIPTS_ROOT)}",
                     "    if normalized_source in {\"user\", \"all\"}:",
                     "        user_path = spec.user_path if path is None else path.expanduser().absolute()",
-                    "        paths[\"user\"] = describe_managed_file(spec=spec, data_path=user_path)",
+                    "        paths[\"user\"] = describe_managed_file(spec=spec, data_path=user_path) | {\"scripts\": str(get_user_installer_scripts_root(user_catalog_path=user_path))}",
                     "    typer.echo(json.dumps(paths, indent=2))"
                   ],
                   "name": "software_path",
@@ -8352,14 +8353,7 @@
                     "        bool,",
                     "        typer.Option(\"--interactive\", \"-i\", help=\"Choose the secret bundle with a TV fuzzy picker. Terms and exact selectors pre-filter the list.\"),",
                     "    ] = False,",
-                    "    all_matches: Annotated[",
-                    "        bool,",
-                    "        typer.Option(",
-                    "            \"--all-matches\",",
-                    "            \"-a\",",
-                    "            help=(\"Select every matching secret bundle. Loading fails if bundles assign different values to one environment variable.\"),",
-                    "        ),",
-                    "    ] = False,",
+                    "    all_matches: Annotated[bool, typer.Option(\"--all-matches\", \"-a\", help=\"Select every matching secret bundle.\")] = False,",
                     "    json_output: Annotated[",
                     "        bool,",
                     "        typer.Option(",
@@ -8393,13 +8387,14 @@
                     "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
                     "    ] = None,",
                     ") -> None:",
-                    "    select_secrets(",
-                    "        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source,",
-                    "        interactive=interactive, all_matches=all_matches, json_output=json_output,",
-                    "        preview_secrets=preview_secrets, verbose=verbose, login_name=login_name,",
-                    "        secret_name=secret_name, tags=tags, login_tags=login_tags, secret_tags=secret_tags,",
-                    "        scopes=scopes, keys=keys, load_environment=False,",
-                    "    )"
+                    "    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import SecretSelectionRequest, search_secrets",
+                    "",
+                    "    request = SecretSelectionRequest(",
+                    "        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,",
+                    "        preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,",
+                    "        secret_tags=secret_tags, scopes=scopes, keys=keys,",
+                    "    )",
+                    "    search_secrets(request, json_output=json_output, verbose=verbose)"
                   ],
                   "name": "search",
                   "parameters": [
@@ -8490,7 +8485,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Select every matching secret bundle. Loading fails if bundles assign different values to one environment variable.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Select every matching secret bundle.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -8503,7 +8498,7 @@
                         "short_flags": [
                           "-a"
                         ],
-                        "help": "Select every matching secret bundle. Loading fails if bundles assign different values to one environment variable."
+                        "help": "Select every matching secret bundle."
                       }
                     },
                     {
@@ -8733,7 +8728,7 @@
                 },
                 "typer": {
                   "no_args_is_help": true,
-                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --all-matches --json mail\n  devops vault load --name aws-dev --tag iam-access-key\n  devops vault load --source global github token\n\nSearch displays bundle labels and environment keys without loading them.\nLoad prepares environment variables for the calling shell.\nUse --json to print matching secrets JSON, including values, without loading variables.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nUse --all-matches to select every matching bundle. Loading rejects conflicting values.\nWhen --source is omitted, --path takes precedence; otherwise local is preferred over global.\nUse --source local/l, global/g, or both/b to select sources explicitly.\n"
+                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --all-matches --json mail\n\nSearch displays bundle labels and environment keys without loading them; use devops vault load to define them.\nUse --json to print matching secrets JSON, including values.\nUse --all-matches to select every matching bundle.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --path takes precedence; otherwise local is preferred over global.\nUse --source local/l, global/g, or both/b to select sources explicitly.\n"
                 },
                 "aliases": [
                   {
@@ -8796,12 +8791,6 @@
                     "            help=(\"Select every matching secret bundle. Loading fails if bundles assign different values to one environment variable.\"),",
                     "        ),",
                     "    ] = False,",
-                    "    json_output: Annotated[",
-                    "        bool,",
-                    "        typer.Option(",
-                    "            \"--json\", \"-j\", help=\"Print matching entries as JSON, including secret values, without loading environment variables.\"",
-                    "        ),",
-                    "    ] = False,",
                     "    preview_secrets: Annotated[",
                     "        bool, typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview. Only applies with --interactive/-i.\")",
                     "    ] = False,",
@@ -8829,13 +8818,14 @@
                     "        list[str] | None, typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Repeat for multiple keys.\")",
                     "    ] = None,",
                     ") -> None:",
-                    "    select_secrets(",
-                    "        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source,",
-                    "        interactive=interactive, all_matches=all_matches, json_output=json_output,",
-                    "        preview_secrets=preview_secrets, verbose=verbose, login_name=login_name,",
-                    "        secret_name=secret_name, tags=tags, login_tags=login_tags, secret_tags=secret_tags,",
-                    "        scopes=scopes, keys=keys, load_environment=True,",
-                    "    )"
+                    "    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import SecretSelectionRequest, load_secrets",
+                    "",
+                    "    request = SecretSelectionRequest(",
+                    "        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,",
+                    "        preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,",
+                    "        secret_tags=secret_tags, scopes=scopes, keys=keys,",
+                    "    )",
+                    "    load_secrets(request, verbose=verbose)"
                   ],
                   "name": "load",
                   "parameters": [
@@ -8943,28 +8933,6 @@
                       }
                     },
                     {
-                      "name": "json_output",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print matching entries as JSON, including secret values, without loading environment variables.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--json",
-                          "-j"
-                        ],
-                        "long_flags": [
-                          "--json"
-                        ],
-                        "short_flags": [
-                          "-j"
-                        ],
-                        "help": "Print matching entries as JSON, including secret values, without loading environment variables."
-                      }
-                    },
-                    {
                       "name": "preview_secrets",
                       "kind": "positional_or_keyword",
                       "type": "bool",
@@ -9169,7 +9137,7 @@
                 },
                 "typer": {
                   "no_args_is_help": true,
-                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --all-matches --json mail\n  devops vault load --name aws-dev --tag iam-access-key\n  devops vault load --source global github token\n\nSearch displays bundle labels and environment keys without loading them.\nLoad prepares environment variables for the calling shell.\nUse --json to print matching secrets JSON, including values, without loading variables.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nUse --all-matches to select every matching bundle. Loading rejects conflicting values.\nWhen --source is omitted, --path takes precedence; otherwise local is preferred over global.\nUse --source local/l, global/g, or both/b to select sources explicitly.\n"
+                  "epilog": "Examples:\n  devops vault load --name aws-dev --tag iam-access-key\n  devops vault load --source global github token\n  devops vault load --all-matches --source both cloudf\n\nLoad prepares environment variables for the calling shell.\nUse --all-matches to select every matching bundle. Loading rejects conflicting values.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --path takes precedence; otherwise local is preferred over global.\nUse --source local/l, global/g, or both/b to select sources explicitly.\n"
                 },
                 "aliases": [
                   {
