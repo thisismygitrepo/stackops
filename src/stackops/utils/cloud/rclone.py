@@ -6,6 +6,7 @@ import shlex
 import subprocess
 import sys
 
+from rich.file_proxy import FileProxy
 from rich.text import Text
 
 from stackops.utils.cloud.share_models import ShareLinkOptions, ShareLinkType, ShareScope
@@ -117,9 +118,10 @@ def _rclone_hint(stdout: str, stderr: str) -> str | None:
 
 
 def _run_rclone(command: list[str], *, show_command: bool, show_progress: bool) -> subprocess.CompletedProcess[str]:
+    interactive_progress = show_progress and sys.stdout.isatty() and not isinstance(sys.stdout, FileProxy)
     if show_progress:
         command = [*command, "--stats-one-line"]
-        if sys.stdout.isatty():
+        if interactive_progress:
             command.extend(["--progress", "--color=ALWAYS"])
         else:
             command.extend(["--stats=30s", "--stats-log-level=NOTICE", "--color=NEVER"])
@@ -133,7 +135,7 @@ def _run_rclone(command: list[str], *, show_command: bool, show_progress: bool) 
                     raise RuntimeError(f"Could not capture rclone output for: {_format_command(command)}")
                 output_chunks: list[str] = []
                 while True:
-                    chunk = process.stdout.read(1)
+                    chunk = process.stdout.read(1) if interactive_progress else process.stdout.readline()
                     if chunk == "":
                         break
                     output_chunks.append(chunk)
