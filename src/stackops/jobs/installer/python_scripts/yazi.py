@@ -82,7 +82,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     install_if_missing(which="glow", binary_name=None, verbose=True)
     install_if_missing(which="duckdb", binary_name=None, verbose=True)
     install_if_missing(which="poppler", binary_name="pdftotext", verbose=True)
-    install_if_missing(which="viu", binary_name=None, verbose=True)
+    install_if_missing(which="chafa", binary_name=None, verbose=True)
     install_if_missing(which="jq", binary_name=None, verbose=True)
     install_if_missing(which="resvg", binary_name=None, verbose=True)
     # on windows those are missing

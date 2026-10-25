@@ -100,7 +100,14 @@ def build_archive_command(target_path: Path) -> Command:
 
 
 def build_image_command(target_path: Path) -> Command:
-    return ["viu", str(target_path)]
+    return [
+        "chafa",
+        "--probe=on",
+        "--clear",
+        "--scale=max",
+        "--margin-bottom=3",
+        str(target_path),
+    ]
 
 
 def build_markdown_command(target_path: Path, terminal_columns: int) -> Command:
@@ -227,7 +234,7 @@ def emit_command_description(action: str, command: Sequence[str]) -> None:
 
 
 def should_wait_for_return(command: Sequence[str]) -> bool:
-    return Path(command[0]).name.lower() == "viu"
+    return Path(command[0]).name.lower() == "chafa"
 
 
 def read_exit_key() -> str:
