@@ -5949,6 +5949,27 @@
       }
     },
     {
+      "appName": "muse",
+      "license": "Proprietary",
+      "repoURL": "CMD",
+      "doc": "Meta Muse Code terminal coding agent",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "curl -fsSL https://dev.meta.ai/install.sh | bash",
+          "windows": null,
+          "darwin": "curl -fsSL https://dev.meta.ai/install.sh | bash"
+        },
+        "arm64": {
+          "linux": "curl -fsSL https://dev.meta.ai/install.sh | bash",
+          "windows": null,
+          "darwin": "curl -fsSL https://dev.meta.ai/install.sh | bash"
+        }
+      }
+    },
+    {
       "appName": "Alacritty",
       "license": "Apache-2.0",
       "repoURL": "CMD",

@@ -108,6 +108,9 @@ def resolve_prompt_sandbox_access(
         case "droid":
             directories = (home / ".factory",)
             environment = ("FACTORY_API_KEY", "FACTORY_DROID_AUTO_UPDATE_ENABLED", *provider_environment)
+        case "muse":
+            directories = (xdg["XDG_CONFIG_HOME"] / "muse", xdg["XDG_DATA_HOME"] / "muse")
+            environment = ("META_API_KEY", *xdg_environment)
         case _:
             raise ValueError(f"""Sandboxing is not supported for agent: {agent}.""")
     return SandboxAccess(

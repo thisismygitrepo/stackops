@@ -105,4 +105,5 @@ BROWSER_SKILLS_CLI_AGENT_BY_STACKOPS_AGENT: Final[dict[AGENTS, str]] = {
     "oz": "warp",
     "droid": "droid",
     "pi": "pi",
+    "muse": "universal",
 }

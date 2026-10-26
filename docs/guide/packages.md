@@ -112,7 +112,7 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>agents</code></td>
-      <td>aider | aoe | aichat | copilot | antigravity | crush | opencode-ai | chatgpt | forge | headroom | hermes | mods | oz | q | qodercli | qwen-code | cursor-cli | droid | dmux | pi | omp | orca | kilocode | cline | auggie | agentofempires | agent-deck | agenthand | beads | beads_viewer | gastown | symphony</td>
+      <td>aider | aoe | aichat | copilot | antigravity | crush | opencode-ai | chatgpt | forge | headroom | hermes | mods | oz | q | qodercli | qwen-code | cursor-cli | droid | muse | dmux | pi | omp | orca | kilocode | cline | auggie | agentofempires | agent-deck | agenthand | beads | beads_viewer | gastown | symphony</td>
     </tr>
     <tr>
       <td><code>terminal</code></td>

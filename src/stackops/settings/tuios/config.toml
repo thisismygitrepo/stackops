@@ -1,7 +1,7 @@
 # TUIOS Configuration File
 # This file allows you to customize appearance and keybindings
 #
-# Configuration location: /Users/alex/Library/Application Support/tuios/config.toml
+# Configuration location: run `tuios config path`
 # Documentation: https://github.com/Gaurav-Gosain/tuios
 # For keybindings documentation, run: tuios keybinds list
 #
@@ -132,7 +132,6 @@ motion = 'full'
 modal_dim = 30
 whichkey_position = ''
 window_title_position = 'top'
-hide_clock = false
 show_clock = false
 show_cpu = false
 show_ram = false
@@ -184,7 +183,6 @@ flash_style = 'diagonal'
 enabled = true
 position = 'right'
 width = 24
-workspaces = ''
 sections = 'sessions:25,terminals,files:25,agents:34'
 folder_click = 'navigate'
 file_delete = 'trash'
@@ -207,7 +205,8 @@ done = ''
 needs_input = ''
 
 [keybindings]
-leader_key = 'ctrl+a'
+leader_key = ''
+preset = 'tmux'
 
 [keybindings.window_management]
 close_window = ['w', 'x']

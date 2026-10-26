@@ -50,6 +50,7 @@ _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
         efforts=("none", "low", "medium", "high", "xhigh"),
         note="StackOps none maps to Pi --thinking off",
     ),
+    "muse": AgentReasoningSupport(efforts=("none", "low", "medium", "high", "xhigh"), note=None),
 }
 
 

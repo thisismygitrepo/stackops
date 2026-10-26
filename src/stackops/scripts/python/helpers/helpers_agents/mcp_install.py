@@ -136,6 +136,8 @@ def install_resolved_mcp_servers(
             _write_crush_config(path=path, resolved_servers=resolved_servers)
         case "pi":
             _write_pi_mcp_adapter_config(path=path, resolved_servers=resolved_servers)
+        case "muse":
+            _write_muse_settings(path=path, resolved_servers=resolved_servers)
         case "deepseek":
             write_deepseek_mcp_config(path=path, resolved_servers=resolved_servers)
     return path
@@ -186,6 +188,8 @@ def resolve_install_path(
                 return repo_root / ".crush.json"
             case "pi":
                 return repo_root / ".pi" / "mcp.json"
+            case "muse":
+                raise ValueError("Muse Code documents MCP servers only in its user settings file; install with --scope global")
             case "deepseek":
                 return repo_root / ".dsh" / "cordis.patch.yml"
 
@@ -228,6 +232,8 @@ def resolve_install_path(
             return home_dir / ".config" / "crush" / "crush.json"
         case "pi":
             return home_dir / ".pi" / "agent" / "mcp.json"
+        case "muse":
+            return home_dir / ".config" / "muse" / "settings.json"
         case "deepseek":
             configured_home = os.environ.get("DSH_HOME", "").strip()
             dsh_home = Path(configured_home).expanduser() if configured_home else home_dir / ".dsh"
@@ -406,6 +412,42 @@ def resolve_oz_mcp_config_paths(*, repo_root: Path | None, home_dir: Path) -> li
     if global_path.is_file():
         paths.append(global_path)
     return paths
+
+
+def _resolved_server_to_muse_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
+    definition = resolved_server["definition"]
+    if definition["cwd"] is not None:
+        raise ValueError(f"Muse MCP config for '{resolved_server['name']}' cannot include cwd because Muse stdio servers do not support it")
+    if definition["transport"] == "stdio":
+        command = definition["command"]
+        if command is None:
+            raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a command")
+        entry: dict[str, object] = {
+            "transport": "stdio",
+            "command": command,
+            "args": list(definition["args"]),
+            "enabled": definition["enabled"],
+        }
+        if len(definition["env"]) > 0:
+            entry["env"] = dict(definition["env"])
+        return entry
+    url = definition["url"]
+    if url is None:
+        raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a URL")
+    entry = {"transport": "streamable_http", "url": url, "enabled": definition["enabled"]}
+    if len(definition["headers"]) > 0:
+        entry["headers"] = dict(definition["headers"])
+    return entry
+
+
+def _write_muse_settings(*, path: Path, resolved_servers: tuple[ResolvedMcpServer, ...]) -> None:
+    root = _load_json_object(path=path)
+    if "schema_version" not in root:
+        root["schema_version"] = 1
+    mcp_servers = _ensure_object_member(root=root, key="mcp_servers", path=path)
+    for resolved_server in resolved_servers:
+        mcp_servers[resolved_server["name"]] = _resolved_server_to_muse_entry(resolved_server=resolved_server)
+    _write_json_object(path=path, root=root)
 
 
 def _resolved_server_to_antigravity_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
