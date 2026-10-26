@@ -1,6 +1,12 @@
 ---
 name: build-typer-cli
-description: Build and change Typer CLIs, including adding, editing, or removing commands, options, and hidden one-letter aliases. Use when tracing command ownership, creating or restructuring a Typer app, or fixing slow startup and heavy imports during command discovery. Preserve lazy routing through lightweight routers and direct entrypoints.
+description: >
+  Use when the task changes a Typer command surface: adding, renaming, editing, or removing a
+  Typer command, option, or hidden one-letter alias; restructuring a Typer app's routers or
+  lazy proxies; or fixing slow startup or heavy imports during Typer command discovery.
+  NEVER for argparse, click-only, or other non-Typer CLIs, for running or explaining an
+  existing command, for changing what a callback does while its registration and signature
+  stay the same, or for general performance or import work outside CLI command discovery.
 ---
 
 # Build Typer CLI

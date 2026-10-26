@@ -1,6 +1,6 @@
 # Parallel Isolated Agents
 
-Use `parallel-isolated-agents` when the user wants multiple external agents working from the same repo state without colliding. Read [herdr.md](herdr.md) first.
+`parallel-isolated-agents` runs only when the user names `agent-ops parallel-isolated-agents`; it runs multiple external agents from the same repo state without colliding. Read [herdr.md](herdr.md) first.
 
 Create one `wt`/Worktrunk git worktree per agent from the current repository state. Start each agent in its own worktree through Herdr.
 

@@ -1,6 +1,6 @@
 # Iter
 
-Read [Herdr mechanics](herdr.md) first. `iter` runs one focused pass per agent and launches a successor only when fixed completion criteria remain unmet and another material pass is credible.
+`iter` runs only when the user names `agent-ops iter`, never for `parallel-iters`. Read [Herdr mechanics](herdr.md) first. `iter` runs one focused pass per agent and launches a successor only when fixed completion criteria remain unmet and another material pass is credible.
 
 ## Contract
 
