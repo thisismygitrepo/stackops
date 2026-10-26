@@ -7802,6 +7802,27 @@
       }
     },
     {
+      "appName": "cli-proxy-api",
+      "license": "MIT License",
+      "repoURL": "https://github.com/router-for-me/CLIProxyAPI",
+      "doc": "🤖 Proxy server exposing OpenAI/Gemini/Claude/Codex compatible APIs on top of CLI and subscription logins (Claude Code, Codex, Gemini CLI, Grok, Muse, Devin).",
+      "categoryLabels": [
+        "ai-agents-assistants"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "CLIProxyAPI_{version}_linux_amd64.tar.gz",
+          "windows": "CLIProxyAPI_{version}_windows_amd64.zip",
+          "darwin": "CLIProxyAPI_{version}_darwin_amd64.tar.gz"
+        },
+        "arm64": {
+          "linux": "CLIProxyAPI_{version}_linux_aarch64.tar.gz",
+          "windows": "CLIProxyAPI_{version}_windows_aarch64.zip",
+          "darwin": "CLIProxyAPI_{version}_darwin_aarch64.tar.gz"
+        }
+      }
+    },
+    {
       "appName": "gdu",
       "license": "MIT License",
       "repoURL": "https://github.com/dundee/gdu",
