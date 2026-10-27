@@ -66,7 +66,7 @@ def main_installer_cli(
     update: Annotated[bool, typer.Option(..., "--update", "-u", help="Allow reinstalling or upgrading already installed apps when supported.")] = False,
     version: Annotated[str | None, typer.Option(..., "--version", "-v", help="Specific version or tag to install when supported.")] = None,
     source: Annotated[InstallerDataSource, typer.Option("--source", "-s", help="Installer definitions to use.")] = "all",
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="User software catalog path.")] = None,
+    path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="User software catalog path.")] = None,
     ctx: typer.Context | None = None,
 ) -> None:
     from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH

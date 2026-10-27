@@ -36,7 +36,7 @@ Current options:
 
 - `--group` to treat `WHICH` as a bundle name
 - `--source` to select `library`, `user`, or `all` installer catalogs; defaults to `all`
-- `--path` to select another user catalog with `--source user` or `all`
+- `--custom-path` to replace the user catalog with another file; `--source all` still merges it with the library catalog
 - `--check` to report binary availability without installing or validating catalog entries
 - `--interactive` to choose packages interactively
 - `--explore` / `-x` to browse installer `categoryLabels` before choosing packages
@@ -53,6 +53,8 @@ devops software install lazygit,fd --update
 ```
 
 Use `software list` to browse definitions, `path` to locate catalogs, `init` to create an empty user catalog, `edit` to modify it, and `validate` to check it.
+
+These software commands all accept `--custom-path` for the user catalog. `list`, `install`, and `path` support `--source library`, `user`, or `all`; a custom path works with `user` or `all`, but not `library`. `init`, `edit`, and `validate` accept only `--source user`, which is also their default.
 
 User catalog entries may reference `.sh`, `.ps1`, or `.py` installer scripts by file name; place them in an `installer_scripts/` directory next to the catalog (`~/dotfiles/stackops/config/installer_scripts/` by default). `software path` prints both script directories, and `software validate` fails if a referenced script is missing or its name is not unique across the user and library script directories.
 
@@ -97,6 +99,10 @@ These are the child commands exposed by the current live help.
 - `setup`
 
 `config dotfiles` provides `sync`, `register`, `export`, `import`, `path`, `init`, and `validate`. The last three locate, initialize, or validate the managed mapping. They are also available as `config path/init/validate dotfiles`; `config export-example dotfiles` exports its example and schema. Secrets are managed under `vault`.
+
+`config dotfiles register` and `data register` accept only `--source user`, which is also the default. `--source` uses `-s`; dotfile registration uses `--sensitivity` / `-v` for sensitivity.
+
+Generic `config` management commands and the dotfile/data `path`, `init`, and `validate` commands use `--custom-path` to select an explicit file. Standalone `repos` management commands retain `--path`.
 
 `data`:
 

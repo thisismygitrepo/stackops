@@ -7,10 +7,14 @@ import typer
 def list_layouts(
     layouts_file: Annotated[
         Path | None,
-        typer.Argument(exists=True, dir_okay=False, help="Layout JSON file. Omit to list layouts from the user and project config files."),
+        typer.Option("--custom-path", "-p", exists=True, dir_okay=False, help="Layout JSON file. Overrides --source; omit to list layouts from the selected sources."),
     ] = None,
+    source: Annotated[
+        Literal["project", "p", "user", "u", "all", "a"],
+        typer.Option("--source", "-s", help="Layout sources: project/p, user/u, or all/a. Ignored when --custom-path is provided."),
+    ] = "all",
     show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include each tab's name, start directory, command, and weight.")] = False,
-    show_stats: Annotated[bool, typer.Option("--stats", "-s", help="Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.")] = False,
+    show_stats: Annotated[bool, typer.Option("--stats", "-S", help="Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.")] = False,
 ) -> None:
     from rich.console import Console
     from rich.table import Table
@@ -22,6 +26,7 @@ def list_layouts(
         entries = resolve_layout_source(
             ctx=None,
             layouts_file=str(layouts_file) if layouts_file is not None else None,
+            source=source,
             test_layout=False,
         )
     except (OSError, ValueError) as error:
@@ -77,11 +82,11 @@ def list_layouts(
 def edit_layouts(
     layouts_file: Annotated[
         Path | None,
-        typer.Argument(dir_okay=False, help="Layout JSON file to edit. Omit to choose the user or project config file."),
+        typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file to edit. Overrides --source; omit to choose the user or project config file."),
     ] = None,
     source: Annotated[
         Literal["project", "p", "user", "u"] | None,
-        typer.Option("--source", "-s", help="Config file to edit without prompting. Ignored when LAYOUTS_FILE is provided."),
+        typer.Option("--source", "-s", help="Config file to edit without prompting. Ignored when --custom-path is provided."),
     ] = None,
     editor: Annotated[
         Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the layout file with."),

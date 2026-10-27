@@ -9,7 +9,7 @@ from stackops.utils.schemas.installer.installer_types import INSTALLER_DATA_SOUR
 
 def software_path(
     source: Annotated[InstallerDataSource, typer.Option("--source", "-s", help="Catalog paths to show: library, user, or all.")] = "all",
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Use another user catalog with --source user or all.")] = None,
+    path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Use another user catalog with --source user or all.")] = None,
 ) -> None:
     from stackops.utils.installer_utils.installer_scripts import LIBRARY_INSTALLER_SCRIPTS_ROOT, get_user_installer_scripts_root
     from stackops.utils.managed_file_operations import describe_managed_file
@@ -17,7 +17,7 @@ def software_path(
 
     normalized_source = INSTALLER_DATA_SOURCE_MAP[source]
     if normalized_source == "library" and path is not None:
-        raise typer.BadParameter("--path requires --source user or all")
+        raise typer.BadParameter("--custom-path requires --source user or all")
     spec = get_managed_file_spec("software")
     paths: dict[str, dict[str, str]] = {}
     if normalized_source in {"library", "all"}:
@@ -29,7 +29,8 @@ def software_path(
 
 
 def init_software(
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Create the user catalog at another path.")] = None,
+    path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Create the user catalog at another path.")] = None,
+    _source: Annotated[Literal["user"], typer.Option("--source", "-s", help="Catalog source to initialize. Only user is supported.")] = "user",
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action
 
@@ -37,7 +38,8 @@ def init_software(
 
 
 def edit_software(
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Edit the user catalog at another path.")] = None,
+    path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Edit the user catalog at another path.")] = None,
+    _source: Annotated[Literal["user"], typer.Option("--source", "-s", help="Catalog source to edit. Only user is supported.")] = "user",
     editor: Annotated[Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the catalog with.")] = "hx",
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.cli_config_edit import edit_managed_file
@@ -46,7 +48,8 @@ def edit_software(
 
 
 def validate_software(
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Validate the user catalog at another path.")] = None,
+    path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Validate the user catalog at another path.")] = None,
+    _source: Annotated[Literal["user"], typer.Option("--source", "-s", help="Catalog source to validate. Only user is supported.")] = "user",
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action
 

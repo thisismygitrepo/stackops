@@ -1,6 +1,6 @@
 """CLI implementation for sessions run command."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import typer
 
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 def run_cli(
     ctx: typer.Context | None,
     layouts_file: str | None,
+    source: Literal["project", "p", "user", "u", "all", "a"],
     test_layout: bool,
     choose_layouts: str | None,
     choose_tabs: str | None,
@@ -46,6 +47,7 @@ def run_cli(
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,
+            source=source,
             test_layout=test_layout,
         )
         layout_entries = load_selected_layouts_from_source(

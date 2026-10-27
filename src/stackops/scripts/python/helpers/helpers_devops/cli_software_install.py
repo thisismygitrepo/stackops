@@ -18,7 +18,7 @@ def install(
         InstallerDataSource,
         typer.Option("--source", "-s", help="Catalog: library, user, or all. User entries override matching library names."),
     ] = "all",
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Use another user catalog with --source user or all.")] = None,
+    path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Use another user catalog with --source user or all.")] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Select programs interactively.")] = False,
     explore: Annotated[bool, typer.Option("--explore", "-x", help="Browse software by category before installing.")] = False,
     update: Annotated[bool, typer.Option("--update", "-u", help="Reinstall or upgrade installed apps when supported.")] = False,
@@ -29,7 +29,7 @@ def install(
 
     if check:
         if path is not None:
-            raise typer.BadParameter("--path cannot be used with --check; checks inspect installed executables")
+            raise typer.BadParameter("--custom-path cannot be used with --check; checks inspect installed executables")
         if which is None:
             raise typer.BadParameter("program name or group name is required when --check is set")
         installer_cli.check_installations(which=which, group=group)

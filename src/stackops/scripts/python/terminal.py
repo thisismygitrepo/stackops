@@ -39,8 +39,12 @@ def balance_load(
 
 def run(
     ctx: typer.Context,
-    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the user and project config files.")] = None,
-    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
+    layouts_file: Annotated[str | None, typer.Option("--custom-path", "-p", help="Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.")] = None,
+    source: Annotated[
+        Literal["project", "p", "user", "u", "all", "a"],
+        typer.Option("--source", "-s", help="Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted."),
+    ] = "all",
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.")] = False,
 
     choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", metavar="[NAMES]", help="Comma separated layout names. Use -l without a value to select layouts interactively.")] = None,
     choose_tabs: Annotated[str | None, typer.Option(..., "--choose-tabs", "-t", metavar="[NAMES]", help="Comma separated tab names. Use -t without a value to select tabs interactively from all layouts, or from layouts selected with -l.")] = None,
@@ -48,7 +52,7 @@ def run(
     max_tabs: Annotated[int, typer.Option(..., "--max-tabs-per-layout", "-T", help="A Sanity checker that throws an error if any layout exceeds the maximum number of tabs to launch.")] = 25,
     max_layouts: Annotated[int, typer.Option(..., "--max-parallel-layouts", "-P", help="A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.")] = 25,
     monitor: Annotated[bool, typer.Option(..., "--monitor", "-m", help="Monitor the layout sessions for completion (implied by --parallel-layouts)")] = False,
-    parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-p", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
+    parallel_layouts: Annotated[int | None, typer.Option(..., "--parallel-layouts", "-j", help="Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.")] = None,
 
     backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer: tmux/t, herdr/h, tuios/u, aoe/e, or auto/a")] = "tmux",
     on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. merge-overwrite and merge-skip are supported for tmux and TUIOS.")] = "error",
@@ -84,6 +88,7 @@ def run(
     impl(
         ctx=ctx,
         layouts_file=layouts_file,
+        source=source,
         test_layout=test_layout,
         choose_layouts=choose_layouts,
         choose_tabs=choose_tabs,
@@ -103,10 +108,14 @@ def run(
 def run_all(
     ctx: typer.Context,
     *,
-    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the user and project config files.")] = None,
-    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
+    layouts_file: Annotated[str | None, typer.Option("--custom-path", "-p", help="Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.")] = None,
+    source: Annotated[
+        Literal["project", "p", "user", "u", "all", "a"],
+        typer.Option("--source", "-s", help="Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted."),
+    ] = "all",
+    test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.")] = False,
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
-    poll_seconds: Annotated[float, typer.Option("--poll-interval", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
+    poll_seconds: Annotated[float, typer.Option("--poll-interval", "-i", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,
     kill_finished_tabs: Annotated[bool, typer.Option("--kill-finished-tabs", "-k", help="Close each tab once its command is finished.")] = False,
     backend: Annotated[Literal["tmux", "t", "tuios", "u", "auto", "a"], typer.Option(..., "--backend", "-b", help="Backend terminal multiplexer to use: tmux or tuios")] = "tmux",
     on_conflict: Annotated[_SessionConflictActionLoose, typer.Option("--on-conflict", "-c", help="How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.")] = "error",
@@ -136,6 +145,7 @@ def run_all(
     impl(
         ctx=ctx,
         layouts_file=layouts_file,
+        source=source,
         test_layout=test_layout,
         max_parallel_tabs=max_parallel_tabs,
         poll_seconds=poll_seconds,
@@ -312,9 +322,9 @@ def export(
         raise typer.Exit(code=1) from error
     typer.echo(f"Exported {resolved_backend} layout to {exported_path}")
     if resolved_backend == "tmux":
-        typer.echo(f"Run it with: stackops terminal run {exported_path}")
+        typer.echo(f"Run it with: stackops terminal run --custom-path {exported_path}")
     else:
-        typer.echo(f"Run it with: stackops terminal run {exported_path} --backend {resolved_backend}")
+        typer.echo(f"Run it with: stackops terminal run --custom-path {exported_path} --backend {resolved_backend}")
 
 
 

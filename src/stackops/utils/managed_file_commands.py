@@ -11,7 +11,7 @@ def register_managed_file_commands(
 ) -> None:
     def path_file(
         path: Annotated[
-            Path | None, typer.Option("--path", "-p", help="Override the user configuration file path."),
+            Path | None, typer.Option("--custom-path", "-p", help="Override the user configuration file path."),
         ] = None,
     ) -> None:
         from stackops.utils.managed_file_cli import run_managed_file_action
@@ -20,7 +20,7 @@ def register_managed_file_commands(
 
     def init_file(
         path: Annotated[
-            Path | None, typer.Option("--path", "-p", help="Override the user configuration file path."),
+            Path | None, typer.Option("--custom-path", "-p", help="Override the user configuration file path."),
         ] = None,
     ) -> None:
         from stackops.utils.managed_file_cli import run_managed_file_action
@@ -29,7 +29,7 @@ def register_managed_file_commands(
 
     def validate_file(
         path: Annotated[
-            Path | None, typer.Option("--path", "-p", help="Override the user configuration file path."),
+            Path | None, typer.Option("--custom-path", "-p", help="Override the user configuration file path."),
         ] = None,
     ) -> None:
         from stackops.utils.managed_file_cli import run_managed_file_action

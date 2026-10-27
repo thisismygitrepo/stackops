@@ -176,7 +176,7 @@ def load_installer_data_file(path: Path) -> InstallerDataFiles:
 def read_installer_data(source: InstallerDataSource, user_path: Path | None) -> list[InstallerData]:
     normalized_source = INSTALLER_DATA_SOURCE_MAP[source]
     if user_path is not None and normalized_source == "library":
-        raise InstallerDataFileError("--path cannot be combined with --source library.")
+        raise InstallerDataFileError("--custom-path cannot be combined with --source library.")
     user_catalog_path = USER_INSTALLER_DATA_PATH if user_path is None else user_path.expanduser().absolute()
     match normalized_source:
         case "library":

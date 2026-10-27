@@ -32,11 +32,12 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 ## Common Layout Source Rules
 
-- Without `LAYOUTS_FILE` or `--test-layout`, `run` and `run-all` combine named layouts from the user file at `~/dotfiles/stackops/config/layouts.json` and the project file at `<git-root>/.stackops/config/layout.json`, including each file that exists, then open a layout picker. The project path uses the enclosing Git repository root, including when called from a subdirectory; outside Git only the user source is available. Cancelling the picker aborts the command.
+- `run`, `run-all`, and `list` accept `--source` / `-s`: `project/p`, `user/u`, or `all/a`, defaulting to `all`.
+- Without `--custom-path` or `--test-layout`, `--source all` combines named layouts from the user file at `~/dotfiles/stackops/config/layouts.json` and the project file at `<git-root>/.stackops/config/layout.json`, including each file that exists. The project path uses the enclosing Git repository root, including when called from a subdirectory; outside Git, `all` includes only the user source. Explicit `--source project` requires a Git repository. `run` and `run-all` open a picker for the selected source files; cancelling it aborts the command.
 - The default picker labels entries `user:name` or `project:name` and previews their source file paths. Layout and session names remain unchanged.
-- An explicit `LAYOUTS_FILE` loads layouts only from the supplied file.
+- `--custom-path` / `-p` overrides `--source` and loads layouts only from the supplied file, including outside Git.
 - For `run`, an explicit `--choose-layouts` or `--choose-tabs` selector uses that selection without opening an additional layout picker.
-- `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `LAYOUTS_FILE`.
+- `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `--custom-path`.
 - `--choose-layouts ""` opens interactive layout selection.
 - Named layout selectors accept an unambiguous name or `user:name` / `project:name`. A name shared by both sources requires the qualified form.
 - `--choose-tabs ""` opens interactive tab selection.
@@ -44,20 +45,21 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 ## run
 
-Launch selected layouts from an explicit file or the default layout files.
+Launch selected layouts from an explicit file or the selected configuration sources.
 
 ```bash
-terminal run [OPTIONS] [LAYOUTS_FILE]
+terminal run [OPTIONS]
 ```
 
 | Argument / Option | Short | Description |
 |-------------------|-------|-------------|
-| `LAYOUTS_FILE` | - | Optional layout file path; omit to select from the combined default files |
+| `--custom-path` | `-p` | Optional layout file path that overrides `--source` |
+| `--source` | `-s` | `project/p`, `user/u`, or `all/a`; defaults to `all` |
 | `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--choose-layouts` | `-l` | Comma-separated layout names, or `""` for interactive selection |
 | `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection across all layouts |
 | `--launch-delay` | `-S` | Delay in seconds between launching layouts |
-| `--parallel-layouts` | `-p` | Maximum number of layouts to launch per monitored batch |
+| `--parallel-layouts` | `-j` | Maximum number of layouts to launch per monitored batch |
 | `--max-tabs-per-layout` | `-T` | Sanity limit for tabs inside a single selected layout |
 | `--max-parallel-layouts` | `-P` | Sanity limit for total parallel layouts |
 | `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
@@ -76,6 +78,9 @@ terminal run
 # Run unambiguous named layouts from the combined default files without prompting
 terminal run --choose-layouts "dev,build"
 
+# Choose layouts only from the project configuration
+terminal run --source project
+
 # Select the project dev layout when both sources define dev
 terminal run --choose-layouts "project:dev"
 
@@ -83,38 +88,39 @@ terminal run --choose-layouts "project:dev"
 terminal run --choose-tabs "project:dev::server"
 
 # Run only selected layouts from an explicit file
-terminal run layouts.json --choose-layouts "dev,build"
+terminal run --custom-path layouts.json --choose-layouts "dev,build"
 
 # Run a generated test layout
 terminal run --test-layout --parallel-layouts 2 --monitor
 
 # Select tabs by name or layout-qualified name
-terminal run layouts.json --choose-tabs "server,build::tests"
+terminal run --custom-path layouts.json --choose-tabs "server,build::tests"
 
 # Restart matching sessions before relaunching
-terminal run layouts.json --on-conflict restart
+terminal run --custom-path layouts.json --on-conflict restart
 
 # Launch selected layouts through Herdr
-terminal run layouts.json --backend herdr
+terminal run --custom-path layouts.json --backend herdr
 
 # Launch selected layout tabs through Agent of Empires
-terminal run layout.json --backend aoe
+terminal run --custom-path layout.json --backend aoe
 ```
 
 ## run-all
 
-Merge every tab from the selected layouts into one paced run. An explicit file uses all its layouts; omitting the file opens a picker for the combined default files. `--max-parallel-tabs` is required in both cases.
+Merge every tab from the selected layouts into one paced run. `--custom-path` uses all layouts from the given file and overrides `--source`; omitting it opens a picker for the selected sources, defaulting to all available user and project files. `--max-parallel-tabs` is required in both cases.
 
 ```bash
-terminal run-all [OPTIONS] [LAYOUTS_FILE]
+terminal run-all [OPTIONS]
 ```
 
 | Argument / Option | Short | Description |
 |-------------------|-------|-------------|
-| `LAYOUTS_FILE` | - | Optional file whose layouts all run; omit to choose layouts from the combined default files |
+| `--custom-path` | `-p` | Optional file whose layouts all run; overrides `--source` |
+| `--source` | `-s` | `project/p`, `user/u`, or `all/a`; defaults to `all` |
 | `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--max-parallel-tabs` | `-t` | Required cap for concurrently active tabs |
-| `--poll-interval` | `-p` | Polling interval for finished-tab detection |
+| `--poll-interval` | `-i` | Polling interval for finished-tab detection |
 | `--backend` | `-b` | `tmux`/`t`, `tuios`/`u`, or `auto`/`a` |
 | `--kill-finished-tabs` | `-k` | Close each tab as soon as its command finishes |
 | `--on-conflict` | `-c` | `error`, `restart`, or `rename`; merge policies are rejected |
@@ -126,8 +132,11 @@ Examples:
 # Choose layouts from the combined default files and keep at most eight tabs active
 terminal run-all --max-parallel-tabs 8
 
+# Choose only user layouts and keep at most eight tabs active
+terminal run-all --source user --max-parallel-tabs 8
+
 # Keep at most eight tabs active while working through the whole file
-terminal run-all layouts.json --max-parallel-tabs 8
+terminal run-all --custom-path layouts.json --max-parallel-tabs 8
 
 # Use the generated test layout and close finished tabs as work drains
 terminal run-all --test-layout --max-parallel-tabs 6 --kill-finished-tabs
@@ -225,11 +234,11 @@ terminal export --sessions "dev,build" --output exported_layout.json
 
 # Export every running tmux session, then replay it with run
 terminal export --all --output exported_layout.json --overwrite
-terminal run exported_layout.json
+terminal run --custom-path exported_layout.json
 
 # Export Herdr workspaces, then replay them with run
 terminal export --backend herdr --all --output exported_layout.json --overwrite
-terminal run exported_layout.json --backend herdr
+terminal run --custom-path exported_layout.json --backend herdr
 ```
 
 ## trace
@@ -370,27 +379,28 @@ Current behavior:
 
 ## list
 
-List saved layouts and their source files. Add `--stats` for aggregate counts and `--tabs` for tab details.
+List saved layouts and their source files. Add `--stats` / `-S` for aggregate counts and `--tabs` / `-t` for tab details. `--source` / `-s` accepts `project/p`, `user/u`, or `all/a`, defaulting to `all`.
 
 ```bash
-terminal list [LAYOUTS_FILE] --stats
-terminal list layout.json --tabs --stats
+terminal list --stats
+terminal list --source project --tabs --stats
+terminal list --custom-path layout.json --tabs --stats
 ```
 
-Omitting `LAYOUTS_FILE` lists layouts from the user and project configuration files. The project file is resolved from the enclosing Git repository root. Statistics include layout and tab totals, average tabs per layout, and the largest and smallest layouts.
+Omitting `--custom-path` lists layouts from the selected source files. The default `all` includes available user and project files; outside Git it includes only the user file. Explicit `--source project` requires a Git repository. `--custom-path` / `-p` overrides the source selection. Statistics include layout and tab totals, average tabs per layout, and the largest and smallest layouts.
 
 ## edit, path, init, validate
 
-`edit` opens a layout file, creates it if missing, and validates it after saving. Omit the file to choose a configuration interactively, or pass `--source project` (alias `p`) or `--source user` (alias `u`). `--editor` accepts `hx`, `nano`, or `code`.
+`edit` opens a layout file, creates it if missing, and validates it after saving. Omit `--custom-path` to choose a configuration interactively, or pass `--source project` (alias `p`) or `--source user` (alias `u`). `--editor` accepts `hx`, `nano`, or `code`.
 
-`path` prints file and schema paths as JSON; with no arguments it shows the user path and, inside Git, the project path. `init` creates a missing file and schema. `validate` checks a file without opening an editor. Both `init` and `validate` require a file argument, `--source project` (alias `p`), or `--source user` (alias `u`). For all four commands, a positional `LAYOUTS_FILE` overrides `--source`; it remains a positional argument rather than a `--custom-path` option.
+`path` prints file and schema paths as JSON; with no options it shows the user path and, inside Git, the project path. `init` creates a missing file and schema. `validate` checks a file without opening an editor. Both `init` and `validate` require `--custom-path`, `--source project` (alias `p`), or `--source user` (alias `u`). For all four commands, `--custom-path` / `-p` overrides `--source`.
 
 ```bash
 terminal edit --source project
 terminal path
 terminal init --source project
 terminal path --source user
-terminal validate layout.json
+terminal validate --custom-path layout.json
 ```
 
 ## Layout File Format

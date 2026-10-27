@@ -29,5 +29,5 @@ terminal balance-load "$AGENTS_DIR/layout.json" \
     --threshold-type number \
     --output "$AGENTS_DIR/layout_balanced.json"
 
-printf 'Please run like this `terminal run "%s/layout_balanced.json" --kill-upon-completion`\n' "$AGENTS_DIR"
+printf 'Please run like this `terminal run --custom-path "%s/layout_balanced.json" --kill-upon-completion`\n' "$AGENTS_DIR"
 printf 'Then, do this `agents parallel collect "%s" "%s/.ai/agents/%s/collected.txt"`\n' "$AGENTS_DIR" "$REPO_ROOT" "$JOB_NAME"

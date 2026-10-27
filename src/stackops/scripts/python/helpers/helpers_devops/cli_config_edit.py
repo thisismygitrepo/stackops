@@ -17,7 +17,7 @@ def edit_managed_file(
     which: Annotated[ManagedFileKind, typer.Argument(help="Which managed file to edit.")],
     path: Annotated[
         Path | None,
-        typer.Option("--path", "-p", help="Edit a file of this kind at another path, e.g. a project-local .stackops/secrets/secrets.json."),
+        typer.Option("--custom-path", "-p", help="Edit a file of this kind at another path, e.g. a project-local .stackops/secrets/secrets.json."),
     ] = None,
     editor: Annotated[Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the file with.")] = "hx",
 ) -> None:

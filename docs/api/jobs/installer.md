@@ -119,7 +119,7 @@ If the resolved installer value ends in:
 - `.ps1`
 - `.py`
 
-the installer searches (recursively, by file name) the packaged installer assets under `stackops.jobs.installer` and, unless `--source library` is used, the `installer_scripts/` directory next to the user catalog (`~/dotfiles/stackops/config/installer_scripts/` by default, or beside the `--path` catalog). The resolved directory travels as `InstallRequest.user_scripts_root`. Exactly one match across both roots is required; a name present in both is an error, so user scripts that replace a library script need a distinct file name. `devops software validate` applies the same resolution to every script reference in the user catalog.
+the installer searches (recursively, by file name) the packaged installer assets under `stackops.jobs.installer` and, unless `--source library` is used, the `installer_scripts/` directory next to the user catalog (`~/dotfiles/stackops/config/installer_scripts/` by default, or beside the `--custom-path` catalog). The resolved directory travels as `InstallRequest.user_scripts_root`. Exactly one match across both roots is required; a name present in both is an error, so user scripts that replace a library script need a distinct file name. `devops software validate` applies the same resolution to every script reference in the user catalog.
 
 Python installer scripts run in-process inside the stackops tool environment, so they can import `stackops` and its dependencies but cannot declare their own.
 

@@ -301,10 +301,11 @@ def _prompt_register_dotfile_options(
 
 def register_dotfile(
     file: Annotated[str | None, typer.Argument(help="file/folder path.")] = None,
+    _source: Annotated[Literal["user"], typer.Option("--source", "-s", help="Mapper source to register in. Only user is supported.")] = "user",
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")] = "copy",
     on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict")] = "throw-error",
     sensitivity: Annotated[
-        Literal["private", "v", "public", "b"], typer.Option(..., "--sensitivity", "-s", help="Sensitivity of the config file.")
+        Literal["private", "v", "public", "b"], typer.Option(..., "--sensitivity", "-v", help="Sensitivity of the config file.")
     ] = "private",
     destination: Annotated[
         str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")

@@ -5,7 +5,7 @@ from typing import Literal
 import typer
 
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
-from stackops.utils.repos.stackops_paths import current_repo_stackops_path
+from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
 from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
 
 
@@ -27,11 +27,12 @@ def default_layout_source_paths() -> dict[Literal["user", "project"], Path]:
 def resolve_layout_source(
     ctx: typer.Context | None,
     layouts_file: str | None,
+    source: Literal["project", "p", "user", "u", "all", "a"],
     test_layout: bool,
 ) -> list[LayoutEntry]:
     if test_layout:
         if layouts_file is not None:
-            raise ValueError("--test-layout cannot be used together with LAYOUTS_FILE.")
+            raise ValueError("--test-layout cannot be used together with --custom-path.")
         from stackops.scripts.python.helpers.helpers_sessions.sessions_test_layouts import (
             build_test_layouts,
             count_tabs_in_layouts,
@@ -53,7 +54,13 @@ def resolve_layout_source(
 
         source_files = [("", Path(find_layout_file(layout_path=layouts_file)))]
     else:
-        source_files = list(default_layout_source_paths().items())
+        match source:
+            case "project" | "p":
+                source_files = [("project", require_current_repo_stackops_path(path_kind="layouts_json"))]
+            case "user" | "u":
+                source_files = [("user", DOTFILES_LAYOUTS_JSON_PATH)]
+            case "all" | "a":
+                source_files = list(default_layout_source_paths().items())
 
     existing_files = [(source_name, path) for source_name, path in source_files if path.is_file()]
     if not existing_files:
@@ -63,7 +70,7 @@ def resolve_layout_source(
         typer.echo(
             f"""No layout files found: {searched_paths}
 
-Create a layout file at one of these paths, or provide LAYOUTS_FILE explicitly.""",
+Create a layout file at one of these paths, or provide --custom-path explicitly.""",
             err=True,
         )
         raise typer.Exit(code=1)

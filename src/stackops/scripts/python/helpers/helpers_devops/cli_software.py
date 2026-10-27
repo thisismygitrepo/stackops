@@ -15,7 +15,7 @@ def list_software(
         InstallerDataSource,
         typer.Option("--source", "-s", help="Catalog: library, user, or all. User entries override matching library names."),
     ] = "all",
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Use another user catalog with --source user or all.")] = None,
+    path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Use another user catalog with --source user or all.")] = None,
     as_json: Annotated[bool, typer.Option("--json", "-j", help="Print complete software definitions as JSON.")] = False,
 ) -> None:
     from rich.console import Console

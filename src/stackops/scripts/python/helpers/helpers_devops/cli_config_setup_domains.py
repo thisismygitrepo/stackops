@@ -30,6 +30,7 @@ def setup_data() -> None:
     _ensure_user_schema("data")
     register_data(
         path_local=None,
+        _source="user",
         group="default",
         name=None,
         path_cloud=None,
@@ -50,6 +51,7 @@ def setup_dotfiles() -> None:
     _ensure_user_schema("dotfiles")
     register_dotfile(
         file=None,
+        _source="user",
         method="copy",
         on_conflict="throw-error",
         sensitivity="private",

@@ -160,6 +160,7 @@ def _prompt_register_data_options(
 
 def register_data(
     path_local: Annotated[str | None, typer.Argument(help="Local file/folder path to back up.")] = None,
+    _source: Annotated[Literal["user"], typer.Option("--source", "-s", help="Mapper source to register in. Only user is supported.")] = "user",
     group: Annotated[str, typer.Option("--group", "-g", help="Group name in mapper/data.yaml.")] = "default",
     name: Annotated[str | None, typer.Option("--name", "-n", help="Entry name inside the group in mapper/data.yaml.")] = None,
     path_cloud: Annotated[str | None, typer.Option("--path-cloud", "-C", help="Cloud path override (optional).")] = None,

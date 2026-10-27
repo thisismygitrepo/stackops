@@ -128,7 +128,7 @@
                     "        InstallerDataSource,",
                     "        typer.Option(\"--source\", \"-s\", help=\"Catalog: library, user, or all. User entries override matching library names.\"),",
                     "    ] = \"all\",",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Select programs interactively.\")] = False,",
                     "    explore: Annotated[bool, typer.Option(\"--explore\", \"-x\", help=\"Browse software by category before installing.\")] = False,",
                     "    update: Annotated[bool, typer.Option(\"--update\", \"-u\", help=\"Reinstall or upgrade installed apps when supported.\")] = False,",
@@ -139,7 +139,7 @@
                     "",
                     "    if check:",
                     "        if path is not None:",
-                    "            raise typer.BadParameter(\"--path cannot be used with --check; checks inspect installed executables\")",
+                    "            raise typer.BadParameter(\"--custom-path cannot be used with --check; checks inspect installed executables\")",
                     "        if which is None:",
                     "            raise typer.BadParameter(\"program name or group name is required when --check is set\")",
                     "        installer_cli.check_installations(which=which, group=group)",
@@ -258,15 +258,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use another user catalog with --source user or all.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use another user catalog with --source user or all.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -394,7 +394,7 @@
                     "        InstallerDataSource,",
                     "        typer.Option(\"--source\", \"-s\", help=\"Catalog: library, user, or all. User entries override matching library names.\"),",
                     "    ] = \"all\",",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
                     "    as_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print complete software definitions as JSON.\")] = False,",
                     ") -> None:",
                     "    from rich.console import Console",
@@ -477,15 +477,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use another user catalog with --source user or all.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use another user catalog with --source user or all.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -540,7 +540,7 @@
                   "raw_lines": [
                     "def software_path(",
                     "    source: Annotated[InstallerDataSource, typer.Option(\"--source\", \"-s\", help=\"Catalog paths to show: library, user, or all.\")] = \"all\",",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
                     ") -> None:",
                     "    from stackops.utils.installer_utils.installer_scripts import LIBRARY_INSTALLER_SCRIPTS_ROOT, get_user_installer_scripts_root",
                     "    from stackops.utils.managed_file_operations import describe_managed_file",
@@ -548,7 +548,7 @@
                     "",
                     "    normalized_source = INSTALLER_DATA_SOURCE_MAP[source]",
                     "    if normalized_source == \"library\" and path is not None:",
-                    "        raise typer.BadParameter(\"--path requires --source user or all\")",
+                    "        raise typer.BadParameter(\"--custom-path requires --source user or all\")",
                     "    spec = get_managed_file_spec(\"software\")",
                     "    paths: dict[str, dict[str, str]] = {}",
                     "    if normalized_source in {\"library\", \"all\"}:",
@@ -588,15 +588,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use another user catalog with --source user or all.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use another user catalog with --source user or all.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -628,7 +628,8 @@
                 "signature": {
                   "raw_lines": [
                     "def init_software(",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Create the user catalog at another path.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Create the user catalog at another path.\")] = None,",
+                    "    _source: Annotated[Literal[\"user\"], typer.Option(\"--source\", \"-s\", help=\"Catalog source to initialize. Only user is supported.\")] = \"user\",",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_action",
                     "",
@@ -642,20 +643,42 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Create the user catalog at another path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Create the user catalog at another path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
                         "help": "Create the user catalog at another path."
+                      }
+                    },
+                    {
+                      "name": "_source",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['user']",
+                      "default": "user",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['user'], typer.Option('--source', '-s', help='Catalog source to initialize. Only user is supported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Catalog source to initialize. Only user is supported."
                       }
                     }
                   ],
@@ -682,7 +705,8 @@
                 "signature": {
                   "raw_lines": [
                     "def edit_software(",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Edit the user catalog at another path.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Edit the user catalog at another path.\")] = None,",
+                    "    _source: Annotated[Literal[\"user\"], typer.Option(\"--source\", \"-s\", help=\"Catalog source to edit. Only user is supported.\")] = \"user\",",
                     "    editor: Annotated[Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the catalog with.\")] = \"hx\",",
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_config_edit import edit_managed_file",
@@ -697,20 +721,42 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Edit the user catalog at another path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Edit the user catalog at another path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
                         "help": "Edit the user catalog at another path."
+                      }
+                    },
+                    {
+                      "name": "_source",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['user']",
+                      "default": "user",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['user'], typer.Option('--source', '-s', help='Catalog source to edit. Only user is supported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Catalog source to edit. Only user is supported."
                       }
                     },
                     {
@@ -759,7 +805,8 @@
                 "signature": {
                   "raw_lines": [
                     "def validate_software(",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Validate the user catalog at another path.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Validate the user catalog at another path.\")] = None,",
+                    "    _source: Annotated[Literal[\"user\"], typer.Option(\"--source\", \"-s\", help=\"Catalog source to validate. Only user is supported.\")] = \"user\",",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_action",
                     "",
@@ -773,20 +820,42 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Validate the user catalog at another path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Validate the user catalog at another path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
                         "help": "Validate the user catalog at another path."
+                      }
+                    },
+                    {
+                      "name": "_source",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['user']",
+                      "default": "user",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['user'], typer.Option('--source', '-s', help='Catalog source to validate. Only user is supported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Catalog source to validate. Only user is supported."
                       }
                     }
                   ],
@@ -1046,6 +1115,7 @@
                   "raw_lines": [
                     "def register_data(",
                     "    path_local: Annotated[str | None, typer.Argument(help=\"Local file/folder path to back up.\")] = None,",
+                    "    _source: Annotated[Literal[\"user\"], typer.Option(\"--source\", \"-s\", help=\"Mapper source to register in. Only user is supported.\")] = \"user\",",
                     "    group: Annotated[str, typer.Option(\"--group\", \"-g\", help=\"Group name in mapper/data.yaml.\")] = \"default\",",
                     "    name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Entry name inside the group in mapper/data.yaml.\")] = None,",
                     "    path_cloud: Annotated[str | None, typer.Option(\"--path-cloud\", \"-C\", help=\"Cloud path override (optional).\")] = None,",
@@ -1119,6 +1189,28 @@
                         "long_flags": [],
                         "short_flags": [],
                         "help": "Local file/folder path to back up."
+                      }
+                    },
+                    {
+                      "name": "_source",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['user']",
+                      "default": "user",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['user'], typer.Option('--source', '-s', help='Mapper source to register in. Only user is supported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Mapper source to register in. Only user is supported."
                       }
                     },
                     {
@@ -2004,7 +2096,7 @@
                   "raw_lines": [
                     "    def path_file(",
                     "        path: Annotated[",
-                    "            Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the user configuration file path.\"),",
+                    "            Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Override the user configuration file path.\"),",
                     "        ] = None,",
                     "    ) -> None:",
                     "        from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -2019,15 +2111,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the user configuration file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Override the user configuration file path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -2060,7 +2152,7 @@
                   "raw_lines": [
                     "    def init_file(",
                     "        path: Annotated[",
-                    "            Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the user configuration file path.\"),",
+                    "            Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Override the user configuration file path.\"),",
                     "        ] = None,",
                     "    ) -> None:",
                     "        from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -2075,15 +2167,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the user configuration file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Override the user configuration file path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -2116,7 +2208,7 @@
                   "raw_lines": [
                     "    def validate_file(",
                     "        path: Annotated[",
-                    "            Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the user configuration file path.\"),",
+                    "            Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Override the user configuration file path.\"),",
                     "        ] = None,",
                     "    ) -> None:",
                     "        from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -2131,15 +2223,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the user configuration file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Override the user configuration file path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -5293,10 +5385,11 @@
                       "raw_lines": [
                         "def register_dotfile(",
                         "    file: Annotated[str | None, typer.Argument(help=\"file/folder path.\")] = None,",
+                        "    _source: Annotated[Literal[\"user\"], typer.Option(\"--source\", \"-s\", help=\"Mapper source to register in. Only user is supported.\")] = \"user\",",
                         "    method: Annotated[METHOD_LOOSE, typer.Option(..., \"--method\", \"-m\", help=\"Method to use for linking files\")] = \"copy\",",
                         "    on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on conflict\")] = \"throw-error\",",
                         "    sensitivity: Annotated[",
-                        "        Literal[\"private\", \"v\", \"public\", \"b\"], typer.Option(..., \"--sensitivity\", \"-s\", help=\"Sensitivity of the config file.\")",
+                        "        Literal[\"private\", \"v\", \"public\", \"b\"], typer.Option(..., \"--sensitivity\", \"-v\", help=\"Sensitivity of the config file.\")",
                         "    ] = \"private\",",
                         "    destination: Annotated[",
                         "        str | None, typer.Option(\"--destination\", \"-d\", help=\"destination folder (override the default, use at your own risk)\")",
@@ -5382,6 +5475,28 @@
                           }
                         },
                         {
+                          "name": "_source",
+                          "kind": "positional_or_keyword",
+                          "type": "Literal['user']",
+                          "default": "user",
+                          "required": false,
+                          "annotation_raw": "Annotated[Literal['user'], typer.Option('--source', '-s', help='Mapper source to register in. Only user is supported.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--source",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--source"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Mapper source to register in. Only user is supported."
+                          }
+                        },
+                        {
                           "name": "method",
                           "kind": "positional_or_keyword",
                           "type": "METHOD_LOOSE",
@@ -5433,18 +5548,18 @@
                           "type": "Literal['private', 'v', 'public', 'b']",
                           "default": "private",
                           "required": false,
-                          "annotation_raw": "Annotated[Literal['private', 'v', 'public', 'b'], typer.Option(..., '--sensitivity', '-s', help='Sensitivity of the config file.')]",
+                          "annotation_raw": "Annotated[Literal['private', 'v', 'public', 'b'], typer.Option(..., '--sensitivity', '-v', help='Sensitivity of the config file.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
                               "--sensitivity",
-                              "-s"
+                              "-v"
                             ],
                             "long_flags": [
                               "--sensitivity"
                             ],
                             "short_flags": [
-                              "-s"
+                              "-v"
                             ],
                             "help": "Sensitivity of the config file.",
                             "default": "..."
@@ -5855,7 +5970,7 @@
                       "raw_lines": [
                         "    def path_file(",
                         "        path: Annotated[",
-                        "            Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the user configuration file path.\"),",
+                        "            Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Override the user configuration file path.\"),",
                         "        ] = None,",
                         "    ) -> None:",
                         "        from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -5870,15 +5985,15 @@
                           "type": "Path | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the user configuration file path.')]",
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Override the user configuration file path.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--path",
+                              "--custom-path",
                               "-p"
                             ],
                             "long_flags": [
-                              "--path"
+                              "--custom-path"
                             ],
                             "short_flags": [
                               "-p"
@@ -5911,7 +6026,7 @@
                       "raw_lines": [
                         "    def init_file(",
                         "        path: Annotated[",
-                        "            Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the user configuration file path.\"),",
+                        "            Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Override the user configuration file path.\"),",
                         "        ] = None,",
                         "    ) -> None:",
                         "        from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -5926,15 +6041,15 @@
                           "type": "Path | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the user configuration file path.')]",
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Override the user configuration file path.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--path",
+                              "--custom-path",
                               "-p"
                             ],
                             "long_flags": [
-                              "--path"
+                              "--custom-path"
                             ],
                             "short_flags": [
                               "-p"
@@ -5967,7 +6082,7 @@
                       "raw_lines": [
                         "    def validate_file(",
                         "        path: Annotated[",
-                        "            Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the user configuration file path.\"),",
+                        "            Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Override the user configuration file path.\"),",
                         "        ] = None,",
                         "    ) -> None:",
                         "        from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -5982,15 +6097,15 @@
                           "type": "Path | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the user configuration file path.')]",
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Override the user configuration file path.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--path",
+                              "--custom-path",
                               "-p"
                             ],
                             "long_flags": [
-                              "--path"
+                              "--custom-path"
                             ],
                             "short_flags": [
                               "-p"
@@ -6402,6 +6517,7 @@
                         "    _ensure_user_schema(\"data\")",
                         "    register_data(",
                         "        path_local=None,",
+                        "        _source=\"user\",",
                         "        group=\"default\",",
                         "        name=None,",
                         "        path_cloud=None,",
@@ -6449,6 +6565,7 @@
                         "    _ensure_user_schema(\"dotfiles\")",
                         "    register_dotfile(",
                         "        file=None,",
+                        "        _source=\"user\",",
                         "        method=\"copy\",",
                         "        on_conflict=\"throw-error\",",
                         "        sensitivity=\"private\",",
@@ -6627,7 +6744,7 @@
                     "    which: Annotated[ManagedFileKind, typer.Argument(help=\"Which managed file to edit.\")],",
                     "    path: Annotated[",
                     "        Path | None,",
-                    "        typer.Option(\"--path\", \"-p\", help=\"Edit a file of this kind at another path, e.g. a project-local .stackops/secrets/secrets.json.\"),",
+                    "        typer.Option(\"--custom-path\", \"-p\", help=\"Edit a file of this kind at another path, e.g. a project-local .stackops/secrets/secrets.json.\"),",
                     "    ] = None,",
                     "    editor: Annotated[Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the file with.\")] = \"hx\",",
                     ") -> None:",
@@ -6682,15 +6799,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Edit a file of this kind at another path, e.g. a project-local .stackops/secrets/secrets.json.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Edit a file of this kind at another path, e.g. a project-local .stackops/secrets/secrets.json.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -6749,7 +6866,7 @@
                   "raw_lines": [
                     "def config_path(",
                     "    which: Annotated[ManagedFileKind, typer.Argument(help=\"Which configuration file to locate.\")],",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use an explicit configuration file path.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use an explicit configuration file path.\")] = None,",
                     ") -> None:",
                     "    run_managed_file_action(kind=which, action=\"path\", path=path)"
                   ],
@@ -6776,15 +6893,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use an explicit configuration file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use an explicit configuration file path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -6820,7 +6937,7 @@
                   "raw_lines": [
                     "def init_config(",
                     "    which: Annotated[ManagedFileKind, typer.Argument(help=\"Which configuration file to initialize.\")],",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use an explicit configuration file path.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use an explicit configuration file path.\")] = None,",
                     ") -> None:",
                     "    run_managed_file_action(kind=which, action=\"init\", path=path)"
                   ],
@@ -6847,15 +6964,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use an explicit configuration file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use an explicit configuration file path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -6891,7 +7008,7 @@
                   "raw_lines": [
                     "def validate_config(",
                     "    which: Annotated[ManagedFileKind, typer.Argument(help=\"Which configuration file to validate.\")],",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Use an explicit configuration file path.\")] = None,",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use an explicit configuration file path.\")] = None,",
                     ") -> None:",
                     "    run_managed_file_action(kind=which, action=\"validate\", path=path)"
                   ],
@@ -6918,15 +7035,15 @@
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Use an explicit configuration file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use an explicit configuration file path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -20811,8 +20928,12 @@
               "raw_lines": [
                 "def run(",
                 "    ctx: typer.Context,",
-                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to choose layouts from the user and project config files.\")] = None,",
-                "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.\")] = False,",
+                "    layouts_file: Annotated[str | None, typer.Option(\"--custom-path\", \"-p\", help=\"Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.\")] = None,",
+                "    source: Annotated[",
+                "        Literal[\"project\", \"p\", \"user\", \"u\", \"all\", \"a\"],",
+                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted.\"),",
+                "    ] = \"all\",",
+                "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.\")] = False,",
                 "",
                 "    choose_layouts: Annotated[str | None, typer.Option(..., \"--choose-layouts\", \"-l\", metavar=\"[NAMES]\", help=\"Comma separated layout names. Use -l without a value to select layouts interactively.\")] = None,",
                 "    choose_tabs: Annotated[str | None, typer.Option(..., \"--choose-tabs\", \"-t\", metavar=\"[NAMES]\", help=\"Comma separated tab names. Use -t without a value to select tabs interactively from all layouts, or from layouts selected with -l.\")] = None,",
@@ -20820,7 +20941,7 @@
                 "    max_tabs: Annotated[int, typer.Option(..., \"--max-tabs-per-layout\", \"-T\", help=\"A Sanity checker that throws an error if any layout exceeds the maximum number of tabs to launch.\")] = 25,",
                 "    max_layouts: Annotated[int, typer.Option(..., \"--max-parallel-layouts\", \"-P\", help=\"A Sanity checker that throws an error if the total number of *parallel layouts exceeds this number.\")] = 25,",
                 "    monitor: Annotated[bool, typer.Option(..., \"--monitor\", \"-m\", help=\"Monitor the layout sessions for completion (implied by --parallel-layouts)\")] = False,",
-                "    parallel_layouts: Annotated[int | None, typer.Option(..., \"--parallel-layouts\", \"-p\", help=\"Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.\")] = None,",
+                "    parallel_layouts: Annotated[int | None, typer.Option(..., \"--parallel-layouts\", \"-j\", help=\"Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.\")] = None,",
                 "",
                 "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"tuios\", \"u\", \"aoe\", \"e\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer: tmux/t, herdr/h, tuios/u, aoe/e, or auto/a\")] = \"tmux\",",
                 "    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. merge-overwrite and merge-skip are supported for tmux and TUIOS.\")] = \"error\",",
@@ -20856,6 +20977,7 @@
                 "    impl(",
                 "        ctx=ctx,",
                 "        layouts_file=layouts_file,",
+                "        source=source,",
                 "        test_layout=test_layout,",
                 "        choose_layouts=choose_layouts,",
                 "        choose_tabs=choose_tabs,",
@@ -20887,13 +21009,42 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to choose layouts from the user and project config files.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--custom-path', '-p', help='Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.')]",
                   "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Path to the layout JSON file. Omit to choose layouts from the user and project config files."
+                    "kind": "option",
+                    "param_decls": [
+                      "--custom-path",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--custom-path"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Layout JSON file, overriding --source. Omit to choose layouts from the selected sources."
+                  }
+                },
+                {
+                  "name": "source",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['project', 'p', 'user', 'u', 'all', 'a']",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--source",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--source"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted."
                   }
                 },
                 {
@@ -20902,7 +21053,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--test-layout', '-L', help='Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--test-layout', '-L', help='Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -20915,7 +21066,7 @@
                     "short_flags": [
                       "-L"
                     ],
-                    "help": "Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.",
+                    "help": "Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.",
                     "default": "..."
                   }
                 },
@@ -21063,18 +21214,18 @@
                   "type": "int | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[int | None, typer.Option(..., '--parallel-layouts', '-p', help='Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.')]",
+                  "annotation_raw": "Annotated[int | None, typer.Option(..., '--parallel-layouts', '-j', help='Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
                       "--parallel-layouts",
-                      "-p"
+                      "-j"
                     ],
                     "long_flags": [
                       "--parallel-layouts"
                     ],
                     "short_flags": [
-                      "-p"
+                      "-j"
                     ],
                     "help": "Maximum number of layouts to launch per monitored batch. 1 behaves like sequential mode.",
                     "default": "..."
@@ -21226,10 +21377,14 @@
                 "def run_all(",
                 "    ctx: typer.Context,",
                 "    *,",
-                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to choose layouts from the user and project config files.\")] = None,",
-                "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.\")] = False,",
+                "    layouts_file: Annotated[str | None, typer.Option(\"--custom-path\", \"-p\", help=\"Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.\")] = None,",
+                "    source: Annotated[",
+                "        Literal[\"project\", \"p\", \"user\", \"u\", \"all\", \"a\"],",
+                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted.\"),",
+                "    ] = \"all\",",
+                "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.\")] = False,",
                 "    max_parallel_tabs: Annotated[int, typer.Option(..., \"--max-parallel-tabs\", \"-t\", help=\"Maximum number of tabs to keep active while dynamically working through the whole file.\")],",
-                "    poll_seconds: Annotated[float, typer.Option(\"--poll-interval\", \"-p\", help=\"Polling interval in seconds used to detect finished tabs.\")] = 2.0,",
+                "    poll_seconds: Annotated[float, typer.Option(\"--poll-interval\", \"-i\", help=\"Polling interval in seconds used to detect finished tabs.\")] = 2.0,",
                 "    kill_finished_tabs: Annotated[bool, typer.Option(\"--kill-finished-tabs\", \"-k\", help=\"Close each tab once its command is finished.\")] = False,",
                 "    backend: Annotated[Literal[\"tmux\", \"t\", \"tuios\", \"u\", \"auto\", \"a\"], typer.Option(..., \"--backend\", \"-b\", help=\"Backend terminal multiplexer to use: tmux or tuios\")] = \"tmux\",",
                 "    on_conflict: Annotated[_SessionConflictActionLoose, typer.Option(\"--on-conflict\", \"-c\", help=\"How to handle existing session name conflicts. run-all only supports error, restart, and rename because the dynamic scheduler must own the target session.\")] = \"error\",",
@@ -21259,6 +21414,7 @@
                 "    impl(",
                 "        ctx=ctx,",
                 "        layouts_file=layouts_file,",
+                "        source=source,",
                 "        test_layout=test_layout,",
                 "        max_parallel_tabs=max_parallel_tabs,",
                 "        poll_seconds=poll_seconds,",
@@ -21284,13 +21440,42 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to choose layouts from the user and project config files.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--custom-path', '-p', help='Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.')]",
                   "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Path to the layout JSON file. Omit to choose layouts from the user and project config files."
+                    "kind": "option",
+                    "param_decls": [
+                      "--custom-path",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--custom-path"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Layout JSON file, overriding --source. Omit to choose layouts from the selected sources."
+                  }
+                },
+                {
+                  "name": "source",
+                  "kind": "keyword_only",
+                  "type": "Literal['project', 'p', 'user', 'u', 'all', 'a']",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--source",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--source"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted."
                   }
                 },
                 {
@@ -21299,7 +21484,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--test-layout', '-L', help='Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--test-layout', '-L', help='Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21312,7 +21497,7 @@
                     "short_flags": [
                       "-L"
                     ],
-                    "help": "Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.",
+                    "help": "Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.",
                     "default": "..."
                   }
                 },
@@ -21345,18 +21530,18 @@
                   "type": "float",
                   "default": 2.0,
                   "required": false,
-                  "annotation_raw": "Annotated[float, typer.Option('--poll-interval', '-p', help='Polling interval in seconds used to detect finished tabs.')]",
+                  "annotation_raw": "Annotated[float, typer.Option('--poll-interval', '-i', help='Polling interval in seconds used to detect finished tabs.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
                       "--poll-interval",
-                      "-p"
+                      "-i"
                     ],
                     "long_flags": [
                       "--poll-interval"
                     ],
                     "short_flags": [
-                      "-p"
+                      "-i"
                     ],
                     "help": "Polling interval in seconds used to detect finished tabs."
                   }
@@ -21483,10 +21668,14 @@
                 "def list_layouts(",
                 "    layouts_file: Annotated[",
                 "        Path | None,",
-                "        typer.Argument(exists=True, dir_okay=False, help=\"Layout JSON file. Omit to list layouts from the user and project config files.\"),",
+                "        typer.Option(\"--custom-path\", \"-p\", exists=True, dir_okay=False, help=\"Layout JSON file. Overrides --source; omit to list layouts from the selected sources.\"),",
                 "    ] = None,",
+                "    source: Annotated[",
+                "        Literal[\"project\", \"p\", \"user\", \"u\", \"all\", \"a\"],",
+                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: project/p, user/u, or all/a. Ignored when --custom-path is provided.\"),",
+                "    ] = \"all\",",
                 "    show_tabs: Annotated[bool, typer.Option(\"--tabs\", \"-t\", help=\"Include each tab's name, start directory, command, and weight.\")] = False,",
-                "    show_stats: Annotated[bool, typer.Option(\"--stats\", \"-s\", help=\"Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.\")] = False,",
+                "    show_stats: Annotated[bool, typer.Option(\"--stats\", \"-S\", help=\"Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.\")] = False,",
                 ") -> None:",
                 "    from rich.console import Console",
                 "    from rich.table import Table",
@@ -21498,6 +21687,7 @@
                 "        entries = resolve_layout_source(",
                 "            ctx=None,",
                 "            layouts_file=str(layouts_file) if layouts_file is not None else None,",
+                "            source=source,",
                 "            test_layout=False,",
                 "        )",
                 "    except (OSError, ValueError) as error:",
@@ -21557,13 +21747,42 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Argument(exists=True, dir_okay=False, help='Layout JSON file. Omit to list layouts from the user and project config files.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', exists=True, dir_okay=False, help='Layout JSON file. Overrides --source; omit to list layouts from the selected sources.')]",
                   "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Layout JSON file. Omit to list layouts from the user and project config files."
+                    "kind": "option",
+                    "param_decls": [
+                      "--custom-path",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--custom-path"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Layout JSON file. Overrides --source; omit to list layouts from the selected sources."
+                  }
+                },
+                {
+                  "name": "source",
+                  "kind": "positional_or_keyword",
+                  "type": "Literal['project', 'p', 'user', 'u', 'all', 'a']",
+                  "default": "all",
+                  "required": false,
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: project/p, user/u, or all/a. Ignored when --custom-path is provided.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--source",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--source"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Layout sources: project/p, user/u, or all/a. Ignored when --custom-path is provided."
                   }
                 },
                 {
@@ -21594,18 +21813,18 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--stats', '-s', help='Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--stats', '-S', help='Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
                       "--stats",
-                      "-s"
+                      "-S"
                     ],
                     "long_flags": [
                       "--stats"
                     ],
                     "short_flags": [
-                      "-s"
+                      "-S"
                     ],
                     "help": "Show layout and tab totals, average tabs per layout, and the largest and smallest layouts."
                   }
@@ -21639,11 +21858,11 @@
                 "def edit_layouts(",
                 "    layouts_file: Annotated[",
                 "        Path | None,",
-                "        typer.Argument(dir_okay=False, help=\"Layout JSON file to edit. Omit to choose the user or project config file.\"),",
+                "        typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to edit. Overrides --source; omit to choose the user or project config file.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
-                "        typer.Option(\"--source\", \"-s\", help=\"Config file to edit without prompting. Ignored when LAYOUTS_FILE is provided.\"),",
+                "        typer.Option(\"--source\", \"-s\", help=\"Config file to edit without prompting. Ignored when --custom-path is provided.\"),",
                 "    ] = None,",
                 "    editor: Annotated[",
                 "        Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the layout file with.\"),",
@@ -21708,13 +21927,20 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Argument(dir_okay=False, help='Layout JSON file to edit. Omit to choose the user or project config file.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file to edit. Overrides --source; omit to choose the user or project config file.')]",
                   "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Layout JSON file to edit. Omit to choose the user or project config file."
+                    "kind": "option",
+                    "param_decls": [
+                      "--custom-path",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--custom-path"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Layout JSON file to edit. Overrides --source; omit to choose the user or project config file."
                   }
                 },
                 {
@@ -21723,7 +21949,7 @@
                   "type": "Literal['project', 'p', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to edit without prompting. Ignored when LAYOUTS_FILE is provided.')]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to edit without prompting. Ignored when --custom-path is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21736,7 +21962,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Config file to edit without prompting. Ignored when LAYOUTS_FILE is provided."
+                    "help": "Config file to edit without prompting. Ignored when --custom-path is provided."
                   }
                 },
                 {
@@ -21789,11 +22015,11 @@
               "raw_lines": [
                 "def path_layouts(",
                 "    layouts_file: Annotated[",
-                "        Path | None, typer.Argument(dir_okay=False, help=\"Layout JSON file. Omit to show user and project paths.\"),",
+                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file. Overrides --source; omit to show user and project paths.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
-                "        typer.Option(\"--source\", \"-s\", help=\"Show one config file's paths. Ignored when LAYOUTS_FILE is provided.\"),",
+                "        typer.Option(\"--source\", \"-s\", help=\"Show one config file's paths. Ignored when --custom-path is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
                 "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -21822,13 +22048,20 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Argument(dir_okay=False, help='Layout JSON file. Omit to show user and project paths.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file. Overrides --source; omit to show user and project paths.')]",
                   "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Layout JSON file. Omit to show user and project paths."
+                    "kind": "option",
+                    "param_decls": [
+                      "--custom-path",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--custom-path"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Layout JSON file. Overrides --source; omit to show user and project paths."
                   }
                 },
                 {
@@ -21837,7 +22070,7 @@
                   "type": "Literal['project', 'p', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help=\"Show one config file's paths. Ignored when LAYOUTS_FILE is provided.\")]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help=\"Show one config file's paths. Ignored when --custom-path is provided.\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21850,7 +22083,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Show one config file's paths. Ignored when LAYOUTS_FILE is provided."
+                    "help": "Show one config file's paths. Ignored when --custom-path is provided."
                   }
                 }
               ],
@@ -21878,11 +22111,11 @@
               "raw_lines": [
                 "def init_layouts(",
                 "    layouts_file: Annotated[",
-                "        Path | None, typer.Argument(dir_okay=False, help=\"Layout JSON file to create if missing.\"),",
+                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to create if missing. Overrides --source.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
-                "        typer.Option(\"--source\", \"-s\", help=\"Config file to initialize. Ignored when LAYOUTS_FILE is provided.\"),",
+                "        typer.Option(\"--source\", \"-s\", help=\"Config file to initialize. Ignored when --custom-path is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
                 "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -21898,13 +22131,20 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Argument(dir_okay=False, help='Layout JSON file to create if missing.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file to create if missing. Overrides --source.')]",
                   "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Layout JSON file to create if missing."
+                    "kind": "option",
+                    "param_decls": [
+                      "--custom-path",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--custom-path"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Layout JSON file to create if missing. Overrides --source."
                   }
                 },
                 {
@@ -21913,7 +22153,7 @@
                   "type": "Literal['project', 'p', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to initialize. Ignored when LAYOUTS_FILE is provided.')]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to initialize. Ignored when --custom-path is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21926,7 +22166,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Config file to initialize. Ignored when LAYOUTS_FILE is provided."
+                    "help": "Config file to initialize. Ignored when --custom-path is provided."
                   }
                 }
               ],
@@ -21954,11 +22194,11 @@
               "raw_lines": [
                 "def validate_layouts(",
                 "    layouts_file: Annotated[",
-                "        Path | None, typer.Argument(dir_okay=False, help=\"Layout JSON file to validate.\"),",
+                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to validate. Overrides --source.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
-                "        typer.Option(\"--source\", \"-s\", help=\"Config file to validate. Ignored when LAYOUTS_FILE is provided.\"),",
+                "        typer.Option(\"--source\", \"-s\", help=\"Config file to validate. Ignored when --custom-path is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
                 "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -21974,13 +22214,20 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Argument(dir_okay=False, help='Layout JSON file to validate.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file to validate. Overrides --source.')]",
                   "typer": {
-                    "kind": "argument",
-                    "param_decls": [],
-                    "long_flags": [],
-                    "short_flags": [],
-                    "help": "Layout JSON file to validate."
+                    "kind": "option",
+                    "param_decls": [
+                      "--custom-path",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--custom-path"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Layout JSON file to validate. Overrides --source."
                   }
                 },
                 {
@@ -21989,7 +22236,7 @@
                   "type": "Literal['project', 'p', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to validate. Ignored when LAYOUTS_FILE is provided.')]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to validate. Ignored when --custom-path is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22002,7 +22249,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Config file to validate. Ignored when LAYOUTS_FILE is provided."
+                    "help": "Config file to validate. Ignored when --custom-path is provided."
                   }
                 }
               ],
@@ -22506,9 +22753,9 @@
                 "        raise typer.Exit(code=1) from error",
                 "    typer.echo(f\"Exported {resolved_backend} layout to {exported_path}\")",
                 "    if resolved_backend == \"tmux\":",
-                "        typer.echo(f\"Run it with: stackops terminal run {exported_path}\")",
+                "        typer.echo(f\"Run it with: stackops terminal run --custom-path {exported_path}\")",
                 "    else:",
-                "        typer.echo(f\"Run it with: stackops terminal run {exported_path} --backend {resolved_backend}\")"
+                "        typer.echo(f\"Run it with: stackops terminal run --custom-path {exported_path} --backend {resolved_backend}\")"
               ],
               "name": "export",
               "parameters": [

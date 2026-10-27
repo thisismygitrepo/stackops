@@ -21,7 +21,7 @@ def test_explicit_layout_file_overrides_source(
     managed_action = Mock()
     monkeypatch.setattr(managed_file_cli, "run_managed_file_action", managed_action)
 
-    result = CliRunner().invoke(terminal.get_app(), [command, str(layout_path), "--source", source])
+    result = CliRunner().invoke(terminal.get_app(), [command, "--custom-path", str(layout_path), "--source", source])
 
     assert result.exit_code == 0, result.output
     managed_action.assert_called_once_with(kind="layouts", action=command, path=layout_path)

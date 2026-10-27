@@ -125,6 +125,7 @@ def _run_generated_layout_with_tmux(*, layout_output_path: Path) -> None:
     run_cli(
         ctx=None,
         layouts_file=str(layout_output_path),
+        source="all",
         test_layout=False,
         choose_layouts=None,
         choose_tabs=None,

@@ -1,6 +1,6 @@
 """CLI implementation for sessions run-all command."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import typer
 
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 def run_all_cli(
     ctx: typer.Context,
     layouts_file: str | None,
+    source: Literal["project", "p", "user", "u", "all", "a"],
     test_layout: bool,
     max_parallel_tabs: int,
     poll_seconds: float,
@@ -39,6 +40,7 @@ def run_all_cli(
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,
+            source=source,
             test_layout=test_layout,
         )
         layout_entries = load_selected_layouts_from_source(
