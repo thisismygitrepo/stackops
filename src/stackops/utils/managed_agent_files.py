@@ -4,7 +4,7 @@ from typing import Literal, TypeAlias, cast
 from stackops.utils.managed_files import ManagedFileSpec
 
 AgentManagedFileKind: TypeAlias = Literal["prompts", "parallel", "mcp"]
-AgentManagedFileSource: TypeAlias = Literal["project", "user", "library"]
+AgentManagedFileSource: TypeAlias = Literal["project", "p", "user", "u", "library", "l"]
 
 
 def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[AgentManagedFileSource, Path], ...]:
@@ -42,6 +42,13 @@ def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[A
 
 
 def resolve_agent_managed_file_path(*, kind: AgentManagedFileKind, source: AgentManagedFileSource) -> Path:
+    match source:
+        case "p":
+            source = "project"
+        case "u":
+            source = "user"
+        case "l":
+            source = "library"
     for location_source, path in agent_managed_file_locations(kind=kind):
         if location_source == source:
             return path

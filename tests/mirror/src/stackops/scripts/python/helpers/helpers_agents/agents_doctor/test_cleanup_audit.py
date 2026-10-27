@@ -38,7 +38,7 @@ def test_mcp_command_match_identifies_nonmatching_server_name(audit_context: Doc
         json.dumps({"mcpServers": {"optimizer": {"command": "headroom", "args": ["mcp"]}, "other": {"command": "keep"}}}), encoding="utf-8"
     )
     inventory = collect_cleanup_resources(agent="claude", context=audit_context, resource_focuses=("mcp",))
-    plan = build_cleanup_plan(inventory=inventory, scope="local", match="headroom", home_directory=audit_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="project", match="headroom", home_directory=audit_context.home_directory)
     assert len(plan.changes) == 1
     assert plan.changes[0].replacement is not None
     assert json.loads(plan.changes[0].replacement) == {"mcpServers": {"other": {"command": "keep"}}}
@@ -52,7 +52,7 @@ def test_linked_skill_cleanup_preserves_external_source(audit_context: DoctorCon
     link.parent.mkdir(parents=True)
     link.symlink_to(source, target_is_directory=True)
     inventory = collect_cleanup_resources(agent="claude", context=audit_context, resource_focuses=("skill",))
-    plan = build_cleanup_plan(inventory=inventory, scope="local", match="shared", home_directory=audit_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="project", match="shared", home_directory=audit_context.home_directory)
     assert not plan.blockers
     assert len(plan.changes) == 1
     assert plan.changes[0].snapshot.path == link
@@ -107,12 +107,12 @@ def test_cline_full_reset_covers_native_cli_customizations(audit_context: Doctor
     global_rule.parent.mkdir(parents=True)
     global_rule.write_text("global rule", encoding="utf-8")
     inventory = collect_cleanup_resources(agent="cline", context=audit_context, resource_focuses=("all",))
-    local_plan = build_cleanup_plan(inventory=inventory, scope="local", match=None, home_directory=audit_context.home_directory)
+    local_plan = build_cleanup_plan(inventory=inventory, scope="project", match=None, home_directory=audit_context.home_directory)
     assert not local_plan.blockers
     changed = {change.snapshot.path for change in local_plan.changes}
     assert {root / "mcp.json", root / "agents.yaml", root / "rules/custom.md", root / "skills/custom", root / "plugins"}.issubset(changed)
     assert global_rule not in changed
-    global_plan = build_cleanup_plan(inventory=inventory, scope="global", match=None, home_directory=audit_context.home_directory)
+    global_plan = build_cleanup_plan(inventory=inventory, scope="user", match=None, home_directory=audit_context.home_directory)
     assert global_rule in {change.snapshot.path for change in global_plan.changes}
 
 
@@ -123,7 +123,7 @@ def test_linked_instruction_cleanup_preserves_external_source(audit_context: Doc
     link.parent.mkdir(parents=True)
     link.symlink_to(source)
     inventory = collect_cleanup_resources(agent="claude", context=audit_context, resource_focuses=("instructions",))
-    plan = build_cleanup_plan(inventory=inventory, scope="local", match="shared", home_directory=audit_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="project", match="shared", home_directory=audit_context.home_directory)
     assert not plan.blockers
     assert len(plan.changes) == 1
     assert plan.changes[0].snapshot.path == link

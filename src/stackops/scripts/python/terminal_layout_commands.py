@@ -81,7 +81,7 @@ def edit_layouts(
     ] = None,
     source: Annotated[
         Literal["project", "p", "user", "u"] | None,
-        typer.Option("--source", "-s", help="Config file to edit without prompting. Cannot be combined with LAYOUTS_FILE."),
+        typer.Option("--source", "-s", help="Config file to edit without prompting. Ignored when LAYOUTS_FILE is provided."),
     ] = None,
     editor: Annotated[
         Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the layout file with."),

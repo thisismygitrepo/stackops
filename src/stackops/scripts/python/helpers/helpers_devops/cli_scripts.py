@@ -1,6 +1,7 @@
 import json
 import shutil
 import subprocess
+from pathlib import Path
 from typing import Annotated, Literal
 
 import typer
@@ -67,7 +68,7 @@ def edit_script(
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.script_resolution import resolve_script
 
-    if source in {"dynamic", "d"}:
+    if source in {"dynamic", "d"} and not Path(name).is_file():
         raise typer.BadParameter("Editing requires a local script source.", param_hint="--source")
     target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive)
     editor_bin = shutil.which(editor)

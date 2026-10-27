@@ -9,8 +9,6 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants
 
 def resolve_secrets_file(*, custom_path: Path | None, source: WritableSecretsSource | None) -> Path:
     if custom_path is not None:
-        if source in {"user", "u"}:
-            raise typer.BadParameter("--custom-path replaces the project secrets source; it cannot be combined with --source user.")
         return custom_path.expanduser().absolute()
     if source is None:
         raise typer.BadParameter("Provide --custom-path or --source project|user. Use devops vault path to see available files.")
@@ -21,7 +19,7 @@ def resolve_secrets_file(*, custom_path: Path | None, source: WritableSecretsSou
 
 def path_secrets(
     custom_path: Annotated[
-        Path | None, typer.Option("--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."),
+        Path | None, typer.Option("--custom-path", "-p", help="Use only this secrets JSON file, overriding --source."),
     ] = None,
     source: Annotated[
         WritableSecretsSource | None,
@@ -49,7 +47,7 @@ def path_secrets(
 
 def init_secrets(
     custom_path: Annotated[
-        Path | None, typer.Option("--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."),
+        Path | None, typer.Option("--custom-path", "-p", help="Use only this secrets JSON file, overriding --source."),
     ] = None,
     source: Annotated[
         WritableSecretsSource | None,
@@ -64,7 +62,7 @@ def init_secrets(
 
 def validate_secrets(
     custom_path: Annotated[
-        Path | None, typer.Option("--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."),
+        Path | None, typer.Option("--custom-path", "-p", help="Use only this secrets JSON file, overriding --source."),
     ] = None,
     source: Annotated[
         WritableSecretsSource | None,

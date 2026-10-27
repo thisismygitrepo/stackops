@@ -68,7 +68,7 @@ def test_full_reset_covers_customizations_and_preserves_unrelated_files(isolated
     auth.parent.mkdir(parents=True)
     auth.write_text('{"token":"keep"}')
     runner = CliRunner()
-    args = ["depoison", "claude", "--directory", str(project), "--scope", "local"]
+    args = ["reset", "claude", "--directory", str(project), "--scope", "project"]
     preview = runner.invoke(agents.get_app(), args)
     assert preview.exit_code == 0, preview.output
     for path in (settings, mcp, instructions, skill, plugin):
@@ -90,7 +90,7 @@ def test_selected_mcp_removal_preserves_settings_and_other_servers(isolated_cont
     config = project / ".mcp.json"
     config.write_text(json.dumps({"mcpServers": {"headroom": {"command": "proxy"}, "keep": {"command": "server"}}, "other": True}))
     result = CliRunner().invoke(agents.get_app(), [
-        "depoison", "claude", "--directory", str(project), "--resource", "mcp", "--match", "headroom", "--apply",
+        "reset", "claude", "--directory", str(project), "--resource", "mcp", "--match", "headroom", "--apply",
     ])
     assert result.exit_code == 0, result.output
     assert json.loads(config.read_text()) == {"mcpServers": {"keep": {"command": "server"}}, "other": True}
@@ -108,7 +108,7 @@ def test_doctor_reports_unknown_local_and_global_hooks(isolated_context: DoctorC
     assert "global" in result.output
     assert "local" in result.output
     assert "Hooks" in result.output
-    assert "depoison" in result.output
+    assert "agents reset" in result.output
 
 
 def test_doctor_malformed_hook_config_reports_incomplete_scan(isolated_context: DoctorContext) -> None:
@@ -129,7 +129,7 @@ def test_skill_cleanup_unlinks_installed_skill_preserving_source(isolated_contex
     link.parent.mkdir(parents=True)
     link.symlink_to(source, target_is_directory=True)
     result = CliRunner().invoke(agents.get_app(), [
-        "depoison", "claude", "--directory", str(project), "--resource", "skill", "--scope", "local", "--apply",
+        "reset", "claude", "--directory", str(project), "--resource", "skill", "--scope", "project", "--apply",
     ])
     assert result.exit_code == 0, result.output
     assert not link.is_symlink()
@@ -144,7 +144,7 @@ def test_local_mcp_in_user_state_removes_only_selected_project(isolated_context:
         "projects": {str(project): {"mcpServers": {"local-server": {"command": "remove"}}}, "/other-project": {"mcpServers": {"keep": {"command": "keep"}}}},
     }))
     result = CliRunner().invoke(agents.get_app(), [
-        "depoison", "claude", "--directory", str(project), "--resource", "mcp", "--scope", "local", "--apply",
+        "reset", "claude", "--directory", str(project), "--resource", "mcp", "--scope", "project", "--apply",
     ])
     assert result.exit_code == 0, result.output
     document = json.loads(state.read_text())
@@ -161,14 +161,14 @@ second line"""
     config = project / ".mcp.json"
     config.write_text(json.dumps({"mcpServers": {selected_name: {"command": "remove"}, "keep": {"command": "server"}}}))
     result = CliRunner().invoke(agents.get_app(), [
-        "depoison", "claude", "--directory", str(project), "--resource", "mcp", "--scope", "local", "--match", selected_name, "--apply",
+        "reset", "claude", "--directory", str(project), "--resource", "mcp", "--scope", "project", "--match", selected_name, "--apply",
     ])
     assert result.exit_code == 0, result.output
     assert json.loads(config.read_text()) == {"mcpServers": {"keep": {"command": "server"}}}
 
 
 def test_worker_reports_invalid_agent(isolated_context: DoctorContext) -> None:
-    result = CliRunner().invoke(agents.get_app(), ["depoison", "unknown-agent", "--directory", str(isolated_context.project_root)])
+    result = CliRunner().invoke(agents.get_app(), ["reset", "unknown-agent", "--directory", str(isolated_context.project_root)])
     assert result.exit_code == 2, result.output
     assert "Error:" in result.output
     assert "unknown-agent" in result.output
@@ -179,7 +179,7 @@ def test_worker_blocks_partial_cleanup_of_malformed_configuration(isolated_conte
     settings.parent.mkdir()
     settings.write_text("invalid json")
     result = CliRunner().invoke(agents.get_app(), [
-        "depoison", "claude", "--directory", str(isolated_context.project_root), "--resource", "hook", "--scope", "local", "--apply",
+        "reset", "claude", "--directory", str(isolated_context.project_root), "--resource", "hook", "--scope", "project", "--apply",
     ])
     assert result.exit_code == 1, result.output
     assert "Blocked:" in result.output

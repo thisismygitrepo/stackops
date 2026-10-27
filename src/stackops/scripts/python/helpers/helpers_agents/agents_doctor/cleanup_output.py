@@ -9,6 +9,7 @@ from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import CleanupSelection
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupResult
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookAgent, HookEntry, HookInventory
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext, DoctorOrigin
 
@@ -24,7 +25,7 @@ def _display_path(*, path: Path, context: DoctorContext) -> str:
 def _render_resources(*, console: Console, entries: list[HookEntry], context: DoctorContext) -> None:
     first = entries[0]
     table = Table(
-        title=Text(f"""{first.agent} · {first.origin}""", style="bold cyan"),
+        title=Text(f"""{first.agent} · {CLEANUP_ORIGIN_LABELS[first.origin]}""", style="bold cyan"),
         box=box.SIMPLE, header_style="bold", expand=True,
     )
     table.add_column("Resource", ratio=2, overflow="fold")
@@ -57,7 +58,7 @@ def render_cleanup_plan(
     overview.add_row("Selection", Text(f"""{selection.agent} · {selection.scope} · {selection.resource}"""))
     if selection.match is not None:
         overview.add_row("Match", Text(selection.match))
-    if selection.scope != "global" and any(kind.strip().casefold() in ("all", "workspace") for kind in selection.resource.split(",")):
+    if selection.scope != "user" and any(kind.strip().casefold() in ("all", "workspace") for kind in selection.resource.split(",")):
         overview.add_row("Workspace scan", Text("recursive repositories" if selection.recursive else "current repository or direct child repositories"))
     console.print(Panel(overview, title="Depoison · Apply" if applying else "Depoison · Preview", border_style=status_style))
 
@@ -76,7 +77,7 @@ def render_cleanup_plan(
                 for entry in entries
             )
             summary.add_row(
-                Text(agent), Text(origin), str(len(entries)),
+                Text(agent), Text(CLEANUP_ORIGIN_LABELS[origin]), str(len(entries)),
                 Text(", ".join(f"""{count} {kind}""" for kind, count in sorted(counts.items()))),
             )
         console.print(summary)
@@ -101,7 +102,7 @@ def render_cleanup_plan(
 
     notes: dict[str, None] = {}
     for diagnostic in inventory.diagnostics:
-        if selection.scope != "all" and diagnostic.origin != selection.scope:
+        if selection.scope != "all" and CLEANUP_ORIGIN_LABELS[diagnostic.origin] != selection.scope:
             continue
         if diagnostic.severity == "error" and f"""{diagnostic.path}: {diagnostic.message}""" in plan.blockers:
             continue

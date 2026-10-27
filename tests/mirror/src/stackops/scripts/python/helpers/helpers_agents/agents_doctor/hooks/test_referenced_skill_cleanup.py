@@ -31,7 +31,7 @@ def test_full_reset_removes_custom_skill_registration_preserves_external_source(
     assert next(resource.state for resource in resources if resource.path == direct) == "available"
 
     inventory = collect_cleanup_resources(agent=agent, context=hook_context, resource_focuses=("all",))
-    plan = build_cleanup_plan(inventory=inventory, scope="global", match=None, home_directory=hook_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="user", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
     apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
     assert original.read_text() == "---\nname: external-skill\n---\nOriginal external instructions"
@@ -53,7 +53,7 @@ def test_omp_full_reset_preserves_skills_inside_external_extension_package(hook_
     assert next(resource.state for resource in resources if resource.path == original) == "referenced"
 
     inventory = collect_cleanup_resources(agent="omp", context=hook_context, resource_focuses=("all",))
-    plan = build_cleanup_plan(inventory=inventory, scope="global", match=None, home_directory=hook_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="user", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
     apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
     assert original.read_text() == "---\nname: package-skill\n---\nPackage-owned instructions"

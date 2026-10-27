@@ -54,18 +54,17 @@ class SecretsFileStats:
     max_keys_per_secret: int = 0
 
 def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: SecretsSource | None) -> list[SecretsFileSource]:
+    if secrets_path is not None:
+        return [SecretsFileSource(name="custom-file", path=secrets_path.expanduser().absolute())]
+
     from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
 
     resolved_source = _resolve_secrets_source_alias(secrets_source) if secrets_source is not None else None
     if resolved_source == "user":
-        if secrets_path is not None:
-            _fail("--custom-path replaces the project secrets source. Use --source project or --source all with --custom-path.")
         return [SecretsFileSource(name="user", path=_resolve_user_secrets_path())]
 
     project_source: SecretsFileSource | None = None
-    if secrets_path is not None:
-        project_source = SecretsFileSource(name="custom-file", path=secrets_path.expanduser().absolute())
-    elif resolved_source == "project":
+    if resolved_source == "project":
         try:
             project_path = require_current_repo_stackops_path(path_kind="secrets_json")
         except ValueError as error:
@@ -77,7 +76,7 @@ def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: Secret
             project_source = SecretsFileSource(name="project", path=project_path)
 
     if project_source is not None:
-        if resolved_source == "project" or (resolved_source is None and (secrets_path is not None or project_source.path.exists())):
+        if resolved_source == "project" or (resolved_source is None and project_source.path.exists()):
             return [project_source]
     user_source = SecretsFileSource(name="user", path=_resolve_user_secrets_path())
     if resolved_source == "all" and project_source is not None:

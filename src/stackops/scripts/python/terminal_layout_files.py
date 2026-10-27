@@ -6,8 +6,6 @@ import typer
 
 
 def resolve_layout_file(*, layouts_file: Path | None, source: Literal["project", "p", "user", "u"] | None) -> Path:
-    if layouts_file is not None and source is not None:
-        raise typer.BadParameter("LAYOUTS_FILE cannot be combined with --source.")
     if layouts_file is not None:
         return layouts_file.expanduser().absolute()
     if source is None:
@@ -32,7 +30,7 @@ def path_layouts(
     ] = None,
     source: Annotated[
         Literal["project", "p", "user", "u"] | None,
-        typer.Option("--source", "-s", help="Show one config file's paths. Cannot be combined with LAYOUTS_FILE."),
+        typer.Option("--source", "-s", help="Show one config file's paths. Ignored when LAYOUTS_FILE is provided."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action
@@ -60,7 +58,7 @@ def init_layouts(
     ] = None,
     source: Annotated[
         Literal["project", "p", "user", "u"] | None,
-        typer.Option("--source", "-s", help="Config file to initialize. Cannot be combined with LAYOUTS_FILE."),
+        typer.Option("--source", "-s", help="Config file to initialize. Ignored when LAYOUTS_FILE is provided."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action
@@ -75,7 +73,7 @@ def validate_layouts(
     ] = None,
     source: Annotated[
         Literal["project", "p", "user", "u"] | None,
-        typer.Option("--source", "-s", help="Config file to validate. Cannot be combined with LAYOUTS_FILE."),
+        typer.Option("--source", "-s", help="Config file to validate. Ignored when LAYOUTS_FILE is provided."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action

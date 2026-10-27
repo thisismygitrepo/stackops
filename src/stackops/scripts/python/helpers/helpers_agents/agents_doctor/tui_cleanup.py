@@ -2,6 +2,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_plan import build_cleanup_plan
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import collect_workspace_resources
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.discovery import collect_hooks
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookEntry, HookInventory, HookRemoval
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorContext
@@ -39,7 +40,7 @@ def cleanup_action(entry: HookEntry) -> str:
 
 def cleanup_details(*, entry: HookEntry, entries: tuple[HookEntry, ...]) -> str:
     details = [
-        entry.name, "", f"""Agent: {entry.agent}    Scope: {entry.origin}    State: {entry.state}""",
+        entry.name, "", f"""Agent: {entry.agent}    Scope: {CLEANUP_ORIGIN_LABELS[entry.origin]}    State: {entry.state}""",
         f"""Type: {cleanup_kind(entry)}    Event: {entry.event}""", "", "Source", str(entry.path),
         "", "Command / provenance", entry.command or "—", "", "Reset action", cleanup_action(entry),
     ]

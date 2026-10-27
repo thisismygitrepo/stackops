@@ -6,6 +6,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_docume
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupPlan, CleanupScope
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import capture_cleanup_snapshot
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_progress import CleanupTargetProgress, logger
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory, HookRemoval
 
 
@@ -14,7 +15,7 @@ def build_cleanup_plan(*, inventory: HookInventory, scope: CleanupScope, match: 
         raise ValueError("--match must contain a nonempty name, command, or source path")
     entries = tuple(
         entry for entry in inventory.entries
-        if (scope == "all" or entry.origin == scope)
+        if (scope == "all" or CLEANUP_ORIGIN_LABELS[entry.origin] == scope)
         and (match is None or match.casefold() in f"{entry.name} {entry.event} {entry.command} {entry.path}".casefold())
     )
     grouped: dict[Path, list[HookRemoval]] = {}
@@ -28,7 +29,7 @@ def build_cleanup_plan(*, inventory: HookInventory, scope: CleanupScope, match: 
     entire_paths = {path for path, removals in grouped.items() if any(removal.format in ("file", "directory") for removal in removals)}
     blockers = [
         f"{diagnostic.path}: {diagnostic.message}" for diagnostic in inventory.diagnostics
-        if diagnostic.severity == "error" and (scope == "all" or diagnostic.origin == scope)
+        if diagnostic.severity == "error" and (scope == "all" or CLEANUP_ORIGIN_LABELS[diagnostic.origin] == scope)
         and not (
             diagnostic.origin in ("local", "global")
             and (diagnostic.path in entire_paths or any(diagnostic.path.is_relative_to(directory) for directory in directory_paths))

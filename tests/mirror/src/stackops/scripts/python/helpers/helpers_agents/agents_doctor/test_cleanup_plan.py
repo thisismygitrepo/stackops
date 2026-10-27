@@ -23,7 +23,7 @@ def test_match_removes_arbitrary_hooks_and_preserves_other_configuration(tmp_pat
         ),
         diagnostics=(),
     )
-    plan = build_cleanup_plan(inventory=inventory, scope="local", match="custom-", home_directory=tmp_path)
+    plan = build_cleanup_plan(inventory=inventory, scope="project", match="custom-", home_directory=tmp_path)
     assert len(plan.entries) == 2
     assert plan.blockers == ()
     assert json.loads(path.read_text(encoding="utf-8")) == original
@@ -67,9 +67,12 @@ def test_scope_selection_and_managed_resources(tmp_path: Path) -> None:
         ),
         diagnostics=(),
     )
-    plan = build_cleanup_plan(inventory=inventory, scope="local", match=None, home_directory=tmp_path)
+    plan = build_cleanup_plan(inventory=inventory, scope="project", match=None, home_directory=tmp_path)
     assert len(plan.changes) == 1
     assert plan.changes[0].snapshot.path == local
+    user_plan = build_cleanup_plan(inventory=inventory, scope="user", match=None, home_directory=tmp_path)
+    assert len(user_plan.changes) == 1
+    assert user_plan.changes[0].snapshot.path == global_path
     all_plan = build_cleanup_plan(inventory=inventory, scope="all", match=None, home_directory=tmp_path)
     assert len(all_plan.blockers) == 1
     with pytest.raises(ValueError, match="Cleanup blocked"):
@@ -82,7 +85,9 @@ def test_diagnostics_block_even_when_name_filter_selects_no_hooks(tmp_path: Path
         entries=(),
         diagnostics=(HookDiagnostic("codex", "global", tmp_path / "broken.json", "Malformed JSON", "error"),),
     )
-    plan = build_cleanup_plan(inventory=inventory, scope="all", match="tk", home_directory=tmp_path)
+    project_plan = build_cleanup_plan(inventory=inventory, scope="project", match="tk", home_directory=tmp_path)
+    assert not project_plan.blockers
+    plan = build_cleanup_plan(inventory=inventory, scope="user", match="tk", home_directory=tmp_path)
     assert plan.blockers
     with pytest.raises(ValueError, match="Cleanup blocked"):
         apply_cleanup_plan(plan=plan, backup_root=tmp_path / "quarantine", home_directory=tmp_path)

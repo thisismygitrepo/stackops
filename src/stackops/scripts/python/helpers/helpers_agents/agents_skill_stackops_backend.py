@@ -10,7 +10,7 @@ from rich.console import Console
 
 from stackops.utils.accessories import get_repo_root
 
-STACKOPS_SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
+STACKOPS_SKILL_INSTALL_SCOPE: TypeAlias = Literal["project", "user"]
 
 AGENT_SKILLS_DIRECTORY_PARTS: Final[tuple[str, str]] = (".agents", "skills")
 SKILL_FILE_NAME: Final[str] = "SKILL.md"
@@ -80,9 +80,9 @@ def resolve_stackops_agent_skill_source_root(*, source_root: Path | None = None)
 
 
 def resolve_stackops_agent_skill_target_root(*, install_root: Path, scope: STACKOPS_SKILL_INSTALL_SCOPE) -> Path:
-    if scope == "global":
+    if scope == "user":
         raise StackopsAgentSkillBackendError(
-            "StackOps skill backend only supports --scope local. Use --backend bunx or --backend npx for global installs."
+            "StackOps skill backend only supports --scope project. Use --backend bunx or --backend npx for user installs."
         )
 
     repo_root = get_repo_root(install_root)

@@ -22,7 +22,7 @@ def test_selective_codex_plugin_cleanup_disables_registration_preserves_cache(ho
     config.write_text('[plugins."headroom@market"]\nenabled = true\n')
 
     inventory = collect_cleanup_resources(agent="codex", context=hook_context, resource_focuses=("plugin",))
-    plan = build_cleanup_plan(inventory=inventory, scope="global", match="headroom", home_directory=hook_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="user", match="headroom", home_directory=hook_context.home_directory)
     assert not plan.blockers
     apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
     assert manifest.exists()
@@ -86,7 +86,7 @@ def test_instruction_symlink_cleanup_removes_registration_preserves_source(
     inventory = collect_cleanup_resources(agent=agent, context=hook_context, resource_focuses=("instructions",))
     assert any(entry.path == registration for entry in inventory.entries)
     assert all(entry.removal is None or entry.removal.path != original for entry in inventory.entries)
-    plan = build_cleanup_plan(inventory=inventory, scope="local", match=None, home_directory=hook_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="project", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
     result = apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
     assert result.changed_paths == (registration,)
@@ -102,7 +102,7 @@ def test_codex_configuration_symlink_full_reset_preserves_source(hook_context: D
     registration = hook_context.codex_home / "config.toml"
     registration.symlink_to(original)
     inventory = collect_cleanup_resources(agent="codex", context=hook_context, resource_focuses=("configuration",))
-    plan = build_cleanup_plan(inventory=inventory, scope="global", match=None, home_directory=hook_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="user", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
     result = apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
     assert result.changed_paths == (registration,)

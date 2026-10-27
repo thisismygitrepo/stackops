@@ -32,15 +32,15 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 ## Common Layout Source Rules
 
-- Without `LAYOUTS_FILE` or `--test-layout`, `run` and `run-all` combine named layouts from `~/dotfiles/stackops/config/layouts.json` and `PWD/.stackops/config/layout.json`, including each file that exists, then open a layout picker. `PWD` is the current working directory. Cancelling the picker aborts the command.
-- The default picker labels entries `global:name` or `local:name` and previews their source file paths. Layout and session names remain unchanged.
+- Without `LAYOUTS_FILE` or `--test-layout`, `run` and `run-all` combine named layouts from the user file at `~/dotfiles/stackops/config/layouts.json` and the project file at `<git-root>/.stackops/config/layout.json`, including each file that exists, then open a layout picker. The project path uses the enclosing Git repository root, including when called from a subdirectory; outside Git only the user source is available. Cancelling the picker aborts the command.
+- The default picker labels entries `user:name` or `project:name` and previews their source file paths. Layout and session names remain unchanged.
 - An explicit `LAYOUTS_FILE` loads layouts only from the supplied file.
 - For `run`, an explicit `--choose-layouts` or `--choose-tabs` selector uses that selection without opening an additional layout picker.
 - `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `LAYOUTS_FILE`.
 - `--choose-layouts ""` opens interactive layout selection.
-- Named layout selectors accept an unambiguous name or `global:name` / `local:name`. A name shared by both sources requires the qualified form.
+- Named layout selectors accept an unambiguous name or `user:name` / `project:name`. A name shared by both sources requires the qualified form.
 - `--choose-tabs ""` opens interactive tab selection.
-- Tab selectors accept `tabName` or `layoutName::tabName`. When both sources share a layout name, qualify it as `global:layoutName::tabName` or `local:layoutName::tabName`; an ambiguous layout name is rejected. Bare tab names match across selected layouts.
+- Tab selectors accept `tabName` or `layoutName::tabName`. When both sources share a layout name, qualify it as `user:layoutName::tabName` or `project:layoutName::tabName`; an ambiguous layout name is rejected. Bare tab names match across selected layouts.
 
 ## run
 
@@ -70,17 +70,17 @@ terminal run [OPTIONS] [LAYOUTS_FILE]
 Examples:
 
 ```bash
-# Choose layouts from the global file and PWD/.stackops/config/layout.json when present
+# Choose layouts from the user file and the Git project's .stackops/config/layout.json when present
 terminal run
 
 # Run unambiguous named layouts from the combined default files without prompting
 terminal run --choose-layouts "dev,build"
 
-# Select the local dev layout when both sources define dev
-terminal run --choose-layouts "local:dev"
+# Select the project dev layout when both sources define dev
+terminal run --choose-layouts "project:dev"
 
-# Select a tab from the local dev layout
-terminal run --choose-tabs "local:dev::server"
+# Select a tab from the project dev layout
+terminal run --choose-tabs "project:dev::server"
 
 # Run only selected layouts from an explicit file
 terminal run layouts.json --choose-layouts "dev,build"
@@ -377,18 +377,19 @@ terminal list [LAYOUTS_FILE] --stats
 terminal list layout.json --tabs --stats
 ```
 
-Omitting `LAYOUTS_FILE` lists layouts from the global and current-directory configuration files. Statistics include layout and tab totals, average tabs per layout, and the largest and smallest layouts.
+Omitting `LAYOUTS_FILE` lists layouts from the user and project configuration files. The project file is resolved from the enclosing Git repository root. Statistics include layout and tab totals, average tabs per layout, and the largest and smallest layouts.
 
 ## edit, path, init, validate
 
-`edit` opens a layout file, creates it if missing, and validates it after saving. Omit the file to choose a configuration interactively, or pass `--source global|local`. `--editor` accepts `hx`, `nano`, or `code`.
+`edit` opens a layout file, creates it if missing, and validates it after saving. Omit the file to choose a configuration interactively, or pass `--source project` (alias `p`) or `--source user` (alias `u`). `--editor` accepts `hx`, `nano`, or `code`.
 
-`path` prints file and schema paths as JSON; with no arguments it shows both global and local paths. `init` creates a missing file and schema. `validate` checks a file without opening an editor. Both `init` and `validate` require a file argument or `--source global|local`.
+`path` prints file and schema paths as JSON; with no arguments it shows the user path and, inside Git, the project path. `init` creates a missing file and schema. `validate` checks a file without opening an editor. Both `init` and `validate` require a file argument, `--source project` (alias `p`), or `--source user` (alias `u`). For all four commands, a positional `LAYOUTS_FILE` overrides `--source`; it remains a positional argument rather than a `--custom-path` option.
 
 ```bash
-terminal edit --source local
+terminal edit --source project
 terminal path
-terminal init --source local
+terminal init --source project
+terminal path --source user
 terminal validate layout.json
 ```
 

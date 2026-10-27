@@ -7,9 +7,9 @@ Playwright MCP exposes browser automation through MCP. It supports accessibility
 StackOps catalog entries:
 
 ```bash
-stackops agents add-mcp playwright --agent codex --scope local
-stackops agents add-mcp playwright-extension --agent codex --scope local
-stackops agents add-mcp playwright-cdp --agent codex --scope local
+stackops agents add-mcp playwright --agent codex --scope project
+stackops agents add-mcp playwright-extension --agent codex --scope project
+stackops agents add-mcp playwright-cdp --agent codex --scope project
 ```
 
 The standard config is in `playwright-mcp.mcp.json`. When StackOps writes this file, `{home}` is replaced with your home directory.

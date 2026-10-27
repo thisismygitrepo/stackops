@@ -44,7 +44,7 @@ def stats(
     custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."
+            "--custom-path", "-p", help="Use only this secrets JSON file, overriding --source."
         ),
     ] = None,
     secrets_source: Annotated[
@@ -53,7 +53,7 @@ def stats(
             "--source",
             "-s",
             case_sensitive=False,
-            help="Secrets file source to read: project/p, user/u, or all/a. --custom-path replaces the project source.",
+            help="Secrets file source to read: project/p, user/u, or all/a. Ignored when --custom-path is provided.",
         ),
     ] = "all",
     details: Annotated[
@@ -81,13 +81,13 @@ def subset(
         typer.Option(
             "--custom-path",
             "-p",
-            help="Use a custom secrets JSON file in place of the project source.",
+            help="Use only this secrets JSON file, overriding --source.",
         ),
     ] = None,
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source", "-s", case_sensitive=False, help="Source secrets file to read: project/p or user/u. --custom-path replaces the project source."
+            "--source", "-s", case_sensitive=False, help="Source secrets file to read: project/p or user/u. Ignored when --custom-path is provided."
         ),
     ] = "project",
     on_conflict: Annotated[
@@ -114,13 +114,13 @@ def add(
     custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."
+            "--custom-path", "-p", help="Use only this secrets JSON file, overriding --source."
         ),
     ] = None,
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source", "-s", case_sensitive=False, help="Secrets file source to update: project/p or user/u. --custom-path replaces the project source."
+            "--source", "-s", case_sensitive=False, help="Secrets file source to update: project/p or user/u. Ignored when --custom-path is provided."
         ),
     ] = "project",
     create: Annotated[

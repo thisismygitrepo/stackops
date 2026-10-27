@@ -7,7 +7,7 @@ from typing import Final, Literal, TypeAlias
 
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_types import SKILL_INSTALL_COMMAND_BACKEND
 
-SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
+SKILL_INSTALL_SCOPE: TypeAlias = Literal["project", "user"]
 SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 RESOLVED_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"
@@ -175,7 +175,7 @@ def build_agent_skill_install_commands(
             command.extend(("--skill", source.skill))
         if yes:
             command.append("--yes")
-        if scope == "global":
+        if scope == "user":
             command.append("--global")
         if len(agent_targets) > 0:
             command.append("--agent")

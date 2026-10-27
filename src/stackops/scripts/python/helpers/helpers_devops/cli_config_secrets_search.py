@@ -19,7 +19,7 @@ def search(
     custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."
+            "--custom-path", "-p", help="Use only this secrets JSON file, overriding --source."
         ),
     ] = None,
     secrets_source: Annotated[
@@ -95,7 +95,7 @@ def load(
     custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."
+            "--custom-path", "-p", help="Use only this secrets JSON file, overriding --source."
         ),
     ] = None,
     secrets_source: Annotated[

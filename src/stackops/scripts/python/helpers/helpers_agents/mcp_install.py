@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogL
 from stackops.utils.files.read import remove_c_style_comments
 
 
-MCP_INSTALL_SCOPE = Literal["local", "global"]
+MCP_INSTALL_SCOPE = Literal["project", "user"]
 MCP_PREVIEW_SIZE_PERCENT: Final[float] = 70.0
 
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
@@ -150,9 +150,9 @@ def resolve_install_path(
     repo_root: Path | None,
     home_dir: Path,
 ) -> Path:
-    if scope == "local":
+    if scope == "project":
         if repo_root is None:
-            raise ValueError("Local MCP installation requires running inside a git repository")
+            raise ValueError("Project MCP installation requires running inside a git repository")
         match agent:
             case "agy":
                 return repo_root / ".agents" / "mcp_config.json"
@@ -189,7 +189,7 @@ def resolve_install_path(
             case "pi":
                 return repo_root / ".pi" / "mcp.json"
             case "muse":
-                raise ValueError("Muse Code documents MCP servers only in its user settings file; install with --scope global")
+                raise ValueError("Muse Code documents MCP servers only in its user settings file; install with --scope user")
             case "deepseek":
                 return repo_root / ".dsh" / "cordis.patch.yml"
 
@@ -320,16 +320,16 @@ def _write_cortex_mcp_config(*, path: Path, scope: MCP_INSTALL_SCOPE, resolved_s
     mcp_servers = _ensure_object_member(root=root, key="mcpServers", path=path)
     disabled_path = path.with_name("mcp-disabled.json")
     disabled_names: set[str] = set()
-    if scope == "global" and disabled_path.exists():
+    if scope == "user" and disabled_path.exists():
         disabled_value: object = json.loads(disabled_path.read_text(encoding="utf-8"))
         if not isinstance(disabled_value, list) or not all(isinstance(name, str) for name in disabled_value):
             raise ValueError(f"""Cortex disabled MCP servers must be a JSON array of names in {disabled_path}""")
         disabled_names.update(cast(list[str], disabled_value))
     for server in resolved_servers:
         enabled = server["definition"]["enabled"]
-        if scope == "local" and not enabled:
+        if scope == "project" and not enabled:
             raise ValueError(
-                f"""Cortex stores disabled MCP servers globally; install disabled server '{server['name']}' with global scope"""
+                f"""Cortex stores disabled MCP servers in user configuration; install disabled server '{server['name']}' with --scope user"""
             )
         entry = _resolved_server_to_generic_entry(resolved_server=server)
         entry["type"] = server["definition"]["transport"]
@@ -341,7 +341,7 @@ def _write_cortex_mcp_config(*, path: Path, scope: MCP_INSTALL_SCOPE, resolved_s
         else:
             disabled_names.add(server["name"])
     _write_json_object(path=path, root=root)
-    if scope == "global" and (disabled_names or disabled_path.exists()):
+    if scope == "user" and (disabled_names or disabled_path.exists()):
         disabled_path.write_text(json.dumps(sorted(disabled_names), indent=2) + "\n", encoding="utf-8")
 
 
@@ -405,12 +405,12 @@ def _write_oz_mcp_file(*, path: Path, resolved_servers: tuple[ResolvedMcpServer,
 def resolve_oz_mcp_config_paths(*, repo_root: Path | None, home_dir: Path) -> list[Path]:
     paths: list[Path] = []
     if repo_root is not None:
-        local_path = resolve_install_path(agent="oz", scope="local", repo_root=repo_root, home_dir=home_dir)
-        if local_path.is_file():
-            paths.append(local_path)
-    global_path = resolve_install_path(agent="oz", scope="global", repo_root=repo_root, home_dir=home_dir)
-    if global_path.is_file():
-        paths.append(global_path)
+        project_path = resolve_install_path(agent="oz", scope="project", repo_root=repo_root, home_dir=home_dir)
+        if project_path.is_file():
+            paths.append(project_path)
+    user_path = resolve_install_path(agent="oz", scope="user", repo_root=repo_root, home_dir=home_dir)
+    if user_path.is_file():
+        paths.append(user_path)
     return paths
 
 

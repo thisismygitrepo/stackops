@@ -56,7 +56,7 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
     guidance = Table.grid(padding=(0, 2))
     guidance.add_column(style="bold cyan", no_wrap=True)
     guidance.add_column(overflow="fold")
-    guidance.add_row("Scope", Text("local: project · global: user · all: both + managed resources"))
+    guidance.add_row("Scope", Text("project: project resources · user: user resources · all: both + managed resources"))
     guidance.add_row("Resources", Text(", ".join(CLEANUP_RESOURCE_CHOICES)))
     guidance.add_row("Workspace", Text("workspace removes shared .ai folders from repositories"))
     guidance.add_row("Full reset", Text("all resets configuration, plugin directories, and .ai folders", style="yellow"))
@@ -72,7 +72,7 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
         except ValueError as error:
             console.print(Text(f"""Invalid selection: {error}""", style="red"))
     recursive = selection.recursive
-    if include_workspace and scope != "global":
+    if include_workspace and scope != "user":
         recursive = typer.confirm("Recurse into nested repositories for .ai folders?", default=recursive)
     match: str | None = None
     if typer.confirm("Filter by name, command, or source path?", default=selection.match is not None):

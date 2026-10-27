@@ -5058,7 +5058,7 @@
                         "    ],",
                         "    sensitivity: Annotated[SENSITIVITY_LOOSE, typer.Option(..., \"--sensitivity\", \"-s\", help=\"Sensitivity of the configuration files to manage.\")] = \"all\",",
                         "    method: Annotated[METHOD_LOOSE, typer.Option(..., \"--method\", \"-m\", help=\"Method to use for linking files\")] = \"symlink\",",
-                        "    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., \"--source\", \"-S\", help=\"Mapper source to use for config files.\")] = \"library\",",
+                        "    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., \"--source\", \"-S\", help=\"Mapper source: library, user, or all. User groups override matching library groups.\")] = \"all\",",
                         "    on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on conflict\")] = \"throw-error\",",
                         "    which: Annotated[str | None, typer.Option(..., \"--which\", \"-w\", help=\"Specific items to process ('all' for all items) (default is None, selection is interactive)\")] = None,",
                         ") -> None:",
@@ -5198,9 +5198,9 @@
                           "name": "source",
                           "kind": "positional_or_keyword",
                           "type": "CONFIG_SOURCE_LOOSE",
-                          "default": "library",
+                          "default": "all",
                           "required": false,
-                          "annotation_raw": "Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., '--source', '-S', help='Mapper source to use for config files.')]",
+                          "annotation_raw": "Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., '--source', '-S', help='Mapper source: library, user, or all. User groups override matching library groups.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -5213,7 +5213,7 @@
                             "short_flags": [
                               "-S"
                             ],
-                            "help": "Mapper source to use for config files.",
+                            "help": "Mapper source: library, user, or all. User groups override matching library groups.",
                             "default": "..."
                           }
                         },
@@ -5655,8 +5655,8 @@
                         "    port = 8888",
                         "    display_with_flashy_style(msg=f\"\"\"",
                         "On the remote machine, run:",
-                        "d c f i -u http://{local_ipv4}:{port}; d c f s d -s all -m s -w all",
-                        "devops config dotfiles import --url http://{local_ipv4}:{port}; devops config dotfiles sync down --sensitivity all --method symlink --which all",
+                        "d c f i -u http://{local_ipv4}:{port}; d c f s d -S all -s all -m s -w all",
+                        "devops config dotfiles import --url http://{local_ipv4}:{port}; devops config dotfiles sync down --source all --sensitivity all --method symlink --which all",
                         "\"\"\", title=\"Remote Machine Instructions\")",
                         "    cli_share_server.web_file_explorer(path=str(zipfile_encrypted_path), no_auth=True, port=port)"
                       ],
@@ -6540,7 +6540,7 @@
                     "name": "secrets",
                     "fullPath": "devops config setup secrets",
                     "shortPath": "d c u s",
-                    "help": "🔐 <s> Interactively create the global secrets file and schema.",
+                    "help": "🔐 <s> Interactively create the user secrets file and schema.",
                     "source": {
                       "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_setup_domains.py",
                       "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup_domains",
@@ -6560,20 +6560,20 @@
                         "",
                         "    if SECRETS_DOFILE.exists():",
                         "        if not SECRETS_DOFILE.is_file():",
-                        "            exit_with_setup_error(f\"Global secrets path exists but is not a file: {SECRETS_DOFILE}\")",
+                        "            exit_with_setup_error(f\"User secrets path exists but is not a file: {SECRETS_DOFILE}\")",
                         "        try:",
                         "            load_secrets_file(SECRETS_DOFILE)",
                         "        except (OSError, SecretsSchemaError) as exc:",
-                        "            exit_with_setup_error(f\"Global secrets cannot be safely read:\\n{exc}\")",
+                        "            exit_with_setup_error(f\"User secrets cannot be safely read:\\n{exc}\")",
                         "        _ensure_user_schema(\"secrets\")",
                         "        typer.echo(",
-                        "            f\"Global secrets and schema are ready: {SECRETS_DOFILE}\\n\"",
+                        "            f\"User secrets and schema are ready: {SECRETS_DOFILE}\\n\"",
                         "            \"Add another login with:\\n\"",
-                        "            \"  devops vault add --source global\"",
+                        "            \"  devops vault add --source user\"",
                         "        )",
                         "        return",
                         "",
-                        "    typer.echo(\"Create the first global login entry. Secret values are hidden while you type.\")",
+                        "    typer.echo(\"Create the first user login entry. Secret values are hidden while you type.\")",
                         "    secrets_file: SecretsFile = {",
                         "        \"$schema\": f\"./{secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE}\",",
                         "        \"version\": SECRETS_FILE_VERSION,",
@@ -6582,9 +6582,9 @@
                         "    try:",
                         "        create_secrets_file(secrets_path=SECRETS_DOFILE, secrets_file=secrets_file)",
                         "    except OSError as exc:",
-                        "        exit_with_setup_error(f\"Global secrets setup was not completed: {exc}\")",
+                        "        exit_with_setup_error(f\"User secrets setup was not completed: {exc}\")",
                         "    _ensure_user_schema(\"secrets\")",
-                        "    typer.echo(typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"Global secrets and schema are ready: {SECRETS_DOFILE}\")"
+                        "    typer.echo(typer.style(\"✅ Success: \", fg=typer.colors.GREEN) + f\"User secrets and schema are ready: {SECRETS_DOFILE}\")"
                       ],
                       "name": "setup_secrets",
                       "parameters": [],
@@ -6597,7 +6597,7 @@
                       {
                         "name": "s",
                         "hidden": true,
-                        "help": "Interactively create the global secrets file and schema."
+                        "help": "Interactively create the user secrets file and schema."
                       }
                     ]
                   }
@@ -8331,10 +8331,10 @@
                     "            )",
                     "        ),",
                     "    ] = None,",
-                    "    secrets_path: Annotated[",
+                    "    custom_path: Annotated[",
                     "        Path | None,",
                     "        typer.Option(",
-                    "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                    "            \"--custom-path\", \"-p\", help=\"Use only this secrets JSON file, overriding --source.\"",
                     "        ),",
                     "    ] = None,",
                     "    secrets_source: Annotated[",
@@ -8344,8 +8344,8 @@
                     "            \"-s\",",
                     "            case_sensitive=False,",
                     "            help=(",
-                    "                \"Secrets file source to read: local/l, global/g, or both/b. \"",
-                    "                \"When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent.\"",
+                    "                \"Secrets file source to read: project/p, user/u, or all/a. \"",
+                    "                \"When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent.\"",
                     "            ),",
                     "        ),",
                     "    ] = None,",
@@ -8390,7 +8390,7 @@
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import SecretSelectionRequest, search_secrets",
                     "",
                     "    request = SecretSelectionRequest(",
-                    "        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,",
+                    "        terms=terms, secrets_path=custom_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,",
                     "        preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,",
                     "        secret_tags=secret_tags, scopes=scopes, keys=keys,",
                     "    )",
@@ -8414,25 +8414,25 @@
                       }
                     },
                     {
-                      "name": "secrets_path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                        "help": "Use only this secrets JSON file, overriding --source."
                       }
                     },
                     {
@@ -8441,7 +8441,7 @@
                       "type": "SecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local/l, global/g, or both/b. When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent.')]",
+                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: project/p, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -8454,7 +8454,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to read: local/l, global/g, or both/b. When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent."
+                        "help": "Secrets file source to read: project/p, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent."
                       }
                     },
                     {
@@ -8728,7 +8728,7 @@
                 },
                 "typer": {
                   "no_args_is_help": true,
-                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --all-matches --json mail\n\nSearch displays bundle labels and environment keys without loading them; use devops vault load to define them.\nUse --json to print matching secrets JSON, including values.\nUse --all-matches to select every matching bundle.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --path takes precedence; otherwise local is preferred over global.\nUse --source local/l, global/g, or both/b to select sources explicitly.\n"
+                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --all-matches --json mail\n\nSearch displays bundle labels and environment keys without loading them; use devops vault load to define them.\nUse --json to print matching secrets JSON, including values.\nUse --all-matches to select every matching bundle.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --custom-path takes precedence; otherwise project is preferred over user.\nThe project file is .stackops/secrets/secrets.json at the repository root.\nUse --source project/p, user/u, or all/a to select sources explicitly.\n"
                 },
                 "aliases": [
                   {
@@ -8761,10 +8761,10 @@
                     "            )",
                     "        ),",
                     "    ] = None,",
-                    "    secrets_path: Annotated[",
+                    "    custom_path: Annotated[",
                     "        Path | None,",
                     "        typer.Option(",
-                    "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                    "            \"--custom-path\", \"-p\", help=\"Use only this secrets JSON file, overriding --source.\"",
                     "        ),",
                     "    ] = None,",
                     "    secrets_source: Annotated[",
@@ -8774,8 +8774,8 @@
                     "            \"-s\",",
                     "            case_sensitive=False,",
                     "            help=(",
-                    "                \"Secrets file source to read: local/l, global/g, or both/b. \"",
-                    "                \"When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent.\"",
+                    "                \"Secrets file source to read: project/p, user/u, or all/a. \"",
+                    "                \"When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent.\"",
                     "            ),",
                     "        ),",
                     "    ] = None,",
@@ -8821,7 +8821,7 @@
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import SecretSelectionRequest, load_secrets",
                     "",
                     "    request = SecretSelectionRequest(",
-                    "        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,",
+                    "        terms=terms, secrets_path=custom_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,",
                     "        preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,",
                     "        secret_tags=secret_tags, scopes=scopes, keys=keys,",
                     "    )",
@@ -8845,25 +8845,25 @@
                       }
                     },
                     {
-                      "name": "secrets_path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                        "help": "Use only this secrets JSON file, overriding --source."
                       }
                     },
                     {
@@ -8872,7 +8872,7 @@
                       "type": "SecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local/l, global/g, or both/b. When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent.')]",
+                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: project/p, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -8885,7 +8885,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to read: local/l, global/g, or both/b. When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent."
+                        "help": "Secrets file source to read: project/p, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent."
                       }
                     },
                     {
@@ -9137,7 +9137,7 @@
                 },
                 "typer": {
                   "no_args_is_help": true,
-                  "epilog": "Examples:\n  devops vault load --name aws-dev --tag iam-access-key\n  devops vault load --source global github token\n  devops vault load --all-matches --source both cloudf\n\nLoad prepares environment variables for the calling shell.\nUse --all-matches to select every matching bundle. Loading rejects conflicting values.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --path takes precedence; otherwise local is preferred over global.\nUse --source local/l, global/g, or both/b to select sources explicitly.\n"
+                  "epilog": "Examples:\n  devops vault load --name aws-dev --tag iam-access-key\n  devops vault load --source user github token\n  devops vault load --all-matches --source all cloudf\n\nLoad prepares environment variables for the calling shell.\nUse --all-matches to select every matching bundle. Loading rejects conflicting values.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --custom-path takes precedence; otherwise project is preferred over user.\nThe project file is .stackops/secrets/secrets.json at the repository root.\nUse --source project/p, user/u, or all/a to select sources explicitly.\n"
                 },
                 "aliases": [
                   {
@@ -9160,10 +9160,10 @@
                 "signature": {
                   "raw_lines": [
                     "def stats(",
-                    "    secrets_path: Annotated[",
+                    "    custom_path: Annotated[",
                     "        Path | None,",
                     "        typer.Option(",
-                    "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                    "            \"--custom-path\", \"-p\", help=\"Use only this secrets JSON file, overriding --source.\"",
                     "        ),",
                     "    ] = None,",
                     "    secrets_source: Annotated[",
@@ -9172,9 +9172,9 @@
                     "            \"--source\",",
                     "            \"-s\",",
                     "            case_sensitive=False,",
-                    "            help=\"Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.\",",
+                    "            help=\"Secrets file source to read: project/p, user/u, or all/a. Ignored when --custom-path is provided.\",",
                     "        ),",
-                    "    ] = \"both\",",
+                    "    ] = \"all\",",
                     "    details: Annotated[",
                     "        bool, typer.Option(\"--details\", \"-d\", help=\"Show top non-secret labels such as tags and scopes. Secret values are never printed.\")",
                     "    ] = False,",
@@ -9188,41 +9188,41 @@
                     "        resolve_secret_sources,",
                     "    )",
                     "",
-                    "    secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)",
+                    "    secret_sources = resolve_secret_sources(secrets_path=custom_path, secrets_source=secrets_source)",
                     "    stats_rows = load_secret_stats_from_sources(secret_sources=secret_sources, show_paths=show_paths)",
                     "    render_secret_stats(stats_rows=stats_rows, details=details, show_paths=show_paths, top=top)"
                   ],
                   "name": "stats",
                   "parameters": [
                     {
-                      "name": "secrets_path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                        "help": "Use only this secrets JSON file, overriding --source."
                       }
                     },
                     {
                       "name": "secrets_source",
                       "kind": "positional_or_keyword",
                       "type": "SecretsSource",
-                      "default": "both",
+                      "default": "all",
                       "required": false,
-                      "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.')]",
+                      "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: project/p, user/u, or all/a. Ignored when --custom-path is provided.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9235,7 +9235,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source."
+                        "help": "Secrets file source to read: project/p, user/u, or all/a. Ignored when --custom-path is provided."
                       }
                     },
                     {
@@ -9334,20 +9334,20 @@
                   "raw_lines": [
                     "def subset(",
                     "    output_path: Annotated[Path, typer.Argument(help=\"Output secrets JSON path. Default mode creates a new file and refuses existing paths.\")],",
-                    "    secrets_path: Annotated[",
+                    "    custom_path: Annotated[",
                     "        Path | None,",
                     "        typer.Option(",
-                    "            \"--path\",",
+                    "            \"--custom-path\",",
                     "            \"-p\",",
-                    "            help=\"Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\",",
+                    "            help=\"Use only this secrets JSON file, overriding --source.\",",
                     "        ),",
                     "    ] = None,",
                     "    secrets_source: Annotated[",
                     "        WritableSecretsSource,",
                     "        typer.Option(",
-                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Source secrets file to read: local/l or global/g. --path overrides the local source.\"",
+                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Source secrets file to read: project/p or user/u. Ignored when --custom-path is provided.\"",
                     "        ),",
-                    "    ] = \"local\",",
+                    "    ] = \"project\",",
                     "    on_conflict: Annotated[",
                     "        cli_subset_support.SubsetOutputConflictOption,",
                     "        typer.Option(",
@@ -9360,7 +9360,7 @@
                     "    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions",
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source",
                     "",
-                    "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
+                    "    secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)",
                     "    resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)",
                     "    resolved_on_conflict = cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]",
                     "    secret_actions.subset_secrets_file(",
@@ -9385,34 +9385,34 @@
                       }
                     },
                     {
-                      "name": "secrets_path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                        "help": "Use only this secrets JSON file, overriding --source."
                       }
                     },
                     {
                       "name": "secrets_source",
                       "kind": "positional_or_keyword",
                       "type": "WritableSecretsSource",
-                      "default": "local",
+                      "default": "project",
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Source secrets file to read: local/l or global/g. --path overrides the local source.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Source secrets file to read: project/p or user/u. Ignored when --custom-path is provided.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9425,7 +9425,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Source secrets file to read: local/l or global/g. --path overrides the local source."
+                        "help": "Source secrets file to read: project/p or user/u. Ignored when --custom-path is provided."
                       }
                     },
                     {
@@ -9501,18 +9501,18 @@
                 "signature": {
                   "raw_lines": [
                     "def add(",
-                    "    secrets_path: Annotated[",
+                    "    custom_path: Annotated[",
                     "        Path | None,",
                     "        typer.Option(",
-                    "            \"--path\", \"-p\", help=\"Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.\"",
+                    "            \"--custom-path\", \"-p\", help=\"Use only this secrets JSON file, overriding --source.\"",
                     "        ),",
                     "    ] = None,",
                     "    secrets_source: Annotated[",
                     "        WritableSecretsSource,",
                     "        typer.Option(",
-                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Secrets file source to update: local/l or global/g. --path overrides the local source.\"",
+                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Secrets file source to update: project/p or user/u. Ignored when --custom-path is provided.\"",
                     "        ),",
-                    "    ] = \"local\",",
+                    "    ] = \"project\",",
                     "    create: Annotated[",
                     "        bool, typer.Option(\"--create\", \"-c\", help=\"Allow creating a missing secrets JSON file and its schema.\")",
                     "    ] = False,",
@@ -9521,40 +9521,40 @@
                     "    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions",
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source",
                     "",
-                    "    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)",
+                    "    secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)",
                     "    secret_actions.add_secrets_entry(secrets_path=secret_source.path, create=create)"
                   ],
                   "name": "add",
                   "parameters": [
                     {
-                      "name": "secrets_path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+                        "help": "Use only this secrets JSON file, overriding --source."
                       }
                     },
                     {
                       "name": "secrets_source",
                       "kind": "positional_or_keyword",
                       "type": "WritableSecretsSource",
-                      "default": "local",
+                      "default": "project",
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to update: local/l or global/g. --path overrides the local source.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to update: project/p or user/u. Ignored when --custom-path is provided.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9567,7 +9567,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to update: local/l or global/g. --path overrides the local source."
+                        "help": "Secrets file source to update: project/p or user/u. Ignored when --custom-path is provided."
                       }
                     },
                     {
@@ -9621,18 +9621,18 @@
                 "signature": {
                   "raw_lines": [
                     "def path_secrets(",
-                    "    path: Annotated[",
-                    "        Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the local secrets JSON file path.\"),",
+                    "    custom_path: Annotated[",
+                    "        Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use only this secrets JSON file, overriding --source.\"),",
                     "    ] = None,",
                     "    source: Annotated[",
                     "        WritableSecretsSource | None,",
-                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Show local/l or global/g paths. Omit to show both.\"),",
+                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Show project/p or user/u paths. Omit to show all available sources.\"),",
                     "    ] = None,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_action",
                     "",
-                    "    if path is not None or source is not None:",
-                    "        file_path = resolve_secrets_file(path=path, source=source)",
+                    "    if custom_path is not None or source is not None:",
+                    "        file_path = resolve_secrets_file(custom_path=custom_path, source=source)",
                     "        run_managed_file_action(kind=\"secrets\", action=\"path\", path=file_path)",
                     "        return",
                     "",
@@ -9643,32 +9643,32 @@
                     "    spec = get_managed_file_spec(\"secrets\")",
                     "    paths = {",
                     "        secret_source.name: describe_managed_file(spec=spec, data_path=secret_source.path)",
-                    "        for secret_source in resolve_secret_sources(secrets_path=None, secrets_source=\"both\")",
+                    "        for secret_source in resolve_secret_sources(secrets_path=None, secrets_source=\"all\")",
                     "    }",
                     "    typer.echo(json.dumps(paths, indent=2))"
                   ],
                   "name": "path_secrets",
                   "parameters": [
                     {
-                      "name": "path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Override the local secrets JSON file path."
+                        "help": "Use only this secrets JSON file, overriding --source."
                       }
                     },
                     {
@@ -9677,7 +9677,7 @@
                       "type": "WritableSecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Show local/l or global/g paths. Omit to show both.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Show project/p or user/u paths. Omit to show all available sources.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9690,7 +9690,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Show local/l or global/g paths. Omit to show both."
+                        "help": "Show project/p or user/u paths. Omit to show all available sources."
                       }
                     }
                   ],
@@ -9717,41 +9717,41 @@
                 "signature": {
                   "raw_lines": [
                     "def init_secrets(",
-                    "    path: Annotated[",
-                    "        Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the local secrets JSON file path.\"),",
+                    "    custom_path: Annotated[",
+                    "        Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use only this secrets JSON file, overriding --source.\"),",
                     "    ] = None,",
                     "    source: Annotated[",
                     "        WritableSecretsSource | None,",
-                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Secrets file to initialize: local/l or global/g.\"),",
+                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Secrets file to initialize: project/p or user/u.\"),",
                     "    ] = None,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_action",
                     "",
-                    "    file_path = resolve_secrets_file(path=path, source=source)",
+                    "    file_path = resolve_secrets_file(custom_path=custom_path, source=source)",
                     "    run_managed_file_action(kind=\"secrets\", action=\"init\", path=file_path)"
                   ],
                   "name": "init_secrets",
                   "parameters": [
                     {
-                      "name": "path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Override the local secrets JSON file path."
+                        "help": "Use only this secrets JSON file, overriding --source."
                       }
                     },
                     {
@@ -9760,7 +9760,7 @@
                       "type": "WritableSecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file to initialize: local/l or global/g.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file to initialize: project/p or user/u.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9773,7 +9773,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file to initialize: local/l or global/g."
+                        "help": "Secrets file to initialize: project/p or user/u."
                       }
                     }
                   ],
@@ -9800,41 +9800,41 @@
                 "signature": {
                   "raw_lines": [
                     "def validate_secrets(",
-                    "    path: Annotated[",
-                    "        Path | None, typer.Option(\"--path\", \"-p\", help=\"Override the local secrets JSON file path.\"),",
+                    "    custom_path: Annotated[",
+                    "        Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use only this secrets JSON file, overriding --source.\"),",
                     "    ] = None,",
                     "    source: Annotated[",
                     "        WritableSecretsSource | None,",
-                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Secrets file to validate: local/l or global/g.\"),",
+                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Secrets file to validate: project/p or user/u.\"),",
                     "    ] = None,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_action",
                     "",
-                    "    file_path = resolve_secrets_file(path=path, source=source)",
+                    "    file_path = resolve_secrets_file(custom_path=custom_path, source=source)",
                     "    run_managed_file_action(kind=\"secrets\", action=\"validate\", path=file_path)"
                   ],
                   "name": "validate_secrets",
                   "parameters": [
                     {
-                      "name": "path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Override the local secrets JSON file path.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Override the local secrets JSON file path."
+                        "help": "Use only this secrets JSON file, overriding --source."
                       }
                     },
                     {
@@ -9843,7 +9843,7 @@
                       "type": "WritableSecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file to validate: local/l or global/g.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file to validate: project/p or user/u.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9856,7 +9856,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file to validate: local/l or global/g."
+                        "help": "Secrets file to validate: project/p or user/u."
                       }
                     }
                   ],
@@ -10873,7 +10873,7 @@
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_devops.script_resolution import resolve_script",
                     "",
-                    "    if source in {\"dynamic\", \"d\"}:",
+                    "    if source in {\"dynamic\", \"d\"} and not Path(name).is_file():",
                     "        raise typer.BadParameter(\"Editing requires a local script source.\", param_hint=\"--source\")",
                     "    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive)",
                     "    editor_bin = shutil.which(editor)",
@@ -20811,7 +20811,7 @@
               "raw_lines": [
                 "def run(",
                 "    ctx: typer.Context,",
-                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.\")] = None,",
+                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to choose layouts from the user and project config files.\")] = None,",
                 "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.\")] = False,",
                 "",
                 "    choose_layouts: Annotated[str | None, typer.Option(..., \"--choose-layouts\", \"-l\", metavar=\"[NAMES]\", help=\"Comma separated layout names. Use -l without a value to select layouts interactively.\")] = None,",
@@ -20887,13 +20887,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to choose layouts from the user and project config files.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files."
+                    "help": "Path to the layout JSON file. Omit to choose layouts from the user and project config files."
                   }
                 },
                 {
@@ -21226,7 +21226,7 @@
                 "def run_all(",
                 "    ctx: typer.Context,",
                 "    *,",
-                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.\")] = None,",
+                "    layouts_file: Annotated[str | None, typer.Argument(help=\"Path to the layout JSON file. Omit to choose layouts from the user and project config files.\")] = None,",
                 "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.\")] = False,",
                 "    max_parallel_tabs: Annotated[int, typer.Option(..., \"--max-parallel-tabs\", \"-t\", help=\"Maximum number of tabs to keep active while dynamically working through the whole file.\")],",
                 "    poll_seconds: Annotated[float, typer.Option(\"--poll-interval\", \"-p\", help=\"Polling interval in seconds used to detect finished tabs.\")] = 2.0,",
@@ -21284,13 +21284,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Path to the layout JSON file. Omit to choose layouts from the user and project config files.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files."
+                    "help": "Path to the layout JSON file. Omit to choose layouts from the user and project config files."
                   }
                 },
                 {
@@ -21483,7 +21483,7 @@
                 "def list_layouts(",
                 "    layouts_file: Annotated[",
                 "        Path | None,",
-                "        typer.Argument(exists=True, dir_okay=False, help=\"Layout JSON file. Omit to list layouts from the global and current-directory config files.\"),",
+                "        typer.Argument(exists=True, dir_okay=False, help=\"Layout JSON file. Omit to list layouts from the user and project config files.\"),",
                 "    ] = None,",
                 "    show_tabs: Annotated[bool, typer.Option(\"--tabs\", \"-t\", help=\"Include each tab's name, start directory, command, and weight.\")] = False,",
                 "    show_stats: Annotated[bool, typer.Option(\"--stats\", \"-s\", help=\"Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.\")] = False,",
@@ -21557,13 +21557,13 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Argument(exists=True, dir_okay=False, help='Layout JSON file. Omit to list layouts from the global and current-directory config files.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Argument(exists=True, dir_okay=False, help='Layout JSON file. Omit to list layouts from the user and project config files.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Layout JSON file. Omit to list layouts from the global and current-directory config files."
+                    "help": "Layout JSON file. Omit to list layouts from the user and project config files."
                   }
                 },
                 {
@@ -21639,11 +21639,11 @@
                 "def edit_layouts(",
                 "    layouts_file: Annotated[",
                 "        Path | None,",
-                "        typer.Argument(dir_okay=False, help=\"Layout JSON file to edit. Omit to choose the global or current-directory config file.\"),",
+                "        typer.Argument(dir_okay=False, help=\"Layout JSON file to edit. Omit to choose the user or project config file.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"global\", \"local\"] | None,",
-                "        typer.Option(\"--source\", \"-s\", help=\"Config file to edit without prompting. Cannot be combined with LAYOUTS_FILE.\"),",
+                "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
+                "        typer.Option(\"--source\", \"-s\", help=\"Config file to edit without prompting. Ignored when LAYOUTS_FILE is provided.\"),",
                 "    ] = None,",
                 "    editor: Annotated[",
                 "        Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the layout file with.\"),",
@@ -21708,22 +21708,22 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Argument(dir_okay=False, help='Layout JSON file to edit. Omit to choose the global or current-directory config file.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Argument(dir_okay=False, help='Layout JSON file to edit. Omit to choose the user or project config file.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Layout JSON file to edit. Omit to choose the global or current-directory config file."
+                    "help": "Layout JSON file to edit. Omit to choose the user or project config file."
                   }
                 },
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['global', 'local'] | None",
+                  "type": "Literal['project', 'p', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['global', 'local'] | None, typer.Option('--source', '-s', help='Config file to edit without prompting. Cannot be combined with LAYOUTS_FILE.')]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to edit without prompting. Ignored when LAYOUTS_FILE is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21736,7 +21736,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Config file to edit without prompting. Cannot be combined with LAYOUTS_FILE."
+                    "help": "Config file to edit without prompting. Ignored when LAYOUTS_FILE is provided."
                   }
                 },
                 {
@@ -21789,11 +21789,11 @@
               "raw_lines": [
                 "def path_layouts(",
                 "    layouts_file: Annotated[",
-                "        Path | None, typer.Argument(dir_okay=False, help=\"Layout JSON file. Omit to show both global and current-directory paths.\"),",
+                "        Path | None, typer.Argument(dir_okay=False, help=\"Layout JSON file. Omit to show user and project paths.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"global\", \"local\"] | None,",
-                "        typer.Option(\"--source\", \"-s\", help=\"Show one config file's paths. Cannot be combined with LAYOUTS_FILE.\"),",
+                "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
+                "        typer.Option(\"--source\", \"-s\", help=\"Show one config file's paths. Ignored when LAYOUTS_FILE is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
                 "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -21822,22 +21822,22 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Argument(dir_okay=False, help='Layout JSON file. Omit to show both global and current-directory paths.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Argument(dir_okay=False, help='Layout JSON file. Omit to show user and project paths.')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Layout JSON file. Omit to show both global and current-directory paths."
+                    "help": "Layout JSON file. Omit to show user and project paths."
                   }
                 },
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['global', 'local'] | None",
+                  "type": "Literal['project', 'p', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['global', 'local'] | None, typer.Option('--source', '-s', help=\"Show one config file's paths. Cannot be combined with LAYOUTS_FILE.\")]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help=\"Show one config file's paths. Ignored when LAYOUTS_FILE is provided.\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21850,7 +21850,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Show one config file's paths. Cannot be combined with LAYOUTS_FILE."
+                    "help": "Show one config file's paths. Ignored when LAYOUTS_FILE is provided."
                   }
                 }
               ],
@@ -21881,8 +21881,8 @@
                 "        Path | None, typer.Argument(dir_okay=False, help=\"Layout JSON file to create if missing.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"global\", \"local\"] | None,",
-                "        typer.Option(\"--source\", \"-s\", help=\"Config file to initialize. Cannot be combined with LAYOUTS_FILE.\"),",
+                "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
+                "        typer.Option(\"--source\", \"-s\", help=\"Config file to initialize. Ignored when LAYOUTS_FILE is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
                 "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -21910,10 +21910,10 @@
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['global', 'local'] | None",
+                  "type": "Literal['project', 'p', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['global', 'local'] | None, typer.Option('--source', '-s', help='Config file to initialize. Cannot be combined with LAYOUTS_FILE.')]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to initialize. Ignored when LAYOUTS_FILE is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21926,7 +21926,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Config file to initialize. Cannot be combined with LAYOUTS_FILE."
+                    "help": "Config file to initialize. Ignored when LAYOUTS_FILE is provided."
                   }
                 }
               ],
@@ -21957,8 +21957,8 @@
                 "        Path | None, typer.Argument(dir_okay=False, help=\"Layout JSON file to validate.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"global\", \"local\"] | None,",
-                "        typer.Option(\"--source\", \"-s\", help=\"Config file to validate. Cannot be combined with LAYOUTS_FILE.\"),",
+                "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
+                "        typer.Option(\"--source\", \"-s\", help=\"Config file to validate. Ignored when LAYOUTS_FILE is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
                 "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -21986,10 +21986,10 @@
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['global', 'local'] | None",
+                  "type": "Literal['project', 'p', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['global', 'local'] | None, typer.Option('--source', '-s', help='Config file to validate. Cannot be combined with LAYOUTS_FILE.')]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to validate. Ignored when LAYOUTS_FILE is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22002,7 +22002,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Config file to validate. Cannot be combined with LAYOUTS_FILE."
+                    "help": "Config file to validate. Ignored when LAYOUTS_FILE is provided."
                   }
                 }
               ],
@@ -23473,7 +23473,7 @@
                 "name": "create",
                 "fullPath": "agents parallel create",
                 "shortPath": "a p c",
-                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi\n",
+                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse\n",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_parallel_commands.py",
                   "module": "stackops.scripts.python.agents_parallel_commands",
@@ -24130,7 +24130,7 @@
                   {
                     "name": "c",
                     "hidden": true,
-                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi\n"
+                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse\n"
                   }
                 ]
               },
@@ -24317,12 +24317,12 @@
                   "raw_lines": [
                     "def run_parallel(",
                     "    run_name: Annotated[str | None, typer.Argument(help=\"Parallel YAML run name. Use a flat top-level key, e.g. docs_update.\")] = None,",
-                    "    parallel_yaml_path: Annotated[",
-                    "        str | None, typer.Option(..., \"--yaml-path\", \"-y\", help=\"YAML file containing named parallel runs. Auto-created with a template if missing.\")",
+                    "    custom_path: Annotated[",
+                    "        str | None, typer.Option(..., \"--custom-path\", \"-y\", help=\"Custom YAML file containing named parallel runs. Auto-created with a template if missing.\")",
                     "    ] = None,",
                     "    source: Annotated[",
                     "        _PARALLEL_RUNS_SOURCE,",
-                    "        typer.Option(..., \"--source\", \"-S\", help=\"Source to look for parallel YAML files when --yaml-path is not provided.\"),",
+                    "        typer.Option(..., \"--source\", \"-S\", help=\"Source to look for parallel YAML files when --custom-path is not provided.\"),",
                     "    ] = \"all\",",
                     "    show_parallel_yaml_format: Annotated[",
                     "        bool, typer.Option(..., \"--show-format\", \"-Y\", help=\"Show parallel YAML format guidance and resolved file paths.\")",
@@ -24331,7 +24331,7 @@
                     "        bool,",
                     "        typer.Option(",
                     "            ..., \"--edit\", \"-e\",",
-                    "            help=\"Edit parallel YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --yaml-path specifies it.\",",
+                    "            help=\"Edit parallel YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it.\",",
                     "        ),",
                     "    ] = False,",
                     "    add_entry: Annotated[",
@@ -24340,7 +24340,7 @@
                     "            ...,",
                     "            \"--add-entry\",",
                     "            \"-A\",",
-                    "            help=\"Append one default template entry to parallel YAML. Add --edit to open it. If RUN_NAME is provided, use it as the new entry name.\",",
+                    "            help=\"Append one default template entry to project parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.\",",
                     "        ),",
                     "    ] = False,",
                     "    agent: Annotated[AGENTS | None, typer.Option(..., \"--agent\", \"-a\", help=\"Override agent type.\")] = None,",
@@ -24395,7 +24395,7 @@
                     "    try:",
                     "        run_parallel_from_yaml(",
                     "            config_name=run_name,",
-                    "            parallel_yaml_path=parallel_yaml_path,",
+                    "            parallel_yaml_path=custom_path,",
                     "            source=source,",
                     "            overrides=ParallelCreateValues(",
                     "                agent=agent,",
@@ -24447,25 +24447,25 @@
                       }
                     },
                     {
-                      "name": "parallel_yaml_path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--yaml-path', '-y', help='YAML file containing named parallel runs. Auto-created with a template if missing.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--custom-path', '-y', help='Custom YAML file containing named parallel runs. Auto-created with a template if missing.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--yaml-path",
+                          "--custom-path",
                           "-y"
                         ],
                         "long_flags": [
-                          "--yaml-path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-y"
                         ],
-                        "help": "YAML file containing named parallel runs. Auto-created with a template if missing.",
+                        "help": "Custom YAML file containing named parallel runs. Auto-created with a template if missing.",
                         "default": "..."
                       }
                     },
@@ -24475,7 +24475,7 @@
                       "type": "_PARALLEL_RUNS_SOURCE",
                       "default": "all",
                       "required": false,
-                      "annotation_raw": "Annotated[_PARALLEL_RUNS_SOURCE, typer.Option(..., '--source', '-S', help='Source to look for parallel YAML files when --yaml-path is not provided.')]",
+                      "annotation_raw": "Annotated[_PARALLEL_RUNS_SOURCE, typer.Option(..., '--source', '-S', help='Source to look for parallel YAML files when --custom-path is not provided.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -24488,7 +24488,7 @@
                         "short_flags": [
                           "-S"
                         ],
-                        "help": "Source to look for parallel YAML files when --yaml-path is not provided.",
+                        "help": "Source to look for parallel YAML files when --custom-path is not provided.",
                         "default": "..."
                       }
                     },
@@ -24521,7 +24521,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Edit parallel YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --yaml-path specifies it.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Edit parallel YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -24534,7 +24534,7 @@
                         "short_flags": [
                           "-e"
                         ],
-                        "help": "Edit parallel YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --yaml-path specifies it.",
+                        "help": "Edit parallel YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it.",
                         "default": "..."
                       }
                     },
@@ -24544,7 +24544,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--add-entry', '-A', help='Append one default template entry to parallel YAML. Add --edit to open it. If RUN_NAME is provided, use it as the new entry name.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--add-entry', '-A', help='Append one default template entry to project parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -24557,7 +24557,7 @@
                         "short_flags": [
                           "-A"
                         ],
-                        "help": "Append one default template entry to parallel YAML. Add --edit to open it. If RUN_NAME is provided, use it as the new entry name.",
+                        "help": "Append one default template entry to project parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.",
                         "default": "..."
                       }
                     },
@@ -25309,7 +25309,7 @@
                     "            typer.echo(f\"Wrote: {guide_path}\")",
                     "        if len(result.mcp_servers) > 0:",
                     "            typer.echo(f\"MCP catalog servers: {', '.join(result.mcp_servers)}\")",
-                    "            typer.echo(f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope local\")"
+                    "            typer.echo(f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope project\")"
                   ],
                   "name": "install_tech",
                   "parameters": [
@@ -27371,11 +27371,11 @@
                   "raw_lines": [
                     "def config_path(",
                     "    kind: Annotated[AgentManagedFileKind, typer.Argument(help=\"Agent configuration file kind.\")],",
-                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to locate.\")] = \"repo\",",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
+                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to locate.\")] = \"project\",",
+                    "    custom_path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
                     ") -> None:",
                     "    try:",
-                    "        resolved_path = path if path is not None else resolve_agent_managed_file_path(kind=kind, source=source)",
+                    "        resolved_path = custom_path if custom_path is not None else resolve_agent_managed_file_path(kind=kind, source=source)",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
                     "    run_managed_file_action(kind=kind, action=\"path\", path=resolved_path)"
@@ -27401,7 +27401,7 @@
                       "name": "source",
                       "kind": "positional_or_keyword",
                       "type": "AgentManagedFileSource",
-                      "default": "repo",
+                      "default": "project",
                       "required": false,
                       "annotation_raw": "Annotated[AgentManagedFileSource, typer.Option('--source', '-s', help='Configuration source to locate.')]",
                       "typer": {
@@ -27420,20 +27420,20 @@
                       }
                     },
                     {
-                      "name": "path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Explicit configuration file instead of --source.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Explicit configuration file instead of --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -27466,11 +27466,11 @@
                   "raw_lines": [
                     "def config_init(",
                     "    kind: Annotated[AgentManagedFileKind, typer.Argument(help=\"Agent configuration file kind.\")],",
-                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to initialize.\")] = \"repo\",",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
+                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to initialize.\")] = \"project\",",
+                    "    custom_path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
                     ") -> None:",
                     "    try:",
-                    "        resolved_path = path if path is not None else resolve_agent_managed_file_path(kind=kind, source=source)",
+                    "        resolved_path = custom_path if custom_path is not None else resolve_agent_managed_file_path(kind=kind, source=source)",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
                     "    run_managed_file_action(kind=kind, action=\"init\", path=resolved_path)"
@@ -27496,7 +27496,7 @@
                       "name": "source",
                       "kind": "positional_or_keyword",
                       "type": "AgentManagedFileSource",
-                      "default": "repo",
+                      "default": "project",
                       "required": false,
                       "annotation_raw": "Annotated[AgentManagedFileSource, typer.Option('--source', '-s', help='Configuration source to initialize.')]",
                       "typer": {
@@ -27515,20 +27515,20 @@
                       }
                     },
                     {
-                      "name": "path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Explicit configuration file instead of --source.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Explicit configuration file instead of --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -27561,11 +27561,11 @@
                   "raw_lines": [
                     "def config_validate(",
                     "    kind: Annotated[AgentManagedFileKind, typer.Argument(help=\"Agent configuration file kind.\")],",
-                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to validate.\")] = \"repo\",",
-                    "    path: Annotated[Path | None, typer.Option(\"--path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
+                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to validate.\")] = \"project\",",
+                    "    custom_path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
                     ") -> None:",
                     "    try:",
-                    "        resolved_path = path if path is not None else resolve_agent_managed_file_path(kind=kind, source=source)",
+                    "        resolved_path = custom_path if custom_path is not None else resolve_agent_managed_file_path(kind=kind, source=source)",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
                     "    run_managed_file_action(kind=kind, action=\"validate\", path=resolved_path)"
@@ -27591,7 +27591,7 @@
                       "name": "source",
                       "kind": "positional_or_keyword",
                       "type": "AgentManagedFileSource",
-                      "default": "repo",
+                      "default": "project",
                       "required": false,
                       "annotation_raw": "Annotated[AgentManagedFileSource, typer.Option('--source', '-s', help='Configuration source to validate.')]",
                       "typer": {
@@ -27610,20 +27610,20 @@
                       }
                     },
                     {
-                      "name": "path",
+                      "name": "custom_path",
                       "kind": "positional_or_keyword",
                       "type": "Path | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[Path | None, typer.Option('--path', '-p', help='Explicit configuration file instead of --source.')]",
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Explicit configuration file instead of --source.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--path",
+                          "--custom-path",
                           "-p"
                         ],
                         "long_flags": [
-                          "--path"
+                          "--custom-path"
                         ],
                         "short_flags": [
                           "-p"
@@ -27670,16 +27670,19 @@
                 "        str, typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")",
                 "    ] = \"\",",
                 "    scope: Annotated[",
-                "        _MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP entries into repo-local or user-global agent config.\")",
-                "    ] = \"local\",",
-                "    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., \"--source\", \"-S\", help=\"Source to resolve or edit MCP catalog files.\")] = \"all\",",
+                "        _MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP entries into project/p or user/u agent configuration.\")",
+                "    ] = \"project\",",
+                "    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., \"--source\", \"-S\", help=\"Source to resolve or edit MCP catalog files when --custom-path is not provided.\")] = \"all\",",
+                "    custom_path: Annotated[",
+                "        Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Explicit MCP catalog file instead of --source.\")",
+                "    ] = None,",
                 "    edit: Annotated[",
                 "        bool,",
                 "        typer.Option(",
                 "            ...,",
                 "            \"--edit\",",
                 "            \"-e\",",
-                "            help=\"Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source is specific. If no MCP names are provided, exits after editing.\",",
+                "            help=\"Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no MCP names are provided, exits after editing.\",",
                 "        ),",
                 "    ] = False,",
                 ") -> None:",
@@ -27687,7 +27690,10 @@
                 "    try:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl",
                 "",
-                "        impl(requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, source=source, edit=edit, report=typer.echo)",
+                "        impl(",
+                "            requested_mcp_servers=requested_mcp_servers, agents=agents, scope=\"project\" if scope in (\"project\", \"p\") else \"user\", source=source,",
+                "            custom_path=custom_path, edit=edit, report=typer.echo,",
+                "        )",
                 "    except ValueError as e:",
                 "        raise typer.BadParameter(str(e)) from e"
               ],
@@ -27733,9 +27739,9 @@
                   "name": "scope",
                   "kind": "positional_or_keyword",
                   "type": "_MCP_INSTALL_SCOPE",
-                  "default": "local",
+                  "default": "project",
                   "required": false,
-                  "annotation_raw": "Annotated[_MCP_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install MCP entries into repo-local or user-global agent config.')]",
+                  "annotation_raw": "Annotated[_MCP_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install MCP entries into project/p or user/u agent configuration.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -27748,7 +27754,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Install MCP entries into repo-local or user-global agent config."
+                    "help": "Install MCP entries into project/p or user/u agent configuration."
                   }
                 },
                 {
@@ -27757,7 +27763,7 @@
                   "type": "MCP_CATALOG_SOURCE",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[MCP_CATALOG_SOURCE, typer.Option(..., '--source', '-S', help='Source to resolve or edit MCP catalog files.')]",
+                  "annotation_raw": "Annotated[MCP_CATALOG_SOURCE, typer.Option(..., '--source', '-S', help='Source to resolve or edit MCP catalog files when --custom-path is not provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -27770,8 +27776,30 @@
                     "short_flags": [
                       "-S"
                     ],
-                    "help": "Source to resolve or edit MCP catalog files.",
+                    "help": "Source to resolve or edit MCP catalog files when --custom-path is not provided.",
                     "default": "..."
+                  }
+                },
+                {
+                  "name": "custom_path",
+                  "kind": "positional_or_keyword",
+                  "type": "Path | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Explicit MCP catalog file instead of --source.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--custom-path",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--custom-path"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Explicit MCP catalog file instead of --source."
                   }
                 },
                 {
@@ -27780,7 +27808,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source is specific. If no MCP names are provided, exits after editing.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no MCP names are provided, exits after editing.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -27793,7 +27821,7 @@
                     "short_flags": [
                       "-e"
                     ],
-                    "help": "Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source is specific. If no MCP names are provided, exits after editing.",
+                    "help": "Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no MCP names are provided, exits after editing.",
                     "default": "..."
                   }
                 }
@@ -27845,8 +27873,8 @@
                 "        ),",
                 "    ] = None,",
                 "    scope: Annotated[",
-                "        _SKILL_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install the skill into the repo-local or user-global agent skill directory.\")",
-                "    ] = \"local\",",
+                "        _SKILL_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install the skill into the project/p or user/u agent skill directory.\")",
+                "    ] = \"project\",",
                 "    directory: Annotated[",
                 "        str | None,",
                 "        typer.Option(",
@@ -27877,7 +27905,7 @@
                 "            skill_name=skill_name,",
                 "            group=group,",
                 "            agent=agent,",
-                "            scope=scope,",
+                "            scope=\"project\" if scope in (\"project\", \"p\") else \"user\",",
                 "            directory=directory,",
                 "            reference=reference,",
                 "            backend=backend,",
@@ -27953,9 +27981,9 @@
                   "name": "scope",
                   "kind": "positional_or_keyword",
                   "type": "_SKILL_INSTALL_SCOPE",
-                  "default": "local",
+                  "default": "project",
                   "required": false,
-                  "annotation_raw": "Annotated[_SKILL_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install the skill into the repo-local or user-global agent skill directory.')]",
+                  "annotation_raw": "Annotated[_SKILL_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install the skill into the project/p or user/u agent skill directory.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -27968,7 +27996,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Install the skill into the repo-local or user-global agent skill directory."
+                    "help": "Install the skill into the project/p or user/u agent skill directory."
                   }
                 },
                 {
@@ -28330,7 +28358,10 @@
                 "def depoison(",
                 "    agent: Annotated[str, typer.Argument(help=\"Agent to reset, or all.\")] = \"all\",",
                 "    directory: Annotated[Path | None, typer.Option(\"--directory\", \"-d\", exists=True, file_okay=False, help=\"Inspect a project or a directory containing repositories.\")] = None,",
-                "    scope: Annotated[CleanupScope, typer.Option(\"--scope\", \"-s\", help=\"Select local, global, or all resources. Workspace folders are local.\")] = \"all\",",
+                "    scope: Annotated[",
+                "        Literal[\"project\", \"p\", \"user\", \"u\", \"all\", \"a\"],",
+                "        typer.Option(\"--scope\", \"-s\", help=\"Select project/p, user/u, or all/a resources. Workspace folders belong to the project scope.\"),",
+                "    ] = \"all\",",
                 "    resource: Annotated[str, typer.Option(\"--resource\", \"-r\", help=\"Comma-separated resources: all, workspace (.ai folders), hook, plugin, mcp, skill, instructions, configuration.\")] = \"all\",",
                 "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-R\", help=\"Recurse into nested repositories when collecting .ai folders.\")] = False,",
                 "    match: Annotated[str | None, typer.Option(\"--match\", \"-m\", help=\"Select resources by name, command, or source path substring.\")] = None,",
@@ -28343,12 +28374,20 @@
                 "        bool, typer.Option(\"--tui\", \"-t\", help=\"Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.\")",
                 "    ] = False,",
                 ") -> None:",
+                "    resolved_scope: CleanupScope",
+                "    match scope:",
+                "        case \"project\" | \"p\":",
+                "            resolved_scope = \"project\"",
+                "        case \"user\" | \"u\":",
+                "            resolved_scope = \"user\"",
+                "        case \"all\" | \"a\":",
+                "            resolved_scope = \"all\"",
                 "    if tui:",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui",
                 "",
                 "        launch_agent_tui(",
                 "            mode=\"depoison\", agent=agent, directory=str(directory if directory is not None else Path.cwd()),",
-                "            resource=resource, scope=scope, match=match, recursive=recursive,",
+                "            resource=resource, scope=resolved_scope, match=match, recursive=recursive,",
                 "        )",
                 "        return",
                 "    from stackops.utils.meta import lambda_to_python_script",
@@ -28357,7 +28396,7 @@
                 "        lambda: _run_depoison(",
                 "            agent=agent,",
                 "            directory=str(directory if directory is not None else Path.cwd()),",
-                "            scope=scope,",
+                "            scope=resolved_scope,",
                 "            resource=resource,",
                 "            recursive=recursive,",
                 "            match=match,",
@@ -28416,10 +28455,10 @@
                 {
                   "name": "scope",
                   "kind": "positional_or_keyword",
-                  "type": "CleanupScope",
+                  "type": "Literal['project', 'p', 'user', 'u', 'all', 'a']",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[CleanupScope, typer.Option('--scope', '-s', help='Select local, global, or all resources. Workspace folders are local.')]",
+                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u', 'all', 'a'], typer.Option('--scope', '-s', help='Select project/p, user/u, or all/a resources. Workspace folders belong to the project scope.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -28432,7 +28471,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Select local, global, or all resources. Workspace folders are local."
+                    "help": "Select project/p, user/u, or all/a resources. Workspace folders belong to the project scope."
                   }
                 },
                 {
@@ -28802,11 +28841,11 @@
                 "    context_path: Annotated[",
                 "        str | None, typer.Option(..., \"--context-path\", \"-C\", help=\"Path to a context file. Mutually exclusive with --context.\")",
                 "    ] = None,",
-                "    prompts_path: Annotated[",
+                "    custom_path: Annotated[",
                 "        str | None,",
                 "        typer.Option(",
                 "            ...,",
-                "            \"--prompts-path\",",
+                "            \"--custom-path\",",
                 "            \"-y\",",
                 "            help=\"Prompts YAML file used for context selection. Created with an example and schema only when the missing file is needed or edited.\",",
                 "        ),",
@@ -28817,7 +28856,7 @@
                 "            ...,",
                 "            \"--context-name\",",
                 "            \"-n\",",
-                "            help=\"YAML section key (supports dot-path, e.g. 'team.backend'). Used with --prompts-path or default prompts YAML.\",",
+                "            help=\"YAML section key (supports dot-path, e.g. 'team.backend'). Used with --custom-path or default prompts YAML.\",",
                 "        ),",
                 "    ] = None,",
                 "    group: Annotated[",
@@ -28835,7 +28874,7 @@
                 "    ] = None,",
                 "    source: Annotated[",
                 "        _PROMPTS_SOURCE,",
-                "        typer.Option(..., \"--source\", \"-s\", help=\"Source to look for prompts YAML files when --prompts-path is not provided.\"),",
+                "        typer.Option(..., \"--source\", \"-s\", help=\"Source to look for prompts YAML files when --custom-path is not provided.\"),",
                 "    ] = \"all\",",
                 "    show_prompts_yaml_format: Annotated[",
                 "        bool,",
@@ -28852,7 +28891,7 @@
                 "            ...,",
                 "            \"--edit\",",
                 "            \"-e\",",
-                "            help=\"Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --prompts-path specifies it. If no prompt/context input is provided, exits after editing.\",",
+                "            help=\"Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no prompt/context input is provided, exits after editing.\",",
                 "        ),",
                 "    ] = False,",
                 "    sandbox: Annotated[",
@@ -28903,7 +28942,7 @@
                 "                reasoning_effort=reasoning_effort,",
                 "                context=context,",
                 "                context_path=context_path,",
-                "                prompts_yaml_path=prompts_path,",
+                "                prompts_yaml_path=custom_path,",
                 "                context_name=context_name,",
                 "                group=group,",
                 "                skill=skill,",
@@ -29076,20 +29115,20 @@
                   }
                 },
                 {
-                  "name": "prompts_path",
+                  "name": "custom_path",
                   "kind": "positional_or_keyword",
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--prompts-path', '-y', help='Prompts YAML file used for context selection. Created with an example and schema only when the missing file is needed or edited.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--custom-path', '-y', help='Prompts YAML file used for context selection. Created with an example and schema only when the missing file is needed or edited.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--prompts-path",
+                      "--custom-path",
                       "-y"
                     ],
                     "long_flags": [
-                      "--prompts-path"
+                      "--custom-path"
                     ],
                     "short_flags": [
                       "-y"
@@ -29104,7 +29143,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--context-name', '-n', help=\"YAML section key (supports dot-path, e.g. 'team.backend'). Used with --prompts-path or default prompts YAML.\")]",
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--context-name', '-n', help=\"YAML section key (supports dot-path, e.g. 'team.backend'). Used with --custom-path or default prompts YAML.\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -29117,7 +29156,7 @@
                     "short_flags": [
                       "-n"
                     ],
-                    "help": "YAML section key (supports dot-path, e.g. 'team.backend'). Used with --prompts-path or default prompts YAML.",
+                    "help": "YAML section key (supports dot-path, e.g. 'team.backend'). Used with --custom-path or default prompts YAML.",
                     "default": "..."
                   }
                 },
@@ -29172,7 +29211,7 @@
                   "type": "_PROMPTS_SOURCE",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[_PROMPTS_SOURCE, typer.Option(..., '--source', '-s', help='Source to look for prompts YAML files when --prompts-path is not provided.')]",
+                  "annotation_raw": "Annotated[_PROMPTS_SOURCE, typer.Option(..., '--source', '-s', help='Source to look for prompts YAML files when --custom-path is not provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -29185,7 +29224,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Source to look for prompts YAML files when --prompts-path is not provided.",
+                    "help": "Source to look for prompts YAML files when --custom-path is not provided.",
                     "default": "..."
                   }
                 },
@@ -29218,7 +29257,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --prompts-path specifies it. If no prompt/context input is provided, exits after editing.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--edit', '-e', help='Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no prompt/context input is provided, exits after editing.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -29231,7 +29270,7 @@
                     "short_flags": [
                       "-e"
                     ],
-                    "help": "Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --prompts-path specifies it. If no prompt/context input is provided, exits after editing.",
+                    "help": "Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no prompt/context input is provided, exits after editing.",
                     "default": "..."
                   }
                 },

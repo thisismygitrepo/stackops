@@ -23,10 +23,10 @@ from stackops.utils.accessories import get_repo_root
 Reporter = Callable[[str], None]
 _WORKSPACE_REPO_MARKER: Final[str] = ".git"
 _WORKSPACE_REPO_MINIMUM: Final[int] = 2
-_LOCAL_INSTALL_ROOT_REQUIREMENT: Final[str] = "running inside a git repository or from a workspace directory containing multiple git repositories"
+_PROJECT_INSTALL_ROOT_REQUIREMENT: Final[str] = "running inside a git repository or from a workspace directory containing multiple git repositories"
 
 
-def resolve_local_install_root(*, current_dir: Path) -> Path | None:
+def resolve_project_install_root(*, current_dir: Path) -> Path | None:
     repo_root = get_repo_root(current_dir)
     if repo_root is not None:
         return repo_root
@@ -38,7 +38,7 @@ def resolve_local_install_root(*, current_dir: Path) -> Path | None:
     try:
         child_paths = tuple(workspace_root.iterdir())
     except OSError as error:
-        raise ValueError(f"Cannot inspect local install directory: {workspace_root}") from error
+        raise ValueError(f"Cannot inspect project install directory: {workspace_root}") from error
 
     nested_repo_count = 0
     for child_path in child_paths:
@@ -86,9 +86,9 @@ def add_mcp(
     else:
         requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
 
-    repo_root = resolve_local_install_root(current_dir=Path.cwd()) if scope == "local" else None
-    if scope == "local" and repo_root is None:
-        raise ValueError(f"Local installation requires {_LOCAL_INSTALL_ROOT_REQUIREMENT}")
+    repo_root = resolve_project_install_root(current_dir=Path.cwd()) if scope == "project" else None
+    if scope == "project" and repo_root is None:
+        raise ValueError(f"Project installation requires {_PROJECT_INSTALL_ROOT_REQUIREMENT}")
 
     resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
     selected_agents = parse_requested_agents(raw_value=agents)

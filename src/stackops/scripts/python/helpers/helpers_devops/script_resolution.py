@@ -66,20 +66,17 @@ def resolve_script(*, ctx: typer.Context, name: str, source: SCRIPT_SOURCE, inte
     if not interactive and not name:
         typer.echo("❌ ERROR: You must provide a script name or use --interactive to select a script.", err=True)
         raise typer.Exit(code=1)
-    if source in {"dynamic", "d"}:
-        return _fetch_dynamic_script(name=name)
-
-    target_file: Path | None = None
     if Path(name).is_file():
         direct_target_file = Path(name).resolve()
         if direct_target_file.suffix not in {".py", ".sh", ".ps1", ".bat", ".cmd", ""}:
             typer.echo(f"""❌ ERROR: File '{name}' is not a recognized script type.""", err=True)
             raise typer.Exit(code=1)
-        target_file = direct_target_file
+        return direct_target_file
+
+    if source in {"dynamic", "d"}:
+        return _fetch_dynamic_script(name=name)
 
     roots = {label: location for label, location in get_script_locations(source=source).items() if isinstance(location, Path)}
-    if target_file is not None:
-        return target_file
     suffixes = _get_supported_script_suffixes(name=name)
     exact_names = [name] if "." in name else [f"""{name}{suffix}""" for suffix in suffixes]
     supported_suffixes = frozenset(suffixes)

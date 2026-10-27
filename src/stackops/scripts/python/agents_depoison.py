@@ -1,7 +1,7 @@
 import subprocess
 import sys
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
@@ -11,7 +11,10 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models
 def depoison(
     agent: Annotated[str, typer.Argument(help="Agent to reset, or all.")] = "all",
     directory: Annotated[Path | None, typer.Option("--directory", "-d", exists=True, file_okay=False, help="Inspect a project or a directory containing repositories.")] = None,
-    scope: Annotated[CleanupScope, typer.Option("--scope", "-s", help="Select local, global, or all resources. Workspace folders are local.")] = "all",
+    scope: Annotated[
+        Literal["project", "p", "user", "u", "all", "a"],
+        typer.Option("--scope", "-s", help="Select project/p, user/u, or all/a resources. Workspace folders belong to the project scope."),
+    ] = "all",
     resource: Annotated[str, typer.Option("--resource", "-r", help="Comma-separated resources: all, workspace (.ai folders), hook, plugin, mcp, skill, instructions, configuration.")] = "all",
     recursive: Annotated[bool, typer.Option("--recursive", "-R", help="Recurse into nested repositories when collecting .ai folders.")] = False,
     match: Annotated[str | None, typer.Option("--match", "-m", help="Select resources by name, command, or source path substring.")] = None,
@@ -24,12 +27,20 @@ def depoison(
         bool, typer.Option("--tui", "-t", help="Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.")
     ] = False,
 ) -> None:
+    resolved_scope: CleanupScope
+    match scope:
+        case "project" | "p":
+            resolved_scope = "project"
+        case "user" | "u":
+            resolved_scope = "user"
+        case "all" | "a":
+            resolved_scope = "all"
     if tui:
         from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
 
         launch_agent_tui(
             mode="depoison", agent=agent, directory=str(directory if directory is not None else Path.cwd()),
-            resource=resource, scope=scope, match=match, recursive=recursive,
+            resource=resource, scope=resolved_scope, match=match, recursive=recursive,
         )
         return
     from stackops.utils.meta import lambda_to_python_script
@@ -38,7 +49,7 @@ def depoison(
         lambda: _run_depoison(
             agent=agent,
             directory=str(directory if directory is not None else Path.cwd()),
-            scope=scope,
+            scope=resolved_scope,
             resource=resource,
             recursive=recursive,
             match=match,
@@ -102,7 +113,7 @@ def _run_depoison(
                         inventories.append(collect_hooks(agent=definition.agent, context=context))
                     if focuses and focuses != ("hook",):
                         inventories.append(collect_cleanup_resources(agent=definition.agent, context=context, resource_focuses=focuses))
-                if include_workspace and selection.scope != "global":
+                if include_workspace and selection.scope != "user":
                     status.update("Inspecting repository .ai folders...")
                     inventories.append(collect_workspace_resources(context=context, recursive=selection.recursive))
                 inventory = HookInventory(

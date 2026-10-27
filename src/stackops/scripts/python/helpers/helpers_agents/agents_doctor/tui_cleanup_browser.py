@@ -9,7 +9,7 @@ from textual.message import Message
 from textual.widgets import Button, DataTable, Input, Select, TabbedContent, TabPane, TextArea
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import CleanupSelection
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_RESOURCE_CHOICES
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS, CLEANUP_RESOURCE_CHOICES
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory, HookRemoval
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import DOCTOR_AGENT_DEFINITIONS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_cleanup import cleanup_action, cleanup_details, cleanup_kind
@@ -53,7 +53,7 @@ class CleanupBrowser(Vertical):
             )
             yield Select[str]([("All types" if kind == "all" else kind, kind) for kind in kinds],
                               value=self.cleanup_initial.resource, allow_blank=False, id="cleanup-kind")
-            yield Select[str]([(scope, scope) for scope in ("all", "local", "global", "admin", "system")],
+            yield Select[str]([(scope, scope) for scope in ("all", "project", "user", "admin", "system")],
                               value=self.cleanup_initial.scope, allow_blank=False, id="cleanup-scope")
         with Horizontal(classes="filters"):
             yield Input(value=self.cleanup_initial.match or "", placeholder="Filter names, commands, paths…", id="cleanup-search")
@@ -77,7 +77,7 @@ class CleanupBrowser(Vertical):
         self.cleanup_inventory = inventory
         self.cleanup_selected.clear()
         notes = "\n\n".join(
-            f"""{item.severity.upper()} · {item.agent} · {item.origin}
+            f"""{item.severity.upper()} · {item.agent} · {CLEANUP_ORIGIN_LABELS[item.origin]}
 {item.path}
 {item.message}""" for item in inventory.diagnostics
         )
@@ -93,7 +93,7 @@ class CleanupBrowser(Vertical):
         search = self.query_one("#cleanup-search", Input).value.casefold()
         self.cleanup_visible = [
             index for index, entry in enumerate(self.cleanup_inventory.entries)
-            if (agent == "all" or entry.agent in (agent, "shared")) and (scope == "all" or entry.origin == scope)
+            if (agent == "all" or entry.agent in (agent, "shared")) and (scope == "all" or CLEANUP_ORIGIN_LABELS[entry.origin] == scope)
             and ("all" in kinds or cleanup_kind(entry) in kinds)
             and search in f"""{entry.name} {entry.event} {entry.command} {entry.path}""".casefold()
         ]
@@ -103,7 +103,7 @@ class CleanupBrowser(Vertical):
             entry = self.cleanup_inventory.entries[index]
             marker = "✓" if entry.removal in self.cleanup_selected else "·" if entry.removal is not None and entry.origin in ("local", "global") else "—"
             table.add_row(
-                *(Text(value) for value in (marker, entry.name, cleanup_kind(entry), entry.agent, entry.origin, entry.state, cleanup_action(entry))),
+                *(Text(value) for value in (marker, entry.name, cleanup_kind(entry), entry.agent, CLEANUP_ORIGIN_LABELS[entry.origin], entry.state, cleanup_action(entry))),
                 key=str(index),
             )
         detail = cleanup_details(entry=self.cleanup_inventory.entries[self.cleanup_visible[0]], entries=self.cleanup_inventory.entries) if self.cleanup_visible else "No matching resources. Adjust the filters."
