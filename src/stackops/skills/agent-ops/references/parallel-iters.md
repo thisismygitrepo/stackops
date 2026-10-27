@@ -1,6 +1,6 @@
 # Parallel Iters
 
-Read [herdr.md](herdr.md) and [iter.md](iter.md) first.
+`parallel-iters` runs only when the user names `agent-ops parallel-iters`, never for `iter`, `parallel-agents`, `parallel-isolated-agents`, or any worktree request. Read [herdr.md](herdr.md) and [iter.md](iter.md) first.
 
 This command first identifies independent lines of work, then launches one goal-directed iteration chain for each line in the same working directory. Complete the Herdr preflight once, then give each chain its own iter workspace using the root-pane launch and `agent prompt --wait` protocol. Separation is by explicit scope ownership only: file paths, modules, features, tests, or investigation targets. Do not create branches, do not create git worktrees, do not use `wt`, and do not move agents into separate working copies for this command.
 

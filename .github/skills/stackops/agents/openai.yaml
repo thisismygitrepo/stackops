@@ -3,4 +3,4 @@ interface:
   short_description: "Find and change StackOps configuration or code"
   default_prompt: "Use $stackops to locate the right configuration file or implementation, make the requested change, and validate it."
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

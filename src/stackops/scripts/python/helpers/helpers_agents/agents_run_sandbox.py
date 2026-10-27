@@ -43,7 +43,7 @@ def build_sandboxed_prompt_script(
     input_paths: list[Path] = []
     prompt_text = ""
     prompt_argument = ""
-    if agent in ("crush", "qwen", "droid"):
+    if agent in ("crush", "qwen", "droid", "muse"):
         input_paths.append(prompt_file)
         prompt_argument = container_path(prompt_file, is_windows=is_windows) if container else str(prompt_file)
     elif agent != "codex":
@@ -119,6 +119,11 @@ def build_sandboxed_prompt_script(
             command.extend(["--prompt", prompt_text])
         case "droid":
             command = [agent, "exec", "-f", prompt_argument]
+        case "muse":
+            command = [agent, "exec", "--yolo"]
+            if reasoning is not None:
+                command.extend(["--reasoning-effort", reasoning])
+            command.extend(["--prompt-file", prompt_argument])
         case "cursor-agent":
             command = [agent, "-p", prompt_text, "--output-format", "text"]
 

@@ -39,6 +39,12 @@ def build_interactive_prompt_command(
             if reasoning is not None:
                 command.extend(["--thinking", "off" if reasoning == "none" else reasoning])
             command.extend(["--", prompt])
+        case "muse":
+            if external_sandbox:
+                command.append("--disable-sandbox")
+            if reasoning is not None:
+                command.extend(["--reasoning-effort", reasoning])
+            command.append(prompt)
         case "opencode":
             command.extend(["--prompt", prompt])
         case "agy":
@@ -55,7 +61,7 @@ def build_interactive_prompt_command(
         case "forge" | "crush" | "q" | "kilocode" | "cline" | "oz":
             raise ValueError(
                 f"""--interactive is not supported for agent '{agent}'. """
-                "Choose codex, copilot, cortex, pi, opencode, agy, qwen, claude, cursor-agent, auggie, or droid, or omit --interactive."
+                "Choose codex, copilot, cortex, pi, muse, opencode, agy, qwen, claude, cursor-agent, auggie, or droid, or omit --interactive."
             )
         case _:
             assert_never(agent)

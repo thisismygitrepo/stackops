@@ -1,6 +1,6 @@
 # Handover
 
-Use `handover` when the user asks to transfer current work to a new interactive agent instance. Read [herdr.md](herdr.md) first.
+`handover` runs only when the user names `agent-ops handover`; it transfers current work to a new interactive agent instance. Read [herdr.md](herdr.md) first.
 
 Start a normal external agent through `herdr`, not an internal subagent. Use a fresh Herdr tab with one pane. Split into panes only when the user explicitly asks for pane-based handover.
 

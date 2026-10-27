@@ -14,6 +14,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.deepsee
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.droid import DEFINITION as DROID
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.forge import DEFINITION as FORGE
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.kilocode import DEFINITION as KILOCODE
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.muse import DEFINITION as MUSE
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.omp import DEFINITION as OMP
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.opencode import DEFINITION as OPENCODE
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.oz import DEFINITION as OZ
@@ -43,6 +44,7 @@ DOCTOR_AGENT_DEFINITIONS: Final[tuple[DoctorAgentDefinition, ...]] = (
     AUGGIE,
     OZ,
     DROID,
+    MUSE,
 )
 DOCTOR_DEFINITION_BY_AGENT: Final[dict[DoctorAgent, DoctorAgentDefinition]] = {
     definition.agent: definition for definition in DOCTOR_AGENT_DEFINITIONS
@@ -59,6 +61,7 @@ DOCTOR_AGENT_ALIASES: Final[dict[str, DoctorAgent]] = {
     "factory-droid": "droid",
     "github-copilot": "copilot",
     "kilo": "kilocode",
+    "muse-code": "muse",
     "oh-my-pi": "omp",
     "qwen-code": "qwen",
 }

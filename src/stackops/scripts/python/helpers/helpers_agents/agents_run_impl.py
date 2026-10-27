@@ -183,6 +183,16 @@ def build_agent_command(
             return f"{agent_cli} agent run{model_arg}{mcp_arg} --prompt {prompt_content_expr}"
         case "droid":
             return f"{agent_cli} exec -f {prompt_file_q}"
+        case "muse":
+            if provider is not None:
+                raise ValueError("Muse Code only talks to the Meta provider; --provider is unsupported.")
+            model_arg = ""
+            if model is not None:
+                model_arg = f" --model {agent_shell.quote_for_shell(model, is_windows=resolved_is_windows)}"
+            reasoning_arg = ""
+            if normalized_reasoning_effort is not None:
+                reasoning_arg = f" --reasoning-effort {agent_shell.quote_for_shell(normalized_reasoning_effort, is_windows=resolved_is_windows)}"
+            return f"{agent_cli} exec --yolo{model_arg}{reasoning_arg} --prompt-file {prompt_file_q}"
         case "pi":
             provider_arg = ""
             if provider is not None:

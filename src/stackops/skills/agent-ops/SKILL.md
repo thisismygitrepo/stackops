@@ -5,25 +5,27 @@ description: >
   (handover, iter, parallel-iters, parallel-agents, parallel-isolated-agents), e.g.
   "agent-ops parallel-agents", or invokes /skill:agent-ops; then it coordinates external
   CLI agents (Codex, OpenCode, Pi) through the herdr CLI and wt/Worktrunk worktrees.
-  NEVER for a command name alone ("parallel-agents", "iter", "handover"), merely
-  mentioning herdr or tmux, checking or debugging them, code-level parallelism or
+  NEVER for a command name alone ("parallel-agents", "iter", "handover"), worktrees or wt
+  alone, merely mentioning herdr or tmux, checking or debugging them, code-level parallelism or
   concurrency, loops or iteration over data, background jobs, or harness-native
   subagents and parallel tool calls.
 ---
 
 # Agent-Ops
 
-Coordinate external agents through the latest `herdr` CLI. Only the latest release is supported:
+Coordinate external agents through the latest `herdr` CLI. Only the latest release is supported.
+
+Run a command only when the user names it exactly, as in `agent-ops iter`. Match the whole token: `iter` is not `parallel-iters`, and `parallel-agents` is not `parallel-isolated-agents`. Never pick a command from intent, similar wording, or a nearby command. If no command is named, or the request combines or paraphrases them (e.g. "parallel iters in worktrees"), ask which single command to run and do nothing else.
 
 - `handover`: transfer active work.
 - `iter`: run a goal-directed chain, one pass per agent.
-- `parallel-iters`: run independent, scope-separated iteration chains.
-- `parallel-agents`: coordinate the user's external parallel agents.
-- `parallel-isolated-agents`: run agents in `wt`/Worktrunk worktrees.
+- `parallel-iters`: run independent, scope-separated iteration chains in the current working directory; never worktrees.
+- `parallel-agents`: coordinate the user's external parallel agents in the current working directory; never worktrees.
+- `parallel-isolated-agents`: run agents in `wt`/Worktrunk worktrees; the only command that creates worktrees.
 
 ## References
 
-Before acting, run `herdr --skill`, read its full output, then read [Herdr for Agent-Ops](references/herdr.md) and the command reference:
+Before acting, run `herdr --skill`, read its full output, then read [Herdr for Agent-Ops](references/herdr.md) and the named command's reference only:
 
 - `handover`: [references/handover.md](references/handover.md)
 - `iter`: [references/iter.md](references/iter.md)

@@ -20,6 +20,7 @@ AGENTS: TypeAlias = Literal[
     "oz",
     "droid",
     "pi",
+    "muse",
 ]
 CONFIG_AGENTS: TypeAlias = AGENTS | Literal["omp"]
 CONFIG_AGENT_VALUES: Final[tuple[CONFIG_AGENTS, ...]] = (

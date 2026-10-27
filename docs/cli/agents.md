@@ -163,7 +163,7 @@ agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 For `run-prompt`, omitting `--agent` uses the configured default agent. `--source repo` or `-s repo` resolves to `<git-root>/.stackops/agents/prompts.yaml`.
 Shell metacharacters such as `|`, `>`, `$`, and `*` are still interpreted by your shell before StackOps receives the prompt.
 
-Interactive mode sends the same prompt, context, and skill reference as the first message, then leaves the agent's chat open. It supports `agy`, `cursor-agent`, `claude`, `qwen`, `copilot`, `codex`, `opencode`, `auggie`, `droid`, and `pi`. Other agents report an error before preparing context. Reasoning, Second Brain, and sandbox options still apply; container sandboxes allocate a terminal. Without `--interactive`, the existing prompt-running behavior is unchanged.
+Interactive mode sends the same prompt, context, and skill reference as the first message, then leaves the agent's chat open. It supports `agy`, `cursor-agent`, `claude`, `qwen`, `copilot`, `codex`, `opencode`, `auggie`, `droid`, `pi`, and `muse`. Other agents report an error before preparing context. Reasoning, Second Brain, and sandbox options still apply; container sandboxes allocate a terminal. Without `--interactive`, the existing prompt-running behavior is unchanged.
 
 Context selection works the same in either mode. Pass `--context ""` to run without context or a YAML picker. Use `agents i` to open an empty chat without preparing a prompt.
 

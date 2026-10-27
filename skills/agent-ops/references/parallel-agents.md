@@ -1,6 +1,6 @@
 # Parallel Agents
 
-Use `parallel-agents` when the user asks for parallel external agents, delegation to Herdr-managed agents, or coordination of multiple interactive CLI agents. Read [herdr.md](herdr.md) first.
+`parallel-agents` runs only when the user names `agent-ops parallel-agents`; it coordinates multiple external interactive CLI agents through Herdr in the current working directory, never in worktrees. Read [herdr.md](herdr.md) first.
 
 Coordinate agent creation, delegation, result collection, reporting, and shutdown through `herdr`.
 

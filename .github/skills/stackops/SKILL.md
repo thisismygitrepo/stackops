@@ -1,6 +1,12 @@
 ---
 name: stackops
-description: Use, troubleshoot, and change StackOps commands and configuration. Use for adding, editing, renaming, or removing layout entries, settings, catalog entries, agent configuration, or CLI behavior; locate the owning file and schema or Python implementation through live help and source maps. Covers devops, cloud, terminal, agents, utils, fire, preview, seek, and the stackops dispatcher.
+description: >
+  Use ONLY when the user explicitly names stackops (e.g. "use stackops to add a layout
+  entry") or invokes /skill:stackops; then it finds and changes the StackOps command,
+  configuration file, schema, or Python implementation that owns the behavior through live
+  help and source maps. NEVER for generic CLI, config, layout, settings, catalog, or agent
+  work that does not name stackops, for working inside the StackOps repo without naming it,
+  or for an entrypoint word alone (devops, cloud, terminal, agents, utils, fire, preview, seek).
 ---
 
 # StackOps

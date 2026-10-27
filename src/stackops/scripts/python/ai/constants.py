@@ -22,5 +22,6 @@ OPENROUTER_ZDR_CONFIGURATION: Final[dict[CONFIG_AGENTS, str | None]] = {
     "oz": "Requires OpenRouter account/API-key enforcement",
     "droid": "ZDR added to existing repository OpenRouter model settings",
     "pi": "OpenRouter provider request policy extension",
+    "muse": None,
     "omp": "OpenRouter session request policy extension",
 }

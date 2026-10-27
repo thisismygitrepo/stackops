@@ -13,6 +13,7 @@ from stackops.scripts.python.ai.solutions.deepseek import deepseek
 from stackops.scripts.python.ai.solutions.droid import droid
 from stackops.scripts.python.ai.solutions.forge import forge
 from stackops.scripts.python.ai.solutions.kilocode import kilocode
+from stackops.scripts.python.ai.solutions.muse import muse
 from stackops.scripts.python.ai.solutions.opencode import opencode
 from stackops.scripts.python.ai.solutions.omp import omp
 from stackops.scripts.python.ai.solutions.oz import oz
@@ -97,6 +98,10 @@ def build_framework_config(
             )
         case "pi":
             return pi.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
+        case "muse":
+            return muse.build_configuration(
                 repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
             )
         case "omp":
