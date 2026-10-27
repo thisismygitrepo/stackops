@@ -12,9 +12,8 @@ import typer
 from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
 from stackops.profile.linking.conflict import ON_CONFLICT_LOOSE
 from stackops.profile.linking.options import METHOD_LOOSE
-from stackops.utils.source_of_truth import DOTFILES_MAPPER_FILES_ROOT
+from stackops.utils.source_of_truth import CONFIG_MAPPER_FILES_ROOT, DOTFILES_MAPPER_FILES_ROOT
 
-BACKUP_ROOT_FLAT = DOTFILES_MAPPER_FILES_ROOT
 FLAT_PATH_HASH_LENGTH = 16
 
 
@@ -159,12 +158,14 @@ def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, sectio
 
 def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool) -> Path:
     match sensitivity:
-        case "private" | "v" | "public" | "b":
-            pass
+        case "private" | "v":
+            backup_root = DOTFILES_MAPPER_FILES_ROOT
+        case "public" | "b":
+            backup_root = CONFIG_MAPPER_FILES_ROOT
         case _:
             raise ValueError(f"Unknown sensitivity: {sensitivity}")
     if destination is None:
-        new_path = BACKUP_ROOT_FLAT.joinpath(_build_flat_backup_name(orig_path))
+        new_path = backup_root.joinpath(_build_flat_backup_name(orig_path))
     else:
         if shared:
             dest_path = Path(destination).expanduser().absolute()

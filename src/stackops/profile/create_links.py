@@ -79,7 +79,7 @@ class MapperFileData(TypedDict):
     public: dict[str, list[ConfigMapper]]
     private: dict[str, list[ConfigMapper]]
 
-def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
+def _read_mapper_document(source: CONFIG_SOURCE_LOOSE) -> MapperDocument:
     source_key = CONFIG_SOURCE_MAP[source]
     match source_key:
         case "user":
@@ -87,15 +87,9 @@ def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
         case "library":
             mapper_path = LIBRARY_MAPPER_PATH
         case "all":
-            # Merge both mappers
-            if not USER_MAPPER_PATH.exists():
-                user_mapper: MapperFileData = {"public": {}, "private": {}}
-            else:
-                user_mapper = read_mapper(source="user")
-            library_mapper = read_mapper(source="library")
-            merged_public: dict[str, list[ConfigMapper]] = {**library_mapper["public"], **user_mapper["public"]}
-            merged_private: dict[str, list[ConfigMapper]] = {**library_mapper["private"], **user_mapper["private"]}
-            return {"public": merged_public, "private": merged_private}
+            library_mapper = _read_mapper_document(source="library")
+            user_mapper = _read_mapper_document(source="user") if USER_MAPPER_PATH.exists() else {}
+            return {**library_mapper, **user_mapper}
         case _:
             raise ValueError(f"Unsupported config source value: {source}")
     if not mapper_path.exists():
@@ -122,6 +116,11 @@ def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
                 "  devops config export-example dotfiles"
             ) from exc
         raise ValueError(f"Packaged dotfiles mapper is invalid: {mapper_path}\n{exc}") from exc
+    return mapper_data
+
+
+def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
+    mapper_data = _read_mapper_document(source=source)
     public: dict[str, list[ConfigMapper]] = {}
     private: dict[str, list[ConfigMapper]] = {}
     normalized_system = _normalize_os_name(SYSTEM)

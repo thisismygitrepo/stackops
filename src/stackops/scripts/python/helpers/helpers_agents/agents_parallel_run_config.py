@@ -166,13 +166,15 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, source: PARAL
     if parallel_yaml_path is not None:
         return [("explicit", Path(parallel_yaml_path).expanduser().resolve())]
 
+    import stackops.utils.schemas.agents as agent_schema_assets
+    from stackops.utils.path_reference import get_path_reference_path
     from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
-    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
+    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT
 
     repo_yaml = current_repo_stackops_path(path_kind="parallel_yaml")
     private_yaml = DOTFILES_STACKOPS_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
     public_yaml = CONFIG_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
-    library_yaml = LIBRARY_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
+    library_yaml = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
 
     match source:
         case "all" | "a":

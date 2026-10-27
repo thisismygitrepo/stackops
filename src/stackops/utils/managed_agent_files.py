@@ -9,6 +9,7 @@ AgentManagedFileSource: TypeAlias = Literal["repo", "private", "public", "librar
 
 def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[AgentManagedFileSource, Path], ...]:
     import stackops.jobs.agents.mcps as mcp_assets
+    import stackops.utils.schemas.agents as agent_schema_assets
     from stackops.utils.path_reference import get_path_reference_path
     from stackops.utils.repos.stackops_paths import current_repo_stackops_path
     from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
@@ -23,7 +24,7 @@ def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[A
             repo_path = current_repo_stackops_path(path_kind="parallel_yaml")
             relative_repo_path = Path(".stackops/agents/parallel.yaml")
             relative_user_path = Path("agents/parallel/parallel.yaml")
-            library_path = LIBRARY_ROOT / relative_user_path
+            library_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
         case "mcp":
             repo_path = current_repo_stackops_path(path_kind="mcp_json")
             relative_repo_path = Path(".stackops/mcp.json")
@@ -67,7 +68,7 @@ def get_agent_managed_file_spec(kind: AgentManagedFileKind) -> ManagedFileSpec:
             initial_content = prompts_yaml_template()
         case "parallel":
             schema_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.schema.json")
-            example_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.example.yaml")
+            example_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
             initial_content = example_path.read_text(encoding="utf-8")
         case "mcp":
             import stackops.jobs.agents.mcps as mcp_assets

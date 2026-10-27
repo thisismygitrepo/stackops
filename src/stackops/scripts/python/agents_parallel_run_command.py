@@ -38,7 +38,7 @@ def run_parallel(
             ...,
             "--add-entry",
             "-A",
-            help="Append one default template entry to parallel YAML. Add --edit to open it. If RUN_NAME is provided, use it as the new entry name.",
+            help="Append one default template entry to repo parallel YAML. Use --source or --yaml-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.",
         ),
     ] = False,
     agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help="Override agent type.")] = None,
