@@ -5,6 +5,7 @@ from typing import Literal
 import typer
 
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
+from stackops.utils.repos.stackops_paths import current_repo_stackops_path
 from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
 
 
@@ -15,11 +16,12 @@ class LayoutEntry:
     source_path: Path | None
 
 
-def default_layout_source_paths() -> dict[Literal["global", "local"], Path]:
-    return {
-        "global": DOTFILES_LAYOUTS_JSON_PATH,
-        "local": Path.cwd().joinpath(".stackops", "config", "layout.json"),
-    }
+def default_layout_source_paths() -> dict[Literal["user", "project"], Path]:
+    source_paths: dict[Literal["user", "project"], Path] = {"user": DOTFILES_LAYOUTS_JSON_PATH}
+    project_path = current_repo_stackops_path(path_kind="layouts_json")
+    if project_path is not None:
+        source_paths["project"] = project_path
+    return source_paths
 
 
 def resolve_layout_source(

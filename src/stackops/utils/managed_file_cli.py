@@ -18,7 +18,7 @@ def run_managed_file_action(*, kind: ManagedFileKind, action: Literal["path", "i
         elif kind in ("prompts", "parallel", "mcp"):
             from stackops.utils.managed_agent_files import resolve_agent_managed_file_path
 
-            data_path = resolve_agent_managed_file_path(kind=kind, source="repo")
+            data_path = resolve_agent_managed_file_path(kind=kind, source="project")
         else:
             data_path = spec.user_path
         match action:

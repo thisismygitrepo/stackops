@@ -13,10 +13,8 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_candidate
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SecretsSource, WritableSecretsSource
 from stackops.secrets.models import Login, SecretsFile
 
-SECRETS_RELATIVE_PATH = Path(".stackops") / "secrets" / "secrets.json"
-
-ResolvedSecretsSource: TypeAlias = Literal["local", "global", "both"]
-SecretsFileSourceName: TypeAlias = Literal["local", "global"]
+ResolvedSecretsSource: TypeAlias = Literal["project", "user", "all"]
+SecretsFileSourceName: TypeAlias = Literal["project", "user", "custom-file"]
 
 
 @dataclass(frozen=True)
@@ -56,57 +54,58 @@ class SecretsFileStats:
     max_keys_per_secret: int = 0
 
 def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: SecretsSource | None) -> list[SecretsFileSource]:
-    local_source = SecretsFileSource(name="local", path=_resolve_local_secrets_path(secrets_path))
-    if secrets_source is None:
-        if secrets_path is not None or local_source.path.exists():
-            return [local_source]
-        return [SecretsFileSource(name="global", path=_resolve_global_secrets_path())]
+    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
 
-    resolved_source = _resolve_secrets_source_alias(secrets_source)
-    if resolved_source == "local":
-        return [local_source]
-
-    global_source = SecretsFileSource(name="global", path=_resolve_global_secrets_path())
-    if resolved_source == "global":
+    resolved_source = _resolve_secrets_source_alias(secrets_source) if secrets_source is not None else None
+    if resolved_source == "user":
         if secrets_path is not None:
-            _fail("--path overrides only the local secrets source. Use --source local or --source both with --path.")
-        return [global_source]
-    if resolved_source == "both":
-        return [local_source, global_source]
+            _fail("--custom-path replaces the project secrets source. Use --source project or --source all with --custom-path.")
+        return [SecretsFileSource(name="user", path=_resolve_user_secrets_path())]
 
-    _fail(f"Unknown secrets source: {secrets_source}")
+    project_source: SecretsFileSource | None = None
+    if secrets_path is not None:
+        project_source = SecretsFileSource(name="custom-file", path=secrets_path.expanduser().absolute())
+    elif resolved_source == "project":
+        try:
+            project_path = require_current_repo_stackops_path(path_kind="secrets_json")
+        except ValueError as error:
+            _fail(str(error))
+        project_source = SecretsFileSource(name="project", path=project_path)
+    else:
+        project_path = current_repo_stackops_path(path_kind="secrets_json")
+        if project_path is not None:
+            project_source = SecretsFileSource(name="project", path=project_path)
+
+    if project_source is not None:
+        if resolved_source == "project" or (resolved_source is None and (secrets_path is not None or project_source.path.exists())):
+            return [project_source]
+    user_source = SecretsFileSource(name="user", path=_resolve_user_secrets_path())
+    if resolved_source == "all" and project_source is not None:
+        return [project_source, user_source]
+    return [user_source]
 
 
 def _resolve_single_secret_source(*, secrets_path: Path | None, secrets_source: WritableSecretsSource) -> SecretsFileSource:
     secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
     if len(secret_sources) != 1:
-        _fail("Choose exactly one secrets source: local/l or global/g.")
+        _fail("Choose exactly one secrets source: project/p or user/u.")
     return secret_sources[0]
 
 
 def _resolve_secrets_source_alias(secrets_source: SecretsSource) -> ResolvedSecretsSource:
     match secrets_source.casefold():
-        case "local" | "l":
-            return "local"
-        case "global" | "g":
-            return "global"
-        case "both" | "b":
-            return "both"
+        case "project" | "p":
+            return "project"
+        case "user" | "u":
+            return "user"
+        case "all" | "a":
+            return "all"
         case _:
             raise NotImplementedError
     _fail(f"Unknown secrets source: {secrets_source}")
 
 
-def _resolve_local_secrets_path(secrets_path: Path | None) -> Path:
-    if secrets_path is None:
-        return Path.cwd() / SECRETS_RELATIVE_PATH
-    expanded_path = secrets_path.expanduser()
-    if expanded_path.is_absolute():
-        return expanded_path
-    return Path.cwd() / expanded_path
-
-
-def _resolve_global_secrets_path() -> Path:
+def _resolve_user_secrets_path() -> Path:
     from stackops.secrets.paths import SECRETS_DOFILE
 
     return SECRETS_DOFILE.expanduser()

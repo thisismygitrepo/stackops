@@ -11,7 +11,7 @@ REPO_PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 REPO_MCP_JSON_FILE_NAME: Final[str] = "mcp.json"
 REPO_SCRIPTS_DIRECTORY_NAME: Final[str] = "scripts"
 
-RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "parallel_yaml", "mcp_json", "scripts"]
+RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "parallel_yaml", "mcp_json", "scripts", "secrets_json", "layouts_json"]
 
 
 def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
@@ -30,12 +30,16 @@ def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
             return stackops_root / REPO_MCP_JSON_FILE_NAME
         case "scripts":
             return stackops_root / REPO_SCRIPTS_DIRECTORY_NAME
+        case "secrets_json":
+            return stackops_root / "secrets" / "secrets.json"
+        case "layouts_json":
+            return stackops_root / "config" / "layout.json"
 
 
 def require_current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path:
     stackops_path = current_repo_stackops_path(path_kind=path_kind)
     if stackops_path is None:
-        raise ValueError("--source repo requires running inside a git repository")
+        raise ValueError("--source project requires running inside a git repository")
     return stackops_path
 
 
@@ -46,7 +50,7 @@ def repo_stackops_yaml_paths(*, path_kind: Literal["prompts_yaml", "parallel_yam
     relative_yaml = Path(REPO_STACKOPS_DIRECTORY_NAME) / REPO_STACKOPS_AGENTS_DIRECTORY_NAME / file_name
     locations: list[tuple[str, Path]] = []
     if repo_yaml is not None and repo_yaml.is_file():
-        locations.append(("repo", repo_yaml))
+        locations.append(("project", repo_yaml))
 
     for child_directory, directory_names, _file_names in directory.walk():
         if child_directory == directory:
@@ -59,10 +63,10 @@ def repo_stackops_yaml_paths(*, path_kind: Literal["prompts_yaml", "parallel_yam
         if yaml_path == repo_yaml or not yaml_path.is_file():
             continue
         location_name = (
-            "repo" if child_directory == directory and repo_yaml is None else f"""repo:{child_directory.relative_to(directory).as_posix()}"""
+            "project" if child_directory == directory and repo_yaml is None else f"""project:{child_directory.relative_to(directory).as_posix()}"""
         )
         locations.append((location_name, yaml_path))
 
     if not locations:
-        locations.append(("repo", repo_yaml if repo_yaml is not None else directory / relative_yaml))
+        locations.append(("project", repo_yaml if repo_yaml is not None else directory / relative_yaml))
     return locations

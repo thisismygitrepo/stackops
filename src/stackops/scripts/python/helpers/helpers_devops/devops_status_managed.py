@@ -50,7 +50,7 @@ def check_managed_files_status() -> list[ManagedFileStatus]:
 
                 locations = tuple(
                     (source.name, source.path)
-                    for source in resolve_secret_sources(secrets_path=None, secrets_source="both")
+                    for source in resolve_secret_sources(secrets_path=None, secrets_source="all")
                 )
             case "prompts":
                 from stackops.utils.repos.stackops_paths import repo_stackops_yaml_paths

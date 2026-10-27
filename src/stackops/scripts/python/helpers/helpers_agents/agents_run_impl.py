@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
     normalize_reasoning_effort,
 )
 
-PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
 
 
 def _format_shell_args(values: list[str], *, is_windows: bool) -> str:
@@ -241,7 +241,7 @@ def run(
         if edit and prompts_yaml_path is None and source in ("all", "a"):
             source, selected_yaml_path = choose_edit_source(locations=yaml_locations)
             yaml_locations = [(source, selected_yaml_path)]
-            if source == "repo":
+            if source == "project":
                 prompts_yaml_path = str(selected_yaml_path)
         if edit:
             created_yaml_paths: list[Path] = []
@@ -307,11 +307,9 @@ def _should_scaffold_prompts_yaml(*, location_name: str, prompts_yaml_path: str 
     if prompts_yaml_path is not None:
         return True
     match source:
-        case "all" | "a" | "repo" | "r":
-            return location_name == "repo"
-        case "private" | "p":
-            return location_name == "private"
-        case "public" | "b":
-            return location_name == "public"
+        case "all" | "a" | "project" | "p":
+            return location_name == "project"
+        case "user" | "u":
+            return location_name == "user"
         case "library" | "l":
             return False

@@ -7,7 +7,7 @@ from stackops.utils.managed_files import ManagedFileKind
 DATA_SETUP_HELP = "Interactively register a backup entry and install its YAML schema."
 DOTFILES_SETUP_HELP = "Interactively register a dotfile and install its YAML schema."
 LAYOUTS_SETUP_HELP = "Install starter terminal layouts and their JSON schema."
-SECRETS_SETUP_HELP = "Interactively create the global secrets file and schema."
+SECRETS_SETUP_HELP = "Interactively create the user secrets file and schema."
 
 
 def _ensure_user_schema(kind: ManagedFileKind) -> None:
@@ -84,20 +84,20 @@ def setup_secrets() -> None:
 
     if SECRETS_DOFILE.exists():
         if not SECRETS_DOFILE.is_file():
-            exit_with_setup_error(f"Global secrets path exists but is not a file: {SECRETS_DOFILE}")
+            exit_with_setup_error(f"User secrets path exists but is not a file: {SECRETS_DOFILE}")
         try:
             load_secrets_file(SECRETS_DOFILE)
         except (OSError, SecretsSchemaError) as exc:
-            exit_with_setup_error(f"Global secrets cannot be safely read:\n{exc}")
+            exit_with_setup_error(f"User secrets cannot be safely read:\n{exc}")
         _ensure_user_schema("secrets")
         typer.echo(
-            f"Global secrets and schema are ready: {SECRETS_DOFILE}\n"
+            f"User secrets and schema are ready: {SECRETS_DOFILE}\n"
             "Add another login with:\n"
-            "  devops vault add --source global"
+            "  devops vault add --source user"
         )
         return
 
-    typer.echo("Create the first global login entry. Secret values are hidden while you type.")
+    typer.echo("Create the first user login entry. Secret values are hidden while you type.")
     secrets_file: SecretsFile = {
         "$schema": f"./{secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE}",
         "version": SECRETS_FILE_VERSION,
@@ -106,6 +106,6 @@ def setup_secrets() -> None:
     try:
         create_secrets_file(secrets_path=SECRETS_DOFILE, secrets_file=secrets_file)
     except OSError as exc:
-        exit_with_setup_error(f"Global secrets setup was not completed: {exc}")
+        exit_with_setup_error(f"User secrets setup was not completed: {exc}")
     _ensure_user_schema("secrets")
-    typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Global secrets and schema are ready: {SECRETS_DOFILE}")
+    typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"User secrets and schema are ready: {SECRETS_DOFILE}")

@@ -7,7 +7,7 @@ import typer
 def list_layouts(
     layouts_file: Annotated[
         Path | None,
-        typer.Argument(exists=True, dir_okay=False, help="Layout JSON file. Omit to list layouts from the global and current-directory config files."),
+        typer.Argument(exists=True, dir_okay=False, help="Layout JSON file. Omit to list layouts from the user and project config files."),
     ] = None,
     show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include each tab's name, start directory, command, and weight.")] = False,
     show_stats: Annotated[bool, typer.Option("--stats", "-s", help="Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.")] = False,
@@ -77,10 +77,10 @@ def list_layouts(
 def edit_layouts(
     layouts_file: Annotated[
         Path | None,
-        typer.Argument(dir_okay=False, help="Layout JSON file to edit. Omit to choose the global or current-directory config file."),
+        typer.Argument(dir_okay=False, help="Layout JSON file to edit. Omit to choose the user or project config file."),
     ] = None,
     source: Annotated[
-        Literal["global", "local"] | None,
+        Literal["project", "p", "user", "u"] | None,
         typer.Option("--source", "-s", help="Config file to edit without prompting. Cannot be combined with LAYOUTS_FILE."),
     ] = None,
     editor: Annotated[

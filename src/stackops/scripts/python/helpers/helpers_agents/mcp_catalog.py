@@ -43,17 +43,16 @@ def parse_requested_mcp_names(raw_value: str) -> tuple[str, ...]:
 
 
 def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
-    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT
+    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT
 
     locations: list[McpCatalogLocation] = []
     repo_catalog_path = current_repo_stackops_path(path_kind="mcp_json")
     if repo_catalog_path is not None:
-        locations.append({"scope": "repo", "path": repo_catalog_path})
+        locations.append({"scope": "project", "path": repo_catalog_path})
 
     locations.extend(
         [
-            {"scope": "private", "path": DOTFILES_STACKOPS_ROOT / "agents" / "mcps" / "mcp.json"},
-            {"scope": "public", "path": CONFIG_ROOT / "agents" / "mcps" / "mcp.json"},
+            {"scope": "user", "path": DOTFILES_STACKOPS_ROOT / "agents" / "mcps" / "mcp.json"},
             {
                 "scope": "library",
                 "path": get_path_reference_path(
@@ -66,17 +65,17 @@ def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
     return tuple(locations)
 
 
-def resolve_mcp_catalog_locations(source: MCP_CATALOG_SOURCE) -> tuple[McpCatalogLocation, ...]:
+def resolve_mcp_catalog_locations(source: MCP_CATALOG_SOURCE, custom_path: Path | None) -> tuple[McpCatalogLocation, ...]:
+    if custom_path is not None:
+        return ({"scope": "custom-file", "path": custom_path.expanduser().resolve()},)
     locations = default_mcp_catalog_locations()
     match source:
         case "all" | "a":
             return locations
-        case "repo" | "r":
-            return ({"scope": "repo", "path": require_current_repo_stackops_path(path_kind="mcp_json")},)
-        case "private" | "p":
-            return tuple(location for location in locations if location["scope"] == "private")
-        case "public" | "b":
-            return tuple(location for location in locations if location["scope"] == "public")
+        case "project" | "p":
+            return ({"scope": "project", "path": require_current_repo_stackops_path(path_kind="mcp_json")},)
+        case "user" | "u":
+            return tuple(location for location in locations if location["scope"] == "user")
         case "library" | "l":
             return tuple(location for location in locations if location["scope"] == "library")
 

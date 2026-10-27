@@ -3,7 +3,7 @@ from typing import Any, Final, Literal
 import json
 
 
-PROMPTS_SOURCE = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+PROMPTS_SOURCE = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
 PROMPTS_PREVIEW_SIZE_PERCENT = 70.0
 _PROMPTS_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
 
@@ -122,30 +122,27 @@ def build_named_prompt_selection_maps(
 
 
 def _get_default_prompts_yaml_locations(source: PROMPTS_SOURCE) -> list[tuple[str, Path]]:
-    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, CONFIG_ROOT, LIBRARY_ROOT
+    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
     from stackops.utils.repos.stackops_paths import repo_stackops_yaml_paths
 
-    private_prompts = DOTFILES_STACKOPS_ROOT / "agents" / "prompts" / "prompts.yaml"
-    public_prompts = CONFIG_ROOT / "agents" / "prompts" / "prompts.yaml"
+    user_prompts = DOTFILES_STACKOPS_ROOT / "agents" / "prompts" / "prompts.yaml"
     library_prompts = LIBRARY_ROOT / "agents" / "prompts" / "prompts.yaml"
 
     match source:
         case "all" | "a":
-            locations = [("private", private_prompts), ("public", public_prompts), ("library", library_prompts)]
+            locations = [("user", user_prompts), ("library", library_prompts)]
             return repo_stackops_yaml_paths(path_kind="prompts_yaml") + locations
-        case "repo" | "r":
+        case "project" | "p":
             return repo_stackops_yaml_paths(path_kind="prompts_yaml")
-        case "private" | "p":
-            return [("private", private_prompts)]
-        case "public" | "b":
-            return [("public", public_prompts)]
+        case "user" | "u":
+            return [("user", user_prompts)]
         case "library" | "l":
             return [("library", library_prompts)]
 
 
 def resolve_prompts_yaml_paths(prompts_yaml_path: str | None, source: PROMPTS_SOURCE) -> list[tuple[str, Path]]:
     if prompts_yaml_path is not None:
-        return [("explicit", Path(prompts_yaml_path).expanduser().resolve())]
+        return [("custom-file", Path(prompts_yaml_path).expanduser().resolve())]
     return _get_default_prompts_yaml_locations(source=source)
 
 

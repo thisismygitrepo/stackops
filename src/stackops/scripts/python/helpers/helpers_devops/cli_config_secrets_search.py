@@ -16,10 +16,10 @@ def search(
             )
         ),
     ] = None,
-    secrets_path: Annotated[
+    custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--path", "-p", help="Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+            "--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."
         ),
     ] = None,
     secrets_source: Annotated[
@@ -29,8 +29,8 @@ def search(
             "-s",
             case_sensitive=False,
             help=(
-                "Secrets file source to read: local/l, global/g, or both/b. "
-                "When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent."
+                "Secrets file source to read: project/p, user/u, or all/a. "
+                "When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent."
             ),
         ),
     ] = None,
@@ -75,7 +75,7 @@ def search(
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import SecretSelectionRequest, search_secrets
 
     request = SecretSelectionRequest(
-        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,
+        terms=terms, secrets_path=custom_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,
         preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,
         secret_tags=secret_tags, scopes=scopes, keys=keys,
     )
@@ -92,10 +92,10 @@ def load(
             )
         ),
     ] = None,
-    secrets_path: Annotated[
+    custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--path", "-p", help="Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+            "--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."
         ),
     ] = None,
     secrets_source: Annotated[
@@ -105,8 +105,8 @@ def load(
             "-s",
             case_sensitive=False,
             help=(
-                "Secrets file source to read: local/l, global/g, or both/b. "
-                "When omitted, --path is used if provided; otherwise local is preferred and global is used when local is absent."
+                "Secrets file source to read: project/p, user/u, or all/a. "
+                "When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent."
             ),
         ),
     ] = None,
@@ -152,7 +152,7 @@ def load(
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_selection import SecretSelectionRequest, load_secrets
 
     request = SecretSelectionRequest(
-        terms=terms, secrets_path=secrets_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,
+        terms=terms, secrets_path=custom_path, secrets_source=secrets_source, interactive=interactive, all_matches=all_matches,
         preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,
         secret_tags=secret_tags, scopes=scopes, keys=keys,
     )

@@ -21,28 +21,30 @@ Use --json to print matching secrets JSON, including values.
 Use --all-matches to select every matching bundle.
 Terms are case-insensitive substring matches; exact selectors are case-sensitive.
 Use --interactive to select a bundle and --preview-secrets to show values in its preview.
-When --source is omitted, --path takes precedence; otherwise local is preferred over global.
-Use --source local/l, global/g, or both/b to select sources explicitly.
+When --source is omitted, --custom-path takes precedence; otherwise project is preferred over user.
+The project file is .stackops/secrets/secrets.json at the repository root.
+Use --source project/p, user/u, or all/a to select sources explicitly.
 """
 SECRETS_LOAD_EPILOG = """Examples:
   devops vault load --name aws-dev --tag iam-access-key
-  devops vault load --source global github token
-  devops vault load --all-matches --source both cloudf
+  devops vault load --source user github token
+  devops vault load --all-matches --source all cloudf
 
 Load prepares environment variables for the calling shell.
 Use --all-matches to select every matching bundle. Loading rejects conflicting values.
 Terms are case-insensitive substring matches; exact selectors are case-sensitive.
 Use --interactive to select a bundle and --preview-secrets to show values in its preview.
-When --source is omitted, --path takes precedence; otherwise local is preferred over global.
-Use --source local/l, global/g, or both/b to select sources explicitly.
+When --source is omitted, --custom-path takes precedence; otherwise project is preferred over user.
+The project file is .stackops/secrets/secrets.json at the repository root.
+Use --source project/p, user/u, or all/a to select sources explicitly.
 """
 
 
 def stats(
-    secrets_path: Annotated[
+    custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--path", "-p", help="Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+            "--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."
         ),
     ] = None,
     secrets_source: Annotated[
@@ -51,9 +53,9 @@ def stats(
             "--source",
             "-s",
             case_sensitive=False,
-            help="Secrets file source to read: local/l, global/g, or both/b. --path overrides the local source.",
+            help="Secrets file source to read: project/p, user/u, or all/a. --custom-path replaces the project source.",
         ),
-    ] = "both",
+    ] = "all",
     details: Annotated[
         bool, typer.Option("--details", "-d", help="Show top non-secret labels such as tags and scopes. Secret values are never printed.")
     ] = False,
@@ -67,27 +69,27 @@ def stats(
         resolve_secret_sources,
     )
 
-    secret_sources = resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
+    secret_sources = resolve_secret_sources(secrets_path=custom_path, secrets_source=secrets_source)
     stats_rows = load_secret_stats_from_sources(secret_sources=secret_sources, show_paths=show_paths)
     render_secret_stats(stats_rows=stats_rows, details=details, show_paths=show_paths, top=top)
 
 
 def subset(
     output_path: Annotated[Path, typer.Argument(help="Output secrets JSON path. Default mode creates a new file and refuses existing paths.")],
-    secrets_path: Annotated[
+    custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--path",
+            "--custom-path",
             "-p",
-            help="Override the local source secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory.",
+            help="Use a custom secrets JSON file in place of the project source.",
         ),
     ] = None,
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source", "-s", case_sensitive=False, help="Source secrets file to read: local/l or global/g. --path overrides the local source."
+            "--source", "-s", case_sensitive=False, help="Source secrets file to read: project/p or user/u. --custom-path replaces the project source."
         ),
-    ] = "local",
+    ] = "project",
     on_conflict: Annotated[
         cli_subset_support.SubsetOutputConflictOption,
         typer.Option(
@@ -100,7 +102,7 @@ def subset(
     from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
 
-    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
+    secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)
     resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)
     resolved_on_conflict = cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]
     secret_actions.subset_secrets_file(
@@ -109,18 +111,18 @@ def subset(
 
 
 def add(
-    secrets_path: Annotated[
+    custom_path: Annotated[
         Path | None,
         typer.Option(
-            "--path", "-p", help="Override the local secrets JSON file path. Defaults to .stackops/secrets/secrets.json in the current directory."
+            "--custom-path", "-p", help="Use a custom secrets JSON file in place of the project source."
         ),
     ] = None,
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source", "-s", case_sensitive=False, help="Secrets file source to update: local/l or global/g. --path overrides the local source."
+            "--source", "-s", case_sensitive=False, help="Secrets file source to update: project/p or user/u. --custom-path replaces the project source."
         ),
-    ] = "local",
+    ] = "project",
     create: Annotated[
         bool, typer.Option("--create", "-c", help="Allow creating a missing secrets JSON file and its schema.")
     ] = False,
@@ -129,7 +131,7 @@ def add(
     from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
 
-    secret_source = resolve_single_secret_source(secrets_path=secrets_path, secrets_source=secrets_source)
+    secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)
     secret_actions.add_secrets_entry(secrets_path=secret_source.path, create=create)
 
 

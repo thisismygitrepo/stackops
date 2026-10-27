@@ -9,11 +9,11 @@ from stackops.utils.managed_file_cli import run_managed_file_action
 
 def config_path(
     kind: Annotated[AgentManagedFileKind, typer.Argument(help="Agent configuration file kind.")],
-    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to locate.")] = "repo",
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Explicit configuration file instead of --source.")] = None,
+    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to locate.")] = "project",
+    custom_path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Explicit configuration file instead of --source.")] = None,
 ) -> None:
     try:
-        resolved_path = path if path is not None else resolve_agent_managed_file_path(kind=kind, source=source)
+        resolved_path = custom_path if custom_path is not None else resolve_agent_managed_file_path(kind=kind, source=source)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     run_managed_file_action(kind=kind, action="path", path=resolved_path)
@@ -21,11 +21,11 @@ def config_path(
 
 def config_init(
     kind: Annotated[AgentManagedFileKind, typer.Argument(help="Agent configuration file kind.")],
-    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to initialize.")] = "repo",
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Explicit configuration file instead of --source.")] = None,
+    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to initialize.")] = "project",
+    custom_path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Explicit configuration file instead of --source.")] = None,
 ) -> None:
     try:
-        resolved_path = path if path is not None else resolve_agent_managed_file_path(kind=kind, source=source)
+        resolved_path = custom_path if custom_path is not None else resolve_agent_managed_file_path(kind=kind, source=source)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     run_managed_file_action(kind=kind, action="init", path=resolved_path)
@@ -33,11 +33,11 @@ def config_init(
 
 def config_validate(
     kind: Annotated[AgentManagedFileKind, typer.Argument(help="Agent configuration file kind.")],
-    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to validate.")] = "repo",
-    path: Annotated[Path | None, typer.Option("--path", "-p", help="Explicit configuration file instead of --source.")] = None,
+    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to validate.")] = "project",
+    custom_path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Explicit configuration file instead of --source.")] = None,
 ) -> None:
     try:
-        resolved_path = path if path is not None else resolve_agent_managed_file_path(kind=kind, source=source)
+        resolved_path = custom_path if custom_path is not None else resolve_agent_managed_file_path(kind=kind, source=source)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     run_managed_file_action(kind=kind, action="validate", path=resolved_path)

@@ -17,7 +17,7 @@ from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
-_PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+_PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["local", "global"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
@@ -158,16 +158,19 @@ def add_mcp(
         str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
     ] = "",
     scope: Annotated[
-        _MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP entries into repo-local or user-global agent config.")
+        _MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP entries into project-local or user-global agent config.")
     ] = "local",
-    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., "--source", "-S", help="Source to resolve or edit MCP catalog files.")] = "all",
+    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., "--source", "-S", help="Source to resolve or edit MCP catalog files when --custom-path is not provided.")] = "all",
+    custom_path: Annotated[
+        Path | None, typer.Option("--custom-path", "-p", help="Explicit MCP catalog file instead of --source.")
+    ] = None,
     edit: Annotated[
         bool,
         typer.Option(
             ...,
             "--edit",
             "-e",
-            help="Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source is specific. If no MCP names are provided, exits after editing.",
+            help="Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no MCP names are provided, exits after editing.",
         ),
     ] = False,
 ) -> None:
@@ -175,7 +178,10 @@ def add_mcp(
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl
 
-        impl(requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, source=source, edit=edit, report=typer.echo)
+        impl(
+            requested_mcp_servers=requested_mcp_servers, agents=agents, scope=scope, source=source,
+            custom_path=custom_path, edit=edit, report=typer.echo,
+        )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
 
@@ -425,11 +431,11 @@ def run_prompt(
     context_path: Annotated[
         str | None, typer.Option(..., "--context-path", "-C", help="Path to a context file. Mutually exclusive with --context.")
     ] = None,
-    prompts_path: Annotated[
+    custom_path: Annotated[
         str | None,
         typer.Option(
             ...,
-            "--prompts-path",
+            "--custom-path",
             "-y",
             help="Prompts YAML file used for context selection. Created with an example and schema only when the missing file is needed or edited.",
         ),
@@ -440,7 +446,7 @@ def run_prompt(
             ...,
             "--context-name",
             "-n",
-            help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --prompts-path or default prompts YAML.",
+            help="YAML section key (supports dot-path, e.g. 'team.backend'). Used with --custom-path or default prompts YAML.",
         ),
     ] = None,
     group: Annotated[
@@ -458,7 +464,7 @@ def run_prompt(
     ] = None,
     source: Annotated[
         _PROMPTS_SOURCE,
-        typer.Option(..., "--source", "-s", help="Source to look for prompts YAML files when --prompts-path is not provided."),
+        typer.Option(..., "--source", "-s", help="Source to look for prompts YAML files when --custom-path is not provided."),
     ] = "all",
     show_prompts_yaml_format: Annotated[
         bool,
@@ -475,7 +481,7 @@ def run_prompt(
             ...,
             "--edit",
             "-e",
-            help="Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --prompts-path specifies it. If no prompt/context input is provided, exits after editing.",
+            help="Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no prompt/context input is provided, exits after editing.",
         ),
     ] = False,
     sandbox: Annotated[
@@ -526,7 +532,7 @@ def run_prompt(
                 reasoning_effort=reasoning_effort,
                 context=context,
                 context_path=context_path,
-                prompts_yaml_path=prompts_path,
+                prompts_yaml_path=custom_path,
                 context_name=context_name,
                 group=group,
                 skill=skill,

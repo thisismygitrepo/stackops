@@ -19,7 +19,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
 
 
-PARALLEL_RUNS_SOURCE: TypeAlias = Literal["all", "a", "repo", "r", "private", "p", "public", "b", "library", "l"]
+PARALLEL_RUNS_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
 ParallelYamlEntry: TypeAlias = tuple[str, Path, object]
 _PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 CREATE_CONFIG_KEYS: Final[frozenset[str]] = PARALLEL_CREATE_CONFIG_KEYS
@@ -164,30 +164,27 @@ def parallel_yaml_template_for_path(*, yaml_path: Path) -> str:
 
 def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, source: PARALLEL_RUNS_SOURCE) -> list[tuple[str, Path]]:
     if parallel_yaml_path is not None:
-        return [("explicit", Path(parallel_yaml_path).expanduser().resolve())]
+        return [("custom-file", Path(parallel_yaml_path).expanduser().resolve())]
 
     import stackops.utils.schemas.agents as agent_schema_assets
     from stackops.utils.path_reference import get_path_reference_path
     from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
-    from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_STACKOPS_ROOT
+    from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT
 
-    repo_yaml = current_repo_stackops_path(path_kind="parallel_yaml")
-    private_yaml = DOTFILES_STACKOPS_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
-    public_yaml = CONFIG_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
+    project_yaml = current_repo_stackops_path(path_kind="parallel_yaml")
+    user_yaml = DOTFILES_STACKOPS_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
     library_yaml = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
 
     match source:
         case "all" | "a":
-            paths = [("private", private_yaml), ("public", public_yaml), ("library", library_yaml)]
-            if repo_yaml is None:
+            paths = [("user", user_yaml), ("library", library_yaml)]
+            if project_yaml is None:
                 return paths
-            return [("repo", repo_yaml)] + paths
-        case "repo" | "r":
-            return [("repo", require_current_repo_stackops_path(path_kind="parallel_yaml"))]
-        case "private" | "p":
-            return [("private", private_yaml)]
-        case "public" | "b":
-            return [("public", public_yaml)]
+            return [("project", project_yaml)] + paths
+        case "project" | "p":
+            return [("project", require_current_repo_stackops_path(path_kind="parallel_yaml"))]
+        case "user" | "u":
+            return [("user", user_yaml)]
         case "library" | "l":
             return [("library", library_yaml)]
 

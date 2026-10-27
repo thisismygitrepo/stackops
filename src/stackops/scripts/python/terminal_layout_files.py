@@ -5,24 +5,33 @@ from typing import Annotated, Literal
 import typer
 
 
-def resolve_layout_file(*, layouts_file: Path | None, source: Literal["global", "local"] | None) -> Path:
+def resolve_layout_file(*, layouts_file: Path | None, source: Literal["project", "p", "user", "u"] | None) -> Path:
     if layouts_file is not None and source is not None:
         raise typer.BadParameter("LAYOUTS_FILE cannot be combined with --source.")
     if layouts_file is not None:
         return layouts_file.expanduser().absolute()
     if source is None:
-        raise typer.BadParameter("Provide LAYOUTS_FILE or --source global|local. Use terminal path to see both files.")
-    from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import default_layout_source_paths
+        raise typer.BadParameter("Provide LAYOUTS_FILE or --source project|user. Use terminal path to see available files.")
+    match source:
+        case "project" | "p":
+            from stackops.utils.repos.stackops_paths import require_current_repo_stackops_path
 
-    return default_layout_source_paths()[source]
+            try:
+                return require_current_repo_stackops_path(path_kind="layouts_json")
+            except ValueError as error:
+                raise typer.BadParameter(str(error)) from error
+        case "user" | "u":
+            from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+
+            return DOTFILES_LAYOUTS_JSON_PATH
 
 
 def path_layouts(
     layouts_file: Annotated[
-        Path | None, typer.Argument(dir_okay=False, help="Layout JSON file. Omit to show both global and current-directory paths."),
+        Path | None, typer.Argument(dir_okay=False, help="Layout JSON file. Omit to show user and project paths."),
     ] = None,
     source: Annotated[
-        Literal["global", "local"] | None,
+        Literal["project", "p", "user", "u"] | None,
         typer.Option("--source", "-s", help="Show one config file's paths. Cannot be combined with LAYOUTS_FILE."),
     ] = None,
 ) -> None:
@@ -50,7 +59,7 @@ def init_layouts(
         Path | None, typer.Argument(dir_okay=False, help="Layout JSON file to create if missing."),
     ] = None,
     source: Annotated[
-        Literal["global", "local"] | None,
+        Literal["project", "p", "user", "u"] | None,
         typer.Option("--source", "-s", help="Config file to initialize. Cannot be combined with LAYOUTS_FILE."),
     ] = None,
 ) -> None:
@@ -65,7 +74,7 @@ def validate_layouts(
         Path | None, typer.Argument(dir_okay=False, help="Layout JSON file to validate."),
     ] = None,
     source: Annotated[
-        Literal["global", "local"] | None,
+        Literal["project", "p", "user", "u"] | None,
         typer.Option("--source", "-s", help="Config file to validate. Cannot be combined with LAYOUTS_FILE."),
     ] = None,
 ) -> None:

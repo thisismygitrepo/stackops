@@ -39,7 +39,7 @@ def balance_load(
 
 def run(
     ctx: typer.Context,
-    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.")] = None,
+    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the user and project config files.")] = None,
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
 
     choose_layouts: Annotated[str | None, typer.Option(..., "--choose-layouts", "-l", metavar="[NAMES]", help="Comma separated layout names. Use -l without a value to select layouts interactively.")] = None,
@@ -103,7 +103,7 @@ def run(
 def run_all(
     ctx: typer.Context,
     *,
-    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the global and current-directory config files.")] = None,
+    layouts_file: Annotated[str | None, typer.Argument(help="Path to the layout JSON file. Omit to choose layouts from the user and project config files.")] = None,
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with LAYOUTS_FILE.")] = False,
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],
     poll_seconds: Annotated[float, typer.Option("--poll-interval", "-p", help="Polling interval in seconds used to detect finished tabs.")] = 2.0,

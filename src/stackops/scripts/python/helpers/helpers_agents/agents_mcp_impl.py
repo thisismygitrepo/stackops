@@ -50,16 +50,23 @@ def resolve_local_install_root(*, current_dir: Path) -> Path | None:
 
 
 def add_mcp(
-    *, requested_mcp_servers: str | None, agents: str, scope: MCP_INSTALL_SCOPE, source: MCP_CATALOG_SOURCE, edit: bool, report: Reporter
+    *,
+    requested_mcp_servers: str | None,
+    agents: str,
+    scope: MCP_INSTALL_SCOPE,
+    source: MCP_CATALOG_SOURCE,
+    custom_path: Path | None,
+    edit: bool,
+    report: Reporter,
 ) -> None:
-    search_locations: tuple[McpCatalogLocation, ...] = resolve_mcp_catalog_locations(source=source)
-    if edit and source in ("all", "a"):
+    search_locations: tuple[McpCatalogLocation, ...] = resolve_mcp_catalog_locations(source=source, custom_path=custom_path)
+    if edit and custom_path is None and source in ("all", "a"):
         source, selected_catalog_path = choose_edit_source(locations=[(location["scope"], location["path"]) for location in search_locations])
         search_locations = ({"scope": source, "path": selected_catalog_path},)
     if edit:
         created_catalog_paths: list[Path] = []
         for location in search_locations:
-            should_create_or_validate = location["scope"] != "repo" or location["path"].exists() or source in ("repo", "r")
+            should_create_or_validate = location["scope"] != "project" or location["path"].exists() or source in ("project", "p")
             if should_create_or_validate and ensure_mcp_catalog_exists(location=location):
                 created_catalog_paths.append(location["path"])
         for created_catalog_path in created_catalog_paths:

@@ -7,28 +7,21 @@ from stackops.utils.options_utils.options import choose_from_options
 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
 
-def choose_edit_source(*, locations: list[tuple[str, Path]]) -> tuple[Literal["repo", "private", "public", "library"], Path]:
+def choose_edit_source(*, locations: list[tuple[str, Path]]) -> tuple[Literal["project", "user", "library"], Path]:
     if not sys.stdin.isatty():
-        raise ValueError("--edit requires a specific --source (repo, private, public, or library) when input is not interactive.")
+        raise ValueError("--edit requires a specific --source (project, user, or library) when input is not interactive.")
 
     source_descriptions: dict[str, str] = {
-        "repo": """Project configuration
+        "project": """Project configuration
 
 Use for prompts, parallel runs and MCP definitions that belong with a project.
 These files can be committed and shared with the project.
 """,
-        "private": """Personal configuration
+        "user": """Personal configuration
 
 Use for your own prompts, parallel runs and MCP definitions, reused across projects.
 These files are kept in your private dotfiles storage, separately from each project.
 The source name does not set file permissions or encrypt the contents.
-""",
-        "public": """Reusable local configuration
-
-Use for prompts, parallel runs and MCP definitions in your local StackOps configuration,
-available across projects on this machine.
-
-Selecting public edits local files; it does not publish or upload them.
 """,
         "library": """Built-in StackOps configuration
 
@@ -39,12 +32,12 @@ Edits change the bundled files directly and may be replaced by an upgrade or rei
 """,
     }
     source_previews: dict[str, str] = {}
-    source_locations: dict[str, tuple[Literal["repo", "private", "public", "library"], Path]] = {}
+    source_locations: dict[str, tuple[Literal["project", "user", "library"], Path]] = {}
     for location_name, path in locations:
         source = location_name.partition(":")[0]
         match source:
-            case "repo" | "private" | "public" | "library":
-                label = f"""repo:{path.relative_to(Path.cwd(), walk_up=True).as_posix()}""" if source == "repo" else source
+            case "project" | "user" | "library":
+                label = f"""project:{path.relative_to(Path.cwd(), walk_up=True).as_posix()}""" if source == "project" else source
                 source_locations[label] = (source, path)
                 source_previews[label] = f"""{label}
 
