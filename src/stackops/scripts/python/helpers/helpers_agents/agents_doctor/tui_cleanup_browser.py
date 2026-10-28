@@ -53,7 +53,7 @@ class CleanupBrowser(Vertical):
             )
             yield Select[str]([("All types" if kind == "all" else kind, kind) for kind in kinds],
                               value=self.cleanup_initial.resource, allow_blank=False, id="cleanup-kind")
-            yield Select[str]([(scope, scope) for scope in ("all", "project", "user", "admin", "system")],
+            yield Select[str]([(scope, scope) for scope in ("all", "workspace", "user", "admin", "system")],
                               value=self.cleanup_initial.scope, allow_blank=False, id="cleanup-scope")
         with Horizontal(classes="filters"):
             yield Input(value=self.cleanup_initial.match or "", placeholder="Filter names, commands, paths…", id="cleanup-search")
@@ -69,7 +69,7 @@ class CleanupBrowser(Vertical):
 
     def on_mount(self) -> None:
         table = self.query_one(CleanupResourceTable)
-        for label, width in (("✓", 3), ("Resource", 30), ("Type", 14), ("Agent", 12), ("Scope", 8), ("State", 12), ("Action", 28)):
+        for label, width in (("✓", 3), ("Resource", 30), ("Type", 14), ("Agent", 12), ("Scope", 9), ("State", 12), ("Action", 28)):
             table.add_column(label, key=label, width=width)
         table.border_title = "Resources · Space / Enter to select"
 

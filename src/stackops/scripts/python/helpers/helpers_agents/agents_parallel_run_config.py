@@ -19,7 +19,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
 from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
 
 
-PARALLEL_RUNS_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
+PARALLEL_RUNS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 ParallelYamlEntry: TypeAlias = tuple[str, Path, object]
 _PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 CREATE_CONFIG_KEYS: Final[frozenset[str]] = PARALLEL_CREATE_CONFIG_KEYS
@@ -180,9 +180,9 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, source: PARAL
             paths = [("user", user_yaml), ("library", library_yaml)]
             if project_yaml is None:
                 return paths
-            return [("project", project_yaml)] + paths
-        case "project" | "p":
-            return [("project", require_current_repo_stackops_path(path_kind="parallel_yaml"))]
+            return [("workspace", project_yaml)] + paths
+        case "workspace" | "w":
+            return [("workspace", require_current_repo_stackops_path(path_kind="parallel_yaml"))]
         case "user" | "u":
             return [("user", user_yaml)]
         case "library" | "l":

@@ -79,7 +79,7 @@ def install_tech(
             typer.echo(f"Wrote: {guide_path}")
         if len(result.mcp_servers) > 0:
             typer.echo(f"MCP catalog servers: {', '.join(result.mcp_servers)}")
-            typer.echo(f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope project")
+            typer.echo(f"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope workspace")
 
 
 def _parse_profile_names(*, raw_profile: str) -> tuple[str, ...]:

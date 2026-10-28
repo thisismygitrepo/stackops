@@ -265,11 +265,11 @@ Current behavior:
 
 - `NAME` can be a predefined script name or a raw command string
 - when `NAME` is a direct script file path, `run` executes it without searching the configured script roots. An explicit file overrides `--source`, including `--source dynamic`
-- `--source`, `-s` selects search locations: `all/a`, `project/p`, `user/u`, `library/l`, or `dynamic/d`
-- `--source project` or `-s p` searches `<git-root>/.stackops/scripts`
+- `--source`, `-s` selects search locations: `all/a`, `workspace/w`, `user/u`, `library/l`, or `dynamic/d`
+- `--source workspace` or `-s w` searches `<workspace-root>/.stackops/scripts`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` searches the remaining sources
 - `--interactive` enables interactive selection
 - `--command` runs the input as a command
-- `scripts list` prints available scripts; `scripts path [NAME]` prints a resolved path or the search locations; `scripts edit NAME` opens a script from `project/p`, `user/u`, or `library/l`, or searches those locations with `all/a`
+- `scripts list` prints available scripts; `scripts path [NAME]` prints a resolved path or the search locations; `scripts edit NAME` opens a script from `workspace/w`, `user/u`, or `library/l`, or searches those locations with `all/a`
 - `--subprocess`, `-S` runs shell scripts in a child Bash or PowerShell process instead of sourcing them in the caller
 - put StackOps run options before `NAME`; arguments after it are forwarded to the script
 
@@ -278,7 +278,7 @@ Examples:
 ```bash
 devops scripts list
 devops scripts run -s library deploy
-devops scripts run -s project deploy
+devops scripts run -s workspace deploy
 devops scripts run -S deploy.sh
 devops scripts run --command "echo hello"
 devops scripts path deploy
@@ -299,10 +299,10 @@ Current behavior:
 - `load` selects bundles and loads their environment variables; it uses the same terms and selectors as `search`
 - `add` creates a new login entry; `stats` and `subset` inspect or export selected entries
 - `path`, `init`, and `validate` manage the secrets file and schema
-- `--source/-s` selects `project/p` or `user/u`; `search`, `load`, and `stats` also accept `all/a`
-- The project secrets file is `<git-root>/.stackops/secrets/secrets.json`, including when called from a subdirectory. Outside a Git repository, select `user` or pass a custom file
+- `--source/-s` selects `workspace/w` or `user/u`; `search`, `load`, and `stats` also accept `all/a`
+- The workspace secrets file is `<workspace-root>/.stackops/secrets/secrets.json`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` includes only `user`; select `user` or pass a custom file
 - `--custom-path/-p` selects exactly one secrets file and overrides `--source`, including `--source all`
-- With no source or custom file, `search` and `load` prefer an existing project file and otherwise use the user file; `stats` reads all available sources
+- With no source or custom file, `search` and `load` prefer an existing workspace file and otherwise use the user file; `stats` reads all available sources
 - `bitwarden search` retrieves Bitwarden credentials and can copy password, username, TOTP, or raw JSON to clipboard slots
 - `bitwarden login-and-unlock` loads Bitwarden API credentials from StackOps secrets, unlocks the vault, and saves `BW_SESSION` locally
 - `bitwarden export-session` prints an eval-able shell script that exports the saved `BW_SESSION`
@@ -317,7 +317,7 @@ devops vault load github --name github
 devops vault load github --source user
 devops vault search github --source all
 devops vault search github --custom-path ./secrets.json
-devops vault add --source project
+devops vault add --source workspace
 devops vault validate --custom-path ./secrets.json
 devops vault bitwarden login-and-unlock --account-name dev
 devops vault bitwarden search github --copy password

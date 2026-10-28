@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities impor
     normalize_reasoning_effort,
 )
 
-PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
+PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 
 
 def _format_shell_args(values: list[str], *, is_windows: bool) -> str:
@@ -92,9 +92,9 @@ def _build_oz_mcp_args(repo_root: Path | None, is_windows: bool) -> str:
 
 
 def _resolve_current_repo_root() -> Path | None:
-    from stackops.utils.accessories import get_repo_root
+    from stackops.utils.repos.project import resolve_project_root
 
-    return get_repo_root(Path.cwd())
+    return resolve_project_root(current_dir=Path.cwd())
 
 
 def build_agent_command(
@@ -251,7 +251,7 @@ def run(
         if edit and prompts_yaml_path is None and source in ("all", "a"):
             source, selected_yaml_path = choose_edit_source(locations=yaml_locations)
             yaml_locations = [(source, selected_yaml_path)]
-            if source == "project":
+            if source == "workspace":
                 prompts_yaml_path = str(selected_yaml_path)
         if edit:
             created_yaml_paths: list[Path] = []
@@ -317,8 +317,8 @@ def _should_scaffold_prompts_yaml(*, location_name: str, prompts_yaml_path: str 
     if prompts_yaml_path is not None:
         return True
     match source:
-        case "all" | "a" | "project" | "p":
-            return location_name == "project"
+        case "all" | "a" | "workspace" | "w":
+            return location_name == "workspace"
         case "user" | "u":
             return location_name == "user"
         case "library" | "l":

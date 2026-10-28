@@ -92,9 +92,9 @@ def build_sandboxed_prompt_script(
             command = [agent, prompt_text]
         case "cline":
             from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_agent_launch_prefix
-            from stackops.utils.accessories import get_repo_root
+            from stackops.utils.repos.project import resolve_project_root
 
-            prefix = resolve_agent_launch_prefix(agent=agent, repo_root=get_repo_root(Path.cwd()))
+            prefix = resolve_agent_launch_prefix(agent=agent, repo_root=resolve_project_root(current_dir=Path.cwd()))
             if prefix:
                 config_directory = Path(prefix[1])
                 access = SandboxAccess(
@@ -110,10 +110,10 @@ def build_sandboxed_prompt_script(
             command = [agent, "--print", prompt_text]
         case "oz":
             from stackops.scripts.python.helpers.helpers_agents.mcp_install import resolve_oz_mcp_config_paths
-            from stackops.utils.accessories import get_repo_root
+            from stackops.utils.repos.project import resolve_project_root
 
             command = [agent, "agent", "run"]
-            for path in resolve_oz_mcp_config_paths(repo_root=get_repo_root(Path.cwd()), home_dir=Path.home()):
+            for path in resolve_oz_mcp_config_paths(repo_root=resolve_project_root(current_dir=Path.cwd()), home_dir=Path.home()):
                 input_paths.append(path)
                 command.extend(["--mcp", container_path(path, is_windows=is_windows) if container else str(path)])
             command.extend(["--prompt", prompt_text])

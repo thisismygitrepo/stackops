@@ -5,14 +5,13 @@ from typing import Annotated
 import typer
 
 from stackops.utils.default_agent import DEFAULT_AGENT_HELP
+from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
+from stackops.utils.repos.project import resolve_project_root
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
 JOB_NAME = "test_runtime"
 FILE_SEPARATOR = "\n\n"
-_WORKSPACE_REPO_MARKER = ".git"
-_WORKSPACE_REPO_MINIMUM = 2
-_WORKSPACE_ROOT_REQUIREMENT = "inside a git repository or from a workspace directory containing multiple git repositories"
 PROMPT_TEMPLATE = """for the following py files, please create a test under <repo-name>/tests/runtime_tests/<file-path-relative-to-repo-root>.
 
 The material contains only Python file paths relative to the current workspace root. Inspect those files directly.
@@ -41,30 +40,6 @@ def _get_context_path(*, workspace_root: Path) -> Path:
 
 def _get_layout_path(*, workspace_root: Path) -> str:
     return str(workspace_root / ".ai" / "agents" / JOB_NAME / "layout.json")
-
-
-def _resolve_workspace_root(*, current_dir: Path) -> Path | None:
-    from stackops.utils.accessories import get_repo_root
-
-    repo_root = get_repo_root(current_dir)
-    if repo_root is not None:
-        return repo_root
-
-    if not current_dir.is_dir():
-        return None
-
-    try:
-        child_paths = tuple(current_dir.iterdir())
-    except OSError as error:
-        raise ValueError(f"Cannot inspect workspace directory: {current_dir}") from error
-
-    nested_repo_count = 0
-    for child_path in child_paths:
-        if child_path.is_dir() and child_path.joinpath(_WORKSPACE_REPO_MARKER).exists():
-            nested_repo_count += 1
-            if nested_repo_count >= _WORKSPACE_REPO_MINIMUM:
-                return current_dir
-    return None
 
 
 def _should_exclude_path(*, relative_path: Path) -> bool:
@@ -135,12 +110,12 @@ def launch_test_runtime(
 
     search_root = Path.cwd().resolve()
     try:
-        workspace_root = _resolve_workspace_root(current_dir=search_root)
+        workspace_root = resolve_project_root(current_dir=search_root)
     except ValueError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
     if workspace_root is None:
-        typer.echo(f"💥 Could not determine a valid workspace root. Please run this command {_WORKSPACE_ROOT_REQUIREMENT}.", err=True)
+        typer.echo(f"""💥 This command requires {PROJECT_ROOT_REQUIREMENT}.""", err=True)
         raise typer.Exit(code=1)
 
     context_path = _get_context_path(workspace_root=workspace_root)

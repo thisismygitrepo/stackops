@@ -67,13 +67,14 @@ def agents_create(
         show_created_artifacts_panel,
         show_generated_agents_table,
     )
-    from stackops.utils.accessories import get_repo_root
+    from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
+    from stackops.utils.repos.project import resolve_project_root
     import json
 
-    detected_repo_root = get_repo_root(Path.cwd())
-    if save_as_yaml and detected_repo_root is None:
-        raise RuntimeError("`--save-as-yaml` requires running inside a git repository.")
-    repo_root = detected_repo_root
+    project_root = resolve_project_root(current_dir=Path.cwd())
+    if save_as_yaml and project_root is None:
+        raise RuntimeError(f"""`--save-as-yaml` requires {PROJECT_ROOT_REQUIREMENT}.""")
+    repo_root = project_root
     if repo_root is None:
         repo_root = Path.cwd().resolve()
     else:

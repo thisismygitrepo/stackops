@@ -13,8 +13,8 @@ Requirements from the upstream project:
 StackOps catalog entries:
 
 ```bash
-stackops agents add-mcp chrome-devtools --agent codex --scope project
-stackops agents add-mcp chrome-devtools-browser-url --agent codex --scope project
+stackops agents add-mcp chrome-devtools --agent codex --scope workspace
+stackops agents add-mcp chrome-devtools-browser-url --agent codex --scope workspace
 ```
 
 The standard MCP config is in `chrome-devtools-mcp.mcp.json`. It lets the MCP server start Chrome on demand with an explicit StackOps profile. When StackOps writes this file, `{home}` is replaced with your home directory.

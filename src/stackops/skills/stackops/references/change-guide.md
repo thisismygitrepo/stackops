@@ -1,6 +1,6 @@
 # Changing StackOps
 
-Use this guide when a user asks to add, edit, rename, or remove something. Command examples use installed entrypoints; in the StackOps checkout, prefix them with `UV_CACHE_DIR=/tmp/uv-cache uv run`. Discover configuration from the target project, or pass its explicit file path when running elsewhere.
+Use this guide when a user asks to add, edit, rename, or remove something. Command examples use installed entrypoints; in the StackOps checkout, prefix them with `UV_CACHE_DIR=/tmp/uv-cache uv run`. Discover configuration from the target workspace, or pass its explicit file path when running elsewhere.
 
 ## Choose the owning layer
 
@@ -11,7 +11,7 @@ Use this guide when a user asks to add, edit, rename, or remove something. Comma
 | Support a new field, command, option, or behavior | The command registration and callback, then its implementation and any affected parser/types/schema |
 | Change a bundled default or example for all users | The source asset used by the loader; distinguish it from a user's active configuration |
 
-Identify the target project, source, and entry from the request and current files. Ask only when ambiguity changes the edit, such as two layouts with the same name in different sources. Preserve the requested operation: do not turn removal into disabling, or an extra tab into a new CLI command.
+Identify the target workspace, source, and entry from the request and current files. Ask only when ambiguity changes the edit, such as two layouts with the same name in different sources. Preserve the requested operation: do not turn removal into disabling, or an extra tab into a new CLI command.
 
 ## Locate configuration and its contract
 
@@ -20,25 +20,27 @@ Run the relevant command's `--help`, then its `path` command. The JSON output id
 | Configuration | Discovery command | Source selection |
 | --- | --- | --- |
 | StackOps settings | `devops config path config` | `--custom-path` for an explicit file |
-| Terminal layouts and tabs | `terminal path` | `--source project` (alias `p`), `--source user` (alias `u`), or `--custom-path` |
+| Terminal layouts and tabs | `terminal path` | `--source workspace` (alias `w`), `--source user` (alias `u`), or `--custom-path` |
 | Dotfile mappings | `devops config dotfiles path` | `--custom-path` for an explicit file |
 | Data/backup mappings | `devops data path` | `--custom-path` for an explicit file |
-| Secrets | `devops vault path` | `--source project` (alias `p`), `--source user` (alias `u`), or `--custom-path` |
+| Secrets | `devops vault path` | `--source workspace` (alias `w`), `--source user` (alias `u`), or `--custom-path` |
 | Repository specifications | `devops repos path` | `--path` for an explicit file |
 | Software installers | `devops software path` | `--source user`, `library`, or `all`; `--custom-path` replaces the user catalog |
-| Saved prompts | `agents config path prompts` | `--source project` (alias `p`), `--source user` (alias `u`), `--source library` (alias `l`), or `--custom-path` |
+| Saved prompts | `agents config path prompts` | `--source workspace` (alias `w`), `--source user` (alias `u`), `--source library` (alias `l`), or `--custom-path` |
 | Parallel agent workflows | `agents config path parallel` | Same agent source selection |
 | MCP catalog | `agents config path mcp` | Same agent source selection |
 
 Read the selected data file and the reported bundled schema before editing. Inspect the loader when a source override, name lookup, or cross-reference matters. In particular, deleting a software user override exposes the bundled entry again; it does not uninstall software or remove the bundled definition. Agent catalogs can also combine sources: check the consuming command's source selection before claiming an entry is gone.
 
-An explicit management file selects the file to edit or validate; it does not make a later runtime command consume that file. Generic `devops config` management and the dotfile/data file-management commands use `--custom-path` for an explicit file. Agent catalog, vault, and terminal layout commands also use `--custom-path`, which selects only that file even when `--source` is supplied. Software commands use `--custom-path` to replace the user catalog: `--source all` still merges it with the library catalog, and `--source library` cannot be combined with a custom path. Standalone `devops repos` management commands retain `--path`; generic `devops config ... repos` uses `--custom-path`. StackOps settings currently load from `DOTFILES_STACKOPS_CONFIG_PATH` in `src/stackops/utils/source_of_truth.py`. For saved prompts, `agents run-prompt --source project` can also discover files in the working directory and immediate child directories, including outside Git, beyond the root file reported by `agents config path prompts`. Trace an existing prompt to its actual source before editing or creating a same-named entry elsewhere.
+For source selection, the workspace root is the enclosing Git repository root, including a worktree or monorepo. Outside Git, the current directory qualifies when it contains at least two immediate child directories with a `.git` marker. Explicit `--source workspace` requires one of these contexts; `all` includes the workspace source when available.
+
+An explicit management file selects the file to edit or validate; it does not make a later runtime command consume that file. Generic `devops config` management and the dotfile/data file-management commands use `--custom-path` for an explicit file. Agent catalog, vault, and terminal layout commands also use `--custom-path`, which selects only that file even when `--source` is supplied. Software commands use `--custom-path` to replace the user catalog: `--source all` still merges it with the library catalog, and `--source library` cannot be combined with a custom path. Standalone `devops repos` management commands retain `--path`; generic `devops config ... repos` uses `--custom-path`. StackOps settings currently load from `DOTFILES_STACKOPS_CONFIG_PATH` in `src/stackops/utils/source_of_truth.py`. For saved prompts, `agents run-prompt --source workspace` uses `.stackops/agents/prompts.yaml` under the resolved workspace root, the same file reported by `agents config path prompts --source workspace`. Prompt discovery does not scan additional YAML files in the working directory or child directories.
 
 `devops config dotfiles register` and `devops data register` support only `--source user`, the default. Both use `-s` for `--source`. Dotfile registration stores files in the user `mapper/files` directory by default, with `--destination` for an explicit storage directory. Dotfile sync uses `--source` / `-s` to select user, library, or all mappings and processes all entries selected by that source and `--which`. Software `init`, `edit`, and `validate` also accept only `--source user`, their default; software `list`, `install`, and `path` retain the user, library, and all choices.
 
-To consume a custom agent catalog, pass `--custom-path` to `agents run-prompt`, `agents parallel run`, or `agents add-mcp`. Their sources are `project/p`, `user/u`, `library/l`, or `all/a`. `agents parallel run --prompt-path` still supplies prompt text, not the workflow YAML. Vault `search`, `load`, and `stats` accept `project/p`, `user/u`, or `all/a`; a custom path overrides all of them. MCP and skill installation use `--scope project` (alias `p`) or `--scope user` (alias `u`) for their destination, separately from catalog source selection. `agents reset --scope` also accepts `all/a`.
+To consume a custom agent catalog, pass `--custom-path` to `agents run-prompt`, `agents parallel run`, or `agents add-mcp`. Their sources are `workspace/w`, `user/u`, `library/l`, or `all/a`. `agents parallel run --prompt-path` still supplies prompt text, not the workflow YAML. Vault `search`, `load`, and `stats` accept `workspace/w`, `user/u`, or `all/a`; a custom path overrides all of them. MCP and skill installation use `--scope workspace` (alias `w`) or `--scope user` (alias `u`) for their destination, separately from catalog source selection. `agents reset --scope` also accepts `all/a`.
 
-`terminal run`, `run-all`, and `list` accept `--source` / `-s` with `project/p`, `user/u`, or `all/a`, defaulting to `all`. The default includes available user and Git-project layout files; outside Git it includes only the user file. Explicit `--source project` requires a Git repository. These commands and `terminal path`, `edit`, `init`, and `validate` accept `--custom-path` / `-p`, which overrides source selection, including outside Git. `terminal run --parallel-layouts` uses `-j`, `terminal run-all --poll-interval` uses `-i`, and `terminal list --stats` uses `-S`.
+`terminal run`, `run-all`, and `list` accept `--source` / `-s` with `workspace/w`, `user/u`, or `all/a`, defaulting to `all`. The default includes available user and workspace layout files; without a recognized workspace it includes only the user file. These commands and `terminal path`, `edit`, `init`, and `validate` accept `--custom-path` / `-p`, which overrides source selection, including outside a recognized workspace. `terminal run --parallel-layouts` uses `-j`, `terminal run-all --poll-interval` uses `-i`, and `terminal list --stats` uses `-S`.
 
 Use `init` for a missing file when creation is part of the request. It creates a schema and initial content, which may include example entries. For an agent making the edit, patch the selected file directly; interactive `edit` commands are available for a human editor workflow. Keep unrelated entries, ordering, metadata, and comments intact where the format permits them.
 
@@ -52,16 +54,16 @@ Report the file, selected entry, change, and validation result. For secret edits
 
 ## Example: add, edit, or remove a layout entry
 
-1. From the target project, use `terminal path --source project`, or `terminal path --custom-path /absolute/layout.json` for an explicitly requested file. A project layout is `.stackops/config/layout.json` under the enclosing Git repository root, including when called from a subdirectory. Resolve a user target through `terminal path --source user` when that is the requested source. Outside Git, use the user source or an explicit file.
-2. Read the chosen file and its reported schema. `terminal list --custom-path /absolute/layout.json --tabs` shows layouts and tabs from just that file. For a standard source, use `terminal list --source project --tabs` or `--source user`; omitting both the custom path and source lists all available default sources.
+1. From the target workspace, use `terminal path --source workspace`, or `terminal path --custom-path /absolute/layout.json` for an explicitly requested file. A workspace layout is `.stackops/config/layout.json` under the resolved workspace root: the enclosing Git root, or the current directory containing at least two immediate child Git repositories. Resolve a user target through `terminal path --source user` when that is the requested source. Without a recognized workspace, use the user source or an explicit file.
+2. Read the chosen file and its reported schema. `terminal list --custom-path /absolute/layout.json --tabs` shows layouts and tabs from just that file. For a standard source, use `terminal list --source workspace --tabs` or `--source user`; omitting both the custom path and source lists all available default sources.
 3. Find the exact `layoutName` in the top-level `layouts` array. An extra tab goes in that layout's `layoutTabs`; a whole new layout is another object in `layouts`.
 
-A tab has this shape; take its name, directory, and command from the request or the project:
+A tab has this shape; take its name, directory, and command from the request or the workspace:
 
 ```json
 {
   "tabName": "worker",
-  "startDir": "/absolute/project",
+  "startDir": "/absolute/workspace",
   "command": "uv run worker.py"
 }
 ```

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 def run_all_cli(
     ctx: typer.Context,
     layouts_file: str | None,
-    source: Literal["project", "p", "user", "u", "all", "a"],
+    source: Literal["workspace", "w", "user", "u", "all", "a"],
     test_layout: bool,
     max_parallel_tabs: int,
     poll_seconds: float,

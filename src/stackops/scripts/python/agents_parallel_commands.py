@@ -121,7 +121,7 @@ def agents_create(
             ...,
             "--save-as-yaml",
             "-y",
-            help="Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.",
+            help="Save or update this create configuration in project .stackops/agents/parallel.yaml under the resolved job name.",
         ),
     ] = False,
     show_example: Annotated[bool, typer.Option(..., "--show-example", "-e", help="Show a long parallel YAML create configuration example.")] = False,

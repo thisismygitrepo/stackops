@@ -14,10 +14,10 @@ def get_script_locations(source: SCRIPT_SOURCE) -> dict[str, Path | str]:
             locations = {"user": SCRIPTS_ROOT_PRIVATE, "library": SCRIPTS_ROOT_LIBRARY}
             project_scripts = current_repo_stackops_path(path_kind="scripts")
             if project_scripts is not None:
-                locations = {"project": project_scripts, **locations}
+                locations = {"workspace": project_scripts, **locations}
             locations["dynamic"] = dynamic_location
-        case "project" | "p":
-            locations = {"project": require_current_repo_stackops_path(path_kind="scripts")}
+        case "workspace" | "w":
+            locations = {"workspace": require_current_repo_stackops_path(path_kind="scripts")}
         case "user" | "u":
             locations = {"user": SCRIPTS_ROOT_PRIVATE}
         case "library" | "l":

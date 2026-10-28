@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 def run_cli(
     ctx: typer.Context | None,
     layouts_file: str | None,
-    source: Literal["project", "p", "user", "u", "all", "a"],
+    source: Literal["workspace", "w", "user", "u", "all", "a"],
     test_layout: bool,
     choose_layouts: str | None,
     choose_tabs: str | None,

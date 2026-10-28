@@ -26,7 +26,7 @@ def run_parallel_from_yaml(
     show_parallel_yaml_format: bool,
 ) -> None:
     if add_entry and not edit and parallel_yaml_path is None and source in ("all", "a"):
-        source = "project"
+        source = "workspace"
     yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, source=source)
     if edit and parallel_yaml_path is None and source in ("all", "a"):
         source, selected_yaml_path = choose_edit_source(locations=yaml_locations)
@@ -254,8 +254,8 @@ def _should_scaffold_parallel_yaml(*, location_name: str, parallel_yaml_path: st
     if parallel_yaml_path is not None:
         return True
     match source:
-        case "all" | "a" | "project" | "p":
-            return location_name == "project"
+        case "all" | "a" | "workspace" | "w":
+            return location_name == "workspace"
         case "user" | "u":
             return location_name == "user"
         case "library" | "l":

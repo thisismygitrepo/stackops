@@ -16,9 +16,9 @@ from stackops.utils.sandbox.options import SandboxBackend, SandboxSync
 from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS
 
-_MCP_INSTALL_SCOPE: TypeAlias = Literal["project", "p", "user", "u"]
-_PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
-_SKILL_INSTALL_SCOPE: TypeAlias = Literal["project", "p", "user", "u"]
+_MCP_INSTALL_SCOPE: TypeAlias = Literal["workspace", "w", "user", "u"]
+_PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
+_SKILL_INSTALL_SCOPE: TypeAlias = Literal["workspace", "w", "user", "u"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
 _INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "cortex", "pi", "opencode", "omp", "deepseek"]
@@ -158,8 +158,8 @@ def add_mcp(
         str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all supporting the selected scope. {','.join(get_args(AGENTS))}")
     ] = "",
     scope: Annotated[
-        _MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP entries into project/p or user/u agent configuration.")
-    ] = "project",
+        _MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP entries into workspace/w or user/u agent configuration.")
+    ] = "workspace",
     source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., "--source", "-S", help="Source to resolve or edit MCP catalog files when --custom-path is not provided.")] = "all",
     custom_path: Annotated[
         Path | None, typer.Option("--custom-path", "-p", help="Explicit MCP catalog file instead of --source.")
@@ -179,7 +179,7 @@ def add_mcp(
         from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl
 
         impl(
-            requested_mcp_servers=requested_mcp_servers, agents=agents, scope="project" if scope in ("project", "p") else "user", source=source,
+            requested_mcp_servers=requested_mcp_servers, agents=agents, scope="workspace" if scope in ("workspace", "w") else "user", source=source,
             custom_path=custom_path, edit=edit, report=typer.echo,
         )
     except ValueError as e:
@@ -599,8 +599,8 @@ def add_skill(
         ),
     ] = None,
     scope: Annotated[
-        _SKILL_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install the skill into the project/p or user/u agent skill directory.")
-    ] = "project",
+        _SKILL_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install the skill into the workspace/w or user/u agent skill directory.")
+    ] = "workspace",
     directory: Annotated[
         str | None,
         typer.Option(
@@ -631,7 +631,7 @@ def add_skill(
             skill_name=skill_name,
             group=group,
             agent=agent,
-            scope="project" if scope in ("project", "p") else "user",
+            scope="workspace" if scope in ("workspace", "w") else "user",
             directory=directory,
             reference=reference,
             backend=backend,

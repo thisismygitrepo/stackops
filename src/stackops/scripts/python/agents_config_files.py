@@ -9,7 +9,7 @@ from stackops.utils.managed_file_cli import run_managed_file_action
 
 def config_path(
     kind: Annotated[AgentManagedFileKind, typer.Argument(help="Agent configuration file kind.")],
-    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to locate.")] = "project",
+    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to locate.")] = "workspace",
     custom_path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Explicit configuration file instead of --source.")] = None,
 ) -> None:
     try:
@@ -21,7 +21,7 @@ def config_path(
 
 def config_init(
     kind: Annotated[AgentManagedFileKind, typer.Argument(help="Agent configuration file kind.")],
-    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to initialize.")] = "project",
+    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to initialize.")] = "workspace",
     custom_path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Explicit configuration file instead of --source.")] = None,
 ) -> None:
     try:
@@ -33,7 +33,7 @@ def config_init(
 
 def config_validate(
     kind: Annotated[AgentManagedFileKind, typer.Argument(help="Agent configuration file kind.")],
-    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to validate.")] = "project",
+    source: Annotated[AgentManagedFileSource, typer.Option("--source", "-s", help="Configuration source to validate.")] = "workspace",
     custom_path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Explicit configuration file instead of --source.")] = None,
 ) -> None:
     try:

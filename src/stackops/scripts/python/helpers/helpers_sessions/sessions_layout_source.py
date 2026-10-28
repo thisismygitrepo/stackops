@@ -16,18 +16,18 @@ class LayoutEntry:
     source_path: Path | None
 
 
-def default_layout_source_paths() -> dict[Literal["user", "project"], Path]:
-    source_paths: dict[Literal["user", "project"], Path] = {"user": DOTFILES_LAYOUTS_JSON_PATH}
+def default_layout_source_paths() -> dict[Literal["user", "workspace"], Path]:
+    source_paths: dict[Literal["user", "workspace"], Path] = {"user": DOTFILES_LAYOUTS_JSON_PATH}
     project_path = current_repo_stackops_path(path_kind="layouts_json")
     if project_path is not None:
-        source_paths["project"] = project_path
+        source_paths["workspace"] = project_path
     return source_paths
 
 
 def resolve_layout_source(
     ctx: typer.Context | None,
     layouts_file: str | None,
-    source: Literal["project", "p", "user", "u", "all", "a"],
+    source: Literal["workspace", "w", "user", "u", "all", "a"],
     test_layout: bool,
 ) -> list[LayoutEntry]:
     if test_layout:
@@ -55,8 +55,8 @@ def resolve_layout_source(
         source_files = [("", Path(find_layout_file(layout_path=layouts_file)))]
     else:
         match source:
-            case "project" | "p":
-                source_files = [("project", require_current_repo_stackops_path(path_kind="layouts_json"))]
+            case "workspace" | "w":
+                source_files = [("workspace", require_current_repo_stackops_path(path_kind="layouts_json"))]
             case "user" | "u":
                 source_files = [("user", DOTFILES_LAYOUTS_JSON_PATH)]
             case "all" | "a":

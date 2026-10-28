@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import Literal, TypeAlias, TypedDict
 
 
-MCP_CATALOG_SCOPE: TypeAlias = Literal["project", "user", "library", "custom-file"]
-MCP_CATALOG_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
+MCP_CATALOG_SCOPE: TypeAlias = Literal["workspace", "user", "library", "custom-file"]
+MCP_CATALOG_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 MCP_TRANSPORT: TypeAlias = Literal["stdio", "http"]
 
 
