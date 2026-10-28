@@ -11,7 +11,7 @@ from stackops.utils.source_of_truth import DOTFILES_USER_MAPPER_PATH
 
 LIBRARY_MAPPER_PATH = get_path_reference_path(
     module=mapper_assets,
-    path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE,
+    path_reference="dotfiles_library.yaml",
 )
 USER_MAPPER_PATH = DOTFILES_USER_MAPPER_PATH
 DEFAULT_DOTFILE_MAPPER_HEADER = (

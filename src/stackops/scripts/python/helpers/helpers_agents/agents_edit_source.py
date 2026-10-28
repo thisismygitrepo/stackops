@@ -20,7 +20,7 @@ These files can be committed and shared with the project.
         "user": """Personal configuration
 
 Use for your own prompts, parallel runs and MCP definitions, reused across projects.
-These files are kept in your private dotfiles storage, separately from each project.
+These files are kept in your user dotfiles storage, separately from each project.
 The source name does not set file permissions or encrypt the contents.
 """,
         "library": """Built-in StackOps configuration

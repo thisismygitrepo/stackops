@@ -52,17 +52,17 @@ devops config dotfiles sync --help
 devops data sync --help
 ```
 
-`devops config interactive` offers package, asset, configuration, and shell setup choices. Its public copy and symlink choices use `overwrite-default-path`, which can replace existing target files. The explicit scripted example below instead uses `throw-error` to stop on conflicts.
+`devops config interactive` offers package, asset, configuration, and shell setup choices. Its copy and symlink choices select library or user mappings and use `overwrite-default-path`, which can replace existing target files. The explicit scripted example below uses `throw-error` to stop on conflicts.
 
 ## Optional workstation setup
 
-This broader sequence installs system and terminal package groups, copies bundled assets, applies all public configuration mappings, and updates the default shell profile. It is useful when you want StackOps' workstation conventions. On an existing configured machine, choose only the individual actions you need. System package groups can invoke privileged package managers, and their behavior varies by platform.
+This broader sequence installs system and terminal package groups, copies bundled assets, applies the library configuration mappings, and updates the default shell profile. It is useful when you want StackOps' workstation conventions. On an existing configured machine, choose only the individual actions you need. System package groups can invoke privileged package managers, and their behavior varies by platform.
 
 ```bash
 devops software install --group sysabc
 devops config copy-assets all
 devops config dotfiles sync down \
-  --sensitivity public \
+  --source library \
   --method copy \
   --on-conflict throw-error \
   --which all

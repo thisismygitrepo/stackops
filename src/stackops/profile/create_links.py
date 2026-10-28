@@ -62,12 +62,6 @@ def _resolve_self_managed_path(path_value: str) -> Path:
     return resolve_source_of_truth_path(path_value)
 
 
-def _is_public_self_managed_path(path_value: str) -> bool:
-    config_root = Path(CONFIG_ROOT).expanduser().absolute()
-    resolved_path = _resolve_self_managed_path(path_value)
-    return resolved_path == config_root or resolved_path.is_relative_to(config_root)
-
-
 class ConfigMapper(TypedDict):
     file_name: str
     config_file_default_path: str
@@ -75,9 +69,7 @@ class ConfigMapper(TypedDict):
     contents: bool | None
     copy: bool | None
     os: OsField
-class MapperFileData(TypedDict):
-    public: dict[str, list[ConfigMapper]]
-    private: dict[str, list[ConfigMapper]]
+
 
 def _read_mapper_document(source: CONFIG_SOURCE_LOOSE) -> MapperDocument:
     source_key = CONFIG_SOURCE_MAP[source]
@@ -119,10 +111,9 @@ def _read_mapper_document(source: CONFIG_SOURCE_LOOSE) -> MapperDocument:
     return mapper_data
 
 
-def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
+def read_mapper(source: CONFIG_SOURCE_LOOSE) -> dict[str, list[ConfigMapper]]:
     mapper_data = _read_mapper_document(source=source)
-    public: dict[str, list[ConfigMapper]] = {}
-    private: dict[str, list[ConfigMapper]] = {}
+    programs: dict[str, list[ConfigMapper]] = {}
     normalized_system = _normalize_os_name(SYSTEM)
     for program_key, program_map in mapper_data.items():
         for file_name, file_base in program_map.items():
@@ -137,15 +128,8 @@ def read_mapper(source: CONFIG_SOURCE_LOOSE) -> MapperFileData:
                 "copy": file_base.get("copy"),
                 "os": file_base["os"],
             }
-            if _is_public_self_managed_path(file_map["config_file_self_managed_path"]):
-                if program_key not in public:
-                    public[program_key] = []
-                public[program_key].append(file_map)
-            else:
-                if program_key not in private:
-                    private[program_key] = []
-                private[program_key].append(file_map)
-    return {"public": public, "private": private}
+            programs.setdefault(program_key, []).append(file_map)
+    return programs
 
 
 def _resolve_mapper_paths(a_mapper: ConfigMapper) -> tuple[Path, Path]:
@@ -393,7 +377,7 @@ def apply_mapper(
                         status=f"error: {str(ex)}",
                     )
 
-            if program_name == "ssh" and system == "Linux":  # permissions of the private SSH dotfiles should be adjusted
+            if program_name == "ssh" and system == "Linux":
                 try:
                     console.print("\n[bold]🔒 Setting secure permissions for SSH files...[/bold]")
                     subprocess.run("chmod 700 $HOME/.ssh/", shell=True, check=True)

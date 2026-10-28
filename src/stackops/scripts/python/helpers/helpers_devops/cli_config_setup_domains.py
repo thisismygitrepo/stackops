@@ -54,7 +54,6 @@ def setup_dotfiles() -> None:
         _source="user",
         method="copy",
         on_conflict="throw-error",
-        sensitivity="private",
         destination=None,
         name=None,
         group="default",

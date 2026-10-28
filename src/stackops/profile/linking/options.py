@@ -1,16 +1,5 @@
 from typing import Literal, TypeAlias
 
-SENSITIVITY_LOOSE: TypeAlias = Literal["private", "p", "public", "b", "all", "a"]
-SENSITIVITY_STRICT: TypeAlias = Literal["private", "public", "all"]
-SENSITIVITY_MAP: dict[SENSITIVITY_LOOSE, SENSITIVITY_STRICT] = {
-    "private": "private",
-    "p": "private",
-    "public": "public",
-    "b": "public",
-    "all": "all",
-    "a": "all",
-}
-
 CONFIG_SOURCE_LOOSE: TypeAlias = Literal["library", "l", "user", "u", "all", "a"]
 CONFIG_SOURCE_STRICT: TypeAlias = Literal["library", "user", "all"]
 CONFIG_SOURCE_MAP: dict[CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_STRICT] = {

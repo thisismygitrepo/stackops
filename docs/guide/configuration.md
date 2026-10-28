@@ -48,14 +48,13 @@ devops config dotfiles sync --help
 Current help shows these key concepts:
 
 - positional `direction` with `up` and `down`
-- `--sensitivity` selects whether you are managing `public`, `private`, or `all` configuration files
 - `--method` selects `symlink` or `copy`
-- `--source`, `-S` chooses which mapper source to use
+- `--source`, `-s` chooses `user`, `library`, or `all` mapper sources
 - `--which` narrows the operation to specific items
 
-That makes `devops config dotfiles sync` the main high-level replacement for older configuration, dotfiles, and links documentation.
+For dotfile sync, `library` selects the bundled mappings backed by `~/.config/stackops/settings`. `user` selects your mapper, and `all` combines both; user groups override matching library groups. Personal credential mappings are provided in the exported user example, outside the active library mapper. Sync processes all entries selected by the mapper source and `--which`.
 
-For packaged library settings, use `devops config copy-assets settings` explicitly before syncing `down`.
+For packaged library settings, use `devops config copy-assets settings` explicitly before syncing `down`. `devops self update` refreshes these assets by default, and `--sync-configs` also applies the library mappings to their default application paths.
 
 ---
 
@@ -67,6 +66,8 @@ Use these commands when you need to add new managed dotfiles or inspect the acti
 - `devops config edit dotfiles`
 
 `devops config edit` takes the kind of StackOps user file to open: `config`, `layouts`, `dotfiles`, `data`, or `secrets`.
+
+Dotfile registration accepts `--source user` / `-s user`, which is also the default. It records the mapping in the user mapper and stores files in its `mapper/files` directory. Use `--destination` to choose an explicit storage directory.
 
 ---
 

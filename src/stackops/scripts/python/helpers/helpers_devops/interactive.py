@@ -20,8 +20,8 @@ InstallOption = Literal[
     "sysabc",
     "termabc",
     "install_shell_profile",
-    "link_public_configs",
-    "link_private_configs",
+    "link_library_configs",
+    "link_user_configs",
     "retrieve_repositories",
     "retrieve_data",
 ]
@@ -72,15 +72,15 @@ def get_installation_choices() -> list[InstallOption]:
     v3: InstallOption = "install_shell_profile"
     v5: InstallOption = "retrieve_repositories"
     v6: InstallOption = "retrieve_data"
-    v7: InstallOption = "link_public_configs"
-    v8: InstallOption = "link_private_configs"
+    v7: InstallOption = "link_library_configs"
+    v8: InstallOption = "link_user_configs"
     choices = [
         Choice(value=v0, title="🐍 Install stackops cli.", checked=False),
         Choice(value=v1, title="📥 Install ABCs: package manager, then git, then bun.", checked=False),
         Choice(value=v2, title="⚡ Install Terminal CLI apps essentials (group `termabc`)", checked=False),
         Choice(value=v3, title="🐚 Configure Shell Profile Init.", checked=False),
-        Choice(value=v7, title="🔗 Link Public Configs (symlink public dotfiles).", checked=False),
-        Choice(value=v8, title="🔐 [ADVANCED] Link Private Configs (symlink private dotfiles).", checked=False),
+        Choice(value=v7, title="🔗 Link Library Configs (symlink bundled settings).", checked=False),
+        Choice(value=v8, title="🔗 [ADVANCED] Link User Configs (symlink user mappings).", checked=False),
         Choice(value=v5, title="📚 [ADVANCED] Retrieve Repositories", checked=False),
         Choice(value=v6, title="💾 [ADVANCED] Retrieve Data.", checked=False),
     ]
@@ -128,7 +128,7 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
             create_default_shell_profile()
             console.print("✅ Shell profile configured successfully", style="bold green")
             from stackops.profile.create_links_export import main_from_parser
-            main_from_parser(direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all")
+            main_from_parser(direction="down", source="library", method="copy", on_conflict="overwrite-default-path", which="all")
             if platform.system() == "Windows":
                 # from stackops.jobs.installer.python_scripts.nerdfont import install_nerd_fonts
                 # install_nerd_fonts()
@@ -137,21 +137,21 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
         except Exception as e:
             console.print(f"❌ Error configuring shell profile: {e}", style="bold red")
 
-    if "link_public_configs" in selected_options:
-        console.print(Panel("🔗 [bold bright_green]LINK PUBLIC CONFIGS[/bold bright_green]\n[italic]Symlinking public dotfiles[/italic]", border_style="bright_green"))
-        console.print("🔧 Linking public configs", style="bold cyan")
+    if "link_library_configs" in selected_options:
+        console.print(Panel("🔗 [bold bright_green]LINK LIBRARY CONFIGS[/bold bright_green]\n[italic]Symlinking bundled settings[/italic]", border_style="bright_green"))
+        console.print("🔧 Linking library configs", style="bold cyan")
         try:
             from stackops.profile.create_links_export import main_from_parser
             from stackops.profile.create_helper import copy_assets_to_machine
 
             copy_assets_to_machine(which="settings")
-            main_from_parser(direction="down", sensitivity="public", method="symlink", on_conflict="overwrite-default-path", which="all")
-            console.print("✅ Public configs linked successfully", style="bold green")
+            main_from_parser(direction="down", source="library", method="symlink", on_conflict="overwrite-default-path", which="all")
+            console.print("✅ Library configs linked successfully", style="bold green")
         except Exception as e:
-            console.print(f"❌ Error linking public configs: {e}", style="bold red")
+            console.print(f"❌ Error linking library configs: {e}", style="bold red")
 
     require_dotfiles: list[InstallOption] = [
-        "retrieve_repositories", "retrieve_data", "link_private_configs"]
+        "retrieve_repositories", "retrieve_data", "link_user_configs"]
     if any(a_selected in require_dotfiles for a_selected in selected_options):
         # we cannot proceed before dotfiles are in place
         if DOTFILES_ROOT.exists():
@@ -194,15 +194,15 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
                 console.print("❌ Dotfiles directory still not found after attempted import. Exiting...", style="bold red")
                 sys.exit(1)
 
-    if "link_private_configs" in selected_options:
-        console.print(Panel("🔐 [bold bright_red]LINK PRIVATE CONFIGS[/bold bright_red]\n[italic]Symlinking private dotfiles[/italic]", border_style="bright_red"))
-        console.print("🔧 Linking private configs", style="bold cyan")
+    if "link_user_configs" in selected_options:
+        console.print(Panel("🔗 [bold bright_red]LINK USER CONFIGS[/bold bright_red]\n[italic]Symlinking user mappings[/italic]", border_style="bright_red"))
+        console.print("🔧 Linking user configs", style="bold cyan")
         try:
             from stackops.profile.create_links_export import main_from_parser
-            main_from_parser(direction="down", sensitivity="private", method="symlink", on_conflict="overwrite-default-path", which="all")
-            console.print("✅ Private configs linked successfully", style="bold green")
+            main_from_parser(direction="down", source="user", method="symlink", on_conflict="overwrite-default-path", which="all")
+            console.print("✅ User configs linked successfully", style="bold green")
         except Exception as e:
-            console.print(f"❌ Error linking private configs: {e}", style="bold red")
+            console.print(f"❌ Error linking user configs: {e}", style="bold red")
 
     if "retrieve_repositories" in selected_options:
         console.print(Panel("📚 [bold bright_magenta]REPOSITORIES[/bold bright_magenta]\n[italic]Project code retrieval[/italic]", border_style="bright_magenta"))

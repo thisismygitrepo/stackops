@@ -12,7 +12,7 @@ import typer
 from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
 from stackops.profile.linking.conflict import ON_CONFLICT_LOOSE
 from stackops.profile.linking.options import METHOD_LOOSE
-from stackops.utils.source_of_truth import CONFIG_MAPPER_FILES_ROOT, DOTFILES_MAPPER_FILES_ROOT
+from stackops.utils.source_of_truth import DOTFILES_MAPPER_FILES_ROOT
 
 FLAT_PATH_HASH_LENGTH = 16
 
@@ -156,16 +156,9 @@ def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, sectio
     )
 
 
-def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool) -> Path:
-    match sensitivity:
-        case "private" | "v":
-            backup_root = DOTFILES_MAPPER_FILES_ROOT
-        case "public" | "b":
-            backup_root = CONFIG_MAPPER_FILES_ROOT
-        case _:
-            raise ValueError(f"Unknown sensitivity: {sensitivity}")
+def get_backup_path(orig_path: Path, destination: str | None, shared: bool) -> Path:
     if destination is None:
-        new_path = backup_root.joinpath(_build_flat_backup_name(orig_path))
+        new_path = DOTFILES_MAPPER_FILES_ROOT.joinpath(_build_flat_backup_name(orig_path))
     else:
         if shared:
             dest_path = Path(destination).expanduser().absolute()
@@ -176,14 +169,7 @@ def get_backup_path(orig_path: Path, sensitivity: Literal["private", "v", "publi
     return new_path
 
 
-def get_original_path_from_backup_path(
-    backup_path: Path, sensitivity: Literal["private", "v", "public", "b"], destination: str | None, shared: bool
-) -> Path:
-    match sensitivity:
-        case "private" | "v" | "public" | "b":
-            pass
-        case _:
-            raise ValueError(f"Unknown sensitivity: {sensitivity}")
+def get_original_path_from_backup_path(backup_path: Path, destination: str | None, shared: bool) -> Path:
     if destination is None:
         raise ValueError("Cannot derive the original path from a flat hashed backup path. Use the mapper entry instead.")
     else:
@@ -201,13 +187,12 @@ def _prompt_register_dotfile_options(
     file: str | None,
     method: METHOD_LOOSE,
     on_conflict: ON_CONFLICT_LOOSE,
-    sensitivity: Literal["private", "v", "public", "b"],
     destination: str | None,
     section: str,
     os_filter: str,
     shared: bool,
     entry_name: str | None,
-) -> tuple[str, METHOD_LOOSE, ON_CONFLICT_LOOSE, Literal["private", "public"], str | None, str, str, bool, str]:
+) -> tuple[str, METHOD_LOOSE, ON_CONFLICT_LOOSE, str | None, str, str, bool, str]:
     from stackops.profile.linking.conflict import ON_CONFLICT_MAPPER
     from stackops.profile.linking.options import METHOD_MAP
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
@@ -240,16 +225,6 @@ def _prompt_register_dotfile_options(
             default=conflict_default,
         ),
     )
-    sensitivity_default = "private" if sensitivity in ("private", "v") else "public"
-    prompted_sensitivity = cast(
-        Literal["private", "public"],
-        ask_choice(
-            "Sensitivity",
-            help_text="Private entries go into your private dotfiles area. Public entries go into the public/shared area.",
-            choices=("private", "public"),
-            default=sensitivity_default,
-        ),
-    )
     prompted_destination = ask_text(
         "Destination directory",
         help_text="Optional self-managed destination root. Leave blank to use the default flat dotfiles storage.",
@@ -269,7 +244,7 @@ def _prompt_register_dotfile_options(
     assert prompted_section is not None
     assert prompted_os_filter is not None
     self_managed_path = get_backup_path(
-        orig_path=orig_path, sensitivity=prompted_sensitivity, destination=prompted_destination, shared=prompted_shared
+        orig_path=orig_path, destination=prompted_destination, shared=prompted_shared
     )
     confirm_summary(
         "Config Register Review",
@@ -278,7 +253,6 @@ def _prompt_register_dotfile_options(
             f"self_managed: {self_managed_path}",
             f"method: {prompted_method}",
             f"on_conflict: {prompted_on_conflict}",
-            f"sensitivity: {prompted_sensitivity}",
             f"destination: {prompted_destination or '(default)'}",
             f"shared: {prompted_shared}",
             f"group: {prompted_section}",
@@ -290,7 +264,6 @@ def _prompt_register_dotfile_options(
         prompted_file,
         prompted_method,
         prompted_on_conflict,
-        prompted_sensitivity,
         prompted_destination,
         prompted_section,
         prompted_os_filter,
@@ -304,9 +277,6 @@ def register_dotfile(
     _source: Annotated[Literal["user"], typer.Option("--source", "-s", help="Mapper source to register in. Only user is supported.")] = "user",
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")] = "copy",
     on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict")] = "throw-error",
-    sensitivity: Annotated[
-        Literal["private", "v", "public", "b"], typer.Option(..., "--sensitivity", "-v", help="Sensitivity of the config file.")
-    ] = "private",
     destination: Annotated[
         str | None, typer.Option("--destination", "-d", help="destination folder (override the default, use at your own risk)")
     ] = None,
@@ -323,11 +293,10 @@ def register_dotfile(
 
     console = Console()
     if interactive:
-        file, method, on_conflict, sensitivity, destination, group, os_filter, shared, name = _prompt_register_dotfile_options(
+        file, method, on_conflict, destination, group, os_filter, shared, name = _prompt_register_dotfile_options(
             file=file,
             method=method,
             on_conflict=on_conflict,
-            sensitivity=sensitivity,
             destination=destination,
             section=group,
             os_filter=os_filter,
@@ -338,7 +307,7 @@ def register_dotfile(
         console.print("[red]Error:[/] FILE is required unless --interactive is used.")
         raise typer.Exit(code=1)
     orig_path = Path(file).expanduser().absolute()
-    new_path = get_backup_path(orig_path=orig_path, sensitivity=sensitivity, destination=destination, shared=shared)
+    new_path = get_backup_path(orig_path=orig_path, destination=destination, shared=shared)
     if not _path_exists_for_register(orig_path) and not _path_exists_for_register(new_path):
         console.print(f"[red]Error:[/] Neither original file nor self-managed file exists:\n  Original: {orig_path}\n  Self-managed: {new_path}")
         raise typer.Exit(code=1)

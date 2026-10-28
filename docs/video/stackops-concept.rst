@@ -43,7 +43,7 @@ Scene 01. Your digital life
 :Subtitle: 99% of your|digital footprint.
 :Opening: Your stack is awesome,|but you need a way to manage it.
 :Card: Applications | The software you use
-:Card: Configuration | Public and private settings
+:Card: Configuration | Mapped tool settings
 :Card: Secrets | Credentials and passwords
 :Card: Data | Your files and directories
 :Card: Code | Your repositories
@@ -147,7 +147,7 @@ Scene 05. The command hierarchy
 :Focus: devops
 :Say: DevOps handles installation, configuration, networking, and security.
 :Focus: config
-:Say: Restore public and private settings, dotfiles, and terminal profiles.
+:Say: Restore mapped settings, dotfiles, and terminal profiles.
 :Focus: back
 :Say: Back up, sync, and retrieve your repositories and data.
 :Focus: root

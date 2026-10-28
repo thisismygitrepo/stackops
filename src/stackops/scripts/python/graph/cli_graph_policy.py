@@ -50,7 +50,6 @@ SHORT_OVERRIDES: dict[tuple[str, str], str] = {
     ("devops repos action", "--command"): "-C",
     ("devops repos action", "--pull"): "-P",
     ("devops repos action", "--password"): "-w",
-    ("devops config dotfiles sync", "--source"): "-S",
     ("devops vault search", "--scope"): "-S",
     ("devops vault load", "--scope"): "-S",
     ("agents add-mcp", "--source"): "-S",

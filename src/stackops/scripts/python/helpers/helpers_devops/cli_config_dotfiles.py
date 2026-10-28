@@ -1,6 +1,6 @@
 import typer
 
-DOTFILES_HELP = "Sync, register, export, and import dotfiles listed in the user mapper/dotfiles.yaml."
+DOTFILES_HELP = "Sync packaged settings and user dotfiles; register, export, and import user dotfiles."
 
 
 def get_app() -> typer.Typer:
@@ -13,7 +13,7 @@ def get_app() -> typer.Typer:
         help=DOTFILES_HELP, no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    app.command("sync", no_args_is_help=True, help="🔄 <s> Sync dotfiles between their original paths and the dotfiles repo.")(create_links_export.main_from_parser)
+    app.command("sync", no_args_is_help=True, help="🔄 <s> Sync mapped files between their original and managed paths.")(create_links_export.main_from_parser)
     app.command("s", no_args_is_help=True, help="Sync dotfiles.", hidden=True)(create_links_export.main_from_parser)
     app.command("register", no_args_is_help=True, help="📇 <r> Copy or symlink a dotfile into managed storage and register its mapping.")(register_dotfile)
     app.command("r", no_args_is_help=True, help="Copy or symlink a dotfile into managed storage and register its mapping.", hidden=True)(register_dotfile)

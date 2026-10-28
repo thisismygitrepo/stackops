@@ -37,7 +37,7 @@ Coordinate selected packages, configuration, repositories, data, terminal layout
 ## What you get
 
 * Install selected tools or package groups through platform package managers, release assets, and installer scripts.
-* Synchronize declared public and private configuration mappings, with explicit copy, symlink, and conflict options.
+* Synchronize configured dotfile mappings, with explicit copy, symlink, and conflict options.
 * Manage repository groups and transfer data through existing cloud and SSH tools.
 * Launch, inspect, export, and trace terminal layouts and sessions.
 * Configure supported coding-agent resources and run prompt or parallel workflows.

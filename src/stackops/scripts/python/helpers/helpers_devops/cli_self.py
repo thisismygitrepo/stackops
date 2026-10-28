@@ -12,11 +12,11 @@ def copy_assets_all() -> None:
     create_helper.copy_assets_to_machine(which="settings")
 
 
-def sync_public_configs() -> None:
+def sync_library_configs() -> None:
     from stackops.profile import create_links_export
 
     create_links_export.main_from_parser(
-        direction="down", sensitivity="public", method="copy", on_conflict="overwrite-default-path", which="all"
+        direction="down", source="library", method="copy", on_conflict="overwrite-default-path", which="all"
     )
 
 
@@ -34,12 +34,12 @@ def update(
             help="Skip copying scripts and settings after update."
         ),
     ] = False,
-    sync_public: Annotated[
+    sync_configs: Annotated[
         bool,
         typer.Option(
-            "--sync-public-configs",
+            "--sync-configs",
             "-l",
-            help="Sync public configs down after update (overwrites your configs at their default paths).",
+            help="Apply packaged settings after update (overwrites your configs at their default paths).",
         ),
     ] = False,
     config_shell: Annotated[
@@ -60,7 +60,7 @@ def update(
     Assets are copied by default; --no-copy-assets skips copying.
     Post-update actions:
     Copy scripts and settings unless --no-copy-assets is passed.
-    --sync-public-configs -> devops config dotfiles sync down --sensitivity public --method copy --on-conflict overwrite-default-path --which all
+    --sync-configs        -> devops config dotfiles sync down --source library --method copy --on-conflict overwrite-default-path --which all
     --config-shell        -> devops config terminal config-shell --shell default
 
     --dev is a pre-update action (requires a repo checkout):
@@ -92,21 +92,21 @@ uv tool install --no-cache --upgrade stackops
     if platform.system() == "Windows":
         from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function
 
-        any_post = copy_assets or sync_public or config_shell
+        any_post = copy_assets or sync_configs or config_shell
         full_script = shell_script
         if any_post:
-            def _post_update(copy_assets: bool, sync_public: bool, config_shell: bool) -> None:
+            def _post_update(copy_assets: bool, sync_configs: bool, config_shell: bool) -> None:
                 from stackops.scripts.python.helpers.helpers_devops import cli_self
 
                 if copy_assets:
                     cli_self.copy_assets_all()
-                if sync_public:
-                    cli_self.sync_public_configs()
+                if sync_configs:
+                    cli_self.sync_library_configs()
                 if config_shell:
                     cli_self.configure_default_shell()
 
             uv_command, _py_file = get_shell_script_running_lambda_function(
-                lmb=lambda: _post_update(copy_assets=copy_assets, sync_public=sync_public, config_shell=config_shell),
+                lmb=lambda: _post_update(copy_assets=copy_assets, sync_configs=sync_configs, config_shell=config_shell),
                 uv_with=["stackops"],
                 uv_project_dir=None,
                 uv_run_flags="",
@@ -122,8 +122,8 @@ uv tool install --no-cache --upgrade stackops
             raise typer.Exit(code=proc.returncode)
         if copy_assets:
             copy_assets_all()
-        if sync_public:
-            sync_public_configs()
+        if sync_configs:
+            sync_library_configs()
         if config_shell:
             configure_default_shell()
 

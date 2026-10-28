@@ -1,16 +1,25 @@
 import json
+from pathlib import Path
 from typing import cast
 
+import pytest
 import yaml
 from jsonschema.validators import Draft7Validator
 
 import stackops.utils.schemas.mapper as mapper_assets
-from stackops.profile.dotfiles_mapper import load_dotfiles_mapper
+from stackops.profile.dotfiles_mapper import LIBRARY_MAPPER_PATH, load_dotfiles_mapper
 from stackops.utils.path_reference import get_path_reference_path
 
 
-def test_dotfiles_mapper_matches_schema() -> None:
-    mapper_path = get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE)
+@pytest.mark.parametrize(
+    "mapper_path",
+    (
+        get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE),
+        LIBRARY_MAPPER_PATH,
+    ),
+    ids=("user-example", "library"),
+)
+def test_dotfiles_mapper_matches_schema(mapper_path: Path) -> None:
     schema_path = get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE)
     schema = cast(dict[str, object], json.loads(schema_path.read_text(encoding="utf-8")))
     mapper_data = cast(object, yaml.safe_load(mapper_path.read_text(encoding="utf-8")))

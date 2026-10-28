@@ -49,8 +49,8 @@ def _collect_config_status() -> StatusSnapshot:
                 title="Configuration mappings", border_style="red",
             )),
         )
-    linked = configs["public_linked"] + configs["private_linked"]
-    total = configs["public_count"] + configs["private_count"]
+    linked = configs["linked"]
+    total = configs["count"]
     if level == "ready" and (linked != total or not total):
         level = "attention"
     return StatusSnapshot(
