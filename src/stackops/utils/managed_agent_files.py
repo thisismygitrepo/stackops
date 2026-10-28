@@ -43,11 +43,11 @@ def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[A
 
 def resolve_agent_managed_file_path(*, kind: AgentManagedFileKind, source: AgentManagedFileSource) -> Path:
     match source:
-        case "p":
+        case "project" | "p":
             source = "project"
-        case "u":
+        case "user" | "u":
             source = "user"
-        case "l":
+        case "library" | "l":
             source = "library"
     for location_source, path in agent_managed_file_locations(kind=kind):
         if location_source == source:
