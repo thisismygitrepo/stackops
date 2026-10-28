@@ -102,7 +102,6 @@ def build_archive_command(target_path: Path) -> Command:
 def build_image_command(target_path: Path) -> Command:
     return [
         "chafa",
-        "--probe=on",
         "--clear",
         "--scale=max",
         "--margin-bottom=3",
