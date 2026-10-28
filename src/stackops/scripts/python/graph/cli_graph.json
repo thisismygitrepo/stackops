@@ -8383,8 +8383,8 @@
                     "            \"-s\",",
                     "            case_sensitive=False,",
                     "            help=(",
-                    "                \"Secrets file source to read: project/p, user/u, or all/a. \"",
-                    "                \"When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent.\"",
+                    "                \"Secrets file source to read: workspace/w, user/u, or all/a. \"",
+                    "                \"When omitted, --custom-path is used if provided; otherwise the workspace file at the workspace root is preferred and user is used when it is absent.\"",
                     "            ),",
                     "        ),",
                     "    ] = None,",
@@ -8480,7 +8480,7 @@
                       "type": "SecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: project/p, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent.')]",
+                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: workspace/w, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the workspace file at the workspace root is preferred and user is used when it is absent.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -8493,7 +8493,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to read: project/p, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent."
+                        "help": "Secrets file source to read: workspace/w, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the workspace file at the workspace root is preferred and user is used when it is absent."
                       }
                     },
                     {
@@ -8767,7 +8767,7 @@
                 },
                 "typer": {
                   "no_args_is_help": true,
-                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --all-matches --json mail\n\nSearch displays bundle labels and environment keys without loading them; use devops vault load to define them.\nUse --json to print matching secrets JSON, including values.\nUse --all-matches to select every matching bundle.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --custom-path takes precedence; otherwise project is preferred over user.\nThe project file is .stackops/secrets/secrets.json at the repository root.\nUse --source project/p, user/u, or all/a to select sources explicitly.\n"
+                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --all-matches --json mail\n\nSearch displays bundle labels and environment keys without loading them; use devops vault load to define them.\nUse --json to print matching secrets JSON, including values.\nUse --all-matches to select every matching bundle.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --custom-path takes precedence; otherwise workspace is preferred over user.\nThe workspace file is .stackops/secrets/secrets.json at the workspace root.\nUse --source workspace/w, user/u, or all/a to select sources explicitly.\n"
                 },
                 "aliases": [
                   {
@@ -8813,8 +8813,8 @@
                     "            \"-s\",",
                     "            case_sensitive=False,",
                     "            help=(",
-                    "                \"Secrets file source to read: project/p, user/u, or all/a. \"",
-                    "                \"When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent.\"",
+                    "                \"Secrets file source to read: workspace/w, user/u, or all/a. \"",
+                    "                \"When omitted, --custom-path is used if provided; otherwise the workspace file at the workspace root is preferred and user is used when it is absent.\"",
                     "            ),",
                     "        ),",
                     "    ] = None,",
@@ -8911,7 +8911,7 @@
                       "type": "SecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: project/p, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent.')]",
+                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: workspace/w, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the workspace file at the workspace root is preferred and user is used when it is absent.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -8924,7 +8924,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to read: project/p, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent."
+                        "help": "Secrets file source to read: workspace/w, user/u, or all/a. When omitted, --custom-path is used if provided; otherwise the workspace file at the workspace root is preferred and user is used when it is absent."
                       }
                     },
                     {
@@ -9176,7 +9176,7 @@
                 },
                 "typer": {
                   "no_args_is_help": true,
-                  "epilog": "Examples:\n  devops vault load --name aws-dev --tag iam-access-key\n  devops vault load --source user github token\n  devops vault load --all-matches --source all cloudf\n\nLoad prepares environment variables for the calling shell.\nUse --all-matches to select every matching bundle. Loading rejects conflicting values.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --custom-path takes precedence; otherwise project is preferred over user.\nThe project file is .stackops/secrets/secrets.json at the repository root.\nUse --source project/p, user/u, or all/a to select sources explicitly.\n"
+                  "epilog": "Examples:\n  devops vault load --name aws-dev --tag iam-access-key\n  devops vault load --source user github token\n  devops vault load --all-matches --source all cloudf\n\nLoad prepares environment variables for the calling shell.\nUse --all-matches to select every matching bundle. Loading rejects conflicting values.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --custom-path takes precedence; otherwise workspace is preferred over user.\nThe workspace file is .stackops/secrets/secrets.json at the workspace root.\nUse --source workspace/w, user/u, or all/a to select sources explicitly.\n"
                 },
                 "aliases": [
                   {
@@ -9211,7 +9211,7 @@
                     "            \"--source\",",
                     "            \"-s\",",
                     "            case_sensitive=False,",
-                    "            help=\"Secrets file source to read: project/p, user/u, or all/a. Ignored when --custom-path is provided.\",",
+                    "            help=\"Secrets file source to read: workspace/w, user/u, or all/a. Ignored when --custom-path is provided.\",",
                     "        ),",
                     "    ] = \"all\",",
                     "    details: Annotated[",
@@ -9261,7 +9261,7 @@
                       "type": "SecretsSource",
                       "default": "all",
                       "required": false,
-                      "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: project/p, user/u, or all/a. Ignored when --custom-path is provided.')]",
+                      "annotation_raw": "Annotated[SecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to read: workspace/w, user/u, or all/a. Ignored when --custom-path is provided.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9274,7 +9274,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to read: project/p, user/u, or all/a. Ignored when --custom-path is provided."
+                        "help": "Secrets file source to read: workspace/w, user/u, or all/a. Ignored when --custom-path is provided."
                       }
                     },
                     {
@@ -9384,9 +9384,9 @@
                     "    secrets_source: Annotated[",
                     "        WritableSecretsSource,",
                     "        typer.Option(",
-                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Source secrets file to read: project/p or user/u. Ignored when --custom-path is provided.\"",
+                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Source secrets file to read: workspace/w or user/u. Ignored when --custom-path is provided.\"",
                     "        ),",
-                    "    ] = \"project\",",
+                    "    ] = \"workspace\",",
                     "    on_conflict: Annotated[",
                     "        cli_subset_support.SubsetOutputConflictOption,",
                     "        typer.Option(",
@@ -9449,9 +9449,9 @@
                       "name": "secrets_source",
                       "kind": "positional_or_keyword",
                       "type": "WritableSecretsSource",
-                      "default": "project",
+                      "default": "workspace",
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Source secrets file to read: project/p or user/u. Ignored when --custom-path is provided.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Source secrets file to read: workspace/w or user/u. Ignored when --custom-path is provided.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9464,7 +9464,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Source secrets file to read: project/p or user/u. Ignored when --custom-path is provided."
+                        "help": "Source secrets file to read: workspace/w or user/u. Ignored when --custom-path is provided."
                       }
                     },
                     {
@@ -9549,9 +9549,9 @@
                     "    secrets_source: Annotated[",
                     "        WritableSecretsSource,",
                     "        typer.Option(",
-                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Secrets file source to update: project/p or user/u. Ignored when --custom-path is provided.\"",
+                    "            \"--source\", \"-s\", case_sensitive=False, help=\"Secrets file source to update: workspace/w or user/u. Ignored when --custom-path is provided.\"",
                     "        ),",
-                    "    ] = \"project\",",
+                    "    ] = \"workspace\",",
                     "    create: Annotated[",
                     "        bool, typer.Option(\"--create\", \"-c\", help=\"Allow creating a missing secrets JSON file and its schema.\")",
                     "    ] = False,",
@@ -9591,9 +9591,9 @@
                       "name": "secrets_source",
                       "kind": "positional_or_keyword",
                       "type": "WritableSecretsSource",
-                      "default": "project",
+                      "default": "workspace",
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to update: project/p or user/u. Ignored when --custom-path is provided.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to update: workspace/w or user/u. Ignored when --custom-path is provided.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9606,7 +9606,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file source to update: project/p or user/u. Ignored when --custom-path is provided."
+                        "help": "Secrets file source to update: workspace/w or user/u. Ignored when --custom-path is provided."
                       }
                     },
                     {
@@ -9665,7 +9665,7 @@
                     "    ] = None,",
                     "    source: Annotated[",
                     "        WritableSecretsSource | None,",
-                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Show project/p or user/u paths. Omit to show all available sources.\"),",
+                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Show workspace/w or user/u paths. Omit to show all available sources.\"),",
                     "    ] = None,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -9716,7 +9716,7 @@
                       "type": "WritableSecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Show project/p or user/u paths. Omit to show all available sources.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Show workspace/w or user/u paths. Omit to show all available sources.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9729,7 +9729,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Show project/p or user/u paths. Omit to show all available sources."
+                        "help": "Show workspace/w or user/u paths. Omit to show all available sources."
                       }
                     }
                   ],
@@ -9761,7 +9761,7 @@
                     "    ] = None,",
                     "    source: Annotated[",
                     "        WritableSecretsSource | None,",
-                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Secrets file to initialize: project/p or user/u.\"),",
+                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Secrets file to initialize: workspace/w or user/u.\"),",
                     "    ] = None,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -9799,7 +9799,7 @@
                       "type": "WritableSecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file to initialize: project/p or user/u.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file to initialize: workspace/w or user/u.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9812,7 +9812,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file to initialize: project/p or user/u."
+                        "help": "Secrets file to initialize: workspace/w or user/u."
                       }
                     }
                   ],
@@ -9844,7 +9844,7 @@
                     "    ] = None,",
                     "    source: Annotated[",
                     "        WritableSecretsSource | None,",
-                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Secrets file to validate: project/p or user/u.\"),",
+                    "        typer.Option(\"--source\", \"-s\", case_sensitive=False, help=\"Secrets file to validate: workspace/w or user/u.\"),",
                     "    ] = None,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_action",
@@ -9882,7 +9882,7 @@
                       "type": "WritableSecretsSource | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file to validate: project/p or user/u.')]",
+                      "annotation_raw": "Annotated[WritableSecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file to validate: workspace/w or user/u.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -9895,7 +9895,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Secrets file to validate: project/p or user/u."
+                        "help": "Secrets file to validate: workspace/w or user/u."
                       }
                     }
                   ],
@@ -20852,8 +20852,8 @@
                 "    ctx: typer.Context,",
                 "    layouts_file: Annotated[str | None, typer.Option(\"--custom-path\", \"-p\", help=\"Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.\")] = None,",
                 "    source: Annotated[",
-                "        Literal[\"project\", \"p\", \"user\", \"u\", \"all\", \"a\"],",
-                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted.\"),",
+                "        Literal[\"workspace\", \"w\", \"user\", \"u\", \"all\", \"a\"],",
+                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted.\"),",
                 "    ] = \"all\",",
                 "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.\")] = False,",
                 "",
@@ -20950,10 +20950,10 @@
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['project', 'p', 'user', 'u', 'all', 'a']",
+                  "type": "Literal['workspace', 'w', 'user', 'u', 'all', 'a']",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted.')]",
+                  "annotation_raw": "Annotated[Literal['workspace', 'w', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -20966,7 +20966,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted."
+                    "help": "Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted."
                   }
                 },
                 {
@@ -21301,8 +21301,8 @@
                 "    *,",
                 "    layouts_file: Annotated[str | None, typer.Option(\"--custom-path\", \"-p\", help=\"Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.\")] = None,",
                 "    source: Annotated[",
-                "        Literal[\"project\", \"p\", \"user\", \"u\", \"all\", \"a\"],",
-                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted.\"),",
+                "        Literal[\"workspace\", \"w\", \"user\", \"u\", \"all\", \"a\"],",
+                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted.\"),",
                 "    ] = \"all\",",
                 "    test_layout: Annotated[bool, typer.Option(..., \"--test-layout\", \"-L\", help=\"Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.\")] = False,",
                 "    max_parallel_tabs: Annotated[int, typer.Option(..., \"--max-parallel-tabs\", \"-t\", help=\"Maximum number of tabs to keep active while dynamically working through the whole file.\")],",
@@ -21381,10 +21381,10 @@
                 {
                   "name": "source",
                   "kind": "keyword_only",
-                  "type": "Literal['project', 'p', 'user', 'u', 'all', 'a']",
+                  "type": "Literal['workspace', 'w', 'user', 'u', 'all', 'a']",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted.')]",
+                  "annotation_raw": "Annotated[Literal['workspace', 'w', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21397,7 +21397,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted."
+                    "help": "Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted."
                   }
                 },
                 {
@@ -21593,8 +21593,8 @@
                 "        typer.Option(\"--custom-path\", \"-p\", exists=True, dir_okay=False, help=\"Layout JSON file. Overrides --source; omit to list layouts from the selected sources.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"project\", \"p\", \"user\", \"u\", \"all\", \"a\"],",
-                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: project/p, user/u, or all/a. Ignored when --custom-path is provided.\"),",
+                "        Literal[\"workspace\", \"w\", \"user\", \"u\", \"all\", \"a\"],",
+                "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: workspace/w, user/u, or all/a. Ignored when --custom-path is provided.\"),",
                 "    ] = \"all\",",
                 "    show_tabs: Annotated[bool, typer.Option(\"--tabs\", \"-t\", help=\"Include each tab's name, start directory, command, and weight.\")] = False,",
                 "    show_stats: Annotated[bool, typer.Option(\"--stats\", \"-S\", help=\"Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.\")] = False,",
@@ -21688,10 +21688,10 @@
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['project', 'p', 'user', 'u', 'all', 'a']",
+                  "type": "Literal['workspace', 'w', 'user', 'u', 'all', 'a']",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: project/p, user/u, or all/a. Ignored when --custom-path is provided.')]",
+                  "annotation_raw": "Annotated[Literal['workspace', 'w', 'user', 'u', 'all', 'a'], typer.Option('--source', '-s', help='Layout sources: workspace/w, user/u, or all/a. Ignored when --custom-path is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21704,7 +21704,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Layout sources: project/p, user/u, or all/a. Ignored when --custom-path is provided."
+                    "help": "Layout sources: workspace/w, user/u, or all/a. Ignored when --custom-path is provided."
                   }
                 },
                 {
@@ -21780,10 +21780,10 @@
                 "def edit_layouts(",
                 "    layouts_file: Annotated[",
                 "        Path | None,",
-                "        typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to edit. Overrides --source; omit to choose the user or project config file.\"),",
+                "        typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to edit. Overrides --source; omit to choose the user or workspace config file.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
+                "        Literal[\"workspace\", \"w\", \"user\", \"u\"] | None,",
                 "        typer.Option(\"--source\", \"-s\", help=\"Config file to edit without prompting. Ignored when --custom-path is provided.\"),",
                 "    ] = None,",
                 "    editor: Annotated[",
@@ -21849,7 +21849,7 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file to edit. Overrides --source; omit to choose the user or project config file.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file to edit. Overrides --source; omit to choose the user or workspace config file.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21862,16 +21862,16 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file to edit. Overrides --source; omit to choose the user or project config file."
+                    "help": "Layout JSON file to edit. Overrides --source; omit to choose the user or workspace config file."
                   }
                 },
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['project', 'p', 'user', 'u'] | None",
+                  "type": "Literal['workspace', 'w', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to edit without prompting. Ignored when --custom-path is provided.')]",
+                  "annotation_raw": "Annotated[Literal['workspace', 'w', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to edit without prompting. Ignored when --custom-path is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21937,10 +21937,10 @@
               "raw_lines": [
                 "def path_layouts(",
                 "    layouts_file: Annotated[",
-                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file. Overrides --source; omit to show user and project paths.\"),",
+                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file. Overrides --source; omit to show user and workspace paths.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
+                "        Literal[\"workspace\", \"w\", \"user\", \"u\"] | None,",
                 "        typer.Option(\"--source\", \"-s\", help=\"Show one config file's paths. Ignored when --custom-path is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
@@ -21970,7 +21970,7 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file. Overrides --source; omit to show user and project paths.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file. Overrides --source; omit to show user and workspace paths.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21983,16 +21983,16 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file. Overrides --source; omit to show user and project paths."
+                    "help": "Layout JSON file. Overrides --source; omit to show user and workspace paths."
                   }
                 },
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['project', 'p', 'user', 'u'] | None",
+                  "type": "Literal['workspace', 'w', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help=\"Show one config file's paths. Ignored when --custom-path is provided.\")]",
+                  "annotation_raw": "Annotated[Literal['workspace', 'w', 'user', 'u'] | None, typer.Option('--source', '-s', help=\"Show one config file's paths. Ignored when --custom-path is provided.\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22036,7 +22036,7 @@
                 "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to create if missing. Overrides --source.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
+                "        Literal[\"workspace\", \"w\", \"user\", \"u\"] | None,",
                 "        typer.Option(\"--source\", \"-s\", help=\"Config file to initialize. Ignored when --custom-path is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
@@ -22072,10 +22072,10 @@
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['project', 'p', 'user', 'u'] | None",
+                  "type": "Literal['workspace', 'w', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to initialize. Ignored when --custom-path is provided.')]",
+                  "annotation_raw": "Annotated[Literal['workspace', 'w', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to initialize. Ignored when --custom-path is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22119,7 +22119,7 @@
                 "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to validate. Overrides --source.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
-                "        Literal[\"project\", \"p\", \"user\", \"u\"] | None,",
+                "        Literal[\"workspace\", \"w\", \"user\", \"u\"] | None,",
                 "        typer.Option(\"--source\", \"-s\", help=\"Config file to validate. Ignored when --custom-path is provided.\"),",
                 "    ] = None,",
                 ") -> None:",
@@ -22155,10 +22155,10 @@
                 {
                   "name": "source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['project', 'p', 'user', 'u'] | None",
+                  "type": "Literal['workspace', 'w', 'user', 'u'] | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to validate. Ignored when --custom-path is provided.')]",
+                  "annotation_raw": "Annotated[Literal['workspace', 'w', 'user', 'u'] | None, typer.Option('--source', '-s', help='Config file to validate. Ignored when --custom-path is provided.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -23708,7 +23708,7 @@
                     "            ...,",
                     "            \"--save-as-yaml\",",
                     "            \"-y\",",
-                    "            help=\"Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.\",",
+                    "            help=\"Save or update this create configuration in project .stackops/agents/parallel.yaml under the resolved job name.\",",
                     "        ),",
                     "    ] = False,",
                     "    show_example: Annotated[bool, typer.Option(..., \"--show-example\", \"-e\", help=\"Show a long parallel YAML create configuration example.\")] = False,",
@@ -24224,7 +24224,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--save-as-yaml', '-y', help='Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--save-as-yaml', '-y', help='Save or update this create configuration in project .stackops/agents/parallel.yaml under the resolved job name.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -24237,7 +24237,7 @@
                         "short_flags": [
                           "-y"
                         ],
-                        "help": "Save or update this create configuration in repo .stackops/agents/parallel.yaml under the resolved job name.",
+                        "help": "Save or update this create configuration in project .stackops/agents/parallel.yaml under the resolved job name.",
                         "default": "..."
                       }
                     },
@@ -24509,7 +24509,7 @@
                     "            ...,",
                     "            \"--add-entry\",",
                     "            \"-A\",",
-                    "            help=\"Append one default template entry to project parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.\",",
+                    "            help=\"Append one default template entry to workspace parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.\",",
                     "        ),",
                     "    ] = False,",
                     "    agent: Annotated[AGENTS | None, typer.Option(..., \"--agent\", \"-a\", help=\"Override agent type.\")] = None,",
@@ -24713,7 +24713,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option(..., '--add-entry', '-A', help='Append one default template entry to project parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--add-entry', '-A', help='Append one default template entry to workspace parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -24726,7 +24726,7 @@
                         "short_flags": [
                           "-A"
                         ],
-                        "help": "Append one default template entry to project parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.",
+                        "help": "Append one default template entry to workspace parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.",
                         "default": "..."
                       }
                     },
@@ -25478,7 +25478,7 @@
                     "            typer.echo(f\"Wrote: {guide_path}\")",
                     "        if len(result.mcp_servers) > 0:",
                     "            typer.echo(f\"MCP catalog servers: {', '.join(result.mcp_servers)}\")",
-                    "            typer.echo(f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope project\")"
+                    "            typer.echo(f\"Install into an agent with: stackops agents add-mcp {','.join(result.mcp_servers)} --agent {resolved_agent} --scope workspace\")"
                   ],
                   "name": "install_tech",
                   "parameters": [
@@ -27540,7 +27540,7 @@
                   "raw_lines": [
                     "def config_path(",
                     "    kind: Annotated[AgentManagedFileKind, typer.Argument(help=\"Agent configuration file kind.\")],",
-                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to locate.\")] = \"project\",",
+                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to locate.\")] = \"workspace\",",
                     "    custom_path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
                     ") -> None:",
                     "    try:",
@@ -27570,7 +27570,7 @@
                       "name": "source",
                       "kind": "positional_or_keyword",
                       "type": "AgentManagedFileSource",
-                      "default": "project",
+                      "default": "workspace",
                       "required": false,
                       "annotation_raw": "Annotated[AgentManagedFileSource, typer.Option('--source', '-s', help='Configuration source to locate.')]",
                       "typer": {
@@ -27635,7 +27635,7 @@
                   "raw_lines": [
                     "def config_init(",
                     "    kind: Annotated[AgentManagedFileKind, typer.Argument(help=\"Agent configuration file kind.\")],",
-                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to initialize.\")] = \"project\",",
+                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to initialize.\")] = \"workspace\",",
                     "    custom_path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
                     ") -> None:",
                     "    try:",
@@ -27665,7 +27665,7 @@
                       "name": "source",
                       "kind": "positional_or_keyword",
                       "type": "AgentManagedFileSource",
-                      "default": "project",
+                      "default": "workspace",
                       "required": false,
                       "annotation_raw": "Annotated[AgentManagedFileSource, typer.Option('--source', '-s', help='Configuration source to initialize.')]",
                       "typer": {
@@ -27730,7 +27730,7 @@
                   "raw_lines": [
                     "def config_validate(",
                     "    kind: Annotated[AgentManagedFileKind, typer.Argument(help=\"Agent configuration file kind.\")],",
-                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to validate.\")] = \"project\",",
+                    "    source: Annotated[AgentManagedFileSource, typer.Option(\"--source\", \"-s\", help=\"Configuration source to validate.\")] = \"workspace\",",
                     "    custom_path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Explicit configuration file instead of --source.\")] = None,",
                     ") -> None:",
                     "    try:",
@@ -27760,7 +27760,7 @@
                       "name": "source",
                       "kind": "positional_or_keyword",
                       "type": "AgentManagedFileSource",
-                      "default": "project",
+                      "default": "workspace",
                       "required": false,
                       "annotation_raw": "Annotated[AgentManagedFileSource, typer.Option('--source', '-s', help='Configuration source to validate.')]",
                       "typer": {
@@ -27839,8 +27839,8 @@
                 "        str, typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all supporting the selected scope. {','.join(get_args(AGENTS))}\")",
                 "    ] = \"\",",
                 "    scope: Annotated[",
-                "        _MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP entries into project/p or user/u agent configuration.\")",
-                "    ] = \"project\",",
+                "        _MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP entries into workspace/w or user/u agent configuration.\")",
+                "    ] = \"workspace\",",
                 "    source: Annotated[MCP_CATALOG_SOURCE, typer.Option(..., \"--source\", \"-S\", help=\"Source to resolve or edit MCP catalog files when --custom-path is not provided.\")] = \"all\",",
                 "    custom_path: Annotated[",
                 "        Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Explicit MCP catalog file instead of --source.\")",
@@ -27860,7 +27860,7 @@
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl",
                 "",
                 "        impl(",
-                "            requested_mcp_servers=requested_mcp_servers, agents=agents, scope=\"project\" if scope in (\"project\", \"p\") else \"user\", source=source,",
+                "            requested_mcp_servers=requested_mcp_servers, agents=agents, scope=\"workspace\" if scope in (\"workspace\", \"w\") else \"user\", source=source,",
                 "            custom_path=custom_path, edit=edit, report=typer.echo,",
                 "        )",
                 "    except ValueError as e:",
@@ -27908,9 +27908,9 @@
                   "name": "scope",
                   "kind": "positional_or_keyword",
                   "type": "_MCP_INSTALL_SCOPE",
-                  "default": "project",
+                  "default": "workspace",
                   "required": false,
-                  "annotation_raw": "Annotated[_MCP_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install MCP entries into project/p or user/u agent configuration.')]",
+                  "annotation_raw": "Annotated[_MCP_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install MCP entries into workspace/w or user/u agent configuration.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -27923,7 +27923,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Install MCP entries into project/p or user/u agent configuration."
+                    "help": "Install MCP entries into workspace/w or user/u agent configuration."
                   }
                 },
                 {
@@ -28042,8 +28042,8 @@
                 "        ),",
                 "    ] = None,",
                 "    scope: Annotated[",
-                "        _SKILL_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install the skill into the project/p or user/u agent skill directory.\")",
-                "    ] = \"project\",",
+                "        _SKILL_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install the skill into the workspace/w or user/u agent skill directory.\")",
+                "    ] = \"workspace\",",
                 "    directory: Annotated[",
                 "        str | None,",
                 "        typer.Option(",
@@ -28074,7 +28074,7 @@
                 "            skill_name=skill_name,",
                 "            group=group,",
                 "            agent=agent,",
-                "            scope=\"project\" if scope in (\"project\", \"p\") else \"user\",",
+                "            scope=\"workspace\" if scope in (\"workspace\", \"w\") else \"user\",",
                 "            directory=directory,",
                 "            reference=reference,",
                 "            backend=backend,",
@@ -28150,9 +28150,9 @@
                   "name": "scope",
                   "kind": "positional_or_keyword",
                   "type": "_SKILL_INSTALL_SCOPE",
-                  "default": "project",
+                  "default": "workspace",
                   "required": false,
-                  "annotation_raw": "Annotated[_SKILL_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install the skill into the project/p or user/u agent skill directory.')]",
+                  "annotation_raw": "Annotated[_SKILL_INSTALL_SCOPE, typer.Option('--scope', '-s', help='Install the skill into the workspace/w or user/u agent skill directory.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -28165,7 +28165,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Install the skill into the project/p or user/u agent skill directory."
+                    "help": "Install the skill into the workspace/w or user/u agent skill directory."
                   }
                 },
                 {
@@ -28526,10 +28526,10 @@
               "raw_lines": [
                 "def depoison(",
                 "    agent: Annotated[str, typer.Argument(help=\"Agent to reset, or all.\")] = \"all\",",
-                "    directory: Annotated[Path | None, typer.Option(\"--directory\", \"-d\", exists=True, file_okay=False, help=\"Inspect a project or a directory containing repositories.\")] = None,",
+                "    directory: Annotated[Path | None, typer.Option(\"--directory\", \"-d\", exists=True, file_okay=False, help=\"Inspect a workspace or a directory containing repositories.\")] = None,",
                 "    scope: Annotated[",
-                "        Literal[\"project\", \"p\", \"user\", \"u\", \"all\", \"a\"],",
-                "        typer.Option(\"--scope\", \"-s\", help=\"Select project/p, user/u, or all/a resources. Workspace folders belong to the project scope.\"),",
+                "        Literal[\"workspace\", \"w\", \"user\", \"u\", \"all\", \"a\"],",
+                "        typer.Option(\"--scope\", \"-s\", help=\"Select workspace/w, user/u, or all/a resources. Shared .ai folders belong to the workspace scope.\"),",
                 "    ] = \"all\",",
                 "    resource: Annotated[str, typer.Option(\"--resource\", \"-r\", help=\"Comma-separated resources: all, workspace (.ai folders), hook, plugin, mcp, skill, instructions, configuration.\")] = \"all\",",
                 "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-R\", help=\"Recurse into nested repositories when collecting .ai folders.\")] = False,",
@@ -28545,8 +28545,8 @@
                 ") -> None:",
                 "    resolved_scope: CleanupScope",
                 "    match scope:",
-                "        case \"project\" | \"p\":",
-                "            resolved_scope = \"project\"",
+                "        case \"workspace\" | \"w\":",
+                "            resolved_scope = \"workspace\"",
                 "        case \"user\" | \"u\":",
                 "            resolved_scope = \"user\"",
                 "        case \"all\" | \"a\":",
@@ -28605,7 +28605,7 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--directory', '-d', exists=True, file_okay=False, help='Inspect a project or a directory containing repositories.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--directory', '-d', exists=True, file_okay=False, help='Inspect a workspace or a directory containing repositories.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -28618,16 +28618,16 @@
                     "short_flags": [
                       "-d"
                     ],
-                    "help": "Inspect a project or a directory containing repositories."
+                    "help": "Inspect a workspace or a directory containing repositories."
                   }
                 },
                 {
                   "name": "scope",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['project', 'p', 'user', 'u', 'all', 'a']",
+                  "type": "Literal['workspace', 'w', 'user', 'u', 'all', 'a']",
                   "default": "all",
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['project', 'p', 'user', 'u', 'all', 'a'], typer.Option('--scope', '-s', help='Select project/p, user/u, or all/a resources. Workspace folders belong to the project scope.')]",
+                  "annotation_raw": "Annotated[Literal['workspace', 'w', 'user', 'u', 'all', 'a'], typer.Option('--scope', '-s', help='Select workspace/w, user/u, or all/a resources. Shared .ai folders belong to the workspace scope.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -28640,7 +28640,7 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "Select project/p, user/u, or all/a resources. Workspace folders belong to the project scope."
+                    "help": "Select workspace/w, user/u, or all/a resources. Shared .ai folders belong to the workspace scope."
                   }
                 },
                 {
@@ -32428,12 +32428,12 @@
                     "",
                     "    search_root = Path.cwd().resolve()",
                     "    try:",
-                    "        workspace_root = _resolve_workspace_root(current_dir=search_root)",
+                    "        workspace_root = resolve_project_root(current_dir=search_root)",
                     "    except ValueError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error",
                     "    if workspace_root is None:",
-                    "        typer.echo(f\"💥 Could not determine a valid workspace root. Please run this command {_WORKSPACE_ROOT_REQUIREMENT}.\", err=True)",
+                    "        typer.echo(f\"\"\"💥 This command requires {PROJECT_ROOT_REQUIREMENT}.\"\"\", err=True)",
                     "        raise typer.Exit(code=1)",
                     "",
                     "    context_path = _get_context_path(workspace_root=workspace_root)",

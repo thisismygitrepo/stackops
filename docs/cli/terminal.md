@@ -32,16 +32,17 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 ## Common Layout Source Rules
 
-- `run`, `run-all`, and `list` accept `--source` / `-s`: `project/p`, `user/u`, or `all/a`, defaulting to `all`.
-- Without `--custom-path` or `--test-layout`, `--source all` combines named layouts from the user file at `~/dotfiles/stackops/config/layouts.json` and the project file at `<git-root>/.stackops/config/layout.json`, including each file that exists. The project path uses the enclosing Git repository root, including when called from a subdirectory; outside Git, `all` includes only the user source. Explicit `--source project` requires a Git repository. `run` and `run-all` open a picker for the selected source files; cancelling it aborts the command.
-- The default picker labels entries `user:name` or `project:name` and previews their source file paths. Layout and session names remain unchanged.
-- `--custom-path` / `-p` overrides `--source` and loads layouts only from the supplied file, including outside Git.
+- `run`, `run-all`, and `list` accept `--source` / `-s`: `workspace/w`, `user/u`, or `all/a`, defaulting to `all`.
+- The workspace root is the enclosing Git repository root, including when called from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, the workspace source is unavailable.
+- Without `--custom-path` or `--test-layout`, `--source all` combines named layouts from the user file at `~/dotfiles/stackops/config/layouts.json` and the workspace file at `<workspace-root>/.stackops/config/layout.json`, including each file that exists. When the workspace source is unavailable, `all` includes only the user source; explicit `--source workspace` fails. `run` and `run-all` open a picker for the selected source files; cancelling it aborts the command.
+- The default picker labels entries `user:name` or `workspace:name` and previews their source file paths. Layout and session names remain unchanged.
+- `--custom-path` / `-p` overrides `--source` and loads layouts only from the supplied file, including outside a workspace.
 - For `run`, an explicit `--choose-layouts` or `--choose-tabs` selector uses that selection without opening an additional layout picker.
 - `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `--custom-path`.
 - `--choose-layouts ""` opens interactive layout selection.
-- Named layout selectors accept an unambiguous name or `user:name` / `project:name`. A name shared by both sources requires the qualified form.
+- Named layout selectors accept an unambiguous name or `user:name` / `workspace:name`. A name shared by both sources requires the qualified form.
 - `--choose-tabs ""` opens interactive tab selection.
-- Tab selectors accept `tabName` or `layoutName::tabName`. When both sources share a layout name, qualify it as `user:layoutName::tabName` or `project:layoutName::tabName`; an ambiguous layout name is rejected. Bare tab names match across selected layouts.
+- Tab selectors accept `tabName` or `layoutName::tabName`. When both sources share a layout name, qualify it as `user:layoutName::tabName` or `workspace:layoutName::tabName`; an ambiguous layout name is rejected. Bare tab names match across selected layouts.
 
 ## run
 
@@ -54,7 +55,7 @@ terminal run [OPTIONS]
 | Argument / Option | Short | Description |
 |-------------------|-------|-------------|
 | `--custom-path` | `-p` | Optional layout file path that overrides `--source` |
-| `--source` | `-s` | `project/p`, `user/u`, or `all/a`; defaults to `all` |
+| `--source` | `-s` | `workspace/w`, `user/u`, or `all/a`; defaults to `all` |
 | `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--choose-layouts` | `-l` | Comma-separated layout names, or `""` for interactive selection |
 | `--choose-tabs` | `-t` | Comma-separated tab names, or `""` for interactive selection across all layouts |
@@ -72,20 +73,20 @@ terminal run [OPTIONS]
 Examples:
 
 ```bash
-# Choose layouts from the user file and the Git project's .stackops/config/layout.json when present
+# Choose layouts from the user file and the workspace's .stackops/config/layout.json when present
 terminal run
 
 # Run unambiguous named layouts from the combined default files without prompting
 terminal run --choose-layouts "dev,build"
 
-# Choose layouts only from the project configuration
-terminal run --source project
+# Choose layouts only from the workspace configuration
+terminal run --source workspace
 
-# Select the project dev layout when both sources define dev
-terminal run --choose-layouts "project:dev"
+# Select the workspace dev layout when both sources define dev
+terminal run --choose-layouts "workspace:dev"
 
-# Select a tab from the project dev layout
-terminal run --choose-tabs "project:dev::server"
+# Select a tab from the workspace dev layout
+terminal run --choose-tabs "workspace:dev::server"
 
 # Run only selected layouts from an explicit file
 terminal run --custom-path layouts.json --choose-layouts "dev,build"
@@ -108,7 +109,7 @@ terminal run --custom-path layout.json --backend aoe
 
 ## run-all
 
-Merge every tab from the selected layouts into one paced run. `--custom-path` uses all layouts from the given file and overrides `--source`; omitting it opens a picker for the selected sources, defaulting to all available user and project files. `--max-parallel-tabs` is required in both cases.
+Merge every tab from the selected layouts into one paced run. `--custom-path` uses all layouts from the given file and overrides `--source`; omitting it opens a picker for the selected sources, defaulting to all available user and workspace files. `--max-parallel-tabs` is required in both cases.
 
 ```bash
 terminal run-all [OPTIONS]
@@ -117,7 +118,7 @@ terminal run-all [OPTIONS]
 | Argument / Option | Short | Description |
 |-------------------|-------|-------------|
 | `--custom-path` | `-p` | Optional file whose layouts all run; overrides `--source` |
-| `--source` | `-s` | `project/p`, `user/u`, or `all/a`; defaults to `all` |
+| `--source` | `-s` | `workspace/w`, `user/u`, or `all/a`; defaults to `all` |
 | `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--max-parallel-tabs` | `-t` | Required cap for concurrently active tabs |
 | `--poll-interval` | `-i` | Polling interval for finished-tab detection |
@@ -379,26 +380,26 @@ Current behavior:
 
 ## list
 
-List saved layouts and their source files. Add `--stats` / `-S` for aggregate counts and `--tabs` / `-t` for tab details. `--source` / `-s` accepts `project/p`, `user/u`, or `all/a`, defaulting to `all`.
+List saved layouts and their source files. Add `--stats` / `-S` for aggregate counts and `--tabs` / `-t` for tab details. `--source` / `-s` accepts `workspace/w`, `user/u`, or `all/a`, defaulting to `all`.
 
 ```bash
 terminal list --stats
-terminal list --source project --tabs --stats
+terminal list --source workspace --tabs --stats
 terminal list --custom-path layout.json --tabs --stats
 ```
 
-Omitting `--custom-path` lists layouts from the selected source files. The default `all` includes available user and project files; outside Git it includes only the user file. Explicit `--source project` requires a Git repository. `--custom-path` / `-p` overrides the source selection. Statistics include layout and tab totals, average tabs per layout, and the largest and smallest layouts.
+Omitting `--custom-path` lists layouts from the selected source files. The default `all` includes available user and workspace files; when no workspace root can be resolved, it includes only the user file. Explicit `--source workspace` requires a workspace root as described above. `--custom-path` / `-p` overrides the source selection. Statistics include layout and tab totals, average tabs per layout, and the largest and smallest layouts.
 
 ## edit, path, init, validate
 
-`edit` opens a layout file, creates it if missing, and validates it after saving. Omit `--custom-path` to choose a configuration interactively, or pass `--source project` (alias `p`) or `--source user` (alias `u`). `--editor` accepts `hx`, `nano`, or `code`.
+`edit` opens a layout file, creates it if missing, and validates it after saving. Omit `--custom-path` to choose a configuration interactively, or pass `--source workspace` (alias `w`) or `--source user` (alias `u`). `--editor` accepts `hx`, `nano`, or `code`.
 
-`path` prints file and schema paths as JSON; with no options it shows the user path and, inside Git, the project path. `init` creates a missing file and schema. `validate` checks a file without opening an editor. Both `init` and `validate` require `--custom-path`, `--source project` (alias `p`), or `--source user` (alias `u`). For all four commands, `--custom-path` / `-p` overrides `--source`.
+`path` prints file and schema paths as JSON; with no options it shows the user path and, when a workspace root can be resolved, the workspace path. `init` creates a missing file and schema. `validate` checks a file without opening an editor. Both `init` and `validate` require `--custom-path`, `--source workspace` (alias `w`), or `--source user` (alias `u`). For all four commands, `--custom-path` / `-p` overrides `--source`.
 
 ```bash
-terminal edit --source project
+terminal edit --source workspace
 terminal path
-terminal init --source project
+terminal init --source workspace
 terminal path --source user
 terminal validate --custom-path layout.json
 ```

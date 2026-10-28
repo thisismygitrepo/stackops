@@ -187,15 +187,15 @@ devops config dotfiles import --ssh
 Open one StackOps user file in `hx`, `nano`, or `code`.
 
 ```bash
-devops config edit <config|layouts|dotfiles|data|secrets> [--path PATH] [--editor hx|nano|code]
+devops config edit <config|layouts|dotfiles|data|secrets> [--custom-path PATH] [--editor hx|nano|code]
 ```
 
 When the file does not exist yet, it is created with the smallest valid content for its kind, and its schema is installed next to it: a versioned `config.json`, an empty dotfiles or data mapper with its YAML header, and the packaged starter for `layouts.json` and `secrets.json`, which require at least one entry. Secrets files are created with mode `0600`.
 
-Use `--path`, `-p` to edit a file of the same kind somewhere else, for example a project-local secrets file:
+Use `--custom-path`, `-p` to edit a file of the same kind somewhere else, for example a workspace secrets file:
 
 ```bash
-devops config edit secrets --path .stackops/secrets/secrets.json
+devops config edit secrets --custom-path .stackops/secrets/secrets.json
 ```
 
 ### copy-assets
@@ -222,23 +222,25 @@ devops vault search github personal-access-token
 devops vault search --interactive
 devops vault search mail --all-matches --json
 devops vault load --name aws-dev --tag iam-access-key
-devops vault load --source global github token
-devops vault load --all-matches --source both cloudf
-devops vault subset ./team-secrets.json --source global
-devops vault add --source global
-devops vault init --source local
-devops vault validate --source local
+devops vault load --source user github token
+devops vault load --all-matches --source all cloudf
+devops vault subset ./team-secrets.json --source user
+devops vault add --source user
+devops vault init --source workspace
+devops vault validate --source workspace
 ```
 
-The command aliases are `search/s`, `load/l`, `stats/t`, `subset/u`, `add/a`, `path/p`, `init/i`, and `validate/v`. `init` and `validate` require an explicit `--source local|global` or `--path`.
+The command aliases are `search/s`, `load/l`, `stats/t`, `subset/u`, `add/a`, `path/p`, `init/i`, and `validate/v`. `init` and `validate` require an explicit `--source workspace|user` (aliases `w/u`) or `--custom-path`.
 
 Terms are case-insensitive substring matches across login and secret names, tags, scopes, metadata, and environment keys. By default, selection must identify one bundle. Use `--all-matches`, `-a` for every match or `--interactive`, `-i` to choose with the TV picker. `load --all-matches` rejects conflicting values for the same environment variable. `--preview-secrets`, `-P` shows values in the interactive preview; `--verbose`, `-v` shows metadata without values.
 
 Exact, case-sensitive selectors can be combined with query terms: `--name/-n`, `--secret-name/-N`, `--tag/--tags/-t`, `--login-tag/-l`, `--secret-tag/-T`, `--scope/-S`, and `--key/-k`. Tag, scope, and key options are repeatable.
 
-Both `search` and `load` accept `--source/-s local|global|both` (aliases `l/g/b`) and `--path/-p` for another local file. With neither supplied, the local `.stackops/secrets/secrets.json` is preferred; the global file is used when local is absent.
+`--source/-s` accepts `workspace/w` or `user/u`; `search`, `load`, and `stats` also accept `all/a`. `--custom-path/-p` selects exactly one secrets file and overrides `--source`, including `all`. With neither supplied, `search` and `load` prefer an existing workspace file and otherwise use the user file. `stats` defaults to `all`; `subset` and `add` default to `workspace`.
 
-`subset OUTPUT_PATH` interactively selects login entries from one source and writes a secrets file. `--on-conflict/-c throw-error|overwrite|append` controls an existing output file. `add` prompts for a new login entry and appends it; `--create/-c` also permits creating the file. Use `devops config edit secrets` to edit the global file, or pass `--path` for another file.
+The workspace file is `<workspace-root>/.stackops/secrets/secrets.json`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` includes only `user`.
+
+`subset OUTPUT_PATH` interactively selects login entries from one source and writes a secrets file. `--on-conflict/-c throw-error|overwrite|append` controls an existing output file. `add` prompts for a new login entry and appends it; `--create/-c` also permits creating the file. Use `devops config edit secrets` to edit the user file, or pass `--custom-path` for another file.
 
 Bitwarden operations have their own provider group:
 
