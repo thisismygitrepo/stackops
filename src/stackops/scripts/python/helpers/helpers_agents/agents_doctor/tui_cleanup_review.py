@@ -1,5 +1,4 @@
 from difflib import unified_diff
-from pathlib import Path
 
 from rich.text import Text
 from textual.app import ComposeResult
@@ -8,37 +7,25 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Static, TextArea
 
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupPlan
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupEdit, CleanupPlan, CleanupRemoval
 
 
 def cleanup_change_detail(*, change: CleanupChange) -> str:
-    snapshot = change.snapshot
-    if change.replacement is not None:
-        original = snapshot.files[0].content.decode("utf-8")
-        replacement = change.replacement.decode("utf-8")
-        difference = "\n".join(unified_diff(
-            original.splitlines(), replacement.splitlines(),
-            fromfile=f"""Before: {snapshot.path}""", tofile=f"""After: {snapshot.path}""", lineterm="",
-        ))
-        return difference or f"""{snapshot.path}\n\nNo text changes."""
-    if snapshot.directory:
-        contents = [f"""Quarantine entire directory: {snapshot.path}""", ""]
-        contents.extend(f"""Directory  {path}/""" for path, _mode in snapshot.directories)
-        contents.extend(f"""File       {file.relative_path} ({len(file.content):,} bytes)""" for file in snapshot.files)
-        contents.extend(f"""Symlink    {path} -> {target}""" for path, target in snapshot.links)
-        return "\n".join(contents)
-    if snapshot.links:
-        return f"""Quarantine symlink: {snapshot.path}\n\nTarget: {snapshot.links[0][1]}"""
-    content = snapshot.files[0].content
-    try:
-        text = content.decode("utf-8") if b"\x00" not in content else None
-    except UnicodeDecodeError:
-        text = None
-    if text is None:
-        text = f"""Binary or non-UTF-8 content ({len(content):,} bytes)."""
-    return f"""Quarantine entire file: {snapshot.path}
-
-{text}"""
+    path = change.path
+    match change:
+        case CleanupEdit():
+            difference = "\n".join(unified_diff(
+                change.original.decode("utf-8").splitlines(), change.replacement.decode("utf-8").splitlines(),
+                fromfile=f"""Before: {path}""", tofile=f"""After: {path}""", lineterm="",
+            ))
+            return difference or f"""{path}\n\nNo text changes."""
+        case CleanupRemoval():
+            if path.is_symlink():
+                return f"""Delete symlink: {path}\n\nTarget: {path.readlink()}"""
+            if path.is_dir():
+                children = [f"""{child.name}/""" if child.is_dir() and not child.is_symlink() else child.name for child in sorted(path.iterdir())]
+                return "\n".join([f"""Delete entire directory: {path}""", "", *children])
+            return f"""Delete entire file: {path}"""
 
 
 class CleanupReview(ModalScreen[bool]):
@@ -50,7 +37,7 @@ class CleanupReview(ModalScreen[bool]):
         border: thick $warning; background: $surface;
     }
     #review-title { height: auto; text-style: bold; margin-bottom: 1; }
-    #review-backup { height: auto; margin-bottom: 1; color: $text-muted; }
+    #review-warning { height: auto; margin-bottom: 1; color: $text-muted; }
     #review-blockers { height: 6; border: solid $error; margin-bottom: 1; }
     #review-paths { height: 9; max-height: 35%; border: round $primary; }
     #review-detail { height: 1fr; min-height: 3; border: round $primary; }
@@ -58,17 +45,15 @@ class CleanupReview(ModalScreen[bool]):
     #review-actions Button { margin-left: 1; }
     """
 
-    def __init__(self, *, plan: CleanupPlan, backup_root: Path) -> None:
+    def __init__(self, *, plan: CleanupPlan) -> None:
         super().__init__()
         self._cleanup_plan = plan
-        self._backup_root = backup_root
 
     def compose(self) -> ComposeResult:
         plan = self._cleanup_plan
         with Vertical(id="cleanup-review"):
             yield Static(Text(f"""Review reset · {len(plan.entries)} resources · {len(plan.changes)} paths"""), id="review-title")
-            yield Static(Text(f"""Originals and restore manifest will be saved in a new run directory under:
-{self._backup_root}"""), id="review-backup")
+            yield Static(Text("Deleted paths are removed permanently; nothing is backed up."), id="review-warning")
             if plan.blockers:
                 yield TextArea("\n".join(plan.blockers), read_only=True, id="review-blockers")
             yield DataTable[Text](cursor_type="row", id="review-paths")
@@ -85,10 +70,10 @@ class CleanupReview(ModalScreen[bool]):
         table.border_title = "Planned changes · arrows to inspect"
         table.add_columns("Action", "Path")
         for index, change in enumerate(self._cleanup_plan.changes):
-            action = "Edit configuration" if change.replacement is not None else "Quarantine"
-            table.add_row(Text(action), Text(str(change.snapshot.path)), key=str(index))
+            action = "Delete" if isinstance(change, CleanupRemoval) else "Edit configuration"
+            table.add_row(Text(action), Text(str(change.path)), key=str(index))
         detail = self.query_one("#review-detail", TextArea)
-        detail.border_title = "Diff / quarantine contents"
+        detail.border_title = "Diff / deletion"
         if self._cleanup_plan.changes:
             detail.load_text(cleanup_change_detail(change=self._cleanup_plan.changes[0]))
         else:

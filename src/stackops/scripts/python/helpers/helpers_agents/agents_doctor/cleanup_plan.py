@@ -3,10 +3,9 @@ from pathlib import Path
 import yaml
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_documents import edit_cleanup_document
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupPlan
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupEdit, CleanupPlan, CleanupRemoval
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_scope import CleanupScope
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import capture_cleanup_snapshot
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_progress import CleanupTargetProgress, logger
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import read_editable_file, validate_removal_target
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory, HookRemoval
 
@@ -47,19 +46,15 @@ def build_cleanup_plan(*, inventory: HookInventory, scope: CleanupScope, match: 
         (path, removals) for path, removals in grouped.items()
         if not any(path != directory and path.is_relative_to(directory) for directory in directory_paths)
     )
-    for index, (path, raw_removals) in enumerate(targets, start=1):
-        logger.info(CleanupTargetProgress(path=path, index=index, total=len(targets)))
+    for path, removals in targets:
         try:
-            snapshot = capture_cleanup_snapshot(path=path, home_directory=home_directory)
-            removals = tuple(raw_removals)
-            remove_entire_path = any(removal.format in ("file", "directory") for removal in removals)
-            if remove_entire_path:
-                replacement = None
-            elif snapshot.directory or snapshot.links:
-                raise ValueError(f"Cannot edit directory or symlink as structured configuration: {path}")
+            if path in entire_paths:
+                validate_removal_target(path=path, home_directory=home_directory)
+                changes.append(CleanupRemoval(path=path))
             else:
-                replacement = edit_cleanup_document(original=snapshot.files[0].content, removals=removals)
-            changes.append(CleanupChange(snapshot=snapshot, replacement=replacement))
+                original, mode = read_editable_file(path=path, home_directory=home_directory)
+                replacement = edit_cleanup_document(original=original, removals=tuple(removals))
+                changes.append(CleanupEdit(path=path, original=original, mode=mode, replacement=replacement))
         except (OSError, ValueError, yaml.YAMLError) as error:
             blockers.append(f"{path}: {error}")
     return CleanupPlan(entries=entries, changes=tuple(changes), blockers=tuple(dict.fromkeys(blockers)))

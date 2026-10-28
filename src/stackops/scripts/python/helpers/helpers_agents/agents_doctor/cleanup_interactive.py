@@ -85,7 +85,7 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
     return CleanupSelection(agent=agent, directory=directory, scope=scope, resource=resource, match=match, recursive=recursive)
 
 
-def choose_cleanup_action(*, console: Console, plan: CleanupPlan, backup_root: Path) -> Literal["apply", "revise", "exit"]:
+def choose_cleanup_action(*, console: Console, plan: CleanupPlan) -> Literal["apply", "revise", "exit"]:
     if plan.blockers:
         console.print(Panel(
             Text("Revise the selection or resolve the errors above before resetting."),
@@ -98,14 +98,13 @@ def choose_cleanup_action(*, console: Console, plan: CleanupPlan, backup_root: P
         summary.add_column(style="bold green", no_wrap=True)
         summary.add_column(overflow="fold")
         summary.add_row("Reset", Text(f"""{len(plan.changes)} path(s)"""))
-        summary.add_row("Save originals", Text(str(backup_root)))
         console.print(Panel(summary, title="Ready to reset", border_style="green"))
     choices = ("revise", "exit") if plan.blockers or not plan.changes else ("apply", "revise", "exit")
     console.print(Text("Choose the next action", style="bold cyan"))
     action = cast(Literal["apply", "revise", "exit"], _prompt_choice(
         label="Next action", choices=choices, default="exit",
     ))
-    if action == "apply" and not typer.confirm("Apply the displayed reset and preserve backups?", default=False):
+    if action == "apply" and not typer.confirm("Permanently apply the displayed reset? Deleted files cannot be recovered.", default=False):
         console.print(Text("Reset cancelled. No files changed.", style="yellow"))
         return "exit"
     return action

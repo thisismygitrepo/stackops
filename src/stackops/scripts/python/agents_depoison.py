@@ -18,11 +18,11 @@ def depoison(
     resource: Annotated[str, typer.Option("--resource", "-r", help="Comma-separated resources: all, workspace (.ai folders), hook, plugin, mcp, skill, instructions, configuration.")] = "all",
     recursive: Annotated[bool, typer.Option("--recursive", "-R", help="Recurse into nested repositories when collecting .ai folders.")] = False,
     match: Annotated[str | None, typer.Option("--match", "-m", help="Select resources by name, command, or source path substring.")] = None,
-    apply: Annotated[bool, typer.Option("--apply", "-a", help="Apply the displayed reset and keep original files in quarantine.")] = False,
+    apply: Annotated[bool, typer.Option("--apply", "-a", help="Permanently apply the displayed reset. Nothing is backed up.")] = False,
     interactive: Annotated[
         bool, typer.Option("--interactive", "-i", help="Choose targets, inspect status, and confirm a reset step by step (even with --apply).")
     ] = False,
-    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show every resource, state, command, and source path.")] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show path sizes and every resource, state, command, and source path.")] = False,
     tui: Annotated[
         bool, typer.Option("--tui", "-t", help="Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.")
     ] = False,
@@ -86,7 +86,6 @@ def _run_depoison(
     )
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_output import render_cleanup_plan, render_cleanup_result
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_plan import build_cleanup_plan
-    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_progress import show_cleanup_progress
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import collect_workspace_resources, resolve_cleanup_resources
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.discovery import collect_hooks
@@ -120,8 +119,7 @@ def _run_depoison(
                     entries=tuple(entry for item in inventories for entry in item.entries),
                     diagnostics=tuple(diagnostic for item in inventories for diagnostic in item.diagnostics),
                 )
-            with show_cleanup_progress(console=console):
-                plan = build_cleanup_plan(inventory=inventory, scope=selection.scope, match=selection.match, home_directory=context.home_directory)
+            plan = build_cleanup_plan(inventory=inventory, scope=selection.scope, match=selection.match, home_directory=context.home_directory)
             if interactive:
                 console.rule("Step 3/4 · Review the reset plan", style="cyan")
             render_cleanup_plan(
@@ -129,31 +127,26 @@ def _run_depoison(
                 context=context, selection=selection, applying=apply and not interactive, verbose=verbose,
             )
             if interactive:
-                action = choose_cleanup_action(
-                    plan=plan, backup_root=context.home_directory / ".local" / "state" / "stackops" / "depoison", console=console,
-                )
+                action = choose_cleanup_action(plan=plan, console=console)
                 if action == "revise":
                     continue
                 if action == "exit":
                     console.rule("Step 4/4 · Finished", style="cyan")
                     console.print("[dim]No files changed.[/dim]")
                     raise SystemExit(1 if plan.blockers else 0)
-                console.rule("Step 4/4 · Back up originals and apply", style="cyan")
+                console.rule("Step 4/4 · Delete and apply", style="cyan")
             elif plan.blockers:
                 raise SystemExit(1)
             elif not apply:
                 if plan.changes:
                     console.print(Panel(
-                        "Preview only. Add [bold]--apply[/bold] to perform this reset and preserve backups.",
+                        "Preview only. Add [bold]--apply[/bold] to perform this reset permanently.",
                         title="Next step", border_style="cyan",
                     ))
                 raise SystemExit(0)
             break
-        result = apply_cleanup_plan(
-            plan=plan,
-            backup_root=context.home_directory / ".local" / "state" / "stackops" / "depoison",
-            home_directory=context.home_directory,
-        )
+        with console.status("Deleting..."):
+            result = apply_cleanup_plan(plan=plan, home_directory=context.home_directory)
         render_cleanup_result(console=console, result=result)
     except (typer.Abort, KeyboardInterrupt) as error:
         error_console.print("[yellow]Cancelled.[/yellow]")

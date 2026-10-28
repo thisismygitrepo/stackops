@@ -28563,7 +28563,7 @@
             "name": "reset",
             "fullPath": "agents reset",
             "shortPath": "a D",
-            "help": "Preview or reset agent customizations and repository .ai folders. Use --resource workspace for .ai folders only. Changes require --apply or interactive confirmation and preserve backups.",
+            "help": "Preview or reset agent customizations and repository .ai folders. Use --resource workspace for .ai folders only. Changes require --apply or interactive confirmation and are permanent: nothing is backed up.",
             "source": {
               "file": "src/stackops/scripts/python/agents_depoison.py",
               "module": "stackops.scripts.python.agents_depoison",
@@ -28581,11 +28581,11 @@
                 "    resource: Annotated[str, typer.Option(\"--resource\", \"-r\", help=\"Comma-separated resources: all, workspace (.ai folders), hook, plugin, mcp, skill, instructions, configuration.\")] = \"all\",",
                 "    recursive: Annotated[bool, typer.Option(\"--recursive\", \"-R\", help=\"Recurse into nested repositories when collecting .ai folders.\")] = False,",
                 "    match: Annotated[str | None, typer.Option(\"--match\", \"-m\", help=\"Select resources by name, command, or source path substring.\")] = None,",
-                "    apply: Annotated[bool, typer.Option(\"--apply\", \"-a\", help=\"Apply the displayed reset and keep original files in quarantine.\")] = False,",
+                "    apply: Annotated[bool, typer.Option(\"--apply\", \"-a\", help=\"Permanently apply the displayed reset. Nothing is backed up.\")] = False,",
                 "    interactive: Annotated[",
                 "        bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose targets, inspect status, and confirm a reset step by step (even with --apply).\")",
                 "    ] = False,",
-                "    verbose: Annotated[bool, typer.Option(\"--verbose\", \"-v\", help=\"Show every resource, state, command, and source path.\")] = False,",
+                "    verbose: Annotated[bool, typer.Option(\"--verbose\", \"-v\", help=\"Show path sizes and every resource, state, command, and source path.\")] = False,",
                 "    tui: Annotated[",
                 "        bool, typer.Option(\"--tui\", \"-t\", help=\"Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.\")",
                 "    ] = False,",
@@ -28762,7 +28762,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--apply', '-a', help='Apply the displayed reset and keep original files in quarantine.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--apply', '-a', help='Permanently apply the displayed reset. Nothing is backed up.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -28775,7 +28775,7 @@
                     "short_flags": [
                       "-a"
                     ],
-                    "help": "Apply the displayed reset and keep original files in quarantine."
+                    "help": "Permanently apply the displayed reset. Nothing is backed up."
                   }
                 },
                 {
@@ -28806,7 +28806,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Show every resource, state, command, and source path.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Show path sizes and every resource, state, command, and source path.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -28819,7 +28819,7 @@
                     "short_flags": [
                       "-v"
                     ],
-                    "help": "Show every resource, state, command, and source path."
+                    "help": "Show path sizes and every resource, state, command, and source path."
                   }
                 },
                 {
