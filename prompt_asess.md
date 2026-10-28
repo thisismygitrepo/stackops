@@ -6,9 +6,9 @@ Review boundaries:
 
 - Read and follow the applicable AGENTS.md instructions.
 - Never open, read, write, list, or otherwise inspect anything under ~/dotfiles, including through symlinks, imports, tests, or command execution. Infer configuration locations from repository source declarations only.
-- Assess the current working tree, including staged and unstaged changes. Record the commit and working-tree state. If relevant files change during the review, recheck the affected conclusions before reporting them.
+- Assess the current working tree, including staged, unstaged, and relevant untracked changes. Record the commit and working-tree state. If relevant files change during the review, recheck the affected conclusions before reporting them.
 - Do not implement fixes or modify code, tests, documentation, skills, generated assets, dependencies, or configuration. Return the assessment in your response unless I request a report file.
-- Prefer source inspection. Do not launch agents, execute discovered scripts, install software, open editors, synchronize data, export/import configurations, or load secrets to investigate behavior.
+- Prefer source inspection. Do not launch the application's agent workflows, execute discovered scripts, install software, open editors, synchronize data, export/import configurations, or load secrets to investigate behavior.
 - Do not create tests or validation infrastructure or run repository-wide checks. An existing focused check is optional only when permitted by repository instructions and verified to avoid private configuration access and operational side effects. Clearly state what was actually verified.
 - Use parallel read-only reviews for independent command families when available, then reconcile their findings against the same checkout.
 
@@ -21,7 +21,7 @@ For each relevant command, trace the CLI declaration through normalization, loca
 1. **Command support and vocabulary**
    - Discover accepted source values, aliases, case sensitivity, long and short option names, and defaults.
    - Distinguish an omitted option from an explicitly selected combined source or single source.
-   - Compare related operations: run/install, list/search, path, init, edit, validate, register, subset, save, sync, export, and import.
+   - Compare related operations: run/install, list/search, path, status, init, edit, validate, register, subset, save, sync, export, and import.
    - Check special modes that bypass or alter source selection, such as executable checks, raw commands, interactive selection, or explicit file arguments.
    - Establish which selectors refer to input sources, installation destinations, sensitivity, or unrelated metadata filters.
 
@@ -30,6 +30,7 @@ For each relevant command, trace the CLI declaration through normalization, loca
    - Compare behavior at a repository root, in a nested directory, outside Git, and in a workspace containing multiple repositories.
    - Determine whether discovery uses the current directory, Git root, ancestors, descendants, or a combination; check consistency across consumers and management commands.
    - Check whether path-reporting, validation, editing, and execution address the same file or set of files.
+   - Verify that displayed source/provenance labels identify the file actually selected, including custom files and overridden entries.
    - Verify that advertised bundled sources actually exist in the package assets and are included by packaging rules.
 
 3. **Explicit paths and source isolation**
@@ -91,8 +92,8 @@ Report the results in this order:
 1. A short verdict naming the reviewed commit and working-tree state, with the most consequential findings first.
 2. An actionable findings table: priority, affected command/scenario, observed behavior and impact, and precise clickable file/line references. Each finding needs a concrete trigger and a traced implementation cause. Distinguish static conclusions from runtime observations.
 3. When a prior assessment is available, a status table covering its findings, including confirmed fixes and anything still unverified.
-4. A current command-support matrix: command/operation, accepted source values, default behavior, explicit input-file support, and missing or exceptional capabilities. Group commands only when their behavior matches; separate reading from writing when defaults differ. Explain that omitted source values are unsupported and that a missing capability is not automatically a bug.
+4. A current command-support matrix: command/operation, accepted source values and aliases, selector flags, default behavior, explicit input-file support, and missing or exceptional capabilities. Split into readable tables if necessary. Group commands only when their behavior matches; separate reading from writing when defaults differ. Explain that omitted source values are unsupported and that a missing capability is not automatically a bug.
 5. A source-semantics comparison covering declared storage/discovery, project boundaries, combined-source behavior, custom-file behavior, aliases, and mutation targets. Include a concise table where it makes differences easier to compare.
 6. A short prioritized recommendation and the review's limits: what was inspected, any checks actually run, and what could not be verified.
 
-Keep the review focused on user-visible consistency and correctness. Separate confirmed bugs, documented design differences, optional capability gaps, and internal naming residue. Do not treat source and destination scope as interchangeable, demand library-backed secrets, require combined-source writes, or recommend compatibility layers merely because labels changed. Prefer the smallest coherent correction for each confirmed problem; avoid unrelated cleanup or a speculative framework redesign.
+Keep the review focused on user-visible consistency and correctness. Separate confirmed bugs, documented design differences, optional capability gaps, and internal naming residue. Do not treat source and destination scope as interchangeable, demand library-backed secrets, require combined-source writes, or recommend compatibility layers merely because labels changed. Prefer the smallest coherent correction for each confirmed problem; avoid unrelated cleanup or a speculative framework redesign. If no actionable issues are supported by the evidence, say so and describe the remaining review limitations.
