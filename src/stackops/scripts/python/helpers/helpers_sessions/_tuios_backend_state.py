@@ -81,6 +81,7 @@ def list_window_entries(session_name: str) -> list[WindowEntry]:
             raise ValueError("TUIOS returned an invalid last_exit_code.")
         windows.append(WindowEntry(
             window_id=window_id,
+            pid=_field(entry, "pid", int, 0),
             index=_field(entry, "index", int, 0),
             workspace=_field(entry, "workspace", int, 1),
             display_name=_field(entry, "display_name", str, ""),
@@ -107,6 +108,6 @@ def capture_window(session_name: str, window_id: str, lines: int, ansi: bool) ->
 
 
 def kill_window_command(session_name: str, window_id: str) -> list[str]:
-    command = ["tuios", "run-command", "--session", session_name]
-    command.extend(("CloseWindow", window_id))
+    command = ["tuios", "close-window", "--session", session_name]
+    command.extend(("--", window_id))
     return command

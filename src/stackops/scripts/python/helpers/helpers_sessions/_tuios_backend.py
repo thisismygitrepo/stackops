@@ -1,3 +1,4 @@
+import os
 from typing import Literal
 
 from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
@@ -55,9 +56,42 @@ def choose_existing_session_names(msg: str) -> TraceSessionChoice:
 
 
 def new_session_script(kill_all: bool, sessions: list[SessionEntry]) -> str:
-    commands = [f"""tuios kill-session -- {quote(session.name)}""" for session in sessions if kill_all and not session.saved]
-    commands.append("tuios new")
-    return " &&\n".join(commands)
+    running_sessions = [session for session in sessions if not session.saved]
+    pane_id = os.environ.get("TUIOS_PANE_ID")
+    if pane_id and kill_all:
+        current_session = next((
+            session.name for session in running_sessions
+            if any(window.window_id == pane_id for window in list_window_entries(session.name))
+        ), None)
+        if current_session is None:
+            raise ValueError("Cannot locate the current TUIOS pane's session to replace all sessions.")
+        running_sessions.sort(key=lambda session: session.name == current_session)
+    kill_commands = [f"""tuios kill-session -- {quote(session.name)}""" for session in running_sessions if kill_all]
+    outside_script = " &&\n".join([*kill_commands, "tuios new"])
+    existing_names = {session.name for session in sessions}
+    session_number = 0
+    while f"""session-{session_number}""" in existing_names:
+        session_number += 1
+    name = quote(f"""session-{session_number}""")
+    inside_script = " &&\n".join([
+        f"""tuios new --detach --cwd "$PWD" -- {name}""",
+        f"""tuios switch-session -- {name}""",
+        *kill_commands,
+    ])
+    return f"""if [ -n "${{TUIOS_PANE_ID:-}}" ]; then
+{inside_script}
+else
+{outside_script}
+fi"""
+
+
+def attach_session_script(name: str) -> str:
+    quoted_name = quote(name)
+    return f"""if [ -n "${{TUIOS_PANE_ID:-}}" ]; then
+    tuios switch-session -- {quoted_name}
+else
+    tuios attach -- {quoted_name}
+fi"""
 
 
 def choose_session(
@@ -68,13 +102,13 @@ def choose_session(
     window: bool,
 ) -> AttachSessionChoice:
     if name is not None:
-        return "handoff_script", f"""tuios attach -- {quote(name)}"""
+        return "handoff_script", attach_session_script(name)
     try:
         sessions = list_session_entries()
         if new_session or not sessions:
             return "handoff_script", new_session_script(kill_all=kill_all, sessions=sessions)
         if first:
-            return "handoff_script", f"""tuios attach -- {quote(sessions[0].name)}"""
+            return "handoff_script", attach_session_script(sessions[0].name)
         scripts: dict[str, str] = {}
         previews: dict[str, str] = {}
         for session in sessions:
@@ -85,18 +119,16 @@ def choose_session(
                     label = window_label(session.name, entry)
                     scripts[label] = (
                         f"""tuios focus-window --session {quote(session.name)} -- {quote(entry.window_id)} &&\n"""
-                        f"""tuios attach -- {quote(session.name)}"""
+                        + attach_session_script(session.name)
                     )
                     previews[label] = window_preview(session.name, entry)
             else:
-                scripts[session.name] = f"""tuios attach -- {quote(session.name)}"""
+                scripts[session.name] = attach_session_script(session.name)
                 previews[session.name] = session_preview(session)
         if window and len(scripts) == 1:
             return "handoff_script", next(iter(scripts.values()))
-        scripts[NEW_SESSION_LABEL] = new_session_script(kill_all=kill_all, sessions=sessions)
         previews[NEW_SESSION_LABEL] = "backend: tuios\naction: create a new session"
         if not kill_all:
-            scripts[KILL_ALL_AND_NEW_LABEL] = new_session_script(kill_all=True, sessions=sessions)
             previews[KILL_ALL_AND_NEW_LABEL] = "backend: tuios\naction: kill every running session and create a new one"
         selection = interactive_choose_with_preview(
             msg="Choose a TUIOS window:" if window else "Choose a TUIOS session:",
@@ -106,6 +138,14 @@ def choose_session(
         return "error", str(error)
     if selection is None:
         return "error", "No TUIOS target selected."
+    if selection in {NEW_SESSION_LABEL, KILL_ALL_AND_NEW_LABEL}:
+        try:
+            return "handoff_script", new_session_script(
+                kill_all=kill_all or selection == KILL_ALL_AND_NEW_LABEL,
+                sessions=sessions,
+            )
+        except ValueError as error:
+            return "error", str(error)
     script = scripts.get(selection)
     if script is None:
         return "error", f"""Unknown TUIOS target selected: {selection}"""

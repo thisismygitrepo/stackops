@@ -1,8 +1,10 @@
+import json
 import shlex
 from pathlib import Path
+from typing import cast
 
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
-from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import run_tuios
+from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import kill_window_command, run_tuios
 from stackops.utils.schemas.layouts.layout_types import TabConfig
 
 
@@ -28,24 +30,33 @@ done"""
 
 
 def launch_window(session_name: str, tab: TabConfig, exit_mode: SessionExitMode) -> str:
-    window_id = run_tuios(
+    output = run_tuios(
         [
-            "new-window",
-            "--session", session_name,
-            "--cwd", str(Path(tab["startDir"]).expanduser().absolute()),
-            "--workspace", "1",
-            "--no-focus",
-            "--print-id",
-            "--", tab["tabName"], "bash", "-c",
-            build_window_script(command=tab["command"], exit_mode=exit_mode),
+            "call", "new-window",
+            json.dumps({
+                "session": session_name,
+                "cwd": str(Path(tab["startDir"]).expanduser().absolute()),
+                "workspace": 1,
+                "focus": False,
+                "name": tab["tabName"],
+                "close_on_exit": True,
+                "command": ["bash", "-c", build_window_script(command=tab["command"], exit_mode=exit_mode)],
+            }),
         ]
-    ).strip()
-    if not window_id:
+    )
+    try:
+        payload: object = json.loads(output)
+    except json.JSONDecodeError as error:
+        raise ValueError("TUIOS returned invalid new-window JSON.") from error
+    if not isinstance(payload, dict):
+        raise ValueError("TUIOS returned an invalid new-window response.")
+    window_id = cast(dict[str, object], payload).get("window_id")
+    if not isinstance(window_id, str) or not window_id:
         raise ValueError(f"""TUIOS did not return an ID for window '{tab['tabName']}'.""")
     return window_id
 
 
 def close_window(session_name: str, window_id: str) -> None:
     run_tuios(
-        ["run-command", "--session", session_name, "--", "CloseWindow", window_id]
+        kill_window_command(session_name=session_name, window_id=window_id)[1:]
     )

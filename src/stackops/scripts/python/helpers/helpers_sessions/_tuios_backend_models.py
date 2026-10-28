@@ -14,6 +14,7 @@ class SessionEntry:
 @dataclass(frozen=True, slots=True)
 class WindowEntry:
     window_id: str
+    pid: int
     index: int
     workspace: int
     display_name: str

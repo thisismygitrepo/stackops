@@ -16,7 +16,7 @@ def _print_session_details(session: SessionEntry, console: Console) -> None:
     for column in ("Window", "ID", "Workspace", "Focus", "Shell", "Agent", "Command", "Last exit", "CWD", "Host"):
         table.add_column(column, overflow="fold")
     for window in windows:
-        idle = window_is_idle(session_name=session.name, window=window)
+        idle = window_is_idle(window=window)
         table.add_row(
             window.display_name,
             window.window_id,
@@ -62,7 +62,7 @@ def print_tuios_summary(session_name: str | None, choose_session: bool, show_tab
             table.add_column(column)
         for session in sessions:
             windows = list_window_entries(session_name=session.name)
-            idle_states = [window_is_idle(session_name=session.name, window=window) for window in windows]
+            idle_states = [window_is_idle(window=window) for window in windows]
             agents = Counter(window.agent_state for window in windows if window.agent_state != "none")
             table.add_row(
                 session.name,

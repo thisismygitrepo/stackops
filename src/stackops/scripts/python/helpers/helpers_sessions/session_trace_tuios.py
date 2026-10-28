@@ -27,7 +27,7 @@ def list_trace_targets() -> tuple[list[TraceTarget] | None, str | None]:
     ], None
 
 
-def _window_trace_state(session_name: str, window: WindowEntry, until: TraceUntil, expected_exit_code: int | None) -> TracePaneState:
+def _window_trace_state(window: WindowEntry, until: TraceUntil, expected_exit_code: int | None) -> TracePaneState:
     category: PaneCategory = "unknown"
     status = "unknown"
     completed = window.at_prompt is True and window.command_seq > 0
@@ -41,7 +41,7 @@ def _window_trace_state(session_name: str, window: WindowEntry, until: TraceUnti
         category = "running"
         status = f"""agent: {window.agent_state}""" if window.agent_state != "none" else "running"
     if until == "idle-shell":
-        idle = window_is_idle(session_name=session_name, window=window)
+        idle = window_is_idle(window=window)
         category = "idle-shell" if idle is True else "running" if idle is False else "unknown"
         status = "idle shell" if idle is True else "running" if idle is False else "unknown"
         if idle is False and window.agent_state != "none":
@@ -89,7 +89,7 @@ def load_trace_snapshot(session_name: str, until: TraceUntil, expected_exit_code
     except ValueError as error:
         windows = []
         warning = str(error)
-    panes = tuple(_window_trace_state(session_name, window, until, expected_exit_code) for window in windows)
+    panes = tuple(_window_trace_state(window, until, expected_exit_code) for window in windows)
     if until in {"all-exited", "exit-code"} and any(window.at_prompt is None for window in windows):
         warning = "Shell status requires OSC 133 integration; commands launched through StackOps report it automatically."
     matched_targets = sum(pane.matched for pane in panes)
