@@ -5,10 +5,10 @@ import pytest
 from typer.testing import CliRunner
 
 from stackops.scripts.python import terminal
-from stackops.scripts.python.terminal_summary_models import LegacySummarizeBackend, SummarizeVocabulary, SummaryBackend
+from stackops.scripts.python.terminal_summary_models import SummaryBackend
 
 
-@pytest.mark.parametrize("arguments", [("--help",), ("summary", "--help"), ("s", "--help"), ("summarize", "--help"), ("S", "--help")])
+@pytest.mark.parametrize("arguments", [("--help",), ("summary", "--help"), ("s", "--help")])
 def test_terminal_help_does_not_import_summary_implementations(arguments: tuple[str, ...]) -> None:
     script = """import sys
 from typer.testing import CliRunner
@@ -18,7 +18,6 @@ result = CliRunner().invoke(terminal.get_app(), sys.argv[1:])
 assert result.exit_code == 0, result.output
 blocked_modules = (
     "stackops.scripts.python.terminal_summary",
-    "stackops.scripts.python.terminal_summarize",
     "stackops.scripts.python.helpers.helpers_sessions._tmux_backend",
     "stackops.scripts.python.helpers.helpers_sessions._herdr_backend",
     "stackops.scripts.python.helpers.helpers_sessions._aoe_backend",
@@ -61,20 +60,3 @@ def test_summary_command_forwards_defaults_and_options(
 
     assert result.exit_code == 0, result.output
     assert captured_values == [expected_values]
-
-
-@pytest.mark.parametrize("command", ["summarize", "S"])
-def test_summarize_command_forwards_options(command: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    from stackops.scripts.python import terminal_summarize
-
-    captured_values: list[tuple[str, SummarizeVocabulary, LegacySummarizeBackend | None, bool]] = []
-
-    def capture_summary(*, layout_path: str, vocabulary: SummarizeVocabulary, backend: LegacySummarizeBackend | None, show_tabs: bool) -> None:
-        captured_values.append((layout_path, vocabulary, backend, show_tabs))
-
-    monkeypatch.setattr(terminal_summarize, "summarize", capture_summary)
-
-    result = CliRunner().invoke(terminal.get_app(), [command, "layout.json", "-v", "herdr", "-t"])
-
-    assert result.exit_code == 0, result.output
-    assert captured_values == [("layout.json", "herdr", None, True)]

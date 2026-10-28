@@ -1,9 +1,6 @@
 from typing import Annotated
 
 import typer
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
@@ -34,6 +31,10 @@ def setup_cloud(
     ] = None,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Write without confirmation. Requires --cloud.")] = False,
 ) -> None:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
     from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import (
         exit_with_setup_error,
         load_stackops_config_for_setup,
@@ -115,6 +116,9 @@ def setup_agent(
     ] = None,
 ) -> None:
     from typing import get_args
+
+    from rich.console import Console
+    from rich.panel import Panel
 
     from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import load_stackops_config_for_setup, write_stackops_config
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_choice

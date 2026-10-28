@@ -1,12 +1,13 @@
 import typer
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 
 EMAIL_SETUP_HELP = "Select or create an SMTP profile and save the default recipient."
 
 
 def setup_email() -> None:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
     from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import (
         exit_with_setup_error,
         load_stackops_config_for_setup,

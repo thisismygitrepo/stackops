@@ -1,11 +1,6 @@
 from typing import TYPE_CHECKING, Annotated
 
 import typer
-from rich import box
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from rich.text import Text
 
 from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE
 
@@ -14,6 +9,11 @@ if TYPE_CHECKING:
 
 
 def show_registration_summary(registration: "BackupRegistrationResult") -> None:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.text import Text
+
     from stackops.profile.dotfiles_constants import ALL_OS_VALUES
 
     entry = registration["entry"]
@@ -51,6 +51,12 @@ def show_registration_summary(registration: "BackupRegistrationResult") -> None:
 def display_data(
     source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option("--source", "-s", help="Backup configuration sources: library, user, or all.")] = "all",
 ) -> None:
+    from rich import box
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.text import Text
+
     from stackops.profile.dotfiles_constants import ALL_OS_VALUES
     from stackops.scripts.python.helpers.helpers_cloud.backup_config import read_backup_config
 

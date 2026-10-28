@@ -2,18 +2,18 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.console import Console
-from rich.table import Table
-from rich.text import Text
-
-from stackops.scripts.python.helpers.helpers_devops.devops_status_repos import render_local_repository_status
-from stackops.scripts.python.helpers.helpers_repos.local_status import inspect_local_repository
 
 
 def list_repositories(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
     guarded: Annotated[bool, typer.Option("--guarded", "-g", help="Show only registered repositories using encrypted guard sync.")] = False,
 ) -> None:
+    from rich.console import Console
+    from rich.table import Table
+    from rich.text import Text
+
+    from stackops.scripts.python.helpers.helpers_devops.devops_status_repos import render_local_repository_status
+    from stackops.scripts.python.helpers.helpers_repos.local_status import inspect_local_repository
     from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec, resolve_repos_spec_path
 
     try:

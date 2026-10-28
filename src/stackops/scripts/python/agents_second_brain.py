@@ -5,17 +5,6 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_activity import read_second_brain_git_activity
-from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import (
-    prune_second_brain_updates,
-    read_second_brain_updates,
-)
-from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import (
-    show_second_brain_prune_result,
-    show_second_brain_config_result,
-    show_second_brain_status,
-)
-
 
 def configure_second_brain(
     *, home: Path, instructions_text: str, overwrite: bool
@@ -38,6 +27,8 @@ def config(
         bool, typer.Option("--overwrite", "-o", help="Replace existing AGENTS.md with the bundled instructions, discarding local edits.")
     ] = False,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import show_second_brain_config_result
+
     try:
         instructions_text = files("stackops.scripts.python").joinpath("agents_second_brain.instructions.md").read_text(encoding="utf-8")
         instructions_path, action = configure_second_brain(home=Path.home(), instructions_text=instructions_text, overwrite=overwrite)
@@ -49,7 +40,11 @@ def config(
 
 
 def status() -> None:
-    second_brain_root = Path.home().joinpath("code", "agents", "second-brain")
+    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_activity import read_second_brain_git_activity
+    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import read_second_brain_updates
+    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import show_second_brain_status
+
+    second_brain_root =Path.home().joinpath("code", "agents", "second-brain")
     today = date.today()
     try:
         update_files = read_second_brain_updates(second_brain_root=second_brain_root)
@@ -66,6 +61,12 @@ def status() -> None:
 def prune(
     apply: Annotated[bool, typer.Option("--apply", "-a", help="Delete the invalid updates shown in the preview.")] = False,
 ) -> None:
+    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import (
+        prune_second_brain_updates,
+        read_second_brain_updates,
+    )
+    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import show_second_brain_prune_result
+
     second_brain_root = Path.home().joinpath("code", "agents", "second-brain")
     try:
         update_files = read_second_brain_updates(second_brain_root=second_brain_root)

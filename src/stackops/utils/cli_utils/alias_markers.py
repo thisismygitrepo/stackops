@@ -4,6 +4,8 @@ from collections.abc import Callable
 import typer
 from typer.models import CommandInfo, TyperInfo
 
+from stackops.utils.cli_utils.lazy_alias_group import defer_alias_group_conversion
+
 
 ALIAS_MARKER_PATTERN = re.compile(r"<[^>\s]+>")
 
@@ -11,6 +13,7 @@ ALIAS_MARKER_PATTERN = re.compile(r"<[^>\s]+>")
 def apply_alias_markers(app: typer.Typer) -> typer.Typer:
     _apply_command_alias_markers(app.registered_commands)
     _apply_group_alias_markers(app.registered_groups)
+    defer_alias_group_conversion(app.registered_groups)
     for group in app.registered_groups:
         if group.typer_instance is not None:
             apply_alias_markers(group.typer_instance)

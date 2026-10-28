@@ -2,8 +2,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Never, assert_never
 
 import typer
-from rich.console import Console
-from rich.table import Table
 
 if TYPE_CHECKING:
     from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
@@ -48,6 +46,9 @@ def _state_label(state: VersionRepositoryState) -> str:
 
 
 def _print_versions(versions_file: VersionsFile, path: Path) -> None:
+    from rich.console import Console
+    from rich.table import Table
+
     table = Table(title=f"Declared repository versions · {path}")
     table.add_column("Version", style="bold cyan", no_wrap=True)
     table.add_column("Message")
@@ -61,6 +62,9 @@ def _print_versions(versions_file: VersionsFile, path: Path) -> None:
 
 
 def _print_version_status(declared_version: DeclaredVersion, statuses: list[RepositoryVersionStatus]) -> None:
+    from rich.console import Console
+    from rich.table import Table
+
     table = Table(title=f"Version {declared_version['version']} · {declared_version['message']}")
     table.add_column("Repository", style="cyan")
     table.add_column("Captured", no_wrap=True)
@@ -178,6 +182,9 @@ def checkout(
         )
     except (OSError, ValueError, VersionOperationError) as error:
         _abort(error)
+    from rich.console import Console
+    from rich.table import Table
+
     table = Table(title=f"{'Checkout preview' if dry_run else 'Checked out'} · {declared_version['version']}")
     table.add_column("Repository", style="cyan")
     table.add_column("Target")
