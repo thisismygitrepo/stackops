@@ -5,7 +5,7 @@ from stackops.utils.managed_files import ManagedFileSpec
 from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
 
 AgentManagedFileKind: TypeAlias = Literal["prompts", "parallel", "mcp"]
-AgentManagedFileSource: TypeAlias = Literal["project", "p", "user", "u", "library", "l"]
+AgentManagedFileSource: TypeAlias = Literal["workspace", "w", "user", "u", "library", "l"]
 
 
 def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[AgentManagedFileSource, Path], ...]:
@@ -33,14 +33,14 @@ def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[A
         ("library", library_path),
     ]
     if repo_path is not None:
-        locations.insert(0, ("project", repo_path))
+        locations.insert(0, ("workspace", repo_path))
     return tuple(locations)
 
 
 def resolve_agent_managed_file_path(*, kind: AgentManagedFileKind, source: AgentManagedFileSource) -> Path:
     match source:
-        case "project" | "p":
-            source = "project"
+        case "workspace" | "w":
+            source = "workspace"
         case "user" | "u":
             source = "user"
         case "library" | "l":
@@ -48,8 +48,8 @@ def resolve_agent_managed_file_path(*, kind: AgentManagedFileKind, source: Agent
     for location_source, path in agent_managed_file_locations(kind=kind):
         if location_source == source:
             return path
-    if source == "project":
-        raise ValueError(f"""--source project requires {PROJECT_ROOT_REQUIREMENT}; use --custom-path for an explicit configuration file""")
+    if source == "workspace":
+        raise ValueError(f"""--source workspace requires {PROJECT_ROOT_REQUIREMENT}; use --custom-path for an explicit configuration file""")
     raise ValueError(f"""Unsupported agent configuration source: {source}""")
 
 
@@ -57,7 +57,7 @@ def get_agent_managed_file_spec(kind: AgentManagedFileKind) -> ManagedFileSpec:
     import stackops.utils.schemas.agents as agent_schema_assets
     from stackops.utils.path_reference import get_path_reference_path
 
-    user_path = dict(agent_managed_file_locations(kind=kind)).get("project")
+    user_path = dict(agent_managed_file_locations(kind=kind)).get("workspace")
     if user_path is None:
         relative_path = ".stackops/mcp.json" if kind == "mcp" else f""".stackops/agents/{kind}.yaml"""
         user_path = Path.cwd() / relative_path
@@ -116,4 +116,4 @@ def validate_agent_managed_file(*, kind: AgentManagedFileKind, data_path: Path) 
             servers = entries.get("mcpServers")
             if not isinstance(servers, dict) or not all(isinstance(name, str) for name in servers):
                 raise ValueError(f"""MCP catalog must define mcpServers as an object with string keys: {data_path}""")
-            resolve_requested_mcp_servers(requested_names=tuple(cast(dict[str, object], servers)), locations=({"scope": "project", "path": data_path},))
+            resolve_requested_mcp_servers(requested_names=tuple(cast(dict[str, object], servers)), locations=({"scope": "workspace", "path": data_path},))

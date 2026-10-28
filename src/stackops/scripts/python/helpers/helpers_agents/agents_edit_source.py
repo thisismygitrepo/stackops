@@ -7,20 +7,20 @@ from stackops.utils.options_utils.options import choose_from_options
 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
 
-def choose_edit_source(*, locations: list[tuple[str, Path]]) -> tuple[Literal["project", "user", "library"], Path]:
+def choose_edit_source(*, locations: list[tuple[str, Path]]) -> tuple[Literal["workspace", "user", "library"], Path]:
     if not sys.stdin.isatty():
-        raise ValueError("--edit requires a specific --source (project, user, or library) when input is not interactive.")
+        raise ValueError("--edit requires a specific --source (workspace, user, or library) when input is not interactive.")
 
     source_descriptions: dict[str, str] = {
-        "project": """Project configuration
+        "workspace": """Workspace configuration
 
-Use for prompts, parallel runs and MCP definitions that belong with a project.
-These files can be committed and shared with the project.
+Use for prompts, parallel runs and MCP definitions that belong with a workspace.
+These files can be committed and shared with the workspace.
 """,
         "user": """Personal configuration
 
-Use for your own prompts, parallel runs and MCP definitions, reused across projects.
-These files are kept in your user dotfiles storage, separately from each project.
+Use for your own prompts, parallel runs and MCP definitions, reused across workspaces.
+These files are kept in your user dotfiles storage, separately from each workspace.
 The source name does not set file permissions or encrypt the contents.
 """,
         "library": """Built-in StackOps configuration
@@ -32,12 +32,12 @@ Edits change the bundled files directly and may be replaced by an upgrade or rei
 """,
     }
     source_previews: dict[str, str] = {}
-    source_locations: dict[str, tuple[Literal["project", "user", "library"], Path]] = {}
+    source_locations: dict[str, tuple[Literal["workspace", "user", "library"], Path]] = {}
     for location_name, path in locations:
         source = location_name.partition(":")[0]
         match source:
-            case "project" | "user" | "library":
-                label = f"""project:{path.relative_to(Path.cwd(), walk_up=True).as_posix()}""" if source == "project" else source
+            case "workspace" | "user" | "library":
+                label = f"""workspace:{path.relative_to(Path.cwd(), walk_up=True).as_posix()}""" if source == "workspace" else source
                 source_locations[label] = (source, path)
                 source_previews[label] = f"""{label}
 

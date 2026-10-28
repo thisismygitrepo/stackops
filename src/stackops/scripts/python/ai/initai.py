@@ -93,7 +93,7 @@ def add_ai_configs(
                 skill_names=(AGENT_OPS_SKILL_NAME,),
                 skill_folder_names=build_stackops_skill_folder_names(),
                 install_root=repo_root,
-                scope="project",
+                scope="workspace",
             )
             for install_result in install_results:
                 changes.extend(

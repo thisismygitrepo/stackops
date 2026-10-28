@@ -41,7 +41,7 @@ def add_mcp(
     if edit:
         created_catalog_paths: list[Path] = []
         for location in search_locations:
-            should_create_or_validate = location["scope"] != "project" or location["path"].exists() or source in ("project", "p")
+            should_create_or_validate = location["scope"] != "workspace" or location["path"].exists() or source in ("workspace", "w")
             if should_create_or_validate and ensure_mcp_catalog_exists(location=location):
                 created_catalog_paths.append(location["path"])
         for created_catalog_path in created_catalog_paths:
@@ -61,9 +61,9 @@ def add_mcp(
     else:
         requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
 
-    repo_root = resolve_project_root(current_dir=Path.cwd()) if scope == "project" else None
-    if scope == "project" and repo_root is None:
-        raise ValueError(f"""Project installation requires {PROJECT_ROOT_REQUIREMENT}""")
+    repo_root = resolve_project_root(current_dir=Path.cwd()) if scope == "workspace" else None
+    if scope == "workspace" and repo_root is None:
+        raise ValueError(f"""Workspace installation requires {PROJECT_ROOT_REQUIREMENT}""")
 
     resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
     selected_agents = parse_requested_agents(raw_value=agents, scope=scope)

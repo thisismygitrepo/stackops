@@ -40,5 +40,5 @@ def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
 def require_current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path:
     stackops_path = current_repo_stackops_path(path_kind=path_kind)
     if stackops_path is None:
-        raise ValueError(f"""--source project requires {PROJECT_ROOT_REQUIREMENT}""")
+        raise ValueError(f"""--source workspace requires {PROJECT_ROOT_REQUIREMENT}""")
     return stackops_path

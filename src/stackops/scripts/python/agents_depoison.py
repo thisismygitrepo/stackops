@@ -10,10 +10,10 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models
 
 def depoison(
     agent: Annotated[str, typer.Argument(help="Agent to reset, or all.")] = "all",
-    directory: Annotated[Path | None, typer.Option("--directory", "-d", exists=True, file_okay=False, help="Inspect a project or a directory containing repositories.")] = None,
+    directory: Annotated[Path | None, typer.Option("--directory", "-d", exists=True, file_okay=False, help="Inspect a workspace or a directory containing repositories.")] = None,
     scope: Annotated[
-        Literal["project", "p", "user", "u", "all", "a"],
-        typer.Option("--scope", "-s", help="Select project/p, user/u, or all/a resources. Workspace folders belong to the project scope."),
+        Literal["workspace", "w", "user", "u", "all", "a"],
+        typer.Option("--scope", "-s", help="Select workspace/w, user/u, or all/a resources. Shared .ai folders belong to the workspace scope."),
     ] = "all",
     resource: Annotated[str, typer.Option("--resource", "-r", help="Comma-separated resources: all, workspace (.ai folders), hook, plugin, mcp, skill, instructions, configuration.")] = "all",
     recursive: Annotated[bool, typer.Option("--recursive", "-R", help="Recurse into nested repositories when collecting .ai folders.")] = False,
@@ -29,8 +29,8 @@ def depoison(
 ) -> None:
     resolved_scope: CleanupScope
     match scope:
-        case "project" | "p":
-            resolved_scope = "project"
+        case "workspace" | "w":
+            resolved_scope = "workspace"
         case "user" | "u":
             resolved_scope = "user"
         case "all" | "a":

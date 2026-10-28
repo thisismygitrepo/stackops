@@ -21,9 +21,9 @@ Use --json to print matching secrets JSON, including values.
 Use --all-matches to select every matching bundle.
 Terms are case-insensitive substring matches; exact selectors are case-sensitive.
 Use --interactive to select a bundle and --preview-secrets to show values in its preview.
-When --source is omitted, --custom-path takes precedence; otherwise project is preferred over user.
-The project file is .stackops/secrets/secrets.json at the repository root.
-Use --source project/p, user/u, or all/a to select sources explicitly.
+When --source is omitted, --custom-path takes precedence; otherwise workspace is preferred over user.
+The workspace file is .stackops/secrets/secrets.json at the workspace root.
+Use --source workspace/w, user/u, or all/a to select sources explicitly.
 """
 SECRETS_LOAD_EPILOG = """Examples:
   devops vault load --name aws-dev --tag iam-access-key
@@ -34,9 +34,9 @@ Load prepares environment variables for the calling shell.
 Use --all-matches to select every matching bundle. Loading rejects conflicting values.
 Terms are case-insensitive substring matches; exact selectors are case-sensitive.
 Use --interactive to select a bundle and --preview-secrets to show values in its preview.
-When --source is omitted, --custom-path takes precedence; otherwise project is preferred over user.
-The project file is .stackops/secrets/secrets.json at the repository root.
-Use --source project/p, user/u, or all/a to select sources explicitly.
+When --source is omitted, --custom-path takes precedence; otherwise workspace is preferred over user.
+The workspace file is .stackops/secrets/secrets.json at the workspace root.
+Use --source workspace/w, user/u, or all/a to select sources explicitly.
 """
 
 
@@ -53,7 +53,7 @@ def stats(
             "--source",
             "-s",
             case_sensitive=False,
-            help="Secrets file source to read: project/p, user/u, or all/a. Ignored when --custom-path is provided.",
+            help="Secrets file source to read: workspace/w, user/u, or all/a. Ignored when --custom-path is provided.",
         ),
     ] = "all",
     details: Annotated[
@@ -87,9 +87,9 @@ def subset(
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source", "-s", case_sensitive=False, help="Source secrets file to read: project/p or user/u. Ignored when --custom-path is provided."
+            "--source", "-s", case_sensitive=False, help="Source secrets file to read: workspace/w or user/u. Ignored when --custom-path is provided."
         ),
-    ] = "project",
+    ] = "workspace",
     on_conflict: Annotated[
         cli_subset_support.SubsetOutputConflictOption,
         typer.Option(
@@ -120,9 +120,9 @@ def add(
     secrets_source: Annotated[
         WritableSecretsSource,
         typer.Option(
-            "--source", "-s", case_sensitive=False, help="Secrets file source to update: project/p or user/u. Ignored when --custom-path is provided."
+            "--source", "-s", case_sensitive=False, help="Secrets file source to update: workspace/w or user/u. Ignored when --custom-path is provided."
         ),
-    ] = "project",
+    ] = "workspace",
     create: Annotated[
         bool, typer.Option("--create", "-c", help="Allow creating a missing secrets JSON file and its schema.")
     ] = False,

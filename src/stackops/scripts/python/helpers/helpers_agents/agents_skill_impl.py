@@ -7,7 +7,7 @@ from typing import Final, Literal, TypeAlias
 
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_types import SKILL_INSTALL_COMMAND_BACKEND
 
-SKILL_INSTALL_SCOPE: TypeAlias = Literal["project", "user"]
+SKILL_INSTALL_SCOPE: TypeAlias = Literal["workspace", "user"]
 SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 RESOLVED_SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops"]
 SKILLS_CLI_PACKAGE: Final[str] = "skills@latest"

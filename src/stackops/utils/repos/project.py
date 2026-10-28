@@ -16,7 +16,7 @@ def resolve_project_root(*, current_dir: Path) -> Path | None:
     try:
         child_paths = tuple(directory.iterdir())
     except OSError as error:
-        raise ValueError(f"""Cannot inspect project directory: {directory}""") from error
+        raise ValueError(f"""Cannot inspect workspace directory: {directory}""") from error
 
     nested_repo_count = 0
     for child_path in child_paths:

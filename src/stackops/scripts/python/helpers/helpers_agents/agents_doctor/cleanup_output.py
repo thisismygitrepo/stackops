@@ -54,7 +54,7 @@ def render_cleanup_plan(
     overview.add_column(style="bold", no_wrap=True)
     overview.add_column(overflow="fold")
     overview.add_row("Status", Text(f"""{status} · {len(plan.entries)} resources · {len(plan.changes)} paths""", style=status_style))
-    overview.add_row("Project", Text(str(context.project_root)))
+    overview.add_row("Workspace", Text(str(context.project_root)))
     overview.add_row("Selection", Text(f"""{selection.agent} · {selection.scope} · {selection.resource}"""))
     if selection.match is not None:
         overview.add_row("Match", Text(selection.match))

@@ -10,8 +10,8 @@ def list_layouts(
         typer.Option("--custom-path", "-p", exists=True, dir_okay=False, help="Layout JSON file. Overrides --source; omit to list layouts from the selected sources."),
     ] = None,
     source: Annotated[
-        Literal["project", "p", "user", "u", "all", "a"],
-        typer.Option("--source", "-s", help="Layout sources: project/p, user/u, or all/a. Ignored when --custom-path is provided."),
+        Literal["workspace", "w", "user", "u", "all", "a"],
+        typer.Option("--source", "-s", help="Layout sources: workspace/w, user/u, or all/a. Ignored when --custom-path is provided."),
     ] = "all",
     show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include each tab's name, start directory, command, and weight.")] = False,
     show_stats: Annotated[bool, typer.Option("--stats", "-S", help="Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.")] = False,
@@ -82,10 +82,10 @@ def list_layouts(
 def edit_layouts(
     layouts_file: Annotated[
         Path | None,
-        typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file to edit. Overrides --source; omit to choose the user or project config file."),
+        typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file to edit. Overrides --source; omit to choose the user or workspace config file."),
     ] = None,
     source: Annotated[
-        Literal["project", "p", "user", "u"] | None,
+        Literal["workspace", "w", "user", "u"] | None,
         typer.Option("--source", "-s", help="Config file to edit without prompting. Ignored when --custom-path is provided."),
     ] = None,
     editor: Annotated[

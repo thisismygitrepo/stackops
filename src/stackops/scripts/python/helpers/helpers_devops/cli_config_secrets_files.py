@@ -11,7 +11,7 @@ def resolve_secrets_file(*, custom_path: Path | None, source: WritableSecretsSou
     if custom_path is not None:
         return custom_path.expanduser().absolute()
     if source is None:
-        raise typer.BadParameter("Provide --custom-path or --source project|user. Use devops vault path to see available files.")
+        raise typer.BadParameter("Provide --custom-path or --source workspace|user. Use devops vault path to see available files.")
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
 
     return resolve_single_secret_source(secrets_path=None, secrets_source=source).path
@@ -23,7 +23,7 @@ def path_secrets(
     ] = None,
     source: Annotated[
         WritableSecretsSource | None,
-        typer.Option("--source", "-s", case_sensitive=False, help="Show project/p or user/u paths. Omit to show all available sources."),
+        typer.Option("--source", "-s", case_sensitive=False, help="Show workspace/w or user/u paths. Omit to show all available sources."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action
@@ -51,7 +51,7 @@ def init_secrets(
     ] = None,
     source: Annotated[
         WritableSecretsSource | None,
-        typer.Option("--source", "-s", case_sensitive=False, help="Secrets file to initialize: project/p or user/u."),
+        typer.Option("--source", "-s", case_sensitive=False, help="Secrets file to initialize: workspace/w or user/u."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action
@@ -66,7 +66,7 @@ def validate_secrets(
     ] = None,
     source: Annotated[
         WritableSecretsSource | None,
-        typer.Option("--source", "-s", case_sensitive=False, help="Secrets file to validate: project/p or user/u."),
+        typer.Option("--source", "-s", case_sensitive=False, help="Secrets file to validate: workspace/w or user/u."),
     ] = None,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_action

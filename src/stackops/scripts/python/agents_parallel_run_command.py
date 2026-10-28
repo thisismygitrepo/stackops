@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend impo
 )
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 
-_PARALLEL_RUNS_SOURCE = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
+_PARALLEL_RUNS_SOURCE = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 
 
 def run_parallel(
@@ -38,7 +38,7 @@ def run_parallel(
             ...,
             "--add-entry",
             "-A",
-            help="Append one default template entry to project parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.",
+            help="Append one default template entry to workspace parallel YAML. Use --source or --custom-path to choose the target, or --edit to choose and open it. If RUN_NAME is provided, use it as the new entry name.",
         ),
     ] = False,
     agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help="Override agent type.")] = None,

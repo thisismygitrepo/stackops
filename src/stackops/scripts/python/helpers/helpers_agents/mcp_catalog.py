@@ -48,7 +48,7 @@ def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
     locations: list[McpCatalogLocation] = []
     repo_catalog_path = current_repo_stackops_path(path_kind="mcp_json")
     if repo_catalog_path is not None:
-        locations.append({"scope": "project", "path": repo_catalog_path})
+        locations.append({"scope": "workspace", "path": repo_catalog_path})
 
     locations.extend(
         [
@@ -72,8 +72,8 @@ def resolve_mcp_catalog_locations(source: MCP_CATALOG_SOURCE, custom_path: Path 
     match source:
         case "all" | "a":
             return locations
-        case "project" | "p":
-            return ({"scope": "project", "path": require_current_repo_stackops_path(path_kind="mcp_json")},)
+        case "workspace" | "w":
+            return ({"scope": "workspace", "path": require_current_repo_stackops_path(path_kind="mcp_json")},)
         case "user" | "u":
             return tuple(location for location in locations if location["scope"] == "user")
         case "library" | "l":

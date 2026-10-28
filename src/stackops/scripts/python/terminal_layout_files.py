@@ -5,13 +5,13 @@ from typing import Annotated, Literal
 import typer
 
 
-def resolve_layout_file(*, layouts_file: Path | None, source: Literal["project", "p", "user", "u"] | None) -> Path:
+def resolve_layout_file(*, layouts_file: Path | None, source: Literal["workspace", "w", "user", "u"] | None) -> Path:
     if layouts_file is not None:
         return layouts_file.expanduser().absolute()
     if source is None:
-        raise typer.BadParameter("Provide --custom-path or --source project|user. Use terminal path to see available files.")
+        raise typer.BadParameter("Provide --custom-path or --source workspace|user. Use terminal path to see available files.")
     match source:
-        case "project" | "p":
+        case "workspace" | "w":
             from stackops.utils.repos.stackops_paths import require_current_repo_stackops_path
 
             try:
@@ -26,10 +26,10 @@ def resolve_layout_file(*, layouts_file: Path | None, source: Literal["project",
 
 def path_layouts(
     layouts_file: Annotated[
-        Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file. Overrides --source; omit to show user and project paths."),
+        Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file. Overrides --source; omit to show user and workspace paths."),
     ] = None,
     source: Annotated[
-        Literal["project", "p", "user", "u"] | None,
+        Literal["workspace", "w", "user", "u"] | None,
         typer.Option("--source", "-s", help="Show one config file's paths. Ignored when --custom-path is provided."),
     ] = None,
 ) -> None:
@@ -57,7 +57,7 @@ def init_layouts(
         Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file to create if missing. Overrides --source."),
     ] = None,
     source: Annotated[
-        Literal["project", "p", "user", "u"] | None,
+        Literal["workspace", "w", "user", "u"] | None,
         typer.Option("--source", "-s", help="Config file to initialize. Ignored when --custom-path is provided."),
     ] = None,
 ) -> None:
@@ -72,7 +72,7 @@ def validate_layouts(
         Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file to validate. Overrides --source."),
     ] = None,
     source: Annotated[
-        Literal["project", "p", "user", "u"] | None,
+        Literal["workspace", "w", "user", "u"] | None,
         typer.Option("--source", "-s", help="Config file to validate. Ignored when --custom-path is provided."),
     ] = None,
 ) -> None:

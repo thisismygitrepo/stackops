@@ -3,7 +3,7 @@ from typing import Literal, TypeAlias
 from pathlib import Path
 
 
-SCRIPT_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l", "dynamic", "d"]
+SCRIPT_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l", "dynamic", "d"]
 
 
 def list_available_scripts(source: SCRIPT_SOURCE) -> None:

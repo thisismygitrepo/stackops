@@ -5,7 +5,7 @@ from typing import Literal, TypeAlias
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookEntry
 
 
-CleanupScope: TypeAlias = Literal["project", "user", "all"]
+CleanupScope: TypeAlias = Literal["workspace", "user", "all"]
 
 
 @dataclass(frozen=True)

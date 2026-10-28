@@ -50,13 +50,13 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
         choices=("all", *DOCTOR_DEFINITION_BY_AGENT, *DOCTOR_AGENT_ALIASES),
     )
     directory: str = typer.prompt(
-        "Project directory", default=selection.directory,
+        "Workspace directory", default=selection.directory,
         value_proc=_validate_directory,
     )
     guidance = Table.grid(padding=(0, 2))
     guidance.add_column(style="bold cyan", no_wrap=True)
     guidance.add_column(overflow="fold")
-    guidance.add_row("Scope", Text("project: project resources · user: user resources · all: both + managed resources"))
+    guidance.add_row("Scope", Text("workspace: workspace resources · user: user resources · all: both + managed resources"))
     guidance.add_row("Resources", Text(", ".join(CLEANUP_RESOURCE_CHOICES)))
     guidance.add_row("Workspace", Text("workspace removes shared .ai folders from repositories"))
     guidance.add_row("Full reset", Text("all resets configuration, plugin directories, and .ai folders", style="yellow"))

@@ -3,7 +3,7 @@ from typing import Any, Final, Literal
 import json
 
 
-PROMPTS_SOURCE = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
+PROMPTS_SOURCE = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 PROMPTS_PREVIEW_SIZE_PERCENT = 70.0
 _PROMPTS_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
 
@@ -133,10 +133,10 @@ def _get_default_prompts_yaml_locations(source: PROMPTS_SOURCE) -> list[tuple[st
             locations = [("user", user_prompts), ("library", library_prompts)]
             project_yaml = current_repo_stackops_path(path_kind="prompts_yaml")
             if project_yaml is not None:
-                locations.insert(0, ("project", project_yaml))
+                locations.insert(0, ("workspace", project_yaml))
             return locations
-        case "project" | "p":
-            return [("project", require_current_repo_stackops_path(path_kind="prompts_yaml"))]
+        case "workspace" | "w":
+            return [("workspace", require_current_repo_stackops_path(path_kind="prompts_yaml"))]
         case "user" | "u":
             return [("user", user_prompts)]
         case "library" | "l":

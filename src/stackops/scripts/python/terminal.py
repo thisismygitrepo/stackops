@@ -41,8 +41,8 @@ def run(
     ctx: typer.Context,
     layouts_file: Annotated[str | None, typer.Option("--custom-path", "-p", help="Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.")] = None,
     source: Annotated[
-        Literal["project", "p", "user", "u", "all", "a"],
-        typer.Option("--source", "-s", help="Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted."),
+        Literal["workspace", "w", "user", "u", "all", "a"],
+        typer.Option("--source", "-s", help="Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted."),
     ] = "all",
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.")] = False,
 
@@ -110,8 +110,8 @@ def run_all(
     *,
     layouts_file: Annotated[str | None, typer.Option("--custom-path", "-p", help="Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.")] = None,
     source: Annotated[
-        Literal["project", "p", "user", "u", "all", "a"],
-        typer.Option("--source", "-s", help="Layout sources: project/p, user/u, or all/a. Used when --custom-path is omitted."),
+        Literal["workspace", "w", "user", "u", "all", "a"],
+        typer.Option("--source", "-s", help="Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted."),
     ] = "all",
     test_layout: Annotated[bool, typer.Option(..., "--test-layout", "-L", help="Generate a built-in mock layout with many finite tabs for experimenting with run and run-all. Cannot be used with --custom-path.")] = False,
     max_parallel_tabs: Annotated[int, typer.Option(..., "--max-parallel-tabs", "-t", help="Maximum number of tabs to keep active while dynamically working through the whole file.")],

@@ -29,8 +29,8 @@ def search(
             "-s",
             case_sensitive=False,
             help=(
-                "Secrets file source to read: project/p, user/u, or all/a. "
-                "When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent."
+                "Secrets file source to read: workspace/w, user/u, or all/a. "
+                "When omitted, --custom-path is used if provided; otherwise the workspace file at the workspace root is preferred and user is used when it is absent."
             ),
         ),
     ] = None,
@@ -105,8 +105,8 @@ def load(
             "-s",
             case_sensitive=False,
             help=(
-                "Secrets file source to read: project/p, user/u, or all/a. "
-                "When omitted, --custom-path is used if provided; otherwise the project file at the repository root is preferred and user is used when it is absent."
+                "Secrets file source to read: workspace/w, user/u, or all/a. "
+                "When omitted, --custom-path is used if provided; otherwise the workspace file at the workspace root is preferred and user is used when it is absent."
             ),
         ),
     ] = None,

@@ -1,3 +1,3 @@
 from typing import Literal, TypeAlias
 
-PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "library", "l"]
+PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
