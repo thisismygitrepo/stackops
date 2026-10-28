@@ -240,8 +240,10 @@ def _user_backup_config_guidance() -> str:
 
 
 def load_backup_config_file(path: Path, *, empty_as_config: bool) -> BackupConfig | None:
-    if not path.exists() or not path.is_file():
+    if not path.exists():
         return None
+    if not path.is_file():
+        raise ValueError(f"""Backup configuration path is not a file: {path}""")
     try:
         raw_value = cast(object, yaml.safe_load(path.read_text(encoding="utf-8")))
     except (OSError, yaml.YAMLError) as exc:
@@ -253,9 +255,9 @@ def load_backup_config_file(path: Path, *, empty_as_config: bool) -> BackupConfi
         if empty_as_config:
             return {}
         return None
-    if not isinstance(raw_value, Mapping):
-        return None
     try:
+        if not isinstance(raw_value, Mapping):
+            raise ValueError(f"""Backup configuration file must contain a mapping: {path}""")
         return _parse_backup_config({str(key): item for key, item in raw_value.items()})
     except ValueError as exc:
         if path != USER_BACKUP_PATH:

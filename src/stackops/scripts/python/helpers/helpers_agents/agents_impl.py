@@ -141,7 +141,7 @@ def agents_create(
     show_generated_agents_table(repo_root=workspace_root, prompt_dirs=prompt_directories)
     layoutfile = get_agents_launch_layout(session_root=agents_dir_obj, job_name=job_name_resolved, start_dir=workspace_root)
 
-    layout_output_path = Path(output_path) if output_path is not None else agents_dir_obj / "layout.json"
+    layout_output_path = Path(output_path).expanduser().resolve() if output_path is not None else agents_dir_obj / "layout.json"
     layout_output_path.parent.mkdir(parents=True, exist_ok=True)
     layout_output_path.write_text(data=json.dumps(layoutfile, indent=4), encoding="utf-8")
     create_artifacts = write_create_artifacts(
@@ -341,11 +341,9 @@ def _normalize_parallel_yaml_path_value(*, repo_root: Path, raw_path: str | None
     if raw_path is None:
         return None
 
-    path = Path(raw_path).expanduser()
-    if not path.is_absolute():
-        path = repo_root / path
+    path = Path(raw_path).expanduser().resolve()
     try:
-        return _repo_relative_cli_path(repo_root=repo_root, target_path=path.resolve())
+        return _repo_relative_cli_path(repo_root=repo_root, target_path=path)
     except ValueError:
         return str(path)
 

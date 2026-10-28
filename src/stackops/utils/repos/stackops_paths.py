@@ -49,7 +49,7 @@ def repo_stackops_yaml_paths(*, path_kind: Literal["prompts_yaml", "parallel_yam
     file_name = REPO_PROMPTS_YAML_FILE_NAME if path_kind == "prompts_yaml" else REPO_PARALLEL_YAML_FILE_NAME
     relative_yaml = Path(REPO_STACKOPS_DIRECTORY_NAME) / REPO_STACKOPS_AGENTS_DIRECTORY_NAME / file_name
     locations: list[tuple[str, Path]] = []
-    if repo_yaml is not None and repo_yaml.is_file():
+    if repo_yaml is not None and repo_yaml.exists():
         locations.append(("project", repo_yaml))
 
     for child_directory, directory_names, _file_names in directory.walk():
@@ -60,7 +60,7 @@ def repo_stackops_yaml_paths(*, path_kind: Literal["prompts_yaml", "parallel_yam
         else:
             directory_names.clear()
         yaml_path = child_directory / relative_yaml
-        if yaml_path == repo_yaml or not yaml_path.is_file():
+        if yaml_path == repo_yaml or not yaml_path.exists():
             continue
         location_name = (
             "project" if child_directory == directory and repo_yaml is None else f"""project:{child_directory.relative_to(directory).as_posix()}"""

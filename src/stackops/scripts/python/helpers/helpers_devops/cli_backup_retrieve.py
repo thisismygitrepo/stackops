@@ -239,7 +239,10 @@ def main_backup_retrieve(
             flags += "z" if item["zip"] else ""
             flags += "r" if item["rel2home"] else ""
             flags += "o" if not all_os_values(item["os"]) else ""
-            local_path = Path(item["path_local"]).as_posix()
+            local_path_value = Path(item["path_local"]).expanduser()
+            if item["rel2home"] and not local_path_value.is_absolute():
+                local_path_value = Path.home() / local_path_value
+            local_path = local_path_value.as_posix()
             path_cloud = item["path_cloud"]
             if use_link_retrieve:
                 console.print(Panel(

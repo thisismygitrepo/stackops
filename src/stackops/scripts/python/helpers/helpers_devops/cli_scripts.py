@@ -55,7 +55,7 @@ def script_path(
         locations = get_script_locations(source=source)
         typer.echo(json.dumps({label: str(location) for label, location in locations.items()}, indent=2))
         return
-    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive)
+    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive, allow_dynamic=True)
     typer.echo(str(target))
 
 
@@ -70,7 +70,7 @@ def edit_script(
 
     if source in {"dynamic", "d"} and not Path(name).is_file():
         raise typer.BadParameter("Editing requires a local script source.", param_hint="--source")
-    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive)
+    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive, allow_dynamic=False)
     editor_bin = shutil.which(editor)
     if editor_bin is None:
         typer.echo(f"""Editor '{editor}' is not available on PATH.""", err=True)

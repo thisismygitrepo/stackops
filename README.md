@@ -92,7 +92,7 @@ This broader setup installs system and terminal package groups, copies bundled a
 devops software install --group sysabc
 devops config copy-assets all
 devops config dotfiles sync down \
-  --sensitivity public \
+  --source library \
   --method copy \
   --on-conflict throw-error \
   --which all

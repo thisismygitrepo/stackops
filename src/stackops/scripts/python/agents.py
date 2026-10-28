@@ -155,7 +155,7 @@ def add_mcp(
         str | None, typer.Argument(help="MCP server names to resolve from StackOps catalogs (comma-separated).")
     ] = None,
     agents: Annotated[
-        str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}")
+        str, typer.Option("--agent", "-a", help=f"AI agents to configure (comma-separated), default is all supporting the selected scope. {','.join(get_args(AGENTS))}")
     ] = "",
     scope: Annotated[
         _MCP_INSTALL_SCOPE, typer.Option("--scope", "-s", help="Install MCP entries into project/p or user/u agent configuration.")

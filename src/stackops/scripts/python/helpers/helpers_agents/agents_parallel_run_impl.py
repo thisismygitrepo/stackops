@@ -32,7 +32,7 @@ def run_parallel_from_yaml(
         source, selected_yaml_path = choose_edit_source(locations=yaml_locations)
         yaml_locations = [(source, selected_yaml_path)]
     created_yaml_paths: list[Path] = []
-    if not add_entry:
+    if edit and not add_entry:
         created_yaml_paths = _ensure_writable_parallel_yaml_files(
             yaml_locations=yaml_locations,
             parallel_yaml_path=parallel_yaml_path,
@@ -54,7 +54,7 @@ def run_parallel_from_yaml(
         typer.echo(parallel_yaml_format_explanation(yaml_paths=yaml_locations))
 
     empty_overrides = empty_parallel_create_values()
-    if (edit or add_entry or show_parallel_yaml_format or len(created_yaml_paths) > 0) and config_name is None and overrides == empty_overrides:
+    if (edit or show_parallel_yaml_format) and config_name is None and overrides == empty_overrides:
         return
 
     yaml_entries = _read_existing_parallel_yaml_entries(yaml_locations=yaml_locations)
@@ -234,9 +234,16 @@ def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path
 
     yaml_entries: list[ParallelYamlEntry] = []
     for location_name, yaml_path in yaml_locations:
-        if yaml_path.exists() and yaml_path.is_file():
-            raw_data: object = read_yaml(yaml_path)
-            yaml_entries.append((location_name, yaml_path, raw_data))
+        if not yaml_path.exists():
+            continue
+        if not yaml_path.is_file():
+            raise ValueError(f"""Parallel YAML path exists but is not a file: {yaml_path}""")
+        raw_data: object = read_yaml(yaml_path)
+        if not isinstance(raw_data, dict):
+            raise ValueError(f"""Parallel YAML must be a mapping: {yaml_path}""")
+        if not all(isinstance(key, str) for key in raw_data):
+            raise ValueError(f"""Parallel YAML must use string keys: {yaml_path}""")
+        yaml_entries.append((location_name, yaml_path, raw_data))
     if len(yaml_entries) == 0:
         searched = "\n".join(str(yaml_path) for _location_name, yaml_path in yaml_locations)
         raise ValueError(f"No parallel YAML files found. Searched:\n{searched}")

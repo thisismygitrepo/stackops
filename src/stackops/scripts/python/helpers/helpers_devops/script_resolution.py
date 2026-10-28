@@ -2,20 +2,9 @@ from pathlib import Path
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops.script_discovery import SCRIPT_SUFFIXES, is_supported_script_path, list_dynamic_script_names
 from stackops.scripts.python.helpers.helpers_devops.script_sources import get_script_locations
 from stackops.scripts.python.helpers.helpers_search.script_help import SCRIPT_SOURCE
-
-
-IGNORED_SCRIPT_MATCH_DIR_NAMES: frozenset[str] = frozenset({
-    "__pycache__",
-    ".git",
-    ".ipynb_checkpoints",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".venv",
-    "node_modules",
-})
 
 
 def _get_supported_script_suffixes(name: str) -> tuple[str, ...]:
@@ -33,20 +22,32 @@ def _get_supported_script_suffixes(name: str) -> tuple[str, ...]:
 
 
 def _is_supported_script_match(file_path: Path, root: Path, supported_suffixes: frozenset[str]) -> bool:
-    if not file_path.is_file() or file_path.name == "__init__.py":
+    if not file_path.is_file():
         return False
-    relative_parts = file_path.relative_to(root).parts
-    if any(part in IGNORED_SCRIPT_MATCH_DIR_NAMES for part in relative_parts[:-1]):
-        return False
-    return file_path.suffix in supported_suffixes
+    return is_supported_script_path(relative_path=file_path.relative_to(root), supported_suffixes=supported_suffixes)
 
 
 def _fetch_dynamic_script(name: str) -> Path:
     import requests
 
+    resolved_names: list[str]
     if not name:
-        raise typer.BadParameter("Provide a script name when using --source dynamic.")
-    resolved_names = [name] if "." in name else [f"""{name}{suffix}""" for suffix in (".py", ".sh", "", ".ps1", ".bat", ".cmd")]
+        from stackops.utils.options_utils.options import choose_from_options
+
+        script_names = list_dynamic_script_names()
+        if not script_names:
+            typer.echo("❌ ERROR: No dynamic scripts are available.", err=True)
+            raise typer.Exit(code=1)
+        selected_name = choose_from_options(script_names, multi=False, msg="Select a dynamic script:", tv=True)
+        if selected_name is None:
+            typer.echo(typer.style("❌ Selection cancelled.", fg=typer.colors.YELLOW), err=True)
+            raise typer.Exit(code=1)
+        name = selected_name
+        resolved_names = [name]
+    else:
+        resolved_names = [name] if "." in name else [f"""{name}{suffix}""" for suffix in (".py", ".sh", "", ".ps1", ".bat", ".cmd")]
+    if not is_supported_script_path(relative_path=Path(name), supported_suffixes=SCRIPT_SUFFIXES):
+        raise typer.BadParameter(f"""'{name}' is not an eligible script name.""")
     for resolved_name in resolved_names:
         url = f"""https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/jobs/scripts_dynamic/{resolved_name}"""
         typer.echo(f"""Fetching temporary script from {url} ...""", err=True)
@@ -62,18 +63,18 @@ def _fetch_dynamic_script(name: str) -> Path:
     raise typer.Exit(code=1)
 
 
-def resolve_script(*, ctx: typer.Context, name: str, source: SCRIPT_SOURCE, interactive: bool) -> Path:
+def resolve_script(*, ctx: typer.Context, name: str, source: SCRIPT_SOURCE, interactive: bool, allow_dynamic: bool) -> Path:
     if not interactive and not name:
         typer.echo("❌ ERROR: You must provide a script name or use --interactive to select a script.", err=True)
         raise typer.Exit(code=1)
     if Path(name).is_file():
         direct_target_file = Path(name).resolve()
-        if direct_target_file.suffix not in {".py", ".sh", ".ps1", ".bat", ".cmd", ""}:
+        if direct_target_file.suffix not in SCRIPT_SUFFIXES:
             typer.echo(f"""❌ ERROR: File '{name}' is not a recognized script type.""", err=True)
             raise typer.Exit(code=1)
         return direct_target_file
 
-    if source in {"dynamic", "d"}:
+    if allow_dynamic and source in {"dynamic", "d"}:
         return _fetch_dynamic_script(name=name)
 
     roots = {label: location for label, location in get_script_locations(source=source).items() if isinstance(location, Path)}
@@ -97,6 +98,8 @@ def resolve_script(*, ctx: typer.Context, name: str, source: SCRIPT_SOURCE, inte
     if len(potential_matches) == 1:
         return potential_matches[0]
     if not potential_matches:
+        if allow_dynamic and source in {"all", "a"}:
+            return _fetch_dynamic_script(name=name)
         typer.echo(ctx.get_help(), err=True)
         typer.echo(err=True)
         typer.echo(typer.style(f"""❌ ERROR: Could not find script '{name}'.""", fg=typer.colors.RED, bold=True), err=True)

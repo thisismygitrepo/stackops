@@ -16,7 +16,7 @@ _PARALLEL_RUNS_SOURCE = Literal["all", "a", "project", "p", "user", "u", "librar
 def run_parallel(
     run_name: Annotated[str | None, typer.Argument(help="Parallel YAML run name. Use a flat top-level key, e.g. docs_update.")] = None,
     custom_path: Annotated[
-        str | None, typer.Option(..., "--custom-path", "-y", help="Custom YAML file containing named parallel runs. Auto-created with a template if missing.")
+        str | None, typer.Option(..., "--custom-path", "-y", help="Custom YAML file containing named parallel runs. Use --edit or --add-entry to create a missing file.")
     ] = None,
     source: Annotated[
         _PARALLEL_RUNS_SOURCE,

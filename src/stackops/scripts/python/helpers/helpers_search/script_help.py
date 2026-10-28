@@ -7,6 +7,7 @@ SCRIPT_SOURCE: TypeAlias = Literal["all", "a", "project", "p", "user", "u", "lib
 
 
 def list_available_scripts(source: SCRIPT_SOURCE) -> None:
+    from stackops.scripts.python.helpers.helpers_devops.script_discovery import SCRIPT_SUFFIXES, is_supported_script_path, list_dynamic_script_names
     from stackops.scripts.python.helpers.helpers_devops.script_sources import get_script_locations
 
     locations = get_script_locations(source=source)
@@ -27,7 +28,12 @@ def list_available_scripts(source: SCRIPT_SOURCE) -> None:
         print("-" * 60)
         if isinstance(loc_path, Path):
             if loc_path.is_dir():
-                files = [f for f in loc_path.rglob("*") if f.is_file() and f.suffix in (".py", ".sh", ".ps1", ".bat", ".cmd", "")]
+                files = [
+                    file_path
+                    for file_path in loc_path.rglob("*")
+                    if file_path.is_file()
+                    and is_supported_script_path(relative_path=file_path.relative_to(loc_path), supported_suffixes=SCRIPT_SUFFIXES)
+                ]
                 if files:
                     relative_files = [str(f.relative_to(loc_path)) for f in files]
                     _print_files_by_type(relative_files)
@@ -36,15 +42,7 @@ def list_available_scripts(source: SCRIPT_SOURCE) -> None:
             else:
                 print("  ⚠️  Directory does not exist")
         else:
-            api_url = "https://api.github.com/repos/thisismygitrepo/stackops/contents/src/stackops/jobs/scripts_dynamic"
             try:
-                import requests
-                response = requests.get(api_url, timeout=10)
-                if response.status_code == 200:
-                    items = response.json()
-                    files = [item["name"] for item in items if item["type"] == "file"]
-                    _print_files_by_type(files)
-                else:
-                    print(f"  ⚠️  Could not fetch from GitHub (status: {response.status_code})")
+                _print_files_by_type(list_dynamic_script_names())
             except Exception as e:
                 print(f"  ⚠️  Could not fetch from GitHub: {e}")

@@ -23,9 +23,9 @@ _AUTHORIZATION_BEARER_ENV_PATTERN: Final[re.Pattern[str]] = re.compile(
 _OZ_MCP_SUPPORTED_FIELDS: Final[frozenset[str]] = frozenset({"warp_id", "command", "args", "env", "url", "headers"})
 
 
-def parse_requested_agents(raw_value: str) -> tuple[AGENTS, ...]:
+def parse_requested_agents(raw_value: str, scope: MCP_INSTALL_SCOPE) -> tuple[AGENTS, ...]:
     if raw_value.strip() == "":
-        return _AGENT_VALUES
+        return tuple(agent for agent in _AGENT_VALUES if scope == "user" or agent != "muse")
 
     parts = [part.strip() for part in raw_value.split(",")]
     if any(part == "" for part in parts):

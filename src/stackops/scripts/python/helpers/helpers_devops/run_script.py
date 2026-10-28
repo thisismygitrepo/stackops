@@ -94,7 +94,7 @@ def run_py_script(
         return
     from stackops.scripts.python.helpers.helpers_devops.script_resolution import resolve_script
 
-    target_file = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive)
+    target_file = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive, allow_dynamic=True)
     typer.echo(typer.style(f"✅ Found script at: {target_file}", fg=typer.colors.GREEN))
     if target_file.suffix == ".py":
         from stackops.utils.code import get_uv_command_executing_python_file, exit_then_run_shell_script

@@ -5693,8 +5693,8 @@
                         "    port = 8888",
                         "    display_with_flashy_style(msg=f\"\"\"",
                         "On the remote machine, run:",
-                        "d c f i -u http://{local_ipv4}:{port}; d c f s d -S all -s all -m s -w all",
-                        "devops config dotfiles import --url http://{local_ipv4}:{port}; devops config dotfiles sync down --source all --method symlink --which all",
+                        "d c f i -u http://{local_ipv4}:{port} && d c f s d -s user -m s -w all",
+                        "devops config dotfiles import --url http://{local_ipv4}:{port} && devops config dotfiles sync down --source user --method symlink --which all",
                         "\"\"\", title=\"Remote Machine Instructions\")",
                         "    cli_share_server.web_file_explorer(path=str(zipfile_encrypted_path), no_auth=True, port=port)"
                       ],
@@ -10808,7 +10808,7 @@
                     "        locations = get_script_locations(source=source)",
                     "        typer.echo(json.dumps({label: str(location) for label, location in locations.items()}, indent=2))",
                     "        return",
-                    "    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive)",
+                    "    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive, allow_dynamic=True)",
                     "    typer.echo(str(target))"
                   ],
                   "name": "script_path",
@@ -10914,7 +10914,7 @@
                     "",
                     "    if source in {\"dynamic\", \"d\"} and not Path(name).is_file():",
                     "        raise typer.BadParameter(\"Editing requires a local script source.\", param_hint=\"--source\")",
-                    "    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive)",
+                    "    target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive, allow_dynamic=False)",
                     "    editor_bin = shutil.which(editor)",
                     "    if editor_bin is None:",
                     "        typer.echo(f\"\"\"Editor '{editor}' is not available on PATH.\"\"\", err=True)",
@@ -24487,7 +24487,7 @@
                     "def run_parallel(",
                     "    run_name: Annotated[str | None, typer.Argument(help=\"Parallel YAML run name. Use a flat top-level key, e.g. docs_update.\")] = None,",
                     "    custom_path: Annotated[",
-                    "        str | None, typer.Option(..., \"--custom-path\", \"-y\", help=\"Custom YAML file containing named parallel runs. Auto-created with a template if missing.\")",
+                    "        str | None, typer.Option(..., \"--custom-path\", \"-y\", help=\"Custom YAML file containing named parallel runs. Use --edit or --add-entry to create a missing file.\")",
                     "    ] = None,",
                     "    source: Annotated[",
                     "        _PARALLEL_RUNS_SOURCE,",
@@ -24621,7 +24621,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--custom-path', '-y', help='Custom YAML file containing named parallel runs. Auto-created with a template if missing.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--custom-path', '-y', help='Custom YAML file containing named parallel runs. Use --edit or --add-entry to create a missing file.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -24634,7 +24634,7 @@
                         "short_flags": [
                           "-y"
                         ],
-                        "help": "Custom YAML file containing named parallel runs. Auto-created with a template if missing.",
+                        "help": "Custom YAML file containing named parallel runs. Use --edit or --add-entry to create a missing file.",
                         "default": "..."
                       }
                     },
@@ -27836,7 +27836,7 @@
                 "        str | None, typer.Argument(help=\"MCP server names to resolve from StackOps catalogs (comma-separated).\")",
                 "    ] = None,",
                 "    agents: Annotated[",
-                "        str, typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")",
+                "        str, typer.Option(\"--agent\", \"-a\", help=f\"AI agents to configure (comma-separated), default is all supporting the selected scope. {','.join(get_args(AGENTS))}\")",
                 "    ] = \"\",",
                 "    scope: Annotated[",
                 "        _MCP_INSTALL_SCOPE, typer.Option(\"--scope\", \"-s\", help=\"Install MCP entries into project/p or user/u agent configuration.\")",
@@ -27889,7 +27889,7 @@
                   "type": "str",
                   "default": "",
                   "required": false,
-                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f\"AI agents to configure (comma-separated), default is all of them. {','.join(get_args(AGENTS))}\")]",
+                  "annotation_raw": "Annotated[str, typer.Option('--agent', '-a', help=f\"AI agents to configure (comma-separated), default is all supporting the selected scope. {','.join(get_args(AGENTS))}\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [

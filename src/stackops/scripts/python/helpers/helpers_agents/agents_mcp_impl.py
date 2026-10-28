@@ -16,6 +16,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_install import (
     choose_requested_mcp_names,
     install_resolved_mcp_servers,
     parse_requested_agents,
+    resolve_install_path,
 )
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE, McpCatalogLocation
 from stackops.utils.accessories import get_repo_root
@@ -91,11 +92,14 @@ def add_mcp(
         raise ValueError(f"Project installation requires {_PROJECT_INSTALL_ROOT_REQUIREMENT}")
 
     resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
-    selected_agents = parse_requested_agents(raw_value=agents)
+    selected_agents = parse_requested_agents(raw_value=agents, scope=scope)
+    home_dir = Path.home()
+    for selected_agent in selected_agents:
+        resolve_install_path(agent=selected_agent, scope=scope, repo_root=repo_root, home_dir=home_dir)
 
     report(f"Installing: {format_resolved_mcp_servers(resolved_mcp_servers)}")
     for selected_agent in selected_agents:
         install_path = install_resolved_mcp_servers(
-            agent=selected_agent, scope=scope, resolved_servers=resolved_mcp_servers, repo_root=repo_root, home_dir=Path.home()
+            agent=selected_agent, scope=scope, resolved_servers=resolved_mcp_servers, repo_root=repo_root, home_dir=home_dir
         )
         report(f"{selected_agent}: {install_path}")

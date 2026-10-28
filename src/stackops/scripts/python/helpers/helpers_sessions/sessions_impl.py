@@ -77,23 +77,12 @@ def select_layout(layouts_json_file: str, selected_layouts_names: list[str], sel
     return layouts_chosen
 
 def find_layout_file(layout_path: str) -> str:
-    """Find layout file from a path."""
-    from stackops.scripts.python.helpers.helpers_utils.path_helper import search_for_files_of_interest, match_file_name, sanitize_path
-    from stackops.utils.options_utils.options import choose_from_options
-    path_obj = sanitize_path(layout_path)
+    path_obj = Path(layout_path).expanduser().absolute()
     if not path_obj.exists():
-        choice_file = match_file_name(sub_string=layout_path, search_root=Path.cwd(), suffixes={".json"})
-    elif path_obj.is_dir():
-        print(f"🔍 Searching recursively for Python, PowerShell and Shell scripts in directory `{path_obj}`")
-        files = search_for_files_of_interest(path_obj, suffixes={".py", ".sh", ".ps1"})
-        print(f"🔍 Got #{len(files)} results.")
-        selected_file = choose_from_options(multi=False, options=files, tv=True, msg="Choose one option")
-        if selected_file is None:
-            raise ValueError("Layout file selection cancelled.")
-        choice_file = Path(selected_file).expanduser().absolute()
-    else:
-        choice_file = path_obj
-    return str(choice_file)
+        raise ValueError(f"""Layout file does not exist: {path_obj}""")
+    if not path_obj.is_file():
+        raise ValueError(f"""Layout path is not a file: {path_obj}""")
+    return str(path_obj)
 
 
 def run_layouts(

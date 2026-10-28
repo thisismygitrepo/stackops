@@ -54,25 +54,25 @@ def _format_prompt_entry(value: Any) -> str:
     return "No prompt content configured."
 
 
-def _resolve_named_yaml_entry(raw_data: Any, entry_name: str, *, entry_label: str, group: str | None) -> str:
-    cursor: Any = raw_data
+def _resolve_named_yaml_entry(raw_data: object, entry_name: str, *, entry_label: str, group: str | None) -> str | None:
+    cursor: object = raw_data
     for segment in (part.strip() for part in entry_name.split(".")):
         if segment == "":
             continue
         if not isinstance(cursor, dict) or segment not in cursor:
-            raise ValueError(f"{entry_label} '{entry_name}' was not found in prompts YAML")
+            return None
         cursor = cursor[segment]
-    if cursor is None:
-        raise ValueError(f"{entry_label} '{entry_name}' points to null in prompts YAML")
+        if cursor is None:
+            raise ValueError(f"""{entry_label} '{entry_name}' points to null in prompts YAML""")
     if group is not None and (not isinstance(cursor, dict) or cursor.get("group") != group):
-        raise ValueError(f"""{entry_label} '{entry_name}' does not belong to prompt group '{group}'""")
+        return None
     return _format_prompt_entry(cursor)
 
 
 def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | None) -> dict[str, tuple[str | None, str]]:
     candidates: dict[str, tuple[str | None, str]] = {}
     if not isinstance(raw_data, dict):
-        return candidates
+        raise ValueError("Prompts YAML must be a mapping")
 
     for key, value in raw_data.items():
         part = str(key).strip()
@@ -80,7 +80,7 @@ def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | No
             continue
         dotted_key = f"{prefix}.{part}" if prefix else part
         if value is None:
-            continue
+            raise ValueError(f"""Prompt '{dotted_key}' points to null in prompts YAML""")
 
         if isinstance(value, dict):
             if any(not isinstance(child, dict) for child in value.values()):
@@ -105,7 +105,7 @@ def _preview_prompt_entry_from_path(*, preview: str, yaml_path: Path) -> str:
 
 
 def build_named_prompt_selection_maps(
-    yaml_data_by_location: list[tuple[str, Path, Any]],
+    yaml_data_by_location: list[tuple[str, Path, object]],
     *,
     group: str | None,
 ) -> tuple[dict[str, str], dict[str, str]]:
@@ -147,7 +147,7 @@ def resolve_prompts_yaml_paths(prompts_yaml_path: str | None, source: PROMPTS_SO
 
 
 def _echo_prompts_yaml_locations(
-    *, picked_with_data: list[tuple[str, Path, Any]], skipped: list[tuple[str, Path]]
+    *, picked_with_data: list[tuple[str, Path, object]], skipped: list[tuple[str, Path]]
 ) -> None:
     from rich import box
     from rich.console import Console
@@ -171,19 +171,26 @@ def _echo_prompts_yaml_locations(
     Console().print(table)
 
 
-def load_prompts_yaml_data(prompts_yaml_path: str | None, source: PROMPTS_SOURCE) -> list[tuple[str, Path, Any]]:
+def load_prompts_yaml_data(prompts_yaml_path: str | None, source: PROMPTS_SOURCE) -> list[tuple[str, Path, object]]:
     from stackops.utils.files.read import read_yaml
 
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
+    for _, yaml_path in yaml_locations:
+        if yaml_path.exists() and not yaml_path.is_file():
+            raise ValueError(f"""Prompts YAML path exists but is not a file: {yaml_path}""")
     can_create = prompts_yaml_path is not None or source not in ("library", "l")
     if can_create and not any(yaml_path.is_file() for _, yaml_path in yaml_locations):
         ensure_prompts_yaml_exists(yaml_path=yaml_locations[0][1])
 
-    picked_with_data = [
-        (location_name, yaml_path, read_yaml(yaml_path))
-        for location_name, yaml_path in yaml_locations
-        if yaml_path.exists() and yaml_path.is_file()
-    ]
+    picked_with_data: list[tuple[str, Path, object]] = []
+    for location_name, yaml_path in yaml_locations:
+        if yaml_path.exists() and yaml_path.is_file():
+            yaml_data: object = read_yaml(yaml_path)
+            if not isinstance(yaml_data, dict):
+                raise ValueError(f"""Prompts YAML must be a mapping: {yaml_path}""")
+            if not all(isinstance(key, str) for key in yaml_data):
+                raise ValueError(f"""Prompts YAML must use string keys: {yaml_path}""")
+            picked_with_data.append((location_name, yaml_path, yaml_data))
     skipped = [(location_name, yaml_path) for location_name, yaml_path in yaml_locations if not (yaml_path.exists() and yaml_path.is_file())]
 
     _echo_prompts_yaml_locations(picked_with_data=picked_with_data, skipped=skipped)
@@ -207,15 +214,10 @@ def resolve_named_prompts_yaml_entry(
     if len(yaml_data_by_location) == 0:
         raise _no_prompts_yaml_files_error(prompts_yaml_path=prompts_yaml_path, yaml_locations=yaml_locations, source=source)
 
-    found_entry = None
     for _, _, yaml_data in yaml_data_by_location:
-        try:
-            found_entry = _resolve_named_yaml_entry(raw_data=yaml_data, entry_name=entry_name, entry_label=entry_label, group=group)
-            break
-        except ValueError:
-            pass
-    if found_entry is not None:
-        return found_entry
+        found_entry = _resolve_named_yaml_entry(raw_data=yaml_data, entry_name=entry_name, entry_label=entry_label, group=group)
+        if found_entry is not None:
+            return found_entry
 
     fuzzy_preview_map, fuzzy_value_map = build_named_prompt_selection_maps(yaml_data_by_location=yaml_data_by_location, group=group)
 

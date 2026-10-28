@@ -182,7 +182,7 @@ class Installer:
                 if installer_arch_os.endswith(".sh"):
                     if platform.system() not in ["Linux", "Darwin"]:
                         raise NotImplementedError(f"Shell script installation not supported on {platform.system()}")
-                    subprocess.run(f"bash {installer_path}", shell=True, check=True)
+                    subprocess.run(["bash", str(installer_path)], check=True)
                     version_to_be_installed = "scripted_installation"
                 elif installer_arch_os.endswith(".ps1"):
                     if platform.system() != "Windows":

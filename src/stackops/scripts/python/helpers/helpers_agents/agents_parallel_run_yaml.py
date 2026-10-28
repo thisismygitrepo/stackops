@@ -9,6 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend impo
     resolve_agent_parallel_backend,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import CREATE_CONFIG_KEYS, ParallelCreateValues, ParallelYamlEntry
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_paths import resolve_parallel_create_paths
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
@@ -108,16 +109,17 @@ def select_parallel_create_values_from_locations(
 ) -> tuple[SelectedParallelCreateValues, ...]:
     if requested_name is not None:
         normalized_name = validate_parallel_run_name(entry_name=requested_name)
-        for _location_name, _yaml_path, raw_data in yaml_entries:
+        for _location_name, yaml_path, raw_data in yaml_entries:
             raw_entry = _try_resolve_named_entry(raw_data=raw_data, entry_name=normalized_name)
             if raw_entry is not None:
-                return ((normalized_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=normalized_name)),)
+                values = parse_parallel_create_values(raw_entry=raw_entry, entry_name=normalized_name)
+                return ((normalized_name, resolve_parallel_create_paths(values=values, yaml_path=yaml_path)),)
         raise ValueError(f"Parallel run '{normalized_name}' was not found in parallel YAML")
 
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     candidate_previews: dict[str, str] = {}
-    candidate_sources: dict[str, tuple[str, object]] = {}
+    candidate_sources: dict[str, tuple[str, Path, object]] = {}
     use_location_prefix = len(yaml_entries) > 1
     for location_name, yaml_path, raw_data in yaml_entries:
         candidates = _collect_entry_candidates(raw_data=raw_data)
@@ -126,7 +128,7 @@ def select_parallel_create_values_from_locations(
             if label in candidate_previews:
                 label = f"{label}@{location_name}"
             candidate_previews[label] = _preview_entry_from_path(preview=candidate_preview, yaml_path=yaml_path)
-            candidate_sources[label] = (candidate_name, raw_data)
+            candidate_sources[label] = (candidate_name, yaml_path, raw_data)
 
     if len(candidate_previews) == 0:
         raise ValueError("No parallel run entries found in parallel YAML")
@@ -137,9 +139,10 @@ def select_parallel_create_values_from_locations(
         raise SystemExit(1)
     selected_entries: list[SelectedParallelCreateValues] = []
     for chosen_label in chosen_labels:
-        chosen_name, chosen_data = candidate_sources[chosen_label]
+        chosen_name, yaml_path, chosen_data = candidate_sources[chosen_label]
         raw_entry = _resolve_named_entry(raw_data=chosen_data, entry_name=chosen_name)
-        selected_entries.append((chosen_name, parse_parallel_create_values(raw_entry=raw_entry, entry_name=chosen_name)))
+        values = parse_parallel_create_values(raw_entry=raw_entry, entry_name=chosen_name)
+        selected_entries.append((chosen_name, resolve_parallel_create_paths(values=values, yaml_path=yaml_path)))
     return tuple(selected_entries)
 
 
@@ -165,8 +168,6 @@ def _resolve_named_entry(*, raw_data: object, entry_name: str) -> object:
 
 
 def _try_resolve_named_entry(*, raw_data: object, entry_name: str) -> object | None:
-    if not isinstance(raw_data, Mapping):
-        return None
     mapping = _object_to_string_mapping(raw_value=raw_data, label="parallel YAML")
     if entry_name not in mapping:
         return None
@@ -177,8 +178,6 @@ def _try_resolve_named_entry(*, raw_data: object, entry_name: str) -> object | N
 
 
 def _collect_entry_candidates(*, raw_data: object) -> dict[str, str]:
-    if not isinstance(raw_data, Mapping):
-        return {}
     raw_mapping = _object_to_string_mapping(raw_value=raw_data, label="parallel YAML")
     candidates: dict[str, str] = {}
     for key, value in raw_mapping.items():
