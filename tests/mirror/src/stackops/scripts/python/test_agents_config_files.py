@@ -12,12 +12,12 @@ from stackops.utils.managed_files import ManagedFileKind
 
 
 @pytest.mark.parametrize("action", ("path", "init", "validate"))
-@pytest.mark.parametrize(("alias", "source"), (("p", "project"), ("u", "user"), ("l", "library")))
+@pytest.mark.parametrize(("alias", "source"), (("w", "workspace"), ("u", "user"), ("l", "library")))
 def test_config_source_aliases_resolve_to_canonical_paths(
     action: str, alias: str, source: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     locations: tuple[tuple[AgentManagedFileSource, Path], ...] = (
-        ("project", tmp_path / "project.yaml"),
+        ("workspace", tmp_path / "workspace.yaml"),
         ("user", tmp_path / "user.yaml"),
         ("library", tmp_path / "library.yaml"),
     )

@@ -14,8 +14,14 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, DEFAULT_AGENT_PARALLEL_BACKEND
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.utils.default_agent import resolve_agent
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from stackops.utils.schemas.fire_agents.fire_agents_types import (
+    AGENTS,
+    DEFAULT_SEAPRATOR,
+    DEFAULT_STAGGER_MAX,
+    HOST,
+    PROVIDER,
+    ReasoningEffort,
+)
 from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
 
 

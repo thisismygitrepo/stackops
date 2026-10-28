@@ -4,62 +4,37 @@ from pathlib import Path
 
 from rich.console import Console
 
-from stackops.jobs.installer.checks.check_installations import build_scan_record
-from stackops.jobs.installer.checks.report_utils import AppData, app_safety_sort_key, build_app_metadata_row, build_latest_scan_panel, build_summary_group
+from stackops.jobs.installer.checks.report_utils import AppData, app_safety_sort_key, build_latest_scan_panel, build_summary_group
 from stackops.jobs.installer.checks.scan_outcomes import ScanFailure, ScanSuccess
-from stackops.jobs.installer.checks.security_helper import build_app_data_list, build_report_stats_lines
+from stackops.jobs.installer.checks.scan_records import build_scan_record
 from stackops.jobs.installer.checks.vt_utils import ScanResult, summarize_scan_results
 
+DUMMY_SHA256 = "a" * 64
 
-def test_stored_failed_scan_displays_failed_status_and_error() -> None:
+
+def test_failed_scan_displays_failed_status_and_error() -> None:
     record = build_scan_record(
         app_path=Path("rg"),
         version="1",
         app_url="",
-        outcome=ScanFailure(stage="analysis polling", error_type="APIError", error_code="QuotaExceededError"),
+        outcome=ScanFailure(stage="analysis polling", error_type="APIError", error_code="QuotaExceededError", sha256=DUMMY_SHA256),
     )
-    metadata = build_app_metadata_row(record["app_data"])
-    reloaded = build_app_data_list([metadata], record["engine_results"])
+    app_data = record["app_data"]
     output = StringIO()
     console = Console(file=output, width=200)
 
-    console.print(build_latest_scan_panel(reloaded[0], completed_count=1, total_count=1))
-    console.print(build_summary_group(reloaded))
+    console.print(build_latest_scan_panel(app_data, completed_count=1, total_count=1))
+    console.print(build_summary_group([app_data]))
 
-    assert metadata["scan_summary_available"] is False
-    assert record["engine_results"] == []
-    assert reloaded[0]["notes"] == record["app_data"]["notes"]
     displayed = output.getvalue()
     assert "Failed" in displayed
     assert "failed 1" in displayed
     assert "1/1 processed" in displayed
     assert "QuotaExceededError" in displayed
     assert "analysis polling" in displayed
-    assert "Attempted" in displayed
+    assert "VT analyzed" not in displayed
     assert "Pending" not in displayed
     assert "complete" not in displayed
-    stats_lines = build_report_stats_lines(reloaded, app_metadata_path=Path("metadata.csv"), engine_results_path=Path("engines.csv"))
-    assert "Scanned: 0" in stats_lines
-    assert "Failed: 1" in stats_lines
-
-
-def test_existing_report_preserves_source_and_scan_date_when_reloaded() -> None:
-    results: list[ScanResult] = [{"engine_name": "sample-engine", "category": "undetected", "result": None}]
-    scanned_at = datetime(2026, 10, 3, 1, 2, tzinfo=UTC)
-    record = build_scan_record(
-        app_path=Path("rg"),
-        version="1",
-        app_url="https://example.invalid/rg",
-        outcome=ScanSuccess(summary=summarize_scan_results(results), results=results, scanned_at=scanned_at, source="existing_report"),
-    )
-    metadata = build_app_metadata_row(record["app_data"])
-
-    reloaded = build_app_data_list([metadata], record["engine_results"])
-
-    assert metadata["scan_summary_available"] is True
-    assert reloaded[0] == record["app_data"]
-    assert reloaded[0]["scan_time"] == scanned_at.astimezone().strftime("%Y-%m-%d %H:%M")
-    assert reloaded[0]["notes"].startswith("Existing VirusTotal report. ")
 
 
 def test_engine_unsupported_results_display_no_verdicts_instead_of_failed() -> None:
@@ -73,6 +48,7 @@ def test_engine_unsupported_results_display_no_verdicts_instead_of_failed() -> N
             results=results,
             scanned_at=datetime(2026, 10, 4, 6, 44, tzinfo=UTC),
             source="submitted_file",
+            sha256=DUMMY_SHA256,
         ),
     )
     output = StringIO()
@@ -96,6 +72,7 @@ def test_summary_orders_failed_unknown_and_riskiest_apps_first_without_mutating_
             results=results,
             scanned_at=datetime(2026, 10, 4, 6, 44, tzinfo=UTC),
             source="existing_report",
+            sha256=DUMMY_SHA256,
         ),
     )["app_data"]
     cases: list[tuple[str, float | None, int, str]] = [

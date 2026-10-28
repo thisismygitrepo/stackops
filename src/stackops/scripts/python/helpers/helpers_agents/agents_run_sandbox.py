@@ -6,15 +6,11 @@ from platform import system
 
 from stackops.scripts.python.helpers.helpers_agents.agents_sandbox import resolve_sandbox_access
 from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
-    ReasoningEffort,
-    copilot_reasoning_args,
-    normalize_reasoning_effort,
-)
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import copilot_reasoning_args, normalize_reasoning_effort
 from stackops.utils.sandbox.containers import container_path
 from stackops.utils.sandbox.launch import build_sandbox_command, validate_sandbox_options
 from stackops.utils.sandbox.options import SandboxAccess, SandboxBackend, SandboxOptions
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, ReasoningEffort
 
 
 def validate_prompt_sandbox(*, agent: AGENTS, options: SandboxOptions) -> None:

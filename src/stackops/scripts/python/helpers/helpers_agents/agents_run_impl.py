@@ -5,13 +5,9 @@ from typing import Literal, TypeAlias, cast
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.scripts.python.helpers.helpers_agents.constants import CODEX_EXEC_PERMISSION_ARGS
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER, ReasoningEffort
 from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
-    ReasoningEffort,
-    copilot_reasoning_args,
-    normalize_reasoning_effort,
-)
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import copilot_reasoning_args, normalize_reasoning_effort
 
 PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 

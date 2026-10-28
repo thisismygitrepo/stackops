@@ -14,6 +14,7 @@ from typer.main import get_command
 
 from stackops.scripts.python.graph.cli_graph_tree import build_cli_graph
 from stackops.scripts.python.graph.cli_graph_shared import REPO_ROOT
+from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
 
 class AppSource(TypedDict):
@@ -30,7 +31,7 @@ class CliGraph(TypedDict):
     root: AppNode
 
 
-HELP_MARKER_PATTERN = re.compile(r"^(?P<emoji>\S) <(?P<alias>[A-Za-z])> \S")
+HELP_MARKER_PATTERN = re.compile(r"^<(?P<alias>[A-Za-z])> (?P<emoji>\S) \S")
 
 
 def _registered_apps() -> list[tuple[str, typer.Typer]]:
@@ -49,11 +50,11 @@ def _registered_apps() -> list[tuple[str, typer.Typer]]:
     for factory_path in sorted(factories):
         module_name, _, factory_name = factory_path.rpartition(".")
         factory = cast(Callable[[], typer.Typer], getattr(import_module(module_name), factory_name))
-        apps.append((factory_path, factory()))
+        apps.append((factory_path, apply_alias_markers(factory())))
     return apps
 
 
-def test_visible_commands_lead_help_with_wide_emoji_and_hidden_alias_marker() -> None:
+def test_visible_commands_lead_help_with_hidden_alias_marker_and_wide_emoji() -> None:
     violations: list[str] = []
     for factory_path, app in _registered_apps():
         pending_groups = [(factory_path, get_command(app))]
@@ -69,7 +70,7 @@ def test_visible_commands_lead_help_with_wide_emoji_and_hidden_alias_marker() ->
                 help_line = (command.short_help or command.help or "").strip().partition("\n")[0]
                 match = HELP_MARKER_PATTERN.match(help_line)
                 if match is None:
-                    violations.append(f"""{location} help is not "<emoji> <letter> <text>": {help_line!r}""")
+                    violations.append(f"""{location} help is not "<letter> <emoji> <text>": {help_line!r}""")
                     continue
                 emoji, alias_name = match["emoji"], match["alias"]
                 if unicodedata.east_asian_width(emoji) != "W":

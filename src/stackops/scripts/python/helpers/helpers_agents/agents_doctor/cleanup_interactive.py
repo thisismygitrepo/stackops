@@ -9,7 +9,8 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupScope
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_scope import CleanupScope
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import resolve_cleanup_resources
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_RESOURCE_CHOICES
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import DOCTOR_AGENT_ALIASES, DOCTOR_DEFINITION_BY_AGENT

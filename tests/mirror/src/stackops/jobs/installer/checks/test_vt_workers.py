@@ -2,6 +2,7 @@ from asyncio import AbstractEventLoop, get_event_loop
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 from threading import Barrier, Event, Lock, get_ident
 from typing import cast
@@ -13,6 +14,7 @@ from stackops.jobs.installer.checks.scan_outcomes import ScanCancelled, ScanFail
 from stackops.jobs.installer.checks.vt_account_stats import VirusTotalAccountStats
 from stackops.jobs.installer.checks.vt_requests import ScanClient, VtAccountPool, VtRequestClient
 from stackops.jobs.installer.checks.vt_utils import ScanResult, summarize_scan_results
+from stackops.jobs.installer.checks.vt_workers import ScannedFile
 from stackops.secrets.readers import VirusTotalApiKey
 
 
@@ -28,12 +30,16 @@ class _RecordedClient:
         self.closed.set()
 
 
+def _ignore_result(scanned_file: ScannedFile) -> None:
+    return None
+
+
 @pytest.mark.parametrize(("concurrency", "distinct_apps"), [(None, 9), (6, 9), (6, 3), (6, 1)])
 def test_concurrent_files_preserve_identity_and_thread_owned_clients(
     concurrency: int | None, distinct_apps: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     credentials = tuple(VirusTotalApiKey(account_name=f"""account-{index}""", api_key=f"""dummy-{index}""") for index in range(3))
-    apps = [(Path(f"""sample-{index}.bin"""), str(index)) for index in range(distinct_apps)]
+    apps: list[tuple[Path, str | None]] = [(Path(f"""sample-{index}.bin"""), str(index)) for index in range(distinct_apps)]
     apps.append((apps[0][0], "duplicate-path"))
     worker_count = min(len(apps), len(credentials) if concurrency is None else concurrency)
     barrier = Barrier(worker_count)
@@ -43,6 +49,7 @@ def test_concurrent_files_preserve_identity_and_thread_owned_clients(
     calls: list[Path] = []
     started_threads: set[int] = set()
     pools: list[VtAccountPool] = []
+    recorded: list[ScannedFile] = []
     stats = VirusTotalAccountStats(tuple(credential.account_name for credential in credentials))
 
     def create_client(pool: VtAccountPool, preferred_account_index: int, stop: Event) -> VtRequestClient:
@@ -64,25 +71,36 @@ def test_concurrent_files_preserve_identity_and_thread_owned_clients(
         if first_scan:
             barrier.wait(timeout=5)
         results: list[ScanResult] = [{"engine_name": path.name, "category": "undetected", "result": None}]
-        return ScanSuccess(summary=summarize_scan_results(results), results=results, scanned_at=datetime.now(UTC), source="existing_report")
+        return ScanSuccess(
+            summary=summarize_scan_results(results),
+            results=results,
+            scanned_at=datetime.now(UTC),
+            source="existing_report",
+            sha256=sha256(path.name.encode()).hexdigest(),
+        )
 
     monkeypatch.setattr(vt_requests, "VtRequestClient", create_client)
     monkeypatch.setattr(vt_workers, "scan_file", scan_file)
-    scanned = list(vt_workers.scan_files_with_vt(apps_to_scan=apps, credentials=credentials, concurrency=concurrency, stats=stats))
+    scanned = list(
+        vt_workers.scan_files_with_vt(apps_to_scan=apps, credentials=credentials, concurrency=concurrency, stats=stats, on_result=recorded.append)
+    )
 
     assert len(clients) == worker_count
     assert len({id(pool) for pool in pools}) == 1
     assert Counter(calls) == Counter(path for path, _version in apps)
     assert sorted(result.index for result in scanned) == list(range(len(apps)))
+    assert sorted(result.index for result in recorded) == list(range(len(apps)))
     for result in scanned:
         assert (result.path, result.version) == apps[result.index]
         assert isinstance(result.outcome, ScanSuccess)
         assert result.outcome.results[0]["engine_name"] == result.path.name
+        assert result.outcome.sha256 == sha256(result.path.name.encode()).hexdigest()
+        assert result in recorded
     assert all(client.closed.is_set() and client.closed_thread == client.created_thread != get_ident() for client in clients)
     assert len(event_loops) == worker_count and all(loop.is_closed() for loop in event_loops)
 
 
-@pytest.mark.parametrize("stage", ["client creation", "file scan", "client closure"])
+@pytest.mark.parametrize("stage", ["client creation", "file scan", "result recording", "client closure"])
 def test_unexpected_worker_errors_never_expose_credentials(stage: str, monkeypatch: pytest.MonkeyPatch) -> None:
     credential = VirusTotalApiKey(account_name="dummy-account", api_key="dummy-secret")
     stats = VirusTotalAccountStats((credential.account_name,))
@@ -105,13 +123,21 @@ def test_unexpected_worker_errors_never_expose_credentials(stage: str, monkeypat
         assert path == Path("sample.bin") and stop is not None and request_lock is None
         if stage == "file scan":
             raise ValueError(f"""{credential.api_key} {credential.account_name}""")
-        return ScanFailure(stage="report lookup", error_type="APIError", error_code="ForbiddenError")
+        return ScanFailure(stage="report lookup", error_type="APIError", error_code="ForbiddenError", sha256=sha256(b"dummy-file").hexdigest())
+
+    def record_result(scanned_file: ScannedFile) -> None:
+        if stage == "result recording":
+            raise ValueError(f"""{credential.api_key} {credential.account_name}""")
 
     monkeypatch.setattr(vt_requests, "VtRequestClient", create_client)
     monkeypatch.setattr(vt_workers, "scan_file", scan_file)
     monkeypatch.setattr(_RecordedClient, "close", close_client)
     with pytest.raises(RuntimeError, match=f"""VirusTotal {stage} failed""") as failure:
-        list(vt_workers.scan_files_with_vt(apps_to_scan=[(Path("sample.bin"), None)], credentials=(credential,), concurrency=1, stats=stats))
+        list(
+            vt_workers.scan_files_with_vt(
+                apps_to_scan=[(Path("sample.bin"), None)], credentials=(credential,), concurrency=1, stats=stats, on_result=record_result
+            )
+        )
     assert credential.api_key not in str(failure.value)
     assert credential.account_name not in str(failure.value)
     if stage != "client creation":
@@ -139,11 +165,23 @@ def test_closing_iterator_stops_pending_work_and_closes_client(monkeypatch: pyte
             assert stop.wait(timeout=5)
             return ScanCancelled()
         results: list[ScanResult] = [{"engine_name": "dummy-engine", "category": "undetected", "result": None}]
-        return ScanSuccess(summary=summarize_scan_results(results), results=results, scanned_at=datetime.now(UTC), source="existing_report")
+        return ScanSuccess(
+            summary=summarize_scan_results(results),
+            results=results,
+            scanned_at=datetime.now(UTC),
+            source="existing_report",
+            sha256=sha256(path.name.encode()).hexdigest(),
+        )
 
     monkeypatch.setattr(vt_requests, "VtRequestClient", create_client)
     monkeypatch.setattr(vt_workers, "scan_file", scan_file)
-    iterator = vt_workers.scan_files_with_vt(apps_to_scan=[(Path(str(index)), None) for index in range(3)], credentials=(credential,), concurrency=1, stats=stats)
+    iterator = vt_workers.scan_files_with_vt(
+        apps_to_scan=[(Path(str(index)), None) for index in range(3)],
+        credentials=(credential,),
+        concurrency=1,
+        stats=stats,
+        on_result=_ignore_result,
+    )
     assert next(iterator).index == 0
     assert waiting.wait(timeout=5)
     iterator.close()
@@ -156,4 +194,8 @@ def test_nonpositive_concurrency_is_rejected(concurrency: int) -> None:
     credential = VirusTotalApiKey(account_name="dummy-account", api_key="dummy-key")
     stats = VirusTotalAccountStats((credential.account_name,))
     with pytest.raises(ValueError, match="at least one"):
-        list(vt_workers.scan_files_with_vt(apps_to_scan=[(Path("sample.bin"), None)], credentials=(credential,), concurrency=concurrency, stats=stats))
+        list(
+            vt_workers.scan_files_with_vt(
+                apps_to_scan=[(Path("sample.bin"), None)], credentials=(credential,), concurrency=concurrency, stats=stats, on_result=_ignore_result
+            )
+        )

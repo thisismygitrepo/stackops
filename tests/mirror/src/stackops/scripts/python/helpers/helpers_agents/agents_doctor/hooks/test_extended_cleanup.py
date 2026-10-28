@@ -86,7 +86,7 @@ def test_instruction_symlink_cleanup_removes_registration_preserves_source(
     inventory = collect_cleanup_resources(agent=agent, context=hook_context, resource_focuses=("instructions",))
     assert any(entry.path == registration for entry in inventory.entries)
     assert all(entry.removal is None or entry.removal.path != original for entry in inventory.entries)
-    plan = build_cleanup_plan(inventory=inventory, scope="project", match=None, home_directory=hook_context.home_directory)
+    plan = build_cleanup_plan(inventory=inventory, scope="workspace", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
     result = apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
     assert result.changed_paths == (registration,)

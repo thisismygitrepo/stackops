@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_cloud import cloud_copy
         ([], None),
         (["--overwrite"], "overwrite"),
         (["-o"], "overwrite"),
-        (["--rel2home"], "rel2home"),
+        (["--relative-to-home"], "rel2home"),
         (["-r"], "rel2home"),
         (["--zip"], "zip_"),
         (["-z"], "zip_"),
@@ -35,7 +35,7 @@ def test_copy_flags_enable_only_the_requested_feature(
         assert copy_main.call_args.kwargs[parameter] is (parameter == enabled)
 
 
-@pytest.mark.parametrize("flag", ["--no-overwrite", "--no-rel2home", "--no-zip", "--no-os-specific"])
+@pytest.mark.parametrize("flag", ["--no-overwrite", "--no-relative-to-home", "--no-zip", "--no-os-specific"])
 def test_copy_rejects_flags_that_repeat_the_default(flag: str) -> None:
     result = CliRunner().invoke(get_app(), ["copy", "source", "target", flag])
     assert result.exit_code == 2

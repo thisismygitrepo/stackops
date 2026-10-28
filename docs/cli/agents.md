@@ -98,7 +98,7 @@ Current subcommands:
 
 `agents parallel run` reads flat top-level named entries from `parallel.yaml`. It launches when the entry omits `run`; an explicitly saved `run: false` still creates files without launching. By default it searches `<workspace-root>/.stackops/agents/parallel.yaml` first, then StackOps user and library locations. The workspace root is the enclosing Git repository root, or the current directory when it contains at least two immediate child Git repositories. `--source/-S` accepts `all/a` (the default), `workspace/w`, `user/u`, or `library/l`. `--custom-path` selects one explicit workflow YAML file and overrides `--source`. Use `--show-format` to print the standard, `--edit` to open the YAML, and `--add-entry` to append a template entry. `--add-entry` defaults to the workspace file; `--source` or `--custom-path` chooses its target. Workflow fields can be overridden on the command line; `--prompt-path` still supplies the workflow's prompt text file.
 
-Both commands accept `--run/--no-run`, `--interactive/--no-interactive`, and `--join-prompt-context/--no-join-prompt-context` as switches without a `true` or `false` argument. Omitting one of these switches on `parallel run` preserves the YAML setting. Use `--no-run` to create the named workflow's files without launching agents.
+`agents parallel create` takes `--run`, `--interactive`, and `--join-prompt-context` as plain switches that are off unless given. `agents parallel run` accepts `--run`, `--interactive`, and `--join-prompt-context` with an explicit `true` or `false` value. Omitting one of these options on `parallel run` preserves the YAML setting. Use `--run false` to create the named workflow's files without launching agents.
 
 Standard `parallel.yaml` shape:
 
@@ -140,7 +140,7 @@ agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning 
 agents parallel run default -S workspace --agent-load 5
 agents parallel run docs_update --custom-path ./.ai/parallel.yaml --agent pi --reasoning high
 agents parallel run docs_update --add-entry --custom-path ./.ai/parallel.yaml
-agents parallel run docs_update --no-run --no-interactive
+agents parallel run docs_update --run false --interactive false
 agents parallel create-context "Collect the repo context for this doc task" updateDocs
 agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
 ```

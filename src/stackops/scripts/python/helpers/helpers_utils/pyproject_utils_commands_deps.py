@@ -1,17 +1,19 @@
 from datetime import datetime
 from pathlib import Path
 import re
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import (
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_options import (
     DependencyBackend,
     DependencyEdgeFilter,
     DependencyOutput,
     DependencyRankDirection,
-    DependencyReport,
 )
+
+if TYPE_CHECKING:
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import DependencyReport
 
 
 def check_deps(
@@ -77,7 +79,7 @@ def build_dependency_report(
     rankdir: DependencyRankDirection,
     focus: tuple[str, ...],
     excludes: tuple[str, ...],
-) -> DependencyReport:
+) -> "DependencyReport":
     from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps import (
         normalize_excludes,
         resolve_dependency_check_context,
@@ -89,6 +91,7 @@ def build_dependency_report(
         find_dual_dependencies,
         focus_dependency_graph,
     )
+    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import DependencyReport
 
     context = resolve_dependency_check_context(target)
     normalized_excludes = normalize_excludes(excludes)
@@ -115,7 +118,7 @@ def build_dependency_report(
     )
 
 
-def _write_json_output(report: DependencyReport, output_path: str | None) -> None:
+def _write_json_output(report: "DependencyReport", output_path: str | None) -> None:
     from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render import report_to_json
 
     payload = report_to_json(report)
@@ -128,7 +131,7 @@ def _write_json_output(report: DependencyReport, output_path: str | None) -> Non
     typer.echo(f"Dependency report written to: {resolved_output_path}")
 
 
-def _write_html_output(report: DependencyReport, output_path: str | None) -> Path:
+def _write_html_output(report: "DependencyReport", output_path: str | None) -> Path:
     from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_render import render_dependency_report_html
 
     resolved_output_path = _resolve_output_path(report=report, output_path=output_path, suffix=".html")
@@ -137,7 +140,7 @@ def _write_html_output(report: DependencyReport, output_path: str | None) -> Pat
     return resolved_output_path
 
 
-def _resolve_output_path(report: DependencyReport, output_path: str | None, suffix: str) -> Path:
+def _resolve_output_path(report: "DependencyReport", output_path: str | None, suffix: str) -> Path:
     if output_path is not None:
         candidate_path = Path(output_path).expanduser()
         if candidate_path.is_absolute() is False:

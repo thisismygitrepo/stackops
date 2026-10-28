@@ -1,88 +1,43 @@
-from pathlib import Path
+import subprocess
 
 import pytest
 from typer.testing import CliRunner
 
 from stackops.scripts.python.helpers.helpers_devops import cli_device, cli_ssh, cli_ssh_port
-from stackops.utils.ssh_utils.connection_target import SSHConnectionTarget
+from stackops.utils.ssh_utils.open_ssh_command import OpenSSHCommandDestination
 
 
-@pytest.mark.parametrize(
-    ("destination", "hostname", "username", "port"),
-    [
-        ("workstation", "workstation", "local-user", 22),
-        ("alex@workstation", "workstation", "alex", 22),
-        ("workstation:2222", "workstation", "local-user", 2_222),
-        ("alex@workstation:2222", "workstation", "alex", 2_222),
-        ("2001:db8::10", "2001:db8::10", "local-user", 22),
-        ("[2001:db8::10]:2222", "2001:db8::10", "local-user", 2_222),
-        ("alex@[2001:db8::10]:2222", "2001:db8::10", "alex", 2_222),
-    ],
-)
-def test_resolve_map_port_destination_supports_every_ssh_destination_form(
-    monkeypatch: pytest.MonkeyPatch, destination: str, hostname: str, username: str, port: int
-) -> None:
-    monkeypatch.setattr(cli_ssh_port.getpass, "getuser", lambda: "local-user")
-    monkeypatch.setattr(
-        cli_ssh_port, "lookup_open_ssh_config", lambda requested_hostname, _requested_username, _requested_port: {"hostname": requested_hostname}
-    )
+def test_resolve_map_port_destination_validates_with_openssh_and_returns_parsed_destination(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands: list[tuple[str, ...]] = []
 
-    target = cli_ssh_port.resolve_map_port_destination(destination=destination)
+    def record_run(command: tuple[str, ...], check: bool, capture_output: bool, encoding: str) -> subprocess.CompletedProcess[str]:
+        assert check
+        assert capture_output
+        assert encoding == "utf-8"
+        commands.append(command)
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
 
-    assert target == SSHConnectionTarget(host=destination, hostname=hostname, username=username, port=port, ssh_key_path=None, proxy_command=None)
+    monkeypatch.setattr(cli_ssh_port.subprocess, "run", record_run)
 
+    destination = cli_ssh_port.resolve_map_port_destination(destination="alex@workstation:2222")
 
-def test_resolve_map_port_destination_uses_supported_ssh_config_options(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    identity_file = tmp_path / "workstation-key"
-    identity_file.touch()
-    lookup_arguments: list[tuple[str, str | None, int | None]] = []
-
-    def lookup_config(hostname: str, username: str | None, port: int | None) -> dict[str, object]:
-        lookup_arguments.append((hostname, username, port))
-        return {
-            "hostname": "workstation.internal",
-            "user": "remote-user",
-            "port": "2200",
-            "identityfile": [str(identity_file)],
-            "proxyjump": "jump-user@gateway:2222",
-        }
-
-    monkeypatch.setattr(cli_ssh_port.getpass, "getuser", lambda: "local-user")
-    monkeypatch.setattr(cli_ssh_port, "lookup_open_ssh_config", lookup_config)
-
-    target = cli_ssh_port.resolve_map_port_destination(destination="workstation")
-
-    assert lookup_arguments == [("workstation", None, None)]
-    assert target == SSHConnectionTarget(
-        host="workstation",
-        hostname="workstation.internal",
-        username="remote-user",
-        port=2_200,
-        ssh_key_path=str(identity_file),
-        proxy_command="ssh -T -l jump-user -p 2222 -W workstation.internal:2200 -- gateway",
-    )
+    assert destination == OpenSSHCommandDestination(hostname="workstation", username="alex", port=2_222)
+    assert commands == [("ssh", "-G", "-T", "-l", "alex", "-p", "2222", "--", "workstation")]
 
 
 def test_build_map_port_command_owns_a_clean_foreground_connection() -> None:
-    target = SSHConnectionTarget(
-        host="workstation",
-        hostname="workstation.internal",
-        username="alex",
-        port=2_222,
-        ssh_key_path="/keys/workstation",
-        proxy_command="ssh gateway -W workstation.internal:2222",
-    )
+    target = OpenSSHCommandDestination(hostname="workstation.internal", username="alex", port=2_222)
 
     command = cli_ssh_port.build_map_port_command(ssh_destination=target, remote_port=8_000, local_port=9_000)
 
     assert command == (
         "ssh",
-        "-F",
-        cli_ssh_port.os.devnull,
         "-N",
         "-T",
         "-o",
         "ExitOnForwardFailure=yes",
+        "-o",
+        "ClearAllForwardings=no",
         "-o",
         "ForkAfterAuthentication=no",
         "-o",
@@ -91,10 +46,6 @@ def test_build_map_port_command_owns_a_clean_foreground_connection() -> None:
         "none",
         "-L",
         "127.0.0.1:9000:127.0.0.1:8000",
-        "-i",
-        "/keys/workstation",
-        "-o",
-        "ProxyCommand=ssh gateway -W workstation.internal:2222",
         "-l",
         "alex",
         "-p",
@@ -106,13 +57,13 @@ def test_build_map_port_command_owns_a_clean_foreground_connection() -> None:
 
 @pytest.mark.parametrize(("remote_port", "local_port"), [(0, 8_000), (65_536, 8_000), (8_000, 0), (8_000, 65_536)])
 def test_build_map_port_command_rejects_invalid_ports(remote_port: int, local_port: int) -> None:
-    target = SSHConnectionTarget(host="workstation", hostname="workstation.internal", username="alex", port=22, ssh_key_path=None, proxy_command=None)
+    target = OpenSSHCommandDestination(hostname="workstation.internal", username="alex", port=22)
     with pytest.raises(ValueError, match="must be between 1 and 65535"):
         cli_ssh_port.build_map_port_command(ssh_destination=target, remote_port=remote_port, local_port=local_port)
 
 
-def _resolved_workstation(destination: str) -> SSHConnectionTarget:
-    return SSHConnectionTarget(host=destination, hostname="workstation.internal", username="alex", port=22, ssh_key_path=None, proxy_command=None)
+def _resolved_workstation(destination: str) -> OpenSSHCommandDestination:
+    return OpenSSHCommandDestination(hostname="workstation.internal", username="alex", port=None)
 
 
 def test_ssh_map_port_and_alias_run_the_same_loopback_mapping(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -172,8 +123,9 @@ def test_ssh_map_port_propagates_ssh_exit_code(monkeypatch: pytest.MonkeyPatch) 
     assert result.exit_code == 23
 
 
-def test_ssh_map_port_opens_the_mapped_local_address(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ssh_map_port_opens_the_mapped_local_address_once_the_tunnel_is_ready(monkeypatch: pytest.MonkeyPatch) -> None:
     opened_urls: list[str] = []
+    readiness_checks: list[int] = []
 
     class CompletedPopen:
         def wait(self) -> int:
@@ -182,18 +134,55 @@ def test_ssh_map_port_opens_the_mapped_local_address(monkeypatch: pytest.MonkeyP
     def record_popen(_command: tuple[str, ...]) -> CompletedPopen:
         return CompletedPopen()
 
+    def tunnel_is_ready(ssh_process: CompletedPopen, local_port: int) -> None:
+        readiness_checks.append(local_port)
+        assert not opened_urls
+
     def record_browser_open(url: str) -> bool:
         opened_urls.append(url)
         return True
 
     monkeypatch.setattr(cli_ssh_port, "resolve_map_port_destination", _resolved_workstation)
     monkeypatch.setattr(cli_ssh_port.subprocess, "Popen", record_popen)
+    monkeypatch.setattr(cli_ssh_port, "wait_for_local_forward", tunnel_is_ready)
     monkeypatch.setattr(cli_ssh_port.webbrowser, "open_new_tab", record_browser_open)
 
     result = CliRunner().invoke(cli_ssh.get_app(), ["map-port", "workstation", "8000", "-l", "9000", "-b"])
 
     assert result.exit_code == 0, result.output
+    assert readiness_checks == [9_000]
     assert opened_urls == ["http://127.0.0.1:9000"]
+
+
+def test_ssh_map_port_does_not_open_the_browser_when_the_tunnel_exits_before_it_is_ready(monkeypatch: pytest.MonkeyPatch) -> None:
+    opened_urls: list[str] = []
+
+    class ExitedPopen:
+        def poll(self) -> int:
+            return 255
+
+        def wait(self) -> int:
+            return 255
+
+    def record_popen(_command: tuple[str, ...]) -> ExitedPopen:
+        return ExitedPopen()
+
+    def tunnel_exited(ssh_process: ExitedPopen, local_port: int) -> int:
+        return ssh_process.poll()
+
+    def record_browser_open(url: str) -> bool:
+        opened_urls.append(url)
+        return True
+
+    monkeypatch.setattr(cli_ssh_port, "resolve_map_port_destination", _resolved_workstation)
+    monkeypatch.setattr(cli_ssh_port.subprocess, "Popen", record_popen)
+    monkeypatch.setattr(cli_ssh_port, "wait_for_local_forward", tunnel_exited)
+    monkeypatch.setattr(cli_ssh_port.webbrowser, "open_new_tab", record_browser_open)
+
+    result = CliRunner().invoke(cli_ssh.get_app(), ["map-port", "workstation", "8000", "-l", "9000", "-b"])
+
+    assert result.exit_code == 255
+    assert opened_urls == []
 
 
 def test_ssh_map_port_reports_malformed_destination() -> None:
@@ -205,7 +194,7 @@ def test_ssh_map_port_reports_malformed_destination() -> None:
 
 
 def test_ssh_map_port_reports_destination_rejected_by_openssh(monkeypatch: pytest.MonkeyPatch) -> None:
-    def reject_destination(destination: str) -> SSHConnectionTarget:
+    def reject_destination(destination: str) -> OpenSSHCommandDestination:
         assert destination == "bad host"
         raise cli_ssh_port.subprocess.CalledProcessError(returncode=255, cmd=("ssh", "-G", "bad host"), stderr="invalid SSH host")
 

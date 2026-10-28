@@ -13,7 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG
 
 @pytest.mark.parametrize(
     ("arguments", "expected_scope"),
-    [((), "project"), (("project",), "project"), (("p",), "project"), (("user",), "user"), (("u",), "user")],
+    [((), "workspace"), (("workspace",), "workspace"), (("w",), "workspace"), (("user",), "user"), (("u",), "user")],
 )
 def test_add_mcp_normalizes_install_scope(
     arguments: tuple[str, ...], expected_scope: MCP_INSTALL_SCOPE, monkeypatch: pytest.MonkeyPatch,
@@ -49,7 +49,7 @@ def test_add_mcp_normalizes_install_scope(
 
 @pytest.mark.parametrize(
     ("arguments", "expected_scope"),
-    [((), "project"), (("project",), "project"), (("p",), "project"), (("user",), "user"), (("u",), "user")],
+    [((), "workspace"), (("workspace",), "workspace"), (("w",), "workspace"), (("user",), "user"), (("u",), "user")],
 )
 def test_add_skill_normalizes_install_scope(
     arguments: tuple[str, ...], expected_scope: SKILL_INSTALL_SCOPE, monkeypatch: pytest.MonkeyPatch,
@@ -87,8 +87,9 @@ def test_add_skill_normalizes_install_scope(
 
 
 @pytest.mark.parametrize("command_name", ["add-mcp", "add-skill"])
-@pytest.mark.parametrize("removed_scope", ["local", "global"])
+@pytest.mark.parametrize("removed_scope", ["local", "global", "project", "p"])
 def test_install_commands_reject_removed_scope_names(command_name: str, removed_scope: str) -> None:
     result = CliRunner().invoke(agents.get_app(), [command_name, "example", "--scope", removed_scope])
 
     assert result.exit_code == 2, result.output
+    assert f"""'{removed_scope}' is not one of""" in result.output

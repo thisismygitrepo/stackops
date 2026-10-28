@@ -9,8 +9,7 @@ from rich.table import Table
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 
 _CONSOLE: Final[Console] = Console()
 

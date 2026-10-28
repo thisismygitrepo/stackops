@@ -42,7 +42,7 @@ Quotes: 'single' and "double", $HOME, `touch injected`, $(touch injected).
         agent=agent,
         prompt_file=prompt_file,
         reasoning_effort="none" if agent == "pi" else "high",
-        options=SandboxOptions(backend=SandboxBackend.NONE, image=None, settings=None),
+        options=SandboxOptions(backend=SandboxBackend.NONE, image=None, settings=None, providers=(), name=None, sync=None),
     )
 
     result = subprocess.run(
@@ -77,7 +77,7 @@ Keep 'single', "double", $HOME, and $(Write-Output injected).
         agent="pi",
         prompt_file=prompt_file,
         reasoning_effort=None,
-        options=SandboxOptions(backend=SandboxBackend.NONE, image=None, settings=None),
+        options=SandboxOptions(backend=SandboxBackend.NONE, image=None, settings=None, providers=(), name=None, sync=None),
     )
 
     escaped_prompt = prompt.replace("'", "''")
@@ -101,7 +101,14 @@ def test_interactive_sandbox_preserves_tty_and_prompt(
     access = SandboxAccess(writable_paths=(tmp_path / "agent state",), environment_names=(), environment_overrides={})
     access_resolver = Mock(return_value=access)
     monkeypatch.setattr(scripts, "resolve_sandbox_access", access_resolver)
-    sandbox_options = SandboxOptions(backend=backend, image="agent-image" if backend == SandboxBackend.DOCKER else None, settings=None)
+    sandbox_options = SandboxOptions(
+        backend=backend,
+        image="agent-image" if backend == SandboxBackend.DOCKER else None,
+        settings=None,
+        providers=(),
+        name=None,
+        sync=None,
+    )
     captured_commands: list[list[str]] = []
 
     def capture_sandbox_command(

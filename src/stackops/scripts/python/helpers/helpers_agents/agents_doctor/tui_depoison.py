@@ -10,7 +10,8 @@ from textual.widgets import Button, Footer, Header, Input, Static, TextArea
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_apply import apply_cleanup_plan
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import CleanupSelection
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupScope
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_scope import CleanupScope
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import collect_workspace_resources, resolve_cleanup_resources
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext

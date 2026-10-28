@@ -5,11 +5,12 @@ from stackops.scripts.python.helpers.helpers_devops import cli_device, cli_nw
 
 CLOUDFLARE_COMMAND_NAMES: tuple[str, ...] = (
     "switch-public-ip",
-    "reset-cloudflare-tunnel",
+    "run-tunnel",
+    "reinstall-tunnel-service",
     "add-ip-exclusion-to-warp",
-    "cloudflare-tunnel-status",
-    "update-cloudflare-connectors",
-    "sync-cloudflare-routes",
+    "tunnel-status",
+    "update-connectors",
+    "sync-routes",
 )
 
 

@@ -12,11 +12,8 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import build_agent_command
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import (
-    ReasoningEffort,
-    normalize_reasoning_effort,
-)
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, ReasoningEffort
+from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import normalize_reasoning_effort
 
 
 def _join_prompt_parts(prompt_parts: Sequence[str]) -> str:

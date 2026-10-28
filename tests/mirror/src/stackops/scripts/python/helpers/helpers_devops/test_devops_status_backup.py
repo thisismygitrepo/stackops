@@ -102,7 +102,7 @@ def test_backup_status_rejects_non_file_user_config(backup_paths: tuple[Path, Pa
     data_path, _config_path = backup_paths
     data_path.mkdir()
 
-    with pytest.raises(ValueError, match="Could not load user backup configuration"):
+    with pytest.raises(ValueError, match="Backup configuration path is not a file"):
         devops_status_backup.check_backup_config()
 
 

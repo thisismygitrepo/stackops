@@ -1,3 +1,4 @@
+from hashlib import sha256
 from typing import cast
 
 import pytest
@@ -49,8 +50,9 @@ def test_completed_empty_results_have_no_verdict() -> None:
 
 
 def test_failure_format_keeps_only_stage_type_and_safe_api_code() -> None:
-    failure = ScanFailure(stage="report lookup", error_type="APIError", error_code="WrongCredentialsError")
-    unsafe = ScanFailure(stage="file upload", error_type="[unsafe]", error_code="failure\nsecret=value")
+    file_hash = sha256(b"dummy-file").hexdigest()
+    failure = ScanFailure(stage="report lookup", error_type="APIError", error_code="WrongCredentialsError", sha256=file_hash)
+    unsafe = ScanFailure(stage="file upload", error_type="[unsafe]", error_code="failure\nsecret=value", sha256=file_hash)
 
     assert format_scan_failure(failure) == "VirusTotal report lookup failed: APIError (WrongCredentialsError)."
     assert format_scan_failure(unsafe) == "VirusTotal file upload failed: UnknownError (InvalidErrorCode)."

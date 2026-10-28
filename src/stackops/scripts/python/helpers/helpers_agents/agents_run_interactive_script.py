@@ -6,10 +6,9 @@ from stackops.scripts.python.helpers.helpers_agents.agents_run_interactive impor
 from stackops.scripts.python.helpers.helpers_agents.agents_run_sandbox import validate_prompt_sandbox
 from stackops.scripts.python.helpers.helpers_agents.agents_sandbox import resolve_sandbox_access
 from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.sandbox.launch import build_sandbox_command
 from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, ReasoningEffort
 
 
 def build_interactive_prompt_script(

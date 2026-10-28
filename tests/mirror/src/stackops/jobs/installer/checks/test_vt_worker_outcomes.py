@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 from threading import Event, Lock
 from typing import cast
@@ -11,6 +12,7 @@ from stackops.jobs.installer.checks.vt_account_stats import VirusTotalAccountSta
 from stackops.jobs.installer.checks.vt_accounts import VtAccountPool
 from stackops.jobs.installer.checks.vt_requests import ScanClient, VtRequestClient
 from stackops.jobs.installer.checks.vt_utils import ScanResult, summarize_scan_results
+from stackops.jobs.installer.checks.vt_workers import ScannedFile
 from stackops.secrets.readers import VirusTotalApiKey
 
 class _Client:
@@ -24,6 +26,7 @@ class _Client:
 def test_file_api_failure_preserves_code_and_continues_remaining_files(monkeypatch: pytest.MonkeyPatch) -> None:
     client = _Client()
     calls: list[Path] = []
+    recorded: list[ScannedFile] = []
 
     def create_client(pool: VtAccountPool, preferred_account_index: int, stop: Event) -> VtRequestClient:
         assert pool is not None and preferred_account_index == 0 and not stop.is_set()
@@ -33,9 +36,15 @@ def test_file_api_failure_preserves_code_and_continues_remaining_files(monkeypat
         assert stop is not None and request_lock is None
         calls.append(path)
         if path.name == "failed.bin":
-            return ScanFailure(stage="report lookup", error_type="APIError", error_code="QuotaExceededError")
+            return ScanFailure(stage="report lookup", error_type="APIError", error_code="QuotaExceededError", sha256=sha256(path.name.encode()).hexdigest())
         results: list[ScanResult] = [{"engine_name": "dummy-engine", "category": "undetected", "result": None}]
-        return ScanSuccess(summary=summarize_scan_results(results), results=results, scanned_at=datetime.now(UTC), source="existing_report")
+        return ScanSuccess(
+            summary=summarize_scan_results(results),
+            results=results,
+            scanned_at=datetime.now(UTC),
+            source="existing_report",
+            sha256=sha256(path.name.encode()).hexdigest(),
+        )
 
     monkeypatch.setattr(vt_requests, "VtRequestClient", create_client)
     monkeypatch.setattr(vt_workers, "scan_file", scan_file)
@@ -45,19 +54,24 @@ def test_file_api_failure_preserves_code_and_continues_remaining_files(monkeypat
             credentials=(VirusTotalApiKey(account_name="dummy-account", api_key="dummy-key"),),
             concurrency=1,
             stats=VirusTotalAccountStats(("dummy-account",)),
+            on_result=recorded.append,
         )
     )
 
     assert calls == [Path("failed.bin"), Path("ok.bin")]
     assert len(records) == 2
+    assert recorded == records
     assert isinstance(records[0].outcome, ScanFailure)
     assert records[0].outcome.error_code == "QuotaExceededError"
+    assert records[0].outcome.sha256 == sha256(b"failed.bin").hexdigest()
     assert isinstance(records[1].outcome, ScanSuccess)
+    assert records[1].outcome.sha256 == sha256(b"ok.bin").hexdigest()
     assert client.closed.is_set()
 
 
 def test_cancelled_work_cannot_finish_as_successful_batch(monkeypatch: pytest.MonkeyPatch) -> None:
     client = _Client()
+    recorded: list[ScannedFile] = []
 
     def create_client(pool: VtAccountPool, preferred_account_index: int, stop: Event) -> VtRequestClient:
         assert pool is not None and preferred_account_index == 0 and not stop.is_set()
@@ -77,8 +91,10 @@ def test_cancelled_work_cannot_finish_as_successful_batch(monkeypatch: pytest.Mo
                 credentials=(VirusTotalApiKey(account_name="dummy-account", api_key="dummy-key"),),
                 concurrency=1,
                 stats=VirusTotalAccountStats(("dummy-account",)),
+                on_result=recorded.append,
             )
         )
+    assert recorded == []
     assert client.closed.wait(timeout=5)
 
 
@@ -93,6 +109,7 @@ def test_unexpected_failure_stops_queued_work_without_waiting_for_blocked_scan(m
     lock = Lock()
     clients: list[_Client] = []
     paths_scanned: list[Path] = []
+    recorded: list[ScannedFile] = []
 
     def create_client(pool: VtAccountPool, preferred_account_index: int, stop: Event) -> VtRequestClient:
         assert pool is not None and preferred_account_index in (0, 1) and not stop.is_set()
@@ -122,6 +139,7 @@ def test_unexpected_failure_stops_queued_work_without_waiting_for_blocked_scan(m
                     credentials=credentials,
                     concurrency=2,
                     stats=stats,
+                    on_result=recorded.append,
                 )
             )
         assert "dummy-secret" not in str(failure.value)
@@ -131,3 +149,4 @@ def test_unexpected_failure_stops_queued_work_without_waiting_for_blocked_scan(m
         release_scan.set()
         assert all(client.closed.wait(timeout=5) for client in clients)
     assert set(paths_scanned) == {Path("blocked.bin"), Path("failure.bin")}
+    assert recorded == []

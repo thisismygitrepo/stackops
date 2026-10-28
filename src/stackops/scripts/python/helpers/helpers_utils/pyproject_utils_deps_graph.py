@@ -1,11 +1,7 @@
 from collections.abc import Iterable
 
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import (
-    DependencyEdge,
-    DependencyEdgeFilter,
-    DependencyGraph,
-    DualDependency,
-)
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import DependencyEdge, DependencyGraph, DualDependency
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_options import DependencyEdgeFilter
 
 
 def focus_dependency_graph(graph: DependencyGraph, focus: tuple[str, ...]) -> DependencyGraph:

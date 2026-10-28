@@ -1,7 +1,7 @@
 """Agents management commands - lazy loading subcommands."""
 
 import shutil
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import chdir, contextmanager
 from pathlib import Path
 from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
@@ -10,11 +10,10 @@ import typer
 from typer.core import TyperGroup
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.sandbox.options import SandboxBackend, SandboxSync
 from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENT_VALUES, CONFIG_AGENTS
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENTS, CONFIG_AGENT_VALUES, ReasoningEffort
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["workspace", "w", "user", "u"]
 _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
@@ -71,6 +70,59 @@ class _PanelOrderedAgentsGroup(TyperGroup):
     def list_commands(self, ctx: object) -> list[str]:
         declared_positions = {name: position for position, name in enumerate(_AGENTS_COMMAND_PANEL_ORDER)}
         return sorted(self.commands, key=lambda name: declared_positions.get(name, len(declared_positions)))
+
+
+_NESTED_APP_CONTEXT: Final[dict[str, object]] = {
+    "allow_extra_args": True,
+    "allow_interspersed_args": True,
+    "ignore_unknown_options": True,
+    "help_option_names": [],
+}
+
+
+def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) -> None:
+    nested_app = apply_alias_markers(app_factory())
+    if ctx.command.help is not None:
+        nested_app.info.help = ctx.command.help
+    nested_result: object = nested_app(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
+    if isinstance(nested_result, int):
+        raise typer.Exit(code=nested_result)
+
+
+def parallel_group(ctx: typer.Context) -> None:
+    from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
+
+    _run_nested_app(ctx, get_parallel_app)
+
+
+def browser_group(ctx: typer.Context) -> None:
+    from stackops.scripts.python.agents_browser import get_app as get_browser_app
+
+    _run_nested_app(ctx, get_browser_app)
+
+
+def iter_group(ctx: typer.Context) -> None:
+    from stackops.scripts.python.agents_iter import get_app as get_iter_app
+
+    _run_nested_app(ctx, get_iter_app)
+
+
+def second_brain_group(ctx: typer.Context) -> None:
+    from stackops.scripts.python.agents_second_brain import get_app as get_second_brain_app
+
+    _run_nested_app(ctx, get_second_brain_app)
+
+
+def local_group(ctx: typer.Context) -> None:
+    from stackops.scripts.python.agents_local import get_app as get_local_app
+
+    _run_nested_app(ctx, get_local_app)
+
+
+def config_files_group(ctx: typer.Context) -> None:
+    from stackops.scripts.python.agents_config_files import get_app as get_config_files_app
+
+    _run_nested_app(ctx, get_config_files_app)
 
 
 @contextmanager
@@ -689,13 +741,7 @@ def doctor(
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.agents_browser import get_app as get_browser_app
-    from stackops.scripts.python.agents_config_files import get_app as get_config_files_app
     from stackops.scripts.python.agents_depoison import depoison
-    from stackops.scripts.python.agents_iter import get_app as get_iter_app
-    from stackops.scripts.python.agents_local import get_app as get_local_app
-    from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
-    from stackops.scripts.python.agents_second_brain import get_app as get_second_brain_app
 
     agents_app = typer.Typer(
         cls=_PanelOrderedAgentsGroup,
@@ -705,28 +751,31 @@ def get_app() -> typer.Typer:
         add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    agents_app.add_typer(
-        get_parallel_app(), name="parallel", help="🧵 <p> Parallel agent workflow commands", short_help="🧵 <p> Parallel agent workflow commands"
-    )
-    agents_app.add_typer(get_parallel_app(), name="p", help="Parallel agent workflow commands", hidden=True)
-    agents_app.add_typer(
-        get_browser_app(), name="browser", help="🌐 <b> Browser automation for agent CLIs and MCP", short_help="🌐 <b> Browser automation for agent CLIs/MCP"
-    )
-    agents_app.add_typer(get_browser_app(), name="b", help="Browser automation for agent CLIs and MCP", hidden=True)
-    agents_app.add_typer(
-        get_iter_app(), name="iter", help="🔁 <I> Iter maintenance through Herdr", short_help="🔁 <I> Current Herdr iter maintenance"
-    )
-    agents_app.add_typer(get_iter_app(), name="I", help="Iter maintenance through Herdr", hidden=True)
-    agents_app.add_typer(
-        get_second_brain_app(), name="second-brain", help="🧠 <B> Second Brain commands", short_help="🧠 <B> Second Brain commands"
-    )
-    agents_app.add_typer(get_second_brain_app(), name="B", help="Second Brain commands", hidden=True)
-    agents_app.add_typer(get_local_app(), name="local", help="🦙 <l> Local models through Ollama", short_help="🦙 <l> Local models through Ollama")
-    agents_app.add_typer(get_local_app(), name="l", help="Local models through Ollama", hidden=True)
-    agents_app.add_typer(
-        get_config_files_app(), name="config", help="📄 <C> Locate, initialize, and validate StackOps agent catalogs"
-    )
-    agents_app.add_typer(get_config_files_app(), name="C", hidden=True)
+    agents_app.command(
+        "parallel", help="🧵 <p> Parallel agent workflow commands", short_help="🧵 <p> Parallel agent workflow commands", context_settings=_NESTED_APP_CONTEXT
+    )(parallel_group)
+    agents_app.command("p", help="Parallel agent workflow commands", hidden=True, context_settings=_NESTED_APP_CONTEXT)(parallel_group)
+    agents_app.command(
+        "browser", help="🌐 <b> Browser automation for agent CLIs and MCP", short_help="🌐 <b> Browser automation for agent CLIs/MCP",
+        context_settings=_NESTED_APP_CONTEXT,
+    )(browser_group)
+    agents_app.command("b", help="Browser automation for agent CLIs and MCP", hidden=True, context_settings=_NESTED_APP_CONTEXT)(browser_group)
+    agents_app.command(
+        "iter", help="🔁 <I> Iter maintenance through Herdr", short_help="🔁 <I> Current Herdr iter maintenance", context_settings=_NESTED_APP_CONTEXT
+    )(iter_group)
+    agents_app.command("I", help="Iter maintenance through Herdr", hidden=True, context_settings=_NESTED_APP_CONTEXT)(iter_group)
+    agents_app.command(
+        "second-brain", help="🧠 <B> Second Brain commands", short_help="🧠 <B> Second Brain commands", context_settings=_NESTED_APP_CONTEXT
+    )(second_brain_group)
+    agents_app.command("B", help="Second Brain commands", hidden=True, context_settings=_NESTED_APP_CONTEXT)(second_brain_group)
+    agents_app.command(
+        "local", help="🦙 <l> Local models through Ollama", short_help="🦙 <l> Local models through Ollama", context_settings=_NESTED_APP_CONTEXT
+    )(local_group)
+    agents_app.command("l", help="Local models through Ollama", hidden=True, context_settings=_NESTED_APP_CONTEXT)(local_group)
+    agents_app.command(
+        "config", help="📄 <C> Locate, initialize, and validate StackOps agent catalogs", context_settings=_NESTED_APP_CONTEXT
+    )(config_files_group)
+    agents_app.command("C", hidden=True, context_settings=_NESTED_APP_CONTEXT)(config_files_group)
 
     agents_app.command(name="add-mcp", short_help="🔌 <m> Install MCP servers from StackOps catalogs")(add_mcp)
     agents_app.command(name="m", hidden=True)(add_mcp)

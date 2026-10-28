@@ -6,13 +6,19 @@ from typing import Annotated, get_args
 import typer
 
 from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import (
+    AGENTS,
+    DEFAULT_SEAPRATOR,
+    DEFAULT_STAGGER_MAX,
+    HOST,
+    PROVIDER,
+    ReasoningEffort,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
     AGENT_PARALLEL_BACKEND_HELP,
     DEFAULT_AGENT_PARALLEL_BACKEND,
     AgentParallelBackendOption,
 )
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 PARALLEL_CREATE_EXAMPLE = """Create a parallel-agent layout without launching agents.
 
@@ -103,8 +109,8 @@ def agents_create(
             help="Job label. Also used as the generated layout name and to build the default output directory when --agents-dir is omitted.",
         ),
     ] = "AI_Agents",
-    join_prompt_and_context: Annotated[bool, typer.Option("--join-prompt-context/--no-join-prompt-context", "-j", help="Join prompt file to the context.")] = False,
-    run: Annotated[bool, typer.Option("--run/--no-run", "-R", help="Immediately launch the generated layout through the selected backend.")] = False,
+    join_prompt_and_context: Annotated[bool, typer.Option(..., "--join-prompt-context", "-j", help="Join prompt file to the context.")] = False,
+    run: Annotated[bool, typer.Option(..., "--run", "-R", help="Immediately launch the generated layout through the selected backend.")] = False,
     output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Path to write the layout.json file")] = None,
     agents_dir: Annotated[
         str | None,
@@ -126,7 +132,7 @@ def agents_create(
     ] = False,
     show_example: Annotated[bool, typer.Option(..., "--show-example", "-e", help="Show a long parallel YAML create configuration example.")] = False,
     interactive: Annotated[
-        bool, typer.Option("--interactive/--no-interactive", "-i", help="Ask for missing parameters interactively.")
+        bool, typer.Option(..., "--interactive", "-i", help="Ask for missing parameters interactively.")
     ] = False,
 ) -> None:
     """Create agents layout file, ready to run."""

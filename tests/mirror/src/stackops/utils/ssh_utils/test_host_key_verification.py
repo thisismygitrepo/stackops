@@ -45,7 +45,11 @@ def loopback_server() -> Generator[LoopbackServer]:
                 return
             transport = paramiko.Transport(connection)
             transport.add_server_key(host_key)
-            transport.start_server(server=_PasswordServer(authenticated_usernames=authenticated_usernames))
+            try:
+                transport.start_server(server=_PasswordServer(authenticated_usernames=authenticated_usernames))
+            except (paramiko.SSHException, EOFError, OSError):
+                transport.close()
+                continue
             transports.append(transport)
 
     threading.Thread(target=serve, daemon=True).start()

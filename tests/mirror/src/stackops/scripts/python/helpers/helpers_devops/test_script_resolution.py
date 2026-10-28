@@ -7,7 +7,7 @@ from typer.testing import CliRunner
 from stackops.scripts.python.helpers.helpers_devops import cli_scripts, script_resolution
 
 
-@pytest.mark.parametrize("source", ("all", "project", "user", "library", "dynamic"))
+@pytest.mark.parametrize("source", ("all", "workspace", "user", "library", "dynamic"))
 def test_explicit_script_path_overrides_source(source: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     script_path = tmp_path / "custom.py"
     script_path.write_text("pass\n", encoding="utf-8")

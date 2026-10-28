@@ -2,10 +2,8 @@ from pathlib import Path
 import os
 import subprocess
 
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import (
-    DependencyBackend,
-    DependencyCheckContext,
-)
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import DependencyCheckContext
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_options import DependencyBackend
 
 BACKEND_PACKAGE_NAMES: dict[DependencyBackend, str] = {
     "pyan": "pyan3",

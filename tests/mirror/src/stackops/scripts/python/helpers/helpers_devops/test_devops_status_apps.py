@@ -37,7 +37,7 @@ def test_apps_status_uses_installer_executables_and_catalog_categories(
 
     grouped_status = devops_status_apps.check_important_tools()
 
-    catalog.assert_called_once_with(source="all", os="linux", arch="amd64", which_cats=None)
+    catalog.assert_called_once_with(source="all", user_path=None, os="linux", arch="amd64", which_cats=None)
     assert detection.call_args_list == [call(tool_name=executable_name)]
     assert grouped_status == {category: {app_name: True} for category in categories}
 

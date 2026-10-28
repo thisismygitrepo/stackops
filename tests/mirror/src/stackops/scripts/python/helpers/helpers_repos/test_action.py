@@ -8,6 +8,9 @@ from git.repo import Repo
 from stackops.scripts.python.helpers.helpers_repos.action import perform_git_operations
 from stackops.scripts.python.helpers.helpers_repos.action_helper import GitAction
 from stackops.scripts.python.helpers.helpers_repos.git_action import git_action
+from stackops.utils.schemas.repos.repos_types import GitRepoSync
+
+GIT_SYNC: GitRepoSync = {"mode": "git"}
 
 
 def _initialize_repository(repository_path: Path) -> Repo:
@@ -26,14 +29,14 @@ def test_status_reports_clean_and_changed_working_trees(tmp_path: Path) -> None:
     repository_path = tmp_path / "repository"
     _initialize_repository(repository_path)
 
-    clean_result = git_action(path=repository_path, action=GitAction.status, message=None, auto_uv_sync=False, dry_run=False)
+    clean_result = git_action(path=repository_path, action=GitAction.status, message=None, auto_uv_sync=False, dry_run=False, sync=GIT_SYNC, pwd=None)
 
     assert clean_result.success
     assert not clean_result.had_changes
     assert clean_result.message.startswith("##")
 
     (repository_path / "untracked.txt").write_text("changed\n")
-    changed_result = git_action(path=repository_path, action=GitAction.status, message=None, auto_uv_sync=False, dry_run=False)
+    changed_result = git_action(path=repository_path, action=GitAction.status, message=None, auto_uv_sync=False, dry_run=False, sync=GIT_SYNC, pwd=None)
 
     assert changed_result.success
     assert changed_result.had_changes
@@ -48,7 +51,7 @@ def test_commit_dry_run_preserves_staged_changes(tmp_path: Path) -> None:
     repository.index.add([tracked_file.as_posix()])
     commit_before = repository.head.commit.hexsha
 
-    result = git_action(path=repository_path, action=GitAction.commit, message="update", auto_uv_sync=False, dry_run=True)
+    result = git_action(path=repository_path, action=GitAction.commit, message="update", auto_uv_sync=False, dry_run=True, sync=GIT_SYNC, pwd=None)
 
     assert result.success
     assert result.dry_run
@@ -62,7 +65,7 @@ def test_commit_rejects_unstaged_changes(tmp_path: Path) -> None:
     (repository_path / "tracked.txt").write_text("changed\n")
     commit_before = repository.head.commit.hexsha
 
-    result = git_action(path=repository_path, action=GitAction.commit, message="update", auto_uv_sync=False, dry_run=False)
+    result = git_action(path=repository_path, action=GitAction.commit, message="update", auto_uv_sync=False, dry_run=False, sync=GIT_SYNC, pwd=None)
 
     assert not result.success
     assert "No staged changes" in result.message
@@ -77,7 +80,7 @@ def test_commit_does_not_stage_untracked_files(tmp_path: Path) -> None:
     repository.index.add([tracked_file.as_posix()])
     (repository_path / "untracked-secret.txt").write_text("do not commit\n")
 
-    result = git_action(path=repository_path, action=GitAction.commit, message="update", auto_uv_sync=False, dry_run=False)
+    result = git_action(path=repository_path, action=GitAction.commit, message="update", auto_uv_sync=False, dry_run=False, sync=GIT_SYNC, pwd=None)
 
     assert result.success
     assert repository.head.commit.message == "update"
@@ -101,7 +104,7 @@ def test_push_checks_returned_push_results(tmp_path: Path, monkeypatch: pytest.M
         return RejectedPushResults()
 
     monkeypatch.setattr(Remote, "push", rejected_push)
-    result = git_action(path=repository_path, action=GitAction.push, message=None, auto_uv_sync=False, dry_run=False)
+    result = git_action(path=repository_path, action=GitAction.push, message=None, auto_uv_sync=False, dry_run=False, sync=GIT_SYNC, pwd=None)
 
     assert not result.success
     assert "remote rejected the push" in result.message
@@ -116,7 +119,7 @@ def test_pull_dry_run_does_not_update_repository(tmp_path: Path, monkeypatch: py
         raise AssertionError("update_repository must not run during a dry run")
 
     monkeypatch.setattr("stackops.scripts.python.helpers.helpers_repos.git_action.update_repository", unexpected_update)
-    result = git_action(path=repository_path, action=GitAction.pull, message=None, auto_uv_sync=True, dry_run=True)
+    result = git_action(path=repository_path, action=GitAction.pull, message=None, auto_uv_sync=True, dry_run=True, sync=GIT_SYNC, pwd=None)
 
     assert result.success
     assert result.dry_run
@@ -132,7 +135,7 @@ def test_push_dry_run_does_not_contact_remote(tmp_path: Path, monkeypatch: pytes
         raise AssertionError("Remote.push must not run during a dry run")
 
     monkeypatch.setattr(Remote, "push", unexpected_push)
-    result = git_action(path=repository_path, action=GitAction.push, message=None, auto_uv_sync=False, dry_run=True)
+    result = git_action(path=repository_path, action=GitAction.push, message=None, auto_uv_sync=False, dry_run=True, sync=GIT_SYNC, pwd=None)
 
     assert result.success
     assert result.dry_run
@@ -154,6 +157,8 @@ def test_parallel_status_results_are_sorted_and_rendered_once(tmp_path: Path, ca
         auto_uv_sync=False,
         commit_message=None,
         dry_run=False,
+        syncs={},
+        pwd=None,
     )
 
     assert [result.repo_path.name for result in summary.operation_results] == ["alpha", "bravo"]

@@ -11,7 +11,7 @@ from stackops.utils.repos import stackops_paths
 
 
 @pytest.mark.parametrize("command", ("path", "init", "validate"))
-@pytest.mark.parametrize("source", ("project", "p", "user", "u"))
+@pytest.mark.parametrize("source", ("workspace", "w", "user", "u"))
 def test_explicit_layout_file_overrides_source(
     command: str, source: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -28,13 +28,13 @@ def test_explicit_layout_file_overrides_source(
     source_lookup.assert_not_called()
 
 
-def test_project_layout_from_nested_directory_uses_repository_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_workspace_layout_from_nested_directory_uses_repository_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from git import Repo
 
     with Repo.init(tmp_path):
         nested_directory = tmp_path / "src" / "nested"
         nested_directory.mkdir(parents=True)
         monkeypatch.chdir(nested_directory)
-        layout_path = resolve_layout_file(layouts_file=None, source="p")
+        layout_path = resolve_layout_file(layouts_file=None, source="w")
 
     assert layout_path == tmp_path / ".stackops" / "config" / "layout.json"

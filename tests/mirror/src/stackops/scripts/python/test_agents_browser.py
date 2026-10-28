@@ -153,7 +153,7 @@ def test_batch_commands_are_listed_with_uppercase_aliases() -> None:
     assert "launch-browser" not in help_result.output
     assert "<L> Launch every saved profile for one browser" in help_result.output
     assert "close" in help_result.output
-    assert "<c> Close one tracked browser endpoint" in help_result.output
+    assert "<c> Close tracked endpoints by port or profile names" in help_result.output
     assert "batch-close" in help_result.output
     assert "<C> Close tracked saved-profile browser launches" in help_result.output
     assert launch_alias_help_result.exit_code == 0, launch_alias_help_result.output
@@ -418,11 +418,11 @@ def test_declutter_requires_exactly_one_of_profile_or_all(arguments: list[str]) 
     assert result.exit_code != 0
 
 
-def test_replicate_defaults_to_chrome_base_and_forwards_count(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[BrowserName, str, int, bool]] = []
+def test_replicate_defaults_to_chrome_base_and_expands_count_into_target_names(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[BrowserName, str, tuple[str, ...], bool]] = []
 
-    def replicate(*, browser: BrowserName, profile_name: str, count: int, overwrite: bool) -> BrowserProfileReplicationResult:
-        calls.append((browser, profile_name, count, overwrite))
+    def replicate(*, browser: BrowserName, profile_name: str, target_names: tuple[str, ...], overwrite: bool) -> BrowserProfileReplicationResult:
+        calls.append((browser, profile_name, target_names, overwrite))
         return BrowserProfileReplicationResult(
             browser=browser,
             source_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/base"),
@@ -432,19 +432,19 @@ def test_replicate_defaults_to_chrome_base_and_forwards_count(monkeypatch: pytes
 
     monkeypatch.setattr(agents_browser_profiles, "replicate_browser_profile", replicate)
 
-    result = CliRunner().invoke(agents_browser.get_app(), ["replicate", "3"])
+    result = CliRunner().invoke(agents_browser.get_app(), ["replicate", "--count", "3"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("chrome", "base", 3, False)]
+    assert calls == [("chrome", "base", ("p1", "p2", "p3"), False)]
     assert result.output.count("Created:") == 3
     assert "Source size: 2.0 MiB" in result.output
 
 
 def test_replicate_overwrite_forwards_the_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[BrowserName, str, int, bool]] = []
+    calls: list[tuple[BrowserName, str, tuple[str, ...], bool]] = []
 
-    def replicate(*, browser: BrowserName, profile_name: str, count: int, overwrite: bool) -> BrowserProfileReplicationResult:
-        calls.append((browser, profile_name, count, overwrite))
+    def replicate(*, browser: BrowserName, profile_name: str, target_names: tuple[str, ...], overwrite: bool) -> BrowserProfileReplicationResult:
+        calls.append((browser, profile_name, target_names, overwrite))
         return BrowserProfileReplicationResult(
             browser=browser,
             source_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/base"),
@@ -454,7 +454,28 @@ def test_replicate_overwrite_forwards_the_flag(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setattr(agents_browser_profiles, "replicate_browser_profile", replicate)
 
-    result = CliRunner().invoke(agents_browser.get_app(), ["replicate", "5", "--browser", "brave", "--profile", "alex-copy", "--overwrite"])
+    result = CliRunner().invoke(agents_browser.get_app(), ["replicate", "--count", "5", "--browser", "brave", "--profile", "alex-copy", "--overwrite"])
 
     assert result.exit_code == 0, result.output
-    assert calls == [("brave", "alex-copy", 5, True)]
+    assert calls == [("brave", "alex-copy", ("p1", "p2", "p3", "p4", "p5"), True)]
+
+
+def test_replicate_target_forwards_named_destinations(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[BrowserName, str, tuple[str, ...], bool]] = []
+
+    def replicate(*, browser: BrowserName, profile_name: str, target_names: tuple[str, ...], overwrite: bool) -> BrowserProfileReplicationResult:
+        calls.append((browser, profile_name, target_names, overwrite))
+        return BrowserProfileReplicationResult(
+            browser=browser,
+            source_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/base"),
+            destination_paths=(Path("work"), Path("personal")),
+            source_size_bytes=2 * 1024 * 1024,
+        )
+
+    monkeypatch.setattr(agents_browser_profiles, "replicate_browser_profile", replicate)
+
+    result = CliRunner().invoke(agents_browser.get_app(), ["replicate", "--target", "work, personal"])
+
+    assert result.exit_code == 0, result.output
+    assert calls == [("chrome", "base", ("work", "personal"), False)]
+    assert result.output.count("Created:") == 2

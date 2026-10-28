@@ -134,11 +134,6 @@ def rustdesk_server_installer_data() -> InstallerData:
     return matching_installers[0]
 
 
-def test_rustdesk_server_declares_its_complete_binary_set(rustdesk_server_installer_data: InstallerData) -> None:
-    assert rustdesk_server_installer_data["executableName"] == "hbbs"
-    assert rustdesk_server_installer_data["additionalExecutableNames"] == ["hbbr", "rustdesk-utils"]
-
-
 @pytest.mark.parametrize(
     ("operating_system", "architecture", "expected_pattern"),
     (

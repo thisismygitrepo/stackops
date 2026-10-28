@@ -12,11 +12,12 @@ def test_remote_recovery_copy_is_removed_only_after_successful_upload(tmp_path: 
     remote_root = tmp_path.joinpath("remote", "repository")
     events: list[str] = []
 
-    def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> None:
+    def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str | None, ignore_gitignore: bool) -> None:
         assert repo_root == local_root
         assert cloud == "fake-cloud"
         assert remote_path == Path("archive.zip.gpg")
         assert pwd is None
+        assert ignore_gitignore
         events.append("upload")
 
     def delete_path(target: PathLike, *, verbose: bool) -> None:
@@ -28,7 +29,12 @@ def test_remote_recovery_copy_is_removed_only_after_successful_upload(tmp_path: 
     monkeypatch.setattr("stackops.utils.path_core.delete_path", delete_path)
 
     publish_local_repository(
-        repo_local_root=local_root, repo_remote_root=remote_root, cloud="fake-cloud", remote_path=Path("archive.zip.gpg"), pwd=None
+        repo_local_root=local_root,
+        repo_remote_root=remote_root,
+        cloud="fake-cloud",
+        remote_path=Path("archive.zip.gpg"),
+        pwd=None,
+        ignore_gitignore=True,
     )
 
     assert events == ["upload", "delete"]
@@ -38,8 +44,8 @@ def test_failed_upload_preserves_remote_recovery_copy(tmp_path: Path, monkeypatc
     remote_root = tmp_path.joinpath("remote", "repository")
     delete_calls: list[Path] = []
 
-    def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> None:
-        _ = repo_root, cloud, remote_path, pwd
+    def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str | None, ignore_gitignore: bool) -> None:
+        _ = repo_root, cloud, remote_path, pwd, ignore_gitignore
         raise RuntimeError("synthetic upload failure")
 
     def delete_path(target: PathLike, *, verbose: bool) -> None:
@@ -56,6 +62,7 @@ def test_failed_upload_preserves_remote_recovery_copy(tmp_path: Path, monkeypatc
             cloud="fake-cloud",
             remote_path=Path("archive.zip.gpg"),
             pwd=None,
+            ignore_gitignore=False,
         )
 
     assert delete_calls == []

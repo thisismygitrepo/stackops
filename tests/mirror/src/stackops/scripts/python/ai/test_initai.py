@@ -2,8 +2,10 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from stackops.scripts.python.ai import initai
+from stackops.scripts.python.ai.solutions.omp.constants import OPENROUTER_ZDR_EXTENSION_PATH
 from stackops.scripts.python.helpers.helpers_agents import agents_skill_stackops_backend
 
 
@@ -138,9 +140,14 @@ def test_add_ai_configs_writes_omp_ten_retry_policy(tmp_path: Path) -> None:
         add_agent_ops_skill=False,
     )
 
-    assert repo_root.joinpath(".omp", "config.yml").read_text(encoding="utf-8") == """retry:
-  enabled: true
-  maxRetries: 10
-  baseDelayMs: 500
-  maxDelayMs: 300000
-"""
+    config = yaml.safe_load(repo_root.joinpath(".omp", "config.yml").read_text(encoding="utf-8"))
+    assert config == {
+        "retry": {
+            "enabled": True,
+            "maxRetries": 10,
+            "baseDelayMs": 500,
+            "maxDelayMs": 300_000,
+        },
+        "extensions": [OPENROUTER_ZDR_EXTENSION_PATH],
+    }
+    assert repo_root.joinpath(OPENROUTER_ZDR_EXTENSION_PATH).is_file()

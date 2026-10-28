@@ -139,15 +139,15 @@ def _print_merge_report(report: RepoRecordMergeReport) -> None:
 
 
 def record_a_repo(path: Path, search_parent_directories: bool, preferred_remote: str | None) -> RepoRecordDict:
-    from git.exc import InvalidGitRepositoryError, NoSuchPathError
+    from git.exc import GitCommandError, InvalidGitRepositoryError, NoSuchPathError
     from git.repo import Repo
 
+    invalid_repository_message = f"""Cannot register {path}: not a valid Git repository. Check its .git directory or worktree link."""
     try:
         repo = Repo(path, search_parent_directories=search_parent_directories)
-    except (InvalidGitRepositoryError, NoSuchPathError) as error:
-        raise ValueError(
-            f"""Cannot register {path}: not a valid Git repository. Check its .git directory or worktree link."""
-        ) from error
+        repo.git.rev_parse("--git-dir")
+    except (InvalidGitRepositoryError, NoSuchPathError, GitCommandError) as error:
+        raise ValueError(invalid_repository_message) from error
     repo_root = Path(repo.working_dir).absolute()
     # remotes: = {remote.name: remote.url for remote in repo.remotes}
     remotes: list[RepoRemote] = [{"name": remote.name, "url": remote.url} for remote in repo.remotes]

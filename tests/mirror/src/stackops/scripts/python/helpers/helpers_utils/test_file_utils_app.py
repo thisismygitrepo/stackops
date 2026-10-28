@@ -47,7 +47,7 @@ def test_pdf_compression_forwards_opt_outs(
         calls.append((no_compress_streams, no_object_streams))
 
     monkeypatch.setattr(pdf, "compress_pdf", capture_compression)
-    result = CliRunner().invoke(file_utils_app.get_app(), ["pdf-compress", str(input_path), *arguments])
+    result = CliRunner().invoke(file_utils_app.get_app(), ["compress-pdf", str(input_path), *arguments])
 
     assert result.exit_code == 0, result.output
     assert calls == [stream_opt_outs]

@@ -1,5 +1,4 @@
 import stackops
-import json
 import re
 from pathlib import Path
 from typing import Final, cast, get_args
@@ -112,6 +111,8 @@ def _require_agent(value: object) -> AGENTS:
 
 
 def read_stackops_config() -> StackOpsConfig:
+    import json
+
     if not DOTFILES_STACKOPS_CONFIG_PATH.is_file():
         raise FileNotFoundError(f"StackOps config file not found: {DOTFILES_STACKOPS_CONFIG_PATH}")
     raw_config = _require_object(json.loads(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8")), "root")

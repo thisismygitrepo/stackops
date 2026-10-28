@@ -10,6 +10,7 @@ import vt
 
 from stackops.jobs.installer.checks import vt_scanner
 from stackops.jobs.installer.checks.scan_outcomes import ScanCancelled, ScanFailure, ScanSuccess, format_scan_failure
+from stackops.jobs.installer.checks.vt_requests import ScanClient
 
 FILE_BYTES = b"dummy-file"
 FILE_HASH = sha256(FILE_BYTES).hexdigest()
@@ -53,12 +54,13 @@ def file_report() -> vt.Object:
 def test_known_hash_reuses_report_without_upload(sample_path: Path, file_report: vt.Object) -> None:
     client = _ScriptedClient([("/files/{}", FILE_HASH, file_report)])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
     assert isinstance(result, ScanSuccess)
     assert result.summary["verdict_engines"] == 1
     assert result.source == "existing_report"
     assert result.scanned_at == SCAN_DATE
+    assert result.sha256 == FILE_HASH
     assert client.requests == [("/files/{}", FILE_HASH)]
 
 
@@ -70,11 +72,12 @@ def test_not_found_uploads_then_polls_completed_analysis(sample_path: Path) -> N
         ("/analyses/{}", "analysis-id", completed),
     ])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
     assert isinstance(result, ScanSuccess)
     assert result.source == "submitted_file"
     assert result.scanned_at == SCAN_DATE
+    assert result.sha256 == FILE_HASH
     assert result.summary["verdict_engines"] == 0
     assert result.summary["notes"] == "VirusTotal returned no engine results."
     assert not client.script
@@ -90,7 +93,7 @@ def test_duplicate_upload_race_waits_for_existing_report(sample_path: Path, file
         ("/files/{}", FILE_HASH, file_report),
     ])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
     assert isinstance(result, ScanSuccess)
     assert result.source == "existing_report"
@@ -101,9 +104,10 @@ def test_duplicate_upload_race_waits_for_existing_report(sample_path: Path, file
 def test_lookup_errors_fail_without_upload_or_retry(sample_path: Path, error_code: str) -> None:
     client = _ScriptedClient([("/files/{}", FILE_HASH, vt.APIError(error_code, "secret-key account details"))])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
-    assert result == ScanFailure(stage="report lookup", error_type="APIError", error_code=error_code)
+    assert isinstance(result, ScanFailure)
+    assert result == ScanFailure(stage="report lookup", error_type="APIError", error_code=error_code, sha256=FILE_HASH)
     assert "secret-key" not in format_scan_failure(result)
     assert len(client.requests) == 1
 
@@ -116,7 +120,7 @@ def test_pending_existing_report_polls_without_upload(sample_path: Path, file_re
         ("/files/{}", FILE_HASH, file_report),
     ])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
     assert isinstance(result, ScanSuccess)
     assert not client.script
@@ -126,10 +130,19 @@ def test_pending_deadline_returns_timeout(sample_path: Path, monkeypatch: pytest
     monkeypatch.setattr(vt_scanner, "VT_ANALYSIS_TIMEOUT_SECONDS", 0.0)
     client = _ScriptedClient([("/files/{}", FILE_HASH, vt.Object("file", FILE_HASH, {"last_analysis_results": {}}))])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
-    assert result == ScanFailure(stage="analysis polling", error_type="TimeoutError", error_code=None)
+    assert result == ScanFailure(stage="analysis polling", error_type="TimeoutError", error_code=None, sha256=FILE_HASH)
     assert len(client.requests) == 1
+
+
+def test_unreadable_file_fails_without_hash_or_requests(tmp_path: Path) -> None:
+    client = _ScriptedClient([])
+
+    result = vt_scanner.scan_file(tmp_path / "missing-dummy-file", cast(ScanClient, client), stop=None, request_lock=None)
+
+    assert result == ScanFailure(stage="file read", error_type="FileNotFoundError", error_code=None, sha256=None)
+    assert not client.requests
 
 
 def test_cancelled_scan_never_reads_file_or_sends_requests() -> None:
@@ -137,7 +150,7 @@ def test_cancelled_scan_never_reads_file_or_sends_requests() -> None:
     stop.set()
     client = _ScriptedClient([])
 
-    result = vt_scanner.scan_file(Path("missing-dummy-file"), cast(vt.Client, client), stop=stop, request_lock=None)
+    result = vt_scanner.scan_file(Path("missing-dummy-file"), cast(ScanClient, client), stop=stop, request_lock=None)
 
     assert isinstance(result, ScanCancelled)
     assert not client.requests
@@ -154,7 +167,7 @@ def test_cancellation_interrupts_pending_response(sample_path: Path) -> None:
 
     client = _CancellingClient([("/files/{}", FILE_HASH, vt.Object("file", FILE_HASH, {"last_analysis_results": {}}))])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=stop, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=stop, request_lock=None)
 
     assert isinstance(result, ScanCancelled)
     assert len(client.requests) == 1
@@ -164,20 +177,20 @@ def test_cancellation_interrupts_pending_response(sample_path: Path) -> None:
 def test_invalid_report_shape_or_missing_date_is_explicit_failure(sample_path: Path, attributes: dict[str, object]) -> None:
     client = _ScriptedClient([("/files/{}", FILE_HASH, vt.Object("file", FILE_HASH, attributes))])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
-    assert result == ScanFailure(stage="result parsing", error_type="ValueError", error_code=None)
+    assert result == ScanFailure(stage="result parsing", error_type="ValueError", error_code=None, sha256=FILE_HASH)
 
 
 @pytest.mark.parametrize(
     ("upload_response", "poll_response", "failure"),
     [
-        (vt.APIError("QuotaExceededError", "private details"), None, ScanFailure("file upload", "APIError", "QuotaExceededError")),
-        (vt.Object("analysis", "analysis-id"), vt.APIError("QuotaExceededError", "private details"), ScanFailure("analysis polling", "APIError", "QuotaExceededError")),
-        (vt.Object("analysis", "analysis-id"), vt.APIError("NotFoundError", "missing"), ScanFailure("analysis polling", "APIError", "NotFoundError")),
-        (vt.Object("analysis", None), None, ScanFailure("result parsing", "ValueError", None)),
-        (vt.Object("analysis", "analysis-id"), vt.Object("analysis", "analysis-id", {"status": "unknown"}), ScanFailure("result parsing", "ValueError", None)),
-        (vt.Object("analysis", "analysis-id"), vt.Object("analysis", "analysis-id", {"status": "completed", "results": []}), ScanFailure("result parsing", "ValueError", None)),
+        (vt.APIError("QuotaExceededError", "private details"), None, ScanFailure("file upload", "APIError", "QuotaExceededError", FILE_HASH)),
+        (vt.Object("analysis", "analysis-id"), vt.APIError("QuotaExceededError", "private details"), ScanFailure("analysis polling", "APIError", "QuotaExceededError", FILE_HASH)),
+        (vt.Object("analysis", "analysis-id"), vt.APIError("NotFoundError", "missing"), ScanFailure("analysis polling", "APIError", "NotFoundError", FILE_HASH)),
+        (vt.Object("analysis", None), None, ScanFailure("result parsing", "ValueError", None, FILE_HASH)),
+        (vt.Object("analysis", "analysis-id"), vt.Object("analysis", "analysis-id", {"status": "unknown"}), ScanFailure("result parsing", "ValueError", None, FILE_HASH)),
+        (vt.Object("analysis", "analysis-id"), vt.Object("analysis", "analysis-id", {"status": "completed", "results": []}), ScanFailure("result parsing", "ValueError", None, FILE_HASH)),
     ],
 )
 def test_upload_and_poll_failures_are_explicit_and_not_retried(sample_path: Path, upload_response: vt.Object | Exception, poll_response: vt.Object | Exception | None, failure: ScanFailure) -> None:
@@ -186,7 +199,7 @@ def test_upload_and_poll_failures_are_explicit_and_not_retried(sample_path: Path
         script.append(("/analyses/{}", "analysis-id", poll_response))
     client = _ScriptedClient(script)
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
     assert result == failure
     assert not client.script
@@ -203,6 +216,6 @@ def test_upload_uses_the_exact_bytes_from_hash_lookup(sample_path: Path) -> None
         ("upload", FILE_HASH, vt.APIError("QuotaExceededError", "quota")),
     ])
 
-    result = vt_scanner.scan_file(sample_path, cast(vt.Client, client), stop=None, request_lock=None)
+    result = vt_scanner.scan_file(sample_path, cast(ScanClient, client), stop=None, request_lock=None)
 
-    assert result == ScanFailure("file upload", "APIError", "QuotaExceededError")
+    assert result == ScanFailure("file upload", "APIError", "QuotaExceededError", FILE_HASH)

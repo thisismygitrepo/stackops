@@ -68,7 +68,7 @@ def test_full_reset_covers_customizations_and_preserves_unrelated_files(isolated
     auth.parent.mkdir(parents=True)
     auth.write_text('{"token":"keep"}')
     runner = CliRunner()
-    args = ["reset", "claude", "--directory", str(project), "--scope", "project"]
+    args = ["reset", "claude", "--directory", str(project), "--scope", "workspace"]
     preview = runner.invoke(agents.get_app(), args)
     assert preview.exit_code == 0, preview.output
     for path in (settings, mcp, instructions, skill, plugin):
@@ -129,7 +129,7 @@ def test_skill_cleanup_unlinks_installed_skill_preserving_source(isolated_contex
     link.parent.mkdir(parents=True)
     link.symlink_to(source, target_is_directory=True)
     result = CliRunner().invoke(agents.get_app(), [
-        "reset", "claude", "--directory", str(project), "--resource", "skill", "--scope", "project", "--apply",
+        "reset", "claude", "--directory", str(project), "--resource", "skill", "--scope", "workspace", "--apply",
     ])
     assert result.exit_code == 0, result.output
     assert not link.is_symlink()
@@ -144,7 +144,7 @@ def test_local_mcp_in_user_state_removes_only_selected_project(isolated_context:
         "projects": {str(project): {"mcpServers": {"local-server": {"command": "remove"}}}, "/other-project": {"mcpServers": {"keep": {"command": "keep"}}}},
     }))
     result = CliRunner().invoke(agents.get_app(), [
-        "reset", "claude", "--directory", str(project), "--resource", "mcp", "--scope", "project", "--apply",
+        "reset", "claude", "--directory", str(project), "--resource", "mcp", "--scope", "workspace", "--apply",
     ])
     assert result.exit_code == 0, result.output
     document = json.loads(state.read_text())
@@ -161,7 +161,7 @@ second line"""
     config = project / ".mcp.json"
     config.write_text(json.dumps({"mcpServers": {selected_name: {"command": "remove"}, "keep": {"command": "server"}}}))
     result = CliRunner().invoke(agents.get_app(), [
-        "reset", "claude", "--directory", str(project), "--resource", "mcp", "--scope", "project", "--match", selected_name, "--apply",
+        "reset", "claude", "--directory", str(project), "--resource", "mcp", "--scope", "workspace", "--match", selected_name, "--apply",
     ])
     assert result.exit_code == 0, result.output
     assert json.loads(config.read_text()) == {"mcpServers": {"keep": {"command": "server"}}}
@@ -179,7 +179,7 @@ def test_worker_blocks_partial_cleanup_of_malformed_configuration(isolated_conte
     settings.parent.mkdir()
     settings.write_text("invalid json")
     result = CliRunner().invoke(agents.get_app(), [
-        "reset", "claude", "--directory", str(isolated_context.project_root), "--resource", "hook", "--scope", "project", "--apply",
+        "reset", "claude", "--directory", str(isolated_context.project_root), "--resource", "hook", "--scope", "workspace", "--apply",
     ])
     assert result.exit_code == 1, result.output
     assert "Blocked:" in result.output

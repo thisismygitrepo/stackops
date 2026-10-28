@@ -5,9 +5,10 @@ from typing import cast
 import pytest
 from git.repo import Repo
 
+from stackops.scripts.python.helpers.helpers_repos.spec_store import REPOS_SPEC_VERSION, save_repos_spec
 from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError, capture_repository
 from stackops.scripts.python.helpers.helpers_repos.version_checkout import checkout_declared_version
-from stackops.scripts.python.helpers.helpers_repos.version_constants import CHECKOUT_BACKUP_REF_PREFIX
+from stackops.scripts.python.helpers.helpers_repos.version_constants import CHECKOUT_BACKUP_REF_PREFIX, VERSIONS_SCHEMA_VERSION
 from stackops.scripts.python.helpers.helpers_repos.version_models import DeclaredVersion, RepositorySnapshot, VersionsFile
 from stackops.scripts.python.helpers.helpers_repos.version_store import (
     VersionStoreError,
@@ -16,6 +17,9 @@ from stackops.scripts.python.helpers.helpers_repos.version_store import (
     load_versions_file,
     save_versions_file,
 )
+from stackops.utils.schemas.repos.repos_types import GitRepoSync
+
+GIT_SYNC: GitRepoSync = {"mode": "git"}
 
 
 def _initialize_repository(repository_path: Path, content: str) -> Repo:
@@ -39,6 +43,10 @@ def _commit_tracked_change(repository: Repo, repository_path: Path, content: str
 
 def _declared_version(version: str, snapshot: RepositorySnapshot) -> DeclaredVersion:
     return {"version": version, "message": f"Captured {version}", "repositories": [snapshot]}
+
+
+def _empty_specs_path(tmp_path: Path) -> Path:
+    return save_repos_spec(spec={"version": REPOS_SPEC_VERSION, "repos": []}, path=tmp_path.joinpath("repos.json"))
 
 
 def _backup_refs(repository: Repo) -> list[str]:
@@ -65,7 +73,7 @@ def test_capture_reads_authoritative_branches_from_local_bare_remote(tmp_path: P
     publisher.remote("origin").push("main:main").raise_if_error()
     repository.git.update_ref("refs/remotes/origin/main", initial_commit)
 
-    snapshot = capture_repository(repos_root=workspace, repository_path=repository_path)
+    snapshot = capture_repository(repos_root=workspace, repository_path=repository_path, sync=GIT_SYNC, query_remotes=True)
 
     assert cast(str, repository.commit("refs/remotes/origin/main").hexsha).lower() == initial_commit
     assert snapshot["commit"] == initial_commit
@@ -76,7 +84,7 @@ def test_versions_file_append_round_trip_and_duplicate_rejection(tmp_path: Path)
     workspace = tmp_path.joinpath("workspace")
     repository_path = workspace.joinpath("application")
     _initialize_repository(repository_path=repository_path, content="initial\n")
-    snapshot = capture_repository(repos_root=workspace, repository_path=repository_path)
+    snapshot = capture_repository(repos_root=workspace, repository_path=repository_path, sync=GIT_SYNC, query_remotes=True)
     declared_version = _declared_version(version="release-1", snapshot=snapshot)
     versions_file = append_declared_version(versions_file=empty_versions_file(), declared_version=declared_version)
     versions_path = workspace.joinpath("versions.json")
@@ -87,7 +95,7 @@ def test_versions_file_append_round_trip_and_duplicate_rejection(tmp_path: Path)
     with pytest.raises(VersionStoreError, match="already declared"):
         append_declared_version(versions_file=versions_file, declared_version=declared_version)
 
-    duplicate_file: VersionsFile = {"schemaVersion": "1", "versions": [declared_version, declared_version]}
+    duplicate_file: VersionsFile = {"schemaVersion": VERSIONS_SCHEMA_VERSION, "versions": [declared_version, declared_version]}
     with pytest.raises(VersionStoreError, match="duplicate version identifiers"):
         save_versions_file(versions_file=duplicate_file, path=versions_path)
     versions_path.write_text(json.dumps(duplicate_file), encoding="utf-8")
@@ -99,13 +107,17 @@ def test_checkout_restores_and_rewinds_attached_branch_with_recovery_ref(tmp_pat
     workspace = tmp_path.joinpath("workspace")
     repository_path = workspace.joinpath("application")
     repository = _initialize_repository(repository_path=repository_path, content="target\n")
-    snapshot = capture_repository(repos_root=workspace, repository_path=repository_path)
+    snapshot = capture_repository(repos_root=workspace, repository_path=repository_path, sync=GIT_SYNC, query_remotes=True)
     newer_commit = _commit_tracked_change(repository=repository, repository_path=repository_path, content="newer\n", message="newer")
     repository.create_head("scratch", snapshot["commit"])
     repository.git.switch("scratch")
 
     results = checkout_declared_version(
-        repos_root=workspace, declared_version=_declared_version(version="release-1", snapshot=snapshot), dry_run=False
+        repos_root=workspace,
+        declared_version=_declared_version(version="release-1", snapshot=snapshot),
+        dry_run=False,
+        specs_path=_empty_specs_path(tmp_path=tmp_path),
+        pwd=None,
     )
 
     recovery_refs = results[0]["backupRefs"]
@@ -122,12 +134,18 @@ def test_checkout_rejects_dirty_captured_target_before_mutating_repository(tmp_p
     workspace = tmp_path.joinpath("workspace")
     repository_path = workspace.joinpath("application")
     repository = _initialize_repository(repository_path=repository_path, content="target\n")
-    snapshot = capture_repository(repos_root=workspace, repository_path=repository_path)
+    snapshot = capture_repository(repos_root=workspace, repository_path=repository_path, sync=GIT_SYNC, query_remotes=True)
     snapshot["isDirty"] = True
     current_commit = _commit_tracked_change(repository=repository, repository_path=repository_path, content="current\n", message="current")
 
     with pytest.raises(VersionOperationError, match="captured dirty repositories"):
-        checkout_declared_version(repos_root=workspace, declared_version=_declared_version(version="dirty-target", snapshot=snapshot), dry_run=False)
+        checkout_declared_version(
+            repos_root=workspace,
+            declared_version=_declared_version(version="dirty-target", snapshot=snapshot),
+            dry_run=False,
+            specs_path=_empty_specs_path(tmp_path=tmp_path),
+            pwd=None,
+        )
 
     assert cast(str, repository.head.commit.hexsha).lower() == current_commit
     assert _backup_refs(repository=repository) == []
@@ -139,8 +157,8 @@ def test_checkout_preflights_every_current_worktree_before_mutating_any_reposito
     second_path = workspace.joinpath("bravo")
     first_repository = _initialize_repository(repository_path=first_path, content="alpha target\n")
     second_repository = _initialize_repository(repository_path=second_path, content="bravo target\n")
-    first_snapshot = capture_repository(repos_root=workspace, repository_path=first_path)
-    second_snapshot = capture_repository(repos_root=workspace, repository_path=second_path)
+    first_snapshot = capture_repository(repos_root=workspace, repository_path=first_path, sync=GIT_SYNC, query_remotes=True)
+    second_snapshot = capture_repository(repos_root=workspace, repository_path=second_path, sync=GIT_SYNC, query_remotes=True)
     first_current_commit = _commit_tracked_change(
         repository=first_repository, repository_path=first_path, content="alpha current\n", message="alpha current"
     )
@@ -148,7 +166,9 @@ def test_checkout_preflights_every_current_worktree_before_mutating_any_reposito
     declared_version: DeclaredVersion = {"version": "release-1", "message": "Both repositories", "repositories": [first_snapshot, second_snapshot]}
 
     with pytest.raises(VersionOperationError, match="Refusing to overwrite dirty repository"):
-        checkout_declared_version(repos_root=workspace, declared_version=declared_version, dry_run=False)
+        checkout_declared_version(
+            repos_root=workspace, declared_version=declared_version, dry_run=False, specs_path=_empty_specs_path(tmp_path=tmp_path), pwd=None
+        )
 
     assert cast(str, first_repository.head.commit.hexsha).lower() == first_current_commit
     assert first_repository.active_branch.name == "main"

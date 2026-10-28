@@ -10,8 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend impo
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import CREATE_CONFIG_KEYS, ParallelCreateValues, ParallelYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_paths import resolve_parallel_create_paths
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 
 
 PARALLEL_RUN_PREVIEW_SIZE_PERCENT: Final[float] = 70.0

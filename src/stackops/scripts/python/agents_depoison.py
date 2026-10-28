@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupScope
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_scope import CleanupScope
 
 
 def depoison(

@@ -134,7 +134,7 @@ def test_replicate_creates_p1_through_pn_from_the_base_profile(profiles_root: Pa
     _write_sized_file(source_path.joinpath("Local State"), 8)
     _write_sized_file(source_path.joinpath("Default", "Cookies"), 13)
 
-    result = profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=3, overwrite=False)
+    result = profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1", "p2", "p3"), overwrite=False)
 
     expected_destinations = tuple(profiles_root.joinpath("chrome", f"p{index}") for index in range(1, 4))
     assert result.source_path == source_path
@@ -150,7 +150,7 @@ def test_replicate_excludes_temporary_profile_copies(profiles_root: Path) -> Non
     _write_sized_file(source_path.joinpath("Local State"), 8)
     _write_sized_file(source_path.joinpath(".tmp", "old-alias", "temporary.bin"), 13)
 
-    result = profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=1, overwrite=False)
+    result = profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1",), overwrite=False)
 
     destination_path = profiles_root.joinpath("chrome", "p1")
     assert result.source_size_bytes == 8
@@ -165,7 +165,7 @@ def test_replicate_preflights_all_destination_collisions(profiles_root: Path) ->
     sentinel_path = _write_sized_file(collision_path.joinpath("keep.bin"), 5)
 
     with pytest.raises(ValueError, match=r"p2"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=3, overwrite=False)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1", "p2", "p3"), overwrite=False)
 
     assert not profiles_root.joinpath("chrome", "p1").exists()
     assert sentinel_path.is_file()
@@ -188,7 +188,7 @@ def test_replicate_does_not_remove_destination_created_after_preflight(monkeypat
     monkeypatch.setattr(Path, "mkdir", create_p2_before_reservation)
 
     with pytest.raises(RuntimeError, match="Could not replicate browser profile"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=3, overwrite=False)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1", "p2", "p3"), overwrite=False)
 
     assert not profiles_root.joinpath("chrome", "p1").exists()
     assert sentinel_path.read_bytes() == b"keep"
@@ -213,7 +213,7 @@ def test_replicate_rolls_back_all_reserved_destinations_after_partial_copy_failu
     monkeypatch.setattr(profiles, "copy_directory_tree_excluding", fail_on_p2)
 
     with pytest.raises(RuntimeError, match="copy failed"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=3, overwrite=False)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1", "p2", "p3"), overwrite=False)
 
     assert all(not profiles_root.joinpath("chrome", f"p{index}").exists() for index in range(1, 4))
 
@@ -230,7 +230,7 @@ def test_replicate_rolls_back_all_reserved_destinations_after_interruption(monke
     monkeypatch.setattr(profiles, "copy_directory_tree_excluding", interrupt_copy)
 
     with pytest.raises(KeyboardInterrupt):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=2, overwrite=False)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1", "p2"), overwrite=False)
 
     assert all(not profiles_root.joinpath("chrome", f"p{index}").exists() for index in range(1, 3))
 
@@ -249,7 +249,7 @@ def test_replicate_tracks_destination_before_interrupted_directory_creation(monk
     monkeypatch.setattr(Path, "mkdir", interrupt_after_creation)
 
     with pytest.raises(KeyboardInterrupt):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=1, overwrite=False)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1",), overwrite=False)
 
     assert not destination_path.exists()
 
@@ -266,7 +266,7 @@ def test_replicate_refuses_nested_filesystem_boundary(monkeypatch: pytest.Monkey
     monkeypatch.setattr(Path, "is_junction", selected_directory_is_junction)
 
     with pytest.raises(RuntimeError, match="refuses filesystem boundary"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=1, overwrite=False)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1",), overwrite=False)
 
     assert not profiles_root.joinpath("chrome", "p1").exists()
 
@@ -312,7 +312,7 @@ def test_replicate_overwrite_deletes_existing_destinations_before_copying(profil
     stale_destination_path = _create_profile(profiles_root=profiles_root, browser="chrome", name="p2")
     stale_file = _write_sized_file(stale_destination_path.joinpath("stale.bin"), 5)
 
-    result = profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=3, overwrite=True)
+    result = profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1", "p2", "p3"), overwrite=True)
 
     assert result.destination_paths == tuple(profiles_root.joinpath("chrome", f"p{index}") for index in range(1, 4))
     assert not stale_file.exists()
@@ -334,7 +334,7 @@ def test_replicate_overwrite_refuses_a_destination_in_use(monkeypatch: pytest.Mo
     monkeypatch.setattr(profiles, "find_browser_profile_process_ids", running_browser_processes)
 
     with pytest.raises(RuntimeError, match=r"404"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=2, overwrite=True)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1", "p2"), overwrite=True)
 
     assert sentinel_path.is_file()
     assert not profiles_root.joinpath("chrome", "p2").exists()
@@ -356,7 +356,7 @@ def test_replicate_overwrite_preflights_filesystem_boundaries_across_destination
     monkeypatch.setattr(Path, "is_mount", selected_directory_is_mount)
 
     with pytest.raises(RuntimeError, match="refuses filesystem boundary"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=2, overwrite=True)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1", "p2"), overwrite=True)
 
     assert sentinel_path.is_file()
 
@@ -366,27 +366,37 @@ def test_replicate_refuses_the_source_profile_as_a_destination(profiles_root: Pa
     _write_sized_file(source_path.joinpath("Local State"), 8)
 
     with pytest.raises(ValueError, match="Source profile must not be one of the replication destinations"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="p1", count=2, overwrite=True)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="p1", target_names=("p1", "p2"), overwrite=True)
 
     assert source_path.joinpath("Local State").is_file()
 
 
-@pytest.mark.parametrize("count", [0, -1])
-def test_replicate_rejects_invalid_count(count: int, profiles_root: Path) -> None:
-    del profiles_root
-    with pytest.raises(ValueError, match="COUNT must be at least 1"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=count, overwrite=False)
+def test_replicate_rejects_empty_target_names(profiles_root: Path) -> None:
+    _create_profile(profiles_root=profiles_root, browser="chrome")
+
+    with pytest.raises(ValueError, match="At least one destination profile name is required"):
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=(), overwrite=False)
+
+
+def test_replicate_rejects_duplicate_target_names(profiles_root: Path) -> None:
+    source_path = _create_profile(profiles_root=profiles_root, browser="chrome")
+    _write_sized_file(source_path.joinpath("Local State"), 8)
+
+    with pytest.raises(ValueError, match="Destination profile names must be unique"):
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("work", "work"), overwrite=False)
+
+    assert not profiles_root.joinpath("chrome", "work").exists()
 
 
 def test_replicate_rejects_missing_source(profiles_root: Path) -> None:
     with pytest.raises(ValueError, match="does not exist or is not a directory"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="missing", count=1, overwrite=False)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="missing", target_names=("p1",), overwrite=False)
 
 
 def test_replicate_rejects_safari_profiles(profiles_root: Path) -> None:
     del profiles_root
     with pytest.raises(ValueError, match="Safari does not support StackOps browser profiles"):
-        profiles.replicate_browser_profile(browser="safari", profile_name="base", count=1, overwrite=False)
+        profiles.replicate_browser_profile(browser="safari", profile_name="base", target_names=("p1",), overwrite=False)
 
 
 def test_replicate_rejects_symlink_source(profiles_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -406,4 +416,4 @@ def test_replicate_rejects_symlink_source(profiles_root: Path, tmp_path: Path, m
         monkeypatch.setattr(Path, "is_symlink", selected_source_is_symlink)
 
     with pytest.raises(ValueError, match="must not be a symbolic link"):
-        profiles.replicate_browser_profile(browser="chrome", profile_name="base", count=1, overwrite=False)
+        profiles.replicate_browser_profile(browser="chrome", profile_name="base", target_names=("p1",), overwrite=False)

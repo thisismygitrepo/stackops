@@ -1,11 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, TypeAlias
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookEntry
-
-
-CleanupScope: TypeAlias = Literal["workspace", "user", "all"]
 
 
 @dataclass(frozen=True)

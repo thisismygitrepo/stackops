@@ -21,8 +21,8 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import CONFIG_AGENTS
         (("-c", "-i", "-a"), (False, False, False)),
     ],
 )
-@pytest.mark.parametrize("command_name", ["add-config", "c"])
-def test_add_config_forwards_default_inclusions_and_opt_outs(
+@pytest.mark.parametrize("command_name", ["init", "c"])
+def test_init_forwards_default_inclusions_and_opt_outs(
     command_name: str,
     extra_arguments: Sequence[str],
     expected_inclusions: tuple[bool, bool, bool],
@@ -57,13 +57,14 @@ def test_add_config_forwards_default_inclusions_and_opt_outs(
 
 
 @pytest.mark.parametrize("removed_flag", ["--add-config", "--add-instructions", "--agent-ops-skill", "-C", "-I", "-A"])
-def test_add_config_rejects_removed_positive_flags(removed_flag: str) -> None:
-    result = CliRunner().invoke(agents.get_app(), ["add-config", "codex", removed_flag])
+def test_init_rejects_removed_positive_flags(removed_flag: str) -> None:
+    result = CliRunner().invoke(agents.get_app(), ["init", "codex", removed_flag])
 
     assert result.exit_code == 2, result.output
+    assert f"""No such option: {removed_flag}""" in result.output
 
 
-def test_add_config_accepts_omp(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_init_accepts_omp(monkeypatch: pytest.MonkeyPatch) -> None:
     forwarded_frameworks: list[tuple[CONFIG_AGENTS, ...]] = []
 
     def capture_init_config(
@@ -88,7 +89,7 @@ def test_add_config_accepts_omp(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(agents_impl, "init_config", capture_init_config)
 
-    result = CliRunner().invoke(agents.get_app(), ["add-config", "omp"])
+    result = CliRunner().invoke(agents.get_app(), ["init", "omp"])
 
     assert result.exit_code == 0, result.output
     assert forwarded_frameworks == [("omp",)]

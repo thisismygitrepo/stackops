@@ -1,16 +1,16 @@
 """Named parallel workflow command."""
 
-from typing import Annotated, Literal, get_args
+from typing import Annotated, Literal, TypeAlias, get_args
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
     AgentParallelBackendOption,
 )
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 
 _PARALLEL_RUNS_SOURCE = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
+_BooleanOverride: TypeAlias = Literal["true", "false"]
 
 
 def run_parallel(
@@ -72,17 +72,17 @@ def run_parallel(
         str | None, typer.Option(..., "--job-name", "-n", help="Override job label. Also used as generated layout name and default output directory.")
     ] = None,
     join_prompt_and_context: Annotated[
-        bool | None,
-        typer.Option("--join-prompt-context/--no-join-prompt-context", "-j", help="Override whether the prompt file is joined to the context. Omit to use YAML."),
+        _BooleanOverride | None,
+        typer.Option("--join-prompt-context", "-j", help="Override whether the prompt file is joined to the context: true or false. Omit to use YAML."),
     ] = None,
     run: Annotated[
-        bool | None,
-        typer.Option("--run/--no-run", "-R", help="Override whether the layout launches immediately. Omit to use YAML; launches when YAML omits run."),
+        _BooleanOverride | None,
+        typer.Option("--run", "-R", help="Override whether the layout launches immediately: true or false. Omit to use YAML; launches when YAML omits run."),
     ] = None,
     output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Override layout.json output path.")] = None,
     agents_dir: Annotated[str | None, typer.Option(..., "--agents-dir", "-d", help="Override exact directory to store agent files in.")] = None,
     interactive: Annotated[
-        bool | None, typer.Option("--interactive/--no-interactive", "-i", help="Override whether create runs interactively. Omit to use YAML.")
+        _BooleanOverride | None, typer.Option("--interactive", "-i", help="Override whether create runs interactively: true or false. Omit to use YAML.")
     ] = None,
 ) -> None:
     """Run a named parallel agent workflow from YAML, with create-option overrides."""
@@ -111,11 +111,11 @@ def run_parallel(
                 prompt_path=prompt_path,
                 prompt_name=prompt_name,
                 job_name=job_name,
-                join_prompt_and_context=join_prompt_and_context,
-                run=run,
+                join_prompt_and_context=None if join_prompt_and_context is None else join_prompt_and_context == "true",
+                run=None if run is None else run == "true",
                 output_path=output_path,
                 agents_dir=agents_dir,
-                interactive=interactive,
+                interactive=None if interactive is None else interactive == "true",
             ),
             edit=edit,
             add_entry=add_entry,

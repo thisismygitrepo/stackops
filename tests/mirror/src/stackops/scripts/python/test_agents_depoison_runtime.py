@@ -9,7 +9,7 @@ from typer.testing import CliRunner
 
 from stackops.scripts.python import agents, agents_depoison
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor import tui_launch
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupScope
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_scope import CleanupScope
 
 
 def test_agents_help_starts_without_tomlkit() -> None:
@@ -56,7 +56,7 @@ def test_reset_propagates_worker_exit_status(returncode: int, monkeypatch: pytes
 
 @pytest.mark.parametrize(
     ("requested_scope", "expected_scope"),
-    [("project", "project"), ("p", "project"), ("user", "user"), ("u", "user"), ("all", "all"), ("a", "all")],
+    [("workspace", "workspace"), ("w", "workspace"), ("user", "user"), ("u", "user"), ("all", "all"), ("a", "all")],
 )
 def test_reset_normalizes_scope_before_launching_tui(
     requested_scope: str, expected_scope: CleanupScope, monkeypatch: pytest.MonkeyPatch,
@@ -79,7 +79,7 @@ def test_reset_normalizes_scope_before_launching_tui(
     assert received_scopes == [expected_scope]
 
 
-@pytest.mark.parametrize("scope", ["local", "global"])
+@pytest.mark.parametrize("scope", ["local", "global", "project", "p"])
 def test_reset_rejects_previous_scope_names(scope: str) -> None:
     result = CliRunner().invoke(agents.get_app(), ["reset", "claude", "--scope", scope])
     assert result.exit_code == 2

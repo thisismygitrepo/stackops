@@ -1,6 +1,7 @@
 import json
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from typer.testing import CliRunner
@@ -43,8 +44,8 @@ def editor_calls(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
         calls.append(args)
         return subprocess.CompletedProcess(args=args, returncode=0)
 
-    monkeypatch.setattr(cli_repos_edit.shutil, "which", find_editor)
-    monkeypatch.setattr(cli_repos_edit.subprocess, "run", run_editor)
+    monkeypatch.setattr(cli_repos_edit, "shutil", SimpleNamespace(which=find_editor))
+    monkeypatch.setattr(cli_repos_edit, "subprocess", SimpleNamespace(run=run_editor))
     return calls
 
 
@@ -56,7 +57,7 @@ def test_edit_and_alias_open_default_specification(command: str, spec_path: Path
     assert editor_calls == [["/mock/hx", spec_path.as_posix()]]
 
 
-@pytest.mark.parametrize(("path_option", "editor_option"), [("--specs-path", "--editor"), ("-s", "-e")])
+@pytest.mark.parametrize(("path_option", "editor_option"), [("--path", "--editor"), ("-p", "-e")])
 def test_edit_honors_explicit_path_and_editor(
     path_option: str, editor_option: str, spec_path: Path, editor_calls: list[list[str]],
 ) -> None:
@@ -69,28 +70,36 @@ def test_edit_honors_explicit_path_and_editor(
     assert editor_calls == [["/mock/code", "--wait", alternate_path.as_posix()]]
 
 
-@pytest.mark.parametrize(("directory", "expected_error"), [(False, "Run devops repos register first"), (True, "not a file")])
-def test_edit_rejects_missing_file_or_directory(
-    directory: bool, expected_error: str, spec_path: Path, editor_calls: list[list[str]],
-) -> None:
+def test_edit_rejects_directory_as_specification(spec_path: Path, editor_calls: list[list[str]]) -> None:
     spec_path.unlink()
-    if directory:
-        spec_path.mkdir()
+    spec_path.mkdir()
 
     result = CliRunner().invoke(get_app(), ["edit"])
 
     assert result.exit_code == 1
-    assert expected_error in result.output
+    assert "not a file" in result.output
     assert editor_calls == []
+
+
+def test_edit_creates_missing_specification_with_schema_before_opening_editor(spec_path: Path, editor_calls: list[list[str]]) -> None:
+    spec_path.unlink()
+
+    result = CliRunner().invoke(get_app(), ["edit"])
+
+    assert result.exit_code == 0, result.output
+    assert f"""Created repository specification: {spec_path}""" in result.output
+    assert json.loads(spec_path.read_text(encoding="utf-8")) == {"version": spec_store.REPOS_SPEC_VERSION, "repos": []}
+    assert spec_path.with_name("repos_schema.json").is_file()
+    assert editor_calls == [["/mock/hx", spec_path.as_posix()]]
 
 
 def test_edit_rejects_missing_editor(spec_path: Path, editor_calls: list[list[str]], monkeypatch: pytest.MonkeyPatch) -> None:
     def unavailable_editor(_command: str) -> None:
         return None
 
-    monkeypatch.setattr(cli_repos_edit.shutil, "which", unavailable_editor)
+    monkeypatch.setattr(cli_repos_edit, "shutil", SimpleNamespace(which=unavailable_editor))
 
-    result = CliRunner().invoke(get_app(), ["edit", "-s", spec_path.as_posix()])
+    result = CliRunner().invoke(get_app(), ["edit", "-p", spec_path.as_posix()])
 
     assert result.exit_code == 1
     assert "not available on PATH" in result.output
@@ -105,9 +114,9 @@ def test_edit_propagates_editor_failure(
         assert check is False
         return subprocess.CompletedProcess(args=args, returncode=editor_status)
 
-    monkeypatch.setattr(cli_repos_edit.subprocess, "run", failed_editor)
+    monkeypatch.setattr(cli_repos_edit, "subprocess", SimpleNamespace(run=failed_editor))
 
-    result = CliRunner().invoke(get_app(), ["edit", "-s", spec_path.as_posix()])
+    result = CliRunner().invoke(get_app(), ["edit", "-p", spec_path.as_posix()])
 
     assert result.exit_code == expected_status
     assert f"""Editor exited with status code {editor_status}""" in result.output
@@ -119,9 +128,9 @@ def test_edit_reports_editor_launch_error(spec_path: Path, editor_calls: list[li
         assert check is False
         raise OSError(f"""Cannot launch {args[0]}""")
 
-    monkeypatch.setattr(cli_repos_edit.subprocess, "run", inaccessible_editor)
+    monkeypatch.setattr(cli_repos_edit, "subprocess", SimpleNamespace(run=inaccessible_editor))
 
-    result = CliRunner().invoke(get_app(), ["edit", "-s", spec_path.as_posix()])
+    result = CliRunner().invoke(get_app(), ["edit", "-p", spec_path.as_posix()])
 
     assert result.exit_code == 1
     assert "Could not edit repository specification" in result.output
@@ -167,7 +176,7 @@ def test_edit_allows_repairing_invalid_existing_content(
         Path(args[1]).write_text(valid_content, encoding="utf-8")
         return subprocess.CompletedProcess(args=args, returncode=0)
 
-    monkeypatch.setattr(cli_repos_edit.subprocess, "run", repair_specification)
+    monkeypatch.setattr(cli_repos_edit, "subprocess", SimpleNamespace(run=repair_specification))
 
     result = CliRunner().invoke(get_app(), ["edit"])
 

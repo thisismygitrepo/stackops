@@ -3,7 +3,8 @@ from pathlib import Path
 import yaml
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_documents import edit_cleanup_document
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupPlan, CleanupScope
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupPlan
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_scope import CleanupScope
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import capture_cleanup_snapshot
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_progress import CleanupTargetProgress, logger
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS

@@ -28,11 +28,8 @@ def check_backup_config() -> BackupStatus:
     except (FileNotFoundError, KeyError):
         cloud_config = None
 
-    backup_items = load_backup_config_file(USER_BACKUP_PATH, empty_as_config=True)
-    if backup_items is None:
-        if USER_BACKUP_PATH.exists():
-            raise ValueError(f"""Could not load user backup configuration: {USER_BACKUP_PATH}""")
-        backup_items = {}
+    loaded_backup_items = load_backup_config_file(USER_BACKUP_PATH, empty_as_config=True)
+    backup_items: BackupConfig = {} if loaded_backup_items is None else loaded_backup_items
 
     current_system = system()
     return {

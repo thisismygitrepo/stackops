@@ -1,8 +1,14 @@
 from typing import Final, TypedDict
 
-from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX, HOST, PROVIDER
+from stackops.utils.schemas.fire_agents.fire_agents_types import (
+    AGENTS,
+    DEFAULT_SEAPRATOR,
+    DEFAULT_STAGGER_MAX,
+    HOST,
+    PROVIDER,
+    ReasoningEffort,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, DEFAULT_AGENT_PARALLEL_BACKEND
-from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import ReasoningEffort
 
 
 PARALLEL_CREATE_COMMAND_NAME: Final[str] = "agents parallel create"

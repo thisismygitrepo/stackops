@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import TypedDict
 
@@ -51,13 +52,10 @@ def test_close_help_exposes_optional_workspace_and_scope_options() -> None:
     result = CliRunner().invoke(agents_iter.get_app(), ["close", "--help"], terminal_width=160)
 
     assert result.exit_code == 0, result.output
-    assert "[WORKSPACE_ID]" in result.output
-    assert "--all" in result.output
-    assert "-a" in result.output
-    assert "--interactive" in result.output
-    assert "-I" in result.output
-    assert "--interval" in result.output
-    assert "-i" in result.output
+    assert "[workspace_id]" in result.output
+    assert re.search(r"--all\s+-a\b", result.output)
+    assert re.search(r"--interactive\s+-i\b", result.output)
+    assert re.search(r"--interval\s+-I\b", result.output)
 
 
 def test_close_forwards_explicit_workspace_with_defaults(command_calls: CommandCalls) -> None:
@@ -74,7 +72,7 @@ def test_close_all_forwards_scope_and_runtime_options(command_calls: CommandCall
     assert command_calls["close"] == [(None, True, False, True, 1, True, 7)]
 
 
-@pytest.mark.parametrize("interactive_option", ("--interactive", "-I"))
+@pytest.mark.parametrize("interactive_option", ("--interactive", "-i"))
 def test_close_forwards_interactive_scope(interactive_option: str, command_calls: CommandCalls) -> None:
     result = CliRunner().invoke(agents_iter.get_app(), ["close", interactive_option])
 
@@ -96,11 +94,9 @@ def test_status_and_clean_help_expose_optional_workspace_and_scope_options(comma
     result = CliRunner().invoke(agents_iter.get_app(), [command_name, "--help"], terminal_width=160)
 
     assert result.exit_code == 0, result.output
-    assert "[WORKSPACE_ID]" in result.output
-    assert "--all" in result.output
-    assert "-a" in result.output
-    assert "--interactive" in result.output
-    assert "-I" in result.output
+    assert "[workspace_id]" in result.output
+    assert re.search(r"--all\s+-a\b", result.output)
+    assert re.search(r"--interactive\s+-i\b", result.output)
     assert command_option in result.output
 
 
@@ -111,7 +107,7 @@ def test_status_and_clean_help_expose_optional_workspace_and_scope_options(comma
         (("--all", "--retain-previous", "1"), (None, True, False, 1)),
         (("-a",), (None, True, False, 3)),
         (("--interactive",), (None, False, True, 3)),
-        (("-I",), (None, False, True, 3)),
+        (("-i",), (None, False, True, 3)),
     ),
 )
 def test_status_forwards_each_workspace_scope(
@@ -130,7 +126,7 @@ def test_status_forwards_each_workspace_scope(
         (("--all", "--dry-run"), (None, True, False, True)),
         (("-a",), (None, True, False, False)),
         (("--interactive",), (None, False, True, False)),
-        (("-I",), (None, False, True, False)),
+        (("-i",), (None, False, True, False)),
     ),
 )
 def test_clean_forwards_each_workspace_scope(

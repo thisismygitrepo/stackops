@@ -4,7 +4,7 @@ from collections.abc import Callable
 import typer
 from typer.models import CommandInfo, TyperInfo
 
-from stackops.utils.cli_utils.lazy_alias_group import defer_alias_group_conversion
+from stackops.utils.cli_utils.lazy_group import defer_alias_group_conversion, defer_group_conversion
 
 
 ALIAS_MARKER_PATTERN = re.compile(r"<[^>\s]+>")
@@ -17,6 +17,7 @@ def apply_alias_markers(app: typer.Typer) -> typer.Typer:
     for group in app.registered_groups:
         if group.typer_instance is not None:
             apply_alias_markers(group.typer_instance)
+    defer_group_conversion(app.registered_groups)
     return app
 
 
@@ -51,8 +52,13 @@ def _apply_group_alias_markers(groups: list[TyperInfo]) -> None:
             continue
         alias = group.name
         alias_marker = _alias_marker([alias])
-        help_text = _with_alias_marker(help_text=visible_group.help, alias_marker=alias_marker)
-        short_help = _with_alias_marker(help_text=visible_group.short_help, alias_marker=alias_marker)
+        visible_instance = visible_group.typer_instance
+        declared_help = visible_group.help if isinstance(visible_group.help, str) or visible_instance is None else visible_instance.info.help
+        declared_short_help = (
+            visible_group.short_help if isinstance(visible_group.short_help, str) or visible_instance is None else visible_instance.info.short_help
+        )
+        help_text = _with_alias_marker(help_text=declared_help, alias_marker=alias_marker)
+        short_help = _with_alias_marker(help_text=declared_short_help, alias_marker=alias_marker)
         if help_text is not None:
             visible_group.help = help_text
         if short_help is not None:

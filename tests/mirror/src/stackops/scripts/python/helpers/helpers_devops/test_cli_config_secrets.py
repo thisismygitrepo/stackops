@@ -95,7 +95,7 @@ def test_load_with_missing_custom_path_does_not_fall_back_to_user(
 
 
 @pytest.mark.parametrize("all_matches_option", ("--all-matches", "-a"))
-@pytest.mark.parametrize("source", ("project", "user", "all"))
+@pytest.mark.parametrize("source", ("workspace", "user", "all"))
 def test_load_all_matches_uses_only_custom_file(
     all_matches_option: str, source: SecretsSource, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, captured_handoffs: list[SecretValueMap],
 ) -> None:
@@ -126,7 +126,7 @@ def test_load_still_rejects_ambiguous_matches_without_all_matches(tmp_path: Path
     secrets_path = tmp_path / "secrets.json"
     _write_cloudflare_secrets(secrets_path=secrets_path, api_email="alex@example.com", global_email="alex@example.com")
 
-    result = CliRunner().invoke(cli_config_secrets.get_app(), ["load", "cloudf", "--source", "project", "--custom-path", str(secrets_path)])
+    result = CliRunner().invoke(cli_config_secrets.get_app(), ["load", "cloudf", "--source", "workspace", "--custom-path", str(secrets_path)])
 
     assert result.exit_code == 1
     assert "Selection did not identify a unique keyValues entry" in result.output
@@ -137,7 +137,7 @@ def test_load_all_matches_rejects_conflicting_duplicate_env_values(tmp_path: Pat
     secrets_path = tmp_path / "secrets.json"
     _write_cloudflare_secrets(secrets_path=secrets_path, api_email="first@example.com", global_email="second@example.com")
 
-    result = CliRunner().invoke(cli_config_secrets.get_app(), ["load", "cloudf", "--all-matches", "--source", "project", "--custom-path", str(secrets_path)])
+    result = CliRunner().invoke(cli_config_secrets.get_app(), ["load", "cloudf", "--all-matches", "--source", "workspace", "--custom-path", str(secrets_path)])
 
     assert result.exit_code == 1
     assert "Cannot merge 2 matching secret bundles: 1 environment variable would receive different values" in result.output
@@ -162,7 +162,7 @@ def test_search_json_preserves_original_schema_and_filters_only_login_entries(
     _write_cloudflare_secrets(secrets_path=secrets_path, api_email="first@example.com", global_email="second@example.com")
 
     result = CliRunner().invoke(
-        cli_config_secrets.get_app(), ["search", *selection_arguments, "--json", "--source", "project", "--custom-path", str(secrets_path)]
+        cli_config_secrets.get_app(), ["search", *selection_arguments, "--json", "--source", "workspace", "--custom-path", str(secrets_path)]
     )
 
     assert result.exit_code == 0, result.output
@@ -204,7 +204,7 @@ def test_load_all_matches_still_requires_a_selector(tmp_path: Path, captured_han
     secrets_path = tmp_path / "secrets.json"
     _write_cloudflare_secrets(secrets_path=secrets_path, api_email="alex@example.com", global_email="alex@example.com")
 
-    result = CliRunner().invoke(cli_config_secrets.get_app(), ["load", "--all-matches", "--source", "project", "--custom-path", str(secrets_path)])
+    result = CliRunner().invoke(cli_config_secrets.get_app(), ["load", "--all-matches", "--source", "workspace", "--custom-path", str(secrets_path)])
 
     assert result.exit_code == 1
     assert "Pass at least one term or exact selector" in result.output
@@ -215,7 +215,7 @@ def test_search_lists_env_keys_without_loading_or_printing_values(tmp_path: Path
     secrets_path = tmp_path / "secrets.json"
     _write_cloudflare_secrets(secrets_path=secrets_path, api_email="alex@example.com", global_email="alex@example.com")
 
-    result = CliRunner().invoke(cli_config_secrets.get_app(), ["search", "cloudf", "--all-matches", "--source", "project", "--custom-path", str(secrets_path)])
+    result = CliRunner().invoke(cli_config_secrets.get_app(), ["search", "cloudf", "--all-matches", "--source", "workspace", "--custom-path", str(secrets_path)])
 
     assert result.exit_code == 0, result.output
     assert "Environment keys: CLOUDFLARE_EMAIL, CLOUDFLARE_API_TOKEN" in result.output
@@ -230,7 +230,7 @@ def test_load_has_no_json_option(tmp_path: Path, captured_handoffs: list[SecretV
     secrets_path = tmp_path / "secrets.json"
     _write_cloudflare_secrets(secrets_path=secrets_path, api_email="alex@example.com", global_email="alex@example.com")
 
-    result = CliRunner().invoke(cli_config_secrets.get_app(), ["load", "API_TOKEN", "--json", "--source", "project", "--custom-path", str(secrets_path)])
+    result = CliRunner().invoke(cli_config_secrets.get_app(), ["load", "API_TOKEN", "--json", "--source", "workspace", "--custom-path", str(secrets_path)])
 
     assert result.exit_code == 2
     assert "api-token-secret" not in result.output

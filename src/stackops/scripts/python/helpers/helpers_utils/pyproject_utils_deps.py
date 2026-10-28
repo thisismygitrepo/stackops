@@ -4,12 +4,8 @@ import fnmatch
 from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_graph import (
     focus_dependency_graph,
 )
-from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import (
-    DependencyBackend,
-    DependencyCheckContext,
-    DependencyGraph,
-    DependencyRankDirection,
-)
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_models import DependencyCheckContext, DependencyGraph
+from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_options import DependencyBackend, DependencyRankDirection
 from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_deps_parse import (
     parse_pyan_dot,
     parse_pydeps_json,

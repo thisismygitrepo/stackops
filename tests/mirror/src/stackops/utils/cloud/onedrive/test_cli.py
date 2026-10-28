@@ -29,7 +29,7 @@ def test_add_prompts_for_account_details_and_accounts_lists_the_result(tmp_path:
     monkeypatch.setattr(onedrive_cli, "SECRETS_DOFILE", secrets_path)
     runner = CliRunner()
 
-    add_result = runner.invoke(onedrive_cli.get_app(), ["add"], input="odp\napplication-client-id\n")
+    add_result = runner.invoke(onedrive_cli.get_app(), ["add-account"], input="odp\napplication-client-id\n")
     alias_add_result = runner.invoke(
         onedrive_cli.get_app(),
         ["A", "personal", "--client-id", "personal-client-id"],

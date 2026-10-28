@@ -1461,6 +1461,12 @@
                     "def display_data(",
                     "    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(\"--source\", \"-s\", help=\"Backup configuration sources: library, user, or all.\")] = \"all\",",
                     ") -> None:",
+                    "    from rich import box",
+                    "    from rich.console import Console",
+                    "    from rich.panel import Panel",
+                    "    from rich.table import Table",
+                    "    from rich.text import Text",
+                    "",
                     "    from stackops.profile.dotfiles_constants import ALL_OS_VALUES",
                     "    from stackops.scripts.python.helpers.helpers_cloud.backup_config import read_backup_config",
                     "",
@@ -2971,6 +2977,12 @@
                     "    specs_path: Annotated[str | None, typer.Option(\"--specs-path\", \"-s\", help=\"Path to repos.json specification file.\")] = None,",
                     "    guarded: Annotated[bool, typer.Option(\"--guarded\", \"-g\", help=\"Show only registered repositories using encrypted guard sync.\")] = False,",
                     ") -> None:",
+                    "    from rich.console import Console",
+                    "    from rich.table import Table",
+                    "    from rich.text import Text",
+                    "",
+                    "    from stackops.scripts.python.helpers.helpers_devops.devops_status_repos import render_local_repository_status",
+                    "    from stackops.scripts.python.helpers.helpers_repos.local_status import inspect_local_repository",
                     "    from stackops.scripts.python.helpers.helpers_repos.spec_store import load_repos_spec, resolve_repos_spec_path",
                     "",
                     "    try:",
@@ -3839,6 +3851,9 @@
                         "        )",
                         "    except (OSError, ValueError, VersionOperationError) as error:",
                         "        _abort(error)",
+                        "    from rich.console import Console",
+                        "    from rich.table import Table",
+                        "",
                         "    table = Table(title=f\"{'Checkout preview' if dry_run else 'Checked out'} · {declared_version['version']}\")",
                         "    table.add_column(\"Repository\", style=\"cyan\")",
                         "    table.add_column(\"Target\")",
@@ -6099,6 +6114,10 @@
                         "    ] = None,",
                         "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Write without confirmation. Requires --cloud.\")] = False,",
                         ") -> None:",
+                        "    from rich.console import Console",
+                        "    from rich.panel import Panel",
+                        "    from rich.table import Table",
+                        "",
                         "    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import (",
                         "        exit_with_setup_error,",
                         "        load_stackops_config_for_setup,",
@@ -6246,6 +6265,10 @@
                     "signature": {
                       "raw_lines": [
                         "def setup_email() -> None:",
+                        "    from rich.console import Console",
+                        "    from rich.panel import Panel",
+                        "    from rich.table import Table",
+                        "",
                         "    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import (",
                         "        exit_with_setup_error,",
                         "        load_stackops_config_for_setup,",
@@ -6358,6 +6381,9 @@
                         "    ] = None,",
                         ") -> None:",
                         "    from typing import get_args",
+                        "",
+                        "    from rich.console import Console",
+                        "    from rich.panel import Panel",
                         "",
                         "    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import load_stackops_config_for_setup, write_stackops_config",
                         "    from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_choice",
@@ -23622,7 +23648,8 @@
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
-              "dispatches_to": "stackops.scripts.python.agents_parallel.get_app"
+              "dispatches_to": "stackops.scripts.python.agents_parallel.get_app",
+              "callable": "parallel_group"
             },
             "app": {
               "help": "🧵 <p> Parallel agent workflow commands",
@@ -23690,8 +23717,8 @@
                     "            help=\"Job label. Also used as the generated layout name and to build the default output directory when --agents-dir is omitted.\",",
                     "        ),",
                     "    ] = \"AI_Agents\",",
-                    "    join_prompt_and_context: Annotated[bool, typer.Option(\"--join-prompt-context/--no-join-prompt-context\", \"-j\", help=\"Join prompt file to the context.\")] = False,",
-                    "    run: Annotated[bool, typer.Option(\"--run/--no-run\", \"-R\", help=\"Immediately launch the generated layout through the selected backend.\")] = False,",
+                    "    join_prompt_and_context: Annotated[bool, typer.Option(..., \"--join-prompt-context\", \"-j\", help=\"Join prompt file to the context.\")] = False,",
+                    "    run: Annotated[bool, typer.Option(..., \"--run\", \"-R\", help=\"Immediately launch the generated layout through the selected backend.\")] = False,",
                     "    output_path: Annotated[str | None, typer.Option(..., \"--output\", \"-o\", help=\"Path to write the layout.json file\")] = None,",
                     "    agents_dir: Annotated[",
                     "        str | None,",
@@ -23713,7 +23740,7 @@
                     "    ] = False,",
                     "    show_example: Annotated[bool, typer.Option(..., \"--show-example\", \"-e\", help=\"Show a long parallel YAML create configuration example.\")] = False,",
                     "    interactive: Annotated[",
-                    "        bool, typer.Option(\"--interactive/--no-interactive\", \"-i\", help=\"Ask for missing parameters interactively.\")",
+                    "        bool, typer.Option(..., \"--interactive\", \"-i\", help=\"Ask for missing parameters interactively.\")",
                     "    ] = False,",
                     ") -> None:",
                     "    \"\"\"Create agents layout file, ready to run.\"\"\"",
@@ -24132,21 +24159,21 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--join-prompt-context/--no-join-prompt-context', '-j', help='Join prompt file to the context.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--join-prompt-context', '-j', help='Join prompt file to the context.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--join-prompt-context/--no-join-prompt-context",
+                          "--join-prompt-context",
                           "-j"
                         ],
                         "long_flags": [
-                          "--join-prompt-context",
-                          "--no-join-prompt-context"
+                          "--join-prompt-context"
                         ],
                         "short_flags": [
                           "-j"
                         ],
-                        "help": "Join prompt file to the context."
+                        "help": "Join prompt file to the context.",
+                        "default": "..."
                       }
                     },
                     {
@@ -24155,21 +24182,21 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--run/--no-run', '-R', help='Immediately launch the generated layout through the selected backend.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--run', '-R', help='Immediately launch the generated layout through the selected backend.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--run/--no-run",
+                          "--run",
                           "-R"
                         ],
                         "long_flags": [
-                          "--run",
-                          "--no-run"
+                          "--run"
                         ],
                         "short_flags": [
                           "-R"
                         ],
-                        "help": "Immediately launch the generated layout through the selected backend."
+                        "help": "Immediately launch the generated layout through the selected backend.",
+                        "default": "..."
                       }
                     },
                     {
@@ -24270,21 +24297,21 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--interactive/--no-interactive', '-i', help='Ask for missing parameters interactively.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option(..., '--interactive', '-i', help='Ask for missing parameters interactively.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--interactive/--no-interactive",
+                          "--interactive",
                           "-i"
                         ],
                         "long_flags": [
-                          "--interactive",
-                          "--no-interactive"
+                          "--interactive"
                         ],
                         "short_flags": [
                           "-i"
                         ],
-                        "help": "Ask for missing parameters interactively."
+                        "help": "Ask for missing parameters interactively.",
+                        "default": "..."
                       }
                     }
                   ],
@@ -24543,17 +24570,17 @@
                     "        str | None, typer.Option(..., \"--job-name\", \"-n\", help=\"Override job label. Also used as generated layout name and default output directory.\")",
                     "    ] = None,",
                     "    join_prompt_and_context: Annotated[",
-                    "        bool | None,",
-                    "        typer.Option(\"--join-prompt-context/--no-join-prompt-context\", \"-j\", help=\"Override whether the prompt file is joined to the context. Omit to use YAML.\"),",
+                    "        _BooleanOverride | None,",
+                    "        typer.Option(\"--join-prompt-context\", \"-j\", help=\"Override whether the prompt file is joined to the context: true or false. Omit to use YAML.\"),",
                     "    ] = None,",
                     "    run: Annotated[",
-                    "        bool | None,",
-                    "        typer.Option(\"--run/--no-run\", \"-R\", help=\"Override whether the layout launches immediately. Omit to use YAML; launches when YAML omits run.\"),",
+                    "        _BooleanOverride | None,",
+                    "        typer.Option(\"--run\", \"-R\", help=\"Override whether the layout launches immediately: true or false. Omit to use YAML; launches when YAML omits run.\"),",
                     "    ] = None,",
                     "    output_path: Annotated[str | None, typer.Option(..., \"--output\", \"-o\", help=\"Override layout.json output path.\")] = None,",
                     "    agents_dir: Annotated[str | None, typer.Option(..., \"--agents-dir\", \"-d\", help=\"Override exact directory to store agent files in.\")] = None,",
                     "    interactive: Annotated[",
-                    "        bool | None, typer.Option(\"--interactive/--no-interactive\", \"-i\", help=\"Override whether create runs interactively. Omit to use YAML.\")",
+                    "        _BooleanOverride | None, typer.Option(\"--interactive\", \"-i\", help=\"Override whether create runs interactively: true or false. Omit to use YAML.\")",
                     "    ] = None,",
                     ") -> None:",
                     "    \"\"\"Run a named parallel agent workflow from YAML, with create-option overrides.\"\"\"",
@@ -24582,11 +24609,11 @@
                     "                prompt_path=prompt_path,",
                     "                prompt_name=prompt_name,",
                     "                job_name=job_name,",
-                    "                join_prompt_and_context=join_prompt_and_context,",
-                    "                run=run,",
+                    "                join_prompt_and_context=None if join_prompt_and_context is None else join_prompt_and_context == \"true\",",
+                    "                run=None if run is None else run == \"true\",",
                     "                output_path=output_path,",
                     "                agents_dir=agents_dir,",
-                    "                interactive=interactive,",
+                    "                interactive=None if interactive is None else interactive == \"true\",",
                     "            ),",
                     "            edit=edit,",
                     "            add_entry=add_entry,",
@@ -25077,47 +25104,45 @@
                     {
                       "name": "join_prompt_and_context",
                       "kind": "positional_or_keyword",
-                      "type": "bool | None",
+                      "type": "_BooleanOverride | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool | None, typer.Option('--join-prompt-context/--no-join-prompt-context', '-j', help='Override whether the prompt file is joined to the context. Omit to use YAML.')]",
+                      "annotation_raw": "Annotated[_BooleanOverride | None, typer.Option('--join-prompt-context', '-j', help='Override whether the prompt file is joined to the context: true or false. Omit to use YAML.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--join-prompt-context/--no-join-prompt-context",
+                          "--join-prompt-context",
                           "-j"
                         ],
                         "long_flags": [
-                          "--join-prompt-context",
-                          "--no-join-prompt-context"
+                          "--join-prompt-context"
                         ],
                         "short_flags": [
                           "-j"
                         ],
-                        "help": "Override whether the prompt file is joined to the context. Omit to use YAML."
+                        "help": "Override whether the prompt file is joined to the context: true or false. Omit to use YAML."
                       }
                     },
                     {
                       "name": "run",
                       "kind": "positional_or_keyword",
-                      "type": "bool | None",
+                      "type": "_BooleanOverride | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool | None, typer.Option('--run/--no-run', '-R', help='Override whether the layout launches immediately. Omit to use YAML; launches when YAML omits run.')]",
+                      "annotation_raw": "Annotated[_BooleanOverride | None, typer.Option('--run', '-R', help='Override whether the layout launches immediately: true or false. Omit to use YAML; launches when YAML omits run.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--run/--no-run",
+                          "--run",
                           "-R"
                         ],
                         "long_flags": [
-                          "--run",
-                          "--no-run"
+                          "--run"
                         ],
                         "short_flags": [
                           "-R"
                         ],
-                        "help": "Override whether the layout launches immediately. Omit to use YAML; launches when YAML omits run."
+                        "help": "Override whether the layout launches immediately: true or false. Omit to use YAML; launches when YAML omits run."
                       }
                     },
                     {
@@ -25169,24 +25194,23 @@
                     {
                       "name": "interactive",
                       "kind": "positional_or_keyword",
-                      "type": "bool | None",
+                      "type": "_BooleanOverride | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool | None, typer.Option('--interactive/--no-interactive', '-i', help='Override whether create runs interactively. Omit to use YAML.')]",
+                      "annotation_raw": "Annotated[_BooleanOverride | None, typer.Option('--interactive', '-i', help='Override whether create runs interactively: true or false. Omit to use YAML.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--interactive/--no-interactive",
+                          "--interactive",
                           "-i"
                         ],
                         "long_flags": [
-                          "--interactive",
-                          "--no-interactive"
+                          "--interactive"
                         ],
                         "short_flags": [
                           "-i"
                         ],
-                        "help": "Override whether create runs interactively. Omit to use YAML."
+                        "help": "Override whether create runs interactively: true or false. Omit to use YAML."
                       }
                     }
                   ],
@@ -25373,6 +25397,7 @@
                 ]
               }
             ],
+            "command_context_settings": "_NESTED_APP_CONTEXT",
             "aliases": [
               {
                 "name": "p",
@@ -25390,7 +25415,8 @@
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
-              "dispatches_to": "stackops.scripts.python.agents_browser.get_app"
+              "dispatches_to": "stackops.scripts.python.agents_browser.get_app",
+              "callable": "browser_group"
             },
             "app": {
               "help": "🌐 <b> Browser automation for agent CLIs and MCP",
@@ -26644,6 +26670,7 @@
                 ]
               }
             ],
+            "command_context_settings": "_NESTED_APP_CONTEXT",
             "aliases": [
               {
                 "name": "b",
@@ -26661,7 +26688,8 @@
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
-              "dispatches_to": "stackops.scripts.python.agents_iter.get_app"
+              "dispatches_to": "stackops.scripts.python.agents_iter.get_app",
+              "callable": "iter_group"
             },
             "app": {
               "help": "🔁 <I> Iter maintenance through Herdr",
@@ -27155,6 +27183,7 @@
                 ]
               }
             ],
+            "command_context_settings": "_NESTED_APP_CONTEXT",
             "aliases": [
               {
                 "name": "I",
@@ -27172,7 +27201,8 @@
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
-              "dispatches_to": "stackops.scripts.python.agents_second_brain.get_app"
+              "dispatches_to": "stackops.scripts.python.agents_second_brain.get_app",
+              "callable": "second_brain_group"
             },
             "app": {
               "help": "Second Brain commands",
@@ -27205,6 +27235,8 @@
                     "        bool, typer.Option(\"--overwrite\", \"-o\", help=\"Replace existing AGENTS.md with the bundled instructions, discarding local edits.\")",
                     "    ] = False,",
                     ") -> None:",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import show_second_brain_config_result",
+                    "",
                     "    try:",
                     "        instructions_text = files(\"stackops.scripts.python\").joinpath(\"agents_second_brain.instructions.md\").read_text(encoding=\"utf-8\")",
                     "        instructions_path, action = configure_second_brain(home=Path.home(), instructions_text=instructions_text, overwrite=overwrite)",
@@ -27266,7 +27298,11 @@
                 "signature": {
                   "raw_lines": [
                     "def status() -> None:",
-                    "    second_brain_root = Path.home().joinpath(\"code\", \"agents\", \"second-brain\")",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_activity import read_second_brain_git_activity",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import read_second_brain_updates",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import show_second_brain_status",
+                    "",
+                    "    second_brain_root =Path.home().joinpath(\"code\", \"agents\", \"second-brain\")",
                     "    today = date.today()",
                     "    try:",
                     "        update_files = read_second_brain_updates(second_brain_root=second_brain_root)",
@@ -27310,6 +27346,12 @@
                     "def prune(",
                     "    apply: Annotated[bool, typer.Option(\"--apply\", \"-a\", help=\"Delete the invalid updates shown in the preview.\")] = False,",
                     ") -> None:",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import (",
+                    "        prune_second_brain_updates,",
+                    "        read_second_brain_updates,",
+                    "    )",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import show_second_brain_prune_result",
+                    "",
                     "    second_brain_root = Path.home().joinpath(\"code\", \"agents\", \"second-brain\")",
                     "    try:",
                     "        update_files = read_second_brain_updates(second_brain_root=second_brain_root)",
@@ -27366,6 +27408,7 @@
                 ]
               }
             ],
+            "command_context_settings": "_NESTED_APP_CONTEXT",
             "aliases": [
               {
                 "name": "B",
@@ -27383,7 +27426,8 @@
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
-              "dispatches_to": "stackops.scripts.python.agents_local.get_app"
+              "dispatches_to": "stackops.scripts.python.agents_local.get_app",
+              "callable": "local_group"
             },
             "app": {
               "help": "Local models through Ollama",
@@ -27494,6 +27538,7 @@
                 ]
               }
             ],
+            "command_context_settings": "_NESTED_APP_CONTEXT",
             "aliases": [
               {
                 "name": "l",
@@ -27511,7 +27556,8 @@
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
-              "dispatches_to": "stackops.scripts.python.agents_config_files.get_app"
+              "dispatches_to": "stackops.scripts.python.agents_config_files.get_app",
+              "callable": "config_files_group"
             },
             "app": {
               "no_args_is_help": true,
@@ -27811,6 +27857,7 @@
                 ]
               }
             ],
+            "command_context_settings": "_NESTED_APP_CONTEXT",
             "aliases": [
               {
                 "name": "C",
