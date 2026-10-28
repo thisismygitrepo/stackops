@@ -3,7 +3,7 @@ import shlex
 
 from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import normalize_reasoning_effort
-from stackops.utils.accessories import get_repo_root
+from stackops.utils.repos.project import resolve_project_root
 from stackops.utils.schemas.fire_agents.fire_agents_types import PROVIDER, ReasoningEffort
 
 
@@ -15,7 +15,7 @@ def build_cortex_command(
 
     if provider is not None:
         raise ValueError("Cortex uses its configured Snowflake connection; --provider is unsupported.")
-    command = ["cortex", "--bypass", *resolve_agent_launch_prefix(agent="cortex", repo_root=get_repo_root(directory))]
+    command = ["cortex", "--bypass", *resolve_agent_launch_prefix(agent="cortex", repo_root=resolve_project_root(current_dir=directory))]
     if model is not None:
         command.extend(["--model", model])
     reasoning = normalize_reasoning_effort(agent="cortex", reasoning_effort=reasoning_effort)

@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from pathlib import Path
-from typing import Final
 
 from stackops.scripts.python.helpers.helpers_agents.agents_edit_source import choose_edit_source
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import (
@@ -19,35 +18,10 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_install import (
     resolve_install_path,
 )
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE, McpCatalogLocation
-from stackops.utils.accessories import get_repo_root
+from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
+from stackops.utils.repos.project import resolve_project_root
 
 Reporter = Callable[[str], None]
-_WORKSPACE_REPO_MARKER: Final[str] = ".git"
-_WORKSPACE_REPO_MINIMUM: Final[int] = 2
-_PROJECT_INSTALL_ROOT_REQUIREMENT: Final[str] = "running inside a git repository or from a workspace directory containing multiple git repositories"
-
-
-def resolve_project_install_root(*, current_dir: Path) -> Path | None:
-    repo_root = get_repo_root(current_dir)
-    if repo_root is not None:
-        return repo_root
-
-    workspace_root = current_dir.expanduser().resolve()
-    if not workspace_root.is_dir():
-        return None
-
-    try:
-        child_paths = tuple(workspace_root.iterdir())
-    except OSError as error:
-        raise ValueError(f"Cannot inspect project install directory: {workspace_root}") from error
-
-    nested_repo_count = 0
-    for child_path in child_paths:
-        if child_path.is_dir() and child_path.joinpath(_WORKSPACE_REPO_MARKER).exists():
-            nested_repo_count += 1
-            if nested_repo_count >= _WORKSPACE_REPO_MINIMUM:
-                return workspace_root
-    return None
 
 
 def add_mcp(
@@ -87,9 +61,9 @@ def add_mcp(
     else:
         requested_mcp_names = parse_requested_mcp_names(raw_value=requested_mcp_servers)
 
-    repo_root = resolve_project_install_root(current_dir=Path.cwd()) if scope == "project" else None
+    repo_root = resolve_project_root(current_dir=Path.cwd()) if scope == "project" else None
     if scope == "project" and repo_root is None:
-        raise ValueError(f"Project installation requires {_PROJECT_INSTALL_ROOT_REQUIREMENT}")
+        raise ValueError(f"""Project installation requires {PROJECT_ROOT_REQUIREMENT}""")
 
     resolved_mcp_servers = resolve_requested_mcp_servers(requested_names=requested_mcp_names, locations=search_locations)
     selected_agents = parse_requested_agents(raw_value=agents, scope=scope)

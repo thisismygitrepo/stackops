@@ -92,9 +92,9 @@ def _build_oz_mcp_args(repo_root: Path | None, is_windows: bool) -> str:
 
 
 def _resolve_current_repo_root() -> Path | None:
-    from stackops.utils.accessories import get_repo_root
+    from stackops.utils.repos.project import resolve_project_root
 
-    return get_repo_root(Path.cwd())
+    return resolve_project_root(current_dir=Path.cwd())
 
 
 def build_agent_command(

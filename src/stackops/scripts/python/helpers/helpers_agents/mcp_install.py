@@ -11,6 +11,7 @@ from stackops.scripts.python.helpers.helpers_agents.deepseek_mcp import write_de
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names, resolve_requested_mcp_servers
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation, ResolvedMcpServer
 from stackops.utils.files.read import remove_c_style_comments
+from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
 
 
 MCP_INSTALL_SCOPE = Literal["project", "user"]
@@ -152,7 +153,7 @@ def resolve_install_path(
 ) -> Path:
     if scope == "project":
         if repo_root is None:
-            raise ValueError("Project MCP installation requires running inside a git repository")
+            raise ValueError(f"""Project MCP installation requires {PROJECT_ROOT_REQUIREMENT}""")
         match agent:
             case "agy":
                 return repo_root / ".agents" / "mcp_config.json"

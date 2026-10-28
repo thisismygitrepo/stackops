@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias, cast
 
 from stackops.utils.managed_files import ManagedFileSpec
+from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
 
 AgentManagedFileKind: TypeAlias = Literal["prompts", "parallel", "mcp"]
 AgentManagedFileSource: TypeAlias = Literal["project", "p", "user", "u", "library", "l"]
@@ -17,17 +18,14 @@ def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[A
     match kind:
         case "prompts":
             repo_path = current_repo_stackops_path(path_kind="prompts_yaml")
-            relative_repo_path = Path(".stackops/agents/prompts.yaml")
             relative_user_path = Path("agents/prompts/prompts.yaml")
             library_path = LIBRARY_ROOT / relative_user_path
         case "parallel":
             repo_path = current_repo_stackops_path(path_kind="parallel_yaml")
-            relative_repo_path = Path(".stackops/agents/parallel.yaml")
             relative_user_path = Path("agents/parallel/parallel.yaml")
             library_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
         case "mcp":
             repo_path = current_repo_stackops_path(path_kind="mcp_json")
-            relative_repo_path = Path(".stackops/mcp.json")
             relative_user_path = Path("agents/mcps/mcp.json")
             library_path = get_path_reference_path(module=mcp_assets, path_reference=mcp_assets.MCP_PATH_REFERENCE)
     locations: list[tuple[AgentManagedFileSource, Path]] = [
@@ -36,8 +34,6 @@ def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[A
     ]
     if repo_path is not None:
         locations.insert(0, ("project", repo_path))
-    elif kind == "prompts":
-        locations.insert(0, ("project", Path.cwd() / relative_repo_path))
     return tuple(locations)
 
 
@@ -53,7 +49,7 @@ def resolve_agent_managed_file_path(*, kind: AgentManagedFileKind, source: Agent
         if location_source == source:
             return path
     if source == "project":
-        raise ValueError("--source project requires running inside a git repository; use --custom-path for an explicit configuration file")
+        raise ValueError(f"""--source project requires {PROJECT_ROOT_REQUIREMENT}; use --custom-path for an explicit configuration file""")
     raise ValueError(f"""Unsupported agent configuration source: {source}""")
 
 

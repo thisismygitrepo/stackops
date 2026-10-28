@@ -123,7 +123,7 @@ def build_named_prompt_selection_maps(
 
 def _get_default_prompts_yaml_locations(source: PROMPTS_SOURCE) -> list[tuple[str, Path]]:
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
-    from stackops.utils.repos.stackops_paths import repo_stackops_yaml_paths
+    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
 
     user_prompts = DOTFILES_STACKOPS_ROOT / "agents" / "prompts" / "prompts.yaml"
     library_prompts = LIBRARY_ROOT / "agents" / "prompts" / "prompts.yaml"
@@ -131,9 +131,12 @@ def _get_default_prompts_yaml_locations(source: PROMPTS_SOURCE) -> list[tuple[st
     match source:
         case "all" | "a":
             locations = [("user", user_prompts), ("library", library_prompts)]
-            return repo_stackops_yaml_paths(path_kind="prompts_yaml") + locations
+            project_yaml = current_repo_stackops_path(path_kind="prompts_yaml")
+            if project_yaml is not None:
+                locations.insert(0, ("project", project_yaml))
+            return locations
         case "project" | "p":
-            return repo_stackops_yaml_paths(path_kind="prompts_yaml")
+            return [("project", require_current_repo_stackops_path(path_kind="prompts_yaml"))]
         case "user" | "u":
             return [("user", user_prompts)]
         case "library" | "l":

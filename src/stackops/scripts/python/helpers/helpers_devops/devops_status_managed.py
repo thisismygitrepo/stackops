@@ -52,17 +52,7 @@ def check_managed_files_status() -> list[ManagedFileStatus]:
                     (source.name, source.path)
                     for source in resolve_secret_sources(secrets_path=None, secrets_source="all")
                 )
-            case "prompts":
-                from stackops.utils.repos.stackops_paths import repo_stackops_yaml_paths
-
-                locations = agent_managed_file_locations(kind=kind)
-                known_paths = {path for _, path in locations}
-                locations += tuple(
-                    (source, path)
-                    for source, path in repo_stackops_yaml_paths(path_kind="prompts_yaml")
-                    if path not in known_paths
-                )
-            case "parallel" | "mcp":
+            case "prompts" | "parallel" | "mcp":
                 locations = agent_managed_file_locations(kind=kind)
             case _:
                 locations = (("", spec.user_path),)

@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import Final, Literal, TypeAlias
 
-from stackops.utils.accessories import get_repo_root
+from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
+from stackops.utils.repos.project import resolve_project_root
 
 
 REPO_STACKOPS_DIRECTORY_NAME: Final[str] = ".stackops"
@@ -15,11 +16,11 @@ RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "parallel_yaml", "mcp_
 
 
 def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
-    repo_root = get_repo_root(Path.cwd())
-    if repo_root is None:
+    project_root = resolve_project_root(current_dir=Path.cwd())
+    if project_root is None:
         return None
 
-    stackops_root = repo_root.expanduser().resolve().joinpath(REPO_STACKOPS_DIRECTORY_NAME)
+    stackops_root = project_root / REPO_STACKOPS_DIRECTORY_NAME
     agents_root = stackops_root / REPO_STACKOPS_AGENTS_DIRECTORY_NAME
     match path_kind:
         case "prompts_yaml":
@@ -39,34 +40,5 @@ def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
 def require_current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path:
     stackops_path = current_repo_stackops_path(path_kind=path_kind)
     if stackops_path is None:
-        raise ValueError("--source project requires running inside a git repository")
+        raise ValueError(f"""--source project requires {PROJECT_ROOT_REQUIREMENT}""")
     return stackops_path
-
-
-def repo_stackops_yaml_paths(*, path_kind: Literal["prompts_yaml", "parallel_yaml"]) -> list[tuple[str, Path]]:
-    directory = Path.cwd().resolve()
-    repo_yaml = current_repo_stackops_path(path_kind=path_kind)
-    file_name = REPO_PROMPTS_YAML_FILE_NAME if path_kind == "prompts_yaml" else REPO_PARALLEL_YAML_FILE_NAME
-    relative_yaml = Path(REPO_STACKOPS_DIRECTORY_NAME) / REPO_STACKOPS_AGENTS_DIRECTORY_NAME / file_name
-    locations: list[tuple[str, Path]] = []
-    if repo_yaml is not None and repo_yaml.exists():
-        locations.append(("project", repo_yaml))
-
-    for child_directory, directory_names, _file_names in directory.walk():
-        if child_directory == directory:
-            directory_names[:] = sorted(
-                name for name in directory_names if not name.startswith(".") and name not in {"node_modules", "__pycache__"}
-            )
-        else:
-            directory_names.clear()
-        yaml_path = child_directory / relative_yaml
-        if yaml_path == repo_yaml or not yaml_path.exists():
-            continue
-        location_name = (
-            "project" if child_directory == directory and repo_yaml is None else f"""project:{child_directory.relative_to(directory).as_posix()}"""
-        )
-        locations.append((location_name, yaml_path))
-
-    if not locations:
-        locations.append(("project", repo_yaml if repo_yaml is not None else directory / relative_yaml))
-    return locations
