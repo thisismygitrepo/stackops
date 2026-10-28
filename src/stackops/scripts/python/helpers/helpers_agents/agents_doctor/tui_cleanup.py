@@ -31,9 +31,9 @@ def cleanup_action(entry: HookEntry) -> str:
         return "Read only"
     match entry.removal.format:
         case "file":
-            return "Quarantine whole file"
+            return "Delete whole file"
         case "directory":
-            return "Quarantine whole directory"
+            return "Delete whole directory"
         case _:
             return "Disable in configuration" if entry.removal.action == "disable" else "Remove from configuration"
 
@@ -51,7 +51,7 @@ def cleanup_details(*, entry: HookEntry, entries: tuple[HookEntry, ...]) -> str:
         if linked:
             details.extend(("", "Shares this reset action with", *(f"""• {item.agent}: {item.name}""" for item in linked)))
         if removal.format in ("file", "directory"):
-            details.extend(("", "This moves the entire target into backup, including any unselected contents."))
+            details.extend(("", "This permanently deletes the entire target, including any unselected contents."))
         else:
             details.extend(("", "Review the exact configuration diff before applying this action."))
     return "\n".join(details)

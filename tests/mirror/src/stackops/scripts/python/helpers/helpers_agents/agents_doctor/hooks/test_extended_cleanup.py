@@ -24,7 +24,7 @@ def test_selective_codex_plugin_cleanup_disables_registration_preserves_cache(ho
     inventory = collect_cleanup_resources(agent="codex", context=hook_context, resource_focuses=("plugin",))
     plan = build_cleanup_plan(inventory=inventory, scope="user", match="headroom", home_directory=hook_context.home_directory)
     assert not plan.blockers
-    apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
+    apply_cleanup_plan(plan=plan, home_directory=hook_context.home_directory)
     assert manifest.exists()
     assert tomllib.loads(config.read_text())["plugins"]["headroom@market"]["enabled"] is False
 
@@ -47,7 +47,7 @@ def test_codex_full_reset_removes_profiles_and_cached_inactive_hooks(hook_contex
     inventory = HookInventory((*hooks.entries, *resources.entries), (*hooks.diagnostics, *resources.diagnostics))
     plan = build_cleanup_plan(inventory=inventory, scope="all", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
-    apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
+    apply_cleanup_plan(plan=plan, home_directory=hook_context.home_directory)
     assert not config.exists()
     assert not profile.exists()
     assert not instructions.exists()
@@ -67,7 +67,7 @@ def test_pi_full_reset_preserves_external_package_source(hook_context: DoctorCon
     inventory = collect_cleanup_resources(agent="pi", context=hook_context, resource_focuses=("all",))
     plan = build_cleanup_plan(inventory=inventory, scope="all", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
-    apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
+    apply_cleanup_plan(plan=plan, home_directory=hook_context.home_directory)
     assert external.exists()
     assert not settings.exists()
     assert not (root / "extensions").exists()
@@ -88,7 +88,7 @@ def test_instruction_symlink_cleanup_removes_registration_preserves_source(
     assert all(entry.removal is None or entry.removal.path != original for entry in inventory.entries)
     plan = build_cleanup_plan(inventory=inventory, scope="workspace", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
-    result = apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
+    result = apply_cleanup_plan(plan=plan, home_directory=hook_context.home_directory)
     assert result.changed_paths == (registration,)
     assert not registration.is_symlink()
     assert original.read_text() == "Instructions kept by another project"
@@ -104,7 +104,7 @@ def test_codex_configuration_symlink_full_reset_preserves_source(hook_context: D
     inventory = collect_cleanup_resources(agent="codex", context=hook_context, resource_focuses=("configuration",))
     plan = build_cleanup_plan(inventory=inventory, scope="user", match=None, home_directory=hook_context.home_directory)
     assert not plan.blockers
-    result = apply_cleanup_plan(plan=plan, backup_root=hook_context.home_directory / "backups", home_directory=hook_context.home_directory)
+    result = apply_cleanup_plan(plan=plan, home_directory=hook_context.home_directory)
     assert result.changed_paths == (registration,)
     assert not registration.is_symlink()
     assert original.read_text() == 'notify = ["tk"]\n'

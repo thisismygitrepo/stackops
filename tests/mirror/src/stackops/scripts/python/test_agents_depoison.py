@@ -80,9 +80,7 @@ def test_full_reset_covers_customizations_and_preserves_unrelated_files(isolated
         assert not path.exists(), path
     assert unrelated.read_text() == "print('keep')"
     assert auth.read_text() == '{"token":"keep"}'
-    manifests = tuple(isolated_context.home_directory.glob(".local/state/stackops/depoison/run-*/manifest.json"))
-    assert len(manifests) == 1
-    assert "settings.json" in manifests[0].read_text()
+    assert not (isolated_context.home_directory / ".local/state/stackops/depoison").exists()
 
 
 def test_selected_mcp_removal_preserves_settings_and_other_servers(isolated_context: DoctorContext) -> None:

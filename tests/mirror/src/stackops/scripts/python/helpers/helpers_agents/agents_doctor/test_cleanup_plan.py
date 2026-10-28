@@ -27,10 +27,8 @@ def test_match_removes_arbitrary_hooks_and_preserves_other_configuration(tmp_pat
     assert len(plan.entries) == 2
     assert plan.blockers == ()
     assert json.loads(path.read_text(encoding="utf-8")) == original
-    result = apply_cleanup_plan(plan=plan, backup_root=tmp_path / "quarantine", home_directory=tmp_path)
+    apply_cleanup_plan(plan=plan, home_directory=tmp_path)
     assert json.loads(path.read_text(encoding="utf-8")) == {"model": "chosen", "hooks": {"before": [{"command": "keep"}]}}
-    assert result.backup_directory is not None
-    assert json.loads((result.backup_directory / "0000-settings.json").read_text(encoding="utf-8")) == original
 
 
 def test_whole_configuration_and_directory_reset_subsume_hook_edits(tmp_path: Path) -> None:
@@ -48,10 +46,8 @@ def test_whole_configuration_and_directory_reset_subsume_hook_edits(tmp_path: Pa
     )
     plan = build_cleanup_plan(inventory=inventory, scope="all", match=None, home_directory=tmp_path)
     assert len(plan.changes) == 1
-    result = apply_cleanup_plan(plan=plan, backup_root=tmp_path / "quarantine", home_directory=tmp_path)
+    apply_cleanup_plan(plan=plan, home_directory=tmp_path)
     assert not root.exists()
-    assert result.backup_directory is not None
-    assert (result.backup_directory / "0000-plugins" / "hooks.json").exists()
 
 
 def test_scope_selection_and_managed_resources(tmp_path: Path) -> None:
@@ -69,14 +65,14 @@ def test_scope_selection_and_managed_resources(tmp_path: Path) -> None:
     )
     plan = build_cleanup_plan(inventory=inventory, scope="workspace", match=None, home_directory=tmp_path)
     assert len(plan.changes) == 1
-    assert plan.changes[0].snapshot.path == local
+    assert plan.changes[0].path == local
     user_plan = build_cleanup_plan(inventory=inventory, scope="user", match=None, home_directory=tmp_path)
     assert len(user_plan.changes) == 1
-    assert user_plan.changes[0].snapshot.path == global_path
+    assert user_plan.changes[0].path == global_path
     all_plan = build_cleanup_plan(inventory=inventory, scope="all", match=None, home_directory=tmp_path)
     assert len(all_plan.blockers) == 1
     with pytest.raises(ValueError, match="Cleanup blocked"):
-        apply_cleanup_plan(plan=all_plan, backup_root=tmp_path / "quarantine", home_directory=tmp_path)
+        apply_cleanup_plan(plan=all_plan, home_directory=tmp_path)
     assert local.exists() and global_path.exists()
 
 
@@ -90,8 +86,7 @@ def test_diagnostics_block_even_when_name_filter_selects_no_hooks(tmp_path: Path
     plan = build_cleanup_plan(inventory=inventory, scope="user", match="tk", home_directory=tmp_path)
     assert plan.blockers
     with pytest.raises(ValueError, match="Cleanup blocked"):
-        apply_cleanup_plan(plan=plan, backup_root=tmp_path / "quarantine", home_directory=tmp_path)
-    assert not (tmp_path / "quarantine").exists()
+        apply_cleanup_plan(plan=plan, home_directory=tmp_path)
 
 
 def test_malformed_file_blocks_other_selected_changes(tmp_path: Path) -> None:
@@ -108,11 +103,11 @@ def test_malformed_file_blocks_other_selected_changes(tmp_path: Path) -> None:
     )
     plan = build_cleanup_plan(inventory=inventory, scope="all", match=None, home_directory=tmp_path)
     with pytest.raises(ValueError, match="Cleanup blocked"):
-        apply_cleanup_plan(plan=plan, backup_root=tmp_path / "quarantine", home_directory=tmp_path)
+        apply_cleanup_plan(plan=plan, home_directory=tmp_path)
     assert cast(dict[str, object], json.loads(valid.read_text(encoding="utf-8")))["hooks"] == []
 
 
-def test_full_reset_quarantines_malformed_configuration_despite_parser_diagnostic(tmp_path: Path) -> None:
+def test_full_reset_deletes_malformed_configuration_despite_parser_diagnostic(tmp_path: Path) -> None:
     path = tmp_path / "broken.json"
     path.write_text("{broken", encoding="utf-8")
     inventory = HookInventory(
@@ -121,10 +116,8 @@ def test_full_reset_quarantines_malformed_configuration_despite_parser_diagnosti
     )
     plan = build_cleanup_plan(inventory=inventory, scope="all", match=None, home_directory=tmp_path)
     assert not plan.blockers
-    result = apply_cleanup_plan(plan=plan, backup_root=tmp_path / "quarantine", home_directory=tmp_path)
+    apply_cleanup_plan(plan=plan, home_directory=tmp_path)
     assert not path.exists()
-    assert result.backup_directory is not None
-    assert (result.backup_directory / "0000-broken.json").read_text(encoding="utf-8") == "{broken"
 
 
 def test_full_plugin_reset_subsumes_unregistered_cache_entry(tmp_path: Path) -> None:

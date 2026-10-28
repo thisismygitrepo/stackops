@@ -139,9 +139,7 @@ class DepoisonApp(App[int]):
                 build_selected_cleanup_plan, inventory=inventory, context=context, recursive=self.cleanup_selection.recursive,
             )
             self.cleanup_exit_code = 1 if self.cleanup_plan.blockers else 0
-            self.push_screen(CleanupReview(
-                plan=self.cleanup_plan, backup_root=context.home_directory / ".local" / "state" / "stackops" / "depoison",
-            ), self.reset_reviewed)
+            self.push_screen(CleanupReview(plan=self.cleanup_plan), self.reset_reviewed)
         except (OSError, ValueError) as error:
             self.cleanup_exit_code = 2
             self.set_cleanup_busy(False)
@@ -150,7 +148,7 @@ class DepoisonApp(App[int]):
     def reset_reviewed(self, confirmed: bool | None) -> None:
         if confirmed and self.cleanup_plan is not None and self.cleanup_context is not None:
             self.cleanup_applying = True
-            self.query_one("#cleanup-status", Static).update("Saving originals and applying the reviewed cleanup…")
+            self.query_one("#cleanup-status", Static).update("Applying the reviewed cleanup…")
             self.apply_reviewed_cleanup(self.cleanup_plan, self.cleanup_context)
         else:
             self.set_cleanup_busy(False)
@@ -160,10 +158,7 @@ class DepoisonApp(App[int]):
     @work
     async def apply_reviewed_cleanup(self, plan: CleanupPlan, context: DoctorContext) -> None:
         try:
-            result = await asyncio.to_thread(
-                apply_cleanup_plan, plan=plan, home_directory=context.home_directory,
-                backup_root=context.home_directory / ".local" / "state" / "stackops" / "depoison",
-            )
+            result = await asyncio.to_thread(apply_cleanup_plan, plan=plan, home_directory=context.home_directory)
             self.cleanup_exit_code = 0
             self.cleanup_scanned = False
             browser = self.query_one(CleanupBrowser)
@@ -171,8 +166,6 @@ class DepoisonApp(App[int]):
             browser.update_marks()
             browser.query_one("#cleanup-detail", TextArea).load_text(
                 f"""Cleaned {len(result.changed_paths)} path(s).
-
-Originals and restore manifest: {result.backup_directory}
 
 Refresh to inspect the current configuration. Restart the agent to load it.""",
             )

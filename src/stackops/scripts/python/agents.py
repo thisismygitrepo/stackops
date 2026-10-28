@@ -787,7 +787,7 @@ def get_app() -> typer.Typer:
     agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
     agents_app.command(
         name="reset", no_args_is_help=False, short_help="🧼 <D> Preview or reset agent customizations and .ai folders",
-        help="Preview or reset agent customizations and repository .ai folders. Use --resource workspace for .ai folders only. Changes require --apply or interactive confirmation and preserve backups.",
+        help="Preview or reset agent customizations and repository .ai folders. Use --resource workspace for .ai folders only. Changes require --apply or interactive confirmation and are permanent: nothing is backed up.",
     )(depoison)
     agents_app.command(name="D", no_args_is_help=False, hidden=True)(depoison)
     agents_app.command(name="doctor", no_args_is_help=False, short_help="🩺 <d> Inspect agent health and resource provenance")(doctor)

@@ -1,4 +1,3 @@
-from collections import Counter
 from pathlib import Path
 
 from rich import box
@@ -8,7 +7,8 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import CleanupSelection
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupResult
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupRemoval, CleanupResult
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_sizes import describe_change_size
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookAgent, HookEntry, HookInventory
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext, DoctorOrigin
@@ -59,37 +59,29 @@ def render_cleanup_plan(
     if selection.match is not None:
         overview.add_row("Match", Text(selection.match))
     if selection.scope != "user" and any(kind.strip().casefold() in ("all", "workspace") for kind in selection.resource.split(",")):
-        overview.add_row("Workspace scan", Text("recursive repositories" if selection.recursive else "current repository or direct child repositories"))
+        overview.add_row("Workspace scan", Text("working directory and nested repositories" if selection.recursive else "working directory and direct child repositories"))
     console.print(Panel(overview, title="Depoison · Apply" if applying else "Depoison · Preview", border_style=status_style))
 
     grouped: dict[tuple[HookAgent, DoctorOrigin], list[HookEntry]] = {}
     for entry in plan.entries:
         grouped.setdefault((entry.agent, entry.origin), []).append(entry)
-    if grouped:
-        summary = Table(title="Selected resources", box=box.SIMPLE, header_style="bold cyan", expand=True)
-        summary.add_column("Agent", style="bold")
-        summary.add_column("Scope")
-        summary.add_column("Count", justify="right")
-        summary.add_column("Resources", overflow="fold", ratio=1)
-        for (agent, origin), entries in sorted(grouped.items()):
-            counts = Counter(
-                entry.event if entry.event in ("workspace", "configuration", "mcp", "plugin", "skill", "instructions") else "hook"
-                for entry in entries
-            )
-            summary.add_row(
-                Text(agent), Text(CLEANUP_ORIGIN_LABELS[origin]), str(len(entries)),
-                Text(", ".join(f"""{count} {kind}""" for kind, count in sorted(counts.items()))),
-            )
-        console.print(summary)
-
-    if plan.changes:
+    if plan.changes and not plan.blockers:
+        sizes: dict[Path, str] = {}
+        if verbose:
+            with console.status("Measuring paths..."):
+                sizes = {change.path: describe_change_size(change=change) for change in plan.changes}
         changes = Table(title="Planned changes", box=box.SIMPLE, header_style="bold cyan", expand=True)
         changes.add_column("Action", style="yellow")
+        if verbose:
+            changes.add_column("Size", justify="right", no_wrap=True)
         changes.add_column("Path", overflow="fold", ratio=1)
-        for change in sorted(plan.changes, key=lambda item: str(item.snapshot.path)):
-            action = "Quarantine" if change.replacement is None else "Edit configuration"
-            changes.add_row(action, Text(_display_path(path=change.snapshot.path, context=context)))
-        changes.caption = "Quarantine moves the whole file or directory into backup; edits preserve the original in backup."
+        for change in sorted(plan.changes, key=lambda item: str(item.path)):
+            cells = [Text("Delete" if isinstance(change, CleanupRemoval) else "Edit configuration")]
+            if verbose:
+                cells.append(Text(sizes[change.path]))
+            cells.append(Text(_display_path(path=change.path, context=context)))
+            changes.add_row(*cells)
+        changes.caption = "Deletes are permanent and nothing is backed up; edits rewrite the configuration in place."
         console.print(changes)
     elif not plan.blockers:
         console.print("[dim]No matching resources need changes.[/dim]")
@@ -98,7 +90,7 @@ def render_cleanup_plan(
         for _group, entries in sorted(grouped.items()):
             _render_resources(console=console, entries=entries, context=context)
     elif plan.entries:
-        console.print("[dim]Use --verbose to show resource names, states, commands, and sources.[/dim]")
+        console.print("[dim]Use --verbose to show path sizes, resource names, states, commands, and sources.[/dim]")
 
     notes: dict[str, None] = {}
     for diagnostic in inventory.diagnostics:
@@ -120,9 +112,6 @@ def render_cleanup_plan(
 
 def render_cleanup_result(*, console: Console, result: CleanupResult) -> None:
     summary = Text(f"""Reset {len(result.changed_paths)} path(s).""", style="bold green")
-    if result.backup_directory is not None:
-        summary.append("\nOriginals and restore manifest: ", style="default")
-        summary.append(str(result.backup_directory), style="cyan")
     if result.changed_paths:
         summary.append("\nRestart the agent to load the reset configuration.", style="default")
     console.print(Panel(summary, title="Reset complete", border_style="green"))

@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_apply import apply_cleanup_plan
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupEdit
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_plan import build_cleanup_plan
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext
@@ -40,8 +41,9 @@ def test_mcp_command_match_identifies_nonmatching_server_name(audit_context: Doc
     inventory = collect_cleanup_resources(agent="claude", context=audit_context, resource_focuses=("mcp",))
     plan = build_cleanup_plan(inventory=inventory, scope="workspace", match="headroom", home_directory=audit_context.home_directory)
     assert len(plan.changes) == 1
-    assert plan.changes[0].replacement is not None
-    assert json.loads(plan.changes[0].replacement) == {"mcpServers": {"other": {"command": "keep"}}}
+    change = plan.changes[0]
+    assert isinstance(change, CleanupEdit)
+    assert json.loads(change.replacement) == {"mcpServers": {"other": {"command": "keep"}}}
 
 
 def test_linked_skill_cleanup_preserves_external_source(audit_context: DoctorContext) -> None:
@@ -55,8 +57,8 @@ def test_linked_skill_cleanup_preserves_external_source(audit_context: DoctorCon
     plan = build_cleanup_plan(inventory=inventory, scope="workspace", match="shared", home_directory=audit_context.home_directory)
     assert not plan.blockers
     assert len(plan.changes) == 1
-    assert plan.changes[0].snapshot.path == link
-    apply_cleanup_plan(plan=plan, backup_root=audit_context.home_directory / "backups", home_directory=audit_context.home_directory)
+    assert plan.changes[0].path == link
+    apply_cleanup_plan(plan=plan, home_directory=audit_context.home_directory)
     assert not link.is_symlink()
     assert (source / "SKILL.md").read_text(encoding="utf-8") == "Shared content"
 
@@ -109,11 +111,11 @@ def test_cline_full_reset_covers_native_cli_customizations(audit_context: Doctor
     inventory = collect_cleanup_resources(agent="cline", context=audit_context, resource_focuses=("all",))
     local_plan = build_cleanup_plan(inventory=inventory, scope="workspace", match=None, home_directory=audit_context.home_directory)
     assert not local_plan.blockers
-    changed = {change.snapshot.path for change in local_plan.changes}
+    changed = {change.path for change in local_plan.changes}
     assert {root / "mcp.json", root / "agents.yaml", root / "rules/custom.md", root / "skills/custom", root / "plugins"}.issubset(changed)
     assert global_rule not in changed
     global_plan = build_cleanup_plan(inventory=inventory, scope="user", match=None, home_directory=audit_context.home_directory)
-    assert global_rule in {change.snapshot.path for change in global_plan.changes}
+    assert global_rule in {change.path for change in global_plan.changes}
 
 
 def test_linked_instruction_cleanup_preserves_external_source(audit_context: DoctorContext) -> None:
@@ -126,7 +128,7 @@ def test_linked_instruction_cleanup_preserves_external_source(audit_context: Doc
     plan = build_cleanup_plan(inventory=inventory, scope="workspace", match="shared", home_directory=audit_context.home_directory)
     assert not plan.blockers
     assert len(plan.changes) == 1
-    assert plan.changes[0].snapshot.path == link
-    apply_cleanup_plan(plan=plan, backup_root=audit_context.home_directory / "backups", home_directory=audit_context.home_directory)
+    assert plan.changes[0].path == link
+    apply_cleanup_plan(plan=plan, home_directory=audit_context.home_directory)
     assert not link.is_symlink()
     assert source.read_text(encoding="utf-8") == "shared instructions"

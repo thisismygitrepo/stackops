@@ -21,36 +21,40 @@ def collect_workspace_resources(*, context: DoctorContext, recursive: bool) -> H
     root = context.working_directory
     entries: list[HookEntry] = []
     diagnostics: list[HookDiagnostic] = []
-    pending = [root]
+    pending = [root, *context.ancestor_directories[:-1]]
     while pending:
-        repository = pending.pop()
-        if not permitted_resource_path(path=repository, home_directory=context.home_directory):
+        directory = pending.pop()
+        if not permitted_resource_path(path=directory, home_directory=context.home_directory):
             continue
         try:
-            validate_cleanup_path(path=repository, home_directory=context.home_directory, allow_leaf_symlink=False)
-            if not permitted_resource_path(path=repository / ".git", home_directory=context.home_directory):
+            validate_cleanup_path(path=directory, home_directory=context.home_directory, allow_leaf_symlink=False)
+            if not permitted_resource_path(path=directory / ".git", home_directory=context.home_directory):
                 continue
+            is_repository = True
             try:
-                Repo(repository, search_parent_directories=False)
+                Repo(directory, search_parent_directories=False)
             except (InvalidGitRepositoryError, NoSuchPathError):
-                if repository == root or recursive:
-                    pending.extend(
-                        child for child in sorted(repository.iterdir(), reverse=True)
-                        if (not recursive or not child.name.startswith("."))
-                        and permitted_resource_path(path=child, home_directory=context.home_directory)
-                        and not child.is_symlink() and child.is_dir()
-                    )
+                is_repository = False
+            in_workspace_chain = directory in context.ancestor_directories
+            if not is_repository and (directory == root or (recursive and not in_workspace_chain)):
+                pending.extend(
+                    child for child in sorted(directory.iterdir(), reverse=True)
+                    if (not recursive or not child.name.startswith("."))
+                    and permitted_resource_path(path=child, home_directory=context.home_directory)
+                    and not child.is_symlink() and child.is_dir()
+                )
+            if not is_repository and not in_workspace_chain:
                 continue
-            workspace = repository / ".ai"
+            workspace = directory / ".ai"
             validate_cleanup_path(path=workspace, home_directory=context.home_directory, allow_leaf_symlink=True)
             linked = workspace.is_symlink()
             if not linked and not workspace.is_dir():
                 continue
             entries.append(HookEntry(
-                agent="shared", origin="local", path=workspace, name=f"""{repository.name}/.ai""", event="workspace",
+                agent="shared", origin="local", path=workspace, name=f"""{directory.name}/.ai""", event="workspace",
                 command="Remove shared .ai workspace files", state="configured",
                 removal=HookRemoval(path=workspace, format="file" if linked else "directory", selector=(), action="delete"),
             ))
         except (OSError, ValueError) as error:
-            diagnostics.append(HookDiagnostic("shared", "local", repository, str(error), "error"))
+            diagnostics.append(HookDiagnostic("shared", "local", directory, str(error), "error"))
     return HookInventory(entries=tuple(entries), diagnostics=tuple(diagnostics))
