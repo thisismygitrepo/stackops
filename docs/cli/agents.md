@@ -184,10 +184,10 @@ agents run-prompt --agent codex --skill caveman --context-path ./context.md "com
 agents run-prompt --show-format
 ```
 
-`run-interactive` launches an agent directly with sensible defaults. Current options:
+`run-interactive` launches an agent directly with sensible defaults. Optional positional text is passed to the agent as its initial prompt; use `--` before text that looks like an option. Current options:
 
 - `--agent`/`-a` accepts `codex`/`x`, `copilot`/`c`, `cortex`, `pi`/`p`, `opencode`/`oc`, `omp`/`o`, or `deepseek`/`dsh`
-- `--caveman`/`-c` starts the session with megacave Wenyan compression
+- `--caveman`/`-c` starts the session with megacave Wenyan compression, ahead of any prompt text
 - `--headroom`/`-H` launches `codex` or `copilot` through headroom
 
 Examples:
@@ -196,7 +196,11 @@ Examples:
 agents run-interactive --agent codex
 agents run-interactive --agent copilot --caveman
 agents run-interactive --agent codex --caveman --headroom
+agents run-interactive --agent codex "review the failing tests"
+agents run-interactive --agent copilot --caveman -- "--help output is wrong"
 ```
+
+`deepseek` opens a web interface and cannot take an initial prompt, so passing prompt text or `--caveman` with it is rejected.
 
 `ask` is the lighter-weight direct path. Current behavior to keep in mind:
 

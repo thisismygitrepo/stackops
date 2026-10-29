@@ -248,45 +248,45 @@ def _resolve_interactive_agent(agent: INTERACTIVE_AGENT | None) -> _INTERACTIVE_
     return cast(_INTERACTIVE_CANONICAL_AGENT, default_agent)
 
 
-def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, caveman: bool) -> list[str]:
+def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, initial_prompt: str | None) -> list[str]:
     match agent:
         case "codex":
             command = ["codex", "--dangerously-bypass-approvals-and-sandbox"]
-            if caveman:
-                command.append(_CAVEMAN_INITIAL_PROMPT)
+            if initial_prompt is not None:
+                command.append(initial_prompt)
             return command
         case "copilot":
             command = ["copilot", "--yolo"]
-            if caveman:
-                command.extend(["--interactive", _CAVEMAN_INITIAL_PROMPT])
+            if initial_prompt is not None:
+                command.extend(["--interactive", initial_prompt])
             return command
         case "cortex":
             from stackops.scripts.python.helpers.helpers_agents.cortex_launch import build_cortex_command
 
             command = build_cortex_command(model=None, provider=None, reasoning_effort=None, directory=Path.cwd())
-            if caveman:
-                command.extend(["--", _CAVEMAN_INITIAL_PROMPT])
+            if initial_prompt is not None:
+                command.extend(["--", initial_prompt])
             return command
         case "pi":
             command = ["pi"]
-            if caveman:
-                command.append(_CAVEMAN_INITIAL_PROMPT)
+            if initial_prompt is not None:
+                command.append(initial_prompt)
             return command
         case "opencode":
             command = ["opencode"]
-            if caveman:
-                command.extend(["--prompt", _CAVEMAN_INITIAL_PROMPT])
+            if initial_prompt is not None:
+                command.extend(["--prompt", initial_prompt])
             return command
         case "omp":
             command = ["omp"]
-            if caveman:
-                command.append(_CAVEMAN_INITIAL_PROMPT)
+            if initial_prompt is not None:
+                command.append(initial_prompt)
             return command
         case "deepseek":
             from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import build_deepseek_command, deepseek_patch_paths
 
-            if caveman:
-                raise ValueError("DeepSeek's web interface does not accept an initial CLI prompt; enter the caveman prompt in the web session.")
+            if initial_prompt is not None:
+                raise ValueError("DeepSeek's web interface does not accept an initial CLI prompt; enter it in the web session instead of passing prompt text or --caveman.")
             return build_deepseek_command(
                 profile="web", patch_paths=deepseek_patch_paths(directory=Path.cwd()), container=False, is_windows=False
             )
@@ -308,6 +308,13 @@ def _apply_headroom(command: list[str], agent: _INTERACTIVE_CANONICAL_AGENT, hea
 
 
 def run_interactive(
+    prompt: Annotated[
+        list[str],
+        typer.Argument(
+            default_factory=list,
+            help="Initial prompt text for the session. Use -- before the prompt to pass option-looking text as prompt content.",
+        ),
+    ],
     agent: Annotated[
         INTERACTIVE_AGENT | None,
         typer.Option(
@@ -321,7 +328,7 @@ def run_interactive(
     ] = False,
     caveman: Annotated[
         bool,
-        typer.Option(..., "--caveman", "-c", help="Start the session with megacave Wenyan compression."),
+        typer.Option(..., "--caveman", "-c", help="Start the session with megacave Wenyan compression. Prepended to any prompt text."),
     ] = False,
     headroom: Annotated[
         bool,
@@ -396,6 +403,11 @@ def run_interactive(
         if followup and sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN) and is_windows_host():
             raise ValueError("Container follow-up on Windows cannot reuse host session paths. Run agents inside WSL2.")
 
+        initial_prompt_parts = [_CAVEMAN_INITIAL_PROMPT] if caveman else []
+        if len(prompt) > 0:
+            initial_prompt_parts.append(" ".join(prompt))
+        initial_prompt = "\n\n".join(initial_prompt_parts) if len(initial_prompt_parts) > 0 else None
+
         with _agent_working_directory(second_brain=second_brain or followup) as working_directory:
             if followup:
                 from stackops.scripts.python.agents_followup import build_followup_command, choose_followup_session
@@ -405,11 +417,11 @@ def run_interactive(
                 command = build_followup_command(
                     session=selected_session,
                     action="fork" if fork else "resume",
-                    initial_prompt=_CAVEMAN_INITIAL_PROMPT if caveman else None,
+                    initial_prompt=initial_prompt,
                 )
             else:
                 resolved_agent = _resolve_interactive_agent(agent=agent)
-                command = _interactive_agent_command(agent=resolved_agent, caveman=caveman)
+                command = _interactive_agent_command(agent=resolved_agent, initial_prompt=initial_prompt)
 
             command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)
             if sandbox != SandboxBackend.NONE:
