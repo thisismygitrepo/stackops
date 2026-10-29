@@ -55,6 +55,7 @@ _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
     "init",
     "config",
     "doctor",
+    "status",
     "reset",
     "browser",
     "second-brain",
@@ -764,6 +765,7 @@ def doctor(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.agents_depoison import depoison
+    from stackops.scripts.python.agents_status import status
 
     agents_app = typer.Typer(
         cls=_PanelOrderedAgentsGroup,
@@ -814,6 +816,11 @@ def get_app() -> typer.Typer:
     agents_app.command(name="D", no_args_is_help=False, hidden=True)(depoison)
     agents_app.command(name="doctor", no_args_is_help=False, short_help="🩺 <d> Inspect agent health and resource provenance")(doctor)
     agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
+    agents_app.command(
+        name="status", no_args_is_help=False, short_help="📊 <S> Read-only TUIOS, Herdr or AoE agent status and retained message history",
+        help="Inspect live agents across local TUIOS or Herdr sessions, including detached sessions and background workspaces, or the current AoE profile. Collect reported states, read-only evidence and reliably linked retained transcripts. Never contacts agents or changes their panes; history gaps and unverified task completion remain explicit.",
+    )(status)
+    agents_app.command(name="S", no_args_is_help=False, hidden=True)(status)
 
     agents_app.command(name="run-prompt", no_args_is_help=False, short_help="💬 <r> Run one prompt via selected agent")(run_prompt)
     agents_app.command(name="r", no_args_is_help=False, hidden=True)(run_prompt)
