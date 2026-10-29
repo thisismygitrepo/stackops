@@ -10,7 +10,7 @@ maintainPakageManager:
   prompt: |
     Use the `$agent-ops` skill with the `parallel-agents` command.
 
-    Goal: coordinate external agents to update GitHub release filename patterns in `src/stackops/utils/schemas/installer/installer_data.json`.
+    Goal: coordinate external agents to update GitHub release filename patterns in `src/stackops/utils/schemas/installer/installer_data.yaml`.
     Split installer entries across agents, with 10 entries per agent. Tell agents to edit only entries assigned to them.
 
     Tell each agent:

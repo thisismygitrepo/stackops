@@ -88,7 +88,7 @@ def build_pattern_row(platform_buckets: dict[PlatformName, list[str]]) -> Platfo
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Build installer_data.json config entry from GitHub release assets.")
+    parser = argparse.ArgumentParser(description="Build an installer_data.yaml entry as JSON from GitHub release assets.")
     parser.add_argument("--repo-url", "-r", required=True, help="GitHub repository URL")
     parser.add_argument("--app-name", "-a", required=True, help="Lowercase app name")
     parser.add_argument("--doc", "-d", required=True, help="Short description")

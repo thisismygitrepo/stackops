@@ -1,6 +1,8 @@
-import json
+from collections.abc import Mapping
 from pathlib import Path
-from typing import cast, get_args
+from typing import Final, cast, get_args, get_type_hints
+
+import yaml
 
 import stackops.utils.schemas.installer as installer_schema_assets
 from stackops.utils.path_reference import get_path_reference_path
@@ -15,6 +17,8 @@ from stackops.utils.schemas.installer.installer_types import (
     LinuxInstallerPattern,
     LinuxPackageManagerInstallerPattern,
 )
+from stackops.utils.schemas.yaml_document import yaml_document_text
+from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
 from stackops.utils.source_of_truth import DOTFILES_USER_INSTALLER_DATA_PATH
 
 
@@ -23,6 +27,7 @@ LIBRARY_INSTALLER_DATA_PATH = get_path_reference_path(
     path_reference=installer_schema_assets.INSTALLER_DATA_PATH_REFERENCE,
 )
 USER_INSTALLER_DATA_PATH = DOTFILES_USER_INSTALLER_DATA_PATH
+_INSTALLER_DATA_KEYS: Final[tuple[str, ...]] = tuple(get_type_hints(InstallerData))
 
 
 class InstallerDataFileError(ValueError):
@@ -47,14 +52,16 @@ def _require_exact_keys(mapping: dict[str, object], required: set[str], optional
 def _require_non_empty_string(mapping: dict[str, object], key: str, context: str) -> str:
     value = mapping.get(key)
     if not isinstance(value, str) or value.strip() == "":
-        raise InstallerDataFileError(f"{context}.{key} must be a non-empty string")
+        raise InstallerDataFileError(
+            f"""{context}.{key} must be a non-empty string (quote YAML values that look like dates, numbers or booleans), got {value!r}"""
+        )
     return value
 
 
 def _require_installer_pattern(value: object, context: str) -> str | None:
     if value is None or isinstance(value, str):
         return value
-    raise InstallerDataFileError(f"{context} must be a string or null")
+    raise InstallerDataFileError(f"""{context} must be a string or null (quote YAML values that look like dates, numbers or booleans), got {value!r}""")
 
 
 def _normalize_linux_pattern(value: object, context: str) -> LinuxInstallerPattern:
@@ -78,9 +85,9 @@ def _normalize_architecture_pattern(value: object, context: str) -> Architecture
     mapping = _require_mapping(value=value, context=context)
     _require_exact_keys(mapping=mapping, required={"windows", "linux", "darwin"}, optional=set(), context=context)
     return ArchitectureInstallerPattern(
-        windows=_require_installer_pattern(mapping["windows"], f"{context}.windows"),
         linux=_normalize_linux_pattern(mapping["linux"], f"{context}.linux"),
         darwin=_require_installer_pattern(mapping["darwin"], f"{context}.darwin"),
+        windows=_require_installer_pattern(mapping["windows"], f"{context}.windows"),
     )
 
 
@@ -108,13 +115,12 @@ def _normalize_category_labels(value: object, context: str) -> list[InstallerCat
     return normalized_labels
 
 
-def _normalize_installer_data(value: object, index: int, path: Path) -> InstallerData:
-    context = f"{path}.installers[{index}]"
+def normalize_installer_data(value: object, context: str) -> InstallerData:
     mapping = _require_mapping(value=value, context=context)
     _require_exact_keys(
         mapping=mapping,
         required={"appName", "license", "repoURL", "doc", "categoryLabels", "fileNamePattern"},
-        optional={"lastCommitDate", "lastCommitDateCheckDate"},
+        optional={"lastCommitDate", "lastCommitDateCheckDate", "comment"},
         context=context,
     )
     installer = InstallerData(
@@ -133,23 +139,27 @@ def _normalize_installer_data(value: object, index: int, path: Path) -> Installe
             key="lastCommitDateCheckDate",
             context=context,
         )
+    if "comment" in mapping:
+        installer["comment"] = _require_non_empty_string(mapping=mapping, key="comment", context=context)
     return installer
 
 
 def load_installer_data_file(path: Path) -> InstallerDataFiles:
+    if path.suffix != LIBRARY_INSTALLER_DATA_PATH.suffix:
+        raise InstallerDataFileError(f"""Installer data files must be YAML with the '{LIBRARY_INSTALLER_DATA_PATH.suffix}' suffix: {path}""")
     if not path.exists():
         raise InstallerDataFileError(f"Installer data file does not exist: {path}")
     if not path.is_file():
         raise InstallerDataFileError(f"Installer data path is not a file: {path}")
     try:
-        payload_value = cast(object, json.loads(path.read_text(encoding="utf-8")))
-    except (OSError, json.JSONDecodeError) as exc:
+        payload_value = cast(object, yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.CSafeLoader))
+    except (OSError, yaml.YAMLError) as exc:
         raise InstallerDataFileError(f"Could not load installer data file {path}: {exc}") from exc
     payload = _require_mapping(value=payload_value, context=f"Installer data root {path}")
-    _require_exact_keys(mapping=payload, required={"version", "installers"}, optional={"$schema"}, context=f"installer data {path}")
-    version = payload.get("version")
+    _require_exact_keys(mapping=payload, required={"version", "installers"}, optional=set(), context=f"installer data {path}")
+    version = payload["version"]
     if not isinstance(version, str) or version.strip() == "":
-        raise InstallerDataFileError(f"Installer data version must be a non-empty string: {path}")
+        raise InstallerDataFileError(f"""Installer data 'version' must be a non-empty quoted string, e.g. version: "4", got {version!r}: {path}""")
     installer_values = payload.get("installers")
     if not isinstance(installer_values, list):
         raise InstallerDataFileError(f"Installer data 'installers' must be a list: {path}")
@@ -157,20 +167,23 @@ def load_installer_data_file(path: Path) -> InstallerDataFiles:
     installers: list[InstallerData] = []
     app_names: set[str] = set()
     for index, installer_value in enumerate(installer_values):
-        installer = _normalize_installer_data(value=installer_value, index=index, path=path)
+        installer = normalize_installer_data(value=installer_value, context=f"{path}.installers[{index}]")
         normalized_app_name = installer["appName"].casefold()
         if normalized_app_name in app_names:
             raise InstallerDataFileError(f"""Duplicate installer appName in {path}: {installer['appName']}""")
         app_names.add(normalized_app_name)
         installers.append(installer)
 
-    catalog: InstallerDataFiles = {"version": version, "installers": installers}
-    schema_reference = payload.get("$schema")
-    if schema_reference is not None:
-        if not isinstance(schema_reference, str):
-            raise InstallerDataFileError(f"Installer data '$schema' must be a string: {path}")
-        catalog["$schema"] = schema_reference
-    return catalog
+    return {"version": version, "installers": installers}
+
+
+def installer_data_file_text(path: Path, catalog: InstallerDataFiles) -> str:
+    installer_documents = [
+        {key: cast(Mapping[str, object], installer)[key] for key in _INSTALLER_DATA_KEYS if key in installer} for installer in catalog["installers"]
+    ]
+    return f"""{yaml_language_server_schema_comment(yaml_path=path)}
+
+{yaml_document_text(document={"version": catalog["version"], "installers": installer_documents})}"""
 
 
 def read_installer_data(source: InstallerDataSource, user_path: Path | None) -> list[InstallerData]:

@@ -1,8 +1,6 @@
-import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TypedDict, cast
 from urllib.parse import urlsplit
 
 from rich.console import Console
@@ -12,8 +10,13 @@ from rich.table import Table
 from stackops.utils.installer_utils.github_commit_dates_constants import (
     COMMIT_DATE_REPORT_PATH,
     GITHUB_HOST,
-    INSTALLER_DATA_PATH,
     MAX_CONCURRENT_GITHUB_REQUESTS,
+)
+from stackops.utils.installer_utils.installer_catalog import (
+    LIBRARY_INSTALLER_DATA_PATH,
+    InstallerDataFileError,
+    installer_data_file_text,
+    load_installer_data_file,
 )
 from stackops.utils.installer_utils.github_commit_dates_fetch import ensure_github_authentication, fetch_commit_dates
 from stackops.utils.installer_utils.github_commit_dates_output import TextOutput, commit_text_outputs
@@ -25,11 +28,6 @@ from stackops.utils.installer_utils.github_commit_dates_report import (
 )
 
 
-class CommitDateMetadata(TypedDict):
-    lastCommitDate: str
-    lastCommitDateCheckDate: str
-
-
 @dataclass(frozen=True, slots=True)
 class CommitDateUpdateResult:
     updated_installer_count: int
@@ -37,22 +35,6 @@ class CommitDateUpdateResult:
     successful_repository_count: int
     failed_repository_count: int
     repository_count: int
-
-
-def require_json_object(value: object, context: str) -> dict[str, object]:
-    if not isinstance(value, dict) or any(not isinstance(key, str) for key in value):
-        raise RuntimeError(f"Expected {context} to be a JSON object.")
-    return cast(dict[str, object], value)
-
-
-def load_installer_data(path: Path) -> tuple[dict[str, object], list[dict[str, object]]]:
-    payload_value: object = json.loads(path.read_text(encoding="utf-8"))
-    payload = require_json_object(value=payload_value, context=str(path))
-    installers_value = payload.get("installers")
-    if not isinstance(installers_value, list):
-        raise RuntimeError(f"Expected {path} to contain an 'installers' array.")
-    installers = [require_json_object(value=installer, context=f"installers[{index}]") for index, installer in enumerate(installers_value)]
-    return payload, installers
 
 
 def github_repository(repo_url: str) -> str | None:
@@ -69,15 +51,13 @@ def github_repository(repo_url: str) -> str | None:
 
 def update_installer_commit_dates(path: Path, report_path: Path, console: Console) -> CommitDateUpdateResult:
     ensure_github_authentication()
-    payload, installers = load_installer_data(path=path)
+    catalog = load_installer_data_file(path=path)
+    installers = catalog["installers"]
     repositories_by_key: dict[str, str] = {}
     repository_keys_by_installer_index: dict[int, str] = {}
 
     for index, installer in enumerate(installers):
-        repo_url = installer.get("repoURL")
-        if not isinstance(repo_url, str):
-            raise RuntimeError(f"Expected installers[{index}].repoURL to be a string.")
-        repository = github_repository(repo_url=repo_url)
+        repository = github_repository(repo_url=installer["repoURL"])
         if repository is None:
             continue
         repository_key = repository.casefold()
@@ -106,27 +86,17 @@ def update_installer_commit_dates(path: Path, report_path: Path, console: Consol
 
     checked_at = datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, installer in enumerate(installers):
-        repository_key = repository_keys_by_installer_index.get(index)
-        if repository_key is not None and repository_key not in commit_dates_by_repository_key:
-            continue
-        updated_installer = {key: value for key, value in installer.items() if key not in {"lastCommitDate", "lastCommitDateCheckDate"}}
-        if repository_key is not None:
-            metadata = CommitDateMetadata(
-                lastCommitDate=commit_dates_by_repository_key[repository_key].isoformat(timespec="seconds").replace("+00:00", "Z"),
-                lastCommitDateCheckDate=checked_at,
-            )
-            ordered_installer: dict[str, object] = {}
-            for key, value in updated_installer.items():
-                ordered_installer[key] = value
-                if key == "repoURL":
-                    ordered_installer.update(metadata)
-            updated_installer = ordered_installer
-        installers[index] = updated_installer
+        installer_repository_key = repository_keys_by_installer_index.get(index)
+        if installer_repository_key is None:
+            installer.pop("lastCommitDate", None)
+            installer.pop("lastCommitDateCheckDate", None)
+        elif installer_repository_key in commit_dates_by_repository_key:
+            installer["lastCommitDate"] = commit_dates_by_repository_key[installer_repository_key].isoformat(timespec="seconds").replace("+00:00", "Z")
+            installer["lastCommitDateCheckDate"] = checked_at
 
-    payload["installers"] = installers
     commit_text_outputs(
         outputs=(
-            TextOutput(path=path, content=json.dumps(payload, indent=2, ensure_ascii=False) + "\n"),
+            TextOutput(path=path, content=installer_data_file_text(path=path, catalog=catalog)),
             TextOutput(path=report_path, content=serialize_commit_date_report(commit_dates=sorted_commit_dates)),
         )
     )
@@ -145,8 +115,8 @@ def update_installer_commit_dates(path: Path, report_path: Path, console: Consol
 def main() -> None:
     console = Console()
     try:
-        update_result = update_installer_commit_dates(path=INSTALLER_DATA_PATH, report_path=COMMIT_DATE_REPORT_PATH, console=console)
-    except (OSError, json.JSONDecodeError, RuntimeError) as error:
+        update_result = update_installer_commit_dates(path=LIBRARY_INSTALLER_DATA_PATH, report_path=COMMIT_DATE_REPORT_PATH, console=console)
+    except (OSError, InstallerDataFileError, RuntimeError) as error:
         raise SystemExit(str(error)) from error
     saved_summary = Table.grid(padding=(0, 2))
     saved_summary.add_column(style="bold cyan", no_wrap=True)
@@ -156,7 +126,7 @@ def main() -> None:
     )
     saved_summary.add_row("Repositories saved", f"{update_result.successful_repository_count} of {update_result.repository_count}")
     saved_summary.add_row("Fetch failures", str(update_result.failed_repository_count))
-    saved_summary.add_row("Installer data", str(INSTALLER_DATA_PATH))
+    saved_summary.add_row("Installer data", str(LIBRARY_INSTALLER_DATA_PATH))
     saved_summary.add_row("CSV report", str(COMMIT_DATE_REPORT_PATH))
     panel_style = "yellow" if update_result.failed_repository_count > 0 else "green"
     panel_title = "Commit metadata saved with fetch failures" if update_result.failed_repository_count > 0 else "Commit metadata saved"

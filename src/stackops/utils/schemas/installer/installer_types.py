@@ -64,9 +64,9 @@ LinuxInstallerPattern: TypeAlias = str | None | LinuxPackageManagerInstallerPatt
 
 
 class ArchitectureInstallerPattern(TypedDict):
-    windows: str | None
     linux: LinuxInstallerPattern
     darwin: str | None
+    windows: str | None
 
 
 class InstallerFileNamePatterns(TypedDict):
@@ -77,15 +77,18 @@ class InstallerFileNamePatterns(TypedDict):
 class InstallerData(TypedDict):
     appName: str
     license: str
-    doc: str
     repoURL: str
     lastCommitDate: NotRequired[str]
     lastCommitDateCheckDate: NotRequired[str]
+    doc: str
+    comment: NotRequired[str]
     categoryLabels: list[InstallerCategoryLabel]
     fileNamePattern: InstallerFileNamePatterns
 
 
-InstallerDataFiles = TypedDict("InstallerDataFiles", {"$schema": NotRequired[str], "version": str, "installers": list[InstallerData]})
+class InstallerDataFiles(TypedDict):
+    version: str
+    installers: list[InstallerData]
 
 
 class InstallationResultSkipped(TypedDict):

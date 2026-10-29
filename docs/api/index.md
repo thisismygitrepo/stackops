@@ -42,7 +42,7 @@ stackops/
 │   ├── accessories, cloud_defaults, code, io, meta, notifications, options, python_env, scheduler, ssh
 │   ├── installer_utils/           # Runtime installer engine
 │   ├── path_core, path_helper, path_reference
-│   └── schemas/{installer,layouts} # installer_data.json and schema types
+│   └── schemas/{installer,layouts} # installer_data.yaml and schema types
 └── settings/                      # Configuration assets and templates
 ```
 

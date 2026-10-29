@@ -79,7 +79,7 @@ Features:
 
 #### Explore by Category Labels
 
-Browse installers by the `categoryLabels` stored in `installer_data.json`, then choose matching installers:
+Browse installers by the `categoryLabels` stored in `installer_data.yaml`, then choose matching installers:
 
 ```bash
 devops software install --explore

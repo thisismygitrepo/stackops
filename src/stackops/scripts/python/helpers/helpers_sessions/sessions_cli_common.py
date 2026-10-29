@@ -89,7 +89,7 @@ def choose_tabs_from_layouts(
     selected_tab_refs: set[tuple[str, int]] = set()
     if choose_tabs == "":
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-        from stackops.utils.schemas.layouts.layout_file import layout_yaml_text
+        from stackops.utils.schemas.yaml_document import yaml_document_text
 
         options_to_preview_mapping: dict[str, str] = {}
         key_to_ref: dict[str, tuple[str, int]] = {}
@@ -98,7 +98,7 @@ def choose_tabs_from_layouts(
                 f"{layout_name}::{tab.get('tabName', f'tab#{tab_index + 1}')}"
                 f"[{tab_index}]"
             )
-            options_to_preview_mapping[option_key] = layout_yaml_text(
+            options_to_preview_mapping[option_key] = yaml_document_text(
                 document={"layoutName": layout_name, "tabIndex": tab_index, "tab": tab},
             )
             key_to_ref[option_key] = (layout_name, tab_index)

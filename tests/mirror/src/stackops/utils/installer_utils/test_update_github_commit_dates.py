@@ -9,20 +9,40 @@ from rich.console import Console
 from stackops.utils.installer_utils import update_github_commit_dates
 from stackops.utils.installer_utils.github_commit_dates_fetch import CommitDateFetchResult
 from stackops.utils.installer_utils.github_commit_dates_report import RepositoryCommitDateFailure
+from stackops.utils.installer_utils.installer_catalog import installer_data_file_text, load_installer_data_file
+from stackops.utils.schemas.installer.installer_types import InstallerData
+
+
+def _installer(app_name: str, repo_url: str) -> InstallerData:
+    return {
+        "appName": app_name,
+        "license": "MIT",
+        "repoURL": repo_url,
+        "doc": f"{app_name} test entry",
+        "categoryLabels": ["system-setup"],
+        "fileNamePattern": {
+            "amd64": {"linux": f"{app_name}.tar.gz", "darwin": None, "windows": None},
+            "arm64": {"linux": None, "darwin": None, "windows": None},
+        },
+    }
+
+
+def _write_catalog(path: Path, installers: list[InstallerData]) -> None:
+    path.write_text(installer_data_file_text(path=path, catalog={"version": "4", "installers": installers}), encoding="utf-8")
 
 
 def test_update_saves_installer_metadata_and_unique_repository_csv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    installer_data_path = tmp_path.joinpath("installer_data.json")
-    installer_data_path.write_text(
-        """{
-  "installers": [
-    {"appName": "first", "repoURL": "https://github.com/Owner/Repository"},
-    {"appName": "duplicate", "repoURL": "https://github.com/owner/repository"},
-    {"appName": "direct", "repoURL": "CMD"}
-  ]
-}
-""",
-        encoding="utf-8",
+    installer_data_path = tmp_path.joinpath("installer_data.yaml")
+    stale_direct_installer = _installer(app_name="direct", repo_url="CMD")
+    stale_direct_installer["lastCommitDate"] = "2020-01-01T00:00:00Z"
+    stale_direct_installer["lastCommitDateCheckDate"] = "2020-01-02T00:00:00Z"
+    _write_catalog(
+        path=installer_data_path,
+        installers=[
+            _installer(app_name="first", repo_url="https://github.com/Owner/Repository"),
+            _installer(app_name="duplicate", repo_url="https://github.com/owner/repository"),
+            stale_direct_installer,
+        ],
     )
     report_path = tmp_path.joinpath("profile", "records", "github_commit_dates.csv")
     output = StringIO()
@@ -43,13 +63,14 @@ def test_update_saves_installer_metadata_and_unique_repository_csv(tmp_path: Pat
         path=installer_data_path, report_path=report_path, console=render_console
     )
 
-    _, saved_installers = update_github_commit_dates.load_installer_data(path=installer_data_path)
+    saved_installers = load_installer_data_file(path=installer_data_path)["installers"]
     assert update_result == update_github_commit_dates.CommitDateUpdateResult(
         updated_installer_count=2, github_installer_count=2, successful_repository_count=1, failed_repository_count=0, repository_count=1
     )
     assert saved_installers[0]["lastCommitDate"] == "2026-08-15T12:30:45Z"
     assert saved_installers[1]["lastCommitDate"] == "2026-08-15T12:30:45Z"
     assert "lastCommitDate" not in saved_installers[2]
+    assert "lastCommitDateCheckDate" not in saved_installers[2]
     for saved_installer in saved_installers[:2]:
         checked_at = saved_installer["lastCommitDateCheckDate"]
         assert isinstance(checked_at, str)
@@ -65,9 +86,9 @@ def test_update_saves_installer_metadata_and_unique_repository_csv(tmp_path: Pat
 
 
 def test_all_fetches_failing_leaves_outputs_untouched(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    installer_data_path = tmp_path.joinpath("installer_data.json")
-    original_installer_data = """{"installers": [{"repoURL": "https://github.com/owner/repository"}]}\n"""
-    installer_data_path.write_text(original_installer_data, encoding="utf-8")
+    installer_data_path = tmp_path.joinpath("installer_data.yaml")
+    _write_catalog(path=installer_data_path, installers=[_installer(app_name="only", repo_url="https://github.com/owner/repository")])
+    original_installer_data = installer_data_path.read_text(encoding="utf-8")
     report_path = tmp_path.joinpath("reports", "github_commit_dates.csv")
     render_console = Console(file=StringIO(), width=120, color_system=None)
 
@@ -93,27 +114,14 @@ def test_all_fetches_failing_leaves_outputs_untouched(tmp_path: Path, monkeypatc
 
 
 def test_partial_fetch_saves_successes_and_preserves_failed_metadata(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    installer_data_path = tmp_path.joinpath("installer_data.json")
-    installer_data_path.write_text(
-        """{
-  "installers": [
-    {
-      "appName": "available",
-      "repoURL": "https://github.com/owner/available",
-      "lastCommitDate": "2020-01-01T00:00:00Z",
-      "lastCommitDateCheckDate": "2020-01-02T00:00:00Z"
-    },
-    {
-      "appName": "blocked",
-      "repoURL": "https://github.com/owner/blocked",
-      "lastCommitDate": "2019-01-01T00:00:00Z",
-      "lastCommitDateCheckDate": "2019-01-02T00:00:00Z"
-    }
-  ]
-}
-""",
-        encoding="utf-8",
-    )
+    installer_data_path = tmp_path.joinpath("installer_data.yaml")
+    available_installer = _installer(app_name="available", repo_url="https://github.com/owner/available")
+    available_installer["lastCommitDate"] = "2020-01-01T00:00:00Z"
+    available_installer["lastCommitDateCheckDate"] = "2020-01-02T00:00:00Z"
+    blocked_installer = _installer(app_name="blocked", repo_url="https://github.com/owner/blocked")
+    blocked_installer["lastCommitDate"] = "2019-01-01T00:00:00Z"
+    blocked_installer["lastCommitDateCheckDate"] = "2019-01-02T00:00:00Z"
+    _write_catalog(path=installer_data_path, installers=[available_installer, blocked_installer])
     report_path = tmp_path.joinpath("records", "github_commit_dates.csv")
     output = StringIO()
     render_console = Console(file=output, width=160, color_system=None)
@@ -136,17 +144,12 @@ def test_partial_fetch_saves_successes_and_preserves_failed_metadata(tmp_path: P
         path=installer_data_path, report_path=report_path, console=render_console
     )
 
-    _, saved_installers = update_github_commit_dates.load_installer_data(path=installer_data_path)
+    saved_installers = load_installer_data_file(path=installer_data_path)["installers"]
     assert update_result == update_github_commit_dates.CommitDateUpdateResult(
         updated_installer_count=1, github_installer_count=2, successful_repository_count=1, failed_repository_count=1, repository_count=2
     )
     assert saved_installers[0]["lastCommitDate"] == "2026-08-15T12:30:45Z"
-    assert saved_installers[1] == {
-        "appName": "blocked",
-        "repoURL": "https://github.com/owner/blocked",
-        "lastCommitDate": "2019-01-01T00:00:00Z",
-        "lastCommitDateCheckDate": "2019-01-02T00:00:00Z",
-    }
+    assert saved_installers[1] == blocked_installer
     report_rows = list(csv.reader(StringIO(report_path.read_text(encoding="utf-8"))))
     assert report_rows == [["repository", "last_commit_utc"], ["owner/available", "2026-08-15 12:30:45"]]
     rendered_output = output.getvalue()

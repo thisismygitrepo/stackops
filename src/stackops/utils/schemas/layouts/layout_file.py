@@ -1,4 +1,3 @@
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal, TypeAlias, cast
 
@@ -6,17 +5,10 @@ import yaml
 
 from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX, LAYOUT_FILE_VERSION, LAYOUT_SCHEMA_URL
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile
+from stackops.utils.schemas.yaml_document import yaml_document_text
 from stackops.utils.schemas.yaml_schema import JsonValue
 
 LayoutFileWriteMode: TypeAlias = Literal["replace_file", "merge_by_layout_name"]
-
-
-class _LayoutYamlDumper(yaml.SafeDumper):
-    def ignore_aliases(self, data: object) -> bool:
-        return True
-
-    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:  # defaults mirror the PyYAML Emitter signature
-        super().increase_indent(flow=flow, indentless=False)
 
 
 def _require_layout_suffix(path: Path) -> None:
@@ -24,14 +16,10 @@ def _require_layout_suffix(path: Path) -> None:
         raise ValueError(f"""Layout files must be YAML with the '{LAYOUT_FILE_SUFFIX}' suffix: {path}""")
 
 
-def layout_yaml_text(document: Mapping[str, object]) -> str:
-    return yaml.dump(document, Dumper=_LayoutYamlDumper, sort_keys=False, default_flow_style=False, allow_unicode=True, width=float("inf"))
-
-
 def read_layouts_file(path: Path) -> LayoutsFile:
     _require_layout_suffix(path)
     try:
-        document = cast(JsonValue, yaml.safe_load(path.read_text(encoding="utf-8")))
+        document = cast(JsonValue, yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.CSafeLoader))
     except yaml.YAMLError as error:
         raise ValueError(f"""Invalid YAML in layout file '{path}': {error}""") from error
     if not isinstance(document, dict):
@@ -83,7 +71,7 @@ def write_layouts_file(path: Path, layouts_file: LayoutsFile) -> None:
     path.write_text(
         f"""# yaml-language-server: $schema={LAYOUT_SCHEMA_URL}
 
-{layout_yaml_text(document=layouts_file)}""",
+{yaml_document_text(document=layouts_file)}""",
         encoding="utf-8",
     )
 

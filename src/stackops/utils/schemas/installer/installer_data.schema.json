@@ -1,15 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://bytesense.local/schemas/installer_type.schema.json",
-  "title": "StackOps installer_data.json",
-  "description": "Schema for StackOps installer package definitions.",
+  "$id": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/installer/installer_data.schema.json",
+  "title": "StackOps installer_data.yaml",
+  "description": "Schema for StackOps installer catalog YAML files (installer_data.yaml).",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$schema": {
-      "type": "string",
-      "description": "Optional JSON Schema reference for editor validation."
-    },
     "version": {
       "type": "string",
       "description": "Installer data format version."
@@ -245,6 +241,11 @@
           "type": "string",
           "minLength": 1,
           "description": "Human-readable installer description."
+        },
+        "comment": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Maintainer note about this installer entry. Use this field instead of YAML comments, which catalog writers do not preserve."
         },
         "categoryLabels": {
           "$ref": "#/definitions/InstallerCategoryLabels"

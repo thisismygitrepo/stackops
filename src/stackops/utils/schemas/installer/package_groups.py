@@ -70,7 +70,7 @@ PACKAGES_BROWSERS = [
 ]
 
 # Code Editors & IDEs - Code editing tools
-# NOTE: Entries must match the corresponding `appName` in installer_data.json for filtering to work.
+# NOTE: Entries must match the corresponding `appName` in installer_data.yaml for filtering to work.
 PACKAGES_CODE_EDITORS = [
     "code",
     "hx",

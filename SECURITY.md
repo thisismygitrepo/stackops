@@ -78,7 +78,7 @@ StackOps can obtain and execute code from several places:
   `https://astral.sh/uv/install.sh` or `install.ps1` installer;
 - the bundled installer catalog is shipped with StackOps;
 - an optional user catalog at
-  `~/dotfiles/stackops/mapper/installer_data.json` can add installers and
+  `~/dotfiles/stackops/config/installer_data.yaml` can add installers and
   replace same-named bundled entries;
 - catalog entries and direct CLI arguments can select GitHub releases,
   arbitrary HTTP(S) downloads, native package managers, or shell commands;

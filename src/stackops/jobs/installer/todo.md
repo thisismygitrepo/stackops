@@ -11,9 +11,9 @@
 cd  ~/code/stackops/src/stackops fd -t f -E .venv -E docs -E tests -E '*.py'
 make sure there is __init__.py file next to them, and in that init file, put variable referencing those files
 like this
-e.g. for this one utils/schemas/installer/installer_type.schema.json
+e.g. for this one utils/schemas/installer/installer_data.schema.json
 we create utils/schemas/installer/__init__.py and in that file, we put
-INSTALLER_TYPE_SCHEMA_PATH_REFERENCE = "./installer_type.schema.json"
+INSTALLER_DATA_SCHEMA_PATH_REFERENCE = "./installer_data.schema.json"
 notice "_PATH_REFERENCE" please ensure that this is consistent across all names, and if not consistent add it please to noncompliant instances.
 additionally, if __init__.py does exist, then please check that it doen't have stale reference to a file that doens't exit
 if so, delete that path reference.

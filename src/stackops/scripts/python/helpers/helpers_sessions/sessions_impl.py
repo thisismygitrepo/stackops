@@ -27,9 +27,9 @@ def select_layout(layouts_file: Path, selected_layouts_names: list[str], select_
         # from stackops.utils.options_utils.options import choose_from_options
         # selected_layouts_names = choose_from_options(multi=True, options=options, prompt="Choose a layout configuration:", tv=True, msg="Choose one option")
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-        from stackops.utils.schemas.layouts.layout_file import layout_yaml_text
+        from stackops.utils.schemas.yaml_document import yaml_document_text
         selected_layouts_names = choose_from_dict_with_preview(
-            {layout["layoutName"]: layout_yaml_text(document=layout) for layout in layouts},
+            {layout["layoutName"]: yaml_document_text(document=layout) for layout in layouts},
             extension="yaml",
             multi=True,
             preview_size_percent=40,

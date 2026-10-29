@@ -103,11 +103,11 @@ def load_selected_layouts_from_source(
         return list(layout_source)
     if choose_layouts == "":
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-        from stackops.utils.schemas.layouts.layout_file import layout_yaml_text
+        from stackops.utils.schemas.yaml_document import yaml_document_text
 
         selected_names = choose_from_dict_with_preview(
             options_to_preview_mapping={
-                entry.selector: layout_yaml_text(
+                entry.selector: yaml_document_text(
                     document={"source_file": str(entry.source_path) if entry.source_path is not None else None, **entry.layout},
                 )
                 for entry in layout_source

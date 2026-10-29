@@ -1,19 +1,16 @@
-import json
 import shutil
 from pathlib import Path
-from typing import cast, get_args
+from typing import get_args
 
 import pytest
 
-import stackops.utils.schemas.installer as installer_schema_assets
 from stackops.scripts.python.helpers.helpers_seek.semantic.backend_grepai import find_grepai_project_root, search_grepai
 from stackops.scripts.python.helpers.helpers_seek.semantic.backend_names import SemanticBackend
 from stackops.scripts.python.helpers.helpers_seek.semantic.backend_qmd import has_qmd_local_index
 from stackops.scripts.python.helpers.helpers_seek.semantic.backend_semtools import list_text_files
 from stackops.scripts.python.helpers.helpers_seek.semantic.run_semantic_search import required_tools, run_semantic_search
 from stackops.scripts.python.helpers.helpers_seek.semantic.semantic_models import SemanticFailure
-from stackops.utils.path_reference import get_path_reference_path
-from stackops.utils.schemas.installer.installer_types import InstallerData
+from stackops.utils.installer_utils.installer_catalog import LIBRARY_INSTALLER_DATA_PATH, load_installer_data_file
 
 
 @pytest.mark.skipif(shutil.which("rg") is None, reason="ripgrep is required")
@@ -72,8 +69,7 @@ def test_grepai_rejects_extension_filter_before_running_anything(tmp_path: Path)
 
 
 def test_every_tool_a_backend_requires_has_an_installer_in_the_bundled_catalog() -> None:
-    catalog_path = get_path_reference_path(module=installer_schema_assets, path_reference=installer_schema_assets.INSTALLER_DATA_PATH_REFERENCE)
-    catalog = cast(dict[str, list[InstallerData]], json.loads(catalog_path.read_text(encoding="utf-8")))
+    catalog = load_installer_data_file(path=LIBRARY_INSTALLER_DATA_PATH)
     catalog_app_names = {installer["appName"] for installer in catalog["installers"]}
 
     for backend in get_args(SemanticBackend):

@@ -57,7 +57,7 @@ Linux installer values may be portable strings or native mappings with the exact
 
 | Type | Purpose |
 | --- | --- |
-| `InstallerDataFiles` | Shape of `installer_data.json` |
+| `InstallerDataFiles` | Shape of `installer_data.yaml` |
 | `InstallRequest` | `{version: str | None, update: bool}` |
 | `InstallationResult` | Typed union of `skipped`, `same_version`, `updated`, and `failed` results |
 | `CPU_ARCHITECTURES` | `"amd64"` or `"arm64"` |

@@ -17,7 +17,7 @@ The runtime installation engine that consumes those assets lives under `stackops
 | Area | What it provides | Main modules |
 | --- | --- | --- |
 | Package groups | Named collections of apps such as `termabc`, `agents`, `dev`, and `db-cli` | `stackops.utils.schemas.installer.package_groups` |
-| Installer catalog assets | `installer_data.json`, installer schema, and typed installer records | `stackops.utils.schemas.installer.*` |
+| Installer catalog assets | `installer_data.yaml`, installer schema, and typed installer records | `stackops.utils.schemas.installer.*` |
 | Installer scripts | Packaged Python, shell, and PowerShell installers | `stackops.jobs.installer.python_scripts.*`, `stackops.jobs.installer.linux_scripts.*`, `stackops.jobs.installer.powershell_scripts.*` |
 | Installer runtime | CLI entrypoints, installer selection, bulk install orchestration, direct URL install | `stackops.utils.installer_utils.*` |
 | Typed installer schema | Platform names, architecture names, install requests, install results | `stackops.utils.schemas.installer.installer_types` |
@@ -70,7 +70,7 @@ print(PACKAGE_GROUP2NAMES["termabc"])
 
 The runtime path looks like this:
 
-1. `utils/schemas/installer/installer_data.json` defines the catalog.
+1. `utils/schemas/installer/installer_data.yaml` defines the catalog.
 2. `utils/schemas/installer/package_groups.py` defines named bundles.
 3. `stackops.utils.installer_utils.installer_runner.get_installers()` filters that catalog for the current OS, architecture, and optional groups.
 4. `stackops.utils.installer_utils.installer_class.Installer` resolves and executes one install target.
@@ -84,8 +84,8 @@ So this section documents both the packaged job assets and the installer APIs th
 
 ```text
 utils/schemas/installer/
-├── installer_data.json           # Catalog of installer definitions
-├── installer_type.schema.json    # JSON Schema for the catalog
+├── installer_data.yaml           # Catalog of installer definitions
+├── installer_data.schema.json    # JSON Schema for the catalog
 ├── installer_types.py            # TypedDicts and platform helpers
 └── package_groups.py             # Named package bundles
 

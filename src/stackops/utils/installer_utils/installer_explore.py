@@ -31,7 +31,7 @@ def _load_category_label_definitions() -> dict[str, CategoryLabelDefinition]:
 
     schema_path = get_path_reference_path(
         module=installer_schema_assets,
-        path_reference=installer_schema_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE,
+        path_reference=installer_schema_assets.INSTALLER_DATA_SCHEMA_PATH_REFERENCE,
     )
     schema_raw: dict[str, Any] = read_json(schema_path)
     definitions_raw = schema_raw.get("x-categoryLabelDefinitions")

@@ -13,11 +13,10 @@ def test_install_browser_tech_prepares_pinchtab_binary_skill_and_guide(monkeypat
     commands: list[tuple[tuple[str, ...], Path]] = []
 
     def capture_installer(
-        which: str | None, group: bool, interactive: bool, explore: bool, update: bool, version: str | None, ctx: typer.Context | None
+        which: str | None, group: bool, interactive: bool, update: bool, version: str | None, ctx: typer.Context | None
     ) -> None:
         assert group is False
         assert interactive is False
-        assert explore is False
         assert update is True
         assert version is None
         assert ctx is None
@@ -48,11 +47,10 @@ def test_install_browser_tech_installs_omp_and_writes_cdp_overlay(monkeypatch: p
     installer_names: list[str | None] = []
 
     def capture_installer(
-        which: str | None, group: bool, interactive: bool, explore: bool, update: bool, version: str | None, ctx: typer.Context | None
+        which: str | None, group: bool, interactive: bool, update: bool, version: str | None, ctx: typer.Context | None
     ) -> None:
         assert group is False
         assert interactive is False
-        assert explore is False
         assert update is True
         assert version is None
         assert ctx is None
@@ -87,11 +85,10 @@ def test_install_browser_tech_prepares_browser_use_cli_skill_and_guide(
     commands: list[tuple[tuple[str, ...], Path]] = []
 
     def capture_installer(
-        which: str | None, group: bool, interactive: bool, explore: bool, update: bool, version: str | None, ctx: typer.Context | None
+        which: str | None, group: bool, interactive: bool, update: bool, version: str | None, ctx: typer.Context | None
     ) -> None:
         assert group is False
         assert interactive is False
-        assert explore is False
         assert update is True
         assert version is None
         assert ctx is None

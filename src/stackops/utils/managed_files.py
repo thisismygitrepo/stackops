@@ -31,9 +31,9 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
                 load_installer_data_file,
             )
             from stackops.utils.schemas.installer.installer_types import InstallerDataFiles
+            from stackops.utils.schemas.yaml_document import yaml_document_text
 
             initial_catalog: InstallerDataFiles = {
-                "$schema": f"""./{installer_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE}""",
                 "version": load_installer_data_file(path=LIBRARY_INSTALLER_DATA_PATH)["version"],
                 "installers": [],
             }
@@ -42,9 +42,9 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
                 example_source_path=LIBRARY_INSTALLER_DATA_PATH,
                 schema_source_path=get_path_reference_path(
                     module=installer_assets,
-                    path_reference=installer_assets.INSTALLER_TYPE_SCHEMA_PATH_REFERENCE,
+                    path_reference=installer_assets.INSTALLER_DATA_SCHEMA_PATH_REFERENCE,
                 ),
-                initial_content=json.dumps(initial_catalog, indent=2) + "\n",
+                initial_content=yaml_document_text(document=initial_catalog),
                 file_mode=0o644,
             )
         case "repos":
