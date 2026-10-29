@@ -1,7 +1,7 @@
 import platform
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Literal, NotRequired, TypeAlias, TypedDict
+from typing import Final, Literal, NotRequired, TypeAlias, TypedDict, get_args
 
 
 CPU_ARCHITECTURES: TypeAlias = Literal["amd64", "arm64"]
@@ -17,39 +17,40 @@ INSTALLER_DATA_SOURCE_MAP: Final[dict[InstallerDataSource, NormalizedInstallerDa
     "a": "all",
 }
 InstallerCategoryLabel: TypeAlias = Literal[
-    "ai-agents-assistants",
-    "browsers-web-access",
-    "build-devops-containers",
-    "cloud-saas",
-    "data-format-tools",
-    "databases",
-    "documents-markdown-latex",
+    "system-setup",
+    "languages-runtimes",
     "editors-ides",
-    "email-communications",
+    "version-control",
+    "build-devops-containers",
+    "ai-agents-assistants",
+    "terminals-shells",
+    "terminal-workspaces",
+    "search-navigation",
     "file-managers",
     "file-operations-archives",
-    "file-transfer-sharing",
-    "finance-markets",
-    "graphics-images-ocr-diagrams",
-    "languages-runtimes",
-    "media-audio-video",
-    "monitoring-performance",
+    "storage-backup-sync",
+    "data-format-tools",
+    "databases",
     "networking-diagnostics",
+    "tunnels-remote-access",
+    "file-transfer-sharing",
+    "cloud-saas",
+    "browsers-web-access",
+    "web-scraping-conversion",
+    "documents-markdown-latex",
+    "graphics-images-ocr-diagrams",
+    "media-audio-video",
     "presentations-recording",
     "productivity-knowledge",
-    "qr-mobile-device-tools",
-    "search-navigation",
     "security-credentials-privacy",
-    "storage-backup-sync",
-    "system-setup",
+    "monitoring-performance",
+    "qr-mobile-device-tools",
     "terminal-fun-visuals",
-    "terminal-workspaces",
-    "terminals-shells",
-    "tunnels-remote-access",
-    "version-control",
-    "web-scraping-conversion",
+    "email-communications",
+    "finance-markets",
     "windows-platform",
 ]
+INSTALLER_CATEGORY_LABELS: Final[tuple[InstallerCategoryLabel, ...]] = get_args(InstallerCategoryLabel)
 
 
 class LinuxPackageManagerInstallerPattern(TypedDict):

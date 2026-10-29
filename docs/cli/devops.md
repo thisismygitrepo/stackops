@@ -37,9 +37,7 @@ Current options:
 - `--group` to treat `WHICH` as a bundle name
 - `--source` to select `library`, `user`, or `all` installer catalogs; defaults to `all`
 - `--custom-path` to replace the user catalog with another file; `--source all` still merges it with the library catalog
-- `--check` to report binary availability without installing or validating catalog entries
 - `--interactive` to choose packages interactively
-- `--explore` / `-x` to browse installer `categoryLabels` before choosing packages
 - `--update` to reinstall or upgrade when supported
 - `--version` to request a specific version or tag
 
@@ -47,12 +45,12 @@ Example:
 
 ```bash
 devops software install --group sysabc
-devops software install --explore
-devops software install ai-agents-assistants -x
+devops software explore
+devops software explore ai-agents-assistants
 devops software install lazygit,fd --update
 ```
 
-Use `software list` to browse definitions, `path` to locate catalogs, `init` to create an empty user catalog, `edit` to modify it, and `validate` to check it.
+Use `software explore` to browse installer `categoryLabels` before choosing packages, `check` to report binary availability without installing, `list` to browse definitions, `path` to locate catalogs, `init` to create an empty user catalog, `edit` to modify it, and `validate` to check it.
 
 These software commands all accept `--custom-path` for the user catalog. `list`, `install`, and `path` support `--source library`, `user`, or `all`; a custom path works with `user` or `all`, but not `library`. `init`, `edit`, and `validate` accept only `--source user`, which is also their default.
 

@@ -32,7 +32,7 @@ jobs:
         enable-cache: true
 
     - name: Validate installer catalog
-      run: uv run --group dev --frozen pytest -q tests/mirror/src/stackops/utils/schemas/installer/test_installer_data.py::test_installer_catalog_matches_schema_and_has_unique_app_names
+      run: uv run --group dev --frozen pytest -q tests/mirror/src/stackops/utils/schemas/installer/test_installer_data.py::test_installer_catalog_matches_schema_and_has_unique_app_names tests/mirror/src/stackops/utils/schemas/installer/test_installer_categories.py
 
     - name: Check if current version needs publishing
       id: check-version

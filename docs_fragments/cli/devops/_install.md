@@ -18,7 +18,6 @@ devops software install [OPTIONS] [WHICH]
 |--------|-------|-------------|
 | `--group` | `-g` | Treat `WHICH` as a package group name |
 | `--interactive` | `-i` | Interactive selection with TV/fzf interface |
-| `--explore` | `-x` | Explore installer `categoryLabels`, then choose matching installers |
 | `--update` | `-u` | Reinstall or upgrade when supported |
 | `--version` | `-v` | Specific version or tag to install when supported |
 
@@ -82,9 +81,8 @@ Features:
 Browse installers by the `categoryLabels` stored in `installer_data.yaml`, then choose matching installers:
 
 ```bash
-devops software install --explore
-devops software install -x
-devops software install ai-agents-assistants -x
+devops software explore
+devops software explore ai-agents-assistants
 ```
 
 #### From GitHub URL

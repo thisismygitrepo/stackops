@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 # from typing import Optional
 from stackops.scripts.python.enums import BACKENDS
+from stackops.utils.constants import STACKOPS_PYTHON_VERSION
 from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
@@ -234,10 +235,10 @@ def _build_uv_runtime_options(project_path: str | None, backend: BACKENDS) -> tu
     if project_path is not None:
         return ("", f'--project "{project_path}"')
     if backend == "visidata":
-        return ("--python 3.14", "--no-project")
+        return (f"--python {STACKOPS_PYTHON_VERSION}", "--no-project")
     if STACKOPS_REPO_DIR.exists():
-        return ("--python 3.14", f"""--project "{str(STACKOPS_REPO_DIR)}" --extra plot --with cowsay """)
-    return ("--python 3.14", f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """)
+        return (f"--python {STACKOPS_PYTHON_VERSION}", f"""--project "{str(STACKOPS_REPO_DIR)}" --extra plot --with cowsay """)
+    return (f"--python {STACKOPS_PYTHON_VERSION}", f"""--with "{STACKOPS_PLOT_REQUIREMENT}" """)
 
 
 def _build_preprogram() -> str:

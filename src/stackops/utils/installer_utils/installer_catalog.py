@@ -1,12 +1,13 @@
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Final, cast, get_args, get_type_hints
+from typing import Final, cast, get_type_hints
 
 import yaml
 
 import stackops.utils.schemas.installer as installer_schema_assets
 from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.schemas.installer.installer_types import (
+    INSTALLER_CATEGORY_LABELS,
     INSTALLER_DATA_SOURCE_MAP,
     ArchitectureInstallerPattern,
     InstallerData,
@@ -28,6 +29,7 @@ LIBRARY_INSTALLER_DATA_PATH = get_path_reference_path(
 )
 USER_INSTALLER_DATA_PATH = DOTFILES_USER_INSTALLER_DATA_PATH
 _INSTALLER_DATA_KEYS: Final[tuple[str, ...]] = tuple(get_type_hints(InstallerData))
+_CATEGORY_LABEL_BY_NAME: Final[dict[str, InstallerCategoryLabel]] = {category_label: category_label for category_label in INSTALLER_CATEGORY_LABELS}
 
 
 class InstallerDataFileError(ValueError):
@@ -103,15 +105,14 @@ def _normalize_file_name_patterns(value: object, context: str) -> InstallerFileN
 def _normalize_category_labels(value: object, context: str) -> list[InstallerCategoryLabel]:
     if not isinstance(value, list) or len(value) == 0:
         raise InstallerDataFileError(f"{context} must be a non-empty list")
-    valid_labels = frozenset(cast(tuple[str, ...], get_args(InstallerCategoryLabel)))
     normalized_labels: list[InstallerCategoryLabel] = []
-    for label in value:
-        if not isinstance(label, str) or label not in valid_labels:
+    for label in cast(list[object], value):
+        category_label = _CATEGORY_LABEL_BY_NAME.get(label) if isinstance(label, str) else None
+        if category_label is None:
             raise InstallerDataFileError(f"Invalid {context} value: {label!r}")
-        normalized_label = cast(InstallerCategoryLabel, label)
-        if normalized_label in normalized_labels:
-            raise InstallerDataFileError(f"Duplicate {context} value: {label}")
-        normalized_labels.append(normalized_label)
+        if category_label in normalized_labels:
+            raise InstallerDataFileError(f"Duplicate {context} value: {category_label}")
+        normalized_labels.append(category_label)
     return normalized_labels
 
 

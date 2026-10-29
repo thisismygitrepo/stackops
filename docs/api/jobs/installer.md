@@ -48,7 +48,7 @@ Fields:
 | `license` | License label stored in the installer catalog |
 | `doc` | Description used in interactive selection |
 | `repoURL` | `"CMD"` for command / script driven installs, or a GitHub repository URL |
-| `categoryLabels` | Searchable category labels used by `devops software install --explore` |
+| `categoryLabels` | Searchable category labels used by `devops software explore` |
 | `fileNamePattern` | `arch -> os -> installer value` mapping |
 
 Linux installer values may be portable strings or native mappings with the exact keys `apk`, `apt`, `dnf`, and `pacman`. A `null` value marks an installer as unsupported by that package manager.
@@ -207,7 +207,6 @@ main_installer_cli(
     which="fd,bat,rg",
     group=False,
     interactive=False,
-    explore=False,
     update=False,
     version=None,
 )
@@ -220,7 +219,6 @@ Parameters:
 | `which` | Comma-separated app names, group names, or URLs |
 | `group` | Treat `which` as package-group names |
 | `interactive` | Launch interactive selection instead of parsing `which` |
-| `explore` | Explore installer categoryLabels before installing |
 | `update` | Allow reinstall or upgrade when supported |
 | `version` | Request a specific version or tag when supported |
 

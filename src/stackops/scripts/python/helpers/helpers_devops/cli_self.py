@@ -2,6 +2,7 @@ from typing import Annotated
 
 import typer
 
+from stackops.utils.constants import STACKOPS_PYTHON_VERSION
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
@@ -80,12 +81,12 @@ def update(
             cli_self_repo.pull_repo_before_update(repo_root=dev_repo_root)
         shell_script = f"""
 uv self update
-uv tool install --no-cache --upgrade --editable "{STACKOPS_REPO_DIR}"
+uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} --editable "{STACKOPS_REPO_DIR}"
 """
     else:
-        shell_script = """
+        shell_script = f"""
 uv self update
-uv tool install --no-cache --upgrade stackops
+uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} stackops
 """
     import platform
 
@@ -161,12 +162,12 @@ def _install_stackops(dev: bool) -> None:
         exit_then_run_shell_script(f"""
 cd "{str(stackops_path)}"
 {uv_command} sync --no-dev
-{uv_command} tool install --upgrade --editable "{str(stackops_path)}"
+{uv_command} tool install --upgrade --python {STACKOPS_PYTHON_VERSION} --editable "{str(stackops_path)}"
 {uv_command2}
 """, strict=True)
     else:
         exit_then_run_shell_script(rf"""
-{uv_command} tool install --upgrade "{STACKOPS_REQUIREMENT}"
+{uv_command} tool install --upgrade --python {STACKOPS_PYTHON_VERSION} "{STACKOPS_REQUIREMENT}"
 {uv_command2}
 """, strict=True)
 

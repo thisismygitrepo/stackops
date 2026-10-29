@@ -1,15 +1,17 @@
 from pathlib import Path
-from typing import Any, TypedDict
 
 import typer
 
 from stackops.utils.installer_utils.installer_explore_preview import render_category_preview, render_installer_preview
-from stackops.utils.schemas.installer.installer_types import InstallRequest, InstallationResult, InstallerData, InstallerDataSource
-
-
-class CategoryLabelDefinition(TypedDict):
-    label: str
-    description: str
+from stackops.utils.schemas.installer.installer_categories import installer_category_definition
+from stackops.utils.schemas.installer.installer_types import (
+    INSTALLER_CATEGORY_LABELS,
+    InstallRequest,
+    InstallationResult,
+    InstallerCategoryLabel,
+    InstallerData,
+    InstallerDataSource,
+)
 
 
 def _build_installer_option_to_data(installers: list[InstallerData]) -> dict[str, InstallerData]:
@@ -24,80 +26,38 @@ def _build_installer_option_to_data(installers: list[InstallerData]) -> dict[str
     return installer_option_to_data
 
 
-def _load_category_label_definitions() -> dict[str, CategoryLabelDefinition]:
-    import stackops.utils.schemas.installer as installer_schema_assets
-    from stackops.utils.files.read import read_json
-    from stackops.utils.path_reference import get_path_reference_path
-
-    schema_path = get_path_reference_path(
-        module=installer_schema_assets,
-        path_reference=installer_schema_assets.INSTALLER_DATA_SCHEMA_PATH_REFERENCE,
-    )
-    schema_raw: dict[str, Any] = read_json(schema_path)
-    definitions_raw = schema_raw.get("x-categoryLabelDefinitions")
-    if not isinstance(definitions_raw, dict):
-        return {}
-
-    definitions: dict[str, CategoryLabelDefinition] = {}
-    for category_label, metadata in definitions_raw.items():
-        if not isinstance(category_label, str) or not isinstance(metadata, dict):
-            continue
-        label_raw = metadata.get("label")
-        description_raw = metadata.get("description")
-        definitions[category_label] = CategoryLabelDefinition(
-            label=label_raw if isinstance(label_raw, str) else category_label,
-            description=description_raw if isinstance(description_raw, str) else "",
-        )
-    return definitions
-
-
-def _group_installers_by_category_label(installers: list[InstallerData]) -> dict[str, list[InstallerData]]:
-    category_to_installers: dict[str, list[InstallerData]] = {}
+def _group_installers_by_category_label(installers: list[InstallerData]) -> dict[InstallerCategoryLabel, list[InstallerData]]:
+    category_to_installers: dict[InstallerCategoryLabel, list[InstallerData]] = {}
     for installer_data in installers:
         for category_label in installer_data["categoryLabels"]:
             category_to_installers.setdefault(category_label, []).append(installer_data)
     return category_to_installers
 
 
-def _sorted_category_labels(
-    category_to_installers: dict[str, list[InstallerData]],
-    category_definitions: dict[str, CategoryLabelDefinition],
-) -> list[str]:
-    labels_in_definition_order = [category_label for category_label in category_definitions if category_label in category_to_installers]
-    unknown_labels = sorted(set(category_to_installers) - set(labels_in_definition_order))
-    return labels_in_definition_order + unknown_labels
-
-
-def _build_category_label_options(
-    category_to_installers: dict[str, list[InstallerData]],
-    category_definitions: dict[str, CategoryLabelDefinition],
-) -> dict[str, str]:
-    category_option_to_label: dict[str, str] = {}
-    for category_label in _sorted_category_labels(
-        category_to_installers=category_to_installers,
-        category_definitions=category_definitions,
-    ):
-        category_metadata = category_definitions.get(category_label)
-        label = category_metadata["label"] if category_metadata is not None else category_label
+def _build_category_label_options(category_to_installers: dict[InstallerCategoryLabel, list[InstallerData]]) -> dict[str, InstallerCategoryLabel]:
+    category_option_to_label: dict[str, InstallerCategoryLabel] = {}
+    for category_label in INSTALLER_CATEGORY_LABELS:
+        if category_label not in category_to_installers:
+            continue
+        title = installer_category_definition(label=category_label)["title"]
         installer_count = len(category_to_installers[category_label])
-        option_label = f"🏷 {category_label:<36} {installer_count:>3} apps  --  {label}"
+        option_label = f"🏷 {category_label:<36} {installer_count:>3} apps  --  {title}"
         category_option_to_label[option_label] = category_label
     return category_option_to_label
 
 
 def _build_category_label_option_previews(
-    category_option_to_label: dict[str, str],
-    category_to_installers: dict[str, list[InstallerData]],
-    category_definitions: dict[str, CategoryLabelDefinition],
+    category_option_to_label: dict[str, InstallerCategoryLabel],
+    category_to_installers: dict[InstallerCategoryLabel, list[InstallerData]],
     preview_size_percent: float,
 ) -> dict[str, str]:
     option_previews: dict[str, str] = {}
     for option_label, category_label in category_option_to_label.items():
-        metadata = category_definitions.get(category_label)
+        category_definition = installer_category_definition(label=category_label)
         option_previews[option_label] = render_category_preview(
             category_label=category_label,
-            label=metadata["label"] if metadata is not None else category_label,
-            description=metadata["description"] if metadata is not None else "",
+            label=category_definition["title"],
+            description=category_definition["description"],
             installers=category_to_installers[category_label],
             preview_size_percent=preview_size_percent,
         )
@@ -130,21 +90,18 @@ def explore_installers_by_category_labels(
 
     console = Console()
     installers = get_installers_from_source(source=source, user_path=user_path, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
-    category_definitions = _load_category_label_definitions()
     category_to_installers = _group_installers_by_category_label(installers=installers)
-    category_option_to_label = _build_category_label_options(
-        category_to_installers=category_to_installers,
-        category_definitions=category_definitions,
-    )
+    category_option_to_label = _build_category_label_options(category_to_installers=category_to_installers)
 
+    selected_category_labels: list[InstallerCategoryLabel]
     if category_labels is None:
+        selected_category_options: list[str] | None
         if check_tool_exists("tv"):
             category_preview_size_percent = 60.0
             selected_category_options = choose_from_dict_with_preview(
                 options_to_preview_mapping=_build_category_label_option_previews(
                     category_option_to_label=category_option_to_label,
                     category_to_installers=category_to_installers,
-                    category_definitions=category_definitions,
                     preview_size_percent=category_preview_size_percent,
                 ),
                 extension="txt",
@@ -165,14 +122,15 @@ def explore_installers_by_category_labels(
             return
         selected_category_labels = [category_option_to_label[option] for option in selected_category_options]
     else:
-        unknown_category_labels = [category_label for category_label in category_labels if category_label not in category_to_installers]
+        available_category_labels: dict[str, InstallerCategoryLabel] = {category_label: category_label for category_label in category_to_installers}
+        unknown_category_labels = [category_label for category_label in category_labels if category_label not in available_category_labels]
         if unknown_category_labels:
             console.print(f"❌ ERROR: Unknown installer categoryLabels: {unknown_category_labels}")
             console.print("[bold blue]Available categoryLabels:[/bold blue]")
             for option_label in category_option_to_label:
                 console.print(f"  {option_label}")
             raise typer.Exit(1)
-        selected_category_labels = category_labels
+        selected_category_labels = [available_category_labels[category_label] for category_label in category_labels]
 
     selected_installers = _dedupe_installers(
         [
@@ -183,6 +141,7 @@ def explore_installers_by_category_labels(
     )
     installer_option_to_data = _build_installer_option_to_data(selected_installers)
 
+    selected_installer_options: list[str] | None
     if check_tool_exists("tv"):
         installer_preview_size_percent = 55.0
         selected_installer_options = choose_from_dict_with_preview(
