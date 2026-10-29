@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=./layout.schema.json
 
-version: "0.1"
+version: "0.2"
 layouts:
   - layoutName: g1
     layoutTabs:

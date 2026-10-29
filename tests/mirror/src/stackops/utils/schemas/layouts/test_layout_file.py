@@ -10,7 +10,7 @@ from stackops.utils.schemas.layouts.layout_types import LayoutsFile, TabConfig, 
 
 def _write_layout_yaml(tmp_path: Path, tab: dict[str, object]) -> Path:
     layout_path = tmp_path / "layout.yaml"
-    layout_path.write_text(yaml.safe_dump({"version": "0.1", "layouts": [{"layoutName": "demo", "layoutTabs": [tab]}]}), encoding="utf-8")
+    layout_path.write_text(yaml.safe_dump({"version": "0.2", "layouts": [{"layoutName": "demo", "layoutTabs": [tab]}]}), encoding="utf-8")
     return layout_path
 
 
@@ -43,12 +43,13 @@ def test_invalid_tabs_are_rejected(tmp_path: Path, tab: dict[str, object], messa
 @pytest.mark.parametrize(
     ("document", "message"),
     [
-        ("version: 0.1\nlayouts: []\n", "'version' must be a quoted string"),
+        ("version: 0.2\nlayouts: []\n", """'version' must be the quoted string "0.2", got 0.2"""),
+        ('version: "0.1"\nlayouts: []\n', """'version' must be the quoted string "0.2", got '0.1'"""),
         (
-            'version: "0.1"\nlayouts:\n  - layoutName: demo\n    layoutTabs:\n      - tabName: dev\n        panes:\n          - {paneName: a, startDir: ~, command: ls}\n',
+            'version: "0.2"\nlayouts:\n  - layoutName: demo\n    layoutTabs:\n      - tabName: dev\n        panes:\n          - {paneName: a, startDir: ~, command: ls}\n',
             "'startDir' must be a string, got None",
         ),
-        ('version: "0.1"\nlayouts: [\n', "Invalid YAML in layout file"),
+        ('version: "0.2"\nlayouts: [\n', "Invalid YAML in layout file"),
     ],
 )
 def test_yaml_typing_traps_are_rejected(tmp_path: Path, document: str, message: str) -> None:
@@ -61,17 +62,17 @@ def test_yaml_typing_traps_are_rejected(tmp_path: Path, document: str, message: 
 @pytest.mark.parametrize("file_name", ("layout.json", "layout.yml"))
 def test_non_yaml_suffix_is_rejected(tmp_path: Path, file_name: str) -> None:
     layout_path = tmp_path / file_name
-    layout_path.write_text('{"version": "0.1", "layouts": []}', encoding="utf-8")
+    layout_path.write_text('{"version": "0.2", "layouts": []}', encoding="utf-8")
     with pytest.raises(ValueError, match="must be YAML with the '.yaml' suffix"):
         read_layouts_file(path=layout_path)
     with pytest.raises(ValueError, match="must be YAML with the '.yaml' suffix"):
-        write_layouts_file(path=layout_path, layouts_file={"version": "0.1", "layouts": []})
+        write_layouts_file(path=layout_path, layouts_file={"version": "0.2", "layouts": []})
 
 
 def test_written_layout_round_trips_without_aliases(tmp_path: Path) -> None:
     command = """bunx -y supergateway --stdio "claude mcp serve" --port 12010 # not: a comment"""
     shared_tab: TabConfig = single_pane_tab(tab_name="brain", start_dir="~", command=command)
-    layouts_file: LayoutsFile = {"version": "0.1", "layouts": [{"layoutName": "one", "layoutTabs": [shared_tab, shared_tab]}]}
+    layouts_file: LayoutsFile = {"version": "0.2", "layouts": [{"layoutName": "one", "layoutTabs": [shared_tab, shared_tab]}]}
     layout_path = tmp_path / "nested" / "layout.yaml"
 
     write_layouts_file(path=layout_path, layouts_file=layouts_file)

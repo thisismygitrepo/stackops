@@ -4,7 +4,7 @@ from typing import Literal, TypeAlias, cast
 
 import yaml
 
-from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX, LAYOUT_SCHEMA_URL
+from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX, LAYOUT_FILE_VERSION, LAYOUT_SCHEMA_URL
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile
 from stackops.utils.schemas.yaml_schema import JsonValue
 
@@ -14,6 +14,9 @@ LayoutFileWriteMode: TypeAlias = Literal["replace_file", "merge_by_layout_name"]
 class _LayoutYamlDumper(yaml.SafeDumper):
     def ignore_aliases(self, data: object) -> bool:
         return True
+
+    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:  # defaults mirror the PyYAML Emitter signature
+        super().increase_indent(flow=flow, indentless=False)
 
 
 def _require_layout_suffix(path: Path) -> None:
@@ -33,8 +36,8 @@ def read_layouts_file(path: Path) -> LayoutsFile:
         raise ValueError(f"""Invalid YAML in layout file '{path}': {error}""") from error
     if not isinstance(document, dict):
         raise ValueError(f"""Invalid layout file '{path}': expected a mapping at the top level.""")
-    if not isinstance(document.get("version"), str):
-        raise ValueError(f"""Invalid layout file '{path}': 'version' must be a quoted string, e.g. version: "0.1".""")
+    if document.get("version") != LAYOUT_FILE_VERSION:
+        raise ValueError(f"""Invalid layout file '{path}': 'version' must be the quoted string "{LAYOUT_FILE_VERSION}", got {document.get("version")!r}.""")
     raw_layouts = document.get("layouts")
     if not isinstance(raw_layouts, list):
         raise ValueError(f"""Invalid layout file '{path}': 'layouts' must be a list.""")
@@ -110,7 +113,7 @@ def _merge_layouts_by_name(existing_layouts: list[LayoutConfig], new_layouts: li
     return merged_layouts
 
 
-def serialize_layouts_to_file(layouts: list[LayoutConfig], version: Literal["0.1"], path: Path, *, write_mode: LayoutFileWriteMode) -> None:
+def serialize_layouts_to_file(layouts: list[LayoutConfig], path: Path, *, write_mode: LayoutFileWriteMode) -> None:
     _get_unique_layout_indexes_by_name(layouts=layouts, source="new layouts")
     match write_mode:
         case "replace_file":
@@ -121,4 +124,4 @@ def serialize_layouts_to_file(layouts: list[LayoutConfig], version: Literal["0.1
                 if path.exists()
                 else layouts
             )
-    write_layouts_file(path=path, layouts_file={"version": version, "layouts": layouts_to_write})
+    write_layouts_file(path=path, layouts_file={"version": LAYOUT_FILE_VERSION, "layouts": layouts_to_write})

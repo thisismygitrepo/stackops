@@ -52,7 +52,7 @@ def balance_load(
 
 def create_template(name: str | None, num_tabs: int) -> None:
     """Create a layout template file."""
-    from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX
+    from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX, LAYOUT_FILE_VERSION
     from stackops.utils.schemas.layouts.layout_file import write_layouts_file
     from stackops.utils.schemas.layouts.layout_types import LayoutsFile, TabConfig, LayoutConfig, single_pane_tab
 
@@ -73,7 +73,7 @@ def create_template(name: str | None, num_tabs: int) -> None:
     for i in range(1, num_tabs + 1):
         tabs.append(single_pane_tab(tab_name=f"Tab{i}", start_dir=start_directory, command=default_command))
     layouts: list[LayoutConfig] = [{"layoutName": f"{Path.cwd().name}Layout", "layoutTabs": tabs}]
-    file: LayoutsFile = {"version": "0.1", "layouts": layouts}
+    file: LayoutsFile = {"version": LAYOUT_FILE_VERSION, "layouts": layouts}
     layout_stem = "layout" if name is None else name.removesuffix(LAYOUT_FILE_SUFFIX)
     layout_path = Path.cwd() / f"{layout_stem}{LAYOUT_FILE_SUFFIX}"
     if layout_path.exists():

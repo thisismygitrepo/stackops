@@ -10,6 +10,7 @@ from typing import Literal, NotRequired, TypedDict, cast
 
 
 type TabArrangement = Literal["columns", "rows", "grid"]
+type LayoutFileVersion = Literal["0.2"]
 
 
 class PaneConfig(TypedDict):
@@ -39,7 +40,7 @@ class LayoutConfig(TypedDict):
 
 class LayoutsFile(TypedDict):
     """Complete layout file structure."""
-    version: str
+    version: LayoutFileVersion
     layouts: list[LayoutConfig]
 
 

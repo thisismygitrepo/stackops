@@ -34,7 +34,7 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 - `run`, `run-all`, and `list` accept `--source` / `-s`: `workspace/w`, `user/u`, or `all/a`, defaulting to `all`.
 - The workspace root is the enclosing Git repository root, including when called from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, the workspace source is unavailable.
-- Without `--custom-path` or `--test-layout`, `--source all` combines named layouts from the user file at `~/dotfiles/stackops/config/layouts.json` and the workspace file at `<workspace-root>/.stackops/config/layout.json`, including each file that exists. When the workspace source is unavailable, `all` includes only the user source; explicit `--source workspace` fails. `run` and `run-all` open a picker for the selected source files; cancelling it aborts the command.
+- Without `--custom-path` or `--test-layout`, `--source all` combines named layouts from the user file at `~/dotfiles/stackops/config/layout.yaml` and the workspace file at `<workspace-root>/.stackops/config/layout.yaml`, including each file that exists. When the workspace source is unavailable, `all` includes only the user source; explicit `--source workspace` fails. `run` and `run-all` open a picker for the selected source files; cancelling it aborts the command.
 - The default picker labels entries `user:name` or `workspace:name` and previews their source file paths. Layout and session names remain unchanged.
 - `--custom-path` / `-p` overrides `--source` and loads layouts only from the supplied file, including outside a workspace.
 - For `run`, an explicit `--choose-layouts` or `--choose-tabs` selector uses that selection without opening an additional layout picker.
@@ -73,7 +73,7 @@ terminal run [OPTIONS]
 Examples:
 
 ```bash
-# Choose layouts from the user file and the workspace's .stackops/config/layout.json when present
+# Choose layouts from the user file and the workspace's .stackops/config/layout.yaml when present
 terminal run
 
 # Run unambiguous named layouts from the combined default files without prompting
@@ -89,22 +89,22 @@ terminal run --choose-layouts "workspace:dev"
 terminal run --choose-tabs "workspace:dev::server"
 
 # Run only selected layouts from an explicit file
-terminal run --custom-path layouts.json --choose-layouts "dev,build"
+terminal run --custom-path layout.yaml --choose-layouts "dev,build"
 
 # Run a generated test layout
 terminal run --test-layout --parallel-layouts 2 --monitor
 
 # Select tabs by name or layout-qualified name
-terminal run --custom-path layouts.json --choose-tabs "server,build::tests"
+terminal run --custom-path layout.yaml --choose-tabs "server,build::tests"
 
 # Restart matching sessions before relaunching
-terminal run --custom-path layouts.json --on-conflict restart
+terminal run --custom-path layout.yaml --on-conflict restart
 
 # Launch selected layouts through Herdr
-terminal run --custom-path layouts.json --backend herdr
+terminal run --custom-path layout.yaml --backend herdr
 
 # Launch selected layout tabs through Agent of Empires
-terminal run --custom-path layout.json --backend aoe
+terminal run --custom-path layout.yaml --backend aoe
 ```
 
 ## run-all
@@ -137,7 +137,7 @@ terminal run-all --max-parallel-tabs 8
 terminal run-all --source user --max-parallel-tabs 8
 
 # Keep at most eight tabs active while working through the whole file
-terminal run-all --custom-path layouts.json --max-parallel-tabs 8
+terminal run-all --custom-path layout.yaml --max-parallel-tabs 8
 
 # Use the generated test layout and close finished tabs as work drains
 terminal run-all --test-layout --max-parallel-tabs 6 --kill-finished-tabs
@@ -218,7 +218,7 @@ terminal export [OPTIONS]
 |--------|-------|-------------|
 | `--sessions` | `-s` | Comma-separated tmux session names or Herdr workspace labels/IDs; omit for interactive multi-select |
 | `--all` | `-a` | Export all running backend sessions/workspaces without prompting |
-| `--output` | `-o` | Output layout file; defaults to `./tmux_export_layout.json` |
+| `--output` | `-o` | Output layout file; defaults to `./tmux_export_layout.yaml` |
 | `--overwrite` | `-w` | Replace the output file if it already exists |
 | `--merge` | `-m` | Merge exported sessions into an existing layout file by `layoutName` |
 | `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, or `tuios`/`u`; defaults to `tmux` |
@@ -231,15 +231,15 @@ Examples:
 terminal export
 
 # Export specific sessions into a runnable layout file
-terminal export --sessions "dev,build" --output exported_layout.json
+terminal export --sessions "dev,build" --output exported_layout.yaml
 
 # Export every running tmux session, then replay it with run
-terminal export --all --output exported_layout.json --overwrite
-terminal run --custom-path exported_layout.json
+terminal export --all --output exported_layout.yaml --overwrite
+terminal run --custom-path exported_layout.yaml
 
 # Export Herdr workspaces, then replay them with run
-terminal export --backend herdr --all --output exported_layout.json --overwrite
-terminal run --custom-path exported_layout.json --backend herdr
+terminal export --backend herdr --all --output exported_layout.yaml --overwrite
+terminal run --custom-path exported_layout.yaml --backend herdr
 ```
 
 ## trace
@@ -357,7 +357,7 @@ terminal balance-load LAYOUT_PATH [OPTIONS]
 | `--breaking-method` | `-b` | `more-layouts`/`ml` or `combine-tabs`/`ct` |
 | `--output` | `-o` | Output path for the rewritten file |
 
-If `--output` is omitted, StackOps writes `<stem>_adjusted_<max>_<threshold>_<method>.json` beside the source file.
+If `--output` is omitted, StackOps writes `<stem>_adjusted_<max>_<threshold>_<method>.yaml` beside the source file.
 
 ## create-template
 
@@ -369,7 +369,7 @@ terminal create-template [NAME] [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `NAME` | - | Optional output filename stem; defaults to `layout.json` |
+| `NAME` | - | Optional output filename stem; defaults to `layout.yaml` |
 | `--num-tabs` | `-t` | Number of tabs to include |
 
 Current behavior:
@@ -385,7 +385,7 @@ List saved layouts and their source files. Add `--stats` / `-S` for aggregate co
 ```bash
 terminal list --stats
 terminal list --source workspace --tabs --stats
-terminal list --custom-path layout.json --tabs --stats
+terminal list --custom-path layout.yaml --tabs --stats
 ```
 
 Omitting `--custom-path` lists layouts from the selected source files. The default `all` includes available user and workspace files; when no workspace root can be resolved, it includes only the user file. Explicit `--source workspace` requires a workspace root as described above. `--custom-path` / `-p` overrides the source selection. Statistics include layout, tab and pane totals, average tabs per layout, and the largest and smallest layouts.
@@ -401,51 +401,34 @@ terminal edit --source workspace
 terminal path
 terminal init --source workspace
 terminal path --source user
-terminal validate --custom-path layout.json
+terminal validate --custom-path layout.yaml
 ```
 
 ## Layout File Format
 
-Current layout files use the `LayoutsFile` wrapper. The important keys are `layouts`, `layoutName`, `layoutTabs`, `tabName`, `panes`, `paneName`, `startDir`, and `command`. A layout is a session, a tab holds one or more panes, and each pane runs one command.
+Layout files are YAML and must use the `.yaml` suffix; StackOps rejects any other suffix. They use the `LayoutsFile` wrapper, and `version` must be the quoted string `"0.2"`. The important keys are `layouts`, `layoutName`, `layoutTabs`, `tabName`, `panes`, `paneName`, `startDir`, and `command`. A layout is a session, a tab holds one or more panes, and each pane runs one command.
 
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json",
-  "version": "0.1",
-  "layouts": [
-    {
-      "layoutName": "Development",
-      "layoutTabs": [
-        {
-          "tabName": "editor",
-          "panes": [
-            {
-              "paneName": "helix",
-              "startDir": "~/projects/myapp",
-              "command": "hx ."
-            }
-          ]
-        },
-        {
-          "tabName": "server",
-          "arrangement": "columns",
-          "panes": [
-            {
-              "paneName": "http",
-              "startDir": "~/projects/myapp",
-              "command": "python -m http.server 8000"
-            },
-            {
-              "paneName": "logs",
-              "startDir": "~/projects/myapp/logs",
-              "command": "tail -f server.log"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json
+
+version: "0.2"
+layouts:
+  - layoutName: Development
+    layoutTabs:
+      - tabName: editor
+        panes:
+          - paneName: helix
+            startDir: ~/projects/myapp
+            command: hx .
+      - tabName: server
+        arrangement: columns
+        panes:
+          - paneName: http
+            startDir: ~/projects/myapp
+            command: python -m http.server 8000
+          - paneName: logs
+            startDir: ~/projects/myapp/logs
+            command: tail -f server.log
 ```
 
 `arrangement` is optional and only matters for tabs with more than one pane: `columns` places panes side by side, `rows` stacks them, and `grid` (the default) balances them. `paneName` must be unique within its tab. `tabWeight` stays on the tab.
@@ -460,7 +443,7 @@ Each backend uses its own names for the same levels:
 
 TUIOS ignores `arrangement` because its tiler arranges the windows of a workspace. AoE starts one agent session per tab and rejects tabs with more than one pane. `balance-load` with `combine-tabs` joins the commands of several tabs into one, so it requires single-pane tabs; `more-layouts` moves whole tabs and accepts any.
 
-Older examples that use `tabs`, `cwd`, or a `startDir`/`command` directly on the tab are stale. The current schema uses `layoutTabs` and `panes`.
+Any file with a different `version` is rejected, including older `0.1` files that put `startDir`/`command` directly on the tab. Long commands can use a `>-` folded block, which joins its lines with single spaces. Quote values YAML would otherwise retype: an unquoted `0.2` is a number and a bare `~` is null.
 
 ## Backend Notes
 

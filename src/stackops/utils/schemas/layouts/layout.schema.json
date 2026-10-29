@@ -2,15 +2,15 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json",
   "title": "Terminal Layouts Schema",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Schema for stackops terminal layout YAML files (layout.yaml).",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "version": {
       "type": "string",
-      "description": "Schema or config version.",
-      "examples": ["0.1"]
+      "const": "0.2",
+      "description": "Layout file format version."
     },
     "layouts": {
       "type": "array",

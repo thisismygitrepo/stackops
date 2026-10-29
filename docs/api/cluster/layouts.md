@@ -5,7 +5,7 @@
 
 ## Layout schema
 
-The schema lives in `stackops.utils.schemas.layouts.layout_types`.
+The types live in `stackops.utils.schemas.layouts.layout_types`; reading and writing layout files lives in `stackops.utils.schemas.layouts.layout_file`. Layout files are YAML with the `.yaml` suffix and `version: "0.2"`.
 
 ### Core types
 
@@ -14,12 +14,14 @@ The schema lives in `stackops.utils.schemas.layouts.layout_types`.
 | `PaneConfig` | `paneName`, `startDir`, `command` |
 | `TabConfig` | `tabName`, `panes`, optional `arrangement` (`columns`, `rows`, or `grid`), optional `tabWeight` |
 | `LayoutConfig` | `layoutName`, `layoutTabs` |
-| `LayoutsFile` | `version`, `layouts` |
+| `LayoutsFile` | `version` (always `"0.2"`), `layouts` |
 
 ### Helper behavior
 
-- `serialize_layouts_to_file(layouts, version, path, write_mode="replace_file")` writes a layout file with `"$schema": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json"` and replaces any existing file content.
-- `serialize_layouts_to_file(layouts, version, path, write_mode="merge_by_layout_name")` preserves existing layouts, replaces layouts that share the same `layoutName`, and appends new layout names.
+- `read_layouts_file(path)` parses and validates a `.yaml` layout file; any other suffix, a `version` other than `"0.2"`, or a malformed tab or pane raises `ValueError`.
+- `write_layouts_file(path, layouts_file)` writes YAML headed by `# yaml-language-server: $schema=https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json`.
+- `serialize_layouts_to_file(layouts, path, write_mode="replace_file")` writes the layouts and replaces any existing file content.
+- `serialize_layouts_to_file(layouts, path, write_mode="merge_by_layout_name")` preserves existing layouts, replaces layouts that share the same `layoutName`, and appends new layout names.
 - `single_pane_tab(tab_name=..., start_dir=..., command=...)` builds a tab with one pane named after the tab.
 - `substitute_home(tabs)` expands `~` and `$HOME` and rewrites shorthand command prefixes:
   - `f ...` -> `~/.config/stackops/scripts/wrap_stackops fire ...`
@@ -146,6 +148,14 @@ That class is responsible for rendering backend-specific layout artifacts:
 ## Layout schema
 
 ::: stackops.utils.schemas.layouts.layout_types
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Layout files
+
+::: stackops.utils.schemas.layouts.layout_file
     options:
       show_root_heading: true
       show_source: false

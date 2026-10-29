@@ -54,9 +54,9 @@ Report the file, selected entry, change, and validation result. For secret edits
 
 ## Example: add, edit, or remove a layout entry
 
-1. From the target workspace, use `terminal path --source workspace`, or `terminal path --custom-path /absolute/layout.json` for an explicitly requested file. A workspace layout is `.stackops/config/layout.json` under the resolved workspace root: the enclosing Git root, or the current directory containing at least two immediate child Git repositories. Resolve a user target through `terminal path --source user` when that is the requested source. Without a recognized workspace, use the user source or an explicit file.
-2. Read the chosen file and its reported schema. `terminal list --custom-path /absolute/layout.json --tabs` shows layouts and tabs from just that file. For a standard source, use `terminal list --source workspace --tabs` or `--source user`; omitting both the custom path and source lists all available default sources.
-3. Find the exact `layoutName` in the top-level `layouts` array. An extra tab goes in that layout's `layoutTabs`; a whole new layout is another object in `layouts`.
+1. From the target workspace, use `terminal path --source workspace`, or `terminal path --custom-path /absolute/layout.yaml` for an explicitly requested file. A workspace layout is `.stackops/config/layout.yaml` under the resolved workspace root: the enclosing Git root, or the current directory containing at least two immediate child Git repositories. Resolve a user target through `terminal path --source user` when that is the requested source. Without a recognized workspace, use the user source or an explicit file.
+2. Read the chosen file and its reported schema. `terminal list --custom-path /absolute/layout.yaml --tabs` shows layouts and tabs from just that file. For a standard source, use `terminal list --source workspace --tabs` or `--source user`; omitting both the custom path and source lists all available default sources.
+3. Find the exact `layoutName` in the top-level `layouts` array. An extra tab goes in that layout's `layoutTabs`; a whole new layout is another item in `layouts`.
 
 A tab has this shape; take its name, directory, and command from the request or the workspace:
 
@@ -73,14 +73,15 @@ A tab has this shape; take its name, directory, and command from the request or 
 }
 ```
 
-A tab can hold several panes; `paneName` must be unique within the tab, and an optional `arrangement` of `columns`, `rows`, or `grid` (the default) says how they share the tab. `tabWeight` is optional and belongs on the tab. A new layout needs both `layoutName` and `layoutTabs`. Preserve the file's `version` and optional `$schema`. Edit a tab by its name within the chosen layout, and remove only the requested tab or layout. The current schema requires at least one layout and at least one tab per layout; if the requested deletion would empty one, resolve the intended remaining configuration instead of inventing a placeholder entry.
+A tab can hold several panes; `paneName` must be unique within the tab, and an optional `arrangement` of `columns`, `rows`, or `grid` (the default) says how they share the tab. `tabWeight` is optional and belongs on the tab. A new layout needs both `layoutName` and `layoutTabs`. Layout files are YAML: keep `version: "0.2"` quoted, keep the `# yaml-language-server: $schema=...` header line, and quote values YAML would retype, such as a bare `~`. Edit a tab by its name within the chosen layout, and remove only the requested tab or layout. The current schema requires at least one layout and at least one tab per layout; if the requested deletion would empty one, resolve the intended remaining configuration instead of inventing a placeholder entry.
 
-Finish with `terminal validate --custom-path /absolute/layout.json`. This validates the schema and parser without launching sessions. An added tab using existing fields requires only the data edit. If the request introduces a new field or changes launch behavior, trace these source owners:
+Finish with `terminal validate --custom-path /absolute/layout.yaml`. This validates the schema and parser without launching sessions. An added tab using existing fields requires only the data edit. If the request introduces a new field or changes launch behavior, trace these source owners:
 
 - `src/stackops/scripts/python/terminal.py`: registrations and launch callbacks.
 - `src/stackops/scripts/python/terminal_layout_files.py`: path, init, and validate commands.
 - `src/stackops/scripts/python/helpers/helpers_sessions/sessions_layout_source.py`: source selection and layout-name resolution.
-- `src/stackops/scripts/python/helpers/helpers_sessions/sessions_impl.py`: parsing and backend dispatch.
+- `src/stackops/scripts/python/helpers/helpers_sessions/sessions_impl.py`: layout selection and backend dispatch.
+- `src/stackops/utils/schemas/layouts/layout_file.py`: YAML parsing, validation, and writing.
 - `src/stackops/utils/schemas/layouts/layout_types.py` and `layout.schema.json`: data types and schema.
 
 The layout serializer's `merge_by_layout_name` replaces a whole matching layout. To add a tab, preserve the existing tabs in that layout rather than passing a one-tab replacement.

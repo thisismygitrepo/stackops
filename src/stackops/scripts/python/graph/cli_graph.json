@@ -6736,10 +6736,10 @@
                         "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-f\", help=\"Overwrite existing layouts and schema.\")] = False,",
                         ") -> None:",
                         "    from stackops.scripts.python.helpers.helpers_devops.cli_config_dump import export_example",
-                        "    from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH",
+                        "    from stackops.utils.source_of_truth import DOTFILES_LAYOUT_YAML_PATH",
                         "",
                         "    export_example(which=\"layouts\", data=False, schema=False, default_path=True, overwrite=overwrite)",
-                        "    typer.echo(f\"Starter layouts are ready at {DOTFILES_LAYOUTS_JSON_PATH}\")"
+                        "    typer.echo(f\"Starter layouts are ready at {DOTFILES_LAYOUT_YAML_PATH}\")"
                       ],
                       "name": "setup_layouts",
                       "parameters": [
@@ -21055,7 +21055,7 @@
               "raw_lines": [
                 "def run(",
                 "    ctx: typer.Context,",
-                "    layouts_file: Annotated[str | None, typer.Option(\"--custom-path\", \"-p\", help=\"Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.\")] = None,",
+                "    layouts_file: Annotated[str | None, typer.Option(\"--custom-path\", \"-p\", help=\"Layout YAML file, overriding --source. Omit to choose layouts from the selected sources.\")] = None,",
                 "    source: Annotated[",
                 "        Literal[\"workspace\", \"w\", \"user\", \"u\", \"all\", \"a\"],",
                 "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted.\"),",
@@ -21136,7 +21136,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--custom-path', '-p', help='Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--custom-path', '-p', help='Layout YAML file, overriding --source. Omit to choose layouts from the selected sources.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21149,7 +21149,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file, overriding --source. Omit to choose layouts from the selected sources."
+                    "help": "Layout YAML file, overriding --source. Omit to choose layouts from the selected sources."
                   }
                 },
                 {
@@ -21504,7 +21504,7 @@
                 "def run_all(",
                 "    ctx: typer.Context,",
                 "    *,",
-                "    layouts_file: Annotated[str | None, typer.Option(\"--custom-path\", \"-p\", help=\"Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.\")] = None,",
+                "    layouts_file: Annotated[str | None, typer.Option(\"--custom-path\", \"-p\", help=\"Layout YAML file, overriding --source. Omit to choose layouts from the selected sources.\")] = None,",
                 "    source: Annotated[",
                 "        Literal[\"workspace\", \"w\", \"user\", \"u\", \"all\", \"a\"],",
                 "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted.\"),",
@@ -21567,7 +21567,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--custom-path', '-p', help='Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--custom-path', '-p', help='Layout YAML file, overriding --source. Omit to choose layouts from the selected sources.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21580,7 +21580,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file, overriding --source. Omit to choose layouts from the selected sources."
+                    "help": "Layout YAML file, overriding --source. Omit to choose layouts from the selected sources."
                   }
                 },
                 {
@@ -21795,7 +21795,7 @@
                 "def list_layouts(",
                 "    layouts_file: Annotated[",
                 "        Path | None,",
-                "        typer.Option(\"--custom-path\", \"-p\", exists=True, dir_okay=False, help=\"Layout JSON file. Overrides --source; omit to list layouts from the selected sources.\"),",
+                "        typer.Option(\"--custom-path\", \"-p\", exists=True, dir_okay=False, help=\"Layout YAML file. Overrides --source; omit to list layouts from the selected sources.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"workspace\", \"w\", \"user\", \"u\", \"all\", \"a\"],",
@@ -21883,7 +21883,7 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', exists=True, dir_okay=False, help='Layout JSON file. Overrides --source; omit to list layouts from the selected sources.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', exists=True, dir_okay=False, help='Layout YAML file. Overrides --source; omit to list layouts from the selected sources.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21896,7 +21896,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file. Overrides --source; omit to list layouts from the selected sources."
+                    "help": "Layout YAML file. Overrides --source; omit to list layouts from the selected sources."
                   }
                 },
                 {
@@ -21994,7 +21994,7 @@
                 "def edit_layouts(",
                 "    layouts_file: Annotated[",
                 "        Path | None,",
-                "        typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to edit. Overrides --source; omit to choose the user or workspace config file.\"),",
+                "        typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout YAML file to edit. Overrides --source; omit to choose the user or workspace config file.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"workspace\", \"w\", \"user\", \"u\"] | None,",
@@ -22063,7 +22063,7 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file to edit. Overrides --source; omit to choose the user or workspace config file.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout YAML file to edit. Overrides --source; omit to choose the user or workspace config file.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22076,7 +22076,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file to edit. Overrides --source; omit to choose the user or workspace config file."
+                    "help": "Layout YAML file to edit. Overrides --source; omit to choose the user or workspace config file."
                   }
                 },
                 {
@@ -22151,7 +22151,7 @@
               "raw_lines": [
                 "def path_layouts(",
                 "    layouts_file: Annotated[",
-                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file. Overrides --source; omit to show user and workspace paths.\"),",
+                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout YAML file. Overrides --source; omit to show user and workspace paths.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"workspace\", \"w\", \"user\", \"u\"] | None,",
@@ -22184,7 +22184,7 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file. Overrides --source; omit to show user and workspace paths.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout YAML file. Overrides --source; omit to show user and workspace paths.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22197,7 +22197,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file. Overrides --source; omit to show user and workspace paths."
+                    "help": "Layout YAML file. Overrides --source; omit to show user and workspace paths."
                   }
                 },
                 {
@@ -22247,7 +22247,7 @@
               "raw_lines": [
                 "def init_layouts(",
                 "    layouts_file: Annotated[",
-                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to create if missing. Overrides --source.\"),",
+                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout YAML file to create if missing. Overrides --source.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"workspace\", \"w\", \"user\", \"u\"] | None,",
@@ -22267,7 +22267,7 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file to create if missing. Overrides --source.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout YAML file to create if missing. Overrides --source.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22280,7 +22280,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file to create if missing. Overrides --source."
+                    "help": "Layout YAML file to create if missing. Overrides --source."
                   }
                 },
                 {
@@ -22330,7 +22330,7 @@
               "raw_lines": [
                 "def validate_layouts(",
                 "    layouts_file: Annotated[",
-                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout JSON file to validate. Overrides --source.\"),",
+                "        Path | None, typer.Option(\"--custom-path\", \"-p\", dir_okay=False, help=\"Layout YAML file to validate. Overrides --source.\"),",
                 "    ] = None,",
                 "    source: Annotated[",
                 "        Literal[\"workspace\", \"w\", \"user\", \"u\"] | None,",
@@ -22350,7 +22350,7 @@
                   "type": "Path | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout JSON file to validate. Overrides --source.')]",
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', dir_okay=False, help='Layout YAML file to validate. Overrides --source.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22363,7 +22363,7 @@
                     "short_flags": [
                       "-p"
                     ],
-                    "help": "Layout JSON file to validate. Overrides --source."
+                    "help": "Layout YAML file to validate. Overrides --source."
                   }
                 },
                 {
@@ -22863,7 +22863,7 @@
                 "def export(",
                 "    sessions: Annotated[str | None, typer.Option(\"--sessions\", \"-s\", help=\"Comma-separated backend session/workspace names. Pass an empty value or omit it to select interactively.\")] = None,",
                 "    all_sessions: Annotated[bool, typer.Option(\"--all\", \"-a\", help=\"Export all running backend sessions/workspaces without prompting.\", show_default=True)] = False,",
-                "    output_path: Annotated[str | None, typer.Option(\"--output\", \"-o\", help=\"Path to write the generated layout file. Defaults to ./tmux_export_layout.json.\")] = None,",
+                "    output_path: Annotated[str | None, typer.Option(\"--output\", \"-o\", help=\"Path to write the generated layout file. Defaults to ./tmux_export_layout.yaml.\")] = None,",
                 "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-w\", help=\"Replace the output file if it already exists.\", show_default=True)] = False,",
                 "    merge: Annotated[bool, typer.Option(\"--merge\", \"-m\", help=\"Merge exported sessions into an existing layout file by layoutName.\", show_default=True)] = False,",
                 "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"tuios\", \"u\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to export from: tmux/t, herdr/h, or tuios/u.\")] = \"tmux\",",
@@ -22945,7 +22945,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option('--output', '-o', help='Path to write the generated layout file. Defaults to ./tmux_export_layout.json.')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option('--output', '-o', help='Path to write the generated layout file. Defaults to ./tmux_export_layout.yaml.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -22958,7 +22958,7 @@
                     "short_flags": [
                       "-o"
                     ],
-                    "help": "Path to write the generated layout file. Defaults to ./tmux_export_layout.json."
+                    "help": "Path to write the generated layout file. Defaults to ./tmux_export_layout.yaml."
                   }
                 },
                 {
@@ -23433,11 +23433,11 @@
             "signature": {
               "raw_lines": [
                 "def balance_load(",
-                "    layout_path: Annotated[str, typer.Argument(..., help=\"Path to the layout.json file\")],",
+                "    layout_path: Annotated[str, typer.Argument(..., help=\"Path to the layout.yaml file\")],",
                 "    max_thresh: Annotated[int, typer.Option(..., \"--max-threshold\", \"-m\", help=\"Maximum tabs per layout\")],",
                 "    thresh_type: Annotated[Literal[\"number\", \"n\", \"weight\", \"w\"], typer.Option(..., \"--threshold-type\", \"-t\", help=\"Threshold type\")] = \"number\",",
                 "    breaking_method: Annotated[Literal[\"more-layouts\", \"ml\", \"combine-tabs\", \"ct\"], typer.Option(..., \"--breaking-method\", \"-b\", help=\"Breaking method\")] = \"more-layouts\",",
-                "    output_path: Annotated[str | None, typer.Option(..., \"--output\", \"-o\", help=\"Path to write the adjusted layout.json file\")] = None,",
+                "    output_path: Annotated[str | None, typer.Option(..., \"--output\", \"-o\", help=\"Path to write the adjusted layout.yaml file\")] = None,",
                 ") -> None:",
                 "    \"\"\"Adjust layout file to limit max tabs per layout, etc.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_sessions.utils import balance_load as impl",
@@ -23461,13 +23461,13 @@
                   "type": "str",
                   "default": null,
                   "required": true,
-                  "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to the layout.json file')]",
+                  "annotation_raw": "Annotated[str, typer.Argument(..., help='Path to the layout.yaml file')]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Path to the layout.json file",
+                    "help": "Path to the layout.yaml file",
                     "default": "..."
                   }
                 },
@@ -23546,7 +23546,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--output', '-o', help='Path to write the adjusted layout.json file')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--output', '-o', help='Path to write the adjusted layout.yaml file')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -23559,7 +23559,7 @@
                     "short_flags": [
                       "-o"
                     ],
-                    "help": "Path to write the adjusted layout.json file",
+                    "help": "Path to write the adjusted layout.yaml file",
                     "default": "..."
                   }
                 }
@@ -23907,7 +23907,7 @@
                     "    ] = \"AI_Agents\",",
                     "    join_prompt_and_context: Annotated[bool, typer.Option(..., \"--join-prompt-context\", \"-j\", help=\"Join prompt file to the context.\")] = False,",
                     "    run: Annotated[bool, typer.Option(..., \"--run\", \"-R\", help=\"Immediately launch the generated layout through the selected backend.\")] = False,",
-                    "    output_path: Annotated[str | None, typer.Option(..., \"--output\", \"-o\", help=\"Path to write the layout.json file\")] = None,",
+                    "    output_path: Annotated[str | None, typer.Option(..., \"--output\", \"-o\", help=\"Path to write the layout.yaml file\")] = None,",
                     "    agents_dir: Annotated[",
                     "        str | None,",
                     "        typer.Option(",
@@ -24393,7 +24393,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--output', '-o', help='Path to write the layout.json file')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--output', '-o', help='Path to write the layout.yaml file')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -24406,7 +24406,7 @@
                         "short_flags": [
                           "-o"
                         ],
-                        "help": "Path to write the layout.json file",
+                        "help": "Path to write the layout.yaml file",
                         "default": "..."
                       }
                     },
@@ -24765,7 +24765,7 @@
                     "        _BooleanOverride | None,",
                     "        typer.Option(\"--run\", \"-R\", help=\"Override whether the layout launches immediately: true or false. Omit to use YAML; launches when YAML omits run.\"),",
                     "    ] = None,",
-                    "    output_path: Annotated[str | None, typer.Option(..., \"--output\", \"-o\", help=\"Override layout.json output path.\")] = None,",
+                    "    output_path: Annotated[str | None, typer.Option(..., \"--output\", \"-o\", help=\"Override layout.yaml output path.\")] = None,",
                     "    agents_dir: Annotated[str | None, typer.Option(..., \"--agents-dir\", \"-d\", help=\"Override exact directory to store agent files in.\")] = None,",
                     "    interactive: Annotated[",
                     "        _BooleanOverride | None, typer.Option(\"--interactive\", \"-i\", help=\"Override whether create runs interactively: true or false. Omit to use YAML.\")",
@@ -25339,7 +25339,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--output', '-o', help='Override layout.json output path.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option(..., '--output', '-o', help='Override layout.yaml output path.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -25352,7 +25352,7 @@
                         "short_flags": [
                           "-o"
                         ],
-                        "help": "Override layout.json output path.",
+                        "help": "Override layout.yaml output path.",
                         "default": "..."
                       }
                     },

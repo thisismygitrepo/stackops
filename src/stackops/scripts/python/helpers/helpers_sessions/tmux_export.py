@@ -17,7 +17,6 @@ from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_preview impo
 )
 from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants import (
     TMUX_EXPORT_DEFAULT_FILENAME,
-    TMUX_EXPORT_LAYOUT_VERSION,
     TMUX_EXPORT_SHELL_COMMAND,
     TmuxExportCommandSource,
 )
@@ -218,7 +217,6 @@ def write_exported_layouts(
     write_mode: LayoutFileWriteMode = "merge_by_layout_name" if merge else "replace_file"
     serialize_layouts_to_file(
         layouts=layouts,
-        version=TMUX_EXPORT_LAYOUT_VERSION,
         path=output_path,
         write_mode=write_mode,
     )
