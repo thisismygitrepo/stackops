@@ -1653,9 +1653,64 @@ StackOpsSeekCommand = TypedDict(
     },
 )
 
+StackOpsFireRunCommand = TypedDict(
+    "StackOpsFireRunCommand",
+    {
+        "command_name": Literal["run"],
+        "short_name": Literal["r"],
+        "help": Literal["🚀 <r> Run a script or Python function"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsFireStreamlitCommand = TypedDict(
+    "StackOpsFireStreamlitCommand",
+    {
+        "command_name": Literal["streamlit"],
+        "short_name": Literal["s"],
+        "help": Literal["📊 <s> Launch a Streamlit app"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsFireJupyterCommand = TypedDict(
+    "StackOpsFireJupyterCommand",
+    {
+        "command_name": Literal["jupyter"],
+        "short_name": Literal["j"],
+        "help": Literal["📓 <j> Open a file in JupyterLab"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsFireMarimoCommand = TypedDict(
+    "StackOpsFireMarimoCommand",
+    {
+        "command_name": Literal["marimo"],
+        "short_name": Literal["m"],
+        "help": Literal["📒 <m> Edit a Marimo notebook"],
+        "subcommands": EmptySubcommands,
+    },
+)
+
+StackOpsFireSubcommands = TypedDict(
+    "StackOpsFireSubcommands",
+    {
+        "run": StackOpsFireRunCommand,
+        "streamlit": StackOpsFireStreamlitCommand,
+        "jupyter": StackOpsFireJupyterCommand,
+        "marimo": StackOpsFireMarimoCommand,
+    },
+)
+
 StackOpsFireCommand = TypedDict(
     "StackOpsFireCommand",
-    {"command_name": Literal["fire"], "short_name": Literal["f"], "help": Literal["<f> Fire and manage jobs"], "subcommands": EmptySubcommands},
+    {
+        "command_name": Literal["fire"],
+        "short_name": Literal["f"],
+        "help": Literal["<f> Fire and manage jobs"],
+        "subcommands": StackOpsFireSubcommands,
+    },
 )
 
 StackOpsPreviewCommand = TypedDict(

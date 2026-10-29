@@ -18,39 +18,10 @@ def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) 
         raise typer.Exit(code=nested_result)
 
 
-def fire(
-    ctx: typer.Context,
-    path: Annotated[str, typer.Argument(help="Path to the Python file to run")] = ".",
-    function: Annotated[str | None, typer.Argument(help="Function to run")] = None,
-    frozen: Annotated[bool, typer.Option("--frozen", "-F", help="Pass --frozen to uv run to use the existing lockfile without updating it.")] = False,
-    cmd: Annotated[bool, typer.Option("--cmd", "-B", help="Create a cmd fire command to launch the job asynchronously")] = False,
-    debug: Annotated[bool, typer.Option("--debug", "-d", help="Enable debug mode")] = False,
-    choose_function: Annotated[bool, typer.Option("--choose-function", "-c", help="Choose function interactively")] = False,
-    loop: Annotated[bool, typer.Option("--loop", "-l", help="Infinite recursion (runs again after completion/interruption)")] = False,
+def fire(ctx: typer.Context) -> None:
+    from stackops.scripts.python.fire_jobs import get_app as get_app_fire
 
-    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Whether to run the job interactively using IPython")] = False,
-    jupyter: Annotated[bool, typer.Option("--jupyter", "-j", help="Open in a jupyter notebook")] = False,
-    marimo: Annotated[bool, typer.Option("--marimo", "-M", help="Open in a marimo notebook")] = False,
-    streamlit: Annotated[bool, typer.Option("--streamlit", "-S", help="Run as streamlit app")] = False,
-
-    module: Annotated[bool, typer.Option("--module", "-m", help="Launch the main file")] = False,
-    script: Annotated[bool, typer.Option("--script", "-s", help="Launch as a script without fire")] = False,
-    optimized: Annotated[bool, typer.Option("--optimized", "-O", help="Run the optimized version of the function")] = False,
-    jit: Annotated[bool, typer.Option("--jit", "-J", help="Enable CPython experimental JIT with PYTHON_JIT=1")] = False,
-    root_repo: Annotated[bool, typer.Option("--root-repo", "-r", help="Resolve and search from the repository root")] = False,
-    remote: Annotated[bool, typer.Option("--remote", "-R", help="Launch on a remote machine")] = False,
-    hold_directory: Annotated[bool, typer.Option("--hold-directory", "-D", help="Hold current directory and avoid cd'ing to the script directory")] = False,
-    path_export: Annotated[bool, typer.Option("--path-export", "-P", help="Augment the PYTHONPATH with repo root")] = False,
-    git_pull: Annotated[bool, typer.Option("--git-pull", "-g", help="Start by pulling the git repo")] = False,
-    watch: Annotated[bool, typer.Option("--watch", "-w", help="Watch the file for changes")] = False,
-) -> None:
-    """Fire and manage jobs."""
-    from stackops.scripts.python.fire_jobs import fire as fire_impl
-    fire_impl(ctx=ctx, path=path, function=function, frozen=frozen, cmd=cmd, interactive=interactive, debug=debug,
-              choose_function=choose_function, loop=loop, jupyter=jupyter, marimo=marimo, module=module,
-              script=script, optimized=optimized, jit=jit, root_repo=root_repo,
-              remote=remote, streamlit=streamlit, hold_directory=hold_directory,
-              path_export=path_export, git_pull=git_pull, watch=watch)
+    _run_nested_app(ctx, get_app_fire)
 
 
 def preview(
@@ -152,8 +123,9 @@ def get_app() -> typer.Typer:
     app.command(name="seek", help="🔎 <s> Search across files, text matches, and code symbols", context_settings=ctx_settings)(seek)
     app.command(name="s", hidden=True, context_settings=ctx_settings)(seek)
 
-    app.command(name="fire", help="🔥 <f> Fire and manage jobs", no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
-    app.command(name="f", hidden=True, no_args_is_help=False, context_settings={"allow_extra_args": True, "allow_interspersed_args": False})(fire)
+    fire_context = {**ctx_settings, "allow_interspersed_args": False}
+    app.command(name="fire", help="🔥 <f> Fire and manage jobs", context_settings=fire_context)(fire)
+    app.command(name="f", hidden=True, context_settings=fire_context)(fire)
     app.command("preview", no_args_is_help=False, help="👀 <p> Preview files and launch reader backends")(preview)
     app.command("p", no_args_is_help=False, hidden=True)(preview)
 

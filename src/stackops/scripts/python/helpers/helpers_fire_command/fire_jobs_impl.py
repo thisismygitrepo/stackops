@@ -2,6 +2,7 @@
 
 import os
 import platform
+import shlex
 import subprocess
 from typing import Callable, Literal
 from pathlib import Path
@@ -23,12 +24,21 @@ def route(args: FireJobArgs, fire_args: str) -> None:
     from stackops.utils.accessories import get_repo_root, randstr
 
     search_root = _get_search_root(root_repo=args.root_repo)
-    choice_file = get_choice_file(args.path, suffixes=None, search_root=search_root)
+    match args.mode:
+        case "run":
+            suffixes = None
+        case "jupyter":
+            suffixes = {".py", ".ipynb"}
+        case "streamlit" | "marimo":
+            suffixes = {".py"}
+    choice_file = get_choice_file(args.path, suffixes=suffixes, search_root=search_root)
+    if suffixes is not None and choice_file.suffix not in suffixes:
+        raise ValueError(f"""fire {args.mode} requires a file with one of these extensions: {", ".join(sorted(suffixes))}.""")
     repo_root = get_repo_root(choice_file)
     print(f"💾 Selected file: {choice_file}.\nRepo root: {repo_root}")
 
-    if args.marimo:
-        _handle_marimo(choice_file=choice_file, repo_root=repo_root, randstr_func=randstr, jit=args.jit)
+    if args.mode == "marimo":
+        _handle_marimo(choice_file=choice_file, repo_root=repo_root, randstr_func=randstr, frozen=args.frozen, jit=args.jit)
         return
 
     kwargs_dict = _prepare_kwargs(args=args, choice_file=choice_file)
@@ -46,6 +56,10 @@ def route(args: FireJobArgs, fire_args: str) -> None:
         randstr_func=randstr,
     )
     command = _apply_command_modifiers(args=args, command=command, choice_file=choice_file, repo_root=repo_root)
+    if args.mode == "streamlit" and not args.hold_directory:
+        command = f"""(cd {shlex.quote(str(choice_file.parent))} && (
+{command}
+))"""
 
     from stackops.utils.code import exit_then_run_shell_script
 
@@ -65,18 +79,20 @@ def _get_search_root(root_repo: bool) -> Path | None:
     return repo_root
 
 
-def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc, jit: bool) -> None:
+def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: RandStrFunc, frozen: bool, jit: bool) -> None:
     """Handle marimo notebook launch."""
     print(f"🧽 Preparing to launch Marimo notebook for `{choice_file}`...")
     environment = resolve_fire_environment(choice_file=choice_file, repo_root=repo_root)
-    uv_prefix = build_uv_run_shell_prefix(environment=environment, frozen=False, cmd=False)
-    marimo_check_cmd = build_uv_run_arguments(environment=environment, frozen=False)
+    uv_prefix = build_uv_run_shell_prefix(environment=environment, frozen=frozen, cmd=False)
+    marimo_check_cmd = build_uv_run_arguments(environment=environment, frozen=frozen)
     marimo_check_cmd.extend(["--with", "marimo", "marimo", "check", str(choice_file)])
     process_environment = os.environ.copy()
     if environment is None:
         process_environment.pop("UV_PROJECT_ENVIRONMENT", None)
     else:
         process_environment["UV_PROJECT_ENVIRONMENT"] = str(environment.directory)
+    if jit:
+        process_environment["PYTHON_JIT"] = "1"
     check_result = subprocess.run(marimo_check_cmd, capture_output=True, text=True, check=False, env=process_environment)
     check_output = f"{check_result.stdout}\n{check_result.stderr}".lower()
     not_valid_markers = ("not a valid notebook", "not recognizable as a marimo notebook", "failed to parse")
@@ -137,15 +153,15 @@ def _build_command(
     randstr_func: RandStrFunc,
 ) -> str:
     """Build the execution command."""
-    if choice_file.suffix == ".py":
+    if choice_file.suffix == ".py" or args.mode == "jupyter":
         exe_line = _build_python_exe_line(
             module=args.module,
             cmd=args.cmd,
             interactive=args.interactive,
             optimized=args.optimized,
             frozen=args.frozen,
-            streamlit=args.streamlit,
-            jupyter=args.jupyter,
+            streamlit=args.mode == "streamlit",
+            jupyter=args.mode == "jupyter",
             choice_file=choice_file,
             repo_root=repo_root,
         )
@@ -158,7 +174,7 @@ def _build_command(
         return _build_final_command(
             debug=args.debug,
             module=args.module,
-            streamlit=args.streamlit,
+            streamlit=args.mode == "streamlit",
             hold_directory=args.hold_directory,
             cmd=args.cmd,
             exe_line=exe_line,
@@ -273,11 +289,9 @@ def _build_final_command(
     if choice_function is not None and choice_file.suffix == ".py":
         return f"{exe_line} -m fire {choice_file_adjusted} {choice_function} {fire_args}"
     if streamlit:
-        import shlex
-
         if hold_directory:
             return f"{exe_line} {shlex.quote(str(choice_file))}"
-        return f"(cd {shlex.quote(str(choice_file.parent))} && {exe_line} {shlex.quote(choice_file.name)})"
+        return f"{exe_line} {shlex.quote(choice_file.name)}"
     if cmd:
         return rf""" cd /d {choice_file.parent} & {exe_line} {choice_file.name} """
     if choice_file.suffix == "":
@@ -292,7 +306,8 @@ def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path,
         command = f"""start cmd -Argument '/k {cmd_command}'"""
 
     if args.watch:
-        command = "watchexec --restart --exts py,sh,ps1 " + command
+        watch_extensions = "py,ipynb" if args.mode == "jupyter" else "py,sh,ps1"
+        command = f"""watchexec --restart --exts {watch_extensions} {command}"""
 
     if args.git_pull:
         command = f"\ngit -C {choice_file.parent} pull\n" + command

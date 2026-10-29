@@ -56,7 +56,7 @@ map i !&$Env:PAGER "$Env:f"
 map T set preview!
 map M toggle-preview-max
 
-map F $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire "$Env:f"
+map F $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire run "$Env:f"
 map Pc $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" seek "$Env:f"
 map Pf $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" seek -f "$Env:f"
 map Pe $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" seek -e "$Env:f"
@@ -74,8 +74,8 @@ map Rv &code "$Env:f"
 map Ro open-default
 map Rh $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" utils file edit "$Env:f"
 map Rp $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" preview "$Env:f"
-map Rf $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire "$Env:f"
-map RF $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire -i "$Env:f"
+map Rf $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire run "$Env:f"
+map RF $& "$Env:USERPROFILE/.config/stackops/scripts/wrap_stackops.ps1" fire run -i "$Env:f"
 map Rc $code "$Env:f"
 
 map o

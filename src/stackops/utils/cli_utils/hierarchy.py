@@ -171,6 +171,11 @@ if TYPE_CHECKING:
         StackOpsSeekSeekCommand,
         StackOpsSeekSubcommands,
         StackOpsSeekCommand,
+        StackOpsFireRunCommand,
+        StackOpsFireStreamlitCommand,
+        StackOpsFireJupyterCommand,
+        StackOpsFireMarimoCommand,
+        StackOpsFireSubcommands,
         StackOpsFireCommand,
         StackOpsPreviewCommand,
         StackOpsSubcommands,
@@ -1389,7 +1394,47 @@ STACKOPS_SEEK_COMMAND: "StackOpsSeekCommand" = {
     "subcommands": STACKOPS_SEEK_SUBCOMMANDS,
 }
 
-STACKOPS_FIRE_COMMAND: "StackOpsFireCommand" = {"command_name": "fire", "short_name": "f", "help": "<f> Fire and manage jobs", "subcommands": {}}
+STACKOPS_FIRE_RUN_COMMAND: "StackOpsFireRunCommand" = {
+    "command_name": "run",
+    "short_name": "r",
+    "help": "🚀 <r> Run a script or Python function",
+    "subcommands": {},
+}
+
+STACKOPS_FIRE_STREAMLIT_COMMAND: "StackOpsFireStreamlitCommand" = {
+    "command_name": "streamlit",
+    "short_name": "s",
+    "help": "📊 <s> Launch a Streamlit app",
+    "subcommands": {},
+}
+
+STACKOPS_FIRE_JUPYTER_COMMAND: "StackOpsFireJupyterCommand" = {
+    "command_name": "jupyter",
+    "short_name": "j",
+    "help": "📓 <j> Open a file in JupyterLab",
+    "subcommands": {},
+}
+
+STACKOPS_FIRE_MARIMO_COMMAND: "StackOpsFireMarimoCommand" = {
+    "command_name": "marimo",
+    "short_name": "m",
+    "help": "📒 <m> Edit a Marimo notebook",
+    "subcommands": {},
+}
+
+STACKOPS_FIRE_SUBCOMMANDS: "StackOpsFireSubcommands" = {
+    "run": STACKOPS_FIRE_RUN_COMMAND,
+    "streamlit": STACKOPS_FIRE_STREAMLIT_COMMAND,
+    "jupyter": STACKOPS_FIRE_JUPYTER_COMMAND,
+    "marimo": STACKOPS_FIRE_MARIMO_COMMAND,
+}
+
+STACKOPS_FIRE_COMMAND: "StackOpsFireCommand" = {
+    "command_name": "fire",
+    "short_name": "f",
+    "help": "<f> Fire and manage jobs",
+    "subcommands": STACKOPS_FIRE_SUBCOMMANDS,
+}
 
 STACKOPS_PREVIEW_COMMAND: "StackOpsPreviewCommand" = {
     "command_name": "preview",

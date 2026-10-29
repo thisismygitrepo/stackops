@@ -1,11 +1,15 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
+
+
+type FireJobMode = Literal["run", "streamlit", "jupyter", "marimo"]
 
 
 @dataclass
 class FireJobArgs:
     """Type-safe dataclass for fire_jobs command line arguments."""
 
+    mode: FireJobMode
     path: str = "."
     function: str | None = None
     frozen: bool = False
@@ -14,13 +18,9 @@ class FireJobArgs:
     debug: bool = False
     choose_function: bool = False
     loop: bool = False
-    jupyter: bool = False
-    marimo: bool = False
     root_repo: bool = False
-    remote: bool = False
     module: bool = False
     script: bool = False
-    streamlit: bool = False
     hold_directory: bool = False
     path_export: bool = False
     git_pull: bool = False

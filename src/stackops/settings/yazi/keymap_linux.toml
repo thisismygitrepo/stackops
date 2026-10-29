@@ -40,7 +40,7 @@ desc = "Toggle preview pane / maximize pane"
 
 [[mgr.prepend_keymap]]
 on   = "F"
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire "$0"'
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire run "$0"'
 desc = "Run fire on hovered file"
 
 [[mgr.prepend_keymap]]
@@ -120,11 +120,11 @@ run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops preview -b
 desc = "Read with VisiData"
 [[mgr.prepend_keymap]]
 on   = ["R", "f"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire "$0"'
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire run "$0"'
 desc = "Read with fire"
 [[mgr.prepend_keymap]]
 on   = ["R", "F"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire -i "$0"'
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops fire run -i "$0"'
 desc = "Read with fire interactively"
 [[mgr.prepend_keymap]]
 on   = ["R", "c"]

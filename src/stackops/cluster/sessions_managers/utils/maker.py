@@ -75,7 +75,7 @@ def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str,
         raise ValueError(f"Unsupported platform: {platform.system()}")
     path = Path(inspect.getfile(func))
     path_relative = path.relative_to(Path.home())
-    command_to_run = f"""{wrap_stackops} fire {fire_flags} {path_relative} {func.__name__} """
+    command_to_run = f"""{wrap_stackops} fire run {fire_flags} {path_relative} {func.__name__} """
     tab_config: TabConfig = {
         "command": command_to_run,
         "startDir": start_dir,

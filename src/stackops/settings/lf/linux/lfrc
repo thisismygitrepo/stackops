@@ -124,7 +124,7 @@ map "!" $$SHELL
 map T set preview!
 map M toggle-preview-max
 
-map F $~/.config/stackops/scripts/wrap_stackops fire "$f"
+map F $~/.config/stackops/scripts/wrap_stackops fire run "$f"
 map Pc $~/.config/stackops/scripts/wrap_stackops seek "$f"
 map Pf $~/.config/stackops/scripts/wrap_stackops seek -f "$f"
 map Pe $~/.config/stackops/scripts/wrap_stackops seek -e "$f"
@@ -143,8 +143,8 @@ map Rv &code "$f"
 map Ro open-default
 map Rh $~/.config/stackops/scripts/wrap_stackops utils file edit "$f"
 map Rp $~/.config/stackops/scripts/wrap_stackops preview "$f"
-map Rf $~/.config/stackops/scripts/wrap_stackops fire "$f"
-map RF $~/.config/stackops/scripts/wrap_stackops fire -i "$f"
+map Rf $~/.config/stackops/scripts/wrap_stackops fire run "$f"
+map RF $~/.config/stackops/scripts/wrap_stackops fire run -i "$f"
 map Rc $code "$f"
 
 map o
