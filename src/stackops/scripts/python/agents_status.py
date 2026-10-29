@@ -33,6 +33,7 @@ def status(
     codex_home: Annotated[Path | None, typer.Option("--codex-home", file_okay=False, help="Codex transcript root for registered session IDs. Default: CODEX_HOME, otherwise ~/.codex. Open-file metadata can link other homes.")] = None,
     output_format: Annotated[StatusFormat, typer.Option("--format", "-f", help="Output format. JSON contains structured evidence and full extracted history subject to the requested limits.")] = "table",
     json_output: Annotated[bool, typer.Option("--json", help="Shortcut for --format json; incompatible with --format markdown.")] = False,
+    rich_output: Annotated[bool, typer.Option("--rich-output", help="Print a styled terminal overview and agent cards with colour, history and evidence. Cannot combine with JSON or Markdown. File output has no ANSI colours.")] = False,
     output: Annotated[Path | None, typer.Option("--output", "-o", dir_okay=False, help="Write the report to a private file instead of stdout. Existing files require --force.")] = None,
     force: Annotated[bool, typer.Option("--force", help="Allow replacing an existing --output file; agent sessions are never modified.")] = False,
 ) -> None:
@@ -41,6 +42,8 @@ def status(
 
     if json_output and output_format not in {"table", "json"}:
         raise typer.BadParameter("--json cannot be combined with --format markdown.")
+    if rich_output and (json_output or output_format != "table"):
+        raise typer.BadParameter("--rich-output cannot be combined with --json or --format json/markdown.")
     if force and output is None:
         raise typer.BadParameter("--force requires --output.")
     if backend != "tuios" and server is not None:
@@ -63,6 +66,11 @@ def status(
     )
     try:
         snapshot = collect_status(options=options)
+        if rich_output:
+            from stackops.scripts.python.helpers.helpers_agents.agents_status_rich_output import print_rich_status
+
+            print_rich_status(snapshot=snapshot, output=output, force=force)
+            return
         report = render_status(snapshot=snapshot, output_format="json" if json_output else output_format)
         write_status_output(report=report, output=output, force=force)
     except (OSError, RuntimeError, ValueError) as error:

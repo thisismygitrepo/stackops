@@ -57,7 +57,7 @@ def inspect_window(
         command = text_field(pane, ("command",))
         if process.live is None:
             errors.extend(process.limitations)
-        candidate = {"session": session, "window_id": window_id, "name": name, "command": command, "reason": "; ".join(errors)} if errors else None
+        candidate: JsonObject | None = {"session": session, "window_id": window_id, "name": name, "command": command, "reason": "; ".join(errors)} if errors else None
         return PaneInspection(agent=None, candidate=candidate, excluded="", limitations=tuple(errors))
     evidence_data: dict[str, JsonObject] = {}
     for verb, extra in (

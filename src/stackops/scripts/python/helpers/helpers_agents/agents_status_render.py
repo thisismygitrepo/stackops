@@ -16,20 +16,20 @@ from rich.text import Text
 from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, StatusBackend, StatusFormat, StatusSnapshot
 
 
-def _plain(value: str) -> str:
+def plain_status_text(value: str) -> str:
     value = re.sub(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))", "", value)
     return "".join(character for character in value if character in "\n\t" or ord(character) >= 32 and ord(character) != 127)
 
 
 def _markdown(value: str) -> str:
-    value = escape(_plain(value), quote=False).replace("\\", "\\\\")
+    value = escape(plain_status_text(value), quote=False).replace("\\", "\\\\")
     for character in "`*_[]#!|":
         value = value.replace(character, f"""\\{character}""")
     return value.replace("\r", "").replace("\n", "<br>")
 
 
 def _brief(value: str) -> str:
-    value = " ".join(_plain(value).split())
+    value = " ".join(plain_status_text(value).split())
     return value if len(value) <= 180 else f"""{value[:177]}…"""
 
 
@@ -63,7 +63,7 @@ def _row(agent: AgentSnapshot, backend: StatusBackend) -> tuple[str, ...]:
 def _appendix(snapshot: StatusSnapshot, markdown: bool) -> list[str]:
     sections: list[str] = []
     for agent in snapshot.agents:
-        transform = _markdown if markdown else _plain
+        transform = _markdown if markdown else plain_status_text
         pane_reference = f"""{agent.session} / {agent.window_id}""" if snapshot.backend == "herdr" else agent.window_id
         sections.extend(["", transform(f"""{pane_reference} — {agent.window_name}"""), transform(f"""History: {agent.history.coverage}.""")])
         for number, message in enumerate(agent.history.messages, start=1):
@@ -103,7 +103,7 @@ def _coverage_entries(value: object) -> tuple[str, ...]:
     return tuple(entries)
 
 
-def _coverage_lines(snapshot: StatusSnapshot) -> list[str]:
+def status_coverage_lines(snapshot: StatusSnapshot) -> list[str]:
     coverage = snapshot.coverage
     pane_label = "runtimes" if snapshot.backend == "aoe" else "panes" if snapshot.backend == "herdr" else "windows"
     workspace_label = "groups" if snapshot.backend == "aoe" else "workspace records"
@@ -149,7 +149,7 @@ def render_status(*, snapshot: StatusSnapshot, output_format: StatusFormat) -> s
         f"""Backend: {snapshot.backend}. {backend_scope}. Reported agents: {len(snapshot.agents)}; {counts}.""",
         hierarchy,
         "Task text comes from retained requests/context; completion is reported evidence, not independently verified success.",
-        *_coverage_lines(snapshot),
+        *status_coverage_lines(snapshot),
     ]
     if snapshot.limitations:
         introductory.append(f"""Coverage limitations: {'; '.join(snapshot.limitations)}""")
@@ -164,12 +164,12 @@ def render_status(*, snapshot: StatusSnapshot, output_format: StatusFormat) -> s
     buffer = io.StringIO()
     console = Console(file=buffer, width=180, force_terminal=False, color_system=None)
     for line in introductory:
-        console.print(Text(_plain(line)))
+        console.print(Text(plain_status_text(line)))
     table = Table(show_lines=True, expand=True)
     for column in columns:
         table.add_column(column, overflow="fold")
     for agent in snapshot.agents:
-        table.add_row(*(Text(_plain(value)) for value in _row(agent, backend=snapshot.backend)))
+        table.add_row(*(Text(plain_status_text(value)) for value in _row(agent, backend=snapshot.backend)))
     console.print(table)
     for line in _appendix(snapshot, markdown=False):
         console.print(Text(line))
