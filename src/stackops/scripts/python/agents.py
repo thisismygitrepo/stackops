@@ -769,9 +769,9 @@ def get_app() -> typer.Typer:
     )(second_brain_group)
     agents_app.command("B", help="Second Brain commands", hidden=True, context_settings=_NESTED_APP_CONTEXT)(second_brain_group)
     agents_app.command(
-        "local", help="🦙 <l> Local models through Ollama", short_help="🦙 <l> Local models through Ollama", context_settings=_NESTED_APP_CONTEXT
+        "local", help="🦙 <l> Local models through Ollama and vLLM", short_help="🦙 <l> Local models through Ollama and vLLM", context_settings=_NESTED_APP_CONTEXT
     )(local_group)
-    agents_app.command("l", help="Local models through Ollama", hidden=True, context_settings=_NESTED_APP_CONTEXT)(local_group)
+    agents_app.command("l", help="Local models through Ollama and vLLM", hidden=True, context_settings=_NESTED_APP_CONTEXT)(local_group)
     agents_app.command(
         "config", help="📄 <C> Locate, initialize, and validate StackOps agent catalogs", context_settings=_NESTED_APP_CONTEXT
     )(config_files_group)
