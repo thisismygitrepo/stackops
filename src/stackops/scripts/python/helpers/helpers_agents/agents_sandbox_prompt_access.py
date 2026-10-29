@@ -111,6 +111,21 @@ def resolve_prompt_sandbox_access(
         case "muse":
             directories = (xdg["XDG_CONFIG_HOME"] / "muse", xdg["XDG_DATA_HOME"] / "muse")
             environment = ("META_API_KEY", *xdg_environment)
+        case "maki":
+            if host_system == "Windows":
+                directories = (roaming_app_data / "maki", local_app_data / "maki", roaming_app_data.parent / "logs/maki")
+                environment_overrides = {
+                    "XDG_CONFIG_HOME": str(roaming_app_data),
+                    "XDG_DATA_HOME": str(roaming_app_data),
+                    "XDG_STATE_HOME": str(roaming_app_data),
+                    "XDG_CACHE_HOME": str(local_app_data),
+                }
+            else:
+                directories = (
+                    *(root / "maki" for root in xdg.values()),
+                    xdg["XDG_STATE_HOME"].parent / "logs/maki",
+                )
+            environment = ("APPDATA", "LOCALAPPDATA", *xdg_environment, *provider_environment)
         case _:
             raise ValueError(f"""Sandboxing is not supported for agent: {agent}.""")
     return SandboxAccess(

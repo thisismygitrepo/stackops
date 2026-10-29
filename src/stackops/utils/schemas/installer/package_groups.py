@@ -34,6 +34,7 @@ AGENTS = [
     "qwen-code",
     "cursor-cli",
     "droid",
+    "maki",
     "muse",
     "dmux",
     "pi",

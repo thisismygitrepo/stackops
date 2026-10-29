@@ -41,6 +41,13 @@ def build_interactive_prompt_command(
             if reasoning is not None:
                 command.extend(["--reasoning-effort", reasoning])
             command.append(prompt)
+        case "maki":
+            from stackops.scripts.python.helpers.helpers_agents.maki_launch import build_maki_command
+
+            command = build_maki_command(model=None, provider=None)
+            if external_sandbox:
+                command.append("--trust")
+            command.extend(["--", prompt])
         case "opencode":
             command.extend(["--prompt", prompt])
         case "agy":
@@ -57,7 +64,7 @@ def build_interactive_prompt_command(
         case "forge" | "crush" | "q" | "kilocode" | "cline" | "oz":
             raise ValueError(
                 f"""--interactive is not supported for agent '{agent}'. """
-                "Choose codex, copilot, cortex, pi, muse, opencode, agy, qwen, claude, cursor-agent, auggie, or droid, or omit --interactive."
+                "Choose codex, copilot, cortex, pi, muse, maki, opencode, agy, qwen, claude, cursor-agent, auggie, or droid, or omit --interactive."
             )
         case _:
             assert_never(agent)

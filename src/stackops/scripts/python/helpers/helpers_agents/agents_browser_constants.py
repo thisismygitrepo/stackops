@@ -106,4 +106,5 @@ BROWSER_SKILLS_CLI_AGENT_BY_STACKOPS_AGENT: Final[dict[AGENTS, str]] = {
     "droid": "droid",
     "pi": "pi",
     "muse": "universal",
+    "maki": "codex",
 }

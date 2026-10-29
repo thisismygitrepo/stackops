@@ -68,7 +68,7 @@ def _provider_options_for_agent(agent: AGENTS) -> tuple[PROVIDER, ...]:
     match agent:
         case "codex":
             return ("openai",)
-        case "deepseek" | "cortex":
+        case "deepseek" | "cortex" | "maki":
             return ()
         case _:
             return provider_options

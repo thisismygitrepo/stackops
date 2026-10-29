@@ -189,6 +189,11 @@ def build_agent_command(
             if normalized_reasoning_effort is not None:
                 reasoning_arg = f" --reasoning-effort {agent_shell.quote_for_shell(normalized_reasoning_effort, is_windows=resolved_is_windows)}"
             return f"{agent_cli} exec --yolo{model_arg}{reasoning_arg} --prompt-file {prompt_file_q}"
+        case "maki":
+            from stackops.scripts.python.helpers.helpers_agents.maki_launch import build_maki_command, render_maki_prompt_command
+
+            command = build_maki_command(model=model, provider=provider)
+            return render_maki_prompt_command(command=command, prompt_file=prompt_file, is_windows=resolved_is_windows)
         case "pi":
             provider_arg = ""
             if provider is not None:

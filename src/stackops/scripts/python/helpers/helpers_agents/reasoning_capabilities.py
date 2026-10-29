@@ -51,6 +51,7 @@ _AGENT_REASONING_SUPPORT: Final[dict[AGENTS, AgentReasoningSupport]] = {
         note="StackOps none maps to Pi --thinking off",
     ),
     "muse": AgentReasoningSupport(efforts=("none", "low", "medium", "high", "xhigh"), note=None),
+    "maki": AgentReasoningSupport(efforts=(), note="Configure always_thinking in Maki init.lua; CLI reasoning flags are ignored"),
 }
 
 

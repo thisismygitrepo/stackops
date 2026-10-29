@@ -8,6 +8,8 @@ from typing import Final, Literal, cast, get_args
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.cortex_paths import resolve_cortex_home
 from stackops.scripts.python.helpers.helpers_agents.deepseek_mcp import write_deepseek_mcp_config
+from stackops.scripts.python.helpers.helpers_agents.maki_mcp import write_maki_mcp_config
+from stackops.scripts.python.helpers.helpers_agents.maki_paths import resolve_maki_config_directory
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names, resolve_requested_mcp_servers
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation, ResolvedMcpServer
 from stackops.utils.files.read import remove_c_style_comments
@@ -141,6 +143,8 @@ def install_resolved_mcp_servers(
             _write_muse_settings(path=path, resolved_servers=resolved_servers)
         case "deepseek":
             write_deepseek_mcp_config(path=path, resolved_servers=resolved_servers)
+        case "maki":
+            write_maki_mcp_config(path=path, resolved_servers=resolved_servers)
     return path
 
 
@@ -193,6 +197,8 @@ def resolve_install_path(
                 raise ValueError("Muse Code documents MCP servers only in its user settings file; install with --scope user")
             case "deepseek":
                 return repo_root / ".dsh" / "cordis.patch.yml"
+            case "maki":
+                return repo_root / ".maki" / "mcp.toml"
 
     match agent:
         case "agy":
@@ -239,6 +245,8 @@ def resolve_install_path(
             configured_home = os.environ.get("DSH_HOME", "").strip()
             dsh_home = Path(configured_home).expanduser() if configured_home else home_dir / ".dsh"
             return dsh_home / "cordis.patch.yml"
+        case "maki":
+            return resolve_maki_config_directory(home_dir=home_dir) / "mcp.toml"
 
 
 def _resolve_copilot_cli_user_config_path(*, home_dir: Path) -> Path:

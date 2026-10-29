@@ -20,12 +20,12 @@ _PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", 
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["workspace", "w", "user", "u"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
-_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "cortex", "pi", "opencode", "omp", "deepseek"]
+_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "cortex", "pi", "opencode", "omp", "deepseek", "maki"]
 
 _ASK_REASONING_HELP: Final[str] = "Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default."
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
-INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "cortex", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh"]
+INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "cortex", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh", "maki"]
 _CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $megacave for this entire session."
 _HEADROOM_COMMAND: Final[str] = "headroom"
 _HEADROOM_AGENTS: Final[tuple[_HEADROOM_AGENT, ...]] = ("codex", "copilot")
@@ -43,6 +43,7 @@ _INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, _INTERACTIVE_CANONICAL
     "o": "omp",
     "deepseek": "deepseek",
     "dsh": "deepseek",
+    "maki": "maki",
 }
 _INIT_CONFIG_AGENT_HELP: Final[str] = (
     f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
@@ -282,6 +283,13 @@ def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, initial_prom
             if initial_prompt is not None:
                 command.append(initial_prompt)
             return command
+        case "maki":
+            from stackops.scripts.python.helpers.helpers_agents.maki_launch import build_maki_command
+
+            command = build_maki_command(model=None, provider=None)
+            if initial_prompt is not None:
+                command.extend(["--", initial_prompt])
+            return command
         case "deepseek":
             from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import build_deepseek_command, deepseek_patch_paths
 
@@ -319,7 +327,7 @@ def run_interactive(
         INTERACTIVE_AGENT | None,
         typer.Option(
             ..., "--agent", "-a",
-            help=f"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}",
+            help=f"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}",
         ),
     ] = None,
     second_brain: Annotated[
@@ -432,6 +440,8 @@ def run_interactive(
 
                 access = resolve_sandbox_access(agent=resolved_agent)
                 read_only_paths: tuple[Path, ...] = ()
+                if resolved_agent == "maki":
+                    command.insert(1, "--trust")
                 if resolved_agent == "deepseek":
                     from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import deepseek_patch_paths
 
@@ -448,7 +458,7 @@ def run_interactive(
                 else:
                     script = shlex.join(command)
             else:
-                if resolved_agent in ("deepseek", "cortex") and is_windows_host():
+                if resolved_agent in ("deepseek", "cortex", "maki") and is_windows_host():
                     from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
 
                     script = "& " + " ".join(quote_for_shell(argument, is_windows=True) for argument in command)

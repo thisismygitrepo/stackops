@@ -23,5 +23,6 @@ OPENROUTER_ZDR_CONFIGURATION: Final[dict[CONFIG_AGENTS, str | None]] = {
     "droid": "ZDR added to existing repository OpenRouter model settings",
     "pi": "OpenRouter provider request policy extension",
     "muse": None,
+    "maki": "Requires OpenRouter account/API-key enforcement",
     "omp": "OpenRouter session request policy extension",
 }

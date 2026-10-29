@@ -3600,6 +3600,7 @@ dependencies = [
     { name = "rich" },
     { name = "tenacity" },
     { name = "textual" },
+    { name = "tomlkit" },
     { name = "typer" },
 ]
 
@@ -3722,6 +3723,7 @@ requires-dist = [
     { name = "sqlalchemy", marker = "extra == 'plot'", specifier = ">=2.0.51" },
     { name = "tenacity", specifier = ">=9.1.4" },
     { name = "textual", specifier = ">=8.2.7" },
+    { name = "tomlkit", specifier = ">=0.15.0" },
     { name = "typer", specifier = ">=0.27.2" },
 ]
 provides-extras = ["windows", "plot"]

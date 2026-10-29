@@ -4402,6 +4402,21 @@ installers:
         linux: null
         darwin: null
         windows: null
+  - appName: maki
+    license: MIT
+    repoURL: https://github.com/tontinton/maki
+    doc: Maki terminal coding agent with Lua plugins, skills, and MCP support.
+    categoryLabels:
+      - ai-agents-assistants
+    fileNamePattern:
+      amd64:
+        linux: curl -fsSL https://maki.sh/install.sh | sh
+        darwin: curl -fsSL https://maki.sh/install.sh | sh
+        windows: powershell -NoProfile -Command "irm https://maki.sh/install.ps1 | iex"
+      arm64:
+        linux: curl -fsSL https://maki.sh/install.sh | sh
+        darwin: curl -fsSL https://maki.sh/install.sh | sh
+        windows: powershell -NoProfile -Command "irm https://maki.sh/install.ps1 | iex"
   - appName: muse
     license: Proprietary
     repoURL: CMD

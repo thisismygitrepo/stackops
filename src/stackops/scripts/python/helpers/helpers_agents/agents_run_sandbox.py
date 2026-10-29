@@ -120,6 +120,11 @@ def build_sandboxed_prompt_script(
             if reasoning is not None:
                 command.extend(["--reasoning-effort", reasoning])
             command.extend(["--prompt-file", prompt_argument])
+        case "maki":
+            from stackops.scripts.python.helpers.helpers_agents.maki_launch import build_maki_command
+
+            command = build_maki_command(model=None, provider=None)
+            command.extend(["--trust", "--print", "--", prompt_text])
         case "cursor-agent":
             command = [agent, "-p", prompt_text, "--output-format", "text"]
 

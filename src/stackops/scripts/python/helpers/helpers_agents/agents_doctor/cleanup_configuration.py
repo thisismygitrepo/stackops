@@ -55,6 +55,12 @@ def configuration_cleanup(
         removal = HookRemoval(path, "file", (), "delete") if resource.origin in ("local", "global") else None
         entry = HookEntry(agent, resource.origin, path, resource.name, "configuration", "Reset configuration file", resource.state, removal)
         return HookInventory((entry,), ())
+    if agent == "maki" and path.suffix == ".lua":
+        return HookInventory((), (HookDiagnostic(
+            agent, resource.origin, path,
+            "Maki Lua declarations require manual inspection; a configuration reset can remove the whole file.",
+            "notice",
+        ),))
     if agent == "cortex" and path.name == "mcp-disabled.json":
         return HookInventory((), ())
     if agent == "deepseek" and path.name == "cordis.patch.yml":
