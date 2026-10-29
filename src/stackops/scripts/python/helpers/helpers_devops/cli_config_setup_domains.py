@@ -67,10 +67,10 @@ def setup_layouts(
     overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Overwrite existing layouts and schema.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dump import export_example
-    from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+    from stackops.utils.source_of_truth import DOTFILES_LAYOUT_YAML_PATH
 
     export_example(which="layouts", data=False, schema=False, default_path=True, overwrite=overwrite)
-    typer.echo(f"Starter layouts are ready at {DOTFILES_LAYOUTS_JSON_PATH}")
+    typer.echo(f"Starter layouts are ready at {DOTFILES_LAYOUT_YAML_PATH}")
 
 
 def setup_secrets() -> None:

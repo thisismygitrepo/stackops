@@ -15,18 +15,18 @@ def resolve_layout_file(*, layouts_file: Path | None, source: Literal["workspace
             from stackops.utils.repos.stackops_paths import require_current_repo_stackops_path
 
             try:
-                return require_current_repo_stackops_path(path_kind="layouts_json")
+                return require_current_repo_stackops_path(path_kind="layout_yaml")
             except ValueError as error:
                 raise typer.BadParameter(str(error)) from error
         case "user" | "u":
-            from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+            from stackops.utils.source_of_truth import DOTFILES_LAYOUT_YAML_PATH
 
-            return DOTFILES_LAYOUTS_JSON_PATH
+            return DOTFILES_LAYOUT_YAML_PATH
 
 
 def path_layouts(
     layouts_file: Annotated[
-        Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file. Overrides --source; omit to show user and workspace paths."),
+        Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout YAML file. Overrides --source; omit to show user and workspace paths."),
     ] = None,
     source: Annotated[
         Literal["workspace", "w", "user", "u"] | None,
@@ -54,7 +54,7 @@ def path_layouts(
 
 def init_layouts(
     layouts_file: Annotated[
-        Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file to create if missing. Overrides --source."),
+        Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout YAML file to create if missing. Overrides --source."),
     ] = None,
     source: Annotated[
         Literal["workspace", "w", "user", "u"] | None,
@@ -69,7 +69,7 @@ def init_layouts(
 
 def validate_layouts(
     layouts_file: Annotated[
-        Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file to validate. Overrides --source."),
+        Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout YAML file to validate. Overrides --source."),
     ] = None,
     source: Annotated[
         Literal["workspace", "w", "user", "u"] | None,

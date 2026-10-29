@@ -79,7 +79,7 @@ def validate_managed_file(*, kind: ManagedFileKind, data_path: Path) -> None:
 
     spec = get_managed_file_spec(kind)
     content = data_path.read_text(encoding="utf-8")
-    if kind in {"layouts", "mcp"}:
+    if kind == "mcp":
         from stackops.utils.files.read import remove_c_style_comments
 
         content = remove_c_style_comments(content)
@@ -118,9 +118,9 @@ def validate_managed_file(*, kind: ManagedFileKind, data_path: Path) -> None:
 
                 load_repos_spec(path=data_path)
             case "layouts":
-                from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import select_layout
+                from stackops.utils.schemas.layouts.layout_file import read_layouts_file
 
-                select_layout(layouts_json_file=str(data_path), selected_layouts_names=[], select_interactively=False)
+                read_layouts_file(path=data_path)
             case "dotfiles":
                 from stackops.profile.dotfiles_mapper import load_dotfiles_mapper
 

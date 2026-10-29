@@ -12,7 +12,7 @@ REPO_PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 REPO_MCP_JSON_FILE_NAME: Final[str] = "mcp.json"
 REPO_SCRIPTS_DIRECTORY_NAME: Final[str] = "scripts"
 
-RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "parallel_yaml", "mcp_json", "scripts", "secrets_json", "layouts_json"]
+RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "parallel_yaml", "mcp_json", "scripts", "secrets_json", "layout_yaml"]
 
 
 def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
@@ -33,8 +33,8 @@ def current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path | None:
             return stackops_root / REPO_SCRIPTS_DIRECTORY_NAME
         case "secrets_json":
             return stackops_root / "secrets" / "secrets.json"
-        case "layouts_json":
-            return stackops_root / "config" / "layout.json"
+        case "layout_yaml":
+            return stackops_root / "config" / "layout.yaml"
 
 
 def require_current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path:

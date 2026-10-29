@@ -1,8 +1,7 @@
 """Pure Python implementations for sessions commands - no typer dependencies."""
 
-import json
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal
 
 from stackops.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
@@ -14,57 +13,13 @@ from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 BackendName = Literal["tmux", "herdr", "tuios"]
 
 
-def select_layout(layouts_json_file: str, selected_layouts_names: list[str], select_interactively: bool) -> list["LayoutConfig"]:
+def select_layout(layouts_file: Path, selected_layouts_names: list[str], select_interactively: bool) -> list["LayoutConfig"]:
     """Select layout(s) from a layout file."""
-    from stackops.utils.schemas.yaml_schema import JsonValue
+    from stackops.utils.schemas.layouts.layout_file import read_layouts_file
 
-    json_str = Path(layouts_json_file).read_text(encoding="utf-8")
-    try:
-        layout_file = cast(JsonValue, json.loads(json_str))
-    except json.JSONDecodeError:
-        print(f"Failed to parse the json file {layouts_json_file}, trying to clean the comments and giving it another shot ... ")
-        from stackops.utils.files.read import remove_c_style_comments
-        json_str = remove_c_style_comments(json_str)
-        layout_file = cast(JsonValue, json.loads(json_str))
-    if not isinstance(layout_file, dict):
-        raise ValueError(f"""Invalid layout file '{layouts_json_file}': expected a JSON object.""")
-    raw_layouts = layout_file.get("layouts")
-    if not isinstance(raw_layouts, list):
-        raise ValueError(f"""Invalid layout file '{layouts_json_file}': 'layouts' must be a list.""")
-    for layout_index, layout in enumerate(raw_layouts):
-        location = f"""'{layouts_json_file}' at layouts[{layout_index}]"""
-        if not isinstance(layout, dict):
-            raise ValueError(f"""Invalid layout in {location}: expected an object.""")
-        if not isinstance(layout.get("layoutName"), str):
-            raise ValueError(f"""Invalid layout in {location}: 'layoutName' must be a string.""")
-        tabs = layout.get("layoutTabs")
-        if not isinstance(tabs, list):
-            raise ValueError(f"""Invalid layout in {location}: 'layoutTabs' must be a list.""")
-        for tab_index, tab in enumerate(tabs):
-            tab_location = f"""{location}.layoutTabs[{tab_index}]"""
-            if not isinstance(tab, dict):
-                raise ValueError(f"""Invalid tab in {tab_location}: expected an object.""")
-            if not isinstance(tab.get("tabName"), str):
-                raise ValueError(f"""Invalid tab in {tab_location}: 'tabName' must be a string.""")
-            if tab.get("arrangement", "grid") not in ("columns", "rows", "grid"):
-                raise ValueError(f"""Invalid tab in {tab_location}: 'arrangement' must be one of columns, rows, grid.""")
-            panes = tab.get("panes")
-            if not isinstance(panes, list) or len(panes) == 0:
-                raise ValueError(f"""Invalid tab in {tab_location}: 'panes' must be a non-empty list.""")
-            pane_names: set[object] = set()
-            for pane_index, pane in enumerate(panes):
-                pane_location = f"""{tab_location}.panes[{pane_index}]"""
-                if not isinstance(pane, dict):
-                    raise ValueError(f"""Invalid pane in {pane_location}: expected an object.""")
-                for field in ("paneName", "startDir", "command"):
-                    if not isinstance(pane.get(field), str):
-                        raise ValueError(f"""Invalid pane in {pane_location}: '{field}' must be a string.""")
-                if pane["paneName"] in pane_names:
-                    raise ValueError(f"""Invalid pane in {pane_location}: duplicate paneName {pane["paneName"]!r} in the tab.""")
-                pane_names.add(pane["paneName"])
-    layouts = cast(list[LayoutConfig], raw_layouts)
+    layouts = read_layouts_file(path=layouts_file)["layouts"]
     if len(layouts) == 0:
-        raise ValueError(f"No layouts found in {layouts_json_file}")
+        raise ValueError(f"No layouts found in {layouts_file}")
     if len(selected_layouts_names) == 0:
         if not select_interactively:
             return layouts
@@ -72,9 +27,10 @@ def select_layout(layouts_json_file: str, selected_layouts_names: list[str], sel
         # from stackops.utils.options_utils.options import choose_from_options
         # selected_layouts_names = choose_from_options(multi=True, options=options, prompt="Choose a layout configuration:", tv=True, msg="Choose one option")
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+        from stackops.utils.schemas.layouts.layout_file import layout_yaml_text
         selected_layouts_names = choose_from_dict_with_preview(
-            {layout["layoutName"]: json.dumps(layout, indent=4) for layout in layouts},
-            extension="json",
+            {layout["layoutName"]: layout_yaml_text(document=layout) for layout in layouts},
+            extension="yaml",
             multi=True,
             preview_size_percent=40,
         )

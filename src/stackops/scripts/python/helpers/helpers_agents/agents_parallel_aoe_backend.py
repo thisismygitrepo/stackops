@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Final
 
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_layouts import read_generated_layouts
 from stackops.scripts.python.helpers.helpers_sessions.sessions_aoe_impl import AoeLaunchOptions, run_layouts_via_aoe
+from stackops.utils.schemas.layouts.layout_file import read_layouts_file
 
 
 _AOE_AGENT_BY_STACKOPS_AGENT: Final[dict[str, str]] = {
@@ -34,7 +34,7 @@ def resolve_aoe_tool_for_stackops_agent(agent: str | None) -> str | None:
 
 
 def run_generated_layout_with_aoe(*, layout_output_path: Path, agent: str | None = None) -> None:
-    layouts = read_generated_layouts(layout_output_path=layout_output_path)
+    layouts = read_layouts_file(path=layout_output_path)["layouts"]
     if len(layouts) == 0:
         raise RuntimeError(f"AoE backend cannot launch {layout_output_path} because it contains no layouts.")
 

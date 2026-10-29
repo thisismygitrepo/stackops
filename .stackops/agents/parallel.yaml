@@ -55,7 +55,7 @@ update-installer:
   prompt_name: null
   job_name: updateInstallerData
   join_prompt_and_context: false
-  output_path: ./.ai/agents/updateInstallerData/layout.json
+  output_path: ./.ai/agents/updateInstallerData/layout.yaml
   agents_dir: ./.ai/agents/updateInstallerData
   interactive: false
   context: null
@@ -112,7 +112,7 @@ update-test:
   prompt_name: null
   job_name: updateTests
   join_prompt_and_context: false
-  output_path: ./.ai/agents/updateTests/layout.json
+  output_path: ./.ai/agents/updateTests/layout.yaml
   agents_dir: ./.ai/agents/updateTests
   interactive: false
 update-docs:
@@ -145,6 +145,6 @@ update-docs:
   prompt_name: null
   job_name: updateDocs
   join_prompt_and_context: false
-  output_path: ./.ai/agents/updateDocs/layout.json
+  output_path: ./.ai/agents/updateDocs/layout.yaml
   agents_dir: ./.ai/agents/updateDocs
   interactive: false

@@ -80,7 +80,7 @@ def _provider_allows_none(agent: AGENTS) -> bool:
 
 def _format_output_path_value(value: str | None) -> str:
     if value is None:
-        return "auto: layout.json inside agents_dir"
+        return "auto: layout.yaml inside agents_dir"
     return value
 
 
@@ -225,7 +225,7 @@ def _build_create_options_form(
             default=backend, options=_to_option_values(order_current_first(options=AGENT_PARALLEL_BACKENDS, current=backend))
         ),
         review_options["output_path"]: _text_option_spec(
-            default=output_path, allow_blank=True, placeholder="Leave blank to auto-create layout.json inside agents_dir"
+            default=output_path, allow_blank=True, placeholder="Leave blank to auto-create layout.yaml inside agents_dir"
         ),
         review_options["agents_dir"]: _text_option_spec(
             default=agents_dir, allow_blank=True, placeholder="Leave blank to derive .ai/agents from job_name"

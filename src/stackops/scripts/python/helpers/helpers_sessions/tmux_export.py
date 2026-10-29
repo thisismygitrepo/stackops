@@ -22,12 +22,8 @@ from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants impo
     TmuxExportCommandSource,
 )
 from stackops.utils.schemas.layouts.layout_arrangement import infer_arrangement_from_origins
-from stackops.utils.schemas.layouts.layout_types import (
-    LayoutConfig,
-    LayoutFileWriteMode,
-    TabConfig,
-    serialize_layouts_to_file,
-)
+from stackops.utils.schemas.layouts.layout_file import LayoutFileWriteMode, serialize_layouts_to_file
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
 
 def _parse_session_names(session_names: str) -> list[str]:
@@ -223,7 +219,7 @@ def write_exported_layouts(
     serialize_layouts_to_file(
         layouts=layouts,
         version=TMUX_EXPORT_LAYOUT_VERSION,
-        path=str(output_path),
+        path=output_path,
         write_mode=write_mode,
     )
 

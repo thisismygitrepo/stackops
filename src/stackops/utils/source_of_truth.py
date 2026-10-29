@@ -29,7 +29,7 @@ DOTFILES_STACKOPS_INIT_LINUX_PATH = DOTFILES_STACKOPS_SCRIPTS_LINUX_ROOT.joinpat
 
 CONFIG_ROOT = Path.home().joinpath(".config/stackops")
 DOTFILES_STACKOPS_CONFIG_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "config.json")
-DOTFILES_LAYOUTS_JSON_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "layouts.json")
+DOTFILES_LAYOUT_YAML_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "layout.yaml")
 DOTFILES_USER_MAPPER_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "dotfiles.yaml")
 DOTFILES_USER_BACKUP_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "data.yaml")
 DOTFILES_USER_INSTALLER_DATA_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "installer_data.json")

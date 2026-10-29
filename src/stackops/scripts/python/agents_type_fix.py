@@ -22,7 +22,7 @@ def _get_job_name(*, checker_name: CheckerName) -> str:
 
 
 def _get_layout_path(*, checker_name: CheckerName) -> str:
-    return f"./.ai/agents/{_get_job_name(checker_name=checker_name)}/layout.json"
+    return f"./.ai/agents/{_get_job_name(checker_name=checker_name)}/layout.yaml"
 
 
 def launch_type_fix(

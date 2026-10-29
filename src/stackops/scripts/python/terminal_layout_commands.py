@@ -7,7 +7,7 @@ import typer
 def list_layouts(
     layouts_file: Annotated[
         Path | None,
-        typer.Option("--custom-path", "-p", exists=True, dir_okay=False, help="Layout JSON file. Overrides --source; omit to list layouts from the selected sources."),
+        typer.Option("--custom-path", "-p", exists=True, dir_okay=False, help="Layout YAML file. Overrides --source; omit to list layouts from the selected sources."),
     ] = None,
     source: Annotated[
         Literal["workspace", "w", "user", "u", "all", "a"],
@@ -91,7 +91,7 @@ def list_layouts(
 def edit_layouts(
     layouts_file: Annotated[
         Path | None,
-        typer.Option("--custom-path", "-p", dir_okay=False, help="Layout JSON file to edit. Overrides --source; omit to choose the user or workspace config file."),
+        typer.Option("--custom-path", "-p", dir_okay=False, help="Layout YAML file to edit. Overrides --source; omit to choose the user or workspace config file."),
     ] = None,
     source: Annotated[
         Literal["workspace", "w", "user", "u"] | None,

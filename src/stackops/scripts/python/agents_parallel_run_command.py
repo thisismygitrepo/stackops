@@ -79,7 +79,7 @@ def run_parallel(
         _BooleanOverride | None,
         typer.Option("--run", "-R", help="Override whether the layout launches immediately: true or false. Omit to use YAML; launches when YAML omits run."),
     ] = None,
-    output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Override layout.json output path.")] = None,
+    output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Override layout.yaml output path.")] = None,
     agents_dir: Annotated[str | None, typer.Option(..., "--agents-dir", "-d", help="Override exact directory to store agent files in.")] = None,
     interactive: Annotated[
         _BooleanOverride | None, typer.Option("--interactive", "-i", help="Override whether create runs interactively: true or false. Omit to use YAML.")

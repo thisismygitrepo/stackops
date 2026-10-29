@@ -6,7 +6,7 @@ import typer
 
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
-from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+from stackops.utils.source_of_truth import DOTFILES_LAYOUT_YAML_PATH
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,8 +17,8 @@ class LayoutEntry:
 
 
 def default_layout_source_paths() -> dict[Literal["user", "workspace"], Path]:
-    source_paths: dict[Literal["user", "workspace"], Path] = {"user": DOTFILES_LAYOUTS_JSON_PATH}
-    project_path = current_repo_stackops_path(path_kind="layouts_json")
+    source_paths: dict[Literal["user", "workspace"], Path] = {"user": DOTFILES_LAYOUT_YAML_PATH}
+    project_path = current_repo_stackops_path(path_kind="layout_yaml")
     if project_path is not None:
         source_paths["workspace"] = project_path
     return source_paths
@@ -56,9 +56,9 @@ def resolve_layout_source(
     else:
         match source:
             case "workspace" | "w":
-                source_files = [("workspace", require_current_repo_stackops_path(path_kind="layouts_json"))]
+                source_files = [("workspace", require_current_repo_stackops_path(path_kind="layout_yaml"))]
             case "user" | "u":
-                source_files = [("user", DOTFILES_LAYOUTS_JSON_PATH)]
+                source_files = [("user", DOTFILES_LAYOUT_YAML_PATH)]
             case "all" | "a":
                 source_files = list(default_layout_source_paths().items())
 
@@ -80,7 +80,7 @@ Create a layout file at one of these paths, or provide --custom-path explicitly.
     entries: list[LayoutEntry] = []
     for source_name, path in existing_files:
         layouts = select_layout(
-            layouts_json_file=str(path),
+            layouts_file=path,
             selected_layouts_names=[],
             select_interactively=False,
         )
@@ -102,19 +102,17 @@ def load_selected_layouts_from_source(
     if choose_layouts is None:
         return list(layout_source)
     if choose_layouts == "":
-        import json
-
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+        from stackops.utils.schemas.layouts.layout_file import layout_yaml_text
 
         selected_names = choose_from_dict_with_preview(
             options_to_preview_mapping={
-                entry.selector: json.dumps(
-                    {"source_file": str(entry.source_path) if entry.source_path is not None else None, **entry.layout},
-                    indent=4,
+                entry.selector: layout_yaml_text(
+                    document={"source_file": str(entry.source_path) if entry.source_path is not None else None, **entry.layout},
                 )
                 for entry in layout_source
             },
-            extension="json",
+            extension="yaml",
             multi=True,
             preview_size_percent=40,
         )

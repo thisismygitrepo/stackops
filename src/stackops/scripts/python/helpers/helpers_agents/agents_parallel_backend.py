@@ -30,8 +30,8 @@ def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBack
         case "tmux":
             _run_generated_layout_with_tmux(layout_output_path=layout_output_path)
         case "tuios":
-            from stackops.scripts.python.helpers.helpers_agents.agents_parallel_layouts import read_generated_layouts
             from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
+            from stackops.utils.schemas.layouts.layout_file import read_layouts_file
 
             run_layouts(
                 sleep_inbetween=0,
@@ -41,16 +41,16 @@ def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBack
                 backend="tuios",
                 on_conflict="restart",
                 exit_mode="backToShell",
-                layouts_selected=read_generated_layouts(layout_output_path=layout_output_path),
+                layouts_selected=read_layouts_file(path=layout_output_path)["layouts"],
             )
         case "herdr":
-            from stackops.scripts.python.helpers.helpers_agents.agents_parallel_layouts import read_generated_layouts
             from stackops.scripts.python.helpers.helpers_sessions.sessions_herdr import (
                 launch_layout_with_herdr,
                 show_herdr_launch_summary,
             )
+            from stackops.utils.schemas.layouts.layout_file import read_layouts_file
 
-            layouts = read_generated_layouts(layout_output_path=layout_output_path)
+            layouts = read_layouts_file(path=layout_output_path)["layouts"]
             if len(layouts) != 1:
                 raise RuntimeError(f"Herdr backend expects one generated layout, found {len(layouts)} in {layout_output_path}")
             show_herdr_launch_summary(summary=launch_layout_with_herdr(layout=layouts[0]))

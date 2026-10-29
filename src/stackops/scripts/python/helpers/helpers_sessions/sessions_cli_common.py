@@ -20,13 +20,13 @@ type ResolvedSessionBackend = Literal["tmux", "herdr", "tuios", "aoe"]
 
 
 def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:
-    from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+    from stackops.utils.source_of_truth import DOTFILES_LAYOUT_YAML_PATH
 
     if layouts_file is not None:
         from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import find_layout_file
         layouts_file_resolved = Path(find_layout_file(layout_path=layouts_file))
     else:
-        layouts_file_resolved = DOTFILES_LAYOUTS_JSON_PATH
+        layouts_file_resolved = DOTFILES_LAYOUT_YAML_PATH
     if layouts_file_resolved.exists():
         return layouts_file_resolved
     typer.echo(ctx.get_help())
@@ -56,7 +56,7 @@ def load_selected_layouts(
         layout_names = [name.strip() for name in choose_layouts.split(",") if name.strip()]
         choose_layouts_interactively = False
     return select_layout(
-        layouts_json_file=str(layouts_file_resolved),
+        layouts_file=layouts_file_resolved,
         selected_layouts_names=layout_names,
         select_interactively=choose_layouts_interactively,
     )
@@ -66,7 +66,7 @@ def load_all_layouts(layouts_file_resolved: Path) -> "list[LayoutConfig]":
     from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import select_layout
 
     return select_layout(
-        layouts_json_file=str(layouts_file_resolved),
+        layouts_file=layouts_file_resolved,
         selected_layouts_names=[],
         select_interactively=False,
     )
@@ -88,9 +88,8 @@ def choose_tabs_from_layouts(
 
     selected_tab_refs: set[tuple[str, int]] = set()
     if choose_tabs == "":
-        import json
-
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+        from stackops.utils.schemas.layouts.layout_file import layout_yaml_text
 
         options_to_preview_mapping: dict[str, str] = {}
         key_to_ref: dict[str, tuple[str, int]] = {}
@@ -99,14 +98,13 @@ def choose_tabs_from_layouts(
                 f"{layout_name}::{tab.get('tabName', f'tab#{tab_index + 1}')}"
                 f"[{tab_index}]"
             )
-            options_to_preview_mapping[option_key] = json.dumps(
-                {"layoutName": layout_name, "tabIndex": tab_index, "tab": tab},
-                indent=4,
+            options_to_preview_mapping[option_key] = layout_yaml_text(
+                document={"layoutName": layout_name, "tabIndex": tab_index, "tab": tab},
             )
             key_to_ref[option_key] = (layout_name, tab_index)
         chosen_keys = choose_from_dict_with_preview(
             options_to_preview_mapping=options_to_preview_mapping,
-            extension="json",
+            extension="yaml",
             multi=True,
             preview_size_percent=40,
         )

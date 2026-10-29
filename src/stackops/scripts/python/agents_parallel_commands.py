@@ -111,7 +111,7 @@ def agents_create(
     ] = "AI_Agents",
     join_prompt_and_context: Annotated[bool, typer.Option(..., "--join-prompt-context", "-j", help="Join prompt file to the context.")] = False,
     run: Annotated[bool, typer.Option(..., "--run", "-R", help="Immediately launch the generated layout through the selected backend.")] = False,
-    output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Path to write the layout.json file")] = None,
+    output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Path to write the layout.yaml file")] = None,
     agents_dir: Annotated[
         str | None,
         typer.Option(

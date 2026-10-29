@@ -3,14 +3,10 @@
   "$id": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json",
   "title": "Terminal Layouts Schema",
   "version": "0.1.0",
-  "description": "Schema for terminal layouts used by scripts/layout.json",
+  "description": "Schema for stackops terminal layout YAML files (layout.yaml).",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$schema": {
-      "type": "string",
-      "description": "Optional link to the JSON Schema used for this file."
-    },
     "version": {
       "type": "string",
       "description": "Schema or config version.",

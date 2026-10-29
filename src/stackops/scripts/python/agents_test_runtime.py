@@ -39,7 +39,7 @@ def _get_context_path(*, workspace_root: Path) -> Path:
 
 
 def _get_layout_path(*, workspace_root: Path) -> str:
-    return str(workspace_root / ".ai" / "agents" / JOB_NAME / "layout.json")
+    return str(workspace_root / ".ai" / "agents" / JOB_NAME / "layout.yaml")
 
 
 def _should_exclude_path(*, relative_path: Path) -> bool:

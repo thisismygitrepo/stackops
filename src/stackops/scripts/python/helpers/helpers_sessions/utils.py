@@ -29,27 +29,13 @@ def balance_load(
     if not layout_path_obj.is_file():
         raise ValueError(f"Layout path is not a file: {layout_path_obj}")
 
-    from stackops.utils.schemas.layouts.layout_types import LayoutsFile
-    import json
-    raw_layout_text = layout_path_obj.read_text(encoding="utf-8")
-    try:
-        layoutfile: LayoutsFile = json.loads(raw_layout_text)
-    except json.JSONDecodeError:
-        from stackops.utils.files.read import remove_c_style_comments
-
-        try:
-            layoutfile = json.loads(remove_c_style_comments(raw_layout_text))
-        except json.JSONDecodeError as error:
-            raise ValueError(f"Failed to parse layout file '{layout_path_obj}': {error}") from error
-
-    try:
-        layout_configs = layoutfile["layouts"]
-    except KeyError as error:
-        raise ValueError(f"Layout file '{layout_path_obj}' is missing required 'layouts' field.") from error
+    from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX
+    from stackops.utils.schemas.layouts.layout_file import read_layouts_file, write_layouts_file
     from stackops.cluster.sessions_managers.utils.load_balancer import limit_tab_num
 
+    layoutfile = read_layouts_file(path=layout_path_obj)
     new_layouts = limit_tab_num(
-        layout_configs=layout_configs,
+        layout_configs=layoutfile["layouts"],
         max_thresh=max_thresh,
         threshold_type=resolved_thresh_type,
         breaking_method=resolved_breaking_method,
@@ -58,15 +44,16 @@ def balance_load(
     target_file = (
         Path(output_path).expanduser().absolute()
         if output_path is not None
-        else layout_path_obj.parent / f"{layout_path_obj.stem}_adjusted_{max_thresh}_{thresh_type}_{breaking_method}.json"
+        else layout_path_obj.parent / f"{layout_path_obj.stem}_adjusted_{max_thresh}_{thresh_type}_{breaking_method}{LAYOUT_FILE_SUFFIX}"
     )
-    target_file.parent.mkdir(parents=True, exist_ok=True)
-    target_file.write_text(data=json.dumps(layoutfile, indent=4), encoding="utf-8")
+    write_layouts_file(path=target_file, layouts_file=layoutfile)
     print(f"Adjusted layout saved to {target_file}")
 
 
 def create_template(name: str | None, num_tabs: int) -> None:
     """Create a layout template file."""
+    from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX
+    from stackops.utils.schemas.layouts.layout_file import write_layouts_file
     from stackops.utils.schemas.layouts.layout_types import LayoutsFile, TabConfig, LayoutConfig, single_pane_tab
 
     tabs: list[TabConfig] = []
@@ -86,21 +73,11 @@ def create_template(name: str | None, num_tabs: int) -> None:
     for i in range(1, num_tabs + 1):
         tabs.append(single_pane_tab(tab_name=f"Tab{i}", start_dir=start_directory, command=default_command))
     layouts: list[LayoutConfig] = [{"layoutName": f"{Path.cwd().name}Layout", "layoutTabs": tabs}]
-    file: LayoutsFile = {
-        "$schema": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json",  # type: ignore
-        "version": "0.1",
-        "layouts": layouts,
-    }
-    import json
-
-    json_string = json.dumps(file, indent=4)
-    if name is None:
-        layout_path = Path.cwd() / "layout.json"
-    else:
-        layout_path = Path.cwd() / (name.replace(".json", "") + ".json")
-    layout_path.parent.mkdir(parents=True, exist_ok=True)
+    file: LayoutsFile = {"version": "0.1", "layouts": layouts}
+    layout_stem = "layout" if name is None else name.removesuffix(LAYOUT_FILE_SUFFIX)
+    layout_path = Path.cwd() / f"{layout_stem}{LAYOUT_FILE_SUFFIX}"
     if layout_path.exists():
         print(f"❌ File {layout_path} already exists. Aborting to avoid overwriting.")
         return
-    layout_path.write_text(json_string, encoding="utf-8")
+    write_layouts_file(path=layout_path, layouts_file=file)
     print(f"✅ Created layout template at {layout_path}")

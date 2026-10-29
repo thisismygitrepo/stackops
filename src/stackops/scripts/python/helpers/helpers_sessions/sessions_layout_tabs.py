@@ -1,5 +1,4 @@
 from copy import deepcopy
-import json
 
 import typer
 
@@ -23,25 +22,25 @@ def choose_tabs_from_source(
     selected_tab_refs: set[tuple[int, int]] = set()
     if choose_tabs == "":
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+        from stackops.utils.schemas.layouts.layout_file import layout_yaml_text
 
         options_to_preview_mapping: dict[str, str] = {}
         key_to_ref: dict[str, tuple[int, int]] = {}
         for layout_index, tab_index, tab in flat_tab_refs:
             entry = layouts_selected[layout_index]
             option_key = f"""{entry.selector}::{tab['tabName']}[{tab_index}]"""
-            options_to_preview_mapping[option_key] = json.dumps(
-                {
+            options_to_preview_mapping[option_key] = layout_yaml_text(
+                document={
                     "source_file": str(entry.source_path) if entry.source_path is not None else None,
                     "layoutName": entry.layout["layoutName"],
                     "tabIndex": tab_index,
                     "tab": tab,
                 },
-                indent=4,
             )
             key_to_ref[option_key] = (layout_index, tab_index)
         chosen_keys = choose_from_dict_with_preview(
             options_to_preview_mapping=options_to_preview_mapping,
-            extension="json",
+            extension="yaml",
             multi=True,
             preview_size_percent=40,
         )

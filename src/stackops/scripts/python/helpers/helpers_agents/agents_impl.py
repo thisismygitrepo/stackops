@@ -77,7 +77,8 @@ def agents_create(
     )
     from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
     from stackops.utils.repos.project import resolve_project_root
-    import json
+    from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX
+    from stackops.utils.schemas.layouts.layout_file import write_layouts_file
 
     project_root = resolve_project_root(current_dir=Path.cwd())
     if save_as_yaml and project_root is None:
@@ -150,9 +151,8 @@ def agents_create(
     show_generated_agents_table(repo_root=workspace_root, prompt_dirs=prompt_directories)
     layoutfile = get_agents_launch_layout(session_root=agents_dir_obj, job_name=job_name_resolved, start_dir=workspace_root)
 
-    layout_output_path = Path(output_path).expanduser().resolve() if output_path is not None else agents_dir_obj / "layout.json"
-    layout_output_path.parent.mkdir(parents=True, exist_ok=True)
-    layout_output_path.write_text(data=json.dumps(layoutfile, indent=4), encoding="utf-8")
+    layout_output_path = Path(output_path).expanduser().resolve() if output_path is not None else agents_dir_obj / f"layout{LAYOUT_FILE_SUFFIX}"
+    write_layouts_file(path=layout_output_path, layouts_file=layoutfile)
     create_artifacts = write_create_artifacts(
         repo_root=workspace_root,
         agents_dir=agents_dir_obj,

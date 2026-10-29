@@ -15,7 +15,7 @@ from stackops.utils.repos import stackops_paths
 def test_explicit_layout_file_overrides_source(
     command: str, source: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    layout_path = tmp_path / "custom.json"
+    layout_path = tmp_path / "custom.yaml"
     source_lookup = Mock(side_effect=AssertionError("Explicit layout files must bypass project lookup"))
     monkeypatch.setattr(stackops_paths, "require_current_repo_stackops_path", source_lookup)
     managed_action = Mock()
@@ -37,4 +37,4 @@ def test_workspace_layout_from_nested_directory_uses_repository_root(tmp_path: P
         monkeypatch.chdir(nested_directory)
         layout_path = resolve_layout_file(layouts_file=None, source="w")
 
-    assert layout_path == tmp_path / ".stackops" / "config" / "layout.json"
+    assert layout_path == tmp_path / ".stackops" / "config" / "layout.yaml"

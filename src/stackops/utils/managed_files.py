@@ -74,11 +74,11 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
             )
         case "layouts":
             import stackops.utils.schemas.layouts as layout_assets
-            from stackops.utils.source_of_truth import DOTFILES_LAYOUTS_JSON_PATH
+            from stackops.utils.source_of_truth import DOTFILES_LAYOUT_YAML_PATH
 
             layouts_example_path = get_path_reference_path(module=layout_assets, path_reference=layout_assets.LAYOUT_PATH_REFERENCE)
             return ManagedFileSpec(
-                user_path=DOTFILES_LAYOUTS_JSON_PATH,
+                user_path=DOTFILES_LAYOUT_YAML_PATH,
                 example_source_path=layouts_example_path,
                 schema_source_path=get_path_reference_path(module=layout_assets, path_reference=layout_assets.LAYOUT_SCHEMA_PATH_REFERENCE),
                 initial_content=layouts_example_path.read_text(encoding="utf-8"),

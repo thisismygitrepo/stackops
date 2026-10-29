@@ -16,11 +16,11 @@ _SessionConflictActionLoose = Literal[
 
 
 def balance_load(
-    layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.json file")],
+    layout_path: Annotated[str, typer.Argument(..., help="Path to the layout.yaml file")],
     max_thresh: Annotated[int, typer.Option(..., "--max-threshold", "-m", help="Maximum tabs per layout")],
     thresh_type: Annotated[Literal["number", "n", "weight", "w"], typer.Option(..., "--threshold-type", "-t", help="Threshold type")] = "number",
     breaking_method: Annotated[Literal["more-layouts", "ml", "combine-tabs", "ct"], typer.Option(..., "--breaking-method", "-b", help="Breaking method")] = "more-layouts",
-    output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Path to write the adjusted layout.json file")] = None,
+    output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Path to write the adjusted layout.yaml file")] = None,
 ) -> None:
     """Adjust layout file to limit max tabs per layout, etc."""
     from stackops.scripts.python.helpers.helpers_sessions.utils import balance_load as impl
@@ -39,7 +39,7 @@ def balance_load(
 
 def run(
     ctx: typer.Context,
-    layouts_file: Annotated[str | None, typer.Option("--custom-path", "-p", help="Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.")] = None,
+    layouts_file: Annotated[str | None, typer.Option("--custom-path", "-p", help="Layout YAML file, overriding --source. Omit to choose layouts from the selected sources.")] = None,
     source: Annotated[
         Literal["workspace", "w", "user", "u", "all", "a"],
         typer.Option("--source", "-s", help="Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted."),
@@ -108,7 +108,7 @@ def run(
 def run_all(
     ctx: typer.Context,
     *,
-    layouts_file: Annotated[str | None, typer.Option("--custom-path", "-p", help="Layout JSON file, overriding --source. Omit to choose layouts from the selected sources.")] = None,
+    layouts_file: Annotated[str | None, typer.Option("--custom-path", "-p", help="Layout YAML file, overriding --source. Omit to choose layouts from the selected sources.")] = None,
     source: Annotated[
         Literal["workspace", "w", "user", "u", "all", "a"],
         typer.Option("--source", "-s", help="Layout sources: workspace/w, user/u, or all/a. Used when --custom-path is omitted."),
@@ -296,7 +296,7 @@ def kill_session_target(
 def export(
     sessions: Annotated[str | None, typer.Option("--sessions", "-s", help="Comma-separated backend session/workspace names. Pass an empty value or omit it to select interactively.")] = None,
     all_sessions: Annotated[bool, typer.Option("--all", "-a", help="Export all running backend sessions/workspaces without prompting.", show_default=True)] = False,
-    output_path: Annotated[str | None, typer.Option("--output", "-o", help="Path to write the generated layout file. Defaults to ./tmux_export_layout.json.")] = None,
+    output_path: Annotated[str | None, typer.Option("--output", "-o", help="Path to write the generated layout file. Defaults to ./tmux_export_layout.yaml.")] = None,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-w", help="Replace the output file if it already exists.", show_default=True)] = False,
     merge: Annotated[bool, typer.Option("--merge", "-m", help="Merge exported sessions into an existing layout file by layoutName.", show_default=True)] = False,
     backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u"], typer.Option("--backend", "-b", help="Backend to export from: tmux/t, herdr/h, or tuios/u.")] = "tmux",

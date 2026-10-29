@@ -156,7 +156,7 @@ def _reject_duplicate_multi_run_outputs(*, resolved_entries: tuple[tuple[str, Re
     layout_owner: dict[str, str] = {}
     for selected_name, resolved in resolved_entries:
         workspace_key = resolved.agents_dir if resolved.agents_dir is not None else f"job:{resolved.job_name}"
-        layout_key = resolved.output_path if resolved.output_path is not None else f"workspace:{workspace_key}/layout.json"
+        layout_key = resolved.output_path if resolved.output_path is not None else f"workspace:{workspace_key}/layout.yaml"
         existing_workspace_owner = workspace_owner.get(workspace_key)
         if existing_workspace_owner is not None:
             raise ValueError(
