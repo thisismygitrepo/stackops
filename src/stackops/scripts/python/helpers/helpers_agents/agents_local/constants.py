@@ -1,6 +1,6 @@
 from typing import Final, Literal
 
-CatalogSort = Literal["newest", "popular"]
+CatalogSort = Literal["newest", "popular", "trending"]
 CatalogCapability = Literal["tools", "thinking", "vision", "audio"]
 LocalBackend = Literal["ollama", "vllm"]
 
@@ -14,6 +14,7 @@ HUGGING_FACE_MODELS_URL: Final[str] = "https://huggingface.co/api/models"
 HUGGING_FACE_HUB_URL: Final[str] = "https://huggingface.co"
 VLLM_CATALOG_URL: Final[str] = "https://huggingface.co/models?apps=vllm"
 VLLM_CATALOG_PAGE_SIZE: Final[int] = 100
+VLLM_DISCOVER_SORT: Final[CatalogSort] = "popular"
 
 OLLAMA_DEFAULT_HOST: Final[str] = "http://127.0.0.1:11434"
 OLLAMA_DEFAULT_PORT: Final[int] = 11434

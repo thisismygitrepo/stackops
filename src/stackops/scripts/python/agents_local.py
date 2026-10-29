@@ -13,6 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_local.constants impor
     OLLAMA_DISCOVER_SORT,
     OLLAMA_TIMEOUT_SECONDS,
     VLLM_DEFAULT_HOST,
+    VLLM_DISCOVER_SORT,
     VLLM_TIMEOUT_SECONDS,
     CatalogCapability,
     CatalogSort,
@@ -77,7 +78,10 @@ def discover(
     max_params: Annotated[
         float, typer.Option("--max-params", "-m", min=0.001, help="Maximum advertised parameter count, in billions."),
     ] = OLLAMA_DISCOVER_MAX_PARAMS,
-    sort: Annotated[CatalogSort, typer.Option("--sort", "-s", help="Catalog ordering; not a quality ranking.")] = OLLAMA_DISCOVER_SORT,
+    sort: Annotated[
+        CatalogSort | None,
+        typer.Option("--sort", "-s", help="Catalog ordering; not a quality ranking. Ollama: newest|popular (default newest). vLLM: popular|trending (default popular)."),
+    ] = None,
     limit: Annotated[int, typer.Option("--limit", "-n", min=1, help="Maximum number of models or Ollama model families to show.")] = OLLAMA_DISCOVER_LIMIT,
     capability: Annotated[
         CatalogCapability | None, typer.Option("--capability", "-c", help="Ollama only: require a capability advertised by the model family."),
@@ -90,6 +94,7 @@ def discover(
         raise typer.BadParameter("Must be less than or equal to --max-params.", param_hint="--min-params")
     if backend == "vllm" and capability is not None:
         raise typer.BadParameter("Capability filtering is only available for the Ollama catalog.", param_hint="--capability")
+    resolved_sort: CatalogSort = sort or (VLLM_DISCOVER_SORT if backend == "vllm" else OLLAMA_DISCOVER_SORT)
 
     import requests
     from rich.console import Console
@@ -103,18 +108,18 @@ def discover(
 
             with Console().status("Fetching current Hugging Face models for vLLM..."):
                 vllm_models = discover_vllm_models(
-                    min_params=min_params, max_params=max_params, sort=sort, limit=limit, query=query, capability=capability, timeout=timeout,
+                    min_params=min_params, max_params=max_params, sort=resolved_sort, limit=limit, query=query, capability=capability, timeout=timeout,
                 )
-            show_discovered_vllm_models(models=vllm_models, min_params=min_params, max_params=max_params, sort=sort)
+            show_discovered_vllm_models(models=vllm_models, min_params=min_params, max_params=max_params, sort=resolved_sort)
         else:
             from stackops.scripts.python.helpers.helpers_agents.agents_local.catalog import discover_models
             from stackops.scripts.python.helpers.helpers_agents.agents_local.catalog_report import show_discovered_models
 
             with Console().status("Fetching current Ollama catalog and download sizes..."):
                 models = discover_models(
-                    min_params=min_params, max_params=max_params, sort=sort, limit=limit, query=query, capability=capability, timeout=timeout,
+                    min_params=min_params, max_params=max_params, sort=resolved_sort, limit=limit, query=query, capability=capability, timeout=timeout,
                 )
-            show_discovered_models(models=models, min_params=min_params, max_params=max_params, sort=sort)
+            show_discovered_models(models=models, min_params=min_params, max_params=max_params, sort=resolved_sort)
     except (requests.RequestException, ValueError) as error:
         Console(stderr=True).print(Text(f"""Could not discover {catalog_name} models: {error}""", style="red"))
         raise typer.Exit(code=1) from error

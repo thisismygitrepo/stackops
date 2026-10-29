@@ -13,7 +13,7 @@ def show_discovered_vllm_models(*, models: tuple[VllmCatalogModel, ...], min_par
     console = Console()
     console.print(Text(f"""Hugging Face vLLM catalog · reported parameters {min_params:g}B–{max_params:g}B · {sort}""", style="bold cyan"))
     console.print(Text(f"""Source: {VLLM_CATALOG_URL}""", style="dim"))
-    console.print(Text("Newest sorts by repository creation; popular sorts by downloads. Neither measures model quality.", style="dim"))
+    console.print(Text("Trending follows Hugging Face's recent-activity score; popular sorts by downloads. Neither measures model quality.", style="dim"))
     if not models:
         console.print(Text("No models match these filters.", style="yellow"))
     else:

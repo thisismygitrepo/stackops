@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import cast
+from typing import assert_never, cast
 
 import requests
 
@@ -26,10 +26,20 @@ def discover_vllm_models(
     if capability is not None:
         raise ValueError("--capability is available for Ollama; Hugging Face does not provide equivalent capability metadata for vLLM.")
 
+    match sort:
+        case "trending":
+            hub_sort = "trendingScore"
+        case "popular":
+            hub_sort = "downloads"
+        case "newest":
+            raise ValueError("--sort newest is available for Ollama; Hugging Face creation order lists unvetted uploads with no downloads. Use trending or popular.")
+        case _ as unreachable:
+            assert_never(unreachable)
+
     params: dict[str, str | int | list[str]] = {
         "apps": "vllm",
         "num_parameters": f"""min:{min_params:g}B,max:{max_params:g}B""",
-        "sort": "createdAt" if sort == "newest" else "downloads",
+        "sort": hub_sort,
         "direction": -1,
         "limit": VLLM_CATALOG_PAGE_SIZE,
         "expand": ["safetensors", "downloads", "pipeline_tag", "lastModified"],
