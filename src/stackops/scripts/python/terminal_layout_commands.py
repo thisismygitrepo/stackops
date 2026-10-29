@@ -13,14 +13,15 @@ def list_layouts(
         Literal["workspace", "w", "user", "u", "all", "a"],
         typer.Option("--source", "-s", help="Layout sources: workspace/w, user/u, or all/a. Ignored when --custom-path is provided."),
     ] = "all",
-    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include each tab's name, start directory, command, and weight.")] = False,
-    show_stats: Annotated[bool, typer.Option("--stats", "-S", help="Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.")] = False,
+    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include each tab's name, arrangement, weight, and each pane's name, start directory, and command.")] = False,
+    show_stats: Annotated[bool, typer.Option("--stats", "-S", help="Show layout, tab and pane totals, average tabs per layout, and the largest and smallest layouts.")] = False,
 ) -> None:
     from rich.console import Console
     from rich.table import Table
     from rich.text import Text
 
     from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import resolve_layout_source
+    from stackops.utils.schemas.layouts.layout_constants import DEFAULT_TAB_ARRANGEMENT
 
     try:
         entries = resolve_layout_source(
@@ -36,11 +37,13 @@ def list_layouts(
     table = Table(title=f"""Saved layouts ({len(entries)})""")
     table.add_column("Layout", style="cyan")
     table.add_column("Tabs", justify="right")
+    table.add_column("Panes", justify="right")
     table.add_column("Source file")
     for entry in entries:
         table.add_row(
             Text(entry.selector),
             str(len(entry.layout["layoutTabs"])),
+            str(sum(len(tab["panes"]) for tab in entry.layout["layoutTabs"])),
             Text(str(entry.source_path)),
         )
     console = Console()
@@ -49,12 +52,14 @@ def list_layouts(
     if show_stats:
         total_layouts = len(entries)
         total_tabs = sum(len(entry.layout["layoutTabs"]) for entry in entries)
+        total_panes = sum(len(tab["panes"]) for entry in entries for tab in entry.layout["layoutTabs"])
         average_tabs = total_tabs / total_layouts if total_layouts else 0.0
         stats_table = Table(title="Layout statistics")
         stats_table.add_column("Metric")
         stats_table.add_column("Value")
         stats_table.add_row("Layouts", str(total_layouts))
         stats_table.add_row("Tabs", str(total_tabs))
+        stats_table.add_row("Panes", str(total_panes))
         stats_table.add_row("Avg tabs/layout", f"""{average_tabs:.2f}""")
         if entries:
             largest = max(entries, key=lambda entry: len(entry.layout["layoutTabs"]))
@@ -67,15 +72,19 @@ def list_layouts(
         tabs_table = Table(title="Layout tabs")
         tabs_table.add_column("Layout", style="cyan")
         tabs_table.add_column("Tab")
+        tabs_table.add_column("Arrangement")
+        tabs_table.add_column("Pane")
         tabs_table.add_column("Start directory")
         tabs_table.add_column("Command")
         tabs_table.add_column("Weight", justify="right")
         for entry in entries:
             for tab in entry.layout["layoutTabs"]:
-                tabs_table.add_row(
-                    Text(entry.selector), Text(tab["tabName"]), Text(tab["startDir"]), Text(tab["command"]),
-                    str(tab["tabWeight"]) if "tabWeight" in tab else "—",
-                )
+                for pane in tab["panes"]:
+                    tabs_table.add_row(
+                        Text(entry.selector), Text(tab["tabName"]), Text(tab.get("arrangement", DEFAULT_TAB_ARRANGEMENT) if len(tab["panes"]) > 1 else "—"),
+                        Text(pane["paneName"]), Text(pane["startDir"]), Text(pane["command"]),
+                        str(tab["tabWeight"]) if "tabWeight" in tab else "—",
+                    )
         console.print(tabs_table)
 
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from types import FunctionType
 from typing import Final, Literal
 
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig, single_pane_tab
 
 
 PYTHON_PROCESS_LAUNCHERS: Final[frozenset[str]] = frozenset({"uv", "python", "python3", "fire", "f", "b", "bi", "bo", "bp"})
@@ -55,12 +55,7 @@ def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bo
     from stackops.utils.code import get_uv_command_executing_python_script
     no_sync_uv_run_flags = "--no-sync" if uv_run_flags == "" else f"--no-sync {uv_run_flags}"
     command_to_run, py_script_path = get_uv_command_executing_python_script(python_script=py_script, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=no_sync_uv_run_flags)
-    tab_config: TabConfig = {
-        "command": command_to_run,
-        "startDir": start_dir,
-        "tabName": func.__name__,
-        "tabWeight": tab_weight
-    }
+    tab_config: TabConfig = {**single_pane_tab(tab_name=func.__name__, start_dir=start_dir, command=command_to_run), "tabWeight": tab_weight}
     return tab_config, py_script_path
 def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str, fire_flags: str) -> TabConfig:
     import inspect
@@ -76,12 +71,7 @@ def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str,
     path = Path(inspect.getfile(func))
     path_relative = path.relative_to(Path.home())
     command_to_run = f"""{wrap_stackops} fire run {fire_flags} {path_relative} {func.__name__} """
-    tab_config: TabConfig = {
-        "command": command_to_run,
-        "startDir": start_dir,
-        "tabName": func.__name__,
-        "tabWeight": tab_weight
-    }
+    tab_config: TabConfig = {**single_pane_tab(tab_name=func.__name__, start_dir=start_dir, command=command_to_run), "tabWeight": tab_weight}
     return tab_config
 
 
@@ -110,15 +100,15 @@ def make_layout_from_functions(functions: list[FunctionType], functions_weights:
         else:
             tab_config = get_fire_tab_using_fire(a_func, tab_weight=tab_weight, start_dir=start_dir, fire_flags=flags)
             artifact_files = []
-        tab_config["command"] = _prepend_random_stagger(tab_config["command"], max_stagger=max_stagger)
+        first_pane = tab_config["panes"][0]
+        first_pane["command"] = _prepend_random_stagger(first_pane["command"], max_stagger=max_stagger)
         tabs2artifacts.append((tab_config, artifact_files))
     staggered_tab_configs: list[TabConfig] = []
     for tab in tab_configs:
-        staggered_tab: TabConfig = {"tabName": tab["tabName"], "startDir": tab["startDir"], "command": tab["command"]}
-        if "tabWeight" in tab:
-            staggered_tab["tabWeight"] = tab["tabWeight"]
-        if _is_python_process_command(command=staggered_tab["command"]):
-            staggered_tab["command"] = _prepend_random_stagger(staggered_tab["command"], max_stagger=max_stagger)
+        staggered_tab: TabConfig = {**tab, "panes": [{**pane} for pane in tab["panes"]]}
+        for pane in staggered_tab["panes"]:
+            if _is_python_process_command(command=pane["command"]):
+                pane["command"] = _prepend_random_stagger(pane["command"], max_stagger=max_stagger)
         staggered_tab_configs.append(staggered_tab)
     list_of_tabs = [tab for tab, _ in tabs2artifacts] + staggered_tab_configs
     layout_config: LayoutConfig = {

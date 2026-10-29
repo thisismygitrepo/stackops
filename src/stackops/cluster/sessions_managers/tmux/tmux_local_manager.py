@@ -18,7 +18,7 @@ from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
 )
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status import (
     TmuxSessionStatus,
-    build_unknown_command_status,
+    build_unknown_commands_status,
     check_tmux_session_status,
 )
 from stackops.cluster.sessions_managers.monitoring_types import CommandStatus, StartResult
@@ -134,8 +134,7 @@ class TmuxLocalManager:
             session_status = check_tmux_session_status(session_name)
             commands_status: dict[str, CommandStatus] = {}
             if manager.layout_config:
-                for tab in manager.layout_config["layoutTabs"]:
-                    commands_status[tab["tabName"]] = build_unknown_command_status(tab)
+                commands_status = build_unknown_commands_status(manager.layout_config)
             summary: TmuxLayoutSummary = {
                 "total_commands": len(commands_status),
                 "running_commands": sum(1 for status in commands_status.values() if status.get("running", False)),

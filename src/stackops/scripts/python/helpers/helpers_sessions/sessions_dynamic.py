@@ -106,7 +106,7 @@ def run_dynamic(
     all_tasks: list[DynamicTabTask] = []
     for index, tab in enumerate(layout["layoutTabs"]):
         runtime_tab_name = _build_runtime_tab_name(original_tab_name=tab["tabName"], index=index)
-        runtime_tab: TabConfig = {"tabName": runtime_tab_name, "startDir": tab["startDir"], "command": tab["command"]}
+        runtime_tab: TabConfig = {**tab, "tabName": runtime_tab_name}
         all_tasks.append({"index": index, "runtime_tab_name": runtime_tab_name, "tab": runtime_tab})
 
     first_count = min(max_parallel_tabs, len(all_tasks))

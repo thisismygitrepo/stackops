@@ -67,7 +67,7 @@ def balance_load(
 
 def create_template(name: str | None, num_tabs: int) -> None:
     """Create a layout template file."""
-    from stackops.utils.schemas.layouts.layout_types import LayoutsFile, TabConfig, LayoutConfig
+    from stackops.utils.schemas.layouts.layout_types import LayoutsFile, TabConfig, LayoutConfig, single_pane_tab
 
     tabs: list[TabConfig] = []
     import platform
@@ -84,8 +84,7 @@ def create_template(name: str | None, num_tabs: int) -> None:
         else str(current_directory)
     )
     for i in range(1, num_tabs + 1):
-        tab: TabConfig = {"tabName": f"Tab{i}", "startDir": start_directory, "command": default_command}
-        tabs.append(tab)
+        tabs.append(single_pane_tab(tab_name=f"Tab{i}", start_dir=start_directory, command=default_command))
     layouts: list[LayoutConfig] = [{"layoutName": f"{Path.cwd().name}Layout", "layoutTabs": tabs}]
     file: LayoutsFile = {
         "$schema": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json",  # type: ignore

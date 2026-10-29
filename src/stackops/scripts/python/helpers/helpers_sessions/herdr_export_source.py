@@ -122,3 +122,21 @@ def load_pane_entries(workspace_id_value: str) -> list[JsonObject]:
     panes = result_entries(payload=payload, key="panes")
     panes.sort(key=pane_sort_key)
     return panes
+
+
+def load_pane_origins(pane_id_value: str) -> dict[str, tuple[int, int]]:
+    payload = run_herdr_json(["herdr", "pane", "layout", "--pane", pane_id_value])
+    result = payload.get("result")
+    layout = cast(JsonObject, result).get("layout") if isinstance(result, dict) else None
+    if not isinstance(layout, dict):
+        raise ValueError(f"Herdr pane layout for {pane_id_value} did not include result.layout.")
+    origins: dict[str, tuple[int, int]] = {}
+    for pane in dict_entries(cast(JsonObject, layout).get("panes")):
+        rect = pane.get("rect")
+        pane_id_text = entry_text(pane, "pane_id")
+        left = entry_int(cast(JsonObject, rect), "x") if isinstance(rect, dict) else None
+        top = entry_int(cast(JsonObject, rect), "y") if isinstance(rect, dict) else None
+        if pane_id_text is None or left is None or top is None:
+            raise ValueError(f"Herdr pane layout for {pane_id_value} contains a pane without an id or position.")
+        origins[pane_id_text] = (left, top)
+    return origins

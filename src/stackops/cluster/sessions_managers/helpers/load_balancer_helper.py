@@ -1,5 +1,5 @@
 from stackops.utils.accessories import split_list
-from stackops.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig
+from stackops.utils.schemas.layouts.layout_types import PaneConfig, TabConfig, LayoutConfig, single_pane_tab
 
 from typing import Literal
 
@@ -9,6 +9,23 @@ def _get_positive_tab_weight(tab: TabConfig) -> int:
     if tab_weight < 1:
         raise ValueError(f"Tab '{tab['tabName']}' has invalid tabWeight ({tab_weight}); expected a positive integer.")
     return tab_weight
+
+
+def get_single_pane(tab: TabConfig) -> PaneConfig:
+    if len(tab["panes"]) != 1:
+        raise ValueError(f"Tab '{tab['tabName']}' has {len(tab['panes'])} panes; load balancing combines or splits one command per tab, so it needs single-pane tabs.")
+    return tab["panes"][0]
+
+
+def _combine_group_into_super_tab(group: list[TabConfig], super_tab_name: str) -> TabConfig:
+    return {
+        **single_pane_tab(
+            tab_name=super_tab_name,
+            start_dir=get_single_pane(group[0])["startDir"],
+            command="; ".join(get_single_pane(tab)["command"] for tab in group),
+        ),
+        "tabWeight": sum(_get_positive_tab_weight(tab) for tab in group),
+    }
 
 
 def split_tabs_by_weight(tabs: list[TabConfig], max_weight: int) -> list[list[TabConfig]]:
@@ -49,18 +66,7 @@ def combine_tabs_into_super_tabs(tabs: list[TabConfig], num_super_tabs: int) -> 
         if len(group) == 1:
             super_tabs.append(group[0])
         else:
-            combined_command = "; ".join(tab["command"] for tab in group)
-            combined_name = f"super_tab_{idx+1}"
-            # Use startDir of the first tab
-            start_dir = group[0]["startDir"]
-            # Sum weights
-            total_weight = sum(_get_positive_tab_weight(tab) for tab in group)
-            super_tabs.append({
-                "tabName": combined_name,
-                "startDir": start_dir,
-                "command": combined_command,
-                "tabWeight": total_weight
-            })
+            super_tabs.append(_combine_group_into_super_tab(group, super_tab_name=f"super_tab_{idx+1}"))
     return super_tabs
 
 
@@ -72,16 +78,7 @@ def combine_tabs_by_weight_into_super_tabs(tabs: list[TabConfig], max_weight: in
         if len(group) == 1:
             super_tabs.append(group[0])
         else:
-            combined_command = "; ".join(tab["command"] for tab in group)
-            combined_name = f"super_tab_{idx+1}"
-            start_dir = group[0]["startDir"]
-            total_weight = sum(_get_positive_tab_weight(tab) for tab in group)
-            super_tabs.append({
-                "tabName": combined_name,
-                "startDir": start_dir,
-                "command": combined_command,
-                "tabWeight": total_weight
-            })
+            super_tabs.append(_combine_group_into_super_tab(group, super_tab_name=f"super_tab_{idx+1}"))
     return super_tabs
 
 

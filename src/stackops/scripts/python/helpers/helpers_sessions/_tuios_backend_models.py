@@ -28,3 +28,9 @@ class WindowEntry:
     command_seq: int
     running_command: str
     last_command: str
+
+
+@dataclass(frozen=True, slots=True)
+class WorkspaceEntry:
+    number: int
+    name: str

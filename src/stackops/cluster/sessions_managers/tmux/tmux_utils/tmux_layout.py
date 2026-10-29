@@ -12,7 +12,8 @@ from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common import (
     normalize_cwd,
     shell_quote,
 )
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig
+from stackops.utils.schemas.layouts.layout_constants import DEFAULT_TAB_ARRANGEMENT
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
 
 TmuxMergeConflictAction = Literal[
@@ -27,10 +28,15 @@ def validate_layout_config(layout_config: LayoutConfig) -> None:
     for tab in layout_config["layoutTabs"]:
         if not tab["tabName"].strip():
             raise ValueError(f"Invalid tab name: {tab['tabName']}")
-        if not tab["command"].strip():
-            raise ValueError(f"Invalid command for tab '{tab['tabName']}': {tab['command']}")
-        if not tab["startDir"].strip():
-            raise ValueError(f"Invalid startDir for tab '{tab['tabName']}': {tab['startDir']}")
+        if not tab["panes"]:
+            raise ValueError(f"Tab '{tab['tabName']}' must contain at least one pane")
+        for pane in tab["panes"]:
+            if not pane["paneName"].strip():
+                raise ValueError(f"Invalid pane name in tab '{tab['tabName']}': {pane['paneName']}")
+            if not pane["command"].strip():
+                raise ValueError(f"Invalid command for pane '{pane['paneName']}' in tab '{tab['tabName']}': {pane['command']}")
+            if not pane["startDir"].strip():
+                raise ValueError(f"Invalid startDir for pane '{pane['paneName']}' in tab '{tab['tabName']}': {pane['startDir']}")
 
 
 def list_tmux_window_names(session_name: str) -> set[str]:
@@ -105,20 +111,53 @@ def _build_replace_window_commands(
     ]
 
 
-def _build_send_command_for_window(
+def _build_tab_pane_commands(
     session_name: str,
-    window_name: str,
-    command: str,
+    tab: TabConfig,
     exit_mode: SessionExitMode,
-) -> str:
-    target = f"{session_name}:{window_name}"
-    actual_command = command
-    if exit_mode != "backToShell":
-        actual_command = build_tmux_exit_mode_command(
-            command=command,
-            exit_mode=exit_mode,
-        )
-    return f"tmux send-keys -t {shell_quote(target)} {shell_quote(actual_command)} C-m"
+) -> list[str]:
+    window_target = shell_quote(f"{session_name}:{tab['tabName']}")
+    commands: list[str] = []
+    for pane_index, pane in enumerate(tab["panes"]):
+        if pane_index > 0:
+            commands.append(
+                f"tmux split-window -t {window_target} -c {shell_quote(normalize_cwd(pane['startDir']))}"
+            )
+        commands.append(f"tmux select-pane -t {window_target} -T {shell_quote(pane['paneName'])}")
+        actual_command = pane["command"]
+        if exit_mode != "backToShell":
+            actual_command = build_tmux_exit_mode_command(
+                command=actual_command,
+                exit_mode=exit_mode,
+            )
+        commands.append(f"tmux send-keys -t {window_target} {shell_quote(actual_command)} C-m")
+    if len(tab["panes"]) > 1:
+        match tab.get("arrangement", DEFAULT_TAB_ARRANGEMENT):
+            case "columns":
+                tmux_layout = "even-horizontal"
+            case "rows":
+                tmux_layout = "even-vertical"
+            case "grid":
+                tmux_layout = "tiled"
+        commands.append(f"tmux select-layout -t {window_target} {tmux_layout}")
+        first_pane_target = shell_quote(f"{session_name}:{tab['tabName']}.{{top-left}}")
+        commands.append(f"tmux select-pane -t {first_pane_target}")
+    return commands
+
+
+def build_tmux_new_window_tab_commands(
+    session_name: str,
+    tab: TabConfig,
+    exit_mode: SessionExitMode,
+) -> list[str]:
+    return [
+        *_build_new_window_commands(
+            session_name=session_name,
+            window_name=tab["tabName"],
+            cwd=normalize_cwd(tab["panes"][0]["startDir"]),
+        ),
+        *_build_tab_pane_commands(session_name=session_name, tab=tab, exit_mode=exit_mode),
+    ]
 
 
 def build_tmux_commands(
@@ -128,43 +167,16 @@ def build_tmux_commands(
 ) -> list[str]:
     validate_layout_config(layout_config)
     tabs = layout_config["layoutTabs"]
-    first_tab = tabs[0]
-    first_window = first_tab["tabName"]
-    first_cwd = normalize_cwd(first_tab["startDir"])
-    first_target = f"{session_name}:{first_window}"
+    first_window = tabs[0]["tabName"]
     commands: list[str] = []
-    commands_to_send: list[str] = []
+    first_cwd = normalize_cwd(tabs[0]["panes"][0]["startDir"])
     commands.append(
         f"tmux new-session -d -s {shell_quote(session_name)} -n {shell_quote(first_window)} -c {shell_quote(first_cwd)}"
     )
-    if first_tab["command"].strip():
-        commands_to_send.append(
-            _build_send_command_for_window(
-                session_name=session_name,
-                window_name=first_window,
-                command=first_tab["command"],
-                exit_mode=exit_mode,
-            )
-        )
+    commands.extend(_build_tab_pane_commands(session_name=session_name, tab=tabs[0], exit_mode=exit_mode))
     for tab in tabs[1:]:
-        commands.extend(
-            _build_new_window_commands(
-                session_name=session_name,
-                window_name=tab["tabName"],
-                cwd=normalize_cwd(tab["startDir"]),
-            )
-        )
-        if tab["command"].strip():
-            commands_to_send.append(
-                _build_send_command_for_window(
-                    session_name=session_name,
-                    window_name=tab["tabName"],
-                    command=tab["command"],
-                    exit_mode=exit_mode,
-                )
-            )
-    commands.append(f"tmux select-window -t {shell_quote(first_target)}")
-    commands.extend(commands_to_send)
+        commands.extend(build_tmux_new_window_tab_commands(session_name=session_name, tab=tab, exit_mode=exit_mode))
+    commands.append(f"tmux select-window -t {shell_quote(f'{session_name}:{first_window}')}")
     return commands
 
 
@@ -178,13 +190,9 @@ def build_tmux_merge_commands(
     existing_window_names = list_tmux_window_names(session_name=session_name)
     first_target: str | None = None
     commands: list[str] = []
-    commands_to_send: list[str] = []
 
     for tab in layout_config["layoutTabs"]:
         window_name = tab["tabName"]
-        cwd = normalize_cwd(tab["startDir"])
-        command = tab["command"]
-        target = f"{session_name}:{window_name}"
         window_exists = window_name in existing_window_names
 
         match on_conflict:
@@ -192,67 +200,32 @@ def build_tmux_merge_commands(
                 if window_exists:
                     continue
                 commands.extend(
-                    _build_new_window_commands(
-                        session_name=session_name,
-                        window_name=window_name,
-                        cwd=cwd,
-                    )
+                    build_tmux_new_window_tab_commands(session_name=session_name, tab=tab, exit_mode=exit_mode)
                 )
-                if command.strip():
-                    commands_to_send.append(
-                        _build_send_command_for_window(
-                            session_name=session_name,
-                            window_name=window_name,
-                            command=command,
-                            exit_mode=exit_mode,
-                        )
-                    )
             case "mergeOverwrite":
                 if window_exists:
                     commands.extend(
                         _build_replace_window_commands(
                             session_name=session_name,
                             window_name=window_name,
-                            cwd=cwd,
+                            cwd=normalize_cwd(tab["panes"][0]["startDir"]),
                             reserved_window_names=existing_window_names,
                         )
                     )
-                    if command.strip():
-                        commands_to_send.append(
-                            _build_send_command_for_window(
-                                session_name=session_name,
-                                window_name=window_name,
-                                command=command,
-                                exit_mode=exit_mode,
-                            )
-                        )
+                    commands.extend(_build_tab_pane_commands(session_name=session_name, tab=tab, exit_mode=exit_mode))
                 else:
                     commands.extend(
-                        _build_new_window_commands(
-                            session_name=session_name,
-                            window_name=window_name,
-                            cwd=cwd,
-                        )
+                        build_tmux_new_window_tab_commands(session_name=session_name, tab=tab, exit_mode=exit_mode)
                     )
-                    if command.strip():
-                        commands_to_send.append(
-                            _build_send_command_for_window(
-                                session_name=session_name,
-                                window_name=window_name,
-                                command=command,
-                                exit_mode=exit_mode,
-                            )
-                        )
             case _:
                 raise ValueError(f"Unsupported tmux merge policy: {on_conflict}")
 
         existing_window_names.add(window_name)
         if first_target is None:
-            first_target = target
+            first_target = f"{session_name}:{window_name}"
 
     if first_target is not None:
         commands.append(f"tmux select-window -t {shell_quote(first_target)}")
-    commands.extend(commands_to_send)
     return commands
 
 

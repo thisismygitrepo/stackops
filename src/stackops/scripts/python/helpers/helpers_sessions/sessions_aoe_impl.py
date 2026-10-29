@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabConfig
 
 type TabCommandMode = Literal["prompt", "cmd", "ignore"]
 
@@ -45,10 +45,10 @@ def _resolve_unique_title(title: str, used_titles: dict[str, int]) -> str:
 
 
 def _resolve_tab_payload(
-    tab: TabConfig,
+    pane: PaneConfig,
     tab_command_mode: TabCommandMode,
 ) -> tuple[str | None, str | None]:
-    tab_command = tab.get("command", "").strip()
+    tab_command = pane["command"].strip()
     if tab_command_mode == "ignore" or tab_command == "":
         return None, None
     if tab_command_mode == "prompt":
@@ -58,17 +58,17 @@ def _resolve_tab_payload(
 
 def build_aoe_add_command(
     *,
-    tab: TabConfig,
+    pane: PaneConfig,
     title: str,
     group: str,
     options: AoeLaunchOptions,
 ) -> list[str]:
     prompt, command_override = _resolve_tab_payload(
-        tab=tab,
+        pane=pane,
         tab_command_mode=options.tab_command_mode,
     )
 
-    command = [options.aoe_bin, "add", tab["startDir"]]
+    command = [options.aoe_bin, "add", pane["startDir"]]
     command.extend(["--title", title])
     command.extend(["--group", group])
 
@@ -98,12 +98,17 @@ def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunch
     for layout in layouts_selected:
         group = layout["layoutName"]
         for tab_index, tab in enumerate(layout["layoutTabs"]):
+            if len(tab["panes"]) != 1:
+                raise ValueError(
+                    f"AoE starts one agent session per tab, but tab '{tab['tabName']}' in layout '{group}' "
+                    f"has {len(tab['panes'])} panes. Use the tmux, herdr or tuios backend for multi-pane tabs."
+                )
             title = _resolve_unique_title(title=_default_title(tab=tab, tab_index=tab_index), used_titles=used_titles)
             pending_commands.append(
                 (
                     group,
                     title,
-                    build_aoe_add_command(tab=tab, title=title, group=group, options=options),
+                    build_aoe_add_command(pane=tab["panes"][0], title=title, group=group, options=options),
                 )
             )
 

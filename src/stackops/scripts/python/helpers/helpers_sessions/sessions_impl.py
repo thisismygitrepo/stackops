@@ -44,9 +44,24 @@ def select_layout(layouts_json_file: str, selected_layouts_names: list[str], sel
             tab_location = f"""{location}.layoutTabs[{tab_index}]"""
             if not isinstance(tab, dict):
                 raise ValueError(f"""Invalid tab in {tab_location}: expected an object.""")
-            for field in ("tabName", "startDir", "command"):
-                if not isinstance(tab.get(field), str):
-                    raise ValueError(f"""Invalid tab in {tab_location}: '{field}' must be a string.""")
+            if not isinstance(tab.get("tabName"), str):
+                raise ValueError(f"""Invalid tab in {tab_location}: 'tabName' must be a string.""")
+            if tab.get("arrangement", "grid") not in ("columns", "rows", "grid"):
+                raise ValueError(f"""Invalid tab in {tab_location}: 'arrangement' must be one of columns, rows, grid.""")
+            panes = tab.get("panes")
+            if not isinstance(panes, list) or len(panes) == 0:
+                raise ValueError(f"""Invalid tab in {tab_location}: 'panes' must be a non-empty list.""")
+            pane_names: set[object] = set()
+            for pane_index, pane in enumerate(panes):
+                pane_location = f"""{tab_location}.panes[{pane_index}]"""
+                if not isinstance(pane, dict):
+                    raise ValueError(f"""Invalid pane in {pane_location}: expected an object.""")
+                for field in ("paneName", "startDir", "command"):
+                    if not isinstance(pane.get(field), str):
+                        raise ValueError(f"""Invalid pane in {pane_location}: '{field}' must be a string.""")
+                if pane["paneName"] in pane_names:
+                    raise ValueError(f"""Invalid pane in {pane_location}: duplicate paneName {pane["paneName"]!r} in the tab.""")
+                pane_names.add(pane["paneName"])
     layouts = cast(list[LayoutConfig], raw_layouts)
     if len(layouts) == 0:
         raise ValueError(f"No layouts found in {layouts_json_file}")

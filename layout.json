@@ -7,18 +7,33 @@
             "layoutTabs": [
                 {
                     "tabName": "Tab1",
-                    "startDir": "~/code/stackops",
-                    "command": "bash"
+                    "panes": [
+                        {
+                            "paneName": "Tab1",
+                            "startDir": "~/code/stackops",
+                            "command": "bash"
+                        }
+                    ]
                 },
                 {
                     "tabName": "Tab2",
-                    "startDir": "~/code/stackops",
-                    "command": "bash"
+                    "panes": [
+                        {
+                            "paneName": "Tab2",
+                            "startDir": "~/code/stackops",
+                            "command": "bash"
+                        }
+                    ]
                 },
                 {
                     "tabName": "Tab3",
-                    "startDir": "~/code/stackops",
-                    "command": "bash"
+                    "panes": [
+                        {
+                            "paneName": "Tab3",
+                            "startDir": "~/code/stackops",
+                            "command": "bash"
+                        }
+                    ]
                 }
             ]
         }

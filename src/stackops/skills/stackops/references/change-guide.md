@@ -63,12 +63,17 @@ A tab has this shape; take its name, directory, and command from the request or 
 ```json
 {
   "tabName": "worker",
-  "startDir": "/absolute/workspace",
-  "command": "uv run worker.py"
+  "panes": [
+    {
+      "paneName": "worker",
+      "startDir": "/absolute/workspace",
+      "command": "uv run worker.py"
+    }
+  ]
 }
 ```
 
-`tabWeight` is optional. A new layout needs both `layoutName` and `layoutTabs`. Preserve the file's `version` and optional `$schema`. Edit a tab by its name within the chosen layout, and remove only the requested tab or layout. The current schema requires at least one layout and at least one tab per layout; if the requested deletion would empty one, resolve the intended remaining configuration instead of inventing a placeholder entry.
+A tab can hold several panes; `paneName` must be unique within the tab, and an optional `arrangement` of `columns`, `rows`, or `grid` (the default) says how they share the tab. `tabWeight` is optional and belongs on the tab. A new layout needs both `layoutName` and `layoutTabs`. Preserve the file's `version` and optional `$schema`. Edit a tab by its name within the chosen layout, and remove only the requested tab or layout. The current schema requires at least one layout and at least one tab per layout; if the requested deletion would empty one, resolve the intended remaining configuration instead of inventing a placeholder entry.
 
 Finish with `terminal validate --custom-path /absolute/layout.json`. This validates the schema and parser without launching sessions. An added tab using existing fields requires only the data edit. If the request introduces a new field or changes launch behavior, trace these source owners:
 

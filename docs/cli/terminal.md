@@ -388,7 +388,7 @@ terminal list --source workspace --tabs --stats
 terminal list --custom-path layout.json --tabs --stats
 ```
 
-Omitting `--custom-path` lists layouts from the selected source files. The default `all` includes available user and workspace files; when no workspace root can be resolved, it includes only the user file. Explicit `--source workspace` requires a workspace root as described above. `--custom-path` / `-p` overrides the source selection. Statistics include layout and tab totals, average tabs per layout, and the largest and smallest layouts.
+Omitting `--custom-path` lists layouts from the selected source files. The default `all` includes available user and workspace files; when no workspace root can be resolved, it includes only the user file. Explicit `--source workspace` requires a workspace root as described above. `--custom-path` / `-p` overrides the source selection. Statistics include layout, tab and pane totals, average tabs per layout, and the largest and smallest layouts.
 
 ## edit, path, init, validate
 
@@ -406,7 +406,7 @@ terminal validate --custom-path layout.json
 
 ## Layout File Format
 
-Current layout files use the `LayoutsFile` wrapper. The important keys are `layouts`, `layoutName`, `layoutTabs`, `tabName`, `startDir`, and `command`.
+Current layout files use the `LayoutsFile` wrapper. The important keys are `layouts`, `layoutName`, `layoutTabs`, `tabName`, `panes`, `paneName`, `startDir`, and `command`. A layout is a session, a tab holds one or more panes, and each pane runs one command.
 
 ```json
 {
@@ -418,13 +418,29 @@ Current layout files use the `LayoutsFile` wrapper. The important keys are `layo
       "layoutTabs": [
         {
           "tabName": "editor",
-          "startDir": "~/projects/myapp",
-          "command": "hx ."
+          "panes": [
+            {
+              "paneName": "helix",
+              "startDir": "~/projects/myapp",
+              "command": "hx ."
+            }
+          ]
         },
         {
           "tabName": "server",
-          "startDir": "~/projects/myapp",
-          "command": "python -m http.server 8000"
+          "arrangement": "columns",
+          "panes": [
+            {
+              "paneName": "http",
+              "startDir": "~/projects/myapp",
+              "command": "python -m http.server 8000"
+            },
+            {
+              "paneName": "logs",
+              "startDir": "~/projects/myapp/logs",
+              "command": "tail -f server.log"
+            }
+          ]
         }
       ]
     }
@@ -432,7 +448,19 @@ Current layout files use the `LayoutsFile` wrapper. The important keys are `layo
 }
 ```
 
-Older examples that use `tabs` or `cwd` are stale. The current schema uses `layoutTabs` and `startDir`.
+`arrangement` is optional and only matters for tabs with more than one pane: `columns` places panes side by side, `rows` stacks them, and `grid` (the default) balances them. `paneName` must be unique within its tab. `tabWeight` stays on the tab.
+
+Each backend uses its own names for the same levels:
+
+| Layout level | tmux | Herdr | TUIOS | AoE |
+| --- | --- | --- | --- | --- |
+| Layout | session | workspace | session | group |
+| Tab | window | tab | workspace | agent session |
+| Pane | pane | pane | window | one pane per tab only |
+
+TUIOS ignores `arrangement` because its tiler arranges the windows of a workspace. AoE starts one agent session per tab and rejects tabs with more than one pane. `balance-load` with `combine-tabs` joins the commands of several tabs into one, so it requires single-pane tabs; `more-layouts` moves whole tabs and accepts any.
+
+Older examples that use `tabs`, `cwd`, or a `startDir`/`command` directly on the tab are stale. The current schema uses `layoutTabs` and `panes`.
 
 ## Backend Notes
 

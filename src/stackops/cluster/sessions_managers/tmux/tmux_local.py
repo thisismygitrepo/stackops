@@ -18,7 +18,7 @@ from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
 )
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status import (
     TmuxSessionStatus,
-    build_unknown_command_status,
+    build_unknown_commands_status,
     check_tmux_session_status,
 )
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout import (
@@ -71,7 +71,8 @@ class TmuxLayoutGenerator:
         layout_name = self.layout_config["layoutName"]
         console.print(f"[bold cyan]📋 Creating tmux layout[/bold cyan] [bright_green]'{layout_name}' with {tab_count} windows[/bright_green]")
         for tab in self.layout_config["layoutTabs"]:
-            console.print(f"  [yellow]→[/yellow] [bold]{tab['tabName']}[/bold] [dim]in[/dim] [blue]{tab['startDir']}[/blue]")
+            for pane in tab["panes"]:
+                console.print(f"  [yellow]→[/yellow] [bold]{tab['tabName']}/{pane['paneName']}[/bold] [dim]in[/dim] [blue]{pane['startDir']}[/blue]")
         self.launch_commands = build_tmux_commands(
             layout_config=self.layout_config,
             session_name=self.session_name,
@@ -100,10 +101,7 @@ class TmuxLayoutGenerator:
     def check_all_commands_status(self) -> dict[str, CommandStatus]:
         if not self.layout_config:
             return {}
-        status_report: dict[str, CommandStatus] = {}
-        for tab in self.layout_config["layoutTabs"]:
-            status_report[tab["tabName"]] = build_unknown_command_status(tab)
-        return status_report
+        return build_unknown_commands_status(self.layout_config)
 
     def get_status_report(self) -> TmuxLayoutStatus:
         tmux_status = check_tmux_session_status(self.session_name or "default")
@@ -248,9 +246,16 @@ if __name__ == "__main__":
     sample_layout: LayoutConfig = {
         "layoutName": "sample_layout",
         "layoutTabs": [
-            {"tabName": "editor", "startDir": "~/projects", "command": "nvim"},
-            {"tabName": "server", "startDir": "~/projects/server", "command": "yazi"},
-            {"tabName": "logs", "startDir": "~/projects/server/logs", "command": "tail -f server.log"},
+            {"tabName": "editor", "panes": [{"paneName": "nvim", "startDir": "~/projects", "command": "nvim"}]},
+            {"tabName": "server", "panes": [{"paneName": "yazi", "startDir": "~/projects/server", "command": "yazi"}]},
+            {
+                "tabName": "logs",
+                "arrangement": "columns",
+                "panes": [
+                    {"paneName": "server-log", "startDir": "~/projects/server/logs", "command": "tail -f server.log"},
+                    {"paneName": "error-log", "startDir": "~/projects/server/logs", "command": "tail -f error.log"},
+                ],
+            },
         ],
     }
     run_tmux_layout(sample_layout, on_conflict="error")

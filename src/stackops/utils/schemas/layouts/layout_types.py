@@ -11,12 +11,26 @@ from typing import Literal, NotRequired, TypeAlias, TypedDict, cast
 LayoutFileWriteMode: TypeAlias = Literal["replace_file", "merge_by_layout_name"]
 
 
-class TabConfig(TypedDict):
-    """Configuration for a single tab in a layout."""
-    tabName: str
+type TabArrangement = Literal["columns", "rows", "grid"]
+
+
+class PaneConfig(TypedDict):
+    """Configuration for a single pane in a tab."""
+    paneName: str
     startDir: str
     command: str
+
+
+class TabConfig(TypedDict):
+    """Configuration for a single tab in a layout, holding one or more panes."""
+    tabName: str
+    panes: list[PaneConfig]
+    arrangement: NotRequired[TabArrangement]
     tabWeight: NotRequired[int]
+
+
+def single_pane_tab(*, tab_name: str, start_dir: str, command: str) -> TabConfig:
+    return {"tabName": tab_name, "panes": [{"paneName": tab_name, "startDir": start_dir, "command": command}]}
 
 
 class LayoutConfig(TypedDict):

@@ -91,8 +91,8 @@
               "callable": "software"
             },
             "app": {
-              "cls": "ordered_group(('install', 'list', 'path', 'init', 'edit', 'validate'))",
-              "help": "Install software and extend the bundled catalog with user definitions. Matching user names override library entries.",
+              "cls": "ordered_group(('install', 'explore', 'check', 'list', 'path', 'init', 'edit', 'validate'))",
+              "help": "Browse, install, and check software, and extend the bundled catalog with user definitions. Matching user names override library entries.",
               "no_args_is_help": true,
               "add_completion": false,
               "context_settings": {
@@ -120,30 +120,20 @@
                     "    ctx: typer.Context,",
                     "    which: Annotated[",
                     "        str | None,",
-                    "        typer.Argument(help=\"Comma-separated program names, group names with --group, or category labels with --explore.\"),",
+                    "        typer.Argument(help=\"Comma-separated program names, or group names with --group.\"),",
                     "    ] = None,",
                     "    group: Annotated[bool, typer.Option(\"--group\", \"-g\", help=\"Treat names as package groups.\")] = False,",
-                    "    check: Annotated[bool, typer.Option(\"--check\", \"-c\", help=\"Check installation status instead of installing.\")] = False,",
                     "    source: Annotated[",
                     "        InstallerDataSource,",
                     "        typer.Option(\"--source\", \"-s\", help=\"Catalog: library, user, or all. User entries override matching library names.\"),",
                     "    ] = \"all\",",
                     "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Select programs interactively.\")] = False,",
-                    "    explore: Annotated[bool, typer.Option(\"--explore\", \"-x\", help=\"Browse software by category before installing.\")] = False,",
                     "    update: Annotated[bool, typer.Option(\"--update\", \"-u\", help=\"Reinstall or upgrade installed apps when supported.\")] = False,",
                     "    version: Annotated[str | None, typer.Option(\"--version\", \"-v\", help=\"Install a specific version or tag when supported.\")] = None,",
                     ") -> None:",
                     "    from stackops.utils.installer_utils import installer_cli",
                     "    from stackops.utils.installer_utils.installer_catalog import InstallerDataFileError",
-                    "",
-                    "    if check:",
-                    "        if path is not None:",
-                    "            raise typer.BadParameter(\"--custom-path cannot be used with --check; checks inspect installed executables\")",
-                    "        if which is None:",
-                    "            raise typer.BadParameter(\"program name or group name is required when --check is set\")",
-                    "        installer_cli.check_installations(which=which, group=group)",
-                    "        return",
                     "",
                     "    try:",
                     "        installer_cli.main_installer_cli(",
@@ -153,7 +143,6 @@
                     "            source=source,",
                     "            path=path,",
                     "            interactive=interactive,",
-                    "            explore=explore,",
                     "            update=update,",
                     "            version=version,",
                     "        )",
@@ -177,13 +166,13 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Comma-separated program names, group names with --group, or category labels with --explore.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Comma-separated program names, or group names with --group.')]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Comma-separated program names, group names with --group, or category labels with --explore."
+                        "help": "Comma-separated program names, or group names with --group."
                       }
                     },
                     {
@@ -206,28 +195,6 @@
                           "-g"
                         ],
                         "help": "Treat names as package groups."
-                      }
-                    },
-                    {
-                      "name": "check",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--check', '-c', help='Check installation status instead of installing.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--check",
-                          "-c"
-                        ],
-                        "long_flags": [
-                          "--check"
-                        ],
-                        "short_flags": [
-                          "-c"
-                        ],
-                        "help": "Check installation status instead of installing."
                       }
                     },
                     {
@@ -297,28 +264,6 @@
                       }
                     },
                     {
-                      "name": "explore",
-                      "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
-                      "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--explore', '-x', help='Browse software by category before installing.')]",
-                      "typer": {
-                        "kind": "option",
-                        "param_decls": [
-                          "--explore",
-                          "-x"
-                        ],
-                        "long_flags": [
-                          "--explore"
-                        ],
-                        "short_flags": [
-                          "-x"
-                        ],
-                        "help": "Browse software by category before installing."
-                      }
-                    },
-                    {
                       "name": "update",
                       "kind": "positional_or_keyword",
                       "type": "bool",
@@ -371,6 +316,240 @@
                 "aliases": [
                   {
                     "name": "i",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "explore",
+                "fullPath": "devops software explore",
+                "shortPath": "d w x",
+                "help": "🔎 <x> Browse software by category and install selected apps.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_install.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_install",
+                  "callable": "explore"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def explore(",
+                    "    categories: Annotated[str | None, typer.Argument(help=\"Comma-separated category labels. Omit to choose categories interactively.\")] = None,",
+                    "    source: Annotated[",
+                    "        InstallerDataSource,",
+                    "        typer.Option(\"--source\", \"-s\", help=\"Catalog: library, user, or all. User entries override matching library names.\"),",
+                    "    ] = \"all\",",
+                    "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use another user catalog with --source user or all.\")] = None,",
+                    "    update: Annotated[bool, typer.Option(\"--update\", \"-u\", help=\"Reinstall or upgrade installed apps when supported.\")] = False,",
+                    "    version: Annotated[str | None, typer.Option(\"--version\", \"-v\", help=\"Install a specific version or tag when supported.\")] = None,",
+                    ") -> None:",
+                    "    from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH, InstallerDataFileError",
+                    "    from stackops.utils.installer_utils.installer_explore import explore_installers_by_category_labels",
+                    "    from stackops.utils.installer_utils.installer_scripts import get_user_installer_scripts_root",
+                    "    from stackops.utils.schemas.installer.installer_types import INSTALLER_DATA_SOURCE_MAP, InstallRequest",
+                    "",
+                    "    user_scripts_root = (",
+                    "        None",
+                    "        if INSTALLER_DATA_SOURCE_MAP[source] == \"library\"",
+                    "        else get_user_installer_scripts_root(user_catalog_path=USER_INSTALLER_DATA_PATH if path is None else path.expanduser().absolute())",
+                    "    )",
+                    "    install_request = InstallRequest(version=version, update=update, user_scripts_root=user_scripts_root)",
+                    "    category_labels = [item.strip() for item in categories.split(\",\") if item.strip()] if categories is not None else None",
+                    "    try:",
+                    "        explore_installers_by_category_labels(",
+                    "            install_request=install_request,",
+                    "            category_labels=category_labels,",
+                    "            source=source,",
+                    "            user_path=path,",
+                    "        )",
+                    "    except InstallerDataFileError as error:",
+                    "        typer.echo(f\"\"\"❌ {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error"
+                  ],
+                  "name": "explore",
+                  "parameters": [
+                    {
+                      "name": "categories",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Argument(help='Comma-separated category labels. Omit to choose categories interactively.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Comma-separated category labels. Omit to choose categories interactively."
+                      }
+                    },
+                    {
+                      "name": "source",
+                      "kind": "positional_or_keyword",
+                      "type": "InstallerDataSource",
+                      "default": "all",
+                      "required": false,
+                      "annotation_raw": "Annotated[InstallerDataSource, typer.Option('--source', '-s', help='Catalog: library, user, or all. User entries override matching library names.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Catalog: library, user, or all. User entries override matching library names."
+                      }
+                    },
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use another user catalog with --source user or all.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--custom-path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--custom-path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Use another user catalog with --source user or all."
+                      }
+                    },
+                    {
+                      "name": "update",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--update', '-u', help='Reinstall or upgrade installed apps when supported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--update",
+                          "-u"
+                        ],
+                        "long_flags": [
+                          "--update"
+                        ],
+                        "short_flags": [
+                          "-u"
+                        ],
+                        "help": "Reinstall or upgrade installed apps when supported."
+                      }
+                    },
+                    {
+                      "name": "version",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--version', '-v', help='Install a specific version or tag when supported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--version",
+                          "-v"
+                        ],
+                        "long_flags": [
+                          "--version"
+                        ],
+                        "short_flags": [
+                          "-v"
+                        ],
+                        "help": "Install a specific version or tag when supported."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "x",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "check",
+                "fullPath": "devops software check",
+                "shortPath": "d w c",
+                "help": "✅ <c> Check whether executables are installed.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_install.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_install",
+                  "callable": "check"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def check(",
+                    "    which: Annotated[str, typer.Argument(help=\"Comma-separated executable names, or a group name with --group.\")],",
+                    "    group: Annotated[bool, typer.Option(\"--group\", \"-g\", help=\"Treat the name as a package group.\")] = False,",
+                    ") -> None:",
+                    "    from stackops.utils.installer_utils.installer_cli import check_installations",
+                    "",
+                    "    check_installations(which=which, group=group)"
+                  ],
+                  "name": "check",
+                  "parameters": [
+                    {
+                      "name": "which",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Comma-separated executable names, or a group name with --group.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Comma-separated executable names, or a group name with --group."
+                      }
+                    },
+                    {
+                      "name": "group",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--group', '-g', help='Treat the name as a package group.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--group",
+                          "-g"
+                        ],
+                        "long_flags": [
+                          "--group"
+                        ],
+                        "short_flags": [
+                          "-g"
+                        ],
+                        "help": "Treat the name as a package group."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "c",
                     "hidden": true
                   }
                 ]
@@ -7651,7 +7830,7 @@
                             "    \"\"\"Install Oh My Tmux through the shared StackOps installer.\"\"\"",
                             "    _reject_native_windows()",
                             "    from stackops.utils.installer_utils.installer_cli import main_installer_cli",
-                            "    main_installer_cli(which=\"oh-my-tmux\", group=False, interactive=False, explore=False, update=update, version=None)",
+                            "    main_installer_cli(which=\"oh-my-tmux\", group=False, interactive=False, update=update, version=None)",
                             "    if apply_stackops_local_config:",
                             "        _write_stackops_local(_paths(\"home\"), overwrite=overwrite)",
                             "    typer.echo(\"Done. Restart tmux or run `devops config terminal tmux-style reload --location home`.\")"
@@ -21622,14 +21801,15 @@
                 "        Literal[\"workspace\", \"w\", \"user\", \"u\", \"all\", \"a\"],",
                 "        typer.Option(\"--source\", \"-s\", help=\"Layout sources: workspace/w, user/u, or all/a. Ignored when --custom-path is provided.\"),",
                 "    ] = \"all\",",
-                "    show_tabs: Annotated[bool, typer.Option(\"--tabs\", \"-t\", help=\"Include each tab's name, start directory, command, and weight.\")] = False,",
-                "    show_stats: Annotated[bool, typer.Option(\"--stats\", \"-S\", help=\"Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.\")] = False,",
+                "    show_tabs: Annotated[bool, typer.Option(\"--tabs\", \"-t\", help=\"Include each tab's name, arrangement, weight, and each pane's name, start directory, and command.\")] = False,",
+                "    show_stats: Annotated[bool, typer.Option(\"--stats\", \"-S\", help=\"Show layout, tab and pane totals, average tabs per layout, and the largest and smallest layouts.\")] = False,",
                 ") -> None:",
                 "    from rich.console import Console",
                 "    from rich.table import Table",
                 "    from rich.text import Text",
                 "",
                 "    from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import resolve_layout_source",
+                "    from stackops.utils.schemas.layouts.layout_constants import DEFAULT_TAB_ARRANGEMENT",
                 "",
                 "    try:",
                 "        entries = resolve_layout_source(",
@@ -21645,11 +21825,13 @@
                 "    table = Table(title=f\"\"\"Saved layouts ({len(entries)})\"\"\")",
                 "    table.add_column(\"Layout\", style=\"cyan\")",
                 "    table.add_column(\"Tabs\", justify=\"right\")",
+                "    table.add_column(\"Panes\", justify=\"right\")",
                 "    table.add_column(\"Source file\")",
                 "    for entry in entries:",
                 "        table.add_row(",
                 "            Text(entry.selector),",
                 "            str(len(entry.layout[\"layoutTabs\"])),",
+                "            str(sum(len(tab[\"panes\"]) for tab in entry.layout[\"layoutTabs\"])),",
                 "            Text(str(entry.source_path)),",
                 "        )",
                 "    console = Console()",
@@ -21658,12 +21840,14 @@
                 "    if show_stats:",
                 "        total_layouts = len(entries)",
                 "        total_tabs = sum(len(entry.layout[\"layoutTabs\"]) for entry in entries)",
+                "        total_panes = sum(len(tab[\"panes\"]) for entry in entries for tab in entry.layout[\"layoutTabs\"])",
                 "        average_tabs = total_tabs / total_layouts if total_layouts else 0.0",
                 "        stats_table = Table(title=\"Layout statistics\")",
                 "        stats_table.add_column(\"Metric\")",
                 "        stats_table.add_column(\"Value\")",
                 "        stats_table.add_row(\"Layouts\", str(total_layouts))",
                 "        stats_table.add_row(\"Tabs\", str(total_tabs))",
+                "        stats_table.add_row(\"Panes\", str(total_panes))",
                 "        stats_table.add_row(\"Avg tabs/layout\", f\"\"\"{average_tabs:.2f}\"\"\")",
                 "        if entries:",
                 "            largest = max(entries, key=lambda entry: len(entry.layout[\"layoutTabs\"]))",
@@ -21676,15 +21860,19 @@
                 "        tabs_table = Table(title=\"Layout tabs\")",
                 "        tabs_table.add_column(\"Layout\", style=\"cyan\")",
                 "        tabs_table.add_column(\"Tab\")",
+                "        tabs_table.add_column(\"Arrangement\")",
+                "        tabs_table.add_column(\"Pane\")",
                 "        tabs_table.add_column(\"Start directory\")",
                 "        tabs_table.add_column(\"Command\")",
                 "        tabs_table.add_column(\"Weight\", justify=\"right\")",
                 "        for entry in entries:",
                 "            for tab in entry.layout[\"layoutTabs\"]:",
-                "                tabs_table.add_row(",
-                "                    Text(entry.selector), Text(tab[\"tabName\"]), Text(tab[\"startDir\"]), Text(tab[\"command\"]),",
-                "                    str(tab[\"tabWeight\"]) if \"tabWeight\" in tab else \"—\",",
-                "                )",
+                "                for pane in tab[\"panes\"]:",
+                "                    tabs_table.add_row(",
+                "                        Text(entry.selector), Text(tab[\"tabName\"]), Text(tab.get(\"arrangement\", DEFAULT_TAB_ARRANGEMENT) if len(tab[\"panes\"]) > 1 else \"—\"),",
+                "                        Text(pane[\"paneName\"]), Text(pane[\"startDir\"]), Text(pane[\"command\"]),",
+                "                        str(tab[\"tabWeight\"]) if \"tabWeight\" in tab else \"—\",",
+                "                    )",
                 "        console.print(tabs_table)"
               ],
               "name": "list_layouts",
@@ -21739,7 +21927,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--tabs', '-t', help=\"Include each tab's name, start directory, command, and weight.\")]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--tabs', '-t', help=\"Include each tab's name, arrangement, weight, and each pane's name, start directory, and command.\")]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21752,7 +21940,7 @@
                     "short_flags": [
                       "-t"
                     ],
-                    "help": "Include each tab's name, start directory, command, and weight."
+                    "help": "Include each tab's name, arrangement, weight, and each pane's name, start directory, and command."
                   }
                 },
                 {
@@ -21761,7 +21949,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--stats', '-S', help='Show layout and tab totals, average tabs per layout, and the largest and smallest layouts.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--stats', '-S', help='Show layout, tab and pane totals, average tabs per layout, and the largest and smallest layouts.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -21774,7 +21962,7 @@
                     "short_flags": [
                       "-S"
                     ],
-                    "help": "Show layout and tab totals, average tabs per layout, and the largest and smallest layouts."
+                    "help": "Show layout, tab and pane totals, average tabs per layout, and the largest and smallest layouts."
                   }
                 }
               ],
@@ -27422,7 +27610,7 @@
             "name": "local",
             "fullPath": "agents local",
             "shortPath": "a l",
-            "help": "🦙 <l> Local models through Ollama",
+            "help": "🦙 <l> Local models through Ollama and vLLM",
             "source": {
               "file": "src/stackops/scripts/python/agents.py",
               "module": "stackops.scripts.python.agents",
@@ -27430,7 +27618,7 @@
               "callable": "local_group"
             },
             "app": {
-              "help": "Local models through Ollama",
+              "help": "Local models through Ollama and vLLM",
               "no_args_is_help": true,
               "add_help_option": true,
               "add_completion": false,
@@ -27456,36 +27644,81 @@
                 "signature": {
                   "raw_lines": [
                     "def doctor(",
+                    "    backend: Annotated[",
+                    "        LocalBackend, typer.Option(\"--backend\", \"-b\", help=\"Local model server to inspect.\"),",
+                    "    ] = LOCAL_DEFAULT_BACKEND,",
                     "    host: Annotated[",
-                    "        str,",
-                    "        typer.Option(\"--host\", \"-H\", envvar=\"OLLAMA_HOST\", help=\"Ollama server address.\"),",
-                    "    ] = OLLAMA_DEFAULT_HOST,",
+                    "        str | None,",
+                    "        typer.Option(\"--host\", \"-H\", help=\"Server address. Defaults to OLLAMA_HOST or VLLM_BASE_URL, then the backend's local address.\"),",
+                    "    ] = None,",
                     "    timeout: Annotated[",
-                    "        float,",
-                    "        typer.Option(\"--timeout\", \"-t\", min=0.1, help=\"Timeout in seconds for each Ollama API request.\"),",
-                    "    ] = OLLAMA_TIMEOUT_SECONDS,",
+                    "        float | None,",
+                    "        typer.Option(\"--timeout\", \"-t\", min=0.1, help=\"Timeout in seconds for each API request (default: 5).\"),",
+                    "    ] = None,",
+                    "    api_key: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--api-key\", \"-k\", envvar=\"VLLM_API_KEY\", show_envvar=True, help=\"vLLM bearer token.\"),",
+                    "    ] = None,",
                     ") -> None:",
-                    "    from stackops.scripts.python.helpers.helpers_agents.agents_local.ollama import collect_ollama_status",
-                    "    from stackops.scripts.python.helpers.helpers_agents.agents_local.report import show_local_doctor",
-                    "",
                     "    try:",
-                    "        status = collect_ollama_status(host=host, timeout=timeout)",
+                    "        if backend == \"vllm\":",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_local.vllm import collect_vllm_status",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_local.vllm_report import show_vllm_doctor",
+                    "",
+                    "            vllm_status = collect_vllm_status(",
+                    "                host=host if host is not None else os.environ.get(\"VLLM_BASE_URL\", VLLM_DEFAULT_HOST),",
+                    "                timeout=timeout if timeout is not None else VLLM_TIMEOUT_SECONDS,",
+                    "                api_key=api_key,",
+                    "            )",
+                    "            show_vllm_doctor(status=vllm_status)",
+                    "            errors = vllm_status.errors",
+                    "        else:",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_local.ollama import collect_ollama_status",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_local.report import show_local_doctor",
+                    "",
+                    "            status = collect_ollama_status(",
+                    "                host=host if host is not None else os.environ.get(\"OLLAMA_HOST\", OLLAMA_DEFAULT_HOST),",
+                    "                timeout=timeout if timeout is not None else OLLAMA_TIMEOUT_SECONDS,",
+                    "            )",
+                    "            show_local_doctor(status=status)",
+                    "            errors = status.errors",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error), param_hint=\"--host\") from error",
                     "",
-                    "    show_local_doctor(status=status)",
-                    "    if status.errors:",
+                    "    if errors:",
                     "        raise typer.Exit(code=1)"
                   ],
                   "name": "doctor",
                   "parameters": [
                     {
+                      "name": "backend",
+                      "kind": "positional_or_keyword",
+                      "type": "LocalBackend",
+                      "default": "LOCAL_DEFAULT_BACKEND",
+                      "required": false,
+                      "annotation_raw": "Annotated[LocalBackend, typer.Option('--backend', '-b', help='Local model server to inspect.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--backend",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--backend"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Local model server to inspect."
+                      }
+                    },
+                    {
                       "name": "host",
                       "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": "OLLAMA_DEFAULT_HOST",
+                      "type": "str | None",
+                      "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--host', '-H', envvar='OLLAMA_HOST', help='Ollama server address.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--host', '-H', help=\"Server address. Defaults to OLLAMA_HOST or VLLM_BASE_URL, then the backend's local address.\")]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -27498,16 +27731,16 @@
                         "short_flags": [
                           "-H"
                         ],
-                        "help": "Ollama server address."
+                        "help": "Server address. Defaults to OLLAMA_HOST or VLLM_BASE_URL, then the backend's local address."
                       }
                     },
                     {
                       "name": "timeout",
                       "kind": "positional_or_keyword",
-                      "type": "float",
-                      "default": "OLLAMA_TIMEOUT_SECONDS",
+                      "type": "float | None",
+                      "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[float, typer.Option('--timeout', '-t', min=0.1, help='Timeout in seconds for each Ollama API request.')]",
+                      "annotation_raw": "Annotated[float | None, typer.Option('--timeout', '-t', min=0.1, help='Timeout in seconds for each API request (default: 5).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -27520,19 +27753,529 @@
                         "short_flags": [
                           "-t"
                         ],
-                        "help": "Timeout in seconds for each Ollama API request."
+                        "help": "Timeout in seconds for each API request (default: 5)."
+                      }
+                    },
+                    {
+                      "name": "api_key",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--api-key', '-k', envvar='VLLM_API_KEY', show_envvar=True, help='vLLM bearer token.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--api-key",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--api-key"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "vLLM bearer token."
                       }
                     }
                   ],
                   "return": "None"
                 },
-                "short_help": "🩺 <d> Inspect Ollama health, models, and resource usage",
+                "short_help": "🩺 <d> Inspect server health, models, and resource usage",
                 "typer": {
                   "no_args_is_help": false
                 },
                 "aliases": [
                   {
                     "name": "d",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "discover",
+                "fullPath": "agents local discover",
+                "shortPath": "a l s",
+                "help": "discover",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_local.py",
+                  "module": "stackops.scripts.python.agents_local",
+                  "callable": "discover"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def discover(",
+                    "    query: Annotated[str, typer.Argument(help=\"Filter model names (and descriptions for Ollama).\")] = \"\",",
+                    "    backend: Annotated[",
+                    "        LocalBackend, typer.Option(\"--backend\", \"-b\", help=\"Model catalog: Ollama or Hugging Face models for vLLM.\"),",
+                    "    ] = LOCAL_DEFAULT_BACKEND,",
+                    "    min_params: Annotated[",
+                    "        float, typer.Option(\"--min-params\", \"-l\", min=0.0, help=\"Minimum advertised parameter count, in billions (inclusive).\"),",
+                    "    ] = OLLAMA_DISCOVER_MIN_PARAMS,",
+                    "    max_params: Annotated[",
+                    "        float, typer.Option(\"--max-params\", \"-m\", min=0.001, help=\"Maximum advertised parameter count, in billions.\"),",
+                    "    ] = OLLAMA_DISCOVER_MAX_PARAMS,",
+                    "    sort: Annotated[",
+                    "        CatalogSort | None,",
+                    "        typer.Option(\"--sort\", \"-s\", help=\"Catalog ordering; not a quality ranking. Ollama: newest|popular (default newest). vLLM: popular|trending (default popular).\"),",
+                    "    ] = None,",
+                    "    limit: Annotated[int, typer.Option(\"--limit\", \"-n\", min=1, help=\"Maximum number of models or Ollama model families to show.\")] = OLLAMA_DISCOVER_LIMIT,",
+                    "    capability: Annotated[",
+                    "        CatalogCapability | None, typer.Option(\"--capability\", \"-c\", help=\"Ollama only: require a capability advertised by the model family.\"),",
+                    "    ] = None,",
+                    "    timeout: Annotated[",
+                    "        float, typer.Option(\"--timeout\", \"-t\", min=0.1, help=\"Timeout in seconds for each catalog or download-size request.\"),",
+                    "    ] = OLLAMA_CATALOG_TIMEOUT_SECONDS,",
+                    ") -> None:",
+                    "    if min_params > max_params:",
+                    "        raise typer.BadParameter(\"Must be less than or equal to --max-params.\", param_hint=\"--min-params\")",
+                    "    if backend == \"vllm\" and capability is not None:",
+                    "        raise typer.BadParameter(\"Capability filtering is only available for the Ollama catalog.\", param_hint=\"--capability\")",
+                    "    resolved_sort: CatalogSort = sort or (VLLM_DISCOVER_SORT if backend == \"vllm\" else OLLAMA_DISCOVER_SORT)",
+                    "",
+                    "    import requests",
+                    "    from rich.console import Console",
+                    "    from rich.text import Text",
+                    "",
+                    "    catalog_name = \"Hugging Face vLLM\" if backend == \"vllm\" else \"Ollama\"",
+                    "    try:",
+                    "        if backend == \"vllm\":",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_local.vllm_catalog import discover_vllm_models",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_local.vllm_catalog_report import show_discovered_vllm_models",
+                    "",
+                    "            with Console().status(\"Fetching current Hugging Face models for vLLM...\"):",
+                    "                vllm_models = discover_vllm_models(",
+                    "                    min_params=min_params, max_params=max_params, sort=resolved_sort, limit=limit, query=query, capability=capability, timeout=timeout,",
+                    "                )",
+                    "            show_discovered_vllm_models(models=vllm_models, min_params=min_params, max_params=max_params, sort=resolved_sort)",
+                    "        else:",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_local.catalog import discover_models",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_local.catalog_report import show_discovered_models",
+                    "",
+                    "            with Console().status(\"Fetching current Ollama catalog and download sizes...\"):",
+                    "                models = discover_models(",
+                    "                    min_params=min_params, max_params=max_params, sort=resolved_sort, limit=limit, query=query, capability=capability, timeout=timeout,",
+                    "                )",
+                    "            show_discovered_models(models=models, min_params=min_params, max_params=max_params, sort=resolved_sort)",
+                    "    except (requests.RequestException, ValueError) as error:",
+                    "        Console(stderr=True).print(Text(f\"\"\"Could not discover {catalog_name} models: {error}\"\"\", style=\"red\"))",
+                    "        raise typer.Exit(code=1) from error"
+                  ],
+                  "name": "discover",
+                  "parameters": [
+                    {
+                      "name": "query",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Filter model names (and descriptions for Ollama).')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Filter model names (and descriptions for Ollama)."
+                      }
+                    },
+                    {
+                      "name": "backend",
+                      "kind": "positional_or_keyword",
+                      "type": "LocalBackend",
+                      "default": "LOCAL_DEFAULT_BACKEND",
+                      "required": false,
+                      "annotation_raw": "Annotated[LocalBackend, typer.Option('--backend', '-b', help='Model catalog: Ollama or Hugging Face models for vLLM.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--backend",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--backend"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Model catalog: Ollama or Hugging Face models for vLLM."
+                      }
+                    },
+                    {
+                      "name": "min_params",
+                      "kind": "positional_or_keyword",
+                      "type": "float",
+                      "default": "OLLAMA_DISCOVER_MIN_PARAMS",
+                      "required": false,
+                      "annotation_raw": "Annotated[float, typer.Option('--min-params', '-l', min=0.0, help='Minimum advertised parameter count, in billions (inclusive).')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--min-params",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--min-params"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Minimum advertised parameter count, in billions (inclusive)."
+                      }
+                    },
+                    {
+                      "name": "max_params",
+                      "kind": "positional_or_keyword",
+                      "type": "float",
+                      "default": "OLLAMA_DISCOVER_MAX_PARAMS",
+                      "required": false,
+                      "annotation_raw": "Annotated[float, typer.Option('--max-params', '-m', min=0.001, help='Maximum advertised parameter count, in billions.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--max-params",
+                          "-m"
+                        ],
+                        "long_flags": [
+                          "--max-params"
+                        ],
+                        "short_flags": [
+                          "-m"
+                        ],
+                        "help": "Maximum advertised parameter count, in billions."
+                      }
+                    },
+                    {
+                      "name": "sort",
+                      "kind": "positional_or_keyword",
+                      "type": "CatalogSort | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[CatalogSort | None, typer.Option('--sort', '-s', help='Catalog ordering; not a quality ranking. Ollama: newest|popular (default newest). vLLM: popular|trending (default popular).')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--sort",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--sort"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Catalog ordering; not a quality ranking. Ollama: newest|popular (default newest). vLLM: popular|trending (default popular)."
+                      }
+                    },
+                    {
+                      "name": "limit",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "OLLAMA_DISCOVER_LIMIT",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--limit', '-n', min=1, help='Maximum number of models or Ollama model families to show.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--limit",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--limit"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Maximum number of models or Ollama model families to show."
+                      }
+                    },
+                    {
+                      "name": "capability",
+                      "kind": "positional_or_keyword",
+                      "type": "CatalogCapability | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[CatalogCapability | None, typer.Option('--capability', '-c', help='Ollama only: require a capability advertised by the model family.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--capability",
+                          "-c"
+                        ],
+                        "long_flags": [
+                          "--capability"
+                        ],
+                        "short_flags": [
+                          "-c"
+                        ],
+                        "help": "Ollama only: require a capability advertised by the model family."
+                      }
+                    },
+                    {
+                      "name": "timeout",
+                      "kind": "positional_or_keyword",
+                      "type": "float",
+                      "default": "OLLAMA_CATALOG_TIMEOUT_SECONDS",
+                      "required": false,
+                      "annotation_raw": "Annotated[float, typer.Option('--timeout', '-t', min=0.1, help='Timeout in seconds for each catalog or download-size request.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--timeout",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--timeout"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Timeout in seconds for each catalog or download-size request."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "🔎 <s> Discover models from Ollama or Hugging Face for vLLM",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "s",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "install",
+                "fullPath": "agents local install",
+                "shortPath": "a l i",
+                "help": "Install vLLM for Linux CUDA using uv, or vLLM Metal for Apple Silicon using Homebrew.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_local_vllm.py",
+                  "module": "stackops.scripts.python.agents_local_vllm",
+                  "callable": "install"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def install() -> None:",
+                    "    import platform",
+                    "    import shutil",
+                    "    import sys",
+                    "",
+                    "    if sys.platform == \"darwin\":",
+                    "        if platform.machine() != \"arm64\" or int(platform.mac_ver()[0].split(\".\")[0]) < 15:",
+                    "            typer.echo(\"vLLM Metal requires Apple Silicon and macOS 15 or newer.\", err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        brew = shutil.which(\"brew\")",
+                    "        if brew is None:",
+                    "            typer.echo(\"Install Homebrew from https://brew.sh, then run agents local install again.\", err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        typer.echo(\"Installing vLLM Metal with Homebrew...\")",
+                    "        _run_command(",
+                    "            command=[brew, \"tap\", \"vllm-project/vllm-metal\", \"https://github.com/vllm-project/vllm-metal\"],",
+                    "            environment=None,",
+                    "        )",
+                    "        _run_command(command=[brew, \"install\", \"vllm-project/vllm-metal/vllm-metal\"], environment=None)",
+                    "    elif sys.platform == \"linux\":",
+                    "        uv = shutil.which(\"uv\")",
+                    "        if uv is None:",
+                    "            typer.echo(\"Install uv from https://docs.astral.sh/uv/getting-started/installation/, then run agents local install again.\", err=True)",
+                    "            raise typer.Exit(code=1)",
+                    "        typer.echo(\"Installing vLLM for NVIDIA CUDA in an isolated uv tool environment...\")",
+                    "        _run_command(",
+                    "            command=[uv, \"tool\", \"install\", \"--python\", VLLM_INSTALL_PYTHON, \"--torch-backend\", \"auto\", \"vllm\"],",
+                    "            environment=None,",
+                    "        )",
+                    "    else:",
+                    "        typer.echo(\"Install vLLM on Linux with NVIDIA CUDA or macOS 15+ with Apple Silicon. On Windows, run agents local install inside WSL2.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    typer.echo(\"vLLM installed. Start a model with: agents local serve MODEL\")"
+                  ],
+                  "name": "install",
+                  "parameters": [],
+                  "return": "None"
+                },
+                "short_help": "📦 <i> Install vLLM for Linux CUDA or Apple Silicon",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "i",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "serve",
+                "fullPath": "agents local serve",
+                "shortPath": "a l S",
+                "help": "serve",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_local_vllm.py",
+                  "module": "stackops.scripts.python.agents_local_vllm",
+                  "callable": "serve"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def serve(",
+                    "    ctx: typer.Context,",
+                    "    model: Annotated[str, typer.Argument(help=\"Hugging Face model ID or local model directory to serve.\")],",
+                    "    host: Annotated[",
+                    "        str,",
+                    "        typer.Option(\"--host\", \"-H\", help=\"Server bind address. Pass additional vLLM options after --.\"),",
+                    "    ] = VLLM_BIND_HOST,",
+                    "    port: Annotated[",
+                    "        int,",
+                    "        typer.Option(\"--port\", \"-p\", min=1, max=65535, help=\"Server listening port.\"),",
+                    "    ] = VLLM_DEFAULT_PORT,",
+                    "    api_key: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--api-key\", \"-k\", envvar=\"VLLM_API_KEY\", show_default=False, hide_input=True, help=\"Require this API key for requests.\"),",
+                    "    ] = None,",
+                    ") -> None:",
+                    "    import os",
+                    "    import shutil",
+                    "    import subprocess",
+                    "    from pathlib import Path",
+                    "",
+                    "    executable = shutil.which(\"vllm\")",
+                    "    if executable is None and (uv := shutil.which(\"uv\")) is not None:",
+                    "        try:",
+                    "            result = subprocess.run([uv, \"tool\", \"dir\", \"--bin\"], capture_output=True, text=True, check=False)",
+                    "        except OSError as error:",
+                    "            typer.echo(f\"\"\"Could not locate uv-managed vLLM: {error}\"\"\", err=True)",
+                    "            raise typer.Exit(code=1) from error",
+                    "        if result.returncode:",
+                    "            typer.echo(f\"\"\"Could not locate uv-managed vLLM: {result.stderr.strip()}\"\"\", err=True)",
+                    "            raise typer.Exit(code=result.returncode if result.returncode > 0 else 128 - result.returncode)",
+                    "        candidate = Path(result.stdout.strip()) / \"vllm\"",
+                    "        if candidate.is_file() and os.access(candidate, os.X_OK):",
+                    "            executable = str(candidate)",
+                    "",
+                    "    if executable is None:",
+                    "        typer.echo(\"vLLM is not installed. Run agents local install first, or add your existing vllm executable to PATH.\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "",
+                    "    environment = os.environ.copy()",
+                    "    if api_key is not None:",
+                    "        environment[\"VLLM_API_KEY\"] = api_key",
+                    "    typer.echo(f\"\"\"Starting vLLM on {host}:{port}. Press Ctrl-C to stop.\"\"\")",
+                    "    _run_command(",
+                    "        command=[executable, \"serve\", model, \"--host\", host, \"--port\", str(port), *ctx.args],",
+                    "        environment=environment,",
+                    "    )"
+                  ],
+                  "name": "serve",
+                  "parameters": [
+                    {
+                      "name": "ctx",
+                      "kind": "positional_or_keyword",
+                      "type": "typer.Context",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "typer.Context"
+                    },
+                    {
+                      "name": "model",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Hugging Face model ID or local model directory to serve.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Hugging Face model ID or local model directory to serve."
+                      }
+                    },
+                    {
+                      "name": "host",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": "VLLM_BIND_HOST",
+                      "required": false,
+                      "annotation_raw": "Annotated[str, typer.Option('--host', '-H', help='Server bind address. Pass additional vLLM options after --.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--host",
+                          "-H"
+                        ],
+                        "long_flags": [
+                          "--host"
+                        ],
+                        "short_flags": [
+                          "-H"
+                        ],
+                        "help": "Server bind address. Pass additional vLLM options after --."
+                      }
+                    },
+                    {
+                      "name": "port",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "VLLM_DEFAULT_PORT",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--port', '-p', min=1, max=65535, help='Server listening port.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--port",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--port"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Server listening port."
+                      }
+                    },
+                    {
+                      "name": "api_key",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--api-key', '-k', envvar='VLLM_API_KEY', show_default=False, hide_input=True, help='Require this API key for requests.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--api-key",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--api-key"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "Require this API key for requests."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "🚀 <S> Start a vLLM model server in the foreground",
+                "command_context_settings": {
+                  "allow_extra_args": true,
+                  "ignore_unknown_options": true
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "S",
                     "hidden": true
                   }
                 ]
@@ -27543,7 +28286,7 @@
               {
                 "name": "l",
                 "hidden": true,
-                "help": "Local models through Ollama"
+                "help": "Local models through Ollama and vLLM"
               }
             ]
           },
@@ -29651,6 +30394,13 @@
             "signature": {
               "raw_lines": [
                 "def run_interactive(",
+                "    prompt: Annotated[",
+                "        list[str],",
+                "        typer.Argument(",
+                "            default_factory=list,",
+                "            help=\"Initial prompt text for the session. Use -- before the prompt to pass option-looking text as prompt content.\",",
+                "        ),",
+                "    ],",
                 "    agent: Annotated[",
                 "        INTERACTIVE_AGENT | None,",
                 "        typer.Option(",
@@ -29664,7 +30414,7 @@
                 "    ] = False,",
                 "    caveman: Annotated[",
                 "        bool,",
-                "        typer.Option(..., \"--caveman\", \"-c\", help=\"Start the session with megacave Wenyan compression.\"),",
+                "        typer.Option(..., \"--caveman\", \"-c\", help=\"Start the session with megacave Wenyan compression. Prepended to any prompt text.\"),",
                 "    ] = False,",
                 "    headroom: Annotated[",
                 "        bool,",
@@ -29739,6 +30489,11 @@
                 "        if followup and sandbox in (SandboxBackend.DOCKER, SandboxBackend.PODMAN) and is_windows_host():",
                 "            raise ValueError(\"Container follow-up on Windows cannot reuse host session paths. Run agents inside WSL2.\")",
                 "",
+                "        initial_prompt_parts = [_CAVEMAN_INITIAL_PROMPT] if caveman else []",
+                "        if len(prompt) > 0:",
+                "            initial_prompt_parts.append(\" \".join(prompt))",
+                "        initial_prompt = \"\\n\\n\".join(initial_prompt_parts) if len(initial_prompt_parts) > 0 else None",
+                "",
                 "        with _agent_working_directory(second_brain=second_brain or followup) as working_directory:",
                 "            if followup:",
                 "                from stackops.scripts.python.agents_followup import build_followup_command, choose_followup_session",
@@ -29748,11 +30503,11 @@
                 "                command = build_followup_command(",
                 "                    session=selected_session,",
                 "                    action=\"fork\" if fork else \"resume\",",
-                "                    initial_prompt=_CAVEMAN_INITIAL_PROMPT if caveman else None,",
+                "                    initial_prompt=initial_prompt,",
                 "                )",
                 "            else:",
                 "                resolved_agent = _resolve_interactive_agent(agent=agent)",
-                "                command = _interactive_agent_command(agent=resolved_agent, caveman=caveman)",
+                "                command = _interactive_agent_command(agent=resolved_agent, initial_prompt=initial_prompt)",
                 "",
                 "            command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)",
                 "            if sandbox != SandboxBackend.NONE:",
@@ -29797,6 +30552,21 @@
               ],
               "name": "run_interactive",
               "parameters": [
+                {
+                  "name": "prompt",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str]",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "Annotated[list[str], typer.Argument(default_factory=list, help='Initial prompt text for the session. Use -- before the prompt to pass option-looking text as prompt content.')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Initial prompt text for the session. Use -- before the prompt to pass option-looking text as prompt content."
+                  }
+                },
                 {
                   "name": "agent",
                   "kind": "positional_or_keyword",
@@ -29848,7 +30618,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--caveman', '-c', help='Start the session with megacave Wenyan compression.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--caveman', '-c', help='Start the session with megacave Wenyan compression. Prepended to any prompt text.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -29861,7 +30631,7 @@
                     "short_flags": [
                       "-c"
                     ],
-                    "help": "Start the session with megacave Wenyan compression.",
+                    "help": "Start the session with megacave Wenyan compression. Prepended to any prompt text.",
                     "default": "..."
                   }
                 },
@@ -34294,8 +35064,25 @@
                 "    path_or_search_term: Annotated[str, typer.Argument(help=\"The directory/file to search, or the search term when no matching path exists\")] = \".\",",
                 "    search_term: Annotated[str, typer.Argument(help=\"Initial search term to seed the interactive search\")] = \"\",",
                 "    ast: Annotated[bool, typer.Option(..., \"--ast\", \"-a\", help=\"The abstract syntax tree search/ tree sitter search of symbols\")] = False,",
-                "    semantic: Annotated[bool, typer.Option(..., \"--semantic\", \"-s\", help=\"The semantic search of symbols\")] = False,",
-                "    extension: Annotated[str | None, typer.Option(..., \"--extension\", \"-E\", help=\"File extension to filter by (e.g., .py, .js)\")] = None,",
+                "    semantic: Annotated[bool, typer.Option(..., \"--semantic\", \"-s\", help=\"Semantic search of text chunks, ranked by meaning rather than keywords\")] = False,",
+                "    semantic_backend: Annotated[",
+                "        SemanticBackend,",
+                "        typer.Option(",
+                "            ...,",
+                "            \"--semantic-backend\",",
+                "            \"-b\",",
+                "            help=\"Backend for --semantic: semtools (stateless, local static embeddings), ck (hybrid, local index), grepai (needs Ollama, local index), or qmd (local GGUF models, local index)\",",
+                "        ),",
+                "    ] = \"semtools\",",
+                "    extension: Annotated[",
+                "        str | None,",
+                "        typer.Option(",
+                "            ...,",
+                "            \"--extension\",",
+                "            \"-E\",",
+                "            help=\"File extension to filter by (e.g., .py, .js). With --semantic, grepai does not support it and qmd searches .md files unless it is given\",",
+                "        ),",
+                "    ] = None,",
                 "    file: Annotated[bool, typer.Option(..., \"--file\", \"-f\", help=\"File search using fzf\")] = False,",
                 "    dotfiles: Annotated[bool, typer.Option(..., \"--dotfiles\", \"-d\", help=\"Include dotfiles in search\")] = False,",
                 "    rga: Annotated[bool, typer.Option(..., \"--rga\", \"-A\", help=\"Use ripgrep-all for searching all (non text files) instead of ripgrep\")] = False,",
@@ -34307,7 +35094,7 @@
                 "            ...,",
                 "            \"--max-files\",",
                 "            \"-m\",",
-                "            help=\"Maximum files for --semantic search. Use 0 to disable the limit.\",",
+                "            help=\"Maximum files for --semantic search with the semtools backend. Use 0 to disable the limit.\",",
                 "            min=0,",
                 "        ),",
                 "    ] = 50,",
@@ -34320,11 +35107,12 @@
                 "    path, resolved_search_term = _resolve_seek_arguments(first_argument=path_or_search_term, search_term=search_term)",
                 "",
                 "    try:",
-                "        impl(",
+                "        failure = impl(",
                 "            path=path,",
                 "            search_term=resolved_search_term,",
                 "            ast=ast,",
                 "            semantic=semantic,",
+                "            semantic_backend=semantic_backend,",
                 "            max_files=max_files,",
                 "            extension=extension,",
                 "            file=file,",
@@ -34333,6 +35121,9 @@
                 "            edit=edit,",
                 "            install_dependencies=install_dependencies,",
                 "        )",
+                "        if failure is not None:",
+                "            typer.echo(f\"\"\"Semantic search with {failure.backend} failed during {failure.stage}: {failure.message}\"\"\", err=True)",
+                "            raise typer.Exit(code=1)",
                 "    except OSError as error:",
                 "        typer.echo(f\"\"\"Search failed: {error}\"\"\", err=True)",
                 "        raise typer.Exit(code=1) from error",
@@ -34407,7 +35198,7 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option(..., '--semantic', '-s', help='The semantic search of symbols')]",
+                  "annotation_raw": "Annotated[bool, typer.Option(..., '--semantic', '-s', help='Semantic search of text chunks, ranked by meaning rather than keywords')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -34420,7 +35211,30 @@
                     "short_flags": [
                       "-s"
                     ],
-                    "help": "The semantic search of symbols",
+                    "help": "Semantic search of text chunks, ranked by meaning rather than keywords",
+                    "default": "..."
+                  }
+                },
+                {
+                  "name": "semantic_backend",
+                  "kind": "positional_or_keyword",
+                  "type": "SemanticBackend",
+                  "default": "semtools",
+                  "required": false,
+                  "annotation_raw": "Annotated[SemanticBackend, typer.Option(..., '--semantic-backend', '-b', help='Backend for --semantic: semtools (stateless, local static embeddings), ck (hybrid, local index), grepai (needs Ollama, local index), or qmd (local GGUF models, local index)')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--semantic-backend",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--semantic-backend"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Backend for --semantic: semtools (stateless, local static embeddings), ck (hybrid, local index), grepai (needs Ollama, local index), or qmd (local GGUF models, local index)",
                     "default": "..."
                   }
                 },
@@ -34430,7 +35244,7 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--extension', '-E', help='File extension to filter by (e.g., .py, .js)')]",
+                  "annotation_raw": "Annotated[str | None, typer.Option(..., '--extension', '-E', help='File extension to filter by (e.g., .py, .js). With --semantic, grepai does not support it and qmd searches .md files unless it is given')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -34443,7 +35257,7 @@
                     "short_flags": [
                       "-E"
                     ],
-                    "help": "File extension to filter by (e.g., .py, .js)",
+                    "help": "File extension to filter by (e.g., .py, .js). With --semantic, grepai does not support it and qmd searches .md files unless it is given",
                     "default": "..."
                   }
                 },
@@ -34568,7 +35382,7 @@
                   "type": "int",
                   "default": 50,
                   "required": false,
-                  "annotation_raw": "Annotated[int, typer.Option(..., '--max-files', '-m', help='Maximum files for --semantic search. Use 0 to disable the limit.', min=0)]",
+                  "annotation_raw": "Annotated[int, typer.Option(..., '--max-files', '-m', help='Maximum files for --semantic search with the semtools backend. Use 0 to disable the limit.', min=0)]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -34581,7 +35395,7 @@
                     "short_flags": [
                       "-m"
                     ],
-                    "help": "Maximum files for --semantic search. Use 0 to disable the limit.",
+                    "help": "Maximum files for --semantic search with the semtools backend. Use 0 to disable the limit.",
                     "default": "..."
                   }
                 }
@@ -34610,7 +35424,7 @@
         ]
       },
       {
-        "kind": "command",
+        "kind": "group",
         "name": "fire",
         "fullPath": "fire",
         "shortPath": "f",
@@ -34618,513 +35432,964 @@
         "source": {
           "file": "src/stackops/scripts/python/stackops_entry.py",
           "module": "stackops.scripts.python.stackops_entry",
+          "dispatches_to": "stackops.scripts.python.fire_jobs.get_app",
           "callable": "fire"
         },
-        "signature": {
-          "raw_lines": [
-            "def fire(",
-            "    ctx: typer.Context,",
-            "    path: Annotated[str, typer.Argument(help=\"Path to the Python file to run\")] = \".\",",
-            "    function: Annotated[str | None, typer.Argument(help=\"Function to run\")] = None,",
-            "    frozen: Annotated[bool, typer.Option(\"--frozen\", \"-F\", help=\"Pass --frozen to uv run to use the existing lockfile without updating it.\")] = False,",
-            "    cmd: Annotated[bool, typer.Option(\"--cmd\", \"-B\", help=\"Create a cmd fire command to launch the job asynchronously\")] = False,",
-            "    debug: Annotated[bool, typer.Option(\"--debug\", \"-d\", help=\"Enable debug mode\")] = False,",
-            "    choose_function: Annotated[bool, typer.Option(\"--choose-function\", \"-c\", help=\"Choose function interactively\")] = False,",
-            "    loop: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Infinite recursion (runs again after completion/interruption)\")] = False,",
-            "",
-            "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Whether to run the job interactively using IPython\")] = False,",
-            "    jupyter: Annotated[bool, typer.Option(\"--jupyter\", \"-j\", help=\"Open in a jupyter notebook\")] = False,",
-            "    marimo: Annotated[bool, typer.Option(\"--marimo\", \"-M\", help=\"Open in a marimo notebook\")] = False,",
-            "    streamlit: Annotated[bool, typer.Option(\"--streamlit\", \"-S\", help=\"Run as streamlit app\")] = False,",
-            "",
-            "    module: Annotated[bool, typer.Option(\"--module\", \"-m\", help=\"Launch the main file\")] = False,",
-            "    script: Annotated[bool, typer.Option(\"--script\", \"-s\", help=\"Launch as a script without fire\")] = False,",
-            "    optimized: Annotated[bool, typer.Option(\"--optimized\", \"-O\", help=\"Run the optimized version of the function\")] = False,",
-            "    jit: Annotated[bool, typer.Option(\"--jit\", \"-J\", help=\"Enable CPython experimental JIT with PYTHON_JIT=1\")] = False,",
-            "    root_repo: Annotated[bool, typer.Option(\"--root-repo\", \"-r\", help=\"Resolve and search from the repository root\")] = False,",
-            "    remote: Annotated[bool, typer.Option(\"--remote\", \"-R\", help=\"Launch on a remote machine\")] = False,",
-            "    hold_directory: Annotated[bool, typer.Option(\"--hold-directory\", \"-D\", help=\"Hold current directory and avoid cd'ing to the script directory\")] = False,",
-            "    path_export: Annotated[bool, typer.Option(\"--path-export\", \"-P\", help=\"Augment the PYTHONPATH with repo root\")] = False,",
-            "    git_pull: Annotated[bool, typer.Option(\"--git-pull\", \"-g\", help=\"Start by pulling the git repo\")] = False,",
-            "    watch: Annotated[bool, typer.Option(\"--watch\", \"-w\", help=\"Watch the file for changes\")] = False,",
-            ") -> None:",
-            "    \"\"\"Fire and manage jobs.\"\"\"",
-            "    from stackops.scripts.python.fire_jobs import fire as fire_impl",
-            "    fire_impl(ctx=ctx, path=path, function=function, frozen=frozen, cmd=cmd, interactive=interactive, debug=debug,",
-            "              choose_function=choose_function, loop=loop, jupyter=jupyter, marimo=marimo, module=module,",
-            "              script=script, optimized=optimized, jit=jit, root_repo=root_repo,",
-            "              remote=remote, streamlit=streamlit, hold_directory=hold_directory,",
-            "              path_export=path_export, git_pull=git_pull, watch=watch)"
-          ],
-          "name": "fire",
-          "parameters": [
-            {
-              "name": "ctx",
-              "kind": "positional_or_keyword",
-              "type": "typer.Context",
-              "default": null,
-              "required": true,
-              "annotation_raw": "typer.Context"
+        "app": {
+          "help": "🔥 Run scripts, apps, and notebooks",
+          "no_args_is_help": true,
+          "add_completion": false,
+          "context_settings": {
+            "help_option_names": [
+              "-h",
+              "--help"
+            ]
+          }
+        },
+        "children": [
+          {
+            "kind": "command",
+            "name": "run",
+            "fullPath": "fire run",
+            "shortPath": "f r",
+            "help": "🚀 <r> Run a script or Python function",
+            "source": {
+              "file": "src/stackops/scripts/python/fire_jobs.py",
+              "module": "stackops.scripts.python.fire_jobs",
+              "callable": "run"
             },
-            {
-              "name": "path",
-              "kind": "positional_or_keyword",
-              "type": "str",
-              "default": ".",
-              "required": false,
-              "annotation_raw": "Annotated[str, typer.Argument(help='Path to the Python file to run')]",
-              "typer": {
-                "kind": "argument",
-                "param_decls": [],
-                "long_flags": [],
-                "short_flags": [],
-                "help": "Path to the Python file to run"
+            "signature": {
+              "raw_lines": [
+                "def run(",
+                "    ctx: typer.Context,",
+                "    path: Annotated[str, typer.Argument(help=\"File, directory, or partial script name to run\")] = \".\",",
+                "    function: Annotated[str | None, typer.Argument(help=\"Python function to run; pass its arguments after --\")] = None,",
+                "    frozen: Annotated[bool, typer.Option(\"--frozen\", \"-F\", help=\"Use the existing uv lockfile without updating it\")] = False,",
+                "    cmd: Annotated[bool, typer.Option(\"--cmd\", \"-B\", help=\"Launch asynchronously in a Windows cmd window\")] = False,",
+                "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Run interactively using IPython\")] = False,",
+                "    debug: Annotated[bool, typer.Option(\"--debug\", \"-d\", help=\"Run with the Python debugger\")] = False,",
+                "    choose_function: Annotated[bool, typer.Option(\"--choose-function\", \"-c\", help=\"Choose a function or shell lines interactively\")] = False,",
+                "    loop: Annotated[bool, typer.Option(\"--loop\", \"-l\", help=\"Rerun after completion or interruption\")] = False,",
+                "    module: Annotated[bool, typer.Option(\"--module\", \"-m\", help=\"Run the selected Python file as a module\")] = False,",
+                "    script: Annotated[bool, typer.Option(\"--script\", \"-s\", help=\"Generate a script that imports and calls the function\")] = False,",
+                "    optimized: Annotated[bool, typer.Option(\"--optimized\", \"-O\", help=\"Run Python with -OO optimization\")] = False,",
+                "    jit: Annotated[bool, typer.Option(\"--jit\", \"-J\", help=\"Enable CPython experimental JIT with PYTHON_JIT=1\")] = False,",
+                "    root_repo: Annotated[bool, typer.Option(\"--root-repo\", \"-r\", help=\"Resolve and search from the repository root\")] = False,",
+                "    path_export: Annotated[bool, typer.Option(\"--path-export\", \"-P\", help=\"Add the repository root to PYTHONPATH\")] = False,",
+                "    git_pull: Annotated[bool, typer.Option(\"--git-pull\", \"-g\", help=\"Pull the git repository before running\")] = False,",
+                "    watch: Annotated[bool, typer.Option(\"--watch\", \"-w\", help=\"Restart when source files change\")] = False,",
+                ") -> None:",
+                "    args = FireJobArgs(",
+                "        mode=\"run\", path=path, function=function, frozen=frozen, cmd=cmd, interactive=interactive,",
+                "        debug=debug, choose_function=choose_function, loop=loop, module=module, script=script,",
+                "        optimized=optimized, jit=jit, root_repo=root_repo, path_export=path_export,",
+                "        git_pull=git_pull, watch=watch,",
+                "    )",
+                "    _launch_job(ctx, args)"
+              ],
+              "name": "run",
+              "parameters": [
+                {
+                  "name": "ctx",
+                  "kind": "positional_or_keyword",
+                  "type": "typer.Context",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "typer.Context"
+                },
+                {
+                  "name": "path",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": ".",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='File, directory, or partial script name to run')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "File, directory, or partial script name to run"
+                  }
+                },
+                {
+                  "name": "function",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help='Python function to run; pass its arguments after --')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Python function to run; pass its arguments after --"
+                  }
+                },
+                {
+                  "name": "frozen",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--frozen', '-F', help='Use the existing uv lockfile without updating it')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--frozen",
+                      "-F"
+                    ],
+                    "long_flags": [
+                      "--frozen"
+                    ],
+                    "short_flags": [
+                      "-F"
+                    ],
+                    "help": "Use the existing uv lockfile without updating it"
+                  }
+                },
+                {
+                  "name": "cmd",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--cmd', '-B', help='Launch asynchronously in a Windows cmd window')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--cmd",
+                      "-B"
+                    ],
+                    "long_flags": [
+                      "--cmd"
+                    ],
+                    "short_flags": [
+                      "-B"
+                    ],
+                    "help": "Launch asynchronously in a Windows cmd window"
+                  }
+                },
+                {
+                  "name": "interactive",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Run interactively using IPython')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--interactive",
+                      "-i"
+                    ],
+                    "long_flags": [
+                      "--interactive"
+                    ],
+                    "short_flags": [
+                      "-i"
+                    ],
+                    "help": "Run interactively using IPython"
+                  }
+                },
+                {
+                  "name": "debug",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--debug', '-d', help='Run with the Python debugger')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--debug",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--debug"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Run with the Python debugger"
+                  }
+                },
+                {
+                  "name": "choose_function",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--choose-function', '-c', help='Choose a function or shell lines interactively')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--choose-function",
+                      "-c"
+                    ],
+                    "long_flags": [
+                      "--choose-function"
+                    ],
+                    "short_flags": [
+                      "-c"
+                    ],
+                    "help": "Choose a function or shell lines interactively"
+                  }
+                },
+                {
+                  "name": "loop",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--loop', '-l', help='Rerun after completion or interruption')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--loop",
+                      "-l"
+                    ],
+                    "long_flags": [
+                      "--loop"
+                    ],
+                    "short_flags": [
+                      "-l"
+                    ],
+                    "help": "Rerun after completion or interruption"
+                  }
+                },
+                {
+                  "name": "module",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--module', '-m', help='Run the selected Python file as a module')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--module",
+                      "-m"
+                    ],
+                    "long_flags": [
+                      "--module"
+                    ],
+                    "short_flags": [
+                      "-m"
+                    ],
+                    "help": "Run the selected Python file as a module"
+                  }
+                },
+                {
+                  "name": "script",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--script', '-s', help='Generate a script that imports and calls the function')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--script",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--script"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Generate a script that imports and calls the function"
+                  }
+                },
+                {
+                  "name": "optimized",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--optimized', '-O', help='Run Python with -OO optimization')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--optimized",
+                      "-O"
+                    ],
+                    "long_flags": [
+                      "--optimized"
+                    ],
+                    "short_flags": [
+                      "-O"
+                    ],
+                    "help": "Run Python with -OO optimization"
+                  }
+                },
+                {
+                  "name": "jit",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--jit', '-J', help='Enable CPython experimental JIT with PYTHON_JIT=1')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--jit",
+                      "-J"
+                    ],
+                    "long_flags": [
+                      "--jit"
+                    ],
+                    "short_flags": [
+                      "-J"
+                    ],
+                    "help": "Enable CPython experimental JIT with PYTHON_JIT=1"
+                  }
+                },
+                {
+                  "name": "root_repo",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--root-repo', '-r', help='Resolve and search from the repository root')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--root-repo",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--root-repo"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Resolve and search from the repository root"
+                  }
+                },
+                {
+                  "name": "path_export",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--path-export', '-P', help='Add the repository root to PYTHONPATH')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--path-export",
+                      "-P"
+                    ],
+                    "long_flags": [
+                      "--path-export"
+                    ],
+                    "short_flags": [
+                      "-P"
+                    ],
+                    "help": "Add the repository root to PYTHONPATH"
+                  }
+                },
+                {
+                  "name": "git_pull",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--git-pull', '-g', help='Pull the git repository before running')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--git-pull",
+                      "-g"
+                    ],
+                    "long_flags": [
+                      "--git-pull"
+                    ],
+                    "short_flags": [
+                      "-g"
+                    ],
+                    "help": "Pull the git repository before running"
+                  }
+                },
+                {
+                  "name": "watch",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--watch', '-w', help='Restart when source files change')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--watch",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--watch"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Restart when source files change"
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "command_context_settings": {
+              "allow_extra_args": true,
+              "allow_interspersed_args": true
+            },
+            "aliases": [
+              {
+                "name": "r",
+                "hidden": true
               }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "streamlit",
+            "fullPath": "fire streamlit",
+            "shortPath": "f s",
+            "help": "📊 <s> Launch a Streamlit app",
+            "source": {
+              "file": "src/stackops/scripts/python/fire_jobs.py",
+              "module": "stackops.scripts.python.fire_jobs",
+              "callable": "streamlit"
             },
-            {
-              "name": "function",
-              "kind": "positional_or_keyword",
-              "type": "str | None",
-              "default": null,
-              "required": false,
-              "annotation_raw": "Annotated[str | None, typer.Argument(help='Function to run')]",
-              "typer": {
-                "kind": "argument",
-                "param_decls": [],
-                "long_flags": [],
-                "short_flags": [],
-                "help": "Function to run"
-              }
-            },
-            {
-              "name": "frozen",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--frozen', '-F', help='Pass --frozen to uv run to use the existing lockfile without updating it.')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--frozen",
-                  "-F"
-                ],
-                "long_flags": [
-                  "--frozen"
-                ],
-                "short_flags": [
-                  "-F"
-                ],
-                "help": "Pass --frozen to uv run to use the existing lockfile without updating it."
-              }
-            },
-            {
-              "name": "cmd",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--cmd', '-B', help='Create a cmd fire command to launch the job asynchronously')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--cmd",
-                  "-B"
-                ],
-                "long_flags": [
-                  "--cmd"
-                ],
-                "short_flags": [
-                  "-B"
-                ],
-                "help": "Create a cmd fire command to launch the job asynchronously"
-              }
-            },
-            {
-              "name": "debug",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--debug', '-d', help='Enable debug mode')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--debug",
-                  "-d"
-                ],
-                "long_flags": [
-                  "--debug"
-                ],
-                "short_flags": [
-                  "-d"
-                ],
-                "help": "Enable debug mode"
-              }
-            },
-            {
-              "name": "choose_function",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--choose-function', '-c', help='Choose function interactively')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--choose-function",
-                  "-c"
-                ],
-                "long_flags": [
-                  "--choose-function"
-                ],
-                "short_flags": [
-                  "-c"
-                ],
-                "help": "Choose function interactively"
-              }
-            },
-            {
-              "name": "loop",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--loop', '-l', help='Infinite recursion (runs again after completion/interruption)')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--loop",
-                  "-l"
-                ],
-                "long_flags": [
-                  "--loop"
-                ],
-                "short_flags": [
-                  "-l"
-                ],
-                "help": "Infinite recursion (runs again after completion/interruption)"
-              }
-            },
-            {
-              "name": "interactive",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Whether to run the job interactively using IPython')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--interactive",
-                  "-i"
-                ],
-                "long_flags": [
-                  "--interactive"
-                ],
-                "short_flags": [
-                  "-i"
-                ],
-                "help": "Whether to run the job interactively using IPython"
-              }
-            },
-            {
-              "name": "jupyter",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--jupyter', '-j', help='Open in a jupyter notebook')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--jupyter",
-                  "-j"
-                ],
-                "long_flags": [
-                  "--jupyter"
-                ],
-                "short_flags": [
-                  "-j"
-                ],
-                "help": "Open in a jupyter notebook"
-              }
-            },
-            {
-              "name": "marimo",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--marimo', '-M', help='Open in a marimo notebook')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--marimo",
-                  "-M"
-                ],
-                "long_flags": [
-                  "--marimo"
-                ],
-                "short_flags": [
-                  "-M"
-                ],
-                "help": "Open in a marimo notebook"
-              }
-            },
-            {
+            "signature": {
+              "raw_lines": [
+                "def streamlit(",
+                "    ctx: typer.Context,",
+                "    path: Annotated[str, typer.Argument(help=\"Python file, directory, or partial app name\")] = \".\",",
+                "    frozen: Annotated[bool, typer.Option(\"--frozen\", \"-F\", help=\"Use the existing uv lockfile without updating it\")] = False,",
+                "    jit: Annotated[bool, typer.Option(\"--jit\", \"-J\", help=\"Enable CPython experimental JIT with PYTHON_JIT=1\")] = False,",
+                "    root_repo: Annotated[bool, typer.Option(\"--root-repo\", \"-r\", help=\"Resolve and search from the repository root\")] = False,",
+                "    hold_directory: Annotated[bool, typer.Option(\"--hold-directory\", \"-D\", help=\"Keep the current directory when launching the app\")] = False,",
+                "    path_export: Annotated[bool, typer.Option(\"--path-export\", \"-P\", help=\"Add the repository root to PYTHONPATH\")] = False,",
+                "    git_pull: Annotated[bool, typer.Option(\"--git-pull\", \"-g\", help=\"Pull the git repository before launching\")] = False,",
+                "    watch: Annotated[bool, typer.Option(\"--watch\", \"-w\", help=\"Restart when source files change\")] = False,",
+                ") -> None:",
+                "    args = FireJobArgs(",
+                "        mode=\"streamlit\", path=path, frozen=frozen, jit=jit, root_repo=root_repo,",
+                "        hold_directory=hold_directory, path_export=path_export, git_pull=git_pull, watch=watch,",
+                "    )",
+                "    _launch_job(ctx, args)"
+              ],
               "name": "streamlit",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--streamlit', '-S', help='Run as streamlit app')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--streamlit",
-                  "-S"
-                ],
-                "long_flags": [
-                  "--streamlit"
-                ],
-                "short_flags": [
-                  "-S"
-                ],
-                "help": "Run as streamlit app"
-              }
+              "parameters": [
+                {
+                  "name": "ctx",
+                  "kind": "positional_or_keyword",
+                  "type": "typer.Context",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "typer.Context"
+                },
+                {
+                  "name": "path",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": ".",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Python file, directory, or partial app name')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Python file, directory, or partial app name"
+                  }
+                },
+                {
+                  "name": "frozen",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--frozen', '-F', help='Use the existing uv lockfile without updating it')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--frozen",
+                      "-F"
+                    ],
+                    "long_flags": [
+                      "--frozen"
+                    ],
+                    "short_flags": [
+                      "-F"
+                    ],
+                    "help": "Use the existing uv lockfile without updating it"
+                  }
+                },
+                {
+                  "name": "jit",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--jit', '-J', help='Enable CPython experimental JIT with PYTHON_JIT=1')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--jit",
+                      "-J"
+                    ],
+                    "long_flags": [
+                      "--jit"
+                    ],
+                    "short_flags": [
+                      "-J"
+                    ],
+                    "help": "Enable CPython experimental JIT with PYTHON_JIT=1"
+                  }
+                },
+                {
+                  "name": "root_repo",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--root-repo', '-r', help='Resolve and search from the repository root')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--root-repo",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--root-repo"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Resolve and search from the repository root"
+                  }
+                },
+                {
+                  "name": "hold_directory",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--hold-directory', '-D', help='Keep the current directory when launching the app')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--hold-directory",
+                      "-D"
+                    ],
+                    "long_flags": [
+                      "--hold-directory"
+                    ],
+                    "short_flags": [
+                      "-D"
+                    ],
+                    "help": "Keep the current directory when launching the app"
+                  }
+                },
+                {
+                  "name": "path_export",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--path-export', '-P', help='Add the repository root to PYTHONPATH')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--path-export",
+                      "-P"
+                    ],
+                    "long_flags": [
+                      "--path-export"
+                    ],
+                    "short_flags": [
+                      "-P"
+                    ],
+                    "help": "Add the repository root to PYTHONPATH"
+                  }
+                },
+                {
+                  "name": "git_pull",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--git-pull', '-g', help='Pull the git repository before launching')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--git-pull",
+                      "-g"
+                    ],
+                    "long_flags": [
+                      "--git-pull"
+                    ],
+                    "short_flags": [
+                      "-g"
+                    ],
+                    "help": "Pull the git repository before launching"
+                  }
+                },
+                {
+                  "name": "watch",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--watch', '-w', help='Restart when source files change')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--watch",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--watch"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Restart when source files change"
+                  }
+                }
+              ],
+              "return": "None"
             },
-            {
-              "name": "module",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--module', '-m', help='Launch the main file')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--module",
-                  "-m"
-                ],
-                "long_flags": [
-                  "--module"
-                ],
-                "short_flags": [
-                  "-m"
-                ],
-                "help": "Launch the main file"
+            "aliases": [
+              {
+                "name": "s",
+                "hidden": true
               }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "jupyter",
+            "fullPath": "fire jupyter",
+            "shortPath": "f j",
+            "help": "📓 <j> Open a file in JupyterLab",
+            "source": {
+              "file": "src/stackops/scripts/python/fire_jobs.py",
+              "module": "stackops.scripts.python.fire_jobs",
+              "callable": "jupyter"
             },
-            {
-              "name": "script",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--script', '-s', help='Launch as a script without fire')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--script",
-                  "-s"
-                ],
-                "long_flags": [
-                  "--script"
-                ],
-                "short_flags": [
-                  "-s"
-                ],
-                "help": "Launch as a script without fire"
-              }
+            "signature": {
+              "raw_lines": [
+                "def jupyter(",
+                "    ctx: typer.Context,",
+                "    path: Annotated[str, typer.Argument(help=\"Python file, notebook, directory, or partial filename\")] = \".\",",
+                "    frozen: Annotated[bool, typer.Option(\"--frozen\", \"-F\", help=\"Use the existing uv lockfile without updating it\")] = False,",
+                "    jit: Annotated[bool, typer.Option(\"--jit\", \"-J\", help=\"Enable CPython experimental JIT with PYTHON_JIT=1\")] = False,",
+                "    root_repo: Annotated[bool, typer.Option(\"--root-repo\", \"-r\", help=\"Resolve and search from the repository root\")] = False,",
+                "    path_export: Annotated[bool, typer.Option(\"--path-export\", \"-P\", help=\"Add the repository root to PYTHONPATH\")] = False,",
+                "    git_pull: Annotated[bool, typer.Option(\"--git-pull\", \"-g\", help=\"Pull the git repository before launching\")] = False,",
+                "    watch: Annotated[bool, typer.Option(\"--watch\", \"-w\", help=\"Restart when source files change\")] = False,",
+                ") -> None:",
+                "    args = FireJobArgs(",
+                "        mode=\"jupyter\", path=path, frozen=frozen, jit=jit, root_repo=root_repo,",
+                "        path_export=path_export, git_pull=git_pull, watch=watch,",
+                "    )",
+                "    _launch_job(ctx, args)"
+              ],
+              "name": "jupyter",
+              "parameters": [
+                {
+                  "name": "ctx",
+                  "kind": "positional_or_keyword",
+                  "type": "typer.Context",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "typer.Context"
+                },
+                {
+                  "name": "path",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": ".",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Python file, notebook, directory, or partial filename')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Python file, notebook, directory, or partial filename"
+                  }
+                },
+                {
+                  "name": "frozen",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--frozen', '-F', help='Use the existing uv lockfile without updating it')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--frozen",
+                      "-F"
+                    ],
+                    "long_flags": [
+                      "--frozen"
+                    ],
+                    "short_flags": [
+                      "-F"
+                    ],
+                    "help": "Use the existing uv lockfile without updating it"
+                  }
+                },
+                {
+                  "name": "jit",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--jit', '-J', help='Enable CPython experimental JIT with PYTHON_JIT=1')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--jit",
+                      "-J"
+                    ],
+                    "long_flags": [
+                      "--jit"
+                    ],
+                    "short_flags": [
+                      "-J"
+                    ],
+                    "help": "Enable CPython experimental JIT with PYTHON_JIT=1"
+                  }
+                },
+                {
+                  "name": "root_repo",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--root-repo', '-r', help='Resolve and search from the repository root')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--root-repo",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--root-repo"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Resolve and search from the repository root"
+                  }
+                },
+                {
+                  "name": "path_export",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--path-export', '-P', help='Add the repository root to PYTHONPATH')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--path-export",
+                      "-P"
+                    ],
+                    "long_flags": [
+                      "--path-export"
+                    ],
+                    "short_flags": [
+                      "-P"
+                    ],
+                    "help": "Add the repository root to PYTHONPATH"
+                  }
+                },
+                {
+                  "name": "git_pull",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--git-pull', '-g', help='Pull the git repository before launching')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--git-pull",
+                      "-g"
+                    ],
+                    "long_flags": [
+                      "--git-pull"
+                    ],
+                    "short_flags": [
+                      "-g"
+                    ],
+                    "help": "Pull the git repository before launching"
+                  }
+                },
+                {
+                  "name": "watch",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--watch', '-w', help='Restart when source files change')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--watch",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--watch"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Restart when source files change"
+                  }
+                }
+              ],
+              "return": "None"
             },
-            {
-              "name": "optimized",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--optimized', '-O', help='Run the optimized version of the function')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--optimized",
-                  "-O"
-                ],
-                "long_flags": [
-                  "--optimized"
-                ],
-                "short_flags": [
-                  "-O"
-                ],
-                "help": "Run the optimized version of the function"
+            "aliases": [
+              {
+                "name": "j",
+                "hidden": true
               }
+            ]
+          },
+          {
+            "kind": "command",
+            "name": "marimo",
+            "fullPath": "fire marimo",
+            "shortPath": "f m",
+            "help": "📒 <m> Edit a Marimo notebook",
+            "source": {
+              "file": "src/stackops/scripts/python/fire_jobs.py",
+              "module": "stackops.scripts.python.fire_jobs",
+              "callable": "marimo"
             },
-            {
-              "name": "jit",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--jit', '-J', help='Enable CPython experimental JIT with PYTHON_JIT=1')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--jit",
-                  "-J"
-                ],
-                "long_flags": [
-                  "--jit"
-                ],
-                "short_flags": [
-                  "-J"
-                ],
-                "help": "Enable CPython experimental JIT with PYTHON_JIT=1"
-              }
+            "signature": {
+              "raw_lines": [
+                "def marimo(",
+                "    ctx: typer.Context,",
+                "    path: Annotated[str, typer.Argument(help=\"Python file, directory, or partial notebook name\")] = \".\",",
+                "    frozen: Annotated[bool, typer.Option(\"--frozen\", \"-F\", help=\"Use the existing uv lockfile without updating it\")] = False,",
+                "    jit: Annotated[bool, typer.Option(\"--jit\", \"-J\", help=\"Enable CPython experimental JIT with PYTHON_JIT=1\")] = False,",
+                "    root_repo: Annotated[bool, typer.Option(\"--root-repo\", \"-r\", help=\"Resolve and search from the repository root\")] = False,",
+                ") -> None:",
+                "    args = FireJobArgs(mode=\"marimo\", path=path, frozen=frozen, jit=jit, root_repo=root_repo)",
+                "    _launch_job(ctx, args)"
+              ],
+              "name": "marimo",
+              "parameters": [
+                {
+                  "name": "ctx",
+                  "kind": "positional_or_keyword",
+                  "type": "typer.Context",
+                  "default": null,
+                  "required": true,
+                  "annotation_raw": "typer.Context"
+                },
+                {
+                  "name": "path",
+                  "kind": "positional_or_keyword",
+                  "type": "str",
+                  "default": ".",
+                  "required": false,
+                  "annotation_raw": "Annotated[str, typer.Argument(help='Python file, directory, or partial notebook name')]",
+                  "typer": {
+                    "kind": "argument",
+                    "param_decls": [],
+                    "long_flags": [],
+                    "short_flags": [],
+                    "help": "Python file, directory, or partial notebook name"
+                  }
+                },
+                {
+                  "name": "frozen",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--frozen', '-F', help='Use the existing uv lockfile without updating it')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--frozen",
+                      "-F"
+                    ],
+                    "long_flags": [
+                      "--frozen"
+                    ],
+                    "short_flags": [
+                      "-F"
+                    ],
+                    "help": "Use the existing uv lockfile without updating it"
+                  }
+                },
+                {
+                  "name": "jit",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--jit', '-J', help='Enable CPython experimental JIT with PYTHON_JIT=1')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--jit",
+                      "-J"
+                    ],
+                    "long_flags": [
+                      "--jit"
+                    ],
+                    "short_flags": [
+                      "-J"
+                    ],
+                    "help": "Enable CPython experimental JIT with PYTHON_JIT=1"
+                  }
+                },
+                {
+                  "name": "root_repo",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--root-repo', '-r', help='Resolve and search from the repository root')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--root-repo",
+                      "-r"
+                    ],
+                    "long_flags": [
+                      "--root-repo"
+                    ],
+                    "short_flags": [
+                      "-r"
+                    ],
+                    "help": "Resolve and search from the repository root"
+                  }
+                }
+              ],
+              "return": "None"
             },
-            {
-              "name": "root_repo",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--root-repo', '-r', help='Resolve and search from the repository root')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--root-repo",
-                  "-r"
-                ],
-                "long_flags": [
-                  "--root-repo"
-                ],
-                "short_flags": [
-                  "-r"
-                ],
-                "help": "Resolve and search from the repository root"
+            "aliases": [
+              {
+                "name": "m",
+                "hidden": true
               }
-            },
-            {
-              "name": "remote",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--remote', '-R', help='Launch on a remote machine')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--remote",
-                  "-R"
-                ],
-                "long_flags": [
-                  "--remote"
-                ],
-                "short_flags": [
-                  "-R"
-                ],
-                "help": "Launch on a remote machine"
-              }
-            },
-            {
-              "name": "hold_directory",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--hold-directory', '-D', help=\"Hold current directory and avoid cd'ing to the script directory\")]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--hold-directory",
-                  "-D"
-                ],
-                "long_flags": [
-                  "--hold-directory"
-                ],
-                "short_flags": [
-                  "-D"
-                ],
-                "help": "Hold current directory and avoid cd'ing to the script directory"
-              }
-            },
-            {
-              "name": "path_export",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--path-export', '-P', help='Augment the PYTHONPATH with repo root')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--path-export",
-                  "-P"
-                ],
-                "long_flags": [
-                  "--path-export"
-                ],
-                "short_flags": [
-                  "-P"
-                ],
-                "help": "Augment the PYTHONPATH with repo root"
-              }
-            },
-            {
-              "name": "git_pull",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--git-pull', '-g', help='Start by pulling the git repo')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--git-pull",
-                  "-g"
-                ],
-                "long_flags": [
-                  "--git-pull"
-                ],
-                "short_flags": [
-                  "-g"
-                ],
-                "help": "Start by pulling the git repo"
-              }
-            },
-            {
-              "name": "watch",
-              "kind": "positional_or_keyword",
-              "type": "bool",
-              "default": false,
-              "required": false,
-              "annotation_raw": "Annotated[bool, typer.Option('--watch', '-w', help='Watch the file for changes')]",
-              "typer": {
-                "kind": "option",
-                "param_decls": [
-                  "--watch",
-                  "-w"
-                ],
-                "long_flags": [
-                  "--watch"
-                ],
-                "short_flags": [
-                  "-w"
-                ],
-                "help": "Watch the file for changes"
-              }
-            }
-          ],
-          "return": "None"
-        },
-        "command_context_settings": {
-          "allow_extra_args": true,
-          "allow_interspersed_args": false
-        },
-        "typer": {
-          "no_args_is_help": false
-        },
-        "doc": "Fire and manage jobs.",
+            ]
+          }
+        ],
+        "command_context_settings": "{**ctx_settings, 'allow_interspersed_args': False}",
         "aliases": [
           {
             "name": "f",

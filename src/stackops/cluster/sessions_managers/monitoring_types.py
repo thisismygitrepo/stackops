@@ -19,6 +19,7 @@ class CommandStatus(TypedDict):
     processes: list[ProcessInfo]
     command: str
     tab_name: str
+    pane_name: str
     cwd: NotRequired[str]
     error: NotRequired[str]
     pid: NotRequired[int]

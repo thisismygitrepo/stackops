@@ -49,13 +49,13 @@ def create_from_function(
         choice_function = function
 
     from stackops.cluster.sessions_managers.tmux.tmux_local import run_tmux_layout
-    from stackops.utils.schemas.layouts.layout_types import LayoutConfig
+    from stackops.utils.schemas.layouts.layout_types import LayoutConfig, single_pane_tab
     layout: LayoutConfig = {"layoutName": "fireNprocess", "layoutTabs": []}
     for an_arg in range(num_process):
-        layout["layoutTabs"].append({
-            "tabName": f"tab{an_arg}",
-            "startDir": str(start_dir),
-            "command": f"uv run python -m fire {choice_file} {choice_function} --idx={an_arg} --idx_max={num_process}"
-            })
+        layout["layoutTabs"].append(single_pane_tab(
+            tab_name=f"tab{an_arg}",
+            start_dir=str(start_dir),
+            command=f"uv run python -m fire {choice_file} {choice_function} --idx={an_arg} --idx_max={num_process}",
+        ))
     print(layout)
     run_tmux_layout(layout_config=layout, on_conflict="error")

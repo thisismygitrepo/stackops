@@ -1,10 +1,11 @@
 """Herdr layout launcher for terminal run."""
 
 import json
+import math
 import shlex
 import subprocess
 from dataclasses import dataclass
-from typing import TypeAlias, cast
+from typing import Literal, TypeAlias, cast
 
 import typer
 
@@ -14,17 +15,24 @@ from stackops.cluster.sessions_managers.session_conflict import (
     build_session_launch_plan,
     kill_existing_session,
 )
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_constants import DEFAULT_TAB_ARRANGEMENT
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabArrangement, TabConfig
 
 
 JsonObject: TypeAlias = dict[str, object]
 
 
 @dataclass(frozen=True, slots=True)
+class HerdrLaunchedPane:
+    name: str
+    pane_id: str
+
+
+@dataclass(frozen=True, slots=True)
 class HerdrLaunchedTab:
     name: str
     tab_id: str
-    pane_id: str
+    panes: tuple[HerdrLaunchedPane, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,7 +107,7 @@ def launch_layout_with_herdr(*, layout: LayoutConfig) -> HerdrLaunchSummary:
             "workspace",
             "create",
             "--cwd",
-            first_tab["startDir"],
+            first_tab["panes"][0]["startDir"],
             "--label",
             layout["layoutName"],
             "--no-focus",
@@ -112,16 +120,14 @@ def launch_layout_with_herdr(*, layout: LayoutConfig) -> HerdrLaunchSummary:
     root_tab_id = _required_string(mapping=root_tab, key="tab_id")
     root_pane_id = _required_string(mapping=root_pane, key="pane_id")
 
-    launched_tabs: list[HerdrLaunchedTab] = []
     _run_herdr(["herdr", "tab", "rename", root_tab_id, first_tab["tabName"]])
-    _run_tab_command(tab=first_tab, pane_id=root_pane_id)
-    launched_tabs.append(
+    launched_tabs: list[HerdrLaunchedTab] = [
         HerdrLaunchedTab(
             name=first_tab["tabName"],
             tab_id=root_tab_id,
-            pane_id=root_pane_id,
+            panes=_launch_tab_panes(tab=first_tab, root_pane_id=root_pane_id),
         )
-    )
+    ]
 
     for tab in tabs[1:]:
         tab_payload = _run_herdr_json(
@@ -132,7 +138,7 @@ def launch_layout_with_herdr(*, layout: LayoutConfig) -> HerdrLaunchSummary:
                 "--workspace",
                 workspace_id,
                 "--cwd",
-                tab["startDir"],
+                tab["panes"][0]["startDir"],
                 "--label",
                 tab["tabName"],
                 "--no-focus",
@@ -142,12 +148,11 @@ def launch_layout_with_herdr(*, layout: LayoutConfig) -> HerdrLaunchSummary:
         created_pane = _result_object(payload=tab_payload, key="root_pane")
         tab_id = _required_string(mapping=created_tab, key="tab_id")
         pane_id = _required_string(mapping=created_pane, key="pane_id")
-        _run_tab_command(tab=tab, pane_id=pane_id)
         launched_tabs.append(
             HerdrLaunchedTab(
                 name=tab["tabName"],
                 tab_id=tab_id,
-                pane_id=pane_id,
+                panes=_launch_tab_panes(tab=tab, root_pane_id=pane_id),
             )
         )
 
@@ -158,8 +163,68 @@ def launch_layout_with_herdr(*, layout: LayoutConfig) -> HerdrLaunchSummary:
     )
 
 
-def _run_tab_command(*, tab: TabConfig, pane_id: str) -> None:
-    _run_herdr(["herdr", "pane", "run", pane_id, tab["command"]])
+def _panes_per_row(*, arrangement: TabArrangement, pane_count: int) -> int:
+    match arrangement:
+        case "columns":
+            return pane_count
+        case "rows":
+            return 1
+        case "grid":
+            return math.ceil(math.sqrt(pane_count))
+
+
+def _split_pane(*, pane_id: str, direction: Literal["right", "down"], kept_share: float, pane: PaneConfig) -> str:
+    split_payload = _run_herdr_json(
+        [
+            "herdr",
+            "pane",
+            "split",
+            pane_id,
+            "--direction",
+            direction,
+            "--ratio",
+            str(kept_share),
+            "--cwd",
+            pane["startDir"],
+            "--no-focus",
+        ]
+    )
+    return _required_string(mapping=_result_object(payload=split_payload, key="pane"), key="pane_id")
+
+
+def _launch_tab_panes(*, tab: TabConfig, root_pane_id: str) -> tuple[HerdrLaunchedPane, ...]:
+    panes = tab["panes"]
+    per_row = _panes_per_row(arrangement=tab.get("arrangement", DEFAULT_TAB_ARRANGEMENT), pane_count=len(panes))
+    rows = [panes[start : start + per_row] for start in range(0, len(panes), per_row)]
+    row_head_ids = [root_pane_id]
+    for row_index in range(1, len(rows)):
+        row_head_ids.append(
+            _split_pane(
+                pane_id=row_head_ids[-1],
+                direction="down",
+                kept_share=1 / (len(rows) - row_index + 1),
+                pane=rows[row_index][0],
+            )
+        )
+    pane_ids: list[str] = []
+    for row, head_id in zip(rows, row_head_ids, strict=True):
+        pane_ids.append(head_id)
+        for column_index in range(1, len(row)):
+            pane_ids.append(
+                _split_pane(
+                    pane_id=pane_ids[-1],
+                    direction="right",
+                    kept_share=1 / (len(row) - column_index + 1),
+                    pane=row[column_index],
+                )
+            )
+    for pane, pane_id in zip(panes, pane_ids, strict=True):
+        _run_herdr(["herdr", "pane", "rename", pane_id, pane["paneName"]])
+        _run_herdr(["herdr", "pane", "run", pane_id, pane["command"]])
+    return tuple(
+        HerdrLaunchedPane(name=pane["paneName"], pane_id=pane_id)
+        for pane, pane_id in zip(panes, pane_ids, strict=True)
+    )
 
 
 def _run_herdr(args: list[str]) -> str:
@@ -213,4 +278,6 @@ def show_herdr_launch_summary(*, summary: HerdrLaunchSummary) -> None:
         f"({summary.workspace_id}) with {len(summary.tabs)} tab(s)."
     )
     for tab in summary.tabs:
-        typer.echo(f"- {tab.name}: tab={tab.tab_id} pane={tab.pane_id}")
+        typer.echo(f"- {tab.name}: tab={tab.tab_id}")
+        for pane in tab.panes:
+            typer.echo(f"    - {pane.name}: pane={pane.pane_id}")

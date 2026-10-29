@@ -3,6 +3,8 @@
 import subprocess
 
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import run_tmux_commands
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout import build_tmux_new_window_tab_commands
 from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_processes import classify_pane_status, find_meaningful_pane_process_label
 from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_display import DynamicStartResult, DynamicTabTask
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
@@ -24,10 +26,10 @@ def _run_capture(args: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 def spawn_tab(session_name: str, task: DynamicTabTask) -> None:
-    tab = task["tab"]
-    runtime_tab_name = task["runtime_tab_name"]
-    _run_command(args=["new-window", "-t", f"{session_name}:", "-n", runtime_tab_name, "-c", tab["startDir"]])
-    _run_command(args=["send-keys", "-t", f"{session_name}:{runtime_tab_name}", tab["command"], "C-m"])
+    run_tmux_commands(
+        commands=build_tmux_new_window_tab_commands(session_name=session_name, tab=task["tab"], exit_mode="backToShell"),
+        timeout_seconds=30,
+    )
 
 
 def close_tab(session_name: str, runtime_tab_name: str) -> None:

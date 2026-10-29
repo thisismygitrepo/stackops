@@ -10,7 +10,7 @@ import shlex
 import subprocess
 import sys
 
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig, single_pane_tab
 
 
 _INLINE_WORKER_SCRIPT = """
@@ -96,17 +96,17 @@ def _build_tabs(
         payload = 25 + (tab_number * 7) + (plan.base_steps * 5)
         worker_label = f"{plan.layout_name}_{tab_number:02d}"
         tabs.append(
-            {
-                "tabName": f"{plan.layout_name}-tab-{tab_number:02d}",
-                "startDir": str(plan.start_dir),
-                "command": _build_worker_command(
+            single_pane_tab(
+                tab_name=f"{plan.layout_name}-tab-{tab_number:02d}",
+                start_dir=str(plan.start_dir),
+                command=_build_worker_command(
                     python_executable=python_executable,
                     label=worker_label,
                     steps=steps,
                     sleep_seconds=sleep_seconds,
                     payload=payload,
                 ),
-            }
+            )
         )
     return tabs
 

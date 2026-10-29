@@ -80,7 +80,7 @@ def collect_session_snapshot(
             "-t",
             session_name,
             "-F",
-            "#{window_index}\t#{pane_index}\t#{pane_current_path}\t#{pane_current_command}\t#{?pane_active,active,}\t#{?pane_dead,dead,}\t#{pane_dead_status}\t#{pane_pid}\t#{window_id}\t#{pane_id}\t#{pane_start_command}",
+            "#{window_index}\t#{pane_index}\t#{pane_current_path}\t#{pane_current_command}\t#{?pane_active,active,}\t#{?pane_dead,dead,}\t#{pane_dead_status}\t#{pane_pid}\t#{window_id}\t#{pane_id}\t#{pane_start_command}\t#{pane_left}\t#{pane_top}",
         ]
     )
 
@@ -91,7 +91,7 @@ def collect_session_snapshot(
             if not pane_line.strip():
                 continue
             parts = pane_line.split("\t")
-            while len(parts) < 11:
+            while len(parts) < 13:
                 parts.append("")
             panes_by_window[parts[0].strip()].append(
                 {
@@ -105,6 +105,8 @@ def collect_session_snapshot(
                     "window_id": parts[8].strip(),
                     "pane_id": parts[9].strip(),
                     "pane_start_command": parts[10].strip(),
+                    "pane_left": parts[11].strip(),
+                    "pane_top": parts[12].strip(),
                 }
             )
         for pane_list in panes_by_window.values():

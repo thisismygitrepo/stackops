@@ -1,11 +1,11 @@
 from collections.abc import Iterable
-from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_sessions.herdr_export_source import (
     JsonObject,
     entry_int,
     entry_text,
     load_pane_entries,
+    load_pane_origins,
     load_tab_entries,
     tab_id,
     workspace_id,
@@ -15,7 +15,8 @@ from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants impo
     TMUX_EXPORT_SHELL_COMMAND,
     TmuxExportCommandSource,
 )
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_arrangement import infer_arrangement_from_origins
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabConfig
 
 
 def _tab_display_name(tab: JsonObject) -> str:
@@ -65,28 +66,46 @@ def _panes_by_tab_id(panes: Iterable[JsonObject]) -> dict[str, list[JsonObject]]
     return grouped_panes
 
 
-def _select_representative_pane(
-    tab: JsonObject,
-    panes_by_tab: dict[str, list[JsonObject]],
-) -> JsonObject | None:
-    tab_id_value = tab_id(tab=tab)
-    if tab_id_value is None:
-        return None
-    tab_panes = panes_by_tab.get(tab_id_value, [])
-    for pane in tab_panes:
-        if bool(pane.get("focused")):
-            return pane
+def _start_dir_from_pane(pane: JsonObject) -> str:
+    cwd = entry_text(pane, "foreground_cwd") or entry_text(pane, "cwd")
+    if cwd is None:
+        raise ValueError(f"Herdr pane {entry_text(pane, 'pane_id')} does not report its working directory.")
+    return cwd
+
+
+def _export_tab_panes(
+    tab_name: str,
+    tab_panes: list[JsonObject],
+) -> tuple[list[PaneConfig], list[tuple[int, int]]]:
     if len(tab_panes) == 0:
-        return None
-    return tab_panes[0]
-
-
-def _start_dir_from_pane(pane: JsonObject | None) -> str:
-    if pane is not None:
-        cwd = entry_text(pane, "foreground_cwd") or entry_text(pane, "cwd")
-        if cwd is not None:
-            return cwd
-    return str(Path.home())
+        raise ValueError(f"Herdr tab '{tab_name}' has no panes to export.")
+    panes_by_id: dict[str, JsonObject] = {}
+    for pane in tab_panes:
+        pane_id = entry_text(pane, "pane_id")
+        if pane_id is None:
+            raise ValueError(f"Herdr tab '{tab_name}' contains a pane without a pane_id.")
+        panes_by_id[pane_id] = pane
+    origins_by_pane_id = load_pane_origins(pane_id_value=next(iter(panes_by_id)))
+    pane_ids_row_major = sorted(
+        panes_by_id,
+        key=lambda pane_id: (origins_by_pane_id[pane_id][1], origins_by_pane_id[pane_id][0]),
+    )
+    used_pane_names: set[str] = set()
+    panes: list[PaneConfig] = []
+    for pane_index, pane_id in enumerate(pane_ids_row_major):
+        pane = panes_by_id[pane_id]
+        pane_name = entry_text(pane, "label") or f"pane-{pane_index + 1}"
+        if pane_name in used_pane_names:
+            pane_name = f"{pane_name}-{pane_index + 1}"
+        used_pane_names.add(pane_name)
+        panes.append(
+            {
+                "paneName": pane_name,
+                "startDir": _start_dir_from_pane(pane=pane),
+                "command": TMUX_EXPORT_SHELL_COMMAND,
+            }
+        )
+    return panes, [origins_by_pane_id[pane_id] for pane_id in pane_ids_row_major]
 
 
 def _workspace_label_counts(workspaces: list[JsonObject]) -> dict[str, int]:
@@ -133,22 +152,15 @@ def _build_layout_for_herdr_workspace(
     used_tab_names: set[str] = set()
     layout_tabs: list[TabConfig] = []
     for tab in tabs:
-        representative_pane = _select_representative_pane(
-            tab=tab,
-            panes_by_tab=panes_by_tab,
+        tab_name = _unique_tab_name(tab=tab, used_tab_names=used_tab_names)
+        panes, origins = _export_tab_panes(
+            tab_name=tab_name,
+            tab_panes=panes_by_tab.get(tab_id(tab) or "", []),
         )
-        layout_tabs.append(
-            {
-                "tabName": _unique_tab_name(
-                    tab=tab,
-                    used_tab_names=used_tab_names,
-                ),
-                "startDir": _start_dir_from_pane(
-                    pane=representative_pane,
-                ),
-                "command": TMUX_EXPORT_SHELL_COMMAND,
-            }
-        )
+        layout_tab: TabConfig = {"tabName": tab_name, "panes": panes}
+        if len(panes) > 1:
+            layout_tab["arrangement"] = infer_arrangement_from_origins(origins=origins)
+        layout_tabs.append(layout_tab)
     return {"layoutName": layout_name, "layoutTabs": layout_tabs}
 
 

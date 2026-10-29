@@ -11,7 +11,8 @@ The schema lives in `stackops.utils.schemas.layouts.layout_types`.
 
 | Type | Fields |
 | --- | --- |
-| `TabConfig` | `tabName`, `startDir`, `command`, optional `tabWeight` |
+| `PaneConfig` | `paneName`, `startDir`, `command` |
+| `TabConfig` | `tabName`, `panes`, optional `arrangement` (`columns`, `rows`, or `grid`), optional `tabWeight` |
 | `LayoutConfig` | `layoutName`, `layoutTabs` |
 | `LayoutsFile` | `version`, `layouts` |
 
@@ -19,12 +20,13 @@ The schema lives in `stackops.utils.schemas.layouts.layout_types`.
 
 - `serialize_layouts_to_file(layouts, version, path, write_mode="replace_file")` writes a layout file with `"$schema": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/layouts/layout.schema.json"` and replaces any existing file content.
 - `serialize_layouts_to_file(layouts, version, path, write_mode="merge_by_layout_name")` preserves existing layouts, replaces layouts that share the same `layoutName`, and appends new layout names.
+- `single_pane_tab(tab_name=..., start_dir=..., command=...)` builds a tab with one pane named after the tab.
 - `substitute_home(tabs)` expands `~` and `$HOME` and rewrites shorthand command prefixes:
   - `f ...` -> `~/.config/stackops/scripts/wrap_stackops fire ...`
   - `t ...` -> `~/.config/stackops/scripts/wrap_stackops terminal ...`
   - `s ...` -> `~/.config/stackops/scripts/wrap_stackops seek ...`
 
-The current schema key is `layoutTabs`. There is no alternate `tabs` field in the typed definitions.
+The current schema keys are `layoutTabs` and `panes`. There is no alternate `tabs` field, and a tab carries no `startDir` or `command` of its own.
 
 ---
 

@@ -13,11 +13,12 @@ from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state impor
     free_workspace_number,
     list_session_entries,
     list_window_entries,
+    list_workspace_entries,
     run_tuios,
 )
 from stackops.scripts.python.helpers.helpers_sessions.sessions_tuios_commands import (
     close_window,
-    launch_window,
+    launch_tab,
 )
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 
@@ -56,23 +57,32 @@ def run_layouts_with_tuios(
             if not merge_existing:
                 run_tuios(["new", "--detach", "--", session_name])
                 initial_window_ids = [window.window_id for window in list_window_entries(session_name)]
-            existing_windows = list_window_entries(session_name) if merge_existing else []
+            existing_workspaces = list_workspace_entries(session_name) if merge_existing else []
             window_ids = list(launched_windows.get(session_name, ()))
             for tab in layout["layoutTabs"]:
-                matching_windows = [window for window in existing_windows if window.display_name == tab["tabName"]]
-                if matching_windows and on_conflict == "mergeSkip":
+                matching_workspace = next((workspace for workspace in existing_workspaces if workspace.name == tab["tabName"]), None)
+                if matching_workspace is not None and on_conflict == "mergeSkip":
                     continue
-                workspace = matching_windows[0].workspace if matching_windows else free_workspace_number(
-                    session_name=session_name,
-                    ignored_window_ids=frozenset(initial_window_ids),
-                )
-                window_ids.append(launch_window(session_name=session_name, tab=tab, exit_mode=exit_mode, workspace=workspace))
-                for window in matching_windows:
-                    close_window(session_name=session_name, window_id=window.window_id)
-                    if window.window_id in window_ids:
-                        window_ids.remove(window.window_id)
+                if matching_workspace is None:
+                    workspace_number = free_workspace_number(
+                        session_name=session_name,
+                        ignored_window_ids=frozenset(initial_window_ids),
+                    )
+                    replaced_window_ids: list[str] = []
+                else:
+                    workspace_number = matching_workspace.number
+                    replaced_window_ids = [
+                        window.window_id
+                        for window in list_window_entries(session_name)
+                        if window.workspace == workspace_number
+                    ]
+                window_ids.extend(launch_tab(session_name=session_name, tab=tab, exit_mode=exit_mode, workspace=workspace_number))
+                for window_id in replaced_window_ids:
+                    close_window(session_name=session_name, window_id=window_id)
+                    if window_id in window_ids:
+                        window_ids.remove(window_id)
                 if merge_existing:
-                    existing_windows = list_window_entries(session_name)
+                    existing_workspaces = list_workspace_entries(session_name)
             for window_id in initial_window_ids:
                 close_window(session_name=session_name, window_id=window_id)
             launched_windows[session_name] = tuple(window_ids)

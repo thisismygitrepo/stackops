@@ -21,6 +21,7 @@ from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants impo
     TMUX_EXPORT_SHELL_COMMAND,
     TmuxExportCommandSource,
 )
+from stackops.utils.schemas.layouts.layout_arrangement import infer_arrangement_from_origins
 from stackops.utils.schemas.layouts.layout_types import (
     LayoutConfig,
     LayoutFileWriteMode,
@@ -95,25 +96,10 @@ def resolve_tmux_session_names_for_export(
     return requested_sessions
 
 
-def _select_representative_pane(
-    window: dict[str, str],
-    panes_by_window: dict[str, list[dict[str, str]]],
-) -> dict[str, str] | None:
-    window_panes = panes_by_window.get(window["window_index"], [])
-    for pane in window_panes:
-        if pane["pane_active"]:
-            return pane
-    if len(window_panes) == 0:
-        return None
-    return window_panes[0]
-
-
 def _command_from_pane(
-    pane: dict[str, str] | None,
+    pane: dict[str, str],
     command_source: TmuxExportCommandSource,
 ) -> str:
-    if pane is None:
-        return TMUX_EXPORT_SHELL_COMMAND
     match command_source:
         case "shell":
             return TMUX_EXPORT_SHELL_COMMAND
@@ -129,9 +115,7 @@ def _command_from_pane(
     return command
 
 
-def _start_dir_from_pane(pane: dict[str, str] | None) -> str:
-    if pane is None:
-        return str(Path.home())
+def _start_dir_from_pane(pane: dict[str, str]) -> str:
     pane_cwd = pane.get("pane_cwd", "").strip()
     if pane_cwd == "":
         return str(Path.home())
@@ -177,23 +161,27 @@ def _build_layout_for_tmux_session(
     used_tab_names: set[str] = set()
     tabs: list[TabConfig] = []
     for window in windows:
-        representative_pane = _select_representative_pane(
-            window=window,
-            panes_by_window=panes_by_window,
-        )
-        tabs.append(
-            {
-                "tabName": _unique_tab_name(
-                    window=window,
-                    used_tab_names=used_tab_names,
-                ),
-                "startDir": _start_dir_from_pane(pane=representative_pane),
-                "command": _command_from_pane(
-                    pane=representative_pane,
-                    command_source=command_source,
-                ),
-            }
-        )
+        window_panes = panes_by_window.get(window["window_index"], [])
+        tab_name = _unique_tab_name(window=window, used_tab_names=used_tab_names)
+        if len(window_panes) == 0:
+            detail = pane_warning or "tmux reported no panes"
+            raise ValueError(f"Tmux window '{tab_name}' in session '{session_name}' has no panes to export: {detail}")
+        tab: TabConfig = {
+            "tabName": tab_name,
+            "panes": [
+                {
+                    "paneName": f"pane-{pane['pane_index']}",
+                    "startDir": _start_dir_from_pane(pane=pane),
+                    "command": _command_from_pane(pane=pane, command_source=command_source),
+                }
+                for pane in window_panes
+            ],
+        }
+        if len(window_panes) > 1:
+            tab["arrangement"] = infer_arrangement_from_origins(
+                origins=[(int(pane["pane_left"]), int(pane["pane_top"])) for pane in window_panes]
+            )
+        tabs.append(tab)
     return {"layoutName": session_name, "layoutTabs": tabs}
 
 

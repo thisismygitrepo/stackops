@@ -3,7 +3,7 @@ import subprocess
 from typing import NotRequired, TypedDict
 
 from stackops.cluster.sessions_managers.monitoring_types import CommandStatus
-from stackops.utils.schemas.layouts.layout_types import TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 
 
 class TmuxSessionStatus(TypedDict):
@@ -65,12 +65,17 @@ def check_tmux_session_status(session_name: str) -> TmuxSessionStatus:
     }
 
 
-def build_unknown_command_status(tab_config: TabConfig) -> CommandStatus:
-    return {
-        "status": "unknown",
-        "running": False,
-        "processes": [],
-        "command": tab_config["command"],
-        "tab_name": tab_config["tabName"],
-        "cwd": tab_config["startDir"],
-    }
+def build_unknown_commands_status(layout_config: LayoutConfig) -> dict[str, CommandStatus]:
+    commands_status: dict[str, CommandStatus] = {}
+    for tab in layout_config["layoutTabs"]:
+        for pane in tab["panes"]:
+            commands_status[f"{tab['tabName']}/{pane['paneName']}"] = {
+                "status": "unknown",
+                "running": False,
+                "processes": [],
+                "command": pane["command"],
+                "tab_name": tab["tabName"],
+                "pane_name": pane["paneName"],
+                "cwd": pane["startDir"],
+            }
+    return commands_status

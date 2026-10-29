@@ -9,6 +9,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import (
     SessionEntry,
     WindowEntry,
+    WorkspaceEntry,
 )
 
 
@@ -100,14 +101,21 @@ def list_window_entries(session_name: str) -> list[WindowEntry]:
     return windows
 
 
-def free_workspace_number(session_name: str, ignored_window_ids: frozenset[str]) -> int:
+def list_workspace_entries(session_name: str) -> list[WorkspaceEntry]:
     try:
         payload: object = json.loads(run_tuios(["call", "list-workspaces", json.dumps({"session": session_name})]))
     except json.JSONDecodeError as error:
         raise ValueError("TUIOS returned invalid workspace JSON.") from error
     if not isinstance(payload, dict):
         raise ValueError("TUIOS returned an invalid workspace response.")
-    workspace_numbers = [_field(entry, "workspace", int, 0) for entry in _json_entries(payload.get("workspaces"))]
+    return [
+        WorkspaceEntry(number=_field(entry, "workspace", int, 0), name=_field(entry, "name", str, ""))
+        for entry in _json_entries(payload.get("workspaces"))
+    ]
+
+
+def free_workspace_number(session_name: str, ignored_window_ids: frozenset[str]) -> int:
+    workspace_numbers = [workspace.number for workspace in list_workspace_entries(session_name)]
     occupied = {window.workspace for window in list_window_entries(session_name) if window.window_id not in ignored_window_ids}
     free_number = next((number for number in workspace_numbers if number not in occupied), None)
     if free_number is None:

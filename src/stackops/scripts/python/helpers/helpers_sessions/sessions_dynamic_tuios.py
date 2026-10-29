@@ -3,13 +3,15 @@ from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state impor
     free_workspace_number,
     list_session_entries,
     list_window_entries,
+    list_workspace_entries,
 )
+from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import WindowEntry
 from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_display import (
     DynamicStartResult,
     DynamicTabTask,
 )
 from stackops.scripts.python.helpers.helpers_sessions.sessions_tuios import run_layouts_with_tuios
-from stackops.scripts.python.helpers.helpers_sessions.sessions_tuios_commands import close_window, launch_window
+from stackops.scripts.python.helpers.helpers_sessions.sessions_tuios_commands import close_window, launch_tab
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 
 
@@ -32,7 +34,7 @@ def start_initial_session(
 
 
 def spawn_tab(session_name: str, task: DynamicTabTask) -> None:
-    launch_window(
+    launch_tab(
         session_name=session_name,
         tab=task["tab"],
         exit_mode="backToShell",
@@ -40,17 +42,20 @@ def spawn_tab(session_name: str, task: DynamicTabTask) -> None:
     )
 
 
+def _tab_windows(session_name: str, runtime_tab_name: str) -> list[WindowEntry]:
+    workspace_numbers = {
+        workspace.number for workspace in list_workspace_entries(session_name) if workspace.name == runtime_tab_name
+    }
+    return [window for window in list_window_entries(session_name) if window.workspace in workspace_numbers]
+
+
 def close_tab(session_name: str, runtime_tab_name: str) -> None:
-    for window in list_window_entries(session_name):
-        if window.display_name == runtime_tab_name:
-            close_window(session_name=session_name, window_id=window.window_id)
-            return
+    for window in _tab_windows(session_name=session_name, runtime_tab_name=runtime_tab_name):
+        close_window(session_name=session_name, window_id=window.window_id)
 
 
 def is_task_running(session_name: str, task: DynamicTabTask) -> bool:
     if not any(session.name == session_name and not session.saved for session in list_session_entries()):
         return False
-    for window in list_window_entries(session_name):
-        if window.display_name == task["runtime_tab_name"]:
-            return not (window.at_prompt is True and window.command_seq > 0)
-    return False
+    windows = _tab_windows(session_name=session_name, runtime_tab_name=task["runtime_tab_name"])
+    return any(not (window.at_prompt is True and window.command_seq > 0) for window in windows)

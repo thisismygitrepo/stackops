@@ -1,9 +1,9 @@
 
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
-from stackops.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig
+from stackops.utils.schemas.layouts.layout_types import TabConfig, LayoutConfig, single_pane_tab
 # from stackops.utils.accessories import split_list
 from typing import Literal, Protocol
-from stackops.cluster.sessions_managers.helpers.load_balancer_helper import restrict_num_tabs_helper1, restrict_num_tabs_helper2, restrict_num_tabs_helper3, restrict_num_tabs_helper4
+from stackops.cluster.sessions_managers.helpers.load_balancer_helper import get_single_pane, restrict_num_tabs_helper1, restrict_num_tabs_helper2, restrict_num_tabs_helper3, restrict_num_tabs_helper4
 
 class COMMAND_SPLITTER(Protocol):
     def __call__(self, command: str, to: int) -> list[str]: ...
@@ -31,12 +31,11 @@ def limit_tab_weight(layout_configs: list[LayoutConfig], max_weight: int, comman
             tab_weight = tab.get("tabWeight", 1)
             if tab_weight > max_weight:
                 print(f"Tab '{tab['tabName']}' in layout '{a_layout_config['layoutName']}' has too much weight ({tab_weight} > {max_weight}). Splitting command.")
-                split_commands = command_splitter(tab["command"], to=max_weight)
+                pane = get_single_pane(tab)
+                split_commands = command_splitter(pane["command"], to=max_weight)
                 for idx, cmd in enumerate(split_commands):
                     new_tabs.append({
-                        "tabName": f"{tab['tabName']}_part{idx+1}",
-                        "startDir": tab["startDir"],
-                        "command": cmd,
+                        **single_pane_tab(tab_name=f"{tab['tabName']}_part{idx+1}", start_dir=pane["startDir"], command=cmd),
                         "tabWeight": max_weight
                     })
             else:

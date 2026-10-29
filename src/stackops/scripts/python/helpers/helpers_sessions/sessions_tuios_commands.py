@@ -5,7 +5,7 @@ from typing import cast
 
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import kill_window_command, run_tuios
-from stackops.utils.schemas.layouts.layout_types import TabConfig
+from stackops.utils.schemas.layouts.layout_types import PaneConfig, TabConfig
 
 
 def build_window_script(command: str, exit_mode: SessionExitMode) -> str:
@@ -29,18 +29,18 @@ fi
 done"""
 
 
-def launch_window(session_name: str, tab: TabConfig, exit_mode: SessionExitMode, workspace: int) -> str:
+def launch_window(session_name: str, pane: PaneConfig, exit_mode: SessionExitMode, workspace: int) -> str:
     output = run_tuios(
         [
             "call", "new-window",
             json.dumps({
                 "session": session_name,
-                "cwd": str(Path(tab["startDir"]).expanduser().absolute()),
+                "cwd": str(Path(pane["startDir"]).expanduser().absolute()),
                 "workspace": workspace,
                 "focus": False,
-                "name": tab["tabName"],
+                "name": pane["paneName"],
                 "close_on_exit": True,
-                "command": ["bash", "-c", build_window_script(command=tab["command"], exit_mode=exit_mode)],
+                "command": ["bash", "-c", build_window_script(command=pane["command"], exit_mode=exit_mode)],
             }),
         ]
     )
@@ -52,9 +52,17 @@ def launch_window(session_name: str, tab: TabConfig, exit_mode: SessionExitMode,
         raise ValueError("TUIOS returned an invalid new-window response.")
     window_id = cast(dict[str, object], payload).get("window_id")
     if not isinstance(window_id, str) or not window_id:
-        raise ValueError(f"""TUIOS did not return an ID for window '{tab['tabName']}'.""")
-    run_tuios(["call", "set-workspace-name", json.dumps({"session": session_name, "workspace": workspace, "name": tab["tabName"]})])
+        raise ValueError(f"""TUIOS did not return an ID for window '{pane['paneName']}'.""")
     return window_id
+
+
+def launch_tab(session_name: str, tab: TabConfig, exit_mode: SessionExitMode, workspace: int) -> list[str]:
+    window_ids = [
+        launch_window(session_name=session_name, pane=pane, exit_mode=exit_mode, workspace=workspace)
+        for pane in tab["panes"]
+    ]
+    run_tuios(["call", "set-workspace-name", json.dumps({"session": session_name, "workspace": workspace, "name": tab["tabName"]})])
+    return window_ids
 
 
 def close_window(session_name: str, window_id: str) -> None:

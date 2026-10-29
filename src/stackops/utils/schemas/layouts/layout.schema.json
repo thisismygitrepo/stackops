@@ -52,24 +52,48 @@
       "properties": {
         "tabName": {
           "type": "string",
-          "description": "Tab title shown in terminal."
+          "description": "Tab title shown in terminal (tmux window, tuios workspace, herdr tab)."
         },
-        "startDir": {
-          "type": "string",
-          "description": "Directory to start the tab in (supports ~ expansion).",
-          "examples": ["~/code/example/project"]
+        "panes": {
+          "type": "array",
+          "description": "Panes shown side by side inside the tab (tmux pane, tuios window, herdr pane).",
+          "items": {
+            "$ref": "#/definitions/LayoutPane"
+          },
+          "minItems": 1
         },
-        "command": {
+        "arrangement": {
           "type": "string",
-          "description": "Shell command to execute when the tab opens.",
-          "examples": ["fire run -mO liveInf.py main -- --arg1=val1"]
+          "enum": ["columns", "rows", "grid"],
+          "description": "How the panes share the tab: side by side, stacked, or a balanced grid. Defaults to grid. TUIOS ignores it because its tiler arranges the windows of a workspace."
         },
         "tabWeight": {
           "type": "integer",
           "description": "Optional weight for tab sizing, defaults to 1 if not provided."
         }
       },
-      "required": ["tabName", "startDir", "command"]
+      "required": ["tabName", "panes"]
+    },
+    "LayoutPane": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paneName": {
+          "type": "string",
+          "description": "Pane title, unique within its tab."
+        },
+        "startDir": {
+          "type": "string",
+          "description": "Directory to start the pane in (supports ~ expansion).",
+          "examples": ["~/code/example/project"]
+        },
+        "command": {
+          "type": "string",
+          "description": "Shell command to execute when the pane opens.",
+          "examples": ["fire run -mO liveInf.py main -- --arg1=val1"]
+        }
+      },
+      "required": ["paneName", "startDir", "command"]
     }
   }
 }

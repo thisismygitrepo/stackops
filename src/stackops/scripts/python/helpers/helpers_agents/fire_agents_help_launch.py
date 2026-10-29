@@ -12,7 +12,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import (
     PROVIDER,
     ReasoningEffort,
 )
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile, TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile, TabConfig, single_pane_tab
 from stackops.utils.source_of_truth import dotfiles_llm_api_keys_path
 
 
@@ -346,7 +346,7 @@ def get_agents_launch_layout(session_root: Path, *, job_name: str, start_dir: Pa
         idx = a_prompt_dir.name.split("_")[-1]  # e.g., agent_0 -> 0
         agent_cmd_path = a_prompt_dir / agent_shell.get_agent_command_filename(idx=idx, is_windows=is_windows)
         fire_cmd = agent_shell.get_script_runner_command(script_path=agent_cmd_path, is_windows=is_windows)
-        tab_config.append(TabConfig(tabName=f"Agent{idx}", startDir=str(start_dir.resolve()), command=fire_cmd))
+        tab_config.append(single_pane_tab(tab_name=f"Agent{idx}", start_dir=str(start_dir.resolve()), command=fire_cmd))
     layout = LayoutConfig(layoutName=job_name, layoutTabs=tab_config)
     layouts_file: LayoutsFile = LayoutsFile(version="1.0", layouts=[layout])
     return layouts_file

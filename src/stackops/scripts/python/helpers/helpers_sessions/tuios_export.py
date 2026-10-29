@@ -1,10 +1,15 @@
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import choose_existing_session_names
-from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import list_session_entries, list_window_entries
+from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import WindowEntry
+from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import (
+    list_session_entries,
+    list_window_entries,
+    list_workspace_entries,
+)
 from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants import (
     TMUX_EXPORT_SHELL_COMMAND,
     TmuxExportCommandSource,
 )
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabConfig
 
 
 def resolve_tuios_sessions_for_export(session_names: str | None, export_all_sessions: bool) -> list[str]:
@@ -27,6 +32,31 @@ def resolve_tuios_sessions_for_export(session_names: str | None, export_all_sess
     return requested_names
 
 
+def _unique_name(name: str, used_names: set[str]) -> str:
+    unique_name = name
+    suffix = 2
+    while unique_name in used_names:
+        unique_name = f"""{name}-{suffix}"""
+        suffix += 1
+    used_names.add(unique_name)
+    return unique_name
+
+
+def _pane_from_window(window: WindowEntry, used_pane_names: set[str], command_source: TmuxExportCommandSource) -> PaneConfig:
+    name = _unique_name(name=window.display_name or f"""window-{window.index}""", used_names=used_pane_names)
+    if not window.cwd:
+        raise ValueError(f"""TUIOS window '{name}' does not report its working directory. Enable shell integration before exporting.""")
+    command = TMUX_EXPORT_SHELL_COMMAND
+    if command_source == "current-command":
+        command = window.running_command or window.foreground_command
+        if not command:
+            if window.at_prompt is True:
+                command = TMUX_EXPORT_SHELL_COMMAND
+            else:
+                raise ValueError(f"""TUIOS window '{name}' does not report its running command. Use --command-source shell.""")
+    return {"paneName": name, "startDir": window.cwd, "command": command}
+
+
 def build_layouts_from_tuios_sessions(session_names: list[str], command_source: TmuxExportCommandSource) -> list[LayoutConfig]:
     if command_source == "start-command":
         raise ValueError("TUIOS does not expose window start commands. Use --command-source shell or current-command.")
@@ -35,26 +65,24 @@ def build_layouts_from_tuios_sessions(session_names: list[str], command_source: 
         windows = list_window_entries(session_name=session_name)
         if not windows:
             raise ValueError(f"""TUIOS session '{session_name}' has no windows to export.""")
-        tabs: list[TabConfig] = []
-        used_names: set[str] = set()
+        workspace_names = {workspace.number: workspace.name for workspace in list_workspace_entries(session_name=session_name)}
+        windows_by_workspace: dict[int, list[WindowEntry]] = {}
         for window in windows:
-            name = window.display_name or f"""window-{window.index}"""
-            base_name = name
-            suffix = 2
-            while name in used_names:
-                name = f"""{base_name}-{suffix}"""
-                suffix += 1
-            used_names.add(name)
-            if not window.cwd:
-                raise ValueError(f"""TUIOS window '{name}' does not report its working directory. Enable shell integration before exporting.""")
-            command = TMUX_EXPORT_SHELL_COMMAND
-            if command_source == "current-command":
-                command = window.running_command or window.foreground_command
-                if not command:
-                    if window.at_prompt is True:
-                        command = TMUX_EXPORT_SHELL_COMMAND
-                    else:
-                        raise ValueError(f"""TUIOS window '{name}' does not report its running command. Use --command-source shell.""")
-            tabs.append({"tabName": name, "startDir": window.cwd, "command": command})
+            windows_by_workspace.setdefault(window.workspace, []).append(window)
+        tabs: list[TabConfig] = []
+        used_tab_names: set[str] = set()
+        for workspace_number, workspace_windows in sorted(windows_by_workspace.items()):
+            tab_name = _unique_name(
+                name=workspace_names.get(workspace_number) or f"""workspace-{workspace_number}""",
+                used_names=used_tab_names,
+            )
+            used_pane_names: set[str] = set()
+            tabs.append({
+                "tabName": tab_name,
+                "panes": [
+                    _pane_from_window(window=window, used_pane_names=used_pane_names, command_source=command_source)
+                    for window in workspace_windows
+                ],
+            })
         layouts.append({"layoutName": session_name, "layoutTabs": tabs})
     return layouts
