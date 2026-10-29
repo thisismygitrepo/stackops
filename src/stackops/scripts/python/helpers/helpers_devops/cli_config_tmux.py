@@ -102,7 +102,7 @@ def install_oh_my_tmux(
     """Install Oh My Tmux through the shared StackOps installer."""
     _reject_native_windows()
     from stackops.utils.installer_utils.installer_cli import main_installer_cli
-    main_installer_cli(which="oh-my-tmux", group=False, interactive=False, explore=False, update=update, version=None)
+    main_installer_cli(which="oh-my-tmux", group=False, interactive=False, update=update, version=None)
     if apply_stackops_local_config:
         _write_stackops_local(_paths("home"), overwrite=overwrite)
     typer.echo("Done. Restart tmux or run `devops config terminal tmux-style reload --location home`.")

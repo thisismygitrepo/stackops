@@ -56,7 +56,7 @@ def install_agent_browser_skill(*, agent: AGENTS, backend: SKILL_INSTALL_COMMAND
 
     from stackops.utils.installer_utils.installer_cli import main_installer_cli
 
-    main_installer_cli(which=AGENT_BROWSER_INSTALLER_NAME, group=False, interactive=False, explore=False, update=True, version=None, ctx=None)
+    main_installer_cli(which=AGENT_BROWSER_INSTALLER_NAME, group=False, interactive=False, update=True, version=None, ctx=None)
     command = (backend, SKILLS_CLI_PACKAGE, "add", AGENT_BROWSER_SKILL_REPO, "--agent", skills_cli_agent, "--yes")
     _run_required_command(command=command, cwd=install_root)
     return BrowserSkillInstallResult(install_root=install_root, command=command)
@@ -68,7 +68,7 @@ def install_browser_use_skill(*, agent: AGENTS) -> BrowserSkillInstallResult:
 
     from stackops.utils.installer_utils.installer_cli import main_installer_cli
 
-    main_installer_cli(which=BROWSER_USE_INSTALLER_NAME, group=False, interactive=False, explore=False, update=True, version=None, ctx=None)
+    main_installer_cli(which=BROWSER_USE_INSTALLER_NAME, group=False, interactive=False, update=True, version=None, ctx=None)
     skill_target = BROWSER_USE_SKILL_TARGET_BY_STACKOPS_AGENT.get(agent, "agents")
     command = (BROWSER_USE_INSTALLER_NAME, "skill", "install", "--target", skill_target, "--no-install")
     _run_required_command(command=command, cwd=install_root)
@@ -82,7 +82,7 @@ def install_pinchtab_skill(*, agent: AGENTS, backend: SKILL_INSTALL_COMMAND_BACK
 
     from stackops.utils.installer_utils.installer_cli import main_installer_cli
 
-    main_installer_cli(which=PINCHTAB_INSTALLER_NAME, group=False, interactive=False, explore=False, update=True, version=None, ctx=None)
+    main_installer_cli(which=PINCHTAB_INSTALLER_NAME, group=False, interactive=False, update=True, version=None, ctx=None)
     command = (backend, SKILLS_CLI_PACKAGE, "add", PINCHTAB_SKILL_REPO, "--skill", PINCHTAB_SKILL_NAME, "--agent", skills_cli_agent, "--yes")
     _run_required_command(command=command, cwd=install_root)
     return BrowserSkillInstallResult(install_root=install_root, command=command)
@@ -105,7 +105,7 @@ def install_omp_browser_support() -> BrowserTechInstallResult:
 
     from stackops.utils.installer_utils.installer_cli import main_installer_cli
 
-    main_installer_cli(which=OMP_INSTALLER_NAME, group=False, interactive=False, explore=False, update=True, version=None, ctx=None)
+    main_installer_cli(which=OMP_INSTALLER_NAME, group=False, interactive=False, update=True, version=None, ctx=None)
     guide_paths = write_browser_tech_files(which=OMP_INSTALLER_NAME, install_root=install_root)
     return BrowserTechInstallResult(which=OMP_INSTALLER_NAME, install_root=install_root, commands=(), guide_paths=guide_paths, mcp_servers=())
 
