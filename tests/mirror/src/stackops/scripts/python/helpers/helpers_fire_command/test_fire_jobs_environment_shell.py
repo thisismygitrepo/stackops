@@ -19,7 +19,7 @@ def test_windows_environment_prefix_uses_selected_shell(tmp_path: Path, monkeypa
     if cmd:
         assert prefix.startswith(f"""set "UV_PROJECT_ENVIRONMENT={environment.directory}" && uv run """)
         command = fire_jobs_impl._apply_command_modifiers(
-            args=FireJobArgs(cmd=True), command=prefix + " python script.py", choice_file=project / "script.py", repo_root=project
+            args=FireJobArgs(mode="run", cmd=True), command=prefix + " python script.py", choice_file=project / "script.py", repo_root=project
         )
         assert command == "start cmd -Argument '/k " + (prefix + " python script.py").replace("'", "''") + "'"
     else:
