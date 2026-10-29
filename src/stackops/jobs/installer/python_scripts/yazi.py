@@ -35,13 +35,13 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     inst.install(version=version)
 
     print("\n" * 5)
-    print("Installing Yazi plugins and flavors...")
+    print("Installing Yazi plugins...")
     installer_standard["appName"] = "ya"
     inst = Installer(installer_data=installer_standard)
     inst.install(version=version)
 
     print("\n" * 5)
-    print("Cloning Yazi plugins and flavors repositories...")
+    print("Cloning Yazi plugins repository...")
 
     from pathlib import Path
     system_name = platform.system().lower()
@@ -52,7 +52,6 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
         yazi_plugins_dir = home_dir.joinpath(".config", "yazi")
     
     yazi_plugins_path = yazi_plugins_dir.joinpath("plugins")
-    yazi_flavours_path = yazi_plugins_dir.joinpath("flavors")
     import shutil
     import os
     import stat
@@ -91,9 +90,6 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     install_if_missing(which="file", binary_name=None, verbose=True)
     import git
     git.Repo.clone_from("https://github.com/yazi-rs/plugins", yazi_plugins_path)
-    force_remove(yazi_flavours_path)
-    yazi_plugins_dir.mkdir(parents=True, exist_ok=True)
-    git.Repo.clone_from("https://github.com/yazi-rs/flavors", yazi_flavours_path)
     script = """
 ya pkg add 'ndtoan96/ouch'  # make ouch default previewer in yazi for compressed files
 ya pkg add 'AnirudhG07/rich-preview'  # rich-cli based previewer for yazi

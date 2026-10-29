@@ -113,6 +113,11 @@ yazi:
     self_managed: CONFIG_ROOT/settings/yazi/keymap_windows.toml
     os:
     - windows
+  flavor_windows:
+    original: ~/AppData/Roaming/yazi/config/flavors/dracula.yazi
+    self_managed: CONFIG_ROOT/settings/yazi/flavors/dracula.yazi
+    os:
+    - windows
   theme_windows:
     original: ~/AppData/Roaming/yazi/config/theme.toml
     self_managed: CONFIG_ROOT/settings/yazi/theme.toml
@@ -142,6 +147,12 @@ yazi:
     original: ~/.config/yazi/keymap.toml
     self_managed: CONFIG_ROOT/settings/yazi/keymap_darwin.toml
     os:
+    - darwin
+  flavor_linux_macos:
+    original: ~/.config/yazi/flavors/dracula.yazi
+    self_managed: CONFIG_ROOT/settings/yazi/flavors/dracula.yazi
+    os:
+    - linux
     - darwin
   theme_linux:
     original: ~/.config/yazi/theme.toml
