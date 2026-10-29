@@ -100,6 +100,21 @@ def list_window_entries(session_name: str) -> list[WindowEntry]:
     return windows
 
 
+def free_workspace_number(session_name: str, ignored_window_ids: frozenset[str]) -> int:
+    try:
+        payload: object = json.loads(run_tuios(["call", "list-workspaces", json.dumps({"session": session_name})]))
+    except json.JSONDecodeError as error:
+        raise ValueError("TUIOS returned invalid workspace JSON.") from error
+    if not isinstance(payload, dict):
+        raise ValueError("TUIOS returned an invalid workspace response.")
+    workspace_numbers = [_field(entry, "workspace", int, 0) for entry in _json_entries(payload.get("workspaces"))]
+    occupied = {window.workspace for window in list_window_entries(session_name) if window.window_id not in ignored_window_ids}
+    free_number = next((number for number in workspace_numbers if number not in occupied), None)
+    if free_number is None:
+        raise ValueError(f"""TUIOS session '{session_name}' has no free workspace: all {len(workspace_numbers)} are in use.""")
+    return free_number
+
+
 def capture_window(session_name: str, window_id: str, lines: int, ansi: bool) -> str:
     args = ["capture-pane", "--session", session_name, "--window", window_id, "--scrollback", "--lines", str(lines)]
     if ansi:

@@ -29,14 +29,14 @@ fi
 done"""
 
 
-def launch_window(session_name: str, tab: TabConfig, exit_mode: SessionExitMode) -> str:
+def launch_window(session_name: str, tab: TabConfig, exit_mode: SessionExitMode, workspace: int) -> str:
     output = run_tuios(
         [
             "call", "new-window",
             json.dumps({
                 "session": session_name,
                 "cwd": str(Path(tab["startDir"]).expanduser().absolute()),
-                "workspace": 1,
+                "workspace": workspace,
                 "focus": False,
                 "name": tab["tabName"],
                 "close_on_exit": True,
@@ -53,6 +53,7 @@ def launch_window(session_name: str, tab: TabConfig, exit_mode: SessionExitMode)
     window_id = cast(dict[str, object], payload).get("window_id")
     if not isinstance(window_id, str) or not window_id:
         raise ValueError(f"""TUIOS did not return an ID for window '{tab['tabName']}'.""")
+    run_tuios(["call", "set-workspace-name", json.dumps({"session": session_name, "workspace": workspace, "name": tab["tabName"]})])
     return window_id
 
 

@@ -10,6 +10,7 @@ from stackops.cluster.sessions_managers.session_conflict import (
 )
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import (
+    free_workspace_number,
     list_session_entries,
     list_window_entries,
     run_tuios,
@@ -61,7 +62,11 @@ def run_layouts_with_tuios(
                 matching_windows = [window for window in existing_windows if window.display_name == tab["tabName"]]
                 if matching_windows and on_conflict == "mergeSkip":
                     continue
-                window_ids.append(launch_window(session_name=session_name, tab=tab, exit_mode=exit_mode))
+                workspace = matching_windows[0].workspace if matching_windows else free_workspace_number(
+                    session_name=session_name,
+                    ignored_window_ids=frozenset(initial_window_ids),
+                )
+                window_ids.append(launch_window(session_name=session_name, tab=tab, exit_mode=exit_mode, workspace=workspace))
                 for window in matching_windows:
                     close_window(session_name=session_name, window_id=window.window_id)
                     if window.window_id in window_ids:
