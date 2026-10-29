@@ -33,6 +33,22 @@ command = "headroom check"
     assert not any(diagnostic.severity == "error" for diagnostic in inventory.diagnostics)
 
 
+def test_codex_hook_trust_state_table_is_not_an_event(hook_context: DoctorContext) -> None:
+    hook_context.codex_home.mkdir()
+    hooks_json = hook_context.codex_home / "hooks.json"
+    hooks_json.write_text(json.dumps({"hooks": {"Stop": [{"hooks": [{"command": "tk"}]}]}}))
+    (hook_context.codex_home / "config.toml").write_text(f"""[features]
+hooks = true
+
+[hooks.state."{hooks_json}:stop:0:0"]
+enabled = true
+trusted_hash = "sha256:00"
+""")
+    inventory = collect_codex_hooks(context=hook_context)
+    assert [entry.event for entry in inventory.entries] == ["Stop"]
+    assert not any(diagnostic.severity == "error" for diagnostic in inventory.diagnostics)
+
+
 def test_codex_feature_gate_disables_hooks_but_not_notify(hook_context: DoctorContext) -> None:
     hook_context.codex_home.mkdir()
     (hook_context.codex_home / "config.toml").write_text('notify = ["notify-hook"]\n[features]\nhooks = false\n')

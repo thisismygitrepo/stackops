@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import cast
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.codex_plugin_hooks import collect_codex_plugin_hooks
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.extended_constants import CODEX_SYSTEM_ROOT
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.extended_constants import CODEX_HOOKS_NON_EVENT_KEYS, CODEX_SYSTEM_ROOT
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.extension_sources import read_extension_config
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.json_inventory import collect_hook_mapping, collect_json_hooks
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import (
@@ -31,9 +31,7 @@ def _layer_inventory(*, layer: CodexHookLayer, state: DoctorResourceState) -> Ho
     mapping = dict(layer.mapping)
     hooks = mapping.get("hooks")
     if isinstance(hooks, dict):
-        mapping["hooks"] = {
-            name: value for name, value in cast(dict[str, object], hooks).items() if name not in ("managed_dir", "windows_managed_dir")
-        }
+        mapping["hooks"] = {name: value for name, value in cast(dict[str, object], hooks).items() if name not in CODEX_HOOKS_NON_EVENT_KEYS}
     inventory = collect_hook_mapping(source=source, mapping=mapping, state=state, removal=None)
     entries = [replace(entry, removal=replace(entry.removal, format="toml") if entry.removal is not None else None) for entry in inventory.entries]
     diagnostics = list(inventory.diagnostics)

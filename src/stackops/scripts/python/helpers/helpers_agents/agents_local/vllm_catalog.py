@@ -31,7 +31,7 @@ def discover_vllm_models(
         "num_parameters": f"""min:{min_params:g}B,max:{max_params:g}B""",
         "sort": "createdAt" if sort == "newest" else "downloads",
         "direction": -1,
-        "limit": min(limit, VLLM_CATALOG_PAGE_SIZE),
+        "limit": VLLM_CATALOG_PAGE_SIZE,
         "expand": ["safetensors", "downloads", "pipeline_tag", "lastModified"],
     }
     if search := query.strip():

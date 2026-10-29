@@ -34,7 +34,7 @@ def doctor(
     ] = None,
     api_key: Annotated[
         str | None,
-        typer.Option("--api-key", envvar="VLLM_API_KEY", show_envvar=True, help="vLLM bearer token."),
+        typer.Option("--api-key", "-k", envvar="VLLM_API_KEY", show_envvar=True, help="vLLM bearer token."),
     ] = None,
 ) -> None:
     try:
@@ -86,14 +86,14 @@ def discover(
         float, typer.Option("--timeout", "-t", min=0.1, help="Timeout in seconds for each catalog or download-size request."),
     ] = OLLAMA_CATALOG_TIMEOUT_SECONDS,
 ) -> None:
-    import requests
-    from rich.console import Console
-    from rich.text import Text
-
     if min_params > max_params:
         raise typer.BadParameter("Must be less than or equal to --max-params.", param_hint="--min-params")
     if backend == "vllm" and capability is not None:
         raise typer.BadParameter("Capability filtering is only available for the Ollama catalog.", param_hint="--capability")
+
+    import requests
+    from rich.console import Console
+    from rich.text import Text
 
     catalog_name = "Hugging Face vLLM" if backend == "vllm" else "Ollama"
     try:
@@ -129,15 +129,17 @@ def get_app() -> typer.Typer:
     )
     local_app.command(name="doctor", no_args_is_help=False, short_help="🩺 <d> Inspect server health, models, and resource usage")(doctor)
     local_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
-    local_app.command(name="discover", no_args_is_help=False, short_help="Discover models from Ollama or Hugging Face for vLLM")(discover)
+    local_app.command(name="discover", no_args_is_help=False, short_help="🔎 <s> Discover models from Ollama or Hugging Face for vLLM")(discover)
     local_app.command(name="s", no_args_is_help=False, hidden=True)(discover)
     local_app.command(
         name="install", no_args_is_help=False,
         help="Install vLLM for Linux CUDA using uv, or vLLM Metal for Apple Silicon using Homebrew.",
-        short_help="Install vLLM for Linux CUDA or Apple Silicon",
+        short_help="📦 <i> Install vLLM for Linux CUDA or Apple Silicon",
     )(install)
+    local_app.command(name="i", no_args_is_help=False, hidden=True)(install)
+    serve_context_settings = {"allow_extra_args": True, "ignore_unknown_options": True}
     local_app.command(
-        name="serve", no_args_is_help=True, short_help="Start a vLLM model server in the foreground",
-        context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+        name="serve", no_args_is_help=True, short_help="🚀 <S> Start a vLLM model server in the foreground", context_settings=serve_context_settings,
     )(serve)
+    local_app.command(name="S", no_args_is_help=True, hidden=True, context_settings=serve_context_settings)(serve)
     return local_app

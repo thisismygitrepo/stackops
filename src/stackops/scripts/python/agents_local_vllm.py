@@ -73,7 +73,7 @@ def serve(
     ] = VLLM_DEFAULT_PORT,
     api_key: Annotated[
         str | None,
-        typer.Option("--api-key", envvar="VLLM_API_KEY", show_default=False, hide_input=True, help="Require this API key for requests."),
+        typer.Option("--api-key", "-k", envvar="VLLM_API_KEY", show_default=False, hide_input=True, help="Require this API key for requests."),
     ] = None,
 ) -> None:
     import os
