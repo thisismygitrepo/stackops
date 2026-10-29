@@ -1,5 +1,6 @@
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import (
+    free_workspace_number,
     list_session_entries,
     list_window_entries,
 )
@@ -35,6 +36,7 @@ def spawn_tab(session_name: str, task: DynamicTabTask) -> None:
         session_name=session_name,
         tab=task["tab"],
         exit_mode="backToShell",
+        workspace=free_workspace_number(session_name=session_name, ignored_window_ids=frozenset()),
     )
 
 

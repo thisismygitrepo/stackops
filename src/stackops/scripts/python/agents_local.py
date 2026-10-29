@@ -13,6 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_local.constants impor
     OLLAMA_DISCOVER_SORT,
     OLLAMA_TIMEOUT_SECONDS,
     VLLM_DEFAULT_HOST,
+    VLLM_DISCOVER_SORT,
     VLLM_TIMEOUT_SECONDS,
     CatalogCapability,
     CatalogSort,
@@ -34,7 +35,7 @@ def doctor(
     ] = None,
     api_key: Annotated[
         str | None,
-        typer.Option("--api-key", envvar="VLLM_API_KEY", show_envvar=True, help="vLLM bearer token."),
+        typer.Option("--api-key", "-k", envvar="VLLM_API_KEY", show_envvar=True, help="vLLM bearer token."),
     ] = None,
 ) -> None:
     try:
@@ -77,7 +78,10 @@ def discover(
     max_params: Annotated[
         float, typer.Option("--max-params", "-m", min=0.001, help="Maximum advertised parameter count, in billions."),
     ] = OLLAMA_DISCOVER_MAX_PARAMS,
-    sort: Annotated[CatalogSort, typer.Option("--sort", "-s", help="Catalog ordering; not a quality ranking.")] = OLLAMA_DISCOVER_SORT,
+    sort: Annotated[
+        CatalogSort | None,
+        typer.Option("--sort", "-s", help="Catalog ordering; not a quality ranking. Ollama: newest|popular (default newest). vLLM: popular|trending (default popular)."),
+    ] = None,
     limit: Annotated[int, typer.Option("--limit", "-n", min=1, help="Maximum number of models or Ollama model families to show.")] = OLLAMA_DISCOVER_LIMIT,
     capability: Annotated[
         CatalogCapability | None, typer.Option("--capability", "-c", help="Ollama only: require a capability advertised by the model family."),
@@ -86,14 +90,15 @@ def discover(
         float, typer.Option("--timeout", "-t", min=0.1, help="Timeout in seconds for each catalog or download-size request."),
     ] = OLLAMA_CATALOG_TIMEOUT_SECONDS,
 ) -> None:
-    import requests
-    from rich.console import Console
-    from rich.text import Text
-
     if min_params > max_params:
         raise typer.BadParameter("Must be less than or equal to --max-params.", param_hint="--min-params")
     if backend == "vllm" and capability is not None:
         raise typer.BadParameter("Capability filtering is only available for the Ollama catalog.", param_hint="--capability")
+    resolved_sort: CatalogSort = sort or (VLLM_DISCOVER_SORT if backend == "vllm" else OLLAMA_DISCOVER_SORT)
+
+    import requests
+    from rich.console import Console
+    from rich.text import Text
 
     catalog_name = "Hugging Face vLLM" if backend == "vllm" else "Ollama"
     try:
@@ -103,18 +108,18 @@ def discover(
 
             with Console().status("Fetching current Hugging Face models for vLLM..."):
                 vllm_models = discover_vllm_models(
-                    min_params=min_params, max_params=max_params, sort=sort, limit=limit, query=query, capability=capability, timeout=timeout,
+                    min_params=min_params, max_params=max_params, sort=resolved_sort, limit=limit, query=query, capability=capability, timeout=timeout,
                 )
-            show_discovered_vllm_models(models=vllm_models, min_params=min_params, max_params=max_params, sort=sort)
+            show_discovered_vllm_models(models=vllm_models, min_params=min_params, max_params=max_params, sort=resolved_sort)
         else:
             from stackops.scripts.python.helpers.helpers_agents.agents_local.catalog import discover_models
             from stackops.scripts.python.helpers.helpers_agents.agents_local.catalog_report import show_discovered_models
 
             with Console().status("Fetching current Ollama catalog and download sizes..."):
                 models = discover_models(
-                    min_params=min_params, max_params=max_params, sort=sort, limit=limit, query=query, capability=capability, timeout=timeout,
+                    min_params=min_params, max_params=max_params, sort=resolved_sort, limit=limit, query=query, capability=capability, timeout=timeout,
                 )
-            show_discovered_models(models=models, min_params=min_params, max_params=max_params, sort=sort)
+            show_discovered_models(models=models, min_params=min_params, max_params=max_params, sort=resolved_sort)
     except (requests.RequestException, ValueError) as error:
         Console(stderr=True).print(Text(f"""Could not discover {catalog_name} models: {error}""", style="red"))
         raise typer.Exit(code=1) from error
@@ -129,15 +134,17 @@ def get_app() -> typer.Typer:
     )
     local_app.command(name="doctor", no_args_is_help=False, short_help="🩺 <d> Inspect server health, models, and resource usage")(doctor)
     local_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
-    local_app.command(name="discover", no_args_is_help=False, short_help="Discover models from Ollama or Hugging Face for vLLM")(discover)
+    local_app.command(name="discover", no_args_is_help=False, short_help="🔎 <s> Discover models from Ollama or Hugging Face for vLLM")(discover)
     local_app.command(name="s", no_args_is_help=False, hidden=True)(discover)
     local_app.command(
         name="install", no_args_is_help=False,
         help="Install vLLM for Linux CUDA using uv, or vLLM Metal for Apple Silicon using Homebrew.",
-        short_help="Install vLLM for Linux CUDA or Apple Silicon",
+        short_help="📦 <i> Install vLLM for Linux CUDA or Apple Silicon",
     )(install)
+    local_app.command(name="i", no_args_is_help=False, hidden=True)(install)
+    serve_context_settings = {"allow_extra_args": True, "ignore_unknown_options": True}
     local_app.command(
-        name="serve", no_args_is_help=True, short_help="Start a vLLM model server in the foreground",
-        context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+        name="serve", no_args_is_help=True, short_help="🚀 <S> Start a vLLM model server in the foreground", context_settings=serve_context_settings,
     )(serve)
+    local_app.command(name="S", no_args_is_help=True, hidden=True, context_settings=serve_context_settings)(serve)
     return local_app

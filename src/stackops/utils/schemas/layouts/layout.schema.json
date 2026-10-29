@@ -62,7 +62,7 @@
         "command": {
           "type": "string",
           "description": "Shell command to execute when the tab opens.",
-          "examples": ["fire -mO liveInf.py main -- --arg1=val1"]
+          "examples": ["fire run -mO liveInf.py main -- --arg1=val1"]
         },
         "tabWeight": {
           "type": "integer",

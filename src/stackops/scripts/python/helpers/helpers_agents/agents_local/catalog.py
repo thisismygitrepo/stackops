@@ -86,6 +86,8 @@ class _CatalogParser(HTMLParser):
 def discover_models(
     *, min_params: float, max_params: float, sort: CatalogSort, limit: int, query: str, capability: CatalogCapability | None, timeout: float,
 ) -> tuple[CatalogModel, ...]:
+    if sort == "trending":
+        raise ValueError("--sort trending is available for vLLM; the Ollama library only offers newest or popular.")
     with requests.get(OLLAMA_CATALOG_URL, params={"sort": sort}, timeout=timeout) as response:
         response.raise_for_status()
         parser = _CatalogParser()
