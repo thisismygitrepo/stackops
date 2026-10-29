@@ -171,7 +171,9 @@ def test_marimo_check_conversion_and_editor_share_environment(
     monkeypatch.setattr(fire_jobs_impl.subprocess, "run", check_notebook)
     monkeypatch.setattr(code, "exit_then_run_shell_script", capture_script)
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    fire_jobs_impl._handle_marimo(choice_file=source / "notebook.py", repo_root=source, randstr_func=lambda _length: "test", jit=False)
+    fire_jobs_impl._handle_marimo(
+        choice_file=source / "notebook.py", repo_root=source, randstr_func=lambda _length: "test", frozen=False, jit=False
+    )
 
     commands = [shlex.split(line) for line in scripts[0].splitlines() if line.startswith("env ")]
     assert len(commands) == (1 if valid_notebook else 2)
