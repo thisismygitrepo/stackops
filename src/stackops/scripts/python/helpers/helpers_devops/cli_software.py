@@ -56,17 +56,21 @@ def list_software(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops.cli_software_files import edit_software, init_software, software_path, validate_software
-    from stackops.scripts.python.helpers.helpers_devops.cli_software_install import install
+    from stackops.scripts.python.helpers.helpers_devops.cli_software_install import check, explore, install
 
     app = typer.Typer(
-        cls=ordered_group(("install", "list", "path", "init", "edit", "validate")),
-        help="Install software and extend the bundled catalog with user definitions. Matching user names override library entries.",
+        cls=ordered_group(("install", "explore", "check", "list", "path", "init", "edit", "validate")),
+        help="Browse, install, and check software, and extend the bundled catalog with user definitions. Matching user names override library entries.",
         no_args_is_help=True,
         add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.command("install", no_args_is_help=True, help="📦 <i> Install software from the catalog.")(install)
     app.command("i", no_args_is_help=True, hidden=True)(install)
+    app.command("explore", help="🔎 <x> Browse software by category and install selected apps.")(explore)
+    app.command("x", hidden=True)(explore)
+    app.command("check", no_args_is_help=True, help="✅ <c> Check whether executables are installed.")(check)
+    app.command("c", no_args_is_help=True, hidden=True)(check)
     app.command("list", help="📋 <l> List software definitions from the selected catalog.")(list_software)
     app.command("l", hidden=True)(list_software)
     app.command("path", help="📍 <p> Print catalog and schema paths as JSON.")(software_path)
