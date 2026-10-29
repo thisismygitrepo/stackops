@@ -7939,6 +7939,69 @@
           "windows": "tuios-ghostty_{version}_Windows_arm64.tar.gz"
         }
       }
+    },
+    {
+      "appName": "ck",
+      "license": "Apache License 2.0 / MIT License",
+      "repoURL": "https://github.com/BeaconBay/ck",
+      "doc": "🔍 Local-first semantic and hybrid BM25 grep for code, with a local embedding index",
+      "categoryLabels": [
+        "search-navigation"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "ck-{version}-x86_64-unknown-linux-gnu.tar.gz",
+          "darwin": "ck-{version}-x86_64-apple-darwin.tar.gz",
+          "windows": "ck-{version}-x86_64-pc-windows-msvc.zip"
+        },
+        "arm64": {
+          "linux": "ck-{version}-aarch64-unknown-linux-gnu.tar.gz",
+          "darwin": "ck-{version}-aarch64-apple-darwin.tar.gz",
+          "windows": "ck-{version}-aarch64-pc-windows-msvc.zip"
+        }
+      }
+    },
+    {
+      "appName": "grepai",
+      "license": "MIT License",
+      "repoURL": "https://github.com/yoanbernabeu/grepai",
+      "doc": "🔍 Semantic code search CLI with call graphs; embeddings via local Ollama or LM Studio",
+      "categoryLabels": [
+        "search-navigation"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "grepai_{version}_linux_amd64.tar.gz",
+          "darwin": "grepai_{version}_darwin_amd64.tar.gz",
+          "windows": "grepai_{version}_windows_amd64.zip"
+        },
+        "arm64": {
+          "linux": "grepai_{version}_linux_arm64.tar.gz",
+          "darwin": "grepai_{version}_darwin_arm64.tar.gz",
+          "windows": "grepai_{version}_windows_arm64.zip"
+        }
+      }
+    },
+    {
+      "appName": "qmd",
+      "license": "MIT License",
+      "repoURL": "CMD",
+      "doc": "🔍 On-device hybrid search for markdown notes and code with BM25, vectors and LLM reranking from https://github.com/tobi/qmd",
+      "categoryLabels": [
+        "search-navigation"
+      ],
+      "fileNamePattern": {
+        "amd64": {
+          "linux": "bun install -g @tobilu/qmd",
+          "darwin": "bun install -g @tobilu/qmd",
+          "windows": "bun install -g @tobilu/qmd"
+        },
+        "arm64": {
+          "linux": "bun install -g @tobilu/qmd",
+          "darwin": "bun install -g @tobilu/qmd",
+          "windows": "bun install -g @tobilu/qmd"
+        }
+      }
     }
   ]
 }
