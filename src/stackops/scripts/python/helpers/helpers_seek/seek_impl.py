@@ -2,6 +2,9 @@
 
 from typing import TYPE_CHECKING
 
+from stackops.scripts.python.helpers.helpers_seek.semantic.backend_names import SemanticBackend
+from stackops.scripts.python.helpers.helpers_seek.semantic.semantic_models import SemanticFailure
+
 
 if TYPE_CHECKING:
     from stackops.scripts.python.helpers.helpers_search.ast_search import SymbolInfo
@@ -12,6 +15,7 @@ def seek(
     search_term: str,
     ast: bool,
     semantic: bool,
+    semantic_backend: SemanticBackend,
     max_files: int,
     extension: str | None,
     file: bool,
@@ -19,22 +23,23 @@ def seek(
     rga: bool,
     edit: bool,
     install_dependencies: bool,
-) -> None:
+) -> SemanticFailure | None:
     """seek across files, text matches, and code symbols."""
 
     if install_dependencies:
-        _install_dependencies()
-        return
+        return _install_dependencies(semantic_backend=semantic_backend)
     if semantic:
-        _ = extension
-        _run_semantic_search(path=path, query=search_term, extension=extension, max_files=max_files)
-        return
+        from stackops.scripts.python.helpers.helpers_seek.semantic.run_semantic_search import run_semantic_search
+
+        return run_semantic_search(
+            path=path, query=search_term, extension=extension, max_files=max_files, backend=semantic_backend, edit=edit
+        )
     if ast:
         _run_ast_search(path=path)
-        return
+        return None
     if file:
         _run_file_search(directory=path, dotfiles=dotfiles, edit=edit, search_term=search_term)
-        return
+        return None
 
     from pathlib import Path
     import sys
@@ -60,13 +65,15 @@ def seek(
 
         code = search_file_with_context(path=path, is_temp_file=is_temp_file, edit=edit)
         exit_then_run_shell_script(script=code, strict=False)
-        return
+        return None
 
     _run_text_search(rga=rga, directory=path, search_term=search_term)
+    return None
 
 
-def _install_dependencies() -> None:
+def _install_dependencies(semantic_backend: SemanticBackend) -> SemanticFailure | None:
     """Install required dependencies."""
+    from stackops.scripts.python.helpers.helpers_seek.semantic.run_semantic_search import ensure_semantic_tools
     from stackops.utils.installer_utils.installer_cli import install_if_missing
 
     install_if_missing(which="fzf", binary_name=None, verbose=True)
@@ -75,7 +82,7 @@ def _install_dependencies() -> None:
     install_if_missing(which="fd", binary_name=None, verbose=True)
     install_if_missing(which="rg", binary_name=None, verbose=True)
     install_if_missing(which="rga", binary_name=None, verbose=True)
-    install_if_missing(which="semtools", binary_name=None, verbose=True)
+    return ensure_semantic_tools(backend=semantic_backend)
 
 
 def search_file_with_context(path: str, is_temp_file: bool, edit: bool) -> str:
@@ -153,84 +160,6 @@ tv `
     else:
         raise RuntimeError(f"Unsupported platform, {platform.system()}")
     return code
-
-
-def _build_semantic_limit_message(text_file_count: int, max_files: int) -> str:
-    return (
-        f"⚠️ Found {text_file_count} text files, which exceeds the current --max-files limit of {max_files}. "
-        "Use --max-files N (or 0 to disable the limit) to search more files, or provide a more specific path or file extension filter."
-    )
-
-
-def _run_semantic_search(path: str, query: str, extension: str | None, max_files: int) -> None:
-    """Run semantic search."""
-    from stackops.utils.installer_utils.installer_cli import install_if_missing
-
-    install_if_missing(which="semtools", binary_name=None, verbose=True)
-    if query == "":
-        # print("❓ No search term provided for semantic search.")
-        # return
-        query = input("Enter search term for semantic search: ")
-
-    from pathlib import Path
-
-    path_obj = Path(path).absolute()
-    if path_obj.is_file():
-        text_files = [str(path_obj)]
-    else:
-        if extension is not None:
-            # Find files with the given extension
-            text_files = [str(candidate) for candidate in path_obj.rglob(f"*{extension}") if candidate.is_file()]
-        else:
-            import subprocess
-
-            def get_text_files(root: str) -> list[str]:
-                result = subprocess.run(["rg", "--files", "-0", root], capture_output=True, encoding="utf-8", check=False)
-                if result.returncode == 1:
-                    return []
-                result.check_returncode()
-                return result.stdout.split("\0")[:-1]
-
-            text_files = get_text_files(str(path_obj))
-
-    if not text_files:
-        raise FileNotFoundError(f"""No searchable files found under: {path_obj}""")
-
-    from typing import TypedDict
-
-    class SemanticSearchResult(TypedDict):
-        filename: str
-        start_line_number: int
-        end_line_number: int
-        match_line_number: int
-        distance: float
-        content: str
-
-    def semantic_search(query: str, text_files: list[str]) -> list[SemanticSearchResult]:
-        import subprocess
-
-        command = ["semtools", "search", query, *text_files, "--json", "--top-k", "5", "--n-lines", "10"]
-        result = subprocess.run(command, capture_output=True, encoding="utf-8", check=True)
-        import json
-
-        results_json = result.stdout
-        results: list[SemanticSearchResult] = json.loads(results_json)["results"]
-        return results
-
-    if max_files != 0 and len(text_files) > max_files:
-        print(_build_semantic_limit_message(text_file_count=len(text_files), max_files=max_files))
-        return
-    results = semantic_search(query=query, text_files=text_files)
-
-    results_as_dict = {
-        res["content"]: res["content"]
-        + f"\n\nDetails:\n{res['filename']}:{res['start_line_number']}-{res['end_line_number']}\nMatch: {res['match_line_number']}\nDistance: {res['distance']}"
-        for res in results
-    }
-    from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-
-    preview_extension = Path(text_files[0]).suffix
-    choose_from_dict_with_preview(options_to_preview_mapping=results_as_dict, extension=preview_extension, multi=False, preview_size_percent=75.0)
 
 
 def _run_ast_search(path: str) -> None:
