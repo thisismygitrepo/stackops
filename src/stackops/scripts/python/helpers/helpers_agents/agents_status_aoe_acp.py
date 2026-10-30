@@ -21,8 +21,6 @@ def inspect_aoe_acp(*, options: StatusOptions, session_id: str) -> tuple[JsonObj
     if options.history == "none":
         coverage = "disabled"
         limitations.append("ACP activity cannot be inferred from worker liveness; retained event inspection was disabled.")
-    elif options.history == "hooks":
-        limitations.append("AoE ACP exposes persisted conversation events, not retained TUIOS hook history.")
     elif os.environ.get("AOE_DAEMON_URL"):
         limitations.append("ACP history was not queried because AOE_DAEMON_URL overrides the daemon for this local AoE inventory.")
     else:

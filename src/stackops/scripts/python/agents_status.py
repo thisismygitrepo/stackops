@@ -11,6 +11,11 @@ from stackops.scripts.python.helpers.helpers_agents.agents_status_models import 
     StatusFormat,
     StatusOptions,
 )
+from stackops.scripts.python.helpers.helpers_agents.constants import (
+    AGENTS_STATUS_EVENT_LIMIT,
+    AGENTS_STATUS_TIMEOUT_SECONDS,
+    AGENTS_STATUS_WORKERS,
+)
 
 
 def status(
@@ -18,35 +23,24 @@ def status(
     session: Annotated[list[str] | None, typer.Option("--session", "-s", help="Native manager session name or ID; Herdr's outer session, TUIOS session, or AoE session in the current profile. Default: all live local sessions, including detached sessions. Repeat for alternatives.")] = None,
     layout: Annotated[list[str] | None, typer.Option("--layout", help="Layout scope: TUIOS session name/ID; Herdr workspace label/ID/number; AoE full group path. Repeat for alternatives.")] = None,
     tab: Annotated[list[str] | None, typer.Option("--tab", "-t", help="Layout tab: TUIOS workspace name/number; Herdr tab label/ID; AoE session title/ID. Repeat for alternatives.")] = None,
-    window: Annotated[list[str] | None, typer.Option("--pane", "-p", "--window", "-w", help="Layout pane: TUIOS window name/ID; Herdr pane label/title/ID; AoE session title/ID (one runtime per tab). --window is the same filter. Repeat for alternatives.")] = None,
-    exclude_window: Annotated[list[str] | None, typer.Option("--exclude-pane", "--exclude-window", help="Pane name or ID to omit, using the same mapping as --pane. Repeat as needed.")] = None,
+    window: Annotated[list[str] | None, typer.Option("--pane", "-p", help="Layout pane: TUIOS window name/ID; Herdr pane label/title/ID; AoE session title/ID (one runtime per tab). Repeat for alternatives.")] = None,
+    exclude_window: Annotated[list[str] | None, typer.Option("--exclude-pane", help="Pane name or ID to omit, using the same mapping as --pane. Repeat as needed.")] = None,
     agent_session: Annotated[list[str] | None, typer.Option("--agent-session", help="Reported agent name or conversation ID, when available: TUIOS registered name (also pane name), Herdr agent name, AoE session title/ID. Repeat for alternatives.")] = None,
     harness: Annotated[list[str] | None, typer.Option("--harness", "-a", help="Agent harness to include; repeat as needed. 'claude' is an alias for 'claude-code'.")] = None,
     state: Annotated[list[str] | None, typer.Option("--state", help="Filter working, waiting, blocked, idle, completed, failed, unknown or unavailable; repeat as needed. completed also matches tasks reported completed while their live agents are idle.")] = None,
-    include_self: Annotated[bool, typer.Option("--include-self/--exclude-self", help="Include the observer's own pane. Default: exclude it using pane/process identity.")] = False,
-    history: Annotated[HistoryMode, typer.Option("--history", help="auto: linked transcripts or AoE structured history, otherwise hooks where supported; transcripts: linked files or AoE structured history; hooks: TUIOS only; none: skip history.")] = "auto",
+    include_self: Annotated[bool, typer.Option("--include-self", help="Include the observer's own pane. Default: exclude it using pane/process identity.")] = False,
+    history: Annotated[HistoryMode, typer.Option("--history", help="auto: use available linked transcripts, AoE structured history or supported hooks; none: skip history.")] = "auto",
     lines: Annotated[int, typer.Option("--lines", min=0, help="Lines to capture per agent. TUIOS and AoE tmux include scrollback; Herdr reads only the visible viewport; AoE ACP workers have no pane. 0 captures all TUIOS scrollback or the Herdr/AoE viewport.")] = 200,
     messages: Annotated[int, typer.Option("--messages", min=0, help="Newest retained human/context messages per agent, in chronological order. 0 keeps all available messages.")] = 0,
     text_limit: Annotated[int, typer.Option("--text-limit", min=0, help="Character limit per message or evidence text. Truncation is marked. 0 keeps full text.")] = 8000,
-    events: Annotated[int, typer.Option("--events", min=1, max=256, help="Maximum TUIOS hook events to inspect per agent; these are bounded and may be abbreviated.")] = 256,
-    timeout: Annotated[float, typer.Option("--timeout", min=0.1, help="Timeout in seconds for each external inspection command.")] = 10.0,
-    workers: Annotated[int, typer.Option("--workers", min=1, max=64, help="Maximum concurrent read-only inspection operations.")] = 8,
     server: Annotated[str | None, typer.Option("--server", help="Named local TUIOS daemon to inspect. Default: TUIOS's current/default daemon.")] = None,
-    claude_home: Annotated[Path | None, typer.Option("--claude-home", file_okay=False, help="Claude metadata/transcript root. Default: CLAUDE_CONFIG_DIR, otherwise ~/.claude.")] = None,
-    codex_home: Annotated[Path | None, typer.Option("--codex-home", file_okay=False, help="Codex transcript root for registered session IDs. Default: CODEX_HOME, otherwise ~/.codex. Open-file metadata can link other homes.")] = None,
-    output_format: Annotated[StatusFormat, typer.Option("--format", "-f", help="Output format. JSON contains structured evidence and full extracted history subject to the requested limits.")] = "table",
-    json_output: Annotated[bool, typer.Option("--json", help="Shortcut for --format json; incompatible with --format markdown.")] = False,
-    rich_output: Annotated[bool, typer.Option("--rich-output", help="Print a styled terminal overview and agent cards with colour, history and evidence. Cannot combine with JSON or Markdown. File output has no ANSI colours.")] = False,
+    output_format: Annotated[StatusFormat, typer.Option("--format", "-f", help="Output format: table, rich (styled overview and agent cards), json or markdown. JSON includes structured evidence and extracted history subject to the requested limits. File output has no ANSI colours.")] = "table",
     output: Annotated[Path | None, typer.Option("--output", "-o", dir_okay=False, help="Write the report to a private file instead of stdout. Existing files require --force.")] = None,
     force: Annotated[bool, typer.Option("--force", help="Allow replacing an existing --output file; agent sessions are never modified.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_agents.agents_status_collect import collect_status
     from stackops.scripts.python.helpers.helpers_agents.agents_status_render import render_status, write_status_output
 
-    if json_output and output_format not in {"table", "json"}:
-        raise typer.BadParameter("--json cannot be combined with --format markdown.")
-    if rich_output and (json_output or output_format != "table"):
-        raise typer.BadParameter("--rich-output cannot be combined with --json or --format json/markdown.")
     if force and output is None:
         raise typer.BadParameter("--force requires --output.")
     if backend != "tuios" and server is not None:
@@ -64,18 +58,19 @@ def status(
         windows=tuple(window or ()), exclude_windows=tuple(exclude_window or ()), agent_sessions=tuple(agent_session or ()),
         harnesses=tuple("claude-code" if value.lower() == "claude" else value.lower() for value in harness or ()),
         states=selected_states, include_self=include_self, history=history, capture_lines=lines,
-        message_limit=messages, text_limit=text_limit, event_limit=events, timeout=timeout, workers=workers,
-        server=server, claude_home=(claude_home or Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude")))).expanduser(),
-        codex_home=(codex_home or Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))).expanduser(),
+        message_limit=messages, text_limit=text_limit, event_limit=AGENTS_STATUS_EVENT_LIMIT,
+        timeout=AGENTS_STATUS_TIMEOUT_SECONDS, workers=AGENTS_STATUS_WORKERS,
+        server=server, claude_home=Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))).expanduser(),
+        codex_home=Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))).expanduser(),
     )
     try:
         snapshot = collect_status(options=options)
-        if rich_output:
+        if output_format == "rich":
             from stackops.scripts.python.helpers.helpers_agents.agents_status_rich_output import print_rich_status
 
             print_rich_status(snapshot=snapshot, output=output, force=force)
             return
-        report = render_status(snapshot=snapshot, output_format="json" if json_output else output_format)
+        report = render_status(snapshot=snapshot, output_format=output_format)
         write_status_output(report=report, output=output, force=force)
     except (OSError, RuntimeError, ValueError) as error:
         typer.echo(f"""Could not inspect agent status: {error}""", err=True)

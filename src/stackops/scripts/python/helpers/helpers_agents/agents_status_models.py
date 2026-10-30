@@ -5,8 +5,8 @@ from typing import Literal, TypeAlias
 
 type JsonObject = dict[str, object]
 StatusBackend: TypeAlias = Literal["tuios", "herdr", "aoe"]
-StatusFormat: TypeAlias = Literal["table", "json", "markdown"]
-HistoryMode: TypeAlias = Literal["auto", "transcripts", "hooks", "none"]
+StatusFormat: TypeAlias = Literal["table", "rich", "json", "markdown"]
+HistoryMode: TypeAlias = Literal["auto", "none"]
 AgentStatus: TypeAlias = Literal["working", "waiting", "blocked", "idle", "completed", "failed", "unknown", "unavailable"]
 
 

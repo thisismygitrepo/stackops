@@ -5879,6 +5879,21 @@ installers:
         linux: tuios_{version}_Linux_arm64.tar.gz
         darwin: tuios_{version}_Darwin_arm64.tar.gz
         windows: tuios-ghostty_{version}_Windows_arm64.tar.gz
+  - appName: tuios-web
+    license: MIT License
+    repoURL: https://github.com/Gaurav-Gosain/tuios
+    doc: Web server for accessing TUIOS terminal sessions in a browser.
+    categoryLabels:
+      - terminal-workspaces
+    fileNamePattern:
+      amd64:
+        linux: tuios-web_{version}_Linux_x86_64.tar.gz
+        darwin: tuios-web_{version}_Darwin_x86_64.tar.gz
+        windows: tuios-web_{version}_Windows_x86_64.tar.gz
+      arm64:
+        linux: tuios-web_{version}_Linux_arm64.tar.gz
+        darwin: tuios-web_{version}_Darwin_arm64.tar.gz
+        windows: null
   - appName: ck
     license: Apache License 2.0 / MIT License
     repoURL: https://github.com/BeaconBay/ck

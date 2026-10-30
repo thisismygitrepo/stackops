@@ -8,12 +8,13 @@ from pathlib import Path
 import re
 import stat
 import sys
+from typing import Literal
 
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, StatusBackend, StatusFormat, StatusSnapshot
+from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, StatusBackend, StatusSnapshot
 
 
 def plain_status_text(value: str) -> str:
@@ -135,7 +136,7 @@ def status_coverage_lines(snapshot: StatusSnapshot) -> list[str]:
     return lines
 
 
-def render_status(*, snapshot: StatusSnapshot, output_format: StatusFormat) -> str:
+def render_status(*, snapshot: StatusSnapshot, output_format: Literal["table", "json", "markdown"]) -> str:
     if output_format == "json":
         return json.dumps(asdict(snapshot), ensure_ascii=False, indent=2, default=str) + "\n"
     counts = ", ".join(f"""{name}: {count}""" for name, count in sorted(Counter(agent.status for agent in snapshot.agents).items())) or "no agents"
