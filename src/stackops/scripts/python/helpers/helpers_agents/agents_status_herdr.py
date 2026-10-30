@@ -8,7 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_status_tuios import j
 from stackops.scripts.python.helpers.helpers_sessions._attach_common import run_command
 
 
-def query_herdr(*, options: StatusOptions, session: str | None, arguments: list[str]) -> tuple[object, str | None]:
+def run_herdr(*, options: StatusOptions, session: str | None, arguments: list[str]) -> tuple[str, str | None]:
     if tuple(arguments[:2]) not in {
         ("session", "list"), ("api", "snapshot"), ("pane", "list"),
         ("pane", "process-info"), ("pane", "read"), ("agent", "explain"), ("agent", "get"),
@@ -19,11 +19,19 @@ def query_herdr(*, options: StatusOptions, session: str | None, arguments: list[
     try:
         result = run_command(command, timeout=options.timeout)
     except (OSError, TimeoutExpired) as error:
-        return None, f"""{operation}: {error}"""
+        return "", f"""{operation}: {error}"""
     if result.returncode != 0:
-        return None, f"""{operation} exited {result.returncode}: {result.stderr.strip() or result.stdout.strip()}"""
+        return "", f"""{operation} exited {result.returncode}: {result.stderr.strip() or result.stdout.strip()}"""
+    return result.stdout, None
+
+
+def query_herdr(*, options: StatusOptions, session: str | None, arguments: list[str]) -> tuple[object, str | None]:
+    stdout, error = run_herdr(options=options, session=session, arguments=arguments)
+    if error is not None:
+        return None, error
+    operation = " ".join(arguments[:2])
     try:
-        payload: object = json.loads(result.stdout)
+        payload: object = json.loads(stdout)
     except json.JSONDecodeError as error:
         return None, f"""{operation} returned invalid JSON: {error}"""
     if not isinstance(payload, dict):
