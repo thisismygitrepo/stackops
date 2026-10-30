@@ -17,6 +17,29 @@ installers:
         linux: sysabc.py
         darwin: sysabc.py
         windows: sysabc.py
+  - appName: samba
+    license: GPL-3.0-or-later AND LGPL-3.0-or-later
+    repoURL: CMD
+    doc: SMB file and print server for Linux
+    categoryLabels:
+      - file-transfer-sharing
+    fileNamePattern:
+      amd64:
+        linux:
+          apk: sudo apk add --no-cache samba
+          apt: sudo apt-get update && sudo apt-get install -y samba
+          dnf: sudo dnf install -y samba
+          pacman: sudo pacman -S --needed --noconfirm samba
+        darwin: null
+        windows: null
+      arm64:
+        linux:
+          apk: sudo apk add --no-cache samba
+          apt: sudo apt-get update && sudo apt-get install -y samba
+          dnf: sudo dnf install -y samba
+          pacman: sudo pacman -S --needed --noconfirm samba
+        darwin: null
+        windows: null
   - appName: winutil
     license: MIT License
     repoURL: https://github.com/ChrisTitusTech/winutil

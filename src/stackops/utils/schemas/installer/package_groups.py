@@ -211,7 +211,6 @@ PACKAGES_SYSTEM_MONITORS = [
     "procs",
     "cpufetch",
     "fastfetch",
-    "psnet",
     "pstop",
 ]
 
@@ -266,7 +265,6 @@ NETWORK = [
 # Terminal & Shell Enhancements - Terminal multiplexers, shell history, and prompts
 PACKAGES_TERMINAL_SHELL = [
     "nerdfont",
-    "psmux",
     "tmux",
     # "mprocs",
     "mcfly",
@@ -274,7 +272,6 @@ PACKAGES_TERMINAL_SHELL = [
     "starship",
     # "gotty",
     # "ttyd",
-    "cb"
 ]
 
 

@@ -163,7 +163,7 @@ desc = "decrypt asymmetric gpg file"
 
 [[mgr.prepend_keymap]]
 on  = "y"
-run = [ 'shell -- echo "$@" | cb cp0', "yank" ]
+run = [ "copy path", "yank" ]
 
 # DuckDB plugin keymaps for column scrolling
 [[mgr.prepend_keymap]]
