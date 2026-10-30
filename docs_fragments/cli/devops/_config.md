@@ -210,8 +210,24 @@ Read-only overview of your dotfiles on this machine. It changes nothing.
 - **Known dotfiles not in your mapper**: what `collect` finds on this machine, by category (collectable, skipped, in your mapper, same as the packaged settings, absent, other OS). Collectable and skipped entries are listed one per row, or one row per group when there are more than 25.
 - **Storage**: file count and size of `~/dotfiles` (what `export` archives) and of your managed copies, mapper entries whose managed copy lies outside `~/dotfiles` (export does not carry them), and files in `~/dotfiles/stackops/mapper/files` that no mapper entry references.
 
+Options from current help:
+
+| Option | Description |
+|--------|-------------|
+| `--mappers`, `-m` | Show the mappers section |
+| `--sync`, `-s` | Show the sync section |
+| `--radar`, `-r` | Show the known-dotfiles section |
+| `--storage`, `-d` | Show the storage section |
+| `--expand`, `-e` | List every entry in the shown sections: your mapper's groups and the replaced library entries, every synced entry (yours and the library's), every catalog entry for this OS, and the size of each managed copy |
+| `--which`, `-w` | Only these groups, comma-separated, as in `sync` and `collect`. Known-dotfile verdicts still account for your whole mapper, and the `~/dotfiles` total and unreferenced stored files stay global |
+
+The section flags pick what to show; without any, all four are shown. Short flags combine.
+
 ```bash
-devops config dotfiles status
+devops config dotfiles status         # all sections, summarized
+devops config dotfiles status -msr    # everything but storage
+devops config dotfiles status -re     # only known dotfiles, every entry listed
+devops config dotfiles status -w ssh,yazi -e  # just these groups, in full
 ```
 
 ### edit

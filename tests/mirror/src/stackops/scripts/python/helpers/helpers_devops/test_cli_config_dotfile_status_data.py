@@ -44,19 +44,39 @@ def test_status_counts_sync_and_storage(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.setattr(status_data, "DOTFILES_ROOT", dotfiles)
     monkeypatch.setattr(status_data, "DOTFILES_MAPPER_FILES_ROOT", stored_root)
 
-    status = status_data.collect_dotfiles_status(current_os="linux")
+    loaded_mappers = status_data.load_mappers()
+    mappers = status_data.collect_mappers_status(loaded_mappers, None)
+    sync = status_data.collect_sync_status(loaded_mappers, None, "linux")
+    radar = status_data.collect_radar_status(loaded_mappers, None, "linux")
+    storage = status_data.collect_storage_status(loaded_mappers, None)
 
-    assert status.user_counts == status_data.MapperCounts(groups=2, entries=4, entries_per_os={"linux": 3, "darwin": 2, "windows": 1})
-    assert status.replaced_library_entries == 1
-    assert {(item.program, item.file_name): item.status for item in status.user_sync} == {
+    assert mappers.user_counts == status_data.MapperCounts(groups=2, entries=4, entries_per_os={"linux": 3, "darwin": 2, "windows": 1})
+    assert mappers.user_group_counts["mine"] == status_data.MapperCounts(groups=1, entries=3, entries_per_os={"linux": 2, "darwin": 1, "windows": 0})
+    assert mappers.replaced_library_entries == [("app", "config")]
+    assert {(item.program, item.file_name): item.status for item in sync.user} == {
         ("app", "config"): "Configured",
         ("mine", "rc"): "Missing default path",
         ("mine", "outside"): "Missing default path",
     }
-    assert [(item.program, item.file_name) for item in status.library_sync] == [("app", "theme")]
-    assert {(plan.group, plan.name): plan.verdict for plan in status.radar if plan.group == "app"} == {("app", "config"): "recorded", ("app", "theme"): "absent"}
-    assert status.dotfiles_root_footprint == status_data.Footprint(files=3, size_bytes=12)
-    assert status.managed_path_count == 3
-    assert status.managed_footprint == status_data.Footprint(files=3, size_bytes=13)
-    assert status.outside_dotfiles_root == [("mine", "outside", config.joinpath("outside.conf"))]
-    assert status.unreferenced_stored_paths == [stored_root.joinpath("def.orphan")]
+    assert [(item.program, item.file_name) for item in sync.library] == [("app", "theme")]
+    assert {(plan.group, plan.name): plan.verdict for plan in radar if plan.group == "app"} == {("app", "config"): "recorded", ("app", "theme"): "absent"}
+    assert storage.dotfiles_root_footprint == status_data.Footprint(files=3, size_bytes=12)
+    assert [(copy.path, copy.entries, copy.footprint) for copy in storage.managed_copies] == [
+        (config.joinpath("outside.conf"), [("mine", "outside")], status_data.Footprint(files=1, size_bytes=7)),
+        (dotfiles.joinpath("settings", "app", "config"), [("app", "config")], status_data.Footprint(files=1, size_bytes=4)),
+        (stored_root.joinpath("abc.rc"), [("mine", "rc"), ("mine", "rc_darwin")], status_data.Footprint(files=1, size_bytes=2)),
+    ]
+    assert storage.managed_footprint == status_data.Footprint(files=3, size_bytes=13)
+    assert storage.outside_dotfiles_root == [("mine", "outside", config.joinpath("outside.conf"))]
+    assert storage.unreferenced_stored_paths == [stored_root.joinpath("def.orphan")]
+
+    app_only = frozenset({"app"})
+    filtered_storage = status_data.collect_storage_status(loaded_mappers, app_only)
+    assert status_data.collect_mappers_status(loaded_mappers, app_only).user_counts == status_data.MapperCounts(
+        groups=1, entries=1, entries_per_os={"linux": 1, "darwin": 1, "windows": 1}
+    )
+    assert [(item.program, item.file_name) for item in status_data.collect_sync_status(loaded_mappers, app_only, "linux").user] == [("app", "config")]
+    assert {plan.group for plan in status_data.collect_radar_status(loaded_mappers, app_only, "linux")} == {"app"}
+    assert [copy.path for copy in filtered_storage.managed_copies] == [dotfiles.joinpath("settings", "app", "config")]
+    assert filtered_storage.outside_dotfiles_root == []
+    assert filtered_storage.unreferenced_stored_paths == [stored_root.joinpath("def.orphan")]
