@@ -5,8 +5,8 @@ from typing import Literal, TypeAlias
 
 type JsonObject = dict[str, object]
 StatusBackend: TypeAlias = Literal["tuios", "herdr", "aoe"]
-StatusFormat: TypeAlias = Literal["table", "json", "markdown"]
-HistoryMode: TypeAlias = Literal["auto", "transcripts", "hooks", "none"]
+StatusFormat: TypeAlias = Literal["table", "rich", "json", "markdown"]
+HistoryMode: TypeAlias = Literal["auto", "none"]
 AgentStatus: TypeAlias = Literal["working", "waiting", "blocked", "idle", "completed", "failed", "unknown", "unavailable"]
 
 
@@ -14,8 +14,11 @@ AgentStatus: TypeAlias = Literal["working", "waiting", "blocked", "idle", "compl
 class StatusOptions:
     backend: StatusBackend
     sessions: tuple[str, ...]
+    layouts: tuple[str, ...]
+    tabs: tuple[str, ...]
     windows: tuple[str, ...]
     exclude_windows: tuple[str, ...]
+    agent_sessions: tuple[str, ...]
     harnesses: tuple[str, ...]
     states: tuple[str, ...]
     include_self: bool
@@ -74,6 +77,7 @@ class AgentSnapshot:
     tab_name: str
     window_id: str
     window_name: str
+    agent_session_name: str
     harness: str
     cwd: str
     process: ProcessEvidence

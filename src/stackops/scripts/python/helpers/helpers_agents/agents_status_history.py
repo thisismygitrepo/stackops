@@ -5,7 +5,7 @@ from pathlib import Path
 from stackops.scripts.python.helpers.helpers_agents.agents_status_history_claude import parse_claude
 from stackops.scripts.python.helpers.helpers_agents.agents_status_history_codex import parse_codex
 from stackops.scripts.python.helpers.helpers_agents.agents_status_history_common import read_jsonl
-from stackops.scripts.python.helpers.helpers_agents.agents_status_models import HistoryEvidence, MessageRecord, StatusBackend
+from stackops.scripts.python.helpers.helpers_agents.agents_status_models import HistoryEvidence, HistoryMode, MessageRecord, StatusBackend
 
 
 def _hook_history(events: list[dict[str, object]]) -> HistoryEvidence:
@@ -34,7 +34,7 @@ def _hook_history(events: list[dict[str, object]]) -> HistoryEvidence:
 
 
 def read_history(
-    *, harness: str, paths: tuple[Path, ...], events: list[dict[str, object]], mode: str,
+    *, harness: str, paths: tuple[Path, ...], events: list[dict[str, object]], mode: HistoryMode,
     message_limit: int, text_limit: int, backend: StatusBackend,
 ) -> HistoryEvidence:
     if mode == "none":
@@ -44,34 +44,33 @@ def read_history(
     limitations: list[str] = []
     replies: list[tuple[str, str]] = []
     transcript_read = False
-    if mode in ("auto", "transcripts"):
-        for path in dict.fromkeys(paths):
-            rows, errors = read_jsonl(path)
-            limitations.extend(errors)
-            sources.append(str(path))
-            if not rows:
-                continue
-            if harness in ("claude", "claude-code"):
-                parsed = parse_claude(path=path, rows=rows)
-            elif harness == "codex":
-                parsed = parse_codex(path=path, rows=rows)
-            else:
-                limitations.append(f"""No transcript parser for harness {harness!r}.""")
-                continue
-            limitations.extend(parsed.limitations)
-            if parsed.child:
-                continue
-            transcript_read = True
-            messages.extend(parsed.messages)
-            if parsed.latest_reply:
-                replies.append((parsed.reply_at, parsed.latest_reply))
-        if transcript_read:
-            limitations.append("History covers retained, readable transcript records only; earlier conversations and deleted records cannot be verified.")
-        elif not paths:
-            limitations.append("No existing transcript could be reliably linked to this live agent.")
+    for path in dict.fromkeys(paths):
+        rows, errors = read_jsonl(path)
+        limitations.extend(errors)
+        sources.append(str(path))
+        if not rows:
+            continue
+        if harness in ("claude", "claude-code"):
+            parsed = parse_claude(path=path, rows=rows)
+        elif harness == "codex":
+            parsed = parse_codex(path=path, rows=rows)
+        else:
+            limitations.append(f"""No transcript parser for harness {harness!r}.""")
+            continue
+        limitations.extend(parsed.limitations)
+        if parsed.child:
+            continue
+        transcript_read = True
+        messages.extend(parsed.messages)
+        if parsed.latest_reply:
+            replies.append((parsed.reply_at, parsed.latest_reply))
+    if transcript_read:
+        limitations.append("History covers retained, readable transcript records only; earlier conversations and deleted records cannot be verified.")
+    elif not paths:
+        limitations.append("No existing transcript could be reliably linked to this live agent.")
     latest_reply_at, latest_reply = max(replies, default=("", ""))
     coverage = "partial" if transcript_read else "unavailable"
-    if mode == "hooks" or mode == "auto" and not transcript_read:
+    if not transcript_read:
         hooks = _hook_history(events) if backend == "tuios" else HistoryEvidence(
             messages=(), latest_reply="", latest_reply_at="", sources=(), coverage="unavailable", omitted_messages=0,
             limitations=(f"""{'Herdr' if backend == 'herdr' else 'AoE'} does not expose retained hook history; human messages require a reliably linked transcript.""",),

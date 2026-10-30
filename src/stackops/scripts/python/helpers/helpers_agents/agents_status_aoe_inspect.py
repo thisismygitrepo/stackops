@@ -91,6 +91,7 @@ def inspect_aoe_window(
         session=session, session_id=session_id, workspace=workspace_number,
         workspace_name=text_field(registered, ("group",)) or (workspace_names.get(workspace_number, "") if workspace_number is not None else ""),
         workspace_id="", tab_id="", tab_name="", window_id=window_id, window_name=text_field(pane, ("name",)),
+        agent_session_name=text_field(registered, ("title",)),
         harness=harness or "unknown", cwd=process.cwd or cwd, process=process, status=status, task_status=task_status,
         reported_state=reported_state, task=task, latest_activity=activity, history=history, prompt=prompt,
         capture=capture, events=(), evidence=tuple(evidence),

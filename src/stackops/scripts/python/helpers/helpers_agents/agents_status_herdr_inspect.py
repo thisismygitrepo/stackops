@@ -67,7 +67,7 @@ def inspect_herdr_window(
         "state": text_field(registered, ("agent_status",)) or text_field(pane, ("agent_status",)),
         "source": "Herdr session snapshot",
     }
-    transcript_linked = bool(process.transcript_paths) and options.history in {"auto", "transcripts"}
+    transcript_linked = bool(process.transcript_paths) and options.history == "auto"
     # Herdr serves scrollback only for a settled agent and at ~250 ms per page past the viewport, so it is skipped when a
     # linked transcript already holds the conversation. Fall back to the viewport if the state changed meanwhile.
     sources = ["recent-unwrapped", "visible"] if state["state"] in {"idle", "done"} and not transcript_linked else ["visible"]
@@ -109,7 +109,8 @@ def inspect_herdr_window(
         session=session, session_id=session_id, workspace=workspace_number,
         workspace_name=workspace_names.get(workspace_number, "") if workspace_number is not None else "",
         workspace_id=text_field(pane, ("workspace_id",)), tab_id=text_field(pane, ("tab_id",)), tab_name=text_field(pane, ("tab_name",)),
-        window_id=window_id, window_name=name, harness=harness, cwd=process.cwd or cwd, process=process,
+        window_id=window_id, window_name=name, agent_session_name=text_field(registered, ("name",)),
+        harness=harness, cwd=process.cwd or cwd, process=process,
         status=status, task_status=task_status, reported_state=text_field(state, ("state",)), task=task, latest_activity=activity,
         history=history, prompt={}, capture=capture, events=(), evidence=tuple(evidence), limitations=tuple(dict.fromkeys(limitations)),
     )

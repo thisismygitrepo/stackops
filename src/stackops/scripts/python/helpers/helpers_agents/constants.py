@@ -14,3 +14,7 @@ CODEX_EXEC_PERMISSION_ARGS: Final[tuple[str, ...]] = (
     *CODEX_WORKSPACE_PERMISSION_ARGS,
     "--skip-git-repo-check",
 )
+
+AGENTS_STATUS_EVENT_LIMIT: Final[int] = 256
+AGENTS_STATUS_TIMEOUT_SECONDS: Final[float] = 10.0
+AGENTS_STATUS_WORKERS: Final[int] = 8
