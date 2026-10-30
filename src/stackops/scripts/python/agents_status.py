@@ -15,9 +15,12 @@ from stackops.scripts.python.helpers.helpers_agents.agents_status_models import 
 
 def status(
     backend: Annotated[StatusBackend, typer.Option("--backend", help="Session-manager backend to inspect: tuios, herdr or aoe. AoE uses its current profile.")] = "tuios",
-    session: Annotated[list[str] | None, typer.Option("--session", "-s", help="Session name or stable ID; repeat to select several. Default: all live local sessions, including detached sessions. AoE scope is its current profile.")] = None,
-    window: Annotated[list[str] | None, typer.Option("--window", "-w", help="Window/pane name or stable ID; AoE session name or ID. Repeat to select several.")] = None,
-    exclude_window: Annotated[list[str] | None, typer.Option("--exclude-window", help="Window/pane ID or name to omit; AoE session name or ID. Repeat as needed.")] = None,
+    session: Annotated[list[str] | None, typer.Option("--session", "-s", help="Native manager session name or ID; Herdr's outer session, TUIOS session, or AoE session in the current profile. Default: all live local sessions, including detached sessions. Repeat for alternatives.")] = None,
+    layout: Annotated[list[str] | None, typer.Option("--layout", help="Layout scope: TUIOS session name/ID; Herdr workspace label/ID/number; AoE full group path. Repeat for alternatives.")] = None,
+    tab: Annotated[list[str] | None, typer.Option("--tab", "-t", help="Layout tab: TUIOS workspace name/number; Herdr tab label/ID; AoE session title/ID. Repeat for alternatives.")] = None,
+    window: Annotated[list[str] | None, typer.Option("--pane", "-p", "--window", "-w", help="Layout pane: TUIOS window name/ID; Herdr pane label/title/ID; AoE session title/ID (one runtime per tab). --window is the same filter. Repeat for alternatives.")] = None,
+    exclude_window: Annotated[list[str] | None, typer.Option("--exclude-pane", "--exclude-window", help="Pane name or ID to omit, using the same mapping as --pane. Repeat as needed.")] = None,
+    agent_session: Annotated[list[str] | None, typer.Option("--agent-session", help="Reported agent name or conversation ID, when available: TUIOS registered name (also pane name), Herdr agent name, AoE session title/ID. Repeat for alternatives.")] = None,
     harness: Annotated[list[str] | None, typer.Option("--harness", "-a", help="Agent harness to include; repeat as needed. 'claude' is an alias for 'claude-code'.")] = None,
     state: Annotated[list[str] | None, typer.Option("--state", help="Filter working, waiting, blocked, idle, completed, failed, unknown or unavailable; repeat as needed. completed also matches tasks reported completed while their live agents are idle.")] = None,
     include_self: Annotated[bool, typer.Option("--include-self/--exclude-self", help="Include the observer's own pane. Default: exclude it using pane/process identity.")] = False,
@@ -57,7 +60,8 @@ def status(
         )
     options = StatusOptions(
         backend=backend,
-        sessions=tuple(session or ()), windows=tuple(window or ()), exclude_windows=tuple(exclude_window or ()),
+        sessions=tuple(session or ()), layouts=tuple(layout or ()), tabs=tuple(tab or ()),
+        windows=tuple(window or ()), exclude_windows=tuple(exclude_window or ()), agent_sessions=tuple(agent_session or ()),
         harnesses=tuple("claude-code" if value.lower() == "claude" else value.lower() for value in harness or ()),
         states=selected_states, include_self=include_self, history=history, capture_lines=lines,
         message_limit=messages, text_limit=text_limit, event_limit=events, timeout=timeout, workers=workers,

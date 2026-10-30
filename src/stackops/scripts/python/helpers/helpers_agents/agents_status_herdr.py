@@ -73,17 +73,15 @@ def read_herdr_inventory(*, options: StatusOptions) -> tuple[list[JsonObject], l
         agents = _entries(payload=snapshot, key="agents")
         workspace_by_id = {text_field(workspace, ("workspace_id",)): workspace for workspace in workspaces}
         tab_by_id = {text_field(tab, ("tab_id",)): tab for tab in tabs}
-        agent_by_pane = {text_field(agent, ("pane_id",)): agent for agent in agents}
         session["workspaces"] = workspaces
         session["window_count"] = len(session_panes)
         for pane in session_panes:
             pane_id = text_field(pane, ("pane_id",))
             workspace = workspace_by_id.get(text_field(pane, ("workspace_id",)), {})
             tab = tab_by_id.get(text_field(pane, ("tab_id",)), {})
-            agent = agent_by_pane.get(pane_id, {})
             panes.append({
                 **pane, "session": name, "window_id": pane_id,
-                "name": text_field(agent, ("name",)) or text_field(pane, ("label", "title")),
+                "name": text_field(pane, ("label", "title")),
                 "workspace": workspace.get("number"), "workspace_name": text_field(workspace, ("label",)),
                 "tab_name": text_field(tab, ("label",)),
             })

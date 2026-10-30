@@ -5,10 +5,11 @@ from datetime import UTC, datetime
 
 from stackops.scripts.python.helpers.helpers_agents.agents_status_aoe import read_aoe_inventory, read_aoe_panes
 from stackops.scripts.python.helpers.helpers_agents.agents_status_aoe_inspect import inspect_aoe_window
+from stackops.scripts.python.helpers.helpers_agents.agents_status_filters import select_status_panes, selected_agent
 from stackops.scripts.python.helpers.helpers_agents.agents_status_herdr import read_herdr_inventory, read_herdr_panes
 from stackops.scripts.python.helpers.helpers_agents.agents_status_herdr_inspect import inspect_herdr_window
 from stackops.scripts.python.helpers.helpers_agents.agents_status_inspect import PaneInspection, inspect_window
-from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, JsonObject, StatusOptions, StatusSnapshot
+from stackops.scripts.python.helpers.helpers_agents.agents_status_models import JsonObject, StatusOptions, StatusSnapshot
 from stackops.scripts.python.helpers.helpers_agents.agents_status_tuios import (
     object_rows,
     observer_ancestors,
@@ -17,19 +18,6 @@ from stackops.scripts.python.helpers.helpers_agents.agents_status_tuios import (
     text_field,
     validate_history_roots,
 )
-
-
-def _window_matches(*, pane: JsonObject, names: tuple[str, ...]) -> bool:
-    identities = {text_field(pane, (key,)) for key in ("window_id", "name", "title", "label")}
-    return not names or bool(identities.intersection(names))
-
-
-def _selected_agent(*, agent: AgentSnapshot, options: StatusOptions) -> bool:
-    harnesses = {"claude-code" if value == "claude" else value for value in options.harnesses}
-    state_matches = not options.states or agent.status in options.states
-    if "completed" in options.states and agent.task_status == "reported completed":
-        state_matches = True
-    return (not harnesses or agent.harness in harnesses) and state_matches
 
 
 def collect_status(options: StatusOptions) -> StatusSnapshot:
@@ -47,18 +35,6 @@ def collect_status(options: StatusOptions) -> StatusSnapshot:
             raise ValueError(f"""Requested session is not live: {requested}. Saved sessions are never restored.""")
     session_by_name = {text_field(session, ("name",)): session for session in selected_sessions}
     panes = [pane for pane in all_panes if pane.get("session") in session_by_name]
-    for requested in options.windows:
-        if not any(_window_matches(pane=pane, names=(requested,)) for pane in panes):
-            raise ValueError(f"""Requested window is not present in the selected live sessions: {requested}""")
-    excluded_keys = {
-        (text_field(pane, ("session",)), text_field(pane, ("window_id",)))
-        for pane in panes if options.exclude_windows and _window_matches(pane=pane, names=options.exclude_windows)
-    }
-    explicitly_excluded = [f"""{session} / {window_id}""" if options.backend != "tuios" else window_id for session, window_id in sorted(excluded_keys)]
-    panes = [
-        pane for pane in panes if _window_matches(pane=pane, names=options.windows)
-        and (text_field(pane, ("session",)), text_field(pane, ("window_id",))) not in excluded_keys
-    ]
     registered_by_window = {
         (text_field(agent, ("session",)) if options.backend != "tuios" else "", text_field(agent, ("window_id",))): agent
         for agent in registrations
@@ -82,6 +58,9 @@ def collect_status(options: StatusOptions) -> StatusSnapshot:
             number: text_field(workspace, ("name", "label"))
             for workspace in workspaces if isinstance(number := workspace.get("number" if options.backend == "herdr" else "workspace"), int)
         }
+    panes, explicitly_excluded = select_status_panes(
+        panes=panes, sessions=session_by_name, workspace_names=workspace_names, options=options,
+    )
     if options.backend == "aoe":
         workspace_count = len({
             text_field(pane, ("group",)) for pane in panes if text_field(pane, ("group",))
@@ -137,7 +116,7 @@ def collect_status(options: StatusOptions) -> StatusSnapshot:
         limitations.append("New windows appeared after initial discovery; listed in coverage but not inspected in this snapshot.")
     if any(pane.get("command") == "ssh" for pane in panes):
         limitations.append("Remote background processes behind SSH windows cannot be identified through local process metadata.")
-    selected = tuple(agent for agent in agents if _selected_agent(agent=agent, options=options))
+    selected = tuple(agent for agent in agents if selected_agent(agent=agent, options=options))
     coverage: JsonObject = {
         "live_sessions": len(live_sessions), "sessions_inspected": len(selected_sessions),
         "sessions": [{key: session.get(key) for key in ("name", "id", "attached", "window_count")} for session in selected_sessions], "workspace_records": workspace_count,
@@ -148,7 +127,7 @@ def collect_status(options: StatusOptions) -> StatusSnapshot:
         "ambiguous_candidates": candidates, "vanished_windows": vanished, "new_windows_not_inspected": new_windows,
         "capture_line_limit": options.capture_lines, "message_limit": options.message_limit, "text_limit": options.text_limit,
         "scope": {
-            "tuios": "Local TUIOS daemon only; detached sessions and background workspaces included. Separate tabs/nested pane IDs are unavailable.",
+            "tuios": "Local TUIOS daemon only; detached sessions and background workspaces included. Layout tabs are workspaces; layout panes are windows.",
             "herdr": "Local Herdr sessions; detached sessions, background workspaces, tabs and panes included.",
             "aoe": "Current local AoE profile; tmux sessions and structured-view workers included. Each AoE session is one runtime target.",
         }[options.backend],

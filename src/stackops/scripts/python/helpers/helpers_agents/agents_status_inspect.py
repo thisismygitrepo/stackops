@@ -101,7 +101,8 @@ def inspect_window(
     agent = AgentSnapshot(
         session=session, session_id=session_id, workspace=workspace_number, workspace_name=workspace_names.get(workspace_number, "") if workspace_number is not None else "",
         workspace_id="", tab_id="", tab_name="",
-        window_id=window_id, window_name=name, harness=harness, cwd=process.cwd or cwd, process=process,
+        window_id=window_id, window_name=name, agent_session_name=text_field(registered, ("name",)),
+        harness=harness, cwd=process.cwd or cwd, process=process,
         status=status, task_status=task_status, reported_state=text_field(state, ("state",)), task=task, latest_activity=activity,
         history=history, prompt=prompt, capture=capture, events=tuple(events), evidence=tuple(evidence), limitations=tuple(dict.fromkeys(limitations)),
     )

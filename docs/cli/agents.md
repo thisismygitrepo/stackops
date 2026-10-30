@@ -21,6 +21,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
 | `second-brain` | Configure the Second Brain repository and its agent instructions |
 | `doctor` | Inspect agent binaries, configuration, plugins, skills, and instruction provenance |
+| `status` | Inspect live TUIOS, Herdr, or AoE agents, with location and agent-session filters |
 | `local` | Inspect local Ollama health, models, and resource usage |
 | `run-prompt` | Run a prompt through a selected agent, with context and an optional interactive session |
 | `run-interactive` | Launch an agent with reasonable defaults |
@@ -28,6 +29,35 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `parallel` | Create or run agent layouts, create shared context, collect outputs, or write starter scripts |
 | `iter` | Inspect and maintain current-format Agent-Ops iteration workspaces through Herdr |
 | `reset` | Preview and apply resets of agent customizations and repository `.ai` directories |
+
+---
+
+## `status`
+
+`agents status` collects reported agent states, read-only terminal evidence, and available retained history. Select `--backend tuios` (the default), `herdr`, or `aoe`. Detached live sessions are included; saved or stopped sessions are not restored. AoE inspection covers its current profile.
+
+Location filters follow the [terminal layout convention](terminal.md#layout-file-format):
+
+| Filter | TUIOS | Herdr | AoE |
+| --- | --- | --- | --- |
+| `--session` / `-s` | Native session name or ID | Native session name | Agent session title or ID |
+| `--layout` | Session name or ID | Workspace label, ID, or number | Full group path |
+| `--tab` / `-t` | Workspace name or number | Tab label or ID | Agent session title or ID |
+| `--pane` / `-p` | Window name or ID | Pane label, title, or ID | Agent session title or ID |
+
+`--window` / `-w` is an alias for `--pane`: it always selects the leaf target. For AoE, this target can be a tmux pane or a structured worker without a terminal pane. `--exclude-pane` (also `--exclude-window`) omits matching leaf targets.
+
+`--agent-session` matches the registered agent name in TUIOS (also its pane name), the agent name in Herdr (separate from the pane label), or the session title/ID in AoE. It also matches a linked harness conversation ID when available; it does not search transcript titles. Missing identity metadata does not match. Reports show the available agent name and conversation ID. Other filters include `--harness` and `--state`.
+
+Names and IDs match exactly and case-sensitively. Repeat an option to match any of its values; combine different filters to require all of them. Duplicate names select every match in the chosen scope. Use the containing session, layout, and tab, or stable IDs, to narrow it down. For example, a Herdr pane named `worker` in two tabs can be selected with both `--tab review` and `--pane worker`. Unknown layout, tab, or pane selectors report an error in the selected scope; an unmatched agent-session filter shows no agents.
+
+```bash
+agents status --backend herdr --session dev --layout project --tab review --pane worker
+agents status --backend tuios --layout project --tab review --window worker
+agents status --backend aoe --layout project/review --tab reviewer
+agents status --backend herdr --agent-session reviewer --agent-session implementer
+agents status --backend herdr --layout project --exclude-pane observer --json
+```
 
 ---
 

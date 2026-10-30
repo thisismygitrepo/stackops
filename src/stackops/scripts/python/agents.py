@@ -818,7 +818,7 @@ def get_app() -> typer.Typer:
     agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
     agents_app.command(
         name="status", no_args_is_help=False, short_help="📊 <S> Read-only TUIOS, Herdr or AoE agent status and retained message history",
-        help="Inspect live agents across local TUIOS or Herdr sessions, including detached sessions and background workspaces, or the current AoE profile. Collect reported states, read-only evidence and reliably linked retained transcripts. Never contacts agents or changes their panes; history gaps and unverified task completion remain explicit.",
+        help="Inspect live agents across local TUIOS or Herdr sessions, including detached sessions and background workspaces, or the current AoE profile. Collect reported states, read-only evidence and reliably linked retained transcripts. Never contacts agents or changes their panes; history gaps and unverified task completion remain explicit.\n\nFilters use terminal layout conventions: layout > tab > pane. TUIOS: session > workspace > window; Herdr: workspace > tab > pane; AoE: group > session > one runtime. --window is an alias for --pane; --session selects the native manager session. Names and IDs match exactly, case-sensitively. Repeat a filter for alternatives; different filters combine with AND. Duplicate names select all matches: narrow with --session/--layout/--tab or use IDs.",
     )(status)
     agents_app.command(name="S", no_args_is_help=False, hidden=True)(status)
 

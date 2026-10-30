@@ -60,6 +60,10 @@ def _agent_card(agent: AgentSnapshot) -> Panel:
     if agent.tab_id:
         location += f"""\nTab ID: {agent.tab_id}"""
     fields.add_row("Location", Text(plain_status_text(location)))
+    if agent.agent_session_name:
+        fields.add_row("Agent name", Text(plain_status_text(agent.agent_session_name)))
+    if agent.process.session_id:
+        fields.add_row("Conversation", Text(plain_status_text(agent.process.session_id)))
     fields.add_row("Harness", Text(plain_status_text(f"""{agent.harness} · PID {agent.process.pid if agent.process.pid is not None else 'unknown'}""")))
     fields.add_row("Directory", Text(plain_status_text(agent.cwd or "unavailable"), style="dim"))
     fields.add_row("Task", Text(plain_status_text(agent.task)))
@@ -84,7 +88,7 @@ def _agent_card(agent: AgentSnapshot) -> Panel:
             notes.append(f"""\n• {plain_status_text(limitation)}""", style="yellow")
         sections.extend([Text(), notes])
     title = _status_text(agent.status)
-    title.append(f"""  {plain_status_text(agent.window_name or agent.harness)}""", style="bold")
+    title.append(f"""  {plain_status_text(agent.agent_session_name or agent.window_name or agent.harness)}""", style="bold")
     return Panel(
         Group(*sections), title=title, title_align="left", border_style=_status_text(agent.status).style,
         subtitle=Text(plain_status_text(f"""{agent.session} / {agent.window_id}"""), style="dim"), subtitle_align="left", padding=(1, 2),
@@ -117,7 +121,7 @@ def _show_rich_status(*, snapshot: StatusSnapshot, console: Console) -> None:
             task = " ".join(plain_status_text(agent.task).split())
             task_excerpt = task[:157] + "…" if len(task) > 160 else task
             overview.add_row(
-                _status_text(agent.status), Text(plain_status_text(agent.window_name or agent.harness)),
+                _status_text(agent.status), Text(plain_status_text(agent.agent_session_name or agent.window_name or agent.harness)),
                 Text(plain_status_text(f"""{agent.session} / {agent.workspace_name or agent.workspace or 'unavailable'}""")), Text(task_excerpt),
             )
         console.print(overview)

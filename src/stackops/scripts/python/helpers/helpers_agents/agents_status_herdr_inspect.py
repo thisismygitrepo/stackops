@@ -101,7 +101,8 @@ def inspect_herdr_window(
         session=session, session_id=session_id, workspace=workspace_number,
         workspace_name=workspace_names.get(workspace_number, "") if workspace_number is not None else "",
         workspace_id=text_field(pane, ("workspace_id",)), tab_id=text_field(pane, ("tab_id",)), tab_name=text_field(pane, ("tab_name",)),
-        window_id=window_id, window_name=name, harness=harness, cwd=process.cwd or cwd, process=process,
+        window_id=window_id, window_name=name, agent_session_name=text_field(registered, ("name",)),
+        harness=harness, cwd=process.cwd or cwd, process=process,
         status=status, task_status=task_status, reported_state=text_field(state, ("state",)), task=task, latest_activity=activity,
         history=history, prompt={}, capture=capture, events=(), evidence=tuple(evidence), limitations=tuple(dict.fromkeys(limitations)),
     )

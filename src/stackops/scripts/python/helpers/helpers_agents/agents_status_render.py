@@ -45,14 +45,19 @@ def _row(agent: AgentSnapshot, backend: StatusBackend) -> tuple[str, ...]:
     workspace = f"""{agent.workspace if agent.workspace is not None else 'unavailable'}: {agent.workspace_name or 'unnamed'}"""
     if agent.workspace_id:
         workspace += f"""\n{agent.workspace_id}"""
-    workspace += f"""\nTab: {agent.tab_name or 'unnamed'} [{agent.tab_id}]""" if agent.tab_id else "\nSeparate tab unavailable"
+    workspace += f"""\nTab: {agent.tab_name or 'unnamed'} [{agent.tab_id}]""" if agent.tab_id else "\nWorkspace is the layout tab" if backend == "tuios" else "\nSeparate tab unavailable"
     if backend == "aoe":
         workspace = f"""Group: {agent.workspace_name or 'ungrouped'}"""
+    harness = f"""{agent.harness or 'unknown'}\n{agent.cwd or 'CWD unavailable'}\nPID {agent.process.pid if agent.process.pid is not None else 'unavailable'}"""
+    if agent.agent_session_name:
+        harness += f"""\nAgent name: {agent.agent_session_name}"""
+    if agent.process.session_id:
+        harness += f"""\nConversation: {agent.process.session_id}"""
     return (
         f"""{agent.session}\n{agent.session_id or 'ID unavailable'}""",
         workspace,
         f"""{agent.window_name}\n{agent.window_id}""",
-        f"""{agent.harness or 'unknown'}\n{agent.cwd or 'CWD unavailable'}\nPID {agent.process.pid if agent.process.pid is not None else 'unavailable'}""",
+        harness,
         _brief(agent.task) or "Unknown; see retained evidence",
         history,
         f"""{agent.status}; task: {agent.task_status}\nReported: {agent.reported_state or 'unknown'}""",
@@ -137,13 +142,13 @@ def render_status(*, snapshot: StatusSnapshot, output_format: StatusFormat) -> s
     match snapshot.backend:
         case "aoe":
             backend_scope = "Local AoE current profile"
-            hierarchy = "Hierarchy: AoE group → session → tmux pane or structured worker."
+            hierarchy = "Layout hierarchy: AoE group (layout) → session (tab) → tmux pane or structured worker (pane target)."
         case "herdr":
             backend_scope = "Local Herdr sessions"
-            hierarchy = "Hierarchy: session → workspace → tab → pane."
+            hierarchy = "Layout hierarchy: Herdr session → workspace (layout) → tab → pane."
         case "tuios":
             backend_scope = f"""Local TUIOS daemon: {snapshot.server or 'current/default'}"""
-            hierarchy = "Hierarchy: session → workspace → window/pane. Separate tabs/nested panes are unavailable unless reported in evidence."
+            hierarchy = "Layout hierarchy: TUIOS session (layout) → workspace (tab) → window (pane)."
     introductory = [
         f"""Agent snapshot: {snapshot.observed_at} (inspection began {snapshot.started_at}).""",
         f"""Backend: {snapshot.backend}. {backend_scope}. Reported agents: {len(snapshot.agents)}; {counts}.""",
