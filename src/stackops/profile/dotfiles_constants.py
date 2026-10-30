@@ -8,3 +8,4 @@ OS_OUTPUT_ORDER: dict[OsName, int] = {value: index for index, value in enumerate
 VALID_OS_VALUES: frozenset[OsName] = frozenset(ALL_OS_VALUES)
 PACKAGED_SETTINGS_TOKEN_PREFIX = "CONFIG_ROOT/"
 COLLECTED_SETTINGS_TOKEN_PREFIX = "DOTFILES_ROOT/"
+STATUS_DETAIL_ROW_LIMIT = 25

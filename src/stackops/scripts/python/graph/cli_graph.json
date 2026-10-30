@@ -5544,7 +5544,7 @@
                         "    from rich.table import Table",
                         "",
                         "    from stackops.profile.create_links import ConfigMapper, apply_mapper, normalize_os_name, to_config_mapper",
-                        "    from stackops.profile.dotfiles_collect_plan import ACTIONABLE_VERDICTS, plan_collect, select_entries_to_record",
+                        "    from stackops.profile.dotfiles_collect_plan import plan_collect, select_entries_to_record, verdict_category",
                         "    from stackops.profile.dotfiles_mapper import (",
                         "        DEFAULT_DOTFILE_MAPPER_HEADER,",
                         "        LIBRARY_MAPPER_PATH,",
@@ -5571,10 +5571,10 @@
                         "        table.add_column(column_name, overflow=\"fold\")",
                         "    for plan in plans:",
                         "        if current_os in plan.entry[\"os\"] and plan.verdict not in (\"absent\", \"packaged\"):",
-                        "            table.add_row(plan.group, plan.name, str(plan.original_path), str(plan.managed_path), _describe_verdict(plan.verdict))",
+                        "            table.add_row(plan.group, plan.name, str(plan.original_path), str(plan.managed_path), describe_verdict(plan.verdict))",
                         "    console.print(table)",
                         "",
-                        "    actionable_groups = list(dict.fromkeys(plan.group for plan in plans if plan.verdict in ACTIONABLE_VERDICTS))",
+                        "    actionable_groups = list(dict.fromkeys(plan.group for plan in plans if verdict_category(plan.verdict) == \"collectable\"))",
                         "    if len(actionable_groups) == 0 and (which is None or which.strip() == \"all\"):",
                         "        console.print(\"Nothing to collect: every known dotfile on this machine is already recorded, absent, packaged, or managed your own way.\")",
                         "        return",
@@ -6024,7 +6024,7 @@
                         "    print(f\"Dotfiles exported to: {zipfile_encrypted_path}\")",
                         "",
                         "    if ssh:",
-                        "        code_sample = f\"cloud transfer {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^\"",
+                        "        code_sample = f\"cloud transfer {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^\"",
                         "        print(\"Exporting dotfiles via SSH-based transfer (scp).\")",
                         "        print(f\"Run the following command on your local machine to copy dotfiles to the remote machine:\\n{code_sample}\")",
                         "        remote_address = typer.prompt(\"Enter the remote machine address (user@host) to copy dotfiles to \")",
@@ -6113,7 +6113,7 @@
                         "",
                         "    if ssh:",
                         "        print(\"Importing dotfiles via SSH-based transfer (scp).\")",
-                        "        dotfiles_display_path = _format_home_relative_path(DOTFILES_ROOT)",
+                        "        dotfiles_display_path = format_home_relative_path(DOTFILES_ROOT)",
                         "        code = f\"cloud transfer $USER@$(hostname):^ {dotfiles_display_path} -z\"",
                         "        print(f\"Run the following command on the remote machine that has the dotfiles:\\n{code}\")",
                         "        url = typer.prompt(\"Enter the remote machine address (user@host) to copy dotfiles from \")",
@@ -6123,7 +6123,7 @@
                         "        return",
                         "",
                         "    if url is None:",
-                        "        url = typer.prompt(f\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) \")",
+                        "        url = typer.prompt(f\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) \")",
                         "    pwd = typer.prompt(\"Enter the password for zip decryption\", hide_input=True)",
                         "    if pwd == \"\":",
                         "        print(\"Password for zip decryption must be non-empty.\")",
@@ -6394,6 +6394,48 @@
                       {
                         "name": "v",
                         "hidden": true
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "status",
+                    "fullPath": "devops config dotfiles status",
+                    "shortPath": "d c f S",
+                    "help": "📊 <S> Show read-only dotfile stats: mappers, sync state, known dotfiles not in your mapper, and storage.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_status.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_status",
+                      "callable": "show_dotfiles_status"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def show_dotfiles_status() -> None:",
+                        "    import platform",
+                        "",
+                        "    from rich.console import Console",
+                        "",
+                        "    from stackops.profile.create_links import normalize_os_name",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_status_data import collect_dotfiles_status",
+                        "    from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_status_render import render_mappers, render_radar, render_storage, render_sync",
+                        "",
+                        "    status = collect_dotfiles_status(normalize_os_name(platform.system()))",
+                        "    console = Console()",
+                        "    for panel in (render_mappers(status), render_sync(status), render_radar(status), render_storage(status)):",
+                        "        console.print(panel)"
+                      ],
+                      "name": "show_dotfiles_status",
+                      "parameters": [],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "S",
+                        "hidden": true,
+                        "help": "Show read-only dotfile stats: mappers, sync state, known dotfiles not in your mapper, and storage."
                       }
                     ]
                   }

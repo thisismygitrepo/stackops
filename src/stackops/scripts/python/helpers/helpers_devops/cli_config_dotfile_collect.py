@@ -13,7 +13,7 @@ def _fail(message: str) -> Never:
     raise typer.Exit(code=1)
 
 
-def _describe_verdict(verdict: "CollectVerdict") -> str:
+def describe_verdict(verdict: "CollectVerdict") -> str:
     match verdict:
         case "collect":
             return "will store in ~/dotfiles and link back"
@@ -60,7 +60,7 @@ def _choose_groups(plans: "list[CollectEntryPlan]", actionable_groups: list[str]
 
     previews = {
         group: yaml.safe_dump(
-            {plan.name: {"verdict": _describe_verdict(plan.verdict), **plan.entry} for plan in plans if plan.group == group and plan.verdict != "other_os"},
+            {plan.name: {"verdict": describe_verdict(plan.verdict), **plan.entry} for plan in plans if plan.group == group and plan.verdict != "other_os"},
             sort_keys=False,
         )
         for group in actionable_groups
@@ -85,7 +85,7 @@ def collect_dotfiles(
     from rich.table import Table
 
     from stackops.profile.create_links import ConfigMapper, apply_mapper, normalize_os_name, to_config_mapper
-    from stackops.profile.dotfiles_collect_plan import ACTIONABLE_VERDICTS, plan_collect, select_entries_to_record
+    from stackops.profile.dotfiles_collect_plan import plan_collect, select_entries_to_record, verdict_category
     from stackops.profile.dotfiles_mapper import (
         DEFAULT_DOTFILE_MAPPER_HEADER,
         LIBRARY_MAPPER_PATH,
@@ -112,10 +112,10 @@ def collect_dotfiles(
         table.add_column(column_name, overflow="fold")
     for plan in plans:
         if current_os in plan.entry["os"] and plan.verdict not in ("absent", "packaged"):
-            table.add_row(plan.group, plan.name, str(plan.original_path), str(plan.managed_path), _describe_verdict(plan.verdict))
+            table.add_row(plan.group, plan.name, str(plan.original_path), str(plan.managed_path), describe_verdict(plan.verdict))
     console.print(table)
 
-    actionable_groups = list(dict.fromkeys(plan.group for plan in plans if plan.verdict in ACTIONABLE_VERDICTS))
+    actionable_groups = list(dict.fromkeys(plan.group for plan in plans if verdict_category(plan.verdict) == "collectable"))
     if len(actionable_groups) == 0 and (which is None or which.strip() == "all"):
         console.print("Nothing to collect: every known dotfile on this machine is already recorded, absent, packaged, or managed your own way.")
         return

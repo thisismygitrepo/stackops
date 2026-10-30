@@ -96,7 +96,7 @@ These are the child commands exposed by the current live help.
 - `terminal`
 - `setup`
 
-`config dotfiles` provides `sync`, `collect`, `register`, `export`, `import`, `path`, `init`, and `validate`. The last three locate, initialize, or validate the managed mapping. They are also available as `config path/init/validate dotfiles`; `config export-example dotfiles` exports its example and schema. Secrets are managed under `vault`.
+`config dotfiles` provides `sync`, `collect`, `register`, `export`, `import`, `path`, `init`, `validate`, and `status`. `path`, `init`, and `validate` locate, initialize, or validate the managed mapping. They are also available as `config path/init/validate dotfiles`; `config export-example dotfiles` exports its example and schema. Secrets are managed under `vault`.
 
 `config dotfiles register` and `data register` accept only `--source user`, which is also the default. `--source` uses `-s`. Dotfile registration stores files under the user `mapper/files` directory by default; `--destination` selects an explicit storage directory.
 

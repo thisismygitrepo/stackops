@@ -3,12 +3,7 @@ from typing import Annotated
 import zipfile
 import typer
 
-
-def _format_home_relative_path(path: Path) -> str:
-    home = Path.home()
-    if path.is_relative_to(home):
-        return f"~/{path.relative_to(home).as_posix()}"
-    return path.as_posix()
+from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import format_home_relative_path
 
 
 def export_dotfiles(
@@ -37,7 +32,7 @@ def export_dotfiles(
     print(f"Dotfiles exported to: {zipfile_encrypted_path}")
 
     if ssh:
-        code_sample = f"cloud transfer {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^"
+        code_sample = f"cloud transfer {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^"
         print("Exporting dotfiles via SSH-based transfer (scp).")
         print(f"Run the following command on your local machine to copy dotfiles to the remote machine:\n{code_sample}")
         remote_address = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles to ")
@@ -109,7 +104,7 @@ def import_dotfiles(
 
     if ssh:
         print("Importing dotfiles via SSH-based transfer (scp).")
-        dotfiles_display_path = _format_home_relative_path(DOTFILES_ROOT)
+        dotfiles_display_path = format_home_relative_path(DOTFILES_ROOT)
         code = f"cloud transfer $USER@$(hostname):^ {dotfiles_display_path} -z"
         print(f"Run the following command on the remote machine that has the dotfiles:\n{code}")
         url = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles from ")
@@ -119,7 +114,7 @@ def import_dotfiles(
         return
 
     if url is None:
-        url = typer.prompt(f"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {_format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) ")
+        url = typer.prompt(f"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) ")
     pwd = typer.prompt("Enter the password for zip decryption", hide_input=True)
     if pwd == "":
         print("Password for zip decryption must be non-empty.")

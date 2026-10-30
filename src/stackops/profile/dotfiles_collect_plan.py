@@ -2,7 +2,7 @@ import filecmp
 import stat
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, assert_never
 
 from stackops.profile.dotfiles_constants import COLLECTED_SETTINGS_TOKEN_PREFIX, PACKAGED_SETTINGS_TOKEN_PREFIX, OsName
 from stackops.profile.dotfiles_mapper import MapperDocument, RawMapperEntry
@@ -24,9 +24,9 @@ type CollectVerdict = Literal[
     "managed_path_mapped",
     "user_group",
 ]
+type VerdictCategory = Literal["collectable", "skipped", "tracked", "packaged", "absent", "other_os"]
 type PathState = Literal["missing", "unreadable", "symlink", "directory", "file"]
 
-ACTIONABLE_VERDICTS: frozenset[CollectVerdict] = frozenset({"collect", "linked", "stored"})
 CONTENTS_BLOCKING_VERDICTS: tuple[CollectVerdict, ...] = ("unreadable", "own_link", "managed_path_exists")
 
 
@@ -39,6 +39,24 @@ class CollectEntryPlan:
     managed_path: Path
     packaged_path: Path | None
     verdict: CollectVerdict
+
+
+def verdict_category(verdict: CollectVerdict) -> VerdictCategory:
+    match verdict:
+        case "recorded" | "original_mapped" | "managed_path_mapped" | "user_group":
+            return "tracked"
+        case "collect" | "linked" | "stored":
+            return "collectable"
+        case "unreadable" | "own_link" | "not_a_directory" | "managed_path_exists":
+            return "skipped"
+        case "packaged":
+            return "packaged"
+        case "absent":
+            return "absent"
+        case "other_os":
+            return "other_os"
+        case _:
+            assert_never(verdict)
 
 
 def _probe_path(path: Path) -> PathState:

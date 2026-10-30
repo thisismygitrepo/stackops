@@ -26,7 +26,7 @@ def test_contents_mapping_requires_children_to_be_configured(tmp_path: Path) -> 
     managed_path.joinpath("config").write_text("managed", encoding="utf-8")
     default_path.joinpath("config").write_text("managed", encoding="utf-8")
 
-    status = devops_status_config._check_config_file(
+    status = devops_status_config.check_config_file(
         "program", _mapping(default_path, managed_path, contents=True, copy=False)
     )
 
@@ -46,7 +46,7 @@ def test_contents_mapping_accepts_child_links_and_extra_default_files(tmp_path: 
     default_path.joinpath("nested").symlink_to(managed_path.joinpath("nested"), target_is_directory=True)
     default_path.joinpath("unmanaged").write_text("unmanaged", encoding="utf-8")
 
-    status = devops_status_config._check_config_file(
+    status = devops_status_config.check_config_file(
         "program", _mapping(default_path, managed_path, contents=True, copy=False)
     )
 
@@ -64,7 +64,7 @@ def test_contents_copy_verifies_nested_children(tmp_path: Path, changed: bool) -
     default_path.joinpath("nested", "config").write_text("changed" if changed else "managed", encoding="utf-8")
     default_path.joinpath("unmanaged").write_text("unmanaged", encoding="utf-8")
 
-    status = devops_status_config._check_config_file(
+    status = devops_status_config.check_config_file(
         "program", _mapping(default_path, managed_path, contents=True, copy=True)
     )
 
@@ -98,7 +98,7 @@ def test_directory_copy_verifies_structure_and_content(
         case "none":
             pass
 
-    status = devops_status_config._check_config_file(
+    status = devops_status_config.check_config_file(
         "program", _mapping(default_path, managed_path, contents=False, copy=True)
     )
 
@@ -113,7 +113,7 @@ def test_copy_accepts_existing_link_to_managed_path(tmp_path: Path) -> None:
     managed_path.joinpath("config").write_text("managed", encoding="utf-8")
     default_path.symlink_to(managed_path, target_is_directory=True)
 
-    status = devops_status_config._check_config_file(
+    status = devops_status_config.check_config_file(
         "program", _mapping(default_path, managed_path, contents=False, copy=True)
     )
 

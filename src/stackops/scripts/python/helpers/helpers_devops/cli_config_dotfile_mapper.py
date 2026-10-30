@@ -17,7 +17,7 @@ from stackops.utils.source_of_truth import DOTFILES_MAPPER_FILES_ROOT
 FLAT_PATH_HASH_LENGTH = 16
 
 
-def _format_home_relative_path(path: Path) -> str:
+def format_home_relative_path(path: Path) -> str:
     home = Path.home()
     if path.is_relative_to(home):
         return f"~/{path.relative_to(home).as_posix()}"
@@ -40,7 +40,7 @@ def _format_self_managed_mapper_path(path: Path) -> str:
     if resolved_path.is_relative_to(dotfiles_root):
         relative_path = resolved_path.relative_to(dotfiles_root)
         return f"DOTFILES_ROOT/{relative_path.as_posix()}"
-    return _format_home_relative_path(path)
+    return format_home_relative_path(path)
 
 
 def _build_entry_name(original_path: Path) -> str:
@@ -55,7 +55,7 @@ def _resolve_entry_name(original_path: Path, entry_name: str | None) -> str:
 
 def _build_flat_backup_name(original_path: Path) -> str:
     normalized_path = original_path.expanduser().absolute()
-    location = _format_home_relative_path(normalized_path.parent)
+    location = format_home_relative_path(normalized_path.parent)
     location_hash = hashlib.sha256(location.encode("utf-8")).hexdigest()[:FLAT_PATH_HASH_LENGTH]
     return f"{location_hash}.{normalized_path.name}"
 
@@ -70,7 +70,7 @@ def _build_mapper_entry(
     from stackops.profile.dotfiles_mapper import normalize_os_filter
 
     entry: RawMapperEntry = {
-        "original": _format_home_relative_path(original_path),
+        "original": format_home_relative_path(original_path),
         "self_managed": _format_self_managed_mapper_path(self_managed_path),
         "os": normalize_os_filter(os_filter),
     }

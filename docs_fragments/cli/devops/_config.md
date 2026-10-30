@@ -88,6 +88,7 @@ devops config dotfiles [SUBCOMMAND] [ARGS]...
 | `register` | Copy or symlink a file into managed storage and register its mapping |
 | `export` | Export `~/dotfiles` for machine migration |
 | `import` | Import an exported dotfiles archive |
+| `status` | Report mapper sizes, sync state, known dotfiles not in your mapper, and storage, without changing anything |
 
 Open the user mapper itself with `devops config edit dotfiles`.
 
@@ -198,6 +199,19 @@ Import an encrypted dotfiles archive from a local path or URL. The command promp
 ```bash
 devops config dotfiles import --url /path/to/dotfiles.zip.gpg
 devops config dotfiles import --ssh
+```
+
+#### status
+
+Read-only overview of your dotfiles on this machine. It changes nothing.
+
+- **Mappers**: groups and entries in your mapper and the library mapper, per OS, and how many library entries yours replace.
+- **Sync**: the state of each mapped entry for this OS (configured, missing paths, link mismatch, differing copies), counted for your mapper and the library; your entries that are not configured are listed.
+- **Known dotfiles not in your mapper**: what `collect` finds on this machine, by category (collectable, skipped, in your mapper, same as the packaged settings, absent, other OS). Collectable and skipped entries are listed one per row, or one row per group when there are more than 25.
+- **Storage**: file count and size of `~/dotfiles` (what `export` archives) and of your managed copies, mapper entries whose managed copy lies outside `~/dotfiles` (export does not carry them), and files in `~/dotfiles/stackops/mapper/files` that no mapper entry references.
+
+```bash
+devops config dotfiles status
 ```
 
 ### edit

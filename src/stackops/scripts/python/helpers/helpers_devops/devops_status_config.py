@@ -85,7 +85,7 @@ def _check_mapping_paths(default_path: Path, managed_path: Path, *, contents: bo
     return "Not configured"
 
 
-def _check_config_file(program: str, config_item: ConfigMapper) -> ConfigFileStatus:
+def check_config_file(program: str, config_item: ConfigMapper) -> ConfigFileStatus:
     default_path = Path(config_item["config_file_default_path"]).expanduser()
     managed_path = resolve_source_of_truth_path(config_item["config_file_self_managed_path"])
     method: ConfigMethod = "contents" if config_item["contents"] else ("copy" if config_item["copy"] else "link")
@@ -104,7 +104,7 @@ def _check_config_file(program: str, config_item: ConfigMapper) -> ConfigFileSta
 def check_config_files_status() -> ConfigFilesStatus:
     mapper = read_mapper(source="all")
     items = [
-        _check_config_file(program, config_item)
+        check_config_file(program, config_item)
         for program, configs in mapper.items()
         for config_item in configs
     ]

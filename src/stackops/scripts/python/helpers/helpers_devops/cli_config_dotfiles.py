@@ -7,6 +7,7 @@ def get_app() -> typer.Typer:
     from stackops.profile import create_links_export
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_collect import COLLECT_HELP, collect_dotfiles
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import register_dotfile
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_status import STATUS_HELP, show_dotfiles_status
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_transfer import export_dotfiles, import_dotfiles
     from stackops.utils.managed_file_commands import register_managed_file_commands
 
@@ -25,4 +26,6 @@ def get_app() -> typer.Typer:
     app.command("import", no_args_is_help=False, help="📥 <i> Import dotfiles from an exported archive.")(import_dotfiles)
     app.command("i", no_args_is_help=False, help="Import dotfiles.", hidden=True)(import_dotfiles)
     register_managed_file_commands(app=app, kind="dotfiles", path_alias="p", init_alias="I", validate_alias="v")
+    app.command("status", no_args_is_help=False, help=f"📊 <S> {STATUS_HELP}")(show_dotfiles_status)
+    app.command("S", no_args_is_help=False, help=STATUS_HELP, hidden=True)(show_dotfiles_status)
     return app
