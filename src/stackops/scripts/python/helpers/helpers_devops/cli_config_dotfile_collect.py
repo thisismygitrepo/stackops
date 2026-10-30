@@ -5,7 +5,7 @@ import typer
 if TYPE_CHECKING:
     from stackops.profile.dotfiles_collect_plan import CollectEntryPlan, CollectVerdict
 
-COLLECT_HELP = "Collect well-known personal files found on this machine into ~/dotfiles and record them in the user mapper."
+COLLECT_HELP = "Collect well-known personal files (ssh, gpg, rclone, ...) found on this machine into ~/dotfiles and record them in the user mapper."
 
 
 def _fail(message: str) -> Never:
@@ -69,7 +69,11 @@ def _choose_groups(plans: "list[CollectEntryPlan]", actionable_groups: list[str]
 def collect_dotfiles(
     which: Annotated[
         str | None,
-        typer.Option("--which", "-w", help="Comma-separated groups to collect, or 'all' for every collectable group. Interactive selection when omitted."),
+        typer.Option(
+            "--which",
+            "-w",
+            help="Groups of well-known files to collect, comma-separated, e.g. ssh,gpg,rclone (the Group column of the printed plan lists them), or 'all' for every group collectable on this machine. Omit to pick interactively.",
+        ),
     ] = None,
 ) -> None:
     import platform

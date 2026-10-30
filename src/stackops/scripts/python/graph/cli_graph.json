@@ -5305,14 +5305,14 @@
                 "name": "dotfiles",
                 "fullPath": "devops config dotfiles",
                 "shortPath": "d c f",
-                "help": "📂 <f> Sync packaged settings and user dotfiles; register, export, and import user dotfiles.",
+                "help": "📂 <f> Sync packaged settings and user dotfiles; collect, register, export, and import user dotfiles.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_config",
                   "dispatches_to": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfiles.get_app"
                 },
                 "app": {
-                  "help": "Sync packaged settings and user dotfiles; register, export, and import user dotfiles.",
+                  "help": "Sync packaged settings and user dotfiles; collect, register, export, and import user dotfiles.",
                   "no_args_is_help": true,
                   "add_help_option": true,
                   "add_completion": false,
@@ -5511,6 +5511,135 @@
                         "name": "s",
                         "hidden": true,
                         "help": "Sync dotfiles."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "collect",
+                    "fullPath": "devops config dotfiles collect",
+                    "shortPath": "d c f c",
+                    "help": "🧺 <c> Collect well-known personal files (ssh, gpg, rclone, ...) found on this machine into ~/dotfiles and record them in the user mapper.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_collect.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_collect",
+                      "callable": "collect_dotfiles"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def collect_dotfiles(",
+                        "    which: Annotated[",
+                        "        str | None,",
+                        "        typer.Option(",
+                        "            \"--which\",",
+                        "            \"-w\",",
+                        "            help=\"Groups of well-known files to collect, comma-separated, e.g. ssh,gpg,rclone (the Group column of the printed plan lists them), or 'all' for every group collectable on this machine. Omit to pick interactively.\",",
+                        "        ),",
+                        "    ] = None,",
+                        ") -> None:",
+                        "    import platform",
+                        "",
+                        "    from rich.console import Console",
+                        "    from rich.table import Table",
+                        "",
+                        "    from stackops.profile.create_links import ConfigMapper, apply_mapper, normalize_os_name, to_config_mapper",
+                        "    from stackops.profile.dotfiles_collect_plan import ACTIONABLE_VERDICTS, plan_collect, select_entries_to_record",
+                        "    from stackops.profile.dotfiles_mapper import (",
+                        "        DEFAULT_DOTFILE_MAPPER_HEADER,",
+                        "        LIBRARY_MAPPER_PATH,",
+                        "        USER_EXAMPLE_MAPPER_PATH,",
+                        "        USER_MAPPER_PATH,",
+                        "        dump_dotfiles_mapper,",
+                        "        load_dotfiles_mapper,",
+                        "        write_dotfiles_mapper,",
+                        "    )",
+                        "",
+                        "    user_mapper = load_dotfiles_mapper(USER_MAPPER_PATH) if USER_MAPPER_PATH.exists() else {}",
+                        "    current_os = normalize_os_name(platform.system())",
+                        "    plans = plan_collect(",
+                        "        catalog=load_dotfiles_mapper(USER_EXAMPLE_MAPPER_PATH),",
+                        "        user_mapper=user_mapper,",
+                        "        library_mapper=load_dotfiles_mapper(LIBRARY_MAPPER_PATH),",
+                        "        current_os=current_os,",
+                        "    )",
+                        "    console = Console()",
+                        "    table = Table(title=\"🧺 Dotfile collection plan\", caption=\"Entries for other operating systems or absent from this machine are not listed.\")",
+                        "    for column_name in (\"Group\", \"Entry\", \"Original\", \"Managed\", \"Verdict\"):",
+                        "        table.add_column(column_name, overflow=\"fold\")",
+                        "    for plan in plans:",
+                        "        if current_os in plan.entry[\"os\"] and plan.verdict != \"absent\":",
+                        "            table.add_row(plan.group, plan.name, str(plan.original_path), str(plan.managed_path), _describe_verdict(plan.verdict))",
+                        "    console.print(table)",
+                        "",
+                        "    actionable_groups = list(dict.fromkeys(plan.group for plan in plans if plan.verdict in ACTIONABLE_VERDICTS))",
+                        "    if len(actionable_groups) == 0 and (which is None or which.strip() == \"all\"):",
+                        "        console.print(\"Nothing to collect: every well-known file on this machine is already recorded, absent, or managed your own way.\")",
+                        "        return",
+                        "    chosen_groups = _choose_groups(plans, actionable_groups, which)",
+                        "    if len(chosen_groups) == 0:",
+                        "        _fail(\"No groups selected.\")",
+                        "",
+                        "    chosen_plans = [plan for plan in plans if plan.group in chosen_groups]",
+                        "    collect_mapper: dict[str, list[ConfigMapper]] = {}",
+                        "    for plan in chosen_plans:",
+                        "        if plan.verdict == \"collect\":",
+                        "            collect_mapper.setdefault(plan.group, []).append(to_config_mapper(file_name=plan.name, entry=plan.entry))",
+                        "    operation_records = apply_mapper(mapper_data=collect_mapper, on_conflict=\"throw-error\", method=\"symlink\", direction=\"up\") if len(collect_mapper) > 0 else []",
+                        "    failed_entries = {(record[\"program\"], record[\"file_key\"]) for record in operation_records if record[\"action\"] == \"error\"}",
+                        "    succeeded_entries = {",
+                        "        (plan.group, plan.name)",
+                        "        for plan in chosen_plans",
+                        "        if plan.verdict in (\"linked\", \"stored\") or (plan.verdict == \"collect\" and (plan.group, plan.name) not in failed_entries)",
+                        "    }",
+                        "    additions = select_entries_to_record(plans=chosen_plans, succeeded=succeeded_entries)",
+                        "    if len(additions) > 0:",
+                        "        merged_mapper = {group: dict(section) for group, section in user_mapper.items()}",
+                        "        for group, section in additions.items():",
+                        "            merged_mapper[group] = {**merged_mapper.get(group, {}), **section}",
+                        "        USER_MAPPER_PATH.parent.mkdir(parents=True, exist_ok=True)",
+                        "        write_dotfiles_mapper(path=USER_MAPPER_PATH, mapper=merged_mapper, header=DEFAULT_DOTFILE_MAPPER_HEADER)",
+                        "        console.print(f\"📝 Recorded in [cyan]{USER_MAPPER_PATH}[/cyan]:\\n{dump_dotfiles_mapper(mapper=additions, header='')}\")",
+                        "    stored_groups = list(dict.fromkeys(plan.group for plan in chosen_plans if plan.verdict == \"stored\"))",
+                        "    if len(stored_groups) > 0:",
+                        "        console.print(f\"\"\"🔗 Link the recorded managed copies here with: devops config dotfiles sync down --source user --which {\",\".join(stored_groups)}\"\"\")",
+                        "    if len(failed_entries) > 0:",
+                        "        _fail(f\"\"\"Not recorded because collection failed: {\", \".join(f\"{group}.{name}\" for group, name in sorted(failed_entries))}\"\"\")"
+                      ],
+                      "name": "collect_dotfiles",
+                      "parameters": [
+                        {
+                          "name": "which",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"Groups of well-known files to collect, comma-separated, e.g. ssh,gpg,rclone (the Group column of the printed plan lists them), or 'all' for every group collectable on this machine. Omit to pick interactively.\")]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--which",
+                              "-w"
+                            ],
+                            "long_flags": [
+                              "--which"
+                            ],
+                            "short_flags": [
+                              "-w"
+                            ],
+                            "help": "Groups of well-known files to collect, comma-separated, e.g. ssh,gpg,rclone (the Group column of the printed plan lists them), or 'all' for every group collectable on this machine. Omit to pick interactively."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "c",
+                        "hidden": true,
+                        "help": "Collect well-known personal files (ssh, gpg, rclone, ...) found on this machine into ~/dotfiles and record them in the user mapper."
                       }
                     ]
                   },
@@ -6245,7 +6374,7 @@
                   {
                     "name": "f",
                     "hidden": true,
-                    "help": "Sync packaged settings and user dotfiles; register, export, and import user dotfiles."
+                    "help": "Sync packaged settings and user dotfiles; collect, register, export, and import user dotfiles."
                   }
                 ]
               },
@@ -16436,12 +16565,12 @@
                     "            cli_self_repo.pull_repo_before_update(repo_root=dev_repo_root)",
                     "        shell_script = f\"\"\"",
                     "uv self update",
-                    "uv tool install --no-cache --upgrade --editable \"{STACKOPS_REPO_DIR}\"",
+                    "uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} --editable \"{STACKOPS_REPO_DIR}\"",
                     "\"\"\"",
                     "    else:",
-                    "        shell_script = \"\"\"",
+                    "        shell_script = f\"\"\"",
                     "uv self update",
-                    "uv tool install --no-cache --upgrade stackops",
+                    "uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} stackops",
                     "\"\"\"",
                     "    import platform",
                     "",
@@ -23857,7 +23986,7 @@
                 "name": "create",
                 "fullPath": "agents parallel create",
                 "shortPath": "a p c",
-                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse\n",
+                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse, maki\n",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_parallel_commands.py",
                   "module": "stackops.scripts.python.agents_parallel_commands",
@@ -24514,7 +24643,7 @@
                   {
                     "name": "c",
                     "hidden": true,
-                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse\n"
+                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse, maki\n"
                   }
                 ]
               },
@@ -29759,6 +29888,489 @@
           },
           {
             "kind": "command",
+            "name": "status",
+            "fullPath": "agents status",
+            "shortPath": "a S",
+            "help": "Inspect live agents across local TUIOS or Herdr sessions, including detached sessions and background workspaces, or the current AoE profile. Collect reported states, read-only evidence and reliably linked retained transcripts. Never contacts agents or changes their panes; history gaps and unverified task completion remain explicit.\n\nFilters use terminal layout conventions: layout > tab > pane. TUIOS: session > workspace > window; Herdr: workspace > tab > pane; AoE: group > session > one runtime. --session selects the native manager session. Names and IDs match exactly, case-sensitively. Repeat a filter for alternatives; different filters combine with AND. Duplicate names select all matches: narrow with --session/--layout/--tab or use IDs.",
+            "source": {
+              "file": "src/stackops/scripts/python/agents_status.py",
+              "module": "stackops.scripts.python.agents_status",
+              "callable": "status"
+            },
+            "signature": {
+              "raw_lines": [
+                "def status(",
+                "    backend: Annotated[StatusBackend, typer.Option(\"--backend\", \"-b\", help=\"Session-manager backend to inspect: tuios, herdr or aoe. AoE uses its current profile.\")] = \"tuios\",",
+                "    session: Annotated[list[str] | None, typer.Option(\"--session\", \"-s\", help=\"Native manager session name or ID; Herdr's outer session, TUIOS session, or AoE session in the current profile. Default: all live local sessions, including detached sessions. Repeat for alternatives.\")] = None,",
+                "    layout: Annotated[list[str] | None, typer.Option(\"--layout\", \"-l\", help=\"Layout scope: TUIOS session name/ID; Herdr workspace label/ID/number; AoE full group path. Repeat for alternatives.\")] = None,",
+                "    tab: Annotated[list[str] | None, typer.Option(\"--tab\", \"-t\", help=\"Layout tab: TUIOS workspace name/number; Herdr tab label/ID; AoE session title/ID. Repeat for alternatives.\")] = None,",
+                "    window: Annotated[list[str] | None, typer.Option(\"--pane\", \"-p\", help=\"Layout pane: TUIOS window name/ID; Herdr pane label/title/ID; AoE session title/ID (one runtime per tab). Repeat for alternatives.\")] = None,",
+                "    exclude_window: Annotated[list[str] | None, typer.Option(\"--exclude-pane\", \"-x\", help=\"Pane name or ID to omit, using the same mapping as --pane. Repeat as needed.\")] = None,",
+                "    agent_session: Annotated[list[str] | None, typer.Option(\"--agent-session\", \"-A\", help=\"Reported agent name or conversation ID, when available: TUIOS registered name (also pane name), Herdr agent name, AoE session title/ID. Repeat for alternatives.\")] = None,",
+                "    harness: Annotated[list[str] | None, typer.Option(\"--harness\", \"-a\", help=\"Agent harness to include; repeat as needed. 'claude' is an alias for 'claude-code'.\")] = None,",
+                "    state: Annotated[list[str] | None, typer.Option(\"--state\", \"-S\", help=\"Filter working, waiting, blocked, idle, completed, failed, unknown or unavailable; repeat as needed. completed also matches tasks reported completed while their live agents are idle.\")] = None,",
+                "    include_self: Annotated[bool, typer.Option(\"--include-self\", \"-i\", help=\"Include the observer's own pane. Default: exclude it using pane/process identity.\")] = False,",
+                "    history: Annotated[HistoryMode, typer.Option(\"--history\", \"-H\", help=\"auto: use available linked transcripts, AoE structured history or supported hooks; none: skip history.\")] = \"auto\",",
+                "    lines: Annotated[int, typer.Option(\"--lines\", \"-n\", min=0, help=\"Lines to capture per agent. TUIOS and AoE tmux include scrollback; Herdr includes retained scrollback only for idle agents without a linked transcript (its scrollback reads are slow), otherwise the visible viewport; AoE ACP workers have no pane. 0 captures all TUIOS scrollback, Herdr's default retained output or the AoE viewport.\")] = 200,",
+                "    messages: Annotated[int, typer.Option(\"--messages\", \"-m\", min=0, help=\"Newest retained human/context messages per agent, in chronological order. 0 keeps all available messages.\")] = 0,",
+                "    text_limit: Annotated[int, typer.Option(\"--text-limit\", \"-T\", min=0, help=\"Character limit per message or evidence text. Truncation is marked. 0 keeps full text.\")] = 8000,",
+                "    server: Annotated[str | None, typer.Option(\"--server\", \"-d\", help=\"Named local TUIOS daemon to inspect. Default: TUIOS's current/default daemon.\")] = None,",
+                "    output_format: Annotated[StatusFormat, typer.Option(\"--format\", \"-f\", help=\"Output format: table, rich (styled overview and agent cards), json or markdown. JSON includes structured evidence and extracted history subject to the requested limits. File output has no ANSI colours.\")] = \"table\",",
+                "    output: Annotated[Path | None, typer.Option(\"--output\", \"-o\", dir_okay=False, help=\"Write the report to a private file instead of stdout. Existing files require --force.\")] = None,",
+                "    force: Annotated[bool, typer.Option(\"--force\", \"-F\", help=\"Allow replacing an existing --output file; agent sessions are never modified.\")] = False,",
+                ") -> None:",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_status_collect import collect_status",
+                "    from stackops.scripts.python.helpers.helpers_agents.agents_status_render import render_status, write_status_output",
+                "",
+                "    if force and output is None:",
+                "        raise typer.BadParameter(\"--force requires --output.\")",
+                "    if backend != \"tuios\" and server is not None:",
+                "        raise typer.BadParameter(\"--server is only supported by TUIOS. Use --session to select sessions.\", param_hint=\"--server\")",
+                "    selected_states = tuple(value.lower() for value in state or ())",
+                "    supported_states = get_args(AgentStatus)",
+                "    if invalid_states := set(selected_states).difference(supported_states):",
+                "        raise typer.BadParameter(",
+                "            f\"\"\"Unknown status: {', '.join(sorted(invalid_states))}. Choose from {', '.join(supported_states)}.\"\"\",",
+                "            param_hint=\"--state\",",
+                "        )",
+                "    options = StatusOptions(",
+                "        backend=backend,",
+                "        sessions=tuple(session or ()), layouts=tuple(layout or ()), tabs=tuple(tab or ()),",
+                "        windows=tuple(window or ()), exclude_windows=tuple(exclude_window or ()), agent_sessions=tuple(agent_session or ()),",
+                "        harnesses=tuple(\"claude-code\" if value.lower() == \"claude\" else value.lower() for value in harness or ()),",
+                "        states=selected_states, include_self=include_self, history=history, capture_lines=lines,",
+                "        message_limit=messages, text_limit=text_limit, event_limit=AGENTS_STATUS_EVENT_LIMIT,",
+                "        timeout=AGENTS_STATUS_TIMEOUT_SECONDS, workers=AGENTS_STATUS_WORKERS,",
+                "        server=server, claude_home=Path(os.environ.get(\"CLAUDE_CONFIG_DIR\", str(Path.home() / \".claude\"))).expanduser(),",
+                "        codex_home=Path(os.environ.get(\"CODEX_HOME\", str(Path.home() / \".codex\"))).expanduser(),",
+                "    )",
+                "    try:",
+                "        snapshot = collect_status(options=options)",
+                "        if output_format == \"rich\":",
+                "            from stackops.scripts.python.helpers.helpers_agents.agents_status_rich_output import print_rich_status",
+                "",
+                "            print_rich_status(snapshot=snapshot, output=output, force=force)",
+                "            return",
+                "        report = render_status(snapshot=snapshot, output_format=output_format)",
+                "        write_status_output(report=report, output=output, force=force)",
+                "    except (OSError, RuntimeError, ValueError) as error:",
+                "        typer.echo(f\"\"\"Could not inspect agent status: {error}\"\"\", err=True)",
+                "        raise typer.Exit(code=1) from error"
+              ],
+              "name": "status",
+              "parameters": [
+                {
+                  "name": "backend",
+                  "kind": "positional_or_keyword",
+                  "type": "StatusBackend",
+                  "default": "tuios",
+                  "required": false,
+                  "annotation_raw": "Annotated[StatusBackend, typer.Option('--backend', '-b', help='Session-manager backend to inspect: tuios, herdr or aoe. AoE uses its current profile.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--backend",
+                      "-b"
+                    ],
+                    "long_flags": [
+                      "--backend"
+                    ],
+                    "short_flags": [
+                      "-b"
+                    ],
+                    "help": "Session-manager backend to inspect: tuios, herdr or aoe. AoE uses its current profile."
+                  }
+                },
+                {
+                  "name": "session",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--session', '-s', help=\"Native manager session name or ID; Herdr's outer session, TUIOS session, or AoE session in the current profile. Default: all live local sessions, including detached sessions. Repeat for alternatives.\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--session",
+                      "-s"
+                    ],
+                    "long_flags": [
+                      "--session"
+                    ],
+                    "short_flags": [
+                      "-s"
+                    ],
+                    "help": "Native manager session name or ID; Herdr's outer session, TUIOS session, or AoE session in the current profile. Default: all live local sessions, including detached sessions. Repeat for alternatives."
+                  }
+                },
+                {
+                  "name": "layout",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--layout', '-l', help='Layout scope: TUIOS session name/ID; Herdr workspace label/ID/number; AoE full group path. Repeat for alternatives.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--layout",
+                      "-l"
+                    ],
+                    "long_flags": [
+                      "--layout"
+                    ],
+                    "short_flags": [
+                      "-l"
+                    ],
+                    "help": "Layout scope: TUIOS session name/ID; Herdr workspace label/ID/number; AoE full group path. Repeat for alternatives."
+                  }
+                },
+                {
+                  "name": "tab",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--tab', '-t', help='Layout tab: TUIOS workspace name/number; Herdr tab label/ID; AoE session title/ID. Repeat for alternatives.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--tab",
+                      "-t"
+                    ],
+                    "long_flags": [
+                      "--tab"
+                    ],
+                    "short_flags": [
+                      "-t"
+                    ],
+                    "help": "Layout tab: TUIOS workspace name/number; Herdr tab label/ID; AoE session title/ID. Repeat for alternatives."
+                  }
+                },
+                {
+                  "name": "window",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--pane', '-p', help='Layout pane: TUIOS window name/ID; Herdr pane label/title/ID; AoE session title/ID (one runtime per tab). Repeat for alternatives.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--pane",
+                      "-p"
+                    ],
+                    "long_flags": [
+                      "--pane"
+                    ],
+                    "short_flags": [
+                      "-p"
+                    ],
+                    "help": "Layout pane: TUIOS window name/ID; Herdr pane label/title/ID; AoE session title/ID (one runtime per tab). Repeat for alternatives."
+                  }
+                },
+                {
+                  "name": "exclude_window",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--exclude-pane', '-x', help='Pane name or ID to omit, using the same mapping as --pane. Repeat as needed.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--exclude-pane",
+                      "-x"
+                    ],
+                    "long_flags": [
+                      "--exclude-pane"
+                    ],
+                    "short_flags": [
+                      "-x"
+                    ],
+                    "help": "Pane name or ID to omit, using the same mapping as --pane. Repeat as needed."
+                  }
+                },
+                {
+                  "name": "agent_session",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--agent-session', '-A', help='Reported agent name or conversation ID, when available: TUIOS registered name (also pane name), Herdr agent name, AoE session title/ID. Repeat for alternatives.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--agent-session",
+                      "-A"
+                    ],
+                    "long_flags": [
+                      "--agent-session"
+                    ],
+                    "short_flags": [
+                      "-A"
+                    ],
+                    "help": "Reported agent name or conversation ID, when available: TUIOS registered name (also pane name), Herdr agent name, AoE session title/ID. Repeat for alternatives."
+                  }
+                },
+                {
+                  "name": "harness",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--harness', '-a', help=\"Agent harness to include; repeat as needed. 'claude' is an alias for 'claude-code'.\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--harness",
+                      "-a"
+                    ],
+                    "long_flags": [
+                      "--harness"
+                    ],
+                    "short_flags": [
+                      "-a"
+                    ],
+                    "help": "Agent harness to include; repeat as needed. 'claude' is an alias for 'claude-code'."
+                  }
+                },
+                {
+                  "name": "state",
+                  "kind": "positional_or_keyword",
+                  "type": "list[str] | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[list[str] | None, typer.Option('--state', '-S', help='Filter working, waiting, blocked, idle, completed, failed, unknown or unavailable; repeat as needed. completed also matches tasks reported completed while their live agents are idle.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--state",
+                      "-S"
+                    ],
+                    "long_flags": [
+                      "--state"
+                    ],
+                    "short_flags": [
+                      "-S"
+                    ],
+                    "help": "Filter working, waiting, blocked, idle, completed, failed, unknown or unavailable; repeat as needed. completed also matches tasks reported completed while their live agents are idle."
+                  }
+                },
+                {
+                  "name": "include_self",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--include-self', '-i', help=\"Include the observer's own pane. Default: exclude it using pane/process identity.\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--include-self",
+                      "-i"
+                    ],
+                    "long_flags": [
+                      "--include-self"
+                    ],
+                    "short_flags": [
+                      "-i"
+                    ],
+                    "help": "Include the observer's own pane. Default: exclude it using pane/process identity."
+                  }
+                },
+                {
+                  "name": "history",
+                  "kind": "positional_or_keyword",
+                  "type": "HistoryMode",
+                  "default": "auto",
+                  "required": false,
+                  "annotation_raw": "Annotated[HistoryMode, typer.Option('--history', '-H', help='auto: use available linked transcripts, AoE structured history or supported hooks; none: skip history.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--history",
+                      "-H"
+                    ],
+                    "long_flags": [
+                      "--history"
+                    ],
+                    "short_flags": [
+                      "-H"
+                    ],
+                    "help": "auto: use available linked transcripts, AoE structured history or supported hooks; none: skip history."
+                  }
+                },
+                {
+                  "name": "lines",
+                  "kind": "positional_or_keyword",
+                  "type": "int",
+                  "default": 200,
+                  "required": false,
+                  "annotation_raw": "Annotated[int, typer.Option('--lines', '-n', min=0, help=\"Lines to capture per agent. TUIOS and AoE tmux include scrollback; Herdr includes retained scrollback only for idle agents without a linked transcript (its scrollback reads are slow), otherwise the visible viewport; AoE ACP workers have no pane. 0 captures all TUIOS scrollback, Herdr's default retained output or the AoE viewport.\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--lines",
+                      "-n"
+                    ],
+                    "long_flags": [
+                      "--lines"
+                    ],
+                    "short_flags": [
+                      "-n"
+                    ],
+                    "help": "Lines to capture per agent. TUIOS and AoE tmux include scrollback; Herdr includes retained scrollback only for idle agents without a linked transcript (its scrollback reads are slow), otherwise the visible viewport; AoE ACP workers have no pane. 0 captures all TUIOS scrollback, Herdr's default retained output or the AoE viewport."
+                  }
+                },
+                {
+                  "name": "messages",
+                  "kind": "positional_or_keyword",
+                  "type": "int",
+                  "default": 0,
+                  "required": false,
+                  "annotation_raw": "Annotated[int, typer.Option('--messages', '-m', min=0, help='Newest retained human/context messages per agent, in chronological order. 0 keeps all available messages.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--messages",
+                      "-m"
+                    ],
+                    "long_flags": [
+                      "--messages"
+                    ],
+                    "short_flags": [
+                      "-m"
+                    ],
+                    "help": "Newest retained human/context messages per agent, in chronological order. 0 keeps all available messages."
+                  }
+                },
+                {
+                  "name": "text_limit",
+                  "kind": "positional_or_keyword",
+                  "type": "int",
+                  "default": 8000,
+                  "required": false,
+                  "annotation_raw": "Annotated[int, typer.Option('--text-limit', '-T', min=0, help='Character limit per message or evidence text. Truncation is marked. 0 keeps full text.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--text-limit",
+                      "-T"
+                    ],
+                    "long_flags": [
+                      "--text-limit"
+                    ],
+                    "short_flags": [
+                      "-T"
+                    ],
+                    "help": "Character limit per message or evidence text. Truncation is marked. 0 keeps full text."
+                  }
+                },
+                {
+                  "name": "server",
+                  "kind": "positional_or_keyword",
+                  "type": "str | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[str | None, typer.Option('--server', '-d', help=\"Named local TUIOS daemon to inspect. Default: TUIOS's current/default daemon.\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--server",
+                      "-d"
+                    ],
+                    "long_flags": [
+                      "--server"
+                    ],
+                    "short_flags": [
+                      "-d"
+                    ],
+                    "help": "Named local TUIOS daemon to inspect. Default: TUIOS's current/default daemon."
+                  }
+                },
+                {
+                  "name": "output_format",
+                  "kind": "positional_or_keyword",
+                  "type": "StatusFormat",
+                  "default": "table",
+                  "required": false,
+                  "annotation_raw": "Annotated[StatusFormat, typer.Option('--format', '-f', help='Output format: table, rich (styled overview and agent cards), json or markdown. JSON includes structured evidence and extracted history subject to the requested limits. File output has no ANSI colours.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--format",
+                      "-f"
+                    ],
+                    "long_flags": [
+                      "--format"
+                    ],
+                    "short_flags": [
+                      "-f"
+                    ],
+                    "help": "Output format: table, rich (styled overview and agent cards), json or markdown. JSON includes structured evidence and extracted history subject to the requested limits. File output has no ANSI colours."
+                  }
+                },
+                {
+                  "name": "output",
+                  "kind": "positional_or_keyword",
+                  "type": "Path | None",
+                  "default": null,
+                  "required": false,
+                  "annotation_raw": "Annotated[Path | None, typer.Option('--output', '-o', dir_okay=False, help='Write the report to a private file instead of stdout. Existing files require --force.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--output",
+                      "-o"
+                    ],
+                    "long_flags": [
+                      "--output"
+                    ],
+                    "short_flags": [
+                      "-o"
+                    ],
+                    "help": "Write the report to a private file instead of stdout. Existing files require --force."
+                  }
+                },
+                {
+                  "name": "force",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--force', '-F', help='Allow replacing an existing --output file; agent sessions are never modified.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--force",
+                      "-F"
+                    ],
+                    "long_flags": [
+                      "--force"
+                    ],
+                    "short_flags": [
+                      "-F"
+                    ],
+                    "help": "Allow replacing an existing --output file; agent sessions are never modified."
+                  }
+                }
+              ],
+              "return": "None"
+            },
+            "short_help": "📊 <S> Read-only TUIOS, Herdr or AoE agent status and retained message history",
+            "typer": {
+              "no_args_is_help": false
+            },
+            "aliases": [
+              {
+                "name": "S",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "kind": "command",
             "name": "run-prompt",
             "fullPath": "agents run-prompt",
             "shortPath": "a r",
@@ -30405,7 +31017,7 @@
                 "        INTERACTIVE_AGENT | None,",
                 "        typer.Option(",
                 "            ..., \"--agent\", \"-a\",",
-                "            help=f\"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}\",",
+                "            help=f\"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}\",",
                 "        ),",
                 "    ] = None,",
                 "    second_brain: Annotated[",
@@ -30518,6 +31130,8 @@
                 "",
                 "                access = resolve_sandbox_access(agent=resolved_agent)",
                 "                read_only_paths: tuple[Path, ...] = ()",
+                "                if resolved_agent == \"maki\":",
+                "                    command.insert(1, \"--trust\")",
                 "                if resolved_agent == \"deepseek\":",
                 "                    from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import deepseek_patch_paths",
                 "",
@@ -30534,7 +31148,7 @@
                 "                else:",
                 "                    script = shlex.join(command)",
                 "            else:",
-                "                if resolved_agent in (\"deepseek\", \"cortex\") and is_windows_host():",
+                "                if resolved_agent in (\"deepseek\", \"cortex\", \"maki\") and is_windows_host():",
                 "                    from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell",
                 "",
                 "                    script = \"& \" + \" \".join(quote_for_shell(argument, is_windows=True) for argument in command)",
@@ -30573,7 +31187,7 @@
                   "type": "INTERACTIVE_AGENT | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[INTERACTIVE_AGENT | None, typer.Option(..., '--agent', '-a', help=f'Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}')]",
+                  "annotation_raw": "Annotated[INTERACTIVE_AGENT | None, typer.Option(..., '--agent', '-a', help=f'Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
