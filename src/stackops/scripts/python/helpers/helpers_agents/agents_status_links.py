@@ -57,6 +57,10 @@ def claude_session_id(
             datetime.fromtimestamp(created_at, timezone.utc).strftime("%a %b %d %H:%M:%S %Y"),
             datetime.fromtimestamp(created_at).strftime("%a %b %d %H:%M:%S %Y"),
         }
+        stat_path = Path(f"""/proc/{pid}/stat""")
+        if stat_path.is_file():
+            # Linux: Claude records stat field 22 (start ticks since boot); count after the parenthesised process name.
+            starts.add(stat_path.read_text(encoding="utf-8").rpartition(")")[2].split()[19])
         if " ".join(recorded_start.split()) not in {" ".join(start.split()) for start in starts}:
             raise ValueError("Claude PID metadata process start conflicts with the live process")
     elif not registered_id:

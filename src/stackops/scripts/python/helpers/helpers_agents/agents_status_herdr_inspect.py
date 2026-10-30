@@ -3,7 +3,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_agents.agents_status_assessment import assess_status, describe_activity
-from stackops.scripts.python.helpers.helpers_agents.agents_status_herdr import query_herdr
+from stackops.scripts.python.helpers.helpers_agents.agents_status_herdr import query_herdr, run_herdr
 from stackops.scripts.python.helpers.helpers_agents.agents_status_history import read_history
 from stackops.scripts.python.helpers.helpers_agents.agents_status_inspect import PaneInspection
 from stackops.scripts.python.helpers.helpers_agents.agents_status_links import readable_status_path
@@ -63,23 +63,29 @@ def inspect_herdr_window(
                 process = replace(process, transcript_paths=(reported_path,))
         except (OSError, ValueError) as error:
             errors.append(str(error))
-    capture_payload, capture_error = query_herdr(
-        options=options, session=session, arguments=["pane", "read", window_id, "--source", "visible", "--format", "text"],
-    )
-    if capture_error is not None:
-        errors.append(capture_error)
-    capture_data = json_object(json_object(json_object(capture_payload).get("result")).get("read"))
-    capture = text_field(capture_data, ("text",))
-    if options.capture_lines:
-        capture = "\n".join(capture.splitlines()[-options.capture_lines:])
-    if options.text_limit and len(capture) > options.text_limit:
-        capture = capture[:options.text_limit] + " [capture truncated by --text-limit]"
-    if capture_data.get("truncated") is True:
-        errors.append("Herdr marked the pane capture as truncated.")
     state: JsonObject = {
         "state": text_field(registered, ("agent_status",)) or text_field(pane, ("agent_status",)),
         "source": "Herdr session snapshot",
     }
+    transcript_linked = bool(process.transcript_paths) and options.history == "auto"
+    # Herdr serves scrollback only for a settled agent and at ~250 ms per page past the viewport, so it is skipped when a
+    # linked transcript already holds the conversation. Fall back to the viewport if the state changed meanwhile.
+    sources = ["recent-unwrapped", "visible"] if state["state"] in {"idle", "done"} and not transcript_linked else ["visible"]
+    capture, capture_error, capture_source = "", None, ""
+    for source in sources:
+        read_arguments = ["pane", "read", window_id, "--source", source, "--format", "text"]
+        if options.capture_lines:
+            read_arguments.extend(["--lines", str(options.capture_lines)])
+        capture, capture_error = run_herdr(options=options, session=session, arguments=read_arguments)
+        if capture_error is None:
+            capture_source = source
+            break
+    if capture_error is not None:
+        errors.append(capture_error)
+    if options.capture_lines:
+        capture = "\n".join(capture.splitlines()[-options.capture_lines:])
+    if options.text_limit and len(capture) > options.text_limit:
+        capture = capture[:options.text_limit] + " [capture truncated by --text-limit]"
     history = read_history(
         harness=harness, paths=process.transcript_paths, events=[], mode=options.history,
         message_limit=options.message_limit, text_limit=options.text_limit, backend=options.backend,
@@ -92,9 +98,11 @@ def inspect_herdr_window(
     workspace = pane.get("workspace")
     workspace_number = workspace if isinstance(workspace, int) else None
     limitations = [*errors, *process.limitations, *history.limitations, *conflicts]
-    limitations.append("Herdr capture includes only the visible viewport, subject to --lines and --text-limit; retained scrollback is not inspected.")
+    if capture_source == "visible" and not transcript_linked:
+        limitations.append("Herdr capture includes only the visible viewport because the agent was not idle; retained scrollback is not inspected.")
     if capture:
-        evidence.append("Read-only visible pane capture is included as terminal evidence, not a conversation transcript.")
+        scope = "retained scrollback" if capture_source == "recent-unwrapped" else "visible viewport"
+        evidence.append(f"""Read-only pane capture ({scope}) is included as terminal evidence, not a conversation transcript.""")
     else:
         limitations.append("No pane capture text was available for corroboration.")
     agent = AgentSnapshot(
