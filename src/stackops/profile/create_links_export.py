@@ -24,7 +24,7 @@ def main_from_parser(
         typer.Argument(..., help="Direction of sync: 'up' pushes default paths into the managed location, 'down' applies managed files back to default paths."),
     ],
     method: Annotated[METHOD_LOOSE, typer.Option(..., "--method", "-m", help="Method to use for linking files")] = "symlink",
-    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., "--source", "-s", help="Mapper source: library for packaged settings, user for your mappings, or all for both. User groups override matching library groups.")] = "all",
+    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., "--source", "-s", help="Mapper source: library for packaged settings, user for your mappings, or all for both. A user entry replaces the library entry with the same group and name.")] = "all",
     on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., "--on-conflict", "-c", help="Action to take on conflict")] = "throw-error",
     which: Annotated[str | None, typer.Option(..., "--which", "-w", help="Specific items to process ('all' for all items) (default is None, selection is interactive)")] = None,
 ) -> None:

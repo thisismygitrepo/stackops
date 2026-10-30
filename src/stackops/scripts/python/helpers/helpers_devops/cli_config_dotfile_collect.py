@@ -5,7 +5,7 @@ import typer
 if TYPE_CHECKING:
     from stackops.profile.dotfiles_collect_plan import CollectEntryPlan, CollectVerdict
 
-COLLECT_HELP = "Collect well-known personal files (ssh, gpg, rclone, ...) found on this machine into ~/dotfiles and record them in the user mapper."
+COLLECT_HELP = "Collect your own dotfiles into ~/dotfiles and record them in the user mapper: personal files (ssh, gpg, rclone, ...) and your own versions of settings StackOps ships (yazi, helix, ...). Without options, only prints the plan."
 
 
 def _fail(message: str) -> Never:
@@ -16,7 +16,7 @@ def _fail(message: str) -> Never:
 def _describe_verdict(verdict: "CollectVerdict") -> str:
     match verdict:
         case "collect":
-            return "will move into ~/dotfiles and link back"
+            return "will store in ~/dotfiles and link back"
         case "linked":
             return "already linked to the managed path; will record"
         case "stored":
@@ -27,6 +27,8 @@ def _describe_verdict(verdict: "CollectVerdict") -> str:
             return "for another OS"
         case "absent":
             return "not on this machine"
+        case "packaged":
+            return "skipped: same as the packaged StackOps settings"
         case "unreadable":
             return "skipped: permission denied"
         case "own_link":
@@ -72,9 +74,10 @@ def collect_dotfiles(
         typer.Option(
             "--which",
             "-w",
-            help="Groups of well-known files to collect, comma-separated, e.g. ssh,gpg,rclone (the Group column of the printed plan lists them), or 'all' for every group collectable on this machine. Omit to pick interactively.",
+            help="Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Group column lists the groups collectable on this machine.",
         ),
     ] = None,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Pick the groups to collect from the plan interactively.")] = False,
 ) -> None:
     import platform
 
@@ -93,26 +96,31 @@ def collect_dotfiles(
         write_dotfiles_mapper,
     )
 
+    if which is not None and interactive:
+        _fail("Use either --which or --interactive, not both.")
     user_mapper = load_dotfiles_mapper(USER_MAPPER_PATH) if USER_MAPPER_PATH.exists() else {}
     current_os = normalize_os_name(platform.system())
     plans = plan_collect(
-        catalog=load_dotfiles_mapper(USER_EXAMPLE_MAPPER_PATH),
-        user_mapper=user_mapper,
+        personal_catalog=load_dotfiles_mapper(USER_EXAMPLE_MAPPER_PATH),
         library_mapper=load_dotfiles_mapper(LIBRARY_MAPPER_PATH),
+        user_mapper=user_mapper,
         current_os=current_os,
     )
     console = Console()
-    table = Table(title="🧺 Dotfile collection plan", caption="Entries for other operating systems or absent from this machine are not listed.")
+    table = Table(title="🧺 Dotfile collection plan", caption="Not listed: entries for other operating systems, absent from this machine, or identical to the packaged settings.")
     for column_name in ("Group", "Entry", "Original", "Managed", "Verdict"):
         table.add_column(column_name, overflow="fold")
     for plan in plans:
-        if current_os in plan.entry["os"] and plan.verdict != "absent":
+        if current_os in plan.entry["os"] and plan.verdict not in ("absent", "packaged"):
             table.add_row(plan.group, plan.name, str(plan.original_path), str(plan.managed_path), _describe_verdict(plan.verdict))
     console.print(table)
 
     actionable_groups = list(dict.fromkeys(plan.group for plan in plans if plan.verdict in ACTIONABLE_VERDICTS))
     if len(actionable_groups) == 0 and (which is None or which.strip() == "all"):
-        console.print("Nothing to collect: every well-known file on this machine is already recorded, absent, or managed your own way.")
+        console.print("Nothing to collect: every known dotfile on this machine is already recorded, absent, packaged, or managed your own way.")
+        return
+    if which is None and not interactive:
+        console.print(f"""Collectable groups: {", ".join(actionable_groups)}\nCollect them with --which <groups>, --which all, or --interactive.""")
         return
     chosen_groups = _choose_groups(plans, actionable_groups, which)
     if len(chosen_groups) == 0:

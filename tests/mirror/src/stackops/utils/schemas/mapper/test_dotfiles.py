@@ -7,6 +7,7 @@ import yaml
 from jsonschema.validators import Draft7Validator
 
 import stackops.utils.schemas.mapper as mapper_assets
+from stackops.profile.dotfiles_constants import PACKAGED_SETTINGS_TOKEN_PREFIX
 from stackops.profile.dotfiles_mapper import LIBRARY_MAPPER_PATH, load_dotfiles_mapper
 from stackops.utils.path_reference import get_path_reference_path
 
@@ -32,6 +33,14 @@ def test_user_example_groups_do_not_shadow_library_groups() -> None:
     example_mapper = load_dotfiles_mapper(get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE))
 
     assert set(example_mapper).isdisjoint(load_dotfiles_mapper(LIBRARY_MAPPER_PATH))
+
+
+def test_library_entries_keep_managed_copies_under_config_root() -> None:
+    library_mapper = load_dotfiles_mapper(LIBRARY_MAPPER_PATH)
+
+    assert [
+        f"{group}.{name}" for group, section in library_mapper.items() for name, entry in section.items() if not entry["self_managed"].startswith(PACKAGED_SETTINGS_TOKEN_PREFIX)
+    ] == []
 
 
 def test_rustdesk_mapper_covers_client_and_selected_server_state() -> None:

@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from pathlib import Path
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 import yaml
 
@@ -128,6 +128,20 @@ def load_dotfiles_mapper(path: Path) -> MapperDocument:
             )
         normalized_document[section_name_str] = normalized_section
     return normalized_document
+
+
+def compose_mapper_documents(*, library_mapper: MapperDocument, user_mapper: MapperDocument, source: Literal["library", "all"]) -> MapperDocument:
+    composed: MapperDocument = {
+        group: {name: entry for name, entry in section.items() if name not in user_mapper.get(group, {})}
+        for group, section in library_mapper.items()
+    }
+    match source:
+        case "library":
+            pass
+        case "all":
+            for group, section in user_mapper.items():
+                composed[group] = {**composed.get(group, {}), **section}
+    return {group: section for group, section in composed.items() if len(section) > 0}
 
 
 def dump_dotfiles_mapper(*, mapper: MapperDocument, header: str) -> str:

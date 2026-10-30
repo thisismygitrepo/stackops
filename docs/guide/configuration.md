@@ -52,7 +52,7 @@ Current help shows these key concepts:
 - `--source`, `-s` chooses `user`, `library`, or `all` mapper sources
 - `--which` narrows the operation to specific items
 
-For dotfile sync, `library` selects the bundled mappings backed by `~/.config/stackops/settings`. `user` selects your mapper, and `all` combines both; user groups override matching library groups. Personal credential mappings (ssh, gpg, rclone, and similar) are not part of the library; `devops config dotfiles collect` finds them on this machine, moves them into `~/dotfiles`, and records them in your mapper. Sync processes all entries selected by the mapper source and `--which`.
+For dotfile sync, `library` selects the bundled mappings backed by `~/.config/stackops/settings`. `user` selects your mapper, and `all` combines both. An entry in your mapper replaces the library entry with the same group and name: `library` skips it and `all` uses yours. `devops config dotfiles collect` builds your mapper from what is on this machine: personal files (ssh, gpg, rclone, and similar) and your own versions of library settings (yazi, helix, and so on). It stores them in `~/dotfiles`, links them back, and skips anything identical to the packaged settings or already managed another way. Sync processes all entries selected by the mapper source and `--which`.
 
 For packaged library settings, use `devops config copy-assets settings` explicitly before syncing `down`. `devops self update` refreshes these assets by default, and `--sync-configs` also applies the library mappings to their default application paths.
 

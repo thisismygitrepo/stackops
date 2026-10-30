@@ -129,15 +129,22 @@ devops config dotfiles sync up --source user --method copy
 
 #### collect
 
-Build your user mapper from well-known personal files (ssh, gpg, rclone, git credentials, and similar) found on this machine. The catalog is the packaged user example. Each chosen entry is moved into its curated `~/dotfiles/creds/...` location, linked back, and recorded in the user mapper; entries for other operating systems that share the same managed path are recorded too, so other machines only need `sync down --source user`.
+Build your user mapper from the dotfiles on this machine. It covers two catalogs:
 
-Collect never touches anything you already manage your own way. It skips an entry when its original links somewhere else, when the original and the managed copy both exist, when its paths overlap a mapping in your mapper or the library, or when your mapper has its own group with the same name. An original that already links to the managed path, or a managed copy whose original is missing, is recorded without moving anything. Re-running adds only new entries.
+- personal files from the packaged user example (ssh, gpg, rclone, git credentials, and similar), stored under `~/dotfiles/creds/...`;
+- your own versions of the library settings (yazi, helix, starship, and so on), stored at the library's relative path under `~/dotfiles` instead of `~/.config/stackops`, e.g. `~/dotfiles/settings/yazi/yazi_linux.toml`.
+
+Each chosen entry is stored in `~/dotfiles`, linked back, and recorded in the user mapper; entries for other operating systems that share the same managed path are recorded too, so other machines only need `sync down`. A recorded settings entry replaces the library entry with the same group and name, so `sync --source library` leaves it alone and `--source all` uses yours.
+
+Collect never touches anything you already manage your own way. It skips an entry when its original links somewhere else, when it is identical to (or links to) the packaged settings, when the original and the managed copy both exist, when its paths overlap a mapping in your mapper, or when your mapper has its own group with the same name. An original that already links to the managed path, or a managed copy whose original is missing, is recorded without moving anything. Re-running adds only new entries.
 
 ```bash
-devops config dotfiles collect [--which GROUPS]
+devops config dotfiles collect                  # print the plan only
+devops config dotfiles collect --interactive    # pick groups from the plan
+devops config dotfiles collect --which yazi,ssh # or --which all
 ```
 
-Without `--which`, it shows the plan and lets you pick groups interactively; `--which all` takes every collectable group.
+The Group column of the printed plan lists the values `--which` accepts on this machine.
 
 #### register
 

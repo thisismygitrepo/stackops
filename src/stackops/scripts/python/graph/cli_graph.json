@@ -5343,7 +5343,7 @@
                         "        typer.Argument(..., help=\"Direction of sync: 'up' pushes default paths into the managed location, 'down' applies managed files back to default paths.\"),",
                         "    ],",
                         "    method: Annotated[METHOD_LOOSE, typer.Option(..., \"--method\", \"-m\", help=\"Method to use for linking files\")] = \"symlink\",",
-                        "    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., \"--source\", \"-s\", help=\"Mapper source: library for packaged settings, user for your mappings, or all for both. User groups override matching library groups.\")] = \"all\",",
+                        "    source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., \"--source\", \"-s\", help=\"Mapper source: library for packaged settings, user for your mappings, or all for both. A user entry replaces the library entry with the same group and name.\")] = \"all\",",
                         "    on_conflict: Annotated[ON_CONFLICT_LOOSE, typer.Option(..., \"--on-conflict\", \"-c\", help=\"Action to take on conflict\")] = \"throw-error\",",
                         "    which: Annotated[str | None, typer.Option(..., \"--which\", \"-w\", help=\"Specific items to process ('all' for all items) (default is None, selection is interactive)\")] = None,",
                         ") -> None:",
@@ -5436,7 +5436,7 @@
                           "type": "CONFIG_SOURCE_LOOSE",
                           "default": "all",
                           "required": false,
-                          "annotation_raw": "Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., '--source', '-s', help='Mapper source: library for packaged settings, user for your mappings, or all for both. User groups override matching library groups.')]",
+                          "annotation_raw": "Annotated[CONFIG_SOURCE_LOOSE, typer.Option(..., '--source', '-s', help='Mapper source: library for packaged settings, user for your mappings, or all for both. A user entry replaces the library entry with the same group and name.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -5449,7 +5449,7 @@
                             "short_flags": [
                               "-s"
                             ],
-                            "help": "Mapper source: library for packaged settings, user for your mappings, or all for both. User groups override matching library groups.",
+                            "help": "Mapper source: library for packaged settings, user for your mappings, or all for both. A user entry replaces the library entry with the same group and name.",
                             "default": "..."
                           }
                         },
@@ -5519,7 +5519,7 @@
                     "name": "collect",
                     "fullPath": "devops config dotfiles collect",
                     "shortPath": "d c f c",
-                    "help": "🧺 <c> Collect well-known personal files (ssh, gpg, rclone, ...) found on this machine into ~/dotfiles and record them in the user mapper.",
+                    "help": "🧺 <c> Collect your own dotfiles into ~/dotfiles and record them in the user mapper: personal files (ssh, gpg, rclone, ...) and your own versions of settings StackOps ships (yazi, helix, ...). Without options, only prints the plan.",
                     "source": {
                       "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_dotfile_collect.py",
                       "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_collect",
@@ -5533,9 +5533,10 @@
                         "        typer.Option(",
                         "            \"--which\",",
                         "            \"-w\",",
-                        "            help=\"Groups of well-known files to collect, comma-separated, e.g. ssh,gpg,rclone (the Group column of the printed plan lists them), or 'all' for every group collectable on this machine. Omit to pick interactively.\",",
+                        "            help=\"Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Group column lists the groups collectable on this machine.\",",
                         "        ),",
                         "    ] = None,",
+                        "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Pick the groups to collect from the plan interactively.\")] = False,",
                         ") -> None:",
                         "    import platform",
                         "",
@@ -5554,26 +5555,31 @@
                         "        write_dotfiles_mapper,",
                         "    )",
                         "",
+                        "    if which is not None and interactive:",
+                        "        _fail(\"Use either --which or --interactive, not both.\")",
                         "    user_mapper = load_dotfiles_mapper(USER_MAPPER_PATH) if USER_MAPPER_PATH.exists() else {}",
                         "    current_os = normalize_os_name(platform.system())",
                         "    plans = plan_collect(",
-                        "        catalog=load_dotfiles_mapper(USER_EXAMPLE_MAPPER_PATH),",
-                        "        user_mapper=user_mapper,",
+                        "        personal_catalog=load_dotfiles_mapper(USER_EXAMPLE_MAPPER_PATH),",
                         "        library_mapper=load_dotfiles_mapper(LIBRARY_MAPPER_PATH),",
+                        "        user_mapper=user_mapper,",
                         "        current_os=current_os,",
                         "    )",
                         "    console = Console()",
-                        "    table = Table(title=\"🧺 Dotfile collection plan\", caption=\"Entries for other operating systems or absent from this machine are not listed.\")",
+                        "    table = Table(title=\"🧺 Dotfile collection plan\", caption=\"Not listed: entries for other operating systems, absent from this machine, or identical to the packaged settings.\")",
                         "    for column_name in (\"Group\", \"Entry\", \"Original\", \"Managed\", \"Verdict\"):",
                         "        table.add_column(column_name, overflow=\"fold\")",
                         "    for plan in plans:",
-                        "        if current_os in plan.entry[\"os\"] and plan.verdict != \"absent\":",
+                        "        if current_os in plan.entry[\"os\"] and plan.verdict not in (\"absent\", \"packaged\"):",
                         "            table.add_row(plan.group, plan.name, str(plan.original_path), str(plan.managed_path), _describe_verdict(plan.verdict))",
                         "    console.print(table)",
                         "",
                         "    actionable_groups = list(dict.fromkeys(plan.group for plan in plans if plan.verdict in ACTIONABLE_VERDICTS))",
                         "    if len(actionable_groups) == 0 and (which is None or which.strip() == \"all\"):",
-                        "        console.print(\"Nothing to collect: every well-known file on this machine is already recorded, absent, or managed your own way.\")",
+                        "        console.print(\"Nothing to collect: every known dotfile on this machine is already recorded, absent, packaged, or managed your own way.\")",
+                        "        return",
+                        "    if which is None and not interactive:",
+                        "        console.print(f\"\"\"Collectable groups: {\", \".join(actionable_groups)}\\nCollect them with --which <groups>, --which all, or --interactive.\"\"\")",
                         "        return",
                         "    chosen_groups = _choose_groups(plans, actionable_groups, which)",
                         "    if len(chosen_groups) == 0:",
@@ -5613,7 +5619,7 @@
                           "type": "str | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"Groups of well-known files to collect, comma-separated, e.g. ssh,gpg,rclone (the Group column of the printed plan lists them), or 'all' for every group collectable on this machine. Omit to pick interactively.\")]",
+                          "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Group column lists the groups collectable on this machine.\")]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -5626,7 +5632,29 @@
                             "short_flags": [
                               "-w"
                             ],
-                            "help": "Groups of well-known files to collect, comma-separated, e.g. ssh,gpg,rclone (the Group column of the printed plan lists them), or 'all' for every group collectable on this machine. Omit to pick interactively."
+                            "help": "Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Group column lists the groups collectable on this machine."
+                          }
+                        },
+                        {
+                          "name": "interactive",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Pick the groups to collect from the plan interactively.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--interactive",
+                              "-i"
+                            ],
+                            "long_flags": [
+                              "--interactive"
+                            ],
+                            "short_flags": [
+                              "-i"
+                            ],
+                            "help": "Pick the groups to collect from the plan interactively."
                           }
                         }
                       ],
@@ -5639,7 +5667,7 @@
                       {
                         "name": "c",
                         "hidden": true,
-                        "help": "Collect well-known personal files (ssh, gpg, rclone, ...) found on this machine into ~/dotfiles and record them in the user mapper."
+                        "help": "Collect your own dotfiles into ~/dotfiles and record them in the user mapper: personal files (ssh, gpg, rclone, ...) and your own versions of settings StackOps ships (yazi, helix, ...). Without options, only prints the plan."
                       }
                     ]
                   },

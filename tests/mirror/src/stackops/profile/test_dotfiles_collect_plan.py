@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+import stackops.utils.source_of_truth as source_of_truth
 from stackops.profile.dotfiles_collect_plan import CollectVerdict, plan_collect, select_entries_to_record
 from stackops.profile.dotfiles_mapper import MapperDocument, RawMapperEntry
 
@@ -15,7 +16,7 @@ def _entry(original: Path, managed: Path, contents: bool) -> RawMapperEntry:
 
 
 def _verdicts(catalog: MapperDocument, user_mapper: MapperDocument, library_mapper: MapperDocument) -> dict[tuple[str, str], CollectVerdict]:
-    plans = plan_collect(catalog=catalog, user_mapper=user_mapper, library_mapper=library_mapper, current_os="linux")
+    plans = plan_collect(personal_catalog=catalog, library_mapper=library_mapper, user_mapper=user_mapper, current_os="linux")
     return {(plan.group, plan.name): plan.verdict for plan in plans}
 
 
@@ -95,10 +96,10 @@ def test_existing_mappers_take_precedence(tmp_path: Path) -> None:
         "keys": {"config": _entry(home.joinpath(".ssh", "config"), tmp_path.joinpath("elsewhere"), contents=False)},
         "tool": {"token": known_entry},
         "mine": {"conf": _entry(home.joinpath("conf"), managed.joinpath("my_conf"), contents=False)},
+        "store": {"shared": _entry(tmp_path.joinpath("x"), managed.joinpath("shared"), contents=False)},
     }
-    library_mapper: MapperDocument = {"settings": {"shared": _entry(tmp_path.joinpath("x"), managed.joinpath("shared"), contents=False)}}
 
-    assert _verdicts(catalog, user_mapper, library_mapper) == {
+    assert _verdicts(catalog, user_mapper, {}) == {
         ("ssh", "keys"): "original_mapped",
         ("tool", "token"): "recorded",
         ("tool", "rc"): "collect",
@@ -118,6 +119,41 @@ def test_records_successes_and_their_other_os_siblings(tmp_path: Path) -> None:
         "tool": {"unix": _entry(home.joinpath("conf"), managed.joinpath("conf"), contents=False), "windows": windows_sibling, "windows_only": windows_only},
         "broken": {"unix": _entry(home.joinpath("failed_conf"), managed.joinpath("failed_conf"), contents=False), "windows": windows_sibling},
     }
-    plans = plan_collect(catalog=catalog, user_mapper={}, library_mapper={}, current_os="linux")
+    plans = plan_collect(personal_catalog=catalog, library_mapper={}, user_mapper={}, current_os="linux")
 
     assert select_entries_to_record(plans=plans, succeeded={("tool", "unix")}) == {"tool": {"unix": catalog["tool"]["unix"], "windows": windows_sibling}}
+
+
+def test_library_entries_are_rehomed_and_packaged_copies_skipped(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    home, packaged, dotfiles = tmp_path.joinpath("home"), tmp_path.joinpath("config", "settings", "app"), tmp_path.joinpath("dotfiles")
+    monkeypatch.setitem(source_of_truth.SOURCE_OF_TRUTH_PATH_TOKENS, "CONFIG_ROOT", tmp_path.joinpath("config"))
+    monkeypatch.setitem(source_of_truth.SOURCE_OF_TRUTH_PATH_TOKENS, "DOTFILES_ROOT", dotfiles)
+    packaged.joinpath("themes").mkdir(parents=True)
+    home.joinpath("themes").mkdir(parents=True)
+    for name in ("own.toml", "same.toml", "linked.toml"):
+        packaged.joinpath(name).write_text("packaged", encoding="utf-8")
+    packaged.joinpath("themes", "dark").write_text("packaged", encoding="utf-8")
+    home.joinpath("own.toml").write_text("mine", encoding="utf-8")
+    home.joinpath("same.toml").write_text("packaged", encoding="utf-8")
+    home.joinpath("linked.toml").symlink_to(packaged.joinpath("linked.toml"))
+    home.joinpath("themes", "dark").symlink_to(packaged.joinpath("themes", "dark"))
+    home.joinpath("themes", "mine").write_text("mine", encoding="utf-8")
+    library_mapper: MapperDocument = {
+        "app": {
+            name.removesuffix(".toml"): {"original": str(home.joinpath(name)), "self_managed": f"CONFIG_ROOT/settings/app/{name}", "os": ["linux"]}
+            for name in ("own.toml", "same.toml", "linked.toml")
+        },
+        "app_themes": {"themes": {"original": str(home.joinpath("themes")), "self_managed": "CONFIG_ROOT/settings/app/themes", "os": ["linux"], "contents": True}},
+    }
+    plans = plan_collect(personal_catalog={}, library_mapper=library_mapper, user_mapper={}, current_os="linux")
+
+    assert {(plan.group, plan.name): plan.verdict for plan in plans} == {
+        ("app", "own"): "collect",
+        ("app", "same"): "packaged",
+        ("app", "linked"): "packaged",
+        ("app_themes", "themes"): "collect",
+    }
+    own_plan = plans[0]
+    assert own_plan.entry["self_managed"] == "DOTFILES_ROOT/settings/app/own.toml"
+    assert own_plan.managed_path == dotfiles.joinpath("settings", "app", "own.toml")
+    assert own_plan.packaged_path == packaged.joinpath("own.toml")

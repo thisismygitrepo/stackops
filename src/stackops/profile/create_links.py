@@ -18,10 +18,18 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.profile.dotfiles_constants import VALID_OS_VALUES, OsName
-from stackops.profile.dotfiles_mapper import LIBRARY_MAPPER_PATH, USER_MAPPER_PATH, MapperDocument, OsField, RawMapperEntry, load_dotfiles_mapper
+from stackops.profile.dotfiles_mapper import (
+    LIBRARY_MAPPER_PATH,
+    USER_MAPPER_PATH,
+    MapperDocument,
+    OsField,
+    RawMapperEntry,
+    compose_mapper_documents,
+    load_dotfiles_mapper,
+)
 from stackops.profile.linking.conflict import ON_CONFLICT_STRICT
 from stackops.profile.linking.operations import ActionType, OperationRecord, OperationResult, copy_map, symlink_map
-from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT
+from stackops.profile.linking.options import CONFIG_FILE_SOURCE_STRICT, CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT
 from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_SSH_CREDS_ROOT, resolve_source_of_truth_path
 
 system = platform.system()  # Linux or Windows
@@ -71,19 +79,12 @@ class ConfigMapper(TypedDict):
     os: OsField
 
 
-def _read_mapper_document(source: CONFIG_SOURCE_LOOSE) -> MapperDocument:
-    source_key = CONFIG_SOURCE_MAP[source]
+def _load_mapper_file(source_key: CONFIG_FILE_SOURCE_STRICT) -> MapperDocument:
     match source_key:
         case "user":
             mapper_path = USER_MAPPER_PATH
         case "library":
             mapper_path = LIBRARY_MAPPER_PATH
-        case "all":
-            library_mapper = _read_mapper_document(source="library")
-            user_mapper = _read_mapper_document(source="user") if USER_MAPPER_PATH.exists() else {}
-            return {**library_mapper, **user_mapper}
-        case _:
-            raise ValueError(f"Unsupported config source value: {source}")
     if not mapper_path.exists():
         if source_key == "user":
             raise FileNotFoundError(
@@ -111,6 +112,16 @@ def _read_mapper_document(source: CONFIG_SOURCE_LOOSE) -> MapperDocument:
             ) from exc
         raise ValueError(f"Packaged dotfiles mapper is invalid: {mapper_path}\n{exc}") from exc
     return mapper_data
+
+
+def _read_mapper_document(source: CONFIG_SOURCE_LOOSE) -> MapperDocument:
+    source_key = CONFIG_SOURCE_MAP[source]
+    match source_key:
+        case "user":
+            return _load_mapper_file("user")
+        case "library" | "all":
+            user_mapper = _load_mapper_file("user") if USER_MAPPER_PATH.exists() else {}
+            return compose_mapper_documents(library_mapper=_load_mapper_file("library"), user_mapper=user_mapper, source=source_key)
 
 
 def read_mapper(source: CONFIG_SOURCE_LOOSE) -> dict[str, list[ConfigMapper]]:
