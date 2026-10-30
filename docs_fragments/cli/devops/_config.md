@@ -84,6 +84,7 @@ devops config dotfiles [SUBCOMMAND] [ARGS]...
 | Command | Description |
 |---------|-------------|
 | `sync` | Apply dotfile mappings with `symlink` or `copy` |
+| `collect` | Collect well-known personal files into `~/dotfiles` and record them in the user mapper |
 | `register` | Copy or symlink a file into managed storage and register its mapping |
 | `export` | Export `~/dotfiles` for machine migration |
 | `import` | Import an exported dotfiles archive |
@@ -95,7 +96,7 @@ Open the user mapper itself with `devops config edit dotfiles`.
 Apply the current dotfile mapping set.
 
 ```bash
-devops config dotfiles sync <up|down> --sensitivity <public|private|all> --method <symlink|copy> [OPTIONS]
+devops config dotfiles sync <up|down> [OPTIONS]
 ```
 
 Key arguments and options from current help:
@@ -103,9 +104,8 @@ Key arguments and options from current help:
 | Item | Description |
 |------|-------------|
 | `direction` | Required. Use `up` to push default paths into the managed location, or `down` to apply managed files back to default paths |
-| `--sensitivity`, `-s` | Required. Choose `private`, `public`, or `all` |
-| `--method`, `-m` | Required. Use `symlink` or `copy` |
-| `--source`, `-S` | Select mappings from `library`, `user`, or `all` |
+| `--method`, `-m` | Use `symlink` (default) or `copy` |
+| `--source`, `-s` | Select mappings from `library`, `user`, or `all` (default) |
 | `--on-conflict`, `-c` | Conflict policy such as `throw-error`, `overwrite-self-managed`, or `overwrite-default-path` |
 | `--which`, `-w` | Limit the run to specific mapping names, or use `all` |
 
@@ -120,12 +120,24 @@ devops config copy-assets settings
 Examples:
 
 ```bash
-# Apply all public mappings with symlinks
-devops config dotfiles sync down --sensitivity public --method symlink --which all
+# Apply all packaged settings with symlinks
+devops config dotfiles sync down --source library --method symlink --which all
 
-# Push local private config changes back into the managed backup area
-devops config dotfiles sync up --sensitivity private --method copy -S user
+# Push local changes to your own mappings back into the managed area
+devops config dotfiles sync up --source user --method copy
 ```
+
+#### collect
+
+Build your user mapper from well-known personal files (ssh, gpg, rclone, git credentials, and similar) found on this machine. The catalog is the packaged user example. Each chosen entry is moved into its curated `~/dotfiles/creds/...` location, linked back, and recorded in the user mapper; entries for other operating systems that share the same managed path are recorded too, so other machines only need `sync down --source user`.
+
+Collect never touches anything you already manage your own way. It skips an entry when its original links somewhere else, when the original and the managed copy both exist, when its paths overlap a mapping in your mapper or the library, or when your mapper has its own group with the same name. An original that already links to the managed path, or a managed copy whose original is missing, is recorded without moving anything. Re-running adds only new entries.
+
+```bash
+devops config dotfiles collect [--which GROUPS]
+```
+
+Without `--which`, it shows the plan and lets you pick groups interactively; `--which all` takes every collectable group.
 
 #### register
 
@@ -143,7 +155,6 @@ Key options from current help:
 |--------|-------------|
 | `--method`, `-m` | Store it with `copy` or `symlink` semantics |
 | `--on-conflict`, `-c` | Conflict strategy during the initial transfer |
-| `--sensitivity`, `-s` | Mark the mapping as `private` or `public` |
 | `--destination`, `-d` | Override the default self-managed destination |
 | `--group`, `-S` | Group name to write inside the user mapper |
 | `--os`, `-o` | Restrict the mapping to one OS or a comma-separated list |
@@ -152,11 +163,11 @@ Key options from current help:
 Examples:
 
 ```bash
-# Register a private file and record it in the default mapper group
-devops config dotfiles register ~/.config/htop/htoprc --sensitivity private
+# Register a file and record it in the default mapper group
+devops config dotfiles register ~/.config/htop/htoprc
 
-# Register a public directory with symlink semantics
-devops config dotfiles register ~/.config/nvim --method symlink --sensitivity public --group editors
+# Register a directory with symlink semantics
+devops config dotfiles register ~/.config/nvim --method symlink --group editors
 ```
 
 #### export

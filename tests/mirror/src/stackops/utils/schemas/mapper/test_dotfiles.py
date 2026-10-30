@@ -28,6 +28,12 @@ def test_dotfiles_mapper_matches_schema(mapper_path: Path) -> None:
     Draft7Validator(schema).validate(mapper_data)
 
 
+def test_user_example_groups_do_not_shadow_library_groups() -> None:
+    example_mapper = load_dotfiles_mapper(get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE))
+
+    assert set(example_mapper).isdisjoint(load_dotfiles_mapper(LIBRARY_MAPPER_PATH))
+
+
 def test_rustdesk_mapper_covers_client_and_selected_server_state() -> None:
     mapper_path = get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE)
     mapper = load_dotfiles_mapper(mapper_path)

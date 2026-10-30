@@ -96,11 +96,11 @@ These are the child commands exposed by the current live help.
 - `terminal`
 - `setup`
 
-`config dotfiles` provides `sync`, `register`, `export`, `import`, `path`, `init`, and `validate`. The last three locate, initialize, or validate the managed mapping. They are also available as `config path/init/validate dotfiles`; `config export-example dotfiles` exports its example and schema. Secrets are managed under `vault`.
+`config dotfiles` provides `sync`, `collect`, `register`, `export`, `import`, `path`, `init`, and `validate`. The last three locate, initialize, or validate the managed mapping. They are also available as `config path/init/validate dotfiles`; `config export-example dotfiles` exports its example and schema. Secrets are managed under `vault`.
 
 `config dotfiles register` and `data register` accept only `--source user`, which is also the default. `--source` uses `-s`. Dotfile registration stores files under the user `mapper/files` directory by default; `--destination` selects an explicit storage directory.
 
-`config dotfiles sync --source` / `-s` selects `user`, `library`, or `all` mappings. `library` contains only bundled settings mappings backed by `~/.config/stackops/settings`; `user` uses your mapper, and `all` combines both with user groups taking precedence. Personal credential mappings are available in the exported user example. Sync processes all entries selected by that source and `--which`.
+`config dotfiles sync --source` / `-s` selects `user`, `library`, or `all` mappings. `library` contains only bundled settings mappings backed by `~/.config/stackops/settings`; `user` uses your mapper, and `all` combines both with user groups taking precedence. Personal credential mappings (ssh, gpg, rclone, and similar) are not part of the library; `devops config dotfiles collect` finds them on this machine, moves them into `~/dotfiles`, and records them in your mapper. Sync processes all entries selected by that source and `--which`.
 
 Generic `config` management commands and the dotfile/data `path`, `init`, and `validate` commands use `--custom-path` to select an explicit file. Standalone `repos` management commands retain `--path`.
 

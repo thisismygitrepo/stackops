@@ -18,7 +18,7 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.profile.dotfiles_constants import VALID_OS_VALUES, OsName
-from stackops.profile.dotfiles_mapper import LIBRARY_MAPPER_PATH, USER_MAPPER_PATH, MapperDocument, OsField, load_dotfiles_mapper
+from stackops.profile.dotfiles_mapper import LIBRARY_MAPPER_PATH, USER_MAPPER_PATH, MapperDocument, OsField, RawMapperEntry, load_dotfiles_mapper
 from stackops.profile.linking.conflict import ON_CONFLICT_STRICT
 from stackops.profile.linking.operations import ActionType, OperationRecord, OperationResult, copy_map, symlink_map
 from stackops.profile.linking.options import CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT
@@ -40,7 +40,7 @@ ON_CONFLICT_UP_COPY_MAP: dict[ON_CONFLICT_STRICT, ON_CONFLICT_STRICT] = {
 }
 
 
-def _normalize_os_name(value: str) -> OsName:
+def normalize_os_name(value: str) -> OsName:
     token = value.strip().lower()
     match token:
         case "darwin":
@@ -88,6 +88,8 @@ def _read_mapper_document(source: CONFIG_SOURCE_LOOSE) -> MapperDocument:
         if source_key == "user":
             raise FileNotFoundError(
                 f"User dotfiles mapper does not exist: {mapper_path}\n\n"
+                "Collect well-known personal files found on this machine:\n"
+                "  devops config dotfiles collect\n"
                 "Create a real mapping interactively:\n"
                 "  devops config setup dotfiles\n"
                 "Or install the example and schema for manual editing:\n"
@@ -114,22 +116,25 @@ def _read_mapper_document(source: CONFIG_SOURCE_LOOSE) -> MapperDocument:
 def read_mapper(source: CONFIG_SOURCE_LOOSE) -> dict[str, list[ConfigMapper]]:
     mapper_data = _read_mapper_document(source=source)
     programs: dict[str, list[ConfigMapper]] = {}
-    normalized_system = _normalize_os_name(SYSTEM)
+    normalized_system = normalize_os_name(SYSTEM)
     for program_key, program_map in mapper_data.items():
         for file_name, file_base in program_map.items():
             os_values = _parse_os_field(file_base["os"])
             if normalized_system not in os_values:
                 continue
-            file_map: ConfigMapper = {
-                "file_name": file_name,
-                "config_file_default_path": file_base["original"],
-                "config_file_self_managed_path": file_base["self_managed"],
-                "contents": file_base.get("contents"),
-                "copy": file_base.get("copy"),
-                "os": file_base["os"],
-            }
-            programs.setdefault(program_key, []).append(file_map)
+            programs.setdefault(program_key, []).append(to_config_mapper(file_name=file_name, entry=file_base))
     return programs
+
+
+def to_config_mapper(file_name: str, entry: RawMapperEntry) -> ConfigMapper:
+    return {
+        "file_name": file_name,
+        "config_file_default_path": entry["original"],
+        "config_file_self_managed_path": entry["self_managed"],
+        "contents": entry.get("contents"),
+        "copy": entry.get("copy"),
+        "os": entry["os"],
+    }
 
 
 def _resolve_mapper_paths(a_mapper: ConfigMapper) -> tuple[Path, Path]:
@@ -270,7 +275,7 @@ def apply_mapper(
     on_conflict: ON_CONFLICT_STRICT,
     method: Literal["symlink", "copy"],
     direction: DIRECTION_STRICT,
-) -> None:
+) -> list[OperationRecord]:
     operation_records: list[OperationRecord] = []
     print(f"Working with {len(mapper_data)} programs from mapper data.")
     if len(mapper_data) == 1:
@@ -460,6 +465,7 @@ def apply_mapper(
                 border_style="green",
             )
         )
+    return operation_records
 
 
 if __name__ == "__main__":
