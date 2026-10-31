@@ -99,6 +99,20 @@ def build_archive_command(target_path: Path) -> Command:
     return ["sh", "-c", 'ouch list "$1" | ${PAGER:-less -R}', "sh", str(target_path)]
 
 
+def build_json_lines_command(target_path: Path) -> Command:
+    if platform.system().lower() == "windows":
+        return [
+            "powershell",
+            "-NoLogo",
+            "-NoProfile",
+            "-Command",
+            "jq -C . $args[0] | more.com",
+            "--",
+            str(target_path),
+        ]
+    return ["sh", "-c", 'jq -C . "$1" | ${PAGER:-less -R}', "sh", str(target_path)]
+
+
 def build_image_command(target_path: Path) -> Command:
     return [
         "chafa",
@@ -176,7 +190,9 @@ def build_command(target_path: Path, terminal_columns: int) -> Command:
                 str(terminal_columns),
                 path_string,
             ]
-        case ".json" | ".jsonl" | ".ndjson":
+        case ".jsonl" | ".ndjson":
+            return build_json_lines_command(target_path=target_path)
+        case ".json":
             return [
                 "uvx",
                 "--from",
