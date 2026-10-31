@@ -105,7 +105,7 @@ def edit_layouts(
     import subprocess
 
     from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import default_layout_source_paths
-    from stackops.scripts.python.terminal_layout_files import resolve_layout_file
+    from stackops.scripts.python.terminal_layout_files import describe_layout_file, resolve_layout_file
     from stackops.utils.managed_file_operations import initialize_managed_file, validate_managed_file
     from stackops.utils.managed_files import get_managed_file_spec
 
@@ -115,7 +115,7 @@ def edit_layouts(
         source_paths = default_layout_source_paths()
         from stackops.utils.options_utils.options import choose_from_options
 
-        choices = {f"""{name}: {path}""": path for name, path in source_paths.items()}
+        choices = {f"""{name}: {path}  [{describe_layout_file(path=path)}]""": path for name, path in source_paths.items()}
         selection = choose_from_options(
             options=list(choices), multi=False, custom_input=False, tv=True, msg="Choose a layout config file to edit:",
         )

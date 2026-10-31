@@ -27,6 +27,16 @@ def resolve_export_backend(
             raise ValueError(f"Unsupported export backend: {backend}")
 
 
+def supported_command_sources(backend: TerminalExportBackend) -> tuple[TmuxExportCommandSource, ...]:
+    match backend:
+        case "tmux":
+            return ("shell", "current-command", "start-command")
+        case "herdr":
+            return ("shell",)
+        case "tuios":
+            return ("shell", "current-command")
+
+
 def export_terminal_sessions(
     session_names: str | None,
     export_all_sessions: bool,
@@ -34,8 +44,8 @@ def export_terminal_sessions(
     overwrite: bool,
     merge: bool,
     command_source: TmuxExportCommandSource,
-    backend: TerminalExportBackendOption,
-) -> tuple[Path, TerminalExportBackend]:
+    backend: TerminalExportBackend,
+) -> Path:
     from stackops.scripts.python.helpers.helpers_sessions.herdr_export import (
         build_layouts_from_herdr_workspaces,
     )
@@ -49,8 +59,10 @@ def export_terminal_sessions(
         write_exported_layouts,
     )
 
-    resolved_backend = resolve_export_backend(backend=backend)
-    match resolved_backend:
+    allowed_command_sources = supported_command_sources(backend=backend)
+    if command_source not in allowed_command_sources:
+        raise ValueError(f"""{backend} export supports --command-source {", ".join(allowed_command_sources)}, got {command_source}.""")
+    match backend:
         case "tmux":
             resolved_session_names = resolve_tmux_session_names_for_export(
                 session_names=session_names,
@@ -61,16 +73,11 @@ def export_terminal_sessions(
                 command_source=command_source,
             )
         case "herdr":
-            if command_source != "shell":
-                raise ValueError("Herdr export only supports --command-source shell.")
             resolved_workspaces = resolve_herdr_workspaces_for_export(
                 workspace_names=session_names,
                 export_all_workspaces=export_all_sessions,
             )
-            layouts = build_layouts_from_herdr_workspaces(
-                workspaces=resolved_workspaces,
-                command_source=command_source,
-            )
+            layouts = build_layouts_from_herdr_workspaces(workspaces=resolved_workspaces)
         case "tuios":
             from stackops.scripts.python.helpers.helpers_sessions.tuios_export import (
                 build_layouts_from_tuios_sessions,
@@ -92,4 +99,4 @@ def export_terminal_sessions(
         overwrite=overwrite,
         merge=merge,
     )
-    return (resolved_output_path, resolved_backend)
+    return resolved_output_path

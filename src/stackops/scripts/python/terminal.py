@@ -299,27 +299,40 @@ def export(
     output_path: Annotated[str | None, typer.Option("--output", "-o", help="Path to write the generated layout file. Defaults to ./tmux_export_layout.yaml.")] = None,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-w", help="Replace the output file if it already exists.", show_default=True)] = False,
     merge: Annotated[bool, typer.Option("--merge", "-m", help="Merge exported sessions into an existing layout file by layoutName.", show_default=True)] = False,
-    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u"], typer.Option("--backend", "-b", help="Backend to export from: tmux/t, herdr/h, or tuios/u.")] = "tmux",
-    command_source: Annotated[Literal["shell", "current-command", "start-command"], typer.Option("--command-source", "-c", help="Command to put in each exported tab: shell, current-command, or start-command.")] = "shell",
+    backend: Annotated[Literal["tmux", "t", "herdr", "h", "tuios", "u"] | None, typer.Option("--backend", "-b", help="Backend to export from: tmux/t, herdr/h, or tuios/u. Defaults to tmux, or is asked with --interactive.")] = None,
+    command_source: Annotated[Literal["shell", "current-command", "start-command"] | None, typer.Option("--command-source", "-c", help="Command to put in each exported tab: shell, current-command, or start-command. Defaults to shell, or is asked with --interactive.")] = None,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Ask for the backend (showing its running sessions), command source, and how to write an existing output file, unless given as flags.", show_default=True)] = False,
 ) -> None:
     """Export running backend sessions/workspaces as a layout file runnable by `run`."""
     from stackops.scripts.python.helpers.helpers_sessions.terminal_export import (
         export_terminal_sessions,
     )
+    from stackops.scripts.python.helpers.helpers_sessions.terminal_export_settings import (
+        resolve_terminal_export_settings,
+    )
 
     try:
-        exported_path, resolved_backend = export_terminal_sessions(
-            session_names=sessions,
-            export_all_sessions=all_sessions,
+        settings = resolve_terminal_export_settings(
+            interactive=interactive,
+            backend=backend,
+            command_source=command_source,
             output_path=output_path,
             overwrite=overwrite,
             merge=merge,
-            command_source=command_source,
-            backend=backend,
+        )
+        exported_path = export_terminal_sessions(
+            session_names=sessions,
+            export_all_sessions=all_sessions,
+            output_path=output_path,
+            overwrite=settings.overwrite,
+            merge=settings.merge,
+            command_source=settings.command_source,
+            backend=settings.backend,
         )
     except ValueError as error:
         typer.echo(f"Error: {error}", err=True, color=True)
         raise typer.Exit(code=1) from error
+    resolved_backend = settings.backend
     typer.echo(f"Exported {resolved_backend} layout to {exported_path}")
     if resolved_backend == "tmux":
         typer.echo(f"Run it with: stackops terminal run --custom-path {exported_path}")

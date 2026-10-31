@@ -13,7 +13,6 @@ from stackops.scripts.python.helpers.helpers_sessions.herdr_export_source import
 )
 from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants import (
     TMUX_EXPORT_SHELL_COMMAND,
-    TmuxExportCommandSource,
 )
 from stackops.utils.schemas.layouts.layout_arrangement import infer_arrangement_from_origins
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabConfig
@@ -166,10 +165,7 @@ def _build_layout_for_herdr_workspace(
 
 def build_layouts_from_herdr_workspaces(
     workspaces: list[JsonObject],
-    command_source: TmuxExportCommandSource,
 ) -> list[LayoutConfig]:
-    if command_source != "shell":
-        raise ValueError("Herdr export only supports --command-source shell.")
     if len(workspaces) == 0:
         raise ValueError("No Herdr workspaces were selected for export.")
     label_counts = _workspace_label_counts(workspaces=workspaces)

@@ -22376,7 +22376,7 @@
                 "    import subprocess",
                 "",
                 "    from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import default_layout_source_paths",
-                "    from stackops.scripts.python.terminal_layout_files import resolve_layout_file",
+                "    from stackops.scripts.python.terminal_layout_files import describe_layout_file, resolve_layout_file",
                 "    from stackops.utils.managed_file_operations import initialize_managed_file, validate_managed_file",
                 "    from stackops.utils.managed_files import get_managed_file_spec",
                 "",
@@ -22386,7 +22386,7 @@
                 "        source_paths = default_layout_source_paths()",
                 "        from stackops.utils.options_utils.options import choose_from_options",
                 "",
-                "        choices = {f\"\"\"{name}: {path}\"\"\": path for name, path in source_paths.items()}",
+                "        choices = {f\"\"\"{name}: {path}  [{describe_layout_file(path=path)}]\"\"\": path for name, path in source_paths.items()}",
                 "        selection = choose_from_options(",
                 "            options=list(choices), multi=False, custom_input=False, tv=True, msg=\"Choose a layout config file to edit:\",",
                 "        )",
@@ -23234,27 +23234,40 @@
                 "    output_path: Annotated[str | None, typer.Option(\"--output\", \"-o\", help=\"Path to write the generated layout file. Defaults to ./tmux_export_layout.yaml.\")] = None,",
                 "    overwrite: Annotated[bool, typer.Option(\"--overwrite\", \"-w\", help=\"Replace the output file if it already exists.\", show_default=True)] = False,",
                 "    merge: Annotated[bool, typer.Option(\"--merge\", \"-m\", help=\"Merge exported sessions into an existing layout file by layoutName.\", show_default=True)] = False,",
-                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"tuios\", \"u\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to export from: tmux/t, herdr/h, or tuios/u.\")] = \"tmux\",",
-                "    command_source: Annotated[Literal[\"shell\", \"current-command\", \"start-command\"], typer.Option(\"--command-source\", \"-c\", help=\"Command to put in each exported tab: shell, current-command, or start-command.\")] = \"shell\",",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"herdr\", \"h\", \"tuios\", \"u\"] | None, typer.Option(\"--backend\", \"-b\", help=\"Backend to export from: tmux/t, herdr/h, or tuios/u. Defaults to tmux, or is asked with --interactive.\")] = None,",
+                "    command_source: Annotated[Literal[\"shell\", \"current-command\", \"start-command\"] | None, typer.Option(\"--command-source\", \"-c\", help=\"Command to put in each exported tab: shell, current-command, or start-command. Defaults to shell, or is asked with --interactive.\")] = None,",
+                "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Ask for the backend (showing its running sessions), command source, and how to write an existing output file, unless given as flags.\", show_default=True)] = False,",
                 ") -> None:",
                 "    \"\"\"Export running backend sessions/workspaces as a layout file runnable by `run`.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_sessions.terminal_export import (",
                 "        export_terminal_sessions,",
                 "    )",
+                "    from stackops.scripts.python.helpers.helpers_sessions.terminal_export_settings import (",
+                "        resolve_terminal_export_settings,",
+                "    )",
                 "",
                 "    try:",
-                "        exported_path, resolved_backend = export_terminal_sessions(",
-                "            session_names=sessions,",
-                "            export_all_sessions=all_sessions,",
+                "        settings = resolve_terminal_export_settings(",
+                "            interactive=interactive,",
+                "            backend=backend,",
+                "            command_source=command_source,",
                 "            output_path=output_path,",
                 "            overwrite=overwrite,",
                 "            merge=merge,",
-                "            command_source=command_source,",
-                "            backend=backend,",
+                "        )",
+                "        exported_path = export_terminal_sessions(",
+                "            session_names=sessions,",
+                "            export_all_sessions=all_sessions,",
+                "            output_path=output_path,",
+                "            overwrite=settings.overwrite,",
+                "            merge=settings.merge,",
+                "            command_source=settings.command_source,",
+                "            backend=settings.backend,",
                 "        )",
                 "    except ValueError as error:",
                 "        typer.echo(f\"Error: {error}\", err=True, color=True)",
                 "        raise typer.Exit(code=1) from error",
+                "    resolved_backend = settings.backend",
                 "    typer.echo(f\"Exported {resolved_backend} layout to {exported_path}\")",
                 "    if resolved_backend == \"tmux\":",
                 "        typer.echo(f\"Run it with: stackops terminal run --custom-path {exported_path}\")",
@@ -23376,10 +23389,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['tmux', 't', 'herdr', 'h', 'tuios', 'u']",
-                  "default": "tmux",
+                  "type": "Literal['tmux', 't', 'herdr', 'h', 'tuios', 'u'] | None",
+                  "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'tuios', 'u'], typer.Option('--backend', '-b', help='Backend to export from: tmux/t, herdr/h, or tuios/u.')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'herdr', 'h', 'tuios', 'u'] | None, typer.Option('--backend', '-b', help='Backend to export from: tmux/t, herdr/h, or tuios/u. Defaults to tmux, or is asked with --interactive.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -23392,16 +23405,16 @@
                     "short_flags": [
                       "-b"
                     ],
-                    "help": "Backend to export from: tmux/t, herdr/h, or tuios/u."
+                    "help": "Backend to export from: tmux/t, herdr/h, or tuios/u. Defaults to tmux, or is asked with --interactive."
                   }
                 },
                 {
                   "name": "command_source",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['shell', 'current-command', 'start-command']",
-                  "default": "shell",
+                  "type": "Literal['shell', 'current-command', 'start-command'] | None",
+                  "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['shell', 'current-command', 'start-command'], typer.Option('--command-source', '-c', help='Command to put in each exported tab: shell, current-command, or start-command.')]",
+                  "annotation_raw": "Annotated[Literal['shell', 'current-command', 'start-command'] | None, typer.Option('--command-source', '-c', help='Command to put in each exported tab: shell, current-command, or start-command. Defaults to shell, or is asked with --interactive.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -23414,7 +23427,29 @@
                     "short_flags": [
                       "-c"
                     ],
-                    "help": "Command to put in each exported tab: shell, current-command, or start-command."
+                    "help": "Command to put in each exported tab: shell, current-command, or start-command. Defaults to shell, or is asked with --interactive."
+                  }
+                },
+                {
+                  "name": "interactive",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Ask for the backend (showing its running sessions), command source, and how to write an existing output file, unless given as flags.', show_default=True)]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--interactive",
+                      "-i"
+                    ],
+                    "long_flags": [
+                      "--interactive"
+                    ],
+                    "short_flags": [
+                      "-i"
+                    ],
+                    "help": "Ask for the backend (showing its running sessions), command source, and how to write an existing output file, unless given as flags."
                   }
                 }
               ],

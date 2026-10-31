@@ -58,8 +58,6 @@ def _pane_from_window(window: WindowEntry, used_pane_names: set[str], command_so
 
 
 def build_layouts_from_tuios_sessions(session_names: list[str], command_source: TmuxExportCommandSource) -> list[LayoutConfig]:
-    if command_source == "start-command":
-        raise ValueError("TUIOS does not expose window start commands. Use --command-source shell or current-command.")
     layouts: list[LayoutConfig] = []
     for session_name in session_names:
         windows = list_window_entries(session_name=session_name)

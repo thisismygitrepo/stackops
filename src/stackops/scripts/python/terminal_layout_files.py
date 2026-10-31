@@ -24,6 +24,23 @@ def resolve_layout_file(*, layouts_file: Path | None, source: Literal["workspace
             return DOTFILES_LAYOUT_YAML_PATH
 
 
+def describe_layout_file(*, path: Path) -> str:
+    from stackops.utils.schemas.layouts.layout_file import read_layouts_file
+
+    if not path.exists():
+        return "🆕 missing · will be created from the example template"
+    if not path.is_file():
+        return "⛔ exists but is not a file"
+    try:
+        layouts = read_layouts_file(path=path)["layouts"]
+    except (OSError, ValueError):
+        return "⚠️ exists · invalid layout file"
+    tabs = [tab for layout in layouts for tab in layout["layoutTabs"]]
+    panes_count = sum(len(tab["panes"]) for tab in tabs)
+    lines_count = len(path.read_text(encoding="utf-8").splitlines())
+    return f"""✅ exists · layouts: {len(layouts)} · tabs: {len(tabs)} · panes: {panes_count} · lines: {lines_count}"""
+
+
 def path_layouts(
     layouts_file: Annotated[
         Path | None, typer.Option("--custom-path", "-p", dir_okay=False, help="Layout YAML file. Overrides --source; omit to show user and workspace paths."),
