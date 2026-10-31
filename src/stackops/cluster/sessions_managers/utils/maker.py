@@ -54,7 +54,7 @@ def get_fire_tab_using_uv(func: FunctionType, tab_weight: int, import_module: bo
                                              in_global=True, import_module=import_module)
     from stackops.utils.code import get_uv_command_executing_python_script
     no_sync_uv_run_flags = "--no-sync" if uv_run_flags == "" else f"--no-sync {uv_run_flags}"
-    command_to_run, py_script_path = get_uv_command_executing_python_script(python_script=py_script, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=no_sync_uv_run_flags)
+    command_to_run, py_script_path = get_uv_command_executing_python_script(python_script=py_script, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=no_sync_uv_run_flags, creator="session_layout")
     tab_config: TabConfig = {**single_pane_tab(tab_name=func.__name__, start_dir=start_dir, command=command_to_run), "tabWeight": tab_weight}
     return tab_config, py_script_path
 def get_fire_tab_using_fire(func: FunctionType, tab_weight: int, start_dir: str, fire_flags: str) -> TabConfig:

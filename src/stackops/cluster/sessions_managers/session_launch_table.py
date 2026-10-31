@@ -41,6 +41,8 @@ def _backend_labels(backend: SessionMultiplexer, session_name: str) -> _BackendL
             return _BackendLabels(container="TUIOS session", location_header="WS", handle_header="Window ID", pane_noun="window", tab_noun="workspace", attach_hint=f"""tuios attach -- {quoted_name}""")
         case "tmux":
             return _BackendLabels(container="tmux session", location_header="Win", handle_header="Pane ID", pane_noun="pane", tab_noun="window", attach_hint=f"""tmux attach -t {quoted_name}""")
+        case "zellij":
+            return _BackendLabels(container="Zellij session", location_header="Tab ID", handle_header="Pane ID", pane_noun="pane", tab_noun="tab", attach_hint=f"""zellij attach -- {quoted_name}""")
         case "herdr":
             return _BackendLabels(container="Herdr workspace", location_header="Tab ID", handle_header="Pane ID", pane_noun="pane", tab_noun="tab", attach_hint=None)
         case "aoe":

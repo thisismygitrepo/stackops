@@ -1,6 +1,7 @@
 
 from collections.abc import Callable
 from pathlib import Path
+import re
 import subprocess
 from typing import Literal, cast
 
@@ -45,9 +46,10 @@ def get_uv_command_executing_python_file(python_file: str, uv_with: list[str] | 
 
 
 def get_uv_command_executing_python_script(python_script: str, uv_with: list[str] | None, uv_project_dir: str | None, uv_run_flags: str = "",
-                                           prepend_print: bool = True, ) -> tuple[str, Path]:
+                                           prepend_print: bool = True, *, creator: str) -> tuple[str, Path]:
     prepend_print = prepend_print and IS_REPO_DEVELOPER
-    python_file = Path.home().joinpath("tmp_results", "tmp_scripts", "python", randstr() + ".py")
+    creator_prefix = re.sub(r"[^a-z0-9_]+", "_", creator.lower()).strip("_")
+    python_file = Path.home().joinpath("tmp_results", "tmp_scripts", "python", f"""{creator_prefix}_{randstr()}.py""")
     python_file.parent.mkdir(parents=True, exist_ok=True)
     if prepend_print:
         print_code_string = lambda_to_python_script(lambda: print_code(code=python_script, lexer="python", desc="Temporary Python Script", subtitle="Executing via shell script"),
@@ -71,7 +73,8 @@ def get_shell_script_running_lambda_function(
         uv_run_flags = f"""--python {python_argument} {uv_run_flags}"""
     code = lambda_to_python_script(lmb, in_global=True, import_module=False)
     uv_command, py_file = get_uv_command_executing_python_script(
-        python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags
+        python_script=code, uv_with=uv_with, uv_project_dir=uv_project_dir, uv_run_flags=uv_run_flags,
+        creator=lmb.__module__.rsplit(".", 1)[-1],
     )
     return uv_command, py_file
 
@@ -86,7 +89,7 @@ def run_lambda_function(
 
 
 def run_python_script_in_marimo(py_script: str, uv_project_with: str | None) -> None:
-    tmp_dir = Path.home().joinpath("tmp_results", "tmp_scripts", "marimo", randstr())
+    tmp_dir = Path.home().joinpath("tmp_results", "tmp_scripts", "marimo", f"""marimo_runner_{randstr()}""")
     tmp_dir.mkdir(parents=True, exist_ok=True)
     pyfile = tmp_dir / "marimo_db_explore.py"
     pyfile.write_text(py_script, encoding="utf-8")
@@ -132,7 +135,7 @@ def run_shell_script(script: str, display_script: bool, clean_env: bool) -> subp
         suffix = ".sh"
         lexer = "bash"
     import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', suffix=suffix, delete=False, encoding='utf-8') as temp_file:
+    with tempfile.NamedTemporaryFile(mode='w', prefix="run_shell_script_", suffix=suffix, delete=False, encoding='utf-8') as temp_file:
         temp_file.write(script)
         temp_shell_script_path = Path(temp_file.name)
     from rich.console import Console
@@ -171,7 +174,7 @@ def exit_then_run_shell_script(script: str, strict: bool = False) -> None:
             else:
                 suffix = ".sh"
                 lexer = "bash"
-            manual_script_path = Path.home().joinpath("tmp_results", "tmp_scripts", "manual_run", f"manual_script_{randstr()}{suffix}")
+            manual_script_path = Path.home().joinpath("tmp_results", "tmp_scripts", "manual_run", f"""exit_then_run_shell_script_{randstr()}{suffix}""")
             manual_script_path.parent.mkdir(parents=True, exist_ok=True)
             manual_script_path.write_text(script, encoding="utf-8")
             if IS_REPO_DEVELOPER:

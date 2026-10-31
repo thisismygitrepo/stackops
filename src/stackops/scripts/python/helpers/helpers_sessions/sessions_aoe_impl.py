@@ -132,7 +132,7 @@ def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunch
             if len(tab["panes"]) != 1:
                 raise ValueError(
                     f"AoE starts one agent session per tab, but tab '{tab['tabName']}' in layout '{group}' "
-                    f"has {len(tab['panes'])} panes. Use the tmux, herdr or tuios backend for multi-pane tabs."
+                    f"has {len(tab['panes'])} panes. Use the tmux, herdr, tuios or zellij backend for multi-pane tabs."
                 )
             title = _resolve_unique_title(title=_default_title(tab=tab, tab_index=tab_index), used_titles=used_titles)
             pane = tab["panes"][0]

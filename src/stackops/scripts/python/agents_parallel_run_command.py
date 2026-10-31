@@ -49,7 +49,7 @@ def run_parallel(
     host: Annotated[HOST | None, typer.Option(..., "--host", "-H", help=f"Override machine. One of {', '.join(get_args(HOST))}")] = None,
     backend: Annotated[
         SessionMultiplexerOption | None,
-        typer.Option(..., "--backend", "-b", help="Override the multiplexer used when --run launches the generated layout: tmux/t, herdr/h, tuios/u, or aoe/e."),
+        typer.Option(..., "--backend", "-b", help="Override the multiplexer used when --run launches the generated layout: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z."),
     ] = None,
     context: Annotated[
         str | None, typer.Option(..., "--context", "-c", help="Override context as a direct string. Mutually exclusive with --context-path.")

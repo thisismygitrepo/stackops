@@ -718,7 +718,7 @@ def summary(
             _print_herdr_workspace_details(workspace_name=workspace_name)
         case "aoe":
             if show_tabs:
-                typer.echo("Error: --tabs is only supported by tmux, Herdr, and TUIOS; AoE sessions are already listed individually.", err=True, color=True)
+                typer.echo("Error: --tabs is only supported by tmux, Herdr, TUIOS, and Zellij; AoE sessions are already listed individually.", err=True, color=True)
                 raise typer.Exit(code=1)
             session_name = _resolve_aoe_session_name(session_name=session, choose_session=choose_session)
             if session_name is None:
@@ -729,3 +729,7 @@ def summary(
             from stackops.scripts.python.helpers.helpers_sessions.tuios_summary import print_tuios_summary
 
             print_tuios_summary(session_name=session, choose_session=choose_session, show_tabs=show_tabs)
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions.zellij_summary import print_zellij_summary
+
+            print_zellij_summary(session_name=session, choose_session=choose_session, show_tabs=show_tabs)

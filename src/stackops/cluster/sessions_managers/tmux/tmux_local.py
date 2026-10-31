@@ -87,7 +87,7 @@ class TmuxLayoutGenerator:
             import tempfile
 
             script_suffix = "_layout.ps1" if os.name == "nt" else "_layout.sh"
-            layout_file = Path(tempfile.mkstemp(suffix=script_suffix, dir=tmp_dir)[1])
+            layout_file = Path(tempfile.mkstemp(prefix="tmux_layout_", suffix=script_suffix, dir=tmp_dir)[1])
         else:
             layout_file = Path(self.script_path)
         layout_file.write_text(script_content, encoding="utf-8")

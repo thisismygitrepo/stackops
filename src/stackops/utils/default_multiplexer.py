@@ -15,7 +15,7 @@ DEFAULT_AGENT_MULTIPLEXER_HELP: Final[str] = (
 
 
 def _require_supported_platform(multiplexer: SessionMultiplexer) -> None:
-    if multiplexer in ("herdr", "aoe") and platform.system() == "Windows":
+    if multiplexer in ("herdr", "aoe", "zellij") and platform.system() == "Windows":
         raise ValueError(f"The {multiplexer} multiplexer requires macOS or Linux.")
 
 
@@ -34,6 +34,8 @@ def resolve_session_multiplexer(multiplexer: SessionMultiplexerOption | None) ->
             resolved = "tuios"
         case "aoe" | "e":
             resolved = "aoe"
+        case "zellij" | "z":
+            resolved = "zellij"
     _require_supported_platform(multiplexer=resolved)
     return resolved
 

@@ -23,7 +23,8 @@ function wrap_in_shell_script {
     }
 
     # Define the output path
-    $env:OP_PROGRAM_PATH = "$HOME/tmp_results/tmp_scripts/stackops/${randomName}.ps1"
+    $commandPrefix = [System.IO.Path]::GetFileNameWithoutExtension($Command).ToLowerInvariant() -replace '[^a-z0-9_]', '_'
+    $env:OP_PROGRAM_PATH = "$HOME/tmp_results/tmp_scripts/stackops/${commandPrefix}_${randomName}.ps1"
 
     # Run the specified command with its arguments
     & $Command @Arguments

@@ -270,7 +270,7 @@ stderr:
         return res
 
     def _run_py_prep(self, python_code: str, uv_with: list[str] | None, uv_project_dir: str | None, on: Literal["local", "remote"]) -> str:
-        py_path = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/runpy_{randstr()}.py")
+        py_path = Path.home().joinpath(f"""{DEFAULT_PICKLE_SUBDIR}/ssh_runpy_{randstr()}.py""")
         py_path.parent.mkdir(parents=True, exist_ok=True)
         py_path.write_text(python_code, encoding="utf-8")
         self.copy_from_here(source_path=str(py_path), target_rel2home=None, compress_with_zip=False, recursive=False, overwrite_existing=False)
@@ -372,7 +372,7 @@ stderr:
             lambda: create_target_dir(target_rel2home=path_rel2home_normalized, overwrite=overwrite_existing),
             in_global=True, import_module=False,
         )
-        tmp_py_file = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/create_target_dir_{randstr()}.py")
+        tmp_py_file = Path.home().joinpath(f"""{DEFAULT_PICKLE_SUBDIR}/ssh_create_target_dir_{randstr()}.py""")
         tmp_py_file.parent.mkdir(parents=True, exist_ok=True)
         tmp_py_file.write_text(command, encoding="utf-8")
         assert self.sftp is not None
@@ -561,7 +561,7 @@ stderr:
                 in_global=True, import_module=False,
             )
             tmp_py_file = Path.home().joinpath(
-                f"{DEFAULT_PICKLE_SUBDIR}/create_target_dir_{randstr()}.py"
+                f"""{DEFAULT_PICKLE_SUBDIR}/ssh_unzip_archive_{randstr()}.py"""
             )
             tmp_py_file.parent.mkdir(parents=True, exist_ok=True)
             tmp_py_file.write_text(command, encoding="utf-8")

@@ -8,7 +8,7 @@ import typer
 if TYPE_CHECKING:
     from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
-type DynamicSessionBackendOption = Literal["tmux", "t", "tuios", "u"]
+type DynamicSessionBackendOption = Literal["tmux", "t", "tuios", "u", "zellij", "z"]
 
 
 def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:

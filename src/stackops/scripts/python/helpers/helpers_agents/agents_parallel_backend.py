@@ -9,7 +9,7 @@ def run_generated_layout(*, layout_output_path: Path, backend: SessionMultiplexe
     match backend:
         case "tmux":
             _run_generated_layout_with_tmux(layout_output_path=layout_output_path)
-        case "tuios":
+        case "tuios" | "zellij":
             from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
             from stackops.utils.schemas.layouts.layout_file import read_layouts_file
 
@@ -18,7 +18,7 @@ def run_generated_layout(*, layout_output_path: Path, backend: SessionMultiplexe
                 monitor=False,
                 parallel_layouts=None,
                 kill_upon_completion=False,
-                backend="tuios",
+                backend=backend,
                 on_conflict="restart",
                 exit_mode="backToShell",
                 layouts_selected=read_layouts_file(path=layout_output_path)["layouts"],

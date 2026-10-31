@@ -13,9 +13,12 @@ wrap_in_shell_script() {
 
   local command="$1"
   shift  
+  local command_prefix="${command##*/}"
+  command_prefix="${command_prefix%.*}"
+  command_prefix=$(printf '%s' "$command_prefix" | LC_ALL=C tr '[:upper:]' '[:lower:]' | LC_ALL=C sed 's/[^a-z0-9_]/_/g')
   local RANDOM_NAME=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 12)
   local OP_DIR="$HOME/tmp_results/tmp_scripts/stackops"
-  local OP_PROGRAM_PATH="$OP_DIR/${RANDOM_NAME}.sh"
+  local OP_PROGRAM_PATH="$OP_DIR/${command_prefix}_${RANDOM_NAME}.sh"
   local command_exit_code
   local exit_code
   export OP_PROGRAM_PATH

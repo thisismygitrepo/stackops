@@ -60,6 +60,12 @@ def _build_trace_kill_command(
             from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import kill_window_command
 
             argv = tuple(kill_window_command(session_name=session_name, window_id=target))
+        case "zellij", "session":
+            argv = ("zellij", "kill-session", "--", target)
+        case "zellij", "window":
+            argv = ("zellij", "--session", session_name, "action", "close-tab", "--tab-id", target)
+        case "zellij", "pane":
+            argv = ("zellij", "--session", session_name, "action", "close-pane", "--pane-id", target)
 
     summary = KilledTarget(
         action=action,

@@ -5,8 +5,8 @@ from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants impo
     TmuxExportCommandSource,
 )
 
-TerminalExportBackend: TypeAlias = Literal["tmux", "herdr", "tuios"]
-TerminalExportBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u"]
+TerminalExportBackend: TypeAlias = Literal["tmux", "herdr", "tuios", "zellij"]
+TerminalExportBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u", "zellij", "z"]
 
 
 def resolve_export_backend(backend: TerminalExportBackendOption | None) -> TerminalExportBackend:
@@ -14,15 +14,15 @@ def resolve_export_backend(backend: TerminalExportBackendOption | None) -> Termi
 
     resolved = resolve_session_multiplexer(multiplexer=backend)
     match resolved:
-        case "tmux" | "herdr" | "tuios":
+        case "tmux" | "herdr" | "tuios" | "zellij":
             return resolved
         case "aoe":
-            raise ValueError("terminal export supports the tmux, herdr and tuios session multiplexers, not the configured aoe. Pass --backend.")
+            raise ValueError("terminal export supports the tmux, herdr, tuios and zellij session multiplexers, not the configured aoe. Pass --backend.")
 
 
 def supported_command_sources(backend: TerminalExportBackend) -> tuple[TmuxExportCommandSource, ...]:
     match backend:
-        case "tmux":
+        case "tmux" | "zellij":
             return ("shell", "current-command", "start-command")
         case "herdr":
             return ("shell",)
@@ -82,6 +82,20 @@ def export_terminal_sessions(
                 export_all_sessions=export_all_sessions,
             )
             layouts = build_layouts_from_tuios_sessions(
+                session_names=resolved_session_names,
+                command_source=command_source,
+            )
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions.zellij_export import (
+                build_layouts_from_zellij_sessions,
+                resolve_zellij_sessions_for_export,
+            )
+
+            resolved_session_names = resolve_zellij_sessions_for_export(
+                session_names=session_names,
+                export_all_sessions=export_all_sessions,
+            )
+            layouts = build_layouts_from_zellij_sessions(
                 session_names=resolved_session_names,
                 command_source=command_source,
             )

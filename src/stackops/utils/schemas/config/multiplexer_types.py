@@ -1,8 +1,8 @@
 from typing import Final, Literal, TypeAlias, cast, get_args
 
 
-SessionMultiplexer: TypeAlias = Literal["tmux", "herdr", "tuios", "aoe"]
-SessionMultiplexerOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e"]
+SessionMultiplexer: TypeAlias = Literal["tmux", "herdr", "tuios", "aoe", "zellij"]
+SessionMultiplexerOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e", "zellij", "z"]
 AgentMultiplexer: TypeAlias = Literal["tuios", "herdr", "aoe"]
 
 SESSION_MULTIPLEXERS: Final[tuple[SessionMultiplexer, ...]] = cast(tuple[SessionMultiplexer, ...], get_args(SessionMultiplexer))

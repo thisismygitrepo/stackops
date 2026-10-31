@@ -80,7 +80,7 @@ def agents_create(
     backend: Annotated[
         SessionMultiplexerOption | None,
         typer.Option(
-            "--backend", "-b", help=f"Multiplexer used when --run launches the generated layout: tmux/t, herdr/h, tuios/u, or aoe/e. {DEFAULT_AGENT_MULTIPLEXER_HELP}"
+            "--backend", "-b", help=f"Multiplexer used when --run launches the generated layout: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z. {DEFAULT_AGENT_MULTIPLEXER_HELP}"
         ),
     ] = None,
     context: Annotated[

@@ -49,7 +49,7 @@ def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) 
         chosen_lines = choose_from_options(msg="Choose a line to run", options=options, tv=True, multi=True)
         if chosen_lines is None or len(chosen_lines) == 0:
             return None, choice_file, kwargs_dict
-        choice_file = Path.home().joinpath(f"tmp_results/tmp_scripts/shell/{randstr(10)}.sh")
+        choice_file = Path.home().joinpath(f"""tmp_results/tmp_scripts/shell/fire_{randstr(10)}.sh""")
         choice_file.parent.mkdir(parents=True, exist_ok=True)
         choice_file.write_text("\n".join(chosen_lines), encoding="utf-8")
         choice_function = None

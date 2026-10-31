@@ -48,6 +48,10 @@ def _load_trace_targets(backend: SessionMultiplexer) -> list[TraceTarget]:
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_tuios import list_trace_targets
 
             targets, error = list_trace_targets()
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions.session_trace_zellij import list_trace_targets
+
+            targets, error = list_trace_targets()
     if targets is None:
         raise ValueError(error or f"Unable to list {backend} sessions.")
     return targets
@@ -94,3 +98,7 @@ def choose_trace_session_names(backend: SessionMultiplexer) -> TraceSessionChoic
             from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import choose_existing_session_names
 
             return choose_existing_session_names(msg="Choose TUIOS sessions to trace:")
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import choose_existing_session_names
+
+            return choose_existing_session_names(msg="Choose Zellij sessions to trace:")

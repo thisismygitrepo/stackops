@@ -114,7 +114,8 @@ except Exception as e:
 
 
     preprogram = _build_preprogram()
-    pyfile = Path.home().joinpath(f"tmp_results/tmp_scripts/python/preview/{randstr()}/script.py")
+    script_name = f"""preview_{randstr()}"""
+    pyfile = Path.home().joinpath("tmp_results", "tmp_scripts", "python", "preview", script_name, f"""{script_name}.py""")
     pyfile.parent.mkdir(parents=True, exist_ok=True)
     title = "Reading Data"
     def_code = lambda_to_python_script(

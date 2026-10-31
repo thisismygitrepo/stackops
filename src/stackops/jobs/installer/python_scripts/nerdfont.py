@@ -16,7 +16,6 @@ import stackops.jobs.installer.powershell_scripts as powershell_scripts
 from stackops.utils.installer_utils.installer_main_protocol import (
     InstallerPythonScriptMain,
 )
-from stackops.utils.accessories import randstr
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.path_core import delete_path, tmpfile
 from stackops.utils.path_reference import get_path_reference_path
@@ -147,7 +146,7 @@ def _install_windows_nerd_fonts(version: str | None) -> None:
             print(f" - {font}")
 
         console.print("⚙️  Installing fonts via PowerShell...")
-        file = tmpfile(name=randstr(), suffix=".ps1")
+        file = tmpfile(name="nerdfont", suffix=".ps1")
 
         raw_content = (
             get_path_reference_path(

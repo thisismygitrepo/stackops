@@ -26,14 +26,13 @@ Run 'rclone config' to configure or repair your remotes.""") from error
 
 
 def get_mprocs_mount_txt(cloud: str, rclone_cmd: str, cloud_brand: str) -> str:  # cloud_brand = config[cloud]["type"]
-    from stackops.utils.accessories import randstr
     from stackops.utils.path_core import tmpfile
     import platform
     DEFAULT_MOUNT = "~/data/rclone"
 
     header = f"{' ' + cloud + ' | ' + cloud_brand + ' '}".center(50, "=")
     if platform.system() == "Windows":
-        sub_text_path = tmpfile(name=randstr(), suffix=".ps1")
+        sub_text_path = tmpfile(name="cloud_mount", suffix=".ps1")
         sub_text_path.write_text(
             f"""
 echo "{header}"

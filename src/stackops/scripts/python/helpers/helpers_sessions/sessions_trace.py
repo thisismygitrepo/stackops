@@ -35,6 +35,11 @@ def _get_trace_loader(
                 load_trace_snapshot as loader,
             )
             return loader
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions.session_trace_zellij import (
+                load_trace_snapshot as loader,
+            )
+            return loader
 
 
 def _validate_trace_options(
@@ -45,6 +50,13 @@ def _validate_trace_options(
 ) -> None:
     if every_seconds <= 0:
         raise typer.BadParameter("`--poll-interval` must be greater than 0.")
+    if backend == "zellij":
+        from stackops.scripts.python.helpers.helpers_sessions._zellij_backend_state import require_zellij
+
+        try:
+            require_zellij()
+        except ValueError as error:
+            raise typer.BadParameter(str(error)) from error
     if backend == "herdr" and until in {"all-exited", "exit-code"}:
         raise typer.BadParameter(
             "Herdr does not expose process exit status for session tracing. "

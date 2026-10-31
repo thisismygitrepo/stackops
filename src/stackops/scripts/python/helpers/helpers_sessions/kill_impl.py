@@ -16,7 +16,7 @@ def _choose_exact_kill_target(
     match backend:
         case "tmux":
             if delete:
-                return ("error", "--delete is only supported by the Herdr backend.", [])
+                return ("error", "--delete is only supported by the Herdr and Zellij backends.", [])
             from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_kill_target as _tmux
 
             return _tmux(name=name, kill_all=kill_all, idle=idle, window=window)
@@ -26,13 +26,17 @@ def _choose_exact_kill_target(
             return _herdr(name=name, kill_all=kill_all, idle=idle, window=window, delete=delete)
         case "tuios":
             if delete:
-                return ("error", "--delete is only supported by the Herdr backend.", [])
+                return ("error", "--delete is only supported by the Herdr and Zellij backends.", [])
             from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_kill import choose_kill_target as _tuios
 
             return _tuios(name=name, kill_all=kill_all, idle=idle, window=window)
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend_kill import choose_kill_target as _zellij
+
+            return _zellij(name=name, kill_all=kill_all, idle=idle, window=window, delete=delete)
         case "aoe":
             if delete:
-                return ("error", "--delete is only supported by the Herdr backend.", [])
+                return ("error", "--delete is only supported by the Herdr and Zellij backends.", [])
             from stackops.scripts.python.helpers.helpers_sessions._aoe_backend import choose_kill_target as _aoe
 
             return _aoe(name=name, kill_all=kill_all, idle=idle, window=window)
@@ -41,6 +45,10 @@ def _choose_exact_kill_target(
 
 def _list_killable_session_names(backend: SessionMultiplexer, delete: bool) -> list[str] | None:
     match backend:
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend_state import list_session_entries
+
+            return [session.name for session in list_session_entries() if session.exited == delete]
         case "tuios":
             from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import list_session_names
 
@@ -78,7 +86,10 @@ def choose_kill_target(
             delete=delete,
         )
 
-    available_names = _list_killable_session_names(backend=backend, delete=delete)
+    try:
+        available_names = _list_killable_session_names(backend=backend, delete=delete)
+    except ValueError as error:
+        return "error", str(error), []
     if available_names is None:
         return ("error", f"Unable to list {backend} sessions.", [])
     matched_names = [
@@ -86,6 +97,10 @@ def choose_kill_target(
         for session_name in available_names
         if matches_session_pattern(session_name=session_name, pattern=name)
     ]
+    if backend == "zellij":
+        import os
+
+        matched_names.sort(key=lambda session_name: session_name == os.environ.get("ZELLIJ_SESSION_NAME"))
     if len(matched_names) == 0:
         return (
             "error",

@@ -44,7 +44,7 @@ def inspect_repos(repo_local_root: str, repo_remote_root: str) -> None:
         suffix = ".sh"
     else:
         raise NotImplementedError(f"Platform {platform.system()} not implemented.")
-    with tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False, encoding="utf-8") as temp_file:
+    with tempfile.NamedTemporaryFile(mode="w", prefix="inspect_repos_", suffix=suffix, delete=False, encoding="utf-8") as temp_file:
         temp_file.write(program)
         temp_script_path = Path(temp_file.name)
     console.print(Panel(f"Run the inspection script:\n\n[blue]{temp_script_path}[/blue]", border_style="blue"))

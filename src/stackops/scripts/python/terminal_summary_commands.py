@@ -7,10 +7,10 @@ from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexerOp
 
 
 def summary(
-    backend: Annotated[SessionMultiplexerOption | None, typer.Option("--backend", "-b", help=f"Session multiplexer to summarize: tmux/t, herdr/h, tuios/u, or aoe/e. {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
+    backend: Annotated[SessionMultiplexerOption | None, typer.Option("--backend", "-b", help=f"Session multiplexer to summarize: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z (Zellij 0.45+). {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
     session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one backend session or workspace by name.")] = None,
     choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one backend session or workspace interactively and show details.")] = False,
-    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include tab/window and pane details for every session (tmux, Herdr, and TUIOS).")] = False,
+    show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include tab/window and pane details for every session (tmux, Herdr, TUIOS, and Zellij).")] = False,
 ) -> None:
     """Print running terminal session summaries or details for one session."""
     from stackops.scripts.python.terminal_summary import summary as print_summary

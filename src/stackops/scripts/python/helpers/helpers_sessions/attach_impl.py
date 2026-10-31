@@ -119,6 +119,10 @@ def choose_session(
             from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import choose_session as _tuios
 
             return _tuios(name=name, new_session=new_session, kill_all=kill_all, first=first, window=window)
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import choose_session as _zellij
+
+            return _zellij(name=name, new_session=new_session, kill_all=kill_all, first=first, window=window)
         case "aoe":
             from stackops.scripts.python.helpers.helpers_sessions._aoe_backend import choose_session as _aoe
 

@@ -44,6 +44,10 @@ def _start_backend_session(
             from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tuios import start_initial_session
 
             return start_initial_session(initial_layout=initial_layout, on_conflict=on_conflict)
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_zellij import start_initial_session
+
+            return start_initial_session(initial_layout=initial_layout, on_conflict=on_conflict)
 
 
 def _spawn_backend_tab(backend: DynamicSessionBackend, session_name: str, task: DynamicTabTask) -> None:
@@ -52,6 +56,10 @@ def _spawn_backend_tab(backend: DynamicSessionBackend, session_name: str, task: 
             sessions_dynamic_tmux.spawn_tab(session_name=session_name, task=task)
         case "tuios":
             from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tuios import spawn_tab
+
+            spawn_tab(session_name=session_name, task=task)
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_zellij import spawn_tab
 
             spawn_tab(session_name=session_name, task=task)
 
@@ -64,6 +72,10 @@ def _close_backend_tab(backend: DynamicSessionBackend, session_name: str, runtim
             from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tuios import close_tab
 
             close_tab(session_name=session_name, runtime_tab_name=runtime_tab_name)
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_zellij import close_tab
+
+            close_tab(session_name=session_name, runtime_tab_name=runtime_tab_name)
 
 
 def _is_dynamic_task_running(backend: DynamicSessionBackend, session_name: str, task: DynamicTabTask) -> bool:
@@ -72,6 +84,10 @@ def _is_dynamic_task_running(backend: DynamicSessionBackend, session_name: str, 
             return sessions_dynamic_tmux.is_task_running(session_name=session_name, task=task)
         case "tuios":
             from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_tuios import is_task_running
+
+            return is_task_running(session_name=session_name, task=task)
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_zellij import is_task_running
 
             return is_task_running(session_name=session_name, task=task)
 
@@ -84,8 +100,10 @@ def _validate_backend(backend: DynamicSessionBackendOption | None) -> DynamicSes
             return "tmux"
         case "tuios":
             return "tuios"
+        case "zellij":
+            return "zellij"
         case unsupported:
-            raise ValueError(f"run-all supports the tmux and tuios session multiplexers, not the configured {unsupported}. Pass --backend tmux or --backend tuios.")
+            raise ValueError(f"run-all supports the tmux, tuios and zellij session multiplexers, not the configured {unsupported}. Pass --backend tmux, --backend tuios or --backend zellij.")
 
 
 def run_dynamic(
@@ -218,15 +236,15 @@ def run_dynamic(
                     finished_task["completion_duration_seconds"] = max(0.0, checked_at - task_started_at)
                 completed_tasks.append(finished_task)
                 completed_count += 1
-                if kill_finished_tabs:
-                    _close_backend_tab(backend=backend_resolved, session_name=session_name, runtime_tab_name=runtime_tab_name)
-
                 if len(pending_tasks) > 0:
                     next_task = pending_tasks.popleft()
                     _spawn_backend_tab(backend=backend_resolved, session_name=session_name, task=next_task)
                     next_task["started_at_seconds"] = monotonic()
                     active_tasks[next_task["runtime_tab_name"]] = next_task
                     started_count += 1
+
+                if kill_finished_tabs:
+                    _close_backend_tab(backend=backend_resolved, session_name=session_name, runtime_tab_name=runtime_tab_name)
 
             if len(finished_names) > 0:
                 message = f"Finished {len(finished_names)} tab(s); started {started_count} replacement tab(s)."

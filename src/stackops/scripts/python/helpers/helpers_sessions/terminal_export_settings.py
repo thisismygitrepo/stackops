@@ -40,6 +40,10 @@ def _backend_session_names(backend: TerminalExportBackend) -> list[str]:
             from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import list_session_entries
 
             return [session.name for session in list_session_entries() if not session.saved]
+        case "zellij":
+            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend_state import list_session_names
+
+            return list_session_names()
 
 
 def _describe_backend(backend: TerminalExportBackend) -> str:

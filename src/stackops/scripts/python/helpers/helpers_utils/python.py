@@ -118,7 +118,7 @@ def _run_textual_env(which: Literal["PATH", "p", "ENV", "e"]) -> None:
     else:
         uv_project_dir = str(STACKOPS_REPO_DIR)
     run_shell_script(
-        get_uv_command_executing_python_script(python_script=path.read_text(encoding="utf-8"), uv_with=uv_with, uv_project_dir=uv_project_dir)[0],
+        get_uv_command_executing_python_script(python_script=path.read_text(encoding="utf-8"), uv_with=uv_with, uv_project_dir=uv_project_dir, creator="textual_env")[0],
         display_script=True,
         clean_env=False,
     )

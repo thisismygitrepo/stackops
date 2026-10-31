@@ -41,7 +41,7 @@
     "default_session_multiplexer": {
       "type": "string",
       "description": "Default session multiplexer used by terminal commands when --backend is not passed.",
-      "enum": ["tmux", "herdr", "tuios", "aoe"]
+      "enum": ["tmux", "herdr", "tuios", "aoe", "zellij"]
     },
     "default_agent_multiplexer": {
       "type": "string",

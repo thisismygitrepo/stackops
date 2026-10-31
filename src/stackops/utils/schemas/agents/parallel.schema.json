@@ -94,6 +94,7 @@
           "description": "Multiplexer used when run launches the generated layout. null uses default_agent_multiplexer from the StackOps config, else tuios.",
           "enum": [
             "tmux",
+            "zellij",
             "herdr",
             "tuios",
             "aoe",

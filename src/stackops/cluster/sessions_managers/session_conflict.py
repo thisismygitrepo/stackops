@@ -5,7 +5,7 @@ import subprocess
 from typing import Literal, NotRequired, TypedDict
 
 
-SessionBackend = Literal["tmux", "herdr", "tuios"]
+SessionBackend = Literal["tmux", "herdr", "tuios", "zellij"]
 SessionConflictActionLoose = Literal[
     "restart", "r",
     "rename", "n",
@@ -54,7 +54,7 @@ MERGE_SESSION_CONFLICT_ACTIONS = frozenset(
         "mergeSkip",
     }
 )
-MERGE_SUPPORTED_BACKENDS = frozenset({"tmux", "tuios"})
+MERGE_SUPPORTED_BACKENDS = frozenset({"tmux", "tuios", "zellij"})
 
 
 class SessionLaunchPlan(TypedDict):
@@ -122,6 +122,10 @@ def _duplicate_conflict_hint(backend: SessionBackend) -> str:
 
 
 def list_existing_sessions(backend: SessionBackend) -> set[str]:
+    if backend == "zellij":
+        from stackops.scripts.python.helpers.helpers_sessions._zellij_backend_state import list_session_entries
+
+        return {entry.name for entry in list_session_entries()}
     if backend == "tuios":
         from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import list_session_entries
 
@@ -306,6 +310,12 @@ def build_session_launch_plan(
 
 
 def kill_existing_session(backend: SessionBackend, session_name: str) -> None:
+    if backend == "zellij":
+        from stackops.scripts.python.helpers.helpers_sessions._zellij_backend_state import list_session_names, run_zellij
+
+        if session_name in list_session_names():
+            run_zellij(["kill-session", "--", session_name])
+        return
     if backend == "tuios":
         from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import run_tuios
 

@@ -15,9 +15,10 @@ def read-shell-environment [file_path: path, powershell: bool]: nothing -> recor
 export def --env --wrapped wrap_in_shell_script [command: string, ...args: string]: nothing -> nothing {
     let powershell = $nu.os-info.name == "windows"
     let extension = if $powershell { "ps1" } else { "sh" }
+    let command_prefix = ($command | path basename | path parse | get stem | str downcase | str replace --all --regex '[^a-z0-9_]' '_')
     let op_dir = ($nu.home-dir | path join "tmp_results" "tmp_scripts" "stackops")
     mkdir $op_dir
-    let op_program_path = ($op_dir | path join $"(random uuid).($extension)")
+    let op_program_path = ($op_dir | path join $"($command_prefix)_(random uuid).($extension)")
 
     with-env {OP_PROGRAM_PATH: $op_program_path} {
         ^$command ...$args

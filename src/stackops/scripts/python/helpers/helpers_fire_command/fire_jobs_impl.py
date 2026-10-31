@@ -106,7 +106,7 @@ def _handle_marimo(choice_file: Path, repo_root: Path | None, randstr_func: Rand
 """
     else:
         print(f"♻️ `{choice_file}` is not recognized as a marimo notebook. Converting before edit.")
-        tmp_dir = Path.home().joinpath(f"tmp_results/tmp_scripts/marimo/{choice_file.stem}_{randstr_func(10)}")
+        tmp_dir = Path.home().joinpath(f"""tmp_results/tmp_scripts/marimo/fire_{choice_file.stem}_{randstr_func(10)}""")
         tmp_dir.mkdir(parents=True, exist_ok=True)
         script = f"""
 cd {tmp_dir}
@@ -256,7 +256,7 @@ def _create_import_script(
     else:
         calling = """# No function selected to call. You can add your code here."""
     new_choice_file = Path.home().joinpath(
-        f"tmp_results/tmp_scripts/python/{Path(choice_file).parent.name}_{Path(choice_file).stem}_{randstr_func(10)}.py"
+        f"""tmp_results/tmp_scripts/python/fire_{Path(choice_file).parent.name}_{Path(choice_file).stem}_{randstr_func(10)}.py"""
     )
     new_choice_file.parent.mkdir(parents=True, exist_ok=True)
     new_choice_file.write_text(import_code_robust + "\n" + code_printing + "\n" + calling, encoding="utf-8")
