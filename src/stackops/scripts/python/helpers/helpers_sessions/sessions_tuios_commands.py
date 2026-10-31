@@ -1,12 +1,11 @@
 import json
 import shlex
-from pathlib import Path
 from typing import cast
 
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import LaunchedWindow
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import kill_window_command, run_tuios
-from stackops.utils.schemas.layouts.layout_types import PaneConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_types import PaneConfig, TabConfig, resolve_start_dir
 
 
 def build_window_script(command: str, exit_mode: SessionExitMode) -> str:
@@ -36,7 +35,7 @@ def launch_window(session_name: str, pane: PaneConfig, exit_mode: SessionExitMod
             "call", "new-window",
             json.dumps({
                 "session": session_name,
-                "cwd": str(Path(pane["startDir"]).expanduser().absolute()),
+                "cwd": resolve_start_dir(pane["startDir"]),
                 "workspace": workspace,
                 "focus": False,
                 "name": pane["paneName"],

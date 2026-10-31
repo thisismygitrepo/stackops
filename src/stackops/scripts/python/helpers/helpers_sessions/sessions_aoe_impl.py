@@ -11,7 +11,7 @@ from typing import Literal
 from rich.console import Console
 
 from stackops.cluster.sessions_managers.session_launch_table import LaunchedPaneRow, print_launch_table
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabConfig, resolve_start_dir
 
 type TabCommandMode = Literal["prompt", "cmd", "ignore"]
 
@@ -99,7 +99,7 @@ def build_aoe_add_command(
         tab_command_mode=options.tab_command_mode,
     )
 
-    command = [options.aoe_bin, "add", pane["startDir"]]
+    command = [options.aoe_bin, "add", resolve_start_dir(pane["startDir"])]
     command.extend(["--title", title])
     command.extend(["--group", group])
 

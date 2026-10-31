@@ -9,11 +9,10 @@ from stackops.cluster.sessions_managers.session_exit_mode import (
 )
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common import (
     generate_random_suffix,
-    normalize_cwd,
     shell_quote,
 )
 from stackops.utils.schemas.layouts.layout_constants import DEFAULT_TAB_ARRANGEMENT
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig, resolve_start_dir
 
 
 TmuxMergeConflictAction = Literal[
@@ -121,7 +120,7 @@ def _build_tab_pane_commands(
     for pane_index, pane in enumerate(tab["panes"]):
         if pane_index > 0:
             commands.append(
-                f"tmux split-window -t {window_target} -c {shell_quote(normalize_cwd(pane['startDir']))}"
+                f"tmux split-window -t {window_target} -c {shell_quote(resolve_start_dir(pane['startDir']))}"
             )
         commands.append(f"tmux select-pane -t {window_target} -T {shell_quote(pane['paneName'])}")
         actual_command = pane["command"]
@@ -154,7 +153,7 @@ def build_tmux_new_window_tab_commands(
         *_build_new_window_commands(
             session_name=session_name,
             window_name=tab["tabName"],
-            cwd=normalize_cwd(tab["panes"][0]["startDir"]),
+            cwd=resolve_start_dir(tab["panes"][0]["startDir"]),
         ),
         *_build_tab_pane_commands(session_name=session_name, tab=tab, exit_mode=exit_mode),
     ]
@@ -169,7 +168,7 @@ def build_tmux_commands(
     tabs = layout_config["layoutTabs"]
     first_window = tabs[0]["tabName"]
     commands: list[str] = []
-    first_cwd = normalize_cwd(tabs[0]["panes"][0]["startDir"])
+    first_cwd = resolve_start_dir(tabs[0]["panes"][0]["startDir"])
     commands.append(
         f"tmux new-session -d -s {shell_quote(session_name)} -n {shell_quote(first_window)} -c {shell_quote(first_cwd)}"
     )
@@ -209,7 +208,7 @@ def build_tmux_merge_commands(
                         _build_replace_window_commands(
                             session_name=session_name,
                             window_name=window_name,
-                            cwd=normalize_cwd(tab["panes"][0]["startDir"]),
+                            cwd=resolve_start_dir(tab["panes"][0]["startDir"]),
                             reserved_window_names=existing_window_names,
                         )
                     )

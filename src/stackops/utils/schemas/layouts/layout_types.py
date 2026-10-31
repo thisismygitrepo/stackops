@@ -44,6 +44,12 @@ class LayoutsFile(TypedDict):
     layouts: list[LayoutConfig]
 
 
+def resolve_start_dir(start_dir: str) -> str:
+    import os
+
+    return str(Path(os.path.expandvars(start_dir)).expanduser().absolute())
+
+
 def substitute_home(tabs: list[TabConfig]) -> list["TabConfig"]:
     json_str = json.dumps(tabs)
     json_str = json_str.replace("~", str(Path.home())).replace("$HOME", str(Path.home()))

@@ -17,7 +17,7 @@ from stackops.cluster.sessions_managers.session_conflict import (
     kill_existing_session,
 )
 from stackops.utils.schemas.layouts.layout_constants import DEFAULT_TAB_ARRANGEMENT
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabArrangement, TabConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabArrangement, TabConfig, resolve_start_dir
 
 
 JsonObject: TypeAlias = dict[str, object]
@@ -108,7 +108,7 @@ def launch_layout_with_herdr(*, layout: LayoutConfig) -> HerdrLaunchSummary:
             "workspace",
             "create",
             "--cwd",
-            first_tab["panes"][0]["startDir"],
+            resolve_start_dir(first_tab["panes"][0]["startDir"]),
             "--label",
             layout["layoutName"],
             "--no-focus",
@@ -139,7 +139,7 @@ def launch_layout_with_herdr(*, layout: LayoutConfig) -> HerdrLaunchSummary:
                 "--workspace",
                 workspace_id,
                 "--cwd",
-                tab["panes"][0]["startDir"],
+                resolve_start_dir(tab["panes"][0]["startDir"]),
                 "--label",
                 tab["tabName"],
                 "--no-focus",
@@ -186,7 +186,7 @@ def _split_pane(*, pane_id: str, direction: Literal["right", "down"], kept_share
             "--ratio",
             str(kept_share),
             "--cwd",
-            pane["startDir"],
+            resolve_start_dir(pane["startDir"]),
             "--no-focus",
         ]
     )

@@ -1,4 +1,5 @@
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import choose_existing_session_names
+from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_idle import window_is_idle
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import WindowEntry
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import (
     list_session_entries,
@@ -50,7 +51,7 @@ def _pane_from_window(window: WindowEntry, used_pane_names: set[str], command_so
     if command_source == "current-command":
         command = window.running_command or window.foreground_command
         if not command:
-            if window.at_prompt is True:
+            if window.at_prompt is True or window_is_idle(window=window) is True:
                 command = TMUX_EXPORT_SHELL_COMMAND
             else:
                 raise ValueError(f"""TUIOS window '{name}' does not report its running command. Use --command-source shell.""")
