@@ -9,22 +9,15 @@ TerminalExportBackend: TypeAlias = Literal["tmux", "herdr", "tuios"]
 TerminalExportBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u"]
 
 
-def resolve_export_backend(
-    backend: TerminalExportBackendOption,
-) -> TerminalExportBackend:
-    import platform
+def resolve_export_backend(backend: TerminalExportBackendOption | None) -> TerminalExportBackend:
+    from stackops.utils.default_multiplexer import resolve_session_multiplexer
 
-    match backend:
-        case "tmux" | "t":
-            return "tmux"
-        case "herdr" | "h":
-            if platform.system().lower() == "windows":
-                raise ValueError("Herdr export is not supported on Windows.")
-            return "herdr"
-        case "tuios" | "u":
-            return "tuios"
-        case _:
-            raise ValueError(f"Unsupported export backend: {backend}")
+    resolved = resolve_session_multiplexer(multiplexer=backend)
+    match resolved:
+        case "tmux" | "herdr" | "tuios":
+            return resolved
+        case "aoe":
+            raise ValueError("terminal export supports the tmux, herdr and tuios session multiplexers, not the configured aoe. Pass --backend.")
 
 
 def supported_command_sources(backend: TerminalExportBackend) -> tuple[TmuxExportCommandSource, ...]:

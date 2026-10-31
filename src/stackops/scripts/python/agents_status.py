@@ -7,10 +7,11 @@ import typer
 from stackops.scripts.python.helpers.helpers_agents.agents_status_models import (
     AgentStatus,
     HistoryMode,
-    StatusBackend,
     StatusFormat,
     StatusOptions,
 )
+from stackops.utils.default_multiplexer import DEFAULT_AGENT_MULTIPLEXER_HELP
+from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer
 from stackops.scripts.python.helpers.helpers_agents.constants import (
     AGENTS_STATUS_EVENT_LIMIT,
     AGENTS_STATUS_TIMEOUT_SECONDS,
@@ -19,7 +20,7 @@ from stackops.scripts.python.helpers.helpers_agents.constants import (
 
 
 def status(
-    backend: Annotated[StatusBackend, typer.Option("--backend", "-b", help="Session-manager backend to inspect: tuios, herdr or aoe. AoE uses its current profile.")] = "tuios",
+    backend: Annotated[AgentMultiplexer | None, typer.Option("--backend", "-b", help=f"Agent multiplexer to inspect: tuios, herdr or aoe. AoE uses its current profile. {DEFAULT_AGENT_MULTIPLEXER_HELP}")] = None,
     session: Annotated[list[str] | None, typer.Option("--session", "-s", help="Native manager session name or ID; Herdr's outer session, TUIOS session, or AoE session in the current profile. Default: all live local sessions, including detached sessions. Repeat for alternatives.")] = None,
     layout: Annotated[list[str] | None, typer.Option("--layout", "-l", help="Layout scope: TUIOS session name/ID; Herdr workspace label/ID/number; AoE full group path. Repeat for alternatives.")] = None,
     tab: Annotated[list[str] | None, typer.Option("--tab", "-t", help="Layout tab: TUIOS workspace name/number; Herdr tab label/ID; AoE session title/ID. Repeat for alternatives.")] = None,
@@ -40,10 +41,15 @@ def status(
 ) -> None:
     from stackops.scripts.python.helpers.helpers_agents.agents_status_collect import collect_status
     from stackops.scripts.python.helpers.helpers_agents.agents_status_render import render_status, write_status_output
+    from stackops.utils.default_multiplexer import resolve_agent_multiplexer
 
     if force and output is None:
         raise typer.BadParameter("--force requires --output.")
-    if backend != "tuios" and server is not None:
+    try:
+        resolved_backend = resolve_agent_multiplexer(multiplexer=backend)
+    except ValueError as error:
+        raise typer.BadParameter(str(error), param_hint="--backend") from error
+    if resolved_backend != "tuios" and server is not None:
         raise typer.BadParameter("--server is only supported by TUIOS. Use --session to select sessions.", param_hint="--server")
     selected_states = tuple(value.lower() for value in state or ())
     supported_states = get_args(AgentStatus)
@@ -53,7 +59,7 @@ def status(
             param_hint="--state",
         )
     options = StatusOptions(
-        backend=backend,
+        backend=resolved_backend,
         sessions=tuple(session or ()), layouts=tuple(layout or ()), tabs=tuple(tab or ()),
         windows=tuple(window or ()), exclude_windows=tuple(exclude_window or ()), agent_sessions=tuple(agent_session or ()),
         harnesses=tuple("claude-code" if value.lower() == "claude" else value.lower() for value in harness or ()),

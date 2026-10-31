@@ -3,13 +3,10 @@ from pathlib import Path
 from typing import Final, TypeAlias, cast, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
-    AGENT_PARALLEL_BACKEND_HELP,
-    AgentParallelBackend,
-    resolve_agent_parallel_backend,
-)
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import CREATE_CONFIG_KEYS, ParallelCreateValues, ParallelYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_paths import resolve_parallel_create_paths
+from stackops.utils.default_multiplexer import resolve_session_multiplexer
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer, SessionMultiplexerOption
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 
 
@@ -257,14 +254,13 @@ def _optional_host(*, mapping: Mapping[str, object], key: str) -> HOST | None:
     return cast(HOST, value)
 
 
-def _optional_backend(*, mapping: Mapping[str, object], key: str) -> AgentParallelBackend | None:
+def _optional_backend(*, mapping: Mapping[str, object], key: str) -> SessionMultiplexer | None:
     value = _optional_string(mapping=mapping, key=key)
     if value is None:
         return None
-    try:
-        return resolve_agent_parallel_backend(cast(AgentParallelBackend, value))
-    except ValueError as exc:
-        raise ValueError(f"{key} must be one of: {AGENT_PARALLEL_BACKEND_HELP}") from exc
+    if value not in get_args(SessionMultiplexerOption):
+        raise ValueError(f"{key} must be one of: {', '.join(get_args(SessionMultiplexerOption))}")
+    return resolve_session_multiplexer(multiplexer=cast(SessionMultiplexerOption, value))
 
 
 def _optional_provider(*, mapping: Mapping[str, object], key: str) -> PROVIDER | None:

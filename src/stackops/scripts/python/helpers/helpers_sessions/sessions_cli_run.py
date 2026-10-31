@@ -7,7 +7,7 @@ import typer
 if TYPE_CHECKING:
     from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
     from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
-    from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import SessionBackendOption
+    from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexerOption
 
 
 def run_cli(
@@ -21,7 +21,7 @@ def run_cli(
     parallel_layouts: int | None,
     max_tabs: int,
     max_layouts: int,
-    backend: "SessionBackendOption",
+    backend: "SessionMultiplexerOption | None",
     on_conflict: "SessionConflictAction",
     exit_mode: "SessionExitMode",
     monitor: bool,
@@ -32,18 +32,16 @@ def run_cli(
         if sleep_inbetween < 0:
             raise ValueError("--launch-delay must be >= 0.")
 
-        from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import (
-            resolve_standard_backend,
-            substitute_home_in_layouts,
-        )
+        from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import substitute_home_in_layouts
         from stackops.scripts.python.helpers.helpers_sessions.sessions_impl import run_layouts
         from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import (
             load_selected_layouts_from_source,
             resolve_layout_source,
         )
         from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_tabs import choose_tabs_from_source
+        from stackops.utils.default_multiplexer import resolve_session_multiplexer
 
-        backend_resolved = resolve_standard_backend(backend)
+        backend_resolved = resolve_session_multiplexer(multiplexer=backend)
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,

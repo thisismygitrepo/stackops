@@ -8,7 +8,6 @@ from stackops.scripts.python.helpers.helpers_sessions.terminal_export import (
     supported_command_sources,
 )
 from stackops.scripts.python.helpers.helpers_sessions.tmux_export_constants import (
-    TERMINAL_EXPORT_DEFAULT_BACKEND,
     TERMINAL_EXPORT_DEFAULT_COMMAND_SOURCE,
     TmuxExportCommandSource,
 )
@@ -91,8 +90,6 @@ def resolve_terminal_export_settings(
             backends = cast(tuple[TerminalExportBackend, ...], get_args(TerminalExportBackend))
             backend_choices: dict[str, TerminalExportBackend] = {f"""{name}  [{_describe_backend(backend=name)}]""": name for name in backends}
             resolved_backend = _choose(choices=backend_choices, msg="Choose a backend to export from:")
-        case None:
-            resolved_backend = resolve_export_backend(backend=TERMINAL_EXPORT_DEFAULT_BACKEND)
         case _:
             resolved_backend = resolve_export_backend(backend=backend)
 

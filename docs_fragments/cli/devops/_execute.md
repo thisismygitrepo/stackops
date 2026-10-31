@@ -23,7 +23,7 @@ The group alias is `x`; command aliases are `run/r`, `list/l`, `path/p`, and `ed
 
 Put `run` options before NAME. Arguments after NAME belong to the script.
 
-`workspace` searches `<workspace-root>/.stackops/scripts`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` searches the remaining sources. A direct script file path overrides `--source`.
+`workspace` searches `<workspace-root>/.stackops/scripts` and `.stackops/scripts` in each immediate child directory of the root that has one, labelled `workspace:<child>`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` searches the remaining sources. A direct script file path overrides `--source`.
 
 ### Examples
 

@@ -106,8 +106,8 @@ def test_load_all_matches_uses_only_custom_file(
         raise AssertionError("A custom file must bypass project and user source resolution")
 
     monkeypatch.setattr(secret_support, "_resolve_user_secrets_path", reject_default_lookup)
-    monkeypatch.setattr(stackops_paths, "current_repo_stackops_path", reject_default_lookup)
-    monkeypatch.setattr(stackops_paths, "require_current_repo_stackops_path", reject_default_lookup)
+    monkeypatch.setattr(stackops_paths, "current_workspace_stackops_paths", reject_default_lookup)
+    monkeypatch.setattr(stackops_paths, "require_current_workspace_stackops_paths", reject_default_lookup)
 
     result = CliRunner().invoke(
         cli_config_secrets.get_app(), ["load", "cloudf", all_matches_option, "--verbose", "--source", source, "--custom-path", str(secrets_path)]

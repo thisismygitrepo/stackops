@@ -8,33 +8,27 @@ AgentManagedFileKind: TypeAlias = Literal["prompts", "parallel", "mcp"]
 AgentManagedFileSource: TypeAlias = Literal["workspace", "w", "user", "u", "library", "l"]
 
 
-def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[AgentManagedFileSource, Path], ...]:
+def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[str, Path], ...]:
     import stackops.jobs.agents.mcps as mcp_assets
     import stackops.utils.schemas.agents as agent_schema_assets
     from stackops.utils.path_reference import get_path_reference_path
-    from stackops.utils.repos.stackops_paths import current_repo_stackops_path
+    from stackops.utils.repos.stackops_paths import current_workspace_stackops_paths
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
 
     match kind:
         case "prompts":
-            repo_path = current_repo_stackops_path(path_kind="prompts_yaml")
+            workspace_paths = current_workspace_stackops_paths(path_kind="prompts_yaml")
             relative_user_path = Path("agents/prompts/prompts.yaml")
             library_path = LIBRARY_ROOT / relative_user_path
         case "parallel":
-            repo_path = current_repo_stackops_path(path_kind="parallel_yaml")
+            workspace_paths = current_workspace_stackops_paths(path_kind="parallel_yaml")
             relative_user_path = Path("agents/parallel/parallel.yaml")
             library_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
         case "mcp":
-            repo_path = current_repo_stackops_path(path_kind="mcp_json")
+            workspace_paths = current_workspace_stackops_paths(path_kind="mcp_json")
             relative_user_path = Path("agents/mcps/mcp.json")
             library_path = get_path_reference_path(module=mcp_assets, path_reference=mcp_assets.MCP_PATH_REFERENCE)
-    locations: list[tuple[AgentManagedFileSource, Path]] = [
-        ("user", DOTFILES_STACKOPS_ROOT / relative_user_path),
-        ("library", library_path),
-    ]
-    if repo_path is not None:
-        locations.insert(0, ("workspace", repo_path))
-    return tuple(locations)
+    return (*workspace_paths, ("user", DOTFILES_STACKOPS_ROOT / relative_user_path), ("library", library_path))
 
 
 def resolve_agent_managed_file_path(*, kind: AgentManagedFileKind, source: AgentManagedFileSource) -> Path:

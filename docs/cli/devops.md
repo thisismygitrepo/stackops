@@ -264,7 +264,7 @@ Current behavior:
 - `NAME` can be a predefined script name or a raw command string
 - when `NAME` is a direct script file path, `run` executes it without searching the configured script roots. An explicit file overrides `--source`, including `--source dynamic`
 - `--source`, `-s` selects search locations: `all/a`, `workspace/w`, `user/u`, `library/l`, or `dynamic/d`
-- `--source workspace` or `-s w` searches `<workspace-root>/.stackops/scripts`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` searches the remaining sources
+- `--source workspace` or `-s w` searches `<workspace-root>/.stackops/scripts` and `.stackops/scripts` in each immediate child directory of the root that has one, labelled `workspace:<child>`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` searches the remaining sources
 - `--interactive` enables interactive selection
 - `--command` runs the input as a command
 - `scripts list` prints available scripts; `scripts path [NAME]` prints a resolved path or the search locations; `scripts edit NAME` opens a script from `workspace/w`, `user/u`, or `library/l`, or searches those locations with `all/a`
@@ -298,7 +298,7 @@ Current behavior:
 - `add` creates a new login entry; `stats` and `subset` inspect or export selected entries
 - `path`, `init`, and `validate` manage the secrets file and schema
 - `--source/-s` selects `workspace/w` or `user/u`; `search`, `load`, and `stats` also accept `all/a`
-- The workspace secrets file is `<workspace-root>/.stackops/secrets/secrets.json`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` includes only `user`; select `user` or pass a custom file
+- The workspace secrets file is `<workspace-root>/.stackops/secrets/secrets.json`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Reads also include `.stackops/secrets/secrets.json` from each immediate child directory of the root that has one, labelled `workspace:<child>`; commands that write one file use the root file. Outside these locations, explicit `workspace` fails and `all` includes only `user`; select `user` or pass a custom file
 - `--custom-path/-p` selects exactly one secrets file and overrides `--source`, including `--source all`
 - With no source or custom file, `search` and `load` prefer an existing workspace file and otherwise use the user file; `stats` reads all available sources
 - `bitwarden search` retrieves Bitwarden credentials and can copy password, username, TOTP, or raw JSON to clipboard slots

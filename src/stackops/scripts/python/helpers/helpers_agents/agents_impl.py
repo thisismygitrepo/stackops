@@ -5,13 +5,8 @@ from math import isfinite
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
-    DEFAULT_AGENT_PARALLEL_BACKEND,
-    AgentParallelBackend,
-    AgentParallelBackendOption,
-    resolve_agent_parallel_backend,
-    run_generated_layout,
-)
+from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import run_generated_layout
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     CONFIG_AGENTS,
@@ -44,11 +39,10 @@ def agents_create(
     reasoning: ReasoningEffort | None,
     provider: PROVIDER | None,
     interactive: bool,
-    backend: AgentParallelBackendOption | AgentParallelBackend = DEFAULT_AGENT_PARALLEL_BACKEND,
+    backend: SessionMultiplexer,
     stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> None:
     """Create agents layout file, ready to run."""
-    backend_resolved = resolve_agent_parallel_backend(backend)
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
     _validate_stagger_max(stagger_max=stagger_max)
     if interactive:
@@ -110,7 +104,7 @@ def agents_create(
         job_name=job_name_resolved,
         agent=agent,
         host=host,
-        backend=backend_resolved,
+        backend=backend,
         provider=provider,
         model=model,
         reasoning_effort=normalized_reasoning_effort,
@@ -162,7 +156,7 @@ def agents_create(
         model=model,
         reasoning_effort=normalized_reasoning_effort,
         provider=provider,
-        backend=backend_resolved,
+        backend=backend,
         agent_load=agent_load,
         stagger_max=stagger_max,
         separator=separator,
@@ -198,7 +192,7 @@ def agents_create(
             reasoning_effort=normalized_reasoning_effort,
             provider=provider,
             host=host,
-            backend=backend_resolved,
+            backend=backend,
             context=context,
             context_path=context_path,
             separator=separator,
@@ -217,7 +211,7 @@ def agents_create(
 
         typer.echo(f"Saved parallel YAML entry '{job_name_resolved}' to: {saved_yaml_path}")
     if run:
-        run_generated_layout(layout_output_path=layout_output_path.resolve(), backend=backend_resolved, agent=agent_selected)
+        run_generated_layout(layout_output_path=layout_output_path.resolve(), backend=backend, agent=agent_selected)
 
 
 def _confirm_existing_agents_dir_cleanup(*, agents_dir_obj: Path) -> None:
@@ -252,7 +246,7 @@ def _save_parallel_yaml_entry(
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
     host: HOST,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     context: str | None,
     context_path: str | None,
     separator: str,
@@ -307,7 +301,7 @@ def _build_parallel_yaml_entry(
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
     host: HOST,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     context: str | None,
     context_path: str | None,
     separator: str,

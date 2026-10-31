@@ -5,7 +5,7 @@ import pytest
 from typer.testing import CliRunner
 
 from stackops.scripts.python import terminal
-from stackops.scripts.python.terminal_summary_models import SummaryBackend
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexerOption
 
 
 @pytest.mark.parametrize("arguments", [("--help",), ("summary", "--help"), ("s", "--help")])
@@ -36,22 +36,22 @@ assert not loaded_modules, loaded_modules
 @pytest.mark.parametrize(
     ("arguments", "expected_values"),
     [
-        ((), ("tmux", None, False, False)),
+        ((), (None, None, False, False)),
         (("-b", "tuios", "-s", "sample", "-t"), ("tuios", "sample", False, True)),
-        (("-c",), ("tmux", None, True, False)),
+        (("-c",), (None, None, True, False)),
     ],
 )
 def test_summary_command_forwards_defaults_and_options(
     command: str,
     arguments: tuple[str, ...],
-    expected_values: tuple[SummaryBackend, str | None, bool, bool],
+    expected_values: tuple[SessionMultiplexerOption | None, str | None, bool, bool],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from stackops.scripts.python import terminal_summary
 
-    captured_values: list[tuple[SummaryBackend, str | None, bool, bool]] = []
+    captured_values: list[tuple[SessionMultiplexerOption | None, str | None, bool, bool]] = []
 
-    def capture_summary(*, backend: SummaryBackend, session: str | None, choose_session: bool, show_tabs: bool) -> None:
+    def capture_summary(*, backend: SessionMultiplexerOption | None, session: str | None, choose_session: bool, show_tabs: bool) -> None:
         captured_values.append((backend, session, choose_session, show_tabs))
 
     monkeypatch.setattr(terminal_summary, "summary", capture_summary)

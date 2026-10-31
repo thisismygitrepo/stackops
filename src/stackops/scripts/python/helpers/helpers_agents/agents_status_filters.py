@@ -1,6 +1,7 @@
 from typing import Literal
 
-from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, JsonObject, StatusBackend, StatusOptions
+from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer
+from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, JsonObject, StatusOptions
 from stackops.scripts.python.helpers.helpers_agents.agents_status_tuios import text_field
 
 
@@ -8,7 +9,7 @@ type LayoutLevel = Literal["layout", "tab", "pane"]
 
 
 def _layout_identities(
-    *, pane: JsonObject, session: JsonObject, workspace_names: dict[int, str], backend: StatusBackend,
+    *, pane: JsonObject, session: JsonObject, workspace_names: dict[int, str], backend: AgentMultiplexer,
 ) -> dict[LayoutLevel, set[str]]:
     session_values = {text_field(session, (key,)) for key in ("name", "id", "title")}
     workspace_values = {text_field(pane, (key,)) for key in ("workspace_id", "workspace_name")}

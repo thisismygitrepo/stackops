@@ -14,7 +14,8 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, StatusBackend, StatusSnapshot
+from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer
+from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, StatusSnapshot
 
 
 def plain_status_text(value: str) -> str:
@@ -34,7 +35,7 @@ def _brief(value: str) -> str:
     return value if len(value) <= 180 else f"""{value[:177]}…"""
 
 
-def _row(agent: AgentSnapshot, backend: StatusBackend) -> tuple[str, ...]:
+def _row(agent: AgentSnapshot, backend: AgentMultiplexer) -> tuple[str, ...]:
     human_count = sum(message.kind == "user" for message in agent.history.messages)
     context_count = sum(message.kind != "user" for message in agent.history.messages)
     pane_reference = f"""{agent.session} / {agent.window_id}""" if agent.tab_id else agent.window_id

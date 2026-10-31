@@ -6,6 +6,7 @@ from typing import Literal, TypeAlias, overload
 
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.options_utils.options import choose_from_options
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 
 NEW_SESSION_LABEL = "NEW SESSION"
 KILL_ALL_AND_NEW_LABEL = "KILL ALL SESSIONS & START NEW"
@@ -98,7 +99,7 @@ def interactive_choose_with_preview(
 
 
 def choose_session(
-    backend: Literal["tmux", "herdr", "tuios", "aoe"],
+    backend: SessionMultiplexer,
     name: str | None,
     new_session: bool,
     kill_all: bool,

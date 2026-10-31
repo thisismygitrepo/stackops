@@ -1,31 +1,11 @@
 """Backend helpers for launching generated parallel agent layouts."""
 
 from pathlib import Path
-from typing import Final, Literal, TypeAlias
+
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 
 
-AgentParallelBackend: TypeAlias = Literal["tmux", "herdr", "tuios", "aoe"]
-AgentParallelBackendOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e"]
-DEFAULT_AGENT_PARALLEL_BACKEND: Final[AgentParallelBackend] = "tmux"
-AGENT_PARALLEL_BACKENDS: Final[tuple[AgentParallelBackend, ...]] = ("tmux", "herdr", "tuios", "aoe")
-AGENT_PARALLEL_BACKEND_HELP: Final[str] = "tmux, herdr, tuios, or aoe"
-
-
-def resolve_agent_parallel_backend(backend: AgentParallelBackendOption | AgentParallelBackend) -> AgentParallelBackend:
-    match backend:
-        case "tmux" | "t":
-            return "tmux"
-        case "herdr" | "h":
-            return "herdr"
-        case "tuios" | "u":
-            return "tuios"
-        case "aoe" | "e":
-            return "aoe"
-        case _:
-            raise ValueError(f"Unsupported backend '{backend}'. Use {AGENT_PARALLEL_BACKEND_HELP}.")
-
-
-def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBackend, agent: str | None = None) -> None:
+def run_generated_layout(*, layout_output_path: Path, backend: SessionMultiplexer, agent: str | None = None) -> None:
     match backend:
         case "tmux":
             _run_generated_layout_with_tmux(layout_output_path=layout_output_path)
@@ -58,8 +38,6 @@ def run_generated_layout(*, layout_output_path: Path, backend: AgentParallelBack
             from stackops.scripts.python.helpers.helpers_agents.agents_parallel_aoe_backend import run_generated_layout_with_aoe
 
             run_generated_layout_with_aoe(layout_output_path=layout_output_path, agent=agent)
-        case _:
-            raise ValueError(f"Unsupported backend '{backend}'. Use {AGENT_PARALLEL_BACKEND_HELP}.")
 
 
 def _run_generated_layout_with_tmux(*, layout_output_path: Path) -> None:

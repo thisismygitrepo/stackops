@@ -34,8 +34,8 @@ Hidden one-letter aliases exist, but this page uses canonical command names.
 
 - `run`, `run-all`, and `list` accept `--source` / `-s`: `workspace/w`, `user/u`, or `all/a`, defaulting to `all`.
 - The workspace root is the enclosing Git repository root, including when called from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, the workspace source is unavailable.
-- Without `--custom-path` or `--test-layout`, `--source all` combines named layouts from the user file at `~/dotfiles/stackops/config/layout.yaml` and the workspace file at `<workspace-root>/.stackops/config/layout.yaml`, including each file that exists. When the workspace source is unavailable, `all` includes only the user source; explicit `--source workspace` fails. `run` and `run-all` open a picker for the selected source files; cancelling it aborts the command.
-- The default picker labels entries `user:name` or `workspace:name` and previews their source file paths. Layout and session names remain unchanged.
+- Without `--custom-path` or `--test-layout`, `--source all` combines named layouts from the user file at `~/dotfiles/stackops/config/layout.yaml` the workspace file at `<workspace-root>/.stackops/config/layout.yaml`, and `.stackops/config/layout.yaml` in each immediate child directory of the root that has one, labelled `workspace:<child>`, including each file that exists. `path`, `init`, `validate`, and `edit` with `--source workspace` use the root file. When the workspace source is unavailable, `all` includes only the user source; explicit `--source workspace` fails. `run` and `run-all` open a picker for the selected source files; cancelling it aborts the command.
+- The default picker labels entries `user:name`, `workspace:name`, or `workspace:<child>:name` and previews their source file paths. Layout and session names remain unchanged.
 - `--custom-path` / `-p` overrides `--source` and loads layouts only from the supplied file, including outside a workspace.
 - For `run`, an explicit `--choose-layouts` or `--choose-tabs` selector uses that selection without opening an additional layout picker.
 - `run` and `run-all` also support `--test-layout`, which generates a built-in finite layout set for experimentation and cannot be combined with `--custom-path`.
@@ -63,7 +63,7 @@ terminal run [OPTIONS]
 | `--parallel-layouts` | `-j` | Maximum number of layouts to launch per monitored batch |
 | `--max-tabs-per-layout` | `-T` | Sanity limit for tabs inside a single selected layout |
 | `--max-parallel-layouts` | `-P` | Sanity limit for total parallel layouts |
-| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, or `aoe`/`e`; omitted, uses `default_session_multiplexer` from the StackOps config, else `tmux` |
 | `--on-conflict` | `-c` | `error`, `restart`, `rename`, `merge-overwrite`, or `merge-skip` |
 | `--exit` | `-e` | `back-to-shell`, `terminate`, or `kill-window` after each command exits |
 | `--monitor` | `-m` | Monitor launched sessions for completion |
@@ -122,7 +122,7 @@ terminal run-all [OPTIONS]
 | `--test-layout` | `-L` | Use the generated mock layout instead of reading a file |
 | `--max-parallel-tabs` | `-t` | Required cap for concurrently active tabs |
 | `--poll-interval` | `-i` | Polling interval for finished-tab detection |
-| `--backend` | `-b` | `tmux`/`t`, `tuios`/`u`, or `auto`/`a` |
+| `--backend` | `-b` | `tmux`/`t` or `tuios`/`u`; omitted, uses `default_session_multiplexer` from the StackOps config, else `tmux`; any other configured value is rejected |
 | `--kill-finished-tabs` | `-k` | Close each tab as soon as its command finishes |
 | `--on-conflict` | `-c` | `error`, `restart`, or `rename`; merge policies are rejected |
 | `--substitute-home` | `-H` | Expand `~` and `$HOME` inside selected tabs |
@@ -158,7 +158,7 @@ terminal attach [OPTIONS] [NAME]
 | `--kill-all` | `-k` | Kill all existing sessions before creating a new one |
 | `--first` | `-f` | Attach to the first available tmux session without prompting |
 | `--window` | `-w` | Choose a window/tab or pane target instead of only sessions |
-| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, or `aoe`/`e`; omitted, uses `default_session_multiplexer` from the StackOps config, else `tmux` |
 
 Example:
 
@@ -191,7 +191,7 @@ terminal kill [OPTIONS] [NAME]
 | `--idle` | `-i` | Kill idle-shell panes/windows in `NAME` or a chosen session; combine with `--kill-all` to inspect all sessions |
 | `--window` | `-w` | Include sessions, windows/tabs, and panes in the chooser |
 | `--delete` | `-D` | Delete stopped Herdr session records instead of killing running sessions |
-| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, or `aoe`/`e`; omitted, uses `default_session_multiplexer` from the StackOps config, else `tmux` |
 
 Example:
 
@@ -221,7 +221,7 @@ terminal export [OPTIONS]
 | `--output` | `-o` | Output layout file; defaults to `./tmux_export_layout.yaml` |
 | `--overwrite` | `-w` | Replace the output file if it already exists |
 | `--merge` | `-m` | Merge exported sessions into an existing layout file by `layoutName` |
-| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, or `tuios`/`u`; defaults to `tmux` |
+| `--backend` | `-b` | `tmux`/`t`, `herdr`/`h`, or `tuios`/`u`; asked with `--interactive`; omitted, uses `default_session_multiplexer` from the StackOps config, else `tmux`; a configured `aoe` is rejected |
 | `--command-source` | `-c` | `shell`, `current-command`, or `start-command`; defaults to `shell` |
 
 Examples:
@@ -253,7 +253,7 @@ terminal trace [SESSION_NAME] [OPTIONS]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `SESSION_NAME` | - | tmux session name, Herdr workspace label/id, or AoE session title/id to trace; omit when using `--interactive` |
-| `--backend` | `-b` | Backend to trace; `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, or `aoe`/`e` |
+| `--backend` | `-b` | Backend to trace; `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, or `aoe`/`e`; omitted, uses `default_session_multiplexer` from the StackOps config, else `tmux` |
 | `--interactive` | `-i` | Choose an existing backend session/workspace interactively |
 | `--poll-interval` | `-p` | Polling interval in seconds |
 | `--until` | `-u` | `idle-shell`, `all-exited`, `exit-code`, or `session-missing` |
@@ -293,7 +293,7 @@ terminal summary [OPTIONS]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--backend` | `-b` | Backend to summarize; `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, `aoe`/`e`, or `auto`/`a` |
+| `--backend` | `-b` | Backend to summarize; `tmux`/`t`, `herdr`/`h`, `tuios`/`u`, or `aoe`/`e`; omitted, uses `default_session_multiplexer` from the StackOps config, else `tmux` |
 | `--session` | `-s` | Show details for one tmux session, Herdr workspace, or AoE session by name |
 | `--choose-session` | `-c` | Choose one tmux session, Herdr workspace, or AoE session interactively and show details |
 

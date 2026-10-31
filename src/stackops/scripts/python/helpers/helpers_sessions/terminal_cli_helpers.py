@@ -1,11 +1,11 @@
 """Shared helpers for terminal CLI commands."""
 
 import subprocess
-from typing import Literal
 
 import typer
 
 from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer, SessionMultiplexerOption
 
 
 def run_detached_shell_script(script: str) -> None:
@@ -72,28 +72,11 @@ def print_kill_summary(
     console.print(table)
 
 
-def resolve_session_backend(
-    backend: Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e", "auto", "a"],
-) -> Literal["tmux", "herdr", "tuios", "aoe"]:
-    import platform
-    system = platform.system().lower()
-    match backend:
-        case "tmux" | "t":
-            return "tmux"
-        case "tuios" | "u":
-            return "tuios"
-        case "herdr" | "h":
-            if system == "windows":
-                typer.echo("Error: StackOps Herdr session commands require macOS or Linux.", err=True, color=True)
-                raise typer.Exit(code=1)
-            return "herdr"
-        case "aoe" | "e":
-            if system == "windows":
-                typer.echo("Error: AoE is not supported on Windows.", err=True, color=True)
-                raise typer.Exit(code=1)
-            return "aoe"
-        case "auto" | "a":
-            return "tmux"
-        case _:
-            typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
-            raise typer.Exit(code=1)
+def resolve_session_backend(backend: SessionMultiplexerOption | None) -> SessionMultiplexer:
+    from stackops.utils.default_multiplexer import resolve_session_multiplexer
+
+    try:
+        return resolve_session_multiplexer(multiplexer=backend)
+    except ValueError as error:
+        typer.echo(f"Error: {error}", err=True, color=True)
+        raise typer.Exit(code=1) from error

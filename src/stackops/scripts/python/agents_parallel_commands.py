@@ -14,11 +14,8 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import (
     PROVIDER,
     ReasoningEffort,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
-    AGENT_PARALLEL_BACKEND_HELP,
-    DEFAULT_AGENT_PARALLEL_BACKEND,
-    AgentParallelBackendOption,
-)
+from stackops.utils.default_multiplexer import DEFAULT_AGENT_MULTIPLEXER_HELP, resolve_agent_multiplexer, resolve_session_multiplexer
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer, SessionMultiplexerOption
 
 PARALLEL_CREATE_EXAMPLE = """Create a parallel-agent layout without launching agents.
 
@@ -81,9 +78,11 @@ def agents_create(
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,
     host: Annotated[HOST, typer.Option(..., "--host", "-H", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",
     backend: Annotated[
-        AgentParallelBackendOption,
-        typer.Option(..., "--backend", "-b", help=f"Backend used when --run launches the generated layout. One of {AGENT_PARALLEL_BACKEND_HELP}."),
-    ] = DEFAULT_AGENT_PARALLEL_BACKEND,
+        SessionMultiplexerOption | None,
+        typer.Option(
+            "--backend", "-b", help=f"Multiplexer used when --run launches the generated layout: tmux/t, herdr/h, tuios/u, or aoe/e. {DEFAULT_AGENT_MULTIPLEXER_HELP}"
+        ),
+    ] = None,
     context: Annotated[
         str | None, typer.Option(..., "--context", "-c", help="Context as a direct string. Mutually exclusive with --context-path.")
     ] = None,
@@ -142,6 +141,7 @@ def agents_create(
             return
 
         resolved_agent = resolve_agent(agent=agent)
+        resolved_backend: SessionMultiplexer = resolve_agent_multiplexer(multiplexer=None) if backend is None else resolve_session_multiplexer(multiplexer=backend)
         normalized_separator = _decode_separator(separator=separator)
         if interactive:
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
@@ -149,7 +149,7 @@ def agents_create(
             main(
                 agent=resolved_agent,
                 host=host,
-                backend=backend,
+                backend=resolved_backend,
                 model=model,
                 reasoning_effort=reasoning_effort,
                 provider=provider,
@@ -175,7 +175,7 @@ def agents_create(
         impl(
             agent=resolved_agent,
             host=host,
-            backend=backend,
+            backend=resolved_backend,
             model=model,
             reasoning=reasoning_effort,
             provider=provider,

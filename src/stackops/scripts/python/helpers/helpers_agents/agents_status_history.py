@@ -5,7 +5,8 @@ from pathlib import Path
 from stackops.scripts.python.helpers.helpers_agents.agents_status_history_claude import parse_claude
 from stackops.scripts.python.helpers.helpers_agents.agents_status_history_codex import parse_codex
 from stackops.scripts.python.helpers.helpers_agents.agents_status_history_common import read_jsonl
-from stackops.scripts.python.helpers.helpers_agents.agents_status_models import HistoryEvidence, HistoryMode, MessageRecord, StatusBackend
+from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer
+from stackops.scripts.python.helpers.helpers_agents.agents_status_models import HistoryEvidence, HistoryMode, MessageRecord
 
 
 def _hook_history(events: list[dict[str, object]]) -> HistoryEvidence:
@@ -35,7 +36,7 @@ def _hook_history(events: list[dict[str, object]]) -> HistoryEvidence:
 
 def read_history(
     *, harness: str, paths: tuple[Path, ...], events: list[dict[str, object]], mode: HistoryMode,
-    message_limit: int, text_limit: int, backend: StatusBackend,
+    message_limit: int, text_limit: int, backend: AgentMultiplexer,
 ) -> HistoryEvidence:
     if mode == "none":
         return HistoryEvidence(messages=(), latest_reply="", latest_reply_at="", sources=(), coverage="disabled", limitations=(), omitted_messages=0)

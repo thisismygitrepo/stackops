@@ -3,7 +3,7 @@ from math import isfinite
 from typing import Literal, TypeAlias, cast, get_args
 
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import order_current_first
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AGENT_PARALLEL_BACKENDS, AgentParallelBackend
+from stackops.utils.schemas.config.multiplexer_types import SESSION_MULTIPLEXERS, SessionMultiplexer
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import reasoning_support
 from stackops.utils.options_utils.textual_options_form import use_textual_options_form
@@ -35,7 +35,7 @@ EditableCreateOption: TypeAlias = Literal[
 class InteractiveCreateReviewOptions:
     join_prompt_and_context: bool
     run: bool
-    backend: AgentParallelBackend
+    backend: SessionMultiplexer
     output_path: str | None
     agents_dir: str | None
     host: HOST
@@ -51,7 +51,7 @@ class InteractiveCreateReviewOptions:
 class _CreateOptionsFormSelection:
     join_prompt_and_context: bool
     run: bool
-    backend: AgentParallelBackend
+    backend: SessionMultiplexer
     output_path: str | None
     agents_dir: str | None
     host: HOST
@@ -90,7 +90,7 @@ def _format_agents_dir_value(value: str | None) -> str:
     return value
 
 
-def _format_backend_value(value: AgentParallelBackend) -> str:
+def _format_backend_value(value: SessionMultiplexer) -> str:
     return value
 
 
@@ -137,7 +137,7 @@ def _build_review_option_labels(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -181,7 +181,7 @@ def _build_create_options_form(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -222,7 +222,7 @@ def _build_create_options_form(
         ),
         review_options["run"]: _select_option_spec(default=run, options=_to_option_values([run, not run])),
         review_options["backend"]: _select_option_spec(
-            default=backend, options=_to_option_values(order_current_first(options=AGENT_PARALLEL_BACKENDS, current=backend))
+            default=backend, options=_to_option_values(order_current_first(options=SESSION_MULTIPLEXERS, current=backend))
         ),
         review_options["output_path"]: _text_option_spec(
             default=output_path, allow_blank=True, placeholder="Leave blank to auto-create layout.yaml inside agents_dir"
@@ -320,7 +320,7 @@ def _collect_create_options_form_selection(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -370,7 +370,7 @@ def _collect_create_options_form_selection(
     return _CreateOptionsFormSelection(
         join_prompt_and_context=_require_bool_value(selected_values=selected_values, key=review_options["join_prompt_and_context"]),
         run=_require_bool_value(selected_values=selected_values, key=review_options["run"]),
-        backend=_require_choice(selected_values=selected_values, key=review_options["backend"], options=AGENT_PARALLEL_BACKENDS),
+        backend=_require_choice(selected_values=selected_values, key=review_options["backend"], options=SESSION_MULTIPLEXERS),
         output_path=_require_optional_text_value(selected_values=selected_values, key=review_options["output_path"]),
         agents_dir=_require_optional_text_value(selected_values=selected_values, key=review_options["agents_dir"]),
         host=_require_choice(selected_values=selected_values, key=review_options["host"], options=cast(tuple[HOST, ...], get_args(HOST))),
@@ -390,7 +390,7 @@ def collect_reviewed_create_options(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,

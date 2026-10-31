@@ -12,12 +12,7 @@ from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.commo
     separator_is_applicable_for_context_path,
 )
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options import collect_reviewed_create_options
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import (
-    AgentParallelBackend,
-    AgentParallelBackendOption,
-    DEFAULT_AGENT_PARALLEL_BACKEND,
-    resolve_agent_parallel_backend,
-)
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     DEFAULT_SEAPRATOR,
@@ -54,7 +49,7 @@ class InteractiveAgentCreateParams:
     job_name: str
     join_prompt_and_context: bool
     run: bool
-    backend: AgentParallelBackend
+    backend: SessionMultiplexer
     output_path: str | None
     agents_dir: str | None
 
@@ -64,7 +59,7 @@ def _collect_inputs(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -186,17 +181,16 @@ def main(
     job_name: str | None = None,
     join_prompt_and_context: bool = False,
     run: bool = False,
-    backend: AgentParallelBackendOption | AgentParallelBackend = DEFAULT_AGENT_PARALLEL_BACKEND,
+    backend: SessionMultiplexer,
     output_path: str | None = None,
     agents_dir: str | None = None,
     save_as_yaml: bool = False,
 ) -> None:
-    backend_resolved = resolve_agent_parallel_backend(backend)
     collected = _collect_inputs(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
         run=run,
-        backend=backend_resolved,
+        backend=backend,
         output_path=output_path,
         agents_dir=agents_dir,
         host=host,

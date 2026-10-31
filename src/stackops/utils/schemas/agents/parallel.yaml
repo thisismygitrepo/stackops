@@ -5,7 +5,7 @@ entryExample:
   reasoning: null
   provider: null
   host: local
-  backend: tmux
+  backend: null
   context: null
   context_path: null
   separator: '\n@-@\n'

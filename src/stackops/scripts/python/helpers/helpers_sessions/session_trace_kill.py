@@ -4,8 +4,8 @@ from typing import Literal
 
 from stackops.scripts.python.helpers.helpers_sessions._attach_common import run_command
 from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
-    TraceBackend,
     TracePaneState,
     TraceSnapshot,
 )
@@ -27,7 +27,7 @@ class TraceKillPlan:
 
 
 def _build_trace_kill_command(
-    backend: TraceBackend,
+    backend: SessionMultiplexer,
     action: TraceKillAction,
     target: str,
     session_name: str,
@@ -71,7 +71,7 @@ def _build_trace_kill_command(
 
 
 def build_trace_kill_plan(
-    backend: TraceBackend,
+    backend: SessionMultiplexer,
     snapshots: tuple[TraceSnapshot, ...],
 ) -> TraceKillPlan:
     commands: list[TraceKillCommand] = []

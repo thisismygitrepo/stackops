@@ -11,9 +11,10 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
     PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY,
     PARALLEL_YAML_TEMPLATE_ENTRY_NAME,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, DEFAULT_AGENT_PARALLEL_BACKEND
 from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.utils.default_agent import resolve_agent
+from stackops.utils.default_multiplexer import resolve_agent_multiplexer
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     DEFAULT_SEAPRATOR,
@@ -38,7 +39,7 @@ class ParallelCreateValues:
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST | None
-    backend: AgentParallelBackend | None
+    backend: SessionMultiplexer | None
     context: str | None
     context_path: str | None
     separator: str | None
@@ -62,7 +63,7 @@ class ResolvedParallelCreateValues:
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST
-    backend: AgentParallelBackend
+    backend: SessionMultiplexer
     context: str | None
     context_path: str | None
     separator: str
@@ -126,7 +127,7 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
         reasoning_effort=overrides.reasoning_effort if overrides.reasoning_effort is not None else base.reasoning_effort,
         provider=overrides.provider if overrides.provider is not None else base.provider,
         host="local" if host is None else host,
-        backend=DEFAULT_AGENT_PARALLEL_BACKEND if backend is None else backend,
+        backend=resolve_agent_multiplexer(multiplexer=None) if backend is None else backend,
         context=overrides.context if overrides.context is not None else base.context,
         context_path=overrides.context_path if overrides.context_path is not None else base.context_path,
         separator=decode_separator_value(separator=resolved_separator),
@@ -174,21 +175,17 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, source: PARAL
 
     import stackops.utils.schemas.agents as agent_schema_assets
     from stackops.utils.path_reference import get_path_reference_path
-    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
+    from stackops.utils.repos.stackops_paths import current_workspace_stackops_paths, require_current_workspace_stackops_paths
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT
 
-    project_yaml = current_repo_stackops_path(path_kind="parallel_yaml")
     user_yaml = DOTFILES_STACKOPS_ROOT / "agents" / "parallel" / _PARALLEL_YAML_FILE_NAME
     library_yaml = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
 
     match source:
         case "all" | "a":
-            paths = [("user", user_yaml), ("library", library_yaml)]
-            if project_yaml is None:
-                return paths
-            return [("workspace", project_yaml)] + paths
+            return [*current_workspace_stackops_paths(path_kind="parallel_yaml"), ("user", user_yaml), ("library", library_yaml)]
         case "workspace" | "w":
-            return [("workspace", require_current_repo_stackops_path(path_kind="parallel_yaml"))]
+            return list(require_current_workspace_stackops_paths(path_kind="parallel_yaml"))
         case "user" | "u":
             return [("user", user_yaml)]
         case "library" | "l":

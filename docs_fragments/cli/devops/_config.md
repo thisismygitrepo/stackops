@@ -59,16 +59,20 @@ devops config setup [SUBCOMMAND] [ARGS]...
 | `cloud` | Select an rclone remote and create or update the StackOps config and schema |
 | `email` | Select or create an SMTP profile and save the default recipient |
 | `agent` | Select the default coding agent and save it in the StackOps config |
+| `multiplexer` | Select the default session and agent multiplexers and save them in the StackOps config |
 | `data` | Interactively register a backup entry and install its YAML schema |
 | `dotfiles` | Interactively register a dotfile and install its YAML schema |
 | `layouts` | Install starter terminal layouts and their JSON schema |
 | `secrets` | Interactively create the global secrets file and schema |
+
+`multiplexer` writes two keys. `default_session_multiplexer` (`tmux`, `herdr`, `tuios`, or `aoe`) is used by `terminal run`, `run-all`, `attach`, `kill`, `trace`, `summary`, and `export` when `--backend` is omitted; the built-in fallback is `tmux`. `default_agent_multiplexer` (`tuios`, `herdr`, or `aoe`) is used by `agents status` and by `agents parallel` launches when `--backend` is omitted; the built-in fallback is `tuios`. An explicit `--backend` always wins. Commands that support fewer multiplexers (`run-all` supports only tmux and tuios; `export` has no aoe) reject a configured value they cannot use instead of silently switching.
 
 Examples:
 
 ```bash
 devops config setup cloud
 devops config setup agent --agent claude
+devops config setup multiplexer --session tuios --agent herdr
 devops config setup data
 devops config setup layouts
 ```
@@ -286,7 +290,7 @@ Exact, case-sensitive selectors can be combined with query terms: `--name/-n`, `
 
 `--source/-s` accepts `workspace/w` or `user/u`; `search`, `load`, and `stats` also accept `all/a`. `--custom-path/-p` selects exactly one secrets file and overrides `--source`, including `all`. With neither supplied, `search` and `load` prefer an existing workspace file and otherwise use the user file. `stats` defaults to `all`; `subset` and `add` default to `workspace`.
 
-The workspace file is `<workspace-root>/.stackops/secrets/secrets.json`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` includes only `user`.
+The workspace file is `<workspace-root>/.stackops/secrets/secrets.json`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Reads also include `.stackops/secrets/secrets.json` from each immediate child directory of the root that has one, labelled `workspace:<child>`; commands that write one file use the root file. Outside these locations, explicit `workspace` fails and `all` includes only `user`.
 
 `subset OUTPUT_PATH` interactively selects login entries from one source and writes a secrets file. `--on-conflict/-c throw-error|overwrite|append` controls an existing output file. `add` prompts for a new login entry and appends it; `--create/-c` also permits creating the file. Use `devops config edit secrets` to edit the user file, or pass `--custom-path` for another file.
 

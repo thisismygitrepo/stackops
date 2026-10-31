@@ -15,7 +15,7 @@ from stackops.scripts.python.helpers.helpers_agents.mcp_types import (
 )
 from stackops.utils.files.read import read_json
 from stackops.utils.path_reference import get_path_reference_path
-from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
+from stackops.utils.repos.stackops_paths import current_workspace_stackops_paths, require_current_workspace_stackops_paths
 import stackops.jobs.agents.mcps as mcp_assets
 
 _HOME_PLACEHOLDER: Final[str] = "{home}"
@@ -45,11 +45,9 @@ def parse_requested_mcp_names(raw_value: str) -> tuple[str, ...]:
 def default_mcp_catalog_locations() -> tuple[McpCatalogLocation, ...]:
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT
 
-    locations: list[McpCatalogLocation] = []
-    repo_catalog_path = current_repo_stackops_path(path_kind="mcp_json")
-    if repo_catalog_path is not None:
-        locations.append({"scope": "workspace", "path": repo_catalog_path})
-
+    locations: list[McpCatalogLocation] = [
+        {"scope": "workspace", "path": catalog_path} for _label, catalog_path in current_workspace_stackops_paths(path_kind="mcp_json")
+    ]
     locations.extend(
         [
             {"scope": "user", "path": DOTFILES_STACKOPS_ROOT / "agents" / "mcps" / "mcp.json"},
@@ -73,7 +71,10 @@ def resolve_mcp_catalog_locations(source: MCP_CATALOG_SOURCE, custom_path: Path 
         case "all" | "a":
             return locations
         case "workspace" | "w":
-            return ({"scope": "workspace", "path": require_current_repo_stackops_path(path_kind="mcp_json")},)
+            return tuple(
+                McpCatalogLocation(scope="workspace", path=catalog_path)
+                for _label, catalog_path in require_current_workspace_stackops_paths(path_kind="mcp_json")
+            )
         case "user" | "u":
             return tuple(location for location in locations if location["scope"] == "user")
         case "library" | "l":

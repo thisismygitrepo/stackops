@@ -8,7 +8,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import (
     PROVIDER,
     ReasoningEffort,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend, DEFAULT_AGENT_PARALLEL_BACKEND
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 
 
 PARALLEL_CREATE_COMMAND_NAME: Final[str] = "agents parallel create"
@@ -23,7 +23,7 @@ class ParallelCreateYamlEntry(TypedDict):
     reasoning: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST | None
-    backend: AgentParallelBackend | None
+    backend: SessionMultiplexer | None
     context: str | None
     context_path: str | None
     separator: str | None
@@ -47,7 +47,7 @@ PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY: Final[ParallelCreateYamlEntry] = {
     "reasoning": None,
     "provider": None,
     "host": "local",
-    "backend": DEFAULT_AGENT_PARALLEL_BACKEND,
+    "backend": None,
     "context": None,
     "context_path": None,
     "separator": _ESCAPED_DEFAULT_SEPARATOR,

@@ -17,7 +17,7 @@ def run_all_cli(
     max_parallel_tabs: int,
     poll_seconds: float,
     kill_finished_tabs: bool,
-    backend: "DynamicSessionBackendOption",
+    backend: "DynamicSessionBackendOption | None",
     on_conflict: "SessionConflictAction",
     subsitute_home: bool,
 ) -> None:

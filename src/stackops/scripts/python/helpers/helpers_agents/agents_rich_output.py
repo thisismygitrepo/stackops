@@ -8,7 +8,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import AgentParallelBackend
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 
 _CONSOLE: Final[Console] = Console()
@@ -58,7 +58,7 @@ def build_agents_create_overview_panel(
     job_name: str,
     agent: AGENTS,
     host: HOST,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     provider: PROVIDER | None,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
@@ -93,7 +93,7 @@ def show_agents_create_overview(
     job_name: str,
     agent: AGENTS,
     host: HOST,
-    backend: AgentParallelBackend,
+    backend: SessionMultiplexer,
     provider: PROVIDER | None,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,

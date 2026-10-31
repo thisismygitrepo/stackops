@@ -19,8 +19,8 @@ if TYPE_CHECKING:
     from rich.console import Console, RenderableType
     from rich.panel import Panel
     from rich.table import Table
+    from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
     from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
-        TraceBackend,
         TracePaneState,
         TraceSnapshot,
         TraceUntil,
@@ -130,7 +130,7 @@ def _shorten_dir(cwd: str, home: str) -> str:
 
 def _build_header_panel(
     snapshots: tuple["TraceSnapshot", ...],
-    backend: "TraceBackend",
+    backend: "SessionMultiplexer",
     until: "TraceUntil",
     exit_code: int | None,
     attempt: int,
@@ -307,7 +307,7 @@ def _build_warning_panel(snapshots: tuple["TraceSnapshot", ...]) -> "Panel | Non
 
 def build_traces_renderable(
     snapshots: tuple["TraceSnapshot", ...],
-    backend: "TraceBackend",
+    backend: "SessionMultiplexer",
     until: "TraceUntil",
     exit_code: int | None,
     attempt: int,

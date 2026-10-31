@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.table import Table
 
-from stackops.scripts.python.terminal_summary_models import ResolvedSummaryBackend
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 
 
 type LaunchVerb = Literal["started", "added"]
@@ -34,7 +34,7 @@ class _BackendLabels:
     attach_hint: str | None
 
 
-def _backend_labels(backend: ResolvedSummaryBackend, session_name: str) -> _BackendLabels:
+def _backend_labels(backend: SessionMultiplexer, session_name: str) -> _BackendLabels:
     quoted_name = shlex.quote(session_name)
     match backend:
         case "tuios":
@@ -47,7 +47,7 @@ def _backend_labels(backend: ResolvedSummaryBackend, session_name: str) -> _Back
             return _BackendLabels(container="AoE group", location_header="Tool", handle_header="Session", pane_noun="session", tab_noun="tab", attach_hint="aoe session attach <session>")
 
 
-def print_launch_table(backend: ResolvedSummaryBackend, session_name: str, rows: Sequence[LaunchedPaneRow], verb: LaunchVerb) -> None:
+def print_launch_table(backend: SessionMultiplexer, session_name: str, rows: Sequence[LaunchedPaneRow], verb: LaunchVerb) -> None:
     labels = _backend_labels(backend=backend, session_name=session_name)
     table = Table(
         title=f"""🚀 {labels.container} [bold]{escape(session_name)}[/bold] {verb}""",

@@ -14,12 +14,11 @@ from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants
 from stackops.secrets.models import Login, SecretsFile
 
 ResolvedSecretsSource: TypeAlias = Literal["workspace", "user", "all"]
-SecretsFileSourceName: TypeAlias = Literal["workspace", "user", "custom-file"]
 
 
 @dataclass(frozen=True)
 class SecretsFileSource:
-    name: SecretsFileSourceName
+    name: str
     path: Path
 
 
@@ -57,38 +56,45 @@ def _resolve_secret_sources(*, secrets_path: Path | None, secrets_source: Secret
     if secrets_path is not None:
         return [SecretsFileSource(name="custom-file", path=secrets_path.expanduser().absolute())]
 
-    from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
+    from stackops.utils.repos.stackops_paths import current_workspace_stackops_paths, require_current_workspace_stackops_paths
 
-    resolved_source = _resolve_secrets_source_alias(secrets_source) if secrets_source is not None else None
-    if resolved_source == "user":
-        return [SecretsFileSource(name="user", path=_resolve_user_secrets_path())]
-
-    project_source: SecretsFileSource | None = None
-    if resolved_source == "workspace":
-        try:
-            project_path = require_current_repo_stackops_path(path_kind="secrets_json")
-        except ValueError as error:
-            _fail(str(error))
-        project_source = SecretsFileSource(name="workspace", path=project_path)
-    else:
-        project_path = current_repo_stackops_path(path_kind="secrets_json")
-        if project_path is not None:
-            project_source = SecretsFileSource(name="workspace", path=project_path)
-
-    if project_source is not None:
-        if resolved_source == "workspace" or (resolved_source is None and project_source.path.exists()):
-            return [project_source]
     user_source = SecretsFileSource(name="user", path=_resolve_user_secrets_path())
-    if resolved_source == "all" and project_source is not None:
-        return [project_source, user_source]
-    return [user_source]
+    match _resolve_secrets_source_alias(secrets_source) if secrets_source is not None else None:
+        case "user":
+            return [user_source]
+        case "workspace":
+            try:
+                workspace_paths = require_current_workspace_stackops_paths(path_kind="secrets_json")
+            except ValueError as error:
+                _fail(str(error))
+            return [SecretsFileSource(name=label, path=path) for label, path in workspace_paths]
+        case "all":
+            workspace_sources = [SecretsFileSource(name=label, path=path) for label, path in current_workspace_stackops_paths(path_kind="secrets_json")]
+            return [*workspace_sources, user_source]
+        case None:
+            existing_workspace_sources = [
+                SecretsFileSource(name=label, path=path)
+                for label, path in current_workspace_stackops_paths(path_kind="secrets_json")
+                if path.exists()
+            ]
+            return existing_workspace_sources if len(existing_workspace_sources) > 0 else [user_source]
 
 
 def _resolve_single_secret_source(*, secrets_path: Path | None, secrets_source: WritableSecretsSource) -> SecretsFileSource:
-    secret_sources = _resolve_secret_sources(secrets_path=secrets_path, secrets_source=secrets_source)
-    if len(secret_sources) != 1:
-        _fail("Choose exactly one secrets source: workspace/w or user/u.")
-    return secret_sources[0]
+    if secrets_path is not None:
+        return SecretsFileSource(name="custom-file", path=secrets_path.expanduser().absolute())
+    match _resolve_secrets_source_alias(secrets_source):
+        case "workspace":
+            from stackops.utils.repos.stackops_paths import require_current_repo_stackops_path
+
+            try:
+                return SecretsFileSource(name="workspace", path=require_current_repo_stackops_path(path_kind="secrets_json"))
+            except ValueError as error:
+                _fail(str(error))
+        case "user":
+            return SecretsFileSource(name="user", path=_resolve_user_secrets_path())
+        case "all":
+            _fail("Choose exactly one secrets source: workspace/w or user/u.")
 
 
 def _resolve_secrets_source_alias(secrets_source: SecretsSource) -> ResolvedSecretsSource:

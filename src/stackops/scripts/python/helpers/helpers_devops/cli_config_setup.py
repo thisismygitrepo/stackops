@@ -147,6 +147,7 @@ def setup_agent(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_config_setup_domains as setup_domains
     from stackops.scripts.python.helpers.helpers_devops import cli_config_setup_email as setup_email
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_setup_multiplexer as setup_multiplexer
 
     app = typer.Typer(
         help=SETUP_HELP, no_args_is_help=True, add_help_option=True, add_completion=False,
@@ -158,6 +159,8 @@ def get_app() -> typer.Typer:
     app.command("e", no_args_is_help=False, help=setup_email.EMAIL_SETUP_HELP, hidden=True)(setup_email.setup_email)
     app.command("agent", no_args_is_help=False, help=f"🤖 <a> {AGENT_SETUP_HELP}")(setup_agent)
     app.command("a", no_args_is_help=False, help=AGENT_SETUP_HELP, hidden=True)(setup_agent)
+    app.command("multiplexer", no_args_is_help=False, help=f"🪟 <m> {setup_multiplexer.MULTIPLEXER_SETUP_HELP}")(setup_multiplexer.setup_multiplexer)
+    app.command("m", no_args_is_help=False, help=setup_multiplexer.MULTIPLEXER_SETUP_HELP, hidden=True)(setup_multiplexer.setup_multiplexer)
     app.command("data", no_args_is_help=False, help=f"💾 <d> {setup_domains.DATA_SETUP_HELP}")(setup_domains.setup_data)
     app.command("d", no_args_is_help=False, help=setup_domains.DATA_SETUP_HELP, hidden=True)(setup_domains.setup_data)
     app.command("dotfiles", no_args_is_help=False, help=f"📄 <f> {setup_domains.DOTFILES_SETUP_HELP}")(setup_domains.setup_dotfiles)

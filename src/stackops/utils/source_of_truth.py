@@ -7,6 +7,7 @@ from stackops.utils.schemas.config.config_types import (
     StackOpsConfig,
     StackOpsConfigStringKey,
 )
+from stackops.utils.schemas.config.multiplexer_types import AGENT_MULTIPLEXERS, SESSION_MULTIPLEXERS
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 EXCLUDE_DIRS = [".links", "notebooks",
@@ -102,12 +103,11 @@ def _require_version(value: object) -> str:
     return version
 
 
-def _require_agent(value: object) -> AGENTS:
-    agent = _require_string(value, "default_agent")
-    valid_agents = cast(tuple[AGENTS, ...], get_args(AGENTS))
-    if agent not in valid_agents:
-        raise ValueError(f"""StackOps config default_agent '{agent}' must be one of {", ".join(valid_agents)}: {DOTFILES_STACKOPS_CONFIG_PATH}""")
-    return agent
+def _require_choice[T: str](value: object, path: str, choices: tuple[T, ...]) -> T:
+    choice = _require_string(value, path)
+    if choice not in choices:
+        raise ValueError(f"""StackOps config {path} '{choice}' must be one of {", ".join(choices)}: {DOTFILES_STACKOPS_CONFIG_PATH}""")
+    return cast(T, choice)
 
 
 def read_stackops_config() -> StackOpsConfig:
@@ -116,7 +116,7 @@ def read_stackops_config() -> StackOpsConfig:
     if not DOTFILES_STACKOPS_CONFIG_PATH.is_file():
         raise FileNotFoundError(f"StackOps config file not found: {DOTFILES_STACKOPS_CONFIG_PATH}")
     raw_config = _require_object(json.loads(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8")), "root")
-    _reject_unknown_keys(raw_config, {"$schema", "version", "default_rclone_config", "default_email_config", "default_email_address", "default_agent"}, "root")
+    _reject_unknown_keys(raw_config, set(StackOpsConfig.__required_keys__ | StackOpsConfig.__optional_keys__), "root")
     config: StackOpsConfig = {
         "version": _require_version(raw_config.get("version")),
     }
@@ -129,7 +129,11 @@ def read_stackops_config() -> StackOpsConfig:
     if "default_email_address" in raw_config:
         config["default_email_address"] = _require_string(raw_config["default_email_address"], "default_email_address")
     if "default_agent" in raw_config:
-        config["default_agent"] = _require_agent(raw_config["default_agent"])
+        config["default_agent"] = _require_choice(raw_config["default_agent"], "default_agent", cast(tuple[AGENTS, ...], get_args(AGENTS)))
+    if "default_session_multiplexer" in raw_config:
+        config["default_session_multiplexer"] = _require_choice(raw_config["default_session_multiplexer"], "default_session_multiplexer", SESSION_MULTIPLEXERS)
+    if "default_agent_multiplexer" in raw_config:
+        config["default_agent_multiplexer"] = _require_choice(raw_config["default_agent_multiplexer"], "default_agent_multiplexer", AGENT_MULTIPLEXERS)
     return config
 
 

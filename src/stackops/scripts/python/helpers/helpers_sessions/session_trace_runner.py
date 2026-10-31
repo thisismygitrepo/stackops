@@ -7,8 +7,8 @@ from stackops.scripts.python.helpers.helpers_sessions.session_trace_kill import 
     build_trace_kill_plan,
     execute_trace_kill_plan,
 )
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
-    TraceBackend,
     TraceSnapshot,
     TraceUntil,
     build_missing_snapshot,
@@ -19,7 +19,7 @@ type TraceSnapshotLoader = Callable[[str, TraceUntil, int | None], TraceSnapshot
 
 
 def trace_sessions(
-    backend: TraceBackend,
+    backend: SessionMultiplexer,
     session_names: list[str],
     until: TraceUntil,
     every_seconds: float,

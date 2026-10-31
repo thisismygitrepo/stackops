@@ -2,11 +2,12 @@ from typing import Annotated
 
 import typer
 
-from stackops.scripts.python.terminal_summary_models import SummaryBackend
+from stackops.utils.default_multiplexer import DEFAULT_SESSION_MULTIPLEXER_HELP
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexerOption
 
 
 def summary(
-    backend: Annotated[SummaryBackend, typer.Option("--backend", "-b", help="Backend to summarize: tmux, herdr, aoe, tuios, or auto.")] = "tmux",
+    backend: Annotated[SessionMultiplexerOption | None, typer.Option("--backend", "-b", help=f"Session multiplexer to summarize: tmux/t, herdr/h, tuios/u, or aoe/e. {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
     session: Annotated[str | None, typer.Option("--session", "-s", help="Show details for one backend session or workspace by name.")] = None,
     choose_session: Annotated[bool, typer.Option("--choose-session", "-c", help="Choose one backend session or workspace interactively and show details.")] = False,
     show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include tab/window and pane details for every session (tmux, Herdr, and TUIOS).")] = False,

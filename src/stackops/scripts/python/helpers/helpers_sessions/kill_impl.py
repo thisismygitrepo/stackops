@@ -1,16 +1,12 @@
-from typing import Literal
-
 from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 from stackops.scripts.python.helpers.helpers_sessions.session_trace_selection import (
     matches_session_pattern,
 )
-
-
-type KillBackend = Literal["tmux", "herdr", "tuios", "aoe"]
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 
 
 def _choose_exact_kill_target(
-    backend: KillBackend,
+    backend: SessionMultiplexer,
     name: str | None,
     kill_all: bool,
     idle: bool,
@@ -43,7 +39,7 @@ def _choose_exact_kill_target(
     raise ValueError(f"Unsupported backend: {backend}")
 
 
-def _list_killable_session_names(backend: KillBackend, delete: bool) -> list[str] | None:
+def _list_killable_session_names(backend: SessionMultiplexer, delete: bool) -> list[str] | None:
     match backend:
         case "tuios":
             from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import list_session_names
@@ -65,7 +61,7 @@ def _list_killable_session_names(backend: KillBackend, delete: bool) -> list[str
 
 
 def choose_kill_target(
-    backend: KillBackend,
+    backend: SessionMultiplexer,
     name: str | None,
     kill_all: bool,
     idle: bool,

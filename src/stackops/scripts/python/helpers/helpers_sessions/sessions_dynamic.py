@@ -3,13 +3,13 @@
 from collections import deque
 import time
 from time import monotonic
-from typing import Literal
 
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
 from stackops.scripts.python.helpers.helpers_sessions import sessions_dynamic_tmux
+from stackops.scripts.python.helpers.helpers_sessions.sessions_cli_common import DynamicSessionBackendOption
 from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_display import (
     LIVE_REFRESH_PER_SECOND,
     DynamicRunPhase,
@@ -76,22 +76,23 @@ def _is_dynamic_task_running(backend: DynamicSessionBackend, session_name: str, 
             return is_task_running(session_name=session_name, task=task)
 
 
-def _validate_backend(backend: Literal["tmux", "t", "tuios", "u", "auto", "a"]) -> DynamicSessionBackend:
-    backend_lower = backend.lower()
-    if backend_lower in {"tmux", "t"}:
-        return "tmux"
-    if backend_lower in {"tuios", "u"}:
-        return "tuios"
-    if backend_lower in {"auto", "a"}:
-        return "tmux"
-    raise ValueError(f"Unsupported backend for dynamic tabs: {backend}")
+def _validate_backend(backend: DynamicSessionBackendOption | None) -> DynamicSessionBackend:
+    from stackops.utils.default_multiplexer import resolve_session_multiplexer
+
+    match resolve_session_multiplexer(multiplexer=backend):
+        case "tmux":
+            return "tmux"
+        case "tuios":
+            return "tuios"
+        case unsupported:
+            raise ValueError(f"run-all supports the tmux and tuios session multiplexers, not the configured {unsupported}. Pass --backend tmux or --backend tuios.")
 
 
 def run_dynamic(
     layout: LayoutConfig,
     max_parallel_tabs: int,
     kill_finished_tabs: bool,
-    backend: Literal["tmux", "t", "tuios", "u", "auto", "a"],
+    backend: DynamicSessionBackendOption | None,
     on_conflict: SessionConflictAction,
     poll_seconds: float,
 ) -> None:

@@ -91,7 +91,7 @@
           ]
         },
         "backend": {
-          "description": "Backend used when run launches the generated layout.",
+          "description": "Multiplexer used when run launches the generated layout. null uses default_agent_multiplexer from the StackOps config, else tuios.",
           "enum": [
             "tmux",
             "herdr",

@@ -37,6 +37,16 @@
       "type": "string",
       "description": "Default agent used by agents commands when --agent is not passed.",
       "enum": ["agy", "cursor-agent", "claude", "qwen", "copilot", "codex", "cortex", "deepseek", "forge", "crush", "q", "opencode", "kilocode", "cline", "auggie", "oz", "droid", "pi", "muse", "maki"]
+    },
+    "default_session_multiplexer": {
+      "type": "string",
+      "description": "Default session multiplexer used by terminal commands when --backend is not passed.",
+      "enum": ["tmux", "herdr", "tuios", "aoe"]
+    },
+    "default_agent_multiplexer": {
+      "type": "string",
+      "description": "Default multiplexer used by agents commands (status, parallel) when --backend is not passed.",
+      "enum": ["tuios", "herdr", "aoe"]
     }
   },
   "required": ["version"]

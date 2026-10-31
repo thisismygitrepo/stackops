@@ -2,41 +2,17 @@ from collections.abc import Callable
 
 import typer
 
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
     PaneCategory,
-    TraceBackend,
-    TraceBackendOption,
     TracePaneState,
     TraceSnapshot,
     TraceUntil,
 )
 
 
-def resolve_trace_backend(backend: TraceBackendOption) -> TraceBackend:
-    import platform
-
-    match backend:
-        case "tmux" | "t":
-            return "tmux"
-        case "herdr" | "h":
-            if platform.system().lower() == "windows":
-                typer.echo("Error: StackOps Herdr session tracing requires macOS or Linux.", err=True, color=True)
-                raise typer.Exit(code=1)
-            return "herdr"
-        case "aoe" | "e":
-            if platform.system().lower() == "windows":
-                typer.echo("Error: AoE is not supported on Windows.", err=True, color=True)
-                raise typer.Exit(code=1)
-            return "aoe"
-        case "tuios" | "u":
-            return "tuios"
-        case _:
-            typer.echo(f"Error: Unsupported backend '{backend}'.", err=True, color=True)
-            raise typer.Exit(code=1)
-
-
 def _get_trace_loader(
-    backend: TraceBackend,
+    backend: SessionMultiplexer,
 ) -> Callable[[str, TraceUntil, int | None], TraceSnapshot]:
     match backend:
         case "tmux":
@@ -62,7 +38,7 @@ def _get_trace_loader(
 
 
 def _validate_trace_options(
-    backend: TraceBackend,
+    backend: SessionMultiplexer,
     until: TraceUntil,
     every_seconds: float,
     exit_code: int | None,
@@ -83,7 +59,7 @@ def _validate_trace_options(
 
 
 def trace_sessions_for_backend(
-    backend: TraceBackend,
+    backend: SessionMultiplexer,
     session_names: list[str],
     until: TraceUntil,
     every_seconds: float,
@@ -117,7 +93,7 @@ def trace_sessions_for_backend(
 
 
 def trace_session_for_backend(
-    backend: TraceBackend,
+    backend: SessionMultiplexer,
     session_name: str,
     until: TraceUntil,
     every_seconds: float,
@@ -175,10 +151,7 @@ __all__: list[str] = [
     "TracePaneState",
     "TraceSnapshot",
     "TraceUntil",
-    "TraceBackend",
-    "TraceBackendOption",
     "evaluate_trace_snapshot",
-    "resolve_trace_backend",
     "trace_session",
     "trace_session_for_backend",
     "trace_sessions_for_backend",

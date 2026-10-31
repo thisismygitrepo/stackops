@@ -6,7 +6,9 @@ from typing import Any, TypeAlias
 
 import typer
 
-from stackops.scripts.python.terminal_summary_models import PaneCategory, ResolvedSummaryBackend, SummaryBackend
+from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import resolve_session_backend
+from stackops.scripts.python.terminal_summary_models import PaneCategory
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexerOption
 
 
 @dataclass(frozen=True)
@@ -72,18 +74,6 @@ def _format_process_names(process_counts: Counter[str]) -> str:
         return "—"
     rows = sorted(process_counts.items(), key=lambda item: (-item[1], item[0]))
     return ", ".join(f"{name} x{count}" if count > 1 else name for name, count in rows)
-
-
-def _resolve_summary_backend(backend: SummaryBackend) -> ResolvedSummaryBackend:
-    match backend:
-        case "tmux" | "t" | "auto" | "a":
-            return "tmux"
-        case "herdr" | "h":
-            return "herdr"
-        case "aoe" | "e":
-            return "aoe"
-        case "tuios" | "u":
-            return "tuios"
 
 
 def _format_counts(counts: Counter[str]) -> str:
@@ -707,13 +697,13 @@ def _resolve_herdr_workspace_name(workspace_name: str | None, choose_session: bo
 
 def summary(
     *,
-    backend: SummaryBackend,
+    backend: SessionMultiplexerOption | None,
     session: str | None,
     choose_session: bool,
     show_tabs: bool,
 ) -> None:
     """Print running terminal session summaries or details for one session."""
-    match _resolve_summary_backend(backend):
+    match resolve_session_backend(backend):
         case "tmux":
             session_name = _resolve_tmux_session_name(session_name=session, choose_session=choose_session)
             if session_name is None:

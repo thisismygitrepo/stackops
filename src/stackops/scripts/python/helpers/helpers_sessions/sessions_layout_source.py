@@ -5,7 +5,7 @@ from typing import Literal
 import typer
 
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
-from stackops.utils.repos.stackops_paths import current_repo_stackops_path, require_current_repo_stackops_path
+from stackops.utils.repos.stackops_paths import current_workspace_stackops_paths, require_current_workspace_stackops_paths
 from stackops.utils.source_of_truth import DOTFILES_LAYOUT_YAML_PATH
 
 
@@ -16,12 +16,8 @@ class LayoutEntry:
     source_path: Path | None
 
 
-def default_layout_source_paths() -> dict[Literal["user", "workspace"], Path]:
-    source_paths: dict[Literal["user", "workspace"], Path] = {"user": DOTFILES_LAYOUT_YAML_PATH}
-    project_path = current_repo_stackops_path(path_kind="layout_yaml")
-    if project_path is not None:
-        source_paths["workspace"] = project_path
-    return source_paths
+def default_layout_source_paths() -> dict[str, Path]:
+    return {"user": DOTFILES_LAYOUT_YAML_PATH, **dict(current_workspace_stackops_paths(path_kind="layout_yaml"))}
 
 
 def resolve_layout_source(
@@ -56,7 +52,7 @@ def resolve_layout_source(
     else:
         match source:
             case "workspace" | "w":
-                source_files = [("workspace", require_current_repo_stackops_path(path_kind="layout_yaml"))]
+                source_files = list(require_current_workspace_stackops_paths(path_kind="layout_yaml"))
             case "user" | "u":
                 source_files = [("user", DOTFILES_LAYOUT_YAML_PATH)]
             case "all" | "a":

@@ -8,15 +8,7 @@ import typer
 if TYPE_CHECKING:
     from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 
-type SessionBackendOption = Literal[
-    "tmux", "t",
-    "herdr", "h",
-    "tuios", "u",
-    "aoe", "e",
-    "auto", "a",
-]
-type DynamicSessionBackendOption = Literal["tmux", "t", "tuios", "u", "auto", "a"]
-type ResolvedSessionBackend = Literal["tmux", "herdr", "tuios", "aoe"]
+type DynamicSessionBackendOption = Literal["tmux", "t", "tuios", "u"]
 
 
 def resolve_layouts_file(ctx: typer.Context, layouts_file: str | None) -> Path:
@@ -158,36 +150,3 @@ def substitute_home_in_layouts(
         }
         layouts_modified.append(layout_modified)
     return layouts_modified
-
-
-def resolve_standard_backend(
-    backend: SessionBackendOption,
-) -> ResolvedSessionBackend:
-    import platform
-
-    match backend:
-        case "tmux" | "t":
-            return "tmux"
-        case "tuios" | "u":
-            return "tuios"
-        case "herdr" | "h":
-            if platform.system().lower() == "windows":
-                typer.echo(
-                    "Error: Herdr layouts cannot be started on Windows systems.",
-                    err=True,
-                )
-                raise typer.Exit(code=1)
-            return "herdr"
-        case "aoe" | "e":
-            if platform.system().lower() == "windows":
-                typer.echo(
-                    "Error: AoE layouts cannot be started on Windows systems.",
-                    err=True,
-                )
-                raise typer.Exit(code=1)
-            return "aoe"
-        case "auto" | "a":
-            return "tmux"
-        case _:
-            typer.echo(f"Error: Unsupported backend '{backend}'.", err=True)
-            raise typer.Exit(code=1)

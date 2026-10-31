@@ -1,8 +1,8 @@
 import re
 from typing import Literal
 
+from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 from stackops.scripts.python.helpers.helpers_sessions.session_trace_models import (
-    TraceBackend,
     TraceTarget,
 )
 
@@ -30,7 +30,7 @@ def matches_session_pattern(session_name: str, pattern: str) -> bool:
     return re.fullmatch("".join(regex_parts), session_name) is not None
 
 
-def _load_trace_targets(backend: TraceBackend) -> list[TraceTarget]:
+def _load_trace_targets(backend: SessionMultiplexer) -> list[TraceTarget]:
     match backend:
         case "tmux":
             from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import list_session_names
@@ -53,7 +53,7 @@ def _load_trace_targets(backend: TraceBackend) -> list[TraceTarget]:
     return targets
 
 
-def resolve_trace_session_names(backend: TraceBackend, session_selectors: str) -> list[str]:
+def resolve_trace_session_names(backend: SessionMultiplexer, session_selectors: str) -> list[str]:
     selectors = _parse_session_selectors(session_selectors=session_selectors)
     if not any("*" in selector or "?" in selector for selector in selectors):
         return list(dict.fromkeys(selectors))
@@ -76,7 +76,7 @@ def resolve_trace_session_names(backend: TraceBackend, session_selectors: str) -
     return list(dict.fromkeys(resolved_session_names))
 
 
-def choose_trace_session_names(backend: TraceBackend) -> TraceSessionChoice:
+def choose_trace_session_names(backend: SessionMultiplexer) -> TraceSessionChoice:
     match backend:
         case "tmux":
             from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import choose_existing_session_names
