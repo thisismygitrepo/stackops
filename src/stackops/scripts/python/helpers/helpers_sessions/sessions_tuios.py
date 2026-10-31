@@ -9,6 +9,8 @@ from stackops.cluster.sessions_managers.session_conflict import (
     kill_existing_session,
 )
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
+from stackops.cluster.sessions_managers.session_launch_table import LaunchedPaneRow, print_launch_table
+from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import LaunchedWindow
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import (
     free_workspace_number,
     list_session_entries,
@@ -28,7 +30,7 @@ def run_layouts_with_tuios(
     layouts_selected: list[LayoutConfig],
     on_conflict: SessionConflictAction,
     exit_mode: SessionExitMode,
-) -> tuple[dict[str, StartResult], dict[str, tuple[str, ...]]]:
+) -> tuple[dict[str, StartResult], dict[str, tuple[LaunchedWindow, ...]]]:
     for layout in layouts_selected:
         if not layout["layoutTabs"]:
             raise ValueError(f"""TUIOS cannot launch layout '{layout['layoutName']}' because it has no tabs.""")
@@ -41,7 +43,7 @@ def run_layouts_with_tuios(
         on_conflict=on_conflict,
     )
     results: dict[str, StartResult] = {}
-    launched_windows: dict[str, tuple[str, ...]] = {}
+    launched_windows: dict[str, tuple[LaunchedWindow, ...]] = {}
     for layout, plan in zip(layouts_selected, plans, strict=True):
         session_name = plan["session_name"]
         if plan.get("skip_launch", False):
@@ -58,7 +60,7 @@ def run_layouts_with_tuios(
                 run_tuios(["new", "--detach", "--", session_name])
                 initial_window_ids = [window.window_id for window in list_window_entries(session_name)]
             existing_workspaces = list_workspace_entries(session_name) if merge_existing else []
-            window_ids = list(launched_windows.get(session_name, ()))
+            windows = list(launched_windows.get(session_name, ()))
             for tab in layout["layoutTabs"]:
                 matching_workspace = next((workspace for workspace in existing_workspaces if workspace.name == tab["tabName"]), None)
                 if matching_workspace is not None and on_conflict == "mergeSkip":
@@ -76,26 +78,39 @@ def run_layouts_with_tuios(
                         for window in list_window_entries(session_name)
                         if window.workspace == workspace_number
                     ]
-                window_ids.extend(launch_tab(session_name=session_name, tab=tab, exit_mode=exit_mode, workspace=workspace_number))
+                windows.extend(launch_tab(session_name=session_name, tab=tab, exit_mode=exit_mode, workspace=workspace_number))
                 for window_id in replaced_window_ids:
                     close_window(session_name=session_name, window_id=window_id)
-                    if window_id in window_ids:
-                        window_ids.remove(window_id)
+                windows = [window for window in windows if window.window_id not in replaced_window_ids]
                 if merge_existing:
                     existing_workspaces = list_workspace_entries(session_name)
             for window_id in initial_window_ids:
                 close_window(session_name=session_name, window_id=window_id)
-            launched_windows[session_name] = tuple(window_ids)
-            message = f"""Started TUIOS session '{session_name}' with {len(window_ids)} window(s)."""
-            results[session_name] = {"success": True, "message": message}
-            typer.echo(message)
+            launched_windows[session_name] = tuple(windows)
+            results[session_name] = {"success": True, "message": f"""Started TUIOS session '{session_name}' with {len(windows)} window(s)."""}
+            print_launch_table(
+                backend="tuios",
+                session_name=session_name,
+                rows=[
+                    LaunchedPaneRow(
+                        location=str(window.workspace),
+                        tab_name=window.tab_name,
+                        pane_name=window.pane["paneName"],
+                        handle=window.window_id,
+                        command=window.pane["command"],
+                        start_dir=window.pane["startDir"],
+                    )
+                    for window in windows
+                ],
+                verb="started",
+            )
         except ValueError as error:
             results[session_name] = {"success": False, "error": str(error)}
     return results, launched_windows
 
 
-def monitor_launched_windows(launched_windows: dict[str, tuple[str, ...]], poll_seconds: float) -> None:
-    pending = {name: set(window_ids) for name, window_ids in launched_windows.items() if window_ids}
+def monitor_launched_windows(launched_windows: dict[str, tuple[LaunchedWindow, ...]], poll_seconds: float) -> None:
+    pending = {name: {window.window_id for window in windows} for name, windows in launched_windows.items() if windows}
     while pending:
         existing_sessions = {session.name for session in list_session_entries() if not session.saved}
         for session_name in tuple(pending):

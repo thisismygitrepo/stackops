@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import cast
 
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
+from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import LaunchedWindow
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import kill_window_command, run_tuios
 from stackops.utils.schemas.layouts.layout_types import PaneConfig, TabConfig
 
@@ -56,13 +57,18 @@ def launch_window(session_name: str, pane: PaneConfig, exit_mode: SessionExitMod
     return window_id
 
 
-def launch_tab(session_name: str, tab: TabConfig, exit_mode: SessionExitMode, workspace: int) -> list[str]:
-    window_ids = [
-        launch_window(session_name=session_name, pane=pane, exit_mode=exit_mode, workspace=workspace)
+def launch_tab(session_name: str, tab: TabConfig, exit_mode: SessionExitMode, workspace: int) -> list[LaunchedWindow]:
+    windows = [
+        LaunchedWindow(
+            window_id=launch_window(session_name=session_name, pane=pane, exit_mode=exit_mode, workspace=workspace),
+            workspace=workspace,
+            tab_name=tab["tabName"],
+            pane=pane,
+        )
         for pane in tab["panes"]
     ]
     run_tuios(["call", "set-workspace-name", json.dumps({"session": session_name, "workspace": workspace, "name": tab["tabName"]})])
-    return window_ids
+    return windows
 
 
 def close_window(session_name: str, window_id: str) -> None:

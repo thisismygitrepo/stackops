@@ -185,11 +185,12 @@ def build_tmux_merge_commands(
     session_name: str,
     on_conflict: TmuxMergeConflictAction,
     exit_mode: SessionExitMode,
-) -> list[str]:
+) -> tuple[list[str], list[TabConfig]]:
     validate_layout_config(layout_config)
     existing_window_names = list_tmux_window_names(session_name=session_name)
     first_target: str | None = None
     commands: list[str] = []
+    launched_tabs: list[TabConfig] = []
 
     for tab in layout_config["layoutTabs"]:
         window_name = tab["tabName"]
@@ -220,13 +221,14 @@ def build_tmux_merge_commands(
             case _:
                 raise ValueError(f"Unsupported tmux merge policy: {on_conflict}")
 
+        launched_tabs.append(tab)
         existing_window_names.add(window_name)
         if first_target is None:
             first_target = f"{session_name}:{window_name}"
 
     if first_target is not None:
         commands.append(f"tmux select-window -t {shell_quote(first_target)}")
-    return commands
+    return commands, launched_tabs
 
 
 def build_tmux_script(
@@ -264,5 +266,5 @@ def build_tmux_merge_script(
             session_name=session_name,
             on_conflict=on_conflict,
             exit_mode=exit_mode,
-        )
+        )[0]
     )

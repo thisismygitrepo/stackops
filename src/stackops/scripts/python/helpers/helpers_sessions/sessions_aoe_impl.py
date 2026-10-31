@@ -8,6 +8,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from rich.console import Console
+
+from stackops.cluster.sessions_managers.session_launch_table import LaunchedPaneRow, print_launch_table
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabConfig
 
 type TabCommandMode = Literal["prompt", "cmd", "ignore"]
@@ -21,6 +24,15 @@ class AoeLaunchOptions:
     sleep_inbetween: float
     tab_command_mode: TabCommandMode
     launch: bool
+
+
+@dataclass(frozen=True, slots=True)
+class _PendingAoeSession:
+    group: str
+    title: str
+    tab_name: str
+    pane: PaneConfig
+    command: list[str]
 
 
 def _command_exists(command: str) -> bool:
@@ -54,6 +66,25 @@ def _resolve_tab_payload(
     if tab_command_mode == "prompt":
         return tab_command, None
     return None, tab_command
+
+
+def _launched_row(session: _PendingAoeSession, options: AoeLaunchOptions) -> LaunchedPaneRow:
+    prompt, command_override = _resolve_tab_payload(pane=session.pane, tab_command_mode=options.tab_command_mode)
+    match prompt, command_override:
+        case str(), _:
+            command = f"""prompt: {prompt}"""
+        case None, str():
+            command = command_override
+        case None, None:
+            command = "—"
+    return LaunchedPaneRow(
+        location=options.tool or "default",
+        tab_name=session.tab_name,
+        pane_name=session.pane["paneName"],
+        handle=session.title,
+        command=command,
+        start_dir=session.pane["startDir"],
+    )
 
 
 def build_aoe_add_command(
@@ -93,7 +124,7 @@ def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunch
             "Install agent-of-empires and make sure `aoe` is available on PATH."
         )
 
-    pending_commands: list[tuple[str, str, list[str]]] = []
+    pending_sessions: list[_PendingAoeSession] = []
     used_titles: dict[str, int] = {}
     for layout in layouts_selected:
         group = layout["layoutName"]
@@ -104,31 +135,48 @@ def run_layouts_via_aoe(layouts_selected: list[LayoutConfig], options: AoeLaunch
                     f"has {len(tab['panes'])} panes. Use the tmux, herdr or tuios backend for multi-pane tabs."
                 )
             title = _resolve_unique_title(title=_default_title(tab=tab, tab_index=tab_index), used_titles=used_titles)
-            pending_commands.append(
-                (
-                    group,
-                    title,
-                    build_aoe_add_command(pane=tab["panes"][0], title=title, group=group, options=options),
+            pane = tab["panes"][0]
+            pending_sessions.append(
+                _PendingAoeSession(
+                    group=group,
+                    title=title,
+                    tab_name=tab["tabName"],
+                    pane=pane,
+                    command=build_aoe_add_command(pane=pane, title=title, group=group, options=options),
                 )
             )
 
-    if len(pending_commands) == 0:
+    if len(pending_sessions) == 0:
         raise ValueError("No tabs were selected to launch through AoE.")
 
-    for index, (group, title, command) in enumerate(pending_commands):
-        printable = shlex.join(command)
-        if options.dry_run:
-            print(printable)
-        else:
-            result = subprocess.run(command, capture_output=True, text=True, timeout=120, check=False)
-            if result.returncode != 0:
-                detail = (result.stderr or result.stdout).strip()
-                raise ValueError(
-                    f"aoe add failed for group '{group}' title '{title}'.\n"
-                    f"Command: {printable}\n"
-                    f"{detail or 'No error output returned.'}"
-                )
-            action = "Added and started" if options.launch else "Added"
-            print(f"{action} AoE session '{title}' in group '{group}'.")
-        if index < len(pending_commands) - 1 and options.sleep_inbetween > 0:
-            time.sleep(options.sleep_inbetween)
+    if options.dry_run:
+        for index, session in enumerate(pending_sessions):
+            print(shlex.join(session.command))
+            if index < len(pending_sessions) - 1 and options.sleep_inbetween > 0:
+                time.sleep(options.sleep_inbetween)
+        return
+
+    launched_sessions: list[_PendingAoeSession] = []
+    try:
+        with Console().status("Launching AoE sessions…") as status:
+            for index, session in enumerate(pending_sessions):
+                status.update(f"""Launching AoE session '{session.title}' ({index + 1}/{len(pending_sessions)})…""")
+                result = subprocess.run(session.command, capture_output=True, text=True, timeout=120, check=False)
+                if result.returncode != 0:
+                    detail = (result.stderr or result.stdout).strip()
+                    raise ValueError(
+                        f"aoe add failed for group '{session.group}' title '{session.title}'.\n"
+                        f"Command: {shlex.join(session.command)}\n"
+                        f"{detail or 'No error output returned.'}"
+                    )
+                launched_sessions.append(session)
+                if index < len(pending_sessions) - 1 and options.sleep_inbetween > 0:
+                    time.sleep(options.sleep_inbetween)
+    finally:
+        for group in dict.fromkeys(session.group for session in launched_sessions):
+            print_launch_table(
+                backend="aoe",
+                session_name=group,
+                rows=[_launched_row(session=session, options=options) for session in launched_sessions if session.group == group],
+                verb="started" if options.launch else "added",
+            )

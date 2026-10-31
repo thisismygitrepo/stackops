@@ -10,6 +10,7 @@ from typing import Literal, TypeAlias, cast
 import typer
 
 from stackops.cluster.sessions_managers.monitoring_types import StartResult
+from stackops.cluster.sessions_managers.session_launch_table import LaunchedPaneRow, print_launch_table
 from stackops.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
     build_session_launch_plan,
@@ -24,7 +25,7 @@ JsonObject: TypeAlias = dict[str, object]
 
 @dataclass(frozen=True, slots=True)
 class HerdrLaunchedPane:
-    name: str
+    pane: PaneConfig
     pane_id: str
 
 
@@ -222,7 +223,7 @@ def _launch_tab_panes(*, tab: TabConfig, root_pane_id: str) -> tuple[HerdrLaunch
         _run_herdr(["herdr", "pane", "rename", pane_id, pane["paneName"]])
         _run_herdr(["herdr", "pane", "run", pane_id, pane["command"]])
     return tuple(
-        HerdrLaunchedPane(name=pane["paneName"], pane_id=pane_id)
+        HerdrLaunchedPane(pane=pane, pane_id=pane_id)
         for pane, pane_id in zip(panes, pane_ids, strict=True)
     )
 
@@ -273,11 +274,20 @@ def _required_string(*, mapping: JsonObject, key: str) -> str:
 
 
 def show_herdr_launch_summary(*, summary: HerdrLaunchSummary) -> None:
-    typer.echo(
-        f"Started Herdr workspace '{summary.workspace_label}' "
-        f"({summary.workspace_id}) with {len(summary.tabs)} tab(s)."
+    print_launch_table(
+        backend="herdr",
+        session_name=f"""{summary.workspace_label} ({summary.workspace_id})""",
+        rows=[
+            LaunchedPaneRow(
+                location=tab.tab_id,
+                tab_name=tab.name,
+                pane_name=launched.pane["paneName"],
+                handle=launched.pane_id,
+                command=launched.pane["command"],
+                start_dir=launched.pane["startDir"],
+            )
+            for tab in summary.tabs
+            for launched in tab.panes
+        ],
+        verb="started",
     )
-    for tab in summary.tabs:
-        typer.echo(f"- {tab.name}: tab={tab.tab_id}")
-        for pane in tab.panes:
-            typer.echo(f"    - {pane.name}: pane={pane.pane_id}")

@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from stackops.utils.schemas.layouts.layout_types import PaneConfig
+
 
 @dataclass(frozen=True, slots=True)
 class SessionEntry:
@@ -34,3 +36,11 @@ class WindowEntry:
 class WorkspaceEntry:
     number: int
     name: str
+
+
+@dataclass(frozen=True, slots=True)
+class LaunchedWindow:
+    window_id: str
+    workspace: int
+    tab_name: str
+    pane: PaneConfig

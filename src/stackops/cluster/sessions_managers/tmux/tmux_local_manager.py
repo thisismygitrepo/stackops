@@ -12,6 +12,7 @@ from stackops.logger import get_logger
 from stackops.cluster.scheduler import Scheduler
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 from stackops.cluster.sessions_managers.tmux.tmux_local import TmuxLayoutGenerator, TmuxLayoutSummary
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_launch_table import print_tmux_launch_table
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
     build_tmux_attach_or_switch_command,
     run_tmux_commands,
@@ -95,6 +96,7 @@ class TmuxLocalManager:
                     timeout_seconds=30.0,
                 )
                 self.launched_managers.append(manager)
+                print_tmux_launch_table(session_name=session_name, tabs=manager.launched_tabs)
                 results[session_name] = {"success": True, "message": f"Session '{session_name}' started successfully"}
             except Exception as exc:
                 results[session_name] = {"success": False, "error": str(exc)}

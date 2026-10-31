@@ -12,10 +12,11 @@ from stackops.cluster.sessions_managers.session_conflict import (
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 from rich.console import Console
 
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (
     run_tmux_commands,
 )
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_launch_table import print_tmux_launch_table
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_status import (
     TmuxSessionStatus,
     build_unknown_commands_status,
@@ -63,21 +64,17 @@ class TmuxLayoutGenerator:
         self.exit_mode: SessionExitMode = exit_mode
         self.layout_config: LayoutConfig = layout_config.copy()
         self.launch_commands: list[str] = []
+        self.launched_tabs: list[TabConfig] = []
         self.script_path: str | None = None
 
     def create_layout_file(self) -> bool:
         validate_layout_config(self.layout_config)
-        tab_count = len(self.layout_config["layoutTabs"])
-        layout_name = self.layout_config["layoutName"]
-        console.print(f"[bold cyan]📋 Creating tmux layout[/bold cyan] [bright_green]'{layout_name}' with {tab_count} windows[/bright_green]")
-        for tab in self.layout_config["layoutTabs"]:
-            for pane in tab["panes"]:
-                console.print(f"  [yellow]→[/yellow] [bold]{tab['tabName']}/{pane['paneName']}[/bold] [dim]in[/dim] [blue]{pane['startDir']}[/blue]")
         self.launch_commands = build_tmux_commands(
             layout_config=self.layout_config,
             session_name=self.session_name,
             exit_mode=self.exit_mode,
         )
+        self.launched_tabs = self.layout_config["layoutTabs"]
         script_content = build_tmux_script_from_commands(commands=self.launch_commands)
         self._write_script_content(script_content=script_content)
         console.print(f"[bold green]✅ Layout created successfully:[/bold green] [cyan]{self.script_path}[/cyan]")
@@ -159,7 +156,7 @@ class TmuxLayoutGenerator:
                         f"[bold yellow]🔀 Merging tmux layout into existing session[/bold yellow] "
                         f"[yellow]'{self.session_name}'[/yellow] [yellow]and overwriting matching windows.[/yellow]"
                     )
-                    launch_commands = build_tmux_merge_commands(
+                    launch_commands, launched_tabs = build_tmux_merge_commands(
                         layout_config=self.layout_config,
                         session_name=self.session_name,
                         on_conflict="mergeOverwrite",
@@ -170,7 +167,7 @@ class TmuxLayoutGenerator:
                         f"[bold yellow]🔀 Merging tmux layout into existing session[/bold yellow] "
                         f"[yellow]'{self.session_name}'[/yellow] [yellow]and skipping matching windows.[/yellow]"
                     )
-                    launch_commands = build_tmux_merge_commands(
+                    launch_commands, launched_tabs = build_tmux_merge_commands(
                         layout_config=self.layout_config,
                         session_name=self.session_name,
                         on_conflict="mergeSkip",
@@ -184,8 +181,10 @@ class TmuxLayoutGenerator:
                 session_name=self.session_name,
                 exit_mode=self.exit_mode,
             )
+            launched_tabs = self.layout_config["layoutTabs"]
 
         self.launch_commands = launch_commands
+        self.launched_tabs = launched_tabs
         script_content = build_tmux_script_from_commands(commands=launch_commands)
         self._write_script_content(script_content=script_content)
 
@@ -199,6 +198,7 @@ class TmuxLayoutGenerator:
                 f"[bold cyan]⏭️ Skipping tmux session[/bold cyan] [cyan]'{launch_plan['session_name']}'[/cyan]"
             )
             self.launch_commands = []
+            self.launched_tabs = []
             return False
         if launch_plan["session_name"] != self.session_name:
             console.print(
@@ -228,6 +228,7 @@ class TmuxLayoutGenerator:
             commands=self.launch_commands,
             timeout_seconds=30.0,
         )
+        print_tmux_launch_table(session_name=self.session_name, tabs=self.launched_tabs)
         return {"returncode": 0, "stdout": "", "stderr": ""}
 
 
