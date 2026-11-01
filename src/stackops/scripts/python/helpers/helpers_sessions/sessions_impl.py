@@ -65,9 +65,10 @@ def run_layouts(
     on_conflict: SessionConflictAction,
     exit_mode: SessionExitMode,
     layouts_selected: list["LayoutConfig"],
-) -> None:
+) -> list[str]:
     """Launch terminal sessions based on a layout configuration file."""
     import time
+    launched_session_names: list[str] = []
     monitor_requested = monitor
     monitor = monitor or (parallel_layouts is not None)
     if parallel_layouts is not None and not monitor_requested:
@@ -94,6 +95,7 @@ def run_layouts(
                 )
                 start_results = tmux_manager.start_all_sessions(on_conflict=on_conflict)
                 raise_on_failed_start(start_results, "tmux")
+                launched_session_names.extend(start_results)
                 if monitor:
                     tmux_manager.run_monitoring_routine(wait_ms=2000)
                     if kill_upon_completion:
@@ -134,6 +136,7 @@ def run_layouts(
                     exit_mode=exit_mode,
                 )
                 raise_on_failed_start(start_results, "TUIOS")
+                launched_session_names.extend(start_results)
                 if monitor or kill_upon_completion:
                     monitor_launched_windows(launched_windows=launched_windows, poll_seconds=2.0)
                     if kill_upon_completion:
@@ -152,6 +155,7 @@ def run_layouts(
                     exit_mode=exit_mode,
                 )
                 raise_on_failed_start(start_results, "Zellij")
+                launched_session_names.extend(start_results)
                 if monitor or kill_upon_completion:
                     monitor_launched_panes(launched_panes=launched_panes, poll_seconds=2.0)
                     if kill_upon_completion:
@@ -161,3 +165,4 @@ def run_layouts(
                     time.sleep(sleep_inbetween)
         case _:
             raise ValueError(f"Unsupported backend: {backend}")
+    return launched_session_names

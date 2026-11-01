@@ -60,4 +60,5 @@ def _run_generated_layout_with_tmux(*, layout_output_path: Path) -> None:
         exit_mode="backToShell",
         kill_upon_completion=False,
         subsitute_home=False,
+        attach=False,
     )
