@@ -455,19 +455,19 @@ tmux_linux:
 tuios:
   config:
     original: ~/.config/tuios/config.toml
-    self_managed: CONFIG_ROOT/settings/tuios/config.toml
+    self_managed: CONFIG_ROOT/settings/tuios/linux/config.toml
     os:
     - linux
 tuios_darwin:
   config:
     original: ~/Library/Application Support/tuios/config.toml
-    self_managed: CONFIG_ROOT/settings/tuios/config.toml
+    self_managed: CONFIG_ROOT/settings/tuios/linux/config.toml
     os:
     - darwin
 tuios_windows:
   config:
     original: ~/AppData/Local/tuios/config.toml
-    self_managed: CONFIG_ROOT/settings/tuios/config.toml
+    self_managed: CONFIG_ROOT/settings/tuios/windows/config.toml
     os:
     - windows
 herdr:
