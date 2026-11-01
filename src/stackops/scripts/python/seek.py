@@ -33,9 +33,9 @@ def seek(
             ...,
             "--semantic-backend",
             "-b",
-            help="Backend for --semantic: semtools (stateless, local static embeddings), ck (hybrid, local index), grepai (needs Ollama, local index), or qmd (local GGUF models, local index)",
+            help="Backend for --semantic: ck (local ONNX embeddings, local index), grepai (needs Ollama, local index), qmd (local GGUF models with LLM query expansion, local index, slow), or semtools (stateless, local static embeddings)",
         ),
-    ] = "semtools",
+    ] = "ck",
     extension: Annotated[
         str | None,
         typer.Option(

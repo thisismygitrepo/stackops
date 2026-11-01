@@ -35,6 +35,11 @@ def installer_category_definition(label: InstallerCategoryLabel) -> InstallerCat
                 title="Build, DevOps & Containers",
                 description="Build helpers, development containers, container tooling, service orchestration, and infrastructure utilities.",
             )
+        case "workflow-orchestration":
+            return InstallerCategoryDefinition(
+                title="Workflow Orchestration & Scheduling",
+                description="Workflow engines, DAG schedulers, and data pipeline orchestrators; Apache Airflow and its alternatives.",
+            )
         case "ai-agents-assistants":
             return InstallerCategoryDefinition(
                 title="AI Agents & Assistants",

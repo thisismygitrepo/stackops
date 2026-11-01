@@ -11,8 +11,11 @@ from stackops.scripts.python.helpers.helpers_seek.semantic.constants import (
     IDENTIFIER_HASH_LENGTH,
     QMD_COLLECTION_PREFIX,
     QMD_DEFAULT_EXTENSION,
+    QMD_INDEX_DIR,
     QMD_LOCAL_CONFIG_RELATIVE_PATHS,
+    QMD_VECTOR_MIN_SCORE,
 )
+from stackops.scripts.python.helpers.helpers_seek.semantic.index_dirs import keep_index_dir_out_of_git
 from stackops.scripts.python.helpers.helpers_seek.semantic.semantic_models import (
     SemanticFailure,
     SemanticHit,
@@ -101,10 +104,12 @@ def search_qmd(root: Path, query: str, extension: str | None, top_k: int) -> Sem
         )
         if isinstance(indexed, SemanticFailure):
             return indexed
+    if needs_init:
+        keep_index_dir_out_of_git(index_dir=root / QMD_INDEX_DIR)
     stdout = run_backend_command(
         backend="qmd",
         stage="search",
-        command=["qmd", "vsearch", "--format", "json", "--full-path", "-n", str(top_k), "-c", collection, "--", query],
+        command=["qmd", "vsearch", "--format", "json", "--full-path", f"""--min-score={QMD_VECTOR_MIN_SCORE}""", "-n", str(top_k), "-c", collection, "--", query],
         cwd=root,
         extra_env=working_directory_env,
         accepted_exit_codes=(0,),

@@ -1,9 +1,18 @@
 import json
 from pathlib import Path
 from typing import TypedDict, cast
+from urllib.parse import urlparse
+
+import yaml
 
 from stackops.scripts.python.helpers.helpers_seek.semantic.command_runner import run_backend_command
-from stackops.scripts.python.helpers.helpers_seek.semantic.constants import GREPAI_CONFIG_RELATIVE_PATH
+from stackops.scripts.python.helpers.helpers_seek.semantic.constants import (
+    GREPAI_CONFIG_RELATIVE_PATH,
+    GREPAI_INIT_PROVIDER,
+    GREPAI_LOCAL_PROVIDERS,
+    GREPAI_LOCAL_STORE,
+    LOOPBACK_HOSTS,
+)
 from stackops.scripts.python.helpers.helpers_seek.semantic.semantic_models import (
     SemanticFailure,
     SemanticHit,
@@ -24,8 +33,40 @@ class GrepaiError(TypedDict):
     error: str
 
 
+class GrepaiEmbedderConfig(TypedDict):
+    provider: str
+    endpoint: str
+
+
+class GrepaiStoreConfig(TypedDict):
+    backend: str
+
+
+class GrepaiConfig(TypedDict):
+    embedder: GrepaiEmbedderConfig
+    store: GrepaiStoreConfig
+
+
 def find_grepai_project_root(root: Path) -> Path | None:
     return next((candidate for candidate in (root, *root.parents) if candidate.joinpath(GREPAI_CONFIG_RELATIVE_PATH).is_file()), None)
+
+
+def check_grepai_config_is_local(project_root: Path) -> SemanticFailure | None:
+    config_path = project_root / GREPAI_CONFIG_RELATIVE_PATH
+    try:
+        config = cast(GrepaiConfig, yaml.safe_load(config_path.read_text(encoding="utf-8")))
+        provider = config["embedder"]["provider"]
+        endpoint = config["embedder"]["endpoint"]
+        store = config["store"]["backend"]
+    except (yaml.YAMLError, KeyError, TypeError) as error:
+        return SemanticFailure(backend="grepai", stage="options", message=f"""unreadable grepai config {config_path}: {error!r}""")
+    if provider in GREPAI_LOCAL_PROVIDERS and urlparse(endpoint).hostname in LOOPBACK_HOSTS and store == GREPAI_LOCAL_STORE:
+        return None
+    return SemanticFailure(
+        backend="grepai",
+        stage="options",
+        message=f"""{config_path} embeds with {provider} at {endpoint} into a {store} store; seek only runs grepai with {"/".join(GREPAI_LOCAL_PROVIDERS)} on a loopback endpoint and the {GREPAI_LOCAL_STORE} store, so nothing leaves this machine""",
+    )
 
 
 def parse_grepai_output(stdout: str, project_root: Path) -> list[SemanticHit] | SemanticFailure:
@@ -57,7 +98,7 @@ def search_grepai(root: Path, query: str, extension: str | None, top_k: int) -> 
         initialized = run_backend_command(
             backend="grepai",
             stage="index",
-            command=["grepai", "init", "--yes"],
+            command=["grepai", "init", "--provider", GREPAI_INIT_PROVIDER, "--backend", GREPAI_LOCAL_STORE, "--yes"],
             cwd=root,
             extra_env={},
             accepted_exit_codes=(0,),
@@ -66,6 +107,9 @@ def search_grepai(root: Path, query: str, extension: str | None, top_k: int) -> 
         if isinstance(initialized, SemanticFailure):
             return initialized
         project_root = root
+    locality_failure = check_grepai_config_is_local(project_root=project_root)
+    if locality_failure is not None:
+        return locality_failure
     indexed = run_backend_command(
         backend="grepai",
         stage="index",
