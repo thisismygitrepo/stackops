@@ -240,6 +240,38 @@ docker:
     - darwin
     - windows
 
+# ============ Workflow Orchestration ============
+dagu:
+  dags:
+    original: ~/.config/dagu/dags
+    self_managed: DOTFILES_ROOT/config/dagu/dags
+    os:
+    - linux
+    - darwin
+    - windows
+  config:
+    original: ~/.config/dagu/config.yaml
+    self_managed: DOTFILES_ROOT/creds/dagu/config.yaml
+    os:
+    - linux
+    - darwin
+    - windows
+  base_config:
+    original: ~/.config/dagu/base.yaml
+    self_managed: DOTFILES_ROOT/creds/dagu/base.yaml
+    os:
+    - linux
+    - darwin
+    - windows
+prefect:
+  profiles:
+    original: ~/.prefect/profiles.toml
+    self_managed: DOTFILES_ROOT/creds/prefect/profiles.toml
+    os:
+    - linux
+    - darwin
+    - windows
+
 # ============ Email ============
 himalaya:
   config:

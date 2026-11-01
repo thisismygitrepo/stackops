@@ -5434,9 +5434,7 @@ installers:
         windows: null
   - appName: psmux
     license: MIT License
-    repoURL: https://github.com/psmux/psmux
-    lastCommitDate: '2026-09-21T12:31:35Z'
-    lastCommitDateCheckDate: '2026-09-21T22:08:58Z'
+    repoURL: CMD
     doc: Native Windows tmux built in Rust.
     categoryLabels:
       - terminal-workspaces
@@ -5445,11 +5443,11 @@ installers:
       amd64:
         linux: null
         darwin: null
-        windows: psmux-{version}-windows-x64.zip
+        windows: psmux.py
       arm64:
         linux: null
         darwin: null
-        windows: psmux-{version}-windows-arm64.zip
+        windows: psmux.py
   - appName: superfile
     license: MIT License
     repoURL: https://github.com/yorukot/superfile
