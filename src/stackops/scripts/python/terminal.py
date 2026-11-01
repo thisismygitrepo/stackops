@@ -61,6 +61,7 @@ def run(
     exit_mode: Annotated[Literal["back-to-shell", "terminate", "kill-window"], typer.Option("--exit", "-e", help="What each tab/window should do after its command exits.")] = "back-to-shell",
     kill_upon_completion: Annotated[bool, typer.Option(..., "--kill-upon-completion", "-k", help="Kill session(s) upon completion (only relevant if --monitor or --parallel-layouts is set)")] = False,
     subsitute_home: Annotated[bool, typer.Option(..., "--substitute-home", "-H", help="Substitute ~ and $HOME in layout file with actual home directory path")] = False,
+    attach: Annotated[bool, typer.Option(..., "--attach", "-a", help="Attach to the first launched session after launching (tmux, TUIOS, and Zellij). Cannot be used with --monitor, --parallel-layouts, or --kill-upon-completion.")] = False,
 ) -> None:
     """Launch selected layouts from a layout configuration file.
 
@@ -104,6 +105,7 @@ def run(
         monitor=monitor,
         kill_upon_completion=kill_upon_completion,
         subsitute_home=subsitute_home,
+        attach=attach,
     )
 
 

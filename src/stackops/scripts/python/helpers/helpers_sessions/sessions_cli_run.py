@@ -27,6 +27,7 @@ def run_cli(
     monitor: bool,
     kill_upon_completion: bool,
     subsitute_home: bool,
+    attach: bool,
 ) -> None:
     try:
         if sleep_inbetween < 0:
@@ -42,6 +43,11 @@ def run_cli(
         from stackops.utils.default_multiplexer import resolve_session_multiplexer
 
         backend_resolved = resolve_session_multiplexer(multiplexer=backend)
+        if attach:
+            if backend_resolved in {"herdr", "aoe"}:
+                raise ValueError(f"--attach is not supported by the {backend_resolved} backend.")
+            if monitor or parallel_layouts is not None or kill_upon_completion:
+                raise ValueError("--attach cannot be used with --monitor, --parallel-layouts, or --kill-upon-completion.")
         layout_source = resolve_layout_source(
             ctx=ctx,
             layouts_file=layouts_file,
@@ -105,7 +111,7 @@ def run_cli(
             run_layouts_via_aoe(layouts_selected=layouts_selected, options=options)
             return
 
-        run_layouts(
+        launched_session_names = run_layouts(
             sleep_inbetween=sleep_inbetween,
             monitor=monitor,
             parallel_layouts=parallel_layouts,
@@ -115,6 +121,19 @@ def run_cli(
             on_conflict=on_conflict,
             exit_mode=exit_mode,
         )
+        if attach:
+            if len(launched_session_names) == 0:
+                raise ValueError("--attach found no launched session to attach to.")
+            target_session_name = launched_session_names[0]
+            if len(launched_session_names) > 1:
+                typer.echo(f"""Attaching to '{target_session_name}'. Other launched sessions: {", ".join(launched_session_names[1:])}""")
+            from stackops.scripts.python.helpers.helpers_sessions.attach_impl import choose_session
+            from stackops.utils.code import exit_then_run_shell_script
+
+            action, payload = choose_session(backend=backend_resolved, name=target_session_name, new_session=False, kill_all=False, first=False, window=False)
+            if action == "error":
+                raise ValueError(payload)
+            exit_then_run_shell_script(script=payload, strict=True)
     except ValueError as e:
         typer.echo(str(e), err=True)
         raise typer.Exit(1) from e
