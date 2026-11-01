@@ -1,0 +1,19 @@
+{
+  "parse": {
+    "base_url": "http://127.0.0.1:9",
+    "num_ongoing_requests": 1,
+    "parse_kwargs": {},
+    "check_interval": 5,
+    "max_timeout": 60,
+    "max_retries": 0,
+    "retry_delay_ms": 1000,
+    "backoff_multiplier": 2.0
+  },
+  "ask": {
+    "api_key": "ollama",
+    "base_url": "http://localhost:11434/v1",
+    "model": "qwen3.8:27b",
+    "max_iterations": 10,
+    "api_mode": "chat"
+  }
+}

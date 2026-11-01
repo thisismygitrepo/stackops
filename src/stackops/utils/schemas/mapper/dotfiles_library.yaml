@@ -19,6 +19,14 @@ ollama:
     - linux
     - darwin
     - windows
+semtools:
+  config:
+    original: ~/.semtools_config.json
+    self_managed: CONFIG_ROOT/settings/semtools/semtools_config.json
+    os:
+    - linux
+    - darwin
+    - windows
 
 # ============ Developer Tools ============
 marimo:
