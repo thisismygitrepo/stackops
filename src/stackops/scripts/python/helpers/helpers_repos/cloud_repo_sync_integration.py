@@ -78,7 +78,7 @@ def integrate_remote_repository(
         get_merge_conflicts,
         resolve_merge_conflicts,
     )
-    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import MergeConflictResult, MergeGitError, merge_remote_copy
+    from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_git import MergeConflictResult, MergeGitError, ensure_git_identity, merge_remote_copy
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_status import print_integration_result, print_repository_comparison
 
     repo_local_root = Path(local_repo.working_dir)
@@ -98,6 +98,7 @@ def integrate_remote_repository(
             repo=local_repo, local_commit=None, remote_commit=local_repo.commit("FETCH_HEAD"),
             console=console, title="Before integration",
         )
+        ensure_git_identity(repo=local_repo, console=console)
         local_repo.git.merge("FETCH_HEAD", no_edit=True)
         print_integration_result(repo=local_repo, previous_commit=None, remote_commit=remote_commit, console=console)
         return

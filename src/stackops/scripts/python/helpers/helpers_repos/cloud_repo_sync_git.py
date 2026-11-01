@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 import stat
+import sys
 from typing import TYPE_CHECKING
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import MergeConflict
@@ -63,6 +64,60 @@ def _has_staged_changes(repo: "Repo") -> bool:
     return repo.git.diff("--cached", "--name-only").strip() != ""
 
 
+def _has_git_identity(repo: "Repo") -> bool:
+    from git.exc import GitCommandError
+
+    with repo.git.custom_environment(LC_ALL="C"):
+        for identity in ("GIT_AUTHOR_IDENT", "GIT_COMMITTER_IDENT"):
+            try:
+                repo.git.var(identity)
+            except GitCommandError as error:
+                if any(reason in error.stderr.lower() for reason in (
+                    "identity unknown", "unable to auto-detect email address", "empty ident name", "empty ident email",
+                    "no name was given", "no email was given",
+                )):
+                    return False
+                raise
+    return True
+
+
+def ensure_git_identity(repo: "Repo", console: "Console") -> None:
+    from git.exc import GitCommandError
+    import typer
+
+    if _has_git_identity(repo=repo):
+        return
+    console.print("Git needs your name and email before it can commit. These details will be saved only for this repository.")
+    if not sys.stdin.isatty():
+        console.print("Run guard in an interactive terminal to enter your Git name and email, or configure user.name and user.email for this repository.")
+        raise typer.Exit(code=1)
+
+    values: dict[str, str] = {}
+    for field, label in (("name", "Git name"), ("email", "Git email")):
+        try:
+            current_value = repo.git.config("--get", f"""user.{field}""").strip()
+        except GitCommandError as error:
+            if error.status != 1:
+                raise
+            current_value = ""
+        while True:
+            try:
+                value = str(typer.prompt(label, default=current_value or None, type=str)).strip()
+            except (typer.Abort, EOFError, KeyboardInterrupt):
+                console.print("Git identity setup cancelled. Guard stopped without creating a commit.")
+                raise typer.Exit(code=1) from None
+            if value and not any(character in value for character in "\0\r\n<>"):
+                values[field] = value
+                break
+            console.print("Enter a nonempty value without angle brackets or line breaks.")
+
+    for field, value in values.items():
+        repo.git.config("--local", "--replace-all", f"""user.{field}""", value)
+    if not _has_git_identity(repo=repo):
+        console.print("Git still cannot use this identity. Check GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, GIT_COMMITTER_NAME and GIT_COMMITTER_EMAIL in your environment.")
+        raise typer.Exit(code=1)
+
+
 def commit_local_changes(repo: "Repo", message: str, console: "Console") -> None:
     _print_section(console=console, title="COMMITTING LOCAL CHANGES")
     print(repo.git.status())
@@ -70,6 +125,7 @@ def commit_local_changes(repo: "Repo", message: str, console: "Console") -> None
     if not _has_staged_changes(repo=repo):
         print("-> No staged changes to commit.")
         return
+    ensure_git_identity(repo=repo, console=console)
     commit_output = repo.git.commit(m=message)
     if commit_output.strip() != "":
         print(commit_output)
@@ -88,6 +144,7 @@ def merge_remote_copy(repo: "Repo", remote_path: Path, console: "Console") -> Me
             repo=repo, local_commit=repo.head.commit, remote_commit=repo.commit("FETCH_HEAD"),
             console=console, title="Before integration",
         )
+        ensure_git_identity(repo=repo, console=console)
         merge_output = repo.git.merge("FETCH_HEAD", no_edit=True)
     except GitCommandError as exc:
         conflicts = get_merge_conflicts(repo=repo)
