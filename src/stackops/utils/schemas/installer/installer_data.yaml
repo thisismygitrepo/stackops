@@ -5962,3 +5962,48 @@ installers:
         linux: bun install -g @tobilu/qmd
         darwin: bun install -g @tobilu/qmd
         windows: bun install -g @tobilu/qmd
+  - appName: dagu
+    license: GNU General Public License v3.0
+    repoURL: https://github.com/dagu-org/dagu
+    doc: 'Airflow alternative: single-binary workflow engine and cron scheduler for YAML-defined DAGs, with a built-in web UI'
+    categoryLabels:
+      - workflow-orchestration
+    fileNamePattern:
+      amd64:
+        linux: dagu_{version}_linux_amd64.tar.gz
+        darwin: dagu_{version}_darwin_amd64.tar.gz
+        windows: dagu_{version}_windows_amd64.tar.gz
+      arm64:
+        linux: dagu_{version}_linux_arm64.tar.gz
+        darwin: dagu_{version}_darwin_arm64.tar.gz
+        windows: dagu_{version}_windows_arm64.tar.gz
+  - appName: prefect
+    license: Apache License 2.0
+    repoURL: https://github.com/PrefectHQ/prefect
+    doc: 'Airflow alternative: Python-native workflow orchestration (flows and tasks) with a local server and web UI'
+    categoryLabels:
+      - workflow-orchestration
+    fileNamePattern:
+      amd64:
+        linux: uv tool install prefect
+        darwin: uv tool install prefect
+        windows: uv tool install prefect
+      arm64:
+        linux: uv tool install prefect
+        darwin: uv tool install prefect
+        windows: uv tool install prefect
+  - appName: dagster
+    license: Apache License 2.0
+    repoURL: https://github.com/dagster-io/dagster
+    doc: 'Airflow alternative: asset-oriented data pipeline orchestrator with a local web UI via dagster dev'
+    categoryLabels:
+      - workflow-orchestration
+    fileNamePattern:
+      amd64:
+        linux: uv tool install dagster --with dagster-webserver
+        darwin: uv tool install dagster --with dagster-webserver
+        windows: uv tool install dagster --with dagster-webserver
+      arm64:
+        linux: uv tool install dagster --with dagster-webserver
+        darwin: uv tool install dagster --with dagster-webserver
+        windows: uv tool install dagster --with dagster-webserver

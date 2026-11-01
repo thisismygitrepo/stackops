@@ -68,6 +68,11 @@
           "description": "Build helpers, development containers, container tooling, service orchestration, and infrastructure utilities."
         },
         {
+          "const": "workflow-orchestration",
+          "title": "Workflow Orchestration & Scheduling",
+          "description": "Workflow engines, DAG schedulers, and data pipeline orchestrators; Apache Airflow and its alternatives."
+        },
+        {
           "const": "ai-agents-assistants",
           "title": "AI Agents & Assistants",
           "description": "AI coding agents, chat CLIs, agent launchers, MCP tooling, and assistant-oriented apps."

@@ -22,6 +22,7 @@ InstallerCategoryLabel: TypeAlias = Literal[
     "editors-ides",
     "version-control",
     "build-devops-containers",
+    "workflow-orchestration",
     "ai-agents-assistants",
     "terminals-shells",
     "terminal-workspaces",

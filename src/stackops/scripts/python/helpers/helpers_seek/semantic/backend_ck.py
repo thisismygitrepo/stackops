@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 from stackops.scripts.python.helpers.helpers_seek.semantic.command_runner import run_backend_command
-from stackops.scripts.python.helpers.helpers_seek.semantic.constants import CK_NO_MATCH_EXIT_CODE
+from stackops.scripts.python.helpers.helpers_seek.semantic.constants import CK_INDEX_DIR, CK_NO_MATCH_EXIT_CODE, CK_SEMANTIC_THRESHOLD
+from stackops.scripts.python.helpers.helpers_seek.semantic.index_dirs import keep_index_dir_out_of_git
 from stackops.scripts.python.helpers.helpers_seek.semantic.semantic_models import (
     SemanticFailure,
     SemanticHit,
@@ -48,7 +49,7 @@ def search_ck(root: Path, query: str, extension: str | None, top_k: int) -> Sema
     stdout = run_backend_command(
         backend="ck",
         stage="search",
-        command=["ck", "--jsonl", "--sem", "--full-section", "--topk", str(top_k), "--", query, target],
+        command=["ck", "--jsonl", "--sem", "--full-section", "--threshold", str(CK_SEMANTIC_THRESHOLD), "--topk", str(top_k), "--", query, target],
         cwd=root,
         extra_env={},
         accepted_exit_codes=(0, CK_NO_MATCH_EXIT_CODE),
@@ -56,6 +57,7 @@ def search_ck(root: Path, query: str, extension: str | None, top_k: int) -> Sema
     )
     if isinstance(stdout, SemanticFailure):
         return stdout
+    keep_index_dir_out_of_git(index_dir=root / CK_INDEX_DIR)
     hits = parse_ck_output(stdout=stdout, root=root)
     if isinstance(hits, SemanticFailure):
         return hits
