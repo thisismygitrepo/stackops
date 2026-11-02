@@ -100,6 +100,7 @@ def edit_layouts(
     editor: Annotated[
         Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the layout file with."),
     ] = "hx",
+    install_lsp: Annotated[bool, typer.Option("--install-lsp", help="Install the required language server if missing (Helix only).")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import default_layout_source_paths
     from stackops.scripts.python.terminal_layout_files import describe_layout_file, resolve_layout_file
@@ -119,4 +120,4 @@ def edit_layouts(
             raise typer.Abort()
         file_path = choices[selection]
 
-    run_managed_file_edit(kind="layouts", path=file_path, editor=editor)
+    run_managed_file_edit(kind="layouts", path=file_path, editor=editor, install_lsp=install_lsp)

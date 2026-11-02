@@ -1,4 +1,3 @@
-import yaml
 from dataclasses import dataclass
 from math import isfinite
 from pathlib import Path
@@ -8,10 +7,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
     PARALLEL_CREATE_COMMAND_NAME,
     PARALLEL_CREATE_CONFIG_KEYS,
     PARALLEL_RUN_COMMAND_NAME,
-    PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY,
-    PARALLEL_YAML_TEMPLATE_ENTRY_NAME,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
 from stackops.utils.default_agent import resolve_agent
 from stackops.utils.default_multiplexer import resolve_agent_multiplexer
 from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
@@ -165,8 +161,13 @@ def parallel_yaml_header_for_path(*, yaml_path: Path) -> str:
 
 
 def parallel_yaml_template_for_path(*, yaml_path: Path) -> str:
-    yaml_body = yaml.safe_dump({PARALLEL_YAML_TEMPLATE_ENTRY_NAME: PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY}, sort_keys=False, default_flow_style=False)
-    return f"{parallel_yaml_header_for_path(yaml_path=yaml_path)}{yaml_body}"
+    from stackops.utils.managed_file_operations import render_managed_file_content
+    from stackops.utils.managed_files import get_managed_file_spec
+
+    spec = get_managed_file_spec("parallel")
+    return render_managed_file_content(
+        spec=spec, data_path=yaml_path, content=spec.example_source_path.read_text(encoding="utf-8"),
+    )
 
 
 def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, source: PARALLEL_RUNS_SOURCE) -> list[tuple[str, Path]]:
@@ -193,14 +194,12 @@ def resolve_parallel_yaml_paths(*, parallel_yaml_path: str | None, source: PARAL
 
 
 def ensure_parallel_yaml_exists(*, yaml_path: Path) -> bool:
-    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="parallel")
-    if yaml_path.exists():
-        if not yaml_path.is_file():
-            raise ValueError(f"parallel YAML path exists but is not a file: {yaml_path}")
-        return False
-    yaml_path.parent.mkdir(parents=True, exist_ok=True)
-    yaml_path.write_text(parallel_yaml_template_for_path(yaml_path=yaml_path), encoding="utf-8")
-    return True
+    from stackops.utils.managed_file_operations import initialize_managed_file
+    from stackops.utils.managed_files import get_managed_file_spec
+
+    existed = yaml_path.exists()
+    initialize_managed_file(spec=get_managed_file_spec("parallel"), data_path=yaml_path)
+    return not existed
 
 
 def parallel_yaml_format_explanation(*, yaml_paths: list[tuple[str, Path]]) -> str:

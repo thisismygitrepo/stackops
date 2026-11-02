@@ -11,7 +11,8 @@ def edit_repositories(
     editor: Annotated[
         Literal["nano", "hx", "code"], typer.Option("--editor", "-e", help="Editor to open repos.json. Defaults to hx.")
     ] = "hx",
+    install_lsp: Annotated[bool, typer.Option("--install-lsp", help="Install the required language server if missing (Helix only).")] = False,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_edit
 
-    run_managed_file_edit(kind="repos", path=specs_path, editor=editor)
+    run_managed_file_edit(kind="repos", path=specs_path, editor=editor, install_lsp=install_lsp)

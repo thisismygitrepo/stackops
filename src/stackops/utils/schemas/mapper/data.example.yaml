@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=./data.schema.json
+example_project:
+  documents:
+    path_local: ~/Documents/example-project
+    path_cloud: example-project
+    share_url: null
+    encryption: symmetric
+    zip: true
+    rel2home: true
+    os:
+      - linux
+      - darwin
+      - windows

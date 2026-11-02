@@ -1,0 +1,11 @@
+{
+  "$schema": "./mcp.schema.json",
+  "mcpServers": {
+    "example": {
+      "url": "https://example.invalid/mcp",
+      "headers": {},
+      "description": "Replace with your MCP server endpoint and description.",
+      "enabled": false
+    }
+  }
+}

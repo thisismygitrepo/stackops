@@ -54,10 +54,18 @@ def describe_managed_file(*, spec: ManagedFileSpec, data_path: Path) -> dict[str
     }
 
 
-def initialize_managed_file(*, spec: ManagedFileSpec, data_path: Path) -> None:
+def render_managed_file_content(*, spec: ManagedFileSpec, data_path: Path, content: str) -> str:
     from stackops.utils.schemas.json_schema import json_schema_document_text
     from stackops.utils.schemas.yaml_schema import yaml_schema_document_text
 
+    schema_path = managed_schema_path(spec=spec, data_path=data_path)
+    schema_reference = f"""./{schema_path.name}"""
+    if spec.user_path.suffix in {".yaml", ".yml"}:
+        return yaml_schema_document_text(content=content, schema_reference=schema_reference)
+    return json_schema_document_text(content=content, schema_reference=schema_reference)
+
+
+def initialize_managed_file(*, spec: ManagedFileSpec, data_path: Path) -> None:
     if data_path.exists() and not data_path.is_file():
         raise IsADirectoryError(f"""Configuration path is not a file: {data_path}""")
     schema_path = managed_schema_path(spec=spec, data_path=data_path)
@@ -65,11 +73,9 @@ def initialize_managed_file(*, spec: ManagedFileSpec, data_path: Path) -> None:
         raise ValueError(f"""Configuration and schema must use different paths: {data_path}""")
     ensure_managed_schema(spec=spec, data_path=data_path)
     existed = data_path.exists()
-    original_content = data_path.read_text(encoding="utf-8") if existed else spec.initial_content
-    if spec.user_path.suffix in {".yaml", ".yml"}:
-        content = yaml_schema_document_text(content=original_content, schema_reference=f"""./{schema_path.name}""")
-    else:
-        content = json_schema_document_text(content=original_content, schema_reference=f"""./{schema_path.name}""")
+    source_path = data_path if existed else spec.example_source_path
+    original_content = source_path.read_text(encoding="utf-8")
+    content = render_managed_file_content(spec=spec, data_path=data_path, content=original_content)
     if existed:
         if content != original_content:
             data_path.write_text(content, encoding="utf-8")

@@ -23,6 +23,7 @@ def export_example(
     ] = False,
     overwrite: Annotated[bool, typer.Option("--overwrite", "-f", help="Overwrite existing output files.")] = False,
 ) -> None:
+    from stackops.utils.managed_file_operations import render_managed_file_content
     from stackops.utils.managed_files import get_managed_file_spec, managed_schema_path
 
     spec = get_managed_file_spec(which)
@@ -43,6 +44,12 @@ def export_example(
 
     for source_path, output_path in copies:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
+        content = source_path.read_text(encoding="utf-8")
+        if output_path == data_output_path:
+            content = render_managed_file_content(spec=spec, data_path=output_path, content=content)
+        with output_path.open("w" if overwrite else "x", encoding="utf-8") as stream:
+            if output_path == data_output_path:
+                output_path.chmod(spec.file_mode)
+            stream.write(content)
     written_paths = ", ".join(str(output_path) for _, output_path in copies)
     typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Wrote {written_paths}")

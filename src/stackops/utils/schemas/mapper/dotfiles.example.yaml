@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=./dotfiles.schema.json
+example_app:
+  settings:
+    original: ~/.config/example-app/config.toml
+    self_managed: CONFIG_ROOT/settings/example-app/config.toml
+    os:
+      - linux
+      - darwin
+      - windows
+    contents: false
+    copy: false

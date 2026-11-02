@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import Any, Final, Literal
+from typing import Any, Literal
 import json
 
 
 PROMPTS_SOURCE = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 PROMPTS_PREVIEW_SIZE_PERCENT = 70.0
-_PROMPTS_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
 
 
 def _value_to_text(value: Any) -> str:
@@ -244,34 +243,19 @@ def resolve_named_prompts_yaml_entry(
 
 
 def prompts_yaml_template() -> str:
-    return _prompts_yaml_template_for_path(yaml_path=Path("prompts.yaml"))
+    from stackops.utils.managed_files import get_managed_file_spec
 
-
-def _prompts_yaml_template_for_path(*, yaml_path: Path) -> str:
-    from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
-
-    return f"""{yaml_language_server_schema_comment(yaml_path=yaml_path)}
-# prompts.yaml used by `agents run-prompt`
-# Top-level and nested keys show up in interactive selection (nested via dot-path, e.g. 'team.backend').
-# Each entry can be a plain string or an object with prompt metadata.
-{_PROMPTS_YAML_TEMPLATE_ENTRY_NAME}:
-  prompt: replace me
-  description: short label
-  group: general
-"""
+    spec = get_managed_file_spec("prompts")
+    return spec.example_source_path.read_text(encoding="utf-8")
 
 
 def ensure_prompts_yaml_exists(yaml_path: Path) -> bool:
-    from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
+    from stackops.utils.managed_file_operations import initialize_managed_file
+    from stackops.utils.managed_files import get_managed_file_spec
 
-    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="prompts")
-    if yaml_path.exists():
-        if not yaml_path.is_file():
-            raise ValueError(f"prompts YAML path exists but is not a file: {yaml_path}")
-        return False
-    yaml_path.parent.mkdir(parents=True, exist_ok=True)
-    yaml_path.write_text(_prompts_yaml_template_for_path(yaml_path=yaml_path), encoding="utf-8")
-    return True
+    existed = yaml_path.exists()
+    initialize_managed_file(spec=get_managed_file_spec("prompts"), data_path=yaml_path)
+    return not existed
 
 
 def prompts_yaml_format_explanation(yaml_paths: list[tuple[str, Path]]) -> str:
@@ -285,21 +269,16 @@ Expected format:
 
 def edit_prompts_yaml(yaml_path: Path) -> None:
     import shutil
-    import subprocess
 
-    from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
+    from stackops.utils.managed_file_cli import run_managed_file_edit
 
-    editor = shutil.which("hx")
-    if editor is None:
-        editor = shutil.which("nano")
-    if editor is None:
+    editor: Literal["hx", "nano"] = "hx"
+    if shutil.which(editor) is None:
+        editor = "nano"
+    if shutil.which(editor) is None:
         raise ValueError("No supported editor found. Install 'hx' or 'nano', or run without --edit")
 
-    yaml_path.parent.mkdir(parents=True, exist_ok=True)
-    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="prompts")
-    result = subprocess.run([editor, str(yaml_path)], check=False)
-    if result.returncode != 0:
-        raise RuntimeError(f"Editor exited with status code {result.returncode}")
+    run_managed_file_edit(kind="prompts", path=yaml_path, editor=editor, install_lsp=False)
 
 
 def resolve_context(

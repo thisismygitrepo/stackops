@@ -1,8 +1,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 import shutil
-import subprocess
-from typing import Final
+from typing import Final, Literal
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import (
     McpCatalogFile,
@@ -85,32 +84,27 @@ def ensure_mcp_catalog_exists(location: McpCatalogLocation) -> bool:
     from stackops.utils.managed_files import get_managed_file_spec
 
     catalog_path = location["path"]
-    if catalog_path.exists():
-        if not catalog_path.is_file():
-            raise ValueError(f"MCP catalog path exists but is not a file: {catalog_path}")
-        return False
+    existed = catalog_path.exists()
+    if existed and not catalog_path.is_file():
+        raise ValueError(f"MCP catalog path exists but is not a file: {catalog_path}")
 
     if location["scope"] == "library":
         return False
 
     initialize_managed_file(spec=get_managed_file_spec("mcp"), data_path=catalog_path)
-    return True
+    return not existed
 
 
 def edit_mcp_catalog(path: Path) -> None:
-    from stackops.utils.managed_file_operations import initialize_managed_file
-    from stackops.utils.managed_files import get_managed_file_spec
+    from stackops.utils.managed_file_cli import run_managed_file_edit
 
-    editor = shutil.which("hx")
-    if editor is None:
-        editor = shutil.which("nano")
-    if editor is None:
+    editor: Literal["hx", "nano"] = "hx"
+    if shutil.which(editor) is None:
+        editor = "nano"
+    if shutil.which(editor) is None:
         raise ValueError("No supported editor found. Install 'hx' or 'nano', or run without --edit")
 
-    initialize_managed_file(spec=get_managed_file_spec("mcp"), data_path=path)
-    result = subprocess.run([editor, str(path)], check=False)
-    if result.returncode != 0:
-        raise ValueError(f"Editor exited with status code {result.returncode}")
+    run_managed_file_edit(kind="mcp", path=path, editor=editor, install_lsp=False)
 
 
 def _validate_non_empty_string(raw_value: object, *, field_name: str, server_name: str, path: Path) -> str:

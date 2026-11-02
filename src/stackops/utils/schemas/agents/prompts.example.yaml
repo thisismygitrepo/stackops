@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=./prompts.schema.json
+entryExample:
+  prompt: Replace with your prompt.
+  description: Replace with a short label.
+  group: general
+  agent: null
+  directory: null

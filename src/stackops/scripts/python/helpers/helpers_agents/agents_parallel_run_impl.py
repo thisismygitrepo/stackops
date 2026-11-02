@@ -175,21 +175,17 @@ def _reject_duplicate_multi_run_outputs(*, resolved_entries: tuple[tuple[str, Re
 
 def edit_parallel_yaml(*, yaml_path: Path) -> None:
     import shutil
-    import subprocess
+    from typing import Literal
 
-    from stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas import ensure_stackops_yaml_schema_exists
+    from stackops.utils.managed_file_cli import run_managed_file_edit
 
-    editor = shutil.which("hx")
-    if editor is None:
-        editor = shutil.which("nano")
-    if editor is None:
+    editor: Literal["hx", "nano"] = "hx"
+    if shutil.which(editor) is None:
+        editor = "nano"
+    if shutil.which(editor) is None:
         raise ValueError("No supported editor found. Install 'hx' or 'nano', or run without --edit")
 
-    yaml_path.parent.mkdir(parents=True, exist_ok=True)
-    ensure_stackops_yaml_schema_exists(yaml_path=yaml_path, schema_kind="parallel")
-    result = subprocess.run([editor, str(yaml_path)], check=False)
-    if result.returncode != 0:
-        raise RuntimeError(f"Editor exited with status code {result.returncode}")
+    run_managed_file_edit(kind="parallel", path=yaml_path, editor=editor, install_lsp=False)
 
 
 def _ensure_writable_parallel_yaml_files(

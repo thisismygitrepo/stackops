@@ -1,9 +1,7 @@
-from typing import Final, TypedDict
+from typing import Final, TypedDict, cast
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
-    DEFAULT_SEAPRATOR,
-    DEFAULT_STAGGER_MAX,
     HOST,
     PROVIDER,
     ReasoningEffort,
@@ -14,7 +12,6 @@ from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 PARALLEL_CREATE_COMMAND_NAME: Final[str] = "agents parallel create"
 PARALLEL_RUN_COMMAND_NAME: Final[str] = "agents parallel run"
 PARALLEL_YAML_TEMPLATE_ENTRY_NAME: Final[str] = "entryExample"
-_ESCAPED_DEFAULT_SEPARATOR: Final[str] = DEFAULT_SEAPRATOR.encode("unicode_escape").decode("ascii")
 
 
 class ParallelCreateYamlEntry(TypedDict):
@@ -41,25 +38,13 @@ class ParallelCreateYamlEntry(TypedDict):
 
 
 PARALLEL_CREATE_CONFIG_KEYS: Final[frozenset[str]] = frozenset(ParallelCreateYamlEntry.__annotations__.keys())
-PARALLEL_YAML_TEMPLATE_DEFAULT_ENTRY: Final[ParallelCreateYamlEntry] = {
-    "agent": None,
-    "model": None,
-    "reasoning": None,
-    "provider": None,
-    "host": "local",
-    "backend": None,
-    "context": None,
-    "context_path": None,
-    "separator": _ESCAPED_DEFAULT_SEPARATOR,
-    "agent_load": 3,
-    "stagger_max": DEFAULT_STAGGER_MAX,
-    "prompt": None,
-    "prompt_path": None,
-    "prompt_name": None,
-    "job_name": "AI_Agents",
-    "join_prompt_and_context": False,
-    "run": True,
-    "output_path": None,
-    "agents_dir": None,
-    "interactive": False,
-}
+
+
+def parallel_yaml_default_entry() -> ParallelCreateYamlEntry:
+    import yaml
+
+    from stackops.utils.managed_files import get_managed_file_spec
+
+    spec = get_managed_file_spec("parallel")
+    entries = cast(dict[str, ParallelCreateYamlEntry], yaml.safe_load(spec.example_source_path.read_text(encoding="utf-8")))
+    return entries[PARALLEL_YAML_TEMPLATE_ENTRY_NAME]

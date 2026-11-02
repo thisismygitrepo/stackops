@@ -75,7 +75,7 @@ def get_app() -> typer.Typer:
     app.command("l", hidden=True)(list_software)
     app.command("path", help="📍 <p> Print catalog and schema paths as JSON.")(software_path)
     app.command("p", hidden=True)(software_path)
-    app.command("init", help="📄 <I> Create an empty user catalog and its schema.")(init_software)
+    app.command("init", help="📄 <I> Create a starter user catalog and its schema.")(init_software)
     app.command("I", hidden=True)(init_software)
     app.command("edit", help="📝 <e> Create, edit, and validate the user software catalog.")(edit_software)
     app.command("e", hidden=True)(edit_software)

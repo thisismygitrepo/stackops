@@ -56,27 +56,18 @@ def get_agent_managed_file_spec(kind: AgentManagedFileKind) -> ManagedFileSpec:
         relative_path = ".stackops/mcp.json" if kind == "mcp" else f""".stackops/agents/{kind}.yaml"""
         user_path = Path.cwd() / relative_path
     match kind:
-        case "prompts":
-            from stackops.scripts.python.helpers.helpers_agents.agents_run_context import prompts_yaml_template
-
-            schema_path = get_path_reference_path(module=agent_schema_assets, path_reference="prompts.schema.json")
-            example_path = resolve_agent_managed_file_path(kind=kind, source="library")
-            initial_content = prompts_yaml_template()
-        case "parallel":
-            schema_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.schema.json")
-            example_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
-            initial_content = example_path.read_text(encoding="utf-8")
+        case "prompts" | "parallel":
+            schema_path = get_path_reference_path(module=agent_schema_assets, path_reference=f"""{kind}.schema.json""")
+            example_path = get_path_reference_path(module=agent_schema_assets, path_reference=f"""{kind}.example.yaml""")
         case "mcp":
             import stackops.jobs.agents.mcps as mcp_assets
 
             schema_path = get_path_reference_path(module=mcp_assets, path_reference=mcp_assets.MCP_SCHEMA_PATH_REFERENCE)
-            example_path = get_path_reference_path(module=mcp_assets, path_reference=mcp_assets.MCP_PATH_REFERENCE)
-            initial_content = '{"$schema": "./mcp.schema.json", "mcpServers": {}}\n'
+            example_path = get_path_reference_path(module=agent_schema_assets, path_reference="mcp.example.json")
     return ManagedFileSpec(
         user_path=user_path,
         example_source_path=example_path,
         schema_source_path=schema_path,
-        initial_content=initial_content,
         file_mode=0o644,
     )
 

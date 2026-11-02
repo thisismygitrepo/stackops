@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=./installer_data.schema.json
+version: "4"
+installers:
+  - appName: example-app
+    license: replace-with-license
+    repoURL: https://example.invalid/owner/example-app
+    doc: Replace with your application's description and installation instructions.
+    categoryLabels:
+      - productivity-knowledge
+    fileNamePattern:
+      amd64:
+        linux: example-app-linux-amd64.tar.gz
+        darwin: example-app-darwin-amd64.tar.gz
+        windows: example-app-windows-amd64.zip
+      arm64:
+        linux: example-app-linux-arm64.tar.gz
+        darwin: example-app-darwin-arm64.tar.gz
+        windows: example-app-windows-arm64.zip

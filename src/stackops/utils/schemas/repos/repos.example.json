@@ -1,0 +1,25 @@
+{
+  "$schema": "./repos_schema.json",
+  "version": "0.2",
+  "repos": [
+    {
+      "name": "example-project",
+      "parentDir": "~/code",
+      "currentBranch": "main",
+      "remotes": [
+        {
+          "name": "origin",
+          "url": "https://example.invalid/owner/example-project.git"
+        }
+      ],
+      "version": {
+        "branch": "main",
+        "commit": "replace-with-commit"
+      },
+      "isDirty": false,
+      "sync": {
+        "mode": "git"
+      }
+    }
+  ]
+}

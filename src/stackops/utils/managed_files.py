@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias
@@ -11,7 +10,6 @@ class ManagedFileSpec:
     user_path: Path
     example_source_path: Path
     schema_source_path: Path
-    initial_content: str
     file_mode: int
 
 
@@ -25,87 +23,66 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
             return get_agent_managed_file_spec(kind)
         case "software":
             import stackops.utils.schemas.installer as installer_assets
-            from stackops.utils.installer_utils.installer_catalog import (
-                LIBRARY_INSTALLER_DATA_PATH,
-                USER_INSTALLER_DATA_PATH,
-                load_installer_data_file,
-            )
-            from stackops.utils.schemas.installer.installer_types import InstallerDataFiles
-            from stackops.utils.schemas.yaml_document import yaml_document_text
+            from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH
 
-            initial_catalog: InstallerDataFiles = {
-                "version": load_installer_data_file(path=LIBRARY_INSTALLER_DATA_PATH)["version"],
-                "installers": [],
-            }
             return ManagedFileSpec(
                 user_path=USER_INSTALLER_DATA_PATH,
-                example_source_path=LIBRARY_INSTALLER_DATA_PATH,
+                example_source_path=get_path_reference_path(module=installer_assets, path_reference="installer_data.example.yaml"),
                 schema_source_path=get_path_reference_path(
                     module=installer_assets,
                     path_reference=installer_assets.INSTALLER_DATA_SCHEMA_PATH_REFERENCE,
                 ),
-                initial_content=yaml_document_text(document=initial_catalog),
                 file_mode=0o644,
             )
         case "repos":
             import stackops.utils.schemas.repos as repos_assets
-            from stackops.scripts.python.helpers.helpers_repos.spec_store import DEFAULT_REPOS_SPEC_PATH, REPOS_SPEC_VERSION
+            from stackops.scripts.python.helpers.helpers_repos.spec_store import DEFAULT_REPOS_SPEC_PATH
 
             return ManagedFileSpec(
                 user_path=DEFAULT_REPOS_SPEC_PATH,
-                example_source_path=get_path_reference_path(module=repos_assets, path_reference="repos.json"),
+                example_source_path=get_path_reference_path(module=repos_assets, path_reference="repos.example.json"),
                 schema_source_path=get_path_reference_path(module=repos_assets, path_reference=repos_assets.REPOS_SCHEMA_PATH_REFERENCE),
-                initial_content=json.dumps({"$schema": f"""./{repos_assets.REPOS_SCHEMA_PATH_REFERENCE}""", "version": REPOS_SPEC_VERSION, "repos": []}, indent=2) + "\n",
                 file_mode=0o644,
             )
         case "config":
             import stackops.utils.schemas.config as config_assets
-            from stackops.utils.schemas.config.config_types import StackOpsConfig
-            from stackops.utils.schemas.config.constants import STACKOPS_CONFIG_FILE_MODE, STACKOPS_CONFIG_VERSION
+            from stackops.utils.schemas.config.constants import STACKOPS_CONFIG_FILE_MODE
             from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH
 
-            initial_config: StackOpsConfig = {"$schema": f"./{config_assets.CONFIG_SCHEMA_PATH_REFERENCE}", "version": STACKOPS_CONFIG_VERSION}
             return ManagedFileSpec(
                 user_path=DOTFILES_STACKOPS_CONFIG_PATH,
-                example_source_path=get_path_reference_path(module=config_assets, path_reference=config_assets.CONFIG_PATH_REFERENCE),
+                example_source_path=get_path_reference_path(module=config_assets, path_reference="config.example.json"),
                 schema_source_path=get_path_reference_path(module=config_assets, path_reference=config_assets.CONFIG_SCHEMA_PATH_REFERENCE),
-                initial_content=json.dumps(initial_config, indent=2) + "\n",
                 file_mode=STACKOPS_CONFIG_FILE_MODE,
             )
         case "layouts":
             import stackops.utils.schemas.layouts as layout_assets
             from stackops.utils.source_of_truth import DOTFILES_LAYOUT_YAML_PATH
 
-            layouts_example_path = get_path_reference_path(module=layout_assets, path_reference=layout_assets.LAYOUT_PATH_REFERENCE)
             return ManagedFileSpec(
                 user_path=DOTFILES_LAYOUT_YAML_PATH,
-                example_source_path=layouts_example_path,
+                example_source_path=get_path_reference_path(module=layout_assets, path_reference="layout.example.yaml"),
                 schema_source_path=get_path_reference_path(module=layout_assets, path_reference=layout_assets.LAYOUT_SCHEMA_PATH_REFERENCE),
-                initial_content=layouts_example_path.read_text(encoding="utf-8"),
                 file_mode=0o644,
             )
         case "dotfiles":
             import stackops.utils.schemas.mapper as mapper_assets
-            from stackops.profile.dotfiles_mapper import DEFAULT_DOTFILE_MAPPER_HEADER, dump_dotfiles_mapper
             from stackops.utils.source_of_truth import DOTFILES_USER_MAPPER_PATH
 
             return ManagedFileSpec(
                 user_path=DOTFILES_USER_MAPPER_PATH,
-                example_source_path=get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DOTFILES_PATH_REFERENCE),
+                example_source_path=get_path_reference_path(module=mapper_assets, path_reference="dotfiles.example.yaml"),
                 schema_source_path=get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE),
-                initial_content=dump_dotfiles_mapper(mapper={}, header=DEFAULT_DOTFILE_MAPPER_HEADER),
                 file_mode=0o644,
             )
         case "data":
             import stackops.utils.schemas.mapper as mapper_assets
-            from stackops.scripts.python.helpers.helpers_cloud.backup_config import DEFAULT_BACKUP_HEADER
             from stackops.utils.source_of_truth import DOTFILES_USER_BACKUP_PATH
 
             return ManagedFileSpec(
                 user_path=DOTFILES_USER_BACKUP_PATH,
-                example_source_path=get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DATA_PATH_REFERENCE),
+                example_source_path=get_path_reference_path(module=mapper_assets, path_reference="data.example.yaml"),
                 schema_source_path=get_path_reference_path(module=mapper_assets, path_reference=mapper_assets.MAPPER_DATA_SCHEMA_PATH_REFERENCE),
-                initial_content=DEFAULT_BACKUP_HEADER,
                 file_mode=0o644,
             )
         case "secrets":
@@ -118,7 +95,6 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
                 user_path=SECRETS_DOFILE,
                 example_source_path=secrets_example_path,
                 schema_source_path=get_path_reference_path(module=secrets_assets, path_reference=secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE),
-                initial_content=secrets_example_path.read_text(encoding="utf-8"),
                 file_mode=PRIVATE_SECRETS_FILE_MODE,
             )
 
