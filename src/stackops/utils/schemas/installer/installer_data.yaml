@@ -2907,23 +2907,21 @@ installers:
         linux: rust-analyzer-aarch64-unknown-linux-gnu.gz
         darwin: rust-analyzer-aarch64-apple-darwin.gz
         windows: rust-analyzer-aarch64-pc-windows-msvc.zip
-  - appName: vscode-json-languageserver
+  - appName: vscode-json-language-server
     license: MIT License
-    repoURL: https://github.com/microsoft/vscode-json-languageservice
-    lastCommitDate: '2026-09-14T15:54:13Z'
-    lastCommitDateCheckDate: '2026-09-21T22:08:58Z'
+    repoURL: https://github.com/hrsh7th/vscode-langservers-extracted
     doc: JSON Language Server for editor and LSP integrations.
     categoryLabels:
       - languages-runtimes
     fileNamePattern:
       amd64:
-        linux: bun install -g vscode-json-language-server
-        darwin: bun install -g vscode-json-language-server
-        windows: bun install -g vscode-json-language-server
+        linux: bun install -g vscode-langservers-extracted
+        darwin: bun install -g vscode-langservers-extracted
+        windows: bun install -g vscode-langservers-extracted
       arm64:
-        linux: bun install -g vscode-json-language-server
-        darwin: bun install -g vscode-json-language-server
-        windows: bun install -g vscode-json-language-server
+        linux: bun install -g vscode-langservers-extracted
+        darwin: bun install -g vscode-langservers-extracted
+        windows: bun install -g vscode-langservers-extracted
   - appName: yaml-language-server
     license: MIT License
     repoURL: https://github.com/redhat-developer/yaml-language-server

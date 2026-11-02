@@ -13,17 +13,16 @@ def software_path(
 ) -> None:
     from stackops.utils.installer_utils.installer_scripts import LIBRARY_INSTALLER_SCRIPTS_ROOT, get_user_installer_scripts_root
     from stackops.utils.managed_file_operations import describe_managed_file
-    from stackops.utils.managed_files import get_managed_file_spec
+    from stackops.utils.managed_files import resolve_managed_file
 
     normalized_source = INSTALLER_DATA_SOURCE_MAP[source]
     if normalized_source == "library" and path is not None:
         raise typer.BadParameter("--custom-path requires --source user or all")
-    spec = get_managed_file_spec("software")
+    spec, user_path = resolve_managed_file(kind="software", path=path)
     paths: dict[str, dict[str, str]] = {}
     if normalized_source in {"library", "all"}:
         paths["library"] = describe_managed_file(spec=spec, data_path=spec.example_source_path) | {"scripts": str(LIBRARY_INSTALLER_SCRIPTS_ROOT)}
     if normalized_source in {"user", "all"}:
-        user_path = spec.user_path if path is None else path.expanduser().absolute()
         paths["user"] = describe_managed_file(spec=spec, data_path=user_path) | {"scripts": str(get_user_installer_scripts_root(user_catalog_path=user_path))}
     typer.echo(json.dumps(paths, indent=2))
 
@@ -42,9 +41,9 @@ def edit_software(
     _source: Annotated[Literal["user"], typer.Option("--source", "-s", help="Catalog source to edit. Only user is supported.")] = "user",
     editor: Annotated[Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the catalog with.")] = "hx",
 ) -> None:
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_edit import edit_managed_file
+    from stackops.utils.managed_file_cli import run_managed_file_edit
 
-    edit_managed_file(which="software", path=path, editor=editor)
+    run_managed_file_edit(kind="software", path=path, editor=editor)
 
 
 def validate_software(

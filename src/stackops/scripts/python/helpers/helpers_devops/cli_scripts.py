@@ -1,6 +1,4 @@
 import json
-import shutil
-import subprocess
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -67,23 +65,13 @@ def edit_script(
     editor: Annotated[Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the script with.")] = "hx",
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.script_resolution import resolve_script
+    from stackops.utils.file_editor_cli import resolve_editor_command, run_file_editor
 
     if source in {"dynamic", "d"} and not Path(name).is_file():
         raise typer.BadParameter("Editing requires a local script source.", param_hint="--source")
     target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive, allow_dynamic=False)
-    editor_bin = shutil.which(editor)
-    if editor_bin is None:
-        typer.echo(f"""Editor '{editor}' is not available on PATH.""", err=True)
-        raise typer.Exit(code=1)
-    editor_command = [editor_bin, "--wait"] if editor == "code" else [editor_bin]
-    try:
-        result = subprocess.run([*editor_command, str(target)], check=False)
-    except OSError as error:
-        typer.echo(f"""Could not edit script: {error}""", err=True)
-        raise typer.Exit(code=1) from error
-    if result.returncode != 0:
-        typer.echo(f"""Editor exited with status code {result.returncode}.""", err=True)
-        raise typer.Exit(code=result.returncode if result.returncode > 0 else 1)
+    editor_command = resolve_editor_command(editor=editor)
+    run_file_editor(path=target, command=editor_command)
 
 
 def get_app() -> typer.Typer:

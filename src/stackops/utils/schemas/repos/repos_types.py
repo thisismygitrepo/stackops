@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 
 class GitRepoSync(TypedDict):
@@ -35,6 +35,7 @@ class RepoRecordDict(TypedDict):
     sync: RepoSync
 
 
-class RepoRecordFile(TypedDict):
-    version: str
-    repos: list[RepoRecordDict]
+RepoRecordFile = TypedDict(
+    "RepoRecordFile",
+    {"$schema": NotRequired[str], "version": str, "repos": list[RepoRecordDict]},
+)

@@ -101,13 +101,9 @@ def edit_layouts(
         Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the layout file with."),
     ] = "hx",
 ) -> None:
-    import shutil
-    import subprocess
-
     from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import default_layout_source_paths
     from stackops.scripts.python.terminal_layout_files import describe_layout_file, resolve_layout_file
-    from stackops.utils.managed_file_operations import initialize_managed_file, validate_managed_file
-    from stackops.utils.managed_files import get_managed_file_spec
+    from stackops.utils.managed_file_cli import run_managed_file_edit
 
     if layouts_file is not None or source is not None:
         file_path = resolve_layout_file(layouts_file=layouts_file, source=source)
@@ -123,31 +119,4 @@ def edit_layouts(
             raise typer.Abort()
         file_path = choices[selection]
 
-    try:
-        if file_path.exists() and not file_path.is_file():
-            raise ValueError(f"""Layout path is not a file: {file_path}""")
-        editor_bin = shutil.which(editor)
-        if editor_bin is None:
-            raise ValueError(f"""Editor '{editor}' is not available on PATH.""")
-        existed = file_path.exists()
-        initialize_managed_file(spec=get_managed_file_spec("layouts"), data_path=file_path)
-        if not existed:
-            typer.echo(f"""Created layout file: {file_path}""")
-
-        editor_command = [editor_bin, "--wait"] if editor == "code" else [editor_bin]
-        editor_command.append(str(file_path))
-        typer.echo(f"""Editing layout file: {file_path}""")
-        result = subprocess.run(editor_command, check=False)
-    except (OSError, ValueError) as error:
-        typer.echo(f"""Error: {error}""", err=True)
-        raise typer.Exit(code=1) from error
-    if result.returncode != 0:
-        typer.echo(f"""Error: Editor exited with status code {result.returncode}.""", err=True)
-        raise typer.Exit(code=result.returncode if result.returncode > 0 else 1)
-
-    try:
-        validate_managed_file(kind="layouts", data_path=file_path)
-    except (OSError, ValueError) as error:
-        typer.echo(f"""Error: Invalid layout file after editing: {error}""", err=True)
-        raise typer.Exit(code=1) from error
-    typer.echo(f"""Layout file validated: {file_path}""")
+    run_managed_file_edit(kind="layouts", path=file_path, editor=editor)

@@ -109,14 +109,14 @@
           ]
         },
         "context_path": {
-          "description": "Path to a context file.",
+          "description": "Path to a context file. Relative paths use the project root for .stackops/agents/parallel.yaml, otherwise the directory containing this YAML file. Supports ~ expansion.",
           "type": [
             "string",
             "null"
           ]
         },
         "separator": {
-          "description": "Escaped separator used to split context chunks.",
+          "description": "Separator used to split context into work chunks. Backslash escapes such as \\n are decoded into their corresponding characters.",
           "type": [
             "string",
             "null"
@@ -146,7 +146,7 @@
           ]
         },
         "prompt_path": {
-          "description": "Path to a prompt file.",
+          "description": "Path to a prompt file. Relative paths use the project root for .stackops/agents/parallel.yaml, otherwise the directory containing this YAML file. Supports ~ expansion.",
           "type": [
             "string",
             "null"
@@ -181,14 +181,14 @@
           ]
         },
         "output_path": {
-          "description": "Path where generated layout JSON is written.",
+          "description": "Path where the generated layout YAML is written; must end in .yaml. Relative paths use the project root for .stackops/agents/parallel.yaml, otherwise the directory containing this YAML file.",
           "type": [
             "string",
             "null"
           ]
         },
         "agents_dir": {
-          "description": "Directory where generated agent files are written.",
+          "description": "Directory where generated agent files are written. Relative paths use the project root for .stackops/agents/parallel.yaml, otherwise the directory containing this YAML file. Supports ~ expansion.",
           "type": [
             "string",
             "null"

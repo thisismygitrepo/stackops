@@ -50,7 +50,10 @@ def _validate_object_fields(data: object, *, string_fields: set[str], other_fiel
 
 
 def _validate_repos_spec(data: object, path: Path) -> RepoRecordFile:
-    spec = _validate_object_fields(data, string_fields={"version"}, other_fields={"repos"}, field_path="$", path=path)
+    string_fields = {"version"}
+    if isinstance(data, dict) and "$schema" in data:
+        string_fields.add("$schema")
+    spec = _validate_object_fields(data, string_fields=string_fields, other_fields={"repos"}, field_path="$", path=path)
     if spec["version"] != REPOS_SPEC_VERSION:
         raise ValueError(f"""Repository specification must use format {REPOS_SPEC_VERSION}: {path}""")
     repos = spec["repos"]
@@ -96,7 +99,10 @@ def _validate_repos_spec(data: object, path: Path) -> RepoRecordFile:
                 "sync": sync,
             }
         )
-    return {"version": REPOS_SPEC_VERSION, "repos": validated_records}
+    validated_spec: RepoRecordFile = {"version": REPOS_SPEC_VERSION, "repos": validated_records}
+    if "$schema" in spec:
+        validated_spec["$schema"] = cast(str, spec["$schema"])
+    return validated_spec
 
 
 def load_repos_spec(path: Path) -> RepoRecordFile:

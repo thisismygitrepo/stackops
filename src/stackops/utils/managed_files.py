@@ -55,7 +55,7 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
                 user_path=DEFAULT_REPOS_SPEC_PATH,
                 example_source_path=get_path_reference_path(module=repos_assets, path_reference="repos.json"),
                 schema_source_path=get_path_reference_path(module=repos_assets, path_reference=repos_assets.REPOS_SCHEMA_PATH_REFERENCE),
-                initial_content=json.dumps({"version": REPOS_SPEC_VERSION, "repos": []}, indent=2) + "\n",
+                initial_content=json.dumps({"$schema": f"""./{repos_assets.REPOS_SCHEMA_PATH_REFERENCE}""", "version": REPOS_SPEC_VERSION, "repos": []}, indent=2) + "\n",
                 file_mode=0o644,
             )
         case "config":
@@ -123,6 +123,19 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
             )
 
 
+def resolve_managed_file(*, kind: ManagedFileKind, path: Path | None) -> tuple[ManagedFileSpec, Path]:
+    spec = get_managed_file_spec(kind)
+    if path is not None:
+        data_path = path.expanduser().absolute()
+    elif kind in ("prompts", "parallel", "mcp"):
+        from stackops.utils.managed_agent_files import resolve_agent_managed_file_path
+
+        data_path = resolve_agent_managed_file_path(kind=kind, source="workspace")
+    else:
+        data_path = spec.user_path
+    return spec, data_path
+
+
 def managed_schema_path(*, spec: ManagedFileSpec, data_path: Path) -> Path:
     if spec.user_path.suffix in {".yaml", ".yml"}:
         return data_path.with_name(f"""{data_path.stem}.schema.json""")
@@ -131,10 +144,12 @@ def managed_schema_path(*, spec: ManagedFileSpec, data_path: Path) -> Path:
 
 def ensure_managed_schema(*, spec: ManagedFileSpec, data_path: Path) -> Path | None:
     schema_path = managed_schema_path(spec=spec, data_path=data_path)
+    schema_content = spec.schema_source_path.read_text(encoding="utf-8")
     if schema_path.exists():
         if not schema_path.is_file():
             raise IsADirectoryError(f"Schema path exists but is not a file: {schema_path}")
-        return None
+        if schema_path.read_text(encoding="utf-8") == schema_content:
+            return None
     schema_path.parent.mkdir(parents=True, exist_ok=True)
-    schema_path.write_text(spec.schema_source_path.read_text(encoding="utf-8"), encoding="utf-8")
+    schema_path.write_text(schema_content, encoding="utf-8")
     return schema_path

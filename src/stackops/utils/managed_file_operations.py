@@ -1,5 +1,4 @@
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -56,19 +55,25 @@ def describe_managed_file(*, spec: ManagedFileSpec, data_path: Path) -> dict[str
 
 
 def initialize_managed_file(*, spec: ManagedFileSpec, data_path: Path) -> None:
+    from stackops.utils.schemas.json_schema import json_schema_document_text
+    from stackops.utils.schemas.yaml_schema import yaml_schema_document_text
+
     if data_path.exists() and not data_path.is_file():
         raise IsADirectoryError(f"""Configuration path is not a file: {data_path}""")
     schema_path = managed_schema_path(spec=spec, data_path=data_path)
     if data_path == schema_path:
         raise ValueError(f"""Configuration and schema must use different paths: {data_path}""")
     ensure_managed_schema(spec=spec, data_path=data_path)
-    if data_path.exists():
-        return
-    content = spec.initial_content
+    existed = data_path.exists()
+    original_content = data_path.read_text(encoding="utf-8") if existed else spec.initial_content
     if spec.user_path.suffix in {".yaml", ".yml"}:
-        content = re.sub(r"^# yaml-language-server: \$schema=.*\n?", "", content)
-        content = f"""# yaml-language-server: $schema=./{schema_path.name}
-{content}"""
+        content = yaml_schema_document_text(content=original_content, schema_reference=f"""./{schema_path.name}""")
+    else:
+        content = json_schema_document_text(content=original_content, schema_reference=f"""./{schema_path.name}""")
+    if existed:
+        if content != original_content:
+            data_path.write_text(content, encoding="utf-8")
+        return
     with data_path.open("x", encoding="utf-8") as stream:
         data_path.chmod(spec.file_mode)
         stream.write(content)

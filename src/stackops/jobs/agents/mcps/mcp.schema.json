@@ -2,13 +2,16 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "$id": "https://bytesense.local/schemas/agents/mcps/mcp.schema.json",
   "title": "StackOps MCP Catalog",
+  "description": "Named MCP servers that StackOps can install into agent configurations. Each server uses either a local command or an HTTP URL.",
   "type": "object",
   "properties": {
     "$schema": {
-      "type": "string"
+      "type": "string",
+      "description": "Path or URL of the JSON Schema used for editor completion, help, and validation."
     },
     "mcpServers": {
       "type": "object",
+      "description": "Server definitions keyed by the names used to select them in MCP commands.",
       "propertyNames": {
         "type": "string",
         "minLength": 1,
@@ -46,24 +49,31 @@
     },
     "stdioServer": {
       "type": "object",
+      "description": "A local MCP process communicating through standard input and output. Requires command; HTTP url and headers are not allowed.",
       "properties": {
         "command": {
-          "$ref": "#/definitions/nonEmptyString"
+          "allOf": [{"$ref": "#/definitions/nonEmptyString"}],
+          "description": "Executable used to start the MCP server. Put command arguments in args. Supports {home} for the user's home directory."
         },
         "args": {
-          "$ref": "#/definitions/stringList"
+          "allOf": [{"$ref": "#/definitions/stringList"}],
+          "description": "Arguments passed to the executable in order. Each string is one argument and supports {home}."
         },
         "env": {
-          "$ref": "#/definitions/stringMap"
+          "allOf": [{"$ref": "#/definitions/stringMap"}],
+          "description": "Environment variables passed to the server, keyed by variable name. Values must be strings and support {home}."
         },
         "cwd": {
-          "$ref": "#/definitions/nonEmptyString"
+          "allOf": [{"$ref": "#/definitions/nonEmptyString"}],
+          "description": "Working directory for the MCP server process. Supports {home} for the user's home directory."
         },
         "description": {
-          "$ref": "#/definitions/nonEmptyString"
+          "allOf": [{"$ref": "#/definitions/nonEmptyString"}],
+          "description": "Human-readable explanation of the server and the tools it provides."
         },
         "enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the server is enabled in the generated agent configuration. Defaults to true when omitted."
         }
       },
       "required": [
@@ -73,18 +83,23 @@
     },
     "httpServer": {
       "type": "object",
+      "description": "An MCP server accessed over HTTP. Requires url; local command, args, env, and cwd are not allowed.",
       "properties": {
         "url": {
-          "$ref": "#/definitions/nonEmptyString"
+          "allOf": [{"$ref": "#/definitions/nonEmptyString"}],
+          "description": "HTTP endpoint of the MCP server. Supports {home} replacement."
         },
         "headers": {
-          "$ref": "#/definitions/stringMap"
+          "allOf": [{"$ref": "#/definitions/stringMap"}],
+          "description": "HTTP request headers, such as Authorization, keyed by header name. Values must be strings and support {home}."
         },
         "description": {
-          "$ref": "#/definitions/nonEmptyString"
+          "allOf": [{"$ref": "#/definitions/nonEmptyString"}],
+          "description": "Human-readable explanation of the server and the tools it provides."
         },
         "enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the server is enabled in the generated agent configuration. Defaults to true when omitted."
         }
       },
       "required": [
@@ -93,6 +108,7 @@
       "additionalProperties": false
     },
     "serverDefinition": {
+      "description": "Define command for a local stdio server or url for an HTTP server, but not both.",
       "oneOf": [
         {
           "$ref": "#/definitions/stdioServer"

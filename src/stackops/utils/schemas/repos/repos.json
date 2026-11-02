@@ -1,4 +1,5 @@
 {
+  "$schema": "./repos_schema.json",
   "version": "0.2",
   "repos": []
 }

@@ -5,6 +5,10 @@
   "description": "Schema for repository records file containing git repository information",
   "type": "object",
   "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL of the JSON Schema used for editor completion, help, and validation."
+    },
     "version": {
       "type": "string",
       "const": "0.2",
@@ -22,20 +26,40 @@
   "additionalProperties": false,
   "$defs": {
     "RepoSync": {
+      "description": "How to synchronize this repository: Git remotes or an encrypted cloud archive.",
       "oneOf": [
         {
           "type": "object",
-          "properties": {"mode": {"const": "git"}},
+          "properties": {
+            "mode": {
+              "const": "git",
+              "description": "Synchronize commits through the repository's configured Git remotes."
+            }
+          },
           "required": ["mode"],
           "additionalProperties": false
         },
         {
           "type": "object",
           "properties": {
-            "mode": {"const": "guard"},
-            "cloud": {"type": "string", "minLength": 1},
-            "remotePath": {"type": "string", "minLength": 1},
-            "ignoreGitignore": {"type": "boolean"}
+            "mode": {
+              "const": "guard",
+              "description": "Synchronize an encrypted repository archive through cloud storage."
+            },
+            "cloud": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of the rclone remote that stores the encrypted repository archive."
+            },
+            "remotePath": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Path to the encrypted repository archive within the selected rclone remote."
+            },
+            "ignoreGitignore": {
+              "type": "boolean",
+              "description": "Include Git-ignored files in the archive when true; respect Git ignore rules when false."
+            }
           },
           "required": ["mode", "cloud", "remotePath", "ignoreGitignore"],
           "additionalProperties": false
@@ -102,10 +126,12 @@
           "description": "Current git version information"
         },
         "isDirty": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the repository had uncommitted changes when its record was captured."
         },
         "sync": {
-          "$ref": "#/$defs/RepoSync"
+          "$ref": "#/$defs/RepoSync",
+          "description": "Choose Git remotes or an encrypted cloud archive as the repository's synchronization destination."
         }
       },
       "required": ["name", "parentDir", "currentBranch", "remotes", "version", "isDirty", "sync"],

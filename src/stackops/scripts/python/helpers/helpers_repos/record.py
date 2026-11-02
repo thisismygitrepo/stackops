@@ -373,7 +373,7 @@ def main_record(
     tree_structure = build_tree_structure(repos=repo_records, repos_root=repos_root)
     print(tree_structure)
 
-    res: RepoRecordFile = {"version": existing_spec["version"], "repos": merged_repos}
+    res: RepoRecordFile = {**existing_spec, "repos": merged_repos}
     save_repos_spec(spec=res, path=spec_path_resolved)
     pprint(f"📁 Result saved at {spec_path_resolved}")
     _print_merge_report(merge_summary)

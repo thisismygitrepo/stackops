@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -81,11 +80,10 @@ def resolve_mcp_catalog_locations(source: MCP_CATALOG_SOURCE, custom_path: Path 
             return tuple(location for location in locations if location["scope"] == "library")
 
 
-def _mcp_catalog_template() -> str:
-    return json.dumps({"mcpServers": {}}, indent=2) + "\n"
-
-
 def ensure_mcp_catalog_exists(location: McpCatalogLocation) -> bool:
+    from stackops.utils.managed_file_operations import initialize_managed_file
+    from stackops.utils.managed_files import get_managed_file_spec
+
     catalog_path = location["path"]
     if catalog_path.exists():
         if not catalog_path.is_file():
@@ -95,18 +93,21 @@ def ensure_mcp_catalog_exists(location: McpCatalogLocation) -> bool:
     if location["scope"] == "library":
         return False
 
-    catalog_path.parent.mkdir(parents=True, exist_ok=True)
-    catalog_path.write_text(_mcp_catalog_template(), encoding="utf-8")
+    initialize_managed_file(spec=get_managed_file_spec("mcp"), data_path=catalog_path)
     return True
 
 
 def edit_mcp_catalog(path: Path) -> None:
+    from stackops.utils.managed_file_operations import initialize_managed_file
+    from stackops.utils.managed_files import get_managed_file_spec
+
     editor = shutil.which("hx")
     if editor is None:
         editor = shutil.which("nano")
     if editor is None:
         raise ValueError("No supported editor found. Install 'hx' or 'nano', or run without --edit")
 
+    initialize_managed_file(spec=get_managed_file_spec("mcp"), data_path=path)
     result = subprocess.run([editor, str(path)], check=False)
     if result.returncode != 0:
         raise ValueError(f"Editor exited with status code {result.returncode}")
