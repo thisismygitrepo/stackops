@@ -8,11 +8,13 @@
 """requirements: stackops"""
 
 import json
+import re
 import shlex
 import subprocess
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Annotated, Final, Literal, NoReturn, TypeAlias
 from urllib.parse import quote, urlencode
@@ -28,6 +30,7 @@ from stackops.utils.options_utils.tv_options import choose_from_dict_with_previe
 
 CodespaceLocation: TypeAlias = Literal["EastUs", "SouthEastAsia", "WestEurope", "WestUs2"]
 OutputFormat: TypeAlias = Literal["table", "json", "names"]
+GithubPlan: TypeAlias = Literal["free", "pro"]
 
 REQUIREMENTS: Final[str] = "stackops"
 DEFAULT_LIST_LIMIT: Final[int] = 30
@@ -41,6 +44,15 @@ VIEW_JSON_FIELDS: Final[str] = (
     "location,machineDisplayName,machineName,name,owner,prebuild,recentFolders,repository,retentionExpiresAt,"
     "retentionPeriodDays,state,vscsTarget"
 )
+EXTRA_ARGS_CONTEXT_SETTINGS: Final[dict[str, bool]] = {"allow_extra_args": True, "ignore_unknown_options": True}
+CODESPACES_PRODUCT: Final[str] = "codespaces"
+CODESPACES_STORAGE_SKU: Final[str] = "Codespaces storage"
+CODESPACES_COMPUTE_SKU_PATTERN: Final[re.Pattern[str]] = re.compile(r"Codespaces compute (\d+)-core")
+CODESPACES_COMPUTE_UNIT_TYPE: Final[str] = "Hours"
+# GitHub labels storage rows either way, but both are priced per GB-month.
+CODESPACES_STORAGE_UNIT_TYPES: Final[frozenset[str]] = frozenset({"GigabyteMonths", "GigabyteHours"})
+QUOTA_MACHINE_CORES: Final[tuple[int, ...]] = (2, 4, 8, 16, 32)
+USER_SCOPE_HINT: Final[str] = "Billing data needs the 'user' token scope. Run: gh auth refresh -h github.com -s user"
 SSH_TRANSPORT_SUBCOMMANDS: Final[frozenset[str]] = frozenset({"cp", "ssh"})
 MISSING_SSH_SERVER_ERROR_MARKERS: Final[tuple[str, ...]] = (
     "failed to start ssh server",
@@ -72,14 +84,6 @@ fi
 """
 ).strip()
 
-console = Console()
-app = typer.Typer(
-    add_completion=False,
-    no_args_is_help=True,
-    help="Convenient GitHub Codespaces CLI over gh.",
-    context_settings={"help_option_names": ["-h", "--help"]},
-)
-
 
 @dataclass(frozen=True, slots=True)
 class CodespaceFilters:
@@ -110,6 +114,31 @@ class MachineSummary:
     memory_bytes: int | None
     cpus: int | None
     raw: Mapping[str, object]
+
+
+@dataclass(frozen=True, slots=True)
+class BillingAccount:
+    login: str
+    plan: GithubPlan
+
+
+@dataclass(frozen=True, slots=True)
+class IncludedQuota:
+    core_hours: float
+    storage_gb_months: float
+
+
+@dataclass(frozen=True, slots=True)
+class ComputeUsage:
+    cores: int
+    hours: float
+
+
+@dataclass(frozen=True, slots=True)
+class CodespacesUsage:
+    compute: list[ComputeUsage]
+    storage_gb_months: float
+    net_amount: float
 
 
 class GhcError(Exception):
@@ -207,6 +236,13 @@ def append_bool_flag(args: list[str], flag: str, enabled: bool) -> None:
         args.append(flag)
 
 
+def github_api_endpoint(path: str, params: Mapping[str, str]) -> str:
+    query = urlencode(params)
+    if not query:
+        return path
+    return f"{path}?{query}"
+
+
 def decode_json_list(stdout: str) -> list[dict[str, object]]:
     parsed: object = json.loads(stdout)
     if not isinstance(parsed, list):
@@ -266,6 +302,13 @@ def item_int(item: Mapping[str, object], key: str) -> int | None:
     return None
 
 
+def item_float(item: Mapping[str, object], key: str) -> float:
+    value = item.get(key)
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise GhcError(f"gh returned a non-numeric '{key}' value: {value!r}.")
+    return float(value)
+
+
 def value_to_text(value: object) -> str:
     if value is None:
         return ""
@@ -313,19 +356,131 @@ def load_codespaces(filters: CodespaceFilters) -> list[CodespaceSummary]:
     return [summary for summary in summaries if summary.repository == filters.repo_owner or summary.repository.startswith(owner_prefix)]
 
 
+def codespace_label(summary: CodespaceSummary) -> str:
+    title = summary.display_name or summary.name
+    repo = summary.repository or "-"
+    state = summary.state or "-"
+    return f"{state} | {repo} | {title} | {summary.name}"
+
+
+def codespace_preview(summary: CodespaceSummary) -> str:
+    raw_json = json.dumps(summary.raw, indent=2, sort_keys=True, ensure_ascii=False, default=str)
+    lines = [
+        f"# {summary.display_name or summary.name}",
+        "",
+        f"- Name: `{summary.name}`",
+        f"- Repository: `{summary.repository or '-'}`",
+        f"- State: `{summary.state or '-'}`",
+        f"- Machine: `{summary.machine or '-'}`",
+        f"- Owner: `{summary.owner or '-'}`",
+        f"- Last used: `{summary.last_used_at or '-'}`",
+        f"- Created: `{summary.created_at or '-'}`",
+        "",
+        "## Raw JSON",
+        "",
+        "```json",
+        raw_json,
+        "```",
+    ]
+    return "\n".join(lines)
+
+
+def choose_labels(mapping: dict[str, str], msg: str, multi: bool) -> str | list[str] | None:
+    if not mapping:
+        return [] if multi else None
+    if check_tool_exists("tv"):
+        if multi:
+            return choose_from_dict_with_preview(
+                options_to_preview_mapping=mapping, extension="md", multi=True, preview_size_percent=DEFAULT_PREVIEW_SIZE_PERCENT
+            )
+        return choose_from_dict_with_preview(
+            options_to_preview_mapping=mapping, extension="md", multi=False, preview_size_percent=DEFAULT_PREVIEW_SIZE_PERCENT
+        )
+    if multi:
+        return choose_from_options(options=list(mapping.keys()), msg=msg, multi=True, custom_input=False, tv=False)
+    return choose_from_options(options=list(mapping.keys()), msg=msg, multi=False, custom_input=False, tv=False)
+
+
+def select_codespace(summaries: Sequence[CodespaceSummary], msg: str) -> CodespaceSummary | None:
+    if not summaries:
+        return None
+    if len(summaries) == 1:
+        return summaries[0]
+    label_to_summary = {codespace_label(summary=summary): summary for summary in summaries}
+    preview_mapping = {label: codespace_preview(summary=summary) for label, summary in label_to_summary.items()}
+    selected_label = choose_labels(mapping=preview_mapping, msg=msg, multi=False)
+    if not isinstance(selected_label, str):
+        return None
+    return label_to_summary[selected_label]
+
+
+def select_codespaces(filters: CodespaceFilters, msg: str, select_all: bool) -> list[CodespaceSummary]:
+    summaries = load_codespaces(filters=filters)
+    if not summaries:
+        return []
+    if select_all:
+        return summaries
+    label_to_summary = {codespace_label(summary=summary): summary for summary in summaries}
+    preview_mapping = {label: codespace_preview(summary=summary) for label, summary in label_to_summary.items()}
+    selected_labels = choose_labels(mapping=preview_mapping, msg=msg, multi=True)
+    if not isinstance(selected_labels, list):
+        return []
+    return [label_to_summary[label] for label in selected_labels]
+
+
+def resolve_explicit_codespace_name(codespace: str, filters: CodespaceFilters) -> str:
+    """Resolve a Codespace's API name or unique display name."""
+    summaries = load_codespaces(filters=filters)
+    for summary in summaries:
+        if summary.name == codespace:
+            return summary.name
+    display_matches = [summary for summary in summaries if summary.display_name == codespace]
+    if len(display_matches) == 1:
+        return display_matches[0].name
+    if len(display_matches) > 1:
+        matching_names = ", ".join(summary.name for summary in display_matches)
+        raise GhcError(f"Display name '{codespace}' is ambiguous. Use one of these Codespace names: {matching_names}")
+    # Preserve gh's native behavior and error message for an unknown API name.
+    return codespace
+
+
+def resolve_codespace_name(codespace: str | None, filters: CodespaceFilters, msg: str) -> str:
+    if codespace is not None:
+        stripped = codespace.strip()
+        if stripped:
+            return resolve_explicit_codespace_name(codespace=stripped, filters=filters)
+    summaries = load_codespaces(filters=filters)
+    selected = select_codespace(summaries=summaries, msg=msg)
+    if selected is None:
+        abort("No codespace selected.", 1)
+    return selected.name
+
+
+def resolve_codespace_names(codespace: str | None, filters: CodespaceFilters, msg: str, select_all: bool) -> list[str]:
+    if codespace is not None:
+        stripped = codespace.strip()
+        if stripped:
+            return [resolve_explicit_codespace_name(codespace=stripped, filters=filters)]
+    selected = select_codespaces(filters=filters, msg=msg, select_all=select_all)
+    if not selected:
+        abort("No codespaces selected.", 1)
+    return [summary.name for summary in selected]
+
+
+def newest_codespace_name(filters: CodespaceFilters) -> str:
+    summaries = load_codespaces(filters=filters)
+    if not summaries:
+        abort("No codespaces found after create.", 1)
+    newest = max(summaries, key=lambda summary: summary.created_at or summary.last_used_at or summary.name)
+    return newest.name
+
+
 def parse_repo_identifier(repo: str) -> tuple[str, str]:
     cleaned = repo.removesuffix(".git").strip("/")
     parts = cleaned.split("/")
     if len(parts) != 2 or not parts[0] or not parts[1]:
         raise GhcError("Repository must use owner/name format.")
     return parts[0], parts[1]
-
-
-def github_api_endpoint(path: str, params: Mapping[str, str]) -> str:
-    query = urlencode(params)
-    if not query:
-        return path
-    return f"{path}?{query}"
 
 
 def machine_summaries_from_response(response: Mapping[str, object]) -> list[MachineSummary]:
@@ -365,35 +520,6 @@ def load_codespace_machines(codespace_name: str) -> list[MachineSummary]:
     path = f"/user/codespaces/{quote(codespace_name, safe='')}/machines"
     response = decode_json_object(stdout=run_gh_capture(args=["api", path]))
     return machine_summaries_from_response(response=response)
-
-
-def codespace_label(summary: CodespaceSummary) -> str:
-    title = summary.display_name or summary.name
-    repo = summary.repository or "-"
-    state = summary.state or "-"
-    return f"{state} | {repo} | {title} | {summary.name}"
-
-
-def codespace_preview(summary: CodespaceSummary) -> str:
-    raw_json = json.dumps(summary.raw, indent=2, sort_keys=True, ensure_ascii=False, default=str)
-    lines = [
-        f"# {summary.display_name or summary.name}",
-        "",
-        f"- Name: `{summary.name}`",
-        f"- Repository: `{summary.repository or '-'}`",
-        f"- State: `{summary.state or '-'}`",
-        f"- Machine: `{summary.machine or '-'}`",
-        f"- Owner: `{summary.owner or '-'}`",
-        f"- Last used: `{summary.last_used_at or '-'}`",
-        f"- Created: `{summary.created_at or '-'}`",
-        "",
-        "## Raw JSON",
-        "",
-        "```json",
-        raw_json,
-        "```",
-    ]
-    return "\n".join(lines)
 
 
 def gib_label(value_bytes: int | None) -> str:
@@ -460,96 +586,54 @@ def resolve_codespace_machine_name(codespace_name: str) -> str:
     return selected.name
 
 
-def choose_labels(mapping: dict[str, str], msg: str, multi: bool) -> str | list[str] | None:
-    if not mapping:
-        return [] if multi else None
-    if check_tool_exists("tv"):
-        if multi:
-            return choose_from_dict_with_preview(
-                options_to_preview_mapping=mapping, extension="md", multi=True, preview_size_percent=DEFAULT_PREVIEW_SIZE_PERCENT
-            )
-        return choose_from_dict_with_preview(
-            options_to_preview_mapping=mapping, extension="md", multi=False, preview_size_percent=DEFAULT_PREVIEW_SIZE_PERCENT
-        )
-    if multi:
-        return choose_from_options(options=list(mapping.keys()), msg=msg, multi=True, custom_input=False, tv=False)
-    return choose_from_options(options=list(mapping.keys()), msg=msg, multi=False, custom_input=False, tv=False)
+def included_quota(plan: GithubPlan) -> IncludedQuota:
+    match plan:
+        case "free":
+            return IncludedQuota(core_hours=120.0, storage_gb_months=15.0)
+        case "pro":
+            return IncludedQuota(core_hours=180.0, storage_gb_months=20.0)
 
 
-def select_codespace(summaries: Sequence[CodespaceSummary], msg: str) -> CodespaceSummary | None:
-    if not summaries:
-        return None
-    if len(summaries) == 1:
-        return summaries[0]
-    label_to_summary = {codespace_label(summary=summary): summary for summary in summaries}
-    preview_mapping = {label: codespace_preview(summary=summary) for label, summary in label_to_summary.items()}
-    selected_label = choose_labels(mapping=preview_mapping, msg=msg, multi=False)
-    if not isinstance(selected_label, str):
-        return None
-    return label_to_summary[selected_label]
+def load_billing_account() -> BillingAccount:
+    user = decode_json_object(stdout=run_gh_capture(args=["api", "user"]))
+    login = item_text(item=user, key="login")
+    if not login:
+        raise GhcError("gh returned a user without a login.")
+    plan_value = user.get("plan")
+    if not isinstance(plan_value, Mapping):
+        raise GhcError(f"GitHub did not return your plan. {USER_SCOPE_HINT}")
+    plan_name = value_to_text(plan_value.get("name"))
+    match plan_name:
+        case "free" | "pro":
+            return BillingAccount(login=login, plan=plan_name)
+        case _:
+            raise GhcError(f"Included Codespaces quota is unknown for plan '{plan_name}'.")
 
 
-def select_codespaces(filters: CodespaceFilters, msg: str, select_all: bool) -> list[CodespaceSummary]:
-    summaries = load_codespaces(filters=filters)
-    if not summaries:
-        return []
-    if select_all:
-        return summaries
-    label_to_summary = {codespace_label(summary=summary): summary for summary in summaries}
-    preview_mapping = {label: codespace_preview(summary=summary) for label, summary in label_to_summary.items()}
-    selected_labels = choose_labels(mapping=preview_mapping, msg=msg, multi=True)
-    if not isinstance(selected_labels, list):
-        return []
-    return [label_to_summary[label] for label in selected_labels]
-
-
-def resolve_explicit_codespace_name(codespace: str, filters: CodespaceFilters) -> str:
-    """Resolve a Codespace's API name or unique display name."""
-    summaries = load_codespaces(filters=filters)
-    for summary in summaries:
-        if summary.name == codespace:
-            return summary.name
-    display_matches = [summary for summary in summaries if summary.display_name == codespace]
-    if len(display_matches) == 1:
-        return display_matches[0].name
-    if len(display_matches) > 1:
-        matching_names = ", ".join(summary.name for summary in display_matches)
-        raise GhcError(
-            f"Display name '{codespace}' is ambiguous. Use one of these Codespace names: {matching_names}"
-        )
-    # Preserve gh's native behavior and error message for an unknown API name.
-    return codespace
-
-
-def resolve_codespace_name(codespace: str | None, filters: CodespaceFilters, msg: str) -> str:
-    if codespace is not None:
-        stripped = codespace.strip()
-        if stripped:
-            return resolve_explicit_codespace_name(codespace=stripped, filters=filters)
-    summaries = load_codespaces(filters=filters)
-    selected = select_codespace(summaries=summaries, msg=msg)
-    if selected is None:
-        abort("No codespace selected.", 1)
-    return selected.name
-
-
-def resolve_codespace_names(codespace: str | None, filters: CodespaceFilters, msg: str, select_all: bool) -> list[str]:
-    if codespace is not None:
-        stripped = codespace.strip()
-        if stripped:
-            return [resolve_explicit_codespace_name(codespace=stripped, filters=filters)]
-    selected = select_codespaces(filters=filters, msg=msg, select_all=select_all)
-    if not selected:
-        abort("No codespaces selected.", 1)
-    return [summary.name for summary in selected]
-
-
-def newest_codespace_name(filters: CodespaceFilters) -> str:
-    summaries = load_codespaces(filters=filters)
-    if not summaries:
-        abort("No codespaces found after create.", 1)
-    newest = max(summaries, key=lambda summary: summary.created_at or summary.last_used_at or summary.name)
-    return newest.name
+def load_codespaces_usage(login: str, year: int, month: int) -> CodespacesUsage:
+    path = f"/users/{quote(login, safe='')}/settings/billing/usage"
+    endpoint = github_api_endpoint(path=path, params={"year": str(year), "month": str(month)})
+    response = decode_json_object(stdout=run_gh_capture(args=["api", endpoint]))
+    hours_by_cores: dict[int, float] = {}
+    storage_gb_months = 0.0
+    net_amount = 0.0
+    for item in list_from_json_object(item=response, key="usageItems"):
+        if item_text(item=item, key="product") != CODESPACES_PRODUCT:
+            continue
+        sku = item_text(item=item, key="sku")
+        unit_type = item_text(item=item, key="unitType")
+        quantity = item_float(item=item, key="quantity")
+        net_amount += item_float(item=item, key="netAmount")
+        compute_match = CODESPACES_COMPUTE_SKU_PATTERN.fullmatch(sku)
+        if compute_match is not None and unit_type == CODESPACES_COMPUTE_UNIT_TYPE:
+            cores = int(compute_match.group(1))
+            hours_by_cores[cores] = hours_by_cores.get(cores, 0.0) + quantity
+        elif sku == CODESPACES_STORAGE_SKU and unit_type in CODESPACES_STORAGE_UNIT_TYPES:
+            storage_gb_months += quantity
+        else:
+            raise GhcError(f"Unrecognised Codespaces usage item: sku='{sku}', unitType='{unit_type}'.")
+    compute = [ComputeUsage(cores=cores, hours=hours) for cores, hours in sorted(hours_by_cores.items())]
+    return CodespacesUsage(compute=compute, storage_gb_months=storage_gb_months, net_amount=net_amount)
 
 
 def remote_spec(path: str) -> str:
@@ -625,12 +709,8 @@ def create_remote_upload_directory(codespace_name: str, remote_directory: str) -
 
 def render_codespaces_table(summaries: Sequence[CodespaceSummary]) -> None:
     table = Table(title="Codespaces")
-    table.add_column("State")
-    table.add_column("Repository")
-    table.add_column("Display")
-    table.add_column("Name")
-    table.add_column("Machine")
-    table.add_column("Last Used")
+    for column in ("State", "Repository", "Display", "Name", "Machine", "Last Used"):
+        table.add_column(column)
     for summary in summaries:
         table.add_row(
             summary.state or "-",
@@ -640,17 +720,13 @@ def render_codespaces_table(summaries: Sequence[CodespaceSummary]) -> None:
             summary.machine or "-",
             summary.last_used_at or "-",
         )
-    console.print(table)
+    Console().print(table)
 
 
 def render_machines_table(summaries: Sequence[MachineSummary]) -> None:
     table = Table(title="Codespace Machines")
-    table.add_column("Name")
-    table.add_column("Display")
-    table.add_column("CPU")
-    table.add_column("RAM")
-    table.add_column("Storage")
-    table.add_column("OS")
+    for column in ("Name", "Display", "CPU", "RAM", "Storage", "OS"):
+        table.add_column(column)
     for summary in summaries:
         table.add_row(
             summary.name,
@@ -660,10 +736,40 @@ def render_machines_table(summaries: Sequence[MachineSummary]) -> None:
             gib_label(value_bytes=summary.storage_bytes),
             summary.operating_system or "-",
         )
-    console.print(table)
+    Console().print(table)
 
 
-@app.command("list", help="List codespaces with table, JSON, or names output.", short_help="<l> List codespaces")
+def render_quota(account: BillingAccount, year: int, month: int, usage: CodespacesUsage) -> None:
+    console = Console()
+    quota = included_quota(plan=account.plan)
+    used_core_hours = sum(entry.cores * entry.hours for entry in usage.compute)
+    remaining_core_hours = max(quota.core_hours - used_core_hours, 0.0)
+    summary = Table(title=f"Codespaces usage {year}-{month:02d} | {account.login} ({account.plan} plan)")
+    for column in ("Resource", "Used", "Included", "Remaining", "Used %"):
+        summary.add_column(column)
+    resources = (
+        ("Compute (core-hours)", used_core_hours, quota.core_hours),
+        ("Storage (GB-month)", usage.storage_gb_months, quota.storage_gb_months),
+    )
+    for resource, used, included in resources:
+        summary.add_row(resource, f"{used:.2f}", f"{included:.0f}", f"{max(included - used, 0.0):.2f}", f"{used / included:.1%}")
+    console.print(summary)
+    if usage.compute:
+        breakdown = Table(title="Compute by machine")
+        for column in ("Machine", "Hours", "Core-hours"):
+            breakdown.add_column(column)
+        for entry in usage.compute:
+            breakdown.add_row(f"{entry.cores}-core", f"{entry.hours:.2f}", f"{entry.cores * entry.hours:.2f}")
+        console.print(breakdown)
+    runtime = Table(title="Compute runtime left")
+    runtime.add_column("Machine")
+    runtime.add_column("Hours left")
+    for cores in QUOTA_MACHINE_CORES:
+        runtime.add_row(f"{cores}-core", f"{remaining_core_hours / cores:.1f}")
+    console.print(runtime)
+    console.print(f"Billed beyond included quota: ${usage.net_amount:.2f}")
+
+
 def list_cmd(
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
     repo_owner: Annotated[str | None, typer.Option("--repo-owner", "-O", help="Filter by repository owner.")] = None,
@@ -684,11 +790,6 @@ def list_cmd(
             render_codespaces_table(summaries=summaries)
 
 
-@app.command(
-    "machines",
-    help="List available machine types with CPU, RAM, and storage specs for a repo or selected codespace.",
-    short_help="<m> List machine specs",
-)
 def machines_cmd(
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Repository, owner/name. Uses the repository machine endpoint.")] = None,
     codespace: Annotated[
@@ -722,10 +823,6 @@ def machines_cmd(
             render_machines_table(summaries=summaries)
 
 
-@app.command(
-    help="Create a codespace. If --repo is supplied and --machine is omitted, choose a machine with CPU/RAM/storage preview.",
-    short_help="<c> Create codespace",
-)
 def create(
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Repository, owner/name.")] = None,
     machine: Annotated[
@@ -773,11 +870,6 @@ def create(
         run_gh_stream(args=["codespace", "ssh", "--codespace", codespace_name])
 
 
-@app.command(
-    help="SSH into a selected codespace. Extra args after the command are passed to ssh.",
-    short_help="<s> SSH into codespace",
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
-)
 def ssh(
     ctx: typer.Context,
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
@@ -796,11 +888,6 @@ def ssh(
     run_gh_stream(args=args)
 
 
-@app.command(
-    "exec",
-    help="Run a remote command through an interactive Bash login shell in a selected codespace.",
-    short_help="<x> Execute remote command",
-)
 def exec_cmd(
     command: Annotated[str, typer.Argument(help="Remote command to run through bash -lic.")],
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
@@ -821,12 +908,6 @@ def exec_cmd(
     run_gh_stream(args=args)
 
 
-@app.command(
-    "run-script",
-    help="Pipe a local script into a selected codespace over gh codespace ssh.",
-    short_help="<r> Run local script remotely",
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
-)
 def run_script(
     ctx: typer.Context,
     script: Annotated[Path, typer.Argument(help="Local script file to pipe into the codespace.")],
@@ -848,7 +929,6 @@ def run_script(
     run_gh_stream_with_input(args=args, input_data=script_path.read_bytes())
 
 
-@app.command(help="Stop one or more selected codespaces.", short_help="<t> Stop codespaces")
 def stop(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -865,7 +945,6 @@ def stop(
         run_gh_stream(args=["codespace", "stop", "--codespace", name])
 
 
-@app.command(help="Delete selected codespaces, all matching codespaces, or codespaces older than N days.", short_help="<d> Delete codespaces")
 def delete(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -902,7 +981,6 @@ def delete(
         run_gh_stream(args=args)
 
 
-@app.command(help="Upload local files or directories to a selected codespace using gh codespace cp.", short_help="<u> Upload to codespace")
 def upload(
     sources: Annotated[list[Path], typer.Argument(help="Local files or directories to upload.")],
     remote: Annotated[
@@ -926,12 +1004,7 @@ def upload(
     local_sources = resolved_existing_paths(paths=sources)
     if any(source.is_dir() for source in local_sources) and not recursive:
         abort("Uploading directories requires --recursive.", 1)
-    inferred_remote = remote is None
-    resolved_remote = (
-        inferred_upload_remote(sources=local_sources)
-        if inferred_remote
-        else normalize_explicit_upload_remote(remote=remote)
-    )
+    resolved_remote = inferred_upload_remote(sources=local_sources) if remote is None else normalize_explicit_upload_remote(remote=remote)
     filters = CodespaceFilters(repo=repo, repo_owner=repo_owner, limit=limit)
     try:
         codespace_name = resolve_codespace_name(codespace=codespace, filters=filters, msg="Select codespace to upload to")
@@ -947,7 +1020,6 @@ def upload(
     run_gh_stream(args=args)
 
 
-@app.command(help="Download remote files or directories from a selected codespace using gh codespace cp.", short_help="<w> Download from codespace")
 def download(
     remote_sources: Annotated[list[str], typer.Argument(help="Remote files or directories to download.")],
     local: Annotated[Path, typer.Option("--local", "-l", help="Local destination.")] = DEFAULT_DOWNLOAD_LOCAL,
@@ -974,7 +1046,6 @@ def download(
     run_gh_stream(args=args)
 
 
-@app.command(help="View full JSON details for a selected codespace.", short_help="<v> View codespace details")
 def view(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -990,7 +1061,6 @@ def view(
     typer.echo(json.dumps(json.loads(output), indent=2, sort_keys=True, ensure_ascii=False, default=str))
 
 
-@app.command(help="Open a selected codespace in VS Code desktop or web.", short_help="<o> Open in VS Code")
 def code(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -1010,7 +1080,6 @@ def code(
     run_gh_stream(args=args)
 
 
-@app.command(help="Open a selected codespace in JupyterLab.", short_help="<j> Open JupyterLab")
 def jupyter(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -1025,7 +1094,6 @@ def jupyter(
     run_gh_stream(args=["codespace", "jupyter", "--codespace", codespace_name])
 
 
-@app.command(help="Show or follow logs for a selected codespace.", short_help="<g> Show logs")
 def logs(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -1043,7 +1111,6 @@ def logs(
     run_gh_stream(args=args)
 
 
-@app.command(help="List forwarded ports for a selected codespace.", short_help="<p> List ports")
 def ports(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -1062,7 +1129,6 @@ def ports(
     run_gh_stream(args=args)
 
 
-@app.command(help="Rebuild a selected codespace.", short_help="<b> Rebuild codespace")
 def rebuild(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -1080,10 +1146,6 @@ def rebuild(
     run_gh_stream(args=args)
 
 
-@app.command(
-    help="Edit a selected codespace display name or machine type. If no edit option is supplied, choose a machine with specs preview.",
-    short_help="<e> Edit codespace",
-)
 def edit(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -1106,7 +1168,6 @@ def edit(
     run_gh_stream(args=args)
 
 
-@app.command("config", help="Print or write OpenSSH config for a selected codespace.", short_help="<k> SSH config")
 def config_cmd(
     codespace: Annotated[str | None, typer.Option("--codespace", "-c", help="Codespace name.")] = None,
     repo: Annotated[str | None, typer.Option("--repo", "-R", help="Filter by repository, owner/name.")] = None,
@@ -1130,30 +1191,97 @@ def config_cmd(
     typer.echo(f"Wrote SSH config to {output_path}")
 
 
-def register_aliases() -> None:
-    app.command("l", hidden=True, help="Alias for list.")(list_cmd)
-    app.command("m", hidden=True, help="Alias for machines.")(machines_cmd)
-    app.command("c", hidden=True, help="Alias for create.")(create)
-    app.command("s", hidden=True, help="Alias for ssh.", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})(ssh)
-    app.command("x", hidden=True, help="Alias for exec.")(exec_cmd)
-    app.command("r", hidden=True, help="Alias for run-script.", context_settings={"allow_extra_args": True, "ignore_unknown_options": True})(
-        run_script
-    )
-    app.command("t", hidden=True, help="Alias for stop.")(stop)
-    app.command("d", hidden=True, help="Alias for delete.")(delete)
-    app.command("u", hidden=True, help="Alias for upload.")(upload)
-    app.command("w", hidden=True, help="Alias for download.")(download)
-    app.command("v", hidden=True, help="Alias for view.")(view)
-    app.command("o", hidden=True, help="Alias for code.")(code)
-    app.command("j", hidden=True, help="Alias for jupyter.")(jupyter)
-    app.command("g", hidden=True, help="Alias for logs.")(logs)
-    app.command("p", hidden=True, help="Alias for ports.")(ports)
-    app.command("b", hidden=True, help="Alias for rebuild.")(rebuild)
-    app.command("e", hidden=True, help="Alias for edit.")(edit)
-    app.command("k", hidden=True, help="Alias for config.")(config_cmd)
+def quota_cmd(
+    year: Annotated[int | None, typer.Option("--year", "-y", min=2020, help="Billing year. Defaults to the current UTC year.")] = None,
+    month: Annotated[int | None, typer.Option("--month", "-m", min=1, max=12, help="Billing month. Defaults to the current UTC month.")] = None,
+) -> None:
+    now = datetime.now(tz=UTC)
+    resolved_year = year if year is not None else now.year
+    resolved_month = month if month is not None else now.month
+    try:
+        account = load_billing_account()
+        usage = load_codespaces_usage(login=account.login, year=resolved_year, month=resolved_month)
+    except GhcError as error:
+        abort(str(error), 1)
+    render_quota(account=account, year=resolved_year, month=resolved_month, usage=usage)
 
 
-register_aliases()
+@dataclass(frozen=True, slots=True)
+class CommandSpec:
+    name: str
+    alias: str
+    callback: Callable[..., None]
+    help_text: str
+    short_help: str
+    passes_extra_args: bool
+
+
+COMMAND_SPECS: Final[tuple[CommandSpec, ...]] = (
+    CommandSpec(name="list", alias="l", callback=list_cmd, help_text="List codespaces with table, JSON, or names output.", short_help="List codespaces", passes_extra_args=False),
+    CommandSpec(
+        name="machines",
+        alias="m",
+        callback=machines_cmd,
+        help_text="List available machine types with CPU, RAM, and storage specs for a repo or selected codespace.",
+        short_help="List machine specs",
+        passes_extra_args=False,
+    ),
+    CommandSpec(
+        name="create",
+        alias="c",
+        callback=create,
+        help_text="Create a codespace. If --repo is supplied and --machine is omitted, choose a machine with CPU/RAM/storage preview.",
+        short_help="Create codespace",
+        passes_extra_args=False,
+    ),
+    CommandSpec(name="ssh", alias="s", callback=ssh, help_text="SSH into a selected codespace. Extra args after the command are passed to ssh.", short_help="SSH into codespace", passes_extra_args=True),
+    CommandSpec(name="exec", alias="x", callback=exec_cmd, help_text="Run a remote command through an interactive Bash login shell in a selected codespace.", short_help="Execute remote command", passes_extra_args=False),
+    CommandSpec(name="run-script", alias="r", callback=run_script, help_text="Pipe a local script into a selected codespace over gh codespace ssh.", short_help="Run local script remotely", passes_extra_args=True),
+    CommandSpec(name="stop", alias="t", callback=stop, help_text="Stop one or more selected codespaces.", short_help="Stop codespaces", passes_extra_args=False),
+    CommandSpec(name="delete", alias="d", callback=delete, help_text="Delete selected codespaces, all matching codespaces, or codespaces older than N days.", short_help="Delete codespaces", passes_extra_args=False),
+    CommandSpec(name="upload", alias="u", callback=upload, help_text="Upload local files or directories to a selected codespace using gh codespace cp.", short_help="Upload to codespace", passes_extra_args=False),
+    CommandSpec(name="download", alias="w", callback=download, help_text="Download remote files or directories from a selected codespace using gh codespace cp.", short_help="Download from codespace", passes_extra_args=False),
+    CommandSpec(name="view", alias="v", callback=view, help_text="View full JSON details for a selected codespace.", short_help="View codespace details", passes_extra_args=False),
+    CommandSpec(name="code", alias="o", callback=code, help_text="Open a selected codespace in VS Code desktop or web.", short_help="Open in VS Code", passes_extra_args=False),
+    CommandSpec(name="jupyter", alias="j", callback=jupyter, help_text="Open a selected codespace in JupyterLab.", short_help="Open JupyterLab", passes_extra_args=False),
+    CommandSpec(name="logs", alias="g", callback=logs, help_text="Show or follow logs for a selected codespace.", short_help="Show logs", passes_extra_args=False),
+    CommandSpec(name="ports", alias="p", callback=ports, help_text="List forwarded ports for a selected codespace.", short_help="List ports", passes_extra_args=False),
+    CommandSpec(name="rebuild", alias="b", callback=rebuild, help_text="Rebuild a selected codespace.", short_help="Rebuild codespace", passes_extra_args=False),
+    CommandSpec(
+        name="edit",
+        alias="e",
+        callback=edit,
+        help_text="Edit a selected codespace display name or machine type. If no edit option is supplied, choose a machine with specs preview.",
+        short_help="Edit codespace",
+        passes_extra_args=False,
+    ),
+    CommandSpec(name="config", alias="k", callback=config_cmd, help_text="Print or write OpenSSH config for a selected codespace.", short_help="SSH config", passes_extra_args=False),
+    CommandSpec(
+        name="quota",
+        alias="q",
+        callback=quota_cmd,
+        help_text="Show Codespaces compute and storage used in a month against the plan's free included quota.",
+        short_help="Free quota usage",
+        passes_extra_args=False,
+    ),
+)
+
+app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Convenient GitHub Codespaces CLI over gh.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+
+
+def register_commands() -> None:
+    for spec in COMMAND_SPECS:
+        context_settings = EXTRA_ARGS_CONTEXT_SETTINGS if spec.passes_extra_args else None
+        app.command(spec.name, help=spec.help_text, short_help=f"<{spec.alias}> {spec.short_help}", context_settings=context_settings)(spec.callback)
+        app.command(spec.alias, hidden=True, help=f"Alias for {spec.name}.", context_settings=context_settings)(spec.callback)
+
+
+register_commands()
 
 
 def main() -> None:
