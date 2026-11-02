@@ -54,11 +54,15 @@ def show_second_brain_status(
     records = [record for update_file in update_files for record in update_file.records]
     invalid_row_count = sum(len(update_file.invalid_rows) for update_file in update_files)
     invalid_file_count = sum(update_file.error is not None for update_file in update_files)
-    unavailable_session_count = sum(record.session_id.casefold() in NON_RESUMABLE_SESSION_IDS for record in records)
-    sessions = {
-        (record.agent, record.session_id)
+    resumable_records = [
+        record
         for record in records
-        if record.session_id.casefold() not in NON_RESUMABLE_SESSION_IDS
+        if record.followup_agent is not None and record.session_id.casefold() not in NON_RESUMABLE_SESSION_IDS
+    ]
+    unavailable_session_count = len(records) - len(resumable_records)
+    sessions = {
+        (record.followup_agent, record.session_id)
+        for record in resumable_records
     }
     work_items_root = second_brain_root.joinpath("work-items")
     work_items = {update_file.path.parent for update_file in update_files if update_file.path.parent.is_relative_to(work_items_root)}
@@ -98,12 +102,15 @@ def show_second_brain_status(
     summary.add_row("Earliest update", min(dates).isoformat() if dates else "-")
     summary.add_row("Latest update", max(dates).isoformat() if dates else "-")
 
-    agent_rows = Counter(record.agent for record in records)
+    agent_rows = Counter(
+        AGENT_DISPLAY_NAME[record.followup_agent] if record.followup_agent is not None else record.agent
+        for record in records
+    )
     agents = Table(title="Valid updates by agent", box=box.ROUNDED, border_style="dim", title_style="bold cyan", header_style="bold cyan")
     agents.add_column("Agent", overflow="fold")
     agents.add_column("Updates", justify="right", style="bold")
-    for agent, display_name in AGENT_DISPLAY_NAME.items():
-        agents.add_row(Text(display_name), str(agent_rows[agent]))
+    for display_name, row_count in sorted(agent_rows.items(), key=lambda item: item[0].casefold()):
+        agents.add_row(Text(display_name), str(row_count))
     console.print(Columns([summary, agents], padding=(0, 2)))
     if invalid_file_count:
         console.print(Text("Update totals exclude invalid logs.", style="dim"))

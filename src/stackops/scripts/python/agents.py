@@ -9,6 +9,7 @@ from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
 import typer
 from typer.core import TyperGroup
 
+from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constants import FOLLOWUP_AGENT
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.sandbox.options import SandboxBackend, SandboxSync
@@ -303,7 +304,7 @@ def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, initial_prom
             raise ValueError(f"Unsupported interactive agent: {agent}")
 
 
-def _apply_headroom(command: list[str], agent: _INTERACTIVE_CANONICAL_AGENT, headroom: bool) -> list[str]:
+def _apply_headroom(command: list[str], agent: _INTERACTIVE_CANONICAL_AGENT | FOLLOWUP_AGENT, headroom: bool) -> list[str]:
     if headroom:
         resolved_headroom = shutil.which(_HEADROOM_COMMAND)
         if resolved_headroom is None:

@@ -12,7 +12,8 @@ from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constant
 
 @dataclass(frozen=True, slots=True)
 class UpdateRecord:
-    agent: FOLLOWUP_AGENT
+    agent: str
+    followup_agent: FOLLOWUP_AGENT | None
     session_id: str
     topic: str
     updated_on: date
@@ -44,9 +45,8 @@ def _parse_update_row(*, fields: list[str], line_number: int) -> UpdateRecord | 
         return InvalidUpdateRow(line_number=line_number, reason=f"""Empty values: {', '.join(empty_columns)}.""")
 
     agent_label, session_id, topic, _actions_taken, updated_on_text = fields
-    agent = AGENT_BY_LABEL.get(agent_label.strip().casefold())
-    if agent is None:
-        return InvalidUpdateRow(line_number=line_number, reason=f"""Unsupported agent '{agent_label}'.""")
+    agent_label = agent_label.strip()
+    followup_agent = AGENT_BY_LABEL.get(agent_label.casefold().partition(" /")[0])
     try:
         updated_on = datetime.fromisoformat(updated_on_text.strip()).date()
     except ValueError:
@@ -54,7 +54,13 @@ def _parse_update_row(*, fields: list[str], line_number: int) -> UpdateRecord | 
             line_number=line_number,
             reason=f"""Invalid date '{updated_on_text}'. Expected an ISO date or datetime.""",
         )
-    return UpdateRecord(agent=agent, session_id=session_id.strip(), topic=topic.strip(), updated_on=updated_on)
+    return UpdateRecord(
+        agent=agent_label,
+        followup_agent=followup_agent,
+        session_id=session_id.strip(),
+        topic=topic.strip(),
+        updated_on=updated_on,
+    )
 
 
 def read_second_brain_updates(*, second_brain_root: Path) -> list[UpdateFile]:

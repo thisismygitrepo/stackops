@@ -1,10 +1,13 @@
 from typing import Final, Literal
 
 
-type FOLLOWUP_AGENT = Literal["codex", "copilot", "pi", "opencode", "omp"]
+type FOLLOWUP_AGENT = Literal["codex", "claude", "copilot", "pi", "opencode", "omp"]
 UPDATE_COLUMNS: Final[tuple[str, ...]] = ("agent", "session-id", "topic", "actionsTaken", "date")
 AGENT_BY_LABEL: Final[dict[str, FOLLOWUP_AGENT]] = {
     "codex": "codex",
+    "claude": "claude",
+    "claude code": "claude",
+    "claude-code": "claude",
     "copilot": "copilot",
     "github copilot": "copilot",
     "pi": "pi",
@@ -14,6 +17,7 @@ AGENT_BY_LABEL: Final[dict[str, FOLLOWUP_AGENT]] = {
 }
 AGENT_DISPLAY_NAME: Final[dict[FOLLOWUP_AGENT, str]] = {
     "codex": "Codex",
+    "claude": "Claude Code",
     "copilot": "Copilot",
     "pi": "Pi",
     "opencode": "OpenCode",

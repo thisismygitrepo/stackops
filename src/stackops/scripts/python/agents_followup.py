@@ -42,10 +42,10 @@ def load_followup_sessions(*, second_brain_root: Path) -> list[FollowupSession]:
                 err=True,
             )
         for record in update_file.records:
-            if record.session_id.casefold() in NON_RESUMABLE_SESSION_IDS:
+            if record.followup_agent is None or record.session_id.casefold() in NON_RESUMABLE_SESSION_IDS:
                 continue
             session = FollowupSession(
-                agent=record.agent,
+                agent=record.followup_agent,
                 session_id=record.session_id,
                 topic=record.topic,
                 updated_on=record.updated_on,
@@ -93,12 +93,16 @@ def choose_followup_session(*, second_brain_root: Path) -> FollowupSession:
 
 
 def build_followup_command(*, session: FollowupSession, action: FOLLOWUP_ACTION, initial_prompt: str | None) -> list[str]:
-    if action == "fork" and session.agent not in ("codex", "pi", "opencode", "omp"):
+    if action == "fork" and session.agent not in ("codex", "claude", "pi", "opencode", "omp"):
         raise ValueError(f"Forking follow-up sessions is not supported for {AGENT_DISPLAY_NAME[session.agent]}.")
 
     match session.agent:
         case "codex":
             command = ["codex", action, "--dangerously-bypass-approvals-and-sandbox", session.session_id]
+        case "claude":
+            command = ["claude", "--resume", session.session_id]
+            if action == "fork":
+                command.append("--fork-session")
         case "copilot":
             command = ["copilot", "--yolo", f"--resume={session.session_id}"]
         case "pi":
@@ -115,6 +119,8 @@ def build_followup_command(*, session: FollowupSession, action: FOLLOWUP_ACTION,
             command.extend(["--interactive", initial_prompt])
         elif session.agent == "opencode":
             command.extend(["--prompt", initial_prompt])
+        elif session.agent == "claude":
+            command.extend(["--", initial_prompt])
         else:
             command.append(initial_prompt)
     return command
