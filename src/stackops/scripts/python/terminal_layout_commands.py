@@ -15,7 +15,11 @@ def list_layouts(
     ] = "all",
     show_tabs: Annotated[bool, typer.Option("--tabs", "-t", help="Include each tab's name, arrangement, weight, and each pane's name, start directory, and command.")] = False,
     show_stats: Annotated[bool, typer.Option("--stats", "-S", help="Show layout, tab and pane totals, average tabs per layout, and the largest and smallest layouts.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print layout metadata as JSON without a picker; --tabs includes pane configuration and --stats includes totals.")] = False,
 ) -> None:
+    import sys
+    from contextlib import nullcontext, redirect_stdout
+
     from rich.console import Console
     from rich.table import Table
     from rich.text import Text
@@ -24,15 +28,45 @@ def list_layouts(
     from stackops.utils.schemas.layouts.layout_constants import DEFAULT_TAB_ARRANGEMENT
 
     try:
-        entries = resolve_layout_source(
-            ctx=None,
-            layouts_file=str(layouts_file) if layouts_file is not None else None,
-            source=source,
-            test_layout=False,
-        )
+        with redirect_stdout(sys.stderr) if json_output else nullcontext():
+            entries = resolve_layout_source(
+                ctx=None,
+                layouts_file=str(layouts_file) if layouts_file is not None else None,
+                source=source,
+                test_layout=False,
+            )
     except (OSError, ValueError) as error:
         typer.echo(f"""Error: {error}""", err=True)
         raise typer.Exit(code=1) from error
+
+    if json_output:
+        import json
+
+        layouts: list[dict[str, object]] = []
+        for entry in entries:
+            record: dict[str, object] = {
+                "selector": entry.selector,
+                "name": entry.layout["layoutName"],
+                "source_file": str(entry.source_path) if entry.source_path is not None else None,
+                "tab_count": len(entry.layout["layoutTabs"]),
+                "pane_count": sum(len(tab["panes"]) for tab in entry.layout["layoutTabs"]),
+            }
+            if show_tabs:
+                record["tabs"] = entry.layout["layoutTabs"]
+            layouts.append(record)
+        payload: dict[str, object] = {"layouts": layouts}
+        if show_stats:
+            total_tabs = sum(len(entry.layout["layoutTabs"]) for entry in entries)
+            payload["stats"] = {
+                "layouts": len(entries),
+                "tabs": total_tabs,
+                "panes": sum(len(tab["panes"]) for entry in entries for tab in entry.layout["layoutTabs"]),
+                "average_tabs": total_tabs / len(entries) if entries else 0.0,
+                "largest_layout": max(entries, key=lambda entry: len(entry.layout["layoutTabs"])).selector if entries else None,
+                "smallest_layout": min(entries, key=lambda entry: len(entry.layout["layoutTabs"])).selector if entries else None,
+            }
+        typer.echo(json.dumps(payload, ensure_ascii=False))
+        return
 
     table = Table(title=f"""Saved layouts ({len(entries)})""")
     table.add_column("Layout", style="cyan")

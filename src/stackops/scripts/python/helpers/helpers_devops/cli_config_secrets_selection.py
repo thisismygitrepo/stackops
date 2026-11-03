@@ -1,3 +1,5 @@
+import sys
+from contextlib import nullcontext, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -76,10 +78,12 @@ def resolve_selection(request: SecretSelectionRequest) -> SecretSelection:
 
 
 def search_secrets(request: SecretSelectionRequest, *, json_output: bool, verbose: bool) -> None:
-    if json_output and verbose:
-        fail("--json/-j cannot be combined with --verbose/-v because JSON output must contain only JSON.")
-
-    selection = resolve_selection(request)
+    with redirect_stdout(sys.stderr) if json_output else nullcontext():
+        if json_output and verbose:
+            fail("--json/-j cannot be combined with --verbose/-v because JSON output must contain only JSON.")
+        if json_output and request.interactive:
+            fail("--json/-j cannot be combined with --interactive/-i. Use exact selectors or --all-matches instead.")
+        selection = resolve_selection(request)
     if json_output:
         typer.echo(render_secret_search_json(selection.candidates), nl=False)
         return

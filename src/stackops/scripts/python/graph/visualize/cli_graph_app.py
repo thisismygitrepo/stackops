@@ -124,35 +124,27 @@ def navigate() -> None:
 
 
 def search(
+    query: Annotated[str, typer.Argument(help="Case-insensitive search terms for command names, descriptions, and source paths; omit to list all.")] = "",
     graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Path to cli_graph.json")] = None,
     json_output: Annotated[
         bool,
-        typer.Option("--json", "-j", help="Print the selected cli_graph.json entry instead of the rendered summary."),
+        typer.Option("--json", "-j", help="Print all matching entries as a JSON array without prompts or a picker."),
     ] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", help="List matching commands without opening a picker.")] = False,
 ) -> None:
-    """🔎 Search cli_graph.json entries and show a rendered summary for the selected command or group."""
-    def func(graph_path_str: str | None, json_output: bool) -> None:
-        from pathlib import Path
+    from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
+    from stackops.scripts.python.graph.visualize.cli_graph_search import search_cli_graph
 
-        import typer
-
-        from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
-        from stackops.scripts.python.graph.visualize.cli_graph_search import search_cli_graph
-
-        graph_file = Path(graph_path_str) if graph_path_str else DEFAULT_GRAPH_PATH
-        return_code = search_cli_graph(graph_path=graph_file, json_output=json_output)
-        if return_code != 0:
-            raise typer.Exit(code=return_code)
-
-    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
-
-    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
-    shell_script, _pyfile = get_shell_script_running_lambda_function(
-        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),
-        uv_with=uv_with,
-        uv_project_dir=uv_project_dir,
-    )
-    exit_then_run_shell_script(str(shell_script), strict=False)
+    try:
+        return_code = search_cli_graph(
+            graph_path=graph_path if graph_path is not None else DEFAULT_GRAPH_PATH,
+            query=query, json_output=json_output, non_interactive=non_interactive,
+        )
+    except (OSError, ValueError) as error:
+        typer.echo(f"""Search failed: {error}""", err=True)
+        raise typer.Exit(code=1) from error
+    if return_code != 0:
+        raise typer.Exit(code=return_code)
 
 
 def get_app() -> typer.Typer:

@@ -82,13 +82,28 @@ def status(
     ] = None,
     all_workspaces: Annotated[bool, typer.Option("--all", "-a", help="Show every Herdr iter workspace.")] = False,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose one Herdr iter workspace with a TV preview.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print workspace status as JSON without a picker; requires WORKSPACE_ID or --all.")] = False,
     retain_previous: Annotated[
         int, typer.Option("--retain-previous", "-k", min=0, help="Evaluate closable tabs while retaining this many previous iterations.")
     ] = DEFAULT_RETAIN_PREVIOUS_ITERATIONS,
 ) -> None:
     """Show each iter loop's latest iteration agent and live Herdr status."""
     try:
+        if json_output and interactive:
+            raise ValueError("--json cannot be combined with --interactive.")
         _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)
+        if json_output:
+            import json
+            import sys
+            from contextlib import redirect_stdout
+            from dataclasses import asdict
+
+            from stackops.scripts.python.helpers.helpers_agents.agents_iter_service import get_iter_workspace_statuses
+
+            with redirect_stdout(sys.stderr):
+                statuses = get_iter_workspace_statuses(workspace_id=workspace_id, retain_previous=retain_previous)
+            typer.echo(json.dumps([asdict(status) for status in statuses], ensure_ascii=False, default=str))
+            return
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_iter_status
 
         show_iter_status(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive, retain_previous=retain_previous)

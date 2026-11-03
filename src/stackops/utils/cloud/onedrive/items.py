@@ -32,7 +32,7 @@ def show_status(account_name: str) -> None:
     )
 
 
-def list_items(account_name: str, remote_path: str) -> None:
+def list_items(account_name: str, remote_path: str, output_json: bool) -> None:
     encoded_path = quote(remote_path.lstrip("/"), safe="/")
     if encoded_path:
         endpoint = f"{GRAPH_BASE}/me/drive/root:/{encoded_path}:/children"
@@ -40,22 +40,42 @@ def list_items(account_name: str, remote_path: str) -> None:
         endpoint = f"{GRAPH_BASE}/me/drive/root/children"
 
     access_token = refresh_access_token(account_name)
-    payload = graph_json(
-        "GET",
-        endpoint,
-        access_token,
-        "Listing remote items",
-        params={"$select": "name,size,lastModifiedDateTime,folder,file", "$orderby": "name", "$top": 200},
-    )
-    items_value = payload.get("value")
-    if not isinstance(items_value, list):
-        raise OneDriveError("Listing remote items returned an unexpected response.")
+    next_url: str | None = endpoint
+    params: Mapping[str, str | int] | None = {
+        "$select": "id,name,size,lastModifiedDateTime,folder,file,parentReference,webUrl", "$orderby": "name", "$top": 200,
+    }
+    items: list[GraphItem] = []
+    while next_url is not None:
+        payload = graph_json("GET", next_url, access_token, "Listing remote items", params=params)
+        items_value = payload.get("value")
+        if not isinstance(items_value, list):
+            raise OneDriveError("Listing remote items returned an unexpected response.")
+        for item_value in items_value:
+            if not isinstance(item_value, Mapping):
+                raise OneDriveError("Listing remote items returned an unexpected item.")
+            items.append(cast(GraphItem, item_value))
+        next_url = _validated_next_link(payload.get("@odata.nextLink"))
+        params = None
+
+    if output_json:
+        records: list[dict[str, object]] = []
+        for item in items:
+            parent_value = item.get("parentReference")
+            parent: GraphItem = cast(GraphItem, parent_value) if isinstance(parent_value, Mapping) else {}
+            records.append({
+                "id": item.get("id"),
+                "name": item.get("name"),
+                "type": "folder" if item.get("folder") is not None else "file",
+                "size": item.get("size"),
+                "last_modified": item.get("lastModifiedDateTime"),
+                "parent_path": parent.get("path"),
+                "web_url": item.get("webUrl"),
+            })
+        json_output(records)
+        return
 
     rows: list[tuple[object, object, object, object]] = []
-    for item_value in items_value:
-        if not isinstance(item_value, Mapping):
-            continue
-        item = cast(GraphItem, item_value)
+    for item in items:
         rows.append((item.get("name"), "folder" if item.get("folder") is not None else "file", item.get("size"), item.get("lastModifiedDateTime")))
     print_table(("NAME", "TYPE", "SIZE (BYTES)", "LAST MODIFIED"), rows)
 

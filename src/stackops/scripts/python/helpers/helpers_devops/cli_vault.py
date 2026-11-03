@@ -11,18 +11,18 @@ def _raise_typer_exit(exc: Exception) -> None:
 
 
 def search(
-    name: Annotated[str, typer.Argument(..., help="Name (or part of the name) of the credential to retrieve")],
+    name: Annotated[str | None, typer.Argument(help="Credential name or substring; omit with --id or --all-matches.")] = None,
     copy: Annotated[
-        str,
+        str | None,
         typer.Option(
             "--copy",
             "-c",
             show_default=True,
-            help="Which field to copy to clipboard (password, username, totp, none)",
+            help="Field to copy: password, username, totp, or none. Defaults to password interactively and none otherwise. JSON/raw output never copies.",
             show_choices=True,
             case_sensitive=False,
         ),
-    ] = "password",
+    ] = None,
     sync: Annotated[bool, typer.Option("--sync", "-S", help="Sync vault with server before searching and bypass the local search cache")] = False,
     show: Annotated[bool, typer.Option("--show", "-s", help="Show credentials in terminal (insecure)")] = False,
     no_totp: Annotated[bool, typer.Option("--no-totp", "-t", help="Skip fetching TOTP")] = False,
@@ -31,12 +31,15 @@ def search(
     totp_slot: Annotated[int, typer.Option("--totp-slot", "-P", help="Clipboard slot for TOTP")] = 2,
     json_slot: Annotated[int, typer.Option("--json-slot", "-J", help="Clipboard slot for full JSON result")] = 3,
     silent: Annotated[bool, typer.Option("--silent", "-q", help="Suppress all progress/status output; only the final result is printed")] = False,
-    json_output: Annotated[bool, typer.Option("--json", "--json-output", "-j", help="Output selected credentials as JSON (includes notes)")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "--json-output", "-j", help="Print all matching credentials as a JSON array, including notes, without selection or clipboard writes.")] = False,
     raw_output: Annotated[bool, typer.Option("--raw", "-r", help="Output raw search results JSON exactly as returned by bw")] = False,
     table_output: Annotated[
         bool, typer.Option("--table", "-l", help="Print all matches as a rich table instead of interactive selection (never exposes secrets, never copies)")
     ] = False,
     fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass cache and query Bitwarden directly")] = False,
+    item_id: Annotated[str | None, typer.Option("--id", help="Retrieve one exact Bitwarden item ID instead of searching by name.")] = None,
+    all_matches: Annotated[bool, typer.Option("--all-matches", "-a", help="Return all matches with --json, --raw, or --table; allows omitting the name to list the whole vault.")] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", help="Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.")] = False,
 ) -> None:
     """Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard."""
     from stackops.scripts.python.helpers.helpers_devops import vault
@@ -57,6 +60,9 @@ def search(
             raw_output=raw_output,
             table_output=table_output,
             fresh=fresh,
+            item_id=item_id,
+            all_matches=all_matches,
+            non_interactive=non_interactive,
         )
     except vault.VaultExit as exc:
         _raise_typer_exit(exc)

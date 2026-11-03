@@ -12,6 +12,7 @@ Features
 import json
 import os
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -151,7 +152,7 @@ def mask_session_args(args: Sequence[str]) -> list[str]:
 def run_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None, check: bool = False) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command and optionally raise a vault command error."""
     try:
-        return subprocess.run(list(args), capture_output=True, text=True, env=env, check=check)
+        return subprocess.run(list(args), stdin=subprocess.DEVNULL, capture_output=True, text=True, env=env, check=check)
     except FileNotFoundError:
         err_console.print(f"[bold red]Command not found:[/bold red] {' '.join(mask_session_args(args))}")
         raise VaultExit(code=1)
@@ -175,7 +176,7 @@ def get_vault_status(session: Optional[str] = None) -> VaultStatus:
     """Return the bw vault status and authenticated account metadata when available."""
     cmd = build_bw_command(["status"], session)
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True)
         data = json.loads(result.stdout)
         status = data.get("status")
         return VaultStatus(
@@ -406,30 +407,49 @@ def print_process_output(result: subprocess.CompletedProcess[str], *, stderr: bo
 
 
 def search(
-    name: str,
-    copy: str = "password",
-    sync: bool = False,
-    show: bool = False,
-    use_totp: bool = True,
-    username_slot: int = 0,
-    password_slot: int = 1,
-    totp_slot: int = 2,
-    json_slot: int = 3,
-    silent: bool = False,
-    json_output: bool = False,
-    raw_output: bool = False,
-    table_output: bool = False,
-    fresh: bool = False,
+    name: str | None,
+    copy: str | None,
+    sync: bool,
+    show: bool,
+    use_totp: bool,
+    username_slot: int,
+    password_slot: int,
+    totp_slot: int,
+    json_slot: int,
+    silent: bool,
+    json_output: bool,
+    raw_output: bool,
+    table_output: bool,
+    fresh: bool,
+    item_id: str | None,
+    all_matches: bool,
+    non_interactive: bool,
 ) -> None:
     """Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard."""
 
-    # install_if_missing(which="tv")
-
-    info = (lambda *a, **kw: None) if silent or json_output or raw_output or table_output else console.print
-
-    copy = copy.lower()
+    info = (lambda *a, **kw: None) if silent or table_output else err_console.print if json_output or raw_output else console.print
+    non_interactive = non_interactive or json_output or raw_output or not (sys.stdin.isatty() and sys.stdout.isatty())
+    copy = ("none" if non_interactive or table_output else "password") if copy is None else copy.lower()
     if copy not in {"password", "username", "totp", "none"}:
         err_console.print("[red]Invalid --copy value. Use 'password', 'username', 'totp', or 'none'.[/red]")
+        raise VaultExit(code=2)
+    if (json_output or raw_output or table_output) and copy != "none":
+        err_console.print("--copy must be none with --json, --raw, or --table.")
+        raise VaultExit(code=2)
+    if json_output and raw_output:
+        err_console.print("Choose either --json or --raw.")
+        raise VaultExit(code=2)
+    if name is not None and not name.strip() or item_id is not None and not item_id.strip():
+        err_console.print("The search name and --id must not be blank.")
+        raise VaultExit(code=2)
+    if item_id is not None and (name is not None or all_matches):
+        err_console.print("--id cannot be combined with a search name or --all-matches.")
+        raise VaultExit(code=2)
+    if all_matches and not (json_output or raw_output or table_output):
+        err_console.print("--all-matches requires --json, --raw, or --table.")
+        raise VaultExit(code=2)
+    if name is None and item_id is None and not all_matches:
+        err_console.print("Provide a search name, --id, or --all-matches.")
         raise VaultExit(code=2)
 
     if table_output and (raw_output or json_output):
@@ -443,7 +463,7 @@ def search(
         info("[blue]🔄 Syncing vault...[/blue]")
         sync_cmd = build_bw_command(["sync"], session)
         try:
-            sync_result = subprocess.run(sync_cmd, capture_output=True, text=True)
+            sync_result = subprocess.run(sync_cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True)
             if sync_result.returncode == 0:
                 info("[green]✅ Vault synced.[/green]")
             else:
@@ -451,7 +471,7 @@ def search(
         except FileNotFoundError:
             info("[yellow]⚠️  bw not found — skipping sync.[/yellow]")
 
-    cache_key = f"search::{name}"
+    cache_key = f"""search::{json.dumps([name, item_id])}"""
     raw = None
     use_cached_search = not (fresh or sync)
     if use_cached_search:
@@ -466,16 +486,26 @@ def search(
             info("[yellow]⚠️  Could not determine vault status — proceeding anyway.[/yellow]")
 
         info(f"🔍 Searching for credentials matching: [bold]{name}[/bold] ...")
-        cmd_args = build_bw_command(["list", "items", "--search", name], session)
+        if item_id is not None:
+            arguments = ["get", "item", item_id]
+        else:
+            arguments = ["list", "items"]
+            if name is not None:
+                arguments.extend(["--search", name])
+        cmd_args = build_bw_command(arguments, session)
         info(f"[dim]$ {' '.join(mask_session_args(cmd_args))}[/dim]")
         raw = run_bw_command(cmd_args)
         cache_set(cache_key, raw)
 
-    items = parse_items(raw)
+    items = parse_items(f"""[{raw}]""" if item_id is not None else raw)
 
     if raw_output:
-        copy_to_clipboard(raw, slot=json_slot)
         print(raw)
+        return
+    if json_output:
+        from stackops.scripts.python.helpers.helpers_devops.vault_search_output import print_credentials_json
+
+        print_credentials_json(items=items, session=session, use_totp=use_totp)
         return
 
     if not items:
@@ -490,14 +520,17 @@ def search(
         entry = items[0]
         info(f"[green]Found:[/green] {entry.name}")
     else:
+        if non_interactive:
+            err_console.print("Multiple credentials match. Use --id to select one, or --json/--table to list every match.")
+            raise VaultExit(code=2)
         entry = choose_entry_interactive(items)
         info(f"[green]Selected:[/green] {entry.name}")
 
     notes_value = get_item_notes(entry.raw)
-    json_str = json.dumps(entry.raw)
-    copy_to_clipboard(json_str, slot=json_slot)
+    if copy != "none":
+        copy_to_clipboard(json.dumps(entry.raw), slot=json_slot)
 
-    if not silent and not json_output:
+    if not silent:
         tbl = Table(box=None, show_header=False)
         tbl.add_column(justify="right", style="bold")
         tbl.add_column()
@@ -542,7 +575,7 @@ def search(
             if copy_to_clipboard(copy_target_value, slot=copy_slot):
                 info(f"✅ [bold]{copy}[/bold] copied to clipboard (slot {copy_slot}).")
                 copied = True
-            elif not json_output:
+            else:
                 console.print(f"[yellow]Clipboard tool not available — cannot copy {copy}. Showing credentials instead:[/yellow]")
                 fallback_tbl = Table(show_header=False, box=None)
                 fallback_tbl.add_column(style="bold", width=12)
@@ -556,13 +589,7 @@ def search(
                 console.print(Panel(fallback_tbl, title="Credentials (cleartext fallback)"))
                 copied = True
 
-    if json_output:
-        print(
-            json.dumps(
-                {"name": entry.name, "id": entry.id, "username": entry.username, "password": entry.password, "totp": totp_value, "notes": notes_value}
-            )
-        )
-    elif not silent and (show or not copied):
+    if not silent and (show or not copied):
         panel_rows = []
         if entry.username:
             panel_rows.append(("Username", entry.username))

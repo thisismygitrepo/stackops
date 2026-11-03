@@ -36,6 +36,7 @@ def status(
     text_limit: Annotated[int, typer.Option("--text-limit", "-T", min=0, help="Character limit per message or evidence text. Truncation is marked. 0 keeps full text.")] = 8000,
     server: Annotated[str | None, typer.Option("--server", "-d", help="Named local TUIOS daemon to inspect. Default: TUIOS's current/default daemon.")] = None,
     output_format: Annotated[StatusFormat, typer.Option("--format", "-f", help="Output format: table, rich (styled overview and agent cards), json or markdown. JSON includes structured evidence and extracted history subject to the requested limits. File output has no ANSI colours.")] = "table",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print structured JSON; shorthand for --format json.")] = False,
     output: Annotated[Path | None, typer.Option("--output", "-o", dir_okay=False, help="Write the report to a private file instead of stdout. Existing files require --force.")] = None,
     force: Annotated[bool, typer.Option("--force", "-F", help="Allow replacing an existing --output file; agent sessions are never modified.")] = False,
 ) -> None:
@@ -43,6 +44,10 @@ def status(
     from stackops.scripts.python.helpers.helpers_agents.agents_status_render import render_status, write_status_output
     from stackops.utils.default_multiplexer import resolve_agent_multiplexer
 
+    if json_output:
+        if output_format not in ("table", "json"):
+            raise typer.BadParameter("--json cannot be combined with a non-JSON --format.", param_hint="--json")
+        output_format = "json"
     if force and output is None:
         raise typer.BadParameter("--force requires --output.")
     try:

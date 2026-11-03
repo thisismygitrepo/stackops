@@ -23,11 +23,27 @@ def seek(
     rga: bool,
     edit: bool,
     install_dependencies: bool,
+    json_output: bool,
 ) -> SemanticFailure | None:
     """seek across files, text matches, and code symbols."""
 
     if install_dependencies:
         return _install_dependencies(semantic_backend=semantic_backend)
+    if json_output:
+        from stackops.scripts.python.helpers.helpers_seek.json_search import run_json_search
+
+        return run_json_search(
+            path=path,
+            query=search_term,
+            ast=ast,
+            semantic=semantic,
+            semantic_backend=semantic_backend,
+            max_files=max_files,
+            extension=extension,
+            file=file,
+            dotfiles=dotfiles,
+            rga=rga,
+        )
     if semantic:
         from stackops.scripts.python.helpers.helpers_seek.semantic.run_semantic_search import run_semantic_search
 

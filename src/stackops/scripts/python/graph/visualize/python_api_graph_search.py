@@ -1,11 +1,11 @@
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.syntax import Syntax
 
 from stackops.utils.installer_utils.installer_cli import install_if_missing
 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
@@ -51,12 +51,27 @@ def load_search_entries(graph_path: Path) -> list[PythonApiGraphSearchEntry]:
     return entries
 
 
-def search_python_api_graph(graph_path: Path, json_output: bool) -> int:
-    install_if_missing(which="tv", binary_name=None, verbose=True)
+def search_python_api_graph(graph_path: Path, query: str, json_output: bool, non_interactive: bool) -> int:
     entries = load_search_entries(graph_path=graph_path)
+    terms = query.casefold().split()
+    entries = [
+        entry for entry in entries
+        if all(term in f"""{entry.qualified_name} {entry.source_file} {entry.kind} {_as_string(entry.entry.get('help'))}""".casefold() for term in terms)
+    ]
+    if json_output:
+        print(json.dumps([
+            {"qualified_name": entry.qualified_name, "source_file": entry.source_file, "kind": entry.kind, "entry": entry.entry}
+            for entry in entries
+        ], ensure_ascii=False))
+        return 0
+    if non_interactive or not (sys.stdin.isatty() and sys.stdout.isatty()):
+        for entry in entries:
+            print(entry.qualified_name)
+        return 0
     if not entries:
-        raise ValueError(f"No searchable Python API entries found in {graph_path}")
+        raise ValueError(f"""No Python API entries match {query!r} in {graph_path}""")
 
+    install_if_missing(which="tv", binary_name=None, verbose=True)
     options_to_preview_mapping, entry_lookup = _build_entry_lookup(entries=entries)
     selected_key = choose_from_dict_with_preview(
         options_to_preview_mapping=options_to_preview_mapping,
@@ -69,17 +84,6 @@ def search_python_api_graph(graph_path: Path, json_output: bool) -> int:
 
     selected_entry = entry_lookup[selected_key]
     console = Console()
-    if json_output:
-        console.print(Panel(_result_summary(entry=selected_entry, json_output=json_output), title="Python API Search Result", border_style="green"))
-        console.print(
-            Panel(
-                Syntax(json.dumps(selected_entry.entry, ensure_ascii=False, indent=2), "json", line_numbers=True),
-                title="Full Python API Graph Entry",
-                border_style="cyan",
-            )
-        )
-        return 0
-
     console.print(Panel(Markdown(_entry_summary_markdown(entry=selected_entry)), title="Python API Summary", border_style="green"))
     return 0
 
@@ -94,16 +98,6 @@ def _build_entry_lookup(entries: list[PythonApiGraphSearchEntry]) -> tuple[dict[
         options_to_preview_mapping[option_key] = _entry_summary_markdown(entry=entry)
 
     return options_to_preview_mapping, entry_lookup
-
-
-def _result_summary(entry: PythonApiGraphSearchEntry, json_output: bool) -> str:
-    lines = [
-        f"[bold]Import path:[/bold] {entry.qualified_name}",
-        f"[bold]Kind:[/bold] {entry.kind}",
-        f"[bold]Source file:[/bold] {entry.source_file or '-'}",
-        f"[bold]Action:[/bold] {'show json' if json_output else 'show summary'}",
-    ]
-    return "\n".join(lines)
 
 
 def _entry_summary_markdown(entry: PythonApiGraphSearchEntry) -> str:

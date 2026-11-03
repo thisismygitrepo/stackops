@@ -50,14 +50,16 @@ def build_cli_graph_app() -> "typer.Typer":
         run_navigate_command()
 
     def search(
+        query: Annotated[str, typer.Argument(help="Case-insensitive search terms; omit to list all entries.")] = "",
         graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Path to cli_graph.json")] = None,
         json_output: Annotated[
-            bool, typer.Option("--json", "-j", help="Print the selected cli_graph.json entry instead of the rendered summary.")
+            bool, typer.Option("--json", "-j", help="Print all matching entries as a JSON array without prompts or a picker.")
         ] = False,
+        non_interactive: Annotated[bool, typer.Option("--non-interactive", help="List matching commands without opening a picker.")] = False,
     ) -> None:
         from stackops.scripts.python.graph.visualize.cli_graph_app import search as run_search_command
 
-        run_search_command(graph_path=graph_path, json_output=json_output)
+        run_search_command(query=query, graph_path=graph_path, json_output=json_output, non_interactive=non_interactive)
 
     cli_app = typer.Typer(
         help="🧭 <g> Visualize the StackOps CLI graph in multiple formats.", no_args_is_help=True, add_help_option=True, add_completion=False,

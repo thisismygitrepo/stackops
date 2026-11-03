@@ -1,4 +1,5 @@
 import shlex
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -11,7 +12,7 @@ from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 ACCOUNT_NAME_HELP = "OneDrive CLI account name. Run 'cloud onedrive accounts' to list configured names. Omit to use the only configured account or enter it interactively."
 
 
-def resolve_account_name(account_name: str | None) -> str:
+def resolve_account_name(account_name: str | None, non_interactive: bool) -> str:
     if account_name is not None:
         return account_name
     from stackops.utils.cloud.onedrive.accounts import list_accounts as list_defined_accounts
@@ -20,6 +21,8 @@ def resolve_account_name(account_name: str | None) -> str:
     accounts = run_cli(lambda: list_defined_accounts(SECRETS_DOFILE))
     if len(accounts) == 1:
         return accounts[0].account_name
+    if non_interactive or not (sys.stdin.isatty() and sys.stdout.isatty()):
+        raise typer.BadParameter("Specify an account name; use 'cloud onedrive accounts --json' to list configured accounts.")
     return str(typer.prompt("OneDrive account name"))
 
 
@@ -43,12 +46,17 @@ def add_account(
     typer.echo(f"Next: cloud onedrive auth {shlex.quote(resolved_account_name)}")
 
 
-def show_accounts() -> None:
+def show_accounts(
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print account names and authentication status as JSON without prompts.")] = False,
+) -> None:
     from stackops.utils.cloud.onedrive.accounts import list_accounts as list_defined_accounts
     from stackops.utils.cloud.onedrive.errors import run_cli
-    from stackops.utils.cloud.onedrive.output import print_table
+    from stackops.utils.cloud.onedrive.output import json_output, print_table
 
     accounts = run_cli(lambda: list_defined_accounts(SECRETS_DOFILE))
+    if output_json:
+        json_output([{"account": account.account_name, "authentication": account.authentication} for account in accounts])
+        return
     if not accounts:
         typer.echo("No OneDrive CLI accounts are defined.")
         return
@@ -62,38 +70,42 @@ def authenticate(account_name: Annotated[str | None, typer.Argument(help=ACCOUNT
     from stackops.utils.cloud.onedrive.auth import authenticate as authenticate_account
     from stackops.utils.cloud.onedrive.errors import run_cli
 
-    resolved = resolve_account_name(account_name)
+    resolved = resolve_account_name(account_name=account_name, non_interactive=False)
     run_cli(lambda: authenticate_account(resolved))
 
 
-def show_status(account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None) -> None:
+def show_status(
+    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print JSON without prompting for an account. Status output always uses JSON.")] = False,
+) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.items import show_status as show_account_status
 
-    resolved = resolve_account_name(account_name)
+    resolved = resolve_account_name(account_name=account_name, non_interactive=output_json)
     run_cli(lambda: show_account_status(resolved))
 
 
 def list_items(
     remote_path: Annotated[str, typer.Argument(help="Remote folder path.")] = "/",
     account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print remote items as a JSON array without prompts.")] = False,
 ) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.items import list_items as list_remote_items
 
-    resolved = resolve_account_name(account_name)
-    run_cli(lambda: list_remote_items(resolved, remote_path))
+    resolved = resolve_account_name(account_name=account_name, non_interactive=output_json)
+    run_cli(lambda: list_remote_items(account_name=resolved, remote_path=remote_path, output_json=output_json))
 
 
 def search_items(
     query: Annotated[str, typer.Argument(help="Text to search for.")],
-    output_json: Annotated[bool, typer.Option("--json", "-j", help="Output JSON.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print matching items as a JSON array without prompts.")] = False,
     account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.items import search_items as search_remote_items
 
-    resolved = resolve_account_name(account_name)
+    resolved = resolve_account_name(account_name=account_name, non_interactive=output_json)
     run_cli(lambda: search_remote_items(resolved, query, output_json))
 
 
@@ -105,7 +117,7 @@ def download_file(
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.file_ops import download_file as download_remote_file
 
-    resolved = resolve_account_name(account_name)
+    resolved = resolve_account_name(account_name=account_name, non_interactive=False)
     run_cli(lambda: download_remote_file(resolved, remote_path, local_path))
 
 
@@ -118,7 +130,7 @@ def upload_file(
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.file_ops import upload_file as upload_local_file
 
-    resolved = resolve_account_name(account_name)
+    resolved = resolve_account_name(account_name=account_name, non_interactive=False)
     run_cli(lambda: upload_local_file(resolved, local_path, remote_path, overwrite))
 
 
@@ -130,7 +142,7 @@ def delete_item(
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.file_ops import delete_item as delete_remote_item
 
-    resolved = resolve_account_name(account_name)
+    resolved = resolve_account_name(account_name=account_name, non_interactive=False)
     run_cli(lambda: delete_remote_item(resolved, remote_path, yes))
 
 

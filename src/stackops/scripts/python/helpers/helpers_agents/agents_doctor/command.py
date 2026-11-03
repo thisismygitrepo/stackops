@@ -1,3 +1,6 @@
+import json
+import sys
+from contextlib import nullcontext, redirect_stdout
 from pathlib import Path
 from typing import Final, cast, get_args
 
@@ -29,10 +32,10 @@ def resolve_resource_focuses(*, requested_resources: str) -> tuple[DoctorResourc
     return resource_focuses
 
 
-def run_doctor(*, requested_agent: str, working_directory: Path, requested_resources: str) -> bool:
+def run_doctor(*, requested_agent: str, working_directory: Path, requested_resources: str, json_output: bool) -> bool:
     definitions = resolve_doctor_definitions(requested_agent=requested_agent)
     resource_focuses = resolve_resource_focuses(requested_resources=requested_resources)
-    console = Console()
+    console = Console(stderr=json_output)
     reports: list[DoctorReport] = []
     with Progress(
         SpinnerColumn(), TextColumn("{task.description}"), BarColumn(), MofNCompleteColumn(), TextColumn("agents"), TimeElapsedColumn(),
@@ -44,8 +47,42 @@ def run_doctor(*, requested_agent: str, working_directory: Path, requested_resou
             progress.update(task_id, description=description, refresh=True)
             if not console.is_terminal:
                 console.print(f"""[{index}/{len(definitions)}] {description}""", markup=False)
-            reports.append(build_doctor_report(definition=definition, working_directory=working_directory))
+            with redirect_stdout(sys.stderr) if json_output else nullcontext():
+                reports.append(build_doctor_report(definition=definition, working_directory=working_directory))
             progress.advance(task_id)
         progress.update(task_id, description="Inspection finished", refresh=True)
-    render_doctor_reports(console=console, reports=reports, resource_focuses=resource_focuses)
+    if json_output:
+        print(json.dumps([
+            {
+                "agent": report.definition.agent,
+                "display_name": report.definition.display_name,
+                "directory": str(report.context.working_directory),
+                "project_root": str(report.context.project_root),
+                "executable": {
+                    "name": report.definition.executable,
+                    "installed": report.executable.installed,
+                    "path": str(report.executable.path) if report.executable.path is not None else None,
+                    "version": report.executable.version,
+                    "error": report.executable.error,
+                },
+                "resources": [
+                    {
+                        "kind": resource.kind,
+                        "is_mcp": resource.is_mcp,
+                        "name": resource.name,
+                        "origin": resource.origin,
+                        "state": resource.state,
+                        "path": str(resource.path),
+                        "detail": resource.detail,
+                    }
+                    for resource in report.resources
+                    if "all" in resource_focuses or resource.kind in resource_focuses or resource.is_mcp and "mcp" in resource_focuses
+                ],
+                "notes": report.inspection_notes,
+                "errors": report.inspection_errors,
+            }
+            for report in reports
+        ], ensure_ascii=False))
+    else:
+        render_doctor_reports(console=console, reports=reports, resource_focuses=resource_focuses)
     return not any(report.inspection_errors for report in reports)

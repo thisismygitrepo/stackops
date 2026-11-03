@@ -169,7 +169,7 @@ def _echo_prompts_yaml_locations(
     Console().print(table)
 
 
-def load_prompts_yaml_data(prompts_yaml_path: str | None, source: PROMPTS_SOURCE) -> list[tuple[str, Path, object]]:
+def load_prompts_yaml_data(prompts_yaml_path: str | None, source: PROMPTS_SOURCE, create_missing: bool) -> list[tuple[str, Path, object]]:
     from stackops.utils.files.read import read_yaml
 
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
@@ -177,7 +177,7 @@ def load_prompts_yaml_data(prompts_yaml_path: str | None, source: PROMPTS_SOURCE
         if yaml_path.exists() and not yaml_path.is_file():
             raise ValueError(f"""Prompts YAML path exists but is not a file: {yaml_path}""")
     can_create = prompts_yaml_path is not None or source not in ("library", "l")
-    if can_create and not any(yaml_path.is_file() for _, yaml_path in yaml_locations):
+    if create_missing and can_create and not any(yaml_path.is_file() for _, yaml_path in yaml_locations):
         ensure_prompts_yaml_exists(yaml_path=yaml_locations[0][1])
 
     picked_with_data: list[tuple[str, Path, object]] = []
@@ -203,12 +203,14 @@ def _no_prompts_yaml_files_error(prompts_yaml_path: str | None, yaml_locations: 
 
 
 def resolve_named_prompts_yaml_entry(
-    *, prompts_yaml_path: str | None, entry_name: str, source: PROMPTS_SOURCE, entry_label: str, group: str | None,
+    *, prompts_yaml_path: str | None, entry_name: str, source: PROMPTS_SOURCE, entry_label: str, group: str | None, allow_selection: bool,
 ) -> str:
+    if any(not segment.strip() for segment in entry_name.split(".")):
+        raise ValueError(f"""{entry_label} must be a nonempty name without empty dotted segments.""")
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
-    yaml_data_by_location = load_prompts_yaml_data(prompts_yaml_path=prompts_yaml_path, source=source)
+    yaml_data_by_location = load_prompts_yaml_data(prompts_yaml_path=prompts_yaml_path, source=source, create_missing=allow_selection)
     if len(yaml_data_by_location) == 0:
         raise _no_prompts_yaml_files_error(prompts_yaml_path=prompts_yaml_path, yaml_locations=yaml_locations, source=source)
 
@@ -216,6 +218,9 @@ def resolve_named_prompts_yaml_entry(
         found_entry = _resolve_named_yaml_entry(raw_data=yaml_data, entry_name=entry_name, entry_label=entry_label, group=group)
         if found_entry is not None:
             return found_entry
+
+    if not allow_selection:
+        raise ValueError(f"""{entry_label} '{entry_name}' was not found. Pass an existing exact name or provide the input explicitly.""")
 
     fuzzy_preview_map, fuzzy_value_map = build_named_prompt_selection_maps(yaml_data_by_location=yaml_data_by_location, group=group)
 
@@ -284,6 +289,7 @@ def edit_prompts_yaml(yaml_path: Path) -> None:
 def resolve_context(
     context: str | None, context_path: str | None, prompts_yaml_path: str | None, context_name: str | None,
     source: PROMPTS_SOURCE, group: str | None,
+    allow_selection: bool,
 ) -> str:
     if context is not None and context_path is not None:
         raise ValueError("Provide only one of --context or --context-path")
@@ -312,10 +318,16 @@ def resolve_context(
             source=source,
             entry_label="Context name",
             group=group,
+            allow_selection=allow_selection,
         )
 
+    if not allow_selection:
+        if group is not None or prompts_yaml_path is not None:
+            raise ValueError("--group and --custom-path require --context-name when running non-interactively.")
+        return ""
+
     yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
-    yaml_data_by_location = load_prompts_yaml_data(prompts_yaml_path=prompts_yaml_path, source=source)
+    yaml_data_by_location = load_prompts_yaml_data(prompts_yaml_path=prompts_yaml_path, source=source, create_missing=True)
     if len(yaml_data_by_location) == 0:
         raise _no_prompts_yaml_files_error(prompts_yaml_path=prompts_yaml_path, yaml_locations=yaml_locations, source=source)
 

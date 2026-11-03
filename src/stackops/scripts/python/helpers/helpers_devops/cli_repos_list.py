@@ -1,12 +1,26 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, TypedDict
 
 import typer
+
+from stackops.scripts.python.helpers.helpers_repos.local_status import RepositoryState
+from stackops.utils.schemas.repos.repos_types import RepoSync
+
+
+class RepositoryListing(TypedDict):
+    name: str
+    destination: str
+    sync: RepoSync
+    state: RepositoryState
+    changes: str
+    branch: str | None
+    committed_at: str | None
 
 
 def list_repositories(
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Path to repos.json specification file.")] = None,
     guarded: Annotated[bool, typer.Option("--guarded", "-g", help="Show only registered repositories using encrypted guard sync.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print repository destinations, sync settings, and local status as a JSON array.")] = False,
 ) -> None:
     from rich.console import Console
     from rich.table import Table
@@ -33,6 +47,26 @@ def list_repositories(
         (record for record in spec["repos"] if not guarded or record["sync"]["mode"] == "guard"),
         key=lambda record: (record["name"].casefold(), record["parentDir"], record["name"]),
     )
+    if json_output:
+        import json
+
+        records: list[RepositoryListing] = []
+        for record in repositories:
+            destination = Path(record["parentDir"]).joinpath(record["name"])
+            local = inspect_local_repository(destination=destination)
+            records.append(
+                {
+                    "name": record["name"],
+                    "destination": str(local.path),
+                    "sync": record["sync"],
+                    "state": local.state,
+                    "changes": local.changes,
+                    "branch": local.branch,
+                    "committed_at": local.committed_at.isoformat() if local.committed_at is not None else None,
+                }
+            )
+        typer.echo(json.dumps(records, ensure_ascii=False))
+        return
     git_count = sum(record["sync"]["mode"] == "git" for record in repositories)
     guard_count = len(repositories) - git_count
     console = Console()

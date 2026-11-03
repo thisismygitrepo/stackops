@@ -136,36 +136,24 @@ def chart(
 
 
 def search(
+    query: Annotated[str, typer.Argument(help="Case-insensitive search terms for import names, descriptions, and source paths; omit to list all.")] = "",
     graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Use an existing Python API graph JSON file.")] = None,
     json_output: Annotated[
         bool,
-        typer.Option("--json", "-j", help="Print the selected graph entry instead of the rendered summary."),
+        typer.Option("--json", "-j", help="Print all matching entries as a JSON array without prompts or a picker."),
     ] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", help="List matching imports without opening a picker.")] = False,
 ) -> None:
-    """Search Python API entries and show the selected import summary."""
+    from stackops.scripts.python.graph.visualize.python_api_graph_search import search_python_api_graph
 
-    def func(graph_path_str: str | None, json_output: bool) -> None:
-        from pathlib import Path
-
-        import typer
-
-        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path
-        from stackops.scripts.python.graph.visualize.python_api_graph_search import search_python_api_graph
-
-        graph_file = Path(materialize_python_api_graph_path(graph_path_str))
-        return_code = search_python_api_graph(graph_path=graph_file, json_output=json_output)
-        if return_code != 0:
-            raise typer.Exit(code=return_code)
-
-    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function
-
-    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
-    shell_script, _pyfile = get_shell_script_running_lambda_function(
-        lambda: func(graph_path_str=str(graph_path) if graph_path else None, json_output=json_output),
-        uv_with=uv_with,
-        uv_project_dir=uv_project_dir,
-    )
-    exit_then_run_shell_script(str(shell_script), strict=False)
+    try:
+        graph_file = Path(materialize_python_api_graph_path(str(graph_path) if graph_path is not None else None))
+        return_code = search_python_api_graph(graph_path=graph_file, query=query, json_output=json_output, non_interactive=non_interactive)
+    except (OSError, ValueError) as error:
+        typer.echo(f"""Search failed: {error}""", err=True)
+        raise typer.Exit(code=1) from error
+    if return_code != 0:
+        raise typer.Exit(code=return_code)
 
 
 def dump(

@@ -42,7 +42,7 @@ def search(
     json_output: Annotated[
         bool,
         typer.Option(
-            "--json", "-j", help="Print matching entries as JSON, including secret values, without loading environment variables."
+            "--json", "-j", help="Print matching entries as JSON, including secret values, without prompts or loading environment variables."
         ),
     ] = False,
     preview_secrets: Annotated[

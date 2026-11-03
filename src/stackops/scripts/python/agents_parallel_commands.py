@@ -276,6 +276,7 @@ def create_context(
                 prompt=full_prompt,
                 agent=resolve_agent(agent=agent),
                 interactive=False,
+                non_interactive=True,
                 reasoning_effort=None,
                 context="",
                 context_path=None,

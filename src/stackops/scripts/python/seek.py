@@ -24,7 +24,7 @@ def _resolve_seek_arguments(first_argument: str, search_term: str) -> tuple[str,
 
 def seek(
     path_or_search_term: Annotated[str, typer.Argument(help="The directory/file to search, or the search term when no matching path exists")] = ".",
-    search_term: Annotated[str, typer.Argument(help="Initial search term to seed the interactive search")] = "",
+    search_term: Annotated[str, typer.Argument(help="Search query; seeds the picker unless --json is used")] = "",
     ast: Annotated[bool, typer.Option(..., "--ast", "-a", help="The abstract syntax tree search/ tree sitter search of symbols")] = False,
     semantic: Annotated[bool, typer.Option(..., "--semantic", "-s", help="Semantic search of text chunks, ranked by meaning rather than keywords")] = False,
     semantic_backend: Annotated[
@@ -49,6 +49,10 @@ def seek(
     dotfiles: Annotated[bool, typer.Option(..., "--dotfiles", "-d", help="Include dotfiles in search")] = False,
     rga: Annotated[bool, typer.Option(..., "--rga", "-A", help="Use ripgrep-all for searching all (non text files) instead of ripgrep")] = False,
     edit: Annotated[bool, typer.Option(..., "--edit", "-e", help="Open selection in editor (helix)")] = False,
+    json_output: Annotated[
+        bool,
+        typer.Option("--json", "-j", help="Print a JSON array without prompts or a picker. Text/semantic searches require a query; file/AST searches allow an empty query. No automatic dependency installation."),
+    ] = False,
     install_dependencies: Annotated[bool, typer.Option(..., "--install-dependencies", "-i", help="Install missing helper dependencies and exit.")] = False,
     max_files: Annotated[
         int,
@@ -67,6 +71,11 @@ def seek(
     from stackops.scripts.python.helpers.helpers_seek.seek_impl import seek as impl
 
     path, resolved_search_term = _resolve_seek_arguments(first_argument=path_or_search_term, search_term=search_term)
+    if json_output:
+        if edit or install_dependencies:
+            raise typer.BadParameter("Cannot combine --json with --edit or --install-dependencies.", param_hint="--json")
+        if resolved_search_term == "" and (semantic or not (ast or file)):
+            raise typer.BadParameter("Provide a search term for text or semantic search with --json.", param_hint="search_term")
 
     try:
         failure = impl(
@@ -82,6 +91,7 @@ def seek(
             rga=rga,
             edit=edit,
             install_dependencies=install_dependencies,
+            json_output=json_output,
         )
         if failure is not None:
             typer.echo(f"""Semantic search with {failure.backend} failed during {failure.stage}: {failure.message}""", err=True)

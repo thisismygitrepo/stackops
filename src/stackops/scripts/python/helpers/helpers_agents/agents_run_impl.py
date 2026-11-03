@@ -219,6 +219,7 @@ def run(
     prompt: str | None,
     agent: AGENTS,
     interactive: bool,
+    non_interactive: bool,
     reasoning_effort: ReasoningEffort | None,
     context: str | None,
     context_path: str | None,
@@ -232,6 +233,9 @@ def run(
     working_directory: Path | None,
     sandbox_options: SandboxOptions,
 ) -> None:
+    import sys
+    from contextlib import nullcontext, redirect_stdout
+
     from stackops.scripts.python.helpers.helpers_agents.agents_run_sandbox import validate_prompt_sandbox
     from stackops.scripts.python.helpers.helpers_agents.agents_edit_source import choose_edit_source
     from stackops.scripts.python.helpers.helpers_agents.agents_run_context import (
@@ -242,6 +246,10 @@ def run(
         resolve_prompts_yaml_paths,
     )
 
+    if non_interactive and (interactive or edit):
+        raise ValueError("--non-interactive cannot be combined with --interactive or --edit.")
+    if non_interactive and skill == "":
+        raise ValueError("Pass an explicit --skill name when running non-interactively.")
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agents_run_interactive import validate_interactive_prompt_agent
 
@@ -282,17 +290,25 @@ def run(
 
     skill_name = resolve_run_skill_name(skill=skill)
     skill_reference = None if skill_name is None else render_agent_skill_reference(skill_name=skill_name)
-    resolved_context = resolve_context(
-        context=context,
-        context_path=context_path,
-        prompts_yaml_path=prompts_yaml_path,
-        context_name=context_name,
-        group=group,
-        source=source,
-    )
+    with redirect_stdout(sys.stderr) if non_interactive else nullcontext():
+        resolved_context = resolve_context(
+            context=context,
+            context_path=context_path,
+            prompts_yaml_path=prompts_yaml_path,
+            context_name=context_name,
+            group=group,
+            source=source,
+            allow_selection=not non_interactive,
+        )
     prompt_text = prompt if prompt is not None else ""
+    if non_interactive and not (prompt_text.strip() or resolved_context.strip() or skill_reference):
+        raise ValueError("Provide prompt text or explicit context when running non-interactively.")
     prompt_file = make_prompt_file(prompt=prompt_text, context=resolved_context, skill_reference=skill_reference)
-    _print_prompt_file_preview(prompt_file=prompt_file)
+    if non_interactive:
+        with redirect_stdout(sys.stderr):
+            _print_prompt_file_preview(prompt_file=prompt_file)
+    else:
+        _print_prompt_file_preview(prompt_file=prompt_file)
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agents_run_interactive_script import build_interactive_prompt_script
 

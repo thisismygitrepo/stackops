@@ -1,11 +1,11 @@
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.syntax import Syntax
 
 from stackops.utils.installer_utils.installer_cli import install_if_missing
 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
@@ -76,12 +76,27 @@ def load_search_entries(graph_path: Path) -> list[CliGraphSearchEntry]:
     return entries
 
 
-def search_cli_graph(graph_path: Path, json_output: bool) -> int:
-    install_if_missing(which="tv", binary_name=None, verbose=True)
+def search_cli_graph(graph_path: Path, query: str, json_output: bool, non_interactive: bool) -> int:
     entries = load_search_entries(graph_path=graph_path)
+    terms = query.casefold().split()
+    entries = [
+        entry for entry in entries
+        if all(term in f"""{entry.command} {entry.short_command} {entry.source_file} {_node_summary(entry.entry)}""".casefold() for term in terms)
+    ]
+    if json_output:
+        print(json.dumps([
+            {"command": entry.executable_command, "short_command": entry.short_command, "source_file": entry.source_file, "entry": entry.entry}
+            for entry in entries
+        ], ensure_ascii=False))
+        return 0
+    if non_interactive or not (sys.stdin.isatty() and sys.stdout.isatty()):
+        for entry in entries:
+            print(entry.executable_command)
+        return 0
     if not entries:
-        raise ValueError(f"No searchable CLI entries found in {graph_path}")
+        raise ValueError(f"""No CLI entries match {query!r} in {graph_path}""")
 
+    install_if_missing(which="tv", binary_name=None, verbose=True)
     options_to_preview_mapping, entry_lookup = _build_entry_lookup(entries=entries)
     selected_key = choose_from_dict_with_preview(
         options_to_preview_mapping=options_to_preview_mapping, extension="md", multi=False, preview_size_percent=70
@@ -91,19 +106,6 @@ def search_cli_graph(graph_path: Path, json_output: bool) -> int:
 
     selected_entry = entry_lookup[selected_key]
     console = _console()
-    if json_output:
-        console.print(
-            Panel(_search_result_summary(entry=selected_entry, json_output=json_output), title="🔎 CLI Graph Search Result", border_style="green")
-        )
-        console.print(
-            Panel(
-                Syntax(json.dumps(selected_entry.entry, ensure_ascii=False, indent=2), "json", line_numbers=True),
-                title="📦 Full cli_graph.json Entry",
-                border_style="cyan",
-            )
-        )
-        return 0
-
     console.print(Panel(Markdown(_command_summary_markdown(entry=selected_entry)), title="CLI Command Summary", border_style="green"))
     return 0
 
@@ -160,15 +162,6 @@ def preview_header(entry: CliGraphSearchEntry) -> str:
     if short_command is not None:
         lines.append(f"Short command: {short_command}")
     return "\n".join(lines) + "\n"
-
-
-def _search_result_summary(entry: CliGraphSearchEntry, json_output: bool) -> str:
-    lines = [f"[bold]Source file:[/bold] {entry.source_file}", f"[bold]Command:[/bold] {entry.command}"]
-    short_command = _distinct_short_command(entry=entry)
-    if short_command is not None:
-        lines.append(f"[bold]Short command:[/bold] {short_command}")
-    lines.append(f"[bold]Action:[/bold] {'show json' if json_output else 'show summary'}")
-    return "\n".join(lines)
 
 
 def _command_summary_markdown(entry: CliGraphSearchEntry) -> str:

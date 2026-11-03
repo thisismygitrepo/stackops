@@ -1,6 +1,7 @@
 """Agents management commands - lazy loading subcommands."""
 
 import shutil
+import sys
 from collections.abc import Callable, Generator
 from contextlib import chdir, contextmanager
 from pathlib import Path
@@ -490,6 +491,9 @@ def run_prompt(
         bool,
         typer.Option("--interactive", "-i", help="Start a native agent chat with the prepared prompt and keep it open for follow-up messages."),
     ] = False,
+    non_interactive: Annotated[
+        bool, typer.Option("--non-interactive", help="Never open a picker or editor. Missing context is empty; unknown context names fail. Automatic without a terminal."),
+    ] = False,
     second_brain: Annotated[
         bool,
         typer.Option(..., "--second-brain", "-b", help="Run from the Second Brain repository."),
@@ -600,11 +604,15 @@ def run_prompt(
     from stackops.utils.sandbox.options import SandboxOptions
 
     try:
+        non_interactive = non_interactive or not (sys.stdin.isatty() and sys.stdout.isatty())
+        if non_interactive and (interactive or edit):
+            raise ValueError("--interactive and --edit require an interactive terminal and cannot be combined with --non-interactive.")
         with _agent_working_directory(second_brain=second_brain) as working_directory:
             impl(
                 prompt=" ".join(prompt) if prompt else None,
                 agent=resolve_agent(agent=agent),
                 interactive=interactive,
+                non_interactive=non_interactive,
                 reasoning_effort=reasoning_effort,
                 context=context,
                 context_path=context_path,
@@ -744,9 +752,12 @@ def doctor(
         ),
     ] = "all",
     tui: Annotated[bool, typer.Option("--tui", "-t", help="Browse agent health and resources in a terminal app.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print agent health and resources as JSON without a picker.")] = False,
 ) -> None:
     """Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance."""
     working_directory = directory if directory is not None else Path.cwd()
+    if json_output and tui:
+        raise typer.BadParameter("--json cannot be combined with --tui.", param_hint="--json")
     if tui:
         from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
 
@@ -757,7 +768,7 @@ def doctor(
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor
 
     try:
-        complete = run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource)
+        complete = run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource, json_output=json_output)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     if not complete:
