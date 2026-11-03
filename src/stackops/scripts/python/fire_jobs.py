@@ -92,10 +92,13 @@ def marimo(
 
 
 def get_app() -> typer.Typer:
+    from stackops.utils.cli_utils.interaction import configure_interaction
+
     app = typer.Typer(
         help="🔥 Run scripts, apps, and notebooks", no_args_is_help=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
+    app.callback()(configure_interaction)
     run_context = {"allow_extra_args": True, "allow_interspersed_args": True}
     app.command(name="run", help="🚀 <r> Run a script or Python function", context_settings=run_context)(run)
     app.command(name="r", hidden=True, context_settings=run_context)(run)

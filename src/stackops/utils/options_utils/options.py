@@ -45,6 +45,9 @@ def choose_from_options[T](
     tv: bool = False,
     preview: Literal["bat"] | None = None,
 ) -> Union[T, list[T]] | None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive(f"""Selection: {msg}""")
     # # also see https://github.com/charmbracelet/gum
     options_list: list[T] = list(options)
     if len(options_list) == 0:

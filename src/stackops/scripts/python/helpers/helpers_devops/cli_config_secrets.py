@@ -110,33 +110,9 @@ def subset(
     )
 
 
-def add(
-    custom_path: Annotated[
-        Path | None,
-        typer.Option(
-            "--custom-path", "-p", help="Use only this secrets JSON file, overriding --source."
-        ),
-    ] = None,
-    secrets_source: Annotated[
-        WritableSecretsSource,
-        typer.Option(
-            "--source", "-s", case_sensitive=False, help="Secrets file source to update: workspace/w or user/u. Ignored when --custom-path is provided."
-        ),
-    ] = "workspace",
-    create: Annotated[
-        bool, typer.Option("--create", "-c", help="Allow creating a missing secrets JSON file and its schema.")
-    ] = False,
-) -> None:
-    """➕ <a> Append a new login entry to a StackOps secrets file."""
-    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
-    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
-
-    secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)
-    secret_actions.add_secrets_entry(secrets_path=secret_source.path, create=create)
-
-
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_vault
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_add import add
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_files import init_secrets, path_secrets, validate_secrets
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_search import load, search
 

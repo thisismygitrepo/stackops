@@ -1,3 +1,4 @@
+import json
 from typing import TYPE_CHECKING, Annotated
 
 import typer
@@ -50,6 +51,7 @@ def show_registration_summary(registration: "BackupRegistrationResult") -> None:
 
 def display_data(
     source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option("--source", "-s", help="Backup configuration sources: library, user, or all.")] = "all",
+    json_output: Annotated[bool, typer.Option("--json", help="Print selectors and complete entry definitions as JSON.")] = False,
 ) -> None:
     from rich import box
     from rich.console import Console
@@ -67,6 +69,9 @@ def display_data(
         raise typer.Exit(code=1) from exc
     if config is None:
         config = {}
+    if json_output:
+        typer.echo(json.dumps({"source": source, "entries": [{"selector": f"{group_name}.{entry_name}", "group": group_name, "name": entry_name, "entry": entry} for group_name, entries in config.items() for entry_name, entry in entries.items()]}, indent=2))
+        return
 
     console = Console()
     entry_count = sum(len(group_entries) for group_entries in config.values())

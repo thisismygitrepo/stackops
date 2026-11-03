@@ -7,6 +7,9 @@ import typer
 
 
 def resolve_editor_command(*, editor: Literal["hx", "nano", "code"]) -> list[str]:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("Opening an editor; use path/init/validate commands for file-based automation")
     editor_bin = shutil.which(editor)
     if editor_bin is None:
         typer.echo(f"""Editor '{editor}' is not available on PATH.""", err=True)
@@ -15,6 +18,9 @@ def resolve_editor_command(*, editor: Literal["hx", "nano", "code"]) -> list[str
 
 
 def run_file_editor(*, path: Path, command: list[str]) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("Opening an editor")
     try:
         result = subprocess.run([*command, str(path)], check=False)
     except OSError as error:

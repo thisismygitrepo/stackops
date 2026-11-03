@@ -4,7 +4,6 @@ from typing import Mapping, NoReturn
 
 import typer
 
-from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_prompts as secret_prompts
 from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_validation as secret_validation
 from stackops.scripts.python.helpers.helpers_devops.cli_interactive_picker import (
     InteractivePickerOption,
@@ -17,19 +16,23 @@ from stackops.secrets.models import Login, SecretsFile
 def add_secrets_entry(
     secrets_path: Path,
     *,
-    create: bool = False,
-    prompt_secret_login_entry: Callable[[], Login] | None = None,
-) -> None:
+    read_entry: Callable[[], object],
+    create: bool,
+    dry_run: bool,
+) -> Login:
+    from stackops.secrets.loader import parse_secret_login
+
     secrets_file, created_file = _load_or_initialize_add_target(secrets_path=secrets_path, create=create)
-    prompt_entry = prompt_secret_login_entry or secret_prompts.prompt_secret_login
-    entry = prompt_entry()
+    entry = parse_secret_login(entry=read_entry(), entry_index=0)
     _secrets_entries(secrets_file).append(entry)
+    if dry_run:
+        return entry
     _write_secrets_file(secrets_path=secrets_path, secrets_file=secrets_file, created_file=created_file)
     if create:
         from stackops.utils.managed_files import ensure_managed_schema, get_managed_file_spec
 
         ensure_managed_schema(spec=get_managed_file_spec("secrets"), data_path=secrets_path)
-    typer.echo(typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Added secrets entry '{entry['name']}' to {secrets_path}")
+    return entry
 
 
 def subset_secrets_file(source_path: Path, output_path: Path, *, on_conflict: SubsetOutputConflictAction, preview_secrets: bool) -> None:
@@ -140,19 +143,16 @@ def _build_subset_file(*, source_file: SecretsFile, selected_entries: list[Login
 
 
 def _load_or_initialize_add_target(*, secrets_path: Path, create: bool) -> tuple[dict[str, object], bool]:
-    from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
+    from stackops.secrets.loader import load_secrets_file
 
     if not secrets_path.exists():
         if not create:
-            _fail(f"Secrets file not found: {secrets_path}. Pass --create to create it.")
+            raise ValueError(f"""Secrets file not found: {secrets_path}. Pass --create to create it.""")
         import stackops.secrets.assets as secrets_assets
         from stackops.secrets.constants import SECRETS_FILE_VERSION
 
         return {"$schema": f"./{secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE}", "version": SECRETS_FILE_VERSION, "entries": []}, True
-    try:
-        load_secrets_file(secrets_path)
-    except SecretsSchemaError as exc:
-        _fail(str(exc))
+    load_secrets_file(secrets_path)
     return _read_secrets_json_payload(secrets_path), False
 
 
@@ -162,9 +162,9 @@ def _read_secrets_json_payload(secrets_path: Path) -> dict[str, object]:
     try:
         payload = json.loads(secrets_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        _fail(f"Invalid JSON in {secrets_path}: {exc.msg} at line {exc.lineno}, column {exc.colno}.")
+        raise ValueError(f"""Invalid JSON in {secrets_path}: {exc.msg} at line {exc.lineno}, column {exc.colno}.""") from exc
     if not isinstance(payload, dict):
-        _fail(f"Secrets file must contain a JSON object: {secrets_path}")
+        raise ValueError(f"""Secrets file must contain a JSON object: {secrets_path}""")
     _secrets_entries(payload)
     return payload
 
@@ -172,7 +172,7 @@ def _read_secrets_json_payload(secrets_path: Path) -> dict[str, object]:
 def _secrets_entries(secrets_file: Mapping[str, object]) -> list[object]:
     entries = secrets_file.get("entries")
     if not isinstance(entries, list):
-        _fail("Secrets file must define an entries array.")
+        raise ValueError("Secrets file must define an entries array.")
     return entries
 
 

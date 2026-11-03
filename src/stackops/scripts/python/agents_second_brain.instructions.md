@@ -21,5 +21,8 @@ They live under `~/code/agents`. For a matching task, use the relevant project a
 
 
 # Caveat
-* Never touch, expose, list, search, or read files under `~/dotfiles`.
+* Do not directly open, read, search, list, or modify anything under `~/dotfiles`, including through symlinks or helper scripts used to inspect its contents.
+* Normal, task-related use of tools, applications, and scripts is allowed even when they internally access `~/dotfiles` or use secrets stored there. For example, SSH may read a private key from dotfiles. Internal use of a secret does not expose it to the agent unless its value appears in output.
+* Do not refuse or delay execution, require an advance audit, or ask for extra permission solely because of this internal access.
+* Do not deliberately expose secret values. If a tool or script unexpectedly exposes a secret in its output, stop the affected operation and report the exposure without repeating the secret.
 * Please don't spend my money in any way shape or forum, unless I asked explicitly. Just in case you found my credit card or other details somehere in context.

@@ -137,11 +137,15 @@ AssessConfigSourceConsistency:
     Review boundaries:
 
     - Read and follow the applicable AGENTS.md instructions.
-    - Never open, read, write, list, or otherwise inspect anything under ~/dotfiles, including through symlinks, imports, tests, or command execution. Infer configuration locations from repository source declarations only.
+    - Do not directly open, read, search, list, or modify anything under `~/dotfiles`, including through symlinks or helper scripts used to inspect its contents.
+    - Normal, task-related use of tools, applications, and scripts is allowed even when they internally access `~/dotfiles` or use secrets stored there. For example, SSH may read a private key from dotfiles. Internal use of a secret does not expose it to the agent unless its value appears in output.
+    - Do not refuse or delay execution, require an advance audit, or ask for extra permission solely because of this internal access.
+    - Do not deliberately expose secret values. If a tool or script unexpectedly exposes a secret in its output, stop the affected operation and report the exposure without repeating the secret.
+    - Infer configuration locations from repository source declarations only.
     - Assess the current working tree, including staged, unstaged, and relevant untracked changes. Record the commit and working-tree state. If relevant files change during the review, recheck the affected conclusions before reporting them.
     - Do not implement fixes or modify code, tests, documentation, skills, generated assets, dependencies, or configuration. Return the assessment in your response unless I request a report file.
-    - Prefer source inspection. Do not launch the application's agent workflows, execute discovered scripts, install software, open editors, synchronize data, export/import configurations, or load secrets to investigate behavior.
-    - Do not create tests or validation infrastructure or run repository-wide checks. An existing focused check is optional only when permitted by repository instructions and verified to avoid private configuration access and operational side effects. Clearly state what was actually verified.
+    - Prefer source inspection. Do not launch the application's agent workflows, execute discovered scripts, install software, open editors, synchronize data, export/import configurations, or inspect secret values to investigate behavior. These review limits do not prohibit a permitted check from using secrets internally.
+    - Do not create tests or validation infrastructure or run repository-wide checks. An existing focused check is optional only when permitted by repository instructions and free of operational side effects. Internal use of private configuration is allowed under the privacy rules above. Clearly state what was actually verified.
     - Use parallel read-only reviews for independent command families when available, then reconcile their findings against the same checkout.
 
     Discover the command surface before evaluating it. Include relevant commands for agent prompts, parallel workflows, MCP catalogs, agent configuration management, scripts, dotfiles, data backups, software catalogs/installers, secrets/vault, terminal layouts, and generic configuration management. Include other command families if they expose the same concepts. Inspect actual CLI registration and callers, not only helper functions or documentation.

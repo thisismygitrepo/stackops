@@ -1,6 +1,8 @@
 """Command handlers for the parallel agent workflow."""
 
 from pathlib import Path
+from contextlib import redirect_stdout
+import sys
 from typing import Annotated, get_args
 
 import typer
@@ -16,6 +18,8 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import (
 )
 from stackops.utils.default_multiplexer import DEFAULT_AGENT_MULTIPLEXER_HELP, resolve_agent_multiplexer, resolve_session_multiplexer
 from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer, SessionMultiplexerOption
+from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentCreationResult, AgentsDirectoryConflict
+from stackops.utils.cli_utils.interaction import require_interactive
 
 PARALLEL_CREATE_EXAMPLE = """Create a parallel-agent layout without launching agents.
 
@@ -117,7 +121,7 @@ def agents_create(
             ...,
             "--agents-dir",
             "-d",
-            help="Exact directory to store agent files in. Existing directories are replaced only when StackOps ownership metadata matches and you confirm.",
+            help="Exact directory to store agent files in. Use --on-directory-conflict to select an existing-directory policy.",
         ),
     ] = None,
     save_as_yaml: Annotated[
@@ -133,7 +137,9 @@ def agents_create(
     interactive: Annotated[
         bool, typer.Option(..., "--interactive", "-i", help="Ask for missing parameters interactively.")
     ] = False,
-) -> None:
+    on_directory_conflict: Annotated[AgentsDirectoryConflict, typer.Option("--on-directory-conflict", help="Existing agents directory: error, allocate a new directory, or replace an owned directory.")] = "error",
+    json_output: Annotated[bool, typer.Option("--json", help="Print created artifact paths and launch state as JSON.")] = False,
+) -> AgentCreationResult | None:
     """Create agents layout file, ready to run."""
     try:
         if show_example:
@@ -144,6 +150,9 @@ def agents_create(
         resolved_backend: SessionMultiplexer = resolve_agent_multiplexer(multiplexer=None) if backend is None else resolve_session_multiplexer(multiplexer=backend)
         normalized_separator = _decode_separator(separator=separator)
         if interactive:
+            require_interactive("Interactive agent creation")
+            if json_output:
+                raise ValueError("--json cannot be combined with --interactive")
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
 
             main(
@@ -167,12 +176,14 @@ def agents_create(
                 output_path=output_path,
                 agents_dir=agents_dir,
                 save_as_yaml=save_as_yaml,
+                on_directory_conflict=on_directory_conflict,
             )
             return
 
         from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
 
-        impl(
+        with redirect_stdout(sys.stderr if json_output else sys.stdout):
+            result = impl(
             agent=resolved_agent,
             host=host,
             backend=resolved_backend,
@@ -194,7 +205,13 @@ def agents_create(
             agents_dir=agents_dir,
             save_as_yaml=save_as_yaml,
             interactive=False,
-        )
+            on_directory_conflict=on_directory_conflict,
+            )
+        if json_output:
+            from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
+
+            emit_agent_json(result)
+        return result
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e
     except RuntimeError as e:

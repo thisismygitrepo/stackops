@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Never, assert_never
 
@@ -123,6 +124,7 @@ def declare(
 
 def list_versions(
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
+    json_output: Annotated[bool, typer.Option("--json", help="Print declared versions as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
     from stackops.scripts.python.helpers.helpers_repos.version_paths import resolve_workspace
@@ -134,6 +136,9 @@ def list_versions(
         versions_file = load_versions_file(path=path, allow_missing=False)
     except (OSError, ValueError) as error:
         _abort(error)
+    if json_output:
+        typer.echo(json.dumps({"path": str(path), "versions": versions_file["versions"]}, indent=2))
+        return
     _print_versions(versions_file=versions_file, path=path)
 
 
@@ -141,6 +146,7 @@ def status(
     version: Annotated[str, typer.Argument(help="Version identifier to compare with current repository state.")],
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
+    json_output: Annotated[bool, typer.Option("--json", help="Print version comparison state as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
     from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
@@ -156,6 +162,9 @@ def status(
         statuses = inspect_declared_version(repos_root=repos_root, declared_version=declared_version, specs_path=specs_path)
     except (OSError, ValueError, VersionOperationError) as error:
         _abort(error)
+    if json_output:
+        typer.echo(json.dumps({"version": declared_version, "repositories": [{**entry, "state": entry["state"].value} for entry in statuses]}, indent=2))
+        return
     _print_version_status(declared_version=declared_version, statuses=statuses)
 
 
@@ -165,6 +174,7 @@ def checkout(
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Preview checkout without changing repositories.")] = False,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing current sync settings.")] = None,
     password: Annotated[str | None, typer.Option("--password", "-p", help="Password for encrypted guard archives.")] = None,
+    json_output: Annotated[bool, typer.Option("--json", help="Print checkout results and recovery references as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
     from stackops.scripts.python.helpers.helpers_repos.version_checkout import checkout_declared_version
@@ -182,6 +192,9 @@ def checkout(
         )
     except (OSError, ValueError, VersionOperationError) as error:
         _abort(error)
+    if json_output:
+        typer.echo(json.dumps({"version": declared_version["version"], "dry_run": dry_run, "repositories": results}, indent=2))
+        return
     from rich.console import Console
     from rich.table import Table
 

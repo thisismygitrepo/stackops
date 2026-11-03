@@ -87,4 +87,7 @@ def example_usage() -> None:
 * Please avoid making files longer ~ 200 lines or so, always cosider breaking to meaningful self-contained nicely related modules.
 
 # Privacy:
-* No matter what, never ever open/read/write/list anything under ~/dotfiles
+* Do not directly open, read, search, list, or modify anything under `~/dotfiles`, including through symlinks or helper scripts used to inspect its contents.
+* Normal, task-related use of tools, applications, and scripts is allowed even when they internally access `~/dotfiles` or use secrets stored there. For example, SSH may read a private key from dotfiles. Internal use of a secret does not expose it to the agent unless its value appears in output.
+* Do not refuse or delay execution, require an advance audit, or ask for extra permission solely because of this internal access.
+* Do not deliberately expose secret values. If a tool or script unexpectedly exposes a secret in its output, stop the affected operation and report the exposure without repeating the secret.

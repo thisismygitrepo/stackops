@@ -36,9 +36,7 @@ def _parse_secrets_file(*, payload: Mapping[str, Any], secrets_path: Path) -> Se
 
     parsed_entries: list[Login] = []
     for entry_index, entry_raw in enumerate(entries):
-        if not isinstance(entry_raw, Mapping):
-            _fail(f"Invalid secrets login at entries[{entry_index}]: expected object.")
-        parsed_entries.append(_parse_entry(entry=entry_raw, entry_index=entry_index))
+        parsed_entries.append(parse_secret_login(entry=entry_raw, entry_index=entry_index))
 
     secrets_file: SecretsFile = {"version": version, "entries": parsed_entries}
     if schema is not None:
@@ -46,8 +44,10 @@ def _parse_secrets_file(*, payload: Mapping[str, Any], secrets_path: Path) -> Se
     return secrets_file
 
 
-def _parse_entry(entry: Mapping[str, Any], entry_index: int) -> Login:
+def parse_secret_login(entry: object, *, entry_index: int) -> Login:
     entry_path = f"entries[{entry_index}]"
+    if not isinstance(entry, Mapping):
+        _fail(f"Invalid secrets login at {entry_path}: expected object.")
     _reject_unknown_keys(
         entry, allowed_keys=("name", "tags", "description", "url", "email", "username", "accountName", "secrets", "metadata"), path=entry_path
     )

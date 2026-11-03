@@ -1,8 +1,9 @@
 """Pure Python implementations for agents commands - no typer dependencies."""
 
-import sys
+from dataclasses import dataclass
 from math import isfinite
 from pathlib import Path
+from typing import Literal
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import run_generated_layout
@@ -17,6 +18,19 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import (
     ReasoningEffort,
 )
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import normalize_reasoning_effort
+
+
+AgentsDirectoryConflict = Literal["error", "new-directory", "replace-owned"]
+
+
+@dataclass(frozen=True, slots=True)
+class AgentCreationResult:
+    agents_dir: Path
+    layout_path: Path
+    artifacts_dir: Path
+    recreate_script_path: Path
+    agent_count: int
+    launched: bool
 
 
 def agents_create(
@@ -40,8 +54,9 @@ def agents_create(
     provider: PROVIDER | None,
     interactive: bool,
     backend: SessionMultiplexer,
+    on_directory_conflict: AgentsDirectoryConflict,
     stagger_max: float = DEFAULT_STAGGER_MAX,
-) -> None:
+) -> AgentCreationResult:
     """Create agents layout file, ready to run."""
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
     _validate_stagger_max(stagger_max=stagger_max)
@@ -90,10 +105,20 @@ def agents_create(
             raise ValueError("Codex agent only works with openai provider.")
 
     agents_dir_obj, job_name_resolved = resolve_agents_output_dir(repo_root=repo_root, agents_dir=agents_dir, job_name=job_name)
-    workspace_root = resolve_agents_workspace_root(preferred_root=repo_root, agents_dir_obj=agents_dir_obj)
     del job_name
     requested_agents_dir = agents_dir
-    cleanup_existing_agents_dir = agents_dir is not None and agents_dir_obj.exists()
+    cleanup_existing_agents_dir = False
+    if agents_dir_obj.exists():
+        match on_directory_conflict:
+            case "error":
+                raise ValueError(f"Agents directory already exists: {agents_dir_obj}. Pass --on-directory-conflict new-directory or replace-owned.")
+            case "new-directory":
+                from uuid import uuid4
+
+                agents_dir_obj = agents_dir_obj.with_name(f"{agents_dir_obj.name}-{uuid4().hex[:12]}")
+            case "replace-owned":
+                cleanup_existing_agents_dir = True
+    workspace_root = resolve_agents_workspace_root(preferred_root=repo_root, agents_dir_obj=agents_dir_obj)
     if cleanup_existing_agents_dir:
         validate_agents_output_dir_cleanup(repo_root=repo_root, agents_dir_obj=agents_dir_obj)
     del agents_dir
@@ -120,7 +145,6 @@ def agents_create(
     )
 
     if cleanup_existing_agents_dir:
-        _confirm_existing_agents_dir_cleanup(agents_dir_obj=agents_dir_obj)
         validate_agents_output_dir_cleanup(repo_root=repo_root, agents_dir_obj=agents_dir_obj)
         import shutil
 
@@ -212,25 +236,14 @@ def agents_create(
         typer.echo(f"Saved parallel YAML entry '{job_name_resolved}' to: {saved_yaml_path}")
     if run:
         run_generated_layout(layout_output_path=layout_output_path.resolve(), backend=backend, agent=agent_selected)
-
-
-def _confirm_existing_agents_dir_cleanup(*, agents_dir_obj: Path) -> None:
-    if not agents_dir_obj.exists():
-        return
-    if not agents_dir_obj.is_dir():
-        raise ValueError(f"--agents-dir points to an existing non-directory path: {agents_dir_obj}")
-    if not sys.stdin.isatty():
-        raise RuntimeError(
-            f"Refusing to delete an existing agents directory in non-interactive mode: {agents_dir_obj}\nRe-run interactively to confirm."
-        )
-    import typer
-
-    proceed = typer.confirm(
-        f"Agents directory already exists and will be deleted to create a clean workspace:\n{agents_dir_obj}\nContinue?", default=False
+    return AgentCreationResult(
+        agents_dir=agents_dir_obj,
+        layout_path=layout_output_path.resolve(),
+        artifacts_dir=create_artifacts.artifacts_dir,
+        recreate_script_path=create_artifacts.recreate_script_path,
+        agent_count=len(prompt_directories),
+        launched=run,
     )
-    if proceed:
-        return
-    raise RuntimeError(f"Aborted: kept existing agents directory: {agents_dir_obj}")
 
 
 def _validate_stagger_max(*, stagger_max: float) -> None:

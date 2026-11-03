@@ -15,6 +15,8 @@ def sync(
         str | None,
         typer.Option("--password", "-p", help="Symmetric GPG encryption password for entries with encryption: symmetric."),
     ] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", help="Read password from a file, or - for stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", help="Read password from this environment variable name.")] = None,
     which: Annotated[
         str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items")
     ] = None,
@@ -30,6 +32,10 @@ def sync(
     # interactive: Annotated[bool, typer.Option("--interactive", "-i", help="🤔 Prompt the selection of which items to process")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.cli_backup_retrieve import main_backup_retrieve
+    from stackops.utils.cli_utils.secret_input import read_secret_input
+
+    if any(value is not None for value in (pwd, password_file, password_env)):
+        pwd = read_secret_input(value=pwd, file=password_file, env=password_env, prompt="Symmetric encryption password")
 
     match direction:
         case "up" | "u":

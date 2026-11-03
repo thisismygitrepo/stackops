@@ -5,6 +5,7 @@ from typing import Annotated, Literal, NoReturn, TypeAlias
 
 import typer
 
+from stackops.utils.cli_utils.secret_input import read_secret_input
 from stackops.utils.cloud.encryption import ENCRYPTION_MODES_DISPLAY, EncryptionMode, EncryptionModeChoice
 from stackops.utils.files.compression_constants import DECOMPRESS_SUPPORTED_FORMATS
 
@@ -27,11 +28,7 @@ def _fail(message: str) -> NoReturn:
 
 
 def _symmetric_password(pwd: str | None, *, prompt: str) -> str:
-    if pwd is not None:
-        return pwd
-    import getpass
-
-    return getpass.getpass(prompt=prompt)
+    return read_secret_input(value=pwd, file=None, env=None, prompt=prompt)
 
 
 def _resolve_encryption(encryption: EncryptionModeChoice, *, pwd: str | None, recipient: str | None) -> EncryptionMode:
@@ -59,6 +56,8 @@ def encrypt(
         typer.Option("--encryption", "-e", help=f"🔐 Encryption mode: {ENCRYPTION_MODES_DISPLAY}. Symmetric uses a password; asymmetric uses GPG keys."),
     ] = "symmetric",
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted.")] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", help="Read password from a file, or - for stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", help="Read password from this environment variable name.")] = None,
     recipient: Annotated[
         str | None,
         typer.Option("--recipient", "-r", help="🪪 Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key."),
@@ -76,6 +75,10 @@ def encrypt(
     from stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output import validate_output
 
     mode = _resolve_encryption(encryption, pwd=pwd, recipient=recipient)
+    if mode == "asymmetric" and (password_file is not None or password_env is not None):
+        raise typer.BadParameter("Password inputs require symmetric encryption.")
+    if mode == "symmetric":
+        pwd = read_secret_input(value=pwd, file=password_file, env=password_env, prompt="Symmetric GPG encryption password")
     source = path.expanduser().absolute()
     if not source.exists():
         _fail(f"Path does not exist: {source}")
@@ -98,6 +101,8 @@ def decrypt(
         typer.Option("--encryption", "-e", help=f"🔓 Encryption mode used to create the file: {ENCRYPTION_MODES_DISPLAY}."),
     ] = "symmetric",
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted.")] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", help="Read password from a file, or - for stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", help="Read password from this environment variable name.")] = None,
     output: Annotated[
         Path | None,
         typer.Option("--output", "-o", help="📦 Decrypted output path. Defaults next to the encrypted file with .gpg and archive suffixes stripped."),
@@ -108,6 +113,10 @@ def decrypt(
     from stackops.utils.cloud.encryption import parse_encryption_mode
 
     mode = parse_encryption_mode(encryption, label="encryption")
+    if mode == "asymmetric" and any(value is not None for value in (pwd, password_file, password_env)):
+        raise typer.BadParameter("Password inputs require symmetric encryption.")
+    if mode == "symmetric":
+        pwd = read_secret_input(value=pwd, file=password_file, env=password_env, prompt="Symmetric GPG decryption password")
     source = path.expanduser().absolute()
     if not source.is_file():
         _fail(f"Encrypted file does not exist: {source}")

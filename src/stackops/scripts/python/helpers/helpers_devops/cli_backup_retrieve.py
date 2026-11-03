@@ -7,6 +7,8 @@ from typing import Literal
 from rich.console import Console
 from rich.panel import Panel
 
+from stackops.utils.cli_utils.interaction import require_interactive
+from stackops.utils.cli_utils.secret_input import read_secret_input
 from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.source_of_truth import read_stackops_config_string
 from stackops.utils.meta import print_code
@@ -132,6 +134,8 @@ def main_backup_retrieve(
     pwd: str | None = None,
 ) -> None:
     console = Console()
+    if which is None:
+        require_interactive("Select data entries; supply --which GROUP.ITEM or --which all")
     if pwd == "":
         raise ValueError("--password must be non-empty.")
     if use_link and direction != "RETRIEVE":
@@ -206,11 +210,7 @@ def main_backup_retrieve(
     if use_link_retrieve:
         _validate_use_link_items(items)
     if pwd is None and any(item["encryption"] == "symmetric" for group_items in items.values() for item in group_items.values()):
-        import typer
-
-        pwd = typer.prompt("Enter the symmetric encryption password", hide_input=True)
-        if pwd == "":
-            raise ValueError("Symmetric encryption password must be non-empty.")
+        pwd = read_secret_input(value=None, file=None, env=None, prompt="Symmetric encryption password; use --password-file or --password-env")
     program = ""
     copy_operations: list[tuple[str, str, BackupItem]] = []
     link_download_count = 0
@@ -221,6 +221,7 @@ def main_backup_retrieve(
         and any(backup_path_needs_default_cloud(item["path_cloud"]) for group_items in items.values() for item in group_items.values())
     )
     if needs_fallback_cloud:
+        require_interactive("Select a cloud; supply --cloud NAME or configure default_rclone_config")
         console.print(Panel("🔍 CLOUD NOT FOUND\n🔄 Please select a cloud configuration from the options below", title="[bold red]Error: Cloud Not Found[/bold red]", border_style="red"))
         cloud_choice = choose_cloud_interactively()
         if cloud_choice is None:

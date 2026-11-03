@@ -22,6 +22,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import (
     DEFAULT_STAGGER_MAX,
 )
 from stackops.utils.accessories import randstr
+from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentsDirectoryConflict
 
 
 _CONTEXT_MODE_TEXT = "enter context text"

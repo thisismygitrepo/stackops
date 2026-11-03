@@ -55,9 +55,12 @@ def subset(
 
 
 def subset_data_file(source_path: Path, output_path: Path, *, on_conflict: SubsetOutputConflictAction, which: str | None) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
     from stackops.scripts.python.helpers.helpers_cloud.backup_selection import parse_backup_entry_selectors, resolve_backup_entry_keys
     from stackops.scripts.python.helpers.helpers_devops.cli_data_subset_io import load_existing_subset_output, write_subset_output
 
+    if which is None:
+        require_interactive("Select data entries; supply --which GROUP.ITEM or --which all")
     source_config = _load_source_config(source_path)
     load_existing_subset_output(source_path=source_path, output_path=output_path, on_conflict=on_conflict)
     if which is None:

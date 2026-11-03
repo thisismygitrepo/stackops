@@ -7,6 +7,9 @@ def choose_from_dict_with_preview(options_to_preview_mapping: dict[str, Any], ex
 @overload
 def choose_from_dict_with_preview(options_to_preview_mapping: dict[str, Any], extension: str | None, multi: Literal[True], preview_size_percent: float) -> list[str]: ...
 def choose_from_dict_with_preview(options_to_preview_mapping: dict[str, Any], extension: str | None, multi: bool, preview_size_percent: float) -> str | list[str] | None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("Interactive selection")
     if not options_to_preview_mapping:
         return [] if multi else None
     system = platform.system()

@@ -91,8 +91,13 @@ def seek(ctx: typer.Context) -> None:
 
 
 def cli(
+    ctx: typer.Context,
     version: Annotated[bool, typer.Option("--version", "-V", is_eager=True, help="Show the StackOps version and exit.")] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="Never prompt or open pickers/editors, including in a terminal.")] = False,
 ) -> None:
+    from stackops.utils.cli_utils.interaction import configure_interaction
+
+    configure_interaction(ctx=ctx, non_interactive=non_interactive)
     if version:
         from stackops.version import get_stackops_version
 
