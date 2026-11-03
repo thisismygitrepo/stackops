@@ -154,14 +154,14 @@ def vscode_share(
             print_vscode_tunnel_credential_context(cli_data_dir)
     if action_normalized == "status" or machine_mode:
         if action_normalized == "share-local":
-            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import _build_http_url, _get_serve_web_details
+            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import build_http_url, get_serve_web_details
             from stackops.scripts.python.helpers.helpers_devops.network_service import run_network_service
 
-            bind_host, port, base_path = _get_serve_web_details(cmd)
+            bind_host, port, base_path = get_serve_web_details(cmd)
             if port == 0:
                 raise typer.BadParameter("Use a fixed --port in --extra-args for machine readiness.")
             url_host = "127.0.0.1" if bind_host == "0.0.0.0" else bind_host
-            url = _build_http_url(url_host, port, base_path, directory)
+            url = build_http_url(url_host, port, base_path, directory)
             run_network_service(name="vscode-web", arguments=shlex.split(cmd), host=bind_host, port=port, url=url, over_internet=False, background=background, output_json=output_json, timeout=timeout, url_from_log=False)
         else:
             from stackops.scripts.python.helpers.helpers_devops.vscode_share_runtime import run_vscode_tunnel

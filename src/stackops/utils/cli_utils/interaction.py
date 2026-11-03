@@ -4,7 +4,7 @@ from functools import partial
 from typing import Annotated
 
 import typer
-from typer import _click
+from typer._click.exceptions import UsageError
 
 
 def is_interactive() -> bool:
@@ -14,7 +14,7 @@ def is_interactive() -> bool:
 
 def require_interactive(action: str) -> None:
     if not is_interactive():
-        raise _click.UsageError(f"""{action} requires an interactive terminal. Supply explicit inputs or use the command's noninteractive alternative.""")
+        raise UsageError(f"""{action} requires an interactive terminal. Supply explicit inputs or use the command's noninteractive alternative.""")
 
 
 def _restore_environment(name: str, value: str | None) -> None:

@@ -6,6 +6,7 @@ from typing import Literal, TypedDict, cast
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_email_profile import NewEmailProfile
+from stackops.utils.schemas.yaml_schema import JsonValue
 
 
 class EmailProfileInput(TypedDict):
@@ -33,7 +34,7 @@ EMAIL_INPUT_SCHEMA: dict[str, object] = {
 }
 
 
-def parse_email_profile(payload: object) -> NewEmailProfile:
+def parse_email_profile(payload: JsonValue) -> NewEmailProfile:
     from jsonschema import Draft202012Validator
 
     error = next(Draft202012Validator(EMAIL_INPUT_SCHEMA).iter_errors(payload), None)
@@ -57,7 +58,7 @@ def read_email_profile(input_path: Path) -> NewEmailProfile:
         raise typer.BadParameter("--input - requires piped or redirected JSON.")
     try:
         raw = sys.stdin.read() if input_path == Path("-") else input_path.expanduser().read_text(encoding="utf-8")
-        payload: object = json.loads(raw)
+        payload: JsonValue = json.loads(raw)
     except (OSError, UnicodeError) as error:
         raise typer.BadParameter("Could not read the email input as UTF-8 text.") from error
     except json.JSONDecodeError as error:

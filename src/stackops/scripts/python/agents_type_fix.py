@@ -25,10 +25,6 @@ def _get_job_name(*, checker_name: CheckerName) -> str:
     return f"fix_{checker_name}_issues"
 
 
-def _get_layout_path(*, checker_name: CheckerName) -> str:
-    return f"./.ai/agents/{_get_job_name(checker_name=checker_name)}/layout.yaml"
-
-
 def launch_type_fix(
     ctx: typer.Context,
     agent: Annotated[AGENTS | None, typer.Option("--agent", "-a", help=f"Agent type. {DEFAULT_AGENT_HELP}")] = None,

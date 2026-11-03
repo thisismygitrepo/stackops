@@ -41,10 +41,6 @@ def _get_context_path(*, workspace_root: Path) -> Path:
     return workspace_root / ".ai" / "agents" / "_inputs" / JOB_NAME / "context.md"
 
 
-def _get_layout_path(*, workspace_root: Path) -> str:
-    return str(workspace_root / ".ai" / "agents" / JOB_NAME / "layout.yaml")
-
-
 def _should_exclude_path(*, relative_path: Path) -> bool:
     return any(path_part == ".venv" or path_part.startswith(".") for path_part in relative_path.parts)
 

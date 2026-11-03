@@ -6,10 +6,10 @@ from pathlib import Path
 
 from rich.console import Console
 from rich.panel import Panel
+from typer._click.exceptions import UsageError
 
 from stackops.utils.source_of_truth import EXCLUDE_DIRS
 from stackops.utils.cli_utils.interaction import is_interactive, require_interactive
-from typer import _click
 
 console = Console()
 
@@ -102,7 +102,7 @@ def match_file_name(sub_string: str, search_root: Path, suffixes: set[str]) -> P
         if len(candidates) == 1:
             return candidates[0]
         choices = "\n".join(str(candidate) for candidate in candidates)
-        raise _click.UsageError(f"""Provide an unambiguous file path. Found {len(candidates)} candidates for {sub_string!r}.\n{choices}""")
+        raise UsageError(f"""Provide an unambiguous file path. Found {len(candidates)} candidates for {sub_string!r}.\n{choices}""")
     if len(filename_matches) == 1:
         return Path(filename_matches[0])
     console.print(

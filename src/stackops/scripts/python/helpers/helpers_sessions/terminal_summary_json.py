@@ -23,7 +23,7 @@ def _herdr_entries(kind: Literal["workspaces", "tabs", "panes"], workspace_id: s
     command = ["herdr", kind.removesuffix("s"), "list"]
     if workspace_id is not None:
         command.extend(["--workspace", workspace_id])
-    payload = _herdr_backend._run_json_command(command)
+    payload = _herdr_backend.run_json_command(command)
     result: object = payload.get("result") if payload is not None else None
     if not isinstance(result, dict):
         raise ValueError(f"""Unable to read Herdr {kind}.""")
@@ -101,16 +101,16 @@ def collect_summary(backend: SessionMultiplexer, session: str | None, show_tabs:
                 records.append(record)
         case "herdr":
             from stackops.scripts.python.helpers.helpers_sessions import _herdr_backend
-            from stackops.scripts.python.terminal_summary import _herdr_workspace_display_name, _herdr_workspace_id
+            from stackops.scripts.python.terminal_summary import herdr_workspace_display_name, herdr_workspace_id
 
             workspaces = _herdr_entries(kind="workspaces", workspace_id=None)
             selected_workspaces = _select_entries(
                 entries=workspaces,
                 session=session,
-                aliases=lambda workspace: (_herdr_workspace_display_name(workspace) or "", _herdr_workspace_id(workspace) or ""),
+                aliases=lambda workspace: (herdr_workspace_display_name(workspace) or "", herdr_workspace_id(workspace) or ""),
             )
             for workspace in selected_workspaces:
-                workspace_id = _herdr_workspace_id(workspace)
+                workspace_id = herdr_workspace_id(workspace)
                 if workspace_id is None:
                     raise ValueError("Herdr returned a workspace without an ID.")
                 tabs = _herdr_entries(kind="tabs", workspace_id=workspace_id)
@@ -120,7 +120,7 @@ def collect_summary(backend: SessionMultiplexer, session: str | None, show_tabs:
                     if (state := _herdr_backend.entry_text(entry, "agent_status")) is not None
                 )
                 record = {
-                    "name": _herdr_workspace_display_name(workspace),
+                    "name": herdr_workspace_display_name(workspace),
                     "id": workspace_id,
                     "focused": bool(workspace.get("focused")),
                     "tab_count": len(tabs),
@@ -140,18 +140,18 @@ def collect_summary(backend: SessionMultiplexer, session: str | None, show_tabs:
                 records.append(record)
         case "aoe":
             from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
-            from stackops.scripts.python.terminal_summary import _aoe_session_entries_or_exit, _collect_aoe_summary
+            from stackops.scripts.python.terminal_summary import aoe_session_entries_or_exit, collect_aoe_summary
 
             if show_tabs:
                 raise ValueError("--tabs is only supported by tmux, Herdr, TUIOS, and Zellij; AoE sessions are already listed individually.")
-            aoe_sessions = _aoe_session_entries_or_exit()
+            aoe_sessions = aoe_session_entries_or_exit()
             selected_sessions = _select_entries(
                 entries=aoe_sessions,
                 session=session,
                 aliases=lambda entry: (_aoe_backend.session_title(entry) or "", _aoe_backend.session_id(entry) or ""),
             )
             for aoe_session in selected_sessions:
-                aoe_summary = _collect_aoe_summary(session=aoe_session)
+                aoe_summary = collect_aoe_summary(session=aoe_session)
                 record = asdict(aoe_summary)
                 record["id"] = aoe_summary.session_id
                 records.append(record)

@@ -35,7 +35,7 @@ class _WindowTargetOptions:
     session_name_by_target_label: dict[str, str]
 
 
-def _run_json_command(args: list[str]) -> JsonObject | None:
+def run_json_command(args: list[str]) -> JsonObject | None:
     try:
         result = run_command(args)
     except FileNotFoundError:
@@ -67,7 +67,7 @@ def _result_entries(payload: JsonObject | None, key: str) -> list[JsonObject]:
 
 
 def _session_entries() -> list[JsonObject] | None:
-    payload = _run_json_command(["herdr", "session", "list", "--json"])
+    payload = run_json_command(["herdr", "session", "list", "--json"])
     if payload is None:
         return None
     sessions = _dict_entries(payload.get("sessions"))
@@ -82,7 +82,7 @@ def _session_entries() -> list[JsonObject] | None:
 
 
 def list_workspace_entries() -> list[JsonObject] | None:
-    payload = _run_json_command(["herdr", "workspace", "list"])
+    payload = run_json_command(["herdr", "workspace", "list"])
     if payload is None:
         return None
     workspaces = _result_entries(payload, "workspaces")
@@ -98,7 +98,7 @@ def list_workspace_entries() -> list[JsonObject] | None:
 
 
 def _session_workspace_entries(session_name: str) -> list[JsonObject] | None:
-    payload = _run_json_command(["herdr", "--session", session_name, "workspace", "list"])
+    payload = run_json_command(["herdr", "--session", session_name, "workspace", "list"])
     if payload is None:
         return None
     return _result_entries(payload, "workspaces")
@@ -198,22 +198,22 @@ def kill_session_script(name: str, is_default: bool) -> str:
 
 
 def _tab_entries(session_name: str) -> list[JsonObject]:
-    payload = _run_json_command(["herdr", "--session", session_name, "tab", "list"])
+    payload = run_json_command(["herdr", "--session", session_name, "tab", "list"])
     return _result_entries(payload, "tabs")
 
 
 def _pane_entries(session_name: str) -> list[JsonObject]:
-    payload = _run_json_command(["herdr", "--session", session_name, "pane", "list"])
+    payload = run_json_command(["herdr", "--session", session_name, "pane", "list"])
     return _result_entries(payload, "panes")
 
 
 def list_workspace_tab_entries(workspace_id: str) -> list[JsonObject]:
-    payload = _run_json_command(["herdr", "tab", "list", "--workspace", workspace_id])
+    payload = run_json_command(["herdr", "tab", "list", "--workspace", workspace_id])
     return _result_entries(payload, "tabs")
 
 
 def list_workspace_pane_entries(workspace_id: str) -> list[JsonObject]:
-    payload = _run_json_command(["herdr", "pane", "list", "--workspace", workspace_id])
+    payload = run_json_command(["herdr", "pane", "list", "--workspace", workspace_id])
     return _result_entries(payload, "panes")
 
 

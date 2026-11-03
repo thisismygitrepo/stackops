@@ -63,6 +63,7 @@ def _filter_candidates(candidates: list[str], query: str) -> list[str]:
 def _decode_ripgrep_text(value: RipgrepText) -> str:
     if "text" in value:
         return value["text"]
+    assert "bytes" in value
     return base64.b64decode(value["bytes"]).decode("utf-8", errors="replace")
 
 

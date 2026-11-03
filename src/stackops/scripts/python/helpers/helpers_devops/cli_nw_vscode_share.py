@@ -29,7 +29,7 @@ def _extract_option_value(args: list[str], option: str) -> str | None:
     return None
 
 
-def _get_serve_web_details(cmd: str) -> tuple[str, int, str]:
+def get_serve_web_details(cmd: str) -> tuple[str, int, str]:
     tokens = shlex.split(cmd)
     host = _extract_option_value(tokens, "--host") or "localhost"
     port_raw = _extract_option_value(tokens, "--port")
@@ -56,7 +56,7 @@ def resolve_share_local_folder(directory: str | None) -> str:
     return str(Path(directory).expanduser().resolve(strict=False))
 
 
-def _build_http_url(host: str, port: int, server_base_path: str, folder_path: str | None) -> str:
+def build_http_url(host: str, port: int, server_base_path: str, folder_path: str | None) -> str:
     normalized_path = _normalize_server_base_path(server_base_path)
     suffix = "/" if normalized_path == "" else f"{normalized_path}/"
     url = f"http://{host}:{port}{suffix}"
@@ -74,7 +74,7 @@ def print_serve_web_urls(cmd: str, folder_path: str | None) -> None:
     from rich.text import Text
     import stackops.utils.network.address as helper
 
-    host, port, server_base_path = _get_serve_web_details(cmd)
+    host, port, server_base_path = get_serve_web_details(cmd)
     normalized_host = host.strip().lower()
     base_path_note = _normalize_server_base_path(server_base_path) or "/"
     console = Console()
@@ -99,7 +99,7 @@ def print_serve_web_urls(cmd: str, folder_path: str | None) -> None:
     seen_urls: set[str] = set()
 
     def add_url(label: str, target_host: str) -> None:
-        url = _build_http_url(target_host, port, server_base_path, folder_path)
+        url = build_http_url(target_host, port, server_base_path, folder_path)
         if url in seen_urls:
             return
         seen_urls.add(url)

@@ -83,7 +83,7 @@ def _format_counts(counts: Counter[str]) -> str:
     return ", ".join(f"{name} x{count}" if count > 1 else name for name, count in rows)
 
 
-def _aoe_session_entries_or_exit() -> list[JsonObject]:
+def aoe_session_entries_or_exit() -> list[JsonObject]:
     from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
 
     sessions = _aoe_backend.list_session_entries()
@@ -97,7 +97,7 @@ def _aoe_session_entries_or_exit() -> list[JsonObject]:
     return sessions
 
 
-def _collect_aoe_summary(session: JsonObject) -> AoeSessionSummary:
+def collect_aoe_summary(session: JsonObject) -> AoeSessionSummary:
     from stackops.scripts.python.helpers.helpers_sessions import _aoe_backend
 
     return AoeSessionSummary(
@@ -115,7 +115,7 @@ def _print_aoe_summary() -> None:
     from rich.console import Console
     from rich.table import Table
 
-    sessions = _aoe_session_entries_or_exit()
+    sessions = aoe_session_entries_or_exit()
     table = Table(
         title=f"AoE sessions ({len(sessions)})",
         box=box.SIMPLE_HEAVY,
@@ -128,7 +128,7 @@ def _print_aoe_summary() -> None:
     table.add_column("Agent")
     table.add_column("Path", overflow="fold")
 
-    for session in [_collect_aoe_summary(session=session) for session in sessions]:
+    for session in [collect_aoe_summary(session=session) for session in sessions]:
         table.add_row(
             session.name,
             session.session_id,
@@ -141,7 +141,7 @@ def _print_aoe_summary() -> None:
 
 
 def _aoe_session_detail_markdown(session: JsonObject) -> str:
-    summary = _collect_aoe_summary(session)
+    summary = collect_aoe_summary(session)
     return "\n".join(
         [
             f"# AoE Session: {summary.name}",
@@ -190,7 +190,7 @@ def _resolve_aoe_session_name(session_name: str | None, choose_session: bool) ->
         typer.echo("Error: --session cannot be used together with --choose-session.", err=True, color=True)
         raise typer.Exit(code=1)
 
-    sessions = _aoe_session_entries_or_exit()
+    sessions = aoe_session_entries_or_exit()
     if choose_session:
         option_to_identifier: dict[str, str] = {}
         options_to_preview_mapping: dict[str, str] = {}
@@ -244,7 +244,7 @@ def _print_aoe_session_details(session_name: str) -> None:
     from rich.console import Console
     from rich.markdown import Markdown
 
-    sessions = _aoe_session_entries_or_exit()
+    sessions = aoe_session_entries_or_exit()
     session = _find_aoe_session(sessions, session_name)
     if session is None:
         available_names = _available_aoe_session_names(sessions)
@@ -382,15 +382,15 @@ def _herdr_workspace_entries_or_exit() -> list[JsonObject]:
     return workspaces
 
 
-def _herdr_workspace_id(workspace: JsonObject) -> str | None:
+def herdr_workspace_id(workspace: JsonObject) -> str | None:
     return _herdr_entry_text(workspace, "workspace_id")
 
 
-def _herdr_workspace_display_name(workspace: JsonObject) -> str | None:
+def herdr_workspace_display_name(workspace: JsonObject) -> str | None:
     label = _herdr_entry_text(workspace, "label")
     if label is not None:
         return label
-    return _herdr_workspace_id(workspace)
+    return herdr_workspace_id(workspace)
 
 
 def _herdr_entry_text(entry: JsonObject, key: str) -> str | None:
@@ -402,8 +402,8 @@ def _herdr_entry_text(entry: JsonObject, key: str) -> str | None:
 def _collect_herdr_summary(workspace: JsonObject) -> HerdrWorkspaceSummary:
     from stackops.scripts.python.helpers.helpers_sessions import _herdr_backend
 
-    name = _herdr_workspace_display_name(workspace) or "-"
-    workspace_id = _herdr_workspace_id(workspace) or "-"
+    name = herdr_workspace_display_name(workspace) or "-"
+    workspace_id = herdr_workspace_id(workspace) or "-"
     tabs: list[JsonObject] = []
     panes: list[JsonObject] = []
     if workspace_id != "-":
@@ -499,9 +499,9 @@ def _tab_id_to_display(tabs: list[JsonObject]) -> dict[str, str]:
 
 
 def _workspace_preview(workspace: JsonObject) -> str:
-    workspace_id = _herdr_workspace_id(workspace) or ""
+    workspace_id = herdr_workspace_id(workspace) or ""
     lines = [
-        f"# Workspace: {_herdr_workspace_display_name(workspace) or workspace_id}",
+        f"# Workspace: {herdr_workspace_display_name(workspace) or workspace_id}",
         "",
         "**backend:** herdr",
         f"**id:** {workspace_id}",
@@ -524,9 +524,9 @@ def _workspace_preview(workspace: JsonObject) -> str:
 
 def _find_herdr_workspace(workspaces: list[JsonObject], name: str) -> JsonObject | None:
     for workspace in workspaces:
-        if _herdr_workspace_display_name(workspace) == name:
+        if herdr_workspace_display_name(workspace) == name:
             return workspace
-        if _herdr_workspace_id(workspace) == name:
+        if herdr_workspace_id(workspace) == name:
             return workspace
     return None
 
@@ -534,8 +534,8 @@ def _find_herdr_workspace(workspaces: list[JsonObject], name: str) -> JsonObject
 def _available_workspace_names(workspaces: list[JsonObject]) -> list[str]:
     names: list[str] = []
     for workspace in workspaces:
-        name = _herdr_workspace_display_name(workspace)
-        workspace_id = _herdr_workspace_id(workspace)
+        name = herdr_workspace_display_name(workspace)
+        workspace_id = herdr_workspace_id(workspace)
         if name is not None:
             names.append(name)
         elif workspace_id is not None:
@@ -560,7 +560,7 @@ def _print_herdr_workspace_details(workspace_name: str) -> None:
         )
         raise typer.Exit(code=1)
 
-    workspace_id = _herdr_workspace_id(workspace)
+    workspace_id = herdr_workspace_id(workspace)
     if workspace_id is None:
         typer.echo(
             f"Error: Herdr workspace '{workspace_name}' did not include a workspace_id.",
@@ -658,7 +658,7 @@ def _resolve_herdr_workspace_name(workspace_name: str | None, choose_session: bo
         display_to_workspace = {
             name: workspace
             for workspace in workspaces
-            if (name := _herdr_workspace_display_name(workspace)) is not None
+            if (name := herdr_workspace_display_name(workspace)) is not None
         }
         if len(display_to_workspace) == 0:
             typer.echo("Error: No Herdr workspaces are available.", err=True, color=True)

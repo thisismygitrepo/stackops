@@ -1,7 +1,6 @@
 """Agents management commands - lazy loading subcommands."""
 
 import shutil
-import sys
 from collections.abc import Callable, Generator
 from contextlib import chdir, contextmanager
 from pathlib import Path
@@ -459,8 +458,6 @@ def run_interactive(
 
             command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)
             if sandbox != SandboxBackend.NONE:
-                import sys
-
                 from stackops.scripts.python.helpers.helpers_agents.agents_sandbox import resolve_sandbox_access
                 from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
 
