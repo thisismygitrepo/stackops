@@ -1,8 +1,8 @@
 import json
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
+from stackops.utils.cli_utils.interaction import is_interactive
 
 from stackops.scripts.python.helpers.helpers_agents.agents_create_artifacts import (
     ContextSourceKind,
@@ -73,7 +73,7 @@ def resolve_prompt_input(*, prompt: str | None, prompt_path: str | None, prompt_
             source="all",
             entry_label="Prompt name",
             group=None,
-            allow_selection=sys.stdin.isatty() and sys.stdout.isatty(),
+            allow_selection=is_interactive(),
         )
         return ResolvedPromptInput(
             prompt_text=prompt_text,

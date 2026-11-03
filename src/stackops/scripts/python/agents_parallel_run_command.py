@@ -1,8 +1,11 @@
 """Named parallel workflow command."""
 
 from typing import Annotated, Literal, TypeAlias, get_args
+from contextlib import redirect_stdout
+import sys
 
 import typer
+from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentsDirectoryConflict
 
 from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexerOption
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
@@ -71,7 +74,7 @@ def run_parallel(
     ] = None,
     join_prompt_and_context: Annotated[
         _BooleanOverride | None,
-        typer.Option("--join-prompt-context", "-j", help="Override whether the prompt file is joined to the context: true or false. Omit to use YAML."),
+        typer.Option("--join-prompt-context", "-J", help="Override whether the prompt file is joined to the context: true or false. Omit to use YAML."),
     ] = None,
     run: Annotated[
         _BooleanOverride | None,
@@ -82,6 +85,8 @@ def run_parallel(
     interactive: Annotated[
         _BooleanOverride | None, typer.Option("--interactive", "-i", help="Override whether create runs interactively: true or false. Omit to use YAML.")
     ] = None,
+    on_directory_conflict: Annotated[AgentsDirectoryConflict, typer.Option("--on-directory-conflict", "-D", help="Existing agents directory: error, new-directory, or replace-owned.")] = "error",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print artifact paths and launch state as JSON.")] = False,
 ) -> None:
     """Run a named parallel agent workflow from YAML, with create-option overrides."""
     from stackops.utils.default_multiplexer import resolve_session_multiplexer
@@ -89,36 +94,43 @@ def run_parallel(
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_impl import run_parallel_from_yaml
 
     try:
-        run_parallel_from_yaml(
-            config_name=run_name,
-            parallel_yaml_path=custom_path,
-            source=source,
-            overrides=ParallelCreateValues(
-                agent=agent,
-                model=model,
-                reasoning_effort=reasoning_effort,
-                provider=provider,
-                host=host,
-                backend=None if backend is None else resolve_session_multiplexer(multiplexer=backend),
-                context=context,
-                context_path=context_path,
-                separator=separator,
-                agent_load=agent_load,
-                stagger_max=stagger_max,
-                prompt=prompt,
-                prompt_path=prompt_path,
-                prompt_name=prompt_name,
-                job_name=job_name,
-                join_prompt_and_context=None if join_prompt_and_context is None else join_prompt_and_context == "true",
-                run=None if run is None else run == "true",
-                output_path=output_path,
-                agents_dir=agents_dir,
-                interactive=None if interactive is None else interactive == "true",
-            ),
-            edit=edit,
-            add_entry=add_entry,
-            show_parallel_yaml_format=show_parallel_yaml_format,
-        )
+        with redirect_stdout(sys.stderr if json_output else sys.stdout):
+            results = run_parallel_from_yaml(
+                config_name=run_name,
+                parallel_yaml_path=custom_path,
+                source=source,
+                overrides=ParallelCreateValues(
+                    agent=agent,
+                    model=model,
+                    reasoning_effort=reasoning_effort,
+                    provider=provider,
+                    host=host,
+                    backend=None if backend is None else resolve_session_multiplexer(multiplexer=backend),
+                    context=context,
+                    context_path=context_path,
+                    separator=separator,
+                    agent_load=agent_load,
+                    stagger_max=stagger_max,
+                    prompt=prompt,
+                    prompt_path=prompt_path,
+                    prompt_name=prompt_name,
+                    job_name=job_name,
+                    join_prompt_and_context=None if join_prompt_and_context is None else join_prompt_and_context == "true",
+                    run=None if run is None else run == "true",
+                    output_path=output_path,
+                    agents_dir=agents_dir,
+                    interactive=None if interactive is None else interactive == "true",
+                ),
+                edit=edit,
+                add_entry=add_entry,
+                show_parallel_yaml_format=show_parallel_yaml_format,
+                on_directory_conflict=on_directory_conflict,
+                json_output=json_output,
+            )
+        if json_output:
+            from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
+
+            emit_agent_json(results)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 
 import typer
+from stackops.utils.cli_utils.interaction import require_interactive
 
 
 DatabaseBackend: TypeAlias = Literal["rainfrog", "r", "lazysql", "l", "dblab", "d", "usql", "u", "harlequin", "h", "sqlit", "s"]
@@ -14,6 +15,7 @@ def edit_file_with_hx(
     path: Annotated[str | None, typer.Argument(..., help="The root directory of the project to edit, or a file path.")] = None,
     lsp: Annotated[bool, typer.Option("--lsp", "-l", help="Install Python LSP tooling in the repository before opening Helix.")] = False,
 ) -> None:
+    require_interactive("Helix editor")
     from stackops.scripts.python.helpers.helpers_utils.python import edit_file_with_hx as impl
 
     impl(path=path, lsp=lsp)
@@ -24,10 +26,19 @@ def download(
     decompress: Annotated[bool, typer.Option(..., "--decompress", "-d", help="Decompress the file if it's an archive.")] = False,
     output: Annotated[str | None, typer.Option("--output", "-o", help="The output file path.")] = None,
     output_dir: Annotated[str | None, typer.Option("--output-dir", "-O", help="Directory to place the downloaded file in.")] = None,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print the resulting path and status as JSON.")] = False,
 ) -> None:
     from stackops.utils.files.download import download as impl
 
-    impl(url=url, decompress=decompress, output=output, output_dir=output_dir)
+    import json
+
+    result = impl(url=url, decompress=decompress, output=output, output_dir=output_dir)
+    if result is None:
+        raise typer.Exit(1)
+    if output_json:
+        typer.echo(json.dumps({"status": "completed", "path": str(result)}))
+    else:
+        typer.echo(str(result))
 
 
 def scrape(
@@ -260,6 +271,7 @@ def read_db_cli_tui(
     theme: Annotated[str | None, typer.Option("--theme", "-t", help="Theme to use (if supported by backend).")] = None,
     limit: Annotated[int | None, typer.Option("--limit", "-l", help="Maximum number of rows to load (if supported by backend).")] = None,
 ) -> None:
+    require_interactive("Database viewer")
     from stackops.scripts.python.helpers.helpers_utils.read_db_cli_tui import app as impl
 
     impl(

@@ -12,9 +12,7 @@ def _raise_unsupported(operation: str) -> Never:
 
 
 def get_available_networks() -> list[WifiNetwork]:
-    system_name = platform.system() or "Unknown"
-    console.print(f"[yellow]⚠️  WiFi helpers are not supported on {system_name}[/yellow]")
-    return []
+    _raise_unsupported("scanning")
 
 
 def connect(name: str, ssid: str) -> None:

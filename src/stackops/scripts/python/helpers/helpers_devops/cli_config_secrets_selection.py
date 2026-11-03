@@ -98,10 +98,24 @@ def search_secrets(request: SecretSelectionRequest, *, json_output: bool, verbos
     typer.echo("""Nothing was loaded. Use "devops vault load" with the same arguments to define these variables.""", err=True)
 
 
-def load_secrets(request: SecretSelectionRequest, *, verbose: bool) -> None:
-    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+def load_secrets(request: SecretSelectionRequest, *, verbose: bool, command: str | None) -> None:
+    import os
+    import shlex
+    import subprocess
 
-    selection = resolve_selection(request)
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+    from stackops.secrets.search import render_secret_value
+
+    try:
+        command_args = shlex.split(command) if command is not None else None
+    except ValueError as error:
+        raise typer.BadParameter("--command contains invalid argument quoting.") from error
+    if command_args == []:
+        raise typer.BadParameter("--command must contain an executable.")
+    if command_args is None and not os.environ.get("OP_PROGRAM_PATH"):
+        raise typer.BadParameter("Use --command 'PROGRAM ARGUMENTS' to run with secrets, or invoke load through the StackOps shell wrapper.")
+    with redirect_stdout(sys.stderr):
+        selection = resolve_selection(request)
     if request.interactive:
         candidate = selection.candidates[0]
         echo_jq_login_entry_hint(
@@ -109,6 +123,15 @@ def load_secrets(request: SecretSelectionRequest, *, verbose: bool) -> None:
         )
     key_values = merge_candidate_key_values(selection.candidates)
     secret_actions.validate_env_names(key_values)
+    if command_args is not None:
+        environment = os.environ.copy()
+        environment.update({key: render_secret_value(value) for key, value in key_values.items()})
+        try:
+            result = subprocess.run(command_args, env=environment, check=False)
+        except OSError as error:
+            typer.echo(f"Could not start child command: {error.strerror}", err=True)
+            raise typer.Exit(code=1) from error
+        raise typer.Exit(code=result.returncode if result.returncode >= 0 else 128 - result.returncode)
     secret_actions.write_env_handoff(key_values, verbose=verbose)
     if verbose:
         for candidate in selection.candidates:

@@ -2,6 +2,7 @@ from typing import Annotated
 
 import typer
 
+from stackops.utils.cli_utils.interaction import require_interactive
 from stackops.utils.managed_files import ManagedFileKind
 
 DATA_SETUP_HELP = "Interactively register a backup entry and install its YAML schema."
@@ -27,6 +28,7 @@ def setup_data() -> None:
     from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
     from stackops.scripts.python.helpers.helpers_devops.cli_data import register_data
 
+    require_interactive("Run data setup; use devops data register with explicit flags")
     _ensure_user_schema("data")
     register_data(
         path_local=None,
@@ -41,6 +43,7 @@ def setup_data() -> None:
         absolute_path=False,
         os=DEFAULT_OS_FILTER,
         interactive=True,
+        json_output=False,
     )
 
 
@@ -48,6 +51,7 @@ def setup_dotfiles() -> None:
     from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
     from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import register_dotfile
 
+    require_interactive("Run dotfiles setup; use devops config dotfiles register with explicit flags")
     _ensure_user_schema("dotfiles")
     register_dotfile(
         file=None,
@@ -74,6 +78,7 @@ def setup_layouts(
 
 
 def setup_secrets() -> None:
+    require_interactive("Run secrets setup; use devops vault add --source user --create --input FILE --json")
     import stackops.secrets.assets as secrets_assets
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_prompts import prompt_secret_login
     from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_config import exit_with_setup_error

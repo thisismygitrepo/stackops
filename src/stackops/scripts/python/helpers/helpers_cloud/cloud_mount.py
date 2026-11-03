@@ -6,6 +6,8 @@ import typer
 from typing import Annotated, Literal
 from typer._completion_classes import completion_init
 from typer.completion import install_callback, show_callback
+from stackops.utils.cli_utils.interaction import require_interactive
+from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_background import MountReceipt, launch_background_mount
 
 
 def get_rclone_config() -> ConfigParser:
@@ -62,14 +64,24 @@ def mount(
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
-    daemon: Annotated[bool, typer.Option("--daemon", "-D", help="Keep mounts running in the background independently of tmux (Linux/macOS).")] = False,
+    daemon: Annotated[bool, typer.Option("--daemon", "-D", help="Keep mounts running in the background independently of a terminal.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Return a JSON receipt for background mounts.")] = False,
+    timeout: Annotated[float, typer.Option("--timeout", "-T", min=1, help="Seconds to wait for each background mount to become ready.")] = 30.0,
     _install_completion: Annotated[
         bool, typer.Option("--install-completion", "-I", callback=install_callback, expose_value=False, help="Install completion for the current shell.")
     ] = False,
     _show_completion: Annotated[
         bool, typer.Option("--show-completion", "-S", callback=show_callback, expose_value=False, help="Show completion for the current shell, to copy it or customize the installation.")
     ] = False,
-) -> None:
+) -> list[MountReceipt]:
+    if output_json and clouds is None:
+        raise typer.BadParameter("Provide explicit cloud names with --json.")
+    if clouds is None:
+        require_interactive("Cloud selection; supply remote names")
+    if output_json and not daemon:
+        raise typer.BadParameter("--json requires --daemon.")
+    if not daemon:
+        require_interactive("Cloud mount dashboard; use explicit remote names and --daemon")
     from stackops.utils.options_utils.options import choose_from_options
     from pathlib import Path
     import platform
@@ -87,9 +99,6 @@ def mount(
     title = "☁️  Cloud Mount Utility"
     console.print(Panel(title, title_align="left", border_style="blue"))
     system_name = platform.system()
-    if daemon and system_name == "Windows":
-        error_console.print(Text("❌ --daemon is only supported on Linux/macOS.", style="red"))
-        raise typer.Exit(code=1)
 
     try:
         config = get_rclone_config()
@@ -174,7 +183,7 @@ def mount(
     mount_arguments: dict[str, list[str]] = {
         cloud_name: [
             "rclone", "mount", f"""{cloud_name}:""", mount_locations[cloud_name], "--vfs-cache-mode", "full", "--file-perms=0777",
-            *(["--network-mode"] if network else []), *(["--daemon"] if daemon else []),
+            *(["--network-mode"] if network else []),
         ]
         for cloud_name in clouds
     }
@@ -187,7 +196,15 @@ def mount(
 
     launch_commands: list[str | list[str]]
     if daemon:
-        launch_commands = list(mount_arguments.values())
+        try:
+            receipts = [launch_background_mount(cloud_name, arguments, Path(mount_locations[cloud_name]), timeout) for cloud_name, arguments in mount_arguments.items()]
+        except (OSError, RuntimeError) as error:
+            typer.echo(str(error), err=True)
+            raise typer.Exit(1) from None
+        if not output_json:
+            for receipt in receipts:
+                typer.echo(f"{receipt['remote']}: {receipt['mount_path']} ({receipt['status']}, PID {receipt['pid']})")
+        return receipts
     elif system_name == "Windows":
         if len(clouds) > 1:
             print("❌ Error: Multiple clouds in one command is only supported on Linux/macOS")
@@ -232,6 +249,7 @@ Check the command output above and verify that {launcher} is installed and avail
     title1 = "✅ Cloud mount command completed successfully"
     title2 = "Mounts are running in the background." if daemon else "Returned from cloud mount session."
     console.print(Panel(f"{title1}\n{title2}", title="Success", border_style="green"))
+    return []
 
 
 

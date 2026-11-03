@@ -6,22 +6,46 @@ from stackops.utils.cli_utils.ordered_group import ordered_group
 from stackops.utils.constants import IS_REPO_DEVELOPER
 
 
-def show_address() -> None:
+def show_address(
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print public, LAN, and interface addresses as JSON.")] = False,
+) -> None:
     """📌 Show this computer addresses on network"""
     import subprocess
 
     import stackops.utils.network.address as helper
 
     public_ip_address: str | None = None
+    loaded_json: helper.PublicIpInfo | None = None
+    public_error: str | None = None
     try:
-        loaded_json = helper.get_public_ip_address()
+        import sys
+        import shutil
+        from contextlib import redirect_stdout
+
+        if output_json and shutil.which("ipinfo") is None:
+            raise FileNotFoundError("ipinfo is required for public-address JSON; install it with devops software install ipinfo.")
+        with redirect_stdout(sys.stderr):
+            loaded_json = helper.get_public_ip_address()
     except (subprocess.CalledProcessError, FileNotFoundError) as error:
-        print(f"⚠️  Could not fetch public IP address: {error}")
+        public_error = str(error)
+        typer.echo(f"Could not fetch public IP address: {error}", err=True)
     else:
         from rich import print_json
 
-        print_json(data=loaded_json)
+        if not output_json:
+            print_json(data=loaded_json)
         public_ip_address = loaded_json["ip"]
+
+    interfaces = helper.get_all_interface_ipv4_addresses()
+    selected_lan_address = helper.select_lan_interface_ipv4(prefer_vpn=False)
+    if output_json:
+        import json
+        from dataclasses import asdict
+
+        typer.echo(json.dumps({"public": loaded_json, "public_error": public_error, "lan": asdict(selected_lan_address) if selected_lan_address is not None else None, "interfaces": [asdict(address) for address in interfaces]}, indent=2))
+        if public_error is not None:
+            raise typer.Exit(1)
+        return
 
     from rich.table import Table
     from rich.console import Console
@@ -36,7 +60,7 @@ def show_address() -> None:
     table.add_column("IP Address", style="green")
     table.add_column("MAC Address", style="magenta")
 
-    for address in helper.get_all_interface_ipv4_addresses():
+    for address in interfaces:
         table.add_row(address.interface, address.ipv4_address, address.mac_address or "-")
     if public_ip_address is not None:
         table.add_row("Public IP", public_ip_address, "-")
@@ -44,7 +68,6 @@ def show_address() -> None:
     console = Console()
     console.print(table)
 
-    selected_lan_address = helper.select_lan_interface_ipv4(prefer_vpn=False)
     if selected_lan_address is not None:
         print(f"LAN IPv4: {selected_lan_address.ipv4_address}")
         if selected_lan_address.mac_address is not None:
@@ -55,7 +78,7 @@ def show_address() -> None:
 
 def vscode_share(
     action: Annotated[
-        Literal["run", "r", "install-service", "i", "uninstall-service", "u", "share-local", "l"],
+        Literal["run", "r", "install-service", "i", "uninstall-service", "u", "share-local", "l", "status", "s"],
         typer.Argument(..., help="Action to perform", case_sensitive=False, show_choices=True),
     ],
     name: Annotated[str | None, typer.Option("--name", "-n", help="Name for tunnel/service actions (run, install-service)")] = None,
@@ -66,6 +89,9 @@ def vscode_share(
     ] = None,
     cli_data_dir: Annotated[str | None, typer.Option("--cli-data-dir", "-D", help="VS Code CLI data directory to use for every generated command")] = None,
     extra_args: Annotated[str | None, typer.Option("--extra-args", "-e", help="Extra args to append to the generated VS Code command")] = None,
+    background: Annotated[bool, typer.Option("--background", "-B", help="Keep a run/share-local process running after readiness.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print service status or ready URL/PID/log as JSON.")] = False,
+    timeout: Annotated[float, typer.Option("--timeout", "-T", min=1, help="Seconds to wait for command completion or readiness.")] = 60.0,
 ) -> None:
     """🧑‍💻 Share workspace using VS Code CLI ("code tunnel" / "code serve-web")
 
@@ -73,6 +99,9 @@ def vscode_share(
     If you need more functionality, consult VS Code Tunnels docs: https://code.visualstudio.com/docs/remote/tunnels
     """
     import shlex
+    from stackops.utils.cli_utils.interaction import is_interactive
+
+    machine_mode = output_json or background or not is_interactive()
 
     accept = "--accept-server-license-terms"
     name_part = f"--name {shlex.quote(name)}" if name else ""
@@ -82,7 +111,9 @@ def vscode_share(
     if cli_data_dir is not None and cli_data_dir.strip() == "":
         raise typer.BadParameter("Value cannot be empty", param_hint="--cli-data-dir")
     cli_data_dir_part = f"--cli-data-dir {shlex.quote(cli_data_dir)}" if cli_data_dir is not None else ""
-    action_normalized = {"r": "run", "i": "install-service", "u": "uninstall-service", "l": "share-local"}.get(action, action)
+    action_normalized = {"r": "run", "i": "install-service", "u": "uninstall-service", "l": "share-local", "s": "status"}.get(action, action)
+    if background and action_normalized not in {"run", "share-local"}:
+        raise typer.BadParameter("--background applies to run and share-local.")
     match action_normalized:
         case "run" | "r":
             cmd = f"code tunnel {name_part} {accept} {cli_data_dir_part} {extra}".strip()
@@ -93,6 +124,9 @@ def vscode_share(
         case "uninstall-service" | "u":
             cmd = f"code tunnel service uninstall {cli_data_dir_part} {extra}".strip()
             desc = "Uninstall code tunnel service"
+        case "status":
+            cmd = f"code tunnel status {cli_data_dir_part}".strip()
+            desc = "Inspect VS Code tunnel status"
         case "share-local" | "l":
             from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder
 
@@ -110,9 +144,30 @@ def vscode_share(
     from stackops.utils.meta import print_code
 
     if action_normalized in {"run", "install-service"}:
-        from stackops.scripts.python.helpers.helpers_devops.vscode_tunnel_auth import print_vscode_tunnel_credential_context
+        from stackops.scripts.python.helpers.helpers_devops.vscode_tunnel_auth import get_vscode_tunnel_provider, print_vscode_tunnel_credential_context
+        if machine_mode:
+            if get_vscode_tunnel_provider(cli_data_dir) is None:
+                raise typer.BadParameter("No stored VS Code credential. Run code tunnel user login interactively first.")
+            if name is None:
+                raise typer.BadParameter("Provide --name for a noninteractive VS Code tunnel launch.")
+        else:
+            print_vscode_tunnel_credential_context(cli_data_dir)
+    if action_normalized == "status" or machine_mode:
+        if action_normalized == "share-local":
+            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import _build_http_url, _get_serve_web_details
+            from stackops.scripts.python.helpers.helpers_devops.network_service import run_network_service
 
-        print_vscode_tunnel_credential_context(cli_data_dir)
+            bind_host, port, base_path = _get_serve_web_details(cmd)
+            if port == 0:
+                raise typer.BadParameter("Use a fixed --port in --extra-args for machine readiness.")
+            url_host = "127.0.0.1" if bind_host == "0.0.0.0" else bind_host
+            url = _build_http_url(url_host, port, base_path, directory)
+            run_network_service(name="vscode-web", arguments=shlex.split(cmd), host=bind_host, port=port, url=url, over_internet=False, background=background, output_json=output_json, timeout=timeout, url_from_log=False)
+        else:
+            from stackops.scripts.python.helpers.helpers_devops.vscode_share_runtime import run_vscode_tunnel
+
+            run_vscode_tunnel(arguments=shlex.split(cmd), action=action_normalized, cli_data_dir=cli_data_dir, name=name, background=background, output_json=output_json, timeout=timeout)
+        return
     if IS_REPO_DEVELOPER:
         print_code(cmd, lexer="bash", desc=desc)
     if action_normalized == "share-local":

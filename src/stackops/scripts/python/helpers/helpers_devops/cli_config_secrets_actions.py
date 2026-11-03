@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from pathlib import Path
-from typing import Mapping, NoReturn
+from typing import Mapping, NoReturn, TypedDict
 
 import typer
 
@@ -35,12 +35,31 @@ def add_secrets_entry(
     return entry
 
 
-def subset_secrets_file(source_path: Path, output_path: Path, *, on_conflict: SubsetOutputConflictAction, preview_secrets: bool) -> None:
+class SubsetReceipt(TypedDict):
+    status: str
+    path: str
+    selected_entries: int
+    secret_bundles: int
+    output_entries: int
+    entry_indices: list[int]
+
+
+def subset_secrets_file(
+    source_path: Path, output_path: Path, *, on_conflict: SubsetOutputConflictAction, preview_secrets: bool,
+    names: list[str], entry_indices: list[int], all_matches: bool, dry_run: bool,
+) -> SubsetReceipt:
     import json
     from copy import deepcopy
 
     from stackops.secrets.loader import SecretsSchemaError, load_secrets_file
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_subset_selection import select_subset_indices
+    from stackops.utils.cli_utils.interaction import require_interactive
 
+    explicit = bool(names or entry_indices or all_matches)
+    if preview_secrets and explicit:
+        raise typer.BadParameter("--preview-secrets only applies to interactive selection.")
+    if not explicit:
+        require_interactive("Select vault entries; supply --name, --entry-index, or --all-matches")
     try:
         secrets_file = load_secrets_file(source_path)
     except SecretsSchemaError as exc:
@@ -53,7 +72,10 @@ def subset_secrets_file(source_path: Path, output_path: Path, *, on_conflict: Su
             f"Cannot append to {output_path}: output version {existing_output_file['version']} "
             + f"does not match source version {secrets_file['version']}."
         )
-    selected_indices = _choose_subset_login_indices(secrets_file=secrets_file, source_path=source_path, preview_secrets=preview_secrets)
+    selected_indices = (
+        select_subset_indices(entries=secrets_file["entries"], names=names, entry_indices=entry_indices, all_matches=all_matches)
+        if explicit else _choose_subset_login_indices(secrets_file=secrets_file, source_path=source_path, preview_secrets=preview_secrets)
+    )
     if not selected_indices:
         _fail("No secrets entries selected.")
     selected_index_set = set(selected_indices)
@@ -61,16 +83,14 @@ def subset_secrets_file(source_path: Path, output_path: Path, *, on_conflict: Su
     if not selected_entries:
         _fail("No secrets entries selected.")
     subset_file = _build_subset_file(source_file=secrets_file, selected_entries=selected_entries, existing_output_file=existing_output_file)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(subset_file, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    _chmod_private(output_path, 0o600)
+    if not dry_run:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(subset_file, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        _chmod_private(output_path, 0o600)
     secret_count = sum(len(entry["secrets"]) for entry in selected_entries)
-    action = "Appended" if on_conflict == "append" else "Wrote"
-    suffix = f"; output now has {len(subset_file['entries'])} login entry(ies)" if on_conflict == "append" else ""
-    typer.echo(
-        typer.style("✅ Success: ", fg=typer.colors.GREEN)
-        + f"{action} {len(selected_entries)} selected login entry(ies) and {secret_count} secret bundle(s) to {output_path}{suffix}"
-    )
+    return {"status": "validated" if dry_run else "appended" if on_conflict == "append" else "written", "path": str(output_path),
+            "selected_entries": len(selected_entries), "secret_bundles": secret_count,
+            "output_entries": len(subset_file["entries"]), "entry_indices": sorted(selected_index_set)}
 
 
 def validate_env_names(key_values: Mapping[str, object]) -> None:

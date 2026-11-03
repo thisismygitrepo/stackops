@@ -25,6 +25,7 @@ def fire(ctx: typer.Context) -> None:
 
 
 def preview(
+    ctx: typer.Context,
     path: Annotated[str, typer.Argument(help="path of file to read.")] = ".",
     project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
     uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
@@ -33,10 +34,12 @@ def preview(
     profile: Annotated[str | None, typer.Option("--profile", "-r", help="ipython profile to use, defaults to default profile.")] = None,
     stackops_project: Annotated[bool, typer.Option("--self", "-s", help="specify stackops project to use.")] = False,
     frozen: Annotated[bool, typer.Option("--frozen", "-f", help="freeze the environment (no package changes allowed)")] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="Disable interactive backends; use --backend preview.")] = False,
 ) -> None:
     """Preview files and launch reader backends."""
     from stackops.scripts.python.preview import preview as preview_impl
     preview_impl(
+        ctx=ctx,
         path=path,
         project_path=project_path,
         uv_with=uv_with,
@@ -45,6 +48,7 @@ def preview(
         profile=profile,
         stackops_project=stackops_project,
         frozen=frozen,
+        non_interactive=non_interactive,
     )
 
 

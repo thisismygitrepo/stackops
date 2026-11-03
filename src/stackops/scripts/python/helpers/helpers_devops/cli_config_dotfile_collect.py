@@ -69,6 +69,7 @@ def _choose_groups(plans: "list[CollectEntryPlan]", actionable_groups: list[str]
 
 
 def collect_dotfiles(
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the collection plan as JSON without making changes.")] = False,
     which: Annotated[
         str | None,
         typer.Option(
@@ -98,6 +99,8 @@ def collect_dotfiles(
 
     if which is not None and interactive:
         _fail("Use either --which or --interactive, not both.")
+    if json_output and interactive:
+        raise typer.BadParameter("--json cannot be combined with --interactive.")
     user_mapper = load_dotfiles_mapper(USER_MAPPER_PATH) if USER_MAPPER_PATH.exists() else {}
     current_os = normalize_os_name(platform.system())
     plans = plan_collect(
@@ -106,6 +109,15 @@ def collect_dotfiles(
         user_mapper=user_mapper,
         current_os=current_os,
     )
+    if json_output:
+        import json
+        from dataclasses import asdict
+
+        selected_groups = None if which is None or which.strip() == "all" else {group.strip() for group in which.split(",")}
+        if selected_groups is not None and selected_groups - {plan.group for plan in plans}:
+            raise typer.BadParameter("--which contains an unknown group.")
+        typer.echo(json.dumps({"os": current_os, "plan": [asdict(plan) for plan in plans if selected_groups is None or plan.group in selected_groups]}, indent=2, default=str))
+        return
     console = Console()
     table = Table(title="🧺 Dotfile collection plan", caption="Not listed: entries for other operating systems, absent from this machine, or identical to the packaged settings.")
     for column_name in ("Group", "Entry", "Original", "Managed", "Verdict"):

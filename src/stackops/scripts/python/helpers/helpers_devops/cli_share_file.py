@@ -133,6 +133,8 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
                     qrcode: Annotated[bool, typer.Option("--qrcode", "--qr", "-q", help="Show receive code as a qrcode")] = False,
                     backend: Annotated[Literal["wormhole", "w", "croc", "c"], typer.Option("--backend", "-b", help="Backend to use")] = "croc",
                     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
+                    output_json: Annotated[bool, typer.Option("--json", "-j", help="Emit JSON Lines with transfer code/PID, then completion status.")] = False,
+                    timeout: Annotated[float | None, typer.Option("--timeout", "-T", min=1, help="Maximum seconds to wait for transfer completion.")] = None,
                     ) -> None:
     """Send a file, directory, or text."""
     import platform
@@ -153,6 +155,16 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
     if zip_folder and backend in ("wormhole", "w"):
         typer.echo("❌ Error: --zip is only supported with the croc backend.", err=True)
         raise typer.Exit(code=1)
+
+    if output_json or timeout is not None:
+        from stackops.scripts.python.helpers.helpers_devops.file_send_runtime import send_with_receipts
+
+        if install_missing_dependencies and backend in {"croc", "c"}:
+            from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency
+
+            install_service_dependency("croc")
+        send_with_receipts(path=path, text=text, code=code, backend=backend, zip_folder=zip_folder, qrcode=qrcode, timeout=timeout, output_json=output_json)
+        return
 
     is_windows = platform.system() == "Windows"
     send_target = "text" if text is not None else path

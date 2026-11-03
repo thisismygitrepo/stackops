@@ -1,6 +1,7 @@
 from typing import Annotated
 
 import typer
+from stackops.utils.cli_utils.interaction import require_interactive
 
 
 def cloudflare_tunnel_status(
@@ -13,6 +14,7 @@ def cloudflare_tunnel_status(
     ] = "~/.local/bin/cloudflared",
     config_path: Annotated[str, typer.Option("--config", "-c", help="cloudflared configuration path on every connector")] = "/etc/cloudflared/config.yml",
     service_name: Annotated[str, typer.Option("--service", "-s", help="systemd service name on every connector")] = "cloudflared",
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print tunnel health and connector records as JSON.")] = False,
 ) -> None:
     """📊 <t> Show tunnel redundancy, versions, services, and route coverage."""
     from rich.console import Console
@@ -36,9 +38,15 @@ def cloudflare_tunnel_status(
             for target in targets
         ]
     except (OSError, RuntimeError, ValueError) as error:
-        console.print(f"[red]{error}[/red]")
+        typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
+    if output_json:
+        import json
+        from dataclasses import asdict
+
+        typer.echo(json.dumps({"tunnel": tunnel_name, "health": asdict(health), "connectors": [asdict(status) for status in statuses]}, indent=2))
+        return
     expected_edge_sessions = health.connector_count * 4
     versions = ", ".join(f"{version} × {count}" for version, count in health.versions)
     console.print(
@@ -72,6 +80,8 @@ def update_cloudflare_connectors(
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Run without confirmation")] = False,
 ) -> None:
     """⏫ <u> Rolling-update local and SSH Cloudflare Tunnel connectors."""
+    if not yes:
+        require_interactive("Connector update confirmation; pass --yes")
     from rich.console import Console
 
     from stackops.scripts.python.helpers.helpers_devops.cloudflare_tunnel_maintenance import rolling_update_connectors
@@ -107,6 +117,8 @@ def sync_cloudflare_routes(
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Run without confirmation")] = False,
 ) -> None:
     """🔀 <y> Copy selected ingress routes without copying tunnel credentials."""
+    if not yes:
+        require_interactive("Route synchronization confirmation; pass --yes")
     from rich.console import Console
 
     from stackops.scripts.python.helpers.helpers_devops.cloudflare_tunnel_maintenance import sync_ingress_routes

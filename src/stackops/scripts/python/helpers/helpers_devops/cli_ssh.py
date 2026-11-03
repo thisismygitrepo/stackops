@@ -1,13 +1,14 @@
 import subprocess
+from pathlib import Path
 from typing import Annotated
 
 import typer
 
 
-def _run_add_ssh_key_with_paramiko(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str) -> None:
+def _run_add_ssh_key_with_paramiko(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str, password_file: Path | None, password_env: str | None) -> None:
     import stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key as helper
 
-    helper.main(pub_path=pub_path, pub_choose=pub_choose, pub_val=pub_val, from_github=from_github, remote=remote)
+    helper.main(pub_path=pub_path, pub_choose=pub_choose, pub_val=pub_val, from_github=from_github, remote=remote, password_file=password_file, password_env=password_env)
 
 
 def install_ssh_server() -> None:
@@ -59,8 +60,18 @@ def add_ssh_key(
     value: Annotated[bool, typer.Option(..., "--value", "-v", help="Paste the public key content manually")] = False,
     github: Annotated[str | None, typer.Option(..., "--github", "-g", help="Fetch public keys from a GitHub username")] = None,
     remote: Annotated[str | None, typer.Option(..., "--remote", "-r", help="Deploy to remote machine (config-name or user@host:port)")] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read SSH password or key passphrase from a file; '-' reads stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the SSH password or key passphrase.")] = None,
 ) -> None:
     """🔑 Add SSH public key to this machine (or remote with --remote)."""
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    if choose or value:
+        require_interactive("Public key selection; pass --path or --github")
+    if password_file is not None and password_env is not None:
+        raise typer.BadParameter("Choose one of --password-file and --password-env.")
+    if remote is None and (password_file is not None or password_env is not None):
+        raise typer.BadParameter("Password sources require --remote.")
     source_count = sum([path is not None, choose, value, github is not None])
     if source_count != 1:
         print("❌ Error: choose exactly one key source: --path, --choose, --value, or --github.")
@@ -73,7 +84,7 @@ def add_ssh_key(
         from stackops.utils.optional_dependencies import PARAMIKO_UV_WITH
 
         proc = run_lambda_function(
-            lambda: _run_add_ssh_key_with_paramiko(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote),
+            lambda: _run_add_ssh_key_with_paramiko(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote, password_file=password_file, password_env=password_env),
             uv_with=list(PARAMIKO_UV_WITH),
             uv_project_dir=None,
         )
@@ -83,10 +94,11 @@ def add_ssh_key(
 
     import stackops.scripts.python.helpers.helpers_network.ssh.ssh_add_ssh_key as helper
 
-    helper.main(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote)
+    helper.main(pub_path=path, pub_choose=choose, pub_val=value, from_github=github, remote=remote, password_file=None, password_env=None)
 
 
 def debug_ssh(
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print SSH diagnostic checks and readiness summary as JSON.")] = False,
     client_host: Annotated[str | None, typer.Option("--client-host", "-H", help="Resolved SSH client host name for Match rules")] = None,
     client_address: Annotated[str | None, typer.Option("--client-address", "-c", help="SSH client source IP address for Match rules")] = None,
     local_address: Annotated[str | None, typer.Option("--local-address", "-a", help="Server local IP address receiving the connection")] = None,
@@ -118,22 +130,30 @@ def debug_ssh(
         print("❌ Error: --client-host, --client-address, --local-address, and --local-port must be supplied together.")
         raise typer.Exit(code=2)
 
+    import json
+    import sys
+    from contextlib import redirect_stdout
+    from dataclasses import asdict
+
     current_system = system()
-    if current_system == "Linux":
-        import stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux
+    with redirect_stdout(sys.stderr if output_json else sys.stdout):
+        if current_system == "Linux":
+            import stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux
 
-        result = ssh_debug_linux.ssh_debug_linux(connection_context=connection_context)
-    elif current_system == "Darwin":
-        from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin import ssh_debug_darwin
+            result = ssh_debug_linux.ssh_debug_linux(connection_context=connection_context)
+        elif current_system == "Darwin":
+            from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_darwin import ssh_debug_darwin
 
-        result = ssh_debug_darwin(connection_context=connection_context)
-    elif current_system == "Windows":
-        from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows import ssh_debug_windows
+            result = ssh_debug_darwin(connection_context=connection_context)
+        elif current_system == "Windows":
+            from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_windows import ssh_debug_windows
 
-        result = ssh_debug_windows(connection_context=connection_context)
-    else:
-        print(f"❌ Error: Platform {current_system} is not supported.")
-        raise typer.Exit(code=1)
+            result = ssh_debug_windows(connection_context=connection_context)
+        else:
+            typer.echo(f"Platform {current_system} is not supported.", err=True)
+            raise typer.Exit(code=1)
+    if output_json:
+        typer.echo(json.dumps(asdict(result), indent=2))
     if not result.summary.ready:
         raise typer.Exit(code=1)
 

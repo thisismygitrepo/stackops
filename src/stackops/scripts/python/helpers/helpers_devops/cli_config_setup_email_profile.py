@@ -82,6 +82,7 @@ def prompt_new_email_profile(
     configured_recipient: str | None,
 ) -> NewEmailProfile:
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_choice, ask_text
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_email_input import parse_email_profile
 
     default_name = configured_profile if configured_profile is not None else "default"
     normalized_existing_names = {name.casefold() for name in existing_login_names}
@@ -131,27 +132,8 @@ def prompt_new_email_profile(
             show_default=False,
         )
     )
-    login: Login = {
-        "name": profile_name,
-        "secrets": [
-            {
-                "name": "smtp",
-                "tags": ["email"],
-                "scopes": [],
-                "keyValues": {
-                    "email_add": sender,
-                    "password": password,
-                    "encryption": encryption,
-                    "smtp_host": smtp_host,
-                    "smtp_port": str(smtp_port),
-                },
-            }
-        ],
-    }
-    return {
-        "login": login,
-        "sender": sender,
-    }
+    return parse_email_profile({"name": profile_name, "sender": sender, "password": password,
+                               "encryption": encryption, "smtp_host": smtp_host, "smtp_port": smtp_port})
 
 
 def write_new_email_profile(secrets_path: Path, secrets_file: SecretsFile | None, profile: NewEmailProfile) -> None:

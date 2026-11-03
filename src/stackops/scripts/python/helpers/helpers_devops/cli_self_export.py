@@ -1,5 +1,9 @@
 from pathlib import Path
 from typing import Annotated
+from contextlib import nullcontext, redirect_stdout
+from dataclasses import asdict
+import json
+import sys
 
 import typer
 
@@ -32,6 +36,7 @@ def export(
             help="Upload the finished archive to the configured default rclone remote, share it, and refresh the dynamic downloader URL map.",
         ),
     ] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the installer artifact receipt as JSON.")] = False,
 ) -> None:
     """📤 export the installation files to get an offline image."""
     output_root = output_root.expanduser()
@@ -74,16 +79,19 @@ def export(
 
     from stackops.utils.installer_utils import installer_offline
 
-    installer_offline.export(
-        options=installer_offline.OfflineInstallerOptions(
-            output_root=output_root,
-            include_configs=not no_include_configs,
-            include_uv_bundle=not no_include_uv_bundle,
-            keep_unpacked=keep_unpacked,
-            upload_to_cloud=upload_to_cloud,
-        ),
-        console=Console(),
-    )
+    with redirect_stdout(sys.stderr) if json_output else nullcontext():
+        report = installer_offline.export(
+            options=installer_offline.OfflineInstallerOptions(
+                output_root=output_root,
+                include_configs=not no_include_configs,
+                include_uv_bundle=not no_include_uv_bundle,
+                keep_unpacked=keep_unpacked,
+                upload_to_cloud=upload_to_cloud,
+            ),
+            console=Console(stderr=json_output),
+        )
+    if json_output:
+        typer.echo(json.dumps(asdict(report), default=str))
 
 
 def download_installer(
@@ -95,12 +103,33 @@ def download_installer(
         Path | None,
         typer.Option("--output-dir", "-o", help="Override the extraction directory. By default, the directory name includes the target OS/arch."),
     ] = None,
+    list_targets: Annotated[bool, typer.Option("--list", "-l", help="List available installer targets without downloading.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print target metadata or the downloaded artifact as JSON.")] = False,
 ) -> None:
     """📥 Download and extract a published offline installer."""
     from stackops.jobs.scripts_dynamic import download_stackops_offline_installer
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    if list_targets:
+        if target is not None or output_dir is not None:
+            raise typer.BadParameter("--list cannot be combined with --target or --output-dir.")
+        targets = download_stackops_offline_installer.load_installer_targets()
+        if json_output:
+            typer.echo(json.dumps([{"target": item.pair, "available": item.url is not None} for item in targets]))
+        else:
+            for item in targets:
+                typer.echo(f"""{item.pair}: {'available' if item.url is not None else 'unavailable'}""")
+        return
+    if target is None:
+        if json_output:
+            raise typer.BadParameter("--json requires --target, or --list to inspect available targets.")
+        require_interactive("Installer target selection; supply --target or use --list --json")
 
     try:
-        download_stackops_offline_installer.download_installer(target_key=target, output_dir=output_dir)
+        with redirect_stdout(sys.stderr) if json_output else nullcontext():
+            downloaded = download_stackops_offline_installer.download_installer(target_key=target, output_dir=output_dir)
     except RuntimeError as exc:
         typer.echo(f"❌ {exc}", err=True)
         raise typer.Exit(code=1) from exc
+    if json_output:
+        typer.echo(json.dumps({"target": target, "output_dir": str(downloaded)}))

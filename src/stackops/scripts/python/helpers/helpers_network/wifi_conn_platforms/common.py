@@ -4,7 +4,7 @@ from typing import Final, TypedDict
 from rich.console import Console
 from rich.table import Table
 
-console: Final[Console] = Console()
+console: Final[Console] = Console(stderr=True)
 
 
 class WifiNetwork(TypedDict):

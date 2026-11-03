@@ -22,6 +22,10 @@ def route(args: FireJobArgs, fire_args: str) -> None:
     """Route execution based on args configuration."""
     from stackops.scripts.python.helpers.helpers_utils.path_helper import get_choice_file
     from stackops.utils.accessories import get_repo_root, randstr
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    if args.choose_function or args.interactive or args.debug:
+        require_interactive("Function selection, debugging, and REPL execution")
 
     search_root = _get_search_root(root_repo=args.root_repo)
     match args.mode:

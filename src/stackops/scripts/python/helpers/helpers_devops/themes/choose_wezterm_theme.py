@@ -4,11 +4,14 @@ Choose a theme for Wezterm
 
 from stackops.utils.options_utils.options import choose_from_options
 from pathlib import Path
-from typing import Any
-import time
+import json
+import os
+import re
+from typing import TYPE_CHECKING
 from rich.panel import Panel
 from rich.console import Console
-import curses
+if TYPE_CHECKING:
+    import curses
 
 console = Console()
 
@@ -43,7 +46,10 @@ schemes_list = [
 ]
 
 
-def main2():
+def main2() -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("WezTerm theme preview; supply --theme NAME")
     console.print(Panel("🎨 WezTerm Theme Selector", title_align="left", border_style="green"))
     option = choose_from_options(multi=False, options=schemes_list, header="Choose a theme for Wezterm", tv=True, msg="Use arrow keys to navigate, Enter to select a theme")
     if option is None:
@@ -53,21 +59,30 @@ def main2():
     print(f"✅ Theme set to: {option}")
 
 
-def set_theme(theme: str):
-    print(f"🔄 Setting WezTerm theme to: {theme}")
-    txt_lines = Path.home().joinpath(".config/wezterm/wezterm.lua").expanduser().read_text(encoding="utf-8").splitlines()
-    res_lines = []
+def set_theme(theme: str) -> Path:
+    if theme not in schemes_list:
+        raise ValueError(f"Unknown WezTerm theme: {theme}")
+    path = Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")).expanduser() / "wezterm" / "wezterm.lua"
+    txt_lines = path.read_text(encoding="utf-8").splitlines()
+    res_lines: list[str] = []
+    replaced = False
     for line in txt_lines:
-        if "config.color_scheme = " in line:
-            res_lines.append(f"config.color_scheme = '{theme}'")
+        if re.match(r"^\s*config\.color_scheme\s*=", line):
+            res_lines.append(f"config.color_scheme = {json.dumps(theme, ensure_ascii=False)}")
+            replaced = True
         else:
             res_lines.append(line)
-    Path.home().joinpath(".config/wezterm/wezterm.lua").expanduser().write_text("\n".join(res_lines), encoding="utf-8")
-    time.sleep(0.1)
-    print("💾 Configuration saved")
+    if not replaced:
+        raise ValueError(f"No config.color_scheme assignment found in {path}")
+    path.write_text("\n".join(res_lines) + "\n", encoding="utf-8")
+    return path
 
 
-def main():
+def main() -> None:
+    import curses
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("WezTerm theme preview; supply --theme NAME")
     console.print(Panel("🎨 WezTerm Theme Selector - Interactive Mode", title_align="left", border_style="blue"))
     print("""
 📝 Use arrow keys to navigate, Enter to select a theme
@@ -76,7 +91,8 @@ def main():
     console.print(Panel("✅ Theme selection completed", title_align="left", border_style="green"))
 
 
-def accessory(stdscr: Any):
+def accessory(stdscr: "curses.window") -> None:
+    import curses
     options = schemes_list
     current_option = 0
     page_size = stdscr.getmaxyx()[0] - 1  # curses.LINES - 1  # Number of lines in the terminal, -1 for status line

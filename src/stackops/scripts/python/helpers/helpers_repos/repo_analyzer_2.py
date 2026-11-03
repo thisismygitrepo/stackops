@@ -180,7 +180,7 @@ def print_python_files_by_size_impl(repo_path: str) -> pl.DataFrame | Exception:
         return Exception(f"❌ Error analyzing repository: {str(e)}")
 
 
-def analyze_over_time(repo_path: str):
+def analyze_over_time(repo_path: str, output_directory: Path) -> list[Path]:
     """Analyze a git repository to track Python code size over time with visualization."""
     repo: Repo = Repo(repo_path)
     branch_name: str = get_default_branch(repo)
@@ -194,9 +194,10 @@ def analyze_over_time(repo_path: str):
         for commit in track(commits, description="Processing commits..."):
             lines, _files = count_python_lines(commit)
             commit_data.append({"hash": commit.hexsha, "dtmExit": datetime.fromtimestamp(commit.committed_date, tz=timezone.utc), "lines": lines})
-    except Exception as e:
-        print(f"❌ Error analyzing commits: {str(e)}")
-        return
+    except Exception as error:
+        raise RuntimeError(f"Error analyzing commits: {error}") from error
+    if not commit_data:
+        raise ValueError("No commits found to analyze.")
 
     import polars as pl
     import plotly.graph_objects as go
@@ -285,28 +286,23 @@ def analyze_over_time(repo_path: str):
     fig.update_xaxes(rangeslider_visible=True, rangeslider_thickness=0.05)
 
     # Save as interactive HTML and static image
-    plot_dir = Path.home().joinpath("tmp_results", "tmp_images", Path(repo_path).name)
+    plot_dir = output_directory
     plot_dir.mkdir(parents=True, exist_ok=True)
 
     html_path = plot_dir.joinpath("code_size_evolution.html")
     png_path = plot_dir.joinpath("code_size_evolution.png")
 
-    try:
-        fig.write_html(html_path, include_plotlyjs="cdn")
-    except Exception as e:
-        print(f"❌ Error saving HTML plot: {str(e)}")
-    try:
-        fig.write_image(png_path, width=1200, height=700, scale=2)
-    except Exception as e:
-        print(f"❌ Error saving PNG plot: {str(e)}")
+    fig.write_html(html_path, include_plotlyjs="cdn")
+    fig.write_image(png_path, width=1200, height=700, scale=2)
 
     print(f"🖼️ Interactive plot saved as {html_path}")
     print(f"🖼️ Static image saved as {png_path}")
     # Print statistics
     print("\n📊 Repository Statistics:")
     print(f"📚 Total commits analyzed: {len(df)}")
-    initial_lines = int(df['lines'][-1])
-    final_lines = int(df['lines'][0])
+    initial_lines = int(df['lines'][0])
+    final_lines = int(df['lines'][-1])
     print(f"🔙 Initial line count: {initial_lines:,}")
     print(f"🔜 Final line count: {final_lines:,}")
     print(f"📈 Net change: {final_lines - initial_lines:,} lines")
+    return [html_path, png_path]

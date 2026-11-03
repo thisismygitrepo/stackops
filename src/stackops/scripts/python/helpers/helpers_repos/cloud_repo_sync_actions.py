@@ -15,8 +15,12 @@ type SelectedConflictAction = ConflictResolutionAction | Literal["inspect", "rec
 
 
 def select_conflict_action(on_conflict: ConflictResolutionAction) -> SelectedConflictAction:
+    from stackops.utils.cli_utils.interaction import is_interactive
+
     if on_conflict != "ask":
         return on_conflict
+    if not is_interactive():
+        return "stop-on-conflict"
     import questionary
 
     choices: dict[str, SelectedConflictAction] = {

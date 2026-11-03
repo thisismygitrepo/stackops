@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING, Annotated, cast, get_args
 
 import typer
+from stackops.utils.cli_utils.interaction import require_interactive
+from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
     BROWSER_TECH_NAMES,
@@ -54,6 +56,7 @@ def install_tech(
         selected_technologies: tuple[BrowserTechName, ...] = BROWSER_TECH_NAMES if tool == "all" else (tool,)
         resolved_agent = agent
         if resolved_agent is None and any(technology not in BROWSER_TECH_NAMES_WITHOUT_AGENT for technology in selected_technologies):
+            require_interactive("Choosing a browser agent; supply --agent")
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import choose_required_option, order_current_first
             from stackops.utils.default_agent import resolve_agent
 
@@ -112,6 +115,8 @@ def launch_browser(
     tmp: Annotated[bool, typer.Option("--tmp", "-t", help="Copy --profile to <profile>/.tmp/<random-alias> and launch the copy.")] = False,
     lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoints on 0.0.0.0 through a localhost relay.")] = False,
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
+    attach: Annotated[bool, typer.Option("--attach", "-a", help="Attach to the launched tmux browser window.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print browser endpoint and launch records as JSON.")] = False,
 ) -> None:
     """Launch browser automation endpoints with isolated profiles when supported."""
     from rich.console import Console
@@ -119,6 +124,10 @@ def launch_browser(
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary
 
+    if attach:
+        if detached or json_output:
+            raise typer.BadParameter("--attach cannot be combined with --detached or --json")
+        require_interactive("Attaching to a browser window")
     profile_names: tuple[str | None, ...] = (None,) if profile is None else _parse_profile_names(raw_profile=profile)
     lan_address: InterfaceIPv4Address | None = None
     try:
@@ -140,19 +149,25 @@ def launch_browser(
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
+    if json_output:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_json import browser_launch_receipt
+
+        emit_agent_json([browser_launch_receipt(result=result) for result in results])
+        return
     console = Console()
     if len(results) == 1:
         console.print(build_browser_launch_summary(result=results[0], lan_address=lan_address))
     else:
         console.print(build_browser_launches_summary(results=results, lan_address=lan_address))
     first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)
-    if first_tmux_result is not None:
+    if attach and first_tmux_result is not None:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window
 
         try:
             attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)
         except RuntimeError as error:
-            typer.echo(f"Browser endpoint is running, but automatic tmux attachment failed: {error}", err=True)
+            typer.echo(f"Browser endpoint is running, but tmux attachment failed: {error}", err=True)
+            raise typer.Exit(code=1) from error
 
 
 def close_browser(
@@ -171,6 +186,7 @@ def close_browser(
             help="Comma-separated saved StackOps profiles under ~/data/browsers-profiles/<browser>/<profile> whose tracked launches should be closed.",
         ),
     ] = None,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print closed launch identities as JSON.")] = False,
 ) -> None:
     """Close one tracked browser endpoint by --port or its saved profiles by --profile."""
     profile_names: tuple[str, ...] | None = None
@@ -194,6 +210,9 @@ def close_browser(
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
+    if json_output:
+        emit_agent_json(result)
+        return
     if profile_names is not None:
         profile_label = ", ".join(profile_names)
         if result.closed_count == 0:
@@ -224,6 +243,8 @@ def batch_launch(
     ] = None,
     lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoints on 0.0.0.0 through localhost relays.")] = False,
     detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
+    attach: Annotated[bool, typer.Option("--attach", "-a", help="Attach to the first launched tmux browser window.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print browser endpoint and launch records as JSON.")] = False,
 ) -> None:
     """Launch every saved profile for one browser on its assigned port."""
     from rich.console import Console
@@ -231,6 +252,10 @@ def batch_launch(
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launches_summary
 
+    if attach:
+        if detached or json_output:
+            raise typer.BadParameter("--attach cannot be combined with --detached or --json")
+        require_interactive("Attaching to a browser window")
     lan_address: InterfaceIPv4Address | None = None
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_batch import build_browser_profile_launch_specs
@@ -255,15 +280,21 @@ def batch_launch(
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
+    if json_output:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_json import browser_launch_receipt
+
+        emit_agent_json([browser_launch_receipt(result=result) for result in results])
+        return
     Console().print(build_browser_launches_summary(results=results, lan_address=lan_address))
     first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)
-    if first_tmux_result is not None:
+    if attach and first_tmux_result is not None:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window
 
         try:
             attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)
         except RuntimeError as error:
-            typer.echo(f"Browser endpoints are running, but automatic tmux attachment failed: {error}", err=True)
+            typer.echo(f"Browser endpoints are running, but tmux attachment failed: {error}", err=True)
+            raise typer.Exit(code=1) from error
 
 
 def batch_close(
@@ -273,6 +304,7 @@ def batch_close(
             "--browser", "-b", help="Browser whose StackOps-tracked saved-profile launches should be closed.", case_sensitive=False, show_choices=True
         ),
     ] = "chrome",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print closed launch identities as JSON.")] = False,
 ) -> None:
     """Close tracked saved-profile launches for one browser."""
     try:
@@ -283,6 +315,9 @@ def batch_close(
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
 
+    if json_output:
+        emit_agent_json(result)
+        return
     browser_label = browser.title()
     if result.closed_count == 0:
         typer.echo(f"No active {browser_label} saved-profile launches found.")
@@ -297,12 +332,18 @@ def status(
     detached: Annotated[
         bool, typer.Option("--detached", "-d", help="Show browser processes launched with --detached instead of tmux windows.")
     ] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print collected browser status records as JSON.")] = False,
 ) -> None:
     """Show active StackOps browser launches."""
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import show_detached_browser_status, show_tmux_browser_status
 
-        if detached:
+        if json_output:
+            from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_status import collect_detached_browser_status
+            from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import collect_browser_tmux_status
+
+            emit_agent_json(collect_detached_browser_status() if detached else collect_browser_tmux_status())
+        elif detached:
             show_detached_browser_status()
         else:
             show_tmux_browser_status()

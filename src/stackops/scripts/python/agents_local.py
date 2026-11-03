@@ -1,7 +1,9 @@
 import os
 from typing import Annotated
+from contextlib import nullcontext
 
 import typer
+from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
 
 from stackops.scripts.python.helpers.helpers_agents.agents_local.constants import (
     LOCAL_DEFAULT_BACKEND,
@@ -37,6 +39,7 @@ def doctor(
         str | None,
         typer.Option("--api-key", "-k", envvar="VLLM_API_KEY", show_envvar=True, help="vLLM bearer token."),
     ] = None,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print server health and model records as JSON.")] = False,
 ) -> None:
     try:
         if backend == "vllm":
@@ -48,7 +51,10 @@ def doctor(
                 timeout=timeout if timeout is not None else VLLM_TIMEOUT_SECONDS,
                 api_key=api_key,
             )
-            show_vllm_doctor(status=vllm_status)
+            if json_output:
+                emit_agent_json(vllm_status)
+            else:
+                show_vllm_doctor(status=vllm_status)
             errors = vllm_status.errors
         else:
             from stackops.scripts.python.helpers.helpers_agents.agents_local.ollama import collect_ollama_status
@@ -58,7 +64,10 @@ def doctor(
                 host=host if host is not None else os.environ.get("OLLAMA_HOST", OLLAMA_DEFAULT_HOST),
                 timeout=timeout if timeout is not None else OLLAMA_TIMEOUT_SECONDS,
             )
-            show_local_doctor(status=status)
+            if json_output:
+                emit_agent_json(status)
+            else:
+                show_local_doctor(status=status)
             errors = status.errors
     except ValueError as error:
         raise typer.BadParameter(str(error), param_hint="--host") from error
@@ -89,6 +98,7 @@ def discover(
     timeout: Annotated[
         float, typer.Option("--timeout", "-t", min=0.1, help="Timeout in seconds for each catalog or download-size request."),
     ] = OLLAMA_CATALOG_TIMEOUT_SECONDS,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print discovered model records as JSON.")] = False,
 ) -> None:
     if min_params > max_params:
         raise typer.BadParameter("Must be less than or equal to --max-params.", param_hint="--min-params")
@@ -106,20 +116,26 @@ def discover(
             from stackops.scripts.python.helpers.helpers_agents.agents_local.vllm_catalog import discover_vllm_models
             from stackops.scripts.python.helpers.helpers_agents.agents_local.vllm_catalog_report import show_discovered_vllm_models
 
-            with Console().status("Fetching current Hugging Face models for vLLM..."):
+            with nullcontext() if json_output else Console().status("Fetching current Hugging Face models for vLLM..."):
                 vllm_models = discover_vllm_models(
                     min_params=min_params, max_params=max_params, sort=resolved_sort, limit=limit, query=query, capability=capability, timeout=timeout,
                 )
-            show_discovered_vllm_models(models=vllm_models, min_params=min_params, max_params=max_params, sort=resolved_sort)
+            if json_output:
+                emit_agent_json(vllm_models)
+            else:
+                show_discovered_vllm_models(models=vllm_models, min_params=min_params, max_params=max_params, sort=resolved_sort)
         else:
             from stackops.scripts.python.helpers.helpers_agents.agents_local.catalog import discover_models
             from stackops.scripts.python.helpers.helpers_agents.agents_local.catalog_report import show_discovered_models
 
-            with Console().status("Fetching current Ollama catalog and download sizes..."):
+            with nullcontext() if json_output else Console().status("Fetching current Ollama catalog and download sizes..."):
                 models = discover_models(
                     min_params=min_params, max_params=max_params, sort=resolved_sort, limit=limit, query=query, capability=capability, timeout=timeout,
                 )
-            show_discovered_models(models=models, min_params=min_params, max_params=max_params, sort=resolved_sort)
+            if json_output:
+                emit_agent_json(models)
+            else:
+                show_discovered_models(models=models, min_params=min_params, max_params=max_params, sort=resolved_sort)
     except (requests.RequestException, ValueError) as error:
         Console(stderr=True).print(Text(f"""Could not discover {catalog_name} models: {error}""", style="red"))
         raise typer.Exit(code=1) from error

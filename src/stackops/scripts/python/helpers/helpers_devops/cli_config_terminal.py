@@ -22,33 +22,35 @@ def configure_shell_profile(
     assert_never(which)
 
 
-def pwsh_theme() -> None:
+def pwsh_theme(
+    theme: Annotated[str | None, typer.Option("--theme", "-t", help="Apply an exact Oh My Posh theme name without a picker.")] = None,
+    list_names: Annotated[bool, typer.Option("--list", "-l", help="List available theme names.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print theme names or the applied result as JSON.")] = False,
+) -> None:
     """Select powershell prompt theme."""
-    import platform
-    import subprocess
-
     import stackops.scripts.python.helpers.helpers_devops.themes as theme_assets
-    from stackops.utils.code import exit_then_run_shell_file
     from stackops.utils.path_reference import get_path_reference_path
+    from stackops.scripts.python.helpers.helpers_devops.themes.theme_commands import run_powershell_theme
 
     script_path = get_path_reference_path(
         module=theme_assets,
         path_reference=theme_assets.CHOOSE_PWSH_THEME_PATH_REFERENCE,
     )
-    if platform.system() == "Windows":
-        exit_then_run_shell_file(script_path=str(script_path), strict=False)
-        return
-    try:
-        subprocess.run(["pwsh", "-File", str(script_path)], check=True)
-    except FileNotFoundError as exc:
-        typer.echo("Error: pwsh is required to select a powershell prompt theme.", err=True)
-        raise typer.Exit(code=1) from exc
+    run_powershell_theme(script_path=script_path, theme=theme, list_names=list_names, json_output=json_output, allow_windows_powershell=False)
 
 
-def starship_theme() -> None:
+def starship_theme(
+    theme: Annotated[str | None, typer.Option("--theme", "-t", help="Apply an exact Starship preset without a picker.")] = None,
+    list_names: Annotated[bool, typer.Option("--list", "-l", help="List available preset names.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print preset names or the applied result as JSON.")] = False,
+) -> None:
     """Select starship prompt theme."""
     import platform
     import subprocess
+    from stackops.scripts.python.helpers.helpers_devops.themes.theme_commands import configure_named_theme
+
+    if configure_named_theme(target="starship", theme=theme, list_names=list_names, json_output=json_output):
+        return
 
     import stackops.scripts.python.helpers.helpers_devops.themes as theme_assets
     from stackops.utils.path_reference import get_path_reference_path
@@ -83,18 +85,34 @@ def starship_theme() -> None:
         raise typer.Exit(code=exc.returncode) from exc
 
 
-def configure_wezterm_theme() -> None:
+def configure_wezterm_theme(
+    theme: Annotated[str | None, typer.Option("--theme", "-t", help="Apply an exact WezTerm theme without a picker.")] = None,
+    list_names: Annotated[bool, typer.Option("--list", "-l", help="List available theme names.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print theme names or the applied result as JSON.")] = False,
+) -> None:
     """Select WezTerm theme with interactive live preview."""
     from stackops.scripts.python.helpers.helpers_devops.themes import choose_wezterm_theme
+    from stackops.scripts.python.helpers.helpers_devops.themes.theme_commands import configure_named_theme
+
+    if configure_named_theme(target="wezterm", theme=theme, list_names=list_names, json_output=json_output):
+        return
 
     choose_wezterm_theme.main()
 
 
-def configure_ghostty_theme() -> None:
+def configure_ghostty_theme(
+    theme: Annotated[str | None, typer.Option("--theme", "-t", help="Apply an exact Ghostty theme without a preview.")] = None,
+    list_names: Annotated[bool, typer.Option("--list", "-l", help="List available theme names.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print theme names or the applied result as JSON.")] = False,
+) -> None:
     """Select Ghostty theme with interactive preview."""
     import os
     import platform
     import subprocess
+    from stackops.scripts.python.helpers.helpers_devops.themes.theme_commands import configure_named_theme
+
+    if configure_named_theme(target="ghostty", theme=theme, list_names=list_names, json_output=json_output):
+        return
 
     from stackops.settings.shells.ghostty import CONFIG_PATH_REFERENCE as GHOSTTY_CONFIG_PATH_REFERENCE
 
@@ -114,13 +132,19 @@ def configure_ghostty_theme() -> None:
     subprocess.run(["ghostty", "+list-themes"], check=True)
 
 
-def configure_windows_terminal_theme() -> None:
+def configure_windows_terminal_theme(
+    theme: Annotated[str | None, typer.Option("--theme", "-t", help="Apply an exact Windows Terminal scheme without a preview.")] = None,
+    list_names: Annotated[bool, typer.Option("--list", "-l", help="List available scheme names.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print scheme names or the applied result as JSON.")] = False,
+) -> None:
     """Select Windows Terminal color scheme with interactive live preview."""
     import platform
-    import subprocess
 
     import stackops.scripts.python.helpers.helpers_devops.themes as theme_assets
     from stackops.utils.path_reference import get_path_reference_path
+    from stackops.scripts.python.helpers.helpers_devops.themes.theme_commands import run_powershell_theme, validate_theme_request
+
+    validate_theme_request(theme=theme, list_names=list_names, json_output=json_output)
 
     if platform.system().lower() != "windows":
         typer.echo("Error: Windows Terminal theme selection is only supported on Windows systems.", err=True)
@@ -129,14 +153,7 @@ def configure_windows_terminal_theme() -> None:
         module=theme_assets,
         path_reference=theme_assets.CHOOSE_WINDOWS_TERMINAL_THEME_PATH_REFERENCE,
     )
-    for shell_name in ("pwsh", "powershell"):
-        try:
-            subprocess.run([shell_name, "-File", str(script_path)], check=True)
-            return
-        except FileNotFoundError:
-            continue
-    typer.echo("Error: pwsh or powershell is required to select a Windows Terminal color scheme.", err=True)
-    raise typer.Exit(code=1)
+    run_powershell_theme(script_path=script_path, theme=theme, list_names=list_names, json_output=json_output, allow_windows_powershell=True)
 
 
 def shell_group(ctx: typer.Context) -> None:

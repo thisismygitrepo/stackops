@@ -10,6 +10,7 @@ from stackops.utils.ssh_utils.connection_target import SSHConnectionProfile, SSH
 from stackops.utils.ssh_utils.host_key_verification import connect_with_verified_host_key
 from stackops.utils.ssh_utils.open_ssh_command import parse_open_ssh_destination
 from stackops.utils.ssh_utils.open_ssh_config import lookup_open_ssh_config
+from stackops.utils.cli_utils.interaction import require_interactive
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,10 +45,11 @@ def open_remote_connection(remote_target: str, password: str | None) -> Generato
         connection = _connect_once(
             profile=profile,
             password=None,
-            passphrase=None,
+            passphrase=password,
             automatic_authentication=True,
         )
     except paramiko.PasswordRequiredException:
+        require_interactive("SSH key authentication; load the key into ssh-agent or provide --password-file/--password-env")
         selected_passphrase = getpass.getpass(f"Passphrase for the SSH key used by {target.username}@{target.hostname}: ")
         try:
             connection = _connect_once(
@@ -66,6 +68,7 @@ def open_remote_connection(remote_target: str, password: str | None) -> Generato
     if connection is None:
         selected_password = password
         if selected_password is None:
+            require_interactive("SSH authentication; configure a key or provide --password-file/--password-env")
             selected_password = getpass.getpass(f"Password for {target.username}@{target.hostname}: ")
         connection = _connect_once(
             profile=profile,

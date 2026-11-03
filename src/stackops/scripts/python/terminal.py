@@ -2,6 +2,7 @@
 
 from typing import Literal, Annotated
 import typer
+from stackops.utils.cli_utils.interaction import configure_interaction, require_interactive
 
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.default_multiplexer import DEFAULT_SESSION_MULTIPLEXER_HELP
@@ -75,6 +76,10 @@ def run(
     """
     if layouts_file is None and not test_layout and choose_layouts is None and choose_tabs is None:
         choose_layouts = ""
+    if choose_layouts == "" or choose_tabs == "":
+        require_interactive("Choosing layouts or tabs; supply --custom-path or exact selectors")
+    if attach:
+        require_interactive("Attaching to a launched terminal session")
     from stackops.cluster.sessions_managers.session_conflict import SessionConflictActionLoose2Strict
     from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
 
@@ -129,6 +134,8 @@ def run_all(
     New tab kicks in as soon as another tab finishes, keeping the total number of active tabs under the specified maximum.
     Use this if problem is embarresingly parallel and is only constrained by resources.
     """
+    if layouts_file is None and not test_layout:
+        require_interactive("Choosing layouts; supply --custom-path for run-all")
     if max_parallel_tabs < 1:
         typer.echo("Error: --max-parallel-tabs must be at least 1.", err=True, color=True)
         raise typer.Exit(code=1)
@@ -168,6 +175,7 @@ def attach_to_session(
         window: Annotated[bool, typer.Option("--window", "-w", help="Choose a window/tab or pane target instead of only choosing from sessions.", show_default=True)] = False,
         backend: Annotated[SessionMultiplexerOption | None, typer.Option("--backend", "-b", help=f"Session multiplexer: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z (Zellij 0.45+). {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
         ) -> None:
+    require_interactive("Terminal attachment; use terminal summary --json for inspection")
     """Choose a session or deeper target to attach to."""
     if name is not None and new_session:
         typer.echo("Error: NAME cannot be used together with --new-session.", err=True, color=True)
@@ -219,8 +227,29 @@ def kill_session_target(
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,
         delete: Annotated[bool, typer.Option("--delete", "-D", help="Delete stopped Herdr or Zellij session records instead of killing running sessions.", show_default=True)] = False,
         backend: Annotated[SessionMultiplexerOption | None, typer.Option("--backend", "-b", help=f"Session multiplexer: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z (Zellij 0.45+). {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
+        window_id: Annotated[str | None, typer.Option("--window-id", "--tab-id", "-W", help="Exact window/tab ID from summary --json --tabs. NAME optionally scopes the session/workspace.")] = None,
+        pane_id: Annotated[str | None, typer.Option("--pane-id", "-p", help="Exact pane ID from summary --json --tabs. NAME optionally scopes the session/workspace.")] = None,
         ) -> None:
     """Choose one or more session targets to kill."""
+    if window_id is not None or pane_id is not None:
+        if (window_id is not None and pane_id is not None) or kill_all or idle or window or delete:
+            raise typer.BadParameter("Choose one exact --window-id/--pane-id; do not combine it with --kill-all, --idle, --window, or --delete")
+        from stackops.scripts.python.helpers.helpers_sessions.kill_exact_target import kill_exact_target
+        from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import resolve_session_backend
+
+        try:
+            kill_exact_target(
+                backend=resolve_session_backend(backend), session=name,
+                target_kind="window" if window_id is not None else "pane",
+                target_id=window_id if window_id is not None else str(pane_id),
+            )
+        except (OSError, ValueError, RuntimeError) as error:
+            typer.echo(str(error), err=True)
+            raise typer.Exit(code=1) from error
+        typer.echo(f"Closed {'window' if window_id is not None else 'pane'} {window_id if window_id is not None else pane_id}")
+        return
+    if name is None and not kill_all:
+        require_interactive("Choosing a kill target; supply NAME, --kill-all, --window-id, or --pane-id")
     if kill_all and name is not None:
         typer.echo("Error: --kill-all cannot be used together with NAME.", err=True, color=True)
         raise typer.Exit(code=1)
@@ -308,6 +337,8 @@ def export(
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Ask for the backend (showing its running sessions), command source, and how to write an existing output file, unless given as flags.", show_default=True)] = False,
 ) -> None:
     """Export running backend sessions/workspaces as a layout file runnable by `run`."""
+    if interactive or (not all_sessions and (sessions is None or not sessions.strip())):
+        require_interactive("Choosing sessions to export; supply --sessions or --all")
     from stackops.scripts.python.helpers.helpers_sessions.terminal_export import (
         export_terminal_sessions,
     )
@@ -353,7 +384,10 @@ def create_template(
 ) -> None:
     """Create a layout template file."""
     from stackops.scripts.python.helpers.helpers_sessions.utils import create_template as impl
-    impl(name=name, num_tabs=num_tabs)
+    try:
+        impl(name=name, num_tabs=num_tabs)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
 
 def create_from_function(
     num_process: Annotated[int, typer.Option(..., "--num-process", "-n", help="Number of parallel processes to run")],
@@ -374,8 +408,13 @@ def trace(
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose an existing backend session/workspace interactively")] = False,
     kill: Annotated[bool, typer.Option("--kill", "-k", help="Kill finalized panes, windows, and sessions as they satisfy the selected criterion")] = False,
     backend: Annotated[SessionMultiplexerOption | None, typer.Option("--backend", "-b", help=f"Session multiplexer to trace: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z (Zellij 0.45+). {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Stream snapshots and completion events as newline-delimited JSON.")] = False,
 ) -> None:
     """Trace terminal backend sessions until every selected target is finalized."""
+    if interactive:
+        require_interactive("Choosing trace targets; supply SESSION_NAMES")
+        if json_output:
+            raise typer.BadParameter("--json cannot be combined with --interactive")
     from stackops.scripts.python.helpers.helpers_sessions.sessions_trace import trace_sessions_for_backend as impl
     from stackops.scripts.python.helpers.helpers_sessions.terminal_cli_helpers import resolve_session_backend
     from stackops.scripts.python.helpers.helpers_sessions.session_trace_selection import (
@@ -430,6 +469,7 @@ def trace(
         every_seconds=every,
         exit_code=exit_code,
         kill=kill,
+        json_output=json_output,
     )
 
 
@@ -443,6 +483,7 @@ def get_app() -> typer.Typer:
         help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
+    layouts_app.callback()(configure_interaction)
 
     layouts_app.command("run", cls=TerminalRunCommand, no_args_is_help=False, help=run.__doc__, short_help="🏃 <r> Run the selected layout(s)")(run)
     layouts_app.command("r", cls=TerminalRunCommand, no_args_is_help=False, help=run.__doc__, hidden=True)(run)

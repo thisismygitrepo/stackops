@@ -24,6 +24,7 @@ def collect_windows() -> list[WindowEntry]:
             raise RuntimeError(f"""Could not read the minimized state of window {window_id}.""")
         entries.append(
             WindowEntry(
+                id=f"x11:{_process_id}:{window_id}",
                 app=app,
                 title=fields[5] if len(fields) == 6 else "",
                 minimized=state_line == "window state: Iconic",

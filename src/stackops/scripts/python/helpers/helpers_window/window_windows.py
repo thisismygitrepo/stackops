@@ -72,6 +72,7 @@ def collect_windows() -> list[WindowEntry]:
         _USER32.GetWindowThreadProcessId(handle, ctypes.byref(process_id))
         entries.append(
             WindowEntry(
+                id=f"win32:{process_id.value}:{handle}",
                 app=f"""PID {process_id.value}""",
                 title=title.value,
                 minimized=bool(_USER32.IsIconic(handle)),

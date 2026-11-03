@@ -10,9 +10,10 @@ from stackops.utils.cloud.onedrive.auth import encoded_remote_path, graph_header
 from stackops.utils.cloud.onedrive.constants import GRAPH_BASE
 from stackops.utils.cloud.onedrive.errors import OneDriveError
 from stackops.utils.cloud.onedrive.output import json_output
+from stackops.utils.cli_utils.interaction import require_interactive
 
 
-def download_file(account_name: str, remote_path: str, local_path: Path) -> None:
+def download_file(account_name: str, remote_path: str, local_path: Path, output_json: bool) -> None:
     if local_path.exists():
         raise OneDriveError(f"Local target already exists: {local_path}")
     encoded_path = encoded_remote_path(remote_path)
@@ -46,7 +47,10 @@ def download_file(account_name: str, remote_path: str, local_path: Path) -> None
     finally:
         temporary_path.unlink(missing_ok=True)
 
-    typer.echo(f"Downloaded {remote_path} to {local_path}")
+    if output_json:
+        json_output({"status": "completed", "account": account_name, "remote_path": remote_path, "local_path": str(local_path.resolve())})
+    else:
+        typer.echo(f"Downloaded {remote_path} to {local_path}")
 
 
 def upload_file(account_name: str, local_path: Path, remote_path: str, overwrite: bool) -> None:
@@ -77,6 +81,8 @@ def upload_file(account_name: str, local_path: Path, remote_path: str, overwrite
 
 
 def delete_item(account_name: str, remote_path: str, yes: bool) -> None:
+    if not yes:
+        require_interactive("OneDrive deletion confirmation; pass --yes")
     encoded_path = encoded_remote_path(remote_path)
     if encoded_path == "":
         raise OneDriveError("Refusing to delete the OneDrive root.")

@@ -15,8 +15,8 @@ def sync(
         str | None,
         typer.Option("--password", "-p", help="Symmetric GPG encryption password for entries with encryption: symmetric."),
     ] = None,
-    password_file: Annotated[Path | None, typer.Option("--password-file", help="Read password from a file, or - for stdin.")] = None,
-    password_env: Annotated[str | None, typer.Option("--password-env", help="Read password from this environment variable name.")] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-F", help="Read password from a file, or - for stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Read password from this environment variable name.")] = None,
     which: Annotated[
         str | None, typer.Option("--which", "-w", help="📝 Comma-separated list of items to process (from mapper/data.yaml), or 'all' for all items")
     ] = None,
@@ -184,12 +184,15 @@ def register_data(
         str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")
     ] = DEFAULT_OS_FILTER,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the registration receipt as JSON.")] = False,
 ) -> None:
     zip_ = not no_zip
     rel2home: bool | None = False if absolute_path else None
     from stackops.scripts.python.helpers.helpers_cloud.backup_registration import register_backup_entry
     from stackops.scripts.python.helpers.helpers_devops.cli_data_display import show_registration_summary
 
+    if json_output and interactive:
+        raise typer.BadParameter("--json cannot be combined with --interactive.")
     if interactive:
         path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os = _prompt_register_data_options(
             path_local=path_local,
@@ -223,7 +226,12 @@ def register_data(
         msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)
         typer.echo(msg)
         raise typer.Exit(code=1)
-    show_registration_summary(registration)
+    if json_output:
+        import json
+
+        typer.echo(json.dumps(registration, indent=2, default=str))
+    else:
+        show_registration_summary(registration)
 
 
 def get_app() -> typer.Typer:

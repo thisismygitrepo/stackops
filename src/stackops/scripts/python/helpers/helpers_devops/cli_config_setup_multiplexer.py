@@ -2,6 +2,7 @@ from typing import Annotated
 
 import typer
 
+from stackops.utils.cli_utils.interaction import require_interactive
 from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer, SessionMultiplexer
 
 MULTIPLEXER_SETUP_HELP = "Select the default session and agent multiplexers and save them in the StackOps config."
@@ -26,6 +27,8 @@ def setup_multiplexer(
     from stackops.utils.managed_files import get_managed_file_spec
     from stackops.utils.schemas.config.multiplexer_types import AGENT_MULTIPLEXERS, SESSION_MULTIPLEXERS
 
+    if session is None or agent is None:
+        require_interactive("Select multiplexers; supply both --session NAME and --agent NAME")
     existing_config = load_stackops_config_for_setup()
     configured_session = existing_config.get("default_session_multiplexer") if existing_config is not None else None
     configured_agent = existing_config.get("default_agent_multiplexer") if existing_config is not None else None

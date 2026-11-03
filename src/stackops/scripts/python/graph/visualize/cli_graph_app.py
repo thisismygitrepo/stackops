@@ -53,33 +53,14 @@ def dot(
     max_depth: Annotated[int | None, typer.Option("--max-depth", "-d", help="Limit depth of the graph")] = None,
 ) -> None:
     """Export the graph as Graphviz DOT."""
-    def func(output_str: str | None, include_help: bool, max_depth: int | None) -> None:
-        from pathlib import Path
-        from stackops.scripts.python.graph.visualize.dot_export import render_dot
+    from stackops.scripts.python.graph.visualize.dot_export import render_dot
 
-        output_path = Path(output_str) if output_str else None
-        dot_text = render_dot(max_depth=max_depth, include_help=include_help)
-
-        if output_path is None:
-            print(dot_text)
-        else:
-            output_path.write_text(dot_text, encoding="utf-8")
-            print(f"Wrote {output_path}")
-
-    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
-
-    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
-
-    shell_script, _pyfile = get_shell_script_running_lambda_function(
-        lambda: func(
-            output_str=str(output) if output else None,
-            include_help=not no_include_help,
-            max_depth=max_depth,
-        ),
-        uv_with=uv_with,
-        uv_project_dir=uv_project_dir,
-    )
-    exit_then_run_shell_script(str(shell_script), strict=False)
+    dot_text = render_dot(max_depth=max_depth, include_help=not no_include_help)
+    if output is None:
+        typer.echo(dot_text)
+    else:
+        output.write_text(dot_text, encoding="utf-8")
+        typer.echo(f"""Wrote {output}""", err=True)
 
 
 def chart(
@@ -113,6 +94,9 @@ def chart(
 
 def navigate() -> None:
     """📚 NAVIGATE command structure with TUI"""
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("CLI navigator; use search --json for command discovery")
     def func() -> None:
         from stackops.scripts.python.graph.visualize.helpers_navigator.devops_navigator import main as main_devops_navigator
         main_devops_navigator()
@@ -130,7 +114,7 @@ def search(
         bool,
         typer.Option("--json", "-j", help="Print all matching entries as a JSON array without prompts or a picker."),
     ] = False,
-    non_interactive: Annotated[bool, typer.Option("--non-interactive", help="List matching commands without opening a picker.")] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="List matching commands without opening a picker.")] = False,
 ) -> None:
     from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
     from stackops.scripts.python.graph.visualize.cli_graph_search import search_cli_graph

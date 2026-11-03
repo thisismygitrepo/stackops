@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import typer
 
+from stackops.utils.cli_utils.interaction import require_interactive
 if TYPE_CHECKING:
     from rich.console import Console
 
@@ -28,6 +29,7 @@ def print_step(title: str, help_text: str, default: object | None = None) -> Non
 
 
 def ask_text(label: str, *, help_text: str, default: str | None = None, allow_empty: bool = False) -> str | None:
+    require_interactive(f"Enter {label}; use explicit command arguments and omit --interactive")
     print_step(title=label, help_text=help_text, default=default)
     console = _get_console()
     while True:
@@ -40,6 +42,7 @@ def ask_text(label: str, *, help_text: str, default: str | None = None, allow_em
 
 
 def ask_bool(label: str, *, help_text: str, default: bool) -> bool:
+    require_interactive(f"Choose {label}; use explicit command arguments and omit --interactive")
     print_step(title=label, help_text=help_text, default=default)
     return bool(typer.confirm(label, default=default))
 
@@ -60,9 +63,10 @@ def ask_choice[ChoiceT: str](label: str, *, help_text: str, choices: Sequence[Ch
 
 
 def confirm_summary(title: str, lines: Sequence[str]) -> None:
+    require_interactive("Confirm registration; use explicit command arguments and omit --interactive")
     from rich.panel import Panel
 
     console = _get_console()
     console.print(Panel("\n".join(lines), title=title, border_style="green", padding=(1, 2)))
     if not typer.confirm("Create or update this entry?", default=True):
-        raise typer.Exit(code=0)
+        raise typer.Exit(code=1)

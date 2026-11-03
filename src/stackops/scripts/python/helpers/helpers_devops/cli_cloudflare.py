@@ -3,9 +3,11 @@ from typing import Annotated
 import typer
 
 from stackops.utils.constants import IS_REPO_DEVELOPER
+from stackops.utils.cli_utils.interaction import is_interactive, require_interactive
 
 
 def switch_public_ip_address(
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print the final public IP and status as JSON.")] = False,
     wait_seconds: Annotated[float, typer.Option(..., "--wait", "-w", min=0.0, help="Seconds to wait between steps")] = 2.0,
     max_trials: Annotated[int, typer.Option(..., "--max-trials", "-m", min=1, help="Max number of switch attempts")] = 10,
     target_ip: Annotated[
@@ -15,13 +17,30 @@ def switch_public_ip_address(
     """🔁 Switch public IP address (Cloudflare WARP)"""
     import stackops.scripts.python.helpers.helpers_network.address_switch as helper
 
-    helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)
+    import json
+    import sys
+    import shutil
+    from contextlib import redirect_stdout
+
+    if output_json:
+        missing = [binary for binary in ("warp-cli", "ipinfo") if shutil.which(binary) is None]
+        if missing:
+            raise typer.BadParameter(f"Install these dependencies before using --json: {', '.join(missing)}.")
+    with redirect_stdout(sys.stderr if output_json else sys.stdout):
+        succeeded, address = helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)
+    if output_json:
+        typer.echo(json.dumps({"status": "completed" if succeeded else "failed", "ip": address or None}))
+    if not succeeded:
+        raise typer.Exit(1)
 
 
 def run_tunnel(
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Run without confirmation.")] = False,
     tunnel_name: Annotated[str | None, typer.Option("--tunnel-name", "-n", help="Name of the Cloudflare tunnel to run")] = None,
     background: Annotated[bool, typer.Option("--background", "-b", help="Run as a transient systemd service instead of in the foreground.")] = False,
 ) -> None:
+    if not yes:
+        require_interactive("Tunnel launch confirmation; pass --yes")
     import shlex
 
     tunnel_argument = shlex.quote(tunnel_name) if tunnel_name is not None else ""
@@ -51,11 +70,19 @@ sudo systemd-run \
 
     if IS_REPO_DEVELOPER:
         print_code(code, lexer="bash", desc="Run the Cloudflare tunnel")
-    if typer.confirm("Run the Cloudflare tunnel now?", default=False):
+    if not is_interactive():
+        code = code.replace("sudo ", "sudo -n ")
+    if yes or typer.confirm("Run the Cloudflare tunnel now?", default=False):
         exit_then_run_shell_script(code)
+    else:
+        raise typer.Abort()
 
 
-def reinstall_tunnel_service() -> None:
+def reinstall_tunnel_service(
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Reinstall without confirmation.")] = False,
+) -> None:
+    if not yes:
+        require_interactive("Tunnel service reinstallation confirmation; pass --yes")
     code = """
 devops software install --update cloudflared
 stackops_tunnel_home=$HOME
@@ -70,13 +97,20 @@ sudo $cloudflared_path --config $stackops_tunnel_home/.cloudflared/config.yml se
 
     if IS_REPO_DEVELOPER:
         print_code(code, lexer="bash", desc="Reinstall the Cloudflare tunnel service")
-    if typer.confirm("Reinstall the Cloudflare tunnel service now?", default=False):
+    if not is_interactive():
+        code = code.replace("sudo ", "sudo -n ")
+    if yes or typer.confirm("Reinstall the Cloudflare tunnel service now?", default=False):
         exit_then_run_shell_script(code)
+    else:
+        raise typer.Abort()
 
 
 def add_ip_exclusion_to_warp(
     ip: Annotated[str, typer.Option(..., "--ip", "-i", help="IP address(es) to exclude from WARP (Comma separated)")],
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Apply exclusions without confirmation.")] = False,
 ) -> None:
+    if not yes:
+        require_interactive("WARP exclusion confirmation; pass --yes")
     from ipaddress import IPv4Address, IPv6Address, ip_address
 
     ips: list[IPv4Address | IPv6Address] = []
@@ -106,9 +140,12 @@ sudo warp-cli connect
 
     if IS_REPO_DEVELOPER:
         print_code(code, lexer="bash", desc="code to achieve the goal")
-    yes = typer.confirm("Add the IP exclusions and restart WARP now?", default=False)
-    if yes:
+    if not is_interactive():
+        code = code.replace("sudo ", "sudo -n ")
+    if yes or typer.confirm("Add the IP exclusions and restart WARP now?", default=False):
         exit_then_run_shell_script(code)
+    else:
+        raise typer.Abort()
 
 
 def get_app() -> typer.Typer:

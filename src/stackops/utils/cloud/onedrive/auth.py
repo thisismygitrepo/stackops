@@ -1,4 +1,5 @@
 import time
+import json
 from collections.abc import Mapping
 from typing import IO, Literal, TypedDict, Unpack, cast
 from urllib.parse import quote
@@ -81,7 +82,7 @@ def encoded_remote_path(remote_path: str) -> str:
     return quote(remote_path.lstrip("/"), safe="/")
 
 
-def _authorization_pending(device_code: str, poll_interval: int, account_name: str, client_id: str) -> None:
+def _authorization_pending(device_code: str, poll_interval: int, account_name: str, client_id: str, output_json: bool) -> None:
     while True:
         response = send_request(
             "POST",
@@ -93,7 +94,10 @@ def _authorization_pending(device_code: str, poll_interval: int, account_name: s
         refresh_token = payload.get("refresh_token")
         if response.ok and isinstance(access_token, str) and access_token and isinstance(refresh_token, str) and refresh_token:
             save_refresh_token(account_name=account_name, client_id=client_id, refresh_token=refresh_token)
-            typer.echo(f"Authentication saved for OneDrive account {account_name}.")
+            if output_json:
+                typer.echo(json.dumps({"status": "authenticated", "account": account_name}))
+            else:
+                typer.echo(f"Authentication saved for OneDrive account {account_name}.")
             return
 
         oauth_error = payload.get("error")
@@ -107,7 +111,7 @@ def _authorization_pending(device_code: str, poll_interval: int, account_name: s
                 raise OneDriveError(_error_description(payload, "Authentication failed."))
 
 
-def authenticate(account_name: str) -> None:
+def authenticate(account_name: str, output_json: bool) -> None:
     credentials = load_credentials(account_name=account_name, require_refresh_token=False)
     client_id = credentials["client_id"]
     response = send_request("POST", DEVICE_ENDPOINT, data={"client_id": client_id, "scope": SCOPE_TEXT})
@@ -130,8 +134,11 @@ def authenticate(account_name: str) -> None:
     ):
         raise OneDriveError("Authentication returned an unexpected response.")
 
-    typer.echo(f"Open {verification_uri} and enter code {user_code}")
-    _authorization_pending(device_code=device_code, poll_interval=poll_interval, account_name=account_name, client_id=client_id)
+    if output_json:
+        typer.echo(json.dumps({"status": "authorization_required", "account": account_name, "verification_uri": verification_uri, "user_code": user_code, "expires_in": payload.get("expires_in"), "interval": poll_interval}))
+    else:
+        typer.echo(f"Open {verification_uri} and enter code {user_code}")
+    _authorization_pending(device_code=device_code, poll_interval=poll_interval, account_name=account_name, client_id=client_id, output_json=output_json)
 
 
 def refresh_access_token(account_name: str) -> str:

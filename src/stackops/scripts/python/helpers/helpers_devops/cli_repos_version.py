@@ -1,4 +1,6 @@
 import json
+import sys
+from contextlib import nullcontext, redirect_stdout
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Never, assert_never
 
@@ -124,7 +126,7 @@ def declare(
 
 def list_versions(
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
-    json_output: Annotated[bool, typer.Option("--json", help="Print declared versions as JSON.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print declared versions as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
     from stackops.scripts.python.helpers.helpers_repos.version_paths import resolve_workspace
@@ -146,7 +148,7 @@ def status(
     version: Annotated[str, typer.Argument(help="Version identifier to compare with current repository state.")],
     directory: Annotated[str | None, typer.Option("--directory", "-d", help="Workspace containing versions.json.")] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
-    json_output: Annotated[bool, typer.Option("--json", help="Print version comparison state as JSON.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print version comparison state as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
     from stackops.scripts.python.helpers.helpers_repos.version_constants import VERSIONS_FILE_NAME
@@ -174,7 +176,7 @@ def checkout(
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Preview checkout without changing repositories.")] = False,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing current sync settings.")] = None,
     password: Annotated[str | None, typer.Option("--password", "-p", help="Password for encrypted guard archives.")] = None,
-    json_output: Annotated[bool, typer.Option("--json", help="Print checkout results and recovery references as JSON.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print checkout results and recovery references as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_repos.version_capture import VersionOperationError
     from stackops.scripts.python.helpers.helpers_repos.version_checkout import checkout_declared_version
@@ -187,9 +189,10 @@ def checkout(
         path = repos_root.joinpath(VERSIONS_FILE_NAME)
         versions_file = load_versions_file(path=path, allow_missing=False)
         declared_version = find_declared_version(versions_file=versions_file, version=version)
-        results = checkout_declared_version(
-            repos_root=repos_root, declared_version=declared_version, dry_run=dry_run, specs_path=specs_path, pwd=password
-        )
+        with redirect_stdout(sys.stderr) if json_output else nullcontext():
+            results = checkout_declared_version(
+                repos_root=repos_root, declared_version=declared_version, dry_run=dry_run, specs_path=specs_path, pwd=password
+            )
     except (OSError, ValueError, VersionOperationError) as error:
         _abort(error)
     if json_output:

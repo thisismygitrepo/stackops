@@ -23,7 +23,7 @@ def pick_device(entries: list[DeviceEntry], header: str) -> DeviceEntry:
 def resolve_device(entries: list[DeviceEntry], query: str) -> DeviceEntry:
     query_value = query.strip()
     if query_value in {"?", ""}:
-        return pick_device(entries, header="Available devices")
+        raise RuntimeError("Provide an exact device path, key, or label, or use --interactive.")
     exact_matches = [
         entry
         for entry in entries
@@ -34,16 +34,5 @@ def resolve_device(entries: list[DeviceEntry], query: str) -> DeviceEntry:
     if len(exact_matches) == 1:
         return exact_matches[0]
     if len(exact_matches) > 1:
-        return pick_device(exact_matches, header="Multiple matches")
-    partial_matches = [
-        entry
-        for entry in entries
-        if query_value.lower() in entry.device_path.lower()
-        or query_value.lower() in entry.key.lower()
-        or (entry.label is not None and query_value.lower() in entry.label.lower())
-    ]
-    if len(partial_matches) == 1:
-        return partial_matches[0]
-    if len(partial_matches) > 1:
-        return pick_device(partial_matches, header="Multiple matches")
-    return pick_device(entries, header="Available devices")
+        raise RuntimeError("Multiple devices match; specify an exact device path or use --interactive.")
+    raise RuntimeError("No exact device match; use utils machine list-devices --json for identifiers.")

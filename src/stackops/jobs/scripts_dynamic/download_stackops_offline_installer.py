@@ -5,6 +5,8 @@
 
 from dataclasses import dataclass
 import json
+import os
+import sys
 from pathlib import Path
 import shutil
 import subprocess
@@ -45,8 +47,9 @@ def main() -> None:
 
 
 def download_installer(*, target_key: str | None, output_dir: Path | None) -> Path:
-    url_map = _load_url_map()
-    targets = _build_targets(url_map=url_map)
+    if target_key is None and (not sys.stdin.isatty() or not sys.stdout.isatty() or os.environ.get("STACKOPS_NON_INTERACTIVE", "").casefold() in {"1", "true", "yes"}):
+        raise RuntimeError("An explicit target is required without an interactive terminal. Use devops self download-installer --list --json.")
+    targets = load_installer_targets()
     if target_key is None:
         selected_target = _prompt_for_target(targets=targets)
     else:
@@ -84,7 +87,8 @@ def _parse_url_map(*, raw_json: str) -> dict[str, str | None]:
     return url_map
 
 
-def _build_targets(*, url_map: dict[str, str | None]) -> list[InstallerTarget]:
+def load_installer_targets() -> list[InstallerTarget]:
+    url_map = _load_url_map()
     return [InstallerTarget(pair=target_key, url=url_map[target_key]) for target_key in KNOWN_TARGETS]
 
 
@@ -128,7 +132,7 @@ def _download_and_extract(*, url: str, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="stackops_offline_installer_", dir=output_dir.parent) as temp_dir_string:
         download_dir = Path(temp_dir_string)
-        subprocess.run(["uvx", "gdown", url, "-O", f"{download_dir.as_posix()}/"], check=True)
+        subprocess.run(["uvx", "gdown", url, "-O", f"{download_dir.as_posix()}/"], stdout=sys.stderr, check=True)
         archive_path = _resolve_downloaded_archive(download_dir=download_dir)
         shutil.unpack_archive(str(archive_path), str(output_dir))
 

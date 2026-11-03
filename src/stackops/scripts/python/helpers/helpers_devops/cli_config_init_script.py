@@ -68,6 +68,10 @@ def init_script(
     which: Annotated[InitScriptKind, typer.Argument(help="init: shell init script, ia: interactive machine setup, live: setup straight from GitHub.")],
     run: Annotated[bool, typer.Option("--run", "-R", help="Run the script instead of printing it.")] = False,
 ) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    if run and which == "ia":
+        require_interactive("Run interactive machine setup; omit --run to print the script or use devops config setup commands")
     script = _read_init_script(which=which)
     if run:
         from stackops.utils.code import exit_then_run_shell_script

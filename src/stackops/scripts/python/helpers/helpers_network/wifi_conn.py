@@ -25,6 +25,7 @@ from typing import Protocol, cast
 from rich.prompt import Prompt
 
 from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import WifiNetwork, console, render_networks_table
+from stackops.utils.cli_utils.interaction import require_interactive
 
 
 class WifiPlatformModule(Protocol):
@@ -60,6 +61,7 @@ def get_available_networks() -> list[WifiNetwork]:
 
 
 def display_and_select_network() -> WifiNetwork | None:
+    require_interactive("WiFi network selection; pass --ssid")
     console.print("\n[blue]📡 Scanning for available WiFi networks...[/blue]")
 
     networks = get_available_networks()
@@ -131,11 +133,12 @@ def try_config_connection(config_ssid: str) -> bool:
         return True
 
     except Exception as error:
-        console.print(f"[red]❌ Error reading configuration: {error}[/red]")
+        console.print(f"[red]WiFi configuration or connection failed ({type(error).__name__}).[/red]")
         return False
 
 
 def manual_network_selection() -> bool:
+    require_interactive("WiFi network selection and authentication")
     network = display_and_select_network()
 
     if not network:

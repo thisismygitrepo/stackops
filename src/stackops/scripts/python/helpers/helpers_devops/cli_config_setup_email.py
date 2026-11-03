@@ -1,9 +1,24 @@
+import json
+import sys
+from pathlib import Path
+from typing import Annotated
+
 import typer
+
+from stackops.utils.cli_utils.interaction import is_interactive, require_interactive
 
 EMAIL_SETUP_HELP = "Select or create an SMTP profile and save the default recipient."
 
 
-def setup_email() -> None:
+def setup_email(
+    profile: Annotated[str | None, typer.Option("--profile", "-p", help="Use an existing SMTP profile by exact name.")] = None,
+    recipient: Annotated[str | None, typer.Option("--recipient", "-r", help="Default notification recipient.")] = None,
+    input_path: Annotated[Path | None, typer.Option("--input", "-i", help="Create an SMTP profile from JSON file or - for stdin.")] = None,
+    schema: Annotated[bool, typer.Option("--schema", "-S", help="Print the input JSON Schema without accessing configuration.")] = False,
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Write without confirmation; requires explicit profile/input and recipient.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print a receipt without credentials; never prompts.")] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run", "-d", help="Validate without writing configuration or secrets.")] = False,
+) -> None:
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
@@ -14,7 +29,6 @@ def setup_email() -> None:
         write_stackops_config,
     )
     from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_email_profile import (
-        NewEmailProfile,
         load_email_profiles,
         prompt_new_email_profile,
         write_new_email_profile,
@@ -22,15 +36,38 @@ def setup_email() -> None:
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_choice, ask_text
     from stackops.secrets.paths import SECRETS_DOFILE
     from stackops.utils.managed_files import get_managed_file_spec
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_setup_email_input import EMAIL_INPUT_SCHEMA, read_email_profile
 
+    if schema:
+        typer.echo(json.dumps(EMAIL_INPUT_SCHEMA, indent=2))
+        return
+    if profile is not None and input_path is not None:
+        raise typer.BadParameter("Choose --profile or --input, not both.")
+    if yes or json_output or not is_interactive():
+        if (profile is None and input_path is None) or recipient is None:
+            raise typer.BadParameter("Supply --profile NAME or --input FILE, and --recipient ADDRESS. Use --schema for new profiles.")
+        if not yes and not dry_run:
+            raise typer.BadParameter("Supply --yes to save without confirmation, or --dry-run to validate.")
+    if recipient is not None and not recipient.strip():
+        raise typer.BadParameter("--recipient must be non-empty.")
+    new_profile = read_email_profile(input_path) if input_path is not None else None
     config_path = get_managed_file_spec("config").user_path
     existing_config = load_stackops_config_for_setup()
     configured_profile = existing_config.get("default_email_config") if existing_config is not None else None
     configured_recipient = existing_config.get("default_email_address") if existing_config is not None else None
     secrets_file, email_profiles = load_email_profiles(secrets_path=SECRETS_DOFILE)
 
-    new_profile: NewEmailProfile | None = None
-    if email_profiles and typer.confirm("Use an existing SMTP profile?", default=True):
+    if new_profile is not None:
+        if secrets_file is not None and any(entry["name"].casefold() == new_profile["login"]["name"].casefold() for entry in secrets_file["entries"]):
+            raise typer.BadParameter("The new SMTP profile name already exists in the vault.")
+        selected_profile = new_profile["login"]["name"]
+        sender = new_profile["sender"]
+    elif profile is not None:
+        if profile not in email_profiles:
+            raise typer.BadParameter(f"No SMTP profile has the exact name {profile!r}.")
+        selected_profile = profile
+        sender = email_profiles[profile]
+    elif email_profiles and typer.confirm("Use an existing SMTP profile?", default=True):
         profile_names = tuple(sorted(email_profiles))
         default_profile = configured_profile if configured_profile in email_profiles else profile_names[0]
         selected_profile = ask_choice(
@@ -50,11 +87,13 @@ def setup_email() -> None:
         selected_profile = new_profile["login"]["name"]
         sender = new_profile["sender"]
 
-    recipient = ask_text(
-        "Default recipient",
-        help_text="Notifications use this address when a command does not provide a recipient.",
-        default=configured_recipient if configured_recipient is not None else sender,
-    )
+    if recipient is None:
+        require_interactive("Choose a notification recipient; supply --recipient ADDRESS")
+        recipient = ask_text(
+            "Default recipient",
+            help_text="Notifications use this address when a command does not provide a recipient.",
+            default=configured_recipient if configured_recipient is not None else sender,
+        )
     assert recipient is not None
 
     summary = Table.grid(padding=(0, 2))
@@ -66,10 +105,15 @@ def setup_email() -> None:
     summary.add_row("Default recipient", recipient)
     summary.add_row("Config", config_path.as_posix())
     summary.add_row("Secrets", SECRETS_DOFILE.as_posix())
-    console = Console()
+    console = Console(file=sys.stderr if json_output else sys.stdout)
     console.print(Panel(summary, title="Email Configuration", border_style="cyan", padding=(1, 2)))
-    if not typer.confirm("Write this configuration?", default=True):
-        raise typer.Exit(code=0)
+    if not yes and not dry_run:
+        require_interactive("Confirm email setup; supply --yes")
+        if not typer.confirm("Write this configuration?", default=True):
+            raise typer.Exit(code=1)
+    if dry_run:
+        typer.echo(json.dumps({"status": "validated", "profile": selected_profile, "recipient": recipient, "new_profile": new_profile is not None}) if json_output else "Email configuration validated; no files written.")
+        return
 
     if new_profile is not None:
         try:
@@ -83,4 +127,7 @@ def setup_email() -> None:
             "default_email_address": recipient,
         },
     )
-    console.print(Panel("Default email notifications are configured.", title="Configuration Saved", border_style="green", padding=(1, 2)))
+    if json_output:
+        typer.echo(json.dumps({"status": "configured", "profile": selected_profile, "recipient": recipient, "new_profile": new_profile is not None, "config_path": str(config_path)}))
+    else:
+        console.print(Panel("Default email notifications are configured.", title="Configuration Saved", border_style="green", padding=(1, 2)))

@@ -11,7 +11,7 @@ def main(
     resync: bool,
     delete: bool,
     verbose: bool,
-) -> None:
+) -> dict[str, str | bool]:
     from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import parse_cloud_source_target
     from stackops.utils.cloud.default_remote import DefaultRcloneRemoteConfigError
 
@@ -81,3 +81,4 @@ def main(
             show_command=verbose,
             show_progress=True,
         )
+    return {"status": "completed", "source": source, "target": target, "bisync": bisync}

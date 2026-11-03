@@ -77,7 +77,6 @@ def create_template(name: str | None, num_tabs: int) -> None:
     layout_stem = "layout" if name is None else name.removesuffix(LAYOUT_FILE_SUFFIX)
     layout_path = Path.cwd() / f"{layout_stem}{LAYOUT_FILE_SUFFIX}"
     if layout_path.exists():
-        print(f"❌ File {layout_path} already exists. Aborting to avoid overwriting.")
-        return
+        raise ValueError(f"File {layout_path} already exists; choose a different template name.")
     write_layouts_file(path=layout_path, layouts_file=file)
     print(f"✅ Created layout template at {layout_path}")

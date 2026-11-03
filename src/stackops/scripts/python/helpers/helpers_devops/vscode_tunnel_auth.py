@@ -11,7 +11,7 @@ def get_vscode_tunnel_provider(cli_data_dir: str | None) -> VscodeTunnelProvider
     if cli_data_dir is not None:
         command.extend(("--cli-data-dir", cli_data_dir))
 
-    result: subprocess.CompletedProcess[str] = subprocess.run(command, capture_output=True, text=True, check=False)
+    result: subprocess.CompletedProcess[str] = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False, timeout=15)
     output = result.stdout.strip()
     match output:
         case "not logged in":

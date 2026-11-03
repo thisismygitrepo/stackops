@@ -62,6 +62,7 @@ def _choose_backend_interactively() -> BACKENDS:
 
 
 def preview(
+    ctx: typer.Context,
     path: Annotated[str, typer.Argument(help="path of file to read.")] = ".",
     project_path: Annotated[str | None, typer.Option("--project", "-p", help="specify uv project to use")] = None,
     uv_with: Annotated[str | None, typer.Option("--uv-with", "-w", help="specify uv with packages to use")] = None,
@@ -69,9 +70,15 @@ def preview(
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="select the backend interactively")] = False,
     profile: Annotated[str | None, typer.Option("--profile", "-r", help="ipython profile to use, defaults to default profile.")] = None,
     stackops_project: Annotated[bool, typer.Option("--self", "-s", help="specify stackops project to use.")] = False,
-    frozen: Annotated[bool, typer.Option("--frozen", "-f", help="freeze the environment (no package changes allowed)")] = False
+    frozen: Annotated[bool, typer.Option("--frozen", "-f", help="freeze the environment (no package changes allowed)")] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="Disable interactive backends; use --backend preview.")] = False,
 ) -> None:
     """Preview files and launch reader backends."""
+    from stackops.utils.cli_utils.interaction import configure_interaction, require_interactive
+
+    configure_interaction(ctx=ctx, non_interactive=non_interactive)
+    if interactive or backend != "preview":
+        require_interactive("Interactive preview; use an explicit file and --backend preview for a finite preview")
     if stackops_project:
         if STACKOPS_REPO_DIR.exists():
             project_path = str(STACKOPS_REPO_DIR)

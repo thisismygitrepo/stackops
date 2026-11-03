@@ -26,7 +26,14 @@ def depoison(
     tui: Annotated[
         bool, typer.Option("--tui", "-t", help="Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.")
     ] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the reset plan and optional applied result as JSON.")] = False,
 ) -> None:
+    if json_output and (interactive or tui):
+        raise typer.BadParameter("--json cannot be combined with --interactive or --tui")
+    if interactive or tui:
+        from stackops.utils.cli_utils.interaction import require_interactive
+
+        require_interactive("Agent reset UI; use explicit selectors with --json")
     resolved_scope: CleanupScope
     match scope:
         case "workspace" | "w":
@@ -56,6 +63,7 @@ def depoison(
             apply=apply,
             interactive=interactive,
             verbose=verbose,
+            json_output=json_output,
         ),
         in_global=True,
         import_module=False,
@@ -69,7 +77,7 @@ def depoison(
 
 def _run_depoison(
     *, agent: str, directory: str, scope: CleanupScope, resource: str, recursive: bool,
-    match: str | None, apply: bool, interactive: bool, verbose: bool,
+    match: str | None, apply: bool, interactive: bool, verbose: bool, json_output: bool,
 ) -> None:
     from pathlib import Path
 
@@ -86,14 +94,16 @@ def _run_depoison(
     )
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_output import render_cleanup_plan, render_cleanup_result
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_plan import build_cleanup_plan
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupRemoval
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resources import collect_cleanup_resources
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_workspace import collect_workspace_resources, resolve_cleanup_resources
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.discovery import collect_hooks
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import resolve_doctor_definitions
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning import create_doctor_context
+    from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
 
-    console = Console()
+    console = Console(stderr=json_output)
     error_console = Console(stderr=True)
     try:
         selection = CleanupSelection(agent=agent, directory=directory, scope=scope, resource=resource, match=match, recursive=recursive)
@@ -120,6 +130,18 @@ def _run_depoison(
                     diagnostics=tuple(diagnostic for item in inventories for diagnostic in item.diagnostics),
                 )
             plan = build_cleanup_plan(inventory=inventory, scope=selection.scope, match=selection.match, home_directory=context.home_directory)
+            if json_output:
+                result = None
+                if apply and not plan.blockers:
+                    result = apply_cleanup_plan(plan=plan, home_directory=context.home_directory)
+                emit_agent_json({
+                    "applied": apply and not plan.blockers, "selection": selection,
+                    "plan": {"entries": plan.entries, "changes": [
+                        {"path": change.path, "action": "remove" if isinstance(change, CleanupRemoval) else "edit"}
+                        for change in plan.changes
+                    ], "blockers": plan.blockers}, "result": result,
+                })
+                raise SystemExit(1 if plan.blockers else 0)
             if interactive:
                 console.rule("Step 3/4 · Review the reset plan", style="cyan")
             render_cleanup_plan(

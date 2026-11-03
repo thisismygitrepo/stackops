@@ -9,7 +9,9 @@ from stackops.utils.cli_utils.ordered_group import ordered_group
 def config() -> None:
     """🤖 <I> interactive configuration of machine."""
     from stackops.scripts.python.helpers.helpers_devops.interactive import main
+    from stackops.utils.cli_utils.interaction import require_interactive
 
+    require_interactive("Run configuration wizard; use named devops software and devops config subcommands")
     main()
 
 

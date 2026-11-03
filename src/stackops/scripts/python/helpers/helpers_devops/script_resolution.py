@@ -64,6 +64,10 @@ def _fetch_dynamic_script(name: str) -> Path:
 
 
 def resolve_script(*, ctx: typer.Context, name: str, source: SCRIPT_SOURCE, interactive: bool, allow_dynamic: bool) -> Path:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    if interactive:
+        require_interactive("Select a script; supply an exact name/path and omit --interactive")
     if not interactive and not name:
         typer.echo("❌ ERROR: You must provide a script name or use --interactive to select a script.", err=True)
         raise typer.Exit(code=1)

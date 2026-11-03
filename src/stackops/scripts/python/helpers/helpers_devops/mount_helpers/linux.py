@@ -17,6 +17,7 @@ MountBackend: TypeAlias = Literal["mount", "dislocker", "udisksctl"]
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.selection import pick_device
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.utils import as_str
+from stackops.utils.cli_utils.interaction import is_interactive, require_interactive
 
 CRYPT_DEVICE_LOOKUP_ATTEMPTS = 5
 CRYPT_DEVICE_LOOKUP_DELAY_SECONDS = 0.2
@@ -102,7 +103,7 @@ def _wait_for_crypt_device(part_name: str) -> str | None:
     return None
 
 
-def _mount_udisksctl_linux(device_path: str, read_only: bool) -> None:
+def _mount_udisksctl_linux(device_path: str, read_only: bool, key_file: Path | None) -> None:
     part_name = Path(device_path).name
     map_dev = _find_crypt_device(part_name)
     if map_dev is not None:
@@ -111,26 +112,39 @@ def _mount_udisksctl_linux(device_path: str, read_only: bool) -> None:
             target = run_command(["findmnt", "-nro", "TARGET", map_dev])
             print(f"Already mounted: {map_dev} at {target.stdout.strip()}")
             return
+    if key_file is None:
+        require_interactive("Encrypted device authentication; pass --key-file")
     print(f"Unlocking {device_path} (you may be prompted for BitLocker and Linux account passwords)...")
     unlock_cmd = ["udisksctl", "unlock", "-b", device_path]
+    if key_file is not None:
+        unlock_cmd.extend(["--key-file", str(key_file)])
+    if not is_interactive():
+        unlock_cmd.append("--no-user-interaction")
     if read_only:
         unlock_cmd.append("--read-only")
-    ensure_ok(run_command_interactive(unlock_cmd), "udisksctl unlock")
+    runner = run_command_interactive if key_file is None else run_command
+    ensure_ok(runner(unlock_cmd), "udisksctl unlock")
     map_dev = _wait_for_crypt_device(part_name)
     if map_dev is None:
         raise RuntimeError("Could not find mapped cleartext device after unlock")
     print(f"Mounting {map_dev}...")
-    ensure_ok(run_command_interactive(["udisksctl", "mount", "-b", map_dev]), "udisksctl mount")
+    mount_cmd = ["udisksctl", "mount", "-b", map_dev]
+    if not is_interactive():
+        mount_cmd.append("--no-user-interaction")
+    ensure_ok(runner(mount_cmd), "udisksctl mount")
 
 
-def _mount_bitlocker_linux(device_path: str, mount_point: str, read_only: bool) -> None:
+def _mount_bitlocker_linux(device_path: str, mount_point: str, read_only: bool, key_file: Path | None) -> None:
     print("🔒 BitLocker volume detected.")
-    method = input("Unlock method?\n  [1] Paste password\n  [2] Path to recovery key / BEK file\nChoice [1]: ").strip() or "1"
+    if key_file is None:
+        require_interactive("BitLocker authentication; pass --key-file with a recovery key / BEK file")
+        method = input("Unlock method?\n  [1] Paste password\n  [2] Path to recovery key / BEK file\nChoice [1]: ").strip() or "1"
+        if method == "2":
+            key_file = Path(input("Path to key file: ").strip())
     dislocker_dir = Path(tempfile.mkdtemp(prefix="dislocker_"))
     ro_flags = ["-r"] if read_only else []
-    if method == "2":
-        key_file = input("Path to key file: ").strip()
-        dislocker_cmd = ["dislocker", *ro_flags, device_path, "-f", key_file, "--", str(dislocker_dir)]
+    if key_file is not None:
+        dislocker_cmd = ["dislocker", *ro_flags, device_path, "-f", str(key_file), "--", str(dislocker_dir)]
     else:
         password = getpass.getpass("BitLocker password: ")
         dislocker_cmd = ["dislocker", *ro_flags, device_path, f"-u{password}", "--", str(dislocker_dir)]
@@ -148,12 +162,15 @@ def _mount_bitlocker_linux(device_path: str, mount_point: str, read_only: bool) 
     print(f"🔓 BitLocker volume mounted at {mount_point} (dislocker temp dir: {dislocker_dir})")
 
 
-def mount_linux(entry: DeviceEntry, mount_point: str, read_only: bool, backend: MountBackend) -> None:
+def mount_linux(entry: DeviceEntry, mount_point: str, read_only: bool, backend: MountBackend, key_file: Path | None) -> None:
     if backend == "udisksctl":
-        _mount_udisksctl_linux(entry.device_path, read_only)
+        _mount_udisksctl_linux(entry.device_path, read_only, key_file)
         return
     if backend == "dislocker":
-        _mount_bitlocker_linux(entry.device_path, mount_point, read_only)
+        _mount_bitlocker_linux(entry.device_path, mount_point, read_only, key_file)
+        return
+    if entry.fs_type is not None and "bitlocker" in entry.fs_type.lower():
+        _mount_bitlocker_linux(entry.device_path, mount_point, read_only, key_file)
         return
     # backend == "mount"
     if entry.mount_point is not None and entry.mount_point != "":
@@ -173,7 +190,7 @@ def mount_linux(entry: DeviceEntry, mount_point: str, read_only: bool, backend: 
     if result.returncode != 0:
         err = (result.stderr + result.stdout).lower()
         if "bitlocker" in err:
-            _mount_bitlocker_linux(entry.device_path, mount_point, read_only)
+            _mount_bitlocker_linux(entry.device_path, mount_point, read_only, key_file)
             return
         ensure_ok(result, "mount")
 

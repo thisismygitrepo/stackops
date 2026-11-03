@@ -77,6 +77,7 @@ def trace_sessions_for_backend(
     every_seconds: float,
     exit_code: int | None,
     kill: bool,
+    json_output: bool,
 ) -> None:
     _validate_trace_options(
         backend=backend,
@@ -101,6 +102,7 @@ def trace_sessions_for_backend(
         exit_code=exit_code,
         kill=kill,
         snapshot_loader=_get_trace_loader(backend=backend),
+        json_output=json_output,
     )
 
 
@@ -118,6 +120,7 @@ def trace_session_for_backend(
         every_seconds=every_seconds,
         exit_code=exit_code,
         kill=False,
+        json_output=False,
     )
 
 

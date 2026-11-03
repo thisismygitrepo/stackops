@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+from stackops.utils.cli_utils.interaction import is_interactive
 from typing import cast
 
 
@@ -54,6 +55,9 @@ def _remote_argument(argument: str) -> str:
 def run_host_command(
     command: tuple[str, ...], host: str | None, capture_output: bool, interactive: bool, timeout_seconds: int | None
 ) -> subprocess.CompletedProcess[str]:
+    interactive = interactive and is_interactive()
+    if not interactive and command and command[0] == "sudo" and "-n" not in command:
+        command = ("sudo", "-n", *command[1:])
     if host is None:
         local_command = [_local_argument(argument) for argument in command]
         return subprocess.run(local_command, capture_output=capture_output, text=True, check=False, timeout=timeout_seconds)
@@ -64,7 +68,7 @@ def run_host_command(
     if interactive:
         ssh_command.append("-tt")
     else:
-        ssh_command.extend(("-o", "BatchMode=yes"))
+        ssh_command.extend(("-o", "BatchMode=yes", "-o", "ConnectTimeout=15"))
     ssh_command.extend((host, remote_command))
     return subprocess.run(ssh_command, capture_output=capture_output, text=True, check=False, timeout=timeout_seconds)
 

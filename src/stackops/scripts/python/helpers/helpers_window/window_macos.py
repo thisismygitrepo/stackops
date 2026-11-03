@@ -69,7 +69,12 @@ def collect_windows() -> list[WindowEntry]:
                     continue
                 for index in range(api.CORE.CFArrayGetCount(windows)):
                     window = api.CORE.CFArrayGetValueAtIndex(windows, index)
+                    window_id = ct.c_uint32()
+                    api.check_error(api.AX._AXUIElementGetWindow(window, ct.byref(window_id)), "read a stable window identifier")
+                    if window_id.value == 0:
+                        raise RuntimeError(f"macOS did not provide a stable identifier for a window in {app['name']}.")
                     entry = WindowEntry(
+                        id=f"macos:{app['pid']}:{window_id.value}",
                         app=app["name"], title=api.read_title(window), minimized=api.read_boolean(window, "AXMinimized"),
                         apply_action=partial(_apply_action, app["pid"], window),
                     )

@@ -1,4 +1,6 @@
 from pathlib import Path
+from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentCreationResult, AgentsDirectoryConflict
+from stackops.utils.cli_utils.interaction import require_interactive
 
 from stackops.scripts.python.helpers.helpers_agents.agents_edit_source import choose_edit_source
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import (
@@ -24,7 +26,15 @@ def run_parallel_from_yaml(
     edit: bool,
     add_entry: bool,
     show_parallel_yaml_format: bool,
-) -> None:
+    on_directory_conflict: AgentsDirectoryConflict,
+    json_output: bool,
+) -> list[AgentCreationResult]:
+    if edit:
+        require_interactive("Editing parallel workflow configuration")
+    if config_name is None and not (edit or add_entry or show_parallel_yaml_format):
+        if json_output:
+            raise ValueError("RUN_NAME is required with --json")
+        require_interactive("Choosing a parallel workflow; supply RUN_NAME")
     if add_entry and not edit and parallel_yaml_path is None and source in ("all", "a"):
         source = "workspace"
     yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, source=source)
@@ -45,7 +55,7 @@ def run_parallel_from_yaml(
             import typer
 
             typer.echo(parallel_yaml_format_explanation(yaml_paths=yaml_locations))
-        return
+        return []
     if edit:
         _edit_existing_parallel_yaml_files(yaml_locations=yaml_locations)
     if show_parallel_yaml_format:
@@ -55,7 +65,7 @@ def run_parallel_from_yaml(
 
     empty_overrides = empty_parallel_create_values()
     if (edit or show_parallel_yaml_format) and config_name is None and overrides == empty_overrides:
-        return
+        return []
 
     yaml_entries = _read_existing_parallel_yaml_entries(yaml_locations=yaml_locations)
     selected_entries = select_parallel_create_values_from_locations(yaml_entries=yaml_entries, requested_name=config_name)
@@ -63,6 +73,10 @@ def run_parallel_from_yaml(
     resolved_entries: list[tuple[str, ResolvedParallelCreateValues]] = []
     for selected_name, base_values in selected_entries:
         resolved = merge_parallel_create_values(base=base_values, overrides=overrides)
+        if resolved.interactive:
+            require_interactive("Interactive parallel workflow")
+            if json_output:
+                raise ValueError("--json cannot be combined with an interactive workflow")
         if not resolved.interactive:
             require_explicit_parallel_context(selected_name=selected_name, resolved=resolved)
         resolved_entries.append((selected_name, resolved))
@@ -70,6 +84,7 @@ def run_parallel_from_yaml(
 
     from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create
 
+    results: list[AgentCreationResult] = []
     for _selected_name, resolved in resolved_entries:
         if resolved.interactive:
             from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main import main
@@ -95,9 +110,10 @@ def run_parallel_from_yaml(
                 output_path=resolved.output_path,
                 agents_dir=resolved.agents_dir,
                 save_as_yaml=False,
+                on_directory_conflict=on_directory_conflict,
             )
             continue
-        agents_create(
+        results.append(agents_create(
             agent=resolved.agent,
             model=resolved.model,
             reasoning=resolved.reasoning_effort,
@@ -119,7 +135,9 @@ def run_parallel_from_yaml(
             agents_dir=resolved.agents_dir,
             save_as_yaml=False,
             interactive=False,
-        )
+            on_directory_conflict=on_directory_conflict,
+        ))
+    return results
 
 
 def require_explicit_parallel_context(*, selected_name: str, resolved: ResolvedParallelCreateValues) -> None:

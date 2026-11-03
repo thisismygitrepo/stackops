@@ -186,7 +186,11 @@ def main(
     output_path: str | None = None,
     agents_dir: str | None = None,
     save_as_yaml: bool = False,
+    on_directory_conflict: AgentsDirectoryConflict,
 ) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("Interactive agent creation")
     collected = _collect_inputs(
         agent=agent,
         join_prompt_and_context=join_prompt_and_context,
@@ -232,4 +236,5 @@ def main(
         agents_dir=collected.agents_dir,
         save_as_yaml=save_as_yaml,
         interactive=False,
+        on_directory_conflict=on_directory_conflict,
     )

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
 
 import typer
+from stackops.utils.cli_utils.interaction import configure_interaction, is_interactive, require_interactive
 from typer.core import TyperGroup
 
 from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constants import FOLLOWUP_AGENT
@@ -229,8 +230,29 @@ def add_mcp(
             help="Edit MCP catalogs (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no MCP names are provided, exits after editing.",
         ),
     ] = False,
+    list_names: Annotated[bool, typer.Option("--list", "-l", help="List available MCP catalog names without installing.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the --list catalog names as JSON.")] = False,
 ) -> None:
     """Install MCP servers from StackOps catalogs or edit those catalogs."""
+    if json_output and not list_names:
+        raise typer.BadParameter("--json requires --list")
+    if list_names:
+        if edit or requested_mcp_servers is not None:
+            raise typer.BadParameter("--list cannot be combined with names or --edit")
+        from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names, resolve_mcp_catalog_locations
+        from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
+
+        try:
+            names = collect_available_mcp_names(locations=resolve_mcp_catalog_locations(source=source, custom_path=custom_path))
+        except ValueError as error:
+            raise typer.BadParameter(str(error)) from error
+        if json_output:
+            emit_agent_json(names)
+        else:
+            typer.echo("\n".join(names))
+        return
+    if edit or requested_mcp_servers is None:
+        require_interactive("Editing MCP catalogs or choosing names; supply MCP names or use --list --json")
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl import add_mcp as impl
 
@@ -393,6 +415,7 @@ def run_interactive(
     ] = None,
 ) -> None:
     """Launch an agent with reasonable defaults."""
+    require_interactive("Native agent chat; use agents ask or run-prompt --non-interactive")
     import shlex
 
     try:
@@ -454,7 +477,7 @@ def run_interactive(
                 command = build_sandbox_command(
                     command=command, options=sandbox_options, directory=Path.cwd(),
                     access=access, read_only_paths=read_only_paths,
-                    interactive=sys.stdin.isatty() and sys.stdout.isatty(),
+                    interactive=is_interactive(),
                 )
                 if is_windows_host():
                     script = "& " + " ".join(quote_for_shell(argument, is_windows=True) for argument in command)
@@ -479,6 +502,7 @@ def run_interactive(
 
 
 def run_prompt(
+    ctx: typer.Context,
     prompt: Annotated[
         list[str],
         typer.Argument(
@@ -604,7 +628,9 @@ def run_prompt(
     from stackops.utils.sandbox.options import SandboxOptions
 
     try:
-        non_interactive = non_interactive or not (sys.stdin.isatty() and sys.stdout.isatty())
+        non_interactive = non_interactive or not is_interactive()
+        if non_interactive:
+            configure_interaction(ctx=ctx, non_interactive=True)
         if non_interactive and (interactive or edit):
             raise ValueError("--interactive and --edit require an interactive terminal and cannot be combined with --non-interactive.")
         with _agent_working_directory(second_brain=second_brain) as working_directory:
@@ -706,8 +732,31 @@ def add_skill(
         bool,
         typer.Option("--yes", "-y", help="Pass --yes to the upstream skills CLI."),
     ] = False,
+    list_names: Annotated[bool, typer.Option("--list", "-l", help="List supported skills without installing or writing a reference file.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the --list skill catalog as JSON.")] = False,
 ) -> None:
     """Install a skill or generate the supported-skill reference."""
+    if json_output and not list_names:
+        raise typer.BadParameter("--json requires --list")
+    if list_names:
+        if skill_name is not None or reference:
+            raise typer.BadParameter("--list cannot be combined with names or --reference")
+        from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import supported_agent_skill_names, get_agent_skill_source
+        from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
+
+        sources = {name: get_agent_skill_source(skill_name=name) for name in supported_agent_skill_names()}
+        catalog = {name: source for name, source in sources.items() if group is None or source.group == group}
+        if group is not None and not catalog:
+            raise typer.BadParameter(f"Unknown skill group: {group}")
+        if json_output:
+            emit_agent_json(catalog)
+        else:
+            typer.echo("\n".join(catalog))
+        return
+    if skill_name is None and not reference:
+        require_interactive("Choosing skills; supply skill names or use --list --json")
+    if not is_interactive():
+        yes = True
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_skill_impl import add_skill as impl
 
@@ -759,6 +808,7 @@ def doctor(
     if json_output and tui:
         raise typer.BadParameter("--json cannot be combined with --tui.", param_hint="--json")
     if tui:
+        require_interactive("Agent doctor terminal UI; use --json")
         from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
 
         launch_agent_tui(
@@ -787,6 +837,7 @@ def get_app() -> typer.Typer:
         add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
+    agents_app.callback()(configure_interaction)
     agents_app.command(
         "parallel", help="🧵 <p> Parallel agent workflow commands", short_help="🧵 <p> Parallel agent workflow commands", context_settings=_NESTED_APP_CONTEXT
     )(parallel_group)

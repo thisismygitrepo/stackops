@@ -18,11 +18,16 @@ def web_file_explorer(
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Expose the share server over the internet using ngrok")] = False,
     backend: Annotated[str, typer.Option("--backend", "-b", help="Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing")] = "miniserve",
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
+    background: Annotated[bool, typer.Option("--background", "-B", help="Keep the server running after this command exits.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print ready URLs, process IDs, and log files as JSON.")] = False,
+    timeout: Annotated[float, typer.Option("--timeout", "-T", min=1, help="Seconds to wait for each service to become ready.")] = 30.0,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read access password from a file; '-' reads stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the access password.")] = None,
 ) -> None:
-    import shlex
-    from stackops.utils.accessories import display_with_flashy_style
+    import subprocess
     from stackops.secrets.readers import read_quick_password
-    from stackops.utils.installer_utils.installer_cli import install_if_missing
+    from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency
+    from stackops.utils.cli_utils.secret_input import read_secret_input
 
     if backend not in ["filebrowser", "miniserve", "qrcp", "easy-sharing"]:
         typer.echo(f"❌ ERROR: Invalid backend '{backend}'. Must be one of: filebrowser, miniserve, qrcp, easy-sharing", err=True)
@@ -39,7 +44,7 @@ def web_file_explorer(
         raise typer.Exit(code=1)
 
     auth_supported = backend in ["filebrowser", "miniserve", "easy-sharing"]
-    if no_auth and (username is not None or password is not None):
+    if no_auth and (username is not None or password is not None or password_file is not None or password_env is not None):
         typer.echo("❌ ERROR: --no-auth cannot be combined with --username or --password.", err=True)
         raise typer.Exit(code=1)
     if not no_auth and not auth_supported:
@@ -48,6 +53,8 @@ def web_file_explorer(
 
     auth_username: str | None = None
     auth_password: str | None = None
+    if password_file is not None or password_env is not None:
+        password = read_secret_input(value=password, file=password_file, env=password_env, prompt="Share access password")
     if not no_auth:
         import getpass
 
@@ -63,9 +70,9 @@ def web_file_explorer(
             raise typer.Exit(code=1)
 
     if install_missing_dependencies:
-        install_if_missing(which=backend, binary_name=None, verbose=True)
+        install_service_dependency(backend)
     if over_internet and install_missing_dependencies:
-        install_if_missing(which="ngrok", binary_name=None, verbose=True)
+        install_service_dependency("ngrok")
 
     import stackops.utils.network.address as helper
     res = helper.select_lan_ipv4(prefer_vpn=False)
@@ -76,81 +83,47 @@ def web_file_explorer(
 
     protocol = "http"
     display_host = local_ip_v4 if bind_address == "0.0.0.0" else bind_address
-    display_with_flashy_style(msg=f"{protocol}://{display_host}:{selected_port}/", title="Local Network Share URL")
-
-    pre_commands: list[str] = []
+    pre_commands: list[list[str]] = []
     if backend == "filebrowser":
         db_path = Path.home().joinpath(".config/filebrowser/filebrowser.db")
         db_path.parent.mkdir(parents=True, exist_ok=True)
         if auth_username is None or auth_password is None:
-            server_command = shlex.join(["filebrowser", "--address", bind_address, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path), "--noauth"])
+            server_args = ["filebrowser", "--address", bind_address, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path), "--noauth"]
         else:
-            pre_commands.append(shlex.join(["filebrowser", "users", "add", auth_username, auth_password, "--database", str(db_path)]))
-            server_command = shlex.join(["filebrowser", "--address", bind_address, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path)])
+            pre_commands.append(["filebrowser", "users", "add", auth_username, auth_password, "--database", str(db_path)])
+            server_args = ["filebrowser", "--address", bind_address, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path)]
     elif backend == "miniserve":
         server_args = ["miniserve", "--port", str(selected_port), "--interfaces", bind_address]
         if auth_username is not None and auth_password is not None:
             server_args.extend(["--auth", f"{auth_username}:{auth_password}"])
         server_args.extend(["--upload-files", "--mkdir", "--enable-tar", "--enable-tar-gz", "--enable-zip", "--qrcode", str(path_obj)])
-        server_command = shlex.join(server_args)
     elif backend == "easy-sharing":
         server_args = ["easy-sharing", "--port", str(selected_port)]
         if auth_username is not None and auth_password is not None:
             server_args.extend(["--username", auth_username, "--password", auth_password])
         server_args.append(str(path_obj))
-        server_command = shlex.join(server_args)
     elif backend == "qrcp":
-        server_command = shlex.join(["qrcp", "--port", str(selected_port), "--bind", bind_address, str(path_obj)])
+        interfaces = helper.get_all_interface_ipv4_addresses()
+        interface = "any" if bind_address == "0.0.0.0" else next((entry.interface for entry in interfaces if entry.ipv4_address == bind_address), None)
+        if interface is None:
+            raise typer.BadParameter("The qrcp bind address must match a local network interface.")
+        server_args = ["qrcp", "--port", str(selected_port), "--interface", interface, "--fqdn", display_host, *(["--keep-alive"] if background else []), str(path_obj)]
     else:
         typer.echo(f"❌ ERROR: Unknown backend '{backend}'", err=True)
         raise typer.Exit(code=1)
 
-    if over_internet:
-        command_lines = [
-            *pre_commands,
-            f"{server_command} &",
-            "server_pid=$!",
-            """trap 'kill "$server_pid" 2>/dev/null' INT TERM EXIT""",
-            "sleep 1",
-            """if ! kill -0 "$server_pid" 2>/dev/null; then""",
-              """    wait "$server_pid""",
-            "    exit $?",
-            "fi",
-            shlex.join(["ngrok", "http", str(selected_port)]),
-        ]
-    else:
-        command_lines = [*pre_commands, server_command]
-    command = "\n".join(command_lines)
+    try:
+        for command in pre_commands:
+            result = subprocess.run(command, capture_output=True, text=True, check=False, timeout=timeout)
+            if result.returncode != 0:
+                raise RuntimeError(f"{backend} setup failed with code {result.returncode}.")
+    except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
+        typer.echo(f"Share setup failed ({type(error).__name__}).", err=True)
+        raise typer.Exit(1) from None
 
-    from stackops.utils.code import exit_then_run_shell_script
-    exit_then_run_shell_script(script=command, strict=False)
-    # import subprocess
-    # import time
-    # server_process: subprocess.Popen[bytes]
-    # server_process = subprocess.Popen(command, shell=True)
-    # processes = [server_process]
-    # if over_internet:
-    #     ngrok_process = subprocess.Popen(f"ngrok http {port}", shell=True)
-    #     processes.append(ngrok_process)
-    #     time.sleep(3)
-    #     try:
-    #         import requests
-    #         response = requests.get("http://localhost:4040/api/tunnels")
-    #         data = response.json()
-    #         public_url = data['tunnels'][0]['public_url']
-    #         print(f"🌐 Ngrok tunnel ready: {public_url}")
-    #     except Exception as e:
-    #         print(f"Could not retrieve ngrok URL: {e}")
-    
-    # try:
-    #     while True:
-    #         print(f"Share server ({backend}) is running. Press Ctrl+C to stop.")
-    #         time.sleep(2)
-    # except KeyboardInterrupt:
-    #     print("\nTerminating processes...")
-    #     for p in processes:
-    #         p.terminate()
-    #         p.wait()
+    from stackops.scripts.python.helpers.helpers_devops.network_service import run_network_service
+
+    run_network_service(name=backend, arguments=server_args, host=bind_address, port=selected_port, url=f"{protocol}://{display_host}:{selected_port}/", over_internet=over_internet, background=background, output_json=output_json, timeout=timeout, url_from_log=backend == "qrcp")
 
 
 def get_share_file_app() -> typer.Typer:

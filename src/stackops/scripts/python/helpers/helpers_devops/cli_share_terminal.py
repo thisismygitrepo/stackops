@@ -1,5 +1,6 @@
 
 from typing import Annotated
+from pathlib import Path
 import typer
 
 """
@@ -54,21 +55,20 @@ def share_terminal(
     ssl_ca: Annotated[str | None, typer.Option("--ssl-ca", "-A", help="SSL CA file path for client certificate verification")] = None,
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Expose the terminal over the internet using ngrok")] = False,
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
-
+    background: Annotated[bool, typer.Option("--background", "-B", help="Keep the server running after this command exits.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print ready URLs, process IDs, and log files as JSON.")] = False,
+    timeout: Annotated[float, typer.Option("--timeout", "-T", min=1, help="Seconds to wait for each service to become ready.")] = 30.0,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read access password from a file; '-' reads stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the access password.")] = None,
 ) -> None:
     from stackops.utils.source_of_truth import DOTFILES_SSL_ORIGIN_SERVER_CERT_PATH, DOTFILES_SSL_ORIGIN_SERVER_KEY_PATH
     from stackops.secrets.readers import read_quick_password
-    if install_missing_dependencies:
-        from stackops.utils.installer_utils.installer_cli import install_if_missing
-        install_if_missing(which="ttyd", binary_name=None, verbose=True)
-    if over_internet and install_missing_dependencies:
-        from stackops.utils.installer_utils.installer_cli import install_if_missing
-        install_if_missing(which="ngrok", binary_name=None, verbose=True)
-
-    from pathlib import Path
-    if no_auth and (username is not None or password is not None):
+    from stackops.utils.cli_utils.secret_input import read_secret_input
+    if no_auth and (username is not None or password is not None or password_file is not None or password_env is not None):
         print("❌ Error: --no-auth cannot be combined with --username or --password.")
         raise typer.Exit(code=1)
+    if password_file is not None or password_env is not None:
+        password = read_secret_input(value=password, file=password_file, env=password_env, prompt="Terminal access password")
     if not ssl and any(value is not None for value in (ssl_cert, ssl_key, ssl_ca)):
         print("❌ Error: --ssl-cert, --ssl-key, and --ssl-ca require --ssl.")
         raise typer.Exit(code=1)
@@ -119,7 +119,6 @@ def share_terminal(
 
     # Display the flashy terminal announcement  
     protocol = "https" if ssl else "http"
-    display_terminal_url(local_ip_v4, port, protocol)
     
     # Build ttyd command with SSL options
     ssl_args: list[str] = []
@@ -141,8 +140,6 @@ def share_terminal(
             start_command = "bash"
 
     import shlex
-    import subprocess
-    import time
     start_command_parts = shlex.split(start_command)
     if not start_command_parts:
         print("❌ Error: --start-command must not be empty.")
@@ -156,56 +153,13 @@ def share_terminal(
         ttyd_cmd.extend(["--credential", f"{username}:{password}"])
     ttyd_cmd.extend(["-t", """theme={"background": "black"}""", *start_command_parts])
 
-    processes: dict[str, subprocess.Popen[bytes]] = {}
-    try:
-        try:
-            processes["ttyd"] = subprocess.Popen(ttyd_cmd)
-        except FileNotFoundError:
-            print("❌ Error: ttyd was not found. Use --install-dep to install missing dependencies.")
-            raise typer.Exit(code=1) from None
+    from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency, run_network_service
 
+    if install_missing_dependencies:
+        install_service_dependency("ttyd")
         if over_internet:
-            try:
-                processes["ngrok"] = subprocess.Popen(["ngrok", "http", str(port)])
-            except FileNotFoundError:
-                print("❌ Error: ngrok was not found. Use --install-dep to install missing dependencies.")
-                raise typer.Exit(code=1) from None
-            time.sleep(3)
-            import json
-            from urllib import error, request
-
-            try:
-                with request.urlopen("http://127.0.0.1:4040/api/tunnels", timeout=5) as response:
-                    data = json.load(response)
-            except (error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
-                print(f"❌ Error: Could not retrieve ngrok URL: {exc}")
-                raise typer.Exit(code=1) from exc
-
-            tunnels = data.get("tunnels")
-            if not isinstance(tunnels, list) or len(tunnels) == 0:
-                print("❌ Error: Ngrok did not report any active tunnels.")
-                raise typer.Exit(code=1)
-            public_url = tunnels[0].get("public_url") if isinstance(tunnels[0], dict) else None
-            if not isinstance(public_url, str) or public_url == "":
-                print("❌ Error: Ngrok tunnel response did not include a public URL.")
-                raise typer.Exit(code=1)
-            print(f"🌐 Ngrok tunnel ready: {public_url}")
-
-        while True:
-            exited_processes = [f"{name} (exit code {process.returncode})" for name, process in processes.items() if process.poll() is not None]
-            if exited_processes:
-                print(f"❌ Error: Process exited unexpectedly: {', '.join(exited_processes)}")
-                raise typer.Exit(code=1)
-            print("Terminal server is running. Press Ctrl+C to stop.")
-            time.sleep(2)
-    except KeyboardInterrupt:
-        print("\nTerminating processes...")
-    finally:
-        for process in processes.values():
-            if process.poll() is None:
-                process.terminate()
-        for process in processes.values():
-            process.wait()
+            install_service_dependency("ngrok")
+    run_network_service(name="ttyd", arguments=ttyd_cmd, host="0.0.0.0", port=port, url=f"{protocol}://{local_ip_v4}:{port}", over_internet=over_internet, background=background, output_json=output_json, timeout=timeout, url_from_log=False)
 
 
 def main_with_parser() -> None:

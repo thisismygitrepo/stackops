@@ -22,7 +22,7 @@ def download(
     if output is not None and output_dir is not None:
         typer.echo("❌ Error: --output and --output-dir cannot be used together.", err=True)
         return None
-    typer.echo(f"    {url}")
+    typer.echo(f"    {url}", err=True)
 
     def _sanitize_candidate_filename(name: str) -> str | None:
         candidate = Path(name).name.strip()
@@ -104,9 +104,9 @@ def download(
                     download_buffer.extend(chunk)
                     downloaded += len(chunk)
                     progress = (downloaded / total_size) * 100
-                    typer.echo(f"\r⏬ Progress: {progress:.1f}% ({downloaded}/{total_size} bytes)", nl=False)
+                    typer.echo(f"\r⏬ Progress: {progress:.1f}% ({downloaded}/{total_size} bytes)", nl=False, err=True)
                 download_path.write_bytes(bytes(download_buffer))
-                typer.echo()
+                typer.echo(err=True)
     except requests.exceptions.RequestException as exception:
         typer.echo(f"❌ Download failed: {exception}", err=True)
         return None
@@ -114,26 +114,26 @@ def download(
         typer.echo(f"❌ File write error: {exception}", err=True)
         return None
 
-    typer.echo(f"✅ Downloaded to: {download_path}")
+    typer.echo(f"✅ Downloaded to: {download_path}", err=True)
     result_path: Path = download_path
     if decompress:
-        typer.echo(f"📦 Decompressing: {download_path}")
+        typer.echo(f"📦 Decompressing: {download_path}", err=True)
         base_name = download_path.name.split(".", maxsplit=1)[0]  # ouch decompresses all (e.g. .tar.gz) in one go.
         if base_name in {"", ".", ".."}:
             base_name = "extracted"
         extract_dir = download_path.parent / base_name
-        extract_dir.mkdir(parents=True, exist_ok=True)
         try:
+            extract_dir.mkdir(parents=True, exist_ok=True)
             subprocess.run(
                 ["ouch", "decompress", str(download_path), "--dir", str(extract_dir)],
                 check=True,
                 capture_output=True,
                 text=True,
             )
-            typer.echo(f"✅ Decompressed to: {extract_dir}")
+            typer.echo(f"✅ Decompressed to: {extract_dir}", err=True)
             if download_path.exists():
                 download_path.unlink()
-                typer.echo(f"🗑️  Removed archive: {download_path}")
+                typer.echo(f"🗑️  Removed archive: {download_path}", err=True)
             result_path = extract_dir
         except subprocess.CalledProcessError as exception:
             typer.echo(f"❌ Decompression failed: {exception.stderr}", err=True)
@@ -141,6 +141,9 @@ def download(
         except FileNotFoundError:
             typer.echo("❌ Error: ouch command not found. Please install ouch.", err=True)
             typer.echo("💡 Install with: cargo install ouch", err=True)
+            return None
+        except OSError as exception:
+            typer.echo(f"Decompression file error: {exception}", err=True)
             return None
 
     return result_path.resolve()

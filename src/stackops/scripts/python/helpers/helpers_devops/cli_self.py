@@ -91,8 +91,12 @@ uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} stackops
     import platform
 
     if platform.system() == "Windows":
-        from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function
+        from stackops.utils.code import run_shell_script, get_shell_script_running_lambda_function
 
+        shell_script = "\n".join(
+            f"""{line}\nif ($LASTEXITCODE -ne 0) {{ exit $LASTEXITCODE }}"""
+            for line in shell_script.splitlines() if line.strip()
+        )
         any_post = copy_assets or sync_configs or config_shell
         full_script = shell_script
         if any_post:
@@ -113,11 +117,13 @@ uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} stackops
                 uv_run_flags="",
             )
             full_script = shell_script + "\n" + uv_command
-        exit_then_run_shell_script(full_script, strict=True)
+        process = run_shell_script(full_script, display_script=True, clean_env=False)
+        if process.returncode:
+            raise typer.Exit(code=process.returncode)
     else:
         from stackops.utils.code import run_shell_script
 
-        proc = run_shell_script(shell_script, display_script=True, clean_env=False)
+        proc = run_shell_script("set -e\n" + shell_script, display_script=True, clean_env=False)
         if proc.returncode != 0:
             typer.echo(f"❌ Update script failed with return code {proc.returncode}")
             raise typer.Exit(code=proc.returncode)
@@ -132,7 +138,7 @@ uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} stackops
 def _install_stackops(dev: bool) -> None:
     import platform
 
-    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function, get_uv_command
+    from stackops.utils.code import run_shell_script, get_shell_script_running_lambda_function, get_uv_command
     from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
     stackops_path = STACKOPS_REPO_DIR
@@ -159,17 +165,27 @@ def _install_stackops(dev: bool) -> None:
             typer.echo(f"Cannot install editable stackops from {str(stackops_path)} because pyproject.toml is missing.")
             raise typer.Exit(code=1)
 
-        exit_then_run_shell_script(f"""
+        install_script = f"""
 cd "{str(stackops_path)}"
 {uv_command} sync --no-dev
 {uv_command} tool install --upgrade --python {STACKOPS_PYTHON_VERSION} --editable "{str(stackops_path)}"
 {uv_command2}
-""", strict=True)
+"""
     else:
-        exit_then_run_shell_script(rf"""
+        install_script = rf"""
 {uv_command} tool install --upgrade --python {STACKOPS_PYTHON_VERSION} "{STACKOPS_REQUIREMENT}"
 {uv_command2}
-""", strict=True)
+"""
+    if platform.system() == "Windows":
+        install_script = "$ErrorActionPreference = 'Stop'\n" + "\n".join(
+            f"""{line}\nif ($LASTEXITCODE -ne 0) {{ exit $LASTEXITCODE }}""" if line.lstrip().startswith("& ") else line
+            for line in install_script.splitlines()
+        )
+    else:
+        install_script = "set -e\n" + install_script
+    process = run_shell_script(install_script, display_script=True, clean_env=False)
+    if process.returncode:
+        raise typer.Exit(code=process.returncode)
 
 
 def install(dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False) -> None:

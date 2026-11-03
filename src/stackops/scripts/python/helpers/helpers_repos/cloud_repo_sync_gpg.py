@@ -17,4 +17,4 @@ def stop_repository_gpg_daemons(repo_root: Path) -> None:
     # Follow links from the active GnuPG home, and stop daemons only when their
     # key database resides in the repository being synced.
     if gpg_keybox_path.resolve().is_relative_to(repo_root.expanduser().resolve()):
-        subprocess.run(["gpgconf", "--homedir", gpg_home, "--kill", "all"], check=True)
+        subprocess.run(["gpgconf", "--homedir", gpg_home, "--kill", "all"], check=True, capture_output=True)

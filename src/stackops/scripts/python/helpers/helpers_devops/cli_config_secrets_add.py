@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import WritableSecretsSource
+from stackops.utils.cli_utils.interaction import is_interactive
 
 
 def add(
@@ -48,7 +49,7 @@ def add(
     if schema:
         _print_input_schema()
         return
-    if input_path is None and (non_interactive or json_output or not (sys.stdin.isatty() and sys.stdout.isatty())):
+    if input_path is None and (non_interactive or json_output or not is_interactive()):
         raise typer.BadParameter("Provide --input FILE or --input - for stdin. Use --schema to inspect the login JSON format.")
     if input_path == "-" and sys.stdin.isatty():
         raise typer.BadParameter("--input - requires piped or redirected JSON on stdin.")

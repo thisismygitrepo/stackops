@@ -1,3 +1,6 @@
+import json
+import sys
+from contextlib import nullcontext, redirect_stdout
 from pathlib import Path
 from typing import Annotated
 
@@ -7,6 +10,7 @@ import typer
 def count_lines_in_repo(
     repo_path: Annotated[str, typer.Argument(help="Path to the git repository")] = ".",
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository registry containing sync settings.")] = None,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print historical Python line totals as JSON.")] = False,
 ) -> None:
     resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
     if not resolved_repo_path.exists():
@@ -31,7 +35,10 @@ def count_lines_in_repo(
     from stackops.scripts.python.helpers.helpers_repos import repo_analyzer_1
 
     try:
-        repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix(), specs_path=specs_path)
+        with redirect_stdout(sys.stderr) if json_output else nullcontext():
+            total_lines = repo_analyzer_1.count_historical_line_edits(repo_path=resolved_repo_path.as_posix(), specs_path=specs_path)
+        if json_output:
+            typer.echo(json.dumps({"repository": str(resolved_repo_path), "historical_python_line_edits": total_lines}))
     except Exception as exc:
         typer.echo(f"❌ Error counting lines in repo {resolved_repo_path}: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -43,7 +50,11 @@ def print_python_files_by_size(repo_path: Annotated[str, typer.Argument(..., hel
     print_python_files_by_size_impl(repo_path=repo_path)
 
 
-def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")]) -> None:
+def analyze_repo_development(
+    repo_path: Annotated[str, typer.Argument(..., help="Path to the git repository")],
+    output_directory: Annotated[Path | None, typer.Option("--output-dir", "-o", help="Directory for generated analysis artifacts.")] = None,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print generated artifact paths as JSON.")] = False,
+) -> None:
     resolved_repo_path = Path(repo_path).expanduser().absolute().resolve()
     if not resolved_repo_path.exists():
         typer.echo(f"❌ Repository path does not exist: {resolved_repo_path}")
@@ -52,16 +63,28 @@ def analyze_repo_development(repo_path: Annotated[str, typer.Argument(..., help=
         typer.echo(f"❌ Repository path is not a directory: {resolved_repo_path}")
         raise typer.Exit(code=1)
 
-    def func(repo_path: str) -> None:
+    resolved_output = output_directory.expanduser().absolute() if output_directory is not None else Path.home().joinpath("tmp_results", "tmp_images", resolved_repo_path.name)
+
+    def func(repo_path: str, output_directory: Path, json_output: bool) -> None:
+        import json
+        import sys
+        from contextlib import nullcontext, redirect_stdout
+
         from stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2 import analyze_over_time
 
-        analyze_over_time(repo_path=repo_path)
+        with redirect_stdout(sys.stderr) if json_output else nullcontext():
+            artifacts = analyze_over_time(repo_path=repo_path, output_directory=output_directory)
+        if json_output:
+            print(json.dumps({"repository": repo_path, "artifacts": [str(path) for path in artifacts]}))
 
     from stackops.utils.code import run_lambda_function
     from stackops.utils.ssh_utils.abc import STACKOPS_VERSION
 
     stackops_plot_requirement = f"stackops[plot]>={STACKOPS_VERSION}"
-    run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix()), uv_project_dir=None, uv_with=[stackops_plot_requirement, "polars"])
+    with redirect_stdout(sys.stderr) if json_output else nullcontext():
+        result = run_lambda_function(lambda: func(repo_path=resolved_repo_path.as_posix(), output_directory=resolved_output, json_output=json_output), uv_project_dir=None, uv_with=[stackops_plot_requirement, "polars"])
+    if result.returncode != 0:
+        raise typer.Exit(code=result.returncode)
 
 
 def gource_viz(
@@ -98,7 +121,10 @@ def gource_viz(
 ) -> None:
     """🎬 Visualize repository activity using Gource."""
     from stackops.scripts.python.helpers.helpers_repos.grource import visualize
+    from stackops.utils.cli_utils.interaction import require_interactive
 
+    if output_file is None:
+        require_interactive("Display repository visualization; supply --output FILE to render an artifact")
     if self:
         repo_path = Path.home().joinpath("stackops")
         if not repo_path.exists():

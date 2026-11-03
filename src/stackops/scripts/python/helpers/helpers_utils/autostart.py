@@ -1,4 +1,6 @@
 import platform
+import json
+from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 import typer
@@ -64,11 +66,12 @@ def print_autostart_report(
     scope: AutostartScope | None,
     name: str | None,
     source: str | None,
+    output_json: bool,
 ) -> None:
     from rich.console import Console
 
     entries = collect_autostart_entries()
-    if not entries:
+    if not entries and not output_json:
         typer.echo("No auto-start entries found")
         return
     name_query = name.casefold() if name is not None else ""
@@ -81,6 +84,9 @@ def print_autostart_report(
         and source_query in entry.source.casefold()
     ]
     visible = [entry for entry in matching if show_all or not entry.stock]
+    if output_json:
+        typer.echo(json.dumps([asdict(entry) for entry in visible], indent=2))
+        return
     hidden_count = len(matching) - len(visible)
     console = Console()
     if visible:

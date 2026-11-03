@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 import typer
+from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
 
 
 def configure_second_brain(
@@ -39,7 +40,9 @@ def config(
     show_second_brain_config_result(instructions_path=instructions_path, action=action)
 
 
-def status() -> None:
+def status(
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print update records and activity as JSON.")] = False,
+) -> None:
     from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_activity import read_second_brain_git_activity
     from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import read_second_brain_updates
     from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_report import show_second_brain_status
@@ -55,11 +58,15 @@ def status() -> None:
         typer.echo(f"""Could not read Second Brain status: {error}""", err=True)
         raise typer.Exit(code=1) from error
 
-    show_second_brain_status(second_brain_root=second_brain_root, update_files=update_files, git_activity=git_activity, today=today)
+    if json_output:
+        emit_agent_json({"root": second_brain_root, "today": today, "update_files": update_files, "git_activity": git_activity})
+    else:
+        show_second_brain_status(second_brain_root=second_brain_root, update_files=update_files, git_activity=git_activity, today=today)
 
 
 def prune(
     apply: Annotated[bool, typer.Option("--apply", "-a", help="Delete the invalid updates shown in the preview.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the pruning plan or result as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import (
         prune_second_brain_updates,
@@ -77,6 +84,9 @@ def prune(
         typer.echo(f"""Could not prune Second Brain updates: {error}""", err=True)
         raise typer.Exit(code=1) from error
 
+    if json_output:
+        emit_agent_json({"root": second_brain_root, "applied": apply, "removed_rows": removed_rows, "scanned_file_count": len(update_files)})
+        return
     show_second_brain_prune_result(
         second_brain_root=second_brain_root,
         removed_rows=removed_rows,

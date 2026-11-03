@@ -157,9 +157,9 @@ def get_available_networks() -> list[WifiNetwork]:
                 f"[yellow]⚠️  WiFi scan completed on '{device_name}', but NetworkManager did not report any visible networks[/yellow]"
             )
     except subprocess.CalledProcessError as error:
-        console.print(f"[red]❌ Error scanning networks: {error}[/red]")
+        raise RuntimeError(f"WiFi scan failed with exit code {error.returncode}.") from None
     except Exception as error:
-        console.print(f"[red]❌ Unexpected error: {error}[/red]")
+        raise RuntimeError(f"WiFi scan failed: {error}") from error
 
     return deduplicate_networks(networks)
 
@@ -169,7 +169,7 @@ def connect(name: str, ssid: str) -> None:
 
     try:
         device_name = _ensure_linux_wifi_ready()
-        subprocess.run(["nmcli", "connection", "up", "id", name, "ifname", device_name], check=True)
+        run_text_command(["nmcli", "connection", "up", "id", name, "ifname", device_name], check=True)
         console.print("[green]✅ Connected successfully![/green]\n")
     except subprocess.CalledProcessError as error:
         console.print(f"[red]❌ Error connecting: {error}[/red]")
@@ -183,14 +183,13 @@ def connect_to_new_network(ssid: str, password: str) -> None:
     try:
         device_name = _ensure_linux_wifi_ready()
         try:
-            subprocess.run(["nmcli", "device", "wifi", "connect", ssid, "password", password, "ifname", device_name], check=True)
+            subprocess.run(["nmcli", "device", "wifi", "connect", ssid, "password", password, "ifname", device_name], check=True, capture_output=True, text=True)
             console.print("[green]✅ Connected successfully![/green]\n")
         except subprocess.CalledProcessError:
             create_new_connection(ssid, ssid, password)
             connect(ssid, ssid)
-    except Exception as error:
-        console.print(f"[red]❌ Failed to connect to {ssid}: {error}[/red]")
-        raise
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(f"WiFi connection failed with exit code {error.returncode}.") from None
 
 
 def display_available_networks() -> None:
@@ -231,9 +230,9 @@ def create_new_connection(name: str, ssid: str, password: str) -> None:
 
         if check_result.returncode == 0:
             console.print(f"[yellow]⚠️  Connection '{name}' already exists, deleting old one...[/yellow]")
-            subprocess.run(["nmcli", "connection", "delete", name], check=True)
+            run_text_command(["nmcli", "connection", "delete", name], check=True)
 
-        subprocess.run(
+        run_text_command(
             [
                 "nmcli",
                 "connection",
@@ -256,8 +255,7 @@ def create_new_connection(name: str, ssid: str, password: str) -> None:
 
         console.print("[green]✅ Connection created successfully![/green]\n")
     except subprocess.CalledProcessError as error:
-        console.print(f"[red]❌ Error creating connection: {error}[/red]")
-        raise
+        raise RuntimeError(f"WiFi profile creation failed with exit code {error.returncode}.") from None
     except Exception as error:
         console.print(f"[red]❌ Unexpected error: {error}[/red]")
         raise

@@ -83,6 +83,7 @@ def search(
 
 
 def load(
+    command: Annotated[str | None, typer.Option("--command", "-c", help="Run a quoted command with the selected environment. Parsed as arguments, without a shell.")] = None,
     terms: Annotated[
         list[str] | None,
         typer.Argument(
@@ -156,4 +157,4 @@ def load(
         preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,
         secret_tags=secret_tags, scopes=scopes, keys=keys,
     )
-    load_secrets(request, verbose=verbose)
+    load_secrets(request, verbose=verbose, command=command)

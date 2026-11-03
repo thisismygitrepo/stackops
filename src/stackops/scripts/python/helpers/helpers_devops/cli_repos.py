@@ -1,3 +1,6 @@
+import json
+import sys
+from contextlib import nullcontext, redirect_stdout
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -176,6 +179,7 @@ def clone(
         bool, typer.Option("--checkout-to-branch", "-b", help="Check out the branch recorded in the specification.")
     ] = False,
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="Password for guard archives; otherwise use GPG keys.")] = None,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print repository sync results as JSON.")] = False,
 ) -> None:
     """📥 Clone Git repositories and sync guard repositories from a specification."""
     if checkout_to_commit and checkout_to_branch:
@@ -184,6 +188,8 @@ def clone(
     if which is not None and interactive:
         typer.echo("❌ --which/-w cannot be combined with --interactive/-i.", err=True)
         raise typer.Exit(code=1)
+    if json_output and interactive:
+        raise typer.BadParameter("--json cannot be combined with --interactive.")
 
     checkout_branch_flag = checkout_to_branch
     checkout_commit_flag = checkout_to_commit
@@ -199,13 +205,17 @@ def clone(
         typer.echo(f"""❌ {error}""", err=True)
         raise typer.Exit(code=1) from error
     if not repos:
-        typer.echo("No repositories selected; nothing to sync.")
+        typer.echo(json.dumps({"repositories": []}) if json_output else "No repositories selected; nothing to sync.")
         return
 
-    results = clone_repos(
-        repos=repos, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag,
-        pwd=pwd,
-    )
+    with redirect_stdout(sys.stderr) if json_output else nullcontext():
+        results = clone_repos(
+            repos=repos, preferred_remote=None, checkout_branch_flag=checkout_branch_flag, checkout_commit_flag=checkout_commit_flag,
+            pwd=pwd,
+        )
+    if json_output:
+        typer.echo(json.dumps({"repositories": [{"name": repo["name"], "path": str(Path(repo["parentDir"]) / repo["name"]), "status": status, "message": message}
+                                                for repo, (status, message) in zip(repos, results, strict=True)]}, indent=2))
     if any(status == "failed" for status, _message in results):
         raise typer.Exit(code=1)
 
@@ -215,7 +225,7 @@ def checkout_command(
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """🔀 Check out specific commits listed in the specification."""
-    clone(specs_path=specs_path, which=None, interactive=False, checkout_to_commit=True, checkout_to_branch=False, pwd=pwd)
+    clone(specs_path=specs_path, which=None, interactive=False, checkout_to_commit=True, checkout_to_branch=False, pwd=pwd, json_output=False)
 
 
 def checkout_to_branch_command(
@@ -223,7 +233,7 @@ def checkout_to_branch_command(
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="Password for guard archives; otherwise use GPG keys.")] = None,
 ) -> None:
     """🔀 Check out the branch recorded in the specification."""
-    clone(specs_path=specs_path, which=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True, pwd=pwd)
+    clone(specs_path=specs_path, which=None, interactive=False, checkout_to_commit=False, checkout_to_branch=True, pwd=pwd, json_output=False)
 
 
 def get_app() -> typer.Typer:

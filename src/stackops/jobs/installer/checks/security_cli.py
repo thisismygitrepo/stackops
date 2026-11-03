@@ -61,7 +61,10 @@ def scan(
         raise typer.Exit(code=proc.returncode)
 
 
-def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to list")] = None) -> None:
+def list_apps(
+    apps: Annotated[str | None, typer.Argument(help="Optional comma-separated app names to list")] = None,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print installed app metadata as JSON.")] = False,
+) -> None:
     from rich.console import Console
     from rich.table import Table
 
@@ -73,6 +76,11 @@ def list_apps(apps: Annotated[str | None, typer.Argument(help="Optional comma-se
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     apps_to_scan = collect_apps_to_scan(app_names)
+    if json_output:
+        import json
+
+        typer.echo(json.dumps([{"name": path.stem, "version": version, "path": str(path)} for path, version in apps_to_scan]))
+        return
     if not apps_to_scan:
         typer.echo("No matching installed CLI apps found.", err=True)
         raise typer.Exit(code=1)

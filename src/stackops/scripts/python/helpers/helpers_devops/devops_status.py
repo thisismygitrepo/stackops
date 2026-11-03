@@ -37,7 +37,9 @@ def _run_status_tui(*, sections: tuple[StatusSection, ...]) -> None:
 
 
 def main(*, sections: Sequence[StatusSection], plain: bool) -> None:
-    if plain or not (sys.stdin.isatty() and sys.stdout.isatty()):
+    from stackops.utils.cli_utils.interaction import is_interactive
+
+    if plain or not is_interactive():
         from rich.console import Console
 
         from stackops.scripts.python.helpers.helpers_devops.devops_status_data import collect_status_section

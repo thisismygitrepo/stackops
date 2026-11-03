@@ -51,7 +51,7 @@ def show_registration_summary(registration: "BackupRegistrationResult") -> None:
 
 def display_data(
     source: Annotated[CONFIG_SOURCE_LOOSE, typer.Option("--source", "-s", help="Backup configuration sources: library, user, or all.")] = "all",
-    json_output: Annotated[bool, typer.Option("--json", help="Print selectors and complete entry definitions as JSON.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print selectors and complete entry definitions as JSON.")] = False,
 ) -> None:
     from rich import box
     from rich.console import Console

@@ -16,6 +16,19 @@ def create_from_function(
     from pathlib import Path
 
     path_obj = sanitize_path(path)
+    if not path_obj.is_file() or function is None or not function.strip():
+        from stackops.utils.cli_utils.interaction import is_interactive, require_interactive
+
+        if not is_interactive() and path_obj.is_file() and path_obj.suffix == ".py":
+            import ast
+
+            try:
+                module = ast.parse(path_obj.read_text(encoding="utf-8"), filename=str(path_obj))
+            except (OSError, SyntaxError) as error:
+                raise typer.BadParameter(f"Could not inspect script functions: {error}") from error
+            names = [node.name for node in module.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))]
+            raise typer.BadParameter(f"--function is required without an interactive terminal. Available callables: {', '.join(names) or '(none)'}. ")
+        require_interactive("Choosing a script/function; supply an exact --path FILE and --function NAME")
     if not path_obj.exists():
         suffixes = {".py"}
         choice_file = match_file_name(sub_string=path, search_root=Path.cwd(), suffixes=suffixes)

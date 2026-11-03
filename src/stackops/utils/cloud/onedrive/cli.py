@@ -1,5 +1,4 @@
 import shlex
-import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -7,6 +6,7 @@ import typer
 
 from stackops.secrets.paths import SECRETS_DOFILE
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+from stackops.utils.cli_utils.interaction import is_interactive, require_interactive
 
 
 ACCOUNT_NAME_HELP = "OneDrive CLI account name. Run 'cloud onedrive accounts' to list configured names. Omit to use the only configured account or enter it interactively."
@@ -21,12 +21,13 @@ def resolve_account_name(account_name: str | None, non_interactive: bool) -> str
     accounts = run_cli(lambda: list_defined_accounts(SECRETS_DOFILE))
     if len(accounts) == 1:
         return accounts[0].account_name
-    if non_interactive or not (sys.stdin.isatty() and sys.stdout.isatty()):
+    if non_interactive or not is_interactive():
         raise typer.BadParameter("Specify an account name; use 'cloud onedrive accounts --json' to list configured accounts.")
     return str(typer.prompt("OneDrive account name"))
 
 
 def add_account(
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print the added account receipt as JSON.")] = False,
     account_name: Annotated[
         str | None,
         typer.Argument(help="Unique name for this OneDrive account. Omit to enter it interactively."),
@@ -39,9 +40,18 @@ def add_account(
     from stackops.utils.cloud.onedrive.accounts import add_account as add_defined_account
     from stackops.utils.cloud.onedrive.errors import run_cli
 
+    if account_name is None or client_id is None:
+        if output_json:
+            raise typer.BadParameter("Provide the account name and --client-id with --json.")
+        require_interactive("Account setup; provide the account name and --client-id")
     resolved_account_name = str(typer.prompt("OneDrive account name")) if account_name is None else account_name
     resolved_client_id = str(typer.prompt("Microsoft Application (client) ID")) if client_id is None else client_id
     run_cli(lambda: add_defined_account(secrets_path=SECRETS_DOFILE, account_name=resolved_account_name, client_id=resolved_client_id))
+    if output_json:
+        from stackops.utils.cloud.onedrive.output import json_output
+
+        json_output({"account": resolved_account_name, "status": "added", "authentication": "required"})
+        return
     typer.echo(f"Added OneDrive CLI account {resolved_account_name!r} to {SECRETS_DOFILE}.")
     typer.echo(f"Next: cloud onedrive auth {shlex.quote(resolved_account_name)}")
 
@@ -66,12 +76,15 @@ def show_accounts(
     )
 
 
-def authenticate(account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None) -> None:
+def authenticate(
+    account_name: Annotated[str | None, typer.Argument(help=ACCOUNT_NAME_HELP)] = None,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Emit JSON Lines: authorization challenge, then authentication result after consent.")] = False,
+) -> None:
     from stackops.utils.cloud.onedrive.auth import authenticate as authenticate_account
     from stackops.utils.cloud.onedrive.errors import run_cli
 
-    resolved = resolve_account_name(account_name=account_name, non_interactive=False)
-    run_cli(lambda: authenticate_account(resolved))
+    resolved = resolve_account_name(account_name=account_name, non_interactive=output_json)
+    run_cli(lambda: authenticate_account(resolved, output_json))
 
 
 def show_status(
@@ -113,12 +126,13 @@ def download_file(
     remote_path: Annotated[str, typer.Argument(help="Remote file path.")],
     local_path: Annotated[Path, typer.Argument(help="New local file path.")],
     account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print the download receipt as JSON.")] = False,
 ) -> None:
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.file_ops import download_file as download_remote_file
 
-    resolved = resolve_account_name(account_name=account_name, non_interactive=False)
-    run_cli(lambda: download_remote_file(resolved, remote_path, local_path))
+    resolved = resolve_account_name(account_name=account_name, non_interactive=output_json)
+    run_cli(lambda: download_remote_file(resolved, remote_path, local_path, output_json))
 
 
 def upload_file(
@@ -139,6 +153,8 @@ def delete_item(
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip the confirmation prompt.")] = False,
     account_name: Annotated[str | None, typer.Option("--account", "-a", help=ACCOUNT_NAME_HELP)] = None,
 ) -> None:
+    if not yes:
+        require_interactive("OneDrive deletion confirmation; pass --yes")
     from stackops.utils.cloud.onedrive.errors import run_cli
     from stackops.utils.cloud.onedrive.file_ops import delete_item as delete_remote_item
 

@@ -2,6 +2,7 @@ from typing import Annotated
 
 import typer
 
+from stackops.utils.cli_utils.interaction import require_interactive
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 CLOUD_SETUP_HELP = "Select an rclone remote and create or update the StackOps config and schema."
@@ -45,6 +46,8 @@ def setup_cloud(
 
     if yes and cloud is None:
         exit_with_setup_error("--yes requires --cloud so the selected remote is explicit.")
+    if cloud is None or not yes:
+        require_interactive("Configure a cloud; supply --cloud NAME --yes")
 
     try:
         remote_names = list_remote_names()
@@ -124,6 +127,8 @@ def setup_agent(
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_choice
     from stackops.utils.managed_files import get_managed_file_spec
 
+    if agent is None:
+        require_interactive("Select the default agent; supply --agent NAME")
     existing_config = load_stackops_config_for_setup()
     configured_agent = existing_config.get("default_agent") if existing_config is not None else None
     agent_choices: tuple[AGENTS, ...] = get_args(AGENTS)

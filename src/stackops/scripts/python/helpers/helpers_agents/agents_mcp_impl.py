@@ -34,6 +34,10 @@ def add_mcp(
     edit: bool,
     report: Reporter,
 ) -> None:
+    if edit or requested_mcp_servers is None:
+        from stackops.utils.cli_utils.interaction import require_interactive
+
+        require_interactive("Editing MCP catalogs or choosing MCP names")
     search_locations: tuple[McpCatalogLocation, ...] = resolve_mcp_catalog_locations(source=source, custom_path=custom_path)
     if edit and custom_path is None and source in ("all", "a"):
         source, selected_catalog_path = choose_edit_source(locations=[(location["scope"], location["path"]) for location in search_locations])

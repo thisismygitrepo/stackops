@@ -8,6 +8,7 @@ WindowAction = Literal["minimize", "maximize", "unminimize", "focus", "close"]
 
 @dataclass(frozen=True)
 class WindowEntry:
+    id: str
     app: str
     title: str
     minimized: bool

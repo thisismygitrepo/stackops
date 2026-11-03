@@ -13,8 +13,13 @@ if TYPE_CHECKING:
     from stackops.utils.ssh_utils.ssh import SSH
 
 
-def ftpx(source: str, target: str, recursive: bool, zip_first: bool, cloud: bool, overwrite_existing: bool) -> None:
+def ftpx(source: str, target: str, recursive: bool, zip_first: bool, cloud: bool, overwrite_existing: bool, password_file: Path | None, password_env: str | None) -> None:
     """File transfer utility through SSH."""
+    from stackops.utils.cli_utils.secret_input import read_secret_input
+
+    password = None
+    if password_file is not None or password_env is not None:
+        password = read_secret_input(value=None, file=password_file, env=password_env, prompt="SSH password")
     if target == "wsl" or source == "wsl":
         _handle_wsl_transfer(source=source, target=target, overwrite_existing=overwrite_existing)
         return
@@ -42,7 +47,7 @@ def ftpx(source: str, target: str, recursive: bool, zip_first: bool, cloud: bool
 
     pprint({"source": str(resolved_source), "target": str(resolved_target), "machine": machine}, "CLI Resolution")
 
-    ssh = _create_ssh_connection(machine=machine, console=console)
+    ssh = _create_ssh_connection(machine=machine, console=console, password=password)
 
     if cloud:
         received_file = _handle_cloud_transfer(ssh=ssh, resolved_source=resolved_source, resolved_target=resolved_target, console=console)
@@ -157,16 +162,20 @@ def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, st
     return resolved_source, resolved_target, machine, source_is_remote
 
 
-def _create_ssh_connection(machine: str, console: Console) -> SSH:
+def _create_ssh_connection(machine: str, console: Console, password: str | None) -> SSH:
     """Create SSH connection, handling authentication."""
     from stackops.utils.ssh_utils.ssh import SSH
     from paramiko.ssh_exception import AuthenticationException, SSHException
     from rich.panel import Panel
+    from stackops.utils.cli_utils.interaction import require_interactive
 
     try:
         try:
-            ssh = SSH(host=rf"{machine}", username=None, hostname=None, ssh_key_path=None, password=None, port=22, enable_compression=True)
+            ssh = SSH(host=rf"{machine}", username=None, hostname=None, ssh_key_path=None, password=password, port=22, enable_compression=True)
         except AuthenticationException:
+            if password is not None:
+                raise
+            require_interactive("SSH authentication; configure a key or provide --password-file/--password-env")
             console.print(
                 Panel(
                     "\n".join(

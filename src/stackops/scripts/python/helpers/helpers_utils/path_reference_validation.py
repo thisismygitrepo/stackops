@@ -53,6 +53,15 @@ class MissingPathReference:
 
 
 @dataclass(frozen=True, slots=True)
+class PathReferenceTarget:
+    init_file: Path
+    variable_name: str
+    relative_path: str
+    resolved_path: Path
+    exists: bool
+
+
+@dataclass(frozen=True, slots=True)
 class PathReferenceAudit:
     repo_root: Path
     search_root: Path
@@ -60,6 +69,7 @@ class PathReferenceAudit:
     reference_count: int
     invalid_references: tuple[InvalidPathReference, ...]
     missing_references: tuple[MissingPathReference, ...]
+    targets: tuple[PathReferenceTarget, ...]
 
     def has_failures(self) -> bool:
         return len(self.invalid_references) > 0 or len(self.missing_references) > 0
@@ -260,6 +270,7 @@ def audit_repository_path_references(*, repo_path: Path, search_root: Path | Non
     resolved_search_root = resolve_search_root(repo_root=repo_root, search_root=search_root)
     invalid_references: list[InvalidPathReference] = []
     missing_references: list[MissingPathReference] = []
+    targets: list[PathReferenceTarget] = []
     scanned_init_files = 0
     reference_count = 0
     for init_file in _iter_init_files(search_root=resolved_search_root):
@@ -269,7 +280,10 @@ def audit_repository_path_references(*, repo_path: Path, search_root: Path | Non
         reference_count += len(references)
         for reference in references:
             resolved_path = init_file.parent.joinpath(reference.relative_path).resolve(strict=False)
-            if resolved_path.exists():
+            exists = resolved_path.exists()
+            targets.append(PathReferenceTarget(init_file=init_file, variable_name=reference.variable_name,
+                                               relative_path=reference.relative_path, resolved_path=resolved_path, exists=exists))
+            if exists:
                 continue
             missing_references.append(
                 MissingPathReference(
@@ -286,6 +300,7 @@ def audit_repository_path_references(*, repo_path: Path, search_root: Path | Non
         reference_count=reference_count,
         invalid_references=tuple(invalid_references),
         missing_references=tuple(missing_references),
+        targets=tuple(targets),
     )
 
 

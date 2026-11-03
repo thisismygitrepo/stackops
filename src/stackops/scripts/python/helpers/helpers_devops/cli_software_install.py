@@ -51,11 +51,13 @@ def explore(
     update: Annotated[bool, typer.Option("--update", "-u", help="Reinstall or upgrade installed apps when supported.")] = False,
     version: Annotated[str | None, typer.Option("--version", "-v", help="Install a specific version or tag when supported.")] = None,
 ) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
     from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH, InstallerDataFileError
     from stackops.utils.installer_utils.installer_explore import explore_installers_by_category_labels
     from stackops.utils.installer_utils.installer_scripts import get_user_installer_scripts_root
     from stackops.utils.schemas.installer.installer_types import INSTALLER_DATA_SOURCE_MAP, InstallRequest
 
+    require_interactive("Explore software; use devops software list --json and devops software install NAME")
     user_scripts_root = (
         None
         if INSTALLER_DATA_SOURCE_MAP[source] == "library"

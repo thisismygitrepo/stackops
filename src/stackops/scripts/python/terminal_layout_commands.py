@@ -136,6 +136,9 @@ def edit_layouts(
     ] = "hx",
     install_lsp: Annotated[bool, typer.Option("--install-lsp", help="Install the required language server if missing (Helix only).")] = False,
 ) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("Editing terminal layouts; use terminal path/init/validate for automation")
     from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import default_layout_source_paths
     from stackops.scripts.python.terminal_layout_files import describe_layout_file, resolve_layout_file
     from stackops.utils.managed_file_cli import run_managed_file_edit

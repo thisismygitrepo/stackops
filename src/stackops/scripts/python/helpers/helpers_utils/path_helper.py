@@ -8,6 +8,8 @@ from rich.console import Console
 from rich.panel import Panel
 
 from stackops.utils.source_of_truth import EXCLUDE_DIRS
+from stackops.utils.cli_utils.interaction import is_interactive, require_interactive
+from typer import _click
 
 console = Console()
 
@@ -15,6 +17,7 @@ console = Console()
 def sanitize_path(a_path: str) -> Path:
     path = Path(a_path)
     if Path.cwd() == Path.home() and not path.exists():
+        require_interactive("Searching from the home directory; supply an existing explicit path")
         result = input("Current working directory is home, and passed path is not full path, are you sure you want to continue, [y]/n? ") or "y"
         if result == "y":
             import sys
@@ -90,6 +93,16 @@ def match_file_name(sub_string: str, search_root: Path, suffixes: set[str]) -> P
     search_root_obj = search_root.absolute()
     # assume subscript is filename only, not a sub_path. There is no need to fzf over the paths.
     filename_matches, partial_path_matches = find_scripts(search_root_obj, sub_string, suffixes)
+    if not is_interactive():
+        candidates = filename_matches or partial_path_matches
+        if len(candidates) > 1:
+            exact_case = [candidate for candidate in candidates if sub_string in (candidate.name if filename_matches else candidate.as_posix())]
+            if exact_case:
+                candidates = exact_case
+        if len(candidates) == 1:
+            return candidates[0]
+        choices = "\n".join(str(candidate) for candidate in candidates)
+        raise _click.UsageError(f"""Provide an unambiguous file path. Found {len(candidates)} candidates for {sub_string!r}.\n{choices}""")
     if len(filename_matches) == 1:
         return Path(filename_matches[0])
     console.print(
@@ -217,6 +230,7 @@ def get_choice_file(path: str, suffixes: set[str] | None, search_root: Path | No
         print(f"🔍 Searching for file matching `{path}` under `{resolved_search_root}`, but only if suffix matches {suffixes}")
         choice_file = match_file_name(sub_string=path, search_root=resolved_search_root, suffixes=suffixes)
     elif path_obj.is_dir():
+        require_interactive("Choosing a file from a directory; supply an explicit file path")
         print(f"🔍 Searching recursively for Python, PowerShell and Shell scripts in directory `{path_obj}`")
         files = search_for_files_of_interest(path_obj, suffixes=suffixes)
         print(f"🔍 Got #{len(files)} results.")

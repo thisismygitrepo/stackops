@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import assert_never, cast
 
 from rich.console import Group, RenderableType
@@ -27,6 +27,7 @@ class StatusSnapshot:
     summary: str
     level: StatusLevel
     content: RenderableType
+    details: dict[str, object]
 
 
 def _collect_config_status() -> StatusSnapshot:
@@ -48,6 +49,7 @@ def _collect_config_status() -> StatusSnapshot:
                 Text(f"""Configuration mappings could not be checked ({type(error).__name__}).""", style="red"),
                 title="Configuration mappings", border_style="red",
             )),
+            {"managed_files": [asdict(item) for item in managed], "error": type(error).__name__},
         )
     linked = configs["linked"]
     total = configs["count"]
@@ -56,6 +58,7 @@ def _collect_config_status() -> StatusSnapshot:
     return StatusSnapshot(
         f"""{summary} · {linked}/{total} mappings configured""", level,
         Group(inventory, render_config_files_status(configs)),
+        {"managed_files": [asdict(item) for item in managed], "mappings": configs},
     )
 
 
@@ -68,26 +71,26 @@ def collect_status_section(section: StatusSection) -> StatusSnapshot:
 
                 info = get_machine_specs()
                 summary = f"""{info['system']} · {info['machine']}"""
-                return StatusSnapshot(summary, "ready", render_system_info(cast(dict[str, str], info)))
+                return StatusSnapshot(summary, "ready", render_system_info(cast(dict[str, str], info)), dict(info))
             case "shell":
                 shell = check_shell_profile_status()
                 if shell["configured"]:
                     summary, level = "Configured", "ready"
                 else:
                     summary, level = "Not configured", "attention"
-                return StatusSnapshot(summary, level, render_shell_status(shell))
+                return StatusSnapshot(summary, level, render_shell_status(shell), dict(shell))
             case "repos":
                 repos = check_repos_status()
                 attention = sum(repository.local.state not in {"Clean", "Bare"} for repository in repos.repositories)
                 count = len(repos.repositories)
                 noun = "repository" if count == 1 else "repositories"
                 summary = f"""{count} {noun} · {attention} need attention""" if count else "No repositories registered"
-                return StatusSnapshot(summary, "attention" if attention or not repos.repositories else "ready", render_repos_status(repos))
+                return StatusSnapshot(summary, "attention" if attention or not repos.repositories else "ready", render_repos_status(repos), asdict(repos))
             case "ssh":
                 ssh = check_ssh_status()
                 complete = ssh["ssh_dir_exists"] and ssh["config_exists"] and bool(ssh["keys"]) and all(key["private_exists"] for key in ssh["keys"])
                 summary = f"""{len(ssh['keys'])} public keys · {'Config found' if ssh['config_exists'] else 'No config'}""" if ssh["ssh_dir_exists"] else "No SSH directory"
-                return StatusSnapshot(summary, "ready" if complete else "attention", render_ssh_status(ssh))
+                return StatusSnapshot(summary, "ready" if complete else "attention", render_ssh_status(ssh), dict(ssh))
             case "configs":
                 return _collect_config_status()
             case "apps":
@@ -95,7 +98,7 @@ def collect_status_section(section: StatusSection) -> StatusSnapshot:
                 unique = {name: installed for group in tools.values() for name, installed in group.items()}
                 installed = sum(unique.values())
                 summary = f"""{installed} installed · {len(unique)} in catalog"""
-                return StatusSnapshot(summary, "ready", render_tools_status(tools))
+                return StatusSnapshot(summary, "ready", render_tools_status(tools), dict(tools))
             case "backup":
                 backup = check_backup_config()
                 count = backup["backup_items_count"]
@@ -106,11 +109,12 @@ def collect_status_section(section: StatusSection) -> StatusSnapshot:
                     summary, level = f"""{count} backup {noun} · cloud selection required""", "attention"
                 else:
                     summary, level = f"""{count} backup {noun}""", "ready"
-                return StatusSnapshot(summary, level, render_backup_status(backup))
+                return StatusSnapshot(summary, level, render_backup_status(backup), dict(backup))
             case _:
                 assert_never(section)
     except Exception as error:
         return StatusSnapshot(
             "Check failed", "error",
             Panel(Text(str(error), style="red"), title=STATUS_TITLES[section], border_style="red"),
+            {"error": type(error).__name__},
         )

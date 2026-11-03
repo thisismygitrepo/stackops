@@ -31,11 +31,9 @@ def artifact_path(local_path: Path, *, zip_requested: bool, encryption_mode: Enc
 
 
 def _symmetric_password(pwd: str | None) -> str:
-    if pwd is not None:
-        return pwd
-    import getpass
+    from stackops.utils.cli_utils.secret_input import read_secret_input
 
-    return getpass.getpass(prompt="🔑 Enter symmetric GPG encryption password: ")
+    return read_secret_input(value=pwd, file=None, env=None, prompt="Symmetric encryption password")
 
 
 @contextmanager
@@ -46,6 +44,8 @@ def prepared_upload_path(
     encryption_mode: EncryptionMode | None,
     pwd: str | None,
 ) -> Generator[Path, None, None]:
+    if encryption_mode == "symmetric":
+        pwd = _symmetric_password(pwd)
     source_path = local_path.expanduser().absolute()
     if not source_path.exists():
         raise FileNotFoundError(

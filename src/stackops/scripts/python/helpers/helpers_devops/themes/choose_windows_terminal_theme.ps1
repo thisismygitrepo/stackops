@@ -1,4 +1,11 @@
+param([string]$Theme, [switch]$List, [switch]$Json)
+
 $ErrorActionPreference = "Stop"
+if ($Theme -and $List) { throw "Choose -Theme or -List." }
+if ($Json -and -not ($Theme -or $List)) { throw "-Json requires -Theme or -List." }
+if (-not ($Theme -or $List) -and ($env:STACKOPS_NON_INTERACTIVE -eq "1" -or [Console]::IsInputRedirected -or [Console]::IsOutputRedirected)) {
+    throw "Interactive theme preview requires a terminal; pass -Theme or -List."
+}
 
 $settingsCandidates = @(
     (Join-Path -Path $env:LOCALAPPDATA -ChildPath "Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json")
@@ -33,7 +40,7 @@ function Ensure-Defaults([object]$Settings) {
 function Set-PreviewScheme([string]$Path, [string]$Scheme) {
     $settings = Read-Settings -Path $Path
     Ensure-Defaults -Settings $settings
-    $settings.profiles.defaults.colorScheme = $Scheme
+    $settings.profiles.defaults | Add-Member -MemberType NoteProperty -Name colorScheme -Value $Scheme -Force
     Write-Settings -Path $Path -Settings $settings
 }
 
@@ -89,6 +96,21 @@ if ($schemeNames.Count -eq 0) {
     exit 1
 }
 
+if ($List) {
+    if ($Json) { @{ target = "windows-terminal"; themes = $schemeNames } | ConvertTo-Json -Compress } else { $schemeNames }
+    exit 0
+}
+if ($Theme) {
+    if ($schemeNames -cnotcontains $Theme) { throw "Unknown scheme '$Theme'; use -List." }
+    Set-PreviewScheme -Path $settingsPath -Scheme $Theme
+    if ($Json) {
+        @{ target = "windows-terminal"; theme = $Theme; paths = @($settingsPath); applied = $true } | ConvertTo-Json -Compress
+    } else {
+        Write-Host "Applied Windows Terminal scheme: $Theme"
+    }
+    exit 0
+}
+
 $hadOriginalScheme = $settings.profiles.defaults.PSObject.Properties.Name -contains "colorScheme"
 $originalSchemeValue = if ($hadOriginalScheme) { $settings.profiles.defaults.colorScheme } else { $null }
 
@@ -104,7 +126,7 @@ $confirmed = $false
 Set-PreviewScheme -Path $settingsPath -Scheme $schemeNames[$currentIndex]
 
 try {
-    while ($true) {
+    :themeLoop while ($true) {
         Render-ThemeMenu -Schemes $schemeNames -Index $currentIndex -SettingsPath $settingsPath
         $key = [System.Console]::ReadKey($true)
         switch ($key.Key) {
@@ -138,10 +160,10 @@ try {
             }
             "Enter" {
                 $confirmed = $true
-                break
+                break themeLoop
             }
             "Escape" {
-                break
+                break themeLoop
             }
             Default {
                 continue
@@ -159,3 +181,4 @@ finally {
         Write-Host ("Applied Windows Terminal color scheme: " + $schemeNames[$currentIndex]) -ForegroundColor Green
     }
 }
+if (-not $confirmed) { exit 130 }

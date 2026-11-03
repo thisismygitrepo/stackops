@@ -123,6 +123,7 @@ def main_installer_cli(
 
 
 def install_interactively(install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
     from stackops.utils.options_utils.options import choose_from_options
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
     from stackops.utils.cli_utils.command_lookup import check_tool_exists
@@ -134,6 +135,7 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
     from rich.console import Console
     from rich.panel import Panel
 
+    require_interactive("Choose software; use devops software list --json and devops software install NAME")
     installers = get_installers_from_source(source=source, user_path=user_path, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
     installer_option_to_data = _build_installer_option_to_data(installers)
     available_app_names = {installer["appName"].casefold() for installer in installers}
@@ -164,7 +166,7 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
 
     if program_names is None or len(program_names) == 0:
         Console().print(Panel("❓ Selection cancelled. Nothing to install.", title="Cancelled", border_style="yellow"))
-        return
+        raise typer.Exit(code=1)
 
     installation_results: list[InstallationResult] = []
     for a_program_name in program_names:
@@ -236,12 +238,11 @@ def install_clis(clis_names: list[str], install_request: InstallRequest, source:
                 selected_installer = installer
                 break
         if selected_installer is None:
-            from stackops.utils.installer_utils.installer_helper import handle_installer_not_found
-            clis_names_chosen_interactively = handle_installer_not_found(a_cli_name, all_installers_data)
-            if len(clis_names_chosen_interactively)  == 0:
-                continue
-            install_clis(clis_names=clis_names_chosen_interactively, install_request=install_request, source=source, user_path=user_path)
-            continue
+            from difflib import get_close_matches
+
+            suggestions = get_close_matches(resolved_cli_name.casefold(), [entry["appName"].casefold() for entry in all_installers_data], n=5)
+            hint = f" Suggested names: {', '.join(suggestions)}." if suggestions else ""
+            raise typer.BadParameter(f"Unknown software name {a_cli_name!r}.{hint} Use software list --json or install --interactive.")
         result = Installer(selected_installer).install_robust(install_request=install_request)
         total_results.append(result)
     if total_results:

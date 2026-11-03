@@ -1,4 +1,5 @@
 import subprocess
+from stackops.utils.cli_utils.interaction import is_interactive, require_interactive
 
 
 def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -7,12 +8,14 @@ def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 def run_command_interactive(command: list[str]) -> subprocess.CompletedProcess[str]:
+    require_interactive("Device authentication; supply --key-file for encrypted mounts")
     result = subprocess.run(command, text=True, check=False)
     return result
 
 
 def run_command_sudo(command: list[str]) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(["sudo", *command], capture_output=True, text=True, check=False)
+    sudo_options = [] if is_interactive() else ["-n"]
+    result = subprocess.run(["sudo", *sudo_options, *command], capture_output=True, text=True, check=False)
     return result
 
 

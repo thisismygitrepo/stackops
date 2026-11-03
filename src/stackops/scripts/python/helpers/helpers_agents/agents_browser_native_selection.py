@@ -1,4 +1,4 @@
-import sys
+from stackops.utils.cli_utils.interaction import require_interactive
 
 from rich.console import Console
 from rich.prompt import IntPrompt
@@ -22,6 +22,7 @@ def select_native_browser_profile(*, browser: ProfileBrowserName, profile_name: 
         available_profiles = ", ".join(f"""{profile.name} ({profile.profile_path.name})""" for profile in profiles)
         raise ValueError(f"""Native {browser} profile {profile_name!r} was not found. Available profiles: {available_profiles}""")
 
+    require_interactive("Choosing a native browser profile; supply --native --profile FOLDER")
     table = Table(title=f"""Native {browser} profiles""", header_style="bold cyan")
     table.add_column("#", justify="right")
     table.add_column("Profile name")
@@ -30,7 +31,5 @@ def select_native_browser_profile(*, browser: ProfileBrowserName, profile_name: 
     for index, profile in enumerate(profiles, start=1):
         table.add_row(str(index), Text(profile.name), Text(profile.profile_path.name), Text(str(profile.profile_path)))
     Console().print(table)
-    if not sys.stdin.isatty():
-        raise ValueError("Use --native --profile <folder-or-name> when input is not interactive.")
     selected_index = IntPrompt.ask("Profile number", choices=[str(index) for index in range(1, len(profiles) + 1)])
     return profiles[selected_index - 1]

@@ -1,4 +1,5 @@
 import ast
+from dataclasses import replace
 from typing import Any
 
 from stackops.scripts.python.graph.cli_graph_apps import load_app_model
@@ -83,6 +84,25 @@ def build_group_node(
         )
 
     child_model = load_app_model(child_ref)
+    factory = child_model.module_info.functions[child_ref.factory]
+    has_callback = bool(child_model.app_config.get("callback")) or any(
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "callback"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == child_model.app_var
+        for node in ast.walk(factory)
+    )
+    if reg.kind == "command" and len(child_model.registrations) == 1 and not has_callback:
+        child_registration = child_model.registrations[0]
+        if registration_key(child_registration, child_model.module_info)[0] == "command":
+            return build_command_node(
+                app_model=child_model,
+                reg=replace(child_registration, name=reg.name),
+                aliases=aliases,
+                parent_full_tokens=parent_full_tokens,
+                parent_short_tokens=parent_short_tokens,
+            )
     name = reg.name or ""
     short_name = choose_short_name(name=name, aliases=aliases)
     full_tokens = extend_path_tokens(parent_tokens=parent_full_tokens, name=name)

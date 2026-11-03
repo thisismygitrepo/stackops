@@ -4,22 +4,36 @@ import zipfile
 import typer
 
 from stackops.scripts.python.helpers.helpers_devops.cli_config_dotfile_mapper import format_home_relative_path
+from stackops.utils.cli_utils.interaction import require_interactive
+from stackops.utils.cli_utils.secret_input import read_secret_input
 
 
 def export_dotfiles(
     ssh: Annotated[bool, typer.Option("--ssh", "-s", help="Use SSH-based transfer (scp) to a remote machine")] = False,
+    remote: Annotated[str | None, typer.Option("--remote", "-r", help="SSH destination user@host; requires --ssh.")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="Destination for the encrypted .zip.gpg archive.")] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-F", help="Read password from a file, or - for stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Read password from this environment variable name.")] = None,
+    serve: Annotated[bool, typer.Option("--serve", "-S", help="Serve the encrypted archive until interrupted.")] = False,
 ) -> None:
     """Export dotfiles for migration to new machine."""
     import shutil
 
     from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH
 
+    if remote is not None and not ssh:
+        raise typer.BadParameter("--remote requires --ssh.")
+    if serve and ssh:
+        raise typer.BadParameter("--serve and --ssh cannot be combined.")
+    if ssh and remote is None:
+        require_interactive("Choose SSH destination; supply --remote USER@HOST")
+        remote = typer.prompt("Remote destination (user@host)")
+    output_path = output.expanduser().absolute() if output is not None else None
+    if output_path is not None and output_path.exists():
+        raise typer.BadParameter(f"Output already exists: {output_path}")
+    pwd = read_secret_input(value=None, file=password_file, env=password_env, prompt="Password for zip encryption")
     if not DOTFILES_ROOT.exists() or not DOTFILES_ROOT.is_dir():
         print(f"Dotfiles directory does not exist: {DOTFILES_ROOT}")
-        raise typer.Exit(code=1)
-    pwd = typer.prompt("Enter the password for zip encryption", hide_input=True)
-    if pwd == "":
-        print("Password for zip encryption must be non-empty.")
         raise typer.Exit(code=1)
     if DOTFILES_ZIP_PATH.exists():
         DOTFILES_ZIP_PATH.unlink()
@@ -29,15 +43,20 @@ def export_dotfiles(
     zipfile_path = Path(archive_path)
     zipfile_encrypted_path = encrypt_file_symmetric(file_path=zipfile_path, pwd=pwd)
     zipfile_path.unlink()
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(zipfile_encrypted_path), str(output_path))
+        zipfile_encrypted_path = output_path
     print(f"Dotfiles exported to: {zipfile_encrypted_path}")
 
     if ssh:
-        code_sample = f"cloud transfer {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg user@remote_host:^"
-        print("Exporting dotfiles via SSH-based transfer (scp).")
-        print(f"Run the following command on your local machine to copy dotfiles to the remote machine:\n{code_sample}")
-        remote_address = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles to ")
-        from stackops.utils.code import run_shell_script
-        run_shell_script(f"cloud transfer {zipfile_encrypted_path} {remote_address}:^", display_script=True, clean_env=False)
+        import subprocess
+
+        result = subprocess.run(["cloud", "transfer", str(zipfile_encrypted_path), f"{remote}:^"], check=False)
+        if result.returncode != 0:
+            raise typer.Exit(code=result.returncode)
+        return
+    if not serve:
         return
 
     from stackops.scripts.python.helpers.helpers_devops import cli_share_server
@@ -95,6 +114,9 @@ def _resolve_import_dotfiles_source(url: str) -> Path:
 def import_dotfiles(
     url: Annotated[str | None, typer.Option(..., "--url", "-u", help="URL or local path to the encrypted dotfiles archive (.zip.gpg)")] = None,
     ssh: Annotated[bool, typer.Option("--ssh", "-s", help="Use SSH-based transfer (scp) from a remote machine that has dotfiles.")] = False,
+    remote: Annotated[str | None, typer.Option("--remote", "-r", help="SSH source user@host; requires --ssh.")] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-F", help="Read password from a file, or - for stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Read password from this environment variable name.")] = None,
 ) -> None:
     import shutil
     import tempfile
@@ -102,23 +124,26 @@ def import_dotfiles(
 
     from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH
 
+    if remote is not None and not ssh:
+        raise typer.BadParameter("--remote requires --ssh.")
     if ssh:
-        print("Importing dotfiles via SSH-based transfer (scp).")
-        dotfiles_display_path = format_home_relative_path(DOTFILES_ROOT)
-        code = f"cloud transfer $USER@$(hostname):^ {dotfiles_display_path} -z"
-        print(f"Run the following command on the remote machine that has the dotfiles:\n{code}")
-        url = typer.prompt("Enter the remote machine address (user@host) to copy dotfiles from ")
-        from stackops.utils.code import run_shell_script
-        run_shell_script(f"cloud transfer {url}:^ {dotfiles_display_path} -z", display_script=True, clean_env=False)
+        import subprocess
+
+        if url is not None or password_file is not None or password_env is not None:
+            raise typer.BadParameter("SSH import uses --remote; --url and archive password inputs do not apply.")
+        if remote is None:
+            require_interactive("Choose SSH source; supply --remote USER@HOST")
+            remote = typer.prompt("Remote source (user@host)")
+        result = subprocess.run(["cloud", "transfer", f"{remote}:^", str(DOTFILES_ROOT), "-z"], check=False)
+        if result.returncode != 0:
+            raise typer.Exit(code=result.returncode)
         print("Dotfiles copied via SSH.")
         return
 
     if url is None:
+        require_interactive("Choose an encrypted archive; supply --url URL_OR_PATH")
         url = typer.prompt(f"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) ")
-    pwd = typer.prompt("Enter the password for zip decryption", hide_input=True)
-    if pwd == "":
-        print("Password for zip decryption must be non-empty.")
-        raise typer.Exit(code=1)
+    pwd = read_secret_input(value=None, file=password_file, env=password_env, prompt="Password for zip decryption")
     assert url is not None
     try:
         zipfile_encrypted_path = _resolve_import_dotfiles_source(url=url)

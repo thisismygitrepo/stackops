@@ -1,15 +1,14 @@
-import sys
 from pathlib import Path
 from typing import Literal
 
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.options_utils.options import choose_from_options
 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+from stackops.utils.cli_utils.interaction import require_interactive
 
 
 def choose_edit_source(*, locations: list[tuple[str, Path]]) -> tuple[Literal["workspace", "user", "library"], Path]:
-    if not sys.stdin.isatty():
-        raise ValueError("--edit requires a specific --source (workspace, user, or library) when input is not interactive.")
+    require_interactive("Choosing a configuration source to edit")
 
     source_descriptions: dict[str, str] = {
         "workspace": """Workspace configuration

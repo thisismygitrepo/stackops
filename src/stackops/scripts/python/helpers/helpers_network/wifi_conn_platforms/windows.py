@@ -34,9 +34,9 @@ def get_available_networks() -> list[WifiNetwork]:
                 networks.append({"ssid": current_ssid, "signal": raw_signal.strip()})
                 current_ssid = None
     except subprocess.CalledProcessError as error:
-        console.print(f"[red]❌ Error scanning networks: {error}[/red]")
+        raise RuntimeError(f"WiFi scan failed with exit code {error.returncode}.") from None
     except Exception as error:
-        console.print(f"[red]❌ Unexpected error: {error}[/red]")
+        raise RuntimeError(f"WiFi scan failed: {error}") from error
 
     return deduplicate_networks(networks)
 

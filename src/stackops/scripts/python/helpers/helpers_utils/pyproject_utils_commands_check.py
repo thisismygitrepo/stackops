@@ -120,6 +120,7 @@ def reference_test(
         ),
     ] = None,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Print scan context and detailed rich audit tables.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print reference mappings and validation diagnostics as JSON.")] = False,
 ) -> None:
     from rich.panel import Panel
 
@@ -136,9 +137,20 @@ def reference_test(
     try:
         audit = audit_repository_path_references(repo_path=Path(repo), search_root=search_root_path)
     except ValueError as error:
+        if json_output:
+            typer.echo(f"Reference audit failed: {error}", err=True)
+            raise typer.Exit(code=1) from error
         console.print(Panel(f"❌ {error}", title="Reference Audit Error", border_style="red", expand=False))
         raise typer.Exit(code=1) from error
 
+    if json_output:
+        import json
+        from dataclasses import asdict
+
+        typer.echo(json.dumps({**asdict(audit), "passed": not audit.has_failures(), "resolved_reference_count": audit.resolved_reference_count()}, indent=2, default=str))
+        if audit.has_failures():
+            raise typer.Exit(code=1)
+        return
     print_reference_test_summary(console=console, audit=audit)
     if audit.has_failures():
         if verbose:

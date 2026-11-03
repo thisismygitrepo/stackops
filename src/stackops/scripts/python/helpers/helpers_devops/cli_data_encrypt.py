@@ -56,8 +56,8 @@ def encrypt(
         typer.Option("--encryption", "-e", help=f"🔐 Encryption mode: {ENCRYPTION_MODES_DISPLAY}. Symmetric uses a password; asymmetric uses GPG keys."),
     ] = "symmetric",
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted.")] = None,
-    password_file: Annotated[Path | None, typer.Option("--password-file", help="Read password from a file, or - for stdin.")] = None,
-    password_env: Annotated[str | None, typer.Option("--password-env", help="Read password from this environment variable name.")] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-F", help="Read password from a file, or - for stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Read password from this environment variable name.")] = None,
     recipient: Annotated[
         str | None,
         typer.Option("--recipient", "-r", help="🪪 Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key."),
@@ -101,8 +101,8 @@ def decrypt(
         typer.Option("--encryption", "-e", help=f"🔓 Encryption mode used to create the file: {ENCRYPTION_MODES_DISPLAY}."),
     ] = "symmetric",
     pwd: Annotated[str | None, typer.Option("--password", "-p", help="🔑 Symmetric GPG password. Prompts with a hidden prompt when omitted.")] = None,
-    password_file: Annotated[Path | None, typer.Option("--password-file", help="Read password from a file, or - for stdin.")] = None,
-    password_env: Annotated[str | None, typer.Option("--password-env", help="Read password from this environment variable name.")] = None,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-F", help="Read password from a file, or - for stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Read password from this environment variable name.")] = None,
     output: Annotated[
         Path | None,
         typer.Option("--output", "-o", help="📦 Decrypted output path. Defaults next to the encrypted file with .gpg and archive suffixes stripped."),

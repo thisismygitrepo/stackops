@@ -26,7 +26,13 @@ def trace_sessions(
     exit_code: int | None,
     kill: bool,
     snapshot_loader: TraceSnapshotLoader,
+    json_output: bool,
 ) -> None:
+    if json_output:
+        from stackops.scripts.python.helpers.helpers_sessions.session_trace_json import trace_json_events
+
+        trace_json_events(backend=backend, session_names=session_names, until=until, every_seconds=every_seconds, exit_code=exit_code, kill=kill, snapshot_loader=snapshot_loader)
+        return
     from time import monotonic, sleep
 
     from rich.console import Console, Group

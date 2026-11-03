@@ -19,7 +19,15 @@ console = Console()
 POSIX_SYSTEMS: tuple[str, str] = ("Linux", "Darwin")
 
 
-def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str | None) -> None:
+def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str | None, remote: str | None, password_file: Path | None, password_env: str | None) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+    from stackops.utils.cli_utils.secret_input import read_secret_input
+
+    if pub_choose or pub_val:
+        require_interactive("Public key selection; pass --path or --github")
+    password = None
+    if password_file is not None or password_env is not None:
+        password = read_secret_input(value=None, file=password_file, env=password_env, prompt="SSH password")
     source_count = sum((pub_path is not None, pub_choose, pub_val, from_github is not None))
     if source_count != 1:
         _exit_with_error(message="Choose exactly one public-key source: --path, --choose, --value, or --github.")
@@ -34,7 +42,7 @@ def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str
         if remote is not None:
             from stackops.scripts.python.helpers.helpers_network.ssh.ssh_deploy_key_remote import deploy_keys_to_remote
 
-            if not deploy_keys_to_remote(remote_target=remote, records=records, password=None):
+            if not deploy_keys_to_remote(remote_target=remote, records=records, password=password):
                 raise SystemExit(1)
             return
 

@@ -1,9 +1,11 @@
 from enum import StrEnum
+from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 
 import typer
 
 from stackops.scripts.python.helpers.helpers_utils.window import window
+from stackops.utils.cli_utils.interaction import require_interactive
 
 
 ProcessSearchField: TypeAlias = Literal[
@@ -39,6 +41,7 @@ class AutostartCategoryOption(StrEnum):
 
 
 def kill_process(
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print per-process termination outcomes; requires --yes and a selector.")] = False,
     search_by: Annotated[
         ProcessSearchField,
         typer.Option(..., "--filter-by", "-f", help="Field used to search/filter processes."),
@@ -76,6 +79,10 @@ def kill_process(
         raise typer.BadParameter(str(error)) from error
     if yes and selector is None:
         raise typer.BadParameter("--yes requires a direct process selector.", param_hint="--yes")
+    if output_json and not yes:
+        raise typer.BadParameter("--json requires --yes and a direct selector.")
+    if not yes:
+        require_interactive("Process selection and confirmation; pass a direct selector and --yes")
 
     match search_by:
         case "command" | "c":
@@ -99,9 +106,29 @@ def kill_process(
             raise typer.Exit(code=1)
     if selector is not None:
         search_field = selector.field
-    from stackops.scripts.python.helpers.helpers_utils.processes import ProcessManager
+    import json
+    import sys
+    from contextlib import redirect_stdout
 
-    proc = ProcessManager()
+    with redirect_stdout(sys.stderr if output_json else sys.stdout):
+        from stackops.scripts.python.helpers.helpers_utils.processes import ProcessManager
+
+        proc = ProcessManager()
+    if yes and selector is not None:
+        from stackops.scripts.python.helpers.helpers_utils.process_models import process_matches_selector
+        from stackops.scripts.python.helpers.helpers_utils.process_termination import terminate_processes
+
+        results = terminate_processes([process for process in proc.data if process_matches_selector(process, selector)])
+        if output_json:
+            typer.echo(json.dumps(results, indent=2))
+        else:
+            for result in results:
+                typer.echo(f"{result['pid']} {result['name']}: {result['status']}" + (f" ({result['error']})" if result['error'] else ""))
+            if not results:
+                typer.echo("No processes match the requested selector.")
+        if any(result["status"] == "failed" for result in results):
+            raise typer.Exit(1)
+        return
     proc.choose_and_kill(search_by=search_field, selector=selector, kill_all_matches=yes)
 
 
@@ -109,6 +136,7 @@ def tui_env(
     which: Annotated[EnvironmentSelector, typer.Argument(help="Which environment variable to display.")] = "ENV",
     tui: Annotated[bool, typer.Option("--tui", "-t", help="Use the full-screen Textual TUI instead of the default fuzzy picker.")] = False,
 ) -> None:
+    require_interactive("Environment navigator")
     from stackops.scripts.python.helpers.helpers_utils.python import tui_env as impl
 
     impl(which=which, tui=tui)
@@ -116,12 +144,14 @@ def tui_env(
 
 def get_machine_specs(
     hardware: Annotated[bool, typer.Option(..., "--hardware", "-H", help="Show compute capability")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print machine specifications as JSON.")] = False,
+    save: Annotated[Path | None, typer.Option("--save", "-s", help="Also save specifications to this JSON file.")] = None,
 ) -> None:
     import json
 
-    from stackops.utils.source_of_truth import CONFIG_ROOT
-
     if hardware:
+        if output_json or save is not None:
+            raise typer.BadParameter("--hardware cannot be combined with --json or --save.")
         from stackops.scripts.python.helpers.helpers_utils.specs import main
 
         main()
@@ -130,19 +160,23 @@ def get_machine_specs(
     from stackops.utils.machine.specs import get_machine_specs as impl
 
     specs = impl()
-    typer.echo(specs)
-    CONFIG_ROOT.mkdir(parents=True, exist_ok=True)
-    path = CONFIG_ROOT.joinpath("machine_specs.json")
-    path.write_text(json.dumps(specs, indent=4), encoding="utf-8")
+    serialized = json.dumps(specs, indent=2)
+    typer.echo(serialized if output_json else specs)
+    if save is not None:
+        save.parent.mkdir(parents=True, exist_ok=True)
+        save.write_text(serialized + "\n", encoding="utf-8")
 
 
-def list_devices() -> None:
+def list_devices(
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print device and partition identifiers as JSON.")] = False,
+) -> None:
     from stackops.scripts.python.helpers.helpers_devops import cli_config_mount
 
-    cli_config_mount.list_devices()
+    cli_config_mount.list_devices(output_json=output_json)
 
 
 def list_autostart(
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print the filtered startup inventory as JSON.")] = False,
     show_all: Annotated[bool, typer.Option("--all", "-a", help="Include standard OS services alongside notable ones.")] = False,
     category: Annotated[
         list[AutostartCategoryOption] | None,
@@ -174,6 +208,7 @@ def list_autostart(
             scope=scope,
             name=name,
             source=source,
+            output_json=output_json,
         )
     except (OSError, RuntimeError) as exc:
         typer.echo(f"Autostart listing failed: {exc}", err=True)
@@ -181,6 +216,7 @@ def list_autostart(
 
 
 def mount_device(
+    key_file: Annotated[Path | None, typer.Option("--key-file", "-k", exists=True, dir_okay=False, help="Unlock key file for dislocker or udisksctl.")] = None,
     device_query: Annotated[str | None, typer.Option("--device", "-d", help="Device query (path, key, or label).")] = None,
     mount_point: Annotated[
         str | None,
@@ -196,6 +232,9 @@ def mount_device(
     from stackops.scripts.python.helpers.helpers_devops import cli_config_mount
 
     if interactive:
+        require_interactive("Interactive device mounting")
+        if key_file is not None:
+            raise typer.BadParameter("Use --key-file with explicit --device and --backend options.")
         cli_config_mount.mount_interactive()
         return
     if device_query is None:
@@ -207,7 +246,7 @@ def mount_device(
         typer.echo(msg)
         raise typer.Exit(2)
 
-    cli_config_mount.mount_device(device_query=device_query, mount_point=mount_point or "", read_only=read_only, backend=backend)
+    cli_config_mount.mount_device(device_query=device_query, mount_point=mount_point or "", read_only=read_only, backend=backend, key_file=key_file)
 
 
 def get_app() -> typer.Typer:

@@ -23,6 +23,7 @@ def _resolve_seek_arguments(first_argument: str, search_term: str) -> tuple[str,
 
 
 def seek(
+    ctx: typer.Context,
     path_or_search_term: Annotated[str, typer.Argument(help="The directory/file to search, or the search term when no matching path exists")] = ".",
     search_term: Annotated[str, typer.Argument(help="Search query; seeds the picker unless --json is used")] = "",
     ast: Annotated[bool, typer.Option(..., "--ast", "-a", help="The abstract syntax tree search/ tree sitter search of symbols")] = False,
@@ -54,6 +55,7 @@ def seek(
         typer.Option("--json", "-j", help="Print a JSON array without prompts or a picker. Text/semantic searches require a query; file/AST searches allow an empty query. No automatic dependency installation."),
     ] = False,
     install_dependencies: Annotated[bool, typer.Option(..., "--install-dependencies", "-i", help="Install missing helper dependencies and exit.")] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="Disable interactive selection; use --json for search results.")] = False,
     max_files: Annotated[
         int,
         typer.Option(
@@ -69,6 +71,11 @@ def seek(
     import subprocess
 
     from stackops.scripts.python.helpers.helpers_seek.seek_impl import seek as impl
+    from stackops.utils.cli_utils.interaction import configure_interaction, require_interactive
+
+    configure_interaction(ctx=ctx, non_interactive=non_interactive)
+    if not json_output and not install_dependencies:
+        require_interactive("Search selection; use --json for noninteractive results")
 
     path, resolved_search_term = _resolve_seek_arguments(first_argument=path_or_search_term, search_term=search_term)
     if json_output:

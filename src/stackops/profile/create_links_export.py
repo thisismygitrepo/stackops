@@ -33,7 +33,10 @@ def main_from_parser(
     DOWN = Self-Managed-Config-File-Path -> Config-File-Default-Path
     For config files in the library repo, copy packaged settings first when syncing down."""
     from stackops.profile.create_links import ConfigMapper, read_mapper
+    from stackops.utils.cli_utils.interaction import require_interactive
 
+    if which is None:
+        require_interactive("Select dotfile groups; supply --which GROUP or --which all")
     source_key = CONFIG_SOURCE_MAP[source]
     try:
         mapper_full = read_mapper(source=source_key)

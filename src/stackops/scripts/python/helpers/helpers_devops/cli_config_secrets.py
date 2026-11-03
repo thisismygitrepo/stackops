@@ -1,3 +1,7 @@
+import json
+import sys
+from contextlib import redirect_stdout
+from dataclasses import fields
 from pathlib import Path
 from typing import Annotated
 
@@ -61,6 +65,7 @@ def stats(
     ] = False,
     show_paths: Annotated[bool, typer.Option("--show-paths", "-P", help="Include secrets file paths in the source table.")] = False,
     top: Annotated[int, typer.Option("--top", "-t", min=1, max=50, help="Number of tag/scope labels to show with --details.")] = 8,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print metadata-only inventory statistics as JSON.")] = False,
 ) -> None:
     """📊 <t> Show aggregate StackOps secrets inventory stats without printing secret values."""
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import (
@@ -69,8 +74,13 @@ def stats(
         resolve_secret_sources,
     )
 
-    secret_sources = resolve_secret_sources(secrets_path=custom_path, secrets_source=secrets_source)
-    stats_rows = load_secret_stats_from_sources(secret_sources=secret_sources, show_paths=show_paths)
+    with redirect_stdout(sys.stderr):
+        secret_sources = resolve_secret_sources(secrets_path=custom_path, secrets_source=secrets_source)
+        stats_rows = load_secret_stats_from_sources(secret_sources=secret_sources, show_paths=show_paths)
+    if json_output:
+        rows = [{field.name: getattr(row, field.name) for field in fields(row) if show_paths or field.name != "path"} for row in stats_rows]
+        typer.echo(json.dumps({"sources": rows}, indent=2, default=str))
+        return
     render_secret_stats(stats_rows=stats_rows, details=details, show_paths=show_paths, top=top)
 
 
@@ -97,17 +107,30 @@ def subset(
         ),
     ] = "throw-error",
     preview_secrets: Annotated[bool, typer.Option("--preview-secrets", "-P", help="Include secret values in the interactive TV preview.")] = False,
+    names: Annotated[list[str] | None, typer.Option("--name", "-n", help="Exact login name to include; repeat to select several.")] = None,
+    entry_indices: Annotated[list[int] | None, typer.Option("--entry-index", "-I", min=0, help="Zero-based entries[] index to include; repeat to select several.")] = None,
+    all_matches: Annotated[bool, typer.Option("--all-matches", "-a", help="Include all entries, or every entry with a selected name.")] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run", "-d", help="Validate the selection and output without writing.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print a receipt without secret values; requires explicit selectors.")] = False,
 ) -> None:
     """📦 <u> Create a StackOps secrets subset and choose output conflicts with --on-conflict."""
     from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
 
-    secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)
-    resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)
-    resolved_on_conflict = cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict]
-    secret_actions.subset_secrets_file(
-        source_path=secret_source.path, output_path=resolved_output_path, on_conflict=resolved_on_conflict, preview_secrets=preview_secrets
-    )
+    if json_output and not (names or entry_indices or all_matches):
+        raise typer.BadParameter("--json requires --name, --entry-index, or --all-matches.")
+    with redirect_stdout(sys.stderr):
+        secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)
+        resolved_output_path = cli_subset_support.resolve_subset_output_path(output_path)
+        receipt = secret_actions.subset_secrets_file(
+            source_path=secret_source.path, output_path=resolved_output_path,
+            on_conflict=cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict], preview_secrets=preview_secrets,
+            names=names or [], entry_indices=entry_indices or [], all_matches=all_matches, dry_run=dry_run,
+        )
+    if json_output:
+        typer.echo(json.dumps(receipt, indent=2))
+    else:
+        typer.echo(f"{receipt['status']}: {receipt['selected_entries']} login entries, {receipt['secret_bundles']} bundles; {receipt['path']}")
 
 
 def get_app() -> typer.Typer:

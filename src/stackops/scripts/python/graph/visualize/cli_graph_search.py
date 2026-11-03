@@ -1,5 +1,4 @@
 import json
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,6 +8,7 @@ from rich.panel import Panel
 
 from stackops.utils.installer_utils.installer_cli import install_if_missing
 from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+from stackops.utils.cli_utils.interaction import is_interactive
 
 
 type JsonObject = dict[str, object]
@@ -89,7 +89,7 @@ def search_cli_graph(graph_path: Path, query: str, json_output: bool, non_intera
             for entry in entries
         ], ensure_ascii=False))
         return 0
-    if non_interactive or not (sys.stdin.isatty() and sys.stdout.isatty()):
+    if non_interactive or not is_interactive():
         for entry in entries:
             print(entry.executable_command)
         return 0

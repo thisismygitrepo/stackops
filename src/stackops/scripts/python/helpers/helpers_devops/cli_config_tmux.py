@@ -200,10 +200,19 @@ def reload_tmux(
 
 def status(
     location: Annotated[TmuxInstallLocation, typer.Option("--location", "-l", help="tmux config location to inspect.")] = "home",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print styling paths and installation state as JSON.")] = False,
 ) -> None:
     """Show tmux styling paths and install status."""
     paths = _paths(location)
     symlink_target = paths.config_path.resolve(strict=False) if paths.config_path.is_symlink() else None
+    if json_output:
+        import json
+
+        typer.echo(json.dumps({"location": paths.location,
+                              "framework": {"path": str(paths.framework_dir), "exists": paths.framework_dir.exists()},
+                              "config": {"path": str(paths.config_path), "exists": paths.config_path.exists(), "symlink_target": str(symlink_target) if symlink_target is not None else None},
+                              "local": {"path": str(paths.local_config_path), "exists": paths.local_config_path.exists()}}, indent=2))
+        return
     typer.echo(f"location: {paths.location}")
     typer.echo(f"framework: {paths.framework_dir} ({'present' if paths.framework_dir.exists() else 'missing'})")
     if symlink_target is None:

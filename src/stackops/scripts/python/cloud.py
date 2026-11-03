@@ -1,6 +1,10 @@
 """Cloud management commands - lazy loading subcommands."""
 
 from typing import Annotated, Literal
+from pathlib import Path
+from contextlib import redirect_stdout
+import sys
+import json
 
 import typer
 
@@ -25,22 +29,17 @@ def sync(
         typer.Option("--delete", "-D", help="Delete destination-only files during one-way sync. Bisync always propagates deletions; this flag changes their timing."),
     ] = False,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Show the rclone command being executed.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print a completion receipt as JSON.")] = False,
 ) -> None:
     """🔄 Synchronize files/folders between local and cloud storage."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_sync import main as sync_main
     from stackops.utils.cloud.rclone import RcloneCommandError
 
     try:
-        sync_main(
-            source=source,
-            target=target,
-            transfers=transfers,
-            root=root,
-            bisync=bisync,
-            resync=resync,
-            delete=delete,
-            verbose=verbose,
-        )
+        with redirect_stdout(sys.stderr if output_json else sys.stdout):
+            receipt = sync_main(source=source, target=target, transfers=transfers, root=root, bisync=bisync, resync=resync, delete=delete, verbose=verbose)
+        if output_json:
+            typer.echo(json.dumps(receipt))
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RcloneCommandError as error:
@@ -74,28 +73,31 @@ def copy(
     ] = defaults["encryption"],
     zip_: Annotated[bool, typer.Option("--zip", "-z", help="📦 Compress uploads and extract downloads.")] = defaults["zip"],
     os_specific: Annotated[bool, typer.Option("--os-specific", "-O", help="💻 choose path specific for this OS.")] = defaults["os_specific"],
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read the encryption password from a file; '-' reads stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the encryption password.")] = None,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print resolved paths and share links as JSON.")] = False,
 ) -> None:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main
 
-    copy_main(
-        source=source,
-        target=target,
-        transfers=transfers,
-        overwrite=overwrite,
-        share_scope=share_scope,
-        share_type=share_type,
-        record_group=record_group,
-        record_name=record_name,
-        record_os=record_os,
-        rel2home=rel2home,
-        root=root,
-        pwd=pwd,
-        password_name=password_name,
-        encryption=encryption,
-        zip_=zip_,
-        os_specific=os_specific,
-    )
+    supplied_password_sources = sum(password_source is not None for password_source in (pwd, password_name, password_file, password_env))
+    if supplied_password_sources > 1:
+        raise typer.BadParameter("Choose one password source: --password, --password-name, --password-file, or --password-env.")
+    if output_json and encryption in {"symmetric", "s"} and supplied_password_sources == 0:
+        raise typer.BadParameter("Provide --password-name, --password-file, or --password-env with symmetric encryption and --json.")
+    if password_file is not None or password_env is not None:
+        from stackops.utils.cli_utils.secret_input import read_secret_input
+
+        pwd = read_secret_input(value=None, file=password_file, env=password_env, prompt="Encryption password")
+    with redirect_stdout(sys.stderr if output_json else sys.stdout):
+        receipt = copy_main(
+            source=source, target=target, transfers=transfers, overwrite=overwrite,
+            share_scope=share_scope, share_type=share_type, record_group=record_group,
+            record_name=record_name, record_os=record_os, rel2home=rel2home, root=root,
+            pwd=pwd, password_name=password_name, encryption=encryption, zip_=zip_, os_specific=os_specific,
+        )
+    if output_json:
+        typer.echo(json.dumps(receipt))
 
 
 def mount(
@@ -106,11 +108,16 @@ def mount(
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
     backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
-    daemon: Annotated[bool, typer.Option("--daemon", "-D", help="Keep mounts running in the background independently of tmux (Linux/macOS).")] = False,
+    daemon: Annotated[bool, typer.Option("--daemon", "-D", help="Keep mounts running in the background independently of a terminal.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print background mount locations and process identities as JSON.")] = False,
+    timeout: Annotated[float, typer.Option("--timeout", "-T", min=1, help="Seconds to wait for each background mount.")] = 30.0,
 ) -> None:
     """🔗 Mount cloud storage services as local drives."""
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount import mount as mount_main
-    mount_main(clouds=clouds, destination=destination, network=network, backend=backend, daemon=daemon)
+    with redirect_stdout(sys.stderr if output_json else sys.stdout):
+        receipt = mount_main(clouds=clouds, destination=destination, network=network, backend=backend, daemon=daemon, output_json=output_json, timeout=timeout)
+    if output_json:
+        typer.echo(json.dumps(receipt))
 
 
 def transfer(
@@ -120,19 +127,23 @@ def transfer(
     zip_first: Annotated[bool, typer.Option("--zip-first", "-z", help="Zip before sending.")] = False,
     cloud: Annotated[bool, typer.Option("--cloud", "-c", help="Transfer through the cloud.")] = False,
     overwrite_existing: Annotated[bool, typer.Option("--overwrite", "-o", help="Overwrite existing files on remote when sending from local to remote.")] = False,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read the SSH password from a file; '-' reads stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the SSH password.")] = None,
 ) -> None:
     """📦 File transfer utility through SSH."""
     from stackops.scripts.python.ftpx import ftpx as ftpx_impl
-    ftpx_impl(source=source, target=target, recursive=recursive, zip_first=zip_first, cloud=cloud, overwrite_existing=overwrite_existing)
+    ftpx_impl(source=source, target=target, recursive=recursive, zip_first=zip_first, cloud=cloud, overwrite_existing=overwrite_existing, password_file=password_file, password_env=password_env)
 
 
 def get_app() -> typer.Typer:
+    from stackops.utils.cli_utils.interaction import configure_interaction
     from stackops.utils.cloud.onedrive.cli import get_app as get_onedrive_app
 
     app = typer.Typer(
         add_completion=False, no_args_is_help=True, help="☁ Cloud management commands",
         context_settings={"help_option_names": ["-h", "--help"]},
     )
+    app.callback()(configure_interaction)
 
     app.command(name="sync", no_args_is_help=True, short_help="🔄 <s> Synchronize files/folders between local and cloud storage.")(sync)
     app.command(name="s", no_args_is_help=True, hidden=True)(sync)

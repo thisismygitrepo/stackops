@@ -161,6 +161,10 @@ def use_render_plotly(
     item_label: str = "Command",
 ) -> None:
     from stackops.utils.code import run_lambda_function
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    if output is None:
+        require_interactive("Opening a graph viewer; supply --output for an artifact")
     # from stackops.utils.source_of_truth import REPO_ROOT
 
     resolved_uv_with = [] if uv_with is None else list(uv_with)
@@ -170,7 +174,7 @@ def use_render_plotly(
 
     # resolved_uv_project_dir = str(REPO_ROOT) if REPO_ROOT.joinpath("pyproject.toml").exists() else None
 
-    run_lambda_function(
+    result = run_lambda_function(
         lambda: _render_plotly(
             view=view,
             output=output,
@@ -185,6 +189,10 @@ def use_render_plotly(
         uv_with=resolved_uv_with,
         uv_project_dir=uv_project_dir,
     )
+    if result.returncode != 0:
+        import typer
+
+        raise typer.Exit(code=result.returncode)
 
 
 if __name__ == "__main__":

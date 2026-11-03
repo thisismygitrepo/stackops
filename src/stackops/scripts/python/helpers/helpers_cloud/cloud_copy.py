@@ -207,7 +207,7 @@ def main(
     encryption: EncryptionModeChoice | None,
     zip_: bool,
     os_specific: bool,
-) -> None:
+) -> dict[str, str | None]:
     """📤 Upload or 📥 Download files/folders to/from cloud storage services like Google Drive, Dropbox, OneDrive, etc."""
     from rich.console import Console
     from rich.text import Text
@@ -222,6 +222,10 @@ def main(
     try:
         resolved_pwd = _resolve_password(pwd=pwd, password_name=password_name)
         encryption_mode = _resolve_encryption_mode(encryption=encryption, pwd=resolved_pwd)
+        if encryption_mode == "symmetric" and resolved_pwd is None:
+            from stackops.utils.cli_utils.secret_input import read_secret_input
+
+            resolved_pwd = read_secret_input(value=None, file=None, env=None, prompt="Encryption password; alternatively pass --password-name, --password-file, or --password-env")
         share_options = _resolve_share_options(share_scope=share_scope, share_type=share_type)
         resolved_record_name = _resolve_record_name(record_name)
     except (OSError, TypeError, ValueError) as error:
@@ -296,6 +300,7 @@ For this command, replace a leading :path with REMOTE:path.""",
         )
     )
 
+    share_url: str | None = None
     if operation == "download":
         target_path = Path(target)
         remote_path = Path(source.replace(cloud + ":", ""))
@@ -341,7 +346,6 @@ Use --overwrite to replace the target, or choose a different target.""",
     else:
         source_path = Path(source)
         remote_path = Path(target.replace(cloud + ":", ""))
-        share_url: str | None = None
         try:
             with prepared_upload_path(
                 local_path=source_path,
@@ -394,3 +398,4 @@ Data file: {registration['backup_path']}"""))
             direct_download_url = rclone_wrapper.google_drive_direct_download_url(share_url=share_url)
             if direct_download_url is not None:
                 console.print(Text(f"""⬇️ Direct download URL: {direct_download_url}"""))
+    return {"status": "completed", "operation": operation, "source": source, "target": target, "remote": cloud, "share_url": share_url}

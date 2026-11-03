@@ -34,9 +34,24 @@ def run_script(
 
 def list_scripts(
     source: Annotated[SCRIPT_SOURCE, typer.Option("--source", "-s", help="Source whose scripts should be listed.")] = "all",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print script names, paths, and sources as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_search.script_help import list_available_scripts
 
+    if json_output:
+        from stackops.scripts.python.helpers.helpers_devops.script_discovery import SCRIPT_SUFFIXES, is_supported_script_path, list_dynamic_script_names
+        from stackops.scripts.python.helpers.helpers_devops.script_sources import get_script_locations
+
+        scripts: list[dict[str, str]] = []
+        for label, location in get_script_locations(source=source).items():
+            if isinstance(location, Path):
+                scripts.extend({"source": label, "name": str(path.relative_to(location)), "path": str(path)}
+                               for path in sorted(location.rglob("*")) if path.is_file()
+                               and is_supported_script_path(relative_path=path.relative_to(location), supported_suffixes=SCRIPT_SUFFIXES))
+            else:
+                scripts.extend({"source": label, "name": name, "path": f"{str(location).rstrip('/')}/{name}"} for name in sorted(list_dynamic_script_names()))
+        typer.echo(json.dumps({"scripts": scripts}, indent=2))
+        return
     list_available_scripts(source=source)
 
 
@@ -66,7 +81,9 @@ def edit_script(
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops.script_resolution import resolve_script
     from stackops.utils.file_editor_cli import resolve_editor_command, run_file_editor
+    from stackops.utils.cli_utils.interaction import require_interactive
 
+    require_interactive("Edit a script; use devops scripts path NAME to locate the file for direct editing")
     if source in {"dynamic", "d"} and not Path(name).is_file():
         raise typer.BadParameter("Editing requires a local script source.", param_hint="--source")
     target = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive, allow_dynamic=False)

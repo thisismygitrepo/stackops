@@ -29,6 +29,9 @@ def run_managed_file_action(*, kind: ManagedFileKind, action: Literal["path", "i
 
 
 def run_managed_file_edit(*, kind: ManagedFileKind, path: Path | None, editor: Literal["hx", "nano", "code"], install_lsp: bool) -> None:
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("Editing a managed file; use path, init, and validate for noninteractive configuration")
     from stackops.utils.file_editor_cli import resolve_editor_command, run_file_editor
     from stackops.utils.managed_file_operations import initialize_managed_file, validate_managed_file
     from stackops.utils.managed_files import resolve_managed_file

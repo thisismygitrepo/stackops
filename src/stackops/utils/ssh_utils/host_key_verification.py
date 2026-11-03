@@ -9,6 +9,7 @@ import socket
 import stat
 
 import paramiko
+from stackops.utils.cli_utils.interaction import require_interactive
 
 from stackops.utils.ssh_utils.connection_target import SSHConnectionProfile
 
@@ -25,6 +26,7 @@ class ConfirmUnknownHostKey(paramiko.MissingHostKeyPolicy):
         self.hash_hostname = hash_hostname
 
     def missing_host_key(self, client: paramiko.SSHClient, hostname: str, key: paramiko.PKey) -> None:
+        require_interactive(f"Trusting the SSH host key for {hostname}; verify and add its key to known_hosts first")
         digest = hashlib.sha256(key.asbytes()).digest()
         fingerprint = base64.b64encode(digest).decode("ascii").rstrip("=")
         persistence_prompt = (

@@ -1,5 +1,7 @@
 import os
 import subprocess
+import sys
+import json
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -84,9 +86,11 @@ def build_docker(
         typer.Option(
             "--docker-secrets-path",
             "-p",
-            help="Secrets JSON path for Docker publish credentials. Read only after registry upload is confirmed.",
+            help="Secrets JSON path for Docker publish credentials. Read only with --publish.",
         ),
     ] = None,
+    publish: Annotated[bool, typer.Option("--publish", "-P", help="Publish the built image to the registry.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print an image/result receipt as JSON.")] = False,
 ) -> None:
     """🧱 `build_docker` — wrapper for `jobs/shell/docker_build_and_publish.sh`"""
     from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
@@ -102,52 +106,49 @@ def build_docker(
         typer.echo(f"❌ Script not found: {str(script_path)}")
         raise typer.Exit(code=1)
 
-    build_environment = os.environ.copy()
-    build_environment.update({"STACKOPS_DOCKER_ACTION": "build", "VARIANT": variant})
-    build_process = subprocess.run(["bash", str(script_path)], cwd=repo_root, env=build_environment, check=False)
-    if build_process.returncode != 0:
-        raise typer.Exit(code=build_process.returncode)
-
-    if not typer.confirm("❓ Do you want to push to the registry?", default=False):
-        typer.echo(f"❌ Registry upload canceled. Local image: stackops-{variant}:latest")
-        return
-
     from stackops.scripts.python.helpers.helpers_devops import cli_self_docker
     from stackops.secrets.search import render_secret_value
 
-    try:
-        credentials = cli_self_docker.resolve_docker_credentials(
-            secrets_path=docker_secrets_path,
-            login_name=docker_login_name,
-            account_name=docker_account_name,
-            secret_name=docker_secret_name,
-            secret_tags=docker_secret_tags,
-            scopes=docker_scopes,
-            token_key=docker_token_key,
+    publish_environment: dict[str, str] | None = None
+    if publish:
+        try:
+            credentials = cli_self_docker.resolve_docker_credentials(
+                secrets_path=docker_secrets_path,
+                login_name=docker_login_name,
+                account_name=docker_account_name,
+                secret_name=docker_secret_name,
+                secret_tags=docker_secret_tags,
+                scopes=docker_scopes,
+                token_key=docker_token_key,
+            )
+            cli_self_docker.validate_env_names(credentials.key_values)
+        except cli_self_docker.DockerCredentialError as exc:
+            typer.echo(f"""Error: {exc}""", err=True)
+            raise typer.Exit(code=1) from exc
+        publish_environment = os.environ.copy()
+        publish_environment.update({key: render_secret_value(value) for key, value in credentials.key_values.items()})
+        publish_environment.update(
+            {
+                "STACKOPS_DOCKER_ACTION": "publish",
+                "VARIANT": variant,
+                "DOCKER_IMAGE_NAMESPACE": credentials.username,
+                "DOCKER_LOGIN_TOKEN_ENV_VAR": credentials.token_env_key,
+            }
         )
-        cli_self_docker.validate_env_names(credentials.key_values)
-    except cli_self_docker.DockerCredentialError as exc:
-        typer.echo(typer.style("Error: ", fg=typer.colors.RED) + str(exc))
-        raise typer.Exit(code=1)
-
-    typer.echo(
-        typer.style("✅ Docker credentials: ", fg=typer.colors.GREEN)
-        + f"using login '{credentials.login_name}' / secret '{credentials.secret_name}' "
-        + f"as Docker namespace '{credentials.username}' with token env var '{credentials.token_env_key}'."
-    )
-    publish_environment = os.environ.copy()
-    publish_environment.update({key: render_secret_value(value) for key, value in credentials.key_values.items()})
-    publish_environment.update(
-        {
-            "STACKOPS_DOCKER_ACTION": "publish",
-            "VARIANT": variant,
-            "DOCKER_IMAGE_NAMESPACE": credentials.username,
-            "DOCKER_LOGIN_TOKEN_ENV_VAR": credentials.token_env_key,
-        }
-    )
-    publish_process = subprocess.run(["bash", str(script_path)], cwd=repo_root, env=publish_environment, check=False)
-    if publish_process.returncode != 0:
-        raise typer.Exit(code=publish_process.returncode)
+    build_environment = os.environ.copy()
+    build_environment.update({"STACKOPS_DOCKER_ACTION": "build", "VARIANT": variant})
+    build_process = subprocess.run(["bash", str(script_path)], cwd=repo_root, env=build_environment, stdout=sys.stderr if json_output else None, check=False)
+    if build_process.returncode:
+        raise typer.Exit(code=build_process.returncode)
+    if publish_environment is not None:
+        publish_process = subprocess.run(["bash", str(script_path)], cwd=repo_root, env=publish_environment, stdout=sys.stderr if json_output else None, check=False)
+        if publish_process.returncode:
+            raise typer.Exit(code=publish_process.returncode)
+    image = f"""stackops-{variant}:latest"""
+    if json_output:
+        typer.echo(json.dumps({"image": image, "built": True, "published": publish}))
+    else:
+        typer.echo(f"""Built {image}. Published: {publish}.""")
 
 
 def build_graph(
@@ -157,6 +158,10 @@ def build_graph(
     ] = False,
 ) -> None:
     """🔗 <g> Build the architecture dependency graph."""
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    if view:
+        require_interactive("Opening the architecture graph in a browser")
     from stackops.scripts.python.helpers.helpers_devops import cli_self_repo
     from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 

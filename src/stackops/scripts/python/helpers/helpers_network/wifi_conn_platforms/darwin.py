@@ -44,9 +44,9 @@ def get_available_networks() -> list[WifiNetwork]:
         result = run_text_command([_AIRPORT_BINARY, "-s"], check=True)
         networks = _parse_airport_scan_output(result.stdout)
     except subprocess.CalledProcessError as error:
-        console.print(f"[red]❌ Error scanning networks: {error}[/red]")
+        raise RuntimeError(f"WiFi scan failed with exit code {error.returncode}.") from None
     except Exception as error:
-        console.print(f"[red]❌ Unexpected error: {error}[/red]")
+        raise RuntimeError(f"WiFi scan failed: {error}") from error
 
     return deduplicate_networks(networks)
 

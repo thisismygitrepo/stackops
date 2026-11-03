@@ -1,4 +1,5 @@
 from typing import Annotated
+from pathlib import Path
 
 import typer
 
@@ -57,47 +58,60 @@ def link_wsl_and_windows_home(
 
 
 def connect_wifi(
-    ssid: Annotated[str, typer.Option("-n", "--ssid", help="🔗 SSID of WiFi (from config)")] = "MyPhoneHotSpot",
+    ssid: Annotated[str | None, typer.Option("-n", "--ssid", help="Exact SSID, or configured WiFi login name when no password source is supplied.")] = None,
     manual: Annotated[bool, typer.Option("-m", "--manual", help="🔍 Manual network selection mode")] = False,
     list_: Annotated[bool, typer.Option("-l", "--list", help="📡 List available networks only")] = False,
+    password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read the network password from a file; '-' reads stdin.")] = None,
+    password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the network password.")] = None,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print network inventory or connection receipt as JSON.")] = False,
 ) -> None:
-    """Main function with fallback network selection"""
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.prompt import Confirm
+    import json
+    import subprocess
 
-    from stackops.scripts.python.helpers.helpers_network.wifi_conn import display_available_networks, manual_network_selection, try_config_connection
+    from stackops.utils.cli_utils.interaction import require_interactive
+    from stackops.utils.cli_utils.secret_input import read_secret_input
 
-    console = Console()
-    console.print(Panel("📶 Welcome to the WiFi Connector Tool", title="[bold blue]WiFi Connection[/bold blue]", border_style="blue"))
-
-    if list_:
-        display_available_networks()
-        return
-
+    if list_ and (ssid is not None or manual or password_file is not None or password_env is not None):
+        raise typer.BadParameter("--list cannot be combined with connection options.")
     if manual:
-        console.print("[blue]🔍 Manual network selection mode[/blue]")
-        if manual_network_selection():
-            console.print("[green]🎉 Successfully connected![/green]")
-        else:
-            console.print("[red]❌ Failed to connect[/red]")
-        return
+        if ssid is not None or password_file is not None or password_env is not None or output_json:
+            raise typer.BadParameter("--manual cannot be combined with an SSID, password source, or --json.")
+        require_interactive("WiFi network selection; use --ssid and a password source")
+    if not list_ and not manual and not ssid:
+        raise typer.BadParameter("Provide --ssid, --manual, or --list.")
+    if password_file is not None and password_env is not None:
+        raise typer.BadParameter("Choose one of --password-file and --password-env.")
 
-    console.print(f"[blue]🔍 Attempting to connect to configured network: {ssid}[/blue]")
+    from stackops.scripts.python.helpers.helpers_network.wifi_conn import connect_to_new_network, get_available_networks, manual_network_selection, try_config_connection
+    from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import render_networks_table
 
-    if try_config_connection(ssid):
-        console.print("[green]🎉 Successfully connected using configuration![/green]")
-        return
-
-    console.print("\n[yellow]⚠️  Configuration connection failed or not available[/yellow]")
-
-    if Confirm.ask("[blue]Would you like to manually select a network?[/blue]", default=True):
-        if manual_network_selection():
-            console.print("[green]🎉 Successfully connected![/green]")
-        else:
-            console.print("[red]❌ Failed to connect[/red]")
+    try:
+        if list_:
+            networks = get_available_networks()
+            if output_json:
+                typer.echo(json.dumps(networks, indent=2))
+            else:
+                render_networks_table(networks, title="Available WiFi Networks")
+            return
+        if manual:
+            if not manual_network_selection():
+                raise typer.Exit(1)
+        elif ssid is not None:
+            if password_file is not None or password_env is not None:
+                password = read_secret_input(value=None, file=password_file, env=password_env, prompt="WiFi password")
+                connect_to_new_network(ssid, password)
+            elif not try_config_connection(ssid):
+                raise typer.BadParameter("Configured WiFi connection failed; supply --ssid and --password-file or --password-env.")
+    except subprocess.CalledProcessError as error:
+        typer.echo(f"WiFi operation failed with exit code {error.returncode}.", err=True)
+        raise typer.Exit(1) from None
+    except (OSError, RuntimeError) as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from None
+    if output_json:
+        typer.echo(json.dumps({"status": "connected", "ssid": ssid}))
     else:
-        console.print("[blue]👋 Goodbye![/blue]")
+        typer.echo("WiFi connection completed.")
 
 
 def get_app() -> typer.Typer:

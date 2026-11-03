@@ -112,7 +112,7 @@ def agents_create(
             help="Job label. Also used as the generated layout name and to build the default output directory when --agents-dir is omitted.",
         ),
     ] = "AI_Agents",
-    join_prompt_and_context: Annotated[bool, typer.Option(..., "--join-prompt-context", "-j", help="Join prompt file to the context.")] = False,
+    join_prompt_and_context: Annotated[bool, typer.Option(..., "--join-prompt-context", "-J", help="Join prompt file to the context.")] = False,
     run: Annotated[bool, typer.Option(..., "--run", "-R", help="Immediately launch the generated layout through the selected backend.")] = False,
     output_path: Annotated[str | None, typer.Option(..., "--output", "-o", help="Path to write the layout.yaml file")] = None,
     agents_dir: Annotated[
@@ -137,8 +137,8 @@ def agents_create(
     interactive: Annotated[
         bool, typer.Option(..., "--interactive", "-i", help="Ask for missing parameters interactively.")
     ] = False,
-    on_directory_conflict: Annotated[AgentsDirectoryConflict, typer.Option("--on-directory-conflict", help="Existing agents directory: error, allocate a new directory, or replace an owned directory.")] = "error",
-    json_output: Annotated[bool, typer.Option("--json", help="Print created artifact paths and launch state as JSON.")] = False,
+    on_directory_conflict: Annotated[AgentsDirectoryConflict, typer.Option("--on-directory-conflict", "-D", help="Existing agents directory: error, allocate a new directory, or replace an owned directory.")] = "error",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print created artifact paths and launch state as JSON.")] = False,
 ) -> AgentCreationResult | None:
     """Create agents layout file, ready to run."""
     try:
@@ -184,28 +184,28 @@ def agents_create(
 
         with redirect_stdout(sys.stderr if json_output else sys.stdout):
             result = impl(
-            agent=resolved_agent,
-            host=host,
-            backend=resolved_backend,
-            model=model,
-            reasoning=reasoning_effort,
-            provider=provider,
-            context=context,
-            context_path=context_path,
-            separator=normalized_separator,
-            agent_load=agent_load,
-            stagger_max=stagger_max,
-            prompt=prompt,
-            prompt_path=prompt_path,
-            prompt_name=prompt_name,
-            job_name=job_name,
-            join_prompt_and_context=join_prompt_and_context,
-            run=run,
-            output_path=output_path,
-            agents_dir=agents_dir,
-            save_as_yaml=save_as_yaml,
-            interactive=False,
-            on_directory_conflict=on_directory_conflict,
+                agent=resolved_agent,
+                host=host,
+                backend=resolved_backend,
+                model=model,
+                reasoning=reasoning_effort,
+                provider=provider,
+                context=context,
+                context_path=context_path,
+                separator=normalized_separator,
+                agent_load=agent_load,
+                stagger_max=stagger_max,
+                prompt=prompt,
+                prompt_path=prompt_path,
+                prompt_name=prompt_name,
+                job_name=job_name,
+                join_prompt_and_context=join_prompt_and_context,
+                run=run,
+                output_path=output_path,
+                agents_dir=agents_dir,
+                save_as_yaml=save_as_yaml,
+                interactive=False,
+                on_directory_conflict=on_directory_conflict,
             )
         if json_output:
             from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from stackops.utils.cli_utils.interaction import require_interactive
 
 from stackops.scripts.python.helpers.helpers_agents.agents_iter_constants import (
     CLOSE_LOOP_INTERVAL_SECONDS,
@@ -23,10 +24,18 @@ def close(
     interval_seconds: Annotated[
         int, typer.Option("--interval", "-I", min=1, help="Seconds between close passes when --loop is used.")
     ] = CLOSE_LOOP_INTERVAL_SECONDS,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print close plans/results as JSON; --loop emits one JSON line per pass.")] = False,
 ) -> None:
     """Close handed-off iteration tabs after exact receipt and live-state validation."""
     try:
         _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)
+        if json_output:
+            if interactive:
+                raise ValueError("--json cannot be combined with --interactive")
+            from stackops.scripts.python.helpers.helpers_agents.agents_iter_json import close_iter_json
+
+            close_iter_json(workspace_id=workspace_id, continuous=continuous, retain_previous=retain_previous, dry_run=dry_run, interval_seconds=interval_seconds)
+            return
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_close_iter_workspaces_loop
 
         show_close_iter_workspaces_loop(
@@ -46,6 +55,8 @@ def close(
 
 
 def _validate_workspace_scope(*, workspace_id: str | None, all_workspaces: bool, interactive: bool) -> None:
+    if interactive:
+        require_interactive("Choosing an iteration workspace; supply WORKSPACE_ID or --all")
     selected_scope_count = sum((workspace_id is not None, all_workspaces, interactive))
     if selected_scope_count != 1:
         raise ValueError("Pass exactly one WORKSPACE_ID, --all, or --interactive.")
@@ -62,10 +73,18 @@ def clean(
     ] = False,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose one Agent-Ops iteration run with a TV preview.")] = False,
     dry_run: Annotated[bool, typer.Option("--dry-run", "-n", help="Show stale iteration records without removing them.")] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print cleanup plan/results as JSON.")] = False,
 ) -> None:
     """Remove stale iteration records while preserving live and unrelated Agent-Ops records."""
     try:
         _validate_workspace_scope(workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive)
+        if json_output:
+            if interactive:
+                raise ValueError("--json cannot be combined with --interactive")
+            from stackops.scripts.python.helpers.helpers_agents.agents_iter_json import clean_iter_json
+
+            clean_iter_json(cwd=Path.cwd(), workspace_id=workspace_id, dry_run=dry_run)
+            return
         from stackops.scripts.python.helpers.helpers_agents.agents_iter_rich_output import show_clean_agent_ops_cache
 
         show_clean_agent_ops_cache(cwd=Path.cwd(), workspace_id=workspace_id, all_workspaces=all_workspaces, interactive=interactive, dry_run=dry_run)

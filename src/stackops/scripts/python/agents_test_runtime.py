@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from contextlib import redirect_stdout
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -8,6 +10,7 @@ from stackops.utils.default_agent import DEFAULT_AGENT_HELP
 from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
 from stackops.utils.repos.project import resolve_project_root
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
+from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentsDirectoryConflict
 
 
 JOB_NAME = "test_runtime"
@@ -35,7 +38,7 @@ class ContextBuildResult:
 
 
 def _get_context_path(*, workspace_root: Path) -> Path:
-    return workspace_root / ".ai" / "agents" / JOB_NAME / "context.md"
+    return workspace_root / ".ai" / "agents" / "_inputs" / JOB_NAME / "context.md"
 
 
 def _get_layout_path(*, workspace_root: Path) -> str:
@@ -105,6 +108,9 @@ def launch_test_runtime(
         int,
         typer.Option("--max-agents", "-m", help="Maximum agents allowed in the generated layout."),
     ] = 50,
+    run: Annotated[bool, typer.Option("--run", "-R", help="Launch the generated agents; by default only prepare their artifacts.")] = False,
+    on_directory_conflict: Annotated[AgentsDirectoryConflict, typer.Option("--on-directory-conflict", "-D", help="Existing agents directory: error, new-directory, or replace-owned.")] = "error",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print generated artifact paths and launch state as JSON.")] = False,
 ) -> None:
     from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
 
@@ -125,29 +131,30 @@ def launch_test_runtime(
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
     typer.echo(
-        f"Prepared runtime-test context for {build_result.file_count} Python files across {build_result.repo_count} repositories from {search_root}."
+        f"Prepared runtime-test context for {build_result.file_count} Python files across {build_result.repo_count} repositories from {search_root}.", err=json_output,
     )
 
-    agents_create_command(
-        agent=agent,
-        context_path=str(context_path),
-        separator=FILE_SEPARATOR,
-        agent_load=agent_load,
-        prompt=_build_prompt(),
-        job_name=JOB_NAME,
-    )
-    proceed = typer.confirm("Agents layout for runtime test generation created. Do you want to run it now?", default=True)
-    if not proceed:
-        typer.echo("Agents not launched.")
-        return
-    from stackops.scripts.python.terminal import run as terminal_run_command
+    with redirect_stdout(sys.stderr if json_output else sys.stdout):
+        result = agents_create_command(
+            agent=agent,
+            context_path=str(context_path),
+            separator=FILE_SEPARATOR,
+            agent_load=agent_load,
+            prompt=_build_prompt(),
+            job_name=JOB_NAME,
+            on_directory_conflict=on_directory_conflict,
+            run=False,
+        )
+        if result is None:
+            raise RuntimeError("Runtime-test generation did not return artifact paths")
+        if run:
+            from stackops.scripts.python.terminal import run as terminal_run_command
 
-    terminal_run_command(
-        ctx=ctx,
-        layouts_file=_get_layout_path(workspace_root=workspace_root),
-        max_tabs=max_tabs,
-        on_conflict="restart",
-    )
+            terminal_run_command(ctx=ctx, layouts_file=str(result.layout_path), max_tabs=max_tabs, on_conflict="restart", attach=False)
+    if json_output:
+        from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
+
+        emit_agent_json({"artifacts": replace(result, launched=run), "context_path": context_path, "file_count": build_result.file_count, "repo_count": build_result.repo_count})
 
 
 def get_app() -> typer.Typer:

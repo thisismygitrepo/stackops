@@ -1,3 +1,5 @@
+import json
+from dataclasses import asdict
 from typing import Annotated
 
 import typer
@@ -6,6 +8,7 @@ STATUS_HELP = "Show read-only dotfile stats: mappers, sync state, known dotfiles
 
 
 def show_dotfiles_status(
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print selected status sections as JSON.")] = False,
     mappers: Annotated[bool, typer.Option("--mappers", "-m", help="Show mapper sizes per OS.")] = False,
     sync: Annotated[bool, typer.Option("--sync", "-s", help="Show the sync state of your mapped entries and the library's on this machine.")] = False,
     radar: Annotated[bool, typer.Option("--radar", "-r", help="Show known dotfiles found on this machine, by what collect would do with them.")] = False,
@@ -45,7 +48,20 @@ def show_dotfiles_status(
             typer.echo(typer.style("Error: ", fg=typer.colors.RED) + f"""Unknown --which group(s): {", ".join(repr(group) for group in unknown_groups)}. Known groups: {", ".join(sorted(known_groups))}""")
             raise typer.Exit(code=1)
         groups = frozenset(requested_groups)
-        console.print(Text(f"""Groups: {", ".join(requested_groups)}""", style="dim"))
+        if not json_output:
+            console.print(Text(f"""Groups: {", ".join(requested_groups)}""", style="dim"))
+    if json_output:
+        result: dict[str, object] = {"os": current_os, "groups": sorted(groups) if groups is not None else None}
+        if show_all or mappers:
+            result["mappers"] = asdict(collect_mappers_status(loaded_mappers, groups))
+        if show_all or sync:
+            result["sync"] = asdict(collect_sync_status(loaded_mappers, groups, current_os))
+        if show_all or radar:
+            result["radar"] = [asdict(plan) for plan in collect_radar_status(loaded_mappers, groups, current_os)]
+        if show_all or storage:
+            result["storage"] = asdict(collect_storage_status(loaded_mappers, groups))
+        typer.echo(json.dumps(result, indent=2, default=str))
+        return
     if show_all or mappers:
         console.print(render_mappers(collect_mappers_status(loaded_mappers, groups), expand=expand))
     if show_all or sync:

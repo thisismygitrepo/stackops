@@ -1,4 +1,5 @@
 from typing import Annotated, Literal, TypeAlias, TYPE_CHECKING
+from pathlib import Path
 
 import typer
 
@@ -40,7 +41,7 @@ def _build_devices_table(entries: list[DeviceEntry]) -> "Table":
     return table
 
 
-def list_devices() -> None:
+def list_devices(output_json: bool) -> None:
     from rich.console import Console
 
     from stackops.scripts.python.helpers.helpers_devops.mount_helpers.devices import list_devices as _list_devices
@@ -50,6 +51,12 @@ def list_devices() -> None:
     except RuntimeError as exc:
         typer.echo(f"Device listing failed: {exc}", err=True)
         raise typer.Exit(1)
+    if output_json:
+        import json
+        from dataclasses import asdict
+
+        typer.echo(json.dumps([asdict(entry) for entry in entries], indent=2))
+        return
     if not entries:
         typer.echo("No devices found")
         return
@@ -61,11 +68,12 @@ def mount_device(
     mount_point: Annotated[str, typer.Argument(...)],
     read_only: bool,
     backend: MountBackend,
+    key_file: Path | None,
 ) -> None:
     import platform
 
     from stackops.scripts.python.helpers.helpers_devops.mount_helpers.devices import list_devices as _list_devices
-    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.linux import mount_linux, select_linux_partition
+    from stackops.scripts.python.helpers.helpers_devops.mount_helpers.linux import mount_linux
     from stackops.scripts.python.helpers.helpers_devops.mount_helpers.macos import mount_macos
     from stackops.scripts.python.helpers.helpers_devops.mount_helpers.selection import resolve_device
     from stackops.scripts.python.helpers.helpers_devops.mount_helpers.windows import mount_windows
@@ -78,7 +86,9 @@ def mount_device(
         entry = resolve_device(entries, device_query)
         match platform.system():
             case "Linux":
-                mount_linux(select_linux_partition(entries, entry), mount_point, read_only, backend)
+                if entry.device_type == "disk":
+                    raise RuntimeError("Specify an exact partition from utils machine list-devices --json, or use --interactive.")
+                mount_linux(entry, mount_point, read_only, backend, key_file)
             case "Darwin":
                 mount_macos(entry, mount_point)
             case "Windows":
@@ -100,6 +110,9 @@ def mount_interactive() -> None:
     from stackops.scripts.python.helpers.helpers_devops.mount_helpers.macos import mount_macos
     from stackops.scripts.python.helpers.helpers_devops.mount_helpers.selection import pick_device
     from stackops.scripts.python.helpers.helpers_devops.mount_helpers.windows import mount_windows
+    from stackops.utils.cli_utils.interaction import require_interactive
+
+    require_interactive("Interactive device mounting")
 
     try:
         entries = _list_devices()
@@ -117,7 +130,7 @@ def mount_interactive() -> None:
         backend: MountBackend = backend_str  # type: ignore[assignment]
         match platform_name:
             case "Linux":
-                mount_linux(select_linux_partition(entries, entry), mount_point, read_only, backend)
+                mount_linux(select_linux_partition(entries, entry), mount_point, read_only, backend, None)
             case "Darwin":
                 mount_macos(entry, mount_point)
             case "Windows":
