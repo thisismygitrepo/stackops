@@ -236,6 +236,7 @@ def register_data(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_data_display, cli_data_encrypt, cli_data_subset
+    from stackops.scripts.python.helpers.helpers_devops.cli_data_edit import edit_data
     from stackops.utils.managed_file_commands import register_managed_file_commands
 
     app = typer.Typer(
@@ -279,5 +280,8 @@ def get_app() -> typer.Typer:
     app.command(name="y", no_args_is_help=True, hidden=True)(cli_data_encrypt.decrypt)
 
     register_managed_file_commands(app=app, kind="data", path_alias="p", init_alias="i", validate_alias="v")
+
+    app.command(name="edit", help="📝 <e> Create if missing, edit, and validate the backup configuration and its schema.")(edit_data)
+    app.command(name="e", hidden=True)(edit_data)
 
     return app

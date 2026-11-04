@@ -202,8 +202,11 @@ def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
             unknown_fields = sorted(set(item) - EXPECTED_BACKUP_FIELDS)
             if unknown_fields:
                 raise ValueError(f"Backup entry '{item_key}' has unsupported fields: {', '.join(unknown_fields)}.")
+            path_local = _require_str_field(item, "path_local", item_key)
+            if "\\" in path_local:
+                raise ValueError(f"""Backup entry '{item_key}' path_local uses backslashes ({path_local!r}); use forward slashes, e.g. '~/code/project'.""")
             group_items[item_name] = {
-                "path_local": _require_str_field(item, "path_local", item_key),
+                "path_local": path_local,
                 "path_cloud": _optional_str_field(item, "path_cloud", item_key),
                 "share_url": _nullable_str_field(item, "share_url", item_key),
                 "zip": _require_bool_field(item, "zip", item_key),

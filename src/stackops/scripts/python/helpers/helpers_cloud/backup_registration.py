@@ -93,9 +93,9 @@ def register_backup_entry(
         resolved_entry_name = sanitize_entry_name(entry_name)
 
     if resolved_rel2home:
-        local_display = str(Path("~") / local_path.relative_to(Path.home()))
+        local_display = (Path("~") / local_path.relative_to(Path.home())).as_posix()
     else:
-        local_display = str(local_path)
+        local_display = local_path.as_posix()
     cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
     share_url_value = share_url.strip() if share_url and share_url.strip() else None
 
