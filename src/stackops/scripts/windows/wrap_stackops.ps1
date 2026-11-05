@@ -31,7 +31,9 @@ function wrap_in_shell_script {
 
     # Check if the file exists
     if (Test-Path $env:OP_PROGRAM_PATH) {
-        Write-Host "🚀 Taking over from python script @ $env:OP_PROGRAM_PATH"
+        if ($env:STACKOPS_VERBOSE -eq "1") {
+            Write-Host "🚀 Taking over from python script @ $env:OP_PROGRAM_PATH"
+        }
         & $env:OP_PROGRAM_PATH
         # Write-Host "✅ '$Command' execution completed."
 

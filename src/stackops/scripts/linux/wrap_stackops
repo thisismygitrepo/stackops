@@ -30,7 +30,9 @@ wrap_in_shell_script() {
   "$command" "$@"
   command_exit_code=$?
   if [[ -f "$OP_PROGRAM_PATH" ]]; then
-    printf "%b\n" "🚀 Taking over from python script @ ${OP_PROGRAM_PATH}${RESET}"
+    if [[ "${STACKOPS_VERBOSE:-}" == "1" ]]; then
+      printf "%b\n" "🚀 Taking over from python script @ ${OP_PROGRAM_PATH}${RESET}"
+    fi
     # printf "%b\n" "${GREEN}▶ Running...${RESET}"
     . "$OP_PROGRAM_PATH"
     exit_code=$?

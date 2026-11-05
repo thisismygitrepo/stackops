@@ -27,7 +27,9 @@ export def --env --wrapped wrap_in_shell_script [command: string, ...args: strin
     if ($op_program_path | path exists) {
         let before_path = $"($op_program_path).before"
         let after_path = $"($op_program_path).after"
-        print --stderr $"stackops: running ($op_program_path)"
+        if ($env.STACKOPS_VERBOSE? | default "") == "1" {
+            print --stderr $"stackops: running ($op_program_path)"
+        }
         try {
             with-env {
                 OP_PROGRAM_PATH: $op_program_path
