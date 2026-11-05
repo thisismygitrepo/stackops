@@ -11,11 +11,65 @@ description: >
 
 # StackOps
 
-Use this skill to move from a StackOps request to the command, configuration file, or implementation that owns the requested behavior.
+Use this skill to run StackOps, or to move from a StackOps request to the command, configuration file, or implementation that owns the requested behavior.
 
-For add, edit, rename, or remove requests, read [references/change-guide.md](references/change-guide.md). It covers choosing configuration versus code, locating the active source, making the change, and validating it, including a layout walkthrough.
+## Usage
 
-Run configuration discovery from the user's target project: local paths can depend on the current directory or repository. Resolve a StackOps source checkout only when inspecting or changing its implementation; verify it contains `pyproject.toml` and `src/stackops/` instead of assuming a workspace location. Resolve `src/stackops/...` paths and run source maintenance commands from that checkout. Resolve `references/...` paths from this skill's directory.
+Commands below use installed entrypoints. Run them from the target project, because local configuration can depend on the current directory. Find anything else with `<entrypoint> --help`, repeating for each command segment.
+
+### Run without prompts
+
+In a terminal, a command with missing input opens a picker or editor and waits for a person. Prevent that on every run:
+
+```bash
+STACKOPS_NON_INTERACTIVE=1 agents add-skill --list --json </dev/null
+```
+
+- `STACKOPS_NON_INTERACTIVE=1` makes a command exit with an error naming the input it needs, instead of opening a picker or editor.
+- `</dev/null` ends direct prompts that do not check that setting.
+- This mode turns on by itself when stdin or stdout is not a terminal. Set it anyway, because a shell tool may run under a pseudo-terminal.
+- `--non-interactive` is the option form. It goes on the entrypoint, before the subcommand: `agents --non-interactive add-skill`. `seek`, `preview`, and `agents run-prompt` also accept it directly.
+- Do not use `-N` after a subcommand, where it can mean something else: `--sandbox-name` on `agents run-prompt`, `--secret-name` on `devops vault search`.
+
+### Tasks
+
+Read-only:
+
+| I want to | Run |
+| --- | --- |
+| Search text | `seek PATH TERM --json` |
+| Show a file | `preview PATH --backend preview` |
+| Find installable software | `devops software list QUERY --json` |
+| List saved layouts | `terminal list --tabs --json` |
+| See running sessions | `terminal summary --json` |
+| List registered repositories | `devops repos list --json` |
+| See agents and their state | `agents status --json` |
+| Check an agent's setup | `agents doctor AGENT --json` |
+| List installable skills | `agents add-skill --list --json` |
+
+Changes the machine or remote data, so run these only when asked:
+
+| I want to | Run |
+| --- | --- |
+| Install software | `devops software install NAME` |
+| Launch a saved layout | `terminal run --choose-layouts NAME` |
+| Run a Python file | `fire run PATH` |
+| Call a Python function | `fire run PATH FUNCTION`, from a project environment that has the `fire` package |
+| Copy to or from cloud storage | `cloud copy SOURCE TARGET` |
+| Sync with cloud storage | `cloud sync SOURCE TARGET` |
+| Copy between machines over SSH | `cloud transfer MACHINE:PATH MACHINE:PATH` |
+| Back up or restore registered data | `devops data sync up` or `devops data sync down` |
+| Run a command in every repository | `devops repos action --command "COMMAND"` |
+| Set up an agent in this repository | `agents init AGENT` |
+| Add a skill | `agents add-skill NAME` |
+| Add an MCP server | `agents add-mcp NAME --agent AGENT` |
+| Ask an agent a question | `agents ask --agent AGENT "QUESTION"` |
+
+## Changing StackOps
+
+For add, edit, rename, or remove requests, read `references/change-guide.md`. It covers choosing configuration versus code, locating the active source, making the change, and validating it, including a layout walkthrough.
+
+Run configuration discovery from the user's target project: local paths can depend on the current directory or repository. Resolve a StackOps source checkout only when inspecting or changing its implementation; verify it contains `pyproject.toml` and `src/stackops/` instead of assuming a workspace location. Resolve `src/stackops/...` paths and run source maintenance commands from that checkout. Paths under `references/` are relative to the directory containing this `SKILL.md`. The Usage section needs none of them.
 
 ## Quick Workflow
 
@@ -68,7 +122,7 @@ Run configuration discovery from the user's target project: local paths can depe
 
 ## Reference Files
 
-- [references/change-guide.md](references/change-guide.md): add, edit, rename, or remove configuration entries and command behavior.
+- `references/change-guide.md`: add, edit, rename, or remove configuration entries and command behavior.
 - `references/cli-map.md`: top-level entrypoint index.
 - `references/source-map.md`: source index of umbrella dispatch routes.
 
