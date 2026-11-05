@@ -91,18 +91,23 @@ def lambda_to_python_script(lmb: Callable[[], Any],
     if not (callable(lmb) and isinstance(lmb, _types.LambdaType)):
         raise TypeError(f"Expected a lambda function object, got {type(lmb)}")
 
-    src = _inspect.getsource(lmb)
-    src = _textwrap.dedent(src)
+    # A lambda's getsource is its whole physical line, which need not parse on its own, so parse the
+    # full source and match the node by the span CPython records for the lambda's return instruction.
+    source_lines, _ = _inspect.findsource(lmb)
+    src = "".join(source_lines)
     tree = _ast.parse(src)
-
-    # find first Lambda node
-    lambda_node = None
-    for n in _ast.walk(tree):
-        if isinstance(n, _ast.Lambda):
-            lambda_node = n
-            break
+    code_positions = set(lmb.__code__.co_positions())
+    lambda_node = next(
+        (
+            node
+            for node in _ast.walk(tree)
+            if isinstance(node, _ast.Lambda)
+            and (node.body.lineno, node.body.end_lineno, node.body.col_offset, node.body.end_col_offset) in code_positions
+        ),
+        None,
+    )
     if lambda_node is None:
-        raise ValueError(f"""Could not find a lambda expression in source, got:\n{lmb}\nwhich is not a lambda, its a {src}""")
+        raise ValueError(f"""Could not find a lambda expression for {lmb}""")
 
     body = lambda_node.body
     if not isinstance(body, _ast.Call):

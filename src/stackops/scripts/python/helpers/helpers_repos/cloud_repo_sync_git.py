@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 import stat
-import sys
 from typing import TYPE_CHECKING
 
 from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts import MergeConflict
@@ -85,10 +84,12 @@ def ensure_git_identity(repo: "Repo", console: "Console") -> None:
     from git.exc import GitCommandError
     import typer
 
+    from stackops.utils.cli_utils.interaction import is_interactive
+
     if _has_git_identity(repo=repo):
         return
     console.print("Git needs your name and email before it can commit. These details will be saved only for this repository.")
-    if not sys.stdin.isatty():
+    if not is_interactive():
         console.print("Run guard in an interactive terminal to enter your Git name and email, or configure user.name and user.email for this repository.")
         raise typer.Exit(code=1)
 

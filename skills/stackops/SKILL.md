@@ -2,9 +2,9 @@
 name: stackops
 description: >
   Use ONLY when the user explicitly names stackops (e.g. "use stackops to add a layout
-  entry") or invokes /skill:stackops; then it finds and changes the StackOps command,
-  configuration file, schema, or Python implementation that owns the behavior through live
-  help and source maps. NEVER for generic CLI, config, layout, settings, catalog, or agent
+  entry") or invokes /skill:stackops; then it runs the StackOps command for the task, or finds
+  and changes the command, configuration file, schema, or Python implementation that owns the
+  behavior through live help and source maps. NEVER for generic CLI, config, layout, settings, catalog, or agent
   work that does not name stackops, for working inside the StackOps repo without naming it,
   or for an entrypoint word alone (devops, cloud, terminal, agents, utils, fire, preview, seek).
 ---
@@ -22,11 +22,10 @@ Commands below use installed entrypoints. Run them from the target project, beca
 In a terminal, a command with missing input opens a picker or editor and waits for a person. Prevent that on every run:
 
 ```bash
-STACKOPS_NON_INTERACTIVE=1 agents add-skill --list --json </dev/null
+STACKOPS_NON_INTERACTIVE=1 agents add-skill --list --json
 ```
 
-- `STACKOPS_NON_INTERACTIVE=1` makes a command exit with an error naming the input it needs, instead of opening a picker or editor.
-- `</dev/null` ends direct prompts that do not check that setting.
+- `STACKOPS_NON_INTERACTIVE=1` makes a command exit with an error naming the input it needs, instead of opening a picker, editor, or prompt.
 - This mode turns on by itself when stdin or stdout is not a terminal. Set it anyway, because a shell tool may run under a pseudo-terminal.
 - `--non-interactive` is the option form. It goes on the entrypoint, before the subcommand: `agents --non-interactive add-skill`. `seek`, `preview`, and `agents run-prompt` also accept it directly.
 - Do not use `-N` after a subcommand, where it can mean something else: `--sandbox-name` on `agents run-prompt`, `--secret-name` on `devops vault search`.
@@ -54,7 +53,7 @@ Changes the machine or remote data, so run these only when asked:
 | Install software | `devops software install NAME` |
 | Launch a saved layout | `terminal run --choose-layouts NAME` |
 | Run a Python file | `fire run PATH` |
-| Call a Python function | `fire run PATH FUNCTION`, from a project environment that has the `fire` package |
+| Call a Python function | `fire run PATH FUNCTION -- --ARGUMENT=VALUE` |
 | Copy to or from cloud storage | `cloud copy SOURCE TARGET` |
 | Sync with cloud storage | `cloud sync SOURCE TARGET` |
 | Copy between machines over SSH | `cloud transfer MACHINE:PATH MACHINE:PATH` |

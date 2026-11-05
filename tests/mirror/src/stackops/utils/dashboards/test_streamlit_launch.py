@@ -44,7 +44,7 @@ def test_streamlit_shell_preserves_failure_status(tmp_path: Path, hold_directory
     command = fire_jobs_impl._build_final_command(
         debug=False, module=False, streamlit=True, hold_directory=hold_directory, cmd=False,
         exe_line="sh -c 'exit 17' --", choice_file=script, choice_file_adjusted=str(script),
-        choice_function=None, fire_args="",
+        fire_function=None, fire_args="",
     )
     result = subprocess.run(["bash", "-c", command], cwd=tmp_path, check=False)
     assert result.returncode == 17

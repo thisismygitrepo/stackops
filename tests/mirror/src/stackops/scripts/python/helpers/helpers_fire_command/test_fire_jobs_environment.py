@@ -132,7 +132,7 @@ def test_streamlit_command_runs_in_selected_environment(tmp_path: Path, monkeypa
     monkeypatch.setattr(fire_jobs_route_helper, "get_command_streamlit", streamlit_command)
     command = fire_jobs_impl._build_python_exe_line(
         module=False, cmd=False, interactive=False, optimized=optimized, frozen=False, streamlit=True, jupyter=False,
-        choice_file=source / "app.py", repo_root=source
+        needs_fire_package=False, choice_file=source / "app.py", repo_root=source
     )
     tokens = shlex.split(command)
     assert tokens[tokens.index("--project") + 1] == str(owner)

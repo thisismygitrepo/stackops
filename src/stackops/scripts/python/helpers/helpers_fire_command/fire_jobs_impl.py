@@ -158,6 +158,8 @@ def _build_command(
 ) -> str:
     """Build the execution command."""
     if choice_file.suffix == ".py" or args.mode == "jupyter":
+        generates_script = args.script or (args.debug and args.choose_function)
+        fire_function = None if args.debug or args.module or generates_script or choice_file.suffix != ".py" else choice_function
         exe_line = _build_python_exe_line(
             module=args.module,
             cmd=args.cmd,
@@ -166,11 +168,12 @@ def _build_command(
             frozen=args.frozen,
             streamlit=args.mode == "streamlit",
             jupyter=args.mode == "jupyter",
+            needs_fire_package=fire_function is not None,
             choice_file=choice_file,
             repo_root=repo_root,
         )
         choice_file_adjusted = _adjust_choice_file(module=args.module, choice_file=choice_file, repo_root=repo_root)
-        if args.script or (args.debug and args.choose_function):
+        if generates_script:
             choice_file = _create_import_script(
                 choice_file=choice_file, choice_function=choice_function, kwargs_dict=kwargs_dict, repo_root=repo_root, randstr_func=randstr_func
             )
@@ -184,7 +187,7 @@ def _build_command(
             exe_line=exe_line,
             choice_file=choice_file,
             choice_file_adjusted=choice_file_adjusted,
-            choice_function=choice_function,
+            fire_function=fire_function,
             fire_args=fire_args,
         )
     if choice_file.suffix in (".ps1", ".sh"):
@@ -195,12 +198,22 @@ def _build_command(
 
 
 def _build_python_exe_line(
-    module: bool, cmd: bool, interactive: bool, optimized: bool, frozen: bool, streamlit: bool, jupyter: bool, choice_file: Path, repo_root: Path | None
+    module: bool,
+    cmd: bool,
+    interactive: bool,
+    optimized: bool,
+    frozen: bool,
+    streamlit: bool,
+    jupyter: bool,
+    needs_fire_package: bool,
+    choice_file: Path,
+    repo_root: Path | None,
 ) -> str:
     """Build Python execution line."""
     module_line = "-m" if module else ""
     environment = resolve_fire_environment(choice_file=choice_file, repo_root=repo_root)
     uv_prefix = build_uv_run_shell_prefix(environment=environment, frozen=frozen, cmd=cmd)
+    with_line = "--with fire" if needs_fire_package else ""
     interactive_line = "-i" if interactive else ""
     if interactive:
         ipython_line = "--no-banner --profile default "
@@ -219,7 +232,7 @@ def _build_python_exe_line(
     if optimized and interpreter_line.partition(" ")[0] == "python":
         interpreter_line = interpreter_line.replace("python", "python -OO", 1)
 
-    return f"{uv_prefix} {interpreter_line} {interactive_line} {module_line} {ipython_line}"
+    return f"{uv_prefix} {with_line} {interpreter_line} {interactive_line} {module_line} {ipython_line}"
 
 
 def _adjust_choice_file(module: bool, choice_file: Path, repo_root: Path | None) -> str:
@@ -276,7 +289,7 @@ def _build_final_command(
     exe_line: str,
     choice_file: Path,
     choice_file_adjusted: str,
-    choice_function: str | None,
+    fire_function: str | None,
     fire_args: str,
 ) -> str:
     """Build the final command string."""
@@ -290,8 +303,8 @@ def _build_final_command(
         raise NotImplementedError(f"Platform {platform.system()} not supported.")
     if module:
         return f"{exe_line} {choice_file_adjusted} "
-    if choice_function is not None and choice_file.suffix == ".py":
-        return f"{exe_line} -m fire {choice_file_adjusted} {choice_function} {fire_args}"
+    if fire_function is not None:
+        return f"{exe_line} -m fire {choice_file_adjusted} {fire_function} {fire_args}"
     if streamlit:
         if hold_directory:
             return f"{exe_line} {shlex.quote(str(choice_file))}"

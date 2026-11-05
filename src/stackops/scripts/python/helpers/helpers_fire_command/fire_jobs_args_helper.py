@@ -32,8 +32,8 @@ class FireJobArgs:
 def extract_kwargs(_args: FireJobArgs) -> dict[str, object]:
     """Extract kwargs from command line arguments in Fire format.
 
-    Parses Fire-like arguments (e.g., --a=2, --name=value) from sys.argv
-    and returns them as a dictionary.
+    Parses Fire-like arguments (e.g., --a=2, --name=value) after the -- separator
+    in sys.argv and returns them as a dictionary. Options before it belong to fire itself.
 
     Returns:
         Dictionary mapping argument names to their values
@@ -41,13 +41,11 @@ def extract_kwargs(_args: FireJobArgs) -> dict[str, object]:
     import sys
 
     kwargs: dict[str, object] = {}
+    if "--" not in sys.argv:
+        return kwargs
+    function_arguments = sys.argv[sys.argv.index("--") + 1 :]
 
-    # Look for Fire-style arguments in sys.argv
-    for arg in sys.argv:
-        # Skip the -- separator
-        if arg == "--":
-            continue
-
+    for arg_index, arg in enumerate(function_arguments):
         # Match patterns like --key=value or --key value (but we'll focus on --key=value)
         if arg.startswith("--") and "=" in arg:
             key, value = arg[2:].split("=", 1)  # Remove -- prefix and split on first =
@@ -63,10 +61,9 @@ def extract_kwargs(_args: FireJobArgs) -> dict[str, object]:
                 continue
 
             # Check if next argument exists and doesn't start with --
-            arg_index = sys.argv.index(arg)
-            if arg_index + 1 < len(sys.argv) and not sys.argv[arg_index + 1].startswith("--"):
+            if arg_index + 1 < len(function_arguments) and not function_arguments[arg_index + 1].startswith("--"):
                 # Next argument is the value
-                value = sys.argv[arg_index + 1]
+                value = function_arguments[arg_index + 1]
                 kwargs[key] = _convert_value_type(value)
             else:
                 # It's a boolean flag

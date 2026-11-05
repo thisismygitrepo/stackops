@@ -52,6 +52,7 @@ def parse_pyfile(file_path: str):
 def wrap_import_in_try_except(import_line: str, pyfile: str, repo_root: str | None = None) -> None:
     import importlib
     import sys
+    from pathlib import Path
 
     module_name = import_line.removeprefix("from ").removesuffix(" import *")
 
