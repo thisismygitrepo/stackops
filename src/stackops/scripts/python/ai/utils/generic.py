@@ -50,15 +50,14 @@ def adjust_for_os(config_path: Path) -> str:
             .replace("./", ".\\")
             .replace(".sh", ".ps1")
         )
-    elif platform.system() in ["Linux", "Darwin"]:
+    if platform.system() in ["Linux", "Darwin"]:
         return (
             english_text.replace("PowerShell", "bash")
             .replace("pwsh ", "sh ")
             .replace(".\\", "./")
             .replace(".ps1", ".sh")
         )
-    else:
-        raise NotImplementedError(f"Platform {platform.system()} is not supported.")
+    raise NotImplementedError(f"Platform {platform.system()} is not supported.")
 
 
 def adjust_gitignore(

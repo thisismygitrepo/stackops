@@ -158,7 +158,6 @@ class BrowserPathHandler(SimpleHTTPRequestHandler):
     @override
     def log_message(self, format: str, *args: object) -> None:
         del format, args
-        return
 
 
 def read_exit_key() -> str:

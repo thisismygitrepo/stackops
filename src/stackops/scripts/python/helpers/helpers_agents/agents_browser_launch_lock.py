@@ -1,6 +1,6 @@
 from collections.abc import Generator
 from contextlib import contextmanager
-import os
+import sys
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BROWSER_LAUNCH_LOCK_PATH
 
@@ -9,7 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
 def browser_launch_lock() -> Generator[None, None, None]:
     BROWSER_LAUNCH_LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
     with BROWSER_LAUNCH_LOCK_PATH.open("a+b") as lock_file:
-        if os.name == "nt":
+        if sys.platform == "win32":
             import msvcrt
 
             if lock_file.tell() == 0:

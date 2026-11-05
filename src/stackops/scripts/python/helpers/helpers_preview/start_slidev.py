@@ -97,7 +97,7 @@ def start_slidev(directory: str | None, jupyter_file: str | None) -> None:
             print(f"❌ Error: slides.md not found in {report_dir}")
             raise typer.Exit(code=1)
 
-    import stackops.utils.path_core as path_core
+    from stackops.utils import path_core
 
     slidev_repo = _ensure_slidev_repo()
     print("📂 Copying files to Slidev repository...")
@@ -120,7 +120,7 @@ def start_slidev(directory: str | None, jupyter_file: str | None) -> None:
     program = "bun run dev slides.md -- --remote"
     # PROGRAM_PATH.write_text(program, encoding="utf-8")
 
-    subprocess.run(program, shell=True, cwd=slidev_repo)
+    subprocess.run(program, shell=True, cwd=slidev_repo, check=False)
     from stackops.utils.meta import print_code
 
     if IS_REPO_DEVELOPER:

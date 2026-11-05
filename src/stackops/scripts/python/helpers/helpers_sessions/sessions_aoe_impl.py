@@ -70,13 +70,12 @@ def _resolve_tab_payload(
 
 def _launched_row(session: _PendingAoeSession, options: AoeLaunchOptions) -> LaunchedPaneRow:
     prompt, command_override = _resolve_tab_payload(pane=session.pane, tab_command_mode=options.tab_command_mode)
-    match prompt, command_override:
-        case str(), _:
-            command = f"""prompt: {prompt}"""
-        case None, str():
-            command = command_override
-        case None, None:
-            command = "—"
+    if prompt is not None:
+        command = f"""prompt: {prompt}"""
+    elif command_override is not None:
+        command = command_override
+    else:
+        command = "—"
     return LaunchedPaneRow(
         location=options.tool or "default",
         tab_name=session.tab_name,

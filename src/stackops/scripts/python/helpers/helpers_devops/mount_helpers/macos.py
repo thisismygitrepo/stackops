@@ -1,5 +1,6 @@
 import plistlib
 from pathlib import Path
+from typing import cast
 
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.commands import ensure_ok, run_command
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
@@ -9,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_devops.mount_helpers.utils import a
 def _diskutil_info(identifier: str) -> dict[str, object]:
     result = run_command(["diskutil", "info", "-plist", identifier])
     text = ensure_ok(result, "diskutil info")
-    return plistlib.loads(text.encode("utf-8"))
+    return cast(dict[str, object], plistlib.loads(text.encode("utf-8")))
 
 
 def list_macos_devices() -> list[DeviceEntry]:

@@ -77,14 +77,14 @@ def read_aoe_inventory(*, options: StatusOptions) -> tuple[list[JsonObject], lis
         known_ids.add(session_id)
         title = text_field(entry, ("title",)) or session_id
         name = f"""{title} ({session_id})""" if title_counts[title] > 1 else title
-        runtime = runtimes_by_id.get(session_id)
-        running = runtime is not None and runtime.get("state") != "dead"
+        session_runtime = runtimes_by_id.get(session_id)
+        running = session_runtime is not None and session_runtime.get("state") != "dead"
         session: JsonObject = {**entry, "name": name, "id": session_id, "saved": not running, "workspaces": [], "window_count": int(running)}
         sessions.append(session)
-        if not running or runtime is None or options.sessions and not {name, title, session_id}.intersection(options.sessions):
+        if not running or session_runtime is None or options.sessions and not {name, title, session_id}.intersection(options.sessions):
             continue
         panes.append({
-            **entry, **runtime, "session": name, "window_id": session_id, "name": title,
+            **entry, **session_runtime, "session": name, "window_id": session_id, "name": title,
             "workspace": None, "workspace_name": text_field(entry, ("group",)),
         })
     limitations = []

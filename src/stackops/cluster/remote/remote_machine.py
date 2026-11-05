@@ -85,7 +85,7 @@ class RemoteMachine:
     def from_job_dir(job_dir: Path) -> "RemoteMachine":
         data_dir = job_dir / "data"
         rm_json = data_dir / "remote_machine.json"
-        d: dict[str, object] = read_json(rm_json)
+        d = cast(dict[str, object], read_json(rm_json))
         return RemoteMachine.from_dict(d)
 
     def _ensure_ssh(self) -> SSH:
@@ -169,7 +169,7 @@ class RemoteMachine:
             if self.config.transfer_method == "sftp":
                 transfer_sftp(ssh=ssh, config=self.config, job_params=self.job_params, file_manager=self.file_manager, data=self.data)
             elif self.config.transfer_method == "cloud":
-                transfer_cloud(ssh=ssh, config=self.config, job_params=self.job_params, file_manager=self.file_manager, data=self.data)
+                transfer_cloud(config=self.config, job_params=self.job_params, file_manager=self.file_manager, data=self.data)
             else:
                 raise ValueError(f"Unknown transfer_method: {self.config.transfer_method}")
         self.submitted = True
@@ -183,10 +183,9 @@ class RemoteMachine:
             ssh = self._ensure_ssh()
             response = ssh.run_shell_cmd_on_remote(command=cmd, verbose_output=True, description=f"fire job {self.config.job_id}", strict_stderr=False, strict_return_code=False)
             return 0, response.op
-        else:
-            import subprocess
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            return result.returncode, result.stdout
+        import subprocess
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
+        return result.returncode, result.stdout
 
     def run(self, run: bool, show_scripts: bool) -> "RemoteMachine":
         self.generate_scripts()

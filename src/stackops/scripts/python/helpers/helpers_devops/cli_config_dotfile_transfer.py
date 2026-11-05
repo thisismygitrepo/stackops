@@ -120,7 +120,6 @@ def import_dotfiles(
 ) -> None:
     import shutil
     import tempfile
-    import zipfile
 
     from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH
 

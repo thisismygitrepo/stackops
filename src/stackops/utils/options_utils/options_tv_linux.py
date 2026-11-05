@@ -230,5 +230,5 @@ if __name__ == "__main__":
         "Option 2": "# Option 2\nThis is the preview for option 2.",
         "Option 3": "# Option 3\nThis is the preview for option 3."
     }
-    result = select_from_options(demo_mapping, multi=True, extension="md", preview_size_percent=50)
-    print(f"Selected: {result}")
+    demo_selection = select_from_options(demo_mapping, multi=True, extension="md", preview_size_percent=50)
+    print(f"Selected: {demo_selection}")

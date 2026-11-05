@@ -8,9 +8,10 @@ from stackops.jobs.installer.checks.history_cli import export, history, report, 
 
 
 def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, upload: bool, concurrency: int | None, records_dir: str) -> None:
-    from pathlib import Path
+    # These imports are needed when this function is emitted into a standalone script.
+    from pathlib import Path  # pylint: disable=redefined-outer-name,reimported
 
-    import typer
+    import typer  # pylint: disable=redefined-outer-name,reimported
 
     from stackops.jobs.installer.checks.scan_execution import execute_scan
 
@@ -92,7 +93,7 @@ def list_apps(
     Console().print(table)
 
 
-def upload(path: Annotated[Path, typer.Argument(help="Path to a local file to upload")]) -> None:
+def upload_file(path: Annotated[Path, typer.Argument(help="Path to a local file to upload")]) -> None:
     from stackops.jobs.installer.checks.app_upload import upload_app
 
     link = upload_app(path=path, expected_sha256=None)
@@ -129,8 +130,8 @@ def get_app() -> typer.Typer:
     app.command(name="s", help=SCAN_HELP, hidden=True, no_args_is_help=True)(scan)
     app.command(name="list", help="📋 <l> List installed apps")(list_apps)
     app.command(name="l", hidden=True)(list_apps)
-    app.command(name="upload", help="📤 <u> Upload a local file", no_args_is_help=True)(upload)
-    app.command(name="u", hidden=True, no_args_is_help=True)(upload)
+    app.command(name="upload", help="📤 <u> Upload a local file", no_args_is_help=True)(upload_file)
+    app.command(name="u", hidden=True, no_args_is_help=True)(upload_file)
     app.command(name="download", help="📥 <d> Download a file from Google Drive", no_args_is_help=True)(download)
     app.command(name="d", hidden=True, no_args_is_help=True)(download)
     app.command(name="install", help="📦 <i> Install safe apps from one saved run", no_args_is_help=True)(install)

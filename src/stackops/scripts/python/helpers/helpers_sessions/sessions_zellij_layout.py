@@ -96,9 +96,9 @@ def launch_session(session_name: str, layout: LayoutConfig, exit_mode: SessionEx
     panes: list[PaneEntry] = []
     for tab in layout["layoutTabs"]:
         panes.extend(launch_tab(session_name=session_name, tab=tab, exit_mode=exit_mode))
-    for tab in bootstrap_tabs:
-        if tab.name == bootstrap_name:
-            run_zellij(["--session", session_name, "action", "close-tab", "--tab-id", str(tab.tab_id)])
+    for bootstrap_tab in bootstrap_tabs:
+        if bootstrap_tab.name == bootstrap_name:
+            run_zellij(["--session", session_name, "action", "close-tab", "--tab-id", str(bootstrap_tab.tab_id)])
     return panes
 
 

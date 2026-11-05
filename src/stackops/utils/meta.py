@@ -129,7 +129,7 @@ def lambda_to_python_script(lmb: Callable[[], Any],
     try:
         func_obj = eval(func_ref_src, eval_namespace)
     except Exception as e:
-        raise RuntimeError(f"Could not resolve function reference '{func_ref_src}': {e}")
+        raise RuntimeError(f"Could not resolve function reference '{func_ref_src}': {e}") from e
 
     if not callable(func_obj):
         raise TypeError("Resolved object is not callable")
@@ -154,13 +154,13 @@ def lambda_to_python_script(lmb: Callable[[], Any],
                 else:
                     raise ValueError("Keyword expansion did not evaluate to a dict")
             except Exception as e:
-                raise RuntimeError(f"Failed to evaluate **kwargs expression: {e}")
+                raise RuntimeError(f"Failed to evaluate **kwargs expression: {e}") from e
         else:
             try:
                 val = eval(compile(_ast.Expression(kw.value), "<lambda_eval>", "eval"), eval_namespace)
                 call_kwargs[kw.arg] = val
             except Exception as e:
-                raise RuntimeError(f"Failed to evaluate value for kw '{kw.arg}': {e}")
+                raise RuntimeError(f"Failed to evaluate value for kw '{kw.arg}': {e}") from e
 
     # Try to get original source and dedent it for body extraction
     try:
@@ -201,10 +201,7 @@ def lambda_to_python_script(lmb: Callable[[], Any],
     new_params: list[_inspect.Parameter] = []
     for name, param in sig.parameters.items():
         # If the call provided a value for this parameter, replace default
-        if name in call_kwargs:
-            new_default = call_kwargs[name]
-        else:
-            new_default = param.default
+        new_default = call_kwargs.get(name, param.default)
 
         normalized_annotation = _stringify_annotation(param.annotation)
 

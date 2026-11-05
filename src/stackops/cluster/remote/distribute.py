@@ -99,7 +99,7 @@ def _require_object_dict(value: object, field_name: str) -> dict[str, object]:
 def _require_object_list(value: object, field_name: str) -> list[object]:
     if not isinstance(value, list):
         raise TypeError(f"{field_name} must be a list.")
-    return [item for item in value]
+    return list(value)
 
 
 def _require_float(value: object, field_name: str) -> float:
@@ -266,7 +266,7 @@ class Cluster:
     @staticmethod
     def load(job_id: str, base_dir: str | None) -> "Cluster":
         path = _get_cluster_path(job_id, base_dir) / "cluster.json"
-        state: dict[str, object] = read_json(path)
+        state = cast(dict[str, object], read_json(path))
         cluster = Cluster.__new__(Cluster)
         cluster.job_id = str(state["job_id"])
         cluster.root_dir = Path(str(state["root_dir"]))

@@ -7,7 +7,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import Literal
+from typing import Literal, cast
 
 import typer
 
@@ -67,7 +67,7 @@ def send_with_receipts(
                 if code is None:
                     match = re.search(r"Wormhole code is:\s*([A-Za-z0-9-]+)", output)
                     if match is not None:
-                        code = match.group(1)
+                        code = cast(str, match.group(1))
                 if code is not None and not announced:
                     if output_json:
                         typer.echo(json.dumps({"status": "waiting", "backend": "croc" if backend in {"croc", "c"} else "wormhole", "code": code, "relay": relay, "pid": process.pid}))

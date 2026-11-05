@@ -16,7 +16,7 @@ def _read_init_script(which: InitScriptKind) -> str:
     from stackops.utils.path_reference import get_path_reference_path
 
     platform_name = platform.system()
-    if platform_name == "Linux" or platform_name == "Darwin":
+    if platform_name in {"Linux", "Darwin"}:
         match which:
             case "init":
                 if platform_name == "Darwin":
@@ -50,14 +50,14 @@ def _read_init_script(which: InitScriptKind) -> str:
                 )
                 return init_path.read_text(encoding="utf-8")
             case "ia":
-                import stackops.scripts.setup.windows as module
+                import stackops.scripts.setup.windows as windows_setup_assets
 
-                script_path = get_path_reference_path(module=module, path_reference=module.INTERACTIVE_PATH_REFERENCE)
+                script_path = get_path_reference_path(module=windows_setup_assets, path_reference=windows_setup_assets.INTERACTIVE_PATH_REFERENCE)
                 return script_path.read_text(encoding="utf-8")
             case "live":
-                import stackops.scripts.setup.windows as module
+                import stackops.scripts.setup.windows as windows_setup_assets
 
-                script_path = get_path_reference_path(module=module, path_reference=module.LIVE_FROM_GITHUB_PATH_REFERENCE)
+                script_path = get_path_reference_path(module=windows_setup_assets, path_reference=windows_setup_assets.LIVE_FROM_GITHUB_PATH_REFERENCE)
                 return script_path.read_text(encoding="utf-8")
     else:
         typer.echo("Unsupported platform for init scripts.")

@@ -21,6 +21,7 @@ def install_ssh_server() -> None:
     from stackops.utils.ssh_utils.windows_server_install import build_windows_ssh_server_install_script as _get_windows_ssh_server_install_script
 
     system = platform.system()
+    result: subprocess.CompletedProcess[bytes] | subprocess.CompletedProcess[str]
     if system == "Windows":
         script = _get_windows_ssh_server_install_script()
         from stackops.utils.code import run_shell_script
@@ -138,7 +139,7 @@ def debug_ssh(
     current_system = system()
     with redirect_stdout(sys.stderr if output_json else sys.stdout):
         if current_system == "Linux":
-            import stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux
+            from stackops.scripts.python.helpers.helpers_network.ssh import ssh_debug_linux
 
             result = ssh_debug_linux.ssh_debug_linux(connection_context=connection_context)
         elif current_system == "Darwin":

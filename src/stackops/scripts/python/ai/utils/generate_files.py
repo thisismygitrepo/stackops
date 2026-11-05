@@ -59,7 +59,7 @@ def make_todo_files(
     if strategy == "name":
         python_files = filter_files_by_name(python_files, pattern)
         shell_files = filter_files_by_name(shell_files, pattern)
-    elif strategy == "keywords":
+    else:
         python_files = filter_files_by_content(repo_path, python_files, pattern)
         shell_files = filter_files_by_content(repo_path, shell_files, pattern)
 

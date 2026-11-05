@@ -283,9 +283,9 @@ def _pane_display(pane: JsonObject, tab_display_by_id: dict[str, str]) -> str:
     )
     tab_id = _entry_text(pane, "tab_id")
     if tab_id is not None:
-        tab_display = tab_display_by_id.get(tab_id)
-        if tab_display is not None:
-            return f"{tab_display} / {label}"
+        parent_tab_display = tab_display_by_id.get(tab_id)
+        if parent_tab_display is not None:
+            return f"{parent_tab_display} / {label}"
     return label
 
 
@@ -653,7 +653,7 @@ def choose_kill_target(
             return ("error", "No stopped Herdr sessions are available to delete.", [])
 
         options_to_script: dict[str, str] = {}
-        options_to_preview_mapping: dict[str, str] = {}
+        options_to_preview_mapping = {}
         option_parent_labels: dict[str, tuple[str, ...]] = {}
         for session in deletable_stopped_sessions:
             session_name = _session_name(session)
@@ -703,9 +703,9 @@ def choose_kill_target(
     if len(running_sessions) == 0:
         return ("error", "No running Herdr sessions are available to kill.", [])
 
-    options_to_script: dict[str, str] = {}
-    options_to_preview_mapping: dict[str, str] = {}
-    option_parent_labels: dict[str, tuple[str, ...]] = {}
+    options_to_script = {}
+    options_to_preview_mapping = {}
+    option_parent_labels = {}
 
     if window:
         for session in running_sessions:

@@ -44,7 +44,7 @@ class WorkloadParams:
     job_id: str
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        return cast(dict[str, object], asdict(self))
 
     @staticmethod
     def from_dict(d: dict[str, object]) -> "WorkloadParams":
@@ -199,7 +199,7 @@ class RemoteStackOpsConfig:
     workload_params: WorkloadParams | None = None
 
     def to_dict(self) -> dict[str, object]:
-        d: dict[str, object] = asdict(self)
+        d = cast(dict[str, object], asdict(self))
         if self.workload_params is not None:
             d["workload_params"] = self.workload_params.to_dict()
         return d

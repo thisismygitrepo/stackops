@@ -4,7 +4,7 @@ import os
 import platform
 import shlex
 import subprocess
-from typing import Callable, Literal, cast
+from typing import Callable, Literal
 from pathlib import Path
 from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_args_helper import FireJobArgs
 from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_environment import (
@@ -281,8 +281,6 @@ def _build_final_command(
 ) -> str:
     """Build the final command string."""
     if debug:
-        import platform
-
         if platform.system() == "Windows":
             return f"{exe_line} -m ipdb {choice_file_adjusted} "
         if platform.system() in ["Linux", "Darwin"]:
@@ -344,7 +342,7 @@ def _get_supported_platform_system() -> SupportedPlatformSystem:
 def _normalize_supported_platform_system(platform_system: str) -> SupportedPlatformSystem:
     match platform_system:
         case "Windows" | "Linux" | "Darwin":
-            return cast(SupportedPlatformSystem, platform_system)
+            return platform_system
         case _:
             raise NotImplementedError(f"Platform {platform_system} not supported.")
 

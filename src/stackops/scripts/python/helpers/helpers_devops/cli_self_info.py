@@ -34,16 +34,17 @@ def readme() -> None:
 
         try:
             metadata_text = distribution("stackops").read_text("METADATA")
-        except PackageNotFoundError:
+        except PackageNotFoundError as exc:
             typer.echo("❌ Installed stackops package metadata is not available.")
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1) from exc
         if metadata_text is None:
             typer.echo("❌ Installed stackops package metadata file is not available.")
             raise typer.Exit(code=1)
-        markdown_text = message_from_string(metadata_text).get_payload()
-        if not isinstance(markdown_text, str):
+        metadata_payload = message_from_string(metadata_text).get_payload()
+        if not isinstance(metadata_payload, str):
             typer.echo("❌ Installed stackops package metadata does not include a plain-text README.")
             raise typer.Exit(code=1)
+        markdown_text = metadata_payload
         if not markdown_text:
             typer.echo("❌ Installed stackops package metadata does not include a README.")
             raise typer.Exit(code=1)

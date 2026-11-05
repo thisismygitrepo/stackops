@@ -94,7 +94,7 @@ class CleanupBrowser(Vertical):
         search = self.query_one("#cleanup-search", Input).value.casefold()
         self.cleanup_visible = [
             index for index, entry in enumerate(self.cleanup_inventory.entries)
-            if (agent == "all" or entry.agent in (agent, "shared")) and (scope == "all" or CLEANUP_ORIGIN_LABELS[entry.origin] == scope)
+            if (agent == "all" or entry.agent in (agent, "shared")) and scope in ("all", CLEANUP_ORIGIN_LABELS[entry.origin])
             and ("all" in kinds or cleanup_kind(entry) in kinds)
             and search in f"""{entry.name} {entry.event} {entry.command} {entry.path}""".casefold()
         ]

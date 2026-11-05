@@ -78,9 +78,9 @@ def share_terminal(
     if password is None and not no_auth:
         try:
             password = read_quick_password()
-        except Exception:
+        except Exception as exc:
             print("❌ Error: Password not provided and configured quick password could not be read.")
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1) from exc
 
     if port is None:
         port = 7681  # Default port for ttyd
@@ -123,14 +123,14 @@ def share_terminal(
     # Build ttyd command with SSL options
     ssl_args: list[str] = []
     if ssl:
-            if ssl_cert is None or ssl_key is None:
-                print("❌ Error: SSL certificate and key must be provided when SSL is enabled.")
-                raise typer.Exit(code=1)
-            resolved_ssl_cert = ssl_cert
-            resolved_ssl_key = ssl_key
-            ssl_args = ["--ssl", "--ssl-cert", resolved_ssl_cert, "--ssl-key", resolved_ssl_key]
-            if ssl_ca:
-                ssl_args.extend(["--ssl-ca", ssl_ca])
+        if ssl_cert is None or ssl_key is None:
+            print("❌ Error: SSL certificate and key must be provided when SSL is enabled.")
+            raise typer.Exit(code=1)
+        resolved_ssl_cert = ssl_cert
+        resolved_ssl_key = ssl_key
+        ssl_args = ["--ssl", "--ssl-cert", resolved_ssl_cert, "--ssl-key", resolved_ssl_key]
+        if ssl_ca:
+            ssl_args.extend(["--ssl-ca", ssl_ca])
 
     if start_command is None:
         import platform

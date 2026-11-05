@@ -104,7 +104,7 @@ def _install_linux_dependencies(console: Console) -> None:
                 "The cargo-build Python installer is intentionally disabled on Alpine."
             )
         case "apt":
-            required_packages = DEBIAN_REQUIRED_PACKAGES
+            required_packages: tuple[str, ...] = DEBIAN_REQUIRED_PACKAGES
             optional_packages = DEBIAN_OPTIONAL_PACKAGES
         case "dnf":
             if distribution.distribution_id != "fedora":

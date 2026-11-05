@@ -120,8 +120,8 @@ class DBMS:
             meta.reflect(bind=self.eng, schema=sch)
         insp = inspect__(subject=self.eng)
         schema = insp.get_schema_names()
-        sch_tab = {k: v for k, v in zip(schema, [insp.get_table_names(schema=x) for x in schema])}
-        sch_vws = {k: v for k, v in zip(schema, [insp.get_view_names(schema=x) for x in schema])}
+        sch_tab = {schema_name: insp.get_table_names(schema=schema_name) for schema_name in schema}
+        sch_vws = {schema_name: insp.get_view_names(schema=schema_name) for schema_name in schema}
         return {'con': con, 'ses': ses, 'meta': meta, 'insp': insp, 'schema': schema, 'sch_tab': sch_tab, 'sch_vws': sch_vws}
 
     def get_columns(self, table: str, sch: str | None = None) -> list[str]:
@@ -130,7 +130,7 @@ class DBMS:
     def read_table(self, table: str | None = None, sch: str | None = None, size: int = 5) -> pl.DataFrame:
         insp = inspect__(self.eng)
         schema = insp.get_schema_names()
-        sch_tab = {k: v for k, v in zip(schema, [insp.get_table_names(schema=x) for x in schema])}
+        sch_tab = {schema_name: insp.get_table_names(schema=schema_name) for schema_name in schema}
         if sch is None:
             # First try to find schemas that have tables (excluding system schemas)
             schemas_with_tables = []
@@ -178,8 +178,13 @@ class DBMS:
                 column_details = self.get_column_details(table=table_name, sch=table_schema)
                 count = self._count_rows(table=table_name, sch=table_schema)
                 display_name = table_name if table_schema is None else f"{table_schema}.{table_name}"
-                res = dict(table=display_name, count=count, size_mb=count * len(column_details) * 10 / 1e6,
-                           columns=len(column_details), schema=table_schema)
+                res = {
+                    "table": display_name,
+                    "count": count,
+                    "size_mb": count * len(column_details) * 10 / 1e6,
+                    "columns": len(column_details),
+                    "schema": table_schema,
+                }
                 res_all.append(res)
                 progress.update(task, advance=1)
         return pl.DataFrame(res_all)
@@ -188,7 +193,7 @@ class DBMS:
         print(table.center(100, "="))
         column_details = self.get_column_details(table=table, sch=sch)
         count = self._count_rows(table=table, sch=sch)
-        res = dict(name=table, count=count, size_mb=count * len(column_details) * 10 / 1e6)
+        res = {"name": table, "count": count, "size_mb": count * len(column_details) * 10 / 1e6}
         # from stackops.utils.accessories import pprint
         def pprint(obj: dict[Any, Any], title: str) -> None:
             from rich import inspect

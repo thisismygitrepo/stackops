@@ -171,6 +171,7 @@ def prep_agent_launch(
         agent_cmd_launch_path = prompt_root / agent_shell.get_agent_command_filename(idx=idx, is_windows=is_windows)
         random_sleep_time = random.uniform(0, stagger_max)
         ai_spec: AI_SPEC
+        api_spec: API_SPEC | None
         api_key_environment_name: str | None = None
         match agent:
             case "cursor-agent":

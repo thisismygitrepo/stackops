@@ -27,7 +27,6 @@ netsh.exe interface portproxy add v4tov4 listenport={port} listenaddress=0.0.0.0
 
 """
     import os
-    from pathlib import Path
 
     from stackops.utils.code import exit_then_run_shell_script, run_shell_script
 

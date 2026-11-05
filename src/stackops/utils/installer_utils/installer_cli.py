@@ -91,31 +91,30 @@ def main_installer_cli(
                 install_group(package_group=a_group, install_request=install_request, source=source, user_path=path)
             return None
         return install_clis(clis_names=requested_names, install_request=install_request, source=source, user_path=path)
-    else:
-        if group:
-            from rich.console import Console
-            from rich.table import Table
-            console = Console()
+    if group:
+        from rich.console import Console
+        from rich.table import Table
+        console = Console()
 
-            typer.echo("❌ You must provide a group name when using the --group/-g option.")
-            from stackops.utils.installer_utils.installer_helper import get_group_name_to_repr
-            res = get_group_name_to_repr(available_app_names=None)
-            console.print("[bold blue]Here are the available groups:[/bold blue]")
-            table = Table(show_header=True, header_style="bold magenta")
-            table.add_column("Group", style="cyan", no_wrap=True)
-            table.add_column("AppsBundled", style="green", overflow="fold")
-            for display, group_name in res.items():
-                # Parse display
-                if "   --   " in display:
-                    group_part, items_part = display.split("   --   ", 1)
-                    group_name_parsed = group_part.replace("📦 ", "").strip()
-                    items_str = items_part.strip()
-                else:
-                    group_name_parsed = display
-                    items_str = group_name
-                table.add_row(group_name_parsed, items_str)
-            console.print(table)
-            raise typer.Exit(1)
+        typer.echo("❌ You must provide a group name when using the --group/-g option.")
+        from stackops.utils.installer_utils.installer_helper import get_group_name_to_repr
+        res = get_group_name_to_repr(available_app_names=None)
+        console.print("[bold blue]Here are the available groups:[/bold blue]")
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Group", style="cyan", no_wrap=True)
+        table.add_column("AppsBundled", style="green", overflow="fold")
+        for display, group_name in res.items():
+            # Parse display
+            if "   --   " in display:
+                group_part, items_part = display.split("   --   ", 1)
+                group_name_parsed = group_part.replace("📦 ", "").strip()
+                items_str = items_part.strip()
+            else:
+                group_name_parsed = display
+                items_str = group_name
+            table.add_row(group_name_parsed, items_str)
+        console.print(table)
+        raise typer.Exit(1)
     typer.echo("❌ You must provide a program name/group name, or use --interactive/-i.")
     if ctx is not None:
         typer.echo(ctx.get_help())
@@ -141,6 +140,7 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
     available_app_names = {installer["appName"].casefold() for installer in installers}
     category_display_to_name = get_group_name_to_repr(available_app_names=available_app_names)
     options = list(category_display_to_name.keys()) + list(installer_option_to_data.keys())
+    program_names: list[str] | None
 
     if check_tool_exists("tv"):
         preview_size_percent = 55.0
@@ -225,7 +225,7 @@ def install_clis(clis_names: list[str], install_request: InstallRequest, source:
             from stackops.utils.installer_utils.install_from_url import install_from_github_url
             install_from_github_url(github_url=a_cli_name)
             continue
-        elif a_cli_name.startswith("https://") or a_cli_name.startswith("http://"):
+        if a_cli_name.startswith("https://") or a_cli_name.startswith("http://"):
             print(f"⏳ Installing from binary URL: {a_cli_name} ...")
             from stackops.utils.installer_utils.install_from_url import install_from_binary_url
             install_from_binary_url(binary_url=a_cli_name)
@@ -247,7 +247,6 @@ def install_clis(clis_names: list[str], install_request: InstallRequest, source:
         total_results.append(result)
     if total_results:
         render_installation_summary(results=total_results, console=Console(), title="📊 Installation Results")
-    return None
 
 
 def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bool:

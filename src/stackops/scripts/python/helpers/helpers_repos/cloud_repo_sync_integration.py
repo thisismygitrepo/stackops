@@ -89,7 +89,7 @@ def integrate_remote_repository(
                 remote_commit=None, console=console, title="Before integration",
             )
             console.print("Remote archive has no commits; local history is unchanged.")
-            return
+            return None
         remote_commit = remote_repo.head.commit.hexsha
     if not local_repo.head.is_valid():
         validate_integration_transport(repo_local_root=repo_local_root, integration_root=repo_remote_root, cloud=cloud)
@@ -101,7 +101,7 @@ def integrate_remote_repository(
         ensure_git_identity(repo=local_repo, console=console)
         local_repo.git.merge("FETCH_HEAD", no_edit=True)
         print_integration_result(repo=local_repo, previous_commit=None, remote_commit=remote_commit, console=console)
-        return
+        return None
     integration_worktree = create_integration_worktree(repo=local_repo, worktree_root=integration_root)
     integration_repo = Repo(integration_worktree.root)
     merge_result = merge_remote_copy(repo=integration_repo, remote_path=repo_remote_root, console=console)
@@ -159,3 +159,4 @@ def integrate_remote_repository(
         repo=local_repo, previous_commit=integration_worktree.base_commit, remote_commit=remote_commit, console=console,
     )
     remove_integration_state(local_repo=local_repo, integration_repo=integration_repo, integration_worktree=integration_worktree)
+    return None

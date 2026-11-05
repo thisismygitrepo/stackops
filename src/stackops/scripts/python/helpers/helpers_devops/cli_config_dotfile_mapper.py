@@ -4,15 +4,15 @@ import hashlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Literal, cast
 
-if TYPE_CHECKING:
-    from stackops.profile.dotfiles_mapper import RawMapperEntry
-
 import typer
 
 from stackops.profile.dotfiles_constants import DEFAULT_OS_FILTER
 from stackops.profile.linking.conflict import ON_CONFLICT_LOOSE
 from stackops.profile.linking.options import METHOD_LOOSE
 from stackops.utils.source_of_truth import DOTFILES_MAPPER_FILES_ROOT
+
+if TYPE_CHECKING:
+    from stackops.profile.dotfiles_mapper import RawMapperEntry
 
 FLAT_PATH_HASH_LENGTH = 16
 
@@ -172,13 +172,12 @@ def get_backup_path(orig_path: Path, destination: str | None, shared: bool) -> P
 def get_original_path_from_backup_path(backup_path: Path, destination: str | None, shared: bool) -> Path:
     if destination is None:
         raise ValueError("Cannot derive the original path from a flat hashed backup path. Use the mapper entry instead.")
+    dest_path = Path(destination).expanduser().absolute()
+    if shared:
+        relative_part = backup_path.relative_to(dest_path.joinpath("shared"))
     else:
-        dest_path = Path(destination).expanduser().absolute()
-        if shared:
-            relative_part = backup_path.relative_to(dest_path.joinpath("shared"))
-        else:
-            relative_part = backup_path.relative_to(dest_path)
-        original_path = Path.home().joinpath(relative_part)
+        relative_part = backup_path.relative_to(dest_path)
+    original_path = Path.home().joinpath(relative_part)
     return original_path
 
 

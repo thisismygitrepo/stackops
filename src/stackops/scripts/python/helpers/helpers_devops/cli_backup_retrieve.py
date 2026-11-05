@@ -268,6 +268,7 @@ def main_backup_retrieve(
                     program += """\nchmod 700 ~/.ssh/*\n"""
                     console.print(Panel("🔒 SPECIAL HANDLING: SSH PERMISSIONS\n🛠️  Setting secure permissions for SSH files\n📝 Command: chmod 700 ~/.ssh/*", title="[bold blue]Special Handling: SSH Permissions[/bold blue]", border_style="blue"))
                 continue
+            item_cloud: str | None
             remote_spec_parts = split_backup_remote_spec(path_cloud) if path_cloud not in (None, ES) else None
             if remote_spec_parts is not None and cloud_override is None:
                 item_cloud, remote_path = remote_spec_parts

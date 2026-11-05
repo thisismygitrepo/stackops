@@ -75,7 +75,7 @@ class VirusTotalAccountStats:
         if account_index == destination:
             raise ValueError("VirusTotal failover must switch to another account.")
         with self._lock:
-            self._accounts[destination]
+            _ = self._accounts[destination]
             self._accounts[account_index].failovers += 1
 
     def disabled(self, account_index: int, reason: str) -> None:

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal
 
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
 from stackops.utils.options_utils.options import choose_from_options
@@ -37,7 +37,7 @@ Edits change the bundled files directly and may be replaced by an upgrade or rei
         match source:
             case "workspace" | "user" | "library":
                 label = f"""workspace:{path.relative_to(Path.cwd(), walk_up=True).as_posix()}""" if source == "workspace" else source
-                source_locations[label] = (cast(Literal["workspace", "user", "library"], source), path)
+                source_locations[label] = (source, path)
                 source_previews[label] = f"""{label}
 
 File to edit: {path}

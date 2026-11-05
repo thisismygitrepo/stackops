@@ -9,8 +9,10 @@ from typer.models import DefaultPlaceholder, TyperInfo
 
 
 def _lazy_group_class(source_app: typer.Typer, base_class: type[TyperGroup]) -> type[TyperGroup]:
-    # Retain the configured TyperGroup subclass; ty cannot resolve a dynamic base.
-    class LazyGroup(base_class):  # ty: ignore[unsupported-base]
+    # Retain the configured TyperGroup subclass; checkers cannot resolve a dynamic base.
+    class LazyGroup(base_class):  # type: ignore[valid-type, misc]  # ty: ignore[unsupported-base]
+        _converted_commands: MutableMapping[str, _click.Command] | None
+
         @property
         def commands(self) -> MutableMapping[str, _click.Command]:
             if self._converted_commands is None:
@@ -18,8 +20,8 @@ def _lazy_group_class(source_app: typer.Typer, base_class: type[TyperGroup]) -> 
             return self._converted_commands
 
         @commands.setter
-        def commands(self, value: MutableMapping[str, _click.Command]) -> None:
-            self._converted_commands: MutableMapping[str, _click.Command] | None = None
+        def commands(self, _value: MutableMapping[str, _click.Command]) -> None:
+            self._converted_commands = None
 
     return LazyGroup
 

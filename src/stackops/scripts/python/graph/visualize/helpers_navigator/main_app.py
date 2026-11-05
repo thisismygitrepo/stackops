@@ -229,7 +229,7 @@ class CommandNavigatorApp(App[None]):
         """Execute a shell command."""
         try:
             self.notify(f"Executing: {command}", severity="information")
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode == 0:
                 output = result.stdout.strip()

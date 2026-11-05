@@ -16,7 +16,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
-from typing import Annotated, Final, Literal, NoReturn, TypeAlias, cast
+from typing import Annotated, Final, Literal, NoReturn, TypeAlias
 from urllib.parse import quote, urlencode
 
 import typer
@@ -605,7 +605,7 @@ def load_billing_account() -> BillingAccount:
     plan_name = value_to_text(plan_value.get("name"))
     match plan_name:
         case "free" | "pro":
-            return BillingAccount(login=login, plan=cast(GithubPlan, plan_name))
+            return BillingAccount(login=login, plan=plan_name)
         case _:
             raise GhcError(f"Included Codespaces quota is unknown for plan '{plan_name}'.")
 

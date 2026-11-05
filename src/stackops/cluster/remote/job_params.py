@@ -22,7 +22,7 @@ class JobParams:
     func_name: str | None
 
     def to_dict(self) -> dict[str, object]:
-        return {k: v for k, v in self.__dict__.items()}
+        return dict(self.__dict__)
 
     @staticmethod
     def from_dict(d: dict[str, object]) -> "JobParams":
@@ -97,7 +97,7 @@ class JobParams:
             lines.append(f"kwargs_workload = {split_dicts}")
             lines.append("from concurrent.futures import ProcessPoolExecutor")
             lines.append("split_params = [WorkloadParams(**kw) for kw in kwargs_workload]")
-            lines.append("with ProcessPoolExecutor(max_workers={}) as pool:".format(workload_params.jobs))
+            lines.append(f"""with ProcessPoolExecutor(max_workers={workload_params.jobs}) as pool:""")
             lines.append("    futures = [pool.submit(func, workload_params=wp, **func_kwargs) for wp in split_params]")
             lines.append("    res = [f.result() for f in futures]")
         else:

@@ -1,6 +1,6 @@
 from stackops.utils.path_core import PathLike, delete_path
 from pathlib import Path
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 from stackops.profile.linking.conflict import ON_CONFLICT_STRICT
 from stackops.utils.accessories import randstr
 from rich.console import Console
@@ -142,12 +142,11 @@ def symlink_map(config_file_default_path: Path, config_file_self_managed_path: P
                         details = "Symlink already correctly points to target"
                         console.print(Panel(f"✅ ALREADY LINKED | {config_file_default_path} ➡️  {config_file_self_managed_path}", title="Already Linked", expand=False))
                         return {"action": action_taken, "details": details}
-                    else:
-                        # Case: config_file_default_path exists AND config_file_self_managed_path exists AND config_file_default_path is a symlink pointing to somewhere else
-                        action_taken = "relinking"
-                        details = "Updated existing symlink to point to new target"
-                        console.print(Panel(f"🔄 RELINKING | Updating symlink from {config_file_default_path} ➡️  {config_file_self_managed_path}", title="Relinking", expand=False))
-                        delete_path(config_file_default_path, verbose=True)
+                    # Case: config_file_default_path exists AND config_file_self_managed_path exists AND config_file_default_path is a symlink pointing to somewhere else
+                    action_taken = "relinking"
+                    details = "Updated existing symlink to point to new target"
+                    console.print(Panel(f"🔄 RELINKING | Updating symlink from {config_file_default_path} ➡️  {config_file_self_managed_path}", title="Relinking", expand=False))
+                    delete_path(config_file_default_path, verbose=True)
                 except OSError:
                     # Broken symlink case
                     action_taken = "fixing_broken_link"
@@ -270,11 +269,10 @@ def copy_map(config_file_default_path: Path, config_file_self_managed_path: Path
                         details = "File at default path is already a symlink to self-managed config"
                         console.print(Panel(f"✅ ALREADY CORRECT | {config_file_default_path} already points to {config_file_self_managed_path}", title="Already Correct", expand=False))
                         return {"action": action_taken, "details": details}
-                    else:
-                        action_taken = "relinking"
-                        details = "Removing symlink at default path that points elsewhere"
-                        console.print(Panel(f"🔄 REMOVING SYMLINK | Removing symlink {config_file_default_path} (points elsewhere), will copy from {config_file_self_managed_path}", title="Removing Symlink", expand=False))
-                        delete_path(config_file_default_path, verbose=True)
+                    action_taken = "relinking"
+                    details = "Removing symlink at default path that points elsewhere"
+                    console.print(Panel(f"🔄 REMOVING SYMLINK | Removing symlink {config_file_default_path} (points elsewhere), will copy from {config_file_self_managed_path}", title="Removing Symlink", expand=False))
+                    delete_path(config_file_default_path, verbose=True)
                 except OSError:
                     action_taken = "fixing_broken_link"
                     details = "Removed broken symlink at default path"

@@ -46,21 +46,14 @@ def build_dot(root: GraphNode, *, max_depth: int | None = None, include_help: bo
         style = KIND_STYLES.get(node.kind, KIND_STYLES["command"])
         label = _node_label(node, include_help=include_help)
         lines.append(
-            "  \"{node_id}\" [label=\"{label}\", shape=\"{shape}\", fillcolor=\"{fill}\", color=\"{color}\"];".format(
-                node_id=_dot_escape(node.id),
-                label=_dot_escape(label),
-                shape=style["shape"],
-                fill=style["fillcolor"],
-                color=style["color"],
-            )
+            f"""  "{_dot_escape(node.id)}" [label="{_dot_escape(label)}", """
+            f"""shape="{style["shape"]}", fillcolor="{style["fillcolor"]}", """
+            f"""color="{style["color"]}"];"""
         )
 
         if parent is not None and (max_depth is None or parent.depth <= max_depth):
             lines.append(
-                "  \"{parent}\" -> \"{child}\";".format(
-                    parent=_dot_escape(parent.id),
-                    child=_dot_escape(node.id),
-                )
+                f"""  "{_dot_escape(parent.id)}" -> "{_dot_escape(node.id)}";"""
             )
 
     lines.append("}")

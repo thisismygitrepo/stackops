@@ -43,8 +43,8 @@ def print_kill_summary(
 
     rows: list[tuple[str, str, str, str]] = []
     if killed_targets:
-        for target in killed_targets:
-            rows.append((target["action"], target["session"], target["window"], target["detail"]))
+        for killed_target in killed_targets:
+            rows.append((killed_target["action"], killed_target["session"], killed_target["window"], killed_target["detail"]))
     else:
         for line in script.splitlines():
             line = line.strip()

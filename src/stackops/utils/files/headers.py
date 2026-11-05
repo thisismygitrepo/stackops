@@ -83,7 +83,7 @@ def print_logo(logo: str) -> None:
             # print("🔍 Missing ASCII art dependencies. Install with: iwr https://raw.githubusercontent.com/thisismygitrepo/machineconfig/main/src/machineconfig/setup_windows/web_shortcuts/ascii_art.ps1 | iex")
             # print("🚫 " + "-" * 70 + " 🚫\n")
             _default_art = Path(random.choice([item for item in glob.glob(str(Path(__file__).parent.joinpath("art", "*"))) if Path(item).is_file() and item.endswith(".txt")]))
-            print(_default_art.read_text())
+            print(_default_art.read_text(encoding="utf-8"))
     elif platform.system() in ["Linux", "Darwin"]:  # Explicitly handle both Linux and macOS
         from stackops.utils.cli_utils.command_lookup import is_executable_in_path
         avail_cowsay = is_executable_in_path("cowsay")
@@ -102,8 +102,8 @@ def print_logo(logo: str) -> None:
             install_cmd = f"d install --group {pacakage_name}"
             print(f"🔍 Missing ASCII art dependencies. Install with: {install_cmd}  | {avail_boxes=} {avail_cowsay} {avail_figlet} {avail_lolcat=}")
             _default_art = Path(random.choice(glob.glob(str(Path(__file__).parent.joinpath("art", "*")))))
-            print(_default_art.read_text())
+            print(_default_art.read_text(encoding="utf-8"))
     else:
         print(f"⚠️ Platform {platform.system()} not supported for ASCII art. Using default art.")
         _default_art = Path(random.choice(glob.glob(str(Path(__file__).parent.joinpath("art", "*")))))
-        print(_default_art.read_text())
+        print(_default_art.read_text(encoding="utf-8"))

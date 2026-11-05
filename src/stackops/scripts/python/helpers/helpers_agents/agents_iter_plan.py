@@ -98,7 +98,7 @@ def build_workspace_close_plan(
     closable_tabs: list[HerdrTab] = []
     for tab in tabs:
         iteration = numbered.get(tab.tab_id)
-        reason = _protection_reason(tab=tab, iteration=iteration, incomplete=incomplete, workspace_has_unmanaged_tabs=workspace_has_unmanaged_tabs)
+        reason = _protection_reason(iteration=iteration, incomplete=incomplete, workspace_has_unmanaged_tabs=workspace_has_unmanaged_tabs)
         if reason is not None:
             protected_tabs.append(ProtectedTab(tab=tab, reason=reason))
             continue
@@ -128,7 +128,7 @@ def build_workspace_close_plan(
     )
 
 
-def _protection_reason(*, tab: HerdrTab, iteration: int | None, incomplete: bool, workspace_has_unmanaged_tabs: bool) -> KeepReason | None:
+def _protection_reason(*, iteration: int | None, incomplete: bool, workspace_has_unmanaged_tabs: bool) -> KeepReason | None:
     if iteration is None:
         return "unmanaged"
     if incomplete or workspace_has_unmanaged_tabs:

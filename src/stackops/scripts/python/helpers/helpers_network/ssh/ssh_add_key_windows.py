@@ -26,7 +26,7 @@ def add_ssh_key_windows(records: list[PublicKeyRecord]) -> tuple[Path, int]:
         authorized_keys = ssh_directory.joinpath("administrators_authorized_keys")
         ssh_directory.mkdir(parents=True, exist_ok=True)
         authorized_keys.touch(exist_ok=True)
-        authorization_trustees = (ADMINISTRATORS_SID, SYSTEM_SID)
+        authorization_trustees: tuple[str, ...] = (ADMINISTRATORS_SID, SYSTEM_SID)
         authorization_owner = ADMINISTRATORS_SID
     else:
         user_profile = os.environ.get("USERPROFILE")

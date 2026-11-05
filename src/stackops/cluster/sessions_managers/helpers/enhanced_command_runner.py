@@ -24,11 +24,11 @@ def run_enhanced_command(
             with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console, transient=True) as progress:
                 task = progress.add_task(f"[cyan]{description}[/cyan]", total=None)
 
-                result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=timeout)
+                result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=timeout, check=False)
 
                 progress.update(task, completed=True)
         else:
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=timeout)
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=timeout, check=False)
 
         stdout = result.stdout.strip() if result.stdout else ""
         stderr = result.stderr.strip() if result.stderr else ""
@@ -44,10 +44,9 @@ def run_enhanced_command(
             if stdout and "Session:" not in stdout:
                 console.print(f"[green]{stdout}[/green]")
             return {"success": True, "returncode": result.returncode, "stdout": stdout, "stderr": stderr}
-        else:
-            if stderr:
-                console.print(f"[bold red]Error:[/bold red] [red]{stderr}[/red]")
-            return {"success": False, "returncode": result.returncode, "stdout": stdout, "stderr": stderr}
+        if stderr:
+            console.print(f"[bold red]Error:[/bold red] [red]{stderr}[/red]")
+        return {"success": False, "returncode": result.returncode, "stdout": stdout, "stderr": stderr}
 
     except subprocess.TimeoutExpired:
         console.print(f"[bold red]⏰ Command timed out after {timeout} seconds[/bold red]")
@@ -62,5 +61,5 @@ if __name__ == "__main__":
     console.print(Panel.fit("🎨 Enhanced Command Execution Demo", style="bold cyan"))
 
     # Test with a simple command
-    result = run_enhanced_command("echo 'Hello, Rich world!'", "Testing enhanced output", True, None)
-    console.print(f"Result: {result}")
+    demo_result = run_enhanced_command("echo 'Hello, Rich world!'", "Testing enhanced output", True, None)
+    console.print(f"Result: {demo_result}")

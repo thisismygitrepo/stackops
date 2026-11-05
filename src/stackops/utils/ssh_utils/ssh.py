@@ -2,9 +2,11 @@ from typing import Callable, Any, cast, Union, Literal, override
 import subprocess
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import platform
+
+import rich.console
+
 from stackops.utils.machine.specs import MachineSpecs
 from stackops.utils.code import get_uv_command
-import rich.console
 from stackops.utils.cli_utils.terminal import Response
 from stackops.utils.accessories import pprint, randstr
 from stackops.utils.meta import lambda_to_python_script
@@ -66,7 +68,15 @@ class SSH:
             str(Path(connection_target.ssh_key_path).expanduser().absolute()) if connection_target.ssh_key_path is not None else None
         )
         pprint(
-            dict(host=self.host, hostname=self.hostname, username=self.username, password="***", port=self.port, key_filename=self.ssh_key_path, proxycommand=self.proxycommand),
+            {
+                "host": self.host,
+                "hostname": self.hostname,
+                "username": self.username,
+                "password": "***",
+                "port": self.port,
+                "key_filename": self.ssh_key_path,
+                "proxycommand": self.proxycommand,
+            },
             title="SSHing To",
         )
         use_automatic_authentication = password is None
@@ -457,10 +467,10 @@ stderr:
         if target_rel2home is None:
             try:
                 target_rel2home = str(source_obj.relative_to(Path.home()))
-            except ValueError:
+            except ValueError as exc:
                 raise RuntimeError(
                     f"If target is not specified, source must be relative to home directory, but got: {source_obj}"
-                )
+                ) from exc
         if target_rel2home.startswith("~"):
             target_rel2home = target_rel2home[1:].lstrip("/\\")
         if not compress_with_zip and source_obj.is_dir():
@@ -662,8 +672,8 @@ stderr:
                             json_result_path.write_text(json.dumps(collapsed_path_posix, indent=2), encoding="utf-8")
                             print(json_result_path.as_posix())
                             return collapsed_path_posix
-                        except ValueError:
-                            raise RuntimeError(f"Source path must be relative to home directory: {source_absolute_path}")
+                        except ValueError as exc:
+                            raise RuntimeError(f"Source path must be relative to home directory: {source_absolute_path}") from exc
 
                     remote_json_output = self._build_remote_json_output_path()
                     command = lambda_to_python_script(
@@ -763,8 +773,8 @@ stderr:
                     json_result_path.write_text(json.dumps(collapsed_path_posix, indent=2), encoding="utf-8")
                     print(json_result_path.as_posix())
                     return collapsed_path_posix
-                except ValueError:
-                    raise RuntimeError(f"Source path must be relative to home directory: {source_absolute_path}")
+                except ValueError as exc:
+                    raise RuntimeError(f"Source path must be relative to home directory: {source_absolute_path}") from exc
 
             remote_json_output = self._build_remote_json_output_path()
             command = lambda_to_python_script(

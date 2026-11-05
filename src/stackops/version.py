@@ -1,6 +1,7 @@
 import tomllib
 from importlib.metadata import PackageNotFoundError, version as package_version
 from pathlib import Path
+from typing import cast
 
 
 def get_stackops_version() -> str:
@@ -12,7 +13,7 @@ def get_stackops_version() -> str:
     root = Path(__file__).resolve().parents[2]
     pyproject = root / "pyproject.toml"
     if pyproject.is_file():
-        data: dict[str, object] = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+        data = cast(dict[str, object], tomllib.loads(pyproject.read_text(encoding="utf-8")))
         project = data.get("project")
         if isinstance(project, dict):
             project_version = project.get("version")

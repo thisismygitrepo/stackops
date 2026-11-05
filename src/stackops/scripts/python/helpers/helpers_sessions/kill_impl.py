@@ -58,13 +58,13 @@ def _list_killable_session_names(backend: SessionMultiplexer, delete: bool) -> l
 
             return list_session_names()
         case "herdr":
-            from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import list_killable_session_names
+            from stackops.scripts.python.helpers.helpers_sessions._herdr_backend import list_killable_session_names as list_herdr_killable_session_names
 
-            return list_killable_session_names(delete=delete)
+            return list_herdr_killable_session_names(delete=delete)
         case "aoe":
-            from stackops.scripts.python.helpers.helpers_sessions._aoe_backend import list_killable_session_names
+            from stackops.scripts.python.helpers.helpers_sessions._aoe_backend import list_killable_session_names as list_aoe_killable_session_names
 
-            return list_killable_session_names()
+            return list_aoe_killable_session_names()
     raise ValueError(f"Unsupported backend: {backend}")
 
 

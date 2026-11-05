@@ -144,7 +144,7 @@ def agents_create(
     try:
         if show_example:
             typer.echo(PARALLEL_CREATE_EXAMPLE)
-            return
+            return None
 
         resolved_agent = resolve_agent(agent=agent)
         resolved_backend: SessionMultiplexer = resolve_agent_multiplexer(multiplexer=None) if backend is None else resolve_session_multiplexer(multiplexer=backend)
@@ -178,7 +178,7 @@ def agents_create(
                 save_as_yaml=save_as_yaml,
                 on_directory_conflict=on_directory_conflict,
             )
-            return
+            return None
 
         from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl
 

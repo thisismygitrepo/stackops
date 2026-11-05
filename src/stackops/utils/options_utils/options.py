@@ -176,96 +176,95 @@ tv  {preview_line} --no-sort --ansi --input-position top{input_header_arg} --sou
         result = [options_list[x] for x in choice_idx_s]
         print(f"✅ Selected options: {result}")
         return result
+    if default is not None:
+        assert default in options_list, (
+            f"Default `{default}` option not in options `{options_list}`"
+        )
+        default_msg = Text(" <<<<-------- DEFAULT", style="bold red")
     else:
-        if default is not None:
-            assert default in options_list, (
-                f"Default `{default}` option not in options `{options_list}`"
-            )
-            default_msg = Text(" <<<<-------- DEFAULT", style="bold red")
-        else:
-            default_msg = Text("")
-        txt = Text("\n" + msg + "\n")
-        for idx, key in enumerate(options_list):
-            txt = (
-                txt
-                + Text(f"{idx:2d} ", style="bold blue")
-                + str(key)
-                + (default_msg if default is not None and default == key else "")
-                + "\n"
-            )
-        txt_panel = Panel(txt, title=header, subtitle=tail, border_style="bold red")
+        default_msg = Text("")
+    txt = Text("\n" + msg + "\n")
+    for idx, key in enumerate(options_list):
+        txt = (
+            txt
+            + Text(f"{idx:2d} ", style="bold blue")
+            + str(key)
+            + (default_msg if default is not None and default == key else "")
+            + "\n"
+        )
+    txt_panel = Panel(txt, title=header, subtitle=tail, border_style="bold red")
 
-        console.print(txt_panel)
-        if default is not None:
-            choice_string = input(
-                f"{prompt}\nEnter option number/name or hit enter for default choice: "
-            )
-        else:
-            choice_string = input(f"{prompt}\nEnter option number/name: ")
+    console.print(txt_panel)
+    if default is not None:
+        choice_string = input(
+            f"{prompt}\nEnter option number/name or hit enter for default choice: "
+        )
+    else:
+        choice_string = input(f"{prompt}\nEnter option number/name: ")
 
-        if choice_string == "":
-            if default_string is None:
+    if choice_string == "":
+        if default_string is None:
+            console.print(
+                Panel(
+                    "🧨 Default option not available!", title="Error", expand=False
+                )
+            )
+            return None
+        choice_idx = options_strings.index(default_string)
+        assert default is not None, "🧨 Default option not available!"
+        choice_one: T = default
+    else:
+        try:
+            choice_idx = int(choice_string, base=10)
+            choice_one = options_list[choice_idx]
+        except (
+            IndexError
+        ) as ie:  # i.e. converting to integer was successful but indexing failed.
+            if choice_string in options_strings:  # string input
+                choice_idx = options_strings.index(choice_string)
+                choice_one = options_list[choice_idx]
+            elif custom_input:
+                return str(choice_string)  # type: ignore
+            else:
+                _ = ie
+                # raise ValueError(f"Unknown choice. {choice_string}") from ie
                 console.print(
                     Panel(
-                        "🧨 Default option not available!", title="Error", expand=False
+                        f"❓ Unknown choice: '{choice_string}'",
+                        title="Error",
+                        expand=False,
                     )
                 )
                 return None
-            choice_idx = options_strings.index(default_string)
-            assert default is not None, "🧨 Default option not available!"
-            choice_one: T = default
-        else:
-            try:
-                choice_idx = int(choice_string, base=10)
+        except (
+            TypeError,
+            ValueError,
+        ) as te:  # int(choice_string) failed due to # either the number is invalid, or the input is custom.
+            if choice_string in options_strings:  # string input
+                choice_idx = options_strings.index(choice_string)
                 choice_one = options_list[choice_idx]
-            except (
-                IndexError
-            ) as ie:  # i.e. converting to integer was successful but indexing failed.
-                if choice_string in options_strings:  # string input
-                    choice_idx = options_strings.index(choice_string)
-                    choice_one = options_list[choice_idx]
-                elif custom_input:
-                    return str(choice_string)  # type: ignore
-                else:
-                    _ = ie
-                    # raise ValueError(f"Unknown choice. {choice_string}") from ie
-                    console.print(
-                        Panel(
-                            f"❓ Unknown choice: '{choice_string}'",
-                            title="Error",
-                            expand=False,
-                        )
+            elif custom_input:
+                return choice_string  # type: ignore
+            else:
+                _ = te
+                # raise ValueError(f"Unknown choice. {choice_string}") from te
+                console.print(
+                    Panel(
+                        f"❓ Unknown choice: '{choice_string}'",
+                        title="Error",
+                        expand=False,
                     )
-                    return None
-            except (
-                TypeError,
-                ValueError,
-            ) as te:  # int(choice_string) failed due to # either the number is invalid, or the input is custom.
-                if choice_string in options_strings:  # string input
-                    choice_idx = options_strings.index(choice_string)
-                    choice_one = options_list[choice_idx]
-                elif custom_input:
-                    return choice_string  # type: ignore
-                else:
-                    _ = te
-                    # raise ValueError(f"Unknown choice. {choice_string}") from te
-                    console.print(
-                        Panel(
-                            f"❓ Unknown choice: '{choice_string}'",
-                            title="Error",
-                            expand=False,
-                        )
-                    )
-                    return None
-        console.print(
-            Panel(
-                f"✅ Selected option {choice_idx}: {choice_one}",
-                title="Selected",
-                expand=False,
-            )
+                )
+                return None
+    console.print(
+        Panel(
+            f"✅ Selected option {choice_idx}: {choice_one}",
+            title="Selected",
+            expand=False,
         )
-        if multi:
-            return [choice_one]
+    )
+    if multi:
+        return [choice_one]
     return choice_one
 
 
@@ -279,7 +278,7 @@ def choose_cloud_interactively() -> str | None:
         )
     )
     result = subprocess.run(
-        "rclone listremotes", shell=True, capture_output=True, text=True
+        "rclone listremotes", shell=True, capture_output=True, text=True, check=False
     )
     tmp = result.stdout if result.returncode == 0 else None
     if isinstance(tmp, str):

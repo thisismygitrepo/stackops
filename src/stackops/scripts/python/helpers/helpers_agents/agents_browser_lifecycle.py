@@ -51,15 +51,14 @@ def prepare_browser_launch_state() -> None:
         )
         if browser_process_id is not None:
             continue
-        relay_running = (
+        if (
             launch.relay_process_id is not None
             and launch.relay_process_created_at is not None
             and registered_process_is_running(
                 process_id=launch.relay_process_id,
                 process_created_at=launch.relay_process_created_at,
             )
-        )
-        if relay_running and launch.relay_process_id is not None and launch.relay_process_created_at is not None:
+        ):
             terminate_registered_process(
                 process_id=launch.relay_process_id,
                 process_created_at=launch.relay_process_created_at,

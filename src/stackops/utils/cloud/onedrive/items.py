@@ -125,7 +125,7 @@ def search_items(account_name: str, query: str, output_json: bool) -> None:
     rows: list[tuple[object, object, object, object, object]] = []
     for item in items:
         parent_value = item.get("parentReference")
-        parent: GraphItem = cast(GraphItem, parent_value) if isinstance(parent_value, Mapping) else {}
+        parent = cast(GraphItem, parent_value) if isinstance(parent_value, Mapping) else {}
         rows.append(
             (
                 item.get("name"),

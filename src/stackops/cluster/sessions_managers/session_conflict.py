@@ -127,9 +127,9 @@ def list_existing_sessions(backend: SessionBackend) -> set[str]:
 
         return {entry.name for entry in list_session_entries()}
     if backend == "tuios":
-        from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import list_session_entries
+        from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import list_session_entries as list_tuios_session_entries
 
-        return {entry.name for entry in list_session_entries()}
+        return {entry.name for entry in list_tuios_session_entries()}
     try:
         if backend == "tmux":
             result = subprocess.run(
@@ -177,7 +177,7 @@ def list_existing_sessions(backend: SessionBackend) -> set[str]:
     return set()
 
 
-def session_exists(session_name: str, existing_sessions: set[str], backend: SessionBackend) -> bool:
+def session_exists(session_name: str, existing_sessions: set[str]) -> bool:
     return session_name in existing_sessions
 
 
@@ -199,8 +199,8 @@ def build_session_launch_plan(
     plans: list[SessionLaunchPlan] = []
 
     for requested_name in requested_session_names:
-        conflict_with_existing = session_exists(requested_name, existing_sessions, backend)
-        conflict_with_planned = session_exists(requested_name, planned_sessions, backend)
+        conflict_with_existing = session_exists(requested_name, existing_sessions)
+        conflict_with_planned = session_exists(requested_name, planned_sessions)
         conflict_source = _build_conflict_source(
             conflict_with_existing=conflict_with_existing,
             conflict_with_planned=conflict_with_planned,
@@ -278,7 +278,7 @@ def build_session_launch_plan(
                     reserved_sessions = existing_sessions | planned_sessions
                     while True:
                         candidate_name = f"{requested_name}_{suffix}"
-                        if not session_exists(candidate_name, reserved_sessions, backend):
+                        if not session_exists(candidate_name, reserved_sessions):
                             plans.append(
                                 _build_launch_plan(
                                     requested_name=requested_name,

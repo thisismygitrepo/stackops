@@ -3,6 +3,8 @@ from pathlib import Path
 import os
 from typing import TypedDict
 
+from rich.console import Console
+
 from stackops.cluster.sessions_managers.session_conflict import (
     SessionConflictAction,
     SessionLaunchPlan,
@@ -10,7 +12,6 @@ from stackops.cluster.sessions_managers.session_conflict import (
     kill_existing_session,
 )
 from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
-from rich.console import Console
 
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, TabConfig
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import (

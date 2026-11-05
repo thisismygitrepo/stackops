@@ -53,8 +53,6 @@ def main(pub_path: str | None, pub_choose: bool, pub_val: bool, from_github: str
             authorized_keys, added_count = add_ssh_key_windows(records=records)
         else:
             raise NotImplementedError(f"SSH public-key authorization is unsupported on {operating_system}.")
-    except SystemExit:
-        raise
     except Exception as error:
         _exit_with_error(message=str(error))
 

@@ -110,7 +110,7 @@ def split_files_into_chunks(all_files: list[str], split_every: int | None = None
     """Split files into chunks based on split_every or split_to."""
     if split_every is not None:
         return [all_files[i:i + split_every] for i in range(0, len(all_files), split_every)]
-    elif split_to is not None:
+    if split_to is not None:
         if split_to <= 0:
             return [all_files]
         chunk_size = max(1, len(all_files) // split_to)
@@ -120,5 +120,4 @@ def split_files_into_chunks(all_files: list[str], split_every: int | None = None
             end = start + chunk_size if i < split_to - 1 else len(all_files)
             chunks.append(all_files[start:end])
         return chunks
-    else:
-        return [all_files]
+    return [all_files]

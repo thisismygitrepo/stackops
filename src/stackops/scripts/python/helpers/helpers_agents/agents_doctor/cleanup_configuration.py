@@ -1,15 +1,14 @@
-from typing import cast
+from typing import Literal, cast
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import (
     HookDiagnostic,
     HookEntry,
-    HookFormat,
     HookInventory,
     HookRemoval,
     HookSelector,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorContext, DoctorOrigin, DoctorResource, DoctorResourceFocus
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning import load_config_mapping
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning import ConfigFormat, load_config_mapping
 
 
 def _selected_sections(
@@ -43,6 +42,7 @@ def configuration_cleanup(
     *, agent: DoctorAgent, resource: DoctorResource, focuses: tuple[DoctorResourceFocus, ...], context: DoctorContext,
 ) -> HookInventory:
     path = resource.path
+    config_format: ConfigFormat
     if path.suffix in (".yml", ".yaml"):
         config_format = "yaml"
     elif path.suffix == ".toml":
@@ -98,12 +98,12 @@ def configuration_cleanup(
                 command = f"""{command}: {executable}"""
         is_enabled_plugin = len(selector) > 1 and selector[-2] == "enabledPlugins"
         removal_selector = selector
-        action = "disable" if is_enabled_plugin else "delete"
+        action: Literal["delete", "disable"] = "disable" if is_enabled_plugin else "delete"
         if agent == "codex" and kind == "plugin" and isinstance(value, dict):
             removal_selector = (*selector, "enabled")
             action = "disable"
         removal = (
-            HookRemoval(path, cast(HookFormat, config_format), removal_selector, action)
+            HookRemoval(path, config_format, removal_selector, action)
             if origin in ("local", "global") else None
         )
         entries.append(HookEntry(

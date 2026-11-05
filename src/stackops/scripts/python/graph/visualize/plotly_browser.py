@@ -89,9 +89,9 @@ def _download_chrome_for_testing() -> Path:
     try:
         browser_path = Path(get_chrome_sync(path=download_root))
     except Exception as exc:
-        browser_path = _downloaded_browser_path(browser_root=download_root)
-        if browser_path is not None and _is_supported_browser_path(browser_path=browser_path):
-            return browser_path
+        cached_browser_path = _downloaded_browser_path(browser_root=download_root)
+        if cached_browser_path is not None and _is_supported_browser_path(browser_path=cached_browser_path):
+            return cached_browser_path
         raise RuntimeError(
             f"""Static Plotly export requires Chrome/Chromium, and no usable browser was found.
 Automatic Chrome for Testing download to '{download_root}' failed: {exc}"""

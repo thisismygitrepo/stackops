@@ -13,7 +13,7 @@ from stackops.utils.installer_utils.installer_main_protocol import (
     
 )
 from stackops.utils.schemas.installer.installer_types import InstallerData
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 
 
 # config_dict: InstallerData = {
@@ -81,4 +81,3 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> st
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass

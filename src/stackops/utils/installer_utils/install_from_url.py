@@ -138,7 +138,7 @@ def _finalize_install(repo_name: str, asset_name: str | None, version: str, extr
             installed_path = find_move_delete_linux(downloaded=extracted_path, tool_name=tool_name, delete=True, rename_to=rename_target)
         else:
             console.print(Panel(f"Unsupported operating system: {system_name}", title="❌ Error", border_style="red"))
-            return None
+            return
     except IndexError:
         if system_name == "Windows":
             installed_path = find_move_delete_windows(downloaded_file_path=extracted_path, tool_name=None, delete=True, rename_to=rename_target)
@@ -161,29 +161,29 @@ def install_from_github_url(github_url: str) -> None:
     repo_info = get_repo_name_from_url(github_url)
     if repo_info is None:
         console.print(Panel(f"Invalid GitHub URL: {github_url}", title="❌ Error", border_style="red"))
-        return None
+        return
     owner, repo = repo_info
     repo_name = f"{owner}/{repo}"
     console.print(Panel(f"Fetching latest release for [green]{repo_name}[/green]", title="🌐 GitHub", border_style="blue"))
     release_raw = fetch_github_release_data(owner, repo)
     if not release_raw:
         console.print(Panel("No releases available for this repository.", title="❌ Error", border_style="red"))
-        return None
+        return
 
     release_info = extract_release_info(release_raw)
     if not release_info:
         console.print(Panel("Failed to parse release information.", title="❌ Error", border_style="red"))
-        return None
+        return
 
     assets = release_info["assets"]
     if not assets:
         console.print(Panel("No downloadable assets found in the latest release.", title="❌ Error", border_style="red"))
-        return None
+        return
     binary_assets = assets
     selection_pool = binary_assets if binary_assets else assets
     if not selection_pool:
         console.print(Panel("No assets available for installation.", title="❌ Error", border_style="red"))
-        return None
+        return
 
     # First pass: collect all formatted data and calculate column widths
     asset_data: list[AssetDisplayRow] = []
@@ -220,19 +220,19 @@ def install_from_github_url(github_url: str) -> None:
 
     if not options_map:
         console.print(Panel("Release assets lack download URLs.", title="❌ Error", border_style="red"))
-        return None
+        return
     selection_label = choose_from_options(
         options=list(options_map.keys()), msg="Select a release asset", multi=False, header="📦 GitHub Release Assets", tv=True
     )
     if selection_label is None:
         console.print(Panel("❓ Asset selection cancelled.", title="Cancelled", border_style="yellow"))
-        return None
+        return
     selected_asset = options_map[selection_label]
     download_url_value = selected_asset["browser_download_url"]
     asset_name_value = selected_asset["name"]
     if download_url_value == "":
         console.print(Panel("Selected asset lacks a download URL.", title="❌ Error", border_style="red"))
-        return None
+        return
     asset_name = asset_name_value if asset_name_value != "" else "github_binary"
     version = release_info["tag_name"] if release_info["tag_name"] != "" else "latest"
     console.print(Panel(f"Downloading [cyan]{asset_name}[/cyan]", title="⬇️ Download", border_style="magenta"))

@@ -6,7 +6,7 @@ Interactive StackOps Setup Script
 
 import sys
 import platform
-from typing import Literal
+from typing import Literal, cast
 import questionary
 from questionary import Choice
 from rich.console import Console
@@ -84,7 +84,7 @@ def get_installation_choices() -> list[InstallOption]:
         Choice(value=v5, title="📚 [ADVANCED] Retrieve Repositories", checked=False),
         Choice(value=v6, title="💾 [ADVANCED] Retrieve Data.", checked=False),
     ]
-    selected: list[InstallOption] = questionary.checkbox("Select the installation options you want to execute:", choices=choices, show_description=True).ask() or []
+    selected = cast(list[InstallOption], questionary.checkbox("Select the installation options you want to execute:", choices=choices, show_description=True).ask() or [])
     return selected
 
 

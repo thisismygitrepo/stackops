@@ -145,8 +145,8 @@ def _build_layout_for_herdr_workspace(
     tabs = load_tab_entries(workspace_id_value=workspace_id_value)
     if len(tabs) == 0:
         raise ValueError(f"Herdr workspace '{layout_name}' has no tabs to export.")
-    panes = load_pane_entries(workspace_id_value=workspace_id_value)
-    panes_by_tab = _panes_by_tab_id(panes=panes)
+    workspace_panes = load_pane_entries(workspace_id_value=workspace_id_value)
+    panes_by_tab = _panes_by_tab_id(panes=workspace_panes)
 
     used_tab_names: set[str] = set()
     layout_tabs: list[TabConfig] = []

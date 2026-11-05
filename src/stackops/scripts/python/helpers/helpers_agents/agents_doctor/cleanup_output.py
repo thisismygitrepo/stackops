@@ -94,7 +94,7 @@ def render_cleanup_plan(
 
     notes: dict[str, None] = {}
     for diagnostic in inventory.diagnostics:
-        if selection.scope != "all" and CLEANUP_ORIGIN_LABELS[diagnostic.origin] != selection.scope:
+        if selection.scope not in ("all", CLEANUP_ORIGIN_LABELS[diagnostic.origin]):
             continue
         if diagnostic.severity == "error" and f"""{diagnostic.path}: {diagnostic.message}""" in plan.blockers:
             continue

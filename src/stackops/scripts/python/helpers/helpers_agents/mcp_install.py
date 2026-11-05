@@ -42,7 +42,7 @@ def parse_requested_agents(raw_value: str, scope: MCP_INSTALL_SCOPE) -> tuple[AG
         if part in seen_agents:
             continue
         seen_agents.add(part)
-        resolved_agents.append(cast(AGENTS, part))
+        resolved_agents.append(part)
     return tuple(resolved_agents)
 
 

@@ -2,14 +2,14 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, NoReturn
 
-if TYPE_CHECKING:
-    from stackops.scripts.python.helpers.helpers_cloud.backup_config import BackupConfig, BackupItem
-    from stackops.scripts.python.helpers.helpers_cloud.backup_selection import BackupEntryKey
-
 import typer
 
 from stackops.profile.linking.options import CONFIG_FILE_SOURCE_LOOSE
 from stackops.scripts.python.helpers.helpers_devops.cli_subset_support import SubsetOutputConflictAction, SubsetOutputConflictOption
+
+if TYPE_CHECKING:
+    from stackops.scripts.python.helpers.helpers_cloud.backup_config import BackupConfig, BackupItem
+    from stackops.scripts.python.helpers.helpers_cloud.backup_selection import BackupEntryKey
 
 DATA_SUBSET_HELP = "Create a backup configuration from selected data entries."
 

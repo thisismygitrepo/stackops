@@ -414,13 +414,13 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     distribution: LinuxDistribution | None = None
     if os_name == "linux":
         distribution = detect_current_linux_distribution()
-        package_manager = distribution.package_manager
+        package_manager: str = distribution.package_manager
         if package_manager == "apk":
             raise NotImplementedError(
                 "rmpc on Alpine Linux is installed by the native installer catalog route: apk add --no-cache rmpc. "
                 "The release-archive Python installer is intentionally disabled on Alpine."
             )
-        platform_description = distribution.distribution_id
+        platform_description: str = distribution.distribution_id
     elif os_name == "darwin":
         package_manager = "brew"
         platform_description = "macOS"

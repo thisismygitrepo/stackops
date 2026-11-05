@@ -80,8 +80,6 @@ def get_repr(obj: dict[Any, Any], sep: str = "\n", justify: int = 15, quotes: bo
 
 
 def human_friendly_dict(d: dict[str, Any]) -> dict[str, Any]:
-    from datetime import datetime
-
     result = {}
     for k, v in d.items():
         if isinstance(v, float):
@@ -106,10 +104,6 @@ def get_repo_root(path: Path) -> Path | None:
     except InvalidGitRepositoryError:
         pass
     return None
-
-
-if __name__ == "__main__":
-    from pathlib import Path
 
 
 def display_with_flashy_style(msg: str, title: str) -> None:

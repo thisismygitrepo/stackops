@@ -1,14 +1,15 @@
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import Literal
 
 import stackops.settings.shells.bash as bash_shell_assets
 import stackops.settings.shells.pwsh as pwsh_shell_assets
 import stackops.settings.shells.zsh as zsh_shell_assets
-import stackops.utils.path_core as path_core
 from stackops.settings.shells.bash import INIT_PATH_REFERENCE as BASH_INIT_PATH_REFERENCE
 from stackops.settings.shells.pwsh import INIT_PATH_REFERENCE as PWSH_INIT_PATH_REFERENCE
 from stackops.settings.shells.zsh import INIT_PATH_REFERENCE as ZSH_INIT_PATH_REFERENCE
+from stackops.utils import path_core
 from stackops.utils.path_reference import get_path_reference_library_relative_path
 
 
@@ -21,6 +22,7 @@ class ShellProfileSource:
 
 def build_shell_profile_source(system_name: str, config_root: Path) -> ShellProfileSource:
     shell_name: Literal["pwsh", "bash", "zsh"]
+    shell_assets: ModuleType
     match system_name:
         case "Windows":
             shell_name = "pwsh"

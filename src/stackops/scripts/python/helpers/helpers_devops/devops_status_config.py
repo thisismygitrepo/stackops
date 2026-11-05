@@ -8,7 +8,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 from stackops.profile.create_links import ConfigMapper, read_mapper
 from stackops.profile.linking.operations import files_are_identical
 from stackops.utils.source_of_truth import resolve_source_of_truth_path

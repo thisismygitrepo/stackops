@@ -232,7 +232,7 @@ def build_final_summary(
     diagnostics_table.add_column("Distribution", overflow="fold")
     for result in checker_results:
         diagnostic_count = str(result.diagnostic_summary.total_count)
-        classifier = result.diagnostic_summary.classifier
+        classifier: str = result.diagnostic_summary.classifier
         distribution = format_diagnostic_distribution(result.diagnostic_summary)
         if result.result_kind == START_FAILED_KIND:
             diagnostic_count = "-"

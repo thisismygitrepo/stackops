@@ -108,7 +108,7 @@ def evaluate_trace_snapshot(
         matched_targets=matched_targets,
         pane_warning=pane_warning,
         session_error=None,
-        criterion_satisfied=total_targets > 0 and matched_targets == total_targets,
+        criterion_satisfied=0 < total_targets == matched_targets,
         idle_shell_panes=idle_shell_panes,
         running_panes=running_panes,
         exited_panes=exited_panes,

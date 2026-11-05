@@ -6,8 +6,7 @@ from rich import box
 from rich.console import Console
 from rich.panel import Panel
 
-import stackops.jobs.installer.linux_scripts as linux_scripts
-import stackops.jobs.installer.powershell_scripts as powershell_scripts
+from stackops.jobs.installer import linux_scripts, powershell_scripts
 from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import (

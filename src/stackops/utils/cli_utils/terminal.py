@@ -28,7 +28,7 @@ class Response:
         return resp
 
     def __init__(self, stdin: BinaryIO | None = None, stdout: BinaryIO | None = None, stderr: BinaryIO | None = None, cmd: str | None = None, desc: str = ""):
-        self.std = dict(stdin=stdin, stdout=stdout, stderr=stderr)
+        self.std = {"stdin": stdin, "stdout": stdout, "stderr": stderr}
         self.output = STD(stdin="", stdout="", stderr="", returncode=0)
         self.input = cmd
         self.desc = desc  # input command

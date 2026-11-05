@@ -53,7 +53,7 @@ class FileManager:
 
     @staticmethod
     def from_json_file(path: str | Path) -> "FileManager":
-        data: dict[str, object] = read_json(Path(path).expanduser())
+        data = cast(dict[str, object], read_json(Path(path).expanduser()))
         return FileManager.from_dict(data)
 
     @property
@@ -207,7 +207,7 @@ def _load_job_list(path: Path) -> list[JobStatus]:
         path.parent.mkdir(parents=True, exist_ok=True)
         save_json(obj=[], path=path, verbose=False)
         return []
-    raw: list[dict[str, object]] = read_json(path)
+    raw = cast(list[dict[str, object]], read_json(path))
     return [JobStatus.from_dict(d) for d in raw]
 
 

@@ -9,10 +9,10 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, assert_never
 
-import stackops.utils.path_core as path_core
 from rich.console import Console
 from rich.panel import Panel
 
+from stackops.utils import path_core
 from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_class import Installer
@@ -154,8 +154,8 @@ def _install_linux_dependencies(console: Console) -> None:
         case "apk":
             raise NotImplementedError("Termusic does not publish a musl-linked Alpine Linux release archive or supported APK package.")
         case "apt":
-            required_package_groups = APT_REQUIRED_PACKAGE_GROUPS
-            optional_packages = APT_OPTIONAL_PACKAGES
+            required_package_groups: Sequence[Sequence[str]] = APT_REQUIRED_PACKAGE_GROUPS
+            optional_packages: Sequence[str] = APT_OPTIONAL_PACKAGES
         case "dnf":
             if distribution.distribution_id != "fedora":
                 raise NotImplementedError(

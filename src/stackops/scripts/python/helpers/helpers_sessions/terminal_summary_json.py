@@ -153,8 +153,7 @@ def collect_summary(backend: SessionMultiplexer, session: str | None, show_tabs:
             )
             for aoe_session in selected_sessions:
                 aoe_summary = collect_aoe_summary(session=aoe_session)
-                record = asdict(aoe_summary)
-                record["id"] = aoe_summary.session_id
+                record = {**asdict(aoe_summary), "id": aoe_summary.session_id}
                 records.append(record)
         case _:
             assert_never(backend)

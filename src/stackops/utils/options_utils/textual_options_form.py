@@ -387,7 +387,6 @@ def use_textual_options_form(
         uv_project_dir=uv_project_dir,
     )
     import json
-    from typing import cast
 
     result_content = Path(random_path).read_text(encoding="utf-8")
     result_data = json.loads(result_content)

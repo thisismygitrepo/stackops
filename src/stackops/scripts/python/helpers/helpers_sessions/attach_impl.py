@@ -67,14 +67,13 @@ def interactive_choose_with_preview(
                     preview_size_percent=70.0,
                 )
                 return chosen_multi
-            else:
-                chosen_single = choose_from_dict_with_preview(
-                    options_to_preview_mapping=options_to_preview_mapping,
-                    extension="md",
-                    multi=False,
-                    preview_size_percent=70.0,
-                )
-                return chosen_single
+            chosen_single = choose_from_dict_with_preview(
+                options_to_preview_mapping=options_to_preview_mapping,
+                extension="md",
+                multi=False,
+                preview_size_percent=70.0,
+            )
+            return chosen_single
         except Exception:
             pass
 
@@ -87,15 +86,14 @@ def interactive_choose_with_preview(
             custom_input=False,
         )
         return chosen_multi_options or []
-    else:
-        chosen_single = choose_from_options(
-            msg=msg,
-            multi=False,
-            options=list(options_to_preview_mapping.keys()),
-            tv=True,
-            custom_input=False,
-        )
-        return chosen_single
+    chosen_single = choose_from_options(
+        msg=msg,
+        multi=False,
+        options=list(options_to_preview_mapping.keys()),
+        tv=True,
+        custom_input=False,
+    )
+    return chosen_single
 
 
 def choose_session(
@@ -131,9 +129,9 @@ def choose_session(
 
 
 def get_session_tabs() -> list[tuple[str, str]]:
-    from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import run_command
+    from stackops.scripts.python.helpers.helpers_sessions._tmux_backend import run_command as run_tmux_command
 
-    result = run_command(["tmux", "list-windows", "-a", "-F", "#S\t#W"])
+    result = run_tmux_command(["tmux", "list-windows", "-a", "-F", "#S\t#W"])
     if result.returncode != 0:
         return []
     session_tabs: list[tuple[str, str]] = []
