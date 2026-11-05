@@ -55,29 +55,29 @@ if (Test-Path "$CONFIG_ROOT\scripts\wrap_stackops.ps1") {
     function lsdla { lsd -la }
     Set-Alias -Name l -Value lsdla -Option AllScope
 
-    function d { wrap_in_shell_script devops $args }
-    function c { wrap_in_shell_script cloud $args }
-    function a { wrap_in_shell_script agents $args }
-    function t { wrap_in_shell_script terminal $args }
-    function f { wrap_in_shell_script fire $args }
-    function p { wrap_in_shell_script preview $args }
-    function u { wrap_in_shell_script utils $args }
-    function s { wrap_in_shell_script seek @args }
+    function devops { wrap_in_shell_script devops.exe $args }
+    function cloud { wrap_in_shell_script cloud.exe $args }
+    function agents { wrap_in_shell_script agents.exe $args }
+    function terminal { wrap_in_shell_script terminal.exe $args }
+    function fire { wrap_in_shell_script fire.exe $args }
+    function preview { wrap_in_shell_script preview.exe $args }
+    function utils { wrap_in_shell_script utils.exe $args }
+    function seek { wrap_in_shell_script seek.exe @args }
 
 }
 else {
     Write-Host "Missing config files: $CONFIG_ROOT"
     function lsdla { lsd -la }
     Set-Alias -Name l -Value lsdla -Option AllScope
-    function d { devops $args }
-    function c { cloud $args }
-    function a { agents $args }
-    function t { terminal $args }
-    function f { fire $args }
-    function p { preview $args }
-    function u { utils $args }
-    function s { seek @args }
 }
+function d { devops @args }
+function c { cloud @args }
+function a { agents @args }
+function t { terminal @args }
+function f { fire @args }
+function p { preview @args }
+function u { utils @args }
+function s { seek @args }
 
 
 # prompt integrations ===========================================================

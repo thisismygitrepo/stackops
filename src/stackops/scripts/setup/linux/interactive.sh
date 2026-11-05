@@ -16,7 +16,7 @@ alias fire='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=26.11" fire'
 alias preview='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=26.11" preview'
 alias utils='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=26.11" utils'
 alias terminal='$HOME/.local/bin/uvx --python 3.14 --from "stackops>=26.11" terminal'
-seek() { "$HOME/.local/bin/uvx" --python 3.14 --from "stackops>=26.11" seek "$@"; }
+function seek { "$HOME/.local/bin/uvx" --python 3.14 --from "stackops>=26.11" seek "$@"; }
 
 alias d='wrap_in_shell_script devops'
 alias c='wrap_in_shell_script cloud'

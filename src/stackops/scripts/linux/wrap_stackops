@@ -42,7 +42,7 @@ wrap_in_shell_script() {
       # printf "%b\n" "${YELLOW}⚠️  Program exited with status ${exit_code}${RESET}"
     # fi
   else
-    echo " "
+    echo " " >&2
     exit_code=$command_exit_code
     # printf "%b\n" "${GREEN}✅ '${command}' execution completed.${RESET}"
   fi

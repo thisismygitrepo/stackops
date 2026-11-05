@@ -41,7 +41,7 @@ add_to_path_if_not_already \
 # . $CONFIG_ROOT/settings/lf/linux/exe/lfcd.sh
 # . $CONFIG_ROOT/settings/tere/terecd.sh
 . $CONFIG_ROOT/settings/yazi/shell/yazi_cd.sh
-. $CONFIG_ROOT/scripts/wrap_stackops  # gives wrap_in_shell_script
+[ -f "$CONFIG_ROOT/scripts/wrap_stackops" ] && . "$CONFIG_ROOT/scripts/wrap_stackops"  # gives wrap_in_shell_script
 
 # check if the private StackOps shell init exists and source it
 if [ -f "$DOTFILES_STACKOPS_SCRIPTS_ROOT/init.sh" ]; then
@@ -49,15 +49,14 @@ if [ -f "$DOTFILES_STACKOPS_SCRIPTS_ROOT/init.sh" ]; then
 fi
 
 alias l='lsd -la'
-alias d='wrap_in_shell_script devops'
-alias c='wrap_in_shell_script cloud'
-alias a='wrap_in_shell_script agents'
-alias t='wrap_in_shell_script terminal'
+if command -v wrap_in_shell_script >/dev/null 2>&1; then
+    for stackops_cli in devops cloud agents terminal fire preview utils seek; do
+        alias "$stackops_cli=wrap_in_shell_script $stackops_cli"
+    done
+    unset stackops_cli
+fi
 unalias fx 2>/dev/null
-alias f='wrap_in_shell_script fire'
-alias p='wrap_in_shell_script preview'
-alias u='wrap_in_shell_script utils'
-alias s='wrap_in_shell_script seek'
+alias d=devops c=cloud a=agents t=terminal f=fire p=preview u=utils s=seek
 
 # alias gcs='gh copilot suggest -t shell'
 # alias gcg='gh copilot suggest -t git'
