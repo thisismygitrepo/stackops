@@ -2,7 +2,7 @@ import subprocess
 import requests
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from stackops.utils.installer_utils.installer_main_protocol import (
     InstallerPythonScriptMain,
     
@@ -26,7 +26,7 @@ def is_winget_available() -> bool:
         bool: True if winget is available, False otherwise
     """
     try:
-        result = subprocess.run(["winget", "--version"], capture_output=True, text=True, timeout=10)
+        result = subprocess.run(["winget", "--version"], capture_output=True, text=True, timeout=10, check=False)
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
         return False
@@ -52,7 +52,7 @@ def get_latest_winget_release_url() -> str | None:
         # Look for .msixbundle file in assets
         for asset in release_data.get("assets", []):
             if asset["name"].endswith(".msixbundle"):
-                return asset["browser_download_url"]
+                return cast(str, asset["browser_download_url"])
 
         return None
     except (requests.RequestException, KeyError, ValueError) as e:
@@ -105,15 +105,15 @@ def install_msix_package(package_path: Path) -> bool:
             powershell_cmd,
             text=True,
             timeout=300,  # 5 minutes timeout
+            check=False,
         )
 
         if result.returncode == 0:
             print("Winget installed successfully!")
             return True
-        else:
-            print(f"Installation failed with return code {result.returncode}")
-            print(f"Error output: {result.stderr}")
-            return False
+        print(f"Installation failed with return code {result.returncode}")
+        print(f"Error output: {result.stderr}")
+        return False
 
     except (subprocess.SubprocessError, subprocess.TimeoutExpired) as e:
         print(f"Error installing MSIX package: {e}")
@@ -128,7 +128,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> bo
         bool: True if winget is available (either was already installed or successfully installed),
               False if installation failed
     """
-    _ = installer_data, update
+    _ = installer_data, version, update
     # First check if winget is already available
     if is_winget_available():
         print("Winget is already available on the system.")
@@ -172,9 +172,8 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> bo
     if is_winget_available():
         print("Winget has been successfully installed and is now available!")
         return True
-    else:
-        print("Installation completed but winget is still not available. You may need to restart your terminal or add it to PATH.")
-        return False
+    print("Installation completed but winget is still not available. You may need to restart your terminal or add it to PATH.")
+    return False
 
 
 if __name__ == "__main__":

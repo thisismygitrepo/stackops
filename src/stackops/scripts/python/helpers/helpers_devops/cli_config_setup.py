@@ -118,7 +118,7 @@ def setup_agent(
         typer.Option("--agent", "-a", help="Use this agent instead of prompting."),
     ] = None,
 ) -> None:
-    from typing import get_args
+    from typing import cast, get_args
 
     from rich.console import Console
     from rich.panel import Panel
@@ -131,7 +131,7 @@ def setup_agent(
         require_interactive("Select the default agent; supply --agent NAME")
     existing_config = load_stackops_config_for_setup()
     configured_agent = existing_config.get("default_agent") if existing_config is not None else None
-    agent_choices: tuple[AGENTS, ...] = get_args(AGENTS)
+    agent_choices = cast(tuple[AGENTS, ...], get_args(AGENTS))
     selected_agent: AGENTS = agent if agent is not None else ask_choice(
         "Default agent",
         help_text="Agent commands that omit --agent use this one.",

@@ -1,6 +1,6 @@
 import ast
 from copy import deepcopy
-from typing import Any
+from typing import Any, override
 
 from stackops.scripts.python.graph.cli_graph_eval import evaluate_typer_config
 from stackops.scripts.python.graph.cli_graph_managed_files import managed_file_registrations
@@ -268,6 +268,7 @@ class BoundNameReplacer(ast.NodeTransformer):
     def __init__(self, bindings: dict[str, ast.AST]) -> None:
         self.bindings = bindings
 
+    @override
     def visit_Name(self, node: ast.Name) -> ast.AST:
         if not isinstance(node.ctx, ast.Load):
             return node

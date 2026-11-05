@@ -107,13 +107,14 @@ def register_backup_entry(
             raise ValueError("Password requires encryption mode symmetric.")
 
     USER_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+    config: BackupConfig
     if USER_BACKUP_PATH.exists():
         existing_config = read_user_backup_config_for_update()
         if existing_config is None:
             raise ValueError(describe_missing_backup_config(source="user"))
         config = existing_config
     else:
-        config: BackupConfig = {}
+        config = {}
 
     if group_name in config:
         group_entries = config[group_name]

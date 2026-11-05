@@ -24,8 +24,7 @@ def install_linux(version: str | None) -> None:
     appimage_src = next(Path(home).joinpath("Downloads").glob("**/Cursor*.AppImage"), None)
     if appimage_src is None:
         raise FileNotFoundError("Cursor AppImage not found in Downloads folder.")
-    else:
-        print(f"Cursor AppImage found: {appimage_src}")
+    print(f"Cursor AppImage found: {appimage_src}")
     appimage_dest = Path(LINUX_INSTALL_PATH).joinpath("cursor").__str__()
     desktop_file = f"{home}/.local/share/applications/cursor.desktop"
     icon_path = f"{home}/.local/share/icons/cursor.png"  # Optional: set only if icon exists
@@ -92,7 +91,7 @@ def install_windows(version: str | None) -> None:
             print(f"Alternative installer also failed with exit code {e2.returncode}")
             # If silent install fails, run normally and let user handle it
             print("Running installer in normal mode (user interaction required)...")
-            subprocess.run([str(cursor_installer)])
+            subprocess.run([str(cursor_installer)], check=True)
 
     # Clean up installer file
     try:
@@ -120,5 +119,4 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass
     # main()

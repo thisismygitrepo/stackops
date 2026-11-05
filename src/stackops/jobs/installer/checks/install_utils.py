@@ -10,10 +10,10 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import cast
 
-import stackops.utils.path_core as path_core
 from rich.console import Console
 
 from stackops.jobs.installer.checks.scan_history import ScanRun
+from stackops.utils import path_core
 from stackops.utils.source_of_truth import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 console = Console()

@@ -197,8 +197,8 @@ def _version_status(*, definition: DoctorAgentDefinition) -> DoctorExecutableSta
     output_lines = tuple(line.strip() for line in (result.stdout + "\n" + result.stderr).splitlines() if line.strip())
     if result.returncode == 0 and len(output_lines) > 0:
         return DoctorExecutableStatus(installed=True, path=resolved_executable_path, version=output_lines[0], error=None)
-    error = output_lines[0] if len(output_lines) > 0 else f"version command exited {result.returncode}"
-    return DoctorExecutableStatus(installed=True, path=resolved_executable_path, version=None, error=error)
+    version_error = output_lines[0] if len(output_lines) > 0 else f"version command exited {result.returncode}"
+    return DoctorExecutableStatus(installed=True, path=resolved_executable_path, version=None, error=version_error)
 
 
 def build_doctor_report(*, definition: DoctorAgentDefinition, working_directory: Path) -> DoctorReport:

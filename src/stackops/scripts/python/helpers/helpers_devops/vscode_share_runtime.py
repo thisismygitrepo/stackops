@@ -34,7 +34,7 @@ def run_vscode_tunnel(
             result = subprocess.run(arguments, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False, timeout=timeout)
             if result.returncode != 0:
                 raise RuntimeError(f"VS Code {action} failed with code {result.returncode}: {result.stderr.strip()}")
-            receipt = {"status": "completed", "action": action, "state": read_tunnel_status(cli_data_dir, timeout)}
+            receipt: dict[str, object] = {"status": "completed", "action": action, "state": read_tunnel_status(cli_data_dir, timeout)}
             typer.echo(json.dumps(receipt) if output_json else f"VS Code {action} completed.")
             return
         current = read_tunnel_status(cli_data_dir, timeout)

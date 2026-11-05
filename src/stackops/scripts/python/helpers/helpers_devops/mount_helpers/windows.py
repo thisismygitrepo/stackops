@@ -74,7 +74,7 @@ def _normalize_drive_letter(value: str) -> str:
     match = re.search(r"([A-Za-z])", value)
     if match is None:
         raise RuntimeError("Invalid drive letter")
-    return match.group(1).upper()
+    return match.group().upper()
 
 
 def mount_windows(entry: DeviceEntry, mount_point: str) -> None:

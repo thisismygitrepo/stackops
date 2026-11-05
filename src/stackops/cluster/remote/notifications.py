@@ -8,12 +8,12 @@ import imaplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Any, Union
+import requests
 from rich.console import Console
 from rich.markdown import Markdown
 
 
-def download_to_memory(path: Path, allow_redirects: bool = True, timeout: float | None = None, params: Any = None) -> "Any":
-    import requests
+def download_to_memory(path: Path, allow_redirects: bool = True, timeout: float | None = None, params: Any = None) -> requests.Response:
     return requests.get(
         path.as_posix().replace("https:/", "https://").replace("http:/", "http://"), allow_redirects=allow_redirects, timeout=timeout, params=params
     )  # Alternative: from urllib import request; request.urlopen(url).read().decode('utf-8').

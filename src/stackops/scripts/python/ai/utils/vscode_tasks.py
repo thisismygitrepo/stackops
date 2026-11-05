@@ -38,10 +38,11 @@ def add_lint_and_type_check_task(repo_root: Path) -> ArtifactChange:
 
         # Remove any existing entries with the same label to prevent duplicates
         tasks = cast(list[dict[str, object]], tasks_config["tasks"])
-        tasks_config["tasks"] = [
+        tasks = [
             task for task in tasks if task.get("label") != task_to_add["label"]
         ]
-        tasks_config["tasks"].append(task_to_add)
+        tasks.append(task_to_add)
+        tasks_config["tasks"] = tasks
     else:
         tasks_config = {"version": "2.0.0", "tasks": [task_to_add]}
 

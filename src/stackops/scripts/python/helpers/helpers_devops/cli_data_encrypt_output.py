@@ -29,9 +29,9 @@ def publish_output(*, source: Path, staged_path: Path, output_path: Path, overwr
     shutil.move(output_path, backup_path)
     try:
         _move_output(staged_path=staged_path, output_path=output_path)
-    except BaseException:
+    except BaseException as exc:
         if output_path.exists() or output_path.is_symlink():
-            raise RuntimeError(f"""Could not remove incomplete output: {output_path}. Previous output is preserved at {backup_path}.""")
+            raise RuntimeError(f"""Could not remove incomplete output: {output_path}. Previous output is preserved at {backup_path}.""") from exc
         shutil.move(backup_path, output_path)
         shutil.rmtree(backup_root)
         raise

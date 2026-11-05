@@ -21,7 +21,7 @@ def transfer_sftp(ssh: SSH, config: RemoteStackOpsConfig, job_params: JobParams,
     ssh.copy_from_here(source_path=str(file_manager.job_root), target_rel2home=None, compress_with_zip=True, recursive=True, overwrite_existing=True)
 
 
-def transfer_cloud(ssh: SSH, config: RemoteStackOpsConfig, job_params: JobParams, file_manager: FileManager, data: list[str]) -> None:
+def transfer_cloud(config: RemoteStackOpsConfig, job_params: JobParams, file_manager: FileManager, data: list[str]) -> None:
     cloud = config.cloud_name
     if cloud is None:
         raise ValueError("cloud_name must be set for cloud transfer")

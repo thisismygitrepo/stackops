@@ -14,7 +14,7 @@ from stackops.scripts.python.helpers.helpers_cloud.cloud_copy_artifacts import (
 )
 from stackops.utils.io import GpgCommandError
 from stackops.utils.cloud.encryption import EncryptionMode, EncryptionModeChoice, parse_encryption_mode
-import stackops.utils.cloud.rclone_wrapper as rclone_wrapper
+from stackops.utils.cloud import rclone_wrapper
 from stackops.utils.cloud.rclone import (
     RcloneCommandError,
     RcloneConfigError,

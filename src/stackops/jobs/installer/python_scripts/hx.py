@@ -2,21 +2,18 @@
 Installers do not add runtime files to the machine, hence this script.
 """
 
-import stackops.utils.path_core as path_core
-from stackops.utils.installer_utils.installer_locator_utils import WINDOWS_INSTALL_PATH
-from stackops.utils.path_core import delete_path
 import platform
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from stackops.utils.installer_utils.installer_main_protocol import (
-    InstallerPythonScriptMain,
-    
-)
-from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH
-from stackops.utils.installer_utils.installer_class import Installer
 from rich.console import Console
 from rich.panel import Panel
+
+from stackops.utils import path_core
+from stackops.utils.installer_utils.installer_class import Installer
+from stackops.utils.installer_utils.installer_locator_utils import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
+from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
+from stackops.utils.path_core import delete_path
 from stackops.utils.schemas.installer.installer_types import InstallerData
 
 
@@ -231,4 +228,3 @@ def main(
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass

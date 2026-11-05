@@ -1,7 +1,7 @@
 """Set Windows Terminal Settings"""
 
 from stackops.utils.accessories import randstr
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 from stackops.utils.io import save_json
 from stackops.utils.files.read import read_json
 import platform
@@ -67,17 +67,17 @@ def set_wt_settings(nerd_font: bool = True) -> None:
 
     console.print()
     console.print("🛠️  Customizing PowerShell profile...")
-    pwsh: dict[str, Any] = dict(
-        name="PowerShell",
-        commandline="pwsh",
-        hidden=False,
-        opacity=87,
+    pwsh: dict[str, Any] = {
+        "name": "PowerShell",
+        "commandline": "pwsh",
+        "hidden": False,
+        "opacity": 87,
         # guid="{" + str(uuid4()) + "}",  # WT doesn't accept any GUID to identify pwsh
-        startingDirectory="%USERPROFILE%",  # "%USERPROFILE%",   # None: inherent from parent process.
-    )
+        "startingDirectory": "%USERPROFILE%",  # "%USERPROFILE%",   # None: inherent from parent process.
+    }
     if nerd_font:
         console.print("🔤 Setting PowerShell font to CaskaydiaCove Nerd Font...")
-        pwsh["font"] = dict(face="CaskaydiaCove Nerd Font")  # because oh-my-posh uses glyphs from this font.
+        pwsh["font"] = {"face": "CaskaydiaCove Nerd Font"}  # because oh-my-posh uses glyphs from this font.
 
     powershell_profile = None
     for profile in profiles:

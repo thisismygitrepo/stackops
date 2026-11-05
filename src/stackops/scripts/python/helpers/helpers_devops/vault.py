@@ -67,9 +67,8 @@ def save_encrypted_cache(cache: dict[str, str]) -> None:
         if hint:
             err_console.print(f"[yellow]{hint}[/yellow]")
         raise VaultExit(code=1) from exc
-    else:
-        CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        CACHE_PATH.write_bytes(encrypted)
+    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CACHE_PATH.write_bytes(encrypted)
 
 
 def cache_get(key: str) -> str | None:
@@ -153,16 +152,16 @@ def run_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None, ch
     """Run a subprocess command and optionally raise a vault command error."""
     try:
         return subprocess.run(list(args), stdin=subprocess.DEVNULL, capture_output=True, text=True, env=env, check=check)
-    except FileNotFoundError:
+    except FileNotFoundError as exc:
         err_console.print(f"[bold red]Command not found:[/bold red] {' '.join(mask_session_args(args))}")
-        raise VaultExit(code=1)
+        raise VaultExit(code=1) from exc
     except subprocess.CalledProcessError as exc:
         err_console.print(f"[bold red]Command failed:[/bold red] {' '.join(mask_session_args(args))}")
         if exc.stderr:
             err_console.print("[red]stderr:[/red]", exc.stderr.strip())
         if exc.stdout:
             err_console.print("[red]stdout:[/red]", exc.stdout.strip())
-        raise VaultExit(code=1)
+        raise VaultExit(code=1) from exc
 
 
 def get_vault_status_field(status_payload: dict[str, Any], key: str) -> str | None:
@@ -176,7 +175,7 @@ def get_vault_status(session: Optional[str] = None) -> VaultStatus:
     """Return the bw vault status and authenticated account metadata when available."""
     cmd = build_bw_command(["status"], session)
     try:
-        result = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True)
+        result = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
         data = json.loads(result.stdout)
         status = data.get("status")
         return VaultStatus(
@@ -225,7 +224,7 @@ def parse_items(raw: str) -> List[VaultItem]:
     except json.JSONDecodeError as exc:
         err_console.print("[bold red]Failed to parse JSON from bw output.[/bold red]")
         err_console.print(exc)
-        raise VaultExit(code=1)
+        raise VaultExit(code=1) from exc
 
     items: List[VaultItem] = []
     for it in data:
@@ -463,7 +462,7 @@ def search(
         info("[blue]🔄 Syncing vault...[/blue]")
         sync_cmd = build_bw_command(["sync"], session)
         try:
-            sync_result = subprocess.run(sync_cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True)
+            sync_result = subprocess.run(sync_cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
             if sync_result.returncode == 0:
                 info("[green]✅ Vault synced.[/green]")
             else:
@@ -551,7 +550,7 @@ def search(
                 totp_value = run_bw_command(totp_cmd).strip()
             except VaultExit:
                 raw_totp_seed = login.get("totp")
-                if raw_totp_seed:
+                if isinstance(raw_totp_seed, str) and raw_totp_seed:
                     info(f"[red]Failed to fetch TOTP via bw — raw TOTP seed:[/red] [bold]{raw_totp_seed}[/bold]")
                     totp_value = raw_totp_seed
                 else:

@@ -91,23 +91,23 @@ def process_matches_selector(process: ProcessInfo, selector: ProcessSelector) ->
                     return process["username"] == selector.value
                 case "status":
                     return process["status"] == selector.value
-                case _ as unreachable:
-                    assert_never(unreachable)
+                case _ as unreachable_text_field:
+                    assert_never(unreachable_text_field)
         case IntegerProcessSelector():
             match selector.field:
                 case "ports":
                     return selector.value in process["ports"]
                 case "pid":
                     return process["pid"] == selector.value
-                case _ as unreachable:
-                    assert_never(unreachable)
+                case _ as unreachable_integer_field:
+                    assert_never(unreachable_integer_field)
         case MinimumProcessSelector():
             match selector.field:
                 case "memory":
                     return process["memory_usage_mb"] >= selector.value
                 case "cpu":
                     return process["cpu_percent"] >= selector.value
-                case _ as unreachable:
-                    assert_never(unreachable)
+                case _ as unreachable_minimum_field:
+                    assert_never(unreachable_minimum_field)
         case _ as unreachable:
             assert_never(unreachable)

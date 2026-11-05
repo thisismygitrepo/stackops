@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+from typing import cast
 from uuid import UUID
 
 
@@ -33,7 +34,7 @@ def codex_transcript_metadata(*, path: Path) -> dict[str, object]:
     payload = row.get("payload")
     if not isinstance(payload, dict):
         raise ValueError("Codex transcript session metadata is invalid")
-    return payload
+    return cast(dict[str, object], payload)
 
 
 def claude_session_id(

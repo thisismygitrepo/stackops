@@ -37,7 +37,7 @@ def run_parallel_from_yaml(
         require_interactive("Choosing a parallel workflow; supply RUN_NAME")
     if add_entry and not edit and parallel_yaml_path is None and source in ("all", "a"):
         source = "workspace"
-    yaml_locations = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, source=source)
+    yaml_locations: list[tuple[str, Path]] = resolve_parallel_yaml_paths(parallel_yaml_path=parallel_yaml_path, source=source)
     if edit and parallel_yaml_path is None and source in ("all", "a"):
         source, selected_yaml_path = choose_edit_source(locations=yaml_locations)
         yaml_locations = [(source, selected_yaml_path)]

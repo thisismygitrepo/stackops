@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Literal
+
+from typer import Context
 
 
 type FireJobMode = Literal["run", "streamlit", "jupyter", "marimo"]
@@ -123,7 +125,7 @@ def parse_fire_args_from_argv() -> str:
     return ""
 
 
-def parse_fire_args_from_context(ctx: Any) -> str:
+def parse_fire_args_from_context(ctx: Context) -> str:
     """Parse Fire arguments from typer context.
 
     Args:
@@ -133,7 +135,7 @@ def parse_fire_args_from_context(ctx: Any) -> str:
         String of Fire-compatible arguments to append to command
     """
     # Get remaining args that weren't consumed by typer
-    if hasattr(ctx, "args") and ctx.args:
+    if ctx.args:
         args = ctx.args
         # Filter out the -- separator if present
         if args and args[0] == "--":

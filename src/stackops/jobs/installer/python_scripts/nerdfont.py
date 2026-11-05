@@ -12,7 +12,7 @@ from rich import box
 from rich.console import Console
 from rich.panel import Panel
 
-import stackops.jobs.installer.powershell_scripts as powershell_scripts
+from stackops.jobs.installer import powershell_scripts
 from stackops.utils.installer_utils.installer_main_protocol import (
     InstallerPythonScriptMain,
 )
@@ -360,4 +360,3 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass

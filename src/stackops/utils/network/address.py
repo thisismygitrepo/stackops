@@ -57,7 +57,7 @@ def get_public_ip_address() -> PublicIpInfo:
     result = subprocess.run(["ipinfo", "myip", "--json"], check=True, capture_output=True, text=True, encoding="utf-8")
     import json
 
-    loaded_json: PublicIpInfo = json.loads(result.stdout)
+    loaded_json = cast(PublicIpInfo, json.loads(result.stdout))
     return loaded_json
 
 

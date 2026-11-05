@@ -114,7 +114,7 @@ def extract_typer_info(annotation: ast.AST | None) -> dict[str, Any] | None:
         if func.attr not in {"Argument", "Option"}:
             continue
 
-        default_value: str | int | float | bool | None = None
+        default_value: object = None
         param_decls: list[str] = []
         args = list(metadata.args)
         if args and not isinstance(args[0], ast.Constant | ast.JoinedStr):

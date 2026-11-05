@@ -14,13 +14,13 @@ def limit_tab_num(layout_configs: list[LayoutConfig], max_thresh: int, threshold
         raise ValueError(f"max_thresh must be at least 1, got {max_thresh}.")
     match threshold_type, breaking_method:
         case "number", "moreLayouts":
-            return restrict_num_tabs_helper1(layout_configs=layout_configs, max_thresh=max_thresh, threshold_type="number", breaking_method="moreLayouts")
+            return restrict_num_tabs_helper1(layout_configs=layout_configs, max_thresh=max_thresh)
         case "number", "combineTabs":
-            return restrict_num_tabs_helper2(layout_configs=layout_configs, max_thresh=max_thresh, threshold_type="number", breaking_method="combineTabs")
+            return restrict_num_tabs_helper2(layout_configs=layout_configs, max_thresh=max_thresh)
         case "weight", "moreLayouts":
-            return restrict_num_tabs_helper3(layout_configs=layout_configs, max_thresh=max_thresh, threshold_type="weight", breaking_method="moreLayouts")
+            return restrict_num_tabs_helper3(layout_configs=layout_configs, max_thresh=max_thresh)
         case "weight", "combineTabs":
-            return restrict_num_tabs_helper4(layout_configs=layout_configs, max_thresh=max_thresh, threshold_type="weight", breaking_method="combineTabs")
+            return restrict_num_tabs_helper4(layout_configs=layout_configs, max_thresh=max_thresh)
         case _:
             raise NotImplementedError(f"The combination {threshold_type}, {breaking_method} is not implemented")
 def limit_tab_weight(layout_configs: list[LayoutConfig], max_weight: int, command_splitter: COMMAND_SPLITTER) -> list[LayoutConfig]:

@@ -97,9 +97,8 @@ def generate_content(python_files: list[str], shell_files: list[str], repo_root:
     """Generate content based on format type."""
     if format_type == "csv":
         return generate_csv_content(python_files, shell_files, repo_root, include_line_count)
-    elif format_type == "md":
+    if format_type == "md":
         return generate_markdown_table(python_files, shell_files, repo_root, include_line_count)
-    elif format_type == "txt":
+    if format_type == "txt":
         return generate_txt_content(python_files, shell_files)
-    else:
-        raise ValueError(f"Unsupported format: {format_type}")
+    raise ValueError(f"Unsupported format: {format_type}")

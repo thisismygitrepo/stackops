@@ -4,15 +4,14 @@ import shutil
 from collections.abc import Callable, Generator
 from contextlib import chdir, contextmanager
 from pathlib import Path
-from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
+from typing import Annotated, Final, Literal, TypeAlias, cast, get_args, override
 
 import typer
-from stackops.utils.cli_utils.interaction import configure_interaction, is_interactive, require_interactive
 from typer.core import TyperGroup
 
-from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constants import FOLLOWUP_AGENT
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+from stackops.utils.cli_utils.interaction import configure_interaction, is_interactive, require_interactive
 from stackops.utils.sandbox.options import SandboxBackend, SandboxSync
 from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENTS, CONFIG_AGENT_VALUES, ReasoningEffort
@@ -71,6 +70,7 @@ _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
 
 
 class _PanelOrderedAgentsGroup(TyperGroup):
+    @override
     def list_commands(self, ctx: object) -> list[str]:
         declared_positions = {name: position for position, name in enumerate(_AGENTS_COMMAND_PANEL_ORDER)}
         return sorted(self.commands, key=lambda name: declared_positions.get(name, len(declared_positions)))
@@ -326,7 +326,7 @@ def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, initial_prom
             raise ValueError(f"Unsupported interactive agent: {agent}")
 
 
-def _apply_headroom(command: list[str], agent: _INTERACTIVE_CANONICAL_AGENT | FOLLOWUP_AGENT, headroom: bool) -> list[str]:
+def _apply_headroom(command: list[str], agent: str, headroom: bool) -> list[str]:
     if headroom:
         resolved_headroom = shutil.which(_HEADROOM_COMMAND)
         if resolved_headroom is None:
@@ -442,6 +442,7 @@ def run_interactive(
         initial_prompt = "\n\n".join(initial_prompt_parts) if len(initial_prompt_parts) > 0 else None
 
         with _agent_working_directory(second_brain=second_brain or followup) as working_directory:
+            resolved_agent: str
             if followup:
                 from stackops.scripts.python.agents_followup import build_followup_command, choose_followup_session
 
@@ -453,8 +454,9 @@ def run_interactive(
                     initial_prompt=initial_prompt,
                 )
             else:
-                resolved_agent = _resolve_interactive_agent(agent=agent)
-                command = _interactive_agent_command(agent=resolved_agent, initial_prompt=initial_prompt)
+                interactive_agent = _resolve_interactive_agent(agent=agent)
+                command = _interactive_agent_command(agent=interactive_agent, initial_prompt=initial_prompt)
+                resolved_agent = interactive_agent
 
             command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)
             if sandbox != SandboxBackend.NONE:

@@ -95,10 +95,10 @@ def choose_trace_session_names(backend: SessionMultiplexer) -> TraceSessionChoic
 
             return choose_existing_session_names(msg="Choose AoE sessions to trace:")
         case "tuios":
-            from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import choose_existing_session_names
+            from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import choose_existing_session_names as choose_tuios_session_names
 
-            return choose_existing_session_names(msg="Choose TUIOS sessions to trace:")
+            return choose_tuios_session_names(msg="Choose TUIOS sessions to trace:")
         case "zellij":
-            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import choose_existing_session_names
+            from stackops.scripts.python.helpers.helpers_sessions._zellij_backend import choose_existing_session_names as choose_zellij_session_names
 
-            return choose_existing_session_names(msg="Choose Zellij sessions to trace:")
+            return choose_zellij_session_names(msg="Choose Zellij sessions to trace:")

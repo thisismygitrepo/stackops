@@ -37,7 +37,7 @@ EMAIL_INPUT_SCHEMA: dict[str, object] = {
 def parse_email_profile(payload: JsonValue) -> NewEmailProfile:
     from jsonschema import Draft202012Validator
 
-    error = next(Draft202012Validator(EMAIL_INPUT_SCHEMA).iter_errors(payload), None)
+    error = next(iter(Draft202012Validator(EMAIL_INPUT_SCHEMA).iter_errors(payload)), None)
     if error is not None:
         location = ".".join(str(part) for part in error.path) or "profile"
         raise ValueError(f"Invalid email input at {location}: {error.validator} constraint failed. Use --schema for the format.")
@@ -58,7 +58,7 @@ def read_email_profile(input_path: Path) -> NewEmailProfile:
         raise typer.BadParameter("--input - requires piped or redirected JSON.")
     try:
         raw = sys.stdin.read() if input_path == Path("-") else input_path.expanduser().read_text(encoding="utf-8")
-        payload: JsonValue = json.loads(raw)
+        payload = cast(JsonValue, json.loads(raw))
     except (OSError, UnicodeError) as error:
         raise typer.BadParameter("Could not read the email input as UTF-8 text.") from error
     except json.JSONDecodeError as error:

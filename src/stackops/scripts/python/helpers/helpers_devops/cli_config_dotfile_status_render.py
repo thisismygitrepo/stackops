@@ -62,8 +62,8 @@ def render_sync(status: SyncStatus, current_os: OsName, expand: bool) -> Panel:
         for source, item in rows:
             entry = Text(f"""{item.program}.{item.file_name}""", style="bold")
             entry.append(f"""\n{source} · {item.method}""", style="dim")
-            state = Text(item.status, style="green" if item.configured else "yellow")
-            details.add_row(entry, state, format_home_relative_path(Path(item.default_path)), format_home_relative_path(Path(item.managed_path)))
+            state_text = Text(item.status, style="green" if item.configured else "yellow")
+            details.add_row(entry, state_text, format_home_relative_path(Path(item.default_path)), format_home_relative_path(Path(item.managed_path)))
         parts.append(details)
     return Panel(
         Group(*parts),

@@ -1,4 +1,4 @@
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 from stackops.utils.path_core import delete_path
 from stackops.utils.source_of_truth import WINDOWS_INSTALL_PATH, LINUX_INSTALL_PATH, INSTALL_VERSION_ROOT
 
@@ -203,7 +203,7 @@ def find_move_delete_windows(downloaded_file_path: Path, tool_name: str | None, 
                 if len(search_res) == 0:
                     print(f"❌ ERROR: No executable found in {downloaded_file_path}")
                     raise IndexError(f"No executable found in {downloaded_file_path}")
-                elif len(search_res) == 1:
+                if len(search_res) == 1:
                     exe = search_res[0]
                     print(f"✅ Found single executable: {exe}")
                 else:
@@ -281,7 +281,7 @@ def find_move_delete_linux(downloaded: Path, tool_name: str | None, delete: bool
     if "/usr" in LINUX_INSTALL_PATH:
         print("🔑 Using sudo to move file to system directory...")
         cmd = f"sudo mv {exe} {LINUX_INSTALL_PATH}/"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
         success = result.returncode == 0 and result.stderr == ""
         if not success:
             desc = f"MOVING executable `{exe}` to {LINUX_INSTALL_PATH}"
@@ -324,7 +324,7 @@ def check_tool_exists(tool_name: str) -> bool:
             shutil.which(tool_name_exe) is not None,
         ]
         return any(secondary_checks)
-    elif platform.system() in ["Linux", "Darwin"]:
+    if platform.system() in ["Linux", "Darwin"]:
         root_path = Path(LINUX_INSTALL_PATH)
         standard_checks = [
             Path("/usr/local/bin").joinpath(tool_name).is_file(),
@@ -333,8 +333,7 @@ def check_tool_exists(tool_name: str) -> bool:
             (Path.home() / ".bun" / "bin" / tool_name ).is_file(),
         ]
         return any(standard_checks)
-    else:
-        raise NotImplementedError(f"platform {platform.system()} not implemented")
+    raise NotImplementedError(f"platform {platform.system()} not implemented")
 
 def is_executable_in_path(name: str) -> bool:
     import os
@@ -374,13 +373,11 @@ def check_if_installed_already(exe_name: str, version: str | None, use_cache: bo
             print(f"✅ {exe_name} is up to date (version {version})")
             print(f"📂 Version information stored at: {INSTALL_VERSION_ROOT}")
             return ("✅ Up to date", version.strip(), version.strip())
-        else:
-            print(f"🔄 {exe_name} needs update: {existing_version.rstrip()} → {version}")
-            tmp_path.write_text(version, encoding="utf-8")
-            return ("❌ Outdated", existing_version.strip(), version.strip())
-    else:
-        print(f"📦 {exe_name} is not installed. Will install version: {version}")
-        # tmp_path.write_text(version, encoding="utf-8")
+        print(f"🔄 {exe_name} needs update: {existing_version.rstrip()} → {version}")
+        tmp_path.write_text(version, encoding="utf-8")
+        return ("❌ Outdated", existing_version.strip(), version.strip())
+    print(f"📦 {exe_name} is not installed. Will install version: {version}")
+    # tmp_path.write_text(version, encoding="utf-8")
 
     print(f"{'=' * 80}")
     return ("⚠️ NotInstalled", "None", version or "unknown")

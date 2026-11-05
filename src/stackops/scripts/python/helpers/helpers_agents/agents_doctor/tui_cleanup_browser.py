@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, override
 
 from rich.text import Text
 from textual import on
@@ -42,6 +42,7 @@ class CleanupBrowser(Vertical):
         self.cleanup_selected: set[HookRemoval] = set()
         self.cleanup_visible: list[int] = []
 
+    @override
     def compose(self) -> ComposeResult:
         kinds = list(CLEANUP_RESOURCE_CHOICES)
         if self.cleanup_initial.resource not in kinds:
@@ -93,7 +94,7 @@ class CleanupBrowser(Vertical):
         search = self.query_one("#cleanup-search", Input).value.casefold()
         self.cleanup_visible = [
             index for index, entry in enumerate(self.cleanup_inventory.entries)
-            if (agent == "all" or entry.agent in (agent, "shared")) and (scope == "all" or CLEANUP_ORIGIN_LABELS[entry.origin] == scope)
+            if (agent == "all" or entry.agent in (agent, "shared")) and scope in ("all", CLEANUP_ORIGIN_LABELS[entry.origin])
             and ("all" in kinds or cleanup_kind(entry) in kinds)
             and search in f"""{entry.name} {entry.event} {entry.command} {entry.path}""".casefold()
         ]

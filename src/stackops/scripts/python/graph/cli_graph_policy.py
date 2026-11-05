@@ -89,7 +89,7 @@ def _iter_commands(node: dict[str, Any]) -> list[dict[str, Any]]:
     commands: list[dict[str, Any]] = []
     if node.get("kind") == "command":
         commands.append(node)
-    kids = node.get("children")
+    kids: dict[str, dict[str, object]] | list[dict[str, object]] | None = node.get("children")
     if isinstance(kids, dict):
         kids = list(kids.values())
     elif kids is None:

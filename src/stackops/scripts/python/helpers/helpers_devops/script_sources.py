@@ -11,10 +11,10 @@ def get_script_locations(source: SCRIPT_SOURCE) -> dict[str, Path | str]:
     locations: dict[str, Path | str]
     match source:
         case "all" | "a":
-            locations = {label: path for label, path in current_workspace_stackops_paths(path_kind="scripts")}
+            locations = dict(current_workspace_stackops_paths(path_kind="scripts"))
             locations |= {"user": SCRIPTS_ROOT_PRIVATE, "library": SCRIPTS_ROOT_LIBRARY, "dynamic": dynamic_location}
         case "workspace" | "w":
-            locations = {label: path for label, path in require_current_workspace_stackops_paths(path_kind="scripts")}
+            locations = dict(require_current_workspace_stackops_paths(path_kind="scripts"))
         case "user" | "u":
             locations = {"user": SCRIPTS_ROOT_PRIVATE}
         case "library" | "l":

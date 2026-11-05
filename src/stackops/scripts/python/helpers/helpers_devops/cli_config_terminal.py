@@ -164,7 +164,7 @@ def shell_group(ctx: typer.Context) -> None:
 
 
 def get_app() -> typer.Typer:
-    import stackops.scripts.python.helpers.helpers_devops.cli_config_tmux as cli_config_tmux
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_tmux
 
     shell_app = typer.Typer(
         help="Configure your terminal profile.", no_args_is_help=False, add_help_option=True, add_completion=False,

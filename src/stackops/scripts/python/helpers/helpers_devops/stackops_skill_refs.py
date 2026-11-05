@@ -33,14 +33,14 @@ def read_project_scripts(*, repo_root: Path) -> Mapping[str, str]:
     with pyproject_path.open("rb") as pyproject_file:
         pyproject_payload = tomllib.load(pyproject_file)
 
+    scripts: dict[str, str] = {}
     project_payload = pyproject_payload.get("project", {})
     if not isinstance(project_payload, Mapping):
-        return {}
+        return scripts
     scripts_payload = project_payload.get("scripts", {})
     if not isinstance(scripts_payload, Mapping):
-        return {}
+        return scripts
 
-    scripts: dict[str, str] = {}
     for raw_name, raw_target in scripts_payload.items():
         if isinstance(raw_name, str) and isinstance(raw_target, str):
             scripts[raw_name] = raw_target

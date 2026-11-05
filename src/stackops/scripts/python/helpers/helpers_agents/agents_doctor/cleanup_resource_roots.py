@@ -15,6 +15,7 @@ def validate_resource_location(*, path: Path, context: DoctorContext) -> None:
 
 def reset_plugin_roots(*, agent: DoctorAgent, context: DoctorContext) -> tuple[tuple[DoctorOrigin, Path], ...]:
     locations: tuple[tuple[DoctorOrigin, Path], ...]
+    names: tuple[str, ...]
     match agent:
         case "claude":
             locations = (("global", context.claude_home), *(("local", path / ".claude") for path in context.ancestor_directories))

@@ -305,7 +305,7 @@ def write_summary(
     )
     for result in checker_results:
         diagnostic_count = str(result.diagnostic_summary.total_count)
-        classifier = result.diagnostic_summary.classifier
+        classifier: str = result.diagnostic_summary.classifier
         distribution = format_diagnostic_distribution(result.diagnostic_summary)
         if result.result_kind == START_FAILED_KIND:
             diagnostic_count = "-"
@@ -324,8 +324,8 @@ def write_summary(
                 "| --- | --- |",
             )
         )
-        for result in tool_version_results:
-            lines.append(f"| {result.spec.title} | `{result.version}` |")
+        for version_result in tool_version_results:
+            lines.append(f"| {version_result.spec.title} | `{version_result.version}` |")
     SUMMARY_PATH.write_text(data="\n".join(lines) + "\n", encoding="utf-8")
 
 

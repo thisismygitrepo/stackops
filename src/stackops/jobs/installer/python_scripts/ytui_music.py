@@ -165,20 +165,15 @@ def _install_linux_packages(console: Console) -> None:
             raise NotImplementedError("ytui-music requires libmpv.so.1, while Arch Linux provides libmpv.so.2.")
         case _:
             assert_never(package_manager)
-    if package_manager == "apt":
-        refresh_command = build_metadata_refresh_command(package_manager)
-        _run(_with_sudo(refresh_command), console, "Refresh package metadata", required=False)
+    refresh_command = build_metadata_refresh_command(package_manager)
+    _run(_with_sudo(refresh_command), console, "Refresh package metadata", required=False)
 
     required_command = build_package_install_command(package_manager, required_packages)
-    if package_manager == "apt":
-        required_command = ("env", "DEBIAN_FRONTEND=noninteractive", *required_command)
+    required_command = ("env", "DEBIAN_FRONTEND=noninteractive", *required_command)
     _run(_with_sudo(required_command), console, "Install ytui-music runtime packages", required=True)
 
-    if len(optional_packages) == 0:
-        return
     optional_command = build_package_install_command(package_manager, optional_packages)
-    if package_manager == "apt":
-        optional_command = ("env", "DEBIAN_FRONTEND=noninteractive", *optional_command)
+    optional_command = ("env", "DEBIAN_FRONTEND=noninteractive", *optional_command)
     _run(_with_sudo(optional_command), console, "Install optional ytui-music build headers", required=False)
 
 

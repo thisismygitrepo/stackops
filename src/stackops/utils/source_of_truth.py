@@ -142,7 +142,7 @@ def read_stackops_config_string(key: StackOpsConfigStringKey) -> str:
     value = config.get(key)
     if value is None:
         raise KeyError(key)
-    return value
+    return cast(str, value)
 
 
 def dotfiles_llm_api_keys_path(provider: str) -> Path:

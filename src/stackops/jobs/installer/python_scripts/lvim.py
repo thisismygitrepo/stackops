@@ -92,4 +92,3 @@ LV_BRANCH='release-1.4/neovim-0.9' bash <(curl -s https://raw.githubusercontent.
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass

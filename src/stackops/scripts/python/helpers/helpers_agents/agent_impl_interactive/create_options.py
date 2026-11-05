@@ -165,7 +165,7 @@ def _build_review_option_labels(
 
 
 def _to_option_values[T: str | float | int | bool | None](values: list[T] | tuple[T, ...]) -> list[OptionValue]:
-    return [value for value in values]
+    return list(values)
 
 
 def _select_option_spec(*, default: OptionValue, options: list[OptionValue]) -> TextualSelectOptionSpec:
@@ -252,7 +252,7 @@ def _require_selected_value(*, selected_values: SelectedOptionMap, key: str) -> 
 
 def _require_bool_value(*, selected_values: SelectedOptionMap, key: str) -> bool:
     value = _require_selected_value(selected_values=selected_values, key=key)
-    if type(value) is not bool:
+    if not isinstance(value, bool):
         raise TypeError(f"""Expected "{key}" to be bool, got {value!r}.""")
     return value
 

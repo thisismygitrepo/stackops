@@ -116,4 +116,3 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass

@@ -1,8 +1,6 @@
 from stackops.utils.accessories import split_list
 from stackops.utils.schemas.layouts.layout_types import PaneConfig, TabConfig, LayoutConfig, single_pane_tab
 
-from typing import Literal
-
 
 def _get_positive_tab_weight(tab: TabConfig) -> int:
     tab_weight = tab.get("tabWeight", 1)
@@ -82,7 +80,7 @@ def combine_tabs_by_weight_into_super_tabs(tabs: list[TabConfig], max_weight: in
     return super_tabs
 
 
-def restrict_num_tabs_helper1(layout_configs: list[LayoutConfig], max_thresh: int, threshold_type: Literal["number"], breaking_method: Literal["moreLayouts"]) -> list[LayoutConfig]:
+def restrict_num_tabs_helper1(layout_configs: list[LayoutConfig], max_thresh: int) -> list[LayoutConfig]:
     """When threshold is exceeded, create more layouts with max_thresh tabs each."""
     new_layout_configs: list[LayoutConfig] = []
     for a_layout_config in layout_configs:
@@ -100,7 +98,7 @@ def restrict_num_tabs_helper1(layout_configs: list[LayoutConfig], max_thresh: in
     return new_layout_configs
 
 
-def restrict_num_tabs_helper2(layout_configs: list[LayoutConfig], max_thresh: int, threshold_type: Literal["number"], breaking_method: Literal["combineTabs"]) -> list[LayoutConfig]:
+def restrict_num_tabs_helper2(layout_configs: list[LayoutConfig], max_thresh: int) -> list[LayoutConfig]:
     """When threshold is exceeded, combine tabs into super tabs to reduce count to max_thresh."""
     new_layout_configs: list[LayoutConfig] = []
     for a_layout_config in layout_configs:
@@ -118,7 +116,7 @@ def restrict_num_tabs_helper2(layout_configs: list[LayoutConfig], max_thresh: in
     return new_layout_configs
 
 
-def restrict_num_tabs_helper3(layout_configs: list[LayoutConfig], max_thresh: int, threshold_type: Literal["weight"], breaking_method: Literal["moreLayouts"]) -> list[LayoutConfig]:
+def restrict_num_tabs_helper3(layout_configs: list[LayoutConfig], max_thresh: int) -> list[LayoutConfig]:
     """When threshold is exceeded, create more layouts with max_thresh total weight each."""
     new_layout_configs: list[LayoutConfig] = []
     for a_layout_config in layout_configs:
@@ -137,7 +135,7 @@ def restrict_num_tabs_helper3(layout_configs: list[LayoutConfig], max_thresh: in
     return new_layout_configs
 
 
-def restrict_num_tabs_helper4(layout_configs: list[LayoutConfig], max_thresh: int, threshold_type: Literal["weight"], breaking_method: Literal["combineTabs"]) -> list[LayoutConfig]:
+def restrict_num_tabs_helper4(layout_configs: list[LayoutConfig], max_thresh: int) -> list[LayoutConfig]:
     """When threshold is exceeded, combine tabs into super tabs with weight <= max_thresh."""
     new_layout_configs: list[LayoutConfig] = []
     for a_layout_config in layout_configs:

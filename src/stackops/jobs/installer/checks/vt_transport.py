@@ -43,7 +43,8 @@ async def _upload_file(client: vt.Client, upload_url: str, file_bytes: bytes) ->
         part = aiohttp.get_payload(file)
         part.set_content_disposition("form-data", name="file", filename="unknown", quote_fields=False)
         form_data.append_payload(part)
-        response = await client.post_async(upload_url, data=form_data)  # type: ignore[arg-type]
+        # vt-py forwards data to aiohttp, which accepts MultipartWriter.
+        response = await client.post_async(upload_url, data=form_data)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
         error = await client.get_error_async(response)
         if error is not None:
             raise error

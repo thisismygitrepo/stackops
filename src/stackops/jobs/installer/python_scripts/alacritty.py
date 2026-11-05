@@ -89,4 +89,3 @@ git clone https://github.com/alacritty/alacritty-theme $HOME/.config/alacritty/t
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass

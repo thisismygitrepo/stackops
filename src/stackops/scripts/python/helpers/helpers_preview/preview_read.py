@@ -2,6 +2,7 @@
 from collections.abc import Mapping, Sequence
 from itertools import islice
 from pathlib import Path
+from typing import cast
 
 from rich.console import Console
 from rich.panel import Panel
@@ -27,7 +28,7 @@ def _format_sequence_preview(dat: Sequence[object]) -> str:
 
 def print_data_preview(console: Console, path: Path, dat: object) -> None:
     if isinstance(dat, Mapping):
-        text = _format_mapping_preview(dat=dat)
+        text = _format_mapping_preview(dat=cast(Mapping[object, object], dat))
     elif isinstance(dat, Sequence) and not isinstance(dat, str | bytes | bytearray) and _is_json_like_sequence(dat=dat):
         text = _format_sequence_preview(dat=dat)
     else:

@@ -5,7 +5,7 @@ import re
 import tempfile
 import tomllib
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 from stackops.scripts.python.ai.scripts.models_core import REPORTS_DIR, ToolSpec
 
@@ -86,7 +86,11 @@ def _build_directory_regex(relative_directory: str) -> str:
     return rf"(^|/|\\){escaped_directory}($|/|\\)"
 
 
-def _build_combined_regex(patterns: tuple[str, ...]) -> str:
+def _build_pylint_ignore_paths(directories: tuple[str, ...]) -> str:
+    patterns = (
+        rf"""(^|.*/){re.escape(directory).replace(r"\.", "[.]")}($|/)"""
+        for directory in directories
+    )
     return "|".join(f"(?:{pattern})" for pattern in patterns)
 
 
@@ -114,7 +118,7 @@ def _parse_jsonc_object(raw_text: str) -> dict[str, object]:
     payload = json.loads(normalized_text)
     if not isinstance(payload, dict):
         raise ValueError("Pyright configuration must be a JSON object.")
-    return payload
+    return cast(dict[str, object], payload)
 
 
 def _load_pyright_base_config() -> tuple[dict[str, object], bool]:
@@ -233,8 +237,10 @@ def build_checker_specs(
             "--reports=n",
         )
     )
-    if len(excluded_patterns) > 0:
-        pylint_command.extend(("--ignore-paths", _build_combined_regex(excluded_patterns)))
+    if len(excluded_directories) > 0:
+        pylint_command.extend(
+            ("--ignore-paths", _build_pylint_ignore_paths(excluded_directories))
+        )
     pylint_command.append(".")
     pyrefly_command = build_uv_tool_command(package="pyrefly", latest=latest)
     pyrefly_command.extend(

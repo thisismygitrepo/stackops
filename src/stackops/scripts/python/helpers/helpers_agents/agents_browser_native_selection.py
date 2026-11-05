@@ -1,5 +1,3 @@
-from stackops.utils.cli_utils.interaction import require_interactive
-
 from rich.console import Console
 from rich.prompt import IntPrompt
 from rich.table import Table
@@ -7,6 +5,7 @@ from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import ProfileBrowserName
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_native_profiles import NativeBrowserProfile, list_native_browser_profiles
+from stackops.utils.cli_utils.interaction import require_interactive
 
 
 def select_native_browser_profile(*, browser: ProfileBrowserName, profile_name: str | None) -> NativeBrowserProfile:

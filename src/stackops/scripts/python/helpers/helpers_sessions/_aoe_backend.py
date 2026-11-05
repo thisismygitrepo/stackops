@@ -64,23 +64,23 @@ def _session_entries() -> list[JsonObject] | None:
         return None
     runtime_by_session_id: dict[str, JsonObject] = {}
     for runtime_entry in runtime_entries:
-        session_id = _entry_text(runtime_entry, "session")
-        if session_id is None or session_id in runtime_by_session_id:
+        entry_session_id = _entry_text(runtime_entry, "session")
+        if entry_session_id is None or entry_session_id in runtime_by_session_id:
             return None
-        runtime_by_session_id[session_id] = runtime_entry
+        runtime_by_session_id[entry_session_id] = runtime_entry
 
     terminal_sessions: list[JsonObject] = []
     for session in sessions:
-        session_id = _entry_text(session, "id")
-        if session_id is None:
+        entry_session_id = _entry_text(session, "id")
+        if entry_session_id is None:
             return None
-        runtime_entry = runtime_by_session_id.get(session_id)
-        if runtime_entry is None:
+        session_runtime = runtime_by_session_id.get(entry_session_id)
+        if session_runtime is None:
             continue
-        state = _entry_text(runtime_entry, "state")
+        state = _entry_text(session_runtime, "state")
         if state is None:
             return None
-        merged_session = session | runtime_entry
+        merged_session = session | session_runtime
         merged_session["running"] = state != "dead"
         terminal_sessions.append(merged_session)
 
@@ -289,7 +289,7 @@ def choose_kill_target(
     if unknown_selection is not None:
         return ("error", f"Unknown AoE session selected: {unknown_selection}", [])
     killed_targets = [
-        {"action": "session", "session": option_to_identifier[selection], "window": "-", "detail": "-"}
+        KilledTarget(action="session", session=option_to_identifier[selection], window="-", detail="-")
         for selection in dict.fromkeys(selections)
         if selection in option_to_identifier
     ]

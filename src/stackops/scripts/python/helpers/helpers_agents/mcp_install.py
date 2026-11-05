@@ -361,7 +361,7 @@ def _load_oz_mcp_root(*, path: Path) -> dict[str, object]:
         return _sanitize_existing_oz_mcp_root(root=root, path=path)
     if not isinstance(legacy_mcp_servers, dict):
         raise ValueError(f"Config field 'mcpServers' in {path} must be a JSON object")
-    return _sanitize_existing_oz_mcp_root(root=dict(legacy_mcp_servers), path=path)
+    return _sanitize_existing_oz_mcp_root(root=dict(cast(dict[str, object], legacy_mcp_servers)), path=path)
 
 
 def _sanitize_existing_oz_mcp_root(*, root: dict[str, object], path: Path) -> dict[str, object]:

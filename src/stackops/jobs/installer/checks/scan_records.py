@@ -2,7 +2,7 @@ from datetime import UTC
 from pathlib import Path
 from typing import assert_never
 
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 from stackops.jobs.installer.checks.report_utils import AppData, ScannedAppRecord, build_engine_report_rows
 from stackops.jobs.installer.checks.scan_outcomes import ScanFailure, ScanSuccess, format_scan_failure
 

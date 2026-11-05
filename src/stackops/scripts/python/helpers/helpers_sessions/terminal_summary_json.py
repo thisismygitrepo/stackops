@@ -35,6 +35,7 @@ def _herdr_entries(kind: Literal["workspaces", "tabs", "panes"], workspace_id: s
 
 def collect_summary(backend: SessionMultiplexer, session: str | None, show_tabs: bool) -> list[dict[str, object]]:
     records: list[dict[str, object]] = []
+    record: dict[str, object]
     include_details = show_tabs or session is not None
     match backend:
         case "tmux" | "zellij":
@@ -60,7 +61,7 @@ def collect_summary(backend: SessionMultiplexer, session: str | None, show_tabs:
                 snapshot = load_trace_snapshot(session_name=name, until="idle-shell", expected_exit_code=None)
                 if snapshot.session_error or snapshot.pane_warning or not snapshot.session_exists:
                     raise ValueError(snapshot.session_error or snapshot.pane_warning or f"""Session '{name}' disappeared.""")
-                record: dict[str, object] = {
+                record = {
                     "name": name,
                     "id": snapshot.session_target,
                     "tab_count": snapshot.total_windows,
@@ -152,8 +153,7 @@ def collect_summary(backend: SessionMultiplexer, session: str | None, show_tabs:
             )
             for aoe_session in selected_sessions:
                 aoe_summary = collect_aoe_summary(session=aoe_session)
-                record = asdict(aoe_summary)
-                record["id"] = aoe_summary.session_id
+                record = {**asdict(aoe_summary), "id": aoe_summary.session_id}
                 records.append(record)
         case _:
             assert_never(backend)

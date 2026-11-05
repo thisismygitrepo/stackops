@@ -64,7 +64,7 @@ def _pane_category(status: str) -> PaneCategory:
 
 def _process_group_name(process_name: str) -> str:
     text = process_name.strip().strip("`")
-    if text == "" or text == "—":
+    if text in ("", "—"):
         return "—"
     return text.split(maxsplit=1)[0]
 

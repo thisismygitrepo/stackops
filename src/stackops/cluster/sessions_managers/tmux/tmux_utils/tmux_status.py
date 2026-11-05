@@ -21,6 +21,7 @@ def check_tmux_session_status(session_name: str) -> TmuxSessionStatus:
             capture_output=True,
             text=True,
             timeout=5,
+            check=False,
         )
     except FileNotFoundError as exc:
         return {

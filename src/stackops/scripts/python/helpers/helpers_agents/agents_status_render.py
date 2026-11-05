@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import stat
 import sys
-from typing import Literal
+from typing import Literal, cast
 
 from rich.console import Console
 from rich.table import Table
@@ -102,6 +102,7 @@ def _coverage_entries(value: object) -> tuple[str, ...]:
     entries: list[str] = []
     for entry in value:
         if isinstance(entry, dict):
+            entry = cast(dict[str, object], entry)
             identity = " / ".join(str(entry[key]) for key in ("session", "name", "window_id") if entry.get(key))
             reason = entry.get("reason") or entry.get("status") or entry.get("limitation")
             entries.append(f"""{identity or 'Identifiers unavailable'}{f': {_brief(str(reason))}' if reason else ''}""")

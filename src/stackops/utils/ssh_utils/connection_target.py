@@ -41,7 +41,7 @@ def resolve_ssh_connection_profile(
     if host is None:
         if username is None or not username or hostname is None or not hostname:
             raise ValueError("Either host or both username and hostname must be provided.")
-        resolved_identity_files = (
+        resolved_identity_files: tuple[str, ...] = (
             (str(Path(ssh_key_path).expanduser().absolute()),) if ssh_key_path is not None else ()
         )
         target = SSHConnectionTarget(

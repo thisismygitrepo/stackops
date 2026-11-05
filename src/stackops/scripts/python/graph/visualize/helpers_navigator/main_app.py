@@ -4,6 +4,7 @@ Main TUI application for navigating stackops commands.
 
 import subprocess
 from collections.abc import Iterator
+from typing import override
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -122,6 +123,7 @@ class CommandNavigatorApp(App[None]):
         Binding("b", "build_command", "Build Command"),
     ]
 
+    @override
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header(show_clock=True)
@@ -227,7 +229,7 @@ class CommandNavigatorApp(App[None]):
         """Execute a shell command."""
         try:
             self.notify(f"Executing: {command}", severity="information")
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode == 0:
                 output = result.stdout.strip()

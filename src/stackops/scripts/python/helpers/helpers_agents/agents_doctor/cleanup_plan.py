@@ -15,7 +15,7 @@ def build_cleanup_plan(*, inventory: HookInventory, scope: CleanupScope, match: 
         raise ValueError("--match must contain a nonempty name, command, or source path")
     entries = tuple(
         entry for entry in inventory.entries
-        if (scope == "all" or CLEANUP_ORIGIN_LABELS[entry.origin] == scope)
+        if scope in ("all", CLEANUP_ORIGIN_LABELS[entry.origin])
         and (match is None or match.casefold() in f"{entry.name} {entry.event} {entry.command} {entry.path}".casefold())
     )
     grouped: dict[Path, list[HookRemoval]] = {}
@@ -29,7 +29,7 @@ def build_cleanup_plan(*, inventory: HookInventory, scope: CleanupScope, match: 
     entire_paths = {path for path, removals in grouped.items() if any(removal.format in ("file", "directory") for removal in removals)}
     blockers = [
         f"{diagnostic.path}: {diagnostic.message}" for diagnostic in inventory.diagnostics
-        if diagnostic.severity == "error" and (scope == "all" or CLEANUP_ORIGIN_LABELS[diagnostic.origin] == scope)
+        if diagnostic.severity == "error" and scope in ("all", CLEANUP_ORIGIN_LABELS[diagnostic.origin])
         and not (
             diagnostic.origin in ("local", "global")
             and (diagnostic.path in entire_paths or any(diagnostic.path.is_relative_to(directory) for directory in directory_paths))

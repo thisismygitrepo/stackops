@@ -13,7 +13,7 @@
 import os
 import platform
 from collections.abc import Mapping
-from typing import Final
+from typing import Final, override
 
 from rich.text import Text
 from textual import on
@@ -143,6 +143,7 @@ class EnvExplorerApp(App[None]):
         self._env_lookup: dict[str, str] = {}
         self._selected_key: str = ""
 
+    @override
     def compose(self) -> ComposeResult:
         platform_name = platform.system()
         yield Header(show_clock=True)

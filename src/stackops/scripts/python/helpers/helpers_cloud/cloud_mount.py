@@ -205,7 +205,7 @@ def mount(
             for receipt in receipts:
                 typer.echo(f"{receipt['remote']}: {receipt['mount_path']} ({receipt['status']}, PID {receipt['pid']})")
         return receipts
-    elif system_name == "Windows":
+    if system_name == "Windows":
         if len(clouds) > 1:
             print("❌ Error: Multiple clouds in one command is only supported on Linux/macOS")
             raise typer.Exit(code=1)

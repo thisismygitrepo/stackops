@@ -87,7 +87,6 @@ def read_json(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
 def read_jsonl(path: 'Path', r: bool = False, **kwargs: Any) -> Any:
     raw = Path(path).read_text(encoding="utf-8").splitlines()
     res: list[Any] = []
-    import json
     for line in raw:
         try:
             res.append(json.loads(line, **kwargs))
@@ -172,7 +171,7 @@ def read_dbms(path: 'Path', **kwargs: Any) -> Any:
 
 
 def read_image(path: 'Path', **kwargs: Any) -> Any:
-    import matplotlib.pyplot as pyplot
+    from matplotlib import pyplot
     return pyplot.imread(str(path), **kwargs)
 
 

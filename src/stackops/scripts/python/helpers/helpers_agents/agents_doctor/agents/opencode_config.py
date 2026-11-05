@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 from pathlib import Path
+from typing import cast
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext, DoctorOrigin, DoctorResource
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning import load_config_mapping
@@ -53,7 +54,7 @@ def configured_plugins(*, config_paths: Iterable[OpenCodeConfigPath]) -> tuple[D
                     )
                 )
             elif isinstance(value, dict) and isinstance(value.get("package"), str):
-                package = value["package"]
+                package = cast(dict[str, object], value)["package"]
                 assert isinstance(package, str)
                 resources.append(
                     DoctorResource(

@@ -294,8 +294,6 @@ def _build_final_command(
 ) -> str:
     """Build the final command string."""
     if debug:
-        import platform
-
         if platform.system() == "Windows":
             return f"{exe_line} -m ipdb {choice_file_adjusted} "
         if platform.system() in ["Linux", "Darwin"]:

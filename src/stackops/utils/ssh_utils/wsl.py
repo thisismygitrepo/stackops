@@ -91,7 +91,7 @@ def open_wsl_port(ports_spec: str) -> None:
     ps_array = "@(" + ",".join(f"'{p}'" for p in port_parts) + ")"
     script = f"New-NetFirewallRule -DisplayName '{rule_name}' -Direction Inbound -LocalPort {ps_array} -Protocol TCP -Action Allow"
     print(f"🔥 Opening firewall for ports: {description}...")
-    result = subprocess.run(["powershell.exe", "-NoLogo", "-NoProfile", "-Command", script], capture_output=True, text=True)
+    result = subprocess.run(["powershell.exe", "-NoLogo", "-NoProfile", "-Command", script], capture_output=True, text=True, check=False)
     if result.returncode != 0:
         error_output = result.stderr.strip() or result.stdout.strip()
         if error_output:

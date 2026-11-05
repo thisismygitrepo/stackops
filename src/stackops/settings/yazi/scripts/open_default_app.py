@@ -211,7 +211,7 @@ def command_is_available(command: Sequence[str]) -> bool:
 def run_candidate(candidate: OpenCandidate) -> tuple[bool, str | None]:
     try:
         if candidate.block:
-            completed = subprocess.run(candidate.command, check=False)
+            completed = subprocess.run(candidate.command, check=False, text=True)
         else:
             completed = subprocess.run(
                 candidate.command,
@@ -227,7 +227,7 @@ def run_candidate(candidate: OpenCandidate) -> tuple[bool, str | None]:
         return False, f"timed out after {OPEN_TIMEOUT_SECONDS}s"
     if completed.returncode == 0:
         return True, None
-    stderr = getattr(completed, "stderr", "") or ""
+    stderr = completed.stderr or ""
     detail = stderr.strip() or f"exited with status {completed.returncode}"
     return False, detail
 
@@ -281,8 +281,8 @@ def main(arguments: Sequence[str]) -> int:
             continue
         had_error = True
         sys.stderr.write(f"Could not open with the OS default app: {target_path}\n")
-        for error in errors:
-            sys.stderr.write(f"  - {error}\n")
+        for open_error in errors:
+            sys.stderr.write(f"  - {open_error}\n")
     return 1 if had_error else 0
 
 

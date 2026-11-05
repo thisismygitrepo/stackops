@@ -34,12 +34,11 @@ def decompress_and_remove_zip(zip_path: Union[str, Path]) -> None:
     except BadZipFile as e:
         raise BadZipFile(f"The file '{zip_path}' is not a valid zip archive.") from e
     except Exception as e:
-        raise Exception(f"Failed to extract '{zip_path}': {e}") from e
+        raise RuntimeError(f"Failed to extract '{zip_path}': {e}") from e
 
     try:
         zip_path.unlink()
     except PermissionError as e:
         raise PermissionError(f"Permission denied when deleting '{zip_path}'.") from e
     except Exception as e:
-        raise Exception(f"Failed to delete '{zip_path}': {e}") from e
-
+        raise RuntimeError(f"Failed to delete '{zip_path}': {e}") from e

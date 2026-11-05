@@ -256,7 +256,7 @@ def run(
         validate_interactive_prompt_agent(agent=agent)
     validate_prompt_sandbox(agent=agent, options=sandbox_options)
     if edit or show_prompts_yaml_format:
-        yaml_locations = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
+        yaml_locations: list[tuple[str, Path]] = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
         if edit and prompts_yaml_path is None and source in ("all", "a"):
             source, selected_yaml_path = choose_edit_source(locations=yaml_locations)
             yaml_locations = [(source, selected_yaml_path)]

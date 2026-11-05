@@ -2,7 +2,7 @@ import platform
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.schemas.installer.installer_types import InstallerData

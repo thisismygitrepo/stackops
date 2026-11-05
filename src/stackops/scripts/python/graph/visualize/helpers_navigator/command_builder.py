@@ -3,6 +3,8 @@ Command builder screen for building commands with arguments.
 """
 
 import re
+from typing import override
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import Static, Input, Label, Button
@@ -96,6 +98,7 @@ class CommandBuilderScreen(ModalScreen[str]):
 
         return args
 
+    @override
     def compose(self) -> ComposeResult:
         """Compose the modal screen."""
         with VerticalScroll():

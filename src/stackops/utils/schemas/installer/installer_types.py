@@ -1,7 +1,7 @@
 import platform
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Literal, NotRequired, TypeAlias, TypedDict, get_args
+from typing import Final, Literal, NotRequired, TypeAlias, TypedDict, cast, get_args
 
 
 CPU_ARCHITECTURES: TypeAlias = Literal["amd64", "arm64"]
@@ -51,7 +51,7 @@ InstallerCategoryLabel: TypeAlias = Literal[
     "finance-markets",
     "windows-platform",
 ]
-INSTALLER_CATEGORY_LABELS: Final[tuple[InstallerCategoryLabel, ...]] = get_args(InstallerCategoryLabel)
+INSTALLER_CATEGORY_LABELS: Final[tuple[InstallerCategoryLabel, ...]] = cast(tuple[InstallerCategoryLabel, ...], get_args(InstallerCategoryLabel))
 
 
 class LinuxPackageManagerInstallerPattern(TypedDict):

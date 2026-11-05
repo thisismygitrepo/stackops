@@ -32,6 +32,7 @@ from stackops.utils.installer_utils.github_release_bulk import get_repo_name_fro
 import platform
 from pathlib import Path
 import subprocess
+from typing import override
 
 
 ALIASED_EXE_NAMES: dict[str, str] = {
@@ -55,6 +56,7 @@ class Installer:
     def __init__(self, installer_data: InstallerData):
         self.installer_data: InstallerData = installer_data
 
+    @override
     def __repr__(self) -> str:
         app_name = self.installer_data["appName"]
         repo_url = self.installer_data["repoURL"]

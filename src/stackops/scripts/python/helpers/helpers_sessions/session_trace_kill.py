@@ -37,6 +37,7 @@ def _build_trace_kill_command(
     if target.strip() in {"", "?"}:
         raise ValueError(f"Cannot kill {backend} {action} without a canonical target identifier.")
 
+    argv: tuple[str, ...]
     match backend, action:
         case "tmux", "session":
             argv = ("tmux", "kill-session", "-t", target)

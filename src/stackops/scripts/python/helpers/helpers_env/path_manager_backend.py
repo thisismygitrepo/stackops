@@ -3,15 +3,11 @@
 import os
 import platform
 from pathlib import Path
-from typing import Literal
 
 
-PlatformType = Literal["Windows", "Linux", "Darwin"]
-
-
-def get_platform() -> PlatformType:
+def get_platform() -> str:
     """Get the current platform."""
-    return platform.system()  # type: ignore[return-value]
+    return platform.system()
 
 
 def get_path_entries() -> list[str]:

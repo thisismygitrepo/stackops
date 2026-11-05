@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 import json
 
 
@@ -60,7 +60,7 @@ def _resolve_named_yaml_entry(raw_data: object, entry_name: str, *, entry_label:
             continue
         if not isinstance(cursor, dict) or segment not in cursor:
             return None
-        cursor = cursor[segment]
+        cursor = cast(dict[object, object], cursor)[segment]
         if cursor is None:
             raise ValueError(f"""{entry_label} '{entry_name}' points to null in prompts YAML""")
     if group is not None and (not isinstance(cursor, dict) or cursor.get("group") != group):

@@ -36,8 +36,8 @@ def query_herdr(*, options: StatusOptions, session: str | None, arguments: list[
         return None, f"""{operation} returned invalid JSON: {error}"""
     if not isinstance(payload, dict):
         return None, f"""{operation} returned a non-object JSON response."""
-    if payload.get("error") is not None:
-        return None, f"""{operation}: {payload['error']}"""
+    if (response_error := payload.get("error")) is not None:
+        return None, f"""{operation}: {response_error}"""
     return payload, None
 
 

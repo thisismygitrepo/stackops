@@ -22,9 +22,9 @@ def _get_trace_loader(
             return loader
         case "herdr":
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_herdr import (
-                load_trace_snapshot as loader,
+                load_trace_snapshot as herdr_loader,
             )
-            return loader
+            return herdr_loader
         case "aoe":
             from stackops.scripts.python.helpers.helpers_sessions.session_trace_aoe import (
                 load_trace_snapshot as loader,

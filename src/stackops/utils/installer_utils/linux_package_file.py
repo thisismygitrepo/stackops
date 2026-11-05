@@ -19,6 +19,7 @@ def build_linux_package_file_install_command(
     package_manager: LinuxPackageManager, package_path: Path, privilege_prefix: Sequence[str]
 ) -> tuple[str, ...]:
     package_suffix = get_linux_package_file_suffix(package_path)
+    package_command: tuple[str, ...]
     match package_manager:
         case "apk":
             if package_suffix != ".apk":

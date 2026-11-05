@@ -1,8 +1,11 @@
+from typing import override
+
 from typer._click import Context
 from typer.core import TyperCommand
 
 
 class TerminalRunCommand(TyperCommand):
+    @override
     def parse_args(self, ctx: Context, args: list[str]) -> list[str]:
         normalized_args: list[str] = []
         for index, argument in enumerate(args):

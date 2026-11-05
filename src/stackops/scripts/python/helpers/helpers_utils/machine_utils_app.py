@@ -62,7 +62,7 @@ def kill_process(
         typer.Option("--yes", "-y", help="Non-interactively kill every process matching the direct selector."),
     ] = False,
 ) -> None:
-    from stackops.scripts.python.helpers.helpers_utils.process_models import build_process_selector
+    from stackops.scripts.python.helpers.helpers_utils.process_models import SearchField, build_process_selector
 
     try:
         selector = build_process_selector(
@@ -84,6 +84,7 @@ def kill_process(
     if not yes:
         require_interactive("Process selection and confirmation; pass a direct selector and --yes")
 
+    search_field: SearchField
     match search_by:
         case "command" | "c":
             search_field = "command"

@@ -155,7 +155,7 @@ def _repo_merge_entry(repo_record: RepoRecordDict, changed_fields: list[str] | N
 
 def _changed_repo_fields(existing_repo: RepoRecordDict, scanned_repo: RepoRecordDict) -> list[str]:
     fields = ("name", "parentDir", "currentBranch", "remotes", "version", "isDirty", "sync")
-    return [field for field in fields if existing_repo[field] != scanned_repo[field]]
+    return [field for field in fields if existing_repo[field] != scanned_repo[field]]  # type: ignore[literal-required]  # All fields are declared RepoRecordDict keys.
 
 
 def merge_repo_records(

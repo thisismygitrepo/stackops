@@ -6,7 +6,7 @@ import random
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Final, Literal
+from typing import Any, Final, Literal, cast
 
 from rich.console import Console
 
@@ -75,7 +75,7 @@ class CloudManager:
             path.parent.mkdir(parents=True, exist_ok=True)
             save_json(obj=log, path=path, indent=2, verbose=False)
             return log
-        return read_json(path)
+        return cast(dict[JOB_STATUS, list[dict[str, object]]], read_json(path))
 
     def write_log(self, log: dict[JOB_STATUS, list[dict[str, object]]]) -> None:
         if not self.lock_claimed:
@@ -93,18 +93,21 @@ class CloudManager:
         if not lock_path.exists():
             lock_path.write_text(machine, encoding="utf-8")
             _sync_to_cloud(self.cloud, lock_path)
-            return self.claim_lock(first_call=False)
+            self.claim_lock(first_call=False)
+            return
         lock_owner = lock_path.read_text(encoding="utf-8").strip()
         if lock_owner and lock_owner != machine:
             age = datetime.now() - datetime.fromtimestamp(lock_path.stat().st_mtime)
             if age.total_seconds() > LOCK_EXPIRY_SECONDS:
                 print(f"Lock held by `{lock_owner}` for >{LOCK_EXPIRY_SECONDS}s. Resetting.")
                 self.reset_lock()
-                return self.claim_lock(first_call=False)
+                self.claim_lock(first_call=False)
+                return
             wait = int(random.random() * 30)
             print(f"Lock held by `{lock_owner}`. Sleeping {wait}s.")
             time.sleep(wait)
-            return self.claim_lock(first_call=False)
+            self.claim_lock(first_call=False)
+            return
         if lock_owner == machine:
             print("Lock already held by this machine.")
         else:
@@ -118,7 +121,8 @@ class CloudManager:
             if current_owner != machine:
                 print(f"Lock challenged by `{current_owner}`. Retrying.")
                 time.sleep(INTER_CHECK_INTERVAL_SECONDS)
-                return self.claim_lock(first_call=False)
+                self.claim_lock(first_call=False)
+                return
             print(f"Lock claim check {check}/{NUM_CLAIM_CHECKS} passed.")
         _sync_dir_from_cloud(self.cloud, self.base_path.expanduser())
         print("Lock claimed.")
@@ -262,7 +266,7 @@ class CloudManager:
             log_path = self.base_path.expanduser() / "logs.json"
             _sync_from_cloud(self.cloud, log_path)
             if log_path.exists():
-                log: dict[str, list[dict[str, object]]] = read_json(log_path)
+                log = cast(dict[str, list[dict[str, object]]], read_json(log_path))
                 for status_name, entries in log.items():
                     self.console.rule(f"{status_name} ({len(entries)})")
                     display = entries[-10:]
@@ -285,7 +289,7 @@ def _prepare_servers_report(workers_root: Path) -> list[dict[str, object]]:
     for worker_dir in workers_root.iterdir():
         running_json = worker_dir / "running_jobs.json"
         if running_json.exists():
-            jobs: list[str] = read_json(running_json)
+            jobs = cast(list[str], read_json(running_json))
             mod_time = datetime.fromtimestamp(running_json.stat().st_mtime)
             last_update = datetime.now() - mod_time
         else:

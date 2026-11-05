@@ -5,7 +5,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import stackops.utils.path_core as path_core
+from stackops.utils import path_core
 
 if TYPE_CHECKING:
     from rich.console import Console

@@ -1,6 +1,6 @@
 
 
-from typing import Callable
+from typing import Callable, cast, override
 from math import floor
 from enum import Enum
 from dataclasses import dataclass
@@ -99,7 +99,7 @@ def _require_object_dict(value: object, field_name: str) -> dict[str, object]:
 def _require_object_list(value: object, field_name: str) -> list[object]:
     if not isinstance(value, list):
         raise TypeError(f"{field_name} must be a list.")
-    return [item for item in value]
+    return list(value)
 
 
 def _require_float(value: object, field_name: str) -> float:
@@ -170,6 +170,7 @@ class Cluster:
         self.func: Callable[..., object] | None = func
         self.func_kwargs = func_kwargs
 
+    @override
     def __repr__(self) -> str:
         items = self.machines if self.machines else self.ssh_connections
         return "Cluster:\n" + "\n".join(repr(x) for x in items)
@@ -265,7 +266,7 @@ class Cluster:
     @staticmethod
     def load(job_id: str, base_dir: str | None) -> "Cluster":
         path = _get_cluster_path(job_id, base_dir) / "cluster.json"
-        state: dict[str, object] = read_json(path)
+        state = cast(dict[str, object], read_json(path))
         cluster = Cluster.__new__(Cluster)
         cluster.job_id = str(state["job_id"])
         cluster.root_dir = Path(str(state["root_dir"]))
@@ -284,13 +285,13 @@ class Cluster:
         if isinstance(tlc_raw, dict) and tlc_raw:
             ref_raw = tlc_raw.get("reference_specs", {})
             ref_specs = _require_machine_specs(ref_raw, field_name="thread_load_calc.reference_specs") if isinstance(ref_raw, dict) else MachineSpecs.from_local()
-            cluster.thread_load_calc = ThreadLoadCalculator(num_jobs=tlc_raw.get("num_jobs"), load_criterion=LoadCriterion[str(tlc_raw.get("load_criterion", "cpu"))], reference_specs=ref_specs)
+            cluster.thread_load_calc = ThreadLoadCalculator(num_jobs=cast(int | None, tlc_raw.get("num_jobs")), load_criterion=LoadCriterion[str(tlc_raw.get("load_criterion", "cpu"))], reference_specs=ref_specs)
         else:
             cluster.thread_load_calc = ThreadLoadCalculator.default()
         mlc_raw = state.get("machine_load_calc", {})
         if isinstance(mlc_raw, dict) and mlc_raw:
-            cluster.machine_load_calc = MachineLoadCalculator(max_num=int(mlc_raw.get("max_num", 1000)), load_criterion=LoadCriterion[str(mlc_raw.get("load_criterion", "cpu"))])
-            cluster.machine_load_calc.load_ratios = list(mlc_raw.get("load_ratios", []))
+            cluster.machine_load_calc = MachineLoadCalculator(max_num=int(cast(int, mlc_raw.get("max_num", 1000))), load_criterion=LoadCriterion[str(mlc_raw.get("load_criterion", "cpu"))])
+            cluster.machine_load_calc.load_ratios = list(cast(list[float], mlc_raw.get("load_ratios", [])))
         else:
             cluster.machine_load_calc = MachineLoadCalculator(max_num=1000, load_criterion=LoadCriterion.cpu)
         return cluster

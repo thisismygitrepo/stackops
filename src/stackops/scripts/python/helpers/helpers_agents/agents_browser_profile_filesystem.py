@@ -90,7 +90,7 @@ def directory_size_bytes(*, directory: Path, excluded_root_directory_names: froz
 
 def _linux_mount_points() -> frozenset[Path]:
     if platform.system() != "Linux":
-        return frozenset()
+        return frozenset[Path]()
     mount_info_path = Path("/proc/self/mountinfo")
     try:
         mount_info_lines = mount_info_path.read_text(encoding="utf-8").splitlines()

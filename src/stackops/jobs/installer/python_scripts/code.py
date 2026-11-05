@@ -117,4 +117,3 @@ winget install --no-upgrade --name "Microsoft Visual Studio Code" --Id "Microsof
 if __name__ == "__main__":
     if TYPE_CHECKING:
         _main_protocol_check: InstallerPythonScriptMain = main
-    pass

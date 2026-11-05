@@ -106,6 +106,7 @@ def resolve_secret_candidates(
         _print_candidate_list("Available keyValues entries:", candidates)
         raise typer.Exit(code=1)
 
+    selected_candidates: tuple[SecretCandidate, ...]
     match selection_mode:
         case "interactive":
             selected_candidates = (_choose_candidate_interactively(matches, preview_secrets=preview_secrets),)

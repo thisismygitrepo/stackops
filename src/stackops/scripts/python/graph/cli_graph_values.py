@@ -111,6 +111,8 @@ def evaluate_expr(
         return Unresolved(ast.unparse(expr))
 
     if isinstance(expr, ast.Subscript):
+        if is_name(expr.value, "Literal"):
+            return tuple(literal_values(expr))
         base = evaluate_expr(expr.value, module_info, env, function_docs)
         key = evaluate_expr(expr.slice, module_info, env, function_docs)
         if isinstance(base, Unresolved) or isinstance(key, Unresolved):
@@ -155,10 +157,6 @@ def evaluate_expr(
 
     if isinstance(expr, ast.Call):
         return evaluate_call(expr, module_info, env, function_docs)
-
-    if isinstance(expr, ast.Subscript) and is_name(expr.value, "Literal"):
-        values = literal_values(expr)
-        return tuple(values)
 
     return Unresolved(ast.unparse(expr))
 

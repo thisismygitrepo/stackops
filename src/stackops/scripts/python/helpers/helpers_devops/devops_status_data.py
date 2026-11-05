@@ -85,7 +85,7 @@ def collect_status_section(section: StatusSection) -> StatusSnapshot:
                 count = len(repos.repositories)
                 noun = "repository" if count == 1 else "repositories"
                 summary = f"""{count} {noun} · {attention} need attention""" if count else "No repositories registered"
-                return StatusSnapshot(summary, "attention" if attention or not repos.repositories else "ready", render_repos_status(repos), asdict(repos))
+                return StatusSnapshot(summary, "attention" if attention or not repos.repositories else "ready", render_repos_status(repos), cast(dict[str, object], asdict(repos)))
             case "ssh":
                 ssh = check_ssh_status()
                 complete = ssh["ssh_dir_exists"] and ssh["config_exists"] and bool(ssh["keys"]) and all(key["private_exists"] for key in ssh["keys"])

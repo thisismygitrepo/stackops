@@ -1,6 +1,6 @@
 
 from pathlib import Path
-from typing import Callable, Union, Any, Protocol, List, TypeVar
+from typing import Callable, Union, Any, Protocol, List, TypeVar, override
 # import logging
 import time
 from datetime import datetime, timezone, timedelta
@@ -45,7 +45,8 @@ class Scheduler:
         self.sess_start_utc_ms: int
         self.sess_stats = sess_stats or (lambda _sched: {})
 
-    def __repr__(self):
+    @override
+    def __repr__(self) -> str:
         return f"Scheduler with {self.cycle} cycles ran so far. Last cycle was at {self.sess_start_utc_ms}."
 
     def run(self, max_cycles: int | None = None, until_ms: int | None = None):

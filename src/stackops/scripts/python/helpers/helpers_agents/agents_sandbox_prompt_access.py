@@ -96,6 +96,7 @@ def resolve_prompt_sandbox_access(
             directories = (home / ".augment",)
             environment = ("AUGMENT_SESSION_AUTH",)
         case "oz":
+            platform_directories: tuple[Path, ...]
             if host_system == "Darwin":
                 platform_directories = (home / "Library/Group Containers/2BBY89MBSN.dev.warp/Library/Application Support/dev.warp.Warp-Stable",)
             elif host_system == "Windows":

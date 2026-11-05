@@ -41,7 +41,7 @@ def _event_entries(
         command = _hook_command(mapping=hook)
         name = str(hook.get("name") or command)
         item_state: DoctorResourceState = "disabled" if hook.get("enabled") is False or hook.get("disabled") is True else state
-        action = removal or HookRemoval(source.path, "json", item_selector, "delete")
+        action: HookRemoval | None = removal or HookRemoval(source.path, "json", item_selector, "delete")
         if source.origin in ("admin", "system"):
             action = None
         entries.append(HookEntry(source.agent, source.origin, source.path, name, event, command, item_state, action))

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Literal, cast
+from typing import Final, Literal, cast, override
 
 from textual import on
 from textual.app import App, ComposeResult
@@ -208,6 +208,7 @@ class TextualOptionsFormApp(App[SelectedOptionMap | None]):
             for field in self._fields
         }
 
+    @override
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         with Vertical(id="shell"):
@@ -386,7 +387,6 @@ def use_textual_options_form(
         uv_project_dir=uv_project_dir,
     )
     import json
-    from typing import cast
 
     result_content = Path(random_path).read_text(encoding="utf-8")
     result_data = json.loads(result_content)
