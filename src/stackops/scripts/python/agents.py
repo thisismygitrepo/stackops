@@ -515,7 +515,7 @@ def run_prompt(
         typer.Option("--interactive", "-i", help="Start a native agent chat with the prepared prompt and keep it open for follow-up messages."),
     ] = False,
     non_interactive: Annotated[
-        bool, typer.Option("--non-interactive", help="Never open a picker or editor. Missing context is empty; unknown context names fail. Automatic without a terminal."),
+        bool, typer.Option("--non-interactive", "-B", help="Never open a picker or editor. Missing context is empty; unknown context names fail. Automatic without a terminal."),
     ] = False,
     second_brain: Annotated[
         bool,
@@ -827,10 +827,12 @@ def doctor(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.agents_depoison import depoison
     from stackops.scripts.python.agents_status import status
+    from stackops.utils.constants import AGENT_SKILL_HINT
 
     agents_app = typer.Typer(
         cls=_PanelOrderedAgentsGroup,
         help="🤖 AI Agents management subcommands",
+        epilog=AGENT_SKILL_HINT,
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,

@@ -67,6 +67,7 @@
         },
         "app": {
           "help": "🔧 DevOps operations",
+          "epilog": "Agents: run `stackops --skill` for the usage guide.",
           "no_args_is_help": true,
           "add_help_option": true,
           "add_completion": false,
@@ -889,7 +890,7 @@
                     "    path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Edit the user catalog at another path.\")] = None,",
                     "    _source: Annotated[Literal[\"user\"], typer.Option(\"--source\", \"-s\", help=\"Catalog source to edit. Only user is supported.\")] = \"user\",",
                     "    editor: Annotated[Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the catalog with.\")] = \"hx\",",
-                    "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", help=\"Install the required language server if missing (Helix only).\")] = False,",
+                    "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", \"-l\", help=\"Install the required language server if missing (Helix only).\")] = False,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_edit",
                     "",
@@ -969,16 +970,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', help='Install the required language server if missing (Helix only).')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', '-l', help='Install the required language server if missing (Helix only).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--install-lsp"
+                          "--install-lsp",
+                          "-l"
                         ],
                         "long_flags": [
                           "--install-lsp"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-l"
+                        ],
                         "help": "Install the required language server if missing (Helix only)."
                       }
                     }
@@ -2661,6 +2665,108 @@
                     "hidden": true
                   }
                 ]
+              },
+              {
+                "kind": "command",
+                "name": "edit",
+                "fullPath": "devops data edit",
+                "shortPath": "d d e",
+                "help": "📝 <e> Create if missing, edit, and validate the backup configuration and its schema.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_data_edit.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_data_edit",
+                  "callable": "edit_data"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def edit_data(",
+                    "    path: Annotated[",
+                    "        Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Override the user configuration file path.\"),",
+                    "    ] = None,",
+                    "    editor: Annotated[Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the file with.\")] = \"hx\",",
+                    "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", \"-l\", help=\"Install the required language server if missing (Helix only).\")] = False,",
+                    ") -> None:",
+                    "    from stackops.utils.managed_file_cli import run_managed_file_edit",
+                    "",
+                    "    run_managed_file_edit(kind=\"data\", path=path, editor=editor, install_lsp=install_lsp)"
+                  ],
+                  "name": "edit_data",
+                  "parameters": [
+                    {
+                      "name": "path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Override the user configuration file path.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--custom-path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--custom-path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Override the user configuration file path."
+                      }
+                    },
+                    {
+                      "name": "editor",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['hx', 'nano', 'code']",
+                      "default": "hx",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['hx', 'nano', 'code'], typer.Option('--editor', '-e', help='Editor to open the file with.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--editor",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--editor"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ],
+                        "help": "Editor to open the file with."
+                      }
+                    },
+                    {
+                      "name": "install_lsp",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', '-l', help='Install the required language server if missing (Helix only).')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--install-lsp",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--install-lsp"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Install the required language server if missing (Helix only)."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "e",
+                    "hidden": true
+                  }
+                ]
               }
             ],
             "command_context_settings": {
@@ -3136,7 +3242,7 @@
                     "    editor: Annotated[",
                     "        Literal[\"nano\", \"hx\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open repos.json. Defaults to hx.\")",
                     "    ] = \"hx\",",
-                    "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", help=\"Install the required language server if missing (Helix only).\")] = False,",
+                    "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", \"-l\", help=\"Install the required language server if missing (Helix only).\")] = False,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_edit",
                     "",
@@ -3194,16 +3300,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', help='Install the required language server if missing (Helix only).')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', '-l', help='Install the required language server if missing (Helix only).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--install-lsp"
+                          "--install-lsp",
+                          "-l"
                         ],
                         "long_flags": [
                           "--install-lsp"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-l"
+                        ],
                         "help": "Install the required language server if missing (Helix only)."
                       }
                     }
@@ -6732,7 +6841,6 @@
                         ") -> None:",
                         "    import shutil",
                         "    import tempfile",
-                        "    import zipfile",
                         "",
                         "    from stackops.utils.source_of_truth import DOTFILES_ROOT, DOTFILES_ZIP_PATH",
                         "",
@@ -7854,7 +7962,7 @@
                         "        typer.Option(\"--agent\", \"-a\", help=\"Use this agent instead of prompting.\"),",
                         "    ] = None,",
                         ") -> None:",
-                        "    from typing import get_args",
+                        "    from typing import cast, get_args",
                         "",
                         "    from rich.console import Console",
                         "    from rich.panel import Panel",
@@ -7867,7 +7975,7 @@
                         "        require_interactive(\"Select the default agent; supply --agent NAME\")",
                         "    existing_config = load_stackops_config_for_setup()",
                         "    configured_agent = existing_config.get(\"default_agent\") if existing_config is not None else None",
-                        "    agent_choices: tuple[AGENTS, ...] = get_args(AGENTS)",
+                        "    agent_choices = cast(tuple[AGENTS, ...], get_args(AGENTS))",
                         "    selected_agent: AGENTS = agent if agent is not None else ask_choice(",
                         "        \"Default agent\",",
                         "        help_text=\"Agent commands that omit --agent use this one.\",",
@@ -8299,7 +8407,7 @@
                     "        typer.Option(\"--custom-path\", \"-p\", help=\"Edit a file of this kind at another path, e.g. a project-local .stackops/secrets/secrets.json.\"),",
                     "    ] = None,",
                     "    editor: Annotated[Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the file with.\")] = \"hx\",",
-                    "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", help=\"Install the required language server if missing (Helix only).\")] = False,",
+                    "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", \"-l\", help=\"Install the required language server if missing (Helix only).\")] = False,",
                     ") -> None:",
                     "    from stackops.utils.managed_file_cli import run_managed_file_edit",
                     "",
@@ -8372,16 +8480,19 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', help='Install the required language server if missing (Helix only).')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', '-l', help='Install the required language server if missing (Helix only).')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--install-lsp"
+                          "--install-lsp",
+                          "-l"
                         ],
                         "long_flags": [
                           "--install-lsp"
                         ],
-                        "short_flags": [],
+                        "short_flags": [
+                          "-l"
+                        ],
                         "help": "Install the required language server if missing (Helix only)."
                       }
                     }
@@ -12315,9 +12426,9 @@
                         "        bool, typer.Option(\"--table\", \"-l\", help=\"Print all matches as a rich table instead of interactive selection (never exposes secrets, never copies)\")",
                         "    ] = False,",
                         "    fresh: Annotated[bool, typer.Option(\"--fresh\", \"-f\", help=\"Bypass cache and query Bitwarden directly\")] = False,",
-                        "    item_id: Annotated[str | None, typer.Option(\"--id\", help=\"Retrieve one exact Bitwarden item ID instead of searching by name.\")] = None,",
+                        "    item_id: Annotated[str | None, typer.Option(\"--id\", \"-I\", help=\"Retrieve one exact Bitwarden item ID instead of searching by name.\")] = None,",
                         "    all_matches: Annotated[bool, typer.Option(\"--all-matches\", \"-a\", help=\"Return all matches with --json, --raw, or --table; allows omitting the name to list the whole vault.\")] = False,",
-                        "    non_interactive: Annotated[bool, typer.Option(\"--non-interactive\", help=\"Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.\")] = False,",
+                        "    non_interactive: Annotated[bool, typer.Option(\"--non-interactive\", \"-N\", help=\"Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.\")] = False,",
                         ") -> None:",
                         "    \"\"\"Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard.\"\"\"",
                         "    from stackops.scripts.python.helpers.helpers_devops import vault",
@@ -12656,16 +12767,19 @@
                           "type": "str | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--id', help='Retrieve one exact Bitwarden item ID instead of searching by name.')]",
+                          "annotation_raw": "Annotated[str | None, typer.Option('--id', '-I', help='Retrieve one exact Bitwarden item ID instead of searching by name.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--id"
+                              "--id",
+                              "-I"
                             ],
                             "long_flags": [
                               "--id"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-I"
+                            ],
                             "help": "Retrieve one exact Bitwarden item ID instead of searching by name."
                           }
                         },
@@ -12697,16 +12811,19 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--non-interactive', help='Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--non-interactive', '-N', help='Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--non-interactive"
+                              "--non-interactive",
+                              "-N"
                             ],
                             "long_flags": [
                               "--non-interactive"
                             ],
-                            "short_flags": [],
+                            "short_flags": [
+                              "-N"
+                            ],
                             "help": "Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal."
                           }
                         }
@@ -13814,17 +13931,17 @@
                 "source": {
                   "file": "src/stackops/jobs/installer/checks/security_cli.py",
                   "module": "stackops.jobs.installer.checks.security_cli",
-                  "callable": "upload"
+                  "callable": "upload_file"
                 },
                 "signature": {
                   "raw_lines": [
-                    "def upload(path: Annotated[Path, typer.Argument(help=\"Path to a local file to upload\")]) -> None:",
+                    "def upload_file(path: Annotated[Path, typer.Argument(help=\"Path to a local file to upload\")]) -> None:",
                     "    from stackops.jobs.installer.checks.app_upload import upload_app",
                     "",
                     "    link = upload_app(path=path, expected_sha256=None)",
                     "    typer.echo(link)"
                   ],
-                  "name": "upload",
+                  "name": "upload_file",
                   "parameters": [
                     {
                       "name": "path",
@@ -14593,9 +14710,9 @@
                     "    if password is None and not no_auth:",
                     "        try:",
                     "            password = read_quick_password()",
-                    "        except Exception:",
+                    "        except Exception as exc:",
                     "            print(\"❌ Error: Password not provided and configured quick password could not be read.\")",
-                    "            raise typer.Exit(code=1)",
+                    "            raise typer.Exit(code=1) from exc",
                     "",
                     "    if port is None:",
                     "        port = 7681  # Default port for ttyd",
@@ -14638,14 +14755,14 @@
                     "    # Build ttyd command with SSL options",
                     "    ssl_args: list[str] = []",
                     "    if ssl:",
-                    "            if ssl_cert is None or ssl_key is None:",
-                    "                print(\"❌ Error: SSL certificate and key must be provided when SSL is enabled.\")",
-                    "                raise typer.Exit(code=1)",
-                    "            resolved_ssl_cert = ssl_cert",
-                    "            resolved_ssl_key = ssl_key",
-                    "            ssl_args = [\"--ssl\", \"--ssl-cert\", resolved_ssl_cert, \"--ssl-key\", resolved_ssl_key]",
-                    "            if ssl_ca:",
-                    "                ssl_args.extend([\"--ssl-ca\", ssl_ca])",
+                    "        if ssl_cert is None or ssl_key is None:",
+                    "            print(\"❌ Error: SSL certificate and key must be provided when SSL is enabled.\")",
+                    "            raise typer.Exit(code=1)",
+                    "        resolved_ssl_cert = ssl_cert",
+                    "        resolved_ssl_key = ssl_key",
+                    "        ssl_args = [\"--ssl\", \"--ssl-cert\", resolved_ssl_cert, \"--ssl-key\", resolved_ssl_key]",
+                    "        if ssl_ca:",
+                    "            ssl_args.extend([\"--ssl-ca\", ssl_ca])",
                     "",
                     "    if start_command is None:",
                     "        import platform",
@@ -16118,6 +16235,7 @@
                         "    from stackops.utils.ssh_utils.windows_server_install import build_windows_ssh_server_install_script as _get_windows_ssh_server_install_script",
                         "",
                         "    system = platform.system()",
+                        "    result: subprocess.CompletedProcess[bytes] | subprocess.CompletedProcess[str]",
                         "    if system == \"Windows\":",
                         "        script = _get_windows_ssh_server_install_script()",
                         "        from stackops.utils.code import run_shell_script",
@@ -16496,7 +16614,7 @@
                         "    current_system = system()",
                         "    with redirect_stdout(sys.stderr if output_json else sys.stdout):",
                         "        if current_system == \"Linux\":",
-                        "            import stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_linux as ssh_debug_linux",
+                        "            from stackops.scripts.python.helpers.helpers_network.ssh import ssh_debug_linux",
                         "",
                         "            result = ssh_debug_linux.ssh_debug_linux(connection_context=connection_context)",
                         "        elif current_system == \"Darwin\":",
@@ -16690,7 +16808,7 @@
                         "        require_interactive(\"Opening the forwarded address in a browser; omit --open-browser\")",
                         "    selected_local_port = remote_port if local_port is None else local_port",
                         "    try:",
-                        "        ssh_destination = resolve_map_port_destination(destination=destination)",
+                        "        ssh_destination = resolve_map_port_destination(destination=destination, timeout=timeout)",
                         "    except subprocess.CalledProcessError as error:",
                         "        error_detail = (",
                         "            error.stderr.strip() if isinstance(error.stderr, str) and error.stderr.strip() else f\"OpenSSH exited with code {error.returncode}.\"",
@@ -16698,7 +16816,7 @@
                         "        raise typer.BadParameter(error_detail, param_hint=\"DESTINATION\") from error",
                         "    except (TypeError, ValueError) as error:",
                         "        raise typer.BadParameter(str(error), param_hint=\"DESTINATION\") from error",
-                        "    except OSError as error:",
+                        "    except (OSError, subprocess.TimeoutExpired) as error:",
                         "        typer.echo(f\"Unable to start OpenSSH: {error}\", err=True)",
                         "        raise typer.Exit(code=1) from error",
                         "    try:",
@@ -16974,8 +17092,13 @@
                         "",
                         "    import json",
                         "    import sys",
+                        "    import shutil",
                         "    from contextlib import redirect_stdout",
                         "",
+                        "    if output_json:",
+                        "        missing = [binary for binary in (\"warp-cli\", \"ipinfo\") if shutil.which(binary) is None]",
+                        "        if missing:",
+                        "            raise typer.BadParameter(f\"Install these dependencies before using --json: {', '.join(missing)}.\")",
                         "    with redirect_stdout(sys.stderr if output_json else sys.stdout):",
                         "        succeeded, address = helper.switch_public_ip_address(max_trials=max_trials, wait_seconds=wait_seconds, target_ip_addresses=target_ip)",
                         "    if output_json:",
@@ -17140,7 +17263,9 @@
                         "    if not is_interactive():",
                         "        code = code.replace(\"sudo \", \"sudo -n \")",
                         "    if yes or typer.confirm(\"Run the Cloudflare tunnel now?\", default=False):",
-                        "        exit_then_run_shell_script(code)"
+                        "        exit_then_run_shell_script(code)",
+                        "    else:",
+                        "        raise typer.Abort()"
                       ],
                       "name": "run_tunnel",
                       "parameters": [
@@ -17255,7 +17380,9 @@
                         "    if not is_interactive():",
                         "        code = code.replace(\"sudo \", \"sudo -n \")",
                         "    if yes or typer.confirm(\"Reinstall the Cloudflare tunnel service now?\", default=False):",
-                        "        exit_then_run_shell_script(code)"
+                        "        exit_then_run_shell_script(code)",
+                        "    else:",
+                        "        raise typer.Abort()"
                       ],
                       "name": "reinstall_tunnel_service",
                       "parameters": [
@@ -17342,7 +17469,9 @@
                         "    if not is_interactive():",
                         "        code = code.replace(\"sudo \", \"sudo -n \")",
                         "    if yes or typer.confirm(\"Add the IP exclusions and restart WARP now?\", default=False):",
-                        "        exit_then_run_shell_script(code)"
+                        "        exit_then_run_shell_script(code)",
+                        "    else:",
+                        "        raise typer.Abort()"
                       ],
                       "name": "add_ip_exclusion_to_warp",
                       "parameters": [
@@ -18404,7 +18533,6 @@
                         "",
                         "\"\"\"",
                         "    import os",
-                        "    from pathlib import Path",
                         "",
                         "    from stackops.utils.code import exit_then_run_shell_script, run_shell_script",
                         "",
@@ -18595,8 +18723,11 @@
                     "    public_error: str | None = None",
                     "    try:",
                     "        import sys",
+                    "        import shutil",
                     "        from contextlib import redirect_stdout",
                     "",
+                    "        if output_json and shutil.which(\"ipinfo\") is None:",
+                    "            raise FileNotFoundError(\"ipinfo is required for public-address JSON; install it with devops software install ipinfo.\")",
                     "        with redirect_stdout(sys.stderr):",
                     "            loaded_json = helper.get_public_ip_address()",
                     "    except (subprocess.CalledProcessError, FileNotFoundError) as error:",
@@ -18720,6 +18851,9 @@
                     "    If you need more functionality, consult VS Code Tunnels docs: https://code.visualstudio.com/docs/remote/tunnels",
                     "    \"\"\"",
                     "    import shlex",
+                    "    from stackops.utils.cli_utils.interaction import is_interactive",
+                    "",
+                    "    machine_mode = output_json or background or not is_interactive()",
                     "",
                     "    accept = \"--accept-server-license-terms\"",
                     "    name_part = f\"--name {shlex.quote(name)}\" if name else \"\"",
@@ -18763,25 +18897,23 @@
                     "",
                     "    if action_normalized in {\"run\", \"install-service\"}:",
                     "        from stackops.scripts.python.helpers.helpers_devops.vscode_tunnel_auth import get_vscode_tunnel_provider, print_vscode_tunnel_credential_context",
-                    "        from stackops.utils.cli_utils.interaction import is_interactive",
-                    "",
-                    "        if output_json or background or not is_interactive():",
+                    "        if machine_mode:",
                     "            if get_vscode_tunnel_provider(cli_data_dir) is None:",
                     "                raise typer.BadParameter(\"No stored VS Code credential. Run code tunnel user login interactively first.\")",
                     "            if name is None:",
                     "                raise typer.BadParameter(\"Provide --name for a noninteractive VS Code tunnel launch.\")",
                     "        else:",
                     "            print_vscode_tunnel_credential_context(cli_data_dir)",
-                    "    if action_normalized == \"status\" or output_json or background:",
+                    "    if action_normalized == \"status\" or machine_mode:",
                     "        if action_normalized == \"share-local\":",
-                    "            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import _build_http_url, _get_serve_web_details",
+                    "            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import build_http_url, get_serve_web_details",
                     "            from stackops.scripts.python.helpers.helpers_devops.network_service import run_network_service",
                     "",
-                    "            bind_host, port, base_path = _get_serve_web_details(cmd)",
+                    "            bind_host, port, base_path = get_serve_web_details(cmd)",
                     "            if port == 0:",
                     "                raise typer.BadParameter(\"Use a fixed --port in --extra-args for machine readiness.\")",
                     "            url_host = \"127.0.0.1\" if bind_host == \"0.0.0.0\" else bind_host",
-                    "            url = _build_http_url(url_host, port, base_path, directory)",
+                    "            url = build_http_url(url_host, port, base_path, directory)",
                     "            run_network_service(name=\"vscode-web\", arguments=shlex.split(cmd), host=bind_host, port=port, url=url, over_internet=False, background=background, output_json=output_json, timeout=timeout, url_from_log=False)",
                     "        else:",
                     "            from stackops.scripts.python.helpers.helpers_devops.vscode_share_runtime import run_vscode_tunnel",
@@ -21292,16 +21424,17 @@
                     "",
                     "        try:",
                     "            metadata_text = distribution(\"stackops\").read_text(\"METADATA\")",
-                    "        except PackageNotFoundError:",
+                    "        except PackageNotFoundError as exc:",
                     "            typer.echo(\"❌ Installed stackops package metadata is not available.\")",
-                    "            raise typer.Exit(code=1)",
+                    "            raise typer.Exit(code=1) from exc",
                     "        if metadata_text is None:",
                     "            typer.echo(\"❌ Installed stackops package metadata file is not available.\")",
                     "            raise typer.Exit(code=1)",
-                    "        markdown_text = message_from_string(metadata_text).get_payload()",
-                    "        if not isinstance(markdown_text, str):",
+                    "        metadata_payload = message_from_string(metadata_text).get_payload()",
+                    "        if not isinstance(metadata_payload, str):",
                     "            typer.echo(\"❌ Installed stackops package metadata does not include a plain-text README.\")",
                     "            raise typer.Exit(code=1)",
+                    "        markdown_text = metadata_payload",
                     "        if not markdown_text:",
                     "            typer.echo(\"❌ Installed stackops package metadata does not include a README.\")",
                     "            raise typer.Exit(code=1)",
@@ -22531,6 +22664,7 @@
           "add_completion": false,
           "no_args_is_help": true,
           "help": "☁ Cloud management commands",
+          "epilog": "Agents: run `stackops --skill` for the usage guide.",
           "context_settings": {
             "help_option_names": [
               "-h",
@@ -22828,8 +22962,11 @@
                 "    \"\"\"📤 Upload or 📥 Download files/folders to/from cloud storage services.\"\"\"",
                 "    from stackops.scripts.python.helpers.helpers_cloud.cloud_copy import main as copy_main",
                 "",
-                "    if sum(source is not None for source in (pwd, password_name, password_file, password_env)) > 1:",
+                "    supplied_password_sources = sum(password_source is not None for password_source in (pwd, password_name, password_file, password_env))",
+                "    if supplied_password_sources > 1:",
                 "        raise typer.BadParameter(\"Choose one password source: --password, --password-name, --password-file, or --password-env.\")",
+                "    if output_json and encryption in {\"symmetric\", \"s\"} and supplied_password_sources == 0:",
+                "        raise typer.BadParameter(\"Provide --password-name, --password-file, or --password-env with symmetric encryption and --json.\")",
                 "    if password_file is not None or password_env is not None:",
                 "        from stackops.utils.cli_utils.secret_input import read_secret_input",
                 "",
@@ -24588,6 +24725,7 @@
         },
         "app": {
           "help": "Terminal management subcommands",
+          "epilog": "Agents: run `stackops --skill` for the usage guide.",
           "no_args_is_help": true,
           "add_help_option": true,
           "add_completion": false,
@@ -25645,7 +25783,7 @@
                 "    editor: Annotated[",
                 "        Literal[\"hx\", \"nano\", \"code\"], typer.Option(\"--editor\", \"-e\", help=\"Editor to open the layout file with.\"),",
                 "    ] = \"hx\",",
-                "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", help=\"Install the required language server if missing (Helix only).\")] = False,",
+                "    install_lsp: Annotated[bool, typer.Option(\"--install-lsp\", \"-l\", help=\"Install the required language server if missing (Helix only).\")] = False,",
                 ") -> None:",
                 "    from stackops.utils.cli_utils.interaction import require_interactive",
                 "",
@@ -25744,16 +25882,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', help='Install the required language server if missing (Helix only).')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--install-lsp', '-l', help='Install the required language server if missing (Helix only).')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--install-lsp"
+                      "--install-lsp",
+                      "-l"
                     ],
                     "long_flags": [
                       "--install-lsp"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-l"
+                    ],
                     "help": "Install the required language server if missing (Helix only)."
                   }
                 }
@@ -27617,6 +27758,7 @@
         "app": {
           "cls": "_PanelOrderedAgentsGroup",
           "help": "🤖 AI Agents management subcommands",
+          "epilog": "Agents: run `stackops --skill` for the usage guide.",
           "no_args_is_help": true,
           "add_help_option": true,
           "add_completion": false,
@@ -27740,7 +27882,7 @@
                     "    try:",
                     "        if show_example:",
                     "            typer.echo(PARALLEL_CREATE_EXAMPLE)",
-                    "            return",
+                    "            return None",
                     "",
                     "        resolved_agent = resolve_agent(agent=agent)",
                     "        resolved_backend: SessionMultiplexer = resolve_agent_multiplexer(multiplexer=None) if backend is None else resolve_session_multiplexer(multiplexer=backend)",
@@ -27774,7 +27916,7 @@
                     "                save_as_yaml=save_as_yaml,",
                     "                on_directory_conflict=on_directory_conflict,",
                     "            )",
-                    "            return",
+                    "            return None",
                     "",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create as impl",
                     "",
@@ -34803,7 +34945,7 @@
                 "        typer.Option(\"--interactive\", \"-i\", help=\"Start a native agent chat with the prepared prompt and keep it open for follow-up messages.\"),",
                 "    ] = False,",
                 "    non_interactive: Annotated[",
-                "        bool, typer.Option(\"--non-interactive\", help=\"Never open a picker or editor. Missing context is empty; unknown context names fail. Automatic without a terminal.\"),",
+                "        bool, typer.Option(\"--non-interactive\", \"-B\", help=\"Never open a picker or editor. Missing context is empty; unknown context names fail. Automatic without a terminal.\"),",
                 "    ] = False,",
                 "    second_brain: Annotated[",
                 "        bool,",
@@ -35023,16 +35165,19 @@
                   "type": "bool",
                   "default": false,
                   "required": false,
-                  "annotation_raw": "Annotated[bool, typer.Option('--non-interactive', help='Never open a picker or editor. Missing context is empty; unknown context names fail. Automatic without a terminal.')]",
+                  "annotation_raw": "Annotated[bool, typer.Option('--non-interactive', '-B', help='Never open a picker or editor. Missing context is empty; unknown context names fail. Automatic without a terminal.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
-                      "--non-interactive"
+                      "--non-interactive",
+                      "-B"
                     ],
                     "long_flags": [
                       "--non-interactive"
                     ],
-                    "short_flags": [],
+                    "short_flags": [
+                      "-B"
+                    ],
                     "help": "Never open a picker or editor. Missing context is empty; unknown context names fail. Automatic without a terminal."
                   }
                 },
@@ -35551,6 +35696,7 @@
                 "        initial_prompt = \"\\n\\n\".join(initial_prompt_parts) if len(initial_prompt_parts) > 0 else None",
                 "",
                 "        with _agent_working_directory(second_brain=second_brain or followup) as working_directory:",
+                "            resolved_agent: str",
                 "            if followup:",
                 "                from stackops.scripts.python.agents_followup import build_followup_command, choose_followup_session",
                 "",
@@ -35562,13 +35708,12 @@
                 "                    initial_prompt=initial_prompt,",
                 "                )",
                 "            else:",
-                "                resolved_agent = _resolve_interactive_agent(agent=agent)",
-                "                command = _interactive_agent_command(agent=resolved_agent, initial_prompt=initial_prompt)",
+                "                interactive_agent = _resolve_interactive_agent(agent=agent)",
+                "                command = _interactive_agent_command(agent=interactive_agent, initial_prompt=initial_prompt)",
+                "                resolved_agent = interactive_agent",
                 "",
                 "            command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)",
                 "            if sandbox != SandboxBackend.NONE:",
-                "                import sys",
-                "",
                 "                from stackops.scripts.python.helpers.helpers_agents.agents_sandbox import resolve_sandbox_access",
                 "                from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell",
                 "",
@@ -36114,6 +36259,7 @@
         },
         "app": {
           "help": "⚙ utilities operations",
+          "epilog": "Agents: run `stackops --skill` for the usage guide.",
           "no_args_is_help": true,
           "add_help_option": true,
           "add_completion": false,
@@ -36184,7 +36330,7 @@
                     "        typer.Option(\"--yes\", \"-y\", help=\"Non-interactively kill every process matching the direct selector.\"),",
                     "    ] = False,",
                     ") -> None:",
-                    "    from stackops.scripts.python.helpers.helpers_utils.process_models import build_process_selector",
+                    "    from stackops.scripts.python.helpers.helpers_utils.process_models import SearchField, build_process_selector",
                     "",
                     "    try:",
                     "        selector = build_process_selector(",
@@ -36206,6 +36352,7 @@
                     "    if not yes:",
                     "        require_interactive(\"Process selection and confirmation; pass a direct selector and --yes\")",
                     "",
+                    "    search_field: SearchField",
                     "    match search_by:",
                     "        case \"command\" | \"c\":",
                     "            search_field = \"command\"",
@@ -36991,6 +37138,8 @@
                     "",
                     "    if interactive:",
                     "        require_interactive(\"Interactive device mounting\")",
+                    "        if key_file is not None:",
+                    "            raise typer.BadParameter(\"Use --key-file with explicit --device and --backend options.\")",
                     "        cli_config_mount.mount_interactive()",
                     "        return",
                     "    if device_query is None:",
@@ -40951,6 +41100,7 @@
         },
         "short_help": "stackops search helper",
         "typer": {
+          "epilog": "Agents: run `stackops --skill` for the usage guide.",
           "no_args_is_help": false
         },
         "doc": "seek across files, text matches, and code symbols.",
@@ -40975,6 +41125,7 @@
         },
         "app": {
           "help": "🔥 Run scripts, apps, and notebooks",
+          "epilog": "Agents: run `stackops --skill` for the usage guide.",
           "no_args_is_help": true,
           "add_completion": false,
           "context_settings": {

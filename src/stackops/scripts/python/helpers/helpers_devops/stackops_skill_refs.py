@@ -9,11 +9,7 @@ from typing import TypeAlias, cast
 from stackops.scripts.python.helpers.helpers_devops import cli_self_docs
 
 
-STACKOPS_SKILL_REFERENCES_RELATIVE_PATHS: tuple[Path, ...] = (
-    Path("skills", "stackops", "references"),
-    Path("src", "stackops", "skills", "stackops", "references"),
-    Path(".github", "skills", "stackops", "references"),
-)
+STACKOPS_SKILL_REFERENCES_RELATIVE_PATH: Path = Path("skills", "stackops", "references")
 CLI_GRAPH_DISPLAY_PATH = "src/stackops/scripts/python/graph/cli_graph.json"
 JsonObject: TypeAlias = Mapping[str, object]
 
@@ -47,7 +43,7 @@ def read_project_scripts(*, repo_root: Path) -> Mapping[str, str]:
     return scripts
 
 
-def write_stackops_skill_references(*, repo_root: Path, generated_on: date | None = None) -> tuple[Path, ...]:
+def write_stackops_skill_references(*, repo_root: Path, generated_on: date | None = None) -> tuple[Path, Path]:
     graph_payload = read_cli_graph_payload(repo_root=repo_root)
     project_scripts = read_project_scripts(repo_root=repo_root)
     resolved_generated_on = date.today() if generated_on is None else generated_on
@@ -58,20 +54,17 @@ def write_stackops_skill_references(*, repo_root: Path, generated_on: date | Non
         generated_on=resolved_generated_on,
     )
     source_map_text = render_source_map(cli_graph_payload=graph_payload, generated_on=resolved_generated_on)
-    generated_paths: list[Path] = []
-    for references_relative_path in STACKOPS_SKILL_REFERENCES_RELATIVE_PATHS:
-        references_path = repo_root.joinpath(references_relative_path)
-        stale_command_references_path = references_path.joinpath("commands")
-        references_path.mkdir(parents=True, exist_ok=True)
-        if stale_command_references_path.exists():
-            shutil.rmtree(stale_command_references_path)
+    references_path = repo_root.joinpath(STACKOPS_SKILL_REFERENCES_RELATIVE_PATH)
+    stale_command_references_path = references_path.joinpath("commands")
+    references_path.mkdir(parents=True, exist_ok=True)
+    if stale_command_references_path.exists():
+        shutil.rmtree(stale_command_references_path)
 
-        cli_map_path = references_path.joinpath("cli-map.md")
-        source_map_path = references_path.joinpath("source-map.md")
-        cli_map_path.write_text(cli_map_text, encoding="utf-8")
-        source_map_path.write_text(source_map_text, encoding="utf-8")
-        generated_paths.extend((cli_map_path, source_map_path))
-    return tuple(generated_paths)
+    cli_map_path = references_path.joinpath("cli-map.md")
+    source_map_path = references_path.joinpath("source-map.md")
+    cli_map_path.write_text(cli_map_text, encoding="utf-8")
+    source_map_path.write_text(source_map_text, encoding="utf-8")
+    return cli_map_path, source_map_path
 
 
 def render_cli_map(*, cli_graph_payload: JsonObject, project_scripts: Mapping[str, str], generated_on: date) -> str:

@@ -1,6 +1,0 @@
-interface:
-  display_name: "StackOps"
-  short_description: "Run StackOps, or find and change its configuration or code"
-  default_prompt: "Use $stackops to run the right command, or locate the right configuration file or implementation, make the requested change, and validate it."
-policy:
-  allow_implicit_invocation: false

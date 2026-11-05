@@ -34,6 +34,12 @@ stackops devops --help
 stackops agents --help
 ```
 
+Agents can read the usage guide for the installed version, with no skill install:
+
+```bash
+stackops --skill
+```
+
 The wrappers currently expose:
 
 - `devops`

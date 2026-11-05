@@ -119,8 +119,10 @@ def preview(
 
 
 def main() -> None:
+    from stackops.utils.constants import AGENT_SKILL_HINT
+
     app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
-    app.command()(preview)
+    app.command(epilog=AGENT_SKILL_HINT)(preview)
     app()
 
 

@@ -97,6 +97,7 @@ def seek(ctx: typer.Context) -> None:
 def cli(
     ctx: typer.Context,
     version: Annotated[bool, typer.Option("--version", "-V", is_eager=True, help="Show the StackOps version and exit.")] = False,
+    skill: Annotated[bool, typer.Option("--skill", is_eager=True, help="Print the agent usage guide and its folder, then exit.")] = False,
     non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="Never prompt or open pickers/editors, including in a terminal.")] = False,
 ) -> None:
     from stackops.utils.cli_utils.interaction import configure_interaction
@@ -106,6 +107,18 @@ def cli(
         from stackops.version import get_stackops_version
 
         typer.echo(f"""StackOps {get_stackops_version()}""")
+        raise typer.Exit()
+    if skill:
+        from stackops.scripts.python.helpers.helpers_agents.agents_skill_stackops_backend import (
+            SKILL_FILE_NAME,
+            STACKOPS_SKILL_FOLDER_NAME,
+            resolve_stackops_agent_skill_source_root,
+        )
+
+        skill_directory = resolve_stackops_agent_skill_source_root(source_root=None).joinpath(STACKOPS_SKILL_FOLDER_NAME)
+        typer.echo(f"""Skill folder: {skill_directory}""")
+        typer.echo()
+        typer.echo(skill_directory.joinpath(SKILL_FILE_NAME).read_text(encoding="utf-8"), nl=False)
         raise typer.Exit()
 
 

@@ -134,7 +134,7 @@ def edit_layouts(
     editor: Annotated[
         Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the layout file with."),
     ] = "hx",
-    install_lsp: Annotated[bool, typer.Option("--install-lsp", help="Install the required language server if missing (Helix only).")] = False,
+    install_lsp: Annotated[bool, typer.Option("--install-lsp", "-l", help="Install the required language server if missing (Helix only).")] = False,
 ) -> None:
     from stackops.utils.cli_utils.interaction import require_interactive
 

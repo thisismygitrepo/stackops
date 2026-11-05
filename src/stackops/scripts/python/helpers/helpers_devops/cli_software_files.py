@@ -41,7 +41,7 @@ def edit_software(
     path: Annotated[Path | None, typer.Option("--custom-path", "-p", help="Edit the user catalog at another path.")] = None,
     _source: Annotated[Literal["user"], typer.Option("--source", "-s", help="Catalog source to edit. Only user is supported.")] = "user",
     editor: Annotated[Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the catalog with.")] = "hx",
-    install_lsp: Annotated[bool, typer.Option("--install-lsp", help="Install the required language server if missing (Helix only).")] = False,
+    install_lsp: Annotated[bool, typer.Option("--install-lsp", "-l", help="Install the required language server if missing (Helix only).")] = False,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_edit
 

@@ -68,7 +68,7 @@ Changes the machine or remote data, so run these only when asked:
 
 For add, edit, rename, or remove requests, read `references/change-guide.md`. It covers choosing configuration versus code, locating the active source, making the change, and validating it, including a layout walkthrough.
 
-Run configuration discovery from the user's target project: local paths can depend on the current directory or repository. Resolve a StackOps source checkout only when inspecting or changing its implementation; verify it contains `pyproject.toml` and `src/stackops/` instead of assuming a workspace location. Resolve `src/stackops/...` paths and run source maintenance commands from that checkout. Paths under `references/` are relative to the directory containing this `SKILL.md`. The Usage section needs none of them.
+Run configuration discovery from the user's target project: local paths can depend on the current directory or repository. Resolve a StackOps source checkout only when inspecting or changing its implementation; verify it contains `pyproject.toml` and `src/stackops/` instead of assuming a workspace location. Resolve `src/stackops/...` paths and run source maintenance commands from that checkout. Paths under `references/` are relative to the skill folder, the directory containing this `SKILL.md`. `stackops --skill` prints that folder first. The Usage section needs none of them.
 
 ## Quick Workflow
 

@@ -12,6 +12,8 @@ CANONICAL_SHORTS: dict[str, str] = {
     "--dotfiles": "-d",
     "--editor": "-e",
     "--host": "-H",
+    "--id": "-I",
+    "--install-lsp": "-l",
     "--interactive": "-i",
     "--json": "-j",
     "--kill-all": "-k",

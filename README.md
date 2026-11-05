@@ -71,6 +71,12 @@ Install the StackOps skill for Codex with:
 bunx skills add thisismygitrepo/stackops --skill stackops --global --agent codex --yes
 ```
 
+Any agent can read the same guide for the installed version without installing the skill:
+
+```bash
+stackops --skill
+```
+
 
 ## Start with a workflow
 

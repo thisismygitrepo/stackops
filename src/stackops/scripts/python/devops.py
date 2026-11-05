@@ -116,9 +116,10 @@ def vault(ctx: typer.Context) -> None:
 
 def get_app() -> typer.Typer:
     from stackops.utils.cli_utils.interaction import configure_interaction
+    from stackops.utils.constants import AGENT_SKILL_HINT
 
     cli_app = typer.Typer(
-        help="🔧 DevOps operations", no_args_is_help=True, add_help_option=True, add_completion=False,
+        help="🔧 DevOps operations", epilog=AGENT_SKILL_HINT, no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     cli_app.callback()(configure_interaction)

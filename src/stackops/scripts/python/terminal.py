@@ -478,9 +478,10 @@ def get_app() -> typer.Typer:
     from stackops.scripts.python.terminal_layout_commands import edit_layouts, list_layouts
     from stackops.scripts.python.terminal_layout_files import init_layouts, path_layouts, validate_layouts
     from stackops.scripts.python.terminal_summary_commands import summary
+    from stackops.utils.constants import AGENT_SKILL_HINT
 
     layouts_app = typer.Typer(
-        help="Terminal management subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
+        help="Terminal management subcommands", epilog=AGENT_SKILL_HINT, no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     layouts_app.callback()(configure_interaction)

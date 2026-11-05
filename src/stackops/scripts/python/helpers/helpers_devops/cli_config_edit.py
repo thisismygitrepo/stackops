@@ -15,7 +15,7 @@ def edit_managed_file(
         typer.Option("--custom-path", "-p", help="Edit a file of this kind at another path, e.g. a project-local .stackops/secrets/secrets.json."),
     ] = None,
     editor: Annotated[Literal["hx", "nano", "code"], typer.Option("--editor", "-e", help="Editor to open the file with.")] = "hx",
-    install_lsp: Annotated[bool, typer.Option("--install-lsp", help="Install the required language server if missing (Helix only).")] = False,
+    install_lsp: Annotated[bool, typer.Option("--install-lsp", "-l", help="Install the required language server if missing (Helix only).")] = False,
 ) -> None:
     from stackops.utils.managed_file_cli import run_managed_file_edit
 

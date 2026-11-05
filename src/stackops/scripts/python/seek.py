@@ -118,8 +118,10 @@ def seek(
 
 
 def get_app() -> typer.Typer:
+    from stackops.utils.constants import AGENT_SKILL_HINT
+
     app = typer.Typer(add_completion=False, no_args_is_help=True, context_settings={"help_option_names": ["-h", "--help"]})
-    app.command(name="seek", help=seek.__doc__, short_help="stackops search helper", no_args_is_help=False)(seek)
+    app.command(name="seek", help=seek.__doc__, short_help="stackops search helper", epilog=AGENT_SKILL_HINT, no_args_is_help=False)(seek)
     return app
 
 

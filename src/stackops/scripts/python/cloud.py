@@ -138,9 +138,10 @@ def transfer(
 def get_app() -> typer.Typer:
     from stackops.utils.cli_utils.interaction import configure_interaction
     from stackops.utils.cloud.onedrive.cli import get_app as get_onedrive_app
+    from stackops.utils.constants import AGENT_SKILL_HINT
 
     app = typer.Typer(
-        add_completion=False, no_args_is_help=True, help="☁ Cloud management commands",
+        add_completion=False, no_args_is_help=True, help="☁ Cloud management commands", epilog=AGENT_SKILL_HINT,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.callback()(configure_interaction)

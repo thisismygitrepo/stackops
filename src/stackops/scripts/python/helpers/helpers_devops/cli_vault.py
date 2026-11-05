@@ -37,9 +37,9 @@ def search(
         bool, typer.Option("--table", "-l", help="Print all matches as a rich table instead of interactive selection (never exposes secrets, never copies)")
     ] = False,
     fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass cache and query Bitwarden directly")] = False,
-    item_id: Annotated[str | None, typer.Option("--id", help="Retrieve one exact Bitwarden item ID instead of searching by name.")] = None,
+    item_id: Annotated[str | None, typer.Option("--id", "-I", help="Retrieve one exact Bitwarden item ID instead of searching by name.")] = None,
     all_matches: Annotated[bool, typer.Option("--all-matches", "-a", help="Return all matches with --json, --raw, or --table; allows omitting the name to list the whole vault.")] = False,
-    non_interactive: Annotated[bool, typer.Option("--non-interactive", help="Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.")] = False,
+    non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.")] = False,
 ) -> None:
     """Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard."""
     from stackops.scripts.python.helpers.helpers_devops import vault

@@ -14,6 +14,7 @@ STACKOPS_SKILL_INSTALL_SCOPE: TypeAlias = Literal["workspace", "user"]
 
 AGENT_SKILLS_DIRECTORY_PARTS: Final[tuple[str, str]] = (".agents", "skills")
 SKILL_FILE_NAME: Final[str] = "SKILL.md"
+STACKOPS_SKILL_FOLDER_NAME: Final[str] = "stackops"
 
 
 @dataclass(frozen=True)

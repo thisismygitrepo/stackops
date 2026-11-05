@@ -1,8 +1,6 @@
 [build-system]
-requires = ["setuptools>=80", "wheel"]
-build-backend = "setuptools.build_meta"
-# requires = ["hatchling"]
-# build-backend = "hatchling.build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "stackops"
@@ -68,16 +66,11 @@ utils = "stackops.scripts.python.utils:main"
 stackops = "stackops.scripts.python.stackops_entry:main"
 seek = "stackops.scripts.python.seek:main"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-include-package-data = true
-license-files = []
+[tool.hatch.build.targets.wheel]
+packages = ["src/stackops"]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-stackops = ["**/*.toml", "**/*.md", "**/*.sh", "**/*.ps1", "**/*.txt", "utils/schemas/**/*.json", "utils/schemas/**/*.yaml"]
+[tool.hatch.build.targets.wheel.force-include]
+"skills" = "stackops/skills"
 
 [dependency-groups]
 dev = [

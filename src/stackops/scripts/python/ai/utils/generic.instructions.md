@@ -13,6 +13,7 @@ applyTo: "**/*.py"
         * Use python 3.13 & 3.14 syntax features.
         * Use modern standards, e.g. Path from pathlib.
 * Never touch `pyproject.toml` manually, this file is strictly managed by `uv` tool on your behalf.
+* To use the StackOps CLIs (`devops`, `cloud`, `terminal`, `agents`, `utils`, `seek`, `fire`, `preview`), run `stackops --skill` for the usage guide.
 * If you are writing a test or any temporary script for discovering or undestanding something as an intermediate step, then,
   keep all your temp scripts and files under ./.ai/tmp_scripts directory, its included in .gitignore and won't litter the repo.
   Its also nice if you create a subdirectory therein to contain relevant files for the task at hand, to avoid confusion with other files from other ai agents working simulataneously on other things.
