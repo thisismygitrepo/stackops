@@ -2,7 +2,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from html.parser import HTMLParser
-from typing import Literal
+from typing import Literal, override
 
 import requests
 
@@ -37,6 +37,7 @@ class _CatalogParser(HTMLParser):
         self._fields: list[_CatalogField | None] = []
         self._content: dict[_CatalogField, list[str]] = {}
 
+    @override
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = dict(attrs)
         if tag == "a" and re.fullmatch(r"/library/[\w.-]+", attributes.get("href") or ""):
@@ -55,12 +56,14 @@ class _CatalogParser(HTMLParser):
             field = "capabilities"
         self._fields.append(field)
 
+    @override
     def handle_data(self, data: str) -> None:
         if self._fields and (field := self._fields[-1]) is not None:
             value = " ".join(data.split())
             if value:
                 self._content[field].append(value)
 
+    @override
     def handle_endtag(self, tag: str) -> None:
         if self._name is None or tag in HTML_VOID_ELEMENTS:
             return

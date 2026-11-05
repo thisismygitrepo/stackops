@@ -1,4 +1,5 @@
 from difflib import unified_diff
+from typing import override
 
 from rich.text import Text
 from textual.app import ComposeResult
@@ -49,6 +50,7 @@ class CleanupReview(ModalScreen[bool]):
         super().__init__()
         self._cleanup_plan = plan
 
+    @override
     def compose(self) -> ComposeResult:
         plan = self._cleanup_plan
         with Vertical(id="cleanup-review"):

@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal, NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict, cast
 
 import yaml
 
@@ -40,7 +40,7 @@ class RawMapperEntry(TypedDict):
 
 def _require_mapping(value: object, *, context: str) -> Mapping[object, object]:
     if isinstance(value, Mapping):
-        return value
+        return cast(Mapping[object, object], value)
     raise TypeError(f"{context} must be a mapping, got {type(value).__name__}")
 
 

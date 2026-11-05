@@ -2,7 +2,7 @@
 Command tree widget for displaying command hierarchy.
 """
 
-from typing import cast
+from typing import cast, override
 
 from textual.widgets import Tree
 from textual.widgets.tree import TreeNode
@@ -18,6 +18,7 @@ from stackops.scripts.python.graph.visualize.helpers_navigator.data_models impor
 class CommandTree(Tree[CommandInfo]):
     """Tree widget for displaying command hierarchy."""
 
+    @override
     def on_mount(self) -> None:
         """Build the command tree when mounted."""
         self.show_root = False

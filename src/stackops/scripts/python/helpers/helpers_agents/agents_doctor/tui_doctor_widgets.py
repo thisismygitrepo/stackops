@@ -1,3 +1,5 @@
+from typing import override
+
 from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
@@ -39,6 +41,7 @@ class DoctorBrowser(Widget):
         self.doctor_selected_row = ""
         self.doctor_ready = False
 
+    @override
     def compose(self) -> ComposeResult:
         kinds = [("All kinds", "all")]
         if len(self.doctor_focuses) > 1:

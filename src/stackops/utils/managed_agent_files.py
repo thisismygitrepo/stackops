@@ -97,8 +97,12 @@ def validate_agent_managed_file(*, kind: AgentManagedFileKind, data_path: Path) 
                 parse_parallel_create_values(raw_entry=entry, entry_name=name)
         case "mcp":
             from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import resolve_requested_mcp_servers
+            from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation
 
             servers = entries.get("mcpServers")
             if not isinstance(servers, dict) or not all(isinstance(name, str) for name in servers):
                 raise ValueError(f"""MCP catalog must define mcpServers as an object with string keys: {data_path}""")
-            resolve_requested_mcp_servers(requested_names=tuple(cast(dict[str, object], servers)), locations=({"scope": "workspace", "path": data_path},))
+            resolve_requested_mcp_servers(
+                requested_names=tuple(cast(dict[str, object], servers)),
+                locations=(McpCatalogLocation(scope="workspace", path=data_path),),
+            )

@@ -1,6 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from rich.console import Console
 from rich.markdown import Markdown
@@ -223,7 +224,7 @@ def _as_json_object(value: object) -> JsonObject | None:
         return None
     if not all(isinstance(key, str) for key in value):
         return None
-    return value
+    return cast(JsonObject, value)
 
 
 def _as_string(value: object) -> str:

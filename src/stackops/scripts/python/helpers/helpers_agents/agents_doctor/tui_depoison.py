@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from typing import override
 
 from rich.text import Text
 from textual import on, work
@@ -49,6 +50,7 @@ class DepoisonApp(App[int]):
         self.cleanup_scanned = False
         self.cleanup_exit_code = 0
 
+    @override
     def compose(self) -> ComposeResult:
         yield Header()
         yield CleanupBrowser(selection=self.cleanup_selection)

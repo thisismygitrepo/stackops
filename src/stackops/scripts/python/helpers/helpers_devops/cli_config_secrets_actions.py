@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from pathlib import Path
-from typing import Mapping, NoReturn, TypedDict
+from typing import Mapping, NoReturn, TypedDict, cast
 
 import typer
 
@@ -156,10 +156,10 @@ def _build_subset_file(*, source_file: SecretsFile, selected_entries: list[Login
         return subset_file
     merged_entries = [deepcopy(entry) for entry in existing_output_file["entries"]]
     merged_entries.extend(selected_entries)
-    subset_file = {"version": existing_output_file["version"], "entries": merged_entries}
+    merged_file: SecretsFile = {"version": existing_output_file["version"], "entries": merged_entries}
     if "$schema" in existing_output_file:
-        subset_file["$schema"] = existing_output_file["$schema"]
-    return subset_file
+        merged_file["$schema"] = existing_output_file["$schema"]
+    return merged_file
 
 
 def _load_or_initialize_add_target(*, secrets_path: Path, create: bool) -> tuple[dict[str, object], bool]:
@@ -193,7 +193,7 @@ def _secrets_entries(secrets_file: Mapping[str, object]) -> list[object]:
     entries = secrets_file.get("entries")
     if not isinstance(entries, list):
         raise ValueError("Secrets file must define an entries array.")
-    return entries
+    return cast(list[object], entries)
 
 
 def _write_secrets_file(*, secrets_path: Path, secrets_file: Mapping[str, object], created_file: bool) -> None:

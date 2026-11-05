@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, override
 
 from rich.text import Text
 from textual import on
@@ -42,6 +42,7 @@ class CleanupBrowser(Vertical):
         self.cleanup_selected: set[HookRemoval] = set()
         self.cleanup_visible: list[int] = []
 
+    @override
     def compose(self) -> ComposeResult:
         kinds = list(CLEANUP_RESOURCE_CHOICES)
         if self.cleanup_initial.resource not in kinds:

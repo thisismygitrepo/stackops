@@ -1,7 +1,7 @@
 import ast
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 import stackops.scripts.python.graph as graph_assets
 from stackops.utils.path_reference import get_path_reference_path
@@ -86,5 +86,6 @@ class Unresolved:
     def __init__(self, text: str) -> None:
         self.text = text
 
+    @override
     def __repr__(self) -> str:
         return self.text

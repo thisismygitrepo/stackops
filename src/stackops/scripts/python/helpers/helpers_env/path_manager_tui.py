@@ -11,6 +11,7 @@
 """Cross-platform PATH explorer with Textual TUI."""
 
 from pathlib import Path
+from typing import override
 
 from textual import on
 from textual.app import App, ComposeResult
@@ -156,6 +157,7 @@ class PathExplorerApp(App[None]):
         super().__init__()
         self.selected_path: str = ""
 
+    @override
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         platform_name = get_platform()

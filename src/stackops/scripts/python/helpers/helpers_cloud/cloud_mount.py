@@ -3,7 +3,7 @@
 from configparser import ConfigParser, Error as ConfigParserError
 
 import typer
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 from typer._completion_classes import completion_init
 from typer.completion import install_callback, show_callback
 from stackops.utils.cli_utils.interaction import require_interactive
@@ -156,7 +156,7 @@ def mount(
                 printable_name = "Linux" if system_name == "Linux" else "macOS"
                 print(f"🐧 Creating mount directory on {printable_name}...")
                 try:
-                    recovered = prepare_unix_mount_directory(mount_path=mount_loc_path, system_name=system_name)
+                    recovered = prepare_unix_mount_directory(mount_path=mount_loc_path, system_name=cast(Literal["Linux", "Darwin"], system_name))
                     if recovered:
                         console.print(Text(f"""Detached disconnected mount at {mount_loc_path}.""", style="yellow"))
                     if not mount_loc_path.is_mount():

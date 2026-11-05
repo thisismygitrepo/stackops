@@ -105,7 +105,7 @@ class FileManager:
         if not status_path.exists():
             return "queued"
         status_text = status_path.read_text(encoding="utf-8").strip()
-        status: JOB_STATUS = status_text  # type: ignore[assignment]
+        status = cast(JOB_STATUS, status_text)
         if status != "running":
             return status
         if not pid_path.exists():

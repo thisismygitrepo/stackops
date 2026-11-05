@@ -4,7 +4,7 @@ import os
 import platform
 import shlex
 import subprocess
-from typing import Callable, Literal
+from typing import Callable, Literal, cast
 from pathlib import Path
 from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_args_helper import FireJobArgs
 from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_environment import (
@@ -344,7 +344,7 @@ def _get_supported_platform_system() -> SupportedPlatformSystem:
 def _normalize_supported_platform_system(platform_system: str) -> SupportedPlatformSystem:
     match platform_system:
         case "Windows" | "Linux" | "Darwin":
-            return platform_system
+            return cast(SupportedPlatformSystem, platform_system)
         case _:
             raise NotImplementedError(f"Platform {platform_system} not supported.")
 

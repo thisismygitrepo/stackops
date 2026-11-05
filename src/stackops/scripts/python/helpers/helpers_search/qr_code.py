@@ -66,7 +66,7 @@ def _generate_svg(
         x_offset = padding + col * (cell_width + padding)
         y_offset = padding + row * (cell_height + padding)
 
-        qr = qrcode.QRCode(version=1, error_correction=qrcode.ERROR_CORRECT_L, box_size=10, border=2, image_factory=qrcode.image.svg.SvgPathImage)  # type: ignore
+        qr = qrcode.QRCode(version=1, error_correction=qrcode.ERROR_CORRECT_L, box_size=10, border=2, image_factory=qrcode.image.svg.SvgPathImage)
         qr.add_data(text)
         qr.make(fit=True)
 

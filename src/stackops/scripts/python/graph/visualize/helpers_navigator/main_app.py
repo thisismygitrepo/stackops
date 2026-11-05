@@ -4,6 +4,7 @@ Main TUI application for navigating stackops commands.
 
 import subprocess
 from collections.abc import Iterator
+from typing import override
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -122,6 +123,7 @@ class CommandNavigatorApp(App[None]):
         Binding("b", "build_command", "Build Command"),
     ]
 
+    @override
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header(show_clock=True)

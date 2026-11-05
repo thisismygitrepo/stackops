@@ -8,7 +8,7 @@ import socket
 from socketserver import BaseServer
 import sys
 import threading
-from typing import Callable, Final, cast
+from typing import Callable, Final, cast, override
 from urllib.parse import quote
 import webbrowser
 
@@ -132,6 +132,7 @@ class BrowserPathHandler(SimpleHTTPRequestHandler):
         if send_body:
             self.wfile.write(body)
 
+    @override
     def do_GET(self) -> None:
         if self.path == "/favicon.ico":
             self.send_response(204)
@@ -145,6 +146,7 @@ class BrowserPathHandler(SimpleHTTPRequestHandler):
 
         super().do_GET()
 
+    @override
     def do_HEAD(self) -> None:
         translated_path = Path(self.translate_path(self.path))
         if translated_path.is_dir():
@@ -153,6 +155,7 @@ class BrowserPathHandler(SimpleHTTPRequestHandler):
 
         super().do_HEAD()
 
+    @override
     def log_message(self, format: str, *args: object) -> None:
         del format, args
         return

@@ -1,4 +1,4 @@
-from typing import Callable, Any, cast, Union, Literal
+from typing import Callable, Any, cast, Union, Literal, override
 import subprocess
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import platform
@@ -230,6 +230,7 @@ print("SSH key added successfully")
             + (f" -t {command} " if command != "" else " ")
         )
 
+    @override
     def __repr__(self) -> str:
         return f"local {self.get_local_repr(add_machine=True)} >>> SSH TO >>> remote {self.get_remote_repr(add_machine=True)}"
 

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 import shutil
-from typing import Final, Literal
+from typing import Final, Literal, cast
 
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import (
     McpCatalogFile,
@@ -172,7 +172,7 @@ def _load_mcp_catalog(path: Path) -> McpCatalogFile:
 
             match raw_field_name:
                 case "command" | "url" | "cwd" | "description":
-                    validated_definition[raw_field_name] = _validate_non_empty_string(
+                    validated_definition[cast(Literal["command", "url", "cwd", "description"], raw_field_name)] = _validate_non_empty_string(
                         raw_field_value,
                         field_name=raw_field_name,
                         server_name=raw_server_name,
@@ -186,7 +186,7 @@ def _load_mcp_catalog(path: Path) -> McpCatalogFile:
                         path=path,
                     )
                 case "env" | "headers":
-                    validated_definition[raw_field_name] = _validate_string_map(
+                    validated_definition[cast(Literal["env", "headers"], raw_field_name)] = _validate_string_map(
                         raw_field_value,
                         field_name=raw_field_name,
                         server_name=raw_server_name,

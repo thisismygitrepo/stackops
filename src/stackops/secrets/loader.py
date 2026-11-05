@@ -48,8 +48,9 @@ def parse_secret_login(entry: object, *, entry_index: int) -> Login:
     entry_path = f"entries[{entry_index}]"
     if not isinstance(entry, Mapping):
         _fail(f"Invalid secrets login at {entry_path}: expected object.")
+    # This validator rejects non-string and unknown keys in the runtime-checked mapping.
     _reject_unknown_keys(
-        entry, allowed_keys=("name", "tags", "description", "url", "email", "username", "accountName", "secrets", "metadata"), path=entry_path
+        entry, allowed_keys=("name", "tags", "description", "url", "email", "username", "accountName", "secrets", "metadata"), path=entry_path  # ty: ignore[invalid-argument-type]
     )
     secrets_raw = entry.get("secrets")
     if not isinstance(secrets_raw, list):
@@ -61,7 +62,8 @@ def parse_secret_login(entry: object, *, entry_index: int) -> Login:
     for secret_index, secret_raw in enumerate(secrets_raw):
         if not isinstance(secret_raw, Mapping):
             _fail(f"Invalid secret at entries[{entry_index}].secrets[{secret_index}]: expected object.")
-        parsed_secrets.append(_parse_secret(secret=secret_raw, entry_index=entry_index, secret_index=secret_index))
+        # The parser validates keys and values in the runtime-checked mapping.
+        parsed_secrets.append(_parse_secret(secret=secret_raw, entry_index=entry_index, secret_index=secret_index))  # ty: ignore[invalid-argument-type]
 
     parsed_entry: Login = {"name": _string_value(entry.get("name"), f"entries[{entry_index}].name"), "secrets": parsed_secrets}
     tags = _optional_string_list(entry.get("tags"), f"entries[{entry_index}].tags")

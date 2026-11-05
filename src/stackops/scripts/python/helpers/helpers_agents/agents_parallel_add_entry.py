@@ -1,5 +1,6 @@
 from collections.abc import Mapping
 from pathlib import Path
+from typing import cast
 
 import yaml
 
@@ -65,12 +66,12 @@ def _resolve_added_entry_name(*, raw_data: object, requested_entry_name: str | N
     return candidate_name
 
 
-def _root_yaml_mapping(*, raw_data: object) -> Mapping[str, object]:
+def _root_yaml_mapping(*, raw_data: object) -> Mapping[object, object]:
     if raw_data is None:
         return {}
     if not isinstance(raw_data, Mapping):
         raise ValueError("parallel YAML root must be a mapping")
-    return raw_data
+    return cast(Mapping[object, object], raw_data)
 
 
 def _append_top_level_parallel_entry(*, yaml_text: str, entry_name: str) -> str:
@@ -86,6 +87,6 @@ def _render_parallel_entry_block(*, entry_name: str) -> str:
     return yaml.safe_dump(entry_mapping, sort_keys=False, default_flow_style=False).rstrip()
 
 
-def _render_parallel_yaml_mapping(*, yaml_path: Path, root_mapping: Mapping[str, object]) -> str:
+def _render_parallel_yaml_mapping(*, yaml_path: Path, root_mapping: Mapping[object, object]) -> str:
     yaml_body = yaml.safe_dump(dict(root_mapping), sort_keys=False, default_flow_style=False)
     return f"{parallel_yaml_header_for_path(yaml_path=yaml_path)}{yaml_body}"

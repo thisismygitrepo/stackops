@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from stackops.profile.dotfiles_constants import ALL_OS_VALUES, OsName
 from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
@@ -39,7 +39,7 @@ def _require_os_name(value: str, *, os_filter: str) -> OsName:
     token = value.strip().lower()
     if token not in VALID_OS:
         raise ValueError(f"Invalid os value: {os_filter!r}. Expected one of: {sorted(VALID_OS)}")
-    return token
+    return cast(OsName, token)
 
 
 def resolve_backup_registration_options(

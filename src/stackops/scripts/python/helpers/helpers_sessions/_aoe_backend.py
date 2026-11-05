@@ -289,7 +289,7 @@ def choose_kill_target(
     if unknown_selection is not None:
         return ("error", f"Unknown AoE session selected: {unknown_selection}", [])
     killed_targets = [
-        {"action": "session", "session": option_to_identifier[selection], "window": "-", "detail": "-"}
+        KilledTarget(action="session", session=option_to_identifier[selection], window="-", detail="-")
         for selection in dict.fromkeys(selections)
         if selection in option_to_identifier
     ]

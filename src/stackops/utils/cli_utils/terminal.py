@@ -1,6 +1,6 @@
 from pathlib import Path
 import subprocess
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, override
 from typing import Literal, TypeAlias
 from dataclasses import dataclass
 
@@ -36,6 +36,7 @@ class Response:
     def __call__(self, *args: Any, **kwargs: Any) -> str | None:
         _ = args, kwargs
         return self.op.rstrip() if type(self.op) is str else None
+    @override
     def __repr__(self) -> str:
         return f"Response({self.input=}, {self.output=}, {self.desc=}, {self.op=}, {self.ip=}, {self.err=}, {self.returncode=})"
     @property

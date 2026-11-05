@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, TypedDict, cast
+from typing import Literal, TypedDict
 
 import typer
 
@@ -103,14 +103,11 @@ def prompt_new_email_profile(
         default=configured_recipient,
     )
     assert sender is not None
-    encryption = cast(
-        EmailEncryption,
-        ask_choice(
-            "SMTP encryption",
-            help_text="Choose TLS for STARTTLS or SSL for an immediately encrypted connection.",
-            choices=("tls", "ssl"),
-            default="tls",
-        ),
+    encryption: EmailEncryption = ask_choice(
+        "SMTP encryption",
+        help_text="Choose TLS for STARTTLS or SSL for an immediately encrypted connection.",
+        choices=("tls", "ssl"),
+        default="tls",
     )
     smtp_host = ask_text(
         "SMTP host",

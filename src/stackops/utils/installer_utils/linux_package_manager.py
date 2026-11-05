@@ -1,7 +1,7 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import platform
-from typing import Final, Literal, assert_never
+from typing import Final, Literal, assert_never, cast
 
 
 type LinuxDistributionId = Literal[
@@ -199,7 +199,7 @@ def _get_registered_distribution_id(distribution_id: str) -> LinuxDistributionId
     if alias_target is not None:
         return alias_target
     if distribution_id in _LINUX_DISTRIBUTION_PACKAGE_MANAGERS:
-        return distribution_id
+        return cast(LinuxDistributionId, distribution_id)
     return None
 
 

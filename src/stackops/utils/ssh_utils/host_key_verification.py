@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import socket
 import stat
+from typing import override
 
 import paramiko
 from stackops.utils.cli_utils.interaction import require_interactive
@@ -25,6 +26,7 @@ class ConfirmUnknownHostKey(paramiko.MissingHostKeyPolicy):
         self.known_hosts_path = known_hosts_path
         self.hash_hostname = hash_hostname
 
+    @override
     def missing_host_key(self, client: paramiko.SSHClient, hostname: str, key: paramiko.PKey) -> None:
         require_interactive(f"Trusting the SSH host key for {hostname}; verify and add its key to known_hosts first")
         digest = hashlib.sha256(key.asbytes()).digest()
@@ -77,7 +79,8 @@ def connect_with_verified_host_key(
             password=password,
             passphrase=passphrase,
             port=connection_port,
-            key_filename=key_filename,  # type: ignore[arg-type]  # paramiko accepts list[str]; types-paramiko declares str | None
+            # Paramiko accepts list[str]; types-paramiko declares str | None.
+            key_filename=key_filename,  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
             sock=connection_socket,
             compress=compress,
             allow_agent=allow_agent,

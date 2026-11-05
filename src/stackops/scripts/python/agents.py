@@ -4,7 +4,7 @@ import shutil
 from collections.abc import Callable, Generator
 from contextlib import chdir, contextmanager
 from pathlib import Path
-from typing import Annotated, Final, Literal, TypeAlias, cast, get_args
+from typing import Annotated, Final, Literal, TypeAlias, cast, get_args, override
 
 import typer
 from stackops.utils.cli_utils.interaction import configure_interaction, is_interactive, require_interactive
@@ -71,6 +71,7 @@ _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
 
 
 class _PanelOrderedAgentsGroup(TyperGroup):
+    @override
     def list_commands(self, ctx: object) -> list[str]:
         declared_positions = {name: position for position, name in enumerate(_AGENTS_COMMAND_PANEL_ORDER)}
         return sorted(self.commands, key=lambda name: declared_positions.get(name, len(declared_positions)))
@@ -158,7 +159,7 @@ def _parse_init_config_agents(*, raw_value: str) -> tuple[CONFIG_AGENTS, ...]:
         if part in seen_agents:
             continue
         seen_agents.add(part)
-        resolved_agents.append(part)
+        resolved_agents.append(cast(CONFIG_AGENTS, part))
     return tuple(resolved_agents)
 
 
@@ -456,7 +457,8 @@ def run_interactive(
                 resolved_agent = _resolve_interactive_agent(agent=agent)
                 command = _interactive_agent_command(agent=resolved_agent, initial_prompt=initial_prompt)
 
-            command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)
+            # Both branch types are included in _apply_headroom's accepted agent union.
+            command = _apply_headroom(command=command, agent=resolved_agent, headroom=headroom)  # ty: ignore[invalid-argument-type]
             if sandbox != SandboxBackend.NONE:
                 from stackops.scripts.python.helpers.helpers_agents.agents_sandbox import resolve_sandbox_access
                 from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell

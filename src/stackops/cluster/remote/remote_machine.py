@@ -1,7 +1,7 @@
 
 import inspect
 from types import FunctionType
-from typing import Callable
+from typing import Callable, override
 from typing import cast
 from pathlib import Path
 from datetime import datetime
@@ -47,6 +47,7 @@ class RemoteMachine:
         self.results_downloaded: bool = False
         self.results_path: Path | None = None
 
+    @override
     def __repr__(self) -> str:
         ssh_repr = self.ssh.get_remote_repr(add_machine=True) if self.ssh else (self.config.ssh_host or "local")
         return f"RemoteMachine({ssh_repr})"
@@ -66,9 +67,9 @@ class RemoteMachine:
         file_manager_data = d["file_manager"]
         if not isinstance(file_manager_data, dict):
             raise TypeError("file_manager must be a dict")
-        rm.config = RemoteStackOpsConfig.from_dict(config_data)
-        rm.job_params = JobParams.from_dict(job_params_data)
-        rm.file_manager = FileManager.from_dict(file_manager_data)
+        rm.config = RemoteStackOpsConfig.from_dict(cast(dict[str, object], config_data))
+        rm.job_params = JobParams.from_dict(cast(dict[str, object], job_params_data))
+        rm.file_manager = FileManager.from_dict(cast(dict[str, object], file_manager_data))
         kwargs_raw = d.get("kwargs")
         rm.kwargs = dict(kwargs_raw) if isinstance(kwargs_raw, dict) else {}
         data_raw = d.get("data")

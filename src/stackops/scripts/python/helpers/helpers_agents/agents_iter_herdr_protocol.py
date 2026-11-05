@@ -185,7 +185,7 @@ def _required_status(*, mapping: JsonObject, key: str) -> HerdrStatus:
     value = _required_string(mapping=mapping, key=key)
     match value:
         case "blocked" | "done" | "idle" | "unknown" | "working":
-            return value
+            return cast(HerdrStatus, value)
         case _:
             raise HerdrProtocolError(f"Herdr JSON response included unknown {key} {value!r}.")
 

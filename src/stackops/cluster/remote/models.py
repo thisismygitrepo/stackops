@@ -207,7 +207,7 @@ class RemoteStackOpsConfig:
     @staticmethod
     def from_dict(d: dict[str, object]) -> "RemoteStackOpsConfig":
         wl_raw = d.get("workload_params")
-        wl = WorkloadParams.from_dict(wl_raw) if isinstance(wl_raw, dict) else None
+        wl = WorkloadParams.from_dict(cast(dict[str, object], wl_raw)) if isinstance(wl_raw, dict) else None
         return RemoteStackOpsConfig(
             job_id=str(d.get("job_id", "")), base_dir=str(d.get("base_dir", "~/tmp_results/remote_machines/jobs")), description=str(d.get("description", "")), ssh_host=str(d["ssh_host"]) if d.get("ssh_host") else None,
             copy_repo=bool(d.get("copy_repo", False)), update_repo=bool(d.get("update_repo", False)), install_repo=bool(d.get("install_repo", False)), data=_coerce_string_list(d.get("data", [])),

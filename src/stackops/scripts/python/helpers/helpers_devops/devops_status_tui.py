@@ -1,5 +1,6 @@
 import socket
 from datetime import datetime
+from typing import override
 
 from rich.text import Text
 from textual import events, on, work
@@ -57,6 +58,7 @@ class StatusApp(App[None]):
         self.checked = 0
         self.sub_title = socket.gethostname()
 
+    @override
     def compose(self) -> ComposeResult:
         yield Header()
         with Horizontal(id="toolbar"):

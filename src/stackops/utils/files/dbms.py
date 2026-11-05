@@ -1,5 +1,5 @@
 import time
-from typing import Any, Callable
+from typing import Any, Callable, override
 
 import polars as pl
 
@@ -20,7 +20,8 @@ class DBMS:
     def from_local_db(path: OPLike = None, echo: bool = False, share_across_threads: bool = False, pool_size: int = 5, **kwargs: Any):
         return DBMS(engine=DBMS.make_sql_engine(path=path, echo=echo, share_across_threads=share_across_threads, pool_size=pool_size, **kwargs))
 
-    def __repr__(self): return f"DataBase @ {self.eng}"
+    @override
+    def __repr__(self) -> str: return f"DataBase @ {self.eng}"
     def close(self, sleep: int = 2):
         self.eng.pool.dispose()
         self.eng.dispose()

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import override
 
 from textual import on, work
 from textual.app import App, ComposeResult
@@ -40,6 +41,7 @@ class DoctorApp(App[None]):
         self.complete = False
         self.sub_title = str(self.doctor_directory)
 
+    @override
     def compose(self) -> ComposeResult:
         yield Header()
         yield DoctorBrowser(initial_agent=self.doctor_initial_agent, resource_focuses=self.doctor_focuses)

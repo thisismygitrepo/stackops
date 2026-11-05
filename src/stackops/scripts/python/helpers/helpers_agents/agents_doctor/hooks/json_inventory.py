@@ -52,7 +52,7 @@ def collect_hook_mapping(*, source: HookSource, mapping: dict[str, object], stat
     value: object = mapping
     for component in source.selector:
         if isinstance(component, str) and isinstance(value, dict):
-            selected = value
+            selected = cast(dict[str, object], value)
             if component not in selected:
                 return HookInventory((), ())
             value = selected[component]

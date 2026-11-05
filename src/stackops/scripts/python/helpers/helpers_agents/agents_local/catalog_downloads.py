@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
 from html.parser import HTMLParser
+from typing import override
 
 import requests
 
@@ -23,6 +24,7 @@ class _DownloadSizeParser(HTMLParser):
         self._size: str | None = None
         self._parts: list[str] = []
 
+    @override
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag != "a":
             return
@@ -35,12 +37,14 @@ class _DownloadSizeParser(HTMLParser):
                 self._size = size
                 self._parts = []
 
+    @override
     def handle_data(self, data: str) -> None:
         if self._size is not None:
             value = data.strip()
             if value:
                 self._parts.append(value)
 
+    @override
     def handle_endtag(self, tag: str) -> None:
         if tag != "a" or self._size is None:
             return

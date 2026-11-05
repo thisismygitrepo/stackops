@@ -72,7 +72,7 @@ def check_grepai_config_is_local(project_root: Path) -> SemanticFailure | None:
 def parse_grepai_output(stdout: str, project_root: Path) -> list[SemanticHit] | SemanticFailure:
     try:
         payload = cast(list[GrepaiRecord] | GrepaiError, json.loads(stdout))
-        if isinstance(payload, dict):
+        if not isinstance(payload, list):
             return SemanticFailure(backend="grepai", stage="search", message=payload["error"])
         return [
             SemanticHit(
