@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Final, cast
 
 from stackops.scripts.python.ai.scripts.constants import (
-    CheckerName,
     TYPE_CHECK_TOOL_NAMES,
+    CheckerName,
 )
 from stackops.scripts.python.ai.scripts.models_core import REPORTS_DIR, ToolSpec
 

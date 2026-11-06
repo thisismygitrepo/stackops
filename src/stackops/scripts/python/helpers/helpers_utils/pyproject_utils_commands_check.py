@@ -100,7 +100,8 @@ def type_check(
         cwd=repo_root,
         check=False,
         env=build_type_check_environment(
-            excluded_directories=excluded_directories, latest=latest,
+            excluded_directories=excluded_directories,
+            latest=latest,
             selected_tools=selected_tools,
         ),
     )

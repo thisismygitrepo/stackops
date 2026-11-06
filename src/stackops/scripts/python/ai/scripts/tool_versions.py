@@ -90,7 +90,8 @@ def build_tool_version_specs(
         ),
     )
     return tuple(
-        spec for spec in specs
+        spec
+        for spec in specs
         if spec.title == "Cleanpy" or spec.title.lower() in selected_tools
     )
 

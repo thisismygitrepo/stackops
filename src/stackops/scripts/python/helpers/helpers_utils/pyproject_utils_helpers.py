@@ -1,7 +1,10 @@
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-from stackops.scripts.python.ai.scripts.constants import CheckerName, TYPE_CHECK_TOOLS_ENV_VAR
+from stackops.scripts.python.ai.scripts.constants import (
+    TYPE_CHECK_TOOLS_ENV_VAR,
+    CheckerName,
+)
 
 ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
 InitProjectGroupKey: TypeAlias = Literal["p", "t", "types", "l", "i", "d"]
