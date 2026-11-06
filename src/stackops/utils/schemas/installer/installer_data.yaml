@@ -3896,6 +3896,37 @@ installers:
         linux: bun install -g agent-browser; bun install -g playwright install-deps chromium
         darwin: bun install -g agent-browser; bun install -g playwright install-deps chromium
         windows: bun install -g agent-browser; bun install -g playwright install-deps chromium
+  - appName: agent-desktop
+    license: Apache-2.0
+    repoURL: CMD
+    doc: Vercel CLI for AI agents to inspect and control desktop apps through the OS accessibility tree.
+    categoryLabels:
+      - ai-agents-assistants
+    fileNamePattern:
+      amd64:
+        linux: bun install -g agent-desktop
+        darwin: bun install -g agent-desktop
+        windows: bun install -g agent-desktop
+      arm64:
+        linux: bun install -g agent-desktop
+        darwin: bun install -g agent-desktop
+        windows: bun install -g agent-desktop
+  - appName: windows-mcp
+    license: MIT License
+    repoURL: https://github.com/CursorTouch/Windows-MCP
+    doc: MCP server for AI agents to inspect and control Windows desktop apps.
+    categoryLabels:
+      - ai-agents-assistants
+      - windows-platform
+    fileNamePattern:
+      amd64:
+        linux: null
+        darwin: null
+        windows: uv tool install --python 3.14 windows-mcp
+      arm64:
+        linux: null
+        darwin: null
+        windows: null
   - appName: browser-use
     license: MIT License
     repoURL: CMD
