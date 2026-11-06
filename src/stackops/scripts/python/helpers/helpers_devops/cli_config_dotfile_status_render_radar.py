@@ -31,7 +31,7 @@ def _describe_category(category: VerdictCategory) -> str:
 
 
 def render_radar(plans: list[CollectEntryPlan], current_os: OsName, expand: bool) -> Panel:
-    ordered_categories = cast(tuple[VerdictCategory, ...], get_args(VerdictCategory.__value__))
+    ordered_categories = cast(tuple[VerdictCategory, ...], get_args(VerdictCategory.__value__))  # pylint: disable=no-member  # PEP 695 aliases expose __value__.
     categories: Counter[VerdictCategory] = Counter(verdict_category(plan.verdict) for plan in plans)
     summary = Text(" · ".join(f"""{categories[category]} {_describe_category(category)}""" for category in ordered_categories if categories[category] > 0), style="dim")
     untracked = [plan for plan in plans if verdict_category(plan.verdict) in ("collectable", "skipped")]

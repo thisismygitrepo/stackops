@@ -12,6 +12,7 @@ DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES: tuple[str, ...] = (
     ".ai",
     ".links",
     ".venv",
+    "build",
 )
 INIT_PROJECT_GROUP_KEYS: tuple[InitProjectGroupKey, ...] = (
     "p",

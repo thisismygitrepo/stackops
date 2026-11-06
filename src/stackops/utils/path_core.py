@@ -56,7 +56,7 @@ def delete_path(target: PathLike, *, verbose: bool) -> None:
     _emit(f"🗑️ ❌ DELETED {target_path!r}.", verbose=verbose)
 
 def _is_user_admin() -> bool:
-    if os.name == "nt":
+    if sys.platform == "win32":
         import ctypes
 
         try:

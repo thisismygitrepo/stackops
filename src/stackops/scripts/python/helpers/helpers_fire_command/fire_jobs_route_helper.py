@@ -23,7 +23,7 @@ def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) 
     if choice_file.suffix == ".py":
         from stackops.scripts.python.helpers.helpers_fire_command.file_wrangler import parse_pyfile
         options, func_args = parse_pyfile(file_path=str(choice_file))
-        choice_function_tmp = choose_from_options(msg="Choose a function to run", options=options, tv=True, multi=False)
+        choice_function_tmp: object = choose_from_options(msg="Choose a function to run", options=options, tv=True, multi=False)
         if choice_function_tmp is None:
             return None, choice_file, kwargs_dict
         assert isinstance(choice_function_tmp, str), f"choice_function must be a string. Got {type(choice_function_tmp)}"

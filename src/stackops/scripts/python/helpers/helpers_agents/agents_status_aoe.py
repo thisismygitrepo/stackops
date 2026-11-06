@@ -81,7 +81,7 @@ def read_aoe_inventory(*, options: StatusOptions) -> tuple[list[JsonObject], lis
         running = session_runtime is not None and session_runtime.get("state") != "dead"
         session: JsonObject = {**entry, "name": name, "id": session_id, "saved": not running, "workspaces": [], "window_count": int(running)}
         sessions.append(session)
-        if not running or session_runtime is None or options.sessions and not {name, title, session_id}.intersection(options.sessions):
+        if session_runtime is None or not running or options.sessions and not {name, title, session_id}.intersection(options.sessions):
             continue
         panes.append({
             **entry, **session_runtime, "session": name, "window_id": session_id, "name": title,

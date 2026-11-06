@@ -80,7 +80,7 @@ class DepoisonApp(App[int]):
         self.set_cleanup_busy(True)
         self.scan_inventory()
 
-    @work
+    @work()
     async def scan_inventory(self) -> None:
         try:
             self.cleanup_context = await asyncio.to_thread(create_doctor_context, working_directory=Path(self.cleanup_selection.directory))
@@ -134,7 +134,7 @@ class DepoisonApp(App[int]):
             self.query_one("#cleanup-status", Static).update("Rechecking selected resources and building file diffs…")
             self.review_cleanup(inventory, self.cleanup_context)
 
-    @work
+    @work()
     async def review_cleanup(self, inventory: HookInventory, context: DoctorContext) -> None:
         try:
             self.cleanup_plan = await asyncio.to_thread(
@@ -157,7 +157,7 @@ class DepoisonApp(App[int]):
             self.query_one(CleanupResourceTable).focus()
             self.query_one("#cleanup-status", Static).update("Review closed. No changes applied.")
 
-    @work
+    @work()
     async def apply_reviewed_cleanup(self, plan: CleanupPlan, context: DoctorContext) -> None:
         try:
             result = await asyncio.to_thread(apply_cleanup_plan, plan=plan, home_directory=context.home_directory)

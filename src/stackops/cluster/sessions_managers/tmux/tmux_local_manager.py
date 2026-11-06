@@ -134,9 +134,7 @@ class TmuxLocalManager:
         for manager in self.managers:
             session_name = manager.session_name or "default"
             session_status = check_tmux_session_status(session_name)
-            commands_status: dict[str, CommandStatus] = {}
-            if manager.layout_config:
-                commands_status = build_unknown_commands_status(manager.layout_config)
+            commands_status = build_unknown_commands_status(manager.layout_config)
             summary: TmuxLayoutSummary = {
                 "total_commands": len(commands_status),
                 "running_commands": sum(1 for status in commands_status.values() if status.get("running", False)),

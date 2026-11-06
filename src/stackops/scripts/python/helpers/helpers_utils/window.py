@@ -98,6 +98,7 @@ Minimized: {entry.minimized}"""
                 raise typer.Exit(code=1)
             selected_window = labels[selected_label]
 
+        resolved_action: WindowAction
         if action is None:
             from stackops.scripts.python.helpers.helpers_window.constants import ACTION_DESCRIPTIONS
 
@@ -112,13 +113,15 @@ Minimized: {entry.minimized}"""
             )
             if selected_action is None:
                 raise typer.Exit(code=1)
-            action = next(candidate for candidate in ACTION_DESCRIPTIONS if candidate == selected_action)
-
-        selected_window.apply_action(action)
-        if json_output:
-            typer.echo(json.dumps({"status": "completed", "id": selected_window.id, "action": action, "app": selected_window.app, "title": selected_window.title}))
+            resolved_action = next(candidate for candidate in ACTION_DESCRIPTIONS if candidate == selected_action)
         else:
-            typer.echo(f"""{action}: {selected_window.app} — {selected_window.title or '(untitled)'}""")
+            resolved_action = action
+
+        selected_window.apply_action(resolved_action)
+        if json_output:
+            typer.echo(json.dumps({"status": "completed", "id": selected_window.id, "action": resolved_action, "app": selected_window.app, "title": selected_window.title}))
+        else:
+            typer.echo(f"""{resolved_action}: {selected_window.app} — {selected_window.title or '(untitled)'}""")
     except FileNotFoundError as error:
         typer.echo("Error: interactive window selection requires Television (tv) on PATH.", err=True)
         raise typer.Exit(code=1) from error

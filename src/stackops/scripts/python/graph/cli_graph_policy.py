@@ -1,6 +1,6 @@
 """Static CLI signature policy enforced at graph build time."""
 
-from typing import Any
+from typing import Any, cast
 
 CANONICAL_SHORTS: dict[str, str] = {
     "--all": "-a",
@@ -91,7 +91,10 @@ def _iter_commands(node: dict[str, Any]) -> list[dict[str, Any]]:
     commands: list[dict[str, Any]] = []
     if node.get("kind") == "command":
         commands.append(node)
-    kids: dict[str, dict[str, object]] | list[dict[str, object]] | None = node.get("children")
+    kids = cast(
+        dict[str, dict[str, object]] | list[dict[str, object]] | None,
+        node.get("children"),
+    )
     if isinstance(kids, dict):
         kids = list(kids.values())
     elif kids is None:
@@ -102,7 +105,7 @@ def _iter_commands(node: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _option_decls(param: dict[str, Any]) -> tuple[list[str], list[str]]:
-    decls: list[str] = param.get("typer", {}).get("param_decls", [])
+    decls = cast(list[str], param.get("typer", {}).get("param_decls", []))
     longs = [d for d in decls if d.startswith("--")]
     shorts = [d for d in decls if d.startswith("-") and not d.startswith("--")]
     return longs, shorts
@@ -111,7 +114,7 @@ def _option_decls(param: dict[str, Any]) -> tuple[list[str], list[str]]:
 def validate_cli_graph(payload: dict[str, Any]) -> None:
     violations: list[str] = []
     for node in _iter_commands(payload["root"]):
-        path: str = node["fullPath"]
+        path = cast(str, node["fullPath"])
         seen_shorts: dict[str, str] = {}
         seen_longs: dict[str, str] = {}
         for param in node.get("signature", {}).get("parameters", []):
@@ -121,7 +124,7 @@ def validate_cli_graph(payload: dict[str, Any]) -> None:
             longs, shorts = _option_decls(param)
             primary_long = longs[0].split("/")[0] if longs else ""
             has_secondary = any("/" in d for d in longs + shorts)
-            name: str = param["name"]
+            name = cast(str, param["name"])
 
             if has_secondary and (path, primary_long) not in PAIRED_OPTION_ALLOWLIST:
                 violations.append(f"{path}: {name} declares paired flags; expose only the flag that changes the default")

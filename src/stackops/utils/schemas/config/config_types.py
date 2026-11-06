@@ -19,5 +19,6 @@ class StackOpsConfigValues(TypedDict, total=False):
 _StackOpsConfigHeader = TypedDict("_StackOpsConfigHeader", {"$schema": NotRequired[str], "version": str})
 
 
-class StackOpsConfig(_StackOpsConfigHeader, StackOpsConfigValues):
+# Pylint cannot infer the functional TypedDict required for the "$schema" key.
+class StackOpsConfig(_StackOpsConfigHeader, StackOpsConfigValues):  # pylint: disable=inherit-non-class,inconsistent-mro
     pass

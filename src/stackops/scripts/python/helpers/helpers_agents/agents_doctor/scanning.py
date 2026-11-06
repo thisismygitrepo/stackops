@@ -106,7 +106,7 @@ def _skill_name(*, skill_path: Path) -> str:
     name_match = re.search(r"^name:\s*(?P<name>.+?)\s*$", frontmatter_match.group("body"), flags=re.MULTILINE)
     if name_match is None:
         return skill_path.parent.name
-    return name_match.group("name").strip().strip("\"'")
+    return cast(str, name_match.group("name")).strip().strip("\"'")
 
 
 def scan_skill_roots(*, roots: Sequence[tuple[DoctorOrigin, Path, str]], recursive: bool, state: DoctorResourceState) -> tuple[DoctorResource, ...]:

@@ -141,10 +141,10 @@ class CleanupBrowser(Vertical):
         if event.button.id == "cleanup-clear":
             self.cleanup_selected.clear()
         else:
-            self.cleanup_selected.update(
-                entry.removal for index in self.cleanup_visible
-                if (entry := self.cleanup_inventory.entries[index]).removal is not None and entry.origin in ("local", "global")
-            )
+            for index in self.cleanup_visible:
+                entry = self.cleanup_inventory.entries[index]
+                if entry.removal is not None and entry.origin in ("local", "global"):
+                    self.cleanup_selected.add(entry.removal)
         self.update_marks()
 
     def update_marks(self) -> None:

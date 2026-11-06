@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 import zipfile
 import typer
 
@@ -27,7 +27,7 @@ def export_dotfiles(
         raise typer.BadParameter("--serve and --ssh cannot be combined.")
     if ssh and remote is None:
         require_interactive("Choose SSH destination; supply --remote USER@HOST")
-        remote = typer.prompt("Remote destination (user@host)")
+        remote = cast(str, typer.prompt("Remote destination (user@host)"))
     output_path = output.expanduser().absolute() if output is not None else None
     if output_path is not None and output_path.exists():
         raise typer.BadParameter(f"Output already exists: {output_path}")
@@ -132,7 +132,7 @@ def import_dotfiles(
             raise typer.BadParameter("SSH import uses --remote; --url and archive password inputs do not apply.")
         if remote is None:
             require_interactive("Choose SSH source; supply --remote USER@HOST")
-            remote = typer.prompt("Remote source (user@host)")
+            remote = cast(str, typer.prompt("Remote source (user@host)"))
         result = subprocess.run(["cloud", "transfer", f"{remote}:^", str(DOTFILES_ROOT), "-z"], check=False)
         if result.returncode != 0:
             raise typer.Exit(code=result.returncode)
@@ -141,7 +141,7 @@ def import_dotfiles(
 
     if url is None:
         require_interactive("Choose an encrypted archive; supply --url URL_OR_PATH")
-        url = typer.prompt(f"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) ")
+        url = cast(str, typer.prompt(f"""Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) """))
     pwd = read_secret_input(value=None, file=password_file, env=password_env, prompt="Password for zip decryption")
     assert url is not None
     try:

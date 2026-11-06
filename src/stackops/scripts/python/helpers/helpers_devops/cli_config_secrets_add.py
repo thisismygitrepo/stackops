@@ -3,7 +3,7 @@ import sys
 from contextlib import redirect_stdout
 from functools import partial
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 import typer
 
@@ -87,6 +87,6 @@ def _print_input_schema() -> None:
     from stackops.utils.path_reference import get_path_reference_path
 
     schema_path = get_path_reference_path(module=secrets_assets, path_reference=secrets_assets.SECRETS_SCHEMA_PATH_REFERENCE)
-    catalog_schema: dict[str, object] = json.loads(schema_path.read_text(encoding="utf-8"))
+    catalog_schema = cast(dict[str, object], json.loads(schema_path.read_text(encoding="utf-8")))
     input_schema = {"$schema": catalog_schema["$schema"], "$ref": "#/definitions/login", "definitions": catalog_schema["definitions"]}
     typer.echo(json.dumps(input_schema, indent=2))

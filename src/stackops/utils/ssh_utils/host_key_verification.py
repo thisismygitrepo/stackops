@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import socket
 import stat
+import sys
 from typing import override
 
 import paramiko
@@ -123,7 +124,7 @@ def _resolve_configured_path(value: str) -> Path | None:
 
 @contextmanager
 def _exclusive_file_lock(file_descriptor: int) -> Generator[None]:
-    if os.name == "nt":
+    if sys.platform == "win32":
         import msvcrt
 
         os.lseek(file_descriptor, 0, os.SEEK_SET)

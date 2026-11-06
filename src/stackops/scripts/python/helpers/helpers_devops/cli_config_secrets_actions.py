@@ -180,13 +180,14 @@ def _read_secrets_json_payload(secrets_path: Path) -> dict[str, object]:
     import json
 
     try:
-        payload = json.loads(secrets_path.read_text(encoding="utf-8"))
+        payload: object = json.loads(secrets_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"""Invalid JSON in {secrets_path}: {exc.msg} at line {exc.lineno}, column {exc.colno}.""") from exc
     if not isinstance(payload, dict):
         raise ValueError(f"""Secrets file must contain a JSON object: {secrets_path}""")
-    _secrets_entries(payload)
-    return payload
+    secrets_file = cast(dict[str, object], payload)
+    _secrets_entries(secrets_file)
+    return secrets_file
 
 
 def _secrets_entries(secrets_file: Mapping[str, object]) -> list[object]:

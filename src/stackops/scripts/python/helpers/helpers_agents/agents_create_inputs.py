@@ -248,7 +248,8 @@ def validate_agents_output_dir_cleanup(*, repo_root: Path, agents_dir_obj: Path)
     except json.JSONDecodeError as error:
         raise ValueError(f"Invalid StackOps agents ownership manifest: {manifest_path}") from error
     match manifest:
-        case {"agents_dir": str() as recorded_agents_dir}:
+        # Mapping patterns reject non-mappings; Pyrefly incorrectly infers a Never lookup.
+        case {"agents_dir": str() as recorded_agents_dir}:  # pyrefly: ignore[not-callable]
             recorded_agents_dir_resolved = Path(recorded_agents_dir).expanduser().resolve()
         case _:
             raise ValueError(f"Invalid StackOps agents ownership manifest: {manifest_path}")

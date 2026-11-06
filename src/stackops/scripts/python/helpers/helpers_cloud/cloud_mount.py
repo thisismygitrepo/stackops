@@ -152,11 +152,13 @@ def mount(
             if system_name == "Windows":
                 print("🪟 Creating mount directory on Windows...")
                 mount_loc_path.parent.mkdir(parents=True, exist_ok=True)
-            elif system_name == "Linux" or system_name == "Darwin":
+            elif system_name in ("Linux", "Darwin"):
                 printable_name = "Linux" if system_name == "Linux" else "macOS"
                 print(f"🐧 Creating mount directory on {printable_name}...")
                 try:
-                    recovered = prepare_unix_mount_directory(mount_path=mount_loc_path, system_name=system_name)
+                    recovered = prepare_unix_mount_directory(
+                        mount_path=mount_loc_path, system_name="Linux" if system_name == "Linux" else "Darwin"
+                    )
                     if recovered:
                         console.print(Text(f"""Detached disconnected mount at {mount_loc_path}.""", style="yellow"))
                     if not mount_loc_path.is_mount():
@@ -234,10 +236,10 @@ def mount(
         print("❌ Error: Unsupported platform")
         raise typer.Exit(code=1)
 
-    launcher = "rclone" if daemon else "mprocs" if system_name == "Windows" else "tmux"
+    launcher = "mprocs" if system_name == "Windows" else "tmux"
     try:
         for command in launch_commands:
-            subprocess.run(command, shell=not daemon, check=True)
+            subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError as error:
         error_console.print(Text(f"""❌ Cloud mount could not launch {launcher} (exit code {error.returncode}).
 Check the command output above and verify that {launcher} is installed and available in this terminal.""", style="red"))
@@ -247,7 +249,7 @@ Check the command output above and verify that {launcher} is installed and avail
         raise typer.Exit(code=1) from None
     # draw success box dynamically
     title1 = "✅ Cloud mount command completed successfully"
-    title2 = "Mounts are running in the background." if daemon else "Returned from cloud mount session."
+    title2 = "Returned from cloud mount session."
     console.print(Panel(f"{title1}\n{title2}", title="Success", border_style="green"))
     return []
 

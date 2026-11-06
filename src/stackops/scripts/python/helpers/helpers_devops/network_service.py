@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import json
-import os
 from pathlib import Path
 import socket
 import subprocess
@@ -30,11 +29,15 @@ class ServiceProcess:
 def start_service(name: str, arguments: list[str], background: bool, environment: dict[str, str] | None) -> ServiceProcess:
     directory = Path.home() / ".cache" / "stackops" / "network-services"
     directory.mkdir(parents=True, exist_ok=True)
+    if sys.platform == "win32":
+        creationflags = (subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP) if background else 0
+    else:
+        creationflags = 0
     with tempfile.NamedTemporaryFile(prefix=f"{name}-", suffix=".log", dir=directory, delete=False) as log:
         process = subprocess.Popen(
             arguments, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-            env=environment, start_new_session=background and os.name != "nt",
-            creationflags=(subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP) if background and os.name == "nt" else 0,
+            env=environment, start_new_session=background and sys.platform != "win32",
+            creationflags=creationflags,
         )
         return ServiceProcess(name=name, process=process, log_path=Path(log.name))
 

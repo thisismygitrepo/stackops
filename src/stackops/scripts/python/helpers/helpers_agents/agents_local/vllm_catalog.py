@@ -53,7 +53,7 @@ def discover_vllm_models(
         with requests.get(url, params=params, timeout=timeout) as response:
             response.raise_for_status()
             payload = cast(object, response.json())
-            url = response.links.get("next", {}).get("url")
+            url = cast(dict[str, dict[str, str]], response.links).get("next", {}).get("url")
         params = {}
         if not isinstance(payload, list):
             raise ValueError("Hugging Face model catalog must be a list.")

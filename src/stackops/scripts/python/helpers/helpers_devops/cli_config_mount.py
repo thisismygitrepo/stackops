@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, TypeAlias, TYPE_CHECKING
+from typing import Annotated, Literal, TypeAlias, TYPE_CHECKING, cast
 from pathlib import Path
 
 import typer
@@ -127,7 +127,7 @@ def mount_interactive() -> None:
         if backend_str not in {"mount", "dislocker", "udisksctl"}:
             typer.echo(f"Invalid backend: {backend_str}")
             raise typer.Exit(2)
-        backend: MountBackend = backend_str  # type: ignore[assignment]
+        backend = cast(MountBackend, backend_str)
         match platform_name:
             case "Linux":
                 mount_linux(select_linux_partition(entries, entry), mount_point, read_only, backend, None)

@@ -43,13 +43,6 @@ def type_check(
 
     try:
         repo_root = resolve_pyproject_root(Path(repo))
-        (
-            default_excluded_directories,
-            _skipped_default_excluded_directories,
-        ) = resolve_type_check_excluded_directories(
-            repo_root=repo_root,
-            excluded_directories=list(DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES),
-        )
         explicit_excluded_directories = [] if exclude is None else exclude
         (
             resolved_explicit_excluded_directories,
@@ -72,7 +65,7 @@ def type_check(
     excluded_directories = tuple(
         dict.fromkeys(
             (
-                *default_excluded_directories,
+                *DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES,
                 *resolved_explicit_excluded_directories,
             )
         )

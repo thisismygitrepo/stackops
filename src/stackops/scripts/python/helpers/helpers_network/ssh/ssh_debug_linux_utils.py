@@ -4,6 +4,7 @@ import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_common import ListenerAddressFamily, run_argv
 from stackops.scripts.python.helpers.helpers_network.ssh.ssh_debug_models import SSHDebugCheck
@@ -94,7 +95,7 @@ def _is_external_address(address: str) -> bool | None:
 
 
 def _listener_owner(process_text: str) -> tuple[bool | None, tuple[str, ...]]:
-    owner_names = tuple(re.findall(r'\("([^"]+)"', process_text))
+    owner_names = tuple(cast(list[str], re.findall(r'\("([^"]+)"', process_text)))
     if not owner_names:
         return None, ()
     if "sshd" in owner_names:

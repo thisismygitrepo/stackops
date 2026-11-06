@@ -5,7 +5,7 @@ Load and normalize CLI graph data for the command navigator.
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from stackops.scripts.python.graph.visualize.helpers_navigator.data_models import (
     CommandInfo,
@@ -69,34 +69,37 @@ def _build_node(node: dict[str, Any], parent_tokens: list[str], parent_name: str
 
 def _node_description(node: dict[str, Any]) -> str:
     if node.get("kind") == "group":
-        return (
+        return cast(
+            str,
             node.get("app", {}).get("help")
             or node.get("help")
             or node.get("doc")
-            or node.get("name", "")
+            or node.get("name", ""),
         )
-    return (
+    return cast(
+        str,
         node.get("short_help")
         or node.get("help")
         or node.get("doc")
-        or node.get("name", "")
+        or node.get("name", ""),
     )
 
 
 def _node_long_description(node: dict[str, Any], fallback: str) -> str:
     if node.get("kind") == "group":
-        return (
+        return cast(
+            str,
             node.get("app", {}).get("help")
             or node.get("help")
             or node.get("doc")
-            or fallback
+            or fallback,
         )
-    return node.get("help") or node.get("doc") or fallback
+    return cast(str, node.get("help") or node.get("doc") or fallback)
 
 
 def _node_module_path(node: dict[str, Any]) -> str:
     source = node.get("source") or {}
-    return source.get("dispatches_to") or source.get("module") or ""
+    return cast(str, source.get("dispatches_to") or source.get("module") or "")
 
 
 def _parse_signature(signature: dict[str, Any] | None) -> list[ArgumentInfo]:

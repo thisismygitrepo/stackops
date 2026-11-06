@@ -68,10 +68,17 @@ def _select_picker_labels(*, option_to_preview: dict[str, str], multi: bool, mis
     from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
 
     try:
+        if multi:
+            return choose_from_dict_with_preview(
+                options_to_preview_mapping=option_to_preview,
+                extension=PICKER_PREVIEW_EXTENSION,
+                multi=True,
+                preview_size_percent=PICKER_PREVIEW_SIZE_PERCENT,
+            )
         return choose_from_dict_with_preview(
             options_to_preview_mapping=option_to_preview,
             extension=PICKER_PREVIEW_EXTENSION,
-            multi=multi,
+            multi=False,
             preview_size_percent=PICKER_PREVIEW_SIZE_PERCENT,
         )
     except FileNotFoundError:

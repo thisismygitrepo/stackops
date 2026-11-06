@@ -50,10 +50,10 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
         label="Agent", default=selection.agent,
         choices=("all", *DOCTOR_DEFINITION_BY_AGENT, *DOCTOR_AGENT_ALIASES),
     )
-    directory: str = typer.prompt(
+    directory = cast(str, typer.prompt(
         "Workspace directory", default=selection.directory,
         value_proc=_validate_directory,
-    )
+    ))
     guidance = Table.grid(padding=(0, 2))
     guidance.add_column(style="bold cyan", no_wrap=True)
     guidance.add_column(overflow="fold")
@@ -66,7 +66,7 @@ def prompt_cleanup_selection(*, console: Console, selection: CleanupSelection) -
         label="Scope", default=selection.scope, choices=get_args(CleanupScope),
     ))
     while True:
-        resource: str = typer.prompt("Resources", default=selection.resource)
+        resource = cast(str, typer.prompt("Resources", default=selection.resource))
         try:
             _focuses, include_workspace = resolve_cleanup_resources(requested_resources=resource)
             break
