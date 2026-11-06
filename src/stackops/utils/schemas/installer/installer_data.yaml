@@ -6018,3 +6018,18 @@ installers:
         linux: zellij-aarch64-unknown-linux-musl.tar.gz
         darwin: zellij-aarch64-apple-darwin.tar.gz
         windows: null
+  - appName: ntfy
+    license: Apache License 2.0 OR GPLv2 License
+    repoURL: https://github.com/binwiederhier/ntfy
+    doc: Send push notifications to your phone or desktop via HTTP PUT/POST; CLI to publish/subscribe and self-host the server
+    categoryLabels:
+      - email-communications
+    fileNamePattern:
+      amd64:
+        linux: ntfy_{version}_linux_amd64.tar.gz
+        darwin: ntfy_{version}_darwin_all.tar.gz
+        windows: ntfy_{version}_windows_amd64.zip
+      arm64:
+        linux: ntfy_{version}_linux_arm64.tar.gz
+        darwin: ntfy_{version}_darwin_all.tar.gz
+        windows: null
