@@ -7,6 +7,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from stackops.scripts.python.ai.scripts.constants import CheckerName
 from stackops.scripts.python.ai.scripts.models_config import build_uv_tool_command
 
 
@@ -26,8 +27,10 @@ class ToolVersionResolutionError(RuntimeError):
     pass
 
 
-def build_tool_version_specs(latest: bool) -> tuple[ToolVersionSpec, ...]:
-    return (
+def build_tool_version_specs(
+    latest: bool, selected_tools: tuple[CheckerName, ...]
+) -> tuple[ToolVersionSpec, ...]:
+    specs = (
         ToolVersionSpec(
             title="Cleanpy",
             command=(
@@ -85,6 +88,10 @@ def build_tool_version_specs(latest: bool) -> tuple[ToolVersionSpec, ...]:
                 "--version",
             ),
         ),
+    )
+    return tuple(
+        spec for spec in specs
+        if spec.title == "Cleanpy" or spec.title.lower() in selected_tools
     )
 
 

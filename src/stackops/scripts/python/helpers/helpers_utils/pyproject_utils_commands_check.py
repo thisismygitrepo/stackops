@@ -28,11 +28,20 @@ def type_check(
             help="Resolve and report the latest compatible lint and type-check tool versions for this run.",
         ),
     ] = False,
+    tools: Annotated[
+        str | None,
+        typer.Option(
+            "--tools",
+            "-t",
+            help="One tool or a comma-separated list: pyright, mypy, pylint, pyrefly, ty, ruff. Omit to run all tools.",
+        ),
+    ] = None,
 ) -> None:
     import subprocess
     import sys
 
     import stackops.scripts.python.ai.scripts as ai_scripts
+    from stackops.scripts.python.ai.scripts.models_config import parse_type_check_tools
     from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_helpers import (
         DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES,
         build_type_check_environment,
@@ -42,6 +51,7 @@ def type_check(
     from stackops.utils.path_reference import get_path_reference_path
 
     try:
+        selected_tools = parse_type_check_tools(tools)
         repo_root = resolve_pyproject_root(Path(repo))
         explicit_excluded_directories = [] if exclude is None else exclude
         (
@@ -90,7 +100,8 @@ def type_check(
         cwd=repo_root,
         check=False,
         env=build_type_check_environment(
-            excluded_directories=excluded_directories, latest=latest
+            excluded_directories=excluded_directories, latest=latest,
+            selected_tools=selected_tools,
         ),
     )
     if completed.returncode != 0:

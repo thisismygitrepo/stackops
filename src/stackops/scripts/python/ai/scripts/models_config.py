@@ -7,6 +7,10 @@ import tomllib
 from pathlib import Path
 from typing import Final, cast
 
+from stackops.scripts.python.ai.scripts.constants import (
+    CheckerName,
+    TYPE_CHECK_TOOL_NAMES,
+)
 from stackops.scripts.python.ai.scripts.models_core import REPORTS_DIR, ToolSpec
 
 
@@ -16,6 +20,18 @@ MYPY_EXCLUDE_PATTERN: Final[str] = r"(^|/|\\)gromit-mpx($|/|\\)"
 PYRIGHT_CONFIG_PATH: Final[Path] = Path("pyrightconfig.json")
 PYPROJECT_PATH: Final[Path] = Path("pyproject.toml")
 PYRIGHT_CONFIG_OVERRIDE_PATH: Final[Path] = Path(".pyright.type-check.override.json")
+
+
+def parse_type_check_tools(value: str | None) -> tuple[CheckerName, ...]:
+    if value is None:
+        return TYPE_CHECK_TOOL_NAMES
+    names = tuple(dict.fromkeys(name.strip() for name in value.split(",")))
+    invalid_names = tuple(name for name in names if name not in TYPE_CHECK_TOOL_NAMES)
+    if invalid_names:
+        invalid = ", ".join(repr(name) for name in invalid_names)
+        available = ", ".join(TYPE_CHECK_TOOL_NAMES)
+        raise ValueError(f"""Unknown tool(s): {invalid}. Choose from: {available}.""")
+    return cast(tuple[CheckerName, ...], names)
 
 
 def _remove_generated_file(path: Path) -> None:
@@ -174,6 +190,7 @@ def _ensure_pyright_config_override(excluded_directories: tuple[str, ...]) -> Pa
 def build_cleanup_commands(
     excluded_directories: tuple[str, ...],
     latest: bool,
+    selected_tools: tuple[CheckerName, ...],
 ) -> tuple[tuple[str, ...], ...]:
     excluded_patterns = tuple(
         _build_directory_regex(directory) for directory in excluded_directories
@@ -184,6 +201,8 @@ def build_cleanup_commands(
         command=cleanpy_command, option="--exclude", values=excluded_patterns
     )
     cleanpy_command.append(".")
+    if "ruff" not in selected_tools:
+        return (tuple(cleanpy_command),)
     ruff_fix_command = build_uv_tool_command(package="ruff", latest=latest)
     ruff_fix_command.extend(("ruff", "check", "--fix"))
     if len(excluded_directories) > 0:
@@ -204,6 +223,7 @@ def build_cleanup_commands(
 def build_checker_specs(
     excluded_directories: tuple[str, ...],
     latest: bool,
+    selected_tools: tuple[CheckerName, ...],
 ) -> tuple[ToolSpec, ...]:
     excluded_patterns = tuple(
         _build_directory_regex(directory) for directory in excluded_directories
@@ -212,7 +232,7 @@ def build_checker_specs(
     pyright_command = build_uv_tool_command(package="pyright", latest=latest)
     pyright_command.extend(("pyright", "--outputjson", "--threads", "10"))
     pyright_temporary_paths: tuple[Path, ...] = ()
-    if len(excluded_directories) > 0:
+    if "pyright" in selected_tools and len(excluded_directories) > 0:
         pyright_config_override_path = _ensure_pyright_config_override(
             excluded_directories
         )
@@ -270,7 +290,7 @@ def build_checker_specs(
             values=excluded_directories,
         )
     ruff_command.append(".")
-    return (
+    specs = (
         ToolSpec(
             slug="pyright",
             title="Pyright Type Checker",
@@ -320,3 +340,4 @@ def build_checker_specs(
             temporary_paths=(),
         ),
     )
+    return tuple(spec for spec in specs if spec.slug in selected_tools)

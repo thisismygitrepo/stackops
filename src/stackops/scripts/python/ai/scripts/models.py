@@ -1,8 +1,13 @@
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, TextIO
 
+from stackops.scripts.python.ai.scripts.constants import (
+    CheckerName,
+    TYPE_CHECK_TOOLS_ENV_VAR,
+)
 from stackops.scripts.python.ai.scripts import models_diagnostics as models_diagnostics_module
 from stackops.scripts.python.ai.scripts import (
     models_config as models_config_module,
@@ -124,14 +129,19 @@ TYPE_CHECK_EXCLUDED_DIRECTORIES: Final[tuple[str, ...]] = (
     load_type_check_excluded_directories()
 )
 LATEST_TYPE_CHECK_TOOLS: Final[bool] = load_latest_type_check_tools()
+SELECTED_TYPE_CHECK_TOOLS: Final[tuple[CheckerName, ...]] = (
+    models_config_module.parse_type_check_tools(os.environ.get(TYPE_CHECK_TOOLS_ENV_VAR))
+)
 TOOL_VERSION_SPECS: Final[tuple[ToolVersionSpec, ...]] = build_tool_version_specs(
-    latest=LATEST_TYPE_CHECK_TOOLS
+    latest=LATEST_TYPE_CHECK_TOOLS, selected_tools=SELECTED_TYPE_CHECK_TOOLS
 )
 CLEANUP_COMMANDS: Final[tuple[tuple[str, ...], ...]] = build_cleanup_commands(
-    excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES, latest=LATEST_TYPE_CHECK_TOOLS
+    excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES, latest=LATEST_TYPE_CHECK_TOOLS,
+    selected_tools=SELECTED_TYPE_CHECK_TOOLS,
 )
 CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = build_checker_specs(
-    excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES, latest=LATEST_TYPE_CHECK_TOOLS
+    excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES, latest=LATEST_TYPE_CHECK_TOOLS,
+    selected_tools=SELECTED_TYPE_CHECK_TOOLS,
 )
 
 __all__ = (
