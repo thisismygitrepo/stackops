@@ -34,6 +34,8 @@ def show_registration_summary(registration: "BackupRegistrationResult") -> None:
     details.add_row("Encryption", Text(encryption))
     details.add_row("Home-relative", Text(str(entry["rel2home"]).lower()))
     details.add_row("OS", Text(os_values))
+    if entry["note"] is not None:
+        details.add_row("Note", Text(entry["note"]))
     details.add_row("Data file", Text(registration["backup_path"].as_posix()))
 
     action = "Updated" if registration["replaced"] else "Added"

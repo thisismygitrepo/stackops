@@ -87,7 +87,8 @@ def _prompt_register_data_options(
     pwd: str | None,
     rel2home: bool | None,
     os: str,
-) -> tuple[str, str, str, str, str | None, bool, EncryptionMode | None, bool, str]:
+    note: str | None,
+) -> tuple[str, str, str, str, str | None, bool, EncryptionMode | None, bool, str, str | None]:
     from stackops.scripts.python.helpers.helpers_cloud.cloud_path_resolver import ES
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
 
@@ -135,6 +136,9 @@ def _prompt_register_data_options(
         help_text="When enabled, paths under your home directory are stored as ~/... instead of absolute paths.",
         default=rel2home_default,
     )
+    prompted_note = ask_text(
+        "Note", help_text="Optional free-text note stored on the entry. Leave blank to keep the existing note, if any.", default=note, allow_empty=True
+    )
     assert prompted_name is not None
     assert prompted_path_cloud is not None
     confirm_summary(
@@ -149,6 +153,7 @@ def _prompt_register_data_options(
             f"encryption: {prompted_encryption or 'null'}",
             f"rel2home: {prompted_rel2home}",
             f"os: {prompted_os}",
+            f"note: {prompted_note or '(keep existing)'}",
         ],
     )
     return (
@@ -161,6 +166,7 @@ def _prompt_register_data_options(
         prompted_encryption,
         prompted_rel2home,
         prompted_os,
+        prompted_note,
     )
 
 
@@ -183,6 +189,9 @@ def register_data(
     os: Annotated[
         str, typer.Option("--os", "-o", help=f"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.")
     ] = DEFAULT_OS_FILTER,
+    note: Annotated[
+        str | None, typer.Option("--note", "-N", help="Free-text note stored on the entry. Omit to keep an existing note; pass an empty string to clear it.")
+    ] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the registration receipt as JSON.")] = False,
 ) -> None:
@@ -194,7 +203,7 @@ def register_data(
     if json_output and interactive:
         raise typer.BadParameter("--json cannot be combined with --interactive.")
     if interactive:
-        path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os = _prompt_register_data_options(
+        path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os, note = _prompt_register_data_options(
             path_local=path_local,
             group=group,
             name=name,
@@ -205,6 +214,7 @@ def register_data(
             pwd=pwd,
             rel2home=rel2home,
             os=os,
+            note=note,
         )
     if path_local is None:
         typer.echo("Error: PATH_LOCAL is required unless --interactive is used.", err=True)
@@ -221,6 +231,7 @@ def register_data(
             password=pwd,
             rel2home=rel2home,
             os=os,
+            note=note,
         )
     except ValueError as exc:
         msg = typer.style("Error: ", fg=typer.colors.RED) + str(exc)

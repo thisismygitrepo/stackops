@@ -72,6 +72,15 @@
           "minItems": 1,
           "uniqueItems": true,
           "description": "Explicit YAML list of supported operating systems."
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": ".*\\S.*",
+          "description": "Free-text note about this entry. Kept when stackops rewrites the file; # comments are not."
         }
       },
       "required": [

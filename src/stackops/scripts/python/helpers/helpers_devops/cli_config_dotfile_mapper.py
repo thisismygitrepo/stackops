@@ -103,6 +103,7 @@ def _write_to_user_mapper(
     method: Literal["symlink", "copy"],
     is_contents: bool,
     os_filter: str,
+    note: str | None,
 ) -> "tuple[Path, RawMapperEntry]":
     from stackops.profile.dotfiles_mapper import DEFAULT_DOTFILE_MAPPER_HEADER, USER_MAPPER_PATH, load_dotfiles_mapper, write_dotfiles_mapper
 
@@ -117,6 +118,10 @@ def _write_to_user_mapper(
         is_contents=is_contents,
         os_filter=os_filter,
     )
+    previous_note = section_entries[entry_name].get("note") if entry_name in section_entries else None
+    resolved_note = previous_note if note is None else note.strip() or None
+    if resolved_note is not None:
+        entry["note"] = resolved_note
     section_entries[entry_name] = entry
     mapper[section] = section_entries
     write_dotfiles_mapper(
@@ -127,7 +132,9 @@ def _write_to_user_mapper(
     return mapper_path, entry
 
 
-def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, section: str, os_filter: str, entry_name: str | None = None) -> None:
+def record_mapping(
+    orig_path: Path, new_path: Path, method: METHOD_LOOSE, section: str, os_filter: str, note: str | None, entry_name: str | None = None
+) -> None:
     from stackops.profile.linking.options import METHOD_MAP
 
     resolved_entry_name = _resolve_entry_name(orig_path, entry_name)
@@ -140,6 +147,7 @@ def record_mapping(orig_path: Path, new_path: Path, method: METHOD_LOOSE, sectio
         method=method_resolved,
         is_contents=False,
         os_filter=os_filter,
+        note=note,
     )
     preview = _build_mapper_preview(section=section, entry_name=resolved_entry_name, entry=entry)
     from rich.console import Console
@@ -191,7 +199,8 @@ def _prompt_register_dotfile_options(
     os_filter: str,
     shared: bool,
     entry_name: str | None,
-) -> tuple[str, METHOD_LOOSE, ON_CONFLICT_LOOSE, str | None, str, str, bool, str]:
+    note: str | None,
+) -> tuple[str, METHOD_LOOSE, ON_CONFLICT_LOOSE, str | None, str, str, bool, str, str | None]:
     from stackops.profile.linking.conflict import ON_CONFLICT_MAPPER
     from stackops.profile.linking.options import METHOD_MAP
     from stackops.scripts.python.helpers.helpers_devops.register_interactive import ask_bool, ask_choice, ask_text, confirm_summary
@@ -239,6 +248,9 @@ def _prompt_register_dotfile_options(
         "Mapper group", help_text="Top-level group in mapper/dotfiles.yaml where this entry should be recorded.", default=section
     )
     prompted_os_filter = ask_text("OS filter", help_text="Comma-separated OS list. Valid values are linux, darwin, and windows.", default=os_filter)
+    prompted_note = ask_text(
+        "Note", help_text="Optional free-text note stored on the entry. Leave blank to keep the existing note, if any.", default=note, allow_empty=True
+    )
     assert prompted_entry_name is not None
     assert prompted_section is not None
     assert prompted_os_filter is not None
@@ -257,6 +269,7 @@ def _prompt_register_dotfile_options(
             f"group: {prompted_section}",
             f"name: {prompted_entry_name}",
             f"os: {prompted_os_filter}",
+            f"note: {prompted_note or '(keep existing)'}",
         ],
     )
     return (
@@ -268,6 +281,7 @@ def _prompt_register_dotfile_options(
         prompted_os_filter,
         prompted_shared,
         prompted_entry_name,
+        prompted_note,
     )
 
 
@@ -283,6 +297,9 @@ def register_dotfile(
     group: Annotated[str, typer.Option("--group", "-S", help="Group name in mapper/dotfiles.yaml to record this mapping.")] = "default",
     os_filter: Annotated[str, typer.Option("--os", "-o", help="Comma-separated OS list from: linux,darwin,windows.")] = DEFAULT_OS_FILTER,
     shared: Annotated[bool, typer.Option("--shared", "-H", help="Whether the config file is shared across destinations directory.")] = False,
+    note: Annotated[
+        str | None, typer.Option("--note", "-N", help="Free-text note stored on the entry. Omit to keep an existing note; pass an empty string to clear it.")
+    ] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Prompt for register fields one step at a time.")] = False,
 ) -> None:
     from rich.console import Console
@@ -292,7 +309,7 @@ def register_dotfile(
 
     console = Console()
     if interactive:
-        file, method, on_conflict, destination, group, os_filter, shared, name = _prompt_register_dotfile_options(
+        file, method, on_conflict, destination, group, os_filter, shared, name, note = _prompt_register_dotfile_options(
             file=file,
             method=method,
             on_conflict=on_conflict,
@@ -301,6 +318,7 @@ def register_dotfile(
             os_filter=os_filter,
             shared=shared,
             entry_name=name,
+            note=note,
         )
     if file is None:
         console.print("[red]Error:[/] FILE is required unless --interactive is used.")
@@ -339,7 +357,7 @@ def register_dotfile(
     if result["action"] == "error":
         raise typer.Exit(code=1)
     entry_name = _resolve_entry_name(orig_path, name)
-    record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=group, os_filter=os_filter, entry_name=entry_name)
+    record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=group, os_filter=os_filter, note=note, entry_name=entry_name)
 
 
 def arg_parser() -> None:

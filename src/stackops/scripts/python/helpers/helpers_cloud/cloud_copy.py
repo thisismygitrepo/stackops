@@ -178,6 +178,7 @@ def _record_upload(
         password=None,
         rel2home=rel2home,
         os=record_os,
+        note=None,
     )
 
 

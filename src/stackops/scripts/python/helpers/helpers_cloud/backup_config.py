@@ -39,6 +39,7 @@ DEFAULT_BACKUP_HEADER = f"""# yaml-language-server: $schema=./{mapper_assets.MAP
 #     rel2home: true           # true: path_local is interpreted relative to your home dir
 #     os:
 #       - linux                # linux | darwin | windows
+#     note: "work laptop only" # optional free text; kept when commands rewrite this file, # comments are not
 #
 # Selection behavior:
 # - `devops data sync` filters entries by the current OS using the `os` field.
@@ -61,7 +62,7 @@ DEFAULT_BACKUP_HEADER = f"""# yaml-language-server: $schema=./{mapper_assets.MAP
 #       - darwin
 """
 VALID_OS = frozenset(ALL_OS_VALUES)
-EXPECTED_BACKUP_FIELDS = frozenset({"path_local", "path_cloud", "share_url", "zip", "encryption", "rel2home", "os"})
+EXPECTED_BACKUP_FIELDS = frozenset({"path_local", "path_cloud", "share_url", "zip", "encryption", "rel2home", "os", "note"})
 OS_OUTPUT_ORDER: dict[OsName, int] = {value: index for index, value in enumerate(ALL_OS_VALUES)}
 
 
@@ -73,6 +74,7 @@ class BackupItem(TypedDict):
     encryption: EncryptionMode | None
     rel2home: bool
     os: set[OsName]
+    note: str | None
 
 
 BackupGroup = dict[str, BackupItem]
@@ -213,6 +215,7 @@ def _parse_backup_config(raw: Mapping[str, object]) -> BackupConfig:
                 "encryption": _parse_encryption_field(item, item_name=item_key),
                 "rel2home": _require_bool_field(item, "rel2home", item_key),
                 "os": _parse_os_field(item.get("os"), item_key),
+                "note": _nullable_str_field(item, "note", item_key),
             }
         if group_items:
             config[group_name] = group_items
@@ -284,6 +287,9 @@ def serialize_backup_config(config: BackupConfig) -> str:
             yaml_item["zip"] = item["zip"]
             yaml_item["rel2home"] = item["rel2home"]
             yaml_item["os"] = _serialize_os_values(item["os"])
+            note = item["note"]
+            if note is not None:
+                yaml_item["note"] = note
             yaml_group[item_name] = yaml_item
         document[group_name] = yaml_group
     yaml_body = yaml.safe_dump(document, sort_keys=False, default_flow_style=False, allow_unicode=False, width=1000)

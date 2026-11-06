@@ -64,6 +64,11 @@
         "copy": {
           "type": "boolean",
           "description": "When true, copy instead of symlink."
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Free-text note about this entry. Kept when stackops rewrites the file; # comments are not."
         }
       },
       "required": [

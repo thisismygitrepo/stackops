@@ -139,6 +139,10 @@ def _build_catalog(personal_catalog: MapperDocument, library_mapper: MapperDocum
     return catalog, packaged_paths
 
 
+def _without_note(entry: RawMapperEntry) -> dict[str, object]:
+    return {key: value for key, value in entry.items() if key != "note"}
+
+
 def plan_collect(
     *, personal_catalog: MapperDocument, library_mapper: MapperDocument, user_mapper: MapperDocument, current_os: OsName
 ) -> list[CollectEntryPlan]:
@@ -146,7 +150,10 @@ def plan_collect(
     previously_collected_groups = {
         group
         for group, section in user_mapper.items()
-        if group in catalog and all(catalog[group].get(name) == entry for name, entry in section.items())
+        if group in catalog
+        and all(
+            name in catalog[group] and _without_note(catalog[group][name]) == _without_note(entry) for name, entry in section.items()
+        )
     }
     claimed_entries = [entry for group, section in user_mapper.items() if group not in previously_collected_groups for entry in section.values()]
     claimed_originals = [Path(entry["original"]).expanduser().absolute() for entry in claimed_entries]

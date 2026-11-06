@@ -75,6 +75,7 @@ def register_backup_entry(
     password: str | None,
     rel2home: bool | None,
     os: str,
+    note: str | None,
 ) -> BackupRegistrationResult:
     local_path = Path(path_local).expanduser().absolute()
     if not local_path.exists():
@@ -122,6 +123,8 @@ def register_backup_entry(
         group_entries = {}
         config[group_name] = group_entries
     replaced = resolved_entry_name in group_entries
+    previous_note = group_entries[resolved_entry_name]["note"] if replaced else None
+    resolved_note = previous_note if note is None else note.strip() or None
     entry: BackupItem = {
         "path_local": local_display,
         "path_cloud": cloud_value,
@@ -130,6 +133,7 @@ def register_backup_entry(
         "encryption": encryption_mode,
         "rel2home": resolved_rel2home,
         "os": set(os_tokens),
+        "note": resolved_note,
     }
     group_entries[resolved_entry_name] = entry
     write_backup_config(USER_BACKUP_PATH, config)

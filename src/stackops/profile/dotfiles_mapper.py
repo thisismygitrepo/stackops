@@ -22,7 +22,8 @@ DEFAULT_DOTFILE_MAPPER_HEADER = (
     f"# yaml-language-server: $schema=./{mapper_assets.MAPPER_DOTFILES_SCHEMA_PATH_REFERENCE}\n"
     "# User-defined config file mappings\n"
     "# Managed by `devops config dotfiles` commands\n"
-    "# os must be an explicit YAML list containing one or more of: linux, darwin, windows"
+    "# os must be an explicit YAML list containing one or more of: linux, darwin, windows\n"
+    "# note is an optional free-text field per entry; it is kept when commands rewrite this file, # comments are not"
 )
 
 type OsField = list[OsName]
@@ -36,6 +37,7 @@ class RawMapperEntry(TypedDict):
     os: OsField
     contents: NotRequired[bool]
     copy: NotRequired[bool]
+    note: NotRequired[str]
 
 
 def _require_mapping(value: object, *, context: str) -> Mapping[object, object]:
@@ -107,6 +109,8 @@ def _normalize_mapper_entry(entry_value: object, *, context: str) -> RawMapperEn
         normalized_entry["contents"] = _require_bool(entry_mapping["contents"], context=f"{context}.contents")
     if "copy" in entry_mapping:
         normalized_entry["copy"] = _require_bool(entry_mapping["copy"], context=f"{context}.copy")
+    if "note" in entry_mapping:
+        normalized_entry["note"] = _require_str(entry_mapping["note"], context=f"{context}.note")
     return normalized_entry
 
 
