@@ -90,7 +90,8 @@ def main_installer_cli(
             for a_group in requested_names:
                 install_group(package_group=a_group, install_request=install_request, source=source, user_path=path)
             return None
-        return install_clis(clis_names=requested_names, install_request=install_request, source=source, user_path=path)
+        install_clis(clis_names=requested_names, install_request=install_request, source=source, user_path=path)
+        return None
     if group:
         from rich.console import Console
         from rich.table import Table
@@ -211,7 +212,7 @@ def install_group(package_group: str, install_request: InstallRequest, source: I
     raise typer.Exit(1)
 
 
-def install_clis(clis_names: list[str], install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None:
+def install_clis(clis_names: list[str], install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> list[InstallationResult]:
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from stackops.utils.installer_utils.installer_summary import render_installation_summary
     from stackops.utils.installer_utils.installer_runner import get_installers_from_source
@@ -247,6 +248,7 @@ def install_clis(clis_names: list[str], install_request: InstallRequest, source:
         total_results.append(result)
     if total_results:
         render_installation_summary(results=total_results, console=Console(), title="📊 Installation Results")
+    return total_results
 
 
 def install_if_missing(which: str, binary_name: str | None, verbose: bool) -> bool:

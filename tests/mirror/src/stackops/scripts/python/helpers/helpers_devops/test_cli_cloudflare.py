@@ -5,6 +5,7 @@ from stackops.scripts.python.helpers.helpers_devops import cli_device, cli_nw
 
 CLOUDFLARE_COMMAND_NAMES: tuple[str, ...] = (
     "switch-public-ip",
+    "connect-warp",
     "run-tunnel",
     "reinstall-tunnel-service",
     "add-ip-exclusion-to-warp",
