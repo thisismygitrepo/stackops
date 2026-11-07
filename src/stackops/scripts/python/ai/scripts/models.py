@@ -13,6 +13,7 @@ from stackops.scripts.python.ai.scripts import (
 from stackops.scripts.python.ai.scripts.constants import (
     TYPE_CHECK_TOOLS_ENV_VAR,
     CheckerName,
+    ToolVersionMode,
 )
 from stackops.scripts.python.ai.scripts.models_core import (
     CleanupStatus,
@@ -111,7 +112,7 @@ TYPE_CHECK_EXCLUDES_ENV_VAR = models_config_module.TYPE_CHECK_EXCLUDES_ENV_VAR
 build_checker_specs = models_config_module.build_checker_specs
 build_cleanup_commands = models_config_module.build_cleanup_commands
 build_tool_version_specs = tool_versions_module.build_tool_version_specs
-load_latest_type_check_tools = models_config_module.load_latest_type_check_tools
+load_type_check_tool_versions = models_config_module.load_type_check_tool_versions
 load_type_check_excluded_directories = (
     models_config_module.load_type_check_excluded_directories
 )
@@ -128,21 +129,24 @@ write_start_failure = models_reports_module.write_start_failure
 TYPE_CHECK_EXCLUDED_DIRECTORIES: Final[tuple[str, ...]] = (
     load_type_check_excluded_directories()
 )
-LATEST_TYPE_CHECK_TOOLS: Final[bool] = load_latest_type_check_tools()
+TYPE_CHECK_TOOL_VERSIONS: Final[ToolVersionMode] = load_type_check_tool_versions()
 SELECTED_TYPE_CHECK_TOOLS: Final[tuple[CheckerName, ...]] = (
     models_config_module.parse_type_check_tools(os.environ.get(TYPE_CHECK_TOOLS_ENV_VAR))
 )
+TOOL_UPGRADE_COMMAND: Final[tuple[str, ...]] = tool_versions_module.build_tool_upgrade_command(
+    selected_tools=SELECTED_TYPE_CHECK_TOOLS
+)
 TOOL_VERSION_SPECS: Final[tuple[ToolVersionSpec, ...]] = build_tool_version_specs(
-    latest=LATEST_TYPE_CHECK_TOOLS, selected_tools=SELECTED_TYPE_CHECK_TOOLS
+    tool_versions=TYPE_CHECK_TOOL_VERSIONS, selected_tools=SELECTED_TYPE_CHECK_TOOLS
 )
 CLEANUP_COMMANDS: Final[tuple[tuple[str, ...], ...]] = build_cleanup_commands(
     excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES,
-    latest=LATEST_TYPE_CHECK_TOOLS,
+    tool_versions=TYPE_CHECK_TOOL_VERSIONS,
     selected_tools=SELECTED_TYPE_CHECK_TOOLS,
 )
 CHECKER_SPECS: Final[tuple[ToolSpec, ...]] = build_checker_specs(
     excluded_directories=TYPE_CHECK_EXCLUDED_DIRECTORIES,
-    latest=LATEST_TYPE_CHECK_TOOLS,
+    tool_versions=TYPE_CHECK_TOOL_VERSIONS,
     selected_tools=SELECTED_TYPE_CHECK_TOOLS,
 )
 
@@ -155,7 +159,6 @@ __all__ = (
     "ERROR_LABEL",
     "FAILURE_LABEL",
     "ISSUES_LABEL",
-    "LATEST_TYPE_CHECK_TOOLS",
     "PYRIGHT_CONFIG_OVERRIDE_PATH",
     "REPO_MARKER",
     "REPORTS_DIR",
@@ -165,6 +168,8 @@ __all__ = (
     "SUMMARY_PATH",
     "TYPE_CHECK_EXCLUDES_ENV_VAR",
     "TYPE_CHECK_EXCLUDED_DIRECTORIES",
+    "TYPE_CHECK_TOOL_VERSIONS",
+    "TOOL_UPGRADE_COMMAND",
     "TOOL_VERSION_SPECS",
     "CleanupResult",
     "DiagnosticBucket",

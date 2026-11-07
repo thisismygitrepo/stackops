@@ -8,14 +8,17 @@ from pathlib import Path
 from typing import Final, cast
 
 from stackops.scripts.python.ai.scripts.constants import (
+    DEFAULT_TOOL_VERSION_MODE,
+    TOOL_VERSION_MODES,
     TYPE_CHECK_TOOL_NAMES,
+    TYPE_CHECK_TOOL_VERSIONS_ENV_VAR,
     CheckerName,
+    ToolVersionMode,
 )
 from stackops.scripts.python.ai.scripts.models_core import REPORTS_DIR, ToolSpec
 
 
 TYPE_CHECK_EXCLUDES_ENV_VAR: Final[str] = "STACKOPS_TYPE_CHECK_EXCLUDES"
-TYPE_CHECK_LATEST_ENV_VAR: Final[str] = "STACKOPS_TYPE_CHECK_LATEST"
 MYPY_EXCLUDE_PATTERN: Final[str] = r"(^|/|\\)gromit-mpx($|/|\\)"
 PYRIGHT_CONFIG_PATH: Final[Path] = Path("pyrightconfig.json")
 PYPROJECT_PATH: Final[Path] = Path("pyproject.toml")
@@ -76,13 +79,15 @@ def load_type_check_excluded_directories() -> tuple[str, ...]:
     return tuple(excluded_directories)
 
 
-def load_latest_type_check_tools() -> bool:
-    raw_value = os.environ.get(TYPE_CHECK_LATEST_ENV_VAR, "0")
-    if raw_value == "1":
-        return True
-    if raw_value == "0":
-        return False
-    raise ValueError(f"Invalid {TYPE_CHECK_LATEST_ENV_VAR} value. Expected '1' or '0'.")
+def load_type_check_tool_versions() -> ToolVersionMode:
+    raw_value = os.environ.get(TYPE_CHECK_TOOL_VERSIONS_ENV_VAR, DEFAULT_TOOL_VERSION_MODE)
+    match raw_value:
+        case "latest" | "upgrade" | "pinned":
+            return raw_value
+        case _:
+            raise ValueError(
+                f"""Invalid {TYPE_CHECK_TOOL_VERSIONS_ENV_VAR} value {raw_value!r}. Expected one of: {", ".join(TOOL_VERSION_MODES)}."""
+            )
 
 
 def _merge_distinct_strings(*groups: tuple[str, ...]) -> tuple[str, ...]:
@@ -117,11 +122,12 @@ def _append_repeated_option(
         command.extend((option, value))
 
 
-def build_uv_tool_command(package: str, latest: bool) -> list[str]:
-    if latest:
-        command = ["uv", "run", "--isolated", "--upgrade-package", package]
-    else:
-        command = ["uv", "run", "--frozen"]
+def build_uv_tool_command(package: str, tool_versions: ToolVersionMode) -> list[str]:
+    match tool_versions:
+        case "latest":
+            command = ["uv", "run", "--isolated", "--upgrade-package", package]
+        case "upgrade" | "pinned":
+            command = ["uv", "run", "--frozen"]
     command.extend(("--with", package))
     return command
 
@@ -189,13 +195,13 @@ def _ensure_pyright_config_override(excluded_directories: tuple[str, ...]) -> Pa
 
 def build_cleanup_commands(
     excluded_directories: tuple[str, ...],
-    latest: bool,
+    tool_versions: ToolVersionMode,
     selected_tools: tuple[CheckerName, ...],
 ) -> tuple[tuple[str, ...], ...]:
     excluded_patterns = tuple(
         _build_directory_regex(directory) for directory in excluded_directories
     )
-    cleanpy_command = build_uv_tool_command(package="cleanpy", latest=latest)
+    cleanpy_command = build_uv_tool_command(package="cleanpy", tool_versions=tool_versions)
     cleanpy_command.extend(("-m", "cleanpy"))
     _append_repeated_option(
         command=cleanpy_command, option="--exclude", values=excluded_patterns
@@ -203,7 +209,7 @@ def build_cleanup_commands(
     cleanpy_command.append(".")
     if "ruff" not in selected_tools:
         return (tuple(cleanpy_command),)
-    ruff_fix_command = build_uv_tool_command(package="ruff", latest=latest)
+    ruff_fix_command = build_uv_tool_command(package="ruff", tool_versions=tool_versions)
     ruff_fix_command.extend(("ruff", "check", "--fix"))
     if len(excluded_directories) > 0:
         ruff_fix_command.append("--force-exclude")
@@ -215,21 +221,21 @@ def build_cleanup_commands(
     ruff_fix_command.append(".")
     return (
         tuple(cleanpy_command),
-        (*build_uv_tool_command(package="ruff", latest=latest), "-m", "ruff", "clean"),
+        (*build_uv_tool_command(package="ruff", tool_versions=tool_versions), "-m", "ruff", "clean"),
         tuple(ruff_fix_command),
     )
 
 
 def build_checker_specs(
     excluded_directories: tuple[str, ...],
-    latest: bool,
+    tool_versions: ToolVersionMode,
     selected_tools: tuple[CheckerName, ...],
 ) -> tuple[ToolSpec, ...]:
     excluded_patterns = tuple(
         _build_directory_regex(directory) for directory in excluded_directories
     )
     mypy_excludes = _merge_distinct_strings((MYPY_EXCLUDE_PATTERN,), excluded_patterns)
-    pyright_command = build_uv_tool_command(package="pyright", latest=latest)
+    pyright_command = build_uv_tool_command(package="pyright", tool_versions=tool_versions)
     pyright_command.extend(("pyright", "--outputjson", "--threads", "10"))
     pyright_temporary_paths: tuple[Path, ...] = ()
     if "pyright" in selected_tools and len(excluded_directories) > 0:
@@ -241,11 +247,11 @@ def build_checker_specs(
         )
         pyright_temporary_paths = (pyright_config_override_path,)
     pyright_command.append(".")
-    mypy_command = build_uv_tool_command(package="mypy", latest=latest)
+    mypy_command = build_uv_tool_command(package="mypy", tool_versions=tool_versions)
     mypy_command.extend(("mypy", "-O", "json"))
     _append_repeated_option(command=mypy_command, option="--exclude", values=mypy_excludes)
     mypy_command.append(".")
-    pylint_command = build_uv_tool_command(package="pylint", latest=latest)
+    pylint_command = build_uv_tool_command(package="pylint", tool_versions=tool_versions)
     pylint_command.extend(
         (
             "pylint",
@@ -262,7 +268,7 @@ def build_checker_specs(
             ("--ignore-paths", _build_pylint_ignore_paths(excluded_directories))
         )
     pylint_command.append(".")
-    pyrefly_command = build_uv_tool_command(package="pyrefly", latest=latest)
+    pyrefly_command = build_uv_tool_command(package="pyrefly", tool_versions=tool_versions)
     pyrefly_command.extend(
         ("pyrefly", "check", "--summary=none", "--output-format", "json")
     )
@@ -272,7 +278,7 @@ def build_checker_specs(
         values=excluded_directories,
     )
     pyrefly_command.append(".")
-    ty_command = build_uv_tool_command(package="ty", latest=latest)
+    ty_command = build_uv_tool_command(package="ty", tool_versions=tool_versions)
     ty_command.extend(("ty", "check", "--no-progress", "--output-format", "gitlab"))
     if len(excluded_directories) > 0:
         ty_command.append("--force-exclude")
@@ -280,7 +286,7 @@ def build_checker_specs(
             command=ty_command, option="--exclude", values=excluded_directories
         )
     ty_command.append(".")
-    ruff_command = build_uv_tool_command(package="ruff", latest=latest)
+    ruff_command = build_uv_tool_command(package="ruff", tool_versions=tool_versions)
     ruff_command.extend(("ruff", "check", "--output-format", "json"))
     if len(excluded_directories) > 0:
         ruff_command.append("--force-exclude")

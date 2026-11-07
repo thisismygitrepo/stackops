@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from stackops.scripts.python.ai.scripts.constants import CheckerName
+from stackops.scripts.python.ai.scripts.constants import CheckerName, ToolVersionMode
 from stackops.scripts.python.ai.scripts.models_config import build_uv_tool_command
 
 
@@ -27,14 +27,21 @@ class ToolVersionResolutionError(RuntimeError):
     pass
 
 
+def build_tool_upgrade_command(selected_tools: tuple[CheckerName, ...]) -> tuple[str, ...]:
+    command = ["uv", "lock"]
+    for package in ("cleanpy", *selected_tools):
+        command.extend(("--upgrade-package", package))
+    return tuple(command)
+
+
 def build_tool_version_specs(
-    latest: bool, selected_tools: tuple[CheckerName, ...]
+    tool_versions: ToolVersionMode, selected_tools: tuple[CheckerName, ...]
 ) -> tuple[ToolVersionSpec, ...]:
     specs = (
         ToolVersionSpec(
             title="Cleanpy",
             command=(
-                *build_uv_tool_command(package="cleanpy", latest=latest),
+                *build_uv_tool_command(package="cleanpy", tool_versions=tool_versions),
                 "-m",
                 "cleanpy",
                 "--version",
@@ -43,7 +50,7 @@ def build_tool_version_specs(
         ToolVersionSpec(
             title="Ruff",
             command=(
-                *build_uv_tool_command(package="ruff", latest=latest),
+                *build_uv_tool_command(package="ruff", tool_versions=tool_versions),
                 "ruff",
                 "--version",
             ),
@@ -51,7 +58,7 @@ def build_tool_version_specs(
         ToolVersionSpec(
             title="Pyright",
             command=(
-                *build_uv_tool_command(package="pyright", latest=latest),
+                *build_uv_tool_command(package="pyright", tool_versions=tool_versions),
                 "pyright",
                 "--version",
             ),
@@ -59,7 +66,7 @@ def build_tool_version_specs(
         ToolVersionSpec(
             title="MyPy",
             command=(
-                *build_uv_tool_command(package="mypy", latest=latest),
+                *build_uv_tool_command(package="mypy", tool_versions=tool_versions),
                 "mypy",
                 "--version",
             ),
@@ -67,7 +74,7 @@ def build_tool_version_specs(
         ToolVersionSpec(
             title="Pylint",
             command=(
-                *build_uv_tool_command(package="pylint", latest=latest),
+                *build_uv_tool_command(package="pylint", tool_versions=tool_versions),
                 "pylint",
                 "--version",
             ),
@@ -75,7 +82,7 @@ def build_tool_version_specs(
         ToolVersionSpec(
             title="Pyrefly",
             command=(
-                *build_uv_tool_command(package="pyrefly", latest=latest),
+                *build_uv_tool_command(package="pyrefly", tool_versions=tool_versions),
                 "pyrefly",
                 "--version",
             ),
@@ -83,7 +90,7 @@ def build_tool_version_specs(
         ToolVersionSpec(
             title="Ty",
             command=(
-                *build_uv_tool_command(package="ty", latest=latest),
+                *build_uv_tool_command(package="ty", tool_versions=tool_versions),
                 "ty",
                 "--version",
             ),
@@ -153,7 +160,7 @@ def resolve_tool_versions(
 
 
 def build_tool_versions_panel(
-    results: tuple[ToolVersionResult, ...],
+    results: tuple[ToolVersionResult, ...], tool_versions: ToolVersionMode
 ) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("CLI", style="bold cyan")
@@ -162,6 +169,6 @@ def build_tool_versions_panel(
         table.add_row(result.spec.title, Text(result.version))
     return Panel(
         table,
-        title="CLI Versions (--latest)",
+        title=f"CLI Versions (--tool-versions {tool_versions})",
         border_style="cyan",
     )

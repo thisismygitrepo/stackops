@@ -34,13 +34,14 @@ COMPLETED_KIND = models_module.COMPLETED_KIND
 DiagnosticSummary = models_module.DiagnosticSummary
 FAILURE_LABEL = models_module.FAILURE_LABEL
 ISSUES_LABEL = models_module.ISSUES_LABEL
-LATEST_TYPE_CHECK_TOOLS = models_module.LATEST_TYPE_CHECK_TOOLS
+TOOL_UPGRADE_COMMAND = models_module.TOOL_UPGRADE_COMMAND
 REPORTS_DIR = models_module.REPORTS_DIR
 REPO_MARKER = models_module.REPO_MARKER
 START_FAILED_KIND = models_module.START_FAILED_KIND
 SUCCESS_LABEL = models_module.SUCCESS_LABEL
 SUMMARY_PATH = models_module.SUMMARY_PATH
 TOOL_VERSION_SPECS = models_module.TOOL_VERSION_SPECS
+TYPE_CHECK_TOOL_VERSIONS = models_module.TYPE_CHECK_TOOL_VERSIONS
 CleanupResult = models_module.CleanupResult
 RunningTool = models_module.RunningTool
 ToolResult = models_module.ToolResult
@@ -360,26 +361,48 @@ def main() -> int:
             border_style="cyan",
         )
     )
-    tool_version_results: tuple[ToolVersionResult, ...] = ()
-    if LATEST_TYPE_CHECK_TOOLS:
-        try:
-            with console.status(
-                "[bold cyan]Resolving the latest compatible CLI versions"
-            ):
-                tool_version_results = resolve_tool_versions(
-                    specs=TOOL_VERSION_SPECS,
-                    subprocess_environment=build_subprocess_environment(),
-                )
-        except ToolVersionResolutionError as error:
+    if TYPE_CHECK_TOOL_VERSIONS == "upgrade":
+        console.print(
+            Panel(
+                Text(" ".join(TOOL_UPGRADE_COMMAND)),
+                title="Upgrading Tools In uv.lock",
+                border_style="cyan",
+            )
+        )
+        upgrade_exit_code = subprocess.run(
+            TOOL_UPGRADE_COMMAND, env=build_subprocess_environment(), check=False
+        ).returncode
+        if upgrade_exit_code != 0:
             console.print(
                 Panel(
-                    Text(str(error), style="bold red"),
-                    title="CLI Version Resolution Failed",
+                    Text(f"uv lock exited with code {upgrade_exit_code}.", style="bold red"),
+                    title="Tool Upgrade Failed",
                     border_style="red",
                 )
             )
             return 1
-        console.print(build_tool_versions_panel(results=tool_version_results))
+    try:
+        with console.status(
+            f"[bold cyan]Resolving CLI versions (--tool-versions {TYPE_CHECK_TOOL_VERSIONS})"
+        ):
+            tool_version_results = resolve_tool_versions(
+                specs=TOOL_VERSION_SPECS,
+                subprocess_environment=build_subprocess_environment(),
+            )
+    except ToolVersionResolutionError as error:
+        console.print(
+            Panel(
+                Text(str(error), style="bold red"),
+                title="CLI Version Resolution Failed",
+                border_style="red",
+            )
+        )
+        return 1
+    console.print(
+        build_tool_versions_panel(
+            results=tool_version_results, tool_versions=TYPE_CHECK_TOOL_VERSIONS
+        )
+    )
     console.print(build_command_preview())
     cleanup_result = run_cleanup(console=console)
     running_tools, completed_tools = start_checker_processes()

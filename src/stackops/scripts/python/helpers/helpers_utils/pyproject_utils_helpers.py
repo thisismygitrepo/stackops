@@ -2,14 +2,15 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 from stackops.scripts.python.ai.scripts.constants import (
+    TYPE_CHECK_TOOL_VERSIONS_ENV_VAR,
     TYPE_CHECK_TOOLS_ENV_VAR,
     CheckerName,
+    ToolVersionMode,
 )
 
 ProjectPythonVersion: TypeAlias = Literal["3.11", "3.12", "3.13", "3.14"]
 InitProjectGroupKey: TypeAlias = Literal["p", "t", "types", "l", "i", "d"]
 TYPE_CHECK_EXCLUDES_ENV_VAR = "STACKOPS_TYPE_CHECK_EXCLUDES"
-TYPE_CHECK_LATEST_ENV_VAR = "STACKOPS_TYPE_CHECK_LATEST"
 DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES: tuple[str, ...] = (
     "tests",
     ".github",
@@ -127,7 +128,7 @@ def resolve_type_check_excluded_directories(
 
 def build_type_check_environment(
     excluded_directories: tuple[str, ...],
-    latest: bool,
+    tool_versions: ToolVersionMode,
     selected_tools: tuple[CheckerName, ...],
 ) -> dict[str, str]:
     import json
@@ -137,6 +138,6 @@ def build_type_check_environment(
     environment[TYPE_CHECK_EXCLUDES_ENV_VAR] = json.dumps(
         list(excluded_directories)
     )
-    environment[TYPE_CHECK_LATEST_ENV_VAR] = "1" if latest else "0"
+    environment[TYPE_CHECK_TOOL_VERSIONS_ENV_VAR] = tool_versions
     environment[TYPE_CHECK_TOOLS_ENV_VAR] = ",".join(selected_tools)
     return environment

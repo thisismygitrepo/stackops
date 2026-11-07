@@ -1,8 +1,9 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
+from stackops.scripts.python.ai.scripts.constants import DEFAULT_TOOL_VERSION_MODE
 
 
 def type_check(
@@ -20,14 +21,14 @@ def type_check(
             help="Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.",
         ),
     ] = None,
-    latest: Annotated[
-        bool,
+    tool_versions: Annotated[
+        Literal["latest", "upgrade", "pinned"],
         typer.Option(
-            "--latest",
-            "-l",
-            help="Resolve and report the latest compatible lint and type-check tool versions for this run.",
+            "--tool-versions",
+            "-v",
+            help="Which lint and type-check tool versions to run. latest: newest releases for this run only, project files untouched. upgrade: upgrade the tools in uv.lock, then run the locked versions. pinned: run the versions already in uv.lock.",
         ),
-    ] = False,
+    ] = DEFAULT_TOOL_VERSION_MODE,
     tools: Annotated[
         str | None,
         typer.Option(
@@ -101,7 +102,7 @@ def type_check(
         check=False,
         env=build_type_check_environment(
             excluded_directories=excluded_directories,
-            latest=latest,
+            tool_versions=tool_versions,
             selected_tools=selected_tools,
         ),
     )
