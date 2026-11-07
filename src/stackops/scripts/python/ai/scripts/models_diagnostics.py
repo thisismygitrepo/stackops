@@ -37,7 +37,7 @@ def build_diagnostic_summary(tool_slug: str, raw_output: str) -> DiagnosticSumma
     if raw_output.strip() == "":
         return DiagnosticSummary(total_count=0, classifier="unknown", buckets=())
     try:
-        parsed_output = parse_json_output(raw_output=raw_output)
+        parsed_output = parse_json_output(raw_output=raw_output, tool_slug=tool_slug)
     except json.JSONDecodeError:
         return DiagnosticSummary(total_count=0, classifier="unknown", buckets=())
     payload = parsed_output.payload

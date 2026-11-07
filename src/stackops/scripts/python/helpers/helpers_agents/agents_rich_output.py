@@ -40,7 +40,7 @@ def _file_name_or_placeholder(*, paths: Sequence[Path], placeholder: str) -> str
 
 def _files_summary(*, prompt_dir: Path) -> str:
     prompt_paths = sorted(prompt_dir.glob("*_prompt.txt"))
-    material_paths = sorted(prompt_dir.glob("*_material.txt"))
+    material_paths = sorted(path for path in prompt_dir.glob("*_material.*") if path.suffix in (".txt", ".json"))
     launcher_paths = sorted(prompt_dir.glob(agent_shell.get_agent_launcher_glob()))
     return " | ".join(
         [

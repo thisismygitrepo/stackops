@@ -155,6 +155,7 @@ def agents_create(
         repo_root=workspace_root,
         agents_dir=agents_dir_obj,
         prompts_material=context_input.prompt_materials,
+        material_suffix=context_input.material_suffix,
         join_prompt_and_context=join_prompt_and_context,
         prompt_prefix=prompt_input.prompt_text,
         machine=host,
@@ -386,9 +387,10 @@ def collect(agent_dir: str, output_path: str, separator: str, pattern: str | Non
     for agent_subdir in prompts_dir.iterdir():
         if pattern is None:
             if agent_subdir.is_dir() and agent_subdir.name.startswith("agent_"):
-                material_file = agent_subdir / f"{agent_subdir.name}_material.txt"
-                if material_file.exists():
-                    material_files.append(material_file)
+                for material_suffix in (".txt", ".json"):
+                    material_file = agent_subdir / f"""{agent_subdir.name}_material{material_suffix}"""
+                    if material_file.is_file():
+                        material_files.append(material_file)
         else:
             if agent_subdir.is_dir():
                 for material_file in agent_subdir.glob(pattern):

@@ -63,7 +63,8 @@ def _write_context_snapshot(*, artifacts_dir: Path, context: CreateContextArtifa
 
     if context.file_content is None:
         raise ValueError("file_content must be provided for non-directory context snapshots")
-    snapshot_path = artifacts_dir / "context.md"
+    snapshot_suffix = ".json" if context.source_path is not None and context.source_path.suffix == ".json" else ".md"
+    snapshot_path = artifacts_dir / f"""context{snapshot_suffix}"""
     snapshot_path.write_text(context.file_content, encoding="utf-8")
     return snapshot_path
 

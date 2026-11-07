@@ -1,6 +1,7 @@
 import random
 from math import isfinite
 from pathlib import Path
+from typing import Literal
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
@@ -130,6 +131,7 @@ def prep_agent_launch(
     repo_root: Path,
     agents_dir: Path,
     prompts_material: list[str],
+    material_suffix: Literal[".txt", ".json"],
     prompt_prefix: str,
     join_prompt_and_context: bool,
     machine: HOST,
@@ -163,7 +165,7 @@ def prep_agent_launch(
             prompt_material_path = prompt_path
             prompt_path.write_text(prompt_prefix + """\nPlease only look at:\n""" + a_prompt_material + JURISDICTION_SUFFIX, encoding="utf-8")
         else:
-            prompt_material_path = prompt_root / f"agent_{idx}_material.txt"
+            prompt_material_path = prompt_root / f"""agent_{idx}_material{material_suffix}"""
             prompt_material_path.write_text(a_prompt_material, encoding="utf-8")
             material_reference = _format_material_reference(prompt_material_path=prompt_material_path, repo_root=repo_root)
             prompt_path.write_text(prompt_prefix + f"""\nPlease only look at:\n{material_reference}.""" + JURISDICTION_SUFFIX, encoding="utf-8")

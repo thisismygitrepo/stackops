@@ -3,12 +3,12 @@ from pathlib import Path
 from typing import Final, Literal, TypeAlias
 
 REPORTS_DIR: Final[Path] = Path(".ai/linters")
-SUMMARY_PATH: Final[Path] = REPORTS_DIR / "timing_summary.md"
+SUMMARY_PATH: Final[Path] = REPORTS_DIR / "timing_summary.json"
 
 CleanupStatus: TypeAlias = Literal["PASS", "FAIL"]
 ToolRunState: TypeAlias = Literal["RUNNING", "DONE", "ERROR"]
 ToolOutcome: TypeAlias = Literal["PASS", "ISSUES", "FAIL"]
-ToolResultKind: TypeAlias = Literal["completed", "start_failed"]
+ToolResultKind: TypeAlias = Literal["completed", "start_failed", "output_failed"]
 ToolOutputFormat: TypeAlias = Literal["json", "text"]
 
 SUCCESS_LABEL: Final[Literal["PASS"]] = "PASS"
@@ -19,6 +19,7 @@ DONE_LABEL: Final[Literal["DONE"]] = "DONE"
 ERROR_LABEL: Final[Literal["ERROR"]] = "ERROR"
 COMPLETED_KIND: Final[Literal["completed"]] = "completed"
 START_FAILED_KIND: Final[Literal["start_failed"]] = "start_failed"
+OUTPUT_FAILED_KIND: Final[Literal["output_failed"]] = "output_failed"
 
 
 @dataclass(frozen=True, slots=True)

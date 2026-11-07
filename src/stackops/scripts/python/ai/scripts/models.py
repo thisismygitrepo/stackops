@@ -22,6 +22,7 @@ from stackops.scripts.python.ai.scripts.models_core import (
     ERROR_LABEL,
     FAILURE_LABEL,
     ISSUES_LABEL,
+    OUTPUT_FAILED_KIND,
     REPORTS_DIR,
     RUNNING_LABEL,
     ReportStats,
@@ -84,19 +85,19 @@ class ToolResult:
 
     @property
     def run_state(self) -> ToolRunState:
-        if self.result_kind == START_FAILED_KIND:
+        if self.result_kind != COMPLETED_KIND:
             return ERROR_LABEL
         return DONE_LABEL
 
     @property
     def status(self) -> ToolOutcome:
-        if self.result_kind == START_FAILED_KIND:
+        if self.result_kind != COMPLETED_KIND:
             return FAILURE_LABEL
         if self.diagnostic_summary.total_count > 0:
             return ISSUES_LABEL
         if self.exit_code == 0:
             return SUCCESS_LABEL
-        return ISSUES_LABEL
+        return FAILURE_LABEL
 
 
 @dataclass(slots=True)
@@ -104,6 +105,7 @@ class RunningTool:
     spec: ToolSpec
     process: subprocess.Popen[bytes]
     report_handle: TextIO
+    stderr_handle: TextIO
     started_at: float
 
 
@@ -159,6 +161,7 @@ __all__ = (
     "ERROR_LABEL",
     "FAILURE_LABEL",
     "ISSUES_LABEL",
+    "OUTPUT_FAILED_KIND",
     "PYRIGHT_CONFIG_OVERRIDE_PATH",
     "REPO_MARKER",
     "REPORTS_DIR",

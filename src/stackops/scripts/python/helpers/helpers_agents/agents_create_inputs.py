@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 from stackops.utils.cli_utils.interaction import is_interactive
 
 from stackops.scripts.python.helpers.helpers_agents.agents_create_artifacts import (
@@ -52,6 +52,7 @@ class ResolvedPromptInput:
 @dataclass(frozen=True, slots=True)
 class ResolvedContextInput:
     prompt_materials: list[str]
+    material_suffix: Literal[".txt", ".json"]
     source_kind: ContextSourceKind
     source_path: Path | None
     file_content: str | None
@@ -114,6 +115,7 @@ def resolve_context_input(
             raise ValueError("Provided --context does not contain any non-empty task after splitting")
         return ResolvedContextInput(
             prompt_materials=prompt_materials,
+            material_suffix=".txt",
             source_kind="inline_text",
             source_path=None,
             file_content=context,
@@ -128,10 +130,26 @@ def resolve_context_input(
         raise ValueError(f"Path does not exist: {context_path_resolved}")
 
     if context_path_resolved.is_file():
-        context_file_content = context_path_resolved.read_text(encoding="utf-8", errors="ignore")
-        prompt_materials = _split_and_chunk_prompts(raw_material=context_file_content, separator=separator, tasks_per_prompt=agent_load)
+        context_file_content = context_path_resolved.read_text(
+            encoding="utf-8", errors="strict" if context_path_resolved.suffix == ".json" else "ignore"
+        )
+        material_suffix: Literal[".txt", ".json"] = ".txt"
+        if context_path_resolved.suffix == ".json":
+            payload = cast(object, json.loads(context_file_content))
+            if isinstance(payload, dict) and {"schemaVersion", "diagnostics", "tool"}.issubset(payload):
+                from stackops.scripts.python.helpers.helpers_agents.type_check_context import chunk_type_check_report
+
+                prompt_materials = chunk_type_check_report(payload=payload, agent_load=agent_load)
+                if not prompt_materials:
+                    raise ValueError(f"""No diagnostics to distribute in {context_path_resolved}""")
+                material_suffix = ".json"
+            else:
+                prompt_materials = _split_and_chunk_prompts(raw_material=context_file_content, separator=separator, tasks_per_prompt=agent_load)
+        else:
+            prompt_materials = _split_and_chunk_prompts(raw_material=context_file_content, separator=separator, tasks_per_prompt=agent_load)
         return ResolvedContextInput(
             prompt_materials=prompt_materials,
+            material_suffix=material_suffix,
             source_kind="file_path",
             source_path=context_path_resolved,
             file_content=context_file_content,
@@ -188,6 +206,7 @@ def resolve_context_input(
         )
     return ResolvedContextInput(
         prompt_materials=prompt_materials,
+        material_suffix=".txt",
         source_kind="directory_path",
         source_path=context_path_resolved,
         file_content=None,

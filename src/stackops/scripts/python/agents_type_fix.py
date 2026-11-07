@@ -1,6 +1,8 @@
-from typing import Annotated, Literal, TypeAlias
+from typing import Annotated, Literal, cast
 from contextlib import redirect_stdout
 from dataclasses import replace
+import json
+from pathlib import Path
 import sys
 
 import typer
@@ -8,30 +10,24 @@ import typer
 from stackops.utils.default_agent import DEFAULT_AGENT_HELP
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentsDirectoryConflict
+from stackops.scripts.python.ai.scripts.models_core import REPORTS_DIR
+from stackops.scripts.python.helpers.helpers_agents.type_check_context import read_type_check_report
 
 
-CheckerName: TypeAlias = Literal["mypy", "ruff", "pylint", "pyright", "ty", "pyrefly"]
-DIAGNOSTIC_SEPARATOR = "### Diagnostic"
 PROMPT = """please fix those, but don't be so pedantic because the linter and type checker are not perfect and occasionally give false positives
 in which case it is okay to ignore them and leave code as is, if you felt like that.
+Use only the diagnostics in your JSON batch. Each diagnosticValue is the tool's original diagnostic;
+diagnosticNumber refers to its position in the original report.
 """
-
-
-def _get_issues_path(*, checker_name: CheckerName) -> str:
-    return f"./.ai/linters/issues_{checker_name}.md"
-
-
-def _get_job_name(*, checker_name: CheckerName) -> str:
-    return f"fix_{checker_name}_issues"
 
 
 def launch_type_fix(
     ctx: typer.Context,
     agent: Annotated[AGENTS | None, typer.Option("--agent", "-a", help=f"Agent type. {DEFAULT_AGENT_HELP}")] = None,
-    agent_load: Annotated[int, typer.Option("--agent-load", "-l", help="Number of diagnostics per prompt.")] = 10,
+    agent_load: Annotated[int, typer.Option("--agent-load", "-l", min=1, help="Number of diagnostics per prompt.")] = 10,
     which_checker: Annotated[
-        CheckerName,
-        typer.Option("--which-checker", "--which", "-w", help="Which issues_<checker>.md file under ./.ai/linters to process."),
+        Literal["mypy", "ruff", "pylint", "pyright", "ty", "pyrefly"],
+        typer.Option("--which-checker", "--which", "-w", help="Which issues_<checker>.json file under ./.ai/linters to process."),
     ] = "mypy",
     max_tabs: Annotated[
         int,
@@ -43,15 +39,28 @@ def launch_type_fix(
 ) -> None:
     from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
 
-    job_name = _get_job_name(checker_name=which_checker)
+    issues_path: Path = REPORTS_DIR / f"""issues_{which_checker}.json"""
+    try:
+        report = read_type_check_report(cast(object, json.loads(issues_path.read_text(encoding="utf-8"))))
+        if report["tool"] != which_checker:
+            raise ValueError(f"""Expected {which_checker} diagnostics, found {report['tool']} in {issues_path}""")
+    except (OSError, ValueError) as error:
+        raise typer.BadParameter(str(error)) from error
+    if not report["diagnostics"]:
+        if json_output:
+            from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
+
+            emit_agent_json({"tool": which_checker, "agent_count": 0, "launched": False})
+        else:
+            typer.echo(f"""No diagnostics reported by {which_checker}; no agents created.""")
+        return
     with redirect_stdout(sys.stderr if json_output else sys.stdout):
         result = agents_create_command(
             agent=agent,
-            context_path=_get_issues_path(checker_name=which_checker),
-            separator=DIAGNOSTIC_SEPARATOR,
+            context_path=str(issues_path),
             agent_load=agent_load,
             prompt=PROMPT,
-            job_name=job_name,
+            job_name=f"""fix_{which_checker}_issues""",
             on_directory_conflict=on_directory_conflict,
             run=False,
         )

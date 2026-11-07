@@ -30,11 +30,12 @@ def split_json_prefix(raw_output: str) -> tuple[str, str | None]:
     return "", None
 
 
-def parse_json_output(raw_output: str) -> ParsedJsonOutput:
+def parse_json_output(raw_output: str, tool_slug: str) -> ParsedJsonOutput:
     stripped_output = raw_output.strip()
     try:
         return ParsedJsonOutput(
-            prefix_text="", payload=parse_json_stream(raw_output=stripped_output)
+            prefix_text="",
+            payload=parse_json_stream(raw_output=stripped_output, stream=tool_slug == "mypy"),
         )
     except json.JSONDecodeError as error:
         prefix_text, payload_text = split_json_prefix(raw_output=raw_output)
@@ -42,11 +43,11 @@ def parse_json_output(raw_output: str) -> ParsedJsonOutput:
             raise error
         return ParsedJsonOutput(
             prefix_text=prefix_text,
-            payload=parse_json_stream(raw_output=payload_text),
+            payload=parse_json_stream(raw_output=payload_text, stream=tool_slug == "mypy"),
         )
 
 
-def parse_json_stream(raw_output: str) -> object:
+def parse_json_stream(raw_output: str, stream: bool) -> object:
     stripped_output = raw_output.strip()
     if stripped_output == "":
         raise json.JSONDecodeError("Expecting value", raw_output, 0)
@@ -61,7 +62,7 @@ def parse_json_stream(raw_output: str) -> object:
         payload, end_index = decoder.raw_decode(stripped_output, index)
         decoded_items.append(payload)
         index = end_index
-    if len(decoded_items) == 1:
+    if len(decoded_items) == 1 and not stream:
         return decoded_items[0]
     return decoded_items
 

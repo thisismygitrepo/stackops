@@ -4,6 +4,7 @@
 # ///
 
 
+import json
 import os
 import signal
 import shutil
@@ -25,6 +26,14 @@ from stackops.scripts.python.ai.scripts import (
     models as models_module,
     tool_versions as tool_versions_module,
 )
+from stackops.scripts.python.ai.scripts.constants import REPORT_SCHEMA_VERSION
+from stackops.scripts.python.ai.scripts.models_core import OUTPUT_FAILED_KIND
+from stackops.scripts.python.ai.scripts.models_reports import build_tool_report
+from stackops.scripts.python.ai.scripts.run_reports import (
+    CleanupCommandReport,
+    CleanupReport,
+    format_timing_report,
+)
 
 
 CHECKER_REFRESH_SECONDS = models_module.CHECKER_REFRESH_SECONDS
@@ -33,7 +42,6 @@ CLEANUP_COMMANDS = models_module.CLEANUP_COMMANDS
 COMPLETED_KIND = models_module.COMPLETED_KIND
 DiagnosticSummary = models_module.DiagnosticSummary
 FAILURE_LABEL = models_module.FAILURE_LABEL
-ISSUES_LABEL = models_module.ISSUES_LABEL
 TOOL_UPGRADE_COMMAND = models_module.TOOL_UPGRADE_COMMAND
 REPORTS_DIR = models_module.REPORTS_DIR
 REPO_MARKER = models_module.REPO_MARKER
@@ -47,11 +55,7 @@ RunningTool = models_module.RunningTool
 ToolResult = models_module.ToolResult
 ToolVersionResult = models_module.ToolVersionResult
 build_diagnostic_summary = models_module.build_diagnostic_summary
-format_tool_report = models_module.format_tool_report
-format_bytes = models_module.format_bytes
-format_diagnostic_distribution = models_module.format_diagnostic_distribution
 format_duration = models_module.format_duration
-format_share = models_module.format_share
 read_report_stats = models_module.read_report_stats
 relative_path = models_module.relative_path
 write_start_failure = models_module.write_start_failure
@@ -75,10 +79,10 @@ def remove_temporary_paths(spec: models_module.ToolSpec) -> None:
 
 
 def run_cleanup(console: Console) -> CleanupResult:
-    cleanup_path = REPORTS_DIR / "log_cleanup.md"
+    cleanup_path = REPORTS_DIR / "log_cleanup.json"
     started_at = time.monotonic()
     exit_code = 0
-    cleanup_chunks: list[str] = []
+    command_reports: list[CleanupCommandReport] = []
     subprocess_environment = build_subprocess_environment()
     cleanup_command_count = len(CLEANUP_COMMANDS)
     with Progress(
@@ -99,23 +103,38 @@ def run_cleanup(console: Console) -> CleanupResult:
                 cleanup_task,
                 description=f"Cleanup step {index}/{cleanup_command_count} running — waiting for command to finish",
             )
-            cleanup_chunks.append(f"$ {' '.join(command)}\n")
+            command_started_at = time.monotonic()
             completed = subprocess.run(
                 command,
                 env=subprocess_environment,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 text=True,
                 check=False,
             )
-            cleanup_chunks.append(completed.stdout or "")
-            cleanup_chunks.append("\n")
+            command_reports.append(
+                CleanupCommandReport(
+                    command=list(command),
+                    exitCode=completed.returncode,
+                    stdout=completed.stdout or "",
+                    stderr=completed.stderr or "",
+                    durationSeconds=time.monotonic() - command_started_at,
+                )
+            )
             if completed.returncode != 0 and exit_code == 0:
                 exit_code = completed.returncode
             progress.advance(cleanup_task)
         progress.update(cleanup_task, description="Cleanup commands finished")
-    cleanup_path.write_text("".join(cleanup_chunks), encoding="utf-8")
     finished_at = time.monotonic()
+    report = CleanupReport(
+        schemaVersion=REPORT_SCHEMA_VERSION,
+        title="Lint And Type Check Cleanup",
+        exitCode=exit_code,
+        status=SUCCESS_LABEL if exit_code == 0 else FAILURE_LABEL,
+        durationSeconds=finished_at - started_at,
+        commands=command_reports,
+    )
+    cleanup_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     result = CleanupResult(
         exit_code=exit_code,
         started_at=started_at,
@@ -148,23 +167,20 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
         spec.report_path.unlink(missing_ok=True)
         spec.report_path.write_text("", encoding="utf-8")
         report_handle = tempfile.TemporaryFile(mode="w+", encoding="utf-8")
+        stderr_handle = tempfile.TemporaryFile(mode="w+", encoding="utf-8")
         started_at = time.monotonic()
         try:
             process = subprocess.Popen(
                 spec.command,
                 env=subprocess_environment,
                 stdout=report_handle,
-                stderr=subprocess.STDOUT,
+                stderr=stderr_handle,
             )
         except OSError as error:
             report_handle.close()
+            stderr_handle.close()
             remove_temporary_paths(spec=spec)
-            write_start_failure(
-                report_path=spec.report_path,
-                title=spec.title,
-                command=spec.command,
-                error=error,
-            )
+            write_start_failure(spec=spec, error=error)
             finished_at = time.monotonic()
             completed_tools[spec.slug] = ToolResult(
                 spec=spec,
@@ -180,6 +196,7 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
             spec=spec,
             process=process,
             report_handle=report_handle,
+            stderr_handle=stderr_handle,
             started_at=started_at,
         )
     return running_tools, completed_tools
@@ -196,15 +213,21 @@ def finish_ready_processes(
         running_tool.report_handle.flush()
         running_tool.report_handle.seek(0)
         raw_output = running_tool.report_handle.read()
+        running_tool.stderr_handle.flush()
+        running_tool.stderr_handle.seek(0)
+        stderr = running_tool.stderr_handle.read()
+        report = build_tool_report(
+            spec=running_tool.spec,
+            exit_code=exit_code,
+            raw_output=raw_output,
+            stderr=stderr,
+        )
         running_tool.spec.report_path.write_text(
-            format_tool_report(
-                spec=running_tool.spec,
-                exit_code=exit_code,
-                raw_output=raw_output,
-            ),
+            json.dumps(report, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         running_tool.report_handle.close()
+        running_tool.stderr_handle.close()
         remove_temporary_paths(spec=running_tool.spec)
         finished_at = time.monotonic()
         completed_tools[slug] = ToolResult(
@@ -216,7 +239,10 @@ def finish_ready_processes(
             diagnostic_summary=build_diagnostic_summary(
                 tool_slug=running_tool.spec.slug, raw_output=raw_output
             ),
-            result_kind=COMPLETED_KIND,
+            result_kind=COMPLETED_KIND if (
+                report["status"] in ("ok", "empty")
+                and (report["diagnosticCount"] != 0 or exit_code == 0)
+            ) else OUTPUT_FAILED_KIND,
         )
         finished_slugs.append(slug)
     for slug in finished_slugs:
@@ -234,15 +260,21 @@ def terminate_running_tools(running_tools: dict[str, RunningTool]) -> None:
         running_tool.report_handle.flush()
         running_tool.report_handle.seek(0)
         raw_output = running_tool.report_handle.read()
+        running_tool.stderr_handle.flush()
+        running_tool.stderr_handle.seek(0)
+        stderr = running_tool.stderr_handle.read()
+        report = build_tool_report(
+            spec=running_tool.spec,
+            exit_code=exit_code,
+            raw_output=raw_output,
+            stderr=stderr,
+        )
         running_tool.spec.report_path.write_text(
-            format_tool_report(
-                spec=running_tool.spec,
-                exit_code=exit_code,
-                raw_output=raw_output,
-            ),
+            json.dumps(report, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         running_tool.report_handle.close()
+        running_tool.stderr_handle.close()
         remove_temporary_paths(spec=running_tool.spec)
 
 
@@ -252,82 +284,15 @@ def write_summary(
     tool_version_results: tuple[ToolVersionResult, ...],
     wall_started_at: float,
 ) -> None:
-    checker_sum = sum(result.duration_seconds for result in checker_results)
-    checker_wall_start = min(
-        (result.started_at for result in checker_results),
-        default=cleanup_result.finished_at,
+    SUMMARY_PATH.write_text(
+        format_timing_report(
+            cleanup_result=cleanup_result,
+            checker_results=checker_results,
+            tool_version_results=tool_version_results,
+            total_duration=time.monotonic() - wall_started_at,
+        ),
+        encoding="utf-8",
     )
-    checker_wall_end = max(
-        (result.finished_at for result in checker_results),
-        default=cleanup_result.finished_at,
-    )
-    checker_wall = checker_wall_end - checker_wall_start
-    total_duration = time.monotonic() - wall_started_at
-    slowest_result = max(checker_results, key=lambda result: result.duration_seconds)
-    passed_count = sum(1 for result in checker_results if result.status == SUCCESS_LABEL)
-    issue_count = sum(1 for result in checker_results if result.status == ISSUES_LABEL)
-    error_count = sum(1 for result in checker_results if result.status == FAILURE_LABEL)
-    lines = [
-        "# Lint And Type Check Timing Summary",
-        "",
-        f"- Cleanup status: {cleanup_result.status}",
-        f"- Cleanup runtime: {format_duration(cleanup_result.duration_seconds)}",
-        f"- Cleanup log: `{relative_path(cleanup_result.report_path)}`",
-        f"- Checker wall runtime: {format_duration(checker_wall)}",
-        f"- Sum of checker runtimes: {format_duration(checker_sum)}",
-        f"- Parallel speedup: {checker_sum / checker_wall:.2f}x"
-        if checker_wall > 0
-        else "- Parallel speedup: 0.00x",
-        f"- End-to-end runtime: {format_duration(total_duration)}",
-        f"- Passed tools: {passed_count}/{len(checker_results)}",
-        f"- Tools with issues: {issue_count}/{len(checker_results)}",
-        f"- Tool errors: {error_count}/{len(checker_results)}",
-        f"- Slowest tool: {slowest_result.spec.title} ({format_duration(slowest_result.duration_seconds)})",
-        "",
-        "| Tool | State | Outcome | Exit | Duration | Share | Lines | Size | Report |",
-        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
-    ]
-    for result in sorted(
-        checker_results, key=lambda item: item.duration_seconds, reverse=True
-    ):
-        lines.append(
-            f"| {result.spec.title} | {result.run_state} | {result.status} | {result.exit_code} | {format_duration(result.duration_seconds)} | "
-            f"{format_share(result.duration_seconds, checker_sum)} | {result.report_stats.line_count} | "
-            f"{format_bytes(result.report_stats.byte_count)} | `{relative_path(result.spec.report_path)}` |"
-        )
-    lines.extend(
-        (
-            "",
-            "## Diagnostic Distribution",
-            "",
-            "| Tool | Outcome | Diagnostics | By | Distribution |",
-            "| --- | --- | ---: | --- | --- |",
-        )
-    )
-    for result in checker_results:
-        diagnostic_count = str(result.diagnostic_summary.total_count)
-        classifier: str = result.diagnostic_summary.classifier
-        distribution = format_diagnostic_distribution(result.diagnostic_summary)
-        if result.result_kind == START_FAILED_KIND:
-            diagnostic_count = "-"
-            classifier = "-"
-            distribution = "start failure"
-        lines.append(
-            f"| {result.spec.title} | {result.status} | {diagnostic_count} | {classifier} | {distribution} |"
-        )
-    if len(tool_version_results) > 0:
-        lines.extend(
-            (
-                "",
-                "## CLI Versions",
-                "",
-                "| CLI | Resolved version |",
-                "| --- | --- |",
-            )
-        )
-        for version_result in tool_version_results:
-            lines.append(f"| {version_result.spec.title} | `{version_result.version}` |")
-    SUMMARY_PATH.write_text(data="\n".join(lines) + "\n", encoding="utf-8")
 
 
 def collect_results(completed_tools: dict[str, ToolResult]) -> tuple[ToolResult, ...]:

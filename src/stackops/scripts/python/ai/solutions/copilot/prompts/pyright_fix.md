@@ -3,7 +3,7 @@ mode: agent
 ---
 
 
-$PYRIGHT_ISSUES_FILE = "./.ai/linters/issues_pyright.md"
+$PYRIGHT_ISSUES_FILE = "./.ai/linters/issues_pyright.json"
 $NUM_TASKS = 50
 please create $NUM_TASKS todo-list tasks to go through the first $NUM_TASKS 
 from $PYRIGHT_ISSUES_FILE, and solve them independently in each task.

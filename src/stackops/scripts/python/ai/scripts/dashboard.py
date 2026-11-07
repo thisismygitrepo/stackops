@@ -13,6 +13,7 @@ from stackops.scripts.python.ai.scripts import models as models_module
 
 CHECKER_SPECS = models_module.CHECKER_SPECS
 CLEANUP_COMMANDS = models_module.CLEANUP_COMMANDS
+COMPLETED_KIND = models_module.COMPLETED_KIND
 DONE_LABEL = models_module.DONE_LABEL
 ERROR_LABEL = models_module.ERROR_LABEL
 FAILURE_LABEL = models_module.FAILURE_LABEL
@@ -234,10 +235,10 @@ def build_final_summary(
         diagnostic_count = str(result.diagnostic_summary.total_count)
         classifier: str = result.diagnostic_summary.classifier
         distribution = format_diagnostic_distribution(result.diagnostic_summary)
-        if result.result_kind == START_FAILED_KIND:
+        if result.result_kind != COMPLETED_KIND:
             diagnostic_count = "-"
             classifier = "-"
-            distribution = "start failure"
+            distribution = "start failure" if result.result_kind == START_FAILED_KIND else "output failure"
         diagnostics_table.add_row(
             result.spec.title,
             checker_status_text(result),

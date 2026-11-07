@@ -300,7 +300,7 @@ def build_checker_specs(
         ToolSpec(
             slug="pyright",
             title="Pyright Type Checker",
-            report_path=REPORTS_DIR / "issues_pyright.md",
+            report_path=REPORTS_DIR / "issues_pyright.json",
             command=tuple(pyright_command),
             output_format="json",
             temporary_paths=pyright_temporary_paths,
@@ -308,7 +308,7 @@ def build_checker_specs(
         ToolSpec(
             slug="mypy",
             title="MyPy Type Checker",
-            report_path=REPORTS_DIR / "issues_mypy.md",
+            report_path=REPORTS_DIR / "issues_mypy.json",
             command=tuple(mypy_command),
             output_format="json",
             temporary_paths=(),
@@ -316,7 +316,7 @@ def build_checker_specs(
         ToolSpec(
             slug="pylint",
             title="Pylint Code Analysis",
-            report_path=REPORTS_DIR / "issues_pylint.md",
+            report_path=REPORTS_DIR / "issues_pylint.json",
             command=tuple(pylint_command),
             output_format="json",
             temporary_paths=(),
@@ -324,7 +324,7 @@ def build_checker_specs(
         ToolSpec(
             slug="pyrefly",
             title="Pyrefly Type Checker",
-            report_path=REPORTS_DIR / "issues_pyrefly.md",
+            report_path=REPORTS_DIR / "issues_pyrefly.json",
             command=tuple(pyrefly_command),
             output_format="json",
             temporary_paths=(),
@@ -332,7 +332,7 @@ def build_checker_specs(
         ToolSpec(
             slug="ty",
             title="Ty Type Checker",
-            report_path=REPORTS_DIR / "issues_ty.md",
+            report_path=REPORTS_DIR / "issues_ty.json",
             command=tuple(ty_command),
             output_format="json",
             temporary_paths=(),
@@ -340,7 +340,7 @@ def build_checker_specs(
         ToolSpec(
             slug="ruff",
             title="Ruff Linter",
-            report_path=REPORTS_DIR / "issues_ruff.md",
+            report_path=REPORTS_DIR / "issues_ruff.json",
             command=tuple(ruff_command),
             output_format="json",
             temporary_paths=(),
