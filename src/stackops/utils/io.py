@@ -131,7 +131,7 @@ def save_ini(path: PathLike, obj: Mapping[str, Mapping[str, Any]], verbose: bool
     return Path(path_obj)
 
 
-def read_ini(path: "Path", encoding: str | None = None):
+def read_ini(path: "Path", encoding: str | None = None) -> configparser.ConfigParser:
     path_obj = Path(path)
     if not path_obj.exists() or path_obj.is_dir():
         raise FileNotFoundError(f"File not found or is a directory: {path}")

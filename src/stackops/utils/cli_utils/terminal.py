@@ -20,7 +20,7 @@ class STD:
 
 class Response:
     @staticmethod
-    def from_completed_process(cp: subprocess.CompletedProcess[str]):
+    def from_completed_process(cp: subprocess.CompletedProcess[str]) -> "Response":
         resp = Response(cmd=cp.args)
         resp.output.stdout = cp.stdout
         resp.output.stderr = cp.stderr

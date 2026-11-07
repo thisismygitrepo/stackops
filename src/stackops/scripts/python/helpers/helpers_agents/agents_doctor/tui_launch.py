@@ -50,7 +50,8 @@ def _run_agent_tui(
     match: str | None,
     recursive: bool,
 ) -> None:
-    import typer
+    # This body is serialized for a subprocess without the module globals.
+    import typer  # pylint: disable=redefined-outer-name,reimported
 
     try:
         if mode == "doctor":
