@@ -10,10 +10,10 @@ from stackops.scripts.python.helpers.helpers_sessions.session_trace_models impor
 type TraceSessionChoice = tuple[Literal["error"], str] | tuple[Literal["session_names"], list[str]]
 
 
-def _parse_session_selectors(session_selectors: str) -> list[str]:
+def parse_session_selectors(session_selectors: str) -> list[str]:
     selectors = [selector.strip() for selector in session_selectors.split(",")]
     if len(selectors) == 0 or any(selector == "" for selector in selectors):
-        raise ValueError("SESSION_NAMES must contain non-empty comma-separated selectors.")
+        raise ValueError("Session selectors must be non-empty and comma-separated.")
     return selectors
 
 
@@ -58,7 +58,7 @@ def _load_trace_targets(backend: SessionMultiplexer) -> list[TraceTarget]:
 
 
 def resolve_trace_session_names(backend: SessionMultiplexer, session_selectors: str) -> list[str]:
-    selectors = _parse_session_selectors(session_selectors=session_selectors)
+    selectors = parse_session_selectors(session_selectors=session_selectors)
     if not any("*" in selector or "?" in selector for selector in selectors):
         return list(dict.fromkeys(selectors))
 

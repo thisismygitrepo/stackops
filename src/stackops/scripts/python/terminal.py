@@ -221,7 +221,7 @@ def attach_to_session(
 
 
 def kill_session_target(
-        name: Annotated[str | None, typer.Argument(help="Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.")] = None,
+        name: Annotated[str | None, typer.Argument(help="Session(s) to kill: comma-separated names and/or * and ? selectors, e.g. `api,web*`. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.")] = None,
         kill_all: Annotated[bool, typer.Option("--kill-all", "-k", help="Kill all sessions. With --idle, inspect all sessions for idle panes/windows.", show_default=True)] = False,
         idle: Annotated[bool, typer.Option("--idle", "-i", help="Kill idle-shell panes/windows. With --kill-all, inspect all sessions; otherwise inspect NAME or a chosen session.", show_default=True)] = False,
         window: Annotated[bool, typer.Option("--window", "-w", help="Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.", show_default=True)] = False,

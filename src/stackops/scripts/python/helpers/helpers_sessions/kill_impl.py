@@ -1,6 +1,7 @@
 from stackops.scripts.python.helpers.helpers_sessions.kill_models import KilledTarget
 from stackops.scripts.python.helpers.helpers_sessions.session_trace_selection import (
     matches_session_pattern,
+    parse_session_selectors,
 )
 from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
 
@@ -76,37 +77,61 @@ def choose_kill_target(
     window: bool,
     delete: bool,
 ) -> tuple[str, str | None, list[KilledTarget]]:
-    if name is None or not any(character in name for character in ("*", "?")):
+    if name is None:
         return _choose_exact_kill_target(
             backend=backend,
-            name=name,
+            name=None,
+            kill_all=kill_all,
+            idle=idle,
+            window=window,
+            delete=delete,
+        )
+    try:
+        selectors = parse_session_selectors(session_selectors=name)
+    except ValueError as error:
+        return ("error", str(error), [])
+    glob_selectors = {selector for selector in selectors if "*" in selector or "?" in selector}
+    if len(selectors) == 1 and len(glob_selectors) == 0:
+        return _choose_exact_kill_target(
+            backend=backend,
+            name=selectors[0],
             kill_all=kill_all,
             idle=idle,
             window=window,
             delete=delete,
         )
 
-    try:
-        available_names = _list_killable_session_names(backend=backend, delete=delete)
-    except ValueError as error:
-        return "error", str(error), []
-    if available_names is None:
-        return ("error", f"Unable to list {backend} sessions.", [])
-    matched_names = [
-        session_name
-        for session_name in available_names
-        if matches_session_pattern(session_name=session_name, pattern=name)
-    ]
+    available_names: list[str] = []
+    if len(glob_selectors) > 0:
+        try:
+            listed_names = _list_killable_session_names(backend=backend, delete=delete)
+        except ValueError as error:
+            return ("error", str(error), [])
+        if listed_names is None:
+            return ("error", f"Unable to list {backend} sessions.", [])
+        available_names = listed_names
+    resolved_names: list[str] = []
+    for selector in selectors:
+        if selector not in glob_selectors:
+            resolved_names.append(selector)
+            continue
+        selector_matches = [
+            session_name
+            for session_name in available_names
+            if matches_session_pattern(session_name=session_name, pattern=selector)
+        ]
+        if len(selector_matches) == 0:
+            return (
+                "error",
+                f"Session selector '{selector}' matched no killable {backend} sessions. Available names: {available_names}",
+                [],
+            )
+        resolved_names.extend(selector_matches)
+    matched_names = list(dict.fromkeys(resolved_names))
     if backend == "zellij":
         import os
 
         matched_names.sort(key=lambda session_name: session_name == os.environ.get("ZELLIJ_SESSION_NAME"))
-    if len(matched_names) == 0:
-        return (
-            "error",
-            f"Session selector '{name}' matched no killable {backend} sessions. Available names: {available_names}",
-            [],
-        )
 
     scripts: list[str] = []
     killed_targets: list[KilledTarget] = []
