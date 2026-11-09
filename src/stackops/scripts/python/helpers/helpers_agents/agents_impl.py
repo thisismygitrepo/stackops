@@ -7,7 +7,7 @@ from typing import Literal
 
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
 from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import run_generated_layout
-from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackend, SessionMultiplexer
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     CONFIG_AGENTS,
@@ -53,7 +53,7 @@ def agents_create(
     reasoning: ReasoningEffort | None,
     provider: PROVIDER | None,
     interactive: bool,
-    backend: SessionMultiplexer,
+    backend: AgentLaunchBackend,
     on_directory_conflict: AgentsDirectoryConflict,
     stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> AgentCreationResult:
@@ -79,6 +79,12 @@ def agents_create(
         get_prompt_directories,
         prep_agent_launch,
     )
+    from stackops.scripts.python.helpers.helpers_agents.agents_t3_launch import (
+        T3LaunchTarget,
+        launch_t3_threads,
+        resolve_t3_launch_target,
+        t3_requests_from_prompt_directories,
+    )
     from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
         show_agents_create_overview,
         show_created_artifacts_panel,
@@ -88,6 +94,15 @@ def agents_create(
     from stackops.utils.repos.project import resolve_project_root
     from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX
     from stackops.utils.schemas.layouts.layout_file import write_layouts_file
+
+    launch_plan: SessionMultiplexer | T3LaunchTarget
+    match backend:
+        case "t3":
+            launch_plan = resolve_t3_launch_target(
+                agent=agent, host=host, provider=provider, model=model, reasoning_effort=normalized_reasoning_effort
+            )
+        case _:
+            launch_plan = backend
 
     project_root = resolve_project_root(current_dir=Path.cwd())
     if save_as_yaml and project_root is None:
@@ -236,7 +251,15 @@ def agents_create(
 
         typer.echo(f"Saved parallel YAML entry '{job_name_resolved}' to: {saved_yaml_path}")
     if run:
-        run_generated_layout(layout_output_path=layout_output_path.resolve(), backend=backend, agent=agent_selected)
+        match launch_plan:
+            case T3LaunchTarget():
+                launch_t3_threads(
+                    workspace_root=workspace_root,
+                    requests=t3_requests_from_prompt_directories(job_name=job_name_resolved, prompt_directories=prompt_directories),
+                    target=launch_plan,
+                )
+            case _:
+                run_generated_layout(layout_output_path=layout_output_path.resolve(), backend=launch_plan, agent=agent_selected)
     return AgentCreationResult(
         agents_dir=agents_dir_obj,
         layout_path=layout_output_path.resolve(),
@@ -260,7 +283,7 @@ def _save_parallel_yaml_entry(
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
     host: HOST,
-    backend: SessionMultiplexer,
+    backend: AgentLaunchBackend,
     context: str | None,
     context_path: str | None,
     separator: str,
@@ -315,7 +338,7 @@ def _build_parallel_yaml_entry(
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
     host: HOST,
-    backend: SessionMultiplexer,
+    backend: AgentLaunchBackend,
     context: str | None,
     context_path: str | None,
     separator: str,

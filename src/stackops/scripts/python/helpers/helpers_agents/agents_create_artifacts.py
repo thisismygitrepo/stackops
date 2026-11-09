@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackend
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, DEFAULT_STAGGER_MAX, HOST, PROVIDER, ReasoningEffort
 
 
@@ -79,7 +79,7 @@ def _build_recreate_command_args(
     *,
     agent: AGENTS,
     host: HOST,
-    backend: SessionMultiplexer,
+    backend: AgentLaunchBackend,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,
@@ -225,7 +225,7 @@ def write_create_artifacts(
     layout_output_path: Path,
     agent: AGENTS,
     host: HOST,
-    backend: SessionMultiplexer,
+    backend: AgentLaunchBackend,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     provider: PROVIDER | None,

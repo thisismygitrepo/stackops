@@ -16,8 +16,8 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import (
     PROVIDER,
     ReasoningEffort,
 )
-from stackops.utils.default_multiplexer import DEFAULT_AGENT_MULTIPLEXER_HELP, resolve_agent_multiplexer, resolve_session_multiplexer
-from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer, SessionMultiplexerOption
+from stackops.utils.default_multiplexer import DEFAULT_AGENT_MULTIPLEXER_HELP, resolve_agent_launch_backend
+from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackend, AgentLaunchBackendOption
 from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentCreationResult, AgentsDirectoryConflict
 from stackops.utils.cli_utils.interaction import require_interactive
 
@@ -82,9 +82,9 @@ def agents_create(
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,
     host: Annotated[HOST, typer.Option(..., "--host", "-H", help=f"Machine to run agents on. One of {', '.join(get_args(HOST))}")] = "local",
     backend: Annotated[
-        SessionMultiplexerOption | None,
+        AgentLaunchBackendOption | None,
         typer.Option(
-            "--backend", "-b", help=f"Multiplexer used when --run launches the generated layout: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z. {DEFAULT_AGENT_MULTIPLEXER_HELP}"
+            "--backend", "-b", help=f"Where --run launches the agents: a multiplexer running the generated layout (tmux/t, herdr/h, tuios/u, aoe/e, zellij/z) or t3 (one T3 Code thread per agent, full access, requires --model). {DEFAULT_AGENT_MULTIPLEXER_HELP}"
         ),
     ] = None,
     context: Annotated[
@@ -147,7 +147,7 @@ def agents_create(
             return None
 
         resolved_agent = resolve_agent(agent=agent)
-        resolved_backend: SessionMultiplexer = resolve_agent_multiplexer(multiplexer=None) if backend is None else resolve_session_multiplexer(multiplexer=backend)
+        resolved_backend: AgentLaunchBackend = resolve_agent_launch_backend(backend=backend)
         normalized_separator = _decode_separator(separator=separator)
         if interactive:
             require_interactive("Interactive agent creation")
@@ -309,6 +309,8 @@ def create_context(
                     backend=SandboxBackend.NONE, image=None, settings=None,
                     providers=(), name=None, sync=None,
                 ),
+                t3=False,
+                model=None,
             )
     except SystemExit as e:
         exit_code = e.code if isinstance(e.code, int) else 0 if e.code is None else 1

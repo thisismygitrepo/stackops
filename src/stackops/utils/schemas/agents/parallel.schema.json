@@ -91,13 +91,14 @@
           ]
         },
         "backend": {
-          "description": "Multiplexer used when run launches the generated layout. null uses default_agent_multiplexer from the StackOps config, else tuios.",
+          "description": "Where run launches the agents: a multiplexer running the generated layout, or t3 for one T3 Code thread per agent (requires model). null uses default_agent_multiplexer from the StackOps config, else tuios.",
           "enum": [
             "tmux",
             "zellij",
             "herdr",
             "tuios",
             "aoe",
+            "t3",
             null
           ]
         },
