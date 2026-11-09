@@ -240,6 +240,7 @@ devops network cloudflare [SUBCOMMAND] [ARGS]...
 | Command | Description |
 |---------|-------------|
 | `switch-public-ip` | Switch the public IP through Cloudflare WARP |
+| `connect-warp` | Connect WARP, repairing its service and registration, and show the IP before and after |
 | `run-tunnel` | Run a tunnel in the foreground or as a transient background service |
 | `reinstall-tunnel-service` | Reinstall the persistent Cloudflare tunnel service |
 | `add-ip-exclusion-to-warp` | Add WARP tunnel exclusions |
@@ -267,6 +268,28 @@ Example:
 
 ```bash
 devops network cloudflare switch-public-ip --max-trials 5 --target-ip 203.0.113.10
+```
+
+#### connect-warp
+
+Connect Cloudflare WARP if it is not already connected. The command starts the `warp-svc` service when it is down, registers the device when the registration is missing, replaces a stale registration, accepts the WARP Terms of Service, and compares the status and public IP before and after.
+
+```bash
+devops network cloudflare connect-warp [OPTIONS]
+```
+
+Key options from current help:
+
+| Option | Description |
+|--------|-------------|
+| `--update`, `-u` | Update `warp-cli` to the latest release before connecting |
+| `--timeout`, `-t` | Seconds to wait for WARP to connect |
+| `--wait`, `-w` | Seconds between status checks |
+
+Example:
+
+```bash
+devops network cloudflare connect-warp --update
 ```
 
 #### run-tunnel

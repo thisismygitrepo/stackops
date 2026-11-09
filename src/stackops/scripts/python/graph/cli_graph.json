@@ -1387,6 +1387,9 @@
                     "    os: Annotated[",
                     "        str, typer.Option(\"--os\", \"-o\", help=f\"OS filter for this backup entry. Comma-separated values from: {', '.join(ALL_OS_VALUES)}.\")",
                     "    ] = DEFAULT_OS_FILTER,",
+                    "    note: Annotated[",
+                    "        str | None, typer.Option(\"--note\", \"-N\", help=\"Free-text note stored on the entry. Omit to keep an existing note; pass an empty string to clear it.\")",
+                    "    ] = None,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
                     "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the registration receipt as JSON.\")] = False,",
                     ") -> None:",
@@ -1398,7 +1401,7 @@
                     "    if json_output and interactive:",
                     "        raise typer.BadParameter(\"--json cannot be combined with --interactive.\")",
                     "    if interactive:",
-                    "        path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os = _prompt_register_data_options(",
+                    "        path_local, group, name, path_cloud, share_url, zip_, encryption, rel2home, os, note = _prompt_register_data_options(",
                     "            path_local=path_local,",
                     "            group=group,",
                     "            name=name,",
@@ -1409,6 +1412,7 @@
                     "            pwd=pwd,",
                     "            rel2home=rel2home,",
                     "            os=os,",
+                    "            note=note,",
                     "        )",
                     "    if path_local is None:",
                     "        typer.echo(\"Error: PATH_LOCAL is required unless --interactive is used.\", err=True)",
@@ -1425,6 +1429,7 @@
                     "            password=pwd,",
                     "            rel2home=rel2home,",
                     "            os=os,",
+                    "            note=note,",
                     "        )",
                     "    except ValueError as exc:",
                     "        msg = typer.style(\"Error: \", fg=typer.colors.RED) + str(exc)",
@@ -1671,6 +1676,28 @@
                         "short_flags": [
                           "-o"
                         ]
+                      }
+                    },
+                    {
+                      "name": "note",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--note', '-N', help='Free-text note stored on the entry. Omit to keep an existing note; pass an empty string to clear it.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--note",
+                          "-N"
+                        ],
+                        "long_flags": [
+                          "--note"
+                        ],
+                        "short_flags": [
+                          "-N"
+                        ],
+                        "help": "Free-text note stored on the entry. Omit to keep an existing note; pass an empty string to clear it."
                       }
                     },
                     {
@@ -6300,6 +6327,9 @@
                         "    group: Annotated[str, typer.Option(\"--group\", \"-S\", help=\"Group name in mapper/dotfiles.yaml to record this mapping.\")] = \"default\",",
                         "    os_filter: Annotated[str, typer.Option(\"--os\", \"-o\", help=\"Comma-separated OS list from: linux,darwin,windows.\")] = DEFAULT_OS_FILTER,",
                         "    shared: Annotated[bool, typer.Option(\"--shared\", \"-H\", help=\"Whether the config file is shared across destinations directory.\")] = False,",
+                        "    note: Annotated[",
+                        "        str | None, typer.Option(\"--note\", \"-N\", help=\"Free-text note stored on the entry. Omit to keep an existing note; pass an empty string to clear it.\")",
+                        "    ] = None,",
                         "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Prompt for register fields one step at a time.\")] = False,",
                         ") -> None:",
                         "    from rich.console import Console",
@@ -6309,7 +6339,7 @@
                         "",
                         "    console = Console()",
                         "    if interactive:",
-                        "        file, method, on_conflict, destination, group, os_filter, shared, name = _prompt_register_dotfile_options(",
+                        "        file, method, on_conflict, destination, group, os_filter, shared, name, note = _prompt_register_dotfile_options(",
                         "            file=file,",
                         "            method=method,",
                         "            on_conflict=on_conflict,",
@@ -6318,6 +6348,7 @@
                         "            os_filter=os_filter,",
                         "            shared=shared,",
                         "            entry_name=name,",
+                        "            note=note,",
                         "        )",
                         "    if file is None:",
                         "        console.print(\"[red]Error:[/] FILE is required unless --interactive is used.\")",
@@ -6356,7 +6387,7 @@
                         "    if result[\"action\"] == \"error\":",
                         "        raise typer.Exit(code=1)",
                         "    entry_name = _resolve_entry_name(orig_path, name)",
-                        "    record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=group, os_filter=os_filter, entry_name=entry_name)"
+                        "    record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=group, os_filter=os_filter, note=note, entry_name=entry_name)"
                       ],
                       "name": "register_dotfile",
                       "parameters": [
@@ -6554,6 +6585,28 @@
                           }
                         },
                         {
+                          "name": "note",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--note', '-N', help='Free-text note stored on the entry. Omit to keep an existing note; pass an empty string to clear it.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--note",
+                              "-N"
+                            ],
+                            "long_flags": [
+                              "--note"
+                            ],
+                            "short_flags": [
+                              "-N"
+                            ],
+                            "help": "Free-text note stored on the entry. Omit to keep an existing note; pass an empty string to clear it."
+                          }
+                        },
+                        {
                           "name": "interactive",
                           "kind": "positional_or_keyword",
                           "type": "bool",
@@ -6621,7 +6674,7 @@
                         "        raise typer.BadParameter(\"--serve and --ssh cannot be combined.\")",
                         "    if ssh and remote is None:",
                         "        require_interactive(\"Choose SSH destination; supply --remote USER@HOST\")",
-                        "        remote = typer.prompt(\"Remote destination (user@host)\")",
+                        "        remote = cast(str, typer.prompt(\"Remote destination (user@host)\"))",
                         "    output_path = output.expanduser().absolute() if output is not None else None",
                         "    if output_path is not None and output_path.exists():",
                         "        raise typer.BadParameter(f\"Output already exists: {output_path}\")",
@@ -6853,7 +6906,7 @@
                         "            raise typer.BadParameter(\"SSH import uses --remote; --url and archive password inputs do not apply.\")",
                         "        if remote is None:",
                         "            require_interactive(\"Choose SSH source; supply --remote USER@HOST\")",
-                        "            remote = typer.prompt(\"Remote source (user@host)\")",
+                        "            remote = cast(str, typer.prompt(\"Remote source (user@host)\"))",
                         "        result = subprocess.run([\"cloud\", \"transfer\", f\"{remote}:^\", str(DOTFILES_ROOT), \"-z\"], check=False)",
                         "        if result.returncode != 0:",
                         "            raise typer.Exit(code=result.returncode)",
@@ -6862,7 +6915,7 @@
                         "",
                         "    if url is None:",
                         "        require_interactive(\"Choose an encrypted archive; supply --url URL_OR_PATH\")",
-                        "        url = typer.prompt(f\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) \")",
+                        "        url = cast(str, typer.prompt(f\"\"\"Enter the URL or local path to the encrypted dotfiles zip (e.g. http://192.168.20.4:8888 or {format_home_relative_path(DOTFILES_ZIP_PATH)}.gpg) \"\"\"))",
                         "    pwd = read_secret_input(value=None, file=password_file, env=password_env, prompt=\"Password for zip decryption\")",
                         "    assert url is not None",
                         "    try:",
@@ -17208,6 +17261,113 @@
                         "name": "s",
                         "hidden": true,
                         "help": "Switch public IP address (Cloudflare WARP)"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "connect-warp",
+                    "fullPath": "devops network cloudflare connect-warp",
+                    "shortPath": "d n c c",
+                    "help": "🔌 <c> Connect Cloudflare WARP, showing the IP before and after",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_cloudflare.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_cloudflare",
+                      "callable": "connect_warp"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def connect_warp(",
+                        "    update: Annotated[bool, typer.Option(\"--update\", \"-u\", help=\"Update warp-cli to the latest release before connecting.\")] = False,",
+                        "    timeout_seconds: Annotated[float, typer.Option(\"--timeout\", \"-t\", min=1.0, help=\"Seconds to wait for WARP to connect.\")] = 60.0,",
+                        "    wait_seconds: Annotated[float, typer.Option(\"--wait\", \"-w\", min=0.1, help=\"Seconds between status checks.\")] = 1.0,",
+                        ") -> None:",
+                        "    \"\"\"🔌 Connect Cloudflare WARP, repairing its service and registration when needed.\"\"\"",
+                        "    from stackops.scripts.python.helpers.helpers_network import warp_connect as helper",
+                        "",
+                        "    match helper.connect_warp(update=update, timeout_seconds=timeout_seconds, wait_seconds=wait_seconds):",
+                        "        case helper.WarpConnected():",
+                        "            return",
+                        "        case helper.WarpFailure():",
+                        "            raise typer.Exit(1)"
+                      ],
+                      "name": "connect_warp",
+                      "parameters": [
+                        {
+                          "name": "update",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--update', '-u', help='Update warp-cli to the latest release before connecting.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--update",
+                              "-u"
+                            ],
+                            "long_flags": [
+                              "--update"
+                            ],
+                            "short_flags": [
+                              "-u"
+                            ],
+                            "help": "Update warp-cli to the latest release before connecting."
+                          }
+                        },
+                        {
+                          "name": "timeout_seconds",
+                          "kind": "positional_or_keyword",
+                          "type": "float",
+                          "default": 60.0,
+                          "required": false,
+                          "annotation_raw": "Annotated[float, typer.Option('--timeout', '-t', min=1.0, help='Seconds to wait for WARP to connect.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--timeout",
+                              "-t"
+                            ],
+                            "long_flags": [
+                              "--timeout"
+                            ],
+                            "short_flags": [
+                              "-t"
+                            ],
+                            "help": "Seconds to wait for WARP to connect."
+                          }
+                        },
+                        {
+                          "name": "wait_seconds",
+                          "kind": "positional_or_keyword",
+                          "type": "float",
+                          "default": 1.0,
+                          "required": false,
+                          "annotation_raw": "Annotated[float, typer.Option('--wait', '-w', min=0.1, help='Seconds between status checks.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--wait",
+                              "-w"
+                            ],
+                            "long_flags": [
+                              "--wait"
+                            ],
+                            "short_flags": [
+                              "-w"
+                            ],
+                            "help": "Seconds between status checks."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "doc": "🔌 Connect Cloudflare WARP, repairing its service and registration when needed.",
+                    "aliases": [
+                      {
+                        "name": "c",
+                        "hidden": true,
+                        "help": "Connect Cloudflare WARP"
                       }
                     ]
                   },
@@ -37402,6 +37562,7 @@
                     "                raise typer.Exit(code=1)",
                     "            selected_window = labels[selected_label]",
                     "",
+                    "        resolved_action: WindowAction",
                     "        if action is None:",
                     "            from stackops.scripts.python.helpers.helpers_window.constants import ACTION_DESCRIPTIONS",
                     "",
@@ -37416,13 +37577,15 @@
                     "            )",
                     "            if selected_action is None:",
                     "                raise typer.Exit(code=1)",
-                    "            action = next(candidate for candidate in ACTION_DESCRIPTIONS if candidate == selected_action)",
-                    "",
-                    "        selected_window.apply_action(action)",
-                    "        if json_output:",
-                    "            typer.echo(json.dumps({\"status\": \"completed\", \"id\": selected_window.id, \"action\": action, \"app\": selected_window.app, \"title\": selected_window.title}))",
+                    "            resolved_action = next(candidate for candidate in ACTION_DESCRIPTIONS if candidate == selected_action)",
                     "        else:",
-                    "            typer.echo(f\"\"\"{action}: {selected_window.app} — {selected_window.title or '(untitled)'}\"\"\")",
+                    "            resolved_action = action",
+                    "",
+                    "        selected_window.apply_action(resolved_action)",
+                    "        if json_output:",
+                    "            typer.echo(json.dumps({\"status\": \"completed\", \"id\": selected_window.id, \"action\": resolved_action, \"app\": selected_window.app, \"title\": selected_window.title}))",
+                    "        else:",
+                    "            typer.echo(f\"\"\"{resolved_action}: {selected_window.app} — {selected_window.title or '(untitled)'}\"\"\")",
                     "    except FileNotFoundError as error:",
                     "        typer.echo(\"Error: interactive window selection requires Television (tv) on PATH.\", err=True)",
                     "        raise typer.Exit(code=1) from error",
@@ -38343,19 +38506,28 @@
                     "            help=\"Additional directory to exclude from lint and type checking. Relative values are resolved from the repository root. Repeat for multiple directories.\",",
                     "        ),",
                     "    ] = None,",
-                    "    latest: Annotated[",
-                    "        bool,",
+                    "    tool_versions: Annotated[",
+                    "        Literal[\"latest\", \"upgrade\", \"pinned\"],",
                     "        typer.Option(",
-                    "            \"--latest\",",
-                    "            \"-l\",",
-                    "            help=\"Resolve and report the latest compatible lint and type-check tool versions for this run.\",",
+                    "            \"--tool-versions\",",
+                    "            \"-v\",",
+                    "            help=\"Which lint and type-check tool versions to run. latest: newest releases for this run only, project files untouched. upgrade: upgrade the tools in uv.lock, then run the locked versions. pinned: run the versions already in uv.lock.\",",
                     "        ),",
-                    "    ] = False,",
+                    "    ] = DEFAULT_TOOL_VERSION_MODE,",
+                    "    tools: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(",
+                    "            \"--tools\",",
+                    "            \"-t\",",
+                    "            help=\"One tool or a comma-separated list: pyright, mypy, pylint, pyrefly, ty, ruff. Omit to run all tools.\",",
+                    "        ),",
+                    "    ] = None,",
                     ") -> None:",
                     "    import subprocess",
                     "    import sys",
                     "",
                     "    import stackops.scripts.python.ai.scripts as ai_scripts",
+                    "    from stackops.scripts.python.ai.scripts.models_config import parse_type_check_tools",
                     "    from stackops.scripts.python.helpers.helpers_utils.pyproject_utils_helpers import (",
                     "        DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES,",
                     "        build_type_check_environment,",
@@ -38365,14 +38537,8 @@
                     "    from stackops.utils.path_reference import get_path_reference_path",
                     "",
                     "    try:",
+                    "        selected_tools = parse_type_check_tools(tools)",
                     "        repo_root = resolve_pyproject_root(Path(repo))",
-                    "        (",
-                    "            default_excluded_directories,",
-                    "            _skipped_default_excluded_directories,",
-                    "        ) = resolve_type_check_excluded_directories(",
-                    "            repo_root=repo_root,",
-                    "            excluded_directories=list(DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES),",
-                    "        )",
                     "        explicit_excluded_directories = [] if exclude is None else exclude",
                     "        (",
                     "            resolved_explicit_excluded_directories,",
@@ -38395,7 +38561,7 @@
                     "    excluded_directories = tuple(",
                     "        dict.fromkeys(",
                     "            (",
-                    "                *default_excluded_directories,",
+                    "                *DEFAULT_TYPE_CHECK_EXCLUDED_DIRECTORIES,",
                     "                *resolved_explicit_excluded_directories,",
                     "            )",
                     "        )",
@@ -38420,7 +38586,9 @@
                     "        cwd=repo_root,",
                     "        check=False,",
                     "        env=build_type_check_environment(",
-                    "            excluded_directories=excluded_directories, latest=latest",
+                    "            excluded_directories=excluded_directories,",
+                    "            tool_versions=tool_versions,",
+                    "            selected_tools=selected_tools,",
                     "        ),",
                     "    )",
                     "    if completed.returncode != 0:",
@@ -38466,25 +38634,47 @@
                       }
                     },
                     {
-                      "name": "latest",
+                      "name": "tool_versions",
                       "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
+                      "type": "Literal['latest', 'upgrade', 'pinned']",
+                      "default": "DEFAULT_TOOL_VERSION_MODE",
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--latest', '-l', help='Resolve and report the latest compatible lint and type-check tool versions for this run.')]",
+                      "annotation_raw": "Annotated[Literal['latest', 'upgrade', 'pinned'], typer.Option('--tool-versions', '-v', help='Which lint and type-check tool versions to run. latest: newest releases for this run only, project files untouched. upgrade: upgrade the tools in uv.lock, then run the locked versions. pinned: run the versions already in uv.lock.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--latest",
-                          "-l"
+                          "--tool-versions",
+                          "-v"
                         ],
                         "long_flags": [
-                          "--latest"
+                          "--tool-versions"
                         ],
                         "short_flags": [
-                          "-l"
+                          "-v"
                         ],
-                        "help": "Resolve and report the latest compatible lint and type-check tool versions for this run."
+                        "help": "Which lint and type-check tool versions to run. latest: newest releases for this run only, project files untouched. upgrade: upgrade the tools in uv.lock, then run the locked versions. pinned: run the versions already in uv.lock."
+                      }
+                    },
+                    {
+                      "name": "tools",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--tools', '-t', help='One tool or a comma-separated list: pyright, mypy, pylint, pyrefly, ty, ruff. Omit to run all tools.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--tools",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--tools"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "One tool or a comma-separated list: pyright, mypy, pylint, pyrefly, ty, ruff. Omit to run all tools."
                       }
                     }
                   ],
@@ -38516,10 +38706,10 @@
                     "def launch_type_fix(",
                     "    ctx: typer.Context,",
                     "    agent: Annotated[AGENTS | None, typer.Option(\"--agent\", \"-a\", help=f\"Agent type. {DEFAULT_AGENT_HELP}\")] = None,",
-                    "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", help=\"Number of diagnostics per prompt.\")] = 10,",
+                    "    agent_load: Annotated[int, typer.Option(\"--agent-load\", \"-l\", min=1, help=\"Number of diagnostics per prompt.\")] = 10,",
                     "    which_checker: Annotated[",
-                    "        CheckerName,",
-                    "        typer.Option(\"--which-checker\", \"--which\", \"-w\", help=\"Which issues_<checker>.md file under ./.ai/linters to process.\"),",
+                    "        Literal[\"mypy\", \"ruff\", \"pylint\", \"pyright\", \"ty\", \"pyrefly\"],",
+                    "        typer.Option(\"--which-checker\", \"--which\", \"-w\", help=\"Which issues_<checker>.json file under ./.ai/linters to process.\"),",
                     "    ] = \"mypy\",",
                     "    max_tabs: Annotated[",
                     "        int,",
@@ -38531,15 +38721,28 @@
                     ") -> None:",
                     "    from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command",
                     "",
-                    "    job_name = _get_job_name(checker_name=which_checker)",
+                    "    issues_path: Path = REPORTS_DIR / f\"\"\"issues_{which_checker}.json\"\"\"",
+                    "    try:",
+                    "        report = read_type_check_report(cast(object, json.loads(issues_path.read_text(encoding=\"utf-8\"))))",
+                    "        if report[\"tool\"] != which_checker:",
+                    "            raise ValueError(f\"\"\"Expected {which_checker} diagnostics, found {report['tool']} in {issues_path}\"\"\")",
+                    "    except (OSError, ValueError) as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    if not report[\"diagnostics\"]:",
+                    "        if json_output:",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json",
+                    "",
+                    "            emit_agent_json({\"tool\": which_checker, \"agent_count\": 0, \"launched\": False})",
+                    "        else:",
+                    "            typer.echo(f\"\"\"No diagnostics reported by {which_checker}; no agents created.\"\"\")",
+                    "        return",
                     "    with redirect_stdout(sys.stderr if json_output else sys.stdout):",
                     "        result = agents_create_command(",
                     "            agent=agent,",
-                    "            context_path=_get_issues_path(checker_name=which_checker),",
-                    "            separator=DIAGNOSTIC_SEPARATOR,",
+                    "            context_path=str(issues_path),",
                     "            agent_load=agent_load,",
                     "            prompt=PROMPT,",
-                    "            job_name=job_name,",
+                    "            job_name=f\"\"\"fix_{which_checker}_issues\"\"\",",
                     "            on_directory_conflict=on_directory_conflict,",
                     "            run=False,",
                     "        )",
@@ -38591,7 +38794,7 @@
                       "type": "int",
                       "default": 10,
                       "required": false,
-                      "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', help='Number of diagnostics per prompt.')]",
+                      "annotation_raw": "Annotated[int, typer.Option('--agent-load', '-l', min=1, help='Number of diagnostics per prompt.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -38610,10 +38813,10 @@
                     {
                       "name": "which_checker",
                       "kind": "positional_or_keyword",
-                      "type": "CheckerName",
+                      "type": "Literal['mypy', 'ruff', 'pylint', 'pyright', 'ty', 'pyrefly']",
                       "default": "mypy",
                       "required": false,
-                      "annotation_raw": "Annotated[CheckerName, typer.Option('--which-checker', '--which', '-w', help='Which issues_<checker>.md file under ./.ai/linters to process.')]",
+                      "annotation_raw": "Annotated[Literal['mypy', 'ruff', 'pylint', 'pyright', 'ty', 'pyrefly'], typer.Option('--which-checker', '--which', '-w', help='Which issues_<checker>.json file under ./.ai/linters to process.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -38628,7 +38831,7 @@
                         "short_flags": [
                           "-w"
                         ],
-                        "help": "Which issues_<checker>.md file under ./.ai/linters to process."
+                        "help": "Which issues_<checker>.json file under ./.ai/linters to process."
                       }
                     },
                     {

@@ -55,15 +55,12 @@ echo "🔒 Installing Cloudflare WARP on {distribution.distribution_id} with {di
 echo "📦 Installing Cloudflare WARP..."
 {install_command}
 
-echo "📡 Registering the WARP client..."
-warp-cli registration new
-
-echo "✅ Cloudflare WARP installation completed"
+echo "✅ Cloudflare WARP installation completed. Connect with: devops network cloudflare connect-warp"
 """
 
 
 def main(installer_data: InstallerData, version: str | None, update: bool) -> str:
-    _ = installer_data, version, update
+    _ = installer_data, version
     system = platform.system()
     match system:
         case "Windows":
@@ -72,7 +69,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> st
             distribution = detect_current_linux_distribution()
             program = _build_linux_install_script(distribution)
         case "Darwin":
-            program = "brew install --cask cloudflare-warp"
+            program = f"""brew {"upgrade" if update else "install"} --cask cloudflare-warp"""
         case _:
             raise NotImplementedError(f"Unsupported platform: {system}")
     subprocess.run(["bash", "-c", program], text=True, check=True)

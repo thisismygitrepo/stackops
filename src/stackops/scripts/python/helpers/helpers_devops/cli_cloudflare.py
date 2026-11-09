@@ -34,6 +34,21 @@ def switch_public_ip_address(
         raise typer.Exit(1)
 
 
+def connect_warp(
+    update: Annotated[bool, typer.Option("--update", "-u", help="Update warp-cli to the latest release before connecting.")] = False,
+    timeout_seconds: Annotated[float, typer.Option("--timeout", "-t", min=1.0, help="Seconds to wait for WARP to connect.")] = 60.0,
+    wait_seconds: Annotated[float, typer.Option("--wait", "-w", min=0.1, help="Seconds between status checks.")] = 1.0,
+) -> None:
+    """🔌 Connect Cloudflare WARP, repairing its service and registration when needed."""
+    from stackops.scripts.python.helpers.helpers_network import warp_connect as helper
+
+    match helper.connect_warp(update=update, timeout_seconds=timeout_seconds, wait_seconds=wait_seconds):
+        case helper.WarpConnected():
+            return
+        case helper.WarpFailure():
+            raise typer.Exit(1)
+
+
 def run_tunnel(
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Run without confirmation.")] = False,
     tunnel_name: Annotated[str | None, typer.Option("--tunnel-name", "-n", help="Name of the Cloudflare tunnel to run")] = None,
@@ -157,6 +172,8 @@ def get_app() -> typer.Typer:
     )
     cloudflare_app.command(name="switch-public-ip", help="🔁 <s> Switch public IP address (Cloudflare WARP)")(switch_public_ip_address)
     cloudflare_app.command(name="s", help="Switch public IP address (Cloudflare WARP)", hidden=True)(switch_public_ip_address)
+    cloudflare_app.command(name="connect-warp", help="🔌 <c> Connect Cloudflare WARP, showing the IP before and after")(connect_warp)
+    cloudflare_app.command(name="c", help="Connect Cloudflare WARP", hidden=True)(connect_warp)
     cloudflare_app.command(name="run-tunnel", help="🚀 <r> Run a Cloudflare tunnel in the foreground or background.")(run_tunnel)
     cloudflare_app.command(name="r", hidden=True)(run_tunnel)
     cloudflare_app.command(name="reinstall-tunnel-service", help="🔄 <R> Reinstall the persistent Cloudflare tunnel service.")(reinstall_tunnel_service)

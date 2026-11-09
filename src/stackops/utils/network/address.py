@@ -51,7 +51,7 @@ class InterfaceAddressRecord(Protocol):
 def get_public_ip_address() -> PublicIpInfo:
     from stackops.utils.installer_utils.installer_cli import install_if_missing
 
-    install_if_missing(which="ipinfo", binary_name=None, verbose=True)
+    install_if_missing(which="ipinfo", binary_name=None, verbose=False)
     import subprocess
 
     result = subprocess.run(["ipinfo", "myip", "--json"], check=True, capture_output=True, text=True, encoding="utf-8")
