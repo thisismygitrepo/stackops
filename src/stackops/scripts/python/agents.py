@@ -517,6 +517,11 @@ def run_prompt(
         ),
     ],
     agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help=f"Agent to launch. {DEFAULT_AGENT_HELP}")] = None,
+    t3: Annotated[
+        bool,
+        typer.Option("--t3", help="Launch the prompt as a T3 Code thread with full access instead of running the agent here. Requires --model."),
+    ] = False,
+    model: Annotated[str | None, typer.Option("--model", "-m", help="T3 Code model id for --t3, e.g. claude-opus-5-5 or gpt-5.6-luna.")] = None,
     interactive: Annotated[
         bool,
         typer.Option("--interactive", "-i", help="Start a native agent chat with the prepared prompt and keep it open for follow-up messages."),
@@ -660,6 +665,8 @@ def run_prompt(
                     backend=sandbox, image=sandbox_image, settings=sandbox_settings,
                     providers=tuple(sandbox_provider or ()), name=sandbox_name, sync=sandbox_sync,
                 ),
+                t3=t3,
+                model=model,
             )
     except ValueError as e:
         raise typer.BadParameter(str(e)) from e

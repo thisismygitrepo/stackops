@@ -54,7 +54,11 @@ findBugsOrImprovementRoom:
     * The user then might ask you to approve the bug fix suggestions or improvements suggestions, in which case you proceed to launch sub agents, one per improvment/bug fix (exactly one), they go in a separate Herdr workspace and are launched in separate tabs, and they must be instucted with additional caveat """please fix this only if you think it is genuinely a bug/improvment space, if you disagree please leave as is, also, please take into consideration complexity and speed, if solution adds too much complexity, we skip, if solution slow down things significantly, we skip too. We are not super fussy about correctness, we are more about practicality and performance and maintainability. Please write down a comment where needed that this is a design choice and we are aware of its implications or this is not strictly correct but we choose to do so for reason x and y.""". This gives us extra reassurance that first work was not hallucination because the prior agent was handling too much and missed details. The bug finding operation might have been done already and you are asked to start working on fixes, in which case the above applies.
     * When finished, please don't close the Herdr workspaces or tabs, as user might want followup questions with those agents.
     * This is a fresh run, do not rely on old files or memory or runs, unless user is explictly saying that we are following up on an old run.
-  
+
+    Agent multiplexer:
+    ------------------
+    Use Herdr by default, as described above. If you find yourself running inside a T3 Code environment (a `t3-code` MCP server is available to you with tools like `delegate_task`, or your instructions include T3 Code orchestration guidance), do not use Herdr: create each sub agent with `delegate_task` (one task per agent, same harness rules as above), wait for them with T3 Code's task/thread status tools, and leave their threads open for follow-up questions instead of the Herdr workspaces and tabs.
+
 lintAndTypeCheckPyProject:
   group: dev
   description: run the latest and most popular linters and type checkers again the project and run agents to action the results.
@@ -75,6 +79,10 @@ lintAndTypeCheckPyProject:
     It is absolutely crucial that you tell each one of them that those reports coming from the linters and type checkers may very well be false positives because type checking a dynmaic language is a hard problem and those tools continue to evolve but its not a solved problem, so you tell them to take things with pinch of salt, and only action the diagnosis if they agree with it and it is a true one (i.e. understand the limits of those softwares, because agent can see and reason at a higher level). Furthermore, you let them know this golden rule: we are not willing to compromise on complexity just for the sake of being strictly correct from typing perspective, i.e. if the solution involves too much work to fix that increase maintainability burden, then we are happier to go with a practical solution or simply ignoring the diagnosis or silencing it in worst case scenario, with a comment saying why we are doing this. Lastly, the user must specify which linter/type checker to action, e.g. is it the pyright or ruff etc etc, they can say all too.
     * Please put all the agents under a tab called '<project-name>-type-fix' and put the agents as panes inside it.
     * Please let the agents know that there are other agents running in parallel fixing potentially a similar or same problem reported by a different diangostic tool, so some of the tasks they are dealing with are potentially outdated or fixed already, a git diff or some other smarter trick they can think of can reveal the full picture of what is happening.
+
+    Agent multiplexer:
+    ------------------
+    Use Herdr by default, as described above. If you find yourself running inside a T3 Code environment (a `t3-code` MCP server is available to you with tools like `delegate_task`, or your instructions include T3 Code orchestration guidance), do not use Herdr: launch each agent with `delegate_task` instead of panes, keep the same parallel limit and batching rules, and track them with T3 Code's task/thread status tools.
 
     
      

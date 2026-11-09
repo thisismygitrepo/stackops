@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_default
 )
 from stackops.utils.default_agent import resolve_agent
 from stackops.utils.default_multiplexer import resolve_agent_multiplexer
-from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackend
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     DEFAULT_SEAPRATOR,
@@ -35,7 +35,7 @@ class ParallelCreateValues:
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST | None
-    backend: SessionMultiplexer | None
+    backend: AgentLaunchBackend | None
     context: str | None
     context_path: str | None
     separator: str | None
@@ -59,7 +59,7 @@ class ResolvedParallelCreateValues:
     reasoning_effort: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST
-    backend: SessionMultiplexer
+    backend: AgentLaunchBackend
     context: str | None
     context_path: str | None
     separator: str

@@ -6,7 +6,7 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import (
     PROVIDER,
     ReasoningEffort,
 )
-from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackend
 
 
 PARALLEL_CREATE_COMMAND_NAME: Final[str] = "agents parallel create"
@@ -20,7 +20,7 @@ class ParallelCreateYamlEntry(TypedDict):
     reasoning: ReasoningEffort | None
     provider: PROVIDER | None
     host: HOST | None
-    backend: SessionMultiplexer | None
+    backend: AgentLaunchBackend | None
     context: str | None
     context_path: str | None
     separator: str | None

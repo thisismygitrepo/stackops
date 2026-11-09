@@ -12,7 +12,7 @@ from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.commo
     separator_is_applicable_for_context_path,
 )
 from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options import collect_reviewed_create_options
-from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackend
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     DEFAULT_SEAPRATOR,
@@ -50,7 +50,7 @@ class InteractiveAgentCreateParams:
     job_name: str
     join_prompt_and_context: bool
     run: bool
-    backend: SessionMultiplexer
+    backend: AgentLaunchBackend
     output_path: str | None
     agents_dir: str | None
 
@@ -60,7 +60,7 @@ def _collect_inputs(
     agent: AGENTS,
     join_prompt_and_context: bool,
     run: bool,
-    backend: SessionMultiplexer,
+    backend: AgentLaunchBackend,
     output_path: str | None,
     agents_dir: str | None,
     host: HOST,
@@ -182,7 +182,7 @@ def main(
     job_name: str | None = None,
     join_prompt_and_context: bool = False,
     run: bool = False,
-    backend: SessionMultiplexer,
+    backend: AgentLaunchBackend,
     output_path: str | None = None,
     agents_dir: str | None = None,
     save_as_yaml: bool = False,

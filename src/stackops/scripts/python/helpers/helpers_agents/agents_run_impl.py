@@ -232,6 +232,8 @@ def run(
     show_prompts_yaml_format: bool,
     working_directory: Path | None,
     sandbox_options: SandboxOptions,
+    t3: bool,
+    model: str | None,
 ) -> None:
     import sys
     from contextlib import nullcontext, redirect_stdout
@@ -255,6 +257,15 @@ def run(
 
         validate_interactive_prompt_agent(agent=agent)
     validate_prompt_sandbox(agent=agent, options=sandbox_options)
+    from stackops.scripts.python.helpers.helpers_agents.agents_t3_launch import T3LaunchTarget, resolve_t3_launch_target
+
+    if model is not None and not t3:
+        raise ValueError("--model is only used with --t3.")
+    t3_target: T3LaunchTarget | None = None
+    if t3:
+        if interactive or sandbox_options.backend != SandboxBackend.NONE:
+            raise ValueError("--t3 launches the prompt in T3 Code, so it cannot be combined with --interactive or --sandbox.")
+        t3_target = resolve_t3_launch_target(agent=agent, host="local", provider=None, model=model, reasoning_effort=reasoning_effort)
     if edit or show_prompts_yaml_format:
         yaml_locations: list[tuple[str, Path]] = resolve_prompts_yaml_paths(prompts_yaml_path=prompts_yaml_path, source=source)
         if edit and prompts_yaml_path is None and source in ("all", "a"):
@@ -309,6 +320,13 @@ def run(
             _print_prompt_file_preview(prompt_file=prompt_file)
     else:
         _print_prompt_file_preview(prompt_file=prompt_file)
+    if t3_target is not None:
+        from stackops.scripts.python.helpers.helpers_agents.agents_t3_launch import launch_prompt_file_in_t3
+
+        repo_root = _resolve_current_repo_root()
+        workspace_root = working_directory if working_directory is not None else repo_root if repo_root is not None else Path.cwd()
+        launch_prompt_file_in_t3(prompt_file=prompt_file, workspace_root=workspace_root.resolve(), target=t3_target)
+        return
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agents_run_interactive_script import build_interactive_prompt_script
 
@@ -328,6 +346,7 @@ def run(
 
     from stackops.utils.code import exit_then_run_shell_script
     exit_then_run_shell_script(script=command_line, strict=False)
+
 
 
 def _should_scaffold_prompts_yaml(*, location_name: str, prompts_yaml_path: str | None, source: PROMPTS_SOURCE) -> bool:

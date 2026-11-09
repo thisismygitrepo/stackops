@@ -7,7 +7,7 @@ import sys
 import typer
 from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentsDirectoryConflict
 
-from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexerOption
+from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackendOption
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 
 _PARALLEL_RUNS_SOURCE = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
@@ -51,8 +51,8 @@ def run_parallel(
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Override provider.")] = None,
     host: Annotated[HOST | None, typer.Option(..., "--host", "-H", help=f"Override machine. One of {', '.join(get_args(HOST))}")] = None,
     backend: Annotated[
-        SessionMultiplexerOption | None,
-        typer.Option(..., "--backend", "-b", help="Override the multiplexer used when --run launches the generated layout: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z."),
+        AgentLaunchBackendOption | None,
+        typer.Option(..., "--backend", "-b", help="Override where --run launches the agents: tmux/t, herdr/h, tuios/u, aoe/e, zellij/z, or t3 (T3 Code threads)."),
     ] = None,
     context: Annotated[
         str | None, typer.Option(..., "--context", "-c", help="Override context as a direct string. Mutually exclusive with --context-path.")
@@ -89,7 +89,7 @@ def run_parallel(
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print artifact paths and launch state as JSON.")] = False,
 ) -> None:
     """Run a named parallel agent workflow from YAML, with create-option overrides."""
-    from stackops.utils.default_multiplexer import resolve_session_multiplexer
+    from stackops.utils.default_multiplexer import resolve_agent_launch_backend
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config import ParallelCreateValues
     from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_impl import run_parallel_from_yaml
 
@@ -105,7 +105,7 @@ def run_parallel(
                     reasoning_effort=reasoning_effort,
                     provider=provider,
                     host=host,
-                    backend=None if backend is None else resolve_session_multiplexer(multiplexer=backend),
+                    backend=None if backend is None else resolve_agent_launch_backend(backend=backend),
                     context=context,
                     context_path=context_path,
                     separator=separator,

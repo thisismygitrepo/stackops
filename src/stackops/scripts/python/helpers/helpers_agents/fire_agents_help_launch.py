@@ -160,7 +160,7 @@ def prep_agent_launch(
     for idx, a_prompt_material in enumerate(prompts_material):
         prompt_root = prompt_folder / f"agent_{idx}"
         prompt_root.mkdir(parents=True, exist_ok=True)
-        prompt_path = prompt_root / f"agent_{idx}_prompt.txt"
+        prompt_path = get_agent_prompt_file(prompt_directory=prompt_root)
         if join_prompt_and_context:
             prompt_material_path = prompt_path
             prompt_path.write_text(prompt_prefix + """\nPlease only look at:\n""" + a_prompt_material + JURISDICTION_SUFFIX, encoding="utf-8")
@@ -360,6 +360,10 @@ def get_agents_launch_layout(session_root: Path, *, job_name: str, start_dir: Pa
     layout = LayoutConfig(layoutName=job_name, layoutTabs=tab_config)
     layouts_file: LayoutsFile = LayoutsFile(version=LAYOUT_FILE_VERSION, layouts=[layout])
     return layouts_file
+
+
+def get_agent_prompt_file(prompt_directory: Path) -> Path:
+    return prompt_directory / f"""{prompt_directory.name}_prompt.txt"""
 
 
 def get_prompt_directories(*, prompt_root: Path) -> list[Path]:
