@@ -61,7 +61,7 @@ lintAndTypeCheckPyProject:
   prompt: |
     The setup:
     ----------
-    We have "utils pyproject type-check" command that you can run against a python project and it will run the latest version of linter and type checkers and product results under `./.ai/linters/<name>.md` reports are generated in the end.
+    We have "utils pyproject type-check" command that you can run against a python project and it will run the latest version of linter and type checkers and product results under `./.ai/linters/<name>.json` reports are generated in the end.
     The user might have already ran this command, so you jump to results, otherwise, you start by running it if they are not there or they are outdated.
 
     The Task:
