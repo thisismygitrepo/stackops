@@ -29,6 +29,7 @@ type SecretSelectionMode = Literal["unique", "all", "interactive"]
 @dataclass(frozen=True)
 class SecretCandidate:
     entry_index: int
+    secret_index: int
     json_path: str
     login_name: str
     login_tags: tuple[str, ...]
@@ -181,6 +182,7 @@ def _login_candidates(login: Login, entry_index: int, secrets_file: SecretsFile)
         candidates.append(
             SecretCandidate(
                 entry_index=entry_index,
+                secret_index=secret_index,
                 json_path=f"entries[{entry_index}].secrets[{secret_index}].keyValues",
                 login_name=login_name,
                 login_tags=login_tags,
