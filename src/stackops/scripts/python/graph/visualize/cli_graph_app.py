@@ -7,6 +7,7 @@ import typer
 
 
 PlotlyView: TypeAlias = Literal["sunburst", "treemap", "icicle"]
+RunActionLoose: TypeAlias = Literal["type", "t", "run", "r", "print", "p"]
 
 
 def resolve_uv_context(*, local_uv_with: list[str] | None, external_uv_with: list[str]) -> tuple[list[str] | None, str | None]:
@@ -131,6 +132,32 @@ def search(
         raise typer.Exit(code=return_code)
 
 
+def run(
+    query: Annotated[str, typer.Argument(help="Case-insensitive search terms to narrow the command picker; omit to list all.")] = "",
+    action: Annotated[
+        RunActionLoose,
+        typer.Option("--action", "-a", help="What to do with the built command: type = pre-type it in your shell prompt, run = execute it now, print = print it to stdout."),
+    ] = "type",
+    skip_prompts: Annotated[
+        bool, typer.Option("--skip-prompts", "-s", help="Skip the argument and option prompts and use the bare command.")
+    ] = False,
+    graph_path: Annotated[Path | None, typer.Option("--graph-path", "-g", help="Path to cli_graph.json")] = None,
+) -> None:
+    from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
+    from stackops.scripts.python.graph.visualize.cli_graph_execute import run_cli_graph
+
+    try:
+        return_code = run_cli_graph(
+            graph_path=graph_path if graph_path is not None else DEFAULT_GRAPH_PATH,
+            query=query, action=action, skip_prompts=skip_prompts,
+        )
+    except (OSError, ValueError) as error:
+        typer.echo(f"""Run failed: {error}""", err=True)
+        raise typer.Exit(code=1) from error
+    if return_code != 0:
+        raise typer.Exit(code=return_code)
+
+
 def get_app() -> typer.Typer:
     cli_app = typer.Typer(
         help="🧭 <g> Visualize the StackOps CLI graph in multiple formats.",
@@ -141,6 +168,8 @@ def get_app() -> typer.Typer:
     )
     cli_app.command(name="search", no_args_is_help=False, help="🔎 <s> Search CLI graph entries and show the selected command summary.")(search)
     cli_app.command(name="s", no_args_is_help=False, help="Search CLI graph entries and show the selected command summary.", hidden=True)(search)
+    cli_app.command(name="run", no_args_is_help=False, help="🚀 <r> Pick a CLI command, fill its arguments and options, then type, run, or print it.")(run)
+    cli_app.command(name="r", no_args_is_help=False, help="Pick a CLI command, fill its arguments and options, then type, run, or print it.", hidden=True)(run)
     cli_app.command(name="tree", no_args_is_help=False, help="🌳 <t> Render a rich tree view in the terminal.")(tree)
     cli_app.command(name="t", no_args_is_help=False, help="Render a rich tree view in the terminal.", hidden=True)(tree)
     cli_app.command(name="dot", no_args_is_help=False, help="🧩 <d> Export the graph as Graphviz DOT.")(dot)
