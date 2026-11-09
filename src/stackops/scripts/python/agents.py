@@ -59,6 +59,7 @@ _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
     "status",
     "reset",
     "browser",
+    "computer",
     "second-brain",
     "local",
     "run-prompt",
@@ -103,6 +104,12 @@ def browser_group(ctx: typer.Context) -> None:
     from stackops.scripts.python.agents_browser import get_app as get_browser_app
 
     _run_nested_app(ctx, get_browser_app)
+
+
+def computer_group(ctx: typer.Context) -> None:
+    from stackops.scripts.python.agents_computer import get_app as get_computer_app
+
+    _run_nested_app(ctx, get_computer_app)
 
 
 def iter_group(ctx: typer.Context) -> None:
@@ -848,6 +855,11 @@ def get_app() -> typer.Typer:
         context_settings=_NESTED_APP_CONTEXT,
     )(browser_group)
     agents_app.command("b", help="Browser automation for agent CLIs and MCP", hidden=True, context_settings=_NESTED_APP_CONTEXT)(browser_group)
+    agents_app.command(
+        "computer", help="🖥️ <u> Desktop control for agent CLIs through MCP", short_help="🖥️ <u> Desktop control for agent CLIs through MCP",
+        context_settings=_NESTED_APP_CONTEXT,
+    )(computer_group)
+    agents_app.command("u", help="Desktop control for agent CLIs through MCP", hidden=True, context_settings=_NESTED_APP_CONTEXT)(computer_group)
     agents_app.command(
         "iter", help="🔁 <I> Iter maintenance through Herdr", short_help="🔁 <I> Current Herdr iter maintenance", context_settings=_NESTED_APP_CONTEXT
     )(iter_group)

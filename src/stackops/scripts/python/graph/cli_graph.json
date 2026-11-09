@@ -20342,6 +20342,141 @@
                   },
                   {
                     "kind": "command",
+                    "name": "run",
+                    "fullPath": "devops self explore-cli run",
+                    "shortPath": "d s x r",
+                    "help": "🚀 <r> Pick a CLI command, fill its arguments and options, then type, run, or print it.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/graph/visualize/cli_graph_app.py",
+                      "module": "stackops.scripts.python.graph.visualize.cli_graph_app",
+                      "callable": "run"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def run(",
+                        "    query: Annotated[str, typer.Argument(help=\"Case-insensitive search terms to narrow the command picker; omit to list all.\")] = \"\",",
+                        "    action: Annotated[",
+                        "        RunActionLoose,",
+                        "        typer.Option(\"--action\", \"-a\", help=\"What to do with the built command: type = pre-type it in your shell prompt, run = execute it now, print = print it to stdout.\"),",
+                        "    ] = \"type\",",
+                        "    skip_prompts: Annotated[",
+                        "        bool, typer.Option(\"--skip-prompts\", \"-s\", help=\"Skip the argument and option prompts and use the bare command.\")",
+                        "    ] = False,",
+                        "    graph_path: Annotated[Path | None, typer.Option(\"--graph-path\", \"-g\", help=\"Path to cli_graph.json\")] = None,",
+                        ") -> None:",
+                        "    from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH",
+                        "    from stackops.scripts.python.graph.visualize.cli_graph_execute import run_cli_graph",
+                        "",
+                        "    try:",
+                        "        return_code = run_cli_graph(",
+                        "            graph_path=graph_path if graph_path is not None else DEFAULT_GRAPH_PATH,",
+                        "            query=query, action=action, skip_prompts=skip_prompts,",
+                        "        )",
+                        "    except (OSError, ValueError) as error:",
+                        "        typer.echo(f\"\"\"Run failed: {error}\"\"\", err=True)",
+                        "        raise typer.Exit(code=1) from error",
+                        "    if return_code != 0:",
+                        "        raise typer.Exit(code=return_code)"
+                      ],
+                      "name": "run",
+                      "parameters": [
+                        {
+                          "name": "query",
+                          "kind": "positional_or_keyword",
+                          "type": "str",
+                          "default": "",
+                          "required": false,
+                          "annotation_raw": "Annotated[str, typer.Argument(help='Case-insensitive search terms to narrow the command picker; omit to list all.')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Case-insensitive search terms to narrow the command picker; omit to list all."
+                          }
+                        },
+                        {
+                          "name": "action",
+                          "kind": "positional_or_keyword",
+                          "type": "RunActionLoose",
+                          "default": "type",
+                          "required": false,
+                          "annotation_raw": "Annotated[RunActionLoose, typer.Option('--action', '-a', help='What to do with the built command: type = pre-type it in your shell prompt, run = execute it now, print = print it to stdout.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--action",
+                              "-a"
+                            ],
+                            "long_flags": [
+                              "--action"
+                            ],
+                            "short_flags": [
+                              "-a"
+                            ],
+                            "help": "What to do with the built command: type = pre-type it in your shell prompt, run = execute it now, print = print it to stdout."
+                          }
+                        },
+                        {
+                          "name": "skip_prompts",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--skip-prompts', '-s', help='Skip the argument and option prompts and use the bare command.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--skip-prompts",
+                              "-s"
+                            ],
+                            "long_flags": [
+                              "--skip-prompts"
+                            ],
+                            "short_flags": [
+                              "-s"
+                            ],
+                            "help": "Skip the argument and option prompts and use the bare command."
+                          }
+                        },
+                        {
+                          "name": "graph_path",
+                          "kind": "positional_or_keyword",
+                          "type": "Path | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[Path | None, typer.Option('--graph-path', '-g', help='Path to cli_graph.json')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--graph-path",
+                              "-g"
+                            ],
+                            "long_flags": [
+                              "--graph-path"
+                            ],
+                            "short_flags": [
+                              "-g"
+                            ],
+                            "help": "Path to cli_graph.json"
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": false
+                    },
+                    "aliases": [
+                      {
+                        "name": "r",
+                        "hidden": true,
+                        "help": "Pick a CLI command, fill its arguments and options, then type, run, or print it."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
                     "name": "tree",
                     "fullPath": "devops self explore-cli tree",
                     "shortPath": "d s x t",
@@ -26552,7 +26687,7 @@
             "signature": {
               "raw_lines": [
                 "def kill_session_target(",
-                "        name: Annotated[str | None, typer.Argument(help=\"Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.\")] = None,",
+                "        name: Annotated[str | None, typer.Argument(help=\"Session(s) to kill: comma-separated names and/or * and ? selectors, e.g. `api,web*`. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.\")] = None,",
                 "        kill_all: Annotated[bool, typer.Option(\"--kill-all\", \"-k\", help=\"Kill all sessions. With --idle, inspect all sessions for idle panes/windows.\", show_default=True)] = False,",
                 "        idle: Annotated[bool, typer.Option(\"--idle\", \"-i\", help=\"Kill idle-shell panes/windows. With --kill-all, inspect all sessions; otherwise inspect NAME or a chosen session.\", show_default=True)] = False,",
                 "        window: Annotated[bool, typer.Option(\"--window\", \"-w\", help=\"Include session, window/tab, and pane targets in the interactive chooser when NAME is omitted.\", show_default=True)] = False,",
@@ -26664,13 +26799,13 @@
                   "type": "str | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[str | None, typer.Argument(help=\"Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.\")]",
+                  "annotation_raw": "Annotated[str | None, typer.Argument(help=\"Session(s) to kill: comma-separated names and/or * and ? selectors, e.g. `api,web*`. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from.\")]",
                   "typer": {
                     "kind": "argument",
                     "param_decls": [],
                     "long_flags": [],
                     "short_flags": [],
-                    "help": "Name of the session to kill. Supports * and ? selectors. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from."
+                    "help": "Session(s) to kill: comma-separated names and/or * and ? selectors, e.g. `api,web*`. Herdr named sessions are stopped and deleted; Herdr's reserved default session can only be stopped. If not provided, a list will be shown to choose from."
                   }
                 },
                 {
@@ -31273,6 +31408,257 @@
                 "name": "b",
                 "hidden": true,
                 "help": "Browser automation for agent CLIs and MCP"
+              }
+            ]
+          },
+          {
+            "kind": "group",
+            "name": "computer",
+            "fullPath": "agents computer",
+            "shortPath": "a u",
+            "help": "🖥️ <u> Desktop control for agent CLIs through MCP",
+            "source": {
+              "file": "src/stackops/scripts/python/agents.py",
+              "module": "stackops.scripts.python.agents",
+              "dispatches_to": "stackops.scripts.python.agents_computer.get_app",
+              "callable": "computer_group"
+            },
+            "app": {
+              "help": "🖥️ <u> Desktop control for agent CLIs through MCP",
+              "no_args_is_help": true,
+              "add_help_option": true,
+              "add_completion": false,
+              "context_settings": {
+                "help_option_names": [
+                  "-h",
+                  "--help"
+                ]
+              }
+            },
+            "children": [
+              {
+                "kind": "command",
+                "name": "control",
+                "fullPath": "agents computer control",
+                "shortPath": "a u c",
+                "help": "Serve agent-desktop desktop control as a localhost MCP endpoint until interrupted.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_computer.py",
+                  "module": "stackops.scripts.python.agents_computer",
+                  "callable": "control"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def control(",
+                    "    port: Annotated[",
+                    "        int, typer.Option(\"--port\", \"-p\", help=\"Localhost port for the MCP endpoint: streamable HTTP at /mcp, SSE at /sse.\")",
+                    "    ] = DEFAULT_COMPUTER_CONTROL_PORT,",
+                    "    headless: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--headless\", \"-H\", help=\"Restrict agent-desktop to semantic accessibility actions; omit to allow physical mouse and keyboard input.\"),",
+                    "    ] = False,",
+                    ") -> None:",
+                    "    \"\"\"Serve agent-desktop desktop control as a localhost MCP endpoint until interrupted.\"\"\"",
+                    "    import shutil",
+                    "    import subprocess",
+                    "",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_runtime import tcp_port_is_open",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_computer_constants import (",
+                    "        AGENT_DESKTOP_COMMAND_NAME,",
+                    "        AGENT_DESKTOP_INSTALL_HINT,",
+                    "        COMPUTER_CONTROL_HOST,",
+                    "    )",
+                    "",
+                    "    agent_desktop_path = shutil.which(AGENT_DESKTOP_COMMAND_NAME)",
+                    "    if agent_desktop_path is None:",
+                    "        typer.echo(f\"\"\"{AGENT_DESKTOP_COMMAND_NAME} is not on PATH; install it with: {AGENT_DESKTOP_INSTALL_HINT}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1)",
+                    "    if tcp_port_is_open(host=COMPUTER_CONTROL_HOST, port=port):",
+                    "        raise typer.BadParameter(f\"\"\"Port {port} is already in use; inspect it with: stackops agents computer status --port {port}\"\"\")",
+                    "",
+                    "    command = [",
+                    "        \"uvx\", \"mcp-proxy\", \"--pass-environment\", \"--host\", COMPUTER_CONTROL_HOST, \"--port\", str(port),",
+                    "        \"--\", agent_desktop_path, \"mcp\", *(() if headless else (\"--headed\",)),",
+                    "    ]",
+                    "    typer.echo(f\"\"\"MCP endpoint: http://{COMPUTER_CONTROL_HOST}:{port}/mcp (SSE: http://{COMPUTER_CONTROL_HOST}:{port}/sse)\"\"\")",
+                    "    typer.echo(f\"\"\"Input mode: {\"headless semantic\" if headless else \"headed physical\"}; stop with Ctrl+C\"\"\")",
+                    "    try:",
+                    "        result = subprocess.run(command, check=False)",
+                    "    except KeyboardInterrupt:",
+                    "        raise typer.Exit(code=130) from None",
+                    "    except OSError as error:",
+                    "        typer.echo(f\"\"\"Could not start {command[0]}: {error}\"\"\", err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "    if result.returncode:",
+                    "        raise typer.Exit(code=result.returncode if result.returncode > 0 else 128 - result.returncode)"
+                  ],
+                  "name": "control",
+                  "parameters": [
+                    {
+                      "name": "port",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "DEFAULT_COMPUTER_CONTROL_PORT",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--port', '-p', help='Localhost port for the MCP endpoint: streamable HTTP at /mcp, SSE at /sse.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--port",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--port"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Localhost port for the MCP endpoint: streamable HTTP at /mcp, SSE at /sse."
+                      }
+                    },
+                    {
+                      "name": "headless",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--headless', '-H', help='Restrict agent-desktop to semantic accessibility actions; omit to allow physical mouse and keyboard input.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--headless",
+                          "-H"
+                        ],
+                        "long_flags": [
+                          "--headless"
+                        ],
+                        "short_flags": [
+                          "-H"
+                        ],
+                        "help": "Restrict agent-desktop to semantic accessibility actions; omit to allow physical mouse and keyboard input."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "🎮 <c> Serve agent-desktop as a localhost MCP endpoint",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Serve agent-desktop desktop control as a localhost MCP endpoint until interrupted.",
+                "aliases": [
+                  {
+                    "name": "c",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "status",
+                "fullPath": "agents computer status",
+                "shortPath": "a u s",
+                "help": "Show the control endpoint state and agent-desktop permissions.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_computer.py",
+                  "module": "stackops.scripts.python.agents_computer",
+                  "callable": "status"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def status(",
+                    "    port: Annotated[int, typer.Option(\"--port\", \"-p\", help=\"Localhost port of the control MCP endpoint.\")] = DEFAULT_COMPUTER_CONTROL_PORT,",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print endpoint and agent-desktop status as JSON.\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"Show the control endpoint state and agent-desktop permissions.\"\"\"",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_computer_status import (",
+                    "        ComputerStatus,",
+                    "        collect_agent_desktop_status,",
+                    "        collect_control_endpoint_status,",
+                    "        show_computer_status,",
+                    "    )",
+                    "",
+                    "    try:",
+                    "        computer_status = ComputerStatus(endpoint=collect_control_endpoint_status(port=port), agent_desktop=collect_agent_desktop_status())",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    if json_output:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json",
+                    "",
+                    "        emit_agent_json(computer_status)",
+                    "        return",
+                    "    show_computer_status(status=computer_status, port=port)"
+                  ],
+                  "name": "status",
+                  "parameters": [
+                    {
+                      "name": "port",
+                      "kind": "positional_or_keyword",
+                      "type": "int",
+                      "default": "DEFAULT_COMPUTER_CONTROL_PORT",
+                      "required": false,
+                      "annotation_raw": "Annotated[int, typer.Option('--port', '-p', help='Localhost port of the control MCP endpoint.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--port",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--port"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Localhost port of the control MCP endpoint."
+                      }
+                    },
+                    {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print endpoint and agent-desktop status as JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print endpoint and agent-desktop status as JSON."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "📊 <s> Show control endpoint and agent-desktop permissions",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "Show the control endpoint state and agent-desktop permissions.",
+                "aliases": [
+                  {
+                    "name": "s",
+                    "hidden": true
+                  }
+                ]
+              }
+            ],
+            "command_context_settings": "_NESTED_APP_CONTEXT",
+            "aliases": [
+              {
+                "name": "u",
+                "hidden": true,
+                "help": "Desktop control for agent CLIs through MCP"
               }
             ]
           },

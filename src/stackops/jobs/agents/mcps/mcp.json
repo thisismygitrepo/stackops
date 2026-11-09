@@ -1,6 +1,10 @@
 {
   "$schema": "./mcp.schema.json",
   "mcpServers": {
+    "agent-desktop": {
+      "url": "http://127.0.0.1:8096/mcp",
+      "description": "agent-desktop desktop control served by a running StackOps endpoint. Start it with: stackops agents computer control"
+    },
     "chrome-devtools": {
       "command": "bunx",
       "args": [
