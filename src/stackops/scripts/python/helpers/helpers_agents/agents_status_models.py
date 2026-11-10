@@ -2,18 +2,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentStatusBackend
 
 
 type JsonObject = dict[str, object]
 StatusFormat: TypeAlias = Literal["table", "rich", "json", "markdown"]
 HistoryMode: TypeAlias = Literal["auto", "none"]
 AgentStatus: TypeAlias = Literal["working", "waiting", "blocked", "idle", "completed", "failed", "unknown", "unavailable"]
+BtwTopic: TypeAlias = Literal["status", "work"]
 
 
 @dataclass(frozen=True)
 class StatusOptions:
-    backend: AgentMultiplexer
+    backend: AgentStatusBackend
     sessions: tuple[str, ...]
     layouts: tuple[str, ...]
     tabs: tuple[str, ...]
@@ -68,6 +69,15 @@ class ProcessEvidence:
 
 
 @dataclass(frozen=True)
+class BtwAnswer:
+    topic: BtwTopic
+    question: str
+    answer: str
+    route: str
+    error: str
+
+
+@dataclass(frozen=True)
 class AgentSnapshot:
     session: str
     session_id: str
@@ -93,11 +103,12 @@ class AgentSnapshot:
     events: tuple[JsonObject, ...]
     evidence: tuple[str, ...]
     limitations: tuple[str, ...]
+    btw: tuple[BtwAnswer, ...]
 
 
 @dataclass(frozen=True)
 class StatusSnapshot:
-    backend: AgentMultiplexer
+    backend: AgentStatusBackend
     started_at: str
     observed_at: str
     server: str | None

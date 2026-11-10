@@ -6,7 +6,7 @@ import subprocess
 from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import cast
+from typing import Literal, cast
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -17,11 +17,12 @@ from stackops.scripts.python.helpers.helpers_agents.constants import (
     T3_MCP_PROTOCOL_VERSION,
     T3_OAUTH_REDIRECT_URI,
     T3_PAIRING_TTL,
-    T3_RUNTIME_MODE,
+    T3_READ_ONLY_SCOPES,
     T3_SERVER_URL,
 )
 
 type JsonObject = dict[str, object]
+type T3Access = Literal["read-only", "full-access"]
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,13 @@ def require_t3_object(value: object, context: str) -> JsonObject:
     if not isinstance(value, dict):
         raise RuntimeError(f"""T3 Code returned a non-object for {context}: {value!r}""")
     return cast(JsonObject, value)
+
+
+def require_t3_objects(mapping: JsonObject, key: str, context: str) -> list[JsonObject]:
+    values = mapping.get(key)
+    if not isinstance(values, list):
+        raise RuntimeError(f"""T3 Code {context} has no "{key}" list.""")
+    return [require_t3_object(value, context) for value in cast(list[object], values)]
 
 
 def require_t3_text(mapping: JsonObject, key: str, context: str) -> str:
@@ -54,8 +62,9 @@ def _post_json(path: str, payload: JsonObject) -> JsonObject:
     return require_t3_object(response.json(), path)
 
 
-def _issue_full_access_token(client_name: str) -> str:
-    scope_arguments = [argument for scope in T3_FULL_ACCESS_SCOPES for argument in ("--scope", scope)]
+def _issue_access_token(client_name: str, access: T3Access) -> str:
+    scopes = T3_READ_ONLY_SCOPES if access == "read-only" else T3_FULL_ACCESS_SCOPES
+    scope_arguments = [argument for scope in scopes for argument in ("--scope", scope)]
     pairing = require_t3_object(
         _run_t3_json(["auth", "pairing", "create", *scope_arguments, "--ttl", T3_PAIRING_TTL, "--label", client_name, "--json"]),
         "auth pairing create",
@@ -77,7 +86,7 @@ def _issue_full_access_token(client_name: str) -> str:
     pairing_code = require_t3_text(pairing, "credential", "pairing credential")
     decision = _post_json(
         "/oauth/mcp/decision",
-        {"authorization": authorization, "decision": {"_tag": "pairing-code", "access": T3_RUNTIME_MODE, "code": pairing_code}},
+        {"authorization": authorization, "decision": {"_tag": "pairing-code", "access": access, "code": pairing_code}},
     )
     codes = parse_qs(urlparse(require_t3_text(decision, "redirectTo", "approval decision")).query).get("code")
     if codes is None or len(codes) != 1:
@@ -137,9 +146,9 @@ def _initialize(token: str) -> T3McpSession:
 
 
 @contextmanager
-def open_t3_mcp_session() -> Generator[T3McpSession]:
+def open_t3_mcp_session(access: T3Access) -> Generator[T3McpSession]:
     client_name = f"""stackops-{secrets.token_hex(4)}"""
-    token = _issue_full_access_token(client_name=client_name)
+    token = _issue_access_token(client_name=client_name, access=access)
     try:
         yield _initialize(token=token)
     finally:

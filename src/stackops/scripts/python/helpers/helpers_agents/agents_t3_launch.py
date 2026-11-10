@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, TypeAlias, assert_never, cast
+from typing import Literal, TypeAlias, assert_never
 
 import typer
 
@@ -9,7 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_t3_mcp import (
     T3McpSession,
     call_t3_tool,
     open_t3_mcp_session,
-    require_t3_object,
+    require_t3_objects,
     require_t3_text,
 )
 from stackops.scripts.python.helpers.helpers_agents.constants import T3_REASONING_OPTION_IDS, T3_RUNTIME_MODE, T3_SERVER_URL, T3_TITLE_MAX_CHARS
@@ -62,18 +62,11 @@ def resolve_t3_launch_target(
     return T3LaunchTarget(driver=driver, model=model, reasoning_effort=reasoning_effort)
 
 
-def _objects(mapping: JsonObject, key: str, context: str) -> list[JsonObject]:
-    values = mapping.get(key)
-    if not isinstance(values, list):
-        raise RuntimeError(f"""T3 Code {context} has no "{key}" list.""")
-    return [require_t3_object(value, context) for value in cast(list[object], values)]
-
-
 def _model_selection(capabilities: JsonObject, target: T3LaunchTarget) -> JsonObject:
-    providers = [provider for provider in _objects(capabilities, "providers", "capabilities") if provider.get("driverKind") == target.driver]
+    providers = [provider for provider in require_t3_objects(capabilities, "providers", "capabilities") if provider.get("driverKind") == target.driver]
     if len(providers) != 1:
         raise RuntimeError(f"""Expected one T3 Code provider instance for {target.driver}, found {len(providers)}.""")
-    models = _objects(providers[0], "models", f"""provider {target.driver}""")
+    models = require_t3_objects(providers[0], "models", f"""provider {target.driver}""")
     matching = [model for model in models if model.get("id") == target.model]
     if len(matching) != 1:
         available = ", ".join(require_t3_text(model, "id", "model") for model in models)
@@ -81,10 +74,10 @@ def _model_selection(capabilities: JsonObject, target: T3LaunchTarget) -> JsonOb
     selection: JsonObject = {"instanceId": require_t3_text(providers[0], "providerInstanceId", "provider"), "model": target.model}
     if target.reasoning_effort is None:
         return selection
-    reasoning_options = [option for option in _objects(matching[0], "options", "model") if option.get("id") in T3_REASONING_OPTION_IDS]
+    reasoning_options = [option for option in require_t3_objects(matching[0], "options", "model") if option.get("id") in T3_REASONING_OPTION_IDS]
     if len(reasoning_options) != 1:
         raise ValueError(f"""T3 Code model '{target.model}' has no reasoning option, so --reasoning is not supported.""")
-    choices = [require_t3_text(choice, "id", "reasoning choice") for choice in _objects(reasoning_options[0], "options", "reasoning option")]
+    choices = [require_t3_text(choice, "id", "reasoning choice") for choice in require_t3_objects(reasoning_options[0], "options", "reasoning option")]
     if target.reasoning_effort not in choices:
         raise ValueError(f"""T3 Code model '{target.model}' supports reasoning {", ".join(choices)}, not '{target.reasoning_effort}'.""")
     option_id = require_t3_text(reasoning_options[0], "id", "reasoning option")
@@ -95,7 +88,7 @@ def _project_id(session: T3McpSession, workspace_root: Path) -> str:
     cursor: object = None
     while True:
         page = call_t3_tool(session=session, name="t3_project_list", arguments={} if cursor is None else {"cursor": cursor})
-        for project in _objects(page, "projects", "project list"):
+        for project in require_t3_objects(page, "projects", "project list"):
             if Path(require_t3_text(project, "workspaceRoot", "project")).resolve() == workspace_root.resolve():
                 return require_t3_text(project, "id", "project")
         cursor = page.get("nextCursor")
@@ -126,7 +119,7 @@ def t3_requests_from_prompt_directories(job_name: str, prompt_directories: list[
 
 
 def launch_t3_threads(workspace_root: Path, requests: list[T3ThreadRequest], target: T3LaunchTarget) -> None:
-    with open_t3_mcp_session() as session:
+    with open_t3_mcp_session(access=T3_RUNTIME_MODE) as session:
         capabilities = call_t3_tool(session=session, name="orchestrator_capabilities", arguments={})
         if capabilities.get("runtimeMode") != T3_RUNTIME_MODE:
             raise RuntimeError(f"""T3 Code granted runtime mode {capabilities.get("runtimeMode")!r}, expected {T3_RUNTIME_MODE}.""")

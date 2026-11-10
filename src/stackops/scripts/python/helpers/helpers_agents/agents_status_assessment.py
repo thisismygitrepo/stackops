@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentStatusBackend
 from stackops.scripts.python.helpers.helpers_agents.agents_status_models import (
     AgentStatus,
     HistoryEvidence,
@@ -11,7 +11,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_status_tuios import t
 
 
 def assess_status(
-    *, state: JsonObject, prompt: JsonObject, process: ProcessEvidence, detector: JsonObject, backend: AgentMultiplexer
+    *, state: JsonObject, prompt: JsonObject, process: ProcessEvidence, detector: JsonObject, backend: AgentStatusBackend
 ) -> tuple[AgentStatus, str, list[str], list[str]]:
     reported = text_field(state, ("state",))
     evidence: list[str] = []

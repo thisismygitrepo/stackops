@@ -68,6 +68,8 @@ def _agent_card(agent: AgentSnapshot) -> Panel:
     fields.add_row("Directory", Text(plain_status_text(agent.cwd or "unavailable"), style="dim"))
     fields.add_row("Task", Text(plain_status_text(agent.task)))
     fields.add_row("Latest", Text(plain_status_text(agent.latest_activity)))
+    for answer in agent.btw:
+        fields.add_row(f"""BTW {answer.topic}""", Text(plain_status_text(answer.answer or f"""unavailable: {answer.error}"""), style="" if answer.answer else "yellow"))
     fields.add_row("Task state", Text(plain_status_text(f"""{agent.task_status} · reported agent state: {agent.reported_state or 'unknown'}""")))
     sections: list[Table | Text | Group | Panel] = [fields, Text(), _history(agent)]
     if agent.prompt.get("found") or agent.prompt.get("blocked"):

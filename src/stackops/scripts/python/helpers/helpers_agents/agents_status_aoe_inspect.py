@@ -95,6 +95,6 @@ def inspect_aoe_window(
         harness=harness or "unknown", cwd=process.cwd or cwd, process=process, status=status, task_status=task_status,
         reported_state=reported_state, task=task, latest_activity=activity, history=history, prompt=prompt,
         capture=capture, events=(), evidence=tuple(evidence),
-        limitations=tuple(dict.fromkeys((*errors, *process.limitations, *history.limitations, *conflicts))),
+        limitations=tuple(dict.fromkeys((*errors, *process.limitations, *history.limitations, *conflicts))), btw=(),
     )
     return PaneInspection(agent=agent, candidate=None, excluded="", limitations=())

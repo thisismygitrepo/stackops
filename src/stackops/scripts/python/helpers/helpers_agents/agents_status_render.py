@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentStatusBackend
 from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, StatusSnapshot
 
 
@@ -35,7 +35,11 @@ def _brief(value: str) -> str:
     return value if len(value) <= 180 else f"""{value[:177]}…"""
 
 
-def _row(agent: AgentSnapshot, backend: AgentMultiplexer) -> tuple[str, ...]:
+def btw_lines(agent: AgentSnapshot) -> list[str]:
+    return [f"""BTW {answer.topic}: {answer.answer or f'unavailable ({answer.error})'}""" for answer in agent.btw]
+
+
+def _row(agent: AgentSnapshot, backend: AgentStatusBackend, btw: bool) -> tuple[str, ...]:
     human_count = sum(message.kind == "user" for message in agent.history.messages)
     context_count = sum(message.kind != "user" for message in agent.history.messages)
     pane_reference = f"""{agent.session} / {agent.window_id}""" if agent.tab_id else agent.window_id
@@ -50,10 +54,12 @@ def _row(agent: AgentSnapshot, backend: AgentMultiplexer) -> tuple[str, ...]:
     workspace += f"""\nTab: {agent.tab_name or 'unnamed'} [{agent.tab_id}]""" if agent.tab_id else "\nWorkspace is the layout tab" if backend == "tuios" else "\nSeparate tab unavailable"
     if backend == "aoe":
         workspace = f"""Group: {agent.workspace_name or 'ungrouped'}"""
+    if backend == "t3":
+        workspace = f"""Branch: {agent.workspace_name or 'unavailable'}"""
     harness = f"""{agent.harness or 'unknown'}\n{agent.cwd or 'CWD unavailable'}\nPID {agent.process.pid if agent.process.pid is not None else 'unavailable'}"""
-    if agent.agent_session_name:
+    if agent.agent_session_name and backend != "t3":
         harness += f"""\nAgent name: {agent.agent_session_name}"""
-    if agent.process.session_id:
+    if agent.process.session_id and backend != "t3":
         harness += f"""\nConversation: {agent.process.session_id}"""
     return (
         f"""{agent.session}\n{agent.session_id or 'ID unavailable'}""",
@@ -64,6 +70,7 @@ def _row(agent: AgentSnapshot, backend: AgentMultiplexer) -> tuple[str, ...]:
         history,
         f"""{agent.status}; task: {agent.task_status}\nReported: {agent.reported_state or 'unknown'}""",
         _brief(agent.latest_activity) or "; ".join(agent.evidence) or "Unavailable",
+        *(("\n".join(btw_lines(agent)) or "Not asked",) if btw else ()),
     )
 
 
@@ -84,6 +91,8 @@ def _appendix(snapshot: StatusSnapshot, markdown: bool) -> list[str]:
             sections.append(transform(f"""--messages omitted {agent.history.omitted_messages} earlier records."""))
         if agent.latest_activity:
             sections.extend(["", transform(f"""Latest activity/result: {agent.latest_activity}""")])
+        for answer in agent.btw:
+            sections.append(transform(f"""By-the-way {answer.topic} answer ({answer.route}): {answer.answer or f'unavailable: {answer.error}'}"""))
         if agent.prompt.get("found") or agent.prompt.get("blocked"):
             sections.append(transform(f"""Pending prompt (not answered): {json.dumps(agent.prompt, ensure_ascii=False, default=str)}"""))
         if agent.evidence:
@@ -113,6 +122,18 @@ def _coverage_entries(value: object) -> tuple[str, ...]:
 
 def status_coverage_lines(snapshot: StatusSnapshot) -> list[str]:
     coverage = snapshot.coverage
+    if snapshot.backend == "t3":
+        lines = [
+            f"""Coverage: {coverage.get('projects', '?')} T3 Code projects; {coverage.get('threads_inspected', '?')}/{coverage.get('threads_discovered', '?')} unsettled threads inspected; """
+            f"""{coverage.get('settled_threads_skipped', '?')} settled and {coverage.get('subagent_threads_skipped', '?')} subagent threads skipped; {coverage.get('agents_found', len(snapshot.agents))} agents found, {len(snapshot.agents)} shown.""",
+        ]
+        projects = coverage.get("sessions")
+        if isinstance(projects, list):
+            lines.extend(
+                f"""Project {project.get('name') or 'unnamed'} [{project.get('id') or 'ID unavailable'}]: {project.get('window_count', '?')} unsettled threads."""
+                for project in cast(list[object], projects) if isinstance(project, dict)
+            )
+        return lines
     pane_label = "runtimes" if snapshot.backend == "aoe" else "panes" if snapshot.backend == "herdr" else "windows"
     workspace_label = "groups" if snapshot.backend == "aoe" else "workspace records"
     lines = [
@@ -152,6 +173,9 @@ def render_status(*, snapshot: StatusSnapshot, output_format: Literal["table", "
         case "tuios":
             backend_scope = f"""Local TUIOS daemon: {snapshot.server or 'current/default'}"""
             hierarchy = "Layout hierarchy: TUIOS session (layout) → workspace (tab) → window (pane)."
+        case "t3":
+            backend_scope = f"""Local T3 Code server: {snapshot.server}"""
+            hierarchy = "Hierarchy: T3 Code project → thread. T3 Code has no layouts, tabs or panes."
     introductory = [
         f"""Agent snapshot: {snapshot.observed_at} (inspection began {snapshot.started_at}).""",
         f"""Backend: {snapshot.backend}. {backend_scope}. Reported agents: {len(snapshot.agents)}; {counts}.""",
@@ -163,11 +187,19 @@ def render_status(*, snapshot: StatusSnapshot, output_format: Literal["table", "
         introductory.append(f"""Coverage limitations: {'; '.join(snapshot.limitations)}""")
     if not snapshot.agents:
         introductory.append("No agents matched the selected scope; see coverage for inspection failures or excluded panes.")
-    columns = ("Session", "Group" if snapshot.backend == "aoe" else "Workspace/tab", "Runtime name and ID" if snapshot.backend == "aoe" else "Window/pane name and ID", "Harness and working directory", "Task/request excerpt", "User messages so far", "Current status", "Latest evidence/blocker")
+    btw = any(agent.btw for agent in snapshot.agents)
+    match snapshot.backend:
+        case "aoe":
+            location_columns = ("Session", "Group", "Runtime name and ID")
+        case "t3":
+            location_columns = ("Project", "Branch", "Thread title and ID")
+        case "tuios" | "herdr":
+            location_columns = ("Session", "Workspace/tab", "Window/pane name and ID")
+    columns = (*location_columns, "Harness and working directory", "Task/request excerpt", "User messages so far", "Current status", "Latest evidence/blocker", *(("By-the-way answers",) if btw else ()))
     if output_format == "markdown":
         lines = [_markdown(line) for line in introductory]
         lines.extend(["", "| " + " | ".join(columns) + " |", "| " + " | ".join("---" for _column in columns) + " |"])
-        lines.extend("| " + " | ".join(_markdown(value) for value in _row(agent, backend=snapshot.backend)) + " |" for agent in snapshot.agents)
+        lines.extend("| " + " | ".join(_markdown(value) for value in _row(agent, backend=snapshot.backend, btw=btw)) + " |" for agent in snapshot.agents)
         return "\n\n".join(lines[:len(introductory)]) + "\n" + "\n".join(lines[len(introductory):] + _appendix(snapshot, markdown=True)) + "\n"
     buffer = io.StringIO()
     console = Console(file=buffer, width=180, force_terminal=False, color_system=None)
@@ -177,7 +209,7 @@ def render_status(*, snapshot: StatusSnapshot, output_format: Literal["table", "
     for column in columns:
         table.add_column(column, overflow="fold")
     for agent in snapshot.agents:
-        table.add_row(*(Text(plain_status_text(value)) for value in _row(agent, backend=snapshot.backend)))
+        table.add_row(*(Text(plain_status_text(value)) for value in _row(agent, backend=snapshot.backend, btw=btw)))
     console.print(table)
     for line in _appendix(snapshot, markdown=False):
         console.print(Text(line))

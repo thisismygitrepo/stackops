@@ -4,6 +4,7 @@ from typing import Final, Literal, TypeAlias, cast, get_args
 SessionMultiplexer: TypeAlias = Literal["tmux", "herdr", "tuios", "aoe", "zellij"]
 SessionMultiplexerOption: TypeAlias = Literal["tmux", "t", "herdr", "h", "tuios", "u", "aoe", "e", "zellij", "z"]
 AgentMultiplexer: TypeAlias = Literal["tuios", "herdr", "aoe"]
+AgentStatusBackend: TypeAlias = Literal[AgentMultiplexer, "t3"]
 AgentLaunchBackend: TypeAlias = Literal[SessionMultiplexer, "t3"]
 AgentLaunchBackendOption: TypeAlias = Literal[SessionMultiplexerOption, "t3"]
 

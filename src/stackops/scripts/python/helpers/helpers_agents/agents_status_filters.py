@@ -1,6 +1,6 @@
 from typing import Literal
 
-from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer
+from stackops.utils.schemas.config.multiplexer_types import AgentStatusBackend
 from stackops.scripts.python.helpers.helpers_agents.agents_status_models import AgentSnapshot, JsonObject, StatusOptions
 from stackops.scripts.python.helpers.helpers_agents.agents_status_tuios import text_field
 
@@ -9,7 +9,7 @@ type LayoutLevel = Literal["layout", "tab", "pane"]
 
 
 def _layout_identities(
-    *, pane: JsonObject, session: JsonObject, workspace_names: dict[int, str], backend: AgentMultiplexer,
+    *, pane: JsonObject, session: JsonObject, workspace_names: dict[int, str], backend: AgentStatusBackend,
 ) -> dict[LayoutLevel, set[str]]:
     session_values = {text_field(session, (key,)) for key in ("name", "id", "title")}
     workspace_values = {text_field(pane, (key,)) for key in ("workspace_id", "workspace_name")}
@@ -24,6 +24,8 @@ def _layout_identities(
             tab_values = {text_field(pane, (key,)) for key in ("tab_id", "tab_name")}
         case "aoe":
             layout_values, tab_values = {text_field(pane, ("group",))}, session_values
+        case "t3":
+            raise ValueError("T3 Code threads have no layouts, tabs or panes.")
     identities: dict[LayoutLevel, set[str]] = {"layout": layout_values, "tab": tab_values, "pane": pane_values}
     for values in identities.values():
         values.discard("")

@@ -112,6 +112,6 @@ def inspect_herdr_window(
         window_id=window_id, window_name=name, agent_session_name=text_field(registered, ("name",)),
         harness=harness, cwd=process.cwd or cwd, process=process,
         status=status, task_status=task_status, reported_state=text_field(state, ("state",)), task=task, latest_activity=activity,
-        history=history, prompt={}, capture=capture, events=(), evidence=tuple(evidence), limitations=tuple(dict.fromkeys(limitations)),
+        history=history, prompt={}, capture=capture, events=(), evidence=tuple(evidence), limitations=tuple(dict.fromkeys(limitations)), btw=(),
     )
     return PaneInspection(agent=agent, candidate=None, excluded="", limitations=())
