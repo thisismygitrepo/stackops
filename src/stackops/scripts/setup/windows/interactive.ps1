@@ -7,14 +7,14 @@ irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackop
 # live from github version
 # function stackops { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "git+https://github.com/thisismygitrepo/stackops" stackops $args }
 
-function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.4" devops $args }
-function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.4" cloud $args }
-function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.4" agents $args }
-function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.4" fire $args }
-function preview { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.4" preview $args }
-function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.4" utils $args }
-function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.4" terminal $args }
-function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.4" seek @args }
+function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.5" devops $args }
+function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.5" cloud $args }
+function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.5" agents $args }
+function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.5" fire $args }
+function preview { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.5" preview $args }
+function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.5" utils $args }
+function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.5" terminal $args }
+function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.5" seek @args }
 
 function d { wrap_in_shell_script devops @args }
 function c { wrap_in_shell_script cloud @args }

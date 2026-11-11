@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.14"
 # dependencies = [
-#     "stackops>=26.11.4",
+#     "stackops>=26.11.5",
 #     "textual",
 #     "pyperclip",
 # ]
