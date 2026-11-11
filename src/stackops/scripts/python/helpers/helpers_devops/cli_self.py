@@ -6,6 +6,20 @@ from stackops.utils.constants import STACKOPS_PYTHON_VERSION
 from stackops.utils.source_of_truth import STACKOPS_REPO_DIR
 
 
+def run_stackops_reinstall_script(script: str) -> None:
+    import platform
+    import sys
+    from pathlib import Path
+
+    from stackops.utils.code import exit_then_run_shell_script, run_shell_script
+
+    if platform.system() == "Windows" and Path(sys.prefix).joinpath("uv-receipt.toml").is_file():
+        exit_then_run_shell_script(script=script, strict=True)
+    process = run_shell_script(script, display_script=True, clean_env=False)
+    if process.returncode:
+        raise typer.Exit(code=process.returncode)
+
+
 def copy_assets_all() -> None:
     from stackops.profile import create_helper
 
@@ -91,7 +105,7 @@ uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} stackops
     import platform
 
     if platform.system() == "Windows":
-        from stackops.utils.code import run_shell_script, get_shell_script_running_lambda_function
+        from stackops.utils.code import get_shell_script_running_lambda_function
 
         shell_script = "\n".join(
             f"""{line}\nif ($LASTEXITCODE -ne 0) {{ exit $LASTEXITCODE }}"""
@@ -117,16 +131,9 @@ uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} stackops
                 uv_run_flags="",
             )
             full_script = shell_script + "\n" + uv_command
-        process = run_shell_script(full_script, display_script=True, clean_env=False)
-        if process.returncode:
-            raise typer.Exit(code=process.returncode)
+        run_stackops_reinstall_script(script=full_script)
     else:
-        from stackops.utils.code import run_shell_script
-
-        proc = run_shell_script("set -e\n" + shell_script, display_script=True, clean_env=False)
-        if proc.returncode != 0:
-            typer.echo(f"❌ Update script failed with return code {proc.returncode}")
-            raise typer.Exit(code=proc.returncode)
+        run_stackops_reinstall_script(script="set -e\n" + shell_script)
         if copy_assets:
             copy_assets_all()
         if sync_configs:
@@ -138,7 +145,7 @@ uv tool install --no-cache --upgrade --python {STACKOPS_PYTHON_VERSION} stackops
 def _install_stackops(dev: bool) -> None:
     import platform
 
-    from stackops.utils.code import run_shell_script, get_shell_script_running_lambda_function, get_uv_command
+    from stackops.utils.code import get_shell_script_running_lambda_function, get_uv_command
     from stackops.utils.ssh_utils.abc import STACKOPS_REQUIREMENT
 
     stackops_path = STACKOPS_REPO_DIR
@@ -183,9 +190,7 @@ cd "{str(stackops_path)}"
         )
     else:
         install_script = "set -e\n" + install_script
-    process = run_shell_script(install_script, display_script=True, clean_env=False)
-    if process.returncode:
-        raise typer.Exit(code=process.returncode)
+    run_stackops_reinstall_script(script=install_script)
 
 
 def install(dev: Annotated[bool, typer.Option("--dev", "-d", help="Clone repo and install from it instead of PyPI")] = False) -> None:

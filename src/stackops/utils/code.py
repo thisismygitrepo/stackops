@@ -3,7 +3,7 @@ from collections.abc import Callable
 from pathlib import Path
 import re
 import subprocess
-from typing import Literal, cast
+from typing import Literal, NoReturn, cast
 
 from stackops.utils.accessories import randstr
 from stackops.utils.constants import IS_REPO_DEVELOPER
@@ -154,7 +154,7 @@ def run_shell_script(script: str, display_script: bool, clean_env: bool) -> subp
     return proc
 
 
-def exit_then_run_shell_script(script: str, strict: bool = False) -> None:
+def exit_then_run_shell_script(script: str, strict: bool = False) -> NoReturn:
     import os
     from rich.console import Console
     console = Console()
