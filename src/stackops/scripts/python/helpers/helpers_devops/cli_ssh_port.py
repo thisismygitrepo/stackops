@@ -1,3 +1,5 @@
+import os
+import shlex
 import socket
 import subprocess
 import time
@@ -129,6 +131,7 @@ def map_port(
     typer.echo(
         f"Mapping 127.0.0.1:{selected_local_port} to 127.0.0.1:{remote_port} through {destination}.", err=True,
     )
+    typer.echo(f"""Command: {subprocess.list2cmdline(command) if os.name == "nt" else shlex.join(command)}""", err=True)
     service = None
     try:
         if background or output_json or not is_interactive():
