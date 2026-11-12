@@ -5826,6 +5826,21 @@ installers:
         linux: null
         darwin: FreeLLMAPI-{version}-arm64.dmg
         windows: null
+  - appName: free-claude-code
+    license: AGPL-3.0-only
+    repoURL: https://github.com/Alishahryar1/free-claude-code
+    doc: 🤖 Local proxy routing Claude Code, Codex, OpenCode, Pi and other coding agents to free or local LLM providers (NVIDIA NIM, OpenRouter, Ollama, ...), with an admin UI and fcc-* launchers.
+    categoryLabels:
+      - ai-agents-assistants
+    fileNamePattern:
+      amd64:
+        linux: curl -fsSL https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.sh | sh
+        darwin: curl -fsSL https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.sh | sh
+        windows: irm https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.ps1 | iex
+      arm64:
+        linux: curl -fsSL https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.sh | sh
+        darwin: curl -fsSL https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.sh | sh
+        windows: irm https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.ps1 | iex
   - appName: cli-proxy-api
     license: MIT License
     repoURL: https://github.com/router-for-me/CLIProxyAPI
