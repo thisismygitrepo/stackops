@@ -8,7 +8,12 @@ from typing import TypedDict, cast
 import typer
 
 from stackops.scripts.python.helpers.helpers_window import window_macos_api as api
-from stackops.scripts.python.helpers.helpers_window.constants import AX_CANNOT_COMPLETE, AX_TIMEOUT_SECONDS
+from stackops.scripts.python.helpers.helpers_window.constants import (
+    AX_CANNOT_COMPLETE,
+    AX_ILLEGAL_ARGUMENT,
+    AX_INVALID_UI_ELEMENT,
+    AX_TIMEOUT_SECONDS,
+)
 from stackops.scripts.python.helpers.helpers_window.window_models import WindowAction, WindowEntry
 
 
@@ -70,9 +75,20 @@ def collect_windows() -> list[WindowEntry]:
                 for index in range(api.CORE.CFArrayGetCount(windows)):
                     window = api.CORE.CFArrayGetValueAtIndex(windows, index)
                     window_id = ct.c_uint32()
-                    api.check_error(api.AX._AXUIElementGetWindow(window, ct.byref(window_id)), "read a stable window identifier")
+                    id_error = api.AX._AXUIElementGetWindow(window, ct.byref(window_id))
+                    if id_error in {AX_ILLEGAL_ARGUMENT, AX_INVALID_UI_ELEMENT}:
+                        typer.echo(
+                            f"""Warning: Skipping a window entry in {app['name']} (PID {app['pid']}) without a native window identifier (Accessibility error {id_error}).""",
+                            err=True,
+                        )
+                        continue
+                    api.check_error(id_error, "read a stable window identifier")
                     if window_id.value == 0:
-                        raise RuntimeError(f"macOS did not provide a stable identifier for a window in {app['name']}.")
+                        typer.echo(
+                            f"""Warning: Skipping a window entry in {app['name']} (PID {app['pid']}) without a native window identifier.""",
+                            err=True,
+                        )
+                        continue
                     entry = WindowEntry(
                         id=f"macos:{app['pid']}:{window_id.value}",
                         app=app["name"], title=api.read_title(window), minimized=api.read_boolean(window, "AXMinimized"),

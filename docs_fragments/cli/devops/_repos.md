@@ -6,7 +6,7 @@ Manage development repositories.
 devops repos [SUBCOMMAND] [ARGS]...
 ```
 
-Handles cloning, updating, analyzing, and maintaining development repositories.
+Handles cloning, updating, and maintaining development repositories.
 
 Current `devops repos --help` exposes:
 
@@ -17,7 +17,6 @@ Current `devops repos --help` exposes:
 | `edit` | Edit and validate the `repos.json` specification |
 | `action` | Run pull/commit/push actions across repositories |
 | `guard` | Securely sync a git repository to and from cloud storage with encryption |
-| `stats` | Visualize activity, count Python lines, and analyze development over time |
 
 ### sync
 
@@ -154,78 +153,5 @@ devops repos version checkout release-1 --directory ~/code --dry-run
 ```
 
 `list` (`l`) lists saved versions. `status` (`s`) requires a version identifier and compares it with current repositories. `declare` (`d`) captures a named version, and `checkout` (`c`) restores it.
-
-### stats
-
-Inspect repository activity, Python line counts, and development history.
-
-```bash
-devops repos stats [SUBCOMMAND] [ARGS]...
-```
-
-The group alias is `S`. Its commands are `visualize` (`v`), `count-lines` (`c`), and `analyze` (`z`).
-
-#### visualize
-
-Visualize repository history with Gource, either live or rendered to video.
-
-```bash
-devops repos stats visualize [OPTIONS]
-```
-
-Commonly used options from current help:
-
-| Option | Description |
-|--------|-------------|
-| `--repo`, `-r` | Repository to visualize |
-| `--output`, `-o` | Render to a video file instead of interactive mode |
-| `--resolution`, `-R` | Output resolution |
-| `--seconds-per-day`, `-D` | Playback speed |
-| `--start-date`, `-S` | Lower date bound |
-| `--stop-date`, `-E` | Upper date bound |
-| `--title`, `-t` | Visualization title |
-| `--self`, `-x` | Clone and visualize the stackops repository |
-
-The current help also exposes additional rendering controls for hidden layers, viewport, avatars, file limits, framerate, background color, and camera mode.
-
-Examples:
-
-```bash
-# Interactive visualization
-devops repos stats visualize --repo ~/code/stackops
-
-# Render to video
-devops repos stats visualize --repo ~/code/stackops --output stackops.mp4 --resolution 1280x720
-```
-
-#### count-lines
-
-Count Python lines of code in the current state and through repository history.
-
-```bash
-devops repos stats count-lines REPO_PATH
-```
-
-Example:
-
-```bash
-devops repos stats count-lines ~/code/stackops
-```
-
-#### analyze
-
-Analyze repository development over time.
-
-```bash
-devops repos stats analyze REPO_PATH
-```
-
-This delegates to the plotting-oriented repository analyzer.
-
-Example:
-
-```bash
-devops repos stats analyze ~/code/stackops
-```
 
 ---

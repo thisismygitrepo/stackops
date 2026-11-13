@@ -408,10 +408,7 @@ These **263** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_repos.clone` | `cli-helper` | `cli-helper` | `medium` | funcs:6 | src/stackops/scripts/python/helpers/helpers_repos/clone.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync` | `cli` | `cli-module` | `high` | typer, main, classes:1, funcs:15 | src/stackops/scripts/python/helpers/helpers_repos/cloud_repo_sync.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts` | `cli-helper` | `cli-helper` | `medium` | funcs:5 | src/stackops/scripts/python/helpers/helpers_repos/cloud_repo_sync_conflicts.py |  |
-| `stackops.scripts.python.helpers.helpers_repos.grource` | `cli` | `cli-module` | `high` | typer, typer-app, cli-registration, __main__, funcs:6 | src/stackops/scripts/python/helpers/helpers_repos/grource.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.record` | `cli` | `cli-module` | `high` | typer, funcs:12 | src/stackops/scripts/python/helpers/helpers_repos/record.py |  |
-| `stackops.scripts.python.helpers.helpers_repos.repo_analyzer_1` | `cli-helper` | `cli-helper` | `medium` | funcs:5 | src/stackops/scripts/python/helpers/helpers_repos/repo_analyzer_1.py |  |
-| `stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:2 | src/stackops/scripts/python/helpers/helpers_repos/repo_analyzer_2.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.spec_store` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:10 | src/stackops/scripts/python/helpers/helpers_repos/spec_store.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.sync` | `cli-helper` | `cli-helper` | `medium` | funcs:4 | src/stackops/scripts/python/helpers/helpers_repos/sync.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.update` | `cli-helper` | `cli-helper` | `medium` | classes:1, funcs:4 | src/stackops/scripts/python/helpers/helpers_repos/update.py |  |
@@ -1030,10 +1027,7 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_repos.clone` | `cli-helper` | `cli-helper` | `medium` | 1 | 121 | funcs:6 | src/stackops/scripts/python/helpers/helpers_repos/clone.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync` | `cli` | `cli-module` | `high` | 1 | 460 | typer, main, classes:1, funcs:15 | src/stackops/scripts/python/helpers/helpers_repos/cloud_repo_sync.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync_conflicts` | `cli-helper` | `cli-helper` | `medium` | 1 | 92 | funcs:5 | src/stackops/scripts/python/helpers/helpers_repos/cloud_repo_sync_conflicts.py |  |
-| `stackops.scripts.python.helpers.helpers_repos.grource` | `cli` | `cli-module` | `high` | 1 | 342 | typer, typer-app, cli-registration, __main__, funcs:6 | src/stackops/scripts/python/helpers/helpers_repos/grource.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.record` | `cli` | `cli-module` | `high` | 1 | 345 | typer, funcs:12 | src/stackops/scripts/python/helpers/helpers_repos/record.py |  |
-| `stackops.scripts.python.helpers.helpers_repos.repo_analyzer_1` | `cli-helper` | `cli-helper` | `medium` | 1 | 158 | funcs:5 | src/stackops/scripts/python/helpers/helpers_repos/repo_analyzer_1.py |  |
-| `stackops.scripts.python.helpers.helpers_repos.repo_analyzer_2` | `cli-helper` | `cli-helper` | `medium` | 1 | 313 | classes:2, funcs:2 | src/stackops/scripts/python/helpers/helpers_repos/repo_analyzer_2.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.spec_store` | `cli-helper` | `cli-helper` | `medium` | 2 | 120 | classes:2, funcs:10 | src/stackops/scripts/python/helpers/helpers_repos/spec_store.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.sync` | `cli-helper` | `cli-helper` | `medium` | 1 | 94 | funcs:4 | src/stackops/scripts/python/helpers/helpers_repos/sync.py |  |
 | `stackops.scripts.python.helpers.helpers_repos.update` | `cli-helper` | `cli-helper` | `medium` | 3 | 261 | classes:1, funcs:4 | src/stackops/scripts/python/helpers/helpers_repos/update.py |  |

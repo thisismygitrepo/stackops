@@ -18,7 +18,7 @@ from stackops.utils.installer_utils.installer_catalog import (
     installer_data_file_text,
     load_installer_data_file,
 )
-from stackops.utils.installer_utils.github_commit_dates_fetch import ensure_github_authentication, fetch_commit_dates
+from stackops.utils.installer_utils.github_commit_dates_fetch import fetch_commit_dates
 from stackops.utils.installer_utils.github_commit_dates_output import TextOutput, commit_text_outputs
 from stackops.utils.installer_utils.github_commit_dates_report import (
     render_commit_date_extremes,
@@ -50,7 +50,6 @@ def github_repository(repo_url: str) -> str | None:
 
 
 def update_installer_commit_dates(path: Path, report_path: Path, console: Console) -> CommitDateUpdateResult:
-    ensure_github_authentication()
     catalog = load_installer_data_file(path=path)
     installers = catalog["installers"]
     repositories_by_key: dict[str, str] = {}
@@ -72,6 +71,7 @@ def update_installer_commit_dates(path: Path, report_path: Path, console: Consol
     refresh_summary.add_row("GitHub installers", f"{github_installer_count} records across {repository_count} unique repositories")
     refresh_summary.add_row("Skipped", f"{len(installers) - github_installer_count} non-GitHub records")
     refresh_summary.add_row("Concurrency", f"up to {MAX_CONCURRENT_GITHUB_REQUESTS} requests")
+    refresh_summary.add_row("Source", "Public GitHub commit feeds; no CLI or authentication required")
     refresh_summary.add_row("Installer data", str(path))
     refresh_summary.add_row("CSV report", str(report_path))
     refresh_summary.add_row("Writes", "successful fetches are saved; failed repositories retain existing metadata")

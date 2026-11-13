@@ -102,55 +102,6 @@ StackOpsDevopsReposGuardCommand = TypedDict(
     },
 )
 
-StackOpsDevopsReposStatsVizCommand = TypedDict(
-    "StackOpsDevopsReposStatsVizCommand",
-    {
-        "command_name": Literal["viz"],
-        "short_name": Literal["v"],
-        "help": Literal["🎬 <v> Visualize repository activity using Gource"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsReposStatsCountLinesCommand = TypedDict(
-    "StackOpsDevopsReposStatsCountLinesCommand",
-    {
-        "command_name": Literal["count-lines"],
-        "short_name": Literal["c"],
-        "help": Literal["📄 <c> Count python lines of code in current repo + historical edits."],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsReposStatsAnalyzeCommand = TypedDict(
-    "StackOpsDevopsReposStatsAnalyzeCommand",
-    {
-        "command_name": Literal["analyze"],
-        "short_name": Literal["z"],
-        "help": Literal["📊 <z> Analyze repository development over time"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsDevopsReposStatsSubcommands = TypedDict(
-    "StackOpsDevopsReposStatsSubcommands",
-    {
-        "viz": StackOpsDevopsReposStatsVizCommand,
-        "count-lines": StackOpsDevopsReposStatsCountLinesCommand,
-        "analyze": StackOpsDevopsReposStatsAnalyzeCommand,
-    },
-)
-
-StackOpsDevopsReposStatsCommand = TypedDict(
-    "StackOpsDevopsReposStatsCommand",
-    {
-        "command_name": Literal["stats"],
-        "short_name": Literal["S"],
-        "help": Literal["📊 <S> Visualize and analyze repository statistics"],
-        "subcommands": StackOpsDevopsReposStatsSubcommands,
-    },
-)
-
 StackOpsDevopsReposSubcommands = TypedDict(
     "StackOpsDevopsReposSubcommands",
     {
@@ -159,7 +110,6 @@ StackOpsDevopsReposSubcommands = TypedDict(
         "action": StackOpsDevopsReposActionCommand,
         "version": StackOpsDevopsReposVersionCommand,
         "guard": StackOpsDevopsReposGuardCommand,
-        "stats": StackOpsDevopsReposStatsCommand,
     },
 )
 

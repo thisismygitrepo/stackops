@@ -55,12 +55,14 @@ def list_software(
 
 
 def get_app() -> typer.Typer:
+    from stackops.scripts.python.helpers.helpers_devops.cli_software_attrs import update_attrs
     from stackops.scripts.python.helpers.helpers_devops.cli_software_files import edit_software, init_software, software_path, validate_software
     from stackops.scripts.python.helpers.helpers_devops.cli_software_install import check, explore, install
+    from stackops.scripts.python.helpers.helpers_devops.cli_software_report import report
 
     app = typer.Typer(
-        cls=ordered_group(("install", "explore", "check", "list", "path", "init", "edit", "validate")),
-        help="Browse, install, and check software, and extend the bundled catalog with user definitions. Matching user names override library entries.",
+        cls=ordered_group(("install", "explore", "check", "list", "report", "update-attrs", "path", "init", "edit", "validate")),
+        help="Browse, install, and check software, report GitHub activity, and manage catalogs. Matching user names override library entries.",
         no_args_is_help=True,
         add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
@@ -73,6 +75,10 @@ def get_app() -> typer.Typer:
     app.command("c", no_args_is_help=True, hidden=True)(check)
     app.command("list", help="📋 <l> List software definitions from the selected catalog.")(list_software)
     app.command("l", hidden=True)(list_software)
+    app.command("report", help="📊 <r> Rank saved GitHub commit dates; use --reverse for newest first.")(report)
+    app.command("r", hidden=True)(report)
+    app.command("update-attrs", help="🔄 <u> Refresh lastCommitDate and lastCommitDateCheckDate from public GitHub feeds; no login required.")(update_attrs)
+    app.command("u", hidden=True)(update_attrs)
     app.command("path", help="📍 <p> Print catalog and schema paths as JSON.")(software_path)
     app.command("p", hidden=True)(software_path)
     app.command("init", help="📄 <I> Create a starter user catalog and its schema.")(init_software)
