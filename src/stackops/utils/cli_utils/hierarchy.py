@@ -13,11 +13,6 @@ if TYPE_CHECKING:
         StackOpsDevopsReposVersionSubcommands,
         StackOpsDevopsReposVersionCommand,
         StackOpsDevopsReposGuardCommand,
-        StackOpsDevopsReposStatsVizCommand,
-        StackOpsDevopsReposStatsCountLinesCommand,
-        StackOpsDevopsReposStatsAnalyzeCommand,
-        StackOpsDevopsReposStatsSubcommands,
-        StackOpsDevopsReposStatsCommand,
         StackOpsDevopsReposSubcommands,
         StackOpsDevopsReposCommand,
         StackOpsDevopsConfigSyncCommand,
@@ -252,47 +247,12 @@ STACKOPS_DEVOPS_REPOS_GUARD_COMMAND: "StackOpsDevopsReposGuardCommand" = {
     "subcommands": {},
 }
 
-STACKOPS_DEVOPS_REPOS_STATS_VIZ_COMMAND: "StackOpsDevopsReposStatsVizCommand" = {
-    "command_name": "viz",
-    "short_name": "v",
-    "help": "🎬 <v> Visualize repository activity using Gource",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_REPOS_STATS_COUNT_LINES_COMMAND: "StackOpsDevopsReposStatsCountLinesCommand" = {
-    "command_name": "count-lines",
-    "short_name": "c",
-    "help": "📄 <c> Count python lines of code in current repo + historical edits.",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_REPOS_STATS_ANALYZE_COMMAND: "StackOpsDevopsReposStatsAnalyzeCommand" = {
-    "command_name": "analyze",
-    "short_name": "z",
-    "help": "📊 <z> Analyze repository development over time",
-    "subcommands": {},
-}
-
-STACKOPS_DEVOPS_REPOS_STATS_SUBCOMMANDS: "StackOpsDevopsReposStatsSubcommands" = {
-    "viz": STACKOPS_DEVOPS_REPOS_STATS_VIZ_COMMAND,
-    "count-lines": STACKOPS_DEVOPS_REPOS_STATS_COUNT_LINES_COMMAND,
-    "analyze": STACKOPS_DEVOPS_REPOS_STATS_ANALYZE_COMMAND,
-}
-
-STACKOPS_DEVOPS_REPOS_STATS_COMMAND: "StackOpsDevopsReposStatsCommand" = {
-    "command_name": "stats",
-    "short_name": "S",
-    "help": "📊 <S> Visualize and analyze repository statistics",
-    "subcommands": STACKOPS_DEVOPS_REPOS_STATS_SUBCOMMANDS,
-}
-
 STACKOPS_DEVOPS_REPOS_SUBCOMMANDS: "StackOpsDevopsReposSubcommands" = {
     "sync": STACKOPS_DEVOPS_REPOS_SYNC_COMMAND,
     "register": STACKOPS_DEVOPS_REPOS_REGISTER_COMMAND,
     "action": STACKOPS_DEVOPS_REPOS_ACTION_COMMAND,
     "version": STACKOPS_DEVOPS_REPOS_VERSION_COMMAND,
     "guard": STACKOPS_DEVOPS_REPOS_GUARD_COMMAND,
-    "stats": STACKOPS_DEVOPS_REPOS_STATS_COMMAND,
 }
 
 STACKOPS_DEVOPS_REPOS_COMMAND: "StackOpsDevopsReposCommand" = {

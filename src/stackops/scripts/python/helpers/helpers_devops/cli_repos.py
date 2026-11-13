@@ -237,14 +237,14 @@ def checkout_to_branch_command(
 
 
 def get_app() -> typer.Typer:
-    from stackops.scripts.python.helpers.helpers_devops import cli_repos_stats, cli_repos_version
+    from stackops.scripts.python.helpers.helpers_devops import cli_repos_version
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_edit import edit_repositories
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_files import init_repositories, path_repositories, validate_repositories
     from stackops.scripts.python.helpers.helpers_devops.cli_repos_list import list_repositories
     from stackops.scripts.python.helpers.helpers_repos.cloud_repo_sync import main as secure_repo_main
 
     repos_apps = typer.Typer(
-        cls=ordered_group(("sync", "register", "edit", "path", "init", "validate", "list", "action", "version", "guard", "stats")),
+        cls=ordered_group(("sync", "register", "edit", "path", "init", "validate", "list", "action", "version", "guard")),
         help="📁 <r> Manage development repositories", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
@@ -275,8 +275,5 @@ def get_app() -> typer.Typer:
 
     repos_apps.command(name="guard", help="🔐 <g> Securely sync git repository to/from cloud with encryption")(secure_repo_main)
     repos_apps.command(name="g", help="Securely sync git repository to/from cloud with encryption", hidden=True)(secure_repo_main)
-
-    repos_apps.add_typer(cli_repos_stats.get_app(), name="stats", help="📊 <S> Visualize and analyze repository statistics")
-    repos_apps.add_typer(cli_repos_stats.get_app(), name="S", hidden=True)
 
     return repos_apps

@@ -74,13 +74,6 @@ These are the child commands exposed by the current live help.
 - `action`
 - `version`
 - `guard`
-- `stats`
-
-`repos stats`:
-
-- `visualize`
-- `count-lines`
-- `analyze`
 
 `config`:
 
