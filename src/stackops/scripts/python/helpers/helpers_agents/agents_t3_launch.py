@@ -12,7 +12,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_t3_mcp import (
     require_t3_objects,
     require_t3_text,
 )
-from stackops.scripts.python.helpers.helpers_agents.constants import T3_REASONING_OPTION_IDS, T3_RUNTIME_MODE, T3_SERVER_URL, T3_TITLE_MAX_CHARS
+from stackops.scripts.python.helpers.helpers_agents.constants import T3_PLACEHOLDER_THREAD_TITLE, T3_REASONING_OPTION_IDS, T3_RUNTIME_MODE, T3_SERVER_URL
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 
 T3Driver: TypeAlias = Literal["claudeAgent", "codex", "cursor", "opencode", "pi", "muse", "antigravity"]
@@ -101,8 +101,18 @@ def _project_id(session: T3McpSession, workspace_root: Path) -> str:
 
 
 @dataclass(frozen=True)
+class T3FixedTitle:
+    text: str
+
+
+@dataclass(frozen=True)
+class T3GeneratedTitle:
+    pass
+
+
+@dataclass(frozen=True)
 class T3ThreadRequest:
-    title: str
+    title: T3FixedTitle | T3GeneratedTitle
     message: str
 
 
@@ -111,7 +121,7 @@ def t3_requests_from_prompt_directories(job_name: str, prompt_directories: list[
 
     return [
         T3ThreadRequest(
-            title=f"""{job_name}-{prompt_directory.name.split("_")[-1]}""",
+            title=T3FixedTitle(text=f"""{job_name}-{prompt_directory.name.split("_")[-1]}"""),
             message=get_agent_prompt_file(prompt_directory=prompt_directory).read_text(encoding="utf-8"),
         )
         for prompt_directory in prompt_directories
@@ -126,24 +136,28 @@ def launch_t3_threads(workspace_root: Path, requests: list[T3ThreadRequest], tar
         model_selection = _model_selection(capabilities=capabilities, target=target)
         project_id = _project_id(session=session, workspace_root=workspace_root)
         for request in requests:
+            match request.title:
+                case T3FixedTitle(text=text):
+                    launch_title = text
+                case T3GeneratedTitle():
+                    launch_title = T3_PLACEHOLDER_THREAD_TITLE
             launched = call_t3_tool(
                 session=session,
                 name="t3_thread_launch",
                 arguments={
-                    "title": request.title,
+                    "title": launch_title,
                     "projectId": project_id,
                     "modelSelection": model_selection,
                     "runtimeMode": T3_RUNTIME_MODE,
                     "message": request.message,
                 },
             )
-            typer.echo(f"""Launched {request.title} in T3 Code: thread {require_t3_text(launched, "threadId", "launch")} ({launched.get("status")}).""")
+            thread_id = require_t3_text(launched, "threadId", "launch")
+            match request.title:
+                case T3FixedTitle(text=text):
+                    typer.echo(f"""Launched {text} in T3 Code: thread {thread_id} ({launched.get("status")}).""")
+                case T3GeneratedTitle():
+                    call_t3_tool(session=session, name="t3_thread_update", arguments={"threadId": thread_id, "action": "regenerate_title"})
+                    typer.echo(f"""Launched T3 Code thread {thread_id} ({launched.get("status")}); T3 Code is generating its title.""")
     typer.echo(f"""Follow up and monitor in T3 Code at {T3_SERVER_URL}.""")
 
-
-def launch_prompt_file_in_t3(prompt_file: Path, workspace_root: Path, target: T3LaunchTarget) -> None:
-    message = prompt_file.read_text(encoding="utf-8")
-    lines = [line.strip() for line in message.splitlines() if line.strip()]
-    if len(lines) == 0:
-        raise ValueError("The prepared prompt is empty, so there is nothing to launch in T3 Code.")
-    launch_t3_threads(workspace_root=workspace_root, requests=[T3ThreadRequest(title=lines[0][:T3_TITLE_MAX_CHARS], message=message)], target=target)

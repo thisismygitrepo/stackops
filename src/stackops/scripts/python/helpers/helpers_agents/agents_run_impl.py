@@ -321,11 +321,15 @@ def run(
     else:
         _print_prompt_file_preview(prompt_file=prompt_file)
     if t3_target is not None:
-        from stackops.scripts.python.helpers.helpers_agents.agents_t3_launch import launch_prompt_file_in_t3
+        from stackops.scripts.python.helpers.helpers_agents.agents_t3_launch import T3GeneratedTitle, T3ThreadRequest, launch_t3_threads
 
         repo_root = _resolve_current_repo_root()
         workspace_root = working_directory if working_directory is not None else repo_root if repo_root is not None else Path.cwd()
-        launch_prompt_file_in_t3(prompt_file=prompt_file, workspace_root=workspace_root.resolve(), target=t3_target)
+        launch_t3_threads(
+            workspace_root=workspace_root.resolve(),
+            requests=[T3ThreadRequest(title=T3GeneratedTitle(), message=prompt_file.read_text(encoding="utf-8"))],
+            target=t3_target,
+        )
         return
     if interactive:
         from stackops.scripts.python.helpers.helpers_agents.agents_run_interactive_script import build_interactive_prompt_script

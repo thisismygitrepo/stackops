@@ -42,3 +42,4 @@ T3_MAX_CHARS_PER_ITEM: Final[int] = 50000
 T3_WAIT_SLICE_MS: Final[int] = 100_000
 T3_REASONING_OPTION_IDS: Final[tuple[str, ...]] = ("effort", "reasoningEffort")
 T3_TITLE_MAX_CHARS: Final[int] = 60
+T3_PLACEHOLDER_THREAD_TITLE: Final[str] = "New thread"
