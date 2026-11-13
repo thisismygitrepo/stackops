@@ -1,16 +1,17 @@
-import subprocess
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from time import monotonic
 from urllib.parse import quote
+from xml.etree.ElementTree import ParseError, fromstring
 
+import requests
 from rich.console import Console
 from rich.markup import escape
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
 
-from stackops.utils.installer_utils.github_commit_dates_constants import GITHUB_HOST, MAX_CONCURRENT_GITHUB_REQUESTS
+from stackops.utils.installer_utils.github_commit_dates_constants import GITHUB_HOST, GITHUB_REQUEST_TIMEOUT_SECONDS, MAX_CONCURRENT_GITHUB_REQUESTS
 from stackops.utils.installer_utils.github_commit_dates_report import RepositoryCommitDate, RepositoryCommitDateFailure, build_fetched_commit_row
 
 
@@ -20,33 +21,21 @@ class CommitDateFetchResult:
     failures: tuple[RepositoryCommitDateFailure, ...]
 
 
-def run_gh(args: list[str], failure_message: str) -> str:
-    try:
-        result = subprocess.run(["gh", *args], check=False, capture_output=True, text=True)
-    except FileNotFoundError as error:
-        raise RuntimeError("GitHub CLI was not found on PATH. Install `gh`, then run `gh auth login --hostname github.com`.") from error
-    if result.returncode != 0:
-        detail = result.stderr.strip() or result.stdout.strip() or f"gh exited with code {result.returncode}"
-        raise RuntimeError(f"{failure_message}\n{detail}")
-    return result.stdout.strip()
-
-
-def ensure_github_authentication() -> None:
-    run_gh(
-        args=["auth", "status", "--active", "--hostname", GITHUB_HOST],
-        failure_message=("GitHub CLI is not logged in to github.com. Run `gh auth login --hostname github.com` and retry."),
-    )
-
-
 def fetch_last_commit_date(repository: str) -> datetime:
     owner, repo = repository.split("/", maxsplit=1)
-    endpoint = f"repos/{quote(owner, safe='')}/{quote(repo, safe='')}/commits?per_page=1"
-    last_commit_date_value = run_gh(
-        args=["api", "--hostname", GITHUB_HOST, endpoint, "--jq", ".[0].commit.committer.date"],
-        failure_message=f"Failed to fetch the latest commit for {repository}.",
-    )
+    url = f"""https://{GITHUB_HOST}/{quote(owner, safe="")}/{quote(repo, safe="")}/commits.atom"""
+    try:
+        response = requests.get(url, headers={"Accept": "application/atom+xml"}, timeout=GITHUB_REQUEST_TIMEOUT_SECONDS)
+        response.raise_for_status()
+    except requests.RequestException as error:
+        raise RuntimeError(f"""Failed to fetch the public GitHub commit feed for {repository}: {error}""") from error
+    try:
+        feed = fromstring(response.content)
+    except ParseError as error:
+        raise RuntimeError(f"""GitHub returned an invalid commit feed for {repository}.""") from error
+    last_commit_date_value = feed.findtext("{http://www.w3.org/2005/Atom}entry/{http://www.w3.org/2005/Atom}updated")
     if not last_commit_date_value:
-        raise RuntimeError(f"GitHub returned no commits for {repository}.")
+        raise RuntimeError(f"""GitHub returned no latest commit timestamp for {repository}.""")
     try:
         last_commit_at = datetime.fromisoformat(last_commit_date_value)
     except ValueError as error:
