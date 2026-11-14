@@ -284,11 +284,11 @@ def get_app() -> typer.Typer:
 
     app.command(name="encrypt", no_args_is_help=True, hidden=False, help=cli_data_encrypt.DATA_ENCRYPT_HELP)(cli_data_encrypt.encrypt)
 
-    app.command(name="x", no_args_is_help=True, hidden=True)(cli_data_encrypt.encrypt)
+    app.command(name="E", no_args_is_help=True, hidden=True)(cli_data_encrypt.encrypt)
 
     app.command(name="decrypt", no_args_is_help=True, hidden=False, help=cli_data_encrypt.DATA_DECRYPT_HELP)(cli_data_encrypt.decrypt)
 
-    app.command(name="y", no_args_is_help=True, hidden=True)(cli_data_encrypt.decrypt)
+    app.command(name="d", no_args_is_help=True, hidden=True)(cli_data_encrypt.decrypt)
 
     register_managed_file_commands(app=app, kind="data", path_alias="p", init_alias="i", validate_alias="v")
 

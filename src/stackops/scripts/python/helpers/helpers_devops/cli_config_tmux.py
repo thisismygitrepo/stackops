@@ -237,7 +237,7 @@ def get_app() -> typer.Typer:
     tmux_app.callback(invoke_without_command=True)(tmux_style_group)
     for name, short, help_text, fn in (
         ("install-oh-my-tmux", "i", "📦 <i> Install Oh My Tmux and link tmux to it.", install_oh_my_tmux),
-        ("apply-stackops-local", "l", "📋 <l> Copy the StackOps Oh My Tmux local config.", apply_stackops_local),
+        ("apply-stackops-local", "a", "📋 <a> Copy the StackOps Oh My Tmux local config.", apply_stackops_local),
         ("preset", "p", "🎨 <p> Apply an Oh My Tmux color preset.", preset),
         ("set-option", "s", "🔧 <s> Set an Oh My Tmux tmux_conf_* option.", set_option),
         ("reload", "r", "🔄 <r> Reload tmux config.", reload_tmux),

@@ -35,8 +35,8 @@ def get_app() -> typer.Typer:
     pyproject_app.command(name="configure-linters", no_args_is_help=False, help="🧰 <l> Add linter config files to a git repository")(config_linters)
     pyproject_app.command(name="l", no_args_is_help=False, hidden=True)(config_linters)
 
-    pyproject_app.command(name="generate-upgrade-script", no_args_is_help=False, help="⏫ <a> Write pyproject_init.sh without running it. Cleanup flags immediately clear dependency groups or delete .venv.")(upgrade_packages)
-    pyproject_app.command(name="a", no_args_is_help=False, hidden=True)(upgrade_packages)
+    pyproject_app.command(name="generate-upgrade-script", no_args_is_help=False, help="⏫ <g> Write pyproject_init.sh without running it. Cleanup flags immediately clear dependency groups or delete .venv.")(upgrade_packages)
+    pyproject_app.command(name="g", no_args_is_help=False, hidden=True)(upgrade_packages)
 
     pyproject_app.command(name="check-deps", no_args_is_help=False, help="🔗 <d> Check Python import dependencies and cycles.")(check_deps)
     pyproject_app.command(name="d", no_args_is_help=False, hidden=True)(check_deps)
@@ -50,9 +50,9 @@ def get_app() -> typer.Typer:
     pyproject_app.command(
         name="generate-tests",
         no_args_is_help=True,
-        help="🧪 <R> Prepare an agent workflow to write runtime tests and offer to launch it.",
+        help="🧪 <G> Prepare an agent workflow to write runtime tests and offer to launch it.",
     )(test_runtime_module.launch_test_runtime)
-    pyproject_app.command(name="R", no_args_is_help=True, hidden=True)(test_runtime_module.launch_test_runtime)
+    pyproject_app.command(name="G", no_args_is_help=True, hidden=True)(test_runtime_module.launch_test_runtime)
 
     pyproject_app.command(name="test-reference", no_args_is_help=False, help="🔎 <r> Validate _PATH_REFERENCE targets in a repository.")(reference_test)
     pyproject_app.command(name="r", no_args_is_help=False, hidden=True)(reference_test)

@@ -193,7 +193,7 @@ def build_graph(
 
 
 def explore_cli(ctx: typer.Context) -> None:
-    """🧭 <x> Explore the StackOps CLI graph."""
+    """🧭 <e> Explore the StackOps CLI graph."""
     from stackops.scripts.python.graph.visualize import cli_graph_app
     from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 

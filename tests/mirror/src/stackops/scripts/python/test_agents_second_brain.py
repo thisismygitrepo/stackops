@@ -69,7 +69,7 @@ def test_init_refuses_to_replace_existing_configuration_file(tmp_path: Path) -> 
 
 def test_init_help_exposes_alias_and_overwrite_option() -> None:
     result = CliRunner().invoke(agents.get_app(), ["second-brain", "init", "--help"], terminal_width=120)
-    alias_result = CliRunner().invoke(agents.get_app(), ["second-brain", "c", "--help"], terminal_width=120)
+    alias_result = CliRunner().invoke(agents.get_app(), ["second-brain", "i", "--help"], terminal_width=120)
 
     assert result.exit_code == 0, result.output
     assert alias_result.exit_code == 0, alias_result.output

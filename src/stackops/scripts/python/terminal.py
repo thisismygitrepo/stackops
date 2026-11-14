@@ -498,8 +498,8 @@ def get_app() -> typer.Typer:
     layouts_app.command("edit", no_args_is_help=False, help="📝 <e> Edit a layout file, create it if missing, and validate after saving.")(edit_layouts)
     layouts_app.command("e", no_args_is_help=False, hidden=True)(edit_layouts)
 
-    layouts_app.command("path", help="📍 <P> Print layout file and schema paths as JSON.")(path_layouts)
-    layouts_app.command("P", hidden=True)(path_layouts)
+    layouts_app.command("path", help="📍 <p> Print layout file and schema paths as JSON.")(path_layouts)
+    layouts_app.command("p", hidden=True)(path_layouts)
     layouts_app.command("init", help="🆕 <i> Create a missing layout file and its schema without opening an editor.")(init_layouts)
     layouts_app.command("i", hidden=True)(init_layouts)
     layouts_app.command("validate", help="✅ <v> Validate a layout file without opening an editor.")(validate_layouts)
@@ -517,14 +517,14 @@ def get_app() -> typer.Typer:
     layouts_app.command("trace", no_args_is_help=True, help=trace.__doc__, short_help="🔬 <t> Trace a terminal session until it settles")(trace)
     layouts_app.command("t", no_args_is_help=True, help=trace.__doc__, hidden=True)(trace)
 
-    layouts_app.command("run-function", no_args_is_help=True, short_help="🧩 <c> Launch a function in multiple tmux processes")(create_from_function)
-    layouts_app.command("c", no_args_is_help=True, hidden=True)(create_from_function)
+    layouts_app.command("run-function", no_args_is_help=True, short_help="🧩 <f> Launch a function in multiple tmux processes")(create_from_function)
+    layouts_app.command("f", no_args_is_help=True, hidden=True)(create_from_function)
 
     layouts_app.command("balance-load", no_args_is_help=True, help=balance_load.__doc__, short_help="🔀 <b> Balance the load across sessions")(balance_load)
     layouts_app.command("b", no_args_is_help=True, help=balance_load.__doc__, hidden=True)(balance_load)
 
-    layouts_app.command("create-template", no_args_is_help=False, help=create_template.__doc__, short_help="📐 <p> Create a layout template file")(create_template)
-    layouts_app.command("p", no_args_is_help=False, help=create_template.__doc__, hidden=True)(create_template)
+    layouts_app.command("create-template", no_args_is_help=False, help=create_template.__doc__, short_help="📐 <c> Create a layout template file")(create_template)
+    layouts_app.command("c", no_args_is_help=False, help=create_template.__doc__, hidden=True)(create_template)
 
     layouts_app.command("summary", no_args_is_help=False, help=summary.__doc__, short_help="📋 <s> Print running session summary")(summary)
     layouts_app.command("s", no_args_is_help=False, help=summary.__doc__, hidden=True)(summary)

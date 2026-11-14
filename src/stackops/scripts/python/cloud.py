@@ -155,8 +155,8 @@ def get_app() -> typer.Typer:
     app.command(name="mount", short_help="🔗 <m> Mount cloud storage services as local drives.")(mount)
     app.command(name="m", hidden=True)(mount)
 
-    app.command(name="transfer", no_args_is_help=True, short_help="📦 <f> Transfer files between machine:path endpoints through SSH.")(transfer)
-    app.command(name="f", no_args_is_help=True, hidden=True)(transfer)
+    app.command(name="transfer", no_args_is_help=True, short_help="📦 <t> Transfer files between machine:path endpoints through SSH.")(transfer)
+    app.command(name="t", no_args_is_help=True, hidden=True)(transfer)
 
     app.add_typer(get_onedrive_app(), name="onedrive", help="🔷 <o> Access OneDrive through Microsoft Graph.")
     app.add_typer(get_onedrive_app(), name="o", help="Access OneDrive through Microsoft Graph.", hidden=True)

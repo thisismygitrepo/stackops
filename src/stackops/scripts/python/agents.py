@@ -519,7 +519,7 @@ def run_prompt(
     agent: Annotated[AGENTS | None, typer.Option(..., "--agent", "-a", help=f"Agent to launch. {DEFAULT_AGENT_HELP}")] = None,
     t3: Annotated[
         bool,
-        typer.Option("--t3", help="Launch the prompt as a T3 Code thread with full access instead of running the agent here. Requires --model."),
+        typer.Option("--t3", "-t", help="Launch the prompt as a T3 Code thread with full access instead of running the agent here. Requires --model."),
     ] = False,
     model: Annotated[str | None, typer.Option("--model", "-m", help="T3 Code model id for --t3, e.g. claude-opus-5-5 or gpt-5.6-luna.")] = None,
     interactive: Annotated[
@@ -863,10 +863,10 @@ def get_app() -> typer.Typer:
     )(browser_group)
     agents_app.command("b", help="Browser automation for agent CLIs and MCP", hidden=True, context_settings=_NESTED_APP_CONTEXT)(browser_group)
     agents_app.command(
-        "computer", help="🖥️ <u> Desktop control for agent CLIs through MCP", short_help="🖥️ <u> Desktop control for agent CLIs through MCP",
+        "computer", help="🖥️ <c> Desktop control for agent CLIs through MCP", short_help="🖥️ <c> Desktop control for agent CLIs through MCP",
         context_settings=_NESTED_APP_CONTEXT,
     )(computer_group)
-    agents_app.command("u", help="Desktop control for agent CLIs through MCP", hidden=True, context_settings=_NESTED_APP_CONTEXT)(computer_group)
+    agents_app.command("c", help="Desktop control for agent CLIs through MCP", hidden=True, context_settings=_NESTED_APP_CONTEXT)(computer_group)
     agents_app.command(
         "iter", help="🔁 <I> Iter maintenance through Herdr", short_help="🔁 <I> Current Herdr iter maintenance", context_settings=_NESTED_APP_CONTEXT
     )(iter_group)
@@ -889,14 +889,14 @@ def get_app() -> typer.Typer:
     agents_app.command(name="add-skill", short_help="🧩 <s> Add a skill to an agent")(add_skill)
     agents_app.command(name="s", hidden=True)(add_skill)
     agents_app.command(
-        "init", no_args_is_help=True, help=init_config.__doc__, short_help="🔧 <c> Initialize AI configurations in the current repository"
+        "init", no_args_is_help=True, help=init_config.__doc__, short_help="🔧 <n> Initialize AI configurations in the current repository"
     )(init_config)
-    agents_app.command("c", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
+    agents_app.command("n", no_args_is_help=True, help=init_config.__doc__, hidden=True)(init_config)
     agents_app.command(
-        name="reset", no_args_is_help=False, short_help="🧼 <D> Preview or reset agent customizations and .ai folders",
+        name="reset", no_args_is_help=False, short_help="🧼 <R> Preview or reset agent customizations and .ai folders",
         help="Preview or reset agent customizations and repository .ai folders. Use --resource workspace for .ai folders only. Changes require --apply or interactive confirmation and are permanent: nothing is backed up.",
     )(depoison)
-    agents_app.command(name="D", no_args_is_help=False, hidden=True)(depoison)
+    agents_app.command(name="R", no_args_is_help=False, hidden=True)(depoison)
     agents_app.command(name="doctor", no_args_is_help=False, short_help="🩺 <d> Inspect agent health and resource provenance")(doctor)
     agents_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
     agents_app.command(

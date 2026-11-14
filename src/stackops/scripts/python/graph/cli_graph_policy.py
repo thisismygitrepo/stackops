@@ -112,8 +112,21 @@ def _option_decls(param: dict[str, Any]) -> tuple[list[str], list[str]]:
     return longs, shorts
 
 
-def validate_cli_graph(payload: dict[str, Any]) -> None:
+def _command_short_violations(node: dict[str, Any]) -> list[str]:
+    children = cast(list[dict[str, Any]], node.get("children", []))
     violations: list[str] = []
+    for child in children:
+        initial = cast(str, child["name"])[0]
+        aliases = [cast(str, alias["name"]) for alias in child.get("aliases", [])]
+        shares_initial = any(cast(str, sibling["name"])[0] == initial for sibling in children if sibling is not child)
+        if not shares_initial and initial not in aliases:
+            violations.append(f"""{child["fullPath"]}: no sibling command starts with {initial}, so its short alias must be {initial}, not {", ".join(aliases) or "missing"}""")
+        violations.extend(_command_short_violations(child))
+    return violations
+
+
+def validate_cli_graph(payload: dict[str, Any]) -> None:
+    violations: list[str] = _command_short_violations(payload["root"])
     for node in _iter_commands(payload["root"]):
         path = cast(str, node["fullPath"])
         seen_shorts: dict[str, str] = {}

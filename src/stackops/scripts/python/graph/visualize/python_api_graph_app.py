@@ -163,8 +163,8 @@ def get_app() -> typer.Typer:
     cli_app.command(name="v", no_args_is_help=False, help="Render a Plotly hierarchy chart.", hidden=True)(chart)
     cli_app.command(name="dump", no_args_is_help=True, help="📦 <j> Write the generated Python API graph JSON.")(dump)
     cli_app.command(name="j", no_args_is_help=True, help="Write the generated Python API graph JSON.", hidden=True)(dump)
-    cli_app.command(name="explain-filter", no_args_is_help=False, help="🧪 <f> Explain how API files and members are selected.")(explain_filter)
-    cli_app.command(name="f", no_args_is_help=False, help="Explain how API files and members are selected.", hidden=True)(explain_filter)
+    cli_app.command(name="explain-filter", no_args_is_help=False, help="🧪 <e> Explain how API files and members are selected.")(explain_filter)
+    cli_app.command(name="e", no_args_is_help=False, help="Explain how API files and members are selected.", hidden=True)(explain_filter)
     return cli_app
 
 

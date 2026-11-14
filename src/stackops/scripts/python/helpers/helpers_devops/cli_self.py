@@ -233,9 +233,9 @@ def get_app() -> typer.Typer:
     cli_app.command(name="status", no_args_is_help=False, help="📊 <s> Show machine, repository, application, and configuration status.")(status)
     cli_app.command(name="s", no_args_is_help=False, hidden=True)(status)
 
-    cli_app.command(name="explore-cli", help="🧭 <x> Explore the StackOps CLI graph.", context_settings=ctx_settings)(explore_cli)
+    cli_app.command(name="explore-cli", help="🧭 <e> Explore the StackOps CLI graph.", context_settings=ctx_settings)(explore_cli)
     cli_app.command(name="explore", help="Explore the StackOps CLI graph.", hidden=True, context_settings=ctx_settings)(explore_cli)
-    cli_app.command(name="x", hidden=True, context_settings=ctx_settings)(explore_cli)
+    cli_app.command(name="e", hidden=True, context_settings=ctx_settings)(explore_cli)
     cli_app.command(name="explore-python-api", help="🧭 <p> Explore the StackOps Python API graph.", context_settings=ctx_settings)(
         explore_python_api
     )
@@ -254,8 +254,8 @@ def get_app() -> typer.Typer:
         cli_app.command(name="docs", no_args_is_help=False, help="📚 <o> Serve local docs with preview URLs.")(docs)
         cli_app.command(name="o", no_args_is_help=False, hidden=True)(docs)
 
-    cli_app.command(name="build-installer", no_args_is_help=False, help="📤 <e> Build an offline installer.")(export)
-    cli_app.command(name="e", no_args_is_help=False, help="Export the installation files to get an offline image.", hidden=True)(export)
+    cli_app.command(name="build-installer", no_args_is_help=False, help="📤 <b> Build an offline installer.")(export)
+    cli_app.command(name="b", no_args_is_help=False, help="Export the installation files to get an offline image.", hidden=True)(export)
     cli_app.command(name="download-installer", no_args_is_help=False, help="📥 <D> Download an offline installer.")(download_installer)
     cli_app.command(name="D", no_args_is_help=False, help="Download and extract a published offline installer.", hidden=True)(
         download_installer

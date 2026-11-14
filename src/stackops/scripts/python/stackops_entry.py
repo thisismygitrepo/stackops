@@ -97,7 +97,7 @@ def seek(ctx: typer.Context) -> None:
 def cli(
     ctx: typer.Context,
     version: Annotated[bool, typer.Option("--version", "-V", is_eager=True, help="Show the StackOps version and exit.")] = False,
-    skill: Annotated[bool, typer.Option("--skill", is_eager=True, help="Print the agent usage guide and its folder, then exit.")] = False,
+    skill: Annotated[bool, typer.Option("--skill", "-s", is_eager=True, help="Print the agent usage guide and its folder, then exit.")] = False,
     non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="Never prompt or open pickers/editors, including in a terminal.")] = False,
 ) -> None:
     from stackops.utils.cli_utils.interaction import configure_interaction

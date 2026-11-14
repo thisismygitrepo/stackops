@@ -119,7 +119,7 @@ def clean_cache() -> None:
 def get_app() -> typer.Typer:
     app = typer.Typer(
         name="bitwarden",
-        help="🔐 <k> Manage Bitwarden credentials and vault sessions.",
+        help="🔐 <b> Manage Bitwarden credentials and vault sessions.",
         no_args_is_help=True,
         add_help_option=True,
         add_completion=False,
@@ -137,9 +137,9 @@ def get_app() -> typer.Typer:
 
     app.command(
         "export-session",
-        help="""🔓 <u> Print shell code exporting the saved BW_SESSION (usage: eval "$(devops vault bitwarden export-session)").""",
+        help="""🔓 <e> Print shell code exporting the saved BW_SESSION (usage: eval "$(devops vault bitwarden export-session)").""",
     )(export_session)
-    app.command("u", help="Alias for export-session.", hidden=True)(export_session)
+    app.command("e", help="Alias for export-session.", hidden=True)(export_session)
 
     app.command("sync", help="🔄 <S> Sync the Bitwarden vault with the server and refresh cached searches.")(sync)
     app.command("S", help="Alias for sync.", hidden=True)(sync)

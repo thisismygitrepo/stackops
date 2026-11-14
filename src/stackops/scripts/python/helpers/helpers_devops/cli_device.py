@@ -118,8 +118,8 @@ def get_app() -> typer.Typer:
         help="📱 <d> Device subcommands", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    device_app.command(name="connect-wifi", no_args_is_help=False, help="📶 <w> Connect to a configured or selected WiFi network.")(connect_wifi)
-    device_app.command(name="w", no_args_is_help=False, hidden=True)(connect_wifi)
+    device_app.command(name="connect-wifi", no_args_is_help=False, help="📶 <c> Connect to a configured or selected WiFi network.")(connect_wifi)
+    device_app.command(name="c", no_args_is_help=False, hidden=True)(connect_wifi)
 
     device_app.command(name="bind-wsl-port", help="🔌 <b> Bind WSL port to Windows host", no_args_is_help=True)(bind_wsl_port)
     device_app.command(name="b", help="Bind WSL port to Windows host", hidden=True, no_args_is_help=True)(bind_wsl_port)

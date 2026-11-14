@@ -178,8 +178,8 @@ def get_app() -> typer.Typer:
     cloudflare_app.command(name="r", hidden=True)(run_tunnel)
     cloudflare_app.command(name="reinstall-tunnel-service", help="🔄 <R> Reinstall the persistent Cloudflare tunnel service.")(reinstall_tunnel_service)
     cloudflare_app.command(name="R", hidden=True)(reinstall_tunnel_service)
-    cloudflare_app.command(name="add-ip-exclusion-to-warp", help="🚫 <p> Add IP exclusion to WARP")(add_ip_exclusion_to_warp)
-    cloudflare_app.command(name="p", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
+    cloudflare_app.command(name="add-ip-exclusion-to-warp", help="🚫 <a> Add IP exclusion to WARP")(add_ip_exclusion_to_warp)
+    cloudflare_app.command(name="a", help="Add IP exclusion to WARP", hidden=True)(add_ip_exclusion_to_warp)
     cloudflare_app.command(name="tunnel-status", help="📊 <t> Show tunnel redundancy, versions, services, and routes")(
         cli_cloudflare_tunnel.cloudflare_tunnel_status
     )

@@ -170,6 +170,6 @@ def get_app() -> typer.Typer:
     app.command("v", hidden=True)(validate_secrets)
 
     app.add_typer(cli_vault.get_app(), name="bitwarden")
-    app.add_typer(cli_vault.get_app(), name="k", hidden=True)
+    app.add_typer(cli_vault.get_app(), name="b", hidden=True)
 
     return app

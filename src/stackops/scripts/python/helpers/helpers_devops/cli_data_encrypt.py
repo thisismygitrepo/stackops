@@ -9,8 +9,8 @@ from stackops.utils.cli_utils.secret_input import read_secret_input
 from stackops.utils.cloud.encryption import ENCRYPTION_MODES_DISPLAY, EncryptionMode, EncryptionModeChoice
 from stackops.utils.files.compression_constants import DECOMPRESS_SUPPORTED_FORMATS
 
-DATA_ENCRYPT_HELP = "🔐 <x> Encrypt a file or folder with symmetric or asymmetric GPG."
-DATA_DECRYPT_HELP = "🔓 <y> Decrypt a GPG file; folder archives are extracted."
+DATA_ENCRYPT_HELP = "🔐 <E> Encrypt a file or folder with symmetric or asymmetric GPG."
+DATA_DECRYPT_HELP = "🔓 <d> Decrypt a GPG file; folder archives are extracted."
 
 FolderArchiveFormat: TypeAlias = Literal["zip", "tar.gz", "tar.bz2", "tar.xz"]
 FOLDER_ARCHIVE_SUFFIXES: dict[FolderArchiveFormat, str] = {

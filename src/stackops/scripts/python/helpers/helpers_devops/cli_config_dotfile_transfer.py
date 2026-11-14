@@ -71,7 +71,7 @@ def export_dotfiles(
     port = 8888
     display_with_flashy_style(msg=f"""
 On the remote machine, run:
-d c f i -u http://{local_ipv4}:{port} && d c f s d -s user -m s -w all
+d c d i -u http://{local_ipv4}:{port} && d c d s d -s user -m s -w all
 devops config dotfiles import --url http://{local_ipv4}:{port} && devops config dotfiles sync down --source user --method symlink --which all
 """, title="Remote Machine Instructions")
     cli_share_server.web_file_explorer(path=str(zipfile_encrypted_path), no_auth=True, port=port)

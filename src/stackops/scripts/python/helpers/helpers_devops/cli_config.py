@@ -7,7 +7,7 @@ from stackops.utils.cli_utils.ordered_group import ordered_group
 
 
 def config() -> None:
-    """🤖 <I> interactive configuration of machine."""
+    """🤖 <i> interactive configuration of machine."""
     from stackops.scripts.python.helpers.helpers_devops.interactive import main
     from stackops.utils.cli_utils.interaction import require_interactive
 
@@ -75,11 +75,11 @@ def get_app() -> typer.Typer:
         "help_option_names": [],
     }
 
-    config_apps.add_typer(dotfiles_module.get_app(), name="dotfiles", help=f"📂 <f> {dotfiles_module.DOTFILES_HELP}")
-    config_apps.add_typer(dotfiles_module.get_app(), name="f", help=dotfiles_module.DOTFILES_HELP, hidden=True)
+    config_apps.add_typer(dotfiles_module.get_app(), name="dotfiles", help=f"📂 <d> {dotfiles_module.DOTFILES_HELP}")
+    config_apps.add_typer(dotfiles_module.get_app(), name="d", help=dotfiles_module.DOTFILES_HELP, hidden=True)
 
-    config_apps.add_typer(setup_module.get_app(), name="setup", help=f"🧭 <u> {setup_module.SETUP_HELP}")
-    config_apps.add_typer(setup_module.get_app(), name="u", help=setup_module.SETUP_HELP, hidden=True)
+    config_apps.add_typer(setup_module.get_app(), name="setup", help=f"🧭 <s> {setup_module.SETUP_HELP}")
+    config_apps.add_typer(setup_module.get_app(), name="s", help=setup_module.SETUP_HELP, hidden=True)
 
     config_apps.command("edit", no_args_is_help=True, help=f"📝 <e> {EDIT_HELP}")(edit_managed_file)
     config_apps.command("e", no_args_is_help=True, help=EDIT_HELP, hidden=True)(edit_managed_file)
@@ -91,8 +91,8 @@ def get_app() -> typer.Typer:
     config_apps.command("validate", no_args_is_help=True, help="✅ <v> Validate a configuration file against its schema and parser.")(validate_config)
     config_apps.command("v", no_args_is_help=True, hidden=True)(validate_config)
 
-    config_apps.command("export-example", no_args_is_help=True, help=f"📦 <d> {EXPORT_EXAMPLE_HELP}")(export_example)
-    config_apps.command("d", no_args_is_help=True, help=EXPORT_EXAMPLE_HELP, hidden=True)(export_example)
+    config_apps.command("export-example", no_args_is_help=True, help=f"📦 <E> {EXPORT_EXAMPLE_HELP}")(export_example)
+    config_apps.command("E", no_args_is_help=True, help=EXPORT_EXAMPLE_HELP, hidden=True)(export_example)
 
     config_apps.command("init-script", no_args_is_help=True, help=f"🚀 <n> {INIT_SCRIPT_HELP}")(init_script)
     config_apps.command("n", no_args_is_help=True, help=INIT_SCRIPT_HELP, hidden=True)(init_script)

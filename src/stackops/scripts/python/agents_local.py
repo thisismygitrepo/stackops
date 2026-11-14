@@ -150,8 +150,8 @@ def get_app() -> typer.Typer:
     )
     local_app.command(name="doctor", no_args_is_help=False, short_help="🩺 <d> Inspect server health, models, and resource usage")(doctor)
     local_app.command(name="d", no_args_is_help=False, hidden=True)(doctor)
-    local_app.command(name="discover", no_args_is_help=False, short_help="🔎 <s> Discover models from Ollama or Hugging Face for vLLM")(discover)
-    local_app.command(name="s", no_args_is_help=False, hidden=True)(discover)
+    local_app.command(name="discover", no_args_is_help=False, short_help="🔎 <D> Discover models from Ollama or Hugging Face for vLLM")(discover)
+    local_app.command(name="D", no_args_is_help=False, hidden=True)(discover)
     local_app.command(
         name="install", no_args_is_help=False,
         help="Install vLLM for Linux CUDA using uv, or vLLM Metal for Apple Silicon using Homebrew.",
@@ -160,7 +160,7 @@ def get_app() -> typer.Typer:
     local_app.command(name="i", no_args_is_help=False, hidden=True)(install)
     serve_context_settings = {"allow_extra_args": True, "ignore_unknown_options": True}
     local_app.command(
-        name="serve", no_args_is_help=True, short_help="🚀 <S> Start a vLLM model server in the foreground", context_settings=serve_context_settings,
+        name="serve", no_args_is_help=True, short_help="🚀 <s> Start a vLLM model server in the foreground", context_settings=serve_context_settings,
     )(serve)
-    local_app.command(name="S", no_args_is_help=True, hidden=True, context_settings=serve_context_settings)(serve)
+    local_app.command(name="s", no_args_is_help=True, hidden=True, context_settings=serve_context_settings)(serve)
     return local_app

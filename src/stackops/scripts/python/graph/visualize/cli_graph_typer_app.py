@@ -55,7 +55,7 @@ def build_cli_graph_app() -> "typer.Typer":
         json_output: Annotated[
             bool, typer.Option("--json", "-j", help="Print all matching entries as a JSON array without prompts or a picker.")
         ] = False,
-        non_interactive: Annotated[bool, typer.Option("--non-interactive", help="List matching commands without opening a picker.")] = False,
+        non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="List matching commands without opening a picker.")] = False,
     ) -> None:
         from stackops.scripts.python.graph.visualize.cli_graph_app import search as run_search_command
 
