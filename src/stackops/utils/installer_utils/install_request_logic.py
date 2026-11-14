@@ -235,15 +235,18 @@ def build_install_target(repo_url: str, installer_value: str) -> InstallTarget:
     return InstallTarget(installer_kind="github_release", installer_value=installer_value)
 
 
-def is_package_manager_command(installer_value: str) -> bool:
-    contains_native_linux_manager = (
+def is_native_linux_package_manager_command(installer_value: str) -> bool:
+    return (
         _APK_COMMAND_PATTERN.search(installer_value) is not None
         or _APT_COMMAND_PATTERN.search(installer_value) is not None
         or _DNF_COMMAND_PATTERN.search(installer_value) is not None
         or _PACMAN_COMMAND_PATTERN.search(installer_value) is not None
     )
+
+
+def is_package_manager_command(installer_value: str) -> bool:
     contains_other_manager = any(package_manager in installer_value.split() for package_manager in PACKAGE_MANAGERS)
-    return contains_native_linux_manager or contains_other_manager
+    return is_native_linux_package_manager_command(installer_value) or contains_other_manager
 
 
 def should_skip_install(exe_name: str, install_request: InstallRequest, tool_exists: Callable[[str], bool]) -> bool:

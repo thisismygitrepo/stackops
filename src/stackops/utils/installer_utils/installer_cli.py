@@ -173,7 +173,7 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
     for a_program_name in program_names:
         if a_program_name.startswith("📦 "):
             category_name = category_display_to_name.get(a_program_name)
-            if category_name:
+            if category_name is not None:
                 install_group(package_group=category_name, install_request=install_request, source=source, user_path=user_path)
         else:
             an_installer_data = installer_option_to_data[a_program_name]
@@ -184,16 +184,13 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
 
 
 def install_group(package_group: str, install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None:
-    from stackops.utils.installer_utils.installer_runner import get_installers_from_source, install_bulk
+    from stackops.utils.installer_utils.installer_runner import get_installers_from_source
+    from stackops.utils.installer_utils.installer_bulk_runner import install_bulk
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from rich.console import Console
-    from rich.panel import Panel
-    # from rich.table import Table
     from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
     if package_group in PACKAGE_GROUP2NAMES:
-        panel = Panel(f"[bold yellow]Installing programs from category: [green]{package_group}[/green][/bold yellow]", title="[bold blue]📦 Category Installation[/bold blue]", border_style="blue", padding=(1, 2))
         console = Console()
-        console.print(panel)
         package_group_typed: PACKAGE_NAME = next(group_name for group_name in PACKAGE_GROUP2NAMES if group_name == package_group)
         installers_ = get_installers_from_source(
             source=source,
@@ -205,7 +202,7 @@ def install_group(package_group: str, install_request: InstallRequest, source: I
         if len(installers_) == 0:
             console.print(f"❌ No installers from source '{source}' are available in group '{package_group}' on this platform.")
             raise typer.Exit(1)
-        install_bulk(installers_data=installers_, install_request=install_request)
+        install_bulk(installers_data=installers_, install_request=install_request, batch_label=package_group_typed)
         return
     console = Console()
     console.print(f"❌ ERROR: Unknown package group: {package_group}. Available groups are: {list(PACKAGE_GROUP2NAMES.keys())}")

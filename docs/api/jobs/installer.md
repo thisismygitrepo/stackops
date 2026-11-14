@@ -286,28 +286,27 @@ print(PACKAGE_GROUP2NAMES["agents"])
 
 ## Bulk installation
 
-`stackops.utils.installer_utils.installer_runner.install_bulk()` is the multi-package entrypoint.
+`stackops.utils.installer_utils.installer_bulk_runner.install_bulk()` is the multi-package entrypoint behind `devops software install --group <name>`.
 
 ```python
-from stackops.utils.installer_utils.installer_runner import install_bulk
+from stackops.utils.installer_utils.installer_bulk_runner import install_bulk
 from stackops.utils.schemas.installer.installer_types import InstallRequest
 
 install_bulk(
     installers_data=installers,
-    install_request=InstallRequest(version=None, update=False),
-    safe=False,
-    jobs=10,
-    fresh=False,
+    install_request=InstallRequest(version=None, update=False, user_scripts_root=None),
+    batch_label="termabc",
 )
 ```
 
 Current behavior:
 
-- the first installer runs serially
-- the remaining installers run through a stdlib process pool
-- `fresh=True` clears the version cache first
-- `safe` is accepted but currently has no behavior
-- a Rich summary is rendered after the batch finishes
+- already-installed apps are skipped up front and listed once, unless `update` or `version` is set
+- every other installer runs in its own process, up to 10 at a time, with its output captured in `~/tmp_results/installer_logs/<timestamp>_<batch_label>/<exe>.log`
+- installers that drive a system package manager (`apt`, `dnf`, `pacman`, `apk`, `winget`, `brew`, `choco`, `snap`, `.deb`/`.rpm`/`.msi`/`.dmg` files) and script installers run one at a time, so they never contend for the package-manager lock
+- when any of those may call `sudo`, the password is requested once before the batch starts and the credentials are kept alive; if that is not possible the batch continues and the installers that need `sudo` fail on their own
+- the terminal shows one line per finished app plus a live progress bar with the latest log line of each running installer
+- the closing summary reports counts per outcome, wall time versus summed install time, the slowest installers, and a log excerpt for each failure
 
 ---
 
@@ -387,6 +386,14 @@ Security and reporting helpers live under `stackops.jobs.installer.checks.*`. Th
 ## Installer runner
 
 ::: stackops.utils.installer_utils.installer_runner
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Installer bulk runner
+
+::: stackops.utils.installer_utils.installer_bulk_runner
     options:
       show_root_heading: true
       show_source: false

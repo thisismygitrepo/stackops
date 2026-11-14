@@ -1,17 +1,13 @@
 """package manager"""
 
-from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from stackops.utils.installer_utils.installer_locator_utils import check_if_installed_already
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_catalog import read_installer_data
 from stackops.utils.installer_utils.install_request_logic import resolve_installer_pattern
-from stackops.utils.installer_utils.installer_summary import render_installation_summary
 from stackops.utils.schemas.installer.installer_types import (
     CPU_ARCHITECTURES,
-    InstallRequest,
-    InstallationResult,
     InstallerData,
     InstallerDataSource,
     OPERATING_SYSTEMS,
@@ -19,8 +15,7 @@ from stackops.utils.schemas.installer.installer_types import (
     get_os_name,
 )
 from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
-from stackops.utils.path_core import delete_path
-from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT, LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
+from stackops.utils.source_of_truth import LINUX_INSTALL_PATH, WINDOWS_INSTALL_PATH
 
 from rich.console import Console
 from rich.panel import Panel
@@ -149,41 +144,3 @@ def get_installers_from_source(
 ) -> list[InstallerData]:
     installers = read_installer_data(source=source, user_path=user_path)
     return _filter_installers(installers=installers, os=os, arch=arch, which_cats=which_cats)
-
-
-def _install_single_installer(installer_data: InstallerData, install_request: InstallRequest) -> InstallationResult:
-    return Installer(installer_data).install_robust(install_request=install_request)
-
-
-def install_bulk(
-    installers_data: list[InstallerData], install_request: InstallRequest, safe: bool = False, jobs: int = 10, fresh: bool = False
-) -> None:
-    print("🚀 BULK INSTALLATION PROCESS 🚀")
-    if jobs < 1:
-        raise ValueError("jobs must be at least 1")
-    if fresh:
-        print("🧹 Fresh install requested - clearing version cache...")
-        delete_path(Path(INSTALL_VERSION_ROOT), verbose=True)
-    print("✅ Version cache cleared")
-    if safe:
-        pass
-    print(f"🚀 Starting installation of {len(installers_data)} packages...")
-    print("📦 INSTALLING FIRST PACKAGE 📦")
-    first_result = Installer(installers_data[0]).install_robust(install_request=install_request)
-    installers_remaining = installers_data[1:]
-    print("📦 INSTALLING REMAINING PACKAGES 📦")
-
-    if len(installers_remaining) == 0:
-        remaining_results: list[InstallationResult] = []
-    else:
-        install_requests = [install_request for _installer in installers_remaining]
-        with ProcessPoolExecutor(max_workers=jobs) as executor:
-            remaining_results = list(executor.map(_install_single_installer, installers_remaining, install_requests))
-    res: list[InstallationResult] = [first_result, *remaining_results]
-
-    console = Console()
-    render_installation_summary(results=res, console=console, title="📊 INSTALLATION RESULTS SUMMARY 📊")
-
-    print("\n")
-    print("✨ INSTALLATION COMPLETE ✨".center(100, "="))
-    print("\n" * 2)
