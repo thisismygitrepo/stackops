@@ -305,6 +305,7 @@ def register_dotfile(
     from rich.console import Console
 
     from stackops.profile.linking.conflict import ON_CONFLICT_MAPPER
+    from stackops.profile.linking.display import classify_action, print_operation_detail
     from stackops.profile.linking.operations import copy_map, symlink_map
 
     console = Console()
@@ -354,7 +355,9 @@ def register_dotfile(
                 raise typer.Exit(code=1) from e
         case _:
             raise ValueError(f"Unknown method: {method}")
-    if result["action"] == "error":
+    outcome = classify_action(action=result["action"])
+    print_operation_detail(console=console, label=outcome, result=result, config_file_default_path=orig_path, config_file_self_managed_path=new_path)
+    if outcome == "failed":
         raise typer.Exit(code=1)
     entry_name = _resolve_entry_name(orig_path, name)
     record_mapping(orig_path=orig_path, new_path=new_path, method=method, section=group, os_filter=os_filter, note=note, entry_name=entry_name)

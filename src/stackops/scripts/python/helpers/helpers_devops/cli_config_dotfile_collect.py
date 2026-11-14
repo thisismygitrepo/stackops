@@ -86,6 +86,7 @@ def collect_dotfiles(
     from rich.table import Table
 
     from stackops.profile.create_links import ConfigMapper, apply_mapper, normalize_os_name, to_config_mapper
+    from stackops.profile.linking.display import classify_action
     from stackops.profile.dotfiles_collect_plan import plan_collect, select_entries_to_record, verdict_category
     from stackops.profile.dotfiles_mapper import (
         DEFAULT_DOTFILE_MAPPER_HEADER,
@@ -144,7 +145,7 @@ def collect_dotfiles(
         if plan.verdict == "collect":
             collect_mapper.setdefault(plan.group, []).append(to_config_mapper(file_name=plan.name, entry=plan.entry))
     operation_records = apply_mapper(mapper_data=collect_mapper, on_conflict="throw-error", method="symlink", direction="up") if len(collect_mapper) > 0 else []
-    failed_entries = {(record["program"], record["file_key"]) for record in operation_records if record["action"] == "error"}
+    failed_entries = {(record["program"], record["file_key"]) for record in operation_records if classify_action(action=record["action"]) == "failed"}
     succeeded_entries = {
         (plan.group, plan.name)
         for plan in chosen_plans

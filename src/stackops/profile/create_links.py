@@ -8,13 +8,11 @@ import io
 import platform
 import subprocess
 from pathlib import Path
-from typing import Any, Literal, TypedDict
+from typing import Literal, TypedDict
 
 import yaml
 from rich.console import Console
 from rich.panel import Panel
-from rich.pretty import Pretty
-from rich.table import Table
 from rich.text import Text
 
 from stackops.profile.dotfiles_constants import VALID_OS_VALUES, OsName
@@ -28,14 +26,13 @@ from stackops.profile.dotfiles_mapper import (
     load_dotfiles_mapper,
 )
 from stackops.profile.linking.conflict import ON_CONFLICT_STRICT
+from stackops.profile.linking.display import classify_action, print_program_line, render_sync_summary
 from stackops.profile.linking.operations import ActionType, OperationRecord, OperationResult, copy_map, symlink_map
 from stackops.profile.linking.options import CONFIG_FILE_SOURCE_STRICT, CONFIG_SOURCE_LOOSE, CONFIG_SOURCE_MAP, DIRECTION_STRICT
 from stackops.utils.source_of_truth import CONFIG_ROOT, DOTFILES_SSH_CREDS_ROOT, resolve_source_of_truth_path
 
 system = platform.system()  # Linux or Windows
-ERROR_LIST: list[Any] = []  # append to this after every exception captured.
 SYSTEM = system.lower()
-MAX_ERROR_TABLE_CHARS = 30
 
 console = Console()
 
@@ -236,51 +233,6 @@ def _append_operation_record(
     )
 
 
-def _operation_record_has_error(record: OperationRecord) -> bool:
-    return record["action"] == "error" or record["status"].startswith("error:")
-
-
-def _truncate_error_for_summary(value: str) -> str:
-    compact_value = value.replace("\n", " ")
-    if len(compact_value) <= MAX_ERROR_TABLE_CHARS:
-        return compact_value
-    return f"{compact_value[:MAX_ERROR_TABLE_CHARS]}..."
-
-
-def _summary_table_value(record: OperationRecord, field_name: Literal["details", "status"]) -> str:
-    value = record[field_name]
-    if not _operation_record_has_error(record):
-        return value
-    return _truncate_error_for_summary(value)
-
-
-def _print_operation_error_details(error_records: list[OperationRecord]) -> None:
-    if not error_records:
-        return
-
-    console.print()
-    console.rule("[bold red]Dotfile Sync Error Details[/]", style="red")
-    for index, record in enumerate(error_records, start=1):
-        details_grid = Table.grid(padding=(0, 1), expand=True)
-        details_grid.add_column(style="bold red", no_wrap=True)
-        details_grid.add_column(ratio=1, overflow="fold")
-        details_grid.add_row("Program", Text(record["program"]))
-        details_grid.add_row("File Key", Text(record["file_key"]))
-        details_grid.add_row("Default Path", Text(record["defaultPath"]))
-        details_grid.add_row("Self Managed", Text(record["selfManaged"]))
-        details_grid.add_row("Operation", Text(record["operation"]))
-        details_grid.add_row("Action", Text(record["action"]))
-        details_grid.add_row("Details", Text(record["details"]))
-        details_grid.add_row("Status", Text(record["status"]))
-        console.print(
-            Panel(
-                details_grid,
-                title=f"Dotfile Sync Error {index}",
-                border_style="red",
-            )
-        )
-
-
 def apply_mapper(
     mapper_data: dict[str, list[ConfigMapper]],
     on_conflict: ON_CONFLICT_STRICT,
@@ -288,9 +240,6 @@ def apply_mapper(
     direction: DIRECTION_STRICT,
 ) -> list[OperationRecord]:
     operation_records: list[OperationRecord] = []
-    print(f"Working with {len(mapper_data)} programs from mapper data.")
-    if len(mapper_data) == 1:
-        print(mapper_data)
     import os
     if os.name == "nt":
         import ctypes
@@ -314,8 +263,11 @@ def apply_mapper(
                 )
             )
             raise RuntimeError("Run terminal as admin and try again, otherwise, there will be too many popups for admin requests and no chance to terminate the program.")
+    name_width = max((len(program_name) for program_name in mapper_data), default=0) + 2
+    console.print()
+    console.rule(Text(f"""🔗 dotfiles sync {direction} · {method}""", style="bold"), align="left", style="blue")
     for program_name, program_files in mapper_data.items():
-        console.rule(f"🔄 Processing [bold]{program_name}[/] ({direction})", style="cyan")
+        program_start = len(operation_records)
         for a_mapper in program_files:
             config_file_default_path, config_file_self_managed_path = _resolve_mapper_paths(a_mapper)
             use_copy = method == "copy" or a_mapper.get("copy", False)
@@ -331,7 +283,6 @@ def apply_mapper(
                     direction=direction,
                 )
             except Exception as ex:
-                console.print(f"❌ [red]Config error[/red]: {program_name} | {a_mapper['file_name']} | {ex}")
                 _append_operation_record(
                     operation_records,
                     program_name=program_name,
@@ -362,7 +313,7 @@ def apply_mapper(
                         operation=operation_type,
                         action=result["action"],
                         details=result["details"],
-                        status="success",
+                        status=f"""error: {result["details"]}""" if classify_action(action=result["action"]) == "failed" else "success",
                     )
                 except ValueError as ex:
                     if "resolve to the same location" in str(ex):
@@ -380,7 +331,6 @@ def apply_mapper(
                     else:
                         raise
                 except Exception as ex:
-                    console.print(f"❌ [red]Config error[/red]: {program_name} | {a_mapper['file_name']} | {ex}")
                     _append_operation_record(
                         operation_records,
                         program_name=program_name,
@@ -393,89 +343,43 @@ def apply_mapper(
                         status=f"error: {str(ex)}",
                     )
 
-            if program_name == "ssh" and system == "Linux":
-                try:
-                    console.print("\n[bold]🔒 Setting secure permissions for SSH files...[/bold]")
-                    subprocess.run("chmod 700 $HOME/.ssh/", shell=True, check=True)
-                    subprocess.run(f"chmod 700 {DOTFILES_SSH_CREDS_ROOT}", shell=True, check=True)
-                    subprocess.run(f"chmod 600 {DOTFILES_SSH_CREDS_ROOT}/*", shell=True, check=True)
-                    subprocess.run("chmod 600 $HOME/.ssh/*", shell=True, check=True)
-                    console.print("[green]✅ SSH permissions set successfully[/green]")
-                except Exception as e:
-                    ERROR_LIST.append(e)
-                    console.print(f"❌ [red]Error setting SSH permissions[/red]: {e}")
+        if program_name == "ssh" and system == "Linux":
+            try:
+                for permission_command in (
+                    "chmod 700 $HOME/.ssh/",
+                    f"chmod 700 {DOTFILES_SSH_CREDS_ROOT}",
+                    f"chmod 600 {DOTFILES_SSH_CREDS_ROOT}/*",
+                    "chmod 600 $HOME/.ssh/*",
+                ):
+                    subprocess.run(permission_command, shell=True, check=True, capture_output=True, text=True)
+            except subprocess.CalledProcessError as ex:
+                _append_operation_record(
+                    operation_records,
+                    program_name=program_name,
+                    file_key="permissions",
+                    config_file_default_path=Path.home().joinpath(".ssh"),
+                    config_file_self_managed_path=Path(DOTFILES_SSH_CREDS_ROOT),
+                    operation="chmod",
+                    action="error",
+                    details=f"Failed to set SSH permissions: {str(ex.stderr).strip()}",
+                    status=f"error: {str(ex)}",
+                )
+        print_program_line(console=console, program_name=program_name, records=operation_records[program_start:], name_width=name_width)
 
-    # Display operation summary table
-    if operation_records:
-        table = Table(title="🔗 Dotfile Sync Summary", show_header=True, header_style="bold magenta")
-        table.add_column("Program", style="cyan", no_wrap=True)
-        table.add_column("File Key", style="blue", no_wrap=True)
-        table.add_column("Default Path", style="green")
-        table.add_column("Self Managed", style="yellow")
-        table.add_column("Operation", style="magenta", no_wrap=True)
-        table.add_column("Action", style="red", no_wrap=True)
-        table.add_column("Details", style="white")
-        table.add_column("Status", style="red", no_wrap=True)
-        
-        error_records: list[OperationRecord] = []
-        for record in operation_records:
-            has_error = _operation_record_has_error(record)
-            if has_error:
-                error_records.append(record)
-            status_style = "red" if has_error else "green"
-            action_style = "red" if record["action"] == "error" else "green"
-            table.add_row(
-                record["program"],
-                record["file_key"],
-                record["defaultPath"],
-                record["selfManaged"],
-                record["operation"],
-                Text(record["action"], style=action_style),
-                _summary_table_value(record, "details"),
-                Text(_summary_table_value(record, "status"), style=status_style),
-            )
-        
-        console.print("\n")
-        console.print(table)
-        _print_operation_error_details(error_records)
-        
-        # Export operation records to CSV
+    if len(operation_records) > 0:
         import csv
         from datetime import datetime
 
         csv_dir = Path(CONFIG_ROOT).joinpath("symlink_operations")
         csv_dir.mkdir(parents=True, exist_ok=True)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        csv_filename = f"symlink_operations_{timestamp}.csv"
-        csv_path = csv_dir.joinpath(csv_filename)
-        
+        csv_path = csv_dir.joinpath(f"""symlink_operations_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv""")
         fieldnames = ["program", "file_key", "defaultPath", "selfManaged", "operation", "action", "details", "status"]
         csv_buffer = io.StringIO(newline="")
         writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(operation_records)
         csv_path.write_text(csv_buffer.getvalue(), encoding="utf-8")
-
-        console.print(f"\n[bold green]📊 Operations exported to CSV:[/bold green] [cyan]{csv_path}[/cyan]")
-
-    if len(ERROR_LIST) > 0:
-        console.print(
-            Panel(
-                Pretty(ERROR_LIST),
-                title="❗ Errors Encountered During Processing",
-                border_style="red",
-                padding=(1, 2),
-            )
-        )
-    else:
-        console.print(
-            Panel.fit(
-                Text("✅ Dotfile sync completed successfully!", justify="center"),
-                title="Dotfile Sync Complete",
-                border_style="green",
-            )
-        )
+        render_sync_summary(console=console, direction=direction, program_count=len(mapper_data), records=operation_records, csv_path=csv_path)
     return operation_records
 
 
