@@ -79,11 +79,11 @@ def create_default_shell_profile() -> None:
         )
         shell_profile_path.parent.mkdir(parents=True, exist_ok=True)
         shell_profile_path.write_text("", encoding="utf-8")
-    shell_profile = shell_profile_path.read_text(encoding="utf-8")
     from stackops.profile.create_helper import copy_assets_to_machine
 
     copy_assets_to_machine("settings")  # init.ps1 or init.sh live here
     copy_assets_to_machine("scripts")  # init scripts are going to reference those scripts.
+    shell_profile = shell_profile_path.read_text(encoding="utf-8")
 
     was_shell_updated = False
     if any(line.strip() == profile_source.source_line for line in shell_profile.splitlines()):

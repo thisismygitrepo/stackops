@@ -4,6 +4,7 @@ from pathlib import Path
 import stat
 import shutil
 from stackops.utils.source_of_truth import LIBRARY_ROOT, CONFIG_ROOT
+from stackops.profile.migration_until_2028_01_bash_zsh_hook import migrate_stale_shell_hooks
 
 
 def _copy_path(source: Path, target: Path, overwrite: bool) -> None:
@@ -84,4 +85,5 @@ def copy_assets_to_machine(which: Literal["scripts", "settings"]) -> None:
         marimo_config.replace("{STACKOPS_CONFIG_ROOT}", CONFIG_ROOT.as_posix()),
         encoding="utf-8",
     )
+    migrate_stale_shell_hooks(config_root=CONFIG_ROOT)
     
