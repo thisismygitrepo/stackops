@@ -94,6 +94,10 @@ eval "$(starship init "$STACKOPS_SHELL")"
 
 # LEVE THIS IN THE END TO AVOID EXECUTION FAILURE OF THE REST OF THE SCRIPT
 if command -v mcfly &> /dev/null; then
+    # mcfly refuses to initialise without a history file, and a fresh account has none until its first shell exits
+    STACKOPS_HISTFILE="${HISTFILE:-$HOME/.${STACKOPS_SHELL}_history}"
+    [ -e "$STACKOPS_HISTFILE" ] || : > "$STACKOPS_HISTFILE"
+    unset STACKOPS_HISTFILE
     eval "$(mcfly init "$STACKOPS_SHELL")"
 elif command -v atuin &> /dev/null; then
     # https://github.com/atuinsh/atuin

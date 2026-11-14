@@ -1,3 +1,4 @@
+import os
 import platform
 import shlex
 from typing import TYPE_CHECKING, Final
@@ -20,6 +21,7 @@ from stackops.utils.path_reference import get_path_reference_path
 
 
 APT_PACKAGES: Final[tuple[str, ...]] = (
+    "sudo",
     "curl",
     "wget",
     "gpg",
@@ -38,6 +40,7 @@ APT_PACKAGES: Final[tuple[str, ...]] = (
     "libssl-dev",
 )
 APK_PACKAGES: Final[tuple[str, ...]] = (
+    "sudo",
     "bash",
     "ca-certificates",
     "curl",
@@ -58,6 +61,7 @@ APK_PACKAGES: Final[tuple[str, ...]] = (
     "libstdc++",
 )
 DNF_PACKAGES: Final[tuple[str, ...]] = (
+    "sudo",
     "curl",
     "wget",
     "gnupg2",
@@ -75,6 +79,7 @@ DNF_PACKAGES: Final[tuple[str, ...]] = (
     "openssl-devel",
 )
 PACMAN_PACKAGES: Final[tuple[str, ...]] = (
+    "sudo",
     "curl",
     "wget",
     "gnupg",
@@ -93,7 +98,7 @@ PACMAN_PACKAGES: Final[tuple[str, ...]] = (
 )
 
 
-def _build_linux_install_script(distribution: LinuxDistribution) -> str:
+def _build_linux_install_script(distribution: LinuxDistribution, privilege_prefix: tuple[str, ...]) -> str:
     match distribution.package_manager:
         case "apk":
             packages = APK_PACKAGES
@@ -104,14 +109,14 @@ def _build_linux_install_script(distribution: LinuxDistribution) -> str:
         case "pacman":
             packages = PACMAN_PACKAGES
 
-    refresh_command = build_distribution_refresh_command(distribution=distribution)
+    refresh_command = build_distribution_refresh_command(distribution=distribution, privilege_prefix=privilege_prefix)
     install_command = build_package_install_command(distribution.package_manager, packages)
     return "\n".join(
         (
             "#!/usr/bin/env bash",
             "set -euo pipefail",
             shlex.join(refresh_command),
-            shlex.join(("sudo", *install_command)),
+            shlex.join((*privilege_prefix, *install_command)),
             "curl -fsSL https://bun.com/install | bash",
             'sudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node',
             "",
@@ -139,7 +144,8 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     elif operating_system == "Linux":
         distribution = detect_current_linux_distribution()
         console.print(f"🐧 Installing ABC on {distribution.distribution_id} using {distribution.package_manager}...", style="bold")
-        program = _build_linux_install_script(distribution)
+        # root installs the base packages directly: a fresh container has no sudo until this script installs it for the later installers
+        program = _build_linux_install_script(distribution=distribution, privilege_prefix=() if os.geteuid() == 0 else ("sudo",))
     elif operating_system == "Darwin":
         console.print("🍎 Installing ABC on macOS...", style="bold")
         script = get_path_reference_path(module=linux_scripts, path_reference=linux_scripts.SYSABC_MACOS_PATH_REFERENCE)

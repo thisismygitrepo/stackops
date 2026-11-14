@@ -70,7 +70,7 @@ sudo pacman-key --lsign-key linux-maintainers@warp.dev
 """.strip()
         case _:
             assert_never(distribution.package_manager)
-    refresh = shlex.join(build_distribution_refresh_command(distribution=distribution))
+    refresh = shlex.join(build_distribution_refresh_command(distribution=distribution, privilege_prefix=("sudo",)))
     initial_refresh = "" if distribution.distribution_id == "omarchy" else refresh
     install_dependencies = shlex.join(
         ("sudo", *build_package_install_command(package_manager=distribution.package_manager, packages=dependency_packages))

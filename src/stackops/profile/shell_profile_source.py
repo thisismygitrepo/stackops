@@ -1,3 +1,4 @@
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,16 +28,18 @@ def build_shell_profile_source(system_name: str, shell_variable: str | None, con
     shell_name: LoginShell
     if system_name == "Windows":
         shell_name = "pwsh"
-    elif shell_variable is None:
-        raise ValueError("""SHELL is not set, so the login shell is unknown. Set SHELL to the path of bash or zsh.""")
     else:
-        match Path(shell_variable).name:
+        import pwd
+
+        # SHELL is only inherited from a login; `docker run` starts bash without it, so the account's login shell is read where login reads it
+        login_shell_path = shell_variable if shell_variable is not None else pwd.getpwuid(os.getuid()).pw_shell
+        match Path(login_shell_path).name:
             case "bash":
                 shell_name = "bash"
             case "zsh":
                 shell_name = "zsh"
-            case unsupported_shell:
-                raise ValueError(f"""Login shell '{unsupported_shell}' (SHELL={shell_variable}) is not supported. Supported shells: bash, zsh.""")
+            case _:
+                raise ValueError(f"""Login shell '{login_shell_path}' is not supported. Supported shells: bash, zsh.""")
 
     shell_assets: ModuleType
     match shell_name:

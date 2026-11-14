@@ -137,10 +137,10 @@ def detect_current_linux_distribution() -> LinuxDistribution:
     return classify_linux_distribution(platform.freedesktop_os_release())
 
 
-def build_distribution_refresh_command(distribution: LinuxDistribution) -> tuple[str, ...]:
+def build_distribution_refresh_command(distribution: LinuxDistribution, privilege_prefix: tuple[str, ...]) -> tuple[str, ...]:
     if distribution.distribution_id == "omarchy":
         return ("omarchy", "update", "-y")
-    return ("sudo", *build_metadata_refresh_command(distribution.package_manager))
+    return (*privilege_prefix, *build_metadata_refresh_command(distribution.package_manager))
 
 
 def build_metadata_refresh_command(package_manager: LinuxPackageManager) -> tuple[str, ...]:

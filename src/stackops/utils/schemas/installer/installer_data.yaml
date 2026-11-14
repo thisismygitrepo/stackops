@@ -5938,13 +5938,13 @@ installers:
       - ai-agents-assistants
     fileNamePattern:
       amd64:
-        linux: npm install -g @einsia/agent-git
-        darwin: npm install -g @einsia/agent-git
-        windows: npm install -g @einsia/agent-git
+        linux: bun install -g @einsia/agent-git
+        darwin: bun install -g @einsia/agent-git
+        windows: bun install -g @einsia/agent-git
       arm64:
-        linux: npm install -g @einsia/agent-git
-        darwin: npm install -g @einsia/agent-git
-        windows: npm install -g @einsia/agent-git
+        linux: bun install -g @einsia/agent-git
+        darwin: bun install -g @einsia/agent-git
+        windows: bun install -g @einsia/agent-git
   - appName: tuios
     license: MIT License
     repoURL: https://github.com/Gaurav-Gosain/tuios

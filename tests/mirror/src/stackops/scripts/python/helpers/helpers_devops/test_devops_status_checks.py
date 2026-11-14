@@ -1,3 +1,4 @@
+import pwd
 import subprocess
 from pathlib import Path
 from typing import Literal
@@ -64,12 +65,32 @@ def test_shell_status_matches_login_shell_installer(
     assert status["init_script_path"] == str(init_script)
 
 
-@pytest.mark.parametrize("shell_variable", [None, "/usr/bin/fish", "/bin/sh"])
-def test_shell_status_rejects_an_unsupported_login_shell(monkeypatch: pytest.MonkeyPatch, shell_variable: str | None) -> None:
+def _account_with_login_shell(login_shell: str) -> pwd.struct_passwd:
+    return pwd.struct_passwd(("account", "x", 1000, 1000, "", "/home/account", login_shell))
+
+
+@pytest.mark.parametrize("account_login_shell,profile_name", [("/bin/bash", ".bashrc"), ("/usr/bin/zsh", ".zshrc")])
+def test_shell_status_reads_the_account_login_shell_when_shell_is_not_exported(
+    monkeypatch: pytest.MonkeyPatch, account_login_shell: str, profile_name: str
+) -> None:
+    monkeypatch.delenv("SHELL", raising=False)
+    monkeypatch.setattr(pwd, "getpwuid", lambda _user_id: _account_with_login_shell(account_login_shell))
+    monkeypatch.setattr(devops_status_checks.platform, "system", lambda: "Linux")
+
+    status = devops_status_checks.check_shell_profile_status()
+
+    assert status["profile_path"] == str(Path.home().joinpath(profile_name))
+
+
+@pytest.mark.parametrize(
+    "shell_variable,account_login_shell", [(None, "/usr/sbin/nologin"), (None, "/bin/sh"), ("/usr/bin/fish", "/bin/bash"), ("/bin/sh", "/bin/bash")]
+)
+def test_shell_status_rejects_an_unsupported_login_shell(monkeypatch: pytest.MonkeyPatch, shell_variable: str | None, account_login_shell: str) -> None:
     if shell_variable is None:
         monkeypatch.delenv("SHELL", raising=False)
     else:
         monkeypatch.setenv("SHELL", shell_variable)
+    monkeypatch.setattr(pwd, "getpwuid", lambda _user_id: _account_with_login_shell(account_login_shell))
     monkeypatch.setattr(devops_status_checks.platform, "system", lambda: "Linux")
 
     with pytest.raises(ValueError, match="bash"):

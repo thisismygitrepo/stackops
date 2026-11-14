@@ -41,7 +41,7 @@ def test_termabc_system_installers_and_scripts_are_serialized(
         ("https://github.com/cli/cli", "gh_{version}_windows_amd64.msi", True),
         ("https://github.com/owner/tool", "tool_{version}_amd64.deb", True),
         ("https://github.com/owner/tool", "tool-{version}.pkg.tar.zst", True),
-        ("https://github.com/Einsia/agent-git", "npm install -g @einsia/agent-git", False),
+        ("https://github.com/Einsia/agent-git", "bun install -g @einsia/agent-git", False),
         ("CMD", "cargo install tokei", False),
         ("https://github.com/BurntSushi/ripgrep", "ripgrep-{version}-x86_64-unknown-linux-musl.tar.gz", False),
     ),

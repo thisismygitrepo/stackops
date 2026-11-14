@@ -12,6 +12,8 @@ devops software install --group sysabc
 if [ -x /opt/homebrew/bin/brew ]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+# sysabc installed bun, whose rc-file PATH entry only reaches new shells
+export PATH="$HOME/.bun/bin:$PATH"
 
 devops config copy-assets all
 devops config dotfiles sync down --source library --method copy --on-conflict overwrite-default-path --which all
