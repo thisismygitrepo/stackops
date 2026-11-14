@@ -105,6 +105,13 @@ m365:
     - linux
     - darwin
     - windows
+ortie:
+  config:
+    original: ~/.config/ortie/config.toml
+    self_managed: DOTFILES_ROOT/creds/ortie/config.toml
+    os:
+    - linux
+    - darwin
 remmina:
   data:
     original: ~/.var/app/org.remmina.Remmina/data/remmina
