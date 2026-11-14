@@ -64,7 +64,7 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>shell</code></td>
-      <td>nerdfont | psmux | tmux | mcfly | starship | cb</td>
+      <td>nerdfont | psmux | tuios | mcfly | starship | cb</td>
     </tr>
     <tr>
       <td><code>search</code></td>
@@ -83,7 +83,7 @@ Here are the available groups as currently defined by the installer:
       <td>
         nano | lazygit | onefetch | gitcs | lazydocker | hyperfine | kondo | tokei | navi | tealdeer | gitui | delta | gh | watchexec | jq<br>
         btop | btm | ntop | procs | cpufetch | fastfetch | psnet | pstop<br>
-        nerdfont | psmux | tmux | mcfly | starship | cb<br>
+        nerdfont | psmux | tuios | mcfly | starship | cb<br>
         fd | fzf | tv | broot | rg | rga | ugrep | ouch | pistol | bat | viu | superfile | yazi | tere | lsd | zoxide | diskonaut | dua | dust | pdu | cpz | rmz
       </td>
     </tr>

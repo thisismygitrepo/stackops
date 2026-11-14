@@ -9,8 +9,8 @@ from stackops.utils.schemas.installer.installer_types import OPERATING_SYSTEMS
 @pytest.mark.parametrize(
     ("operating_system", "locking_apps", "parallel_apps"),
     (
-        ("linux", {"tmux", "yazi", "nerdfont"}, {"jq", "bat", "tokei", "agent-git"}),
-        ("windows", {"tokei", "nano", "gh", "yazi", "nerdfont"}, {"jq", "bat", "agent-git"}),
+        ("linux", {"yazi", "nerdfont"}, {"jq", "bat", "tokei", "agent-git", "tuios"}),
+        ("windows", {"tokei", "nano", "gh", "yazi", "nerdfont"}, {"jq", "bat", "agent-git", "tuios"}),
     ),
 )
 def test_termabc_system_installers_and_scripts_are_serialized(
