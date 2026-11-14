@@ -302,7 +302,7 @@ install_bulk(
 Current behavior:
 
 - already-installed apps are skipped up front and listed once, unless `update` or `version` is set
-- every other installer runs in its own process, up to 10 at a time, with its output captured in `~/tmp_results/installer_logs/<timestamp>_<batch_label>/<exe>.log`
+- every other installer runs in its own process, up to 20 at a time, with its output captured in `~/tmp_results/installer_logs/<timestamp>_<batch_label>/<exe>.log`
 - installers that drive a system package manager (`apt`, `dnf`, `pacman`, `apk`, `winget`, `brew`, `choco`, `snap`, `.deb`/`.rpm`/`.msi`/`.dmg` files) and script installers run one at a time, so they never contend for the package-manager lock
 - when any of those may call `sudo`, the password is requested once before the batch starts and the credentials are kept alive; if that is not possible the batch continues and the installers that need `sudo` fail on their own
 - the terminal shows one line per finished app plus a live progress bar with the latest log line of each running installer
