@@ -1,6 +1,10 @@
 
 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# Homebrew on Apple Silicon lives outside the default PATH
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
 echo "🔄 Updating Homebrew..."
 brew update || true
 

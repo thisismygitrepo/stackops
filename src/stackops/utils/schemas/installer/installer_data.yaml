@@ -6113,3 +6113,18 @@ installers:
         linux: ntfy_{version}_linux_arm64.tar.gz
         darwin: ntfy_{version}_darwin_all.tar.gz
         windows: null
+  - appName: ortie
+    license: MIT OR Apache-2.0
+    repoURL: https://github.com/pimalaya/ortie
+    doc: CLI to manage OAuth 2.0 access and refresh tokens
+    categoryLabels:
+      - security-credentials-privacy
+    fileNamePattern:
+      amd64:
+        linux: ortie.x86_64-linux.tgz
+        darwin: ortie.x86_64-darwin.tgz
+        windows: ortie.x86_64-windows.tgz
+      arm64:
+        linux: ortie.aarch64-linux.tgz
+        darwin: ortie.aarch64-darwin.tgz
+        windows: null

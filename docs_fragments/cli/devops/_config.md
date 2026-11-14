@@ -383,6 +383,8 @@ devops config terminal tmux-style preset catppuccin-mocha --reload
 devops config terminal tmux-style set-option tmux_conf_theme_colour_4 '#89b4fa' --reload
 ```
 
+`config-shell --shell default` targets your login shell, not your operating system: PowerShell on Windows, otherwise the shell named by `$SHELL` (`bash` → `~/.bashrc`, `zsh` → `~/.zshrc`). Both bash and zsh source the same `settings/shells/bash_zsh/init.sh`. Any other login shell is rejected; run the command with `SHELL` set to a bash or zsh path to choose one explicitly.
+
 `tmux-style install-oh-my-tmux` delegates to the shared `devops software install oh-my-tmux` installer. The remaining subcommands operate on the Oh My Tmux local customization file, defaulting to the home-dotfile layout (`~/.tmux.conf.local`) created by that installer. Use `--location xdg` for the XDG layout (`$XDG_CONFIG_HOME/tmux/tmux.conf.local`).
 
 ---

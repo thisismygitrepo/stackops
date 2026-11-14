@@ -12,7 +12,6 @@ from questionary import Choice
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from stackops.utils.code import run_shell_script
 from stackops.utils.source_of_truth import DOTFILES_ROOT
 
 InstallOption = Literal[
@@ -99,21 +98,6 @@ def execute_installations(selected_options: list[InstallOption]) -> None:
                 console.print("✅ CLI applications installed successfully", style="bold green")
             except Exception as e:
                 console.print(f"❌ Error installing CLI applications: {e}", style="bold red")
-            if platform.system() == "Linux":
-                shell_profile = ". $HOME/.bashrc"
-            elif platform.system() == "Darwin":
-                shell_profile = ". $HOME/.zshrc"
-            elif platform.system() == "Windows":
-                shell_profile = None
-            else:
-                shell_profile = None
-            if shell_profile is not None:
-                try:
-                    console.print("🔄 Reloading shell profile to apply changes", style="bold cyan")
-                    run_shell_script(shell_profile, display_script=False, clean_env=False)
-                    console.print("✅ Shell profile reloaded successfully", style="bold green")
-                except Exception as e:
-                    console.print(f"❌ Error reloading shell profile: {e}", style="bold red")
 
     if "install_stackops" in selected_options:
         console.print(Panel("🐍 [bold green]PYTHON ENVIRONMENT[/bold green]\n[italic]Virtual environment setup[/italic]", border_style="green"))

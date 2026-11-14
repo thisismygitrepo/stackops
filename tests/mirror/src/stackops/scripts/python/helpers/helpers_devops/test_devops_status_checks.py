@@ -1,9 +1,10 @@
+import subprocess
 from pathlib import Path
 from typing import Literal
 
 import pytest
 
-from stackops.profile import create_shell_profile
+from stackops.profile import shell_profile_source
 from stackops.scripts.python.helpers.helpers_devops import devops_status_checks
 
 
@@ -18,40 +19,67 @@ def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def shell_paths(monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
     profile_path = Path.home().joinpath(".bashrc")
-    init_script = devops_status_checks.CONFIG_ROOT.joinpath("settings", "shells", "bash", "init.sh")
+    init_script = devops_status_checks.CONFIG_ROOT.joinpath("settings", "shells", "bash_zsh", "init.sh")
     init_script.parent.mkdir(parents=True)
-    monkeypatch.setattr(create_shell_profile, "get_shell_profile_path", lambda: profile_path)
+    monkeypatch.setenv("SHELL", "/bin/bash")
     monkeypatch.setattr(devops_status_checks.platform, "system", lambda: "Linux")
     return profile_path, init_script
 
 
 @pytest.mark.parametrize(
-    "system_name,shell_name,extension,command",
-    [("Linux", "bash", "sh", "source"), ("Darwin", "zsh", "sh", "source"), ("Windows", "pwsh", "ps1", ".")],
+    "system_name,shell_variable,profile_name,init_relative_path,command",
+    [
+        ("Linux", "/bin/bash", ".bashrc", "bash_zsh/init.sh", "source"),
+        ("Linux", "/usr/bin/zsh", ".zshrc", "bash_zsh/init.sh", "source"),
+        ("Darwin", "/bin/zsh", ".zshrc", "bash_zsh/init.sh", "source"),
+        ("Darwin", "/opt/homebrew/bin/bash", ".bashrc", "bash_zsh/init.sh", "source"),
+        ("Windows", None, "Microsoft.PowerShell_profile.ps1", "pwsh/init.ps1", "."),
+    ],
 )
-def test_shell_status_matches_platform_installer(
-    monkeypatch: pytest.MonkeyPatch, system_name: str, shell_name: str, extension: str, command: str
+def test_shell_status_matches_login_shell_installer(
+    monkeypatch: pytest.MonkeyPatch, system_name: str, shell_variable: str | None, profile_name: str, init_relative_path: str, command: str
 ) -> None:
-    profile_path = Path.home().joinpath("profile")
-    init_script = devops_status_checks.CONFIG_ROOT.joinpath("settings", "shells", shell_name, f"""init.{extension}""")
+    profile_path = Path.home().joinpath(profile_name)
+    init_script = devops_status_checks.CONFIG_ROOT.joinpath("settings", "shells", init_relative_path)
     init_script.parent.mkdir(parents=True)
     init_script.write_text("shell init", encoding="utf-8")
-    profile_path.write_text(f"""{command} $HOME/.config/stackops/settings/shells/{shell_name}/init.{extension}""", encoding="utf-8")
-    monkeypatch.setattr(create_shell_profile, "get_shell_profile_path", lambda: profile_path)
+    profile_path.write_text(f"""{command} $HOME/.config/stackops/settings/shells/{init_relative_path}""", encoding="utf-8")
+    if shell_variable is None:
+        monkeypatch.delenv("SHELL", raising=False)
+    else:
+        monkeypatch.setenv("SHELL", shell_variable)
     monkeypatch.setattr(devops_status_checks.platform, "system", lambda: system_name)
+    monkeypatch.setattr(
+        shell_profile_source.subprocess,
+        "run",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(args=["pwsh", "-Command", "$PROFILE"], returncode=0, stdout=f"""{profile_path}\n""", stderr=""),
+    )
 
     status = devops_status_checks.check_shell_profile_status()
 
     assert status["configured"]
     assert status["source_line_present"]
     assert status["init_script_exists"]
+    assert status["profile_path"] == str(profile_path)
     assert status["init_script_path"] == str(init_script)
+
+
+@pytest.mark.parametrize("shell_variable", [None, "/usr/bin/fish", "/bin/sh"])
+def test_shell_status_rejects_an_unsupported_login_shell(monkeypatch: pytest.MonkeyPatch, shell_variable: str | None) -> None:
+    if shell_variable is None:
+        monkeypatch.delenv("SHELL", raising=False)
+    else:
+        monkeypatch.setenv("SHELL", shell_variable)
+    monkeypatch.setattr(devops_status_checks.platform, "system", lambda: "Linux")
+
+    with pytest.raises(ValueError, match="bash"):
+        devops_status_checks.check_shell_profile_status()
 
 
 @pytest.mark.parametrize("init_kind", ["missing", "directory", "broken_symlink"])
 def test_shell_source_requires_a_real_init_file(shell_paths: tuple[Path, Path], init_kind: Literal["missing", "directory", "broken_symlink"]) -> None:
     profile_path, init_script = shell_paths
-    profile_path.write_text("source $HOME/.config/stackops/settings/shells/bash/init.sh", encoding="utf-8")
+    profile_path.write_text("source $HOME/.config/stackops/settings/shells/bash_zsh/init.sh", encoding="utf-8")
     if init_kind == "directory":
         init_script.mkdir()
     elif init_kind == "broken_symlink":
@@ -66,9 +94,9 @@ def test_shell_source_requires_a_real_init_file(shell_paths: tuple[Path, Path], 
 @pytest.mark.parametrize(
     "source_line",
     [
-        "# source $HOME/.config/stackops/settings/shells/bash/init.sh",
-        "echo source $HOME/.config/stackops/settings/shells/bash/init.sh",
-        "source $HOME/.config/stackops/settings/shells/bash/init.sh.bak",
+        "# source $HOME/.config/stackops/settings/shells/bash_zsh/init.sh",
+        "echo source $HOME/.config/stackops/settings/shells/bash_zsh/init.sh",
+        "source $HOME/.config/stackops/settings/shells/bash_zsh/init.sh.bak",
         "source $HOME/.config/stackops/profile/init.sh",
     ],
 )

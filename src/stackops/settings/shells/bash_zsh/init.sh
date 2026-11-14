@@ -1,5 +1,17 @@
-#!/bin/zsh
-# 🛠️ Zsh Shell Configuration and Initialization
+#!/bin/bash
+# 🛠️ Bash and Zsh Shell Configuration and Initialization
+# 1- Add to path
+# 2- Define aliases
+# 3- Init shell history search
+
+if [ -n "${ZSH_VERSION:-}" ]; then
+    STACKOPS_SHELL="zsh"
+elif [ -n "${BASH_VERSION:-}" ]; then
+    STACKOPS_SHELL="bash"
+else
+    printf 'Unsupported shell: the StackOps init supports bash and zsh only.\n' >&2
+    return 1
+fi
 
 add_to_path_if_not_already() {
     for dir in "$@"; do
@@ -20,12 +32,18 @@ case "$DOTFILES_STACKOPS_PLATFORM" in
 esac
 DOTFILES_STACKOPS_SCRIPTS_ROOT="$DOTFILES_STACKOPS_ROOT/scripts/$DOTFILES_STACKOPS_PLATFORM"
 
+# Homebrew on Apple Silicon lives outside the default PATH
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 # 📂 Add directories to PATH
 add_to_path_if_not_already \
     "$CONFIG_ROOT/scripts" \
     "$DOTFILES_STACKOPS_SCRIPTS_ROOT" \
     "$HOME/.local/bin" \
     "$HOME/.cargo/bin" \
+    "$HOME/.duckdb/cli/latest" \
     "/usr/games"
 # this way, if the script was run multiple times due to nested shells, there will be no duplicates in the path
 # export DISPLAY=localhost:0.0  # xming server
@@ -37,7 +55,7 @@ add_to_path_if_not_already \
 # . $CONFIG_ROOT/settings/lf/linux/exe/lfcd.sh
 # . $CONFIG_ROOT/settings/tere/terecd.sh
 . $CONFIG_ROOT/settings/yazi/shell/yazi_cd.sh
-[ -f "$CONFIG_ROOT/scripts/wrap_stackops" ] && . "$CONFIG_ROOT/scripts/wrap_stackops"
+[ -f "$CONFIG_ROOT/scripts/wrap_stackops" ] && . "$CONFIG_ROOT/scripts/wrap_stackops"  # gives wrap_in_shell_script
 
 # check if the private StackOps shell init exists and source it
 if [ -f "$DOTFILES_STACKOPS_SCRIPTS_ROOT/init.sh" ]; then
@@ -51,6 +69,7 @@ if command -v wrap_in_shell_script >/dev/null 2>&1; then
     done
     unset stackops_cli
 fi
+unalias fx 2>/dev/null
 alias d=devops c=cloud a=agents t=terminal f=fire p=preview u=utils s=seek
 
 # alias gcs='gh copilot suggest -t shell'
@@ -66,22 +85,21 @@ alias d=devops c=cloud a=agents t=terminal f=fire p=preview u=utils s=seek
 #   gh copilot explain "Input command is: $x The output is this: $y"
 # }
 
-
-# https://github.com/atuinsh/atuin
-# eval "$(atuin init bash)"
 # source "${HOME}/.config/broot/launcher/bash/br"
 # eval "$(thefuck --alias)"
 # from https://github.com/ajeetdsouza/zoxide
-eval "$(zoxide init zsh)"
+eval "$(zoxide init "$STACKOPS_SHELL")"
 # from https://github.com/starship/starship
-eval "$(starship init zsh)"
+eval "$(starship init "$STACKOPS_SHELL")"
 
 # LEVE THIS IN THE END TO AVOID EXECUTION FAILURE OF THE REST OF THE SCRIPT
 if command -v mcfly &> /dev/null; then
-    eval "$(mcfly init zsh)"
+    eval "$(mcfly init "$STACKOPS_SHELL")"
 elif command -v atuin &> /dev/null; then
-    eval "$(atuin init zsh --disable-up-arrow)"
-else
+    # https://github.com/atuinsh/atuin
+    # [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+    eval "$(atuin init "$STACKOPS_SHELL" --disable-up-arrow)"
+elif [ "$STACKOPS_SHELL" = "zsh" ]; then
     tv_shell_history() {
         local current_prompt="$LBUFFER"
         local output
@@ -96,4 +114,30 @@ else
     }
     zle -N tv_shell_history
     bindkey '^R' tv_shell_history
+else
+    # eval "$(tv init bash)"
+    tv_shell_history() {
+        # _disable_bracketed_paste
+        local current_prompt="${READLINE_LINE:0:$READLINE_POINT}"
+        local output
+        # move to the next line so that the prompt is not overwritten
+        printf "\n"
+        # Get history using tv with the same arguments as zsh version
+        output=$(tv bash-history --input "$current_prompt" --inline)
+
+        if [[ -n "$output" ]]; then
+            # Clear the right side of cursor and set new line
+            READLINE_LINE="$output"
+            READLINE_POINT=${#READLINE_LINE}
+            # Uncomment this to automatically accept the line
+            # (i.e. run the command without having to press enter twice)
+            # accept-line() { echo; }; accept-line
+        fi
+        # move the cursor back to the previous line
+        printf "\033[A"
+        # _enable_bracketed_paste
+    }
+    if [[ $- == *i* ]] && [[ -t 0 ]] && [[ -t 1 ]]; then
+        bind -x '"\C-r": tv_shell_history'
+    fi
 fi

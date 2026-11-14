@@ -1,1 +1,0 @@
-INIT_PATH_REFERENCE = "init.sh"

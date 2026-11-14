@@ -8,7 +8,7 @@ FROM debian:bookworm-slim
 
 # Set bash as default shell
 SHELL ["/bin/bash", "-lc"]
-# ENV SHELL=/bin/bash
+ENV SHELL=/bin/bash
 RUN apt-get update && apt-get install -y bash sudo xz-utils unzip curl git
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 WORKDIR /app
@@ -21,7 +21,7 @@ RUN /root/.local/bin/devops software install --group termabc
 
 RUN /root/.local/bin/devops config copy-assets all
 RUN /root/.local/bin/devops config dotfiles sync down --sensitivity public --method symlink --which all --on-conflict overwrite-default-path
-RUN /root/.local/bin/devops config terminal config-shell --which default
+RUN /root/.local/bin/devops config terminal config-shell --shell default
 
 RUN touch /root/.bash_history
 # McFly complains about missing history file

@@ -18,49 +18,14 @@ NUSHELL_CONFIG_SOURCE_LINE = f"""source ($nu.home-dir | path join ".config" "sta
 NUSHELL_ENV_SOURCE_LINE = f"""source-env ($nu.home-dir | path join ".config" "stackops" {_to_nushell_join_arguments(NUSHELL_ENV_RELATIVE_PATH)})"""
 
 
-def get_shell_profile_path() -> Path:
-    import platform
-    import subprocess
-    from rich.console import Console
-    from rich.panel import Panel
-
-    system = platform.system()
-    console = Console()
-    if system == "Windows":
-        result = subprocess.run(["pwsh", "-Command", "$PROFILE"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
-        if result.returncode == 0 and result.stdout.strip():
-            profile_path = Path(result.stdout.strip())
-        else:
-            print(f"Command failed with return code {result.returncode}")
-            print(f"stdout: {result.stdout}")
-            print(f"stderr: {result.stderr}")
-            raise ValueError(f"""Could not get profile path for Windows. Got stdout: {result.stdout}, stderr: {result.stderr}""")
-    elif system == "Linux":
-        profile_path = Path.home().joinpath(".bashrc")
-    elif system == "Darwin":
-        profile_path = Path.home().joinpath(".zshrc")
-    else:
-        raise ValueError(f"""Not implemented for this system {system}""")
-    console.print(
-        Panel(f"""🐚 SHELL PROFILE | Working with path: `{profile_path}`""", title="[bold blue]Shell Profile[/bold blue]", border_style="blue")
-    )
-    return profile_path
-
-
 def reload_shell_profile_and_exit() -> None:
+    import os
     import platform
-
-    if platform.system() == "Windows":
-        reload_init_script = "pwsh $PROFILE"
-    elif platform.system() == "Darwin":
-        reload_init_script = "source $HOME/.zshrc"
-    elif platform.system() == "Linux":
-        reload_init_script = "source $HOME/.bashrc"
-    else:
-        reload_init_script = ""
     from stackops.utils.code import exit_then_run_shell_script
+    from stackops.utils.source_of_truth import CONFIG_ROOT
 
-    exit_then_run_shell_script(reload_init_script)
+    profile_source = build_shell_profile_source(system_name=platform.system(), shell_variable=os.environ.get("SHELL"), config_root=CONFIG_ROOT)
+    exit_then_run_shell_script(profile_source.reload_command)
 
 
 def get_nu_shell_profile_path() -> Path:
@@ -91,15 +56,19 @@ def get_nu_shell_profile_path() -> Path:
 
 
 def create_default_shell_profile() -> None:
-    shell_profile_path = get_shell_profile_path()
+    import os
     import platform
     import subprocess
     from rich.console import Console
     from rich.panel import Panel
     from stackops.utils.source_of_truth import CONFIG_ROOT
 
-    system = platform.system()
     console = Console()
+    profile_source = build_shell_profile_source(system_name=platform.system(), shell_variable=os.environ.get("SHELL"), config_root=CONFIG_ROOT)
+    shell_profile_path = profile_source.profile_path
+    console.print(
+        Panel(f"""🐚 SHELL PROFILE | Working with path: `{shell_profile_path}`""", title="[bold blue]Shell Profile[/bold blue]", border_style="blue")
+    )
     if not shell_profile_path.exists():
         console.print(
             Panel(
@@ -115,7 +84,6 @@ def create_default_shell_profile() -> None:
 
     copy_assets_to_machine("settings")  # init.ps1 or init.sh live here
     copy_assets_to_machine("scripts")  # init scripts are going to reference those scripts.
-    profile_source = build_shell_profile_source(system_name=system, config_root=CONFIG_ROOT)
 
     was_shell_updated = False
     if any(line.strip() == profile_source.source_line for line in shell_profile.splitlines()):

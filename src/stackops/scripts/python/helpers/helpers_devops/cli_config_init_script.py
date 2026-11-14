@@ -9,9 +9,8 @@ INIT_SCRIPT_HELP = "Print or run a StackOps shell init or machine setup script."
 def _read_init_script(which: InitScriptKind) -> str:
     import platform
 
-    import stackops.settings.shells.bash as bash_shell_assets
+    import stackops.settings.shells.bash_zsh as bash_zsh_shell_assets
     import stackops.settings.shells.pwsh as pwsh_shell_assets
-    import stackops.settings.shells.zsh as zsh_shell_assets
 
     from stackops.utils.path_reference import get_path_reference_path
 
@@ -19,16 +18,10 @@ def _read_init_script(which: InitScriptKind) -> str:
     if platform_name in {"Linux", "Darwin"}:
         match which:
             case "init":
-                if platform_name == "Darwin":
-                    init_path = get_path_reference_path(
-                        module=zsh_shell_assets,
-                        path_reference=zsh_shell_assets.INIT_PATH_REFERENCE,
-                    )
-                else:
-                    init_path = get_path_reference_path(
-                        module=bash_shell_assets,
-                        path_reference=bash_shell_assets.INIT_PATH_REFERENCE,
-                    )
+                init_path = get_path_reference_path(
+                    module=bash_zsh_shell_assets,
+                    path_reference=bash_zsh_shell_assets.INIT_PATH_REFERENCE,
+                )
                 return init_path.read_text(encoding="utf-8")
             case "ia":
                 import stackops.scripts.setup.linux as module

@@ -1,3 +1,4 @@
+import os
 import platform
 from pathlib import Path
 from typing import TypedDict
@@ -33,10 +34,8 @@ class SshStatus(TypedDict):
 
 
 def check_shell_profile_status() -> ShellProfileStatus:
-    from stackops.profile.create_shell_profile import get_shell_profile_path
-
-    profile_path = get_shell_profile_path()
-    profile_source = build_shell_profile_source(system_name=platform.system(), config_root=CONFIG_ROOT)
+    profile_source = build_shell_profile_source(system_name=platform.system(), shell_variable=os.environ.get("SHELL"), config_root=CONFIG_ROOT)
+    profile_path = profile_source.profile_path
     profile_exists = profile_path.is_file()
     profile_content = profile_path.read_text(encoding="utf-8") if profile_exists else ""
     source_line_present = any(line.strip() == profile_source.source_line for line in profile_content.splitlines())
