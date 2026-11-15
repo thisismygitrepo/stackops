@@ -4,6 +4,7 @@ from typing import Annotated, Literal, TypeAlias
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_cli import clean_drive
 from stackops.scripts.python.helpers.helpers_utils.window import window
 from stackops.utils.cli_utils.interaction import require_interactive
 
@@ -278,4 +279,9 @@ def get_app() -> typer.Typer:
         help="🪟 <w> Manage desktop windows on macOS, Windows, and Linux X11. Select a window and action using tv.",
     )(window)
     machine_app.command(name="w", no_args_is_help=False, hidden=True)(window)
+    machine_app.command(
+        name="clean-drive", no_args_is_help=False,
+        help="🧹 <c> Free disk space: caches, docker, trash, logs and project build folders. Dry run, picker or direct.",
+    )(clean_drive)
+    machine_app.command(name="c", no_args_is_help=False, hidden=True)(clean_drive)
     return machine_app

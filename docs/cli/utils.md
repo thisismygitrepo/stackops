@@ -31,6 +31,7 @@ utils machine [OPTIONS] COMMAND [ARGS]...
 | `specs` | Print machine specifications |
 | `list-devices` | List available devices for mounting |
 | `mount` | Mount a device by query or through an interactive picker |
+| `clean-drive` | Measure and reclaim disk space from caches, Docker, trash, logs, and project build folders |
 
 Key behavior:
 
@@ -40,6 +41,9 @@ Key behavior:
 - `specs --hardware` includes compute capability details; without `--hardware`, it prints specs and writes `machine_specs.json` under the StackOps config root.
 - `mount` requires `--device` unless `--interactive` is set, and requires `--mount-point` unless `--interactive` is set or `--backend udisksctl` is used.
 - `mount --backend` accepts `mount`, `dislocker`, or `udisksctl`.
+- `clean-drive` measures every target for the current OS first: real allocated size, where a hardlinked file counts only when every link would be deleted (uv and Bun hardlink their caches into `.venv` and `node_modules`). `--dry-run`/`-d` stops after the report; `--interactive`/`-i` opens a multi-select picker of every target with a preview, then confirms; with no mode flag it confirms the ● selection; `--yes`/`-y` cleans the ● selection without asking.
+- `clean-drive` selection: `--target`/`-t KEY` (repeatable) picks targets explicitly; otherwise ● marks targets within `--max-risk`/`-r safe|caution|danger` (default `safe`), and targets needing root only with `--sudo`/`-s`. Narrow the scan with `--category`/`-c dev|containers|system|trash|projects` and `--exclude`/`-x KEY`. `--root`/`-R` sets where project folders (`.ai`, `node_modules`, `.venv`, `__pycache__`, Rust `target`) are searched (default: home; hidden folders, `node_modules`, and other filesystems are never entered). `--json`/`-j` prints records with `--dry-run` or `--yes`.
+- `clean-drive` delegates to each tool's own cleaner where one exists (`uv cache clean`, `bun pm cache rm`, `pnpm store prune`, `go clean`, `docker … prune`, `journalctl --vacuum-size`, `apt-get clean`, `brew cleanup`) and to the [BleachBit](https://www.bleachbit.org) CLI for trash, temp files, thumbnails, browser caches, and disabled snap revisions on Linux and Windows. Install BleachBit from your distro (`sudo apt install bleachbit`); the `bleachbit` package on PyPI is not the official one.
 
 Examples:
 
@@ -52,6 +56,11 @@ utils machine kill-process --memory 500 --yes
 utils machine specs --hardware
 utils machine mount --interactive
 utils machine mount --device sdb1 --mount-point /mnt/data --read-only
+utils machine clean-drive --dry-run
+utils machine clean-drive --interactive
+utils machine clean-drive --yes --category dev
+utils machine clean-drive --target docker-build-cache --target uv-cache --yes
+utils machine clean-drive --max-risk caution --sudo --root ~/code
 ```
 
 ## pyproject

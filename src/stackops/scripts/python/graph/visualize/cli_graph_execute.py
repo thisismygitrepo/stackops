@@ -3,6 +3,7 @@ import os
 import platform
 import re
 import shlex
+from enum import Enum
 from pathlib import Path
 from typing import cast
 
@@ -11,7 +12,6 @@ import typer
 import typer.main
 from questionary import Choice
 from typer.core import TyperArgument, TyperOption
-from typer.models import TyperPath
 
 from stackops.scripts.python.graph.visualize.cli_graph_app import RunActionLoose
 from stackops.scripts.python.graph.visualize.cli_graph_search import CliGraphSearchEntry, matching_entries, pick_entry
@@ -168,14 +168,15 @@ def _load_typer_parameters(entry: CliGraphSearchEntry) -> list[TyperArgument | T
 
 
 def _ask_values(message: str, parameter: TyperArgument | TyperOption, multiple: bool) -> list[str] | None:
-    raw_choices = getattr(parameter.type, "choices", None)
-    if isinstance(raw_choices, list | tuple) and raw_choices:
-        choice_titles = [str(choice) for choice in cast(list[object] | tuple[object, ...], raw_choices)]
+    type_descriptor = parameter.type_descriptor
+    raw_choices = type_descriptor.choices
+    if raw_choices:
+        choice_titles = [str(choice.value) if isinstance(choice, Enum) else str(choice) for choice in cast(tuple[object, ...], raw_choices)]
         if multiple:
             return cast(list[str] | None, questionary.checkbox(message, choices=choice_titles).ask())
         selected = cast(str | None, questionary.select(message, choices=[*choice_titles, Choice(title="(leave empty)", value="")]).ask())
         return None if selected is None else [selected] if selected else []
-    if isinstance(parameter.type, TyperPath):
+    if type_descriptor.is_path:
         answer = cast(str | None, questionary.path(message).ask())
     else:
         answer = cast(str | None, questionary.text(message).ask())
