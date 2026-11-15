@@ -9,6 +9,7 @@ from typing import Annotated, Final, Literal, TypeAlias, cast, get_args, overrid
 import typer
 from typer.core import TyperGroup
 
+from stackops.scripts.python.helpers.helpers_agents.agents_run_types import PROMPTS_SOURCE
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import MCP_CATALOG_SOURCE
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.cli_utils.interaction import configure_interaction, is_interactive, require_interactive
@@ -17,7 +18,6 @@ from stackops.utils.default_agent import DEFAULT_AGENT_HELP, resolve_agent
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, CONFIG_AGENTS, CONFIG_AGENT_VALUES, ReasoningEffort
 
 _MCP_INSTALL_SCOPE: TypeAlias = Literal["workspace", "w", "user", "u"]
-_PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["workspace", "w", "user", "u"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
@@ -578,7 +578,7 @@ def run_prompt(
         ),
     ] = None,
     source: Annotated[
-        _PROMPTS_SOURCE,
+        PROMPTS_SOURCE,
         typer.Option(..., "--source", "-s", help="Source to look for prompts YAML files when --custom-path is not provided."),
     ] = "all",
     show_prompts_yaml_format: Annotated[

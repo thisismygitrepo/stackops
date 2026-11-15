@@ -1,15 +1,14 @@
 from pathlib import Path
 from platform import system
 from sys import executable as python_executable
-from typing import Literal, TypeAlias, cast
+from typing import cast
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
 from stackops.scripts.python.helpers.helpers_agents.constants import CODEX_EXEC_PERMISSION_ARGS
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, PROVIDER, ReasoningEffort
 from stackops.utils.sandbox.options import SandboxBackend, SandboxOptions
 from stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities import copilot_reasoning_args, normalize_reasoning_effort
-
-PROMPTS_SOURCE: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
+from stackops.scripts.python.helpers.helpers_agents.agents_run_types import PROMPTS_SOURCE
 
 
 def _format_shell_args(values: list[str], *, is_windows: bool) -> str:

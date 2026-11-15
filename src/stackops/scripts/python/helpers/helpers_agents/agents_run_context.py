@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import Any, Literal, cast
 import json
 
+from stackops.scripts.python.helpers.helpers_agents.agents_run_types import PROMPTS_SOURCE
 
-PROMPTS_SOURCE = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 PROMPTS_PREVIEW_SIZE_PERCENT = 70.0
 
 

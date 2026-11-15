@@ -171,3 +171,28 @@ lintAndTypeCheckPyProject:
     Agent multiplexer:
     ------------------
     Use Herdr by default, as described above. If you find yourself running inside a T3 Code environment (a `t3-code` MCP server is available to you with tools like `delegate_task`, or your instructions include T3 Code orchestration guidance), do not use Herdr: launch each agent with `delegate_task` instead of panes, keep the same parallel limit and batching rules, and track them with T3 Code's task/thread status tools.
+
+cleanTyperApps:
+  group: dev
+  description: Unify Typer CLI options so each boolean has a single flag, every option has a short alias, and imports stay lazy.
+  prompt: |
+    Task:
+    -----
+    Clean up every Typer app and command across this repo by applying the rules below.
+
+    Boolean flags:
+    --------------
+    - A boolean option must expose one flag, never a `--do-something/--no-do-something` pair for the same attribute. Separate, related options are out of scope.
+    - If the default is to do it, expose only the flag that turns it off. If the default is not to do it, expose only the flag that turns it on.
+
+    Short aliases:
+    --------------
+    - Give every option a one-letter short alias, e.g. `-a` for `--all`, unique within its command. With continuous development, sometimes, those shorts need re-defining to be more consistent and aligned with first letter of command (ideally) if not conflicting.
+
+    Lazy imports:
+    -------------
+    - Keep the CLI fast: do not eagerly import modules that only some commands may need. Defer those imports until the command that uses them is invoked.
+
+    Agent-Friendly:
+    ---------------
+    Please ensure that the commands of the cli are agent-friendly, not just human-friendly. This means less interactive things for the agent, by using special flags, e.g. --json, or providing global environment variables that switches behaviour from human friendly to ai-agent friendly. Another good habit is to have --skill so agent knows the full story quickly without running so many commands to explore details. Those are just rough guidelines and ideas, not specific instructions to follow. Act as needed in the circumstance.
