@@ -7,7 +7,7 @@ from typing import NoReturn
 
 def require_tmux() -> None:
     if shutil.which("tmux") is None:
-        raise RuntimeError("tmux is required for browser tmux launches. Pass --detached to use the background process mode.")
+        raise RuntimeError("tmux is required for browser tmux launches. Pass --runtime detached to use background processes.")
 
 
 def run_optional_tmux_command(*, command: Sequence[str]) -> subprocess.CompletedProcess[str] | None:
@@ -15,15 +15,17 @@ def run_optional_tmux_command(*, command: Sequence[str]) -> subprocess.Completed
     if result.returncode == 0:
         return result
     detail = (result.stderr or result.stdout or "").strip().lower()
-    if "no server running" in detail or "failed to connect to server" in detail or "can't find session" in detail:
+    missing_socket = "error connecting to" in detail and "no such file or directory" in detail
+    if missing_socket or any(marker in detail for marker in ("no server running", "failed to connect to server", "can't find session", "can't find window")):
         return None
     raise_tmux_command_failure(command=command, result=result)
 
 
-def run_required_tmux_command(*, command: Sequence[str]) -> None:
+def run_required_tmux_command(*, command: Sequence[str]) -> str:
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise_tmux_command_failure(command=command, result=result)
+    return result.stdout
 
 
 def raise_tmux_command_failure(*, command: Sequence[str], result: subprocess.CompletedProcess[str]) -> NoReturn:

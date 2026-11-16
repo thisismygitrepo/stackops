@@ -21,13 +21,9 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_runtim
     ensure_cdp_page_target,
     tcp_port_is_open,
     verify_cdp_endpoint,
-    wait_for_tcp_endpoint,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_lifecycle import collect_active_browser_endpoints
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import (
-    assert_browser_tmux_window_running,
-    repair_browser_tmux_relay,
-)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_records import collect_browser_launch_status
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_multiplexed_launch import repair_multiplexed_browser_relay
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
 
@@ -40,60 +36,49 @@ def reuse_browser_launch_if_active(
     lan: bool,
 ) -> ExistingBrowserLaunchResult | None:
     launcher = get_browser_launcher(browser=browser)
-    for endpoint in collect_active_browser_endpoints():
-        if endpoint.browser != browser or endpoint.profile_path != profile_path or endpoint.port != port or endpoint.lan != lan:
+    for status in collect_browser_launch_status():
+        launch = status.launch
+        if status.browser_process_id is None:
             continue
-        if not tcp_port_is_open(host=REMOTE_DEBUGGING_LOCALHOST, port=endpoint.browser_port):
+        if launch.browser != browser or launch.profile_path != profile_path or launch.port != port or launch.relay_expected != lan:
+            continue
+        if not tcp_port_is_open(host=REMOTE_DEBUGGING_LOCALHOST, port=launch.browser_port):
             continue
         details = build_browser_launch_details(
             browser=browser,
             browser_path=browser_path,
             profile_path=profile_path,
             port=port,
-            browser_port=endpoint.browser_port,
+            browser_port=launch.browser_port,
             lan=lan,
         )
         repaired_relay = False
-        if endpoint.lan and (
-            not endpoint.relay_running or not tcp_port_is_open(host=REMOTE_DEBUGGING_LOCALHOST, port=endpoint.port)
-        ):
-            assert_tcp_port_available(host=REMOTE_DEBUGGING_LAN, port=endpoint.port)
-            relay_command = build_relay_command(listen_port=endpoint.port, target_port=endpoint.browser_port)
-            if endpoint.owner == "detached":
-                if endpoint.process_created_at is None:
-                    raise RuntimeError(f"Detached {browser} endpoint PID {endpoint.process_id} has no recorded creation time")
+        if launch.relay_expected and (not status.relay_running or not tcp_port_is_open(host=REMOTE_DEBUGGING_LOCALHOST, port=launch.port)):
+            assert_tcp_port_available(host=REMOTE_DEBUGGING_LAN, port=launch.port)
+            relay_command = build_relay_command(listen_port=launch.port, target_port=launch.browser_port)
+            if launch.windows is None:
                 repair_detached_browser_relay(
                     details=details,
-                    browser_process_id=endpoint.process_id,
-                    browser_process_created_at=endpoint.process_created_at,
+                    browser_process_id=launch.process_id,
+                    browser_process_created_at=launch.process_created_at,
                 )
             else:
-                relay_window_name = repair_browser_tmux_relay(
-                    browser=browser,
-                    profile_path=profile_path,
-                    port=endpoint.port,
-                    browser_port=endpoint.browser_port,
-                    host=details.host,
+                repair_multiplexed_browser_relay(
+                    details=details,
+                    windows=launch.windows,
+                    launch_id=launch.launch_id,
+                    browser_process_id=launch.process_id,
+                    browser_process_created_at=launch.process_created_at,
                     relay_command=relay_command,
                 )
-                wait_for_tcp_endpoint(
-                    host=REMOTE_DEBUGGING_LOCALHOST,
-                    port=endpoint.port,
-                    process=None,
-                    process_label="browser endpoint LAN relay",
-                )
-                assert_browser_tmux_window_running(
-                    window_name=relay_window_name,
-                    process_label="browser endpoint LAN relay",
-                )
             if launcher.endpoint_protocol == "cdp":
-                verify_cdp_endpoint(port=endpoint.port)
+                verify_cdp_endpoint(port=launch.port)
             repaired_relay = True
-        opened_page = ensure_cdp_page_target(port=endpoint.browser_port) if launcher.endpoint_protocol == "cdp" else False
+        opened_page = ensure_cdp_page_target(port=launch.browser_port) if launcher.endpoint_protocol == "cdp" else False
         return build_existing_launch_result(
             details=details,
-            process_id=endpoint.process_id,
-            owner=endpoint.owner,
+            process_id=status.browser_process_id,
+            owner="detached" if launch.windows is None else launch.windows.multiplexer,
             opened_page=opened_page,
             repaired_relay=repaired_relay,
         )

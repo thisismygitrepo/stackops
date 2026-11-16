@@ -47,7 +47,7 @@ def test_temporary_launch_uses_copy_and_removes_it_when_launch_fails(monkeypatch
     monkeypatch.setattr(browser_launch, "reuse_browser_launch_if_active", fail_after_copy)
 
     with pytest.raises(RuntimeError, match="port unavailable"):
-        browser_launch.launch_browser(browser="chrome", port=9331, profile_name="base", temporary=True, lan=False, detached=True)
+        browser_launch.launch_browser(browser="chrome", port=9331, profile_name="base", temporary=True, lan=False, runtime="detached")
 
     assert original_profile_path.is_dir()
     assert not copied_path.exists()
@@ -122,6 +122,6 @@ def test_temporary_launch_preserves_copy_when_runtime_start_is_interrupted(monke
     monkeypatch.setattr(browser_launch, "launch_detached_browser", interrupt_runtime)
 
     with pytest.raises(KeyboardInterrupt):
-        browser_launch.launch_browser(browser="chrome", port=9331, profile_name="base", temporary=True, lan=False, detached=True)
+        browser_launch.launch_browser(browser="chrome", port=9331, profile_name="base", temporary=True, lan=False, runtime="detached")
 
     assert copied_path.is_dir()

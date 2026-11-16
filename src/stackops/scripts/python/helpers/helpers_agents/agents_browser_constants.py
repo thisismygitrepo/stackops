@@ -6,6 +6,9 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 BrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox", "safari"]
 ProfileBrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox"]
+BrowserMultiplexer: TypeAlias = Literal["tmux", "tuios", "zellij"]
+BrowserRuntime: TypeAlias = Literal["detached", "tmux", "tuios", "zellij"]
+BrowserRuntimeOption: TypeAlias = Literal["detached", "d", "tmux", "t", "tuios", "u", "zellij", "z"]
 BrowserTechName: TypeAlias = Literal[
     "agent-browser", "browser-use", "pinchtab", "playwright-cli", "chrome-devtools-mcp", "playwright-mcp", "omp"
 ]
@@ -55,7 +58,11 @@ BROWSER_TECH_ROOT: Final[Path] = Path.home().joinpath("code", "agents", "browser
 BROWSER_LAUNCH_LOCK_PATH: Final[Path] = BROWSER_TECH_ROOT.joinpath("launch.lock")
 AGENT_BROWSER_ROOT: Final[Path] = BROWSER_TECH_ROOT.joinpath(AGENT_BROWSER_INSTALLER_NAME)
 BROWSER_MCP_ROOT: Final[Path] = BROWSER_TECH_ROOT.joinpath("mcp")
-BROWSER_DETACHED_LAUNCHES_ROOT: Final[Path] = BROWSER_TECH_ROOT.joinpath("detached-launches")
+BROWSER_LAUNCHES_ROOT: Final[Path] = BROWSER_TECH_ROOT.joinpath("launches")
+BROWSER_MULTIPLEXER_SESSION_NAME: Final[str] = "stackops-browser"
+BROWSER_TUIOS_WORKSPACE: Final[int] = 1
+BROWSER_CDP_RELAY_MODULE: Final[str] = "stackops.scripts.python.helpers.helpers_agents.browser_cdp_relay"
+BROWSER_RELAY_PROCESS_LABEL: Final[str] = "browser endpoint LAN relay"
 BROWSER_PROFILES_ROOT: Final[Path] = Path.home().joinpath("data", "browsers-profiles")
 TEMP_BROWSER_PROFILES_ROOT: Final[Path] = Path(gettempdir()).joinpath("stackops-browser-profiles")
 TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME: Final[str] = ".tmp"

@@ -9,9 +9,8 @@ from rich.text import Text
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LAN
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import (
     BrowserLaunchResult,
-    DetachedBrowserLaunchResult,
     ExistingBrowserLaunchResult,
-    TmuxBrowserLaunchResult,
+    NewBrowserLaunchResult,
 )
 from stackops.utils.network.address import InterfaceIPv4Address
 
@@ -33,18 +32,14 @@ def build_browser_launch_summary(*, result: BrowserLaunchResult, lan_address: In
                 table.add_row("Action", Text("Opened a page because the endpoint had no page targets"))
             if result.repaired_relay:
                 table.add_row("Action", Text("Restarted the missing LAN relay"))
-        case DetachedBrowserLaunchResult():
+        case NewBrowserLaunchResult(windows=windows):
             title = Text(f"✓ {result.process_label} launched", style="bold green")
-            table.add_row("Process", Text(f"PID {result.process_id} · detached"))
+            runtime = "detached" if windows is None else f"{windows.multiplexer} · session {windows.session_name}"
+            table.add_row("Process", Text(f"PID {result.process_id} · {runtime}"))
             if result.relay_process_id is not None:
                 table.add_row("Relay", Text(f"PID {result.relay_process_id} → 127.0.0.1:{result.browser_port}"))
-        case TmuxBrowserLaunchResult():
-            title = Text(f"✓ {result.process_label} launched", style="bold green")
-            table.add_row("Process", Text(f"tmux · session {result.tmux.session_name}"))
-            table.add_row("Browser window", Text(result.tmux.browser_window_name))
-            if result.tmux.relay_window_name is not None:
-                table.add_row("Relay window", Text(f"{result.tmux.relay_window_name} → 127.0.0.1:{result.browser_port}"))
-            table.add_row("Attach", Text(" ".join(result.tmux.attach_command)))
+            if windows is not None:
+                table.add_row("Attach", Text(windows.attach_script))
 
     table.add_row("Executable", Text(str(result.browser_path)))
     endpoint_label = result.endpoint_short_label if not lan_exposed else f"{result.endpoint_short_label} bind"
@@ -106,10 +101,8 @@ def _batch_launch_state(*, result: BrowserLaunchResult) -> tuple[Text, Text]:
     match result:
         case ExistingBrowserLaunchResult():
             return Text("ready", style="bold green"), Text(f"existing {result.owner} · PID {result.process_id}")
-        case DetachedBrowserLaunchResult():
-            runtime = f"detached · PID {result.process_id}"
+        case NewBrowserLaunchResult():
+            runtime = f"{'detached' if result.windows is None else result.windows.multiplexer} · PID {result.process_id}"
             if result.relay_process_id is not None:
                 runtime = f"{runtime} · relay PID {result.relay_process_id}"
             return Text("launched", style="bold green"), Text(runtime)
-        case TmuxBrowserLaunchResult():
-            return Text("launched", style="bold green"), Text(f"tmux · {result.tmux.browser_window_name}")

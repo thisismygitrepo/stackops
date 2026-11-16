@@ -12,18 +12,19 @@ from stackops.scripts.python.helpers.helpers_agents import (
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import (
     BrowserLaunchCloseResult,
+    ClosedBrowserLaunch,
     NamedProfileBrowserLaunches,
     SavedProfileBrowserLaunches,
     SingleBrowserLaunch,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LAN, BrowserName, ProfileBrowserName
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import BrowserLaunchResult, DetachedBrowserLaunchResult
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LAN, BrowserName, BrowserRuntime, ProfileBrowserName
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import BrowserLaunchResult, NewBrowserLaunchResult
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profiles import BrowserProfileDeclutterResult, BrowserProfileReplicationResult
 from stackops.utils.network.address import InterfaceIPv4Address
 from stackops.utils.network import address
 
 
-type LaunchCall = tuple[BrowserName, int, str | None, bool, bool, bool]
+type LaunchCall = tuple[BrowserName, int, str | None, bool, bool, BrowserRuntime]
 
 
 def test_launch_browser_lan_selects_address_before_launch_and_renders_it(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -35,9 +36,9 @@ def test_launch_browser_lan_selects_address_before_launch_and_renders_it(monkeyp
         selector_preferences.append(prefer_vpn)
         return selected_address
 
-    def launch(*, browser: BrowserName, port: int, profile_name: str | None, temporary: bool, lan: bool, detached: bool) -> BrowserLaunchResult:
-        launch_calls.append((browser, port, profile_name, temporary, lan, detached))
-        return DetachedBrowserLaunchResult(
+    def launch(*, browser: BrowserName, port: int, profile_name: str | None, temporary: bool, lan: bool, runtime: BrowserRuntime) -> BrowserLaunchResult:
+        launch_calls.append((browser, port, profile_name, temporary, lan, runtime))
+        return NewBrowserLaunchResult(
             browser=browser,
             browser_path=Path("C:/Program Files/Google/Chrome/Application/chrome.exe"),
             command=("chrome.exe",),
@@ -50,18 +51,19 @@ def test_launch_browser_lan_selects_address_before_launch_and_renders_it(monkeyp
             profile_path=Path("C:/Users/eng_a/data/browsers-profiles/chrome/p1"),
             process_id=30852,
             relay_process_id=17176,
+            windows=None,
         )
 
     monkeypatch.setattr(address, "select_lan_interface_ipv4", select_address)
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
     result = CliRunner().invoke(
-        agents_browser.get_app(), ["launch", "--port", "9000", "--detached", "--lan", "--profile", "p1", "-t"], terminal_width=140
+        agents_browser.get_app(), ["launch", "--port", "9000", "--runtime", "detached", "--lan", "--profile", "p1", "-t"], terminal_width=140
     )
 
     assert result.exit_code == 0, result.output
     assert selector_preferences == [False]
-    assert launch_calls == [("chrome", 9000, "p1", True, True, True)]
+    assert launch_calls == [("chrome", 9000, "p1", True, True, "detached")]
     assert "Chrome launched" in result.output
     assert "http://10.0.26.200:9000" in result.output
     assert "Ethernet" in result.output
@@ -75,8 +77,8 @@ def test_launch_browser_lan_exits_before_launch_when_address_selection_fails(mon
     def select_address(prefer_vpn: bool) -> None:
         selector_preferences.append(prefer_vpn)
 
-    def launch(*, browser: BrowserName, port: int, profile_name: str | None, temporary: bool, lan: bool, detached: bool) -> BrowserLaunchResult:
-        launch_calls.append((browser, port, profile_name, temporary, lan, detached))
+    def launch(*, browser: BrowserName, port: int, profile_name: str | None, temporary: bool, lan: bool, runtime: BrowserRuntime) -> BrowserLaunchResult:
+        launch_calls.append((browser, port, profile_name, temporary, lan, runtime))
         raise AssertionError("Browser launch must not run without a selected LAN address")
 
     monkeypatch.setattr(address, "select_lan_interface_ipv4", select_address)
@@ -98,10 +100,10 @@ def test_batch_launch_launches_every_saved_profile_on_assigned_ports(monkeypatch
     chrome_root.joinpath("README.txt").write_text("not a profile", encoding="utf-8")
     launch_calls: list[LaunchCall] = []
 
-    def launch(*, browser: BrowserName, port: int, profile_name: str | None, temporary: bool, lan: bool, detached: bool) -> BrowserLaunchResult:
-        launch_calls.append((browser, port, profile_name, temporary, lan, detached))
+    def launch(*, browser: BrowserName, port: int, profile_name: str | None, temporary: bool, lan: bool, runtime: BrowserRuntime) -> BrowserLaunchResult:
+        launch_calls.append((browser, port, profile_name, temporary, lan, runtime))
         assert profile_name is not None
-        return DetachedBrowserLaunchResult(
+        return NewBrowserLaunchResult(
             browser=browser,
             browser_path=Path("C:/Program Files/Google/Chrome/Application/chrome.exe"),
             command=("chrome.exe",),
@@ -114,20 +116,21 @@ def test_batch_launch_launches_every_saved_profile_on_assigned_ports(monkeypatch
             profile_path=chrome_root.joinpath(profile_name),
             process_id=1000 + port,
             relay_process_id=None,
+            windows=None,
         )
 
     monkeypatch.setattr(agents_browser_profile_listing, "BROWSER_PROFILES_ROOT", profiles_root)
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
     result = CliRunner().invoke(
-        agents_browser.get_app(), ["batch-launch", "--browser", "chrome", "--port-start", "61000", "--detached"], terminal_width=180
+        agents_browser.get_app(), ["batch-launch", "--browser", "chrome", "--port-start", "61000", "--runtime", "detached"], terminal_width=180
     )
 
     assert result.exit_code == 0, result.output
     assert launch_calls == [
-        ("chrome", 61001, "p1", False, False, True),
-        ("chrome", 61002, "p2", False, False, True),
-        ("chrome", 61003, "base", False, False, True),
+        ("chrome", 61001, "p1", False, False, "detached"),
+        ("chrome", 61002, "p2", False, False, "detached"),
+        ("chrome", 61003, "base", False, False, "detached"),
     ]
     assert "Chrome profiles ready · 3 endpoint(s)" in result.output
     assert "p1" in result.output
@@ -179,10 +182,10 @@ def test_batch_launch_caps_requested_count_to_available_profiles(monkeypatch: py
     firefox_root.joinpath("p2").mkdir()
     launch_calls: list[LaunchCall] = []
 
-    def launch(*, browser: BrowserName, port: int, profile_name: str | None, temporary: bool, lan: bool, detached: bool) -> BrowserLaunchResult:
-        launch_calls.append((browser, port, profile_name, temporary, lan, detached))
+    def launch(*, browser: BrowserName, port: int, profile_name: str | None, temporary: bool, lan: bool, runtime: BrowserRuntime) -> BrowserLaunchResult:
+        launch_calls.append((browser, port, profile_name, temporary, lan, runtime))
         assert profile_name is not None
-        return DetachedBrowserLaunchResult(
+        return NewBrowserLaunchResult(
             browser=browser,
             browser_path=Path("C:/Program Files/Mozilla Firefox/firefox.exe"),
             command=("firefox.exe",),
@@ -195,22 +198,23 @@ def test_batch_launch_caps_requested_count_to_available_profiles(monkeypatch: py
             profile_path=firefox_root.joinpath(profile_name),
             process_id=port,
             relay_process_id=None,
+            windows=None,
         )
 
     monkeypatch.setattr(agents_browser_profile_listing, "BROWSER_PROFILES_ROOT", profiles_root)
     monkeypatch.setattr(agents_browser_launch, "launch_browser", launch)
 
-    limited_result = CliRunner().invoke(agents_browser.get_app(), ["L", "--browser", "firefox", "-n", "1", "--detached"])
+    limited_result = CliRunner().invoke(agents_browser.get_app(), ["L", "--browser", "firefox", "-n", "1", "--runtime", "detached"])
 
     assert limited_result.exit_code == 0, limited_result.output
-    assert launch_calls == [("firefox", 60001, "p1", False, False, True)]
+    assert launch_calls == [("firefox", 60001, "p1", False, False, "detached")]
     assert "Firefox profiles ready · 1 endpoint(s)" in limited_result.output
 
     launch_calls.clear()
-    available_result = CliRunner().invoke(agents_browser.get_app(), ["L", "--browser", "firefox", "-n", "5", "--detached"])
+    available_result = CliRunner().invoke(agents_browser.get_app(), ["L", "--browser", "firefox", "-n", "5", "--runtime", "detached"])
 
     assert available_result.exit_code == 0, available_result.output
-    assert launch_calls == [("firefox", 60001, "p1", False, False, True), ("firefox", 60002, "p2", False, False, True)]
+    assert launch_calls == [("firefox", 60001, "p1", False, False, "detached"), ("firefox", 60002, "p2", False, False, "detached")]
     assert "Firefox profiles ready · 2 endpoint(s)" in available_result.output
 
 
@@ -227,7 +231,7 @@ def test_close_closes_the_tracked_launch_for_browser_and_port(monkeypatch: pytes
     def close(*, browser: BrowserName, port: int) -> BrowserLaunchCloseResult:
         close_calls.append((browser, port))
         return BrowserLaunchCloseResult(
-            scope=SingleBrowserLaunch(browser=browser, port=port), tmux_launch_ids=(f"{browser}-p1",), detached_launch_ids=()
+                scope=SingleBrowserLaunch(browser=browser, port=port), closed=(ClosedBrowserLaunch(launch_id=f"{browser}-p1", runtime="tmux"),)
         )
 
     monkeypatch.setattr(agents_browser_close, "close_browser_launch", close)
@@ -236,7 +240,7 @@ def test_close_closes_the_tracked_launch_for_browser_and_port(monkeypatch: pytes
 
     assert result.exit_code == 0, result.output
     assert close_calls == [("chrome", 9331)]
-    assert "Closed chrome launch on port 9331 (1 tmux, 0 detached)." in result.output
+    assert "Closed chrome launch on port 9331 (1 tmux)." in result.output
 
 
 def test_close_defaults_to_chrome_on_the_default_port_and_is_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -244,7 +248,7 @@ def test_close_defaults_to_chrome_on_the_default_port_and_is_idempotent(monkeypa
 
     def close(*, browser: BrowserName, port: int) -> BrowserLaunchCloseResult:
         close_calls.append((browser, port))
-        return BrowserLaunchCloseResult(scope=SingleBrowserLaunch(browser=browser, port=port), tmux_launch_ids=(), detached_launch_ids=())
+        return BrowserLaunchCloseResult(scope=SingleBrowserLaunch(browser=browser, port=port), closed=())
 
     monkeypatch.setattr(agents_browser_close, "close_browser_launch", close)
 
@@ -274,8 +278,11 @@ def test_close_accepts_comma_separated_profiles_and_closes_them(monkeypatch: pyt
         close_calls.append((browser, profile_names))
         return BrowserLaunchCloseResult(
             scope=NamedProfileBrowserLaunches(browser=browser, profile_names=profile_names),
-            tmux_launch_ids=("chrome-p1", "chrome-p2"),
-            detached_launch_ids=("chrome-p2-detached",),
+            closed=(
+                ClosedBrowserLaunch(launch_id="chrome-p1", runtime="tmux"),
+                ClosedBrowserLaunch(launch_id="chrome-p2", runtime="tuios"),
+                ClosedBrowserLaunch(launch_id="chrome-p2-detached", runtime="detached"),
+            ),
         )
 
     monkeypatch.setattr(agents_browser_close, "close_named_browser_profile_launches", close_named)
@@ -284,13 +291,13 @@ def test_close_accepts_comma_separated_profiles_and_closes_them(monkeypatch: pyt
 
     assert result.exit_code == 0, result.output
     assert close_calls == [("chrome", ("p1", "p2"))]
-    assert "Closed 3 chrome saved-profile launch(es) for p1, p2 (2 tmux, 1 detached)." in result.output
+    assert "Closed 3 chrome saved-profile launch(es) for p1, p2 (1 detached, 1 tmux, 1 tuios)." in result.output
 
 
 def test_close_is_idempotent_for_profiles_with_no_active_launches(monkeypatch: pytest.MonkeyPatch) -> None:
     def close_named(*, browser: BrowserName, profile_names: tuple[str, ...]) -> BrowserLaunchCloseResult:
         return BrowserLaunchCloseResult(
-            scope=NamedProfileBrowserLaunches(browser=browser, profile_names=profile_names), tmux_launch_ids=(), detached_launch_ids=()
+            scope=NamedProfileBrowserLaunches(browser=browser, profile_names=profile_names), closed=()
         )
 
     monkeypatch.setattr(agents_browser_close, "close_named_browser_profile_launches", close_named)
@@ -324,8 +331,11 @@ def test_batch_close_closes_selected_browser_launches_across_modes(monkeypatch: 
         close_calls.append(browser)
         return BrowserLaunchCloseResult(
             scope=SavedProfileBrowserLaunches(browser=browser),
-            tmux_launch_ids=("brave-profile-p1", "brave-profile-p2"),
-            detached_launch_ids=("brave-profile-p3",),
+            closed=(
+                ClosedBrowserLaunch(launch_id="brave-profile-p1", runtime="tmux"),
+                ClosedBrowserLaunch(launch_id="brave-profile-p2", runtime="tmux"),
+                ClosedBrowserLaunch(launch_id="brave-profile-p3", runtime="detached"),
+            ),
         )
 
     monkeypatch.setattr(agents_browser_close, "close_all_browser_profile_launches", close)
@@ -334,12 +344,12 @@ def test_batch_close_closes_selected_browser_launches_across_modes(monkeypatch: 
 
     assert result.exit_code == 0, result.output
     assert close_calls == ["brave"]
-    assert "Closed 3 Brave saved-profile launch(es) (2 tmux, 1 detached)." in result.output
+    assert "Closed 3 Brave saved-profile launch(es) (1 detached, 2 tmux)." in result.output
 
 
 def test_batch_close_is_idempotent_when_no_launches_are_active(monkeypatch: pytest.MonkeyPatch) -> None:
     def close(*, browser: ProfileBrowserName) -> BrowserLaunchCloseResult:
-        return BrowserLaunchCloseResult(scope=SavedProfileBrowserLaunches(browser=browser), tmux_launch_ids=(), detached_launch_ids=())
+        return BrowserLaunchCloseResult(scope=SavedProfileBrowserLaunches(browser=browser), closed=())
 
     monkeypatch.setattr(agents_browser_close, "close_all_browser_profile_launches", close)
 
