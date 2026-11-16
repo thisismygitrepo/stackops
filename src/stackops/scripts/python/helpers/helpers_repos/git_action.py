@@ -94,6 +94,7 @@ def _push(repo: Repo, context: OperationContext, sync: RepoSync, pwd: str | None
             message=None,
             on_conflict="stop-on-conflict",
             ignore_gitignore=sync["ignoreGitignore"],
+            create_remote=False,
         )
         return _result(context, success=True, message=f"""Pushed to encrypted storage {destination}""", is_git_repo=True, had_changes=False)
     if not repo.remotes:

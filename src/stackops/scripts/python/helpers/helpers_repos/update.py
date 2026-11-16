@@ -127,6 +127,7 @@ def update_repository(repo: git.Repo, auto_uv_sync: bool, allow_password_prompt:
                 message=None,
                 on_conflict="stop-on-conflict",
                 ignore_gitignore=sync["ignoreGitignore"],
+                create_remote=False,
             )
             result["remotes_processed"].append(f"""{sync['cloud']}:{sync['remotePath']}""")
             result["commit_after"] = repo.head.commit.hexsha if repo.head.is_valid() else ""

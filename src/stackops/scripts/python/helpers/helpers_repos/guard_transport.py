@@ -22,6 +22,7 @@ def run_guard_repository(
     message: str | None,
     on_conflict: ConflictResolutionAction,
     ignore_gitignore: bool,
+    create_remote: bool,
 ) -> str:
     from git.exc import NoSuchPathError
     from git.repo import Repo
@@ -79,8 +80,14 @@ def run_guard_repository(
             if not is_missing_remote_path_error(error):
                 raise
             delete_path(remote_root.parent, verbose=False)
+            missing_remote = f"{cloud}:{remote_path.as_posix()}"
             if local_repo is None or operation not in {"sync", "push"}:
-                raise FileNotFoundError(f"No remote archive exists at {cloud}:{remote_path.as_posix()}") from error
+                raise FileNotFoundError(f"No remote archive exists at {missing_remote}") from error
+            if not create_remote:
+                raise FileNotFoundError(
+                    f"""No remote archive exists at {missing_remote}. Nothing was uploaded. """
+                    """If you really want to create it from the local repository, re-run with --create-remote."""
+                ) from error
             if operation == "sync":
                 commit_local_changes(repo=local_repo, message=message if message is not None and message.strip() else "sync", console=console)
             upload_repo_archive(repo_root=repo_root, cloud=cloud, remote_path=remote_path, pwd=pwd, ignore_gitignore=ignore_gitignore)

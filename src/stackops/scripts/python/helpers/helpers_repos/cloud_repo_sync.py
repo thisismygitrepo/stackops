@@ -49,6 +49,14 @@ def main(
         typer.Option("--gitignore", "-I", help="Include or respect Git-ignored files; omit to keep the saved archive setting."),
     ] = None,
     specs_path: Annotated[str | None, typer.Option("--specs-path", "-s", help="Repository specification containing saved guard settings.")] = None,
+    create_remote: Annotated[
+        bool,
+        typer.Option(
+            "--create-remote",
+            "-R",
+            help="Allow creating the remote archive from the local repository when none exists yet; otherwise a missing remote is an error.",
+        ),
+    ] = False,
 ) -> str | None:
     from git.exc import InvalidGitRepositoryError, NoSuchPathError
     from git.repo import Repo
@@ -120,6 +128,7 @@ def main(
             message=message,
             on_conflict=resolve_conflict_action(on_conflict=on_conflict),
             ignore_gitignore=include_ignored,
+            create_remote=create_remote,
         )
     except GpgCommandError as error:
         _exit_after_gpg_error(error=error)

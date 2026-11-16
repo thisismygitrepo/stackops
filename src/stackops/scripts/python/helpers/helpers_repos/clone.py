@@ -75,7 +75,7 @@ def clone_single_repo(
             run_guard_repository(
                 repo_root=destination, cloud=sync["cloud"], remote_path=Path(sync["remotePath"]),
                 operation="pull" if checkout_branch_flag or checkout_commit_flag else "sync", pwd=pwd, message=None,
-                on_conflict="stop-on-conflict", ignore_gitignore=sync["ignoreGitignore"],
+                on_conflict="stop-on-conflict", ignore_gitignore=sync["ignoreGitignore"], create_remote=False,
             )
         status = "synced"
         repo = GitRepo(destination)

@@ -132,11 +132,18 @@ Key options from current help:
 | `--message`, `-m` | Commit message for local changes |
 | `--on-conflict`, `-c` | Conflict strategy such as `ask`, `push-local-merge`, `merge-accept-remote`, `merge-accept-local`, `overwrite-local`, `stop-on-conflict`, or `remove-rclone-conflict` |
 | `--password` | Password for encryption and decryption |
+| `--create-remote`, `-R` | Allow creating the remote archive from the local repository when none exists. Without it, a missing remote is an error and nothing is uploaded |
 
 Example:
 
 ```bash
 devops repos guard ~/code/private-repo --cloud myremote --message "sync before travel"
+```
+
+The first sync of a repository has no remote archive yet, so it fails until you create one deliberately:
+
+```bash
+devops repos guard ~/code/private-repo --cloud myremote --create-remote
 ```
 
 `merge-accept-remote` and `merge-accept-local` keep the merge in progress, then resolve only the conflicted files by accepting the remote (`--theirs`) or local (`--ours`) side before finalizing the merge commit.
