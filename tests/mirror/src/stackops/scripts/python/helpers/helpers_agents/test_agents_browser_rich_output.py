@@ -4,17 +4,16 @@ from pathlib import Path
 from rich.console import Console
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import (
-    DetachedBrowserLaunchResult,
+    BrowserWindowHandle,
     ExistingBrowserLaunchResult,
-    TmuxBrowserLaunchResult,
+    NewBrowserLaunchResult,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models import BrowserTmuxLaunch
 from stackops.utils.network.address import InterfaceIPv4Address
 
 
 def test_detached_lan_summary_shows_selected_endpoint_relay_and_warning() -> None:
-    result = DetachedBrowserLaunchResult(
+    result = NewBrowserLaunchResult(
         browser="chrome",
         browser_path=Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
         command=("chrome.exe", "--remote-debugging-port=57632"),
@@ -27,6 +26,7 @@ def test_detached_lan_summary_shows_selected_endpoint_relay_and_warning() -> Non
         profile_path=Path(r"C:\Users\eng_a\data\browsers-profiles\chrome\p1"),
         process_id=30852,
         relay_process_id=17176,
+        windows=None,
     )
     lan_address = InterfaceIPv4Address(interface="Ethernet", ipv4_address="10.0.26.200", mac_address="00:11:22:33:44:55")
     output = StringIO()
@@ -46,8 +46,8 @@ def test_detached_lan_summary_shows_selected_endpoint_relay_and_warning() -> Non
     assert "Use this only on a trusted network." in rendered_output
 
 
-def test_non_lan_tmux_summary_shows_session_windows_and_attach_command() -> None:
-    result = TmuxBrowserLaunchResult(
+def test_non_lan_tmux_summary_shows_session_and_attach_command() -> None:
+    result = NewBrowserLaunchResult(
         browser="chrome",
         browser_path=Path("/usr/bin/google-chrome"),
         command=("/usr/bin/google-chrome", "--remote-debugging-port=9331"),
@@ -58,11 +58,13 @@ def test_non_lan_tmux_summary_shows_session_windows_and_attach_command() -> None
         port=9331,
         browser_port=9331,
         profile_path=Path("/tmp/stackops-browser-profiles/chrome-9331"),
-        tmux=BrowserTmuxLaunch(
+        process_id=4242,
+        relay_process_id=None,
+        windows=BrowserWindowHandle(
+            multiplexer="tmux",
             session_name="stackops-browser",
-            browser_window_name="chrome-9331",
-            relay_window_name=None,
-            attach_command=("tmux", "attach-session", "-t", "stackops-browser"),
+            targets=("@3",),
+            attach_script="tmux attach-session -t stackops-browser:@3",
         ),
     )
     output = StringIO()
@@ -72,14 +74,12 @@ def test_non_lan_tmux_summary_shows_session_windows_and_attach_command() -> None
 
     rendered_output = output.getvalue()
     assert "✓ Chrome launched" in rendered_output
-    assert "tmux · session stackops-browser" in rendered_output
-    assert "Browser window" in rendered_output
-    assert "chrome-9331" in rendered_output
-    assert "tmux attach-session -t stackops-browser" in rendered_output
+    assert "PID 4242 · tmux · session stackops-browser" in rendered_output
+    assert "tmux attach-session -t stackops-browser:@3" in rendered_output
     assert "CDP" in rendered_output
     assert "127.0.0.1:9331" in rendered_output
     assert "CDP bind" not in rendered_output
-    assert "Relay window" not in rendered_output
+    assert "Relay" not in rendered_output
     assert "LAN exposure" not in rendered_output
 
 
@@ -117,7 +117,7 @@ def test_non_lan_existing_summary_shows_owner_and_opened_page_action() -> None:
 def test_batch_lan_summary_shows_one_row_per_profile_and_shared_interface_warning() -> None:
     lan_address = InterfaceIPv4Address(interface="Ethernet", ipv4_address="10.0.26.200", mac_address=None)
     results = tuple(
-        DetachedBrowserLaunchResult(
+        NewBrowserLaunchResult(
             browser="chrome",
             browser_path=Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
             command=("chrome.exe",),
@@ -130,6 +130,7 @@ def test_batch_lan_summary_shows_one_row_per_profile_and_shared_interface_warnin
             profile_path=Path(rf"C:\Users\eng_a\data\browsers-profiles\chrome\p{index}"),
             process_id=30000 + index,
             relay_process_id=31000 + index,
+            windows=None,
         )
         for index, port in enumerate((60001, 60002), start=1)
     )

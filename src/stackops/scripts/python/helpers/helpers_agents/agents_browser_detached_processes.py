@@ -19,7 +19,7 @@ def process_created_at(*, process_id: int, process_label: str) -> float:
     try:
         return psutil.Process(process_id).create_time()
     except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as error:
-        raise RuntimeError(f"{process_label} process {process_id} exited before its detached launch could be recorded") from error
+        raise RuntimeError(f"{process_label} process {process_id} exited before its launch could be recorded") from error
 
 
 def find_browser_process_id(
@@ -33,6 +33,10 @@ def find_browser_process_id(
             return process_id
     except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
         pass
+    return scan_browser_process_id(browser=browser, browser_port=browser_port, profile_path=profile_path)
+
+
+def scan_browser_process_id(*, browser: BrowserName, browser_port: int, profile_path: Path | None) -> int | None:
     for process in psutil.process_iter():
         try:
             if _browser_process_matches(
@@ -52,7 +56,7 @@ def find_running_browser_processes(*, browser: BrowserName, profile_path: Path) 
             if not _browser_process_matches_profile(process=process, browser=browser, profile_path=profile_path, command=command):
                 continue
             option_name = "--remote-debugging-port" if browser != "safari" else "--port"
-            port_value = _option_value(command=command, name=option_name)
+            port_value = command_option_value(command=command, name=option_name)
             if port_value is not None:
                 running_processes.append(RunningBrowserProcess(process_id=process.pid, browser_port=int(port_value)))
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, ValueError):
@@ -61,13 +65,11 @@ def find_running_browser_processes(*, browser: BrowserName, profile_path: Path) 
 
 
 def find_browser_process_ids(*, browser: BrowserName) -> tuple[int, ...]:
-    launcher = get_browser_launcher(browser=browser)
-    executable_names = {_normalize_executable_name(executable_name=path.name) for path in launcher.known_paths(system_name=platform.system())}
-    executable_names.update(_normalize_executable_name(executable_name=command_name) for command_name in launcher.command_names)
+    executable_names = browser_executable_names(browser=browser)
     process_ids: list[int] = []
     for process in psutil.process_iter():
         try:
-            process_name = _normalize_executable_name(executable_name=process.name())
+            process_name = normalize_executable_name(executable_name=process.name())
             if _matches_browser_executable_name(process_name=process_name, executable_names=executable_names):
                 process_ids.append(process.pid)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
@@ -87,8 +89,15 @@ def find_browser_profile_process_ids(*, browser: BrowserName, profile_path: Path
     return tuple(sorted(process_ids))
 
 
-def _normalize_executable_name(*, executable_name: str) -> str:
+def normalize_executable_name(*, executable_name: str) -> str:
     return Path(executable_name).name.casefold().removesuffix(".exe")
+
+
+def browser_executable_names(*, browser: BrowserName) -> set[str]:
+    launcher = get_browser_launcher(browser=browser)
+    executable_names = {normalize_executable_name(executable_name=path.name) for path in launcher.known_paths(system_name=platform.system())}
+    executable_names.update(normalize_executable_name(executable_name=command_name) for command_name in launcher.command_names)
+    return executable_names
 
 
 def _matches_browser_executable_name(*, process_name: str, executable_names: set[str]) -> bool:
@@ -159,16 +168,13 @@ def _browser_process_matches(
     if not _browser_process_matches_profile(process=process, browser=browser, profile_path=profile_path, command=command):
         return False
     option_name = "--port" if browser == "safari" else "--remote-debugging-port"
-    return _has_option(command=command, name=option_name, value=str(browser_port))
+    return command_has_option(command=command, name=option_name, value=str(browser_port))
 
 
 def _browser_process_matches_profile(*, process: psutil.Process, browser: BrowserName, profile_path: Path | None, command: tuple[str, ...]) -> bool:
     if not process.is_running() or process.status() == psutil.STATUS_ZOMBIE:
         return False
-    launcher = get_browser_launcher(browser=browser)
-    executable_names = {_normalize_executable_name(executable_name=path.name) for path in launcher.known_paths(system_name=platform.system())}
-    executable_names.update(_normalize_executable_name(executable_name=command_name) for command_name in launcher.command_names)
-    if not command or _normalize_executable_name(executable_name=command[0]) not in executable_names:
+    if not command or normalize_executable_name(executable_name=command[0]) not in browser_executable_names(browser=browser):
         return False
     if any(argument.startswith("--type=") for argument in command):
         return False
@@ -187,13 +193,13 @@ def _browser_process_matches_profile(*, process: psutil.Process, browser: Browse
             assert_never(browser)
 
 
-def _has_option(*, command: tuple[str, ...], name: str, value: str) -> bool:
+def command_has_option(*, command: tuple[str, ...], name: str, value: str) -> bool:
     if f"{name}={value}" in command:
         return True
     return any(argument == name and index + 1 < len(command) and command[index + 1] == value for index, argument in enumerate(command))
 
 
-def _option_value(*, command: tuple[str, ...], name: str) -> str | None:
+def command_option_value(*, command: tuple[str, ...], name: str) -> str | None:
     option_prefix = f"{name}="
     for index, argument in enumerate(command):
         if argument.startswith(option_prefix):
@@ -204,7 +210,7 @@ def _option_value(*, command: tuple[str, ...], name: str) -> str | None:
 
 
 def _profile_option_matches(*, command: tuple[str, ...], name: str, profile_path: Path) -> bool:
-    option_value = _option_value(command=command, name=name)
+    option_value = command_option_value(command=command, name=name)
     if option_value is None:
         return False
     try:

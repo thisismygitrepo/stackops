@@ -8,6 +8,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BROWSER_TECH_NAMES,
     BROWSER_TECH_NAMES_WITHOUT_AGENT,
     BrowserName,
+    BrowserRuntimeOption,
     BrowserTechName,
     BrowserTechSelection,
     DEFAULT_BROWSER_PORT,
@@ -15,6 +16,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     ProfileBrowserName,
 )
 from stackops.scripts.python.helpers.helpers_agents.agents_skill_types import SKILL_INSTALL_COMMAND_BACKEND
+from stackops.utils.default_multiplexer import DEFAULT_SESSION_MULTIPLEXER_HELP
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 if TYPE_CHECKING:
@@ -114,19 +116,32 @@ def launch_browser(
     ] = None,
     tmp: Annotated[bool, typer.Option("--tmp", "-t", help="Copy --profile to <profile>/.tmp/<random-alias> and launch the copy.")] = False,
     lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoints on 0.0.0.0 through a localhost relay.")] = False,
-    detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
-    attach: Annotated[bool, typer.Option("--attach", "-a", help="Attach to the launched tmux browser window.")] = False,
+    runtime: Annotated[
+        BrowserRuntimeOption | None,
+        typer.Option(
+            "--runtime",
+            "-m",
+            help=f"Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}",
+            case_sensitive=False,
+        ),
+    ] = None,
+    attach: Annotated[bool, typer.Option("--attach", "-a", help="Attach to the launched browser window; not available with --runtime detached.")] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print browser endpoint and launch records as JSON.")] = False,
 ) -> None:
     """Launch browser automation endpoints with isolated profiles when supported."""
     from rich.console import Console
 
-    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import resolve_browser_runtime
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import NewBrowserLaunchResult
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary
 
+    try:
+        resolved_runtime = resolve_browser_runtime(runtime=runtime)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
     if attach:
-        if detached or json_output:
-            raise typer.BadParameter("--attach cannot be combined with --detached or --json")
+        if resolved_runtime == "detached" or json_output:
+            raise typer.BadParameter("--attach cannot be combined with --runtime detached or --json")
         require_interactive("Attaching to a browser window")
     profile_names: tuple[str | None, ...] = (None,) if profile is None else _parse_profile_names(raw_profile=profile)
     lan_address: InterfaceIPv4Address | None = None
@@ -140,7 +155,7 @@ def launch_browser(
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoint.")
         results = tuple(
-            launch_browser_impl(browser=browser, port=port + offset, profile_name=profile_name, temporary=tmp, lan=lan, detached=detached)
+            launch_browser_impl(browser=browser, port=port + offset, profile_name=profile_name, temporary=tmp, lan=lan, runtime=resolved_runtime)
             for offset, profile_name in enumerate(profile_names)
         )
     except ValueError as error:
@@ -159,14 +174,14 @@ def launch_browser(
         console.print(build_browser_launch_summary(result=results[0], lan_address=lan_address))
     else:
         console.print(build_browser_launches_summary(results=results, lan_address=lan_address))
-    first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)
-    if attach and first_tmux_result is not None:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window
+    first_windows = next((result.windows for result in results if isinstance(result, NewBrowserLaunchResult) and result.windows is not None), None)
+    if attach and first_windows is not None:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import attach_browser_windows
 
         try:
-            attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)
+            attach_browser_windows(handle=first_windows)
         except RuntimeError as error:
-            typer.echo(f"Browser endpoint is running, but tmux attachment failed: {error}", err=True)
+            typer.echo(f"Browser endpoint is running, but attachment failed: {error}", err=True)
             raise typer.Exit(code=1) from error
 
 
@@ -191,7 +206,11 @@ def close_browser(
     """Close one tracked browser endpoint by --port or its saved profiles by --profile."""
     profile_names: tuple[str, ...] | None = None
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import close_browser_launch, close_named_browser_profile_launches
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import (
+            close_browser_launch,
+            close_named_browser_profile_launches,
+            describe_closed_runtimes,
+        )
 
         if profile is not None:
             if port is not None:
@@ -215,19 +234,18 @@ def close_browser(
         return
     if profile_names is not None:
         profile_label = ", ".join(profile_names)
-        if result.closed_count == 0:
+        if not result.closed:
             typer.echo(f"No active {browser} saved-profile launches found for: {profile_label}.")
             return
         typer.echo(
-            f"Closed {result.closed_count} {browser} saved-profile launch(es) for {profile_label} "
-            f"({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached)."
+            f"Closed {len(result.closed)} {browser} saved-profile launch(es) for {profile_label} ({describe_closed_runtimes(result=result)})."
         )
         return
     resolved_port = DEFAULT_BROWSER_PORT if port is None else port
-    if result.closed_count == 0:
+    if not result.closed:
         typer.echo(f"No active {browser} launch found on port {resolved_port}.")
         return
-    typer.echo(f"Closed {browser} launch on port {resolved_port} ({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached).")
+    typer.echo(f"Closed {browser} launch on port {resolved_port} ({describe_closed_runtimes(result=result)}).")
 
 
 def batch_launch(
@@ -242,19 +260,34 @@ def batch_launch(
         int | None, typer.Option("--max-profiles", "--max", "-n", min=1, help="Maximum profiles to launch; fewer are used when fewer are available.")
     ] = None,
     lan: Annotated[bool, typer.Option("--lan", "-l", help="Expose endpoints on 0.0.0.0 through localhost relays.")] = False,
-    detached: Annotated[bool, typer.Option("--detached", "-d", help="Launch as background processes instead of tmux windows.")] = False,
-    attach: Annotated[bool, typer.Option("--attach", "-a", help="Attach to the first launched tmux browser window.")] = False,
+    runtime: Annotated[
+        BrowserRuntimeOption | None,
+        typer.Option(
+            "--runtime",
+            "-m",
+            help=f"Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}",
+            case_sensitive=False,
+        ),
+    ] = None,
+    attach: Annotated[
+        bool, typer.Option("--attach", "-a", help="Attach to the first launched browser window; not available with --runtime detached.")
+    ] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print browser endpoint and launch records as JSON.")] = False,
 ) -> None:
     """Launch every saved profile for one browser on its assigned port."""
     from rich.console import Console
 
-    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import resolve_browser_runtime
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import NewBrowserLaunchResult
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launches_summary
 
+    try:
+        resolved_runtime = resolve_browser_runtime(runtime=runtime)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
     if attach:
-        if detached or json_output:
-            raise typer.BadParameter("--attach cannot be combined with --detached or --json")
+        if resolved_runtime == "detached" or json_output:
+            raise typer.BadParameter("--attach cannot be combined with --runtime detached or --json")
         require_interactive("Attaching to a browser window")
     lan_address: InterfaceIPv4Address | None = None
     try:
@@ -271,7 +304,7 @@ def batch_launch(
             if lan_address is None:
                 raise RuntimeError("Could not determine a local LAN IPv4 address for the browser endpoints.")
         results = tuple(
-            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, temporary=False, lan=lan, detached=detached)
+            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, temporary=False, lan=lan, runtime=resolved_runtime)
             for spec in specs
         )
     except ValueError as error:
@@ -286,14 +319,14 @@ def batch_launch(
         emit_agent_json([browser_launch_receipt(result=result) for result in results])
         return
     Console().print(build_browser_launches_summary(results=results, lan_address=lan_address))
-    first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)
-    if attach and first_tmux_result is not None:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window
+    first_windows = next((result.windows for result in results if isinstance(result, NewBrowserLaunchResult) and result.windows is not None), None)
+    if attach and first_windows is not None:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import attach_browser_windows
 
         try:
-            attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)
+            attach_browser_windows(handle=first_windows)
         except RuntimeError as error:
-            typer.echo(f"Browser endpoints are running, but tmux attachment failed: {error}", err=True)
+            typer.echo(f"Browser endpoints are running, but attachment failed: {error}", err=True)
             raise typer.Exit(code=1) from error
 
 
@@ -308,7 +341,7 @@ def batch_close(
 ) -> None:
     """Close tracked saved-profile launches for one browser."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import close_all_browser_profile_launches
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import close_all_browser_profile_launches, describe_closed_runtimes
 
         result = close_all_browser_profile_launches(browser=browser)
     except RuntimeError as error:
@@ -319,34 +352,43 @@ def batch_close(
         emit_agent_json(result)
         return
     browser_label = browser.title()
-    if result.closed_count == 0:
+    if not result.closed:
         typer.echo(f"No active {browser_label} saved-profile launches found.")
         return
-    typer.echo(
-        f"Closed {result.closed_count} {browser_label} saved-profile launch(es) "
-        f"({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached)."
-    )
+    typer.echo(f"Closed {len(result.closed)} {browser_label} saved-profile launch(es) ({describe_closed_runtimes(result=result)}).")
 
 
 def status(
-    detached: Annotated[
-        bool, typer.Option("--detached", "-d", help="Show browser processes launched with --detached instead of tmux windows.")
+    all_browsers: Annotated[
+        bool, typer.Option("--all", "-a", help="Show every open browser, whether StackOps launched it or not, instead of tracked launches.")
     ] = False,
+    browser: Annotated[
+        BrowserName | None,
+        typer.Option("--browser", "-b", help="Only show this browser. Omit to show all browsers.", case_sensitive=False, show_choices=True),
+    ] = None,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print collected browser status records as JSON.")] = False,
 ) -> None:
-    """Show active StackOps browser launches."""
+    """Show StackOps browser launches across tmux, tuios, zellij and detached runtimes."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import show_detached_browser_status, show_tmux_browser_status
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_records import collect_browser_launch_status
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import (
+            collect_open_browser_status,
+            show_browser_launch_status,
+            show_open_browser_status,
+        )
 
-        if json_output:
-            from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_status import collect_detached_browser_status
-            from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import collect_browser_tmux_status
-
-            emit_agent_json(collect_detached_browser_status() if detached else collect_browser_tmux_status())
-        elif detached:
-            show_detached_browser_status()
+        if all_browsers:
+            rows = tuple(row for row in collect_open_browser_status() if browser is None or row.browser.browser == browser)
+            if json_output:
+                emit_agent_json(rows)
+            else:
+                show_open_browser_status(rows=rows)
         else:
-            show_tmux_browser_status()
+            statuses = tuple(status for status in collect_browser_launch_status() if browser is None or status.launch.browser == browser)
+            if json_output:
+                emit_agent_json(statuses)
+            else:
+                show_browser_launch_status(statuses=statuses)
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error

@@ -1,24 +1,22 @@
 from dataclasses import dataclass
 import os
 from pathlib import Path
-import shutil
 from typing import TypeAlias
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
-    BROWSER_DETACHED_LAUNCHES_ROOT,
     BROWSER_PROFILES_ROOT,
     TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME,
     BrowserName,
+    BrowserRuntime,
     ProfileBrowserName,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import (
-    terminate_browser_launch_process,
-    terminate_registered_process,
-)
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_status import DetachedBrowserLaunchRecord, read_detached_browser_launch
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_lock import browser_launch_lock
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import close_browser_tmux_windows, collect_browser_tmux_status
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models import BrowserTmuxPaneStatus
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_records import (
+    BrowserLaunchRecord,
+    list_browser_launch_record_paths,
+    read_browser_launch_record,
+)
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_lifecycle import retire_browser_launch
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,14 +40,15 @@ BrowserCloseScope: TypeAlias = SingleBrowserLaunch | SavedProfileBrowserLaunches
 
 
 @dataclass(frozen=True, slots=True)
+class ClosedBrowserLaunch:
+    launch_id: str
+    runtime: BrowserRuntime
+
+
+@dataclass(frozen=True, slots=True)
 class BrowserLaunchCloseResult:
     scope: BrowserCloseScope
-    tmux_launch_ids: tuple[str, ...]
-    detached_launch_ids: tuple[str, ...]
-
-    @property
-    def closed_count(self) -> int:
-        return len(self.tmux_launch_ids) + len(self.detached_launch_ids)
+    closed: tuple[ClosedBrowserLaunch, ...]
 
 
 def close_browser_launch(*, browser: BrowserName, port: int) -> BrowserLaunchCloseResult:
@@ -69,23 +68,34 @@ def close_named_browser_profile_launches(*, browser: ProfileBrowserName, profile
     return _close_tracked_browser_launches(scope=NamedProfileBrowserLaunches(browser=browser, profile_names=profile_names))
 
 
+def describe_closed_runtimes(*, result: BrowserLaunchCloseResult) -> str:
+    runtimes = [launch.runtime for launch in result.closed]
+    return ", ".join(f"{runtimes.count(runtime)} {runtime}" for runtime in sorted(set(runtimes)))
+
+
 def _close_tracked_browser_launches(*, scope: BrowserCloseScope) -> BrowserLaunchCloseResult:
+    closed: list[ClosedBrowserLaunch] = []
     errors: list[str] = []
-    tmux_launch_ids: tuple[str, ...] = ()
-    detached_launch_ids: tuple[str, ...] = ()
     with browser_launch_lock():
         try:
-            tmux_launch_ids = _close_tmux_browser_launches(scope=scope)
+            record_paths = list_browser_launch_record_paths()
         except RuntimeError as error:
             errors.append(str(error))
-        try:
-            detached_launch_ids = _close_detached_browser_launches(scope=scope)
-        except RuntimeError as error:
-            errors.append(str(error))
+            record_paths = ()
+        for record_path in record_paths:
+            try:
+                launch = read_browser_launch_record(record_path=record_path)
+                if not _launch_in_scope(launch=launch, scope=scope):
+                    continue
+                retire_browser_launch(launch=launch, record_path=record_path)
+            except (OSError, RuntimeError) as error:
+                errors.append(f"{record_path}: {error}")
+                continue
+            closed.append(ClosedBrowserLaunch(launch_id=launch.launch_id, runtime="detached" if launch.windows is None else launch.windows.multiplexer))
     if errors:
         details = "\n".join(f"- {error}" for error in errors)
         raise RuntimeError(f"{_close_failure_headline(scope=scope)}\n{details}")
-    return BrowserLaunchCloseResult(scope=scope, tmux_launch_ids=tmux_launch_ids, detached_launch_ids=detached_launch_ids)
+    return BrowserLaunchCloseResult(scope=scope, closed=tuple(closed))
 
 
 def _close_failure_headline(*, scope: BrowserCloseScope) -> str:
@@ -98,60 +108,7 @@ def _close_failure_headline(*, scope: BrowserCloseScope) -> str:
             return f"Could not close every requested {browser} profile launch ({', '.join(profile_names)}):"
 
 
-def _close_tmux_browser_launches(*, scope: BrowserCloseScope) -> tuple[str, ...]:
-    if shutil.which("tmux") is None:
-        return ()
-    rows = collect_browser_tmux_status()
-    launch_ids = tuple(
-        sorted({row.metadata.launch_id for row in rows if row.metadata.role == "endpoint" and _tmux_endpoint_in_scope(row=row, scope=scope)})
-    )
-    matching_launch_ids = set(launch_ids)
-    window_ids = tuple(sorted({row.window_id for row in rows if row.metadata.launch_id in matching_launch_ids}))
-    close_browser_tmux_windows(window_ids=window_ids)
-    return launch_ids
-
-
-def _close_detached_browser_launches(*, scope: BrowserCloseScope) -> tuple[str, ...]:
-    if not BROWSER_DETACHED_LAUNCHES_ROOT.exists():
-        return ()
-    try:
-        record_paths = tuple(sorted(BROWSER_DETACHED_LAUNCHES_ROOT.glob("*.json")))
-    except OSError as error:
-        raise RuntimeError(f"Could not read detached browser launch records under {BROWSER_DETACHED_LAUNCHES_ROOT}: {error}") from error
-
-    launch_ids: list[str] = []
-    errors: list[str] = []
-    for record_path in record_paths:
-        try:
-            launch = read_detached_browser_launch(record_path=record_path)
-            if not _detached_launch_in_scope(launch=launch, scope=scope):
-                continue
-            _terminate_detached_launch(launch=launch)
-            record_path.unlink()
-        except (OSError, RuntimeError) as error:
-            errors.append(f"{record_path}: {error}")
-            continue
-        launch_ids.append(launch.launch_id)
-    if errors:
-        details = "\n".join(f"  - {error}" for error in errors)
-        raise RuntimeError(f"Detached launch close failures:\n{details}")
-    return tuple(launch_ids)
-
-
-def _tmux_endpoint_in_scope(*, row: BrowserTmuxPaneStatus, scope: BrowserCloseScope) -> bool:
-    match scope:
-        case SingleBrowserLaunch(browser=browser, port=port):
-            return row.metadata.browser == browser and row.metadata.port == str(port)
-        case SavedProfileBrowserLaunches(browser=browser):
-            return row.metadata.browser == browser and _saved_profile_name(profile_path=Path(row.metadata.profile_path), browser=browser) is not None
-        case NamedProfileBrowserLaunches(browser=browser, profile_names=profile_names):
-            if row.metadata.browser != browser:
-                return False
-            profile_name = _saved_profile_name(profile_path=Path(row.metadata.profile_path), browser=browser)
-            return profile_name is not None and profile_name in profile_names
-
-
-def _detached_launch_in_scope(*, launch: DetachedBrowserLaunchRecord, scope: BrowserCloseScope) -> bool:
+def _launch_in_scope(*, launch: BrowserLaunchRecord, scope: BrowserCloseScope) -> bool:
     match scope:
         case SingleBrowserLaunch(browser=browser, port=port):
             return launch.browser == browser and launch.port == port
@@ -164,24 +121,6 @@ def _detached_launch_in_scope(*, launch: DetachedBrowserLaunchRecord, scope: Bro
                 return False
             profile_name = _saved_profile_name(profile_path=launch.profile_path, browser=browser)
             return profile_name is not None and profile_name in profile_names
-
-
-def _terminate_detached_launch(*, launch: DetachedBrowserLaunchRecord) -> None:
-    relay_identity_is_incomplete = (launch.relay_process_id is None) != (launch.relay_process_created_at is None)
-    if relay_identity_is_incomplete:
-        raise RuntimeError("relay process identity is incomplete")
-    if launch.relay_process_id is not None and launch.relay_process_created_at is not None:
-        terminate_registered_process(
-            process_id=launch.relay_process_id, process_created_at=launch.relay_process_created_at, process_label="browser endpoint LAN relay"
-        )
-    terminate_browser_launch_process(
-        browser=launch.browser,
-        browser_port=launch.browser_port,
-        profile_path=launch.profile_path,
-        process_id=launch.process_id,
-        process_created_at=launch.process_created_at,
-        process_label=f"{launch.browser} browser",
-    )
 
 
 def _saved_profile_name(*, profile_path: Path, browser: ProfileBrowserName) -> str | None:

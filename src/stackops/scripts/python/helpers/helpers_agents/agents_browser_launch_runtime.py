@@ -9,6 +9,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
+    BROWSER_CDP_RELAY_MODULE,
     BROWSER_CDP_REQUEST_TIMEOUT_SECONDS,
     BROWSER_ENDPOINT_PROBE_INTERVAL_SECONDS,
     BROWSER_ENDPOINT_STARTUP_TIMEOUT_SECONDS,
@@ -146,7 +147,7 @@ def build_relay_command(*, listen_port: int, target_port: int) -> tuple[str, ...
     return (
         sys.executable,
         "-m",
-        "stackops.scripts.python.helpers.helpers_agents.browser_cdp_relay",
+        BROWSER_CDP_RELAY_MODULE,
         "--listen-host",
         REMOTE_DEBUGGING_LAN,
         "--listen-port",

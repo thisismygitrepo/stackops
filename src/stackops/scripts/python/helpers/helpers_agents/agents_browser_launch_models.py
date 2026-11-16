@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux_models import BrowserTmuxLaunch
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserMultiplexer, BrowserName, BrowserRuntime
 
 
 @dataclass(frozen=True)
@@ -21,29 +20,38 @@ class BrowserLaunchDetails:
 
 
 @dataclass(frozen=True)
-class DetachedBrowserLaunchResult(BrowserLaunchDetails):
-    process_id: int
-    relay_process_id: int | None
+class BrowserWindowHandle:
+    multiplexer: BrowserMultiplexer
+    session_name: str
+    targets: tuple[str, ...]
+    attach_script: str
 
 
 @dataclass(frozen=True)
-class TmuxBrowserLaunchResult(BrowserLaunchDetails):
-    tmux: BrowserTmuxLaunch
+class NewBrowserLaunchResult(BrowserLaunchDetails):
+    process_id: int
+    relay_process_id: int | None
+    windows: BrowserWindowHandle | None
+
+
+BrowserLaunchOwner: TypeAlias = BrowserRuntime | Literal["external"]
 
 
 @dataclass(frozen=True)
 class ExistingBrowserLaunchResult(BrowserLaunchDetails):
     process_id: int
-    owner: Literal["tmux", "detached", "external"]
+    owner: BrowserLaunchOwner
     opened_page: bool
     repaired_relay: bool
 
 
-BrowserLaunchResult: TypeAlias = DetachedBrowserLaunchResult | TmuxBrowserLaunchResult | ExistingBrowserLaunchResult
+BrowserLaunchResult: TypeAlias = NewBrowserLaunchResult | ExistingBrowserLaunchResult
 
 
-def build_detached_launch_result(*, details: BrowserLaunchDetails, process_id: int, relay_process_id: int | None) -> DetachedBrowserLaunchResult:
-    return DetachedBrowserLaunchResult(
+def build_new_launch_result(
+    *, details: BrowserLaunchDetails, process_id: int, relay_process_id: int | None, windows: BrowserWindowHandle | None
+) -> NewBrowserLaunchResult:
+    return NewBrowserLaunchResult(
         browser=details.browser,
         browser_path=details.browser_path,
         command=details.command,
@@ -56,22 +64,7 @@ def build_detached_launch_result(*, details: BrowserLaunchDetails, process_id: i
         profile_path=details.profile_path,
         process_id=process_id,
         relay_process_id=relay_process_id,
-    )
-
-
-def build_tmux_launch_result(*, details: BrowserLaunchDetails, tmux: BrowserTmuxLaunch) -> TmuxBrowserLaunchResult:
-    return TmuxBrowserLaunchResult(
-        browser=details.browser,
-        browser_path=details.browser_path,
-        command=details.command,
-        endpoint_label=details.endpoint_label,
-        endpoint_short_label=details.endpoint_short_label,
-        process_label=details.process_label,
-        host=details.host,
-        port=details.port,
-        browser_port=details.browser_port,
-        profile_path=details.profile_path,
-        tmux=tmux,
+        windows=windows,
     )
 
 
@@ -79,7 +72,7 @@ def build_existing_launch_result(
     *,
     details: BrowserLaunchDetails,
     process_id: int,
-    owner: Literal["tmux", "detached", "external"],
+    owner: BrowserLaunchOwner,
     opened_page: bool,
     repaired_relay: bool,
 ) -> ExistingBrowserLaunchResult:
