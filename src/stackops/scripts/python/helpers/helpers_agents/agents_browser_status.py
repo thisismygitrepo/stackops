@@ -32,8 +32,7 @@ def collect_open_browser_status() -> tuple[OpenBrowserStatus, ...]:
     return tuple(rows)
 
 
-def show_browser_launch_status() -> None:
-    statuses = collect_browser_launch_status()
+def show_browser_launch_status(*, statuses: tuple[BrowserLaunchStatus, ...]) -> None:
     table = Table(title=f"StackOps browser launches: {len(statuses)} tracked", box=box.SIMPLE_HEAVY, show_lines=False)
     table.add_column("Launch", overflow="fold")
     table.add_column("Runtime")
@@ -49,8 +48,7 @@ def show_browser_launch_status() -> None:
     Console().print(table)
 
 
-def show_open_browser_status() -> None:
-    rows = collect_open_browser_status()
+def show_open_browser_status(*, rows: tuple[OpenBrowserStatus, ...]) -> None:
     managed_count = sum(1 for row in rows if row.launch_id is not None)
     table = Table(
         title=f"Open browsers: {len(rows)} running, {managed_count} launched by StackOps", box=box.SIMPLE_HEAVY, show_lines=False

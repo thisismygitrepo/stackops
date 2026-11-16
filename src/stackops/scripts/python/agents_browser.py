@@ -362,6 +362,10 @@ def status(
     all_browsers: Annotated[
         bool, typer.Option("--all", "-a", help="Show every open browser, whether StackOps launched it or not, instead of tracked launches.")
     ] = False,
+    browser: Annotated[
+        BrowserName | None,
+        typer.Option("--browser", "-b", help="Only show this browser. Omit to show all browsers.", case_sensitive=False, show_choices=True),
+    ] = None,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print collected browser status records as JSON.")] = False,
 ) -> None:
     """Show StackOps browser launches across tmux, tuios, zellij and detached runtimes."""
@@ -373,12 +377,18 @@ def status(
             show_open_browser_status,
         )
 
-        if json_output:
-            emit_agent_json(collect_open_browser_status() if all_browsers else collect_browser_launch_status())
-        elif all_browsers:
-            show_open_browser_status()
+        if all_browsers:
+            rows = tuple(row for row in collect_open_browser_status() if browser is None or row.browser.browser == browser)
+            if json_output:
+                emit_agent_json(rows)
+            else:
+                show_open_browser_status(rows=rows)
         else:
-            show_browser_launch_status()
+            statuses = tuple(status for status in collect_browser_launch_status() if browser is None or status.launch.browser == browser)
+            if json_output:
+                emit_agent_json(statuses)
+            else:
+                show_browser_launch_status(statuses=statuses)
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
