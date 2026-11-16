@@ -10,6 +10,7 @@ type Platform = Literal["linux", "darwin", "windows"]
 type Anchor = Literal[
     "home",
     "xdg_cache",
+    "xdg_data",
     "mac_caches",
     "local_app_data",
     "temp",
@@ -82,13 +83,22 @@ type CleanupAction = PathCleanup | CommandCleanup | ProjectCleanup
 
 
 @dataclass(frozen=True, slots=True)
+class ToolWithPathFallback:
+    tool: CommandCleanup
+    fallback: PathCleanup
+
+
+type CatalogAction = CleanupAction | ToolWithPathFallback
+
+
+@dataclass(frozen=True, slots=True)
 class CleanTarget:
     key: str
     title: str
     category: CleanCategory
     risk: Risk
     note: str
-    actions: Mapping[Platform, CleanupAction]
+    actions: Mapping[Platform, CatalogAction]
 
 
 @dataclass(frozen=True, slots=True)

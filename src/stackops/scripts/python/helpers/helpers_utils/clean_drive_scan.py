@@ -8,6 +8,7 @@ from pathlib import Path
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_catalog import CATALOG, CATALOG_BY_KEY
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import RISK_ORDER, SCAN_WORKERS
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import (
+    CatalogAction,
     CleanCategory,
     CleanTarget,
     CleanupAction,
@@ -21,6 +22,7 @@ from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import (
     ProjectCleanup,
     Risk,
     TargetScan,
+    ToolWithPathFallback,
 )
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_paths import expand_globs
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_projects import find_project_entries
@@ -46,6 +48,14 @@ def requires_root(action: CleanupAction) -> bool:
     return not isinstance(action, ProjectCleanup) and action.requires_root
 
 
+def resolve_action(action: CatalogAction) -> CleanupAction:
+    match action:
+        case ToolWithPathFallback():
+            return action.tool if shutil.which(action.tool.tool) is not None else action.fallback
+        case PathCleanup() | CommandCleanup() | ProjectCleanup():
+            return action
+
+
 def select_scope(
     *, platform: Platform, targets: Sequence[str], categories: Sequence[CleanCategory], excludes: Sequence[str], max_risk: Risk, allow_root: bool,
 ) -> tuple[list[ScopedTarget], set[str]]:
@@ -56,7 +66,7 @@ def select_scope(
     if unavailable:
         raise ValueError(f"""Not available on {platform}: {", ".join(unavailable)}""")
     scope = [
-        (target, target.actions[platform]) for target in CATALOG
+        (target, resolve_action(target.actions[platform])) for target in CATALOG
         if platform in target.actions and (not targets or target.key in targets)
         and (not categories or target.category in categories) and target.key not in excludes
     ]

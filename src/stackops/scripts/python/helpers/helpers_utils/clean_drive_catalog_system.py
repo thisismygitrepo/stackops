@@ -6,7 +6,7 @@ from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import 
     BLEACHBIT_PLATFORMS,
     STALE_TEMP_DAYS,
 )
-from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import CleanCategory, CleanTarget, CommandCleanup, PathCleanup, PathGlob
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import CleanCategory, CleanTarget, CommandCleanup, PathCleanup, PathGlob, ToolWithPathFallback
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_plans import plan_bleachbit, plan_brew, plan_docker, plan_from_globs, plan_journal
 
 
@@ -48,11 +48,17 @@ CONTAINER_TARGETS: tuple[CleanTarget, ...] = (
 TRASH_TARGETS: tuple[CleanTarget, ...] = (
     CleanTarget(
         key="trash", title="Trash / Recycle Bin", category=CleanCategory.TRASH, risk="caution",
-        note="Files you already deleted. Emptying is permanent. BleachBit on Linux and Windows; ~/.Trash on macOS.",
+        note="Files you already deleted. Emptying is permanent. BleachBit on Linux (only $XDG_DATA_HOME/Trash without it) and Windows; ~/.Trash on macOS.",
         actions={
-            "linux": CommandCleanup(
-                tool="bleachbit", install_hint=BLEACHBIT_INSTALL_HINT, requires_root=False,
-                plan=partial(plan_bleachbit, executable="bleachbit", options=("system.trash",)),
+            "linux": ToolWithPathFallback(
+                tool=CommandCleanup(
+                    tool="bleachbit", install_hint=BLEACHBIT_INSTALL_HINT, requires_root=False,
+                    plan=partial(plan_bleachbit, executable="bleachbit", options=("system.trash",)),
+                ),
+                fallback=PathCleanup(
+                    globs=(PathGlob("xdg_data", "Trash/files/*"), PathGlob("xdg_data", "Trash/info/*"), PathGlob("xdg_data", "Trash/expunged/*")),
+                    min_age_days=None, requires_root=False,
+                ),
             ),
             "windows": CommandCleanup(
                 tool="bleachbit_console", install_hint=BLEACHBIT_INSTALL_HINT, requires_root=False,
