@@ -114,6 +114,10 @@ findBugsOrImprovementRoom:
     - This is a fresh run. Do not rely on old files, memory, or runs unless the user explicitly says we are following up on an old run.
     - When finished, do not close the sub agents' Herdr workspaces or tabs, as the user might have follow-up questions for those agents.
 
+    Scope:
+    ------
+    Beside all bugs and improvements that you can think of, maintainability and speed are within scope. E.g. if you found a code file 1000+ lines of code for no good reason, then breaking it down is one thign we can do. Reducing complexity is another item, speeding things up. Otherwise, new-features and other decision-involving items, while okay to propose, they should never be done without explicit user approval.
+
     Analysis phase:
     ---------------
     - The repo is large, so split the work across N sub agents. The user must give a concrete value for N; if they have not, stop and ask for it.
