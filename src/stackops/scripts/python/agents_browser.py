@@ -126,19 +126,30 @@ def launch_browser(
         ),
     ] = None,
     attach: Annotated[bool, typer.Option("--attach", "-a", help="Attach to the launched browser window; not available with --runtime detached.")] = False,
+    new_window: Annotated[
+        bool,
+        typer.Option(
+            "--new-window",
+            "-w",
+            help="Claim a browser window per endpoint (CDP browsers): a browser that is already running gets a new window; its id and tabs are reported.",
+        ),
+    ] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print browser endpoint and launch records as JSON.")] = False,
 ) -> None:
     """Launch browser automation endpoints with isolated profiles when supported."""
     from rich.console import Console
 
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import resolve_browser_runtime
-    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import NewBrowserLaunchResult
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import ExistingBrowserLaunchResult, NewBrowserLaunchResult
     from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary
+    from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
     try:
         resolved_runtime = resolve_browser_runtime(runtime=runtime)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
+    if new_window and get_browser_launcher(browser=browser).endpoint_protocol != "cdp":
+        raise typer.BadParameter(f"--new-window needs a Chrome DevTools Protocol browser; {browser} does not expose one")
     if attach:
         if resolved_runtime == "detached" or json_output:
             raise typer.BadParameter("--attach cannot be combined with --runtime detached or --json")
@@ -146,6 +157,7 @@ def launch_browser(
     profile_names: tuple[str | None, ...] = (None,) if profile is None else _parse_profile_names(raw_profile=profile)
     lan_address: InterfaceIPv4Address | None = None
     try:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_cdp_windows import CdpWindow, claim_cdp_window
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl
 
         if lan:
@@ -158,6 +170,10 @@ def launch_browser(
             launch_browser_impl(browser=browser, port=port + offset, profile_name=profile_name, temporary=tmp, lan=lan, runtime=resolved_runtime)
             for offset, profile_name in enumerate(profile_names)
         )
+        browser_windows: tuple[CdpWindow | None, ...] = tuple(
+            claim_cdp_window(port=result.browser_port, open_new=isinstance(result, ExistingBrowserLaunchResult)) if new_window else None
+            for result in results
+        )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     except RuntimeError as error:
@@ -167,13 +183,22 @@ def launch_browser(
     if json_output:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_json import browser_launch_receipt
 
-        emit_agent_json([browser_launch_receipt(result=result) for result in results])
+        emit_agent_json(
+            [
+                browser_launch_receipt(result=result, browser_window=browser_window)
+                for result, browser_window in zip(results, browser_windows, strict=True)
+            ]
+        )
         return
     console = Console()
     if len(results) == 1:
         console.print(build_browser_launch_summary(result=results[0], lan_address=lan_address))
     else:
         console.print(build_browser_launches_summary(results=results, lan_address=lan_address))
+    for result, browser_window in zip(results, browser_windows, strict=True):
+        if browser_window is not None:
+            tab_ids = ", ".join(tab.target_id for tab in browser_window.tabs)
+            typer.echo(f"Browser window {browser_window.window_id} on port {result.port} · tab {tab_ids}")
     first_windows = next((result.windows for result in results if isinstance(result, NewBrowserLaunchResult) and result.windows is not None), None)
     if attach and first_windows is not None:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import attach_browser_windows
@@ -201,9 +226,31 @@ def close_browser(
             help="Comma-separated saved StackOps profiles under ~/data/browsers-profiles/<browser>/<profile> whose tracked launches should be closed.",
         ),
     ] = None,
+    window: Annotated[
+        int | None,
+        typer.Option(
+            "--window", "-w", help="Close only this browser window id (see status) on the --port endpoint; the browser and its other windows keep running."
+        ),
+    ] = None,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print closed launch identities as JSON.")] = False,
 ) -> None:
-    """Close one tracked browser endpoint by --port or its saved profiles by --profile."""
+    """Close one tracked browser endpoint by --port, its saved profiles by --profile, or one browser window by --window."""
+    if window is not None:
+        if profile is not None:
+            raise typer.BadParameter("--window closes one window on the --port endpoint; it cannot be combined with --profile")
+        window_port = DEFAULT_BROWSER_PORT if port is None else port
+        try:
+            from stackops.scripts.python.helpers.helpers_agents.agents_browser_cdp_windows import close_cdp_window
+
+            closed_window = close_cdp_window(port=window_port, window_id=window)
+        except RuntimeError as error:
+            typer.echo(str(error), err=True)
+            raise typer.Exit(code=1) from error
+        if json_output:
+            emit_agent_json(closed_window)
+            return
+        typer.echo(f"Closed browser window {closed_window.window_id} ({len(closed_window.tabs)} tab(s)) on port {window_port}; the browser keeps running.")
+        return
     profile_names: tuple[str, ...] | None = None
     try:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import (
@@ -316,7 +363,7 @@ def batch_launch(
     if json_output:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_json import browser_launch_receipt
 
-        emit_agent_json([browser_launch_receipt(result=result) for result in results])
+        emit_agent_json([browser_launch_receipt(result=result, browser_window=None) for result in results])
         return
     Console().print(build_browser_launches_summary(results=results, lan_address=lan_address))
     first_windows = next((result.windows for result in results if isinstance(result, NewBrowserLaunchResult) and result.windows is not None), None)
@@ -370,8 +417,8 @@ def status(
 ) -> None:
     """Show StackOps browser launches across tmux, tuios, zellij and detached runtimes."""
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_records import collect_browser_launch_status
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import (
+            collect_browser_launch_windows_status,
             collect_open_browser_status,
             show_browser_launch_status,
             show_open_browser_status,
@@ -384,7 +431,7 @@ def status(
             else:
                 show_open_browser_status(rows=rows)
         else:
-            statuses = tuple(status for status in collect_browser_launch_status() if browser is None or status.launch.browser == browser)
+            statuses = tuple(status for status in collect_browser_launch_windows_status() if browser is None or status.launch.browser == browser)
             if json_output:
                 emit_agent_json(statuses)
             else:

@@ -4,7 +4,11 @@ from typing import cast, get_args
 
 import psutil
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BROWSER_CDP_RELAY_MODULE, BrowserName
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
+    BROWSER_CDP_RELAY_MODULE,
+    CHROMIUM_ACTIVE_PORT_FILE_NAME,
+    BrowserName,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import (
     browser_executable_names,
     command_has_option,
@@ -52,12 +56,20 @@ def collect_open_browsers() -> tuple[OpenBrowserProcess, ...]:
             port_option = "--port" if browser == "safari" else "--remote-debugging-port"
             profile_value = command_option_value(command=command, name=profile_option)
             port_value = command_option_value(command=command, name=port_option)
+            debugging_port = int(port_value) if port_value is not None and port_value.isdigit() else None
+            if debugging_port == 0:
+                active_port_path = None if profile_value is None else Path(profile_value).joinpath(CHROMIUM_ACTIVE_PORT_FILE_NAME)
+                debugging_port = (
+                    int(active_port_path.read_text(encoding="utf-8").splitlines()[0])
+                    if active_port_path is not None and active_port_path.is_file()
+                    else None
+                )
             open_browsers.append(
                 OpenBrowserProcess(
                     browser=browser,
                     process_id=process.pid,
                     profile_path=None if profile_value is None else Path(profile_value),
-                    debugging_port=int(port_value) if port_value is not None and port_value.isdigit() else None,
+                    debugging_port=debugging_port,
                     started_at=process.create_time(),
                 )
             )

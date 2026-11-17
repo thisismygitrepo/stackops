@@ -30,6 +30,7 @@ dependencies = [
     "textual>=8.2.7",
     "tomlkit>=0.15.0",
     "typer>=0.27.2",
+    "websockets>=16.0",
 ]
 
 [project.optional-dependencies]

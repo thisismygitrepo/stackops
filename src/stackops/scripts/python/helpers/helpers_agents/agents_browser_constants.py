@@ -92,6 +92,7 @@ CHROMIUM_PROFILE_CLEANUP_PATHS: Final[tuple[tuple[str, ...], ...]] = (
     ("image_cache",),
 )
 FIREFOX_PROFILE_CLEANUP_PATHS: Final[tuple[tuple[str, ...], ...]] = (("cache2",), ("shader-cache",), ("startupCache",))
+CHROMIUM_ACTIVE_PORT_FILE_NAME: Final[str] = "DevToolsActivePort"
 REMOTE_DEBUGGING_LOCALHOST: Final[str] = "127.0.0.1"
 REMOTE_DEBUGGING_LAN: Final[str] = "0.0.0.0"
 BROWSER_SKILLS_CLI_AGENT_BY_STACKOPS_AGENT: Final[dict[AGENTS, str]] = {

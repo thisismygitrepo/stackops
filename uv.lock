@@ -3674,6 +3674,7 @@ dependencies = [
     { name = "textual" },
     { name = "tomlkit" },
     { name = "typer" },
+    { name = "websockets" },
 ]
 
 [package.optional-dependencies]
@@ -3797,6 +3798,7 @@ requires-dist = [
     { name = "textual", specifier = ">=8.2.7" },
     { name = "tomlkit", specifier = ">=0.15.0" },
     { name = "typer", specifier = ">=0.27.2" },
+    { name = "websockets", specifier = ">=16.0" },
 ]
 provides-extras = ["windows", "plot"]
 
