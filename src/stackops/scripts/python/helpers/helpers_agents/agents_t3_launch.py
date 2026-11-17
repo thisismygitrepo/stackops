@@ -41,7 +41,7 @@ def _t3_driver(agent: AGENTS) -> T3Driver | None:
             return "muse"
         case "agy":
             return "antigravity"
-        case "qwen" | "copilot" | "cortex" | "deepseek" | "forge" | "crush" | "q" | "kilocode" | "cline" | "auggie" | "oz" | "droid" | "maki":
+        case "qwen" | "copilot" | "cortex" | "deepseek" | "forge" | "crush" | "q" | "kilocode" | "cline" | "auggie" | "oz" | "droid" | "maki" | "prime-agent":
             return None
         case _:
             assert_never(agent)

@@ -48,6 +48,10 @@ def build_interactive_prompt_command(
             if external_sandbox:
                 command.append("--trust")
             command.extend(["--", prompt])
+        case "prime-agent":
+            from stackops.scripts.python.helpers.helpers_agents.prime_agent_launch import build_prime_agent_command
+
+            command = [*build_prime_agent_command(model=None, provider=None, reasoning_effort=reasoning), "--", prompt]
         case "opencode":
             command.extend(["--prompt", prompt])
         case "agy":
@@ -64,7 +68,7 @@ def build_interactive_prompt_command(
         case "forge" | "crush" | "q" | "kilocode" | "cline" | "oz":
             raise ValueError(
                 f"""--interactive is not supported for agent '{agent}'. """
-                "Choose codex, copilot, cortex, pi, muse, maki, opencode, agy, qwen, claude, cursor-agent, auggie, or droid, or omit --interactive."
+                "Choose codex, copilot, cortex, pi, prime-agent, muse, maki, opencode, agy, qwen, claude, cursor-agent, auggie, or droid, or omit --interactive."
             )
         case _:
             assert_never(agent)

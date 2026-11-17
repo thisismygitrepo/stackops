@@ -36,6 +36,7 @@ AGENTS = [
     "droid",
     "maki",
     "muse",
+    "prime-agent",
     "dmux",
     "pi",
     "omp",

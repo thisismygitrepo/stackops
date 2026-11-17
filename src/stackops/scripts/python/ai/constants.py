@@ -24,5 +24,6 @@ OPENROUTER_ZDR_CONFIGURATION: Final[dict[CONFIG_AGENTS, str | None]] = {
     "pi": "OpenRouter provider request policy extension",
     "muse": None,
     "maki": "Requires OpenRouter account/API-key enforcement",
+    "prime-agent": "Requires OpenRouter account/API-key enforcement",
     "omp": "OpenRouter session request policy extension",
 }

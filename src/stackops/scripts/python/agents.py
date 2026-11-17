@@ -21,12 +21,14 @@ _MCP_INSTALL_SCOPE: TypeAlias = Literal["workspace", "w", "user", "u"]
 _SKILL_INSTALL_SCOPE: TypeAlias = Literal["workspace", "w", "user", "u"]
 _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
-_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "cortex", "pi", "opencode", "omp", "deepseek", "maki"]
+_INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "cortex", "pi", "opencode", "omp", "deepseek", "maki", "prime-agent"]
 
 _ASK_REASONING_HELP: Final[str] = "Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default."
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
-INTERACTIVE_AGENT: TypeAlias = Literal["codex", "x", "copilot", "c", "cortex", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh", "maki"]
+INTERACTIVE_AGENT: TypeAlias = Literal[
+    "codex", "x", "copilot", "c", "cortex", "pi", "p", "opencode", "oc", "omp", "o", "deepseek", "dsh", "maki", "prime-agent", "pa"
+]
 _CAVEMAN_INITIAL_PROMPT: Final[str] = "Use $megacave for this entire session."
 _HEADROOM_COMMAND: Final[str] = "headroom"
 _HEADROOM_AGENTS: Final[tuple[_HEADROOM_AGENT, ...]] = ("codex", "copilot")
@@ -45,6 +47,8 @@ _INTERACTIVE_AGENT_ALIASES: Final[dict[INTERACTIVE_AGENT, _INTERACTIVE_CANONICAL
     "deepseek": "deepseek",
     "dsh": "deepseek",
     "maki": "maki",
+    "prime-agent": "prime-agent",
+    "pa": "prime-agent",
 }
 _INIT_CONFIG_AGENT_HELP: Final[str] = (
     f"AI agents to configure (comma-separated). Pass '{_INIT_CONFIG_ALL_AGENTS}' to configure all of them. "
@@ -321,6 +325,11 @@ def _interactive_agent_command(agent: _INTERACTIVE_CANONICAL_AGENT, initial_prom
             if initial_prompt is not None:
                 command.extend(["--", initial_prompt])
             return command
+        case "prime-agent":
+            command = ["prime-agent"]
+            if initial_prompt is not None:
+                command.extend(["--", initial_prompt])
+            return command
         case "deepseek":
             from stackops.scripts.python.helpers.helpers_agents.deepseek_launch import build_deepseek_command, deepseek_patch_paths
 
@@ -358,7 +367,7 @@ def run_interactive(
         INTERACTIVE_AGENT | None,
         typer.Option(
             ..., "--agent", "-a",
-            help=f"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}",
+            help=f"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, prime-agent/pa, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}",
         ),
     ] = None,
     second_brain: Annotated[

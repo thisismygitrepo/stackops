@@ -127,6 +127,16 @@ def resolve_prompt_sandbox_access(
                     xdg["XDG_STATE_HOME"].parent / "logs/maki",
                 )
             environment = ("APPDATA", "LOCALAPPDATA", *xdg_environment, *provider_environment)
+        case "prime-agent":
+            agent_directory = _configured_directory(name="PRIME_AGENT_CODING_AGENT_DIR", directory=home / ".prime/agent")
+            kernel_directory = _configured_directory(name="PRIME_AGENT_KERNEL_VENV", directory=home / ".prime/agent/kernel-venv")
+            directories = (agent_directory,) if kernel_directory.is_relative_to(agent_directory) else (agent_directory, kernel_directory)
+            if os.environ.get("PRIME_AGENT_SESSION_DIR", "").strip():
+                directories += (_configured_directory(name="PRIME_AGENT_SESSION_DIR", directory=agent_directory),)
+            environment = (
+                "PRIME_AGENT_CODING_AGENT_DIR", "PRIME_AGENT_SESSION_DIR", "PRIME_AGENT_KERNEL_VENV", "PRIME_AGENT_KERNEL_PYTHON",
+                "PRIME_API_KEY", *provider_environment,
+            )
         case _:
             raise ValueError(f"""Sandboxing is not supported for agent: {agent}.""")
     return SandboxAccess(

@@ -125,6 +125,10 @@ def build_sandboxed_prompt_script(
 
             command = build_maki_command(model=None, provider=None)
             command.extend(["--trust", "--print", "--", prompt_text])
+        case "prime-agent":
+            from stackops.scripts.python.helpers.helpers_agents.prime_agent_launch import build_prime_agent_command
+
+            command = [*build_prime_agent_command(model=None, provider=None, reasoning_effort=reasoning), "--print", "--", prompt_text]
         case "cursor-agent":
             command = [agent, "-p", prompt_text, "--output-format", "text"]
 

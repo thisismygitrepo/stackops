@@ -1,0 +1,18 @@
+from pathlib import Path
+
+from stackops.scripts.python.ai.initai_artifacts import write_text_artifact
+from stackops.scripts.python.ai.initai_models import ArtifactChange
+from stackops.scripts.python.ai.utils.shared import get_generic_instructions_path
+
+
+def build_configuration(repo_root: Path, add_private_config: bool, add_instructions: bool) -> tuple[ArtifactChange, ...]:
+    _ = add_private_config
+    if not add_instructions:
+        return ()
+    change = write_text_artifact(
+        repo_root=repo_root,
+        path=repo_root / "AGENTS.md",
+        content=get_generic_instructions_path().read_text(encoding="utf-8"),
+        write_mode="if_missing",
+    )
+    return () if change is None else (change,)

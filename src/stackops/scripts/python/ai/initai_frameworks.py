@@ -19,6 +19,7 @@ from stackops.scripts.python.ai.solutions.opencode import opencode
 from stackops.scripts.python.ai.solutions.omp import omp
 from stackops.scripts.python.ai.solutions.oz import oz
 from stackops.scripts.python.ai.solutions.pi import pi
+from stackops.scripts.python.ai.solutions.prime_agent import prime_agent
 from stackops.scripts.python.ai.solutions.q import amazon_q
 from stackops.scripts.python.ai.solutions.qwen_code import qwen_code
 from stackops.scripts.python.ai.initai_models import ArtifactChange
@@ -107,6 +108,10 @@ def build_framework_config(
             )
         case "maki":
             return maki.build_configuration(
+                repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
+            )
+        case "prime-agent":
+            return prime_agent.build_configuration(
                 repo_root=repo_root, add_private_config=add_private_config, add_instructions=add_instructions
             )
         case "omp":

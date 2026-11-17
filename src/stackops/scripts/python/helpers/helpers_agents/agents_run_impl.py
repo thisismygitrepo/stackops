@@ -193,6 +193,11 @@ def build_agent_command(
 
             command = build_maki_command(model=model, provider=provider)
             return render_maki_prompt_command(command=command, prompt_file=prompt_file, is_windows=resolved_is_windows)
+        case "prime-agent":
+            from stackops.scripts.python.helpers.helpers_agents.prime_agent_launch import build_prime_agent_command, render_prime_agent_prompt_command
+
+            command = build_prime_agent_command(model=model, provider=provider, reasoning_effort=normalized_reasoning_effort)
+            return render_prime_agent_prompt_command(command=command, prompt_file=prompt_file, is_windows=resolved_is_windows)
         case "pi":
             provider_arg = ""
             if provider is not None:

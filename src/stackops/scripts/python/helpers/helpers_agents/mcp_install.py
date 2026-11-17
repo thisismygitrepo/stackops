@@ -10,6 +10,8 @@ from stackops.scripts.python.helpers.helpers_agents.cortex_paths import resolve_
 from stackops.scripts.python.helpers.helpers_agents.deepseek_mcp import write_deepseek_mcp_config
 from stackops.scripts.python.helpers.helpers_agents.maki_mcp import write_maki_mcp_config
 from stackops.scripts.python.helpers.helpers_agents.maki_paths import resolve_maki_config_directory
+from stackops.scripts.python.helpers.helpers_agents.prime_agent_mcp import write_prime_agent_mcp_config
+from stackops.scripts.python.helpers.helpers_agents.prime_agent_paths import resolve_prime_agent_directory
 from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import collect_available_mcp_names, resolve_requested_mcp_servers
 from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation, ResolvedMcpServer
 from stackops.utils.files.read import remove_c_style_comments
@@ -28,7 +30,7 @@ _OZ_MCP_SUPPORTED_FIELDS: Final[frozenset[str]] = frozenset({"warp_id", "command
 
 def parse_requested_agents(raw_value: str, scope: MCP_INSTALL_SCOPE) -> tuple[AGENTS, ...]:
     if raw_value.strip() == "":
-        return tuple(agent for agent in _AGENT_VALUES if scope == "user" or agent != "muse")
+        return tuple(agent for agent in _AGENT_VALUES if scope == "user" or agent not in ("muse", "prime-agent"))
 
     parts = [part.strip() for part in raw_value.split(",")]
     if any(part == "" for part in parts):
@@ -145,6 +147,8 @@ def install_resolved_mcp_servers(
             write_deepseek_mcp_config(path=path, resolved_servers=resolved_servers)
         case "maki":
             write_maki_mcp_config(path=path, resolved_servers=resolved_servers)
+        case "prime-agent":
+            write_prime_agent_mcp_config(path=path, resolved_servers=resolved_servers)
     return path
 
 
@@ -199,6 +203,8 @@ def resolve_install_path(
                 return repo_root / ".dsh" / "cordis.patch.yml"
             case "maki":
                 return repo_root / ".maki" / "mcp.toml"
+            case "prime-agent":
+                raise ValueError("prime-agent ignores mcpServers in project settings; install with --scope user")
 
     match agent:
         case "agy":
@@ -247,6 +253,8 @@ def resolve_install_path(
             return dsh_home / "cordis.patch.yml"
         case "maki":
             return resolve_maki_config_directory(home_dir=home_dir) / "mcp.toml"
+        case "prime-agent":
+            return resolve_prime_agent_directory(home_dir=home_dir) / "settings.json"
 
 
 def _resolve_copilot_cli_user_config_path(*, home_dir: Path) -> Path:

@@ -20,6 +20,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.omp imp
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.opencode import DEFINITION as OPENCODE
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.oz import DEFINITION as OZ
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.pi import DEFINITION as PI
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.prime_agent import DEFINITION as PRIME_AGENT
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.qwen import DEFINITION as QWEN
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorAgentDefinition
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
@@ -47,6 +48,7 @@ DOCTOR_AGENT_DEFINITIONS: Final[tuple[DoctorAgentDefinition, ...]] = (
     DROID,
     MUSE,
     MAKI,
+    PRIME_AGENT,
 )
 DOCTOR_DEFINITION_BY_AGENT: Final[dict[DoctorAgent, DoctorAgentDefinition]] = {
     definition.agent: definition for definition in DOCTOR_AGENT_DEFINITIONS
@@ -65,6 +67,8 @@ DOCTOR_AGENT_ALIASES: Final[dict[str, DoctorAgent]] = {
     "kilo": "kilocode",
     "muse-code": "muse",
     "oh-my-pi": "omp",
+    "pa": "prime-agent",
+    "prime": "prime-agent",
     "qwen-code": "qwen",
 }
 _EXPECTED_DOCTOR_AGENTS: Final[frozenset[DoctorAgent]] = frozenset((*cast(tuple[DoctorAgent, ...], get_args(AGENTS)), "omp"))

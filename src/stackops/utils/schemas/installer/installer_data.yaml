@@ -4483,6 +4483,23 @@ installers:
         linux: curl -fsSL https://maki.sh/install.sh | sh
         darwin: curl -fsSL https://maki.sh/install.sh | sh
         windows: powershell -NoProfile -Command "irm https://maki.sh/install.ps1 | iex"
+  - appName: prime-agent
+    license: MIT
+    repoURL: https://github.com/PrimeIntellect-ai/prime-agent
+    lastCommitDate: '2026-11-16T21:42:53Z'
+    lastCommitDateCheckDate: '2026-11-17T08:07:47Z'
+    doc: Prime Intellect self-improving RLM coding agent for long-running autonomous tasks.
+    categoryLabels:
+      - ai-agents-assistants
+    fileNamePattern:
+      amd64:
+        linux: curl -fsSL https://app.primeintellect.ai/prime-agent/install.sh | sh
+        darwin: curl -fsSL https://app.primeintellect.ai/prime-agent/install.sh | sh
+        windows: powershell -NoProfile -Command "irm https://app.primeintellect.ai/prime-agent/install.ps1 | iex"
+      arm64:
+        linux: curl -fsSL https://app.primeintellect.ai/prime-agent/install.sh | sh
+        darwin: curl -fsSL https://app.primeintellect.ai/prime-agent/install.sh | sh
+        windows: null
   - appName: muse
     license: Proprietary
     repoURL: CMD
