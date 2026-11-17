@@ -23,7 +23,7 @@ _SKILL_INSTALL_BACKEND: TypeAlias = Literal["bunx", "npx", "stackops", "s"]
 _HEADROOM_AGENT: TypeAlias = Literal["codex", "copilot"]
 _INTERACTIVE_CANONICAL_AGENT: TypeAlias = Literal["codex", "copilot", "cortex", "pi", "opencode", "omp", "deepseek", "maki", "prime-agent"]
 
-_ASK_REASONING_HELP: Final[str] = "Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default."
+_ASK_REASONING_HELP: Final[str] = "Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default."
 _AGENT_VALUES: Final[tuple[AGENTS, ...]] = cast(tuple[AGENTS, ...], get_args(AGENTS))
 _INIT_CONFIG_ALL_AGENTS: Final[str] = "all"
 INTERACTIVE_AGENT: TypeAlias = Literal[
@@ -499,7 +499,7 @@ def run_interactive(
                 else:
                     script = shlex.join(command)
             else:
-                if resolved_agent in ("deepseek", "cortex", "maki") and is_windows_host():
+                if resolved_agent in ("deepseek", "cortex", "maki", "prime-agent") and is_windows_host():
                     from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell
 
                     script = "& " + " ".join(quote_for_shell(argument, is_windows=True) for argument in command)
@@ -548,7 +548,7 @@ def run_prompt(
             ...,
             "--reasoning",
             "-r",
-            help="Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default.",
+            help="Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.",
         ),
     ] = None,
     context: Annotated[str | None, typer.Option(..., "--context", "-c", help="Context string. Mutually exclusive with --context-path.")] = None,

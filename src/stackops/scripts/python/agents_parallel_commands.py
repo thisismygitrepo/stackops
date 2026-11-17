@@ -76,7 +76,7 @@ def agents_create(
     reasoning_effort: Annotated[
         ReasoningEffort | None,
         typer.Option(
-            ..., "--reasoning", "-r", help="Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default."
+            ..., "--reasoning", "-r", help="Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default."
         ),
     ] = None,
     provider: Annotated[PROVIDER | None, typer.Option(..., "--provider", "-v", help="Provider to use (if agent support many)")] = None,

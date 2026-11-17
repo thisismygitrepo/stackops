@@ -179,8 +179,8 @@ def build_agent_skill_install_commands(
             command.append("--global")
         if len(agent_targets) > 0:
             command.append("--agent")
-            # The upstream Codex target installs into the shared .agents/skills directories Maki reads.
-            command.extend("codex" if target == "maki" else target for target in agent_targets)
+            # The upstream Codex target installs into the shared .agents/skills directories Maki and prime-agent read.
+            command.extend("codex" if target in ("maki", "prime-agent") else target for target in agent_targets)
         commands.append(tuple(command))
     return tuple(commands)
 
