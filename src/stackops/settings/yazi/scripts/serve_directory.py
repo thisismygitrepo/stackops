@@ -18,8 +18,8 @@ type Command = list[str]
 type Backend = Literal["filebrowser", "miniserve", "copyparty"]
 type Exposure = Literal["local", "network"]
 
-BACKENDS: Final[tuple[str, ...]] = get_args(Backend.__value__)
-EXPOSURES: Final[tuple[str, ...]] = get_args(Exposure.__value__)
+BACKENDS: Final[tuple[str, ...]] = cast(tuple[str, ...], get_args(Backend.__value__))  # pylint: disable=no-member  # PEP 695 aliases expose __value__.
+EXPOSURES: Final[tuple[str, ...]] = cast(tuple[str, ...], get_args(Exposure.__value__))  # pylint: disable=no-member  # PEP 695 aliases expose __value__.
 LOCAL_HOST: Final[str] = "127.0.0.1"
 NETWORK_HOST: Final[str] = "0.0.0.0"
 READY_TIMEOUT_SECONDS: Final[float] = 30.0

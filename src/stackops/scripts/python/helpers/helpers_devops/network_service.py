@@ -34,7 +34,7 @@ def start_service(name: str, arguments: list[str], background: bool, environment
     else:
         creationflags = 0
     with tempfile.NamedTemporaryFile(prefix=f"{name}-", suffix=".log", dir=directory, delete=False) as log:
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # pylint: disable=consider-using-with  # returned to the caller; reaped by stop_services or left running in background mode
             arguments, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
             env=environment, start_new_session=background and sys.platform != "win32",
             creationflags=creationflags,

@@ -138,6 +138,9 @@ findBugsOrImprovementRoom:
     ------------------
     Use Herdr by default, as described above. If you find yourself running inside a T3 Code environment (a `t3-code` MCP server is available to you with tools like `delegate_task`, or your instructions include T3 Code orchestration guidance), do not use Herdr: create each sub agent with `delegate_task` (one task per agent, same harness rules as above), wait for them with T3 Code's task/thread status tools, and leave their threads open for follow-up questions instead of the Herdr workspaces and tabs.
 
+    In case of tuios and herdr environments, please organize the layout of panes so they are equally spaced, as much as possible, do so upon creating them or launching the agents.
+
+
 lintAndTypeCheckPyProject:
   group: dev
   description: run the latest and most popular linters and type checkers against the project and run agents to action the results.
@@ -174,6 +177,8 @@ lintAndTypeCheckPyProject:
     Agent multiplexer:
     ------------------
     Use Herdr by default, as described above. If you find yourself running inside a T3 Code environment (a `t3-code` MCP server is available to you with tools like `delegate_task`, or your instructions include T3 Code orchestration guidance), do not use Herdr: launch each agent with `delegate_task` instead of panes, keep the same parallel limit and batching rules, and track them with T3 Code's task/thread status tools.
+
+    In case of tuios and herdr environments, please organize the layout of panes so they are equally spaced, as much as possible, do so upon creating them or launching the agents.
 
     Agent Harness:
     --------------

@@ -138,7 +138,7 @@ def map_port(
             service = start_service("ssh-forward", list(command), background, None)
             ssh_process = service.process
         else:
-            ssh_process = subprocess.Popen(command)
+            ssh_process = subprocess.Popen(command)  # pylint: disable=consider-using-with  # must outlive this block; waited on below and stopped by stop_ssh_process on failure
     except OSError as error:
         typer.echo(f"Unable to start OpenSSH: {error}", err=True)
         raise typer.Exit(code=1) from error

@@ -79,7 +79,7 @@ def get_command_streamlit(choice_file: Path) -> str:
         if "server" in config:
             if "port" in config["server"]:
                 configured_port: object = config["server"]["port"]
-                if type(configured_port) is not int or not 1 <= configured_port <= 65535:
+                if type(configured_port) is not int or not 1 <= configured_port <= 65535:  # pylint: disable=unidiomatic-typecheck  # isinstance would accept TOML booleans
                     raise ValueError(f"Invalid Streamlit server.port in {toml_path}")
                 port = configured_port
     from stackops.utils.installer_utils.installer_cli import install_if_missing

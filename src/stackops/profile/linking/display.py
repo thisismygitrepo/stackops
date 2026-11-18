@@ -14,7 +14,7 @@ from stackops.profile.linking.options import DIRECTION_STRICT
 
 type SyncOutcome = Literal["failed", "replaced", "moved", "new", "unchanged"]
 
-OUTCOMES_BY_IMPORTANCE: Final[tuple[SyncOutcome, ...]] = cast(tuple[SyncOutcome, ...], get_args(SyncOutcome.__value__))
+OUTCOMES_BY_IMPORTANCE: Final[tuple[SyncOutcome, ...]] = cast(tuple[SyncOutcome, ...], get_args(SyncOutcome.__value__))  # pylint: disable=no-member  # PEP 695 aliases expose __value__.
 
 
 def classify_action(action: ActionType) -> SyncOutcome:
