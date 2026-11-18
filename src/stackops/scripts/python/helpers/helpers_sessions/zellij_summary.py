@@ -10,8 +10,9 @@ from stackops.scripts.python.helpers.helpers_sessions.session_trace_zellij impor
 
 def _load_snapshot(session_name: str) -> TraceSnapshot:
     snapshot = load_trace_snapshot(session_name=session_name, until="idle-shell", expected_exit_code=None)
-    if snapshot.session_error or snapshot.pane_warning:
-        raise ValueError(snapshot.session_error or snapshot.pane_warning)
+    error = snapshot.session_error if snapshot.session_error is not None else snapshot.pane_warning
+    if error is not None:
+        raise ValueError(error)
     return snapshot
 
 

@@ -88,7 +88,7 @@ def _check_mapping_paths(default_path: Path, managed_path: Path, *, contents: bo
 def check_config_file(program: str, config_item: ConfigMapper) -> ConfigFileStatus:
     default_path = Path(config_item["config_file_default_path"]).expanduser()
     managed_path = resolve_source_of_truth_path(config_item["config_file_self_managed_path"])
-    method: ConfigMethod = "contents" if config_item["contents"] else ("copy" if config_item["copy"] else "link")
+    method: ConfigMethod = "contents" if config_item["contents"] is True else ("copy" if config_item["copy"] is True else "link")
     state = _check_mapping_paths(default_path, managed_path, contents=bool(config_item["contents"]), copy=bool(config_item["copy"]))
     return ConfigFileStatus(
         program=program,

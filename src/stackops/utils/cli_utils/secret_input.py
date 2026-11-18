@@ -2,6 +2,7 @@ import getpass
 import os
 import sys
 from pathlib import Path
+from typing import cast
 
 from typer._click.exceptions import UsageError
 
@@ -15,7 +16,7 @@ def read_secret_input(*, value: str | None, file: Path | None, env: str | None, 
         if file == Path("-") and sys.stdin.isatty():
             raise UsageError("Secret input from '-' requires piped or redirected stdin.")
         try:
-            secret_text = sys.stdin.read() if file == Path("-") else file.expanduser().read_text(encoding="utf-8")
+            secret_text = cast(str, sys.stdin.read()) if file == Path("-") else file.expanduser().read_text(encoding="utf-8")
         except (OSError, UnicodeError) as error:
             raise UsageError("Could not read the secret input file as UTF-8 text.") from error
         value = secret_text.removesuffix("\n").removesuffix("\r")
@@ -26,6 +27,6 @@ def read_secret_input(*, value: str | None, file: Path | None, env: str | None, 
     elif value is None:
         require_interactive(f"""{prompt} Supply a secret file or environment-variable reference instead of prompting.""")
         value = getpass.getpass(prompt)
-    if value is None or value == "":
+    if value == "":
         raise UsageError("The supplied secret must not be empty.")
     return value

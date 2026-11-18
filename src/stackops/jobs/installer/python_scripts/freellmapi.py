@@ -33,7 +33,7 @@ def _build_windows_installer_data(base_installer_data: InstallerData) -> Install
 
 
 def _get_windows_install_root() -> Path:
-    local_app_data_raw = os.environ.get("LOCALAPPDATA")
+    local_app_data_raw = os.environ.get("LOCALAPPDATA", "")
     local_app_data = Path(local_app_data_raw) if local_app_data_raw else Path.home().joinpath("AppData", "Local")
     return local_app_data.joinpath("Programs", FREE_LLMAPI_WINDOWS_INSTALL_DIR_NAME)
 

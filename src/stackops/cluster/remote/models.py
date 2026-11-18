@@ -21,16 +21,20 @@ def _coerce_string_list(value: object) -> list[str]:
 
 def _coerce_transfer_method(value: object) -> TRANSFER_METHOD:
     candidate = str(value)
-    if candidate in {"sftp", "cloud"}:
-        return cast(TRANSFER_METHOD, candidate)
-    raise ValueError(f"Unsupported transfer method: {candidate}")
+    match candidate:
+        case "sftp" | "cloud":
+            return candidate
+        case _:
+            raise ValueError(f"Unsupported transfer method: {candidate}")
 
 
 def _coerce_launch_method(value: object) -> LAUNCH_METHOD:
     candidate = str(value)
-    if candidate in {"remotely", "cloud_manager"}:
-        return cast(LAUNCH_METHOD, candidate)
-    raise ValueError(f"Unsupported launch method: {candidate}")
+    match candidate:
+        case "remotely" | "cloud_manager":
+            return candidate
+        case _:
+            raise ValueError(f"Unsupported launch method: {candidate}")
 
 
 @dataclass
@@ -107,15 +111,17 @@ class JobStatus:
     @staticmethod
     def from_dict(d: dict[str, object]) -> "JobStatus":
         status_value = str(d["status"])
-        if status_value not in {"locked", "unlocked"}:
-            raise ValueError(f"Unsupported job status: {status_value}")
-        return JobStatus(
-            pid=int(str(d["pid"])),
-            job_id=str(d["job_id"]),
-            status=cast(Literal["locked", "unlocked"], status_value),
-            submission_time=datetime.fromisoformat(str(d["submission_time"])),
-            start_time=datetime.fromisoformat(str(d["start_time"])) if d.get("start_time") else None,
-        )
+        match status_value:
+            case "locked" | "unlocked":
+                return JobStatus(
+                    pid=int(str(d["pid"])),
+                    job_id=str(d["job_id"]),
+                    status=status_value,
+                    submission_time=datetime.fromisoformat(str(d["submission_time"])),
+                    start_time=datetime.fromisoformat(str(d["start_time"])) if d.get("start_time") else None,
+                )
+            case _:
+                raise ValueError(f"Unsupported job status: {status_value}")
 
 
 @dataclass

@@ -38,6 +38,7 @@ def print_data_preview(console: Console, path: Path, dat: object) -> None:
 
 
 def get_read_python_file_pycode(path: str, title: str) -> None:
+    # pylint: disable=reimported,redefined-outer-name  # body is serialized standalone via lambda_to_python_script
     from pathlib import Path
     print("Reading code from path:", path)
     pycode = Path(path).read_text(encoding="utf-8")

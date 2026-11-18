@@ -52,6 +52,4 @@ def build_aliases(
 def select_help(reg: Registration, default: str | None) -> str:
     if isinstance(reg.help, str) and reg.help:
         return reg.help
-    if default:
-        return default
-    return reg.name or ""
+    return default or reg.name or ""

@@ -11,11 +11,7 @@ from stackops.utils.network.address import get_public_ip_address
 def _ip_is_acceptable(ip: str, current_ip: str | None, target_ip_addresses: list[str] | None) -> bool:
     if target_ip_addresses is not None:
         return ip in target_ip_addresses
-    if current_ip and ip != current_ip:
-        return True
-    if current_ip is None:
-        return True
-    return False
+    return current_ip is None or ip != current_ip
 
 
 def _run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -75,7 +71,7 @@ def switch_public_ip_address(max_trials: int, wait_seconds: float, target_ip_add
     if target_ip_addresses is not None:
         console.print(f"🎯 Acceptable IP pool: [bold]{_format_ip_pool(target_ip_addresses)}[/bold]")
 
-    if target_ip_addresses is not None and current_ip and current_ip in target_ip_addresses:
+    if target_ip_addresses is not None and current_ip is not None and current_ip in target_ip_addresses:
         console.print(f"[green]✅ Current IP {current_ip} is already in the acceptable pool. No switch needed.[/green]")
         return True, current_ip
 

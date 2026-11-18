@@ -166,7 +166,7 @@ def install_from_github_url(github_url: str) -> None:
     repo_name = f"{owner}/{repo}"
     console.print(Panel(f"Fetching latest release for [green]{repo_name}[/green]", title="🌐 GitHub", border_style="blue"))
     release_raw = fetch_github_release_data(owner, repo)
-    if not release_raw:
+    if release_raw is None:
         console.print(Panel("No releases available for this repository.", title="❌ Error", border_style="red"))
         return
 

@@ -81,7 +81,6 @@ def seek(
 
         code = search_file_with_context(path=path, is_temp_file=is_temp_file, edit=edit)
         exit_then_run_shell_script(script=code, strict=False)
-        return None
 
     _run_text_search(rga=rga, directory=path, search_term=search_term)
     return None

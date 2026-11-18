@@ -272,14 +272,11 @@ $rules = @(Get-NetFirewallRule -PolicyStore ActiveStore -Direction Inbound -Enab
             not isinstance(bit, int)
             or isinstance(bit, bool)
             or not isinstance(name, str)
-            or not isinstance(enabled_value, str)
             or enabled_value not in ("True", "False")
-            or not isinstance(allow_inbound_rules, str)
-            or allow_inbound_rules not in ("True", "False", "NotConfigured")
-            or not isinstance(allow_local_firewall_rules, str)
-            or allow_local_firewall_rules not in ("True", "False", "NotConfigured")
-            or not isinstance(allow_local_ipsec_rules, str)
-            or allow_local_ipsec_rules not in ("True", "False", "NotConfigured")
+            or any(
+                value not in ("True", "False", "NotConfigured")
+                for value in (allow_inbound_rules, allow_local_firewall_rules, allow_local_ipsec_rules)
+            )
         ):
             return SSHDebugCheck(
                 identifier="firewall",

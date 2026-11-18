@@ -29,7 +29,7 @@ def read_type_check_report(payload: object) -> ToolReport:
             raise ValueError("Each diagnostic must contain diagnosticNumber and diagnosticValue")
         entry = cast(dict[str, object], diagnostic)
         number = entry.get("diagnosticNumber")
-        if type(number) is not int or number < 1 or "diagnosticValue" not in entry:
+        if type(number) is not int or number < 1 or "diagnosticValue" not in entry:  # pylint: disable=unidiomatic-typecheck  # isinstance would accept JSON booleans
             raise ValueError("Each diagnostic must contain a positive diagnosticNumber and diagnosticValue")
     if not diagnostics and report.get("exitCode") != 0:
         raise ValueError(f"""Checker exited with code {report.get('exitCode')} without usable diagnostics; rerun type-check""")

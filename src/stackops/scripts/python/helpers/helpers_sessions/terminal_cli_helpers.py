@@ -11,7 +11,7 @@ from stackops.utils.schemas.config.multiplexer_types import SessionMultiplexer, 
 def run_detached_shell_script(script: str) -> None:
     if script.strip() == "":
         raise ValueError("Detached shell script must not be empty.")
-    _process = subprocess.Popen(
+    _process = subprocess.Popen(  # pylint: disable=consider-using-with  # detached on purpose, a with-block would wait for the script to exit
         ("sh", "-c", script),
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,

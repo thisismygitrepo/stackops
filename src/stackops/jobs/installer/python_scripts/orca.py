@@ -32,11 +32,11 @@ def _build_windows_installer_data(base_installer_data: InstallerData) -> Install
 
 
 def _get_windows_orca_search_roots() -> tuple[Path, ...]:
-    local_app_data_raw = os.environ.get("LOCALAPPDATA")
+    local_app_data_raw = os.environ.get("LOCALAPPDATA", "")
     local_app_data = Path(local_app_data_raw) if local_app_data_raw else Path.home().joinpath("AppData", "Local")
     search_roots: list[Path] = [local_app_data, local_app_data.joinpath("Programs")]
     for env_name in ("ProgramFiles", "ProgramFiles(x86)"):
-        search_root_raw = os.environ.get(env_name)
+        search_root_raw = os.environ.get(env_name, "")
         if not search_root_raw:
             continue
         search_root = Path(search_root_raw)

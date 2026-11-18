@@ -40,7 +40,7 @@ def secure_q_cli() -> None:
         except Exception:
             pass
     for exe in ["q", "kiro"]:
-        if shutil.which(exe):
+        if shutil.which(exe) is not None:
             for key, value in privacy_settings.items():
                 val_str = "true" if value else "false"
                 try:

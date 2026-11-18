@@ -270,10 +270,10 @@ def apply_mapper(
         program_start = len(operation_records)
         for a_mapper in program_files:
             config_file_default_path, config_file_self_managed_path = _resolve_mapper_paths(a_mapper)
-            use_copy = method == "copy" or a_mapper.get("copy", False)
+            use_copy = method == "copy" or a_mapper.get("copy") is True
             resolved_method: Literal["symlink", "copy"] = "copy" if use_copy else "symlink"
             operation_type = f"{direction}_{resolved_method}"
-            if a_mapper.get("contents"):
+            if a_mapper.get("contents") is True:
                 operation_type = f"{operation_type}_contents"
             try:
                 operation_paths = _iter_operation_paths(

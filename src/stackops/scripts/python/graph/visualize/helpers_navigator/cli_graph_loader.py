@@ -103,7 +103,7 @@ def _node_module_path(node: dict[str, Any]) -> str:
 
 
 def _parse_signature(signature: dict[str, Any] | None) -> list[ArgumentInfo]:
-    if not signature:
+    if signature is None:
         return []
 
     arguments: list[ArgumentInfo] = []

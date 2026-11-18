@@ -138,7 +138,7 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> bo
 
     # Get the latest release URL
     download_url = get_latest_winget_release_url()
-    if not download_url:
+    if download_url is None:
         print("Could not find the latest winget release URL.")
         return False
 

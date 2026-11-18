@@ -254,7 +254,7 @@ def should_wait_for_return(command: Sequence[str]) -> bool:
 
 def read_exit_key() -> str:
     if platform.system().lower() == "windows":
-        import msvcrt
+        import msvcrt  # pylint: disable=import-error  # Windows-only stdlib module, unresolvable on other platforms
 
         getch = cast(Callable[[], bytes], getattr(msvcrt, "getch"))
         pressed_key = getch()
@@ -269,7 +269,7 @@ def read_exit_key() -> str:
     previous_terminal_state = termios.tcgetattr(stdin_file_descriptor)
     try:
         tty.setraw(stdin_file_descriptor)
-        return sys.stdin.read(1)
+        return cast(str, sys.stdin.read(1))
     finally:
         termios.tcsetattr(stdin_file_descriptor, termios.TCSADRAIN, previous_terminal_state)
 

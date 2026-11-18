@@ -3,7 +3,7 @@
 from configparser import ConfigParser, Error as ConfigParserError
 
 import typer
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 from typer._completion_classes import completion_init
 from typer.completion import install_callback, show_callback
 from stackops.utils.cli_utils.interaction import require_interactive
@@ -109,7 +109,7 @@ def mount(
         res = choose_from_options(
             multi=True,
             msg="Select clouds (Tab to select multiple, Enter to confirm)",
-            options=config.sections(),
+            options=cast(list[str], config.sections()),
             header="CLOUD MOUNT",
             default=None,
             tv=True,
@@ -128,7 +128,7 @@ def mount(
             print(f"❌ Error: Cloud(s) not found in config: {', '.join(missing)}")
             raise typer.Exit(code=1)
 
-    if network and len(clouds) > 1:
+    if network is not None and len(clouds) > 1:
         print("❌ Error: Network mode supports only one cloud at a time")
         raise typer.Exit(code=1)
     if network is not None and destination is not None:
@@ -185,7 +185,7 @@ def mount(
     mount_arguments: dict[str, list[str]] = {
         cloud_name: [
             "rclone", "mount", f"""{cloud_name}:""", mount_locations[cloud_name], "--vfs-cache-mode", "full", "--file-perms=0777",
-            *(["--network-mode"] if network else []),
+            *(["--network-mode"] if network is not None else []),
         ]
         for cloud_name in clouds
     }

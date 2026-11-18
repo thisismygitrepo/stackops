@@ -12,7 +12,7 @@ MountBackend: TypeAlias = Literal["mount", "dislocker", "udisksctl"]
 
 
 def _display_value(value: str | None) -> str:
-    return value if value else "-"
+    return "-" if value is None or value == "" else value
 
 
 def _build_devices_table(entries: list[DeviceEntry]) -> "Table":

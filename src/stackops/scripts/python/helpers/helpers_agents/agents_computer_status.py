@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from http.client import HTTPException
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, cast
 from urllib.request import urlopen
 
 from rich import box
@@ -54,11 +54,11 @@ def collect_control_endpoint_status(*, port: int) -> ControlEndpointStatus:
         return ControlEndpointStatus(state="stopped", mcp_url=mcp_url, sse_url=sse_url, last_activity=None, active_sse_connections=None)
     try:
         with urlopen(f"""{base_url}/status""", timeout=COMPUTER_CONTROL_PROBE_TIMEOUT_SECONDS) as response:
-            payload: JsonValue = json.loads(response.read())
+            payload = cast(JsonValue, json.loads(response.read()))
     except (OSError, HTTPException, json.JSONDecodeError):
         return ControlEndpointStatus(state="foreign", mcp_url=mcp_url, sse_url=sse_url, last_activity=None, active_sse_connections=None)
     match payload:
-        case {"api_last_activity": str(last_activity), "active_sse_connections": int(active_sse_connections), "server_instances": dict()}:
+        case {"api_last_activity": str() as last_activity, "active_sse_connections": int() as active_sse_connections, "server_instances": dict()}:
             return ControlEndpointStatus(
                 state="running", mcp_url=mcp_url, sse_url=sse_url, last_activity=last_activity, active_sse_connections=active_sse_connections
             )
@@ -77,7 +77,7 @@ def collect_agent_desktop_status() -> AgentDesktopStatus | None:
     except (OSError, subprocess.TimeoutExpired) as error:
         raise RuntimeError(f"""Could not run {executable} status: {error}""") from error
     try:
-        envelope: JsonValue = json.loads(completed.stdout)
+        envelope = cast(JsonValue, json.loads(completed.stdout))
     except json.JSONDecodeError as error:
         raise RuntimeError(f"""{executable} status did not print JSON (exit {completed.returncode}): {completed.stderr.strip()}""") from error
     unexpected_output = RuntimeError(f"""Unexpected {executable} status output: {completed.stdout.strip()}""")
@@ -89,15 +89,15 @@ def collect_agent_desktop_status() -> AgentDesktopStatus | None:
         case _:
             raise unexpected_output
     match data:
-        case {"version": str(version), "platform": str(platform), "permissions": dict() as raw_permissions}:
+        case {"version": str() as version, "platform": str() as platform, "permissions": dict() as raw_permissions}:
             pass
         case _:
             raise unexpected_output
-    permission_entries: dict[str, JsonValue] = raw_permissions
+    permission_entries = cast(dict[str, JsonValue], raw_permissions)
     permissions: dict[str, str] = {}
     for name, entry in permission_entries.items():
         match entry:
-            case {"state": str(state)}:
+            case {"state": str() as state}:
                 permissions[name] = state
             case _:
                 raise unexpected_output

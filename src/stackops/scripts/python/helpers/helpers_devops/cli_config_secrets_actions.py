@@ -104,7 +104,7 @@ def write_env_handoff(key_values: Mapping[str, object], *, verbose: bool) -> Non
     import platform
 
     op_program_path_raw = os.environ.get("OP_PROGRAM_PATH")
-    if not op_program_path_raw:
+    if op_program_path_raw is None or op_program_path_raw == "":
         _fail("Cannot define env variables in the parent shell because OP_PROGRAM_PATH is not set. Run through the StackOps shell wrapper.")
     op_program_path = Path(op_program_path_raw)
     if op_program_path.exists():

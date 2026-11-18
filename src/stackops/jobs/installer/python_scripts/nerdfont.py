@@ -191,7 +191,7 @@ def _platform_label(current_platform: str) -> str:
 
 def _font_destination_dir(current_platform: str) -> Path:
     if current_platform == "Linux":
-        xdg_data_home = os.environ.get("XDG_DATA_HOME")
+        xdg_data_home = os.environ.get("XDG_DATA_HOME", "")
         data_home = Path(xdg_data_home).expanduser() if xdg_data_home else Path.home().joinpath(".local/share")
         return data_home.joinpath("fonts")
     if current_platform == "Darwin":

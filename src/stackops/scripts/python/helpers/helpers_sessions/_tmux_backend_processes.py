@@ -66,7 +66,7 @@ def classify_pane_status(
     cmd = pane["pane_command"]
     if is_shell_command_name(command_name=cmd):
         child_process = pane_process_label_finder(pane.get("pane_pid", ""))
-        if child_process:
+        if child_process is not None:
             return child_process, f"running: `{child_process}`"
         return process_name, "idle shell"
     if cmd:

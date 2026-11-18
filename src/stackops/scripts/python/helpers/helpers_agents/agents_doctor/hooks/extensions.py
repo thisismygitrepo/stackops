@@ -67,12 +67,12 @@ def collect_extensions(*, agent: DoctorAgent, context: DoctorContext) -> HookInv
             configs.extend((origin, path, "json") for origin, path in config_paths(context=context))
             directories.append(("global", context.xdg_config_directory / "opencode" / "plugins"))
             directories.extend(("local", directory / ".opencode" / "plugins") for directory in context.ancestor_directories)
-            custom = os.environ.get("OPENCODE_CONFIG")
-            if custom:
+            custom = os.environ.get("OPENCODE_CONFIG", "")
+            if custom != "":
                 path = Path(custom).expanduser()
                 configs.append(("global", path if path.is_absolute() else context.working_directory / path, "json"))
-            custom_directory = os.environ.get("OPENCODE_CONFIG_DIR")
-            if custom_directory:
+            custom_directory = os.environ.get("OPENCODE_CONFIG_DIR", "")
+            if custom_directory != "":
                 root = Path(custom_directory).expanduser()
                 if not root.is_absolute():
                     root = context.working_directory / root

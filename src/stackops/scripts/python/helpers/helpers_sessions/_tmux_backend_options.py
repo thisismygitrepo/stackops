@@ -50,7 +50,7 @@ def kill_script_for_target(
         return f"tmux kill-session -t {quote_fn(session_name)}"
 
     target = f"{session_name}:{window_target}"
-    if pane_index:
+    if pane_index is not None:
         return f"tmux kill-pane -t {quote_fn(f'{target}.{pane_index}')}"
     return f"tmux kill-window -t {quote_fn(target)}"
 

@@ -47,7 +47,7 @@ def build_scrape_command(
         command.append("--enable-resources")
     if selector is not None:
         command.extend(["-s", selector])
-    if extra_args:
+    if extra_args is not None:
         command.extend(extra_args)
 
     return command

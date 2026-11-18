@@ -77,7 +77,7 @@ def _check_ufw(
     parsed_rules.sort(key=lambda rule: rule[0])
     unproved: list[str] = []
     for port in ports:
-        port_families = listener_families_by_port.get(port)
+        port_families = listener_families_by_port.get(port, frozenset())
         if not port_families:
             unproved.append(f"unknown-family:{port}/tcp")
             continue

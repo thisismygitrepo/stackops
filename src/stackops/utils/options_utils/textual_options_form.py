@@ -102,7 +102,7 @@ def _normalized_text_value(value: str) -> str | None:
 
 
 def _validated_field_label_width_percent(field_label_width_percent: int) -> int:
-    if type(field_label_width_percent) is not int:
+    if type(field_label_width_percent) is not int:  # pylint: disable=unidiomatic-typecheck  # isinstance would accept bool
         raise TypeError(
             f"""Expected field_label_width_percent to be int, got {type(field_label_width_percent).__name__}."""
         )

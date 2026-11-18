@@ -125,7 +125,7 @@ def scan_file(path: Path, client: "ScanClient", stop: Event | None, request_lock
         try:
             if isinstance(client, VtRequestClient):
                 client.set_request_context(stage=stage, deadline=deadline)
-            with BytesIO(file_bytes) as file_handle, request_lock if request_lock is not None else nullcontext():
+            with request_lock if request_lock is not None else nullcontext(), BytesIO(file_bytes) as file_handle:
                 if stop is not None and stop.is_set():
                     return ScanCancelled()
                 analysis = client.scan_file(file_handle, wait_for_completion=False)

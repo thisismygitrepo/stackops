@@ -26,7 +26,7 @@ def launch_background_mount(remote: str, arguments: list[str], mount_path: Path,
     else:
         creationflags = 0
     with tempfile.NamedTemporaryFile(prefix="mount-", suffix=".log", dir=log_dir, delete=False) as log:
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # pylint: disable=consider-using-with  # the mount must outlive this call
             arguments,
             stdin=subprocess.DEVNULL,
             stdout=log,

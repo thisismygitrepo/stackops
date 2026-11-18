@@ -52,7 +52,7 @@ def parse_pyfile(file_path: str):
 def wrap_import_in_try_except(import_line: str, pyfile: str, repo_root: str | None = None) -> None:
     import importlib
     import sys
-    from pathlib import Path
+    from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is serialized by lambda_to_python_script without module globals
 
     module_name = import_line.removeprefix("from ").removesuffix(" import *")
 

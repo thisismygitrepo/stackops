@@ -125,7 +125,7 @@ def kill_process(
             typer.echo(json.dumps(results, indent=2))
         else:
             for result in results:
-                typer.echo(f"{result['pid']} {result['name']}: {result['status']}" + (f" ({result['error']})" if result['error'] else ""))
+                typer.echo(f"{result['pid']} {result['name']}: {result['status']}" + (f" ({result['error']})" if result['error'] is not None else ""))
             if not results:
                 typer.echo("No processes match the requested selector.")
         if any(result["status"] == "failed" for result in results):

@@ -1,5 +1,6 @@
 import copy
 from collections.abc import MutableMapping
+from typing import cast
 
 import typer
 import typer.main
@@ -29,7 +30,7 @@ def _lazy_group_class(source_app: typer.Typer, base_class: type[TyperGroup]) -> 
 def _base_class(app: typer.Typer) -> type[TyperGroup]:
     configured_class = app.info.cls
     if isinstance(configured_class, DefaultPlaceholder):
-        configured_class = configured_class.value
+        configured_class = cast(type[TyperGroup] | None, configured_class.value)
     return TyperGroup if configured_class is None else configured_class
 
 
@@ -45,7 +46,7 @@ def _is_group_shaped(app: typer.Typer) -> bool:
 
 
 def _shape(app: typer.Typer) -> tuple[tuple[str | None, bool | None], ...]:
-    commands = tuple((command.name or getattr(command.callback, "__name__", None), command.hidden) for command in app.registered_commands)
+    commands = tuple((command.name or cast(str | None, getattr(command.callback, "__name__", None)), command.hidden) for command in app.registered_commands)
     groups = tuple((group.name, group.hidden) for group in app.registered_groups)
     return commands + groups
 

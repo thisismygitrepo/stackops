@@ -79,9 +79,9 @@ def _run_depoison(
     *, agent: str, directory: str, scope: CleanupScope, resource: str, recursive: bool,
     match: str | None, apply: bool, interactive: bool, verbose: bool, json_output: bool,
 ) -> None:
-    from pathlib import Path
+    from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is serialized standalone via lambda_to_python_script
 
-    import typer
+    import typer  # pylint: disable=redefined-outer-name,reimported  # body is serialized standalone via lambda_to_python_script
     from rich.console import Console
     from rich.panel import Panel
     from rich.text import Text

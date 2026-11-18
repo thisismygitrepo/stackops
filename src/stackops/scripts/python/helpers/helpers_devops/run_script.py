@@ -91,7 +91,6 @@ def run_py_script(
         from stackops.utils.code import exit_then_run_shell_script
 
         exit_then_run_shell_script(script=_append_forwarded_args(shell_script=name, forwarded_args=forwarded_args), strict=False)
-        return
     from stackops.scripts.python.helpers.helpers_devops.script_resolution import resolve_script
 
     target_file = resolve_script(ctx=ctx, name=name, source=source, interactive=interactive, allow_dynamic=True)

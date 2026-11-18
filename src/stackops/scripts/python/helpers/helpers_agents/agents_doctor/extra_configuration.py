@@ -14,12 +14,12 @@ def extended_configuration_resources(*, agent: DoctorAgent, context: DoctorConte
         if not isinstance(children, str):
             paths.extend(("global", path, "Codex named profile; loaded when selected") for path in children if path.name.endswith(".config.toml"))
     elif agent == "opencode":
-        config = os.environ.get("OPENCODE_CONFIG")
-        if config:
+        config = os.environ.get("OPENCODE_CONFIG", "")
+        if config != "":
             path = Path(config).expanduser()
             paths.append(("global", path if path.is_absolute() else context.working_directory / path, "OpenCode OPENCODE_CONFIG override"))
-        config_directory = os.environ.get("OPENCODE_CONFIG_DIR")
-        if config_directory:
+        config_directory = os.environ.get("OPENCODE_CONFIG_DIR", "")
+        if config_directory != "":
             root = Path(config_directory).expanduser()
             if not root.is_absolute():
                 root = context.working_directory / root

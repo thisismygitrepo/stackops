@@ -162,7 +162,7 @@ def active_socket_streams(plan: PortChangePlan) -> tuple[str, ...]:
         ),
         failure_message=f"Unable to inspect active socket {socket_name}",
     )
-    streams = tuple(dict.fromkeys(match.group(1) for match in re.finditer(r"(\S+)\s+\(Stream\)", output)))
+    streams: tuple[str, ...] = tuple(dict.fromkeys(match.group(1) for match in re.finditer(r"(\S+)\s+\(Stream\)", output)))
     if len(streams) == 0:
         raise RuntimeError(f"Active socket {socket_name} has no inspectable TCP ListenStream endpoints.")
     return streams

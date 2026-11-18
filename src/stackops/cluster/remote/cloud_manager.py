@@ -200,7 +200,7 @@ class CloudManager:
             if status in ("completed", "failed"):
                 log = self.read_log()
                 entry_data = next((j for j in log["running"] if j.get("name") == rm.config.job_id), None)
-                if entry_data:
+                if entry_data is not None:
                     entry = LogEntry.from_dict(entry_data)
                     entry.end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     log[status].append(entry.__dict__)

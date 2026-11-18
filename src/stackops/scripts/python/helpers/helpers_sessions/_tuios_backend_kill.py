@@ -26,7 +26,7 @@ def choose_kill_target(
         if name is not None:
             sessions = [session for session in sessions if session.name == name]
         if not sessions:
-            detail = f"""No running TUIOS session named '{name}' is available.""" if name else "No running TUIOS sessions are available."
+            detail = f"""No running TUIOS session named '{name}' is available.""" if name is not None else "No running TUIOS sessions are available."
             return "error", detail, []
         if idle:
             selected_names = [session.name for session in sessions]

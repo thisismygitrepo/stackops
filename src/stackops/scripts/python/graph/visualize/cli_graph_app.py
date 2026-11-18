@@ -103,7 +103,7 @@ def navigate() -> None:
         main_devops_navigator()
     from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script
     uv_with, uv_project_dir = resolve_uv_context(local_uv_with=["textual"], external_uv_with=["textual"])
-    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),
+    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),  # pylint: disable=unnecessary-lambda  # The helper parses the lambda's call expression.
             uv_with=uv_with, uv_project_dir=uv_project_dir)
     exit_then_run_shell_script(str(shell_script), strict=False)
 

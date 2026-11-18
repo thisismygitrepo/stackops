@@ -51,7 +51,7 @@ def _read_thread(*, session: T3McpSession, thread_id: str, options: StatusOption
         position = page.get("nextPosition")
         if page.get("hasMore") is not True or position is None:
             return thread, items
-        arguments = {**arguments, "afterPosition": position}
+        arguments["afterPosition"] = position
 
 
 def _history(*, thread_id: str, items: list[JsonObject], options: StatusOptions) -> HistoryEvidence:

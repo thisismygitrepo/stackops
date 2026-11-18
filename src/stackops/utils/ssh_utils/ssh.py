@@ -235,7 +235,7 @@ print("SSH key added successfully")
     def get_ssh_conn_str(self, command: str) -> str:
         return (
             "ssh "
-            + (f" -i {self.ssh_key_path}" if self.ssh_key_path else "")
+            + (f" -i {self.ssh_key_path}" if self.ssh_key_path is not None else "")
             + self.get_remote_repr(add_machine=False).replace(":", " -p ")
             + (f" -t {command} " if command != "" else " ")
         )
@@ -364,7 +364,7 @@ stderr:
         path_rel2home_normalized = self._normalize_rel_path_for_remote(path_rel2home)
 
         def create_target_dir(target_rel2home: str, overwrite: bool) -> None:
-            from pathlib import Path
+            from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
             import shutil
             target_path_abs = Path(target_rel2home).expanduser()
             if not target_path_abs.is_absolute():
@@ -401,7 +401,7 @@ stderr:
 
     def check_remote_is_dir(self, source_path: Union[str, Path]) -> bool:
         def check_is_dir(path_to_check: str, json_output_path: str) -> bool:
-            from pathlib import Path
+            from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
             import json
             is_directory = Path(path_to_check).expanduser().absolute().is_dir()
             json_result_path = Path(json_output_path)
@@ -537,7 +537,7 @@ stderr:
             )
 
             def unzip_archive(zip_file_path: str, overwrite_flag: bool, archive_root_posix_mode: int | None) -> None:
-                from pathlib import Path
+                from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
                 import shutil
                 import stat
                 import zipfile
@@ -619,7 +619,7 @@ stderr:
                     )
 
                 def search_files(directory_path: str, json_output_path: str) -> list[str]:
-                    from pathlib import Path
+                    from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
                     import json
                     file_paths_list = [
                         file_path.as_posix() for file_path in Path(directory_path).expanduser().absolute().rglob("*") if file_path.is_file()
@@ -661,7 +661,7 @@ stderr:
                 file_paths_to_download = [Path(file_path_str) for file_path_str in source_list_str]
                 if target is None:
                     def collapse_to_home_dir(absolute_path: str, json_output_path: str) -> str:
-                        from pathlib import Path
+                        from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
                         import json
                         source_absolute_path = Path(absolute_path).expanduser().absolute()
                         try:
@@ -714,7 +714,7 @@ stderr:
         if compress_with_zip:
 
             def zip_source(path_to_zip: str, json_output_path: str) -> str:
-                from pathlib import Path
+                from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
                 import shutil
                 import json
                 source_to_compress = Path(path_to_zip).expanduser().absolute()
@@ -762,7 +762,7 @@ stderr:
             expanded_source = zipped_path
         if target is None:
             def collapse_to_home(absolute_path: str, json_output_path: str) -> str:
-                from pathlib import Path
+                from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
                 import json
                 source_absolute_path = Path(absolute_path).expanduser().absolute()
                 try:
@@ -827,7 +827,7 @@ stderr:
             target_obj = extract_to
 
             def delete_temp_zip(path_to_delete: str) -> None:
-                from pathlib import Path
+                from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
                 import shutil
                 file_or_dir_path = Path(path_to_delete)
                 if file_or_dir_path.exists():

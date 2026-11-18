@@ -120,7 +120,7 @@ def report(
         f"""Started: {saved['started_at']}""", f"""Finished: {saved['finished_at'] or '-'}""",
         f"""Status: {status}""", f"""Record: {records_dir / saved['run_id'] / 'run.json'}""",
     )))
-    if saved["message"]:
+    if saved["message"] is not None:
         typer.echo(saved["message"])
     if view == "accounts":
         import csv

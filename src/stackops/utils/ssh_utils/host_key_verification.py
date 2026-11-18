@@ -125,7 +125,7 @@ def _resolve_configured_path(value: str) -> Path | None:
 @contextmanager
 def _exclusive_file_lock(file_descriptor: int) -> Generator[None]:
     if sys.platform == "win32":
-        import msvcrt
+        import msvcrt  # pylint: disable=import-error  # Windows-only stdlib module, unresolvable on other platforms
 
         os.lseek(file_descriptor, 0, os.SEEK_SET)
         msvcrt.locking(file_descriptor, msvcrt.LK_LOCK, 1)

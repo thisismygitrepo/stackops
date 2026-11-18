@@ -566,7 +566,7 @@ def search(
         elif copy == "username":
             copy_target_value = entry.username
             copy_slot = username_slot
-        elif copy == "totp":
+        else:
             copy_target_value = totp_value
             copy_slot = totp_slot
 

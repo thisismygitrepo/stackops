@@ -18,7 +18,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning impor
 )
 
 
-def _skills(*, context: DoctorContext, config_paths: Iterable[OpenCodeConfigPath]) -> tuple[DoctorResource, ...]:
+def _skills(*, context: DoctorContext, resolved_config_paths: Iterable[OpenCodeConfigPath]) -> tuple[DoctorResource, ...]:
     roots: list[tuple[DoctorOrigin, Path, str]] = [
         ("global", context.xdg_config_directory / "opencode" / "skills", "OpenCode user skills"),
         ("global", context.home_directory / ".agents" / "skills", "shared user skills"),
@@ -32,7 +32,7 @@ def _skills(*, context: DoctorContext, config_paths: Iterable[OpenCodeConfigPath
         )
     configured_sources: list[DoctorResource] = []
     referenced_roots: list[tuple[DoctorOrigin, Path, str]] = []
-    for origin, config_path in config_paths:
+    for origin, config_path in resolved_config_paths:
         if not config_path.is_file():
             continue
         mapping = load_config_mapping(path=config_path, config_format="json")
@@ -81,7 +81,7 @@ def _ambient_instruction_directories(*, context: DoctorContext) -> tuple[Path, .
     return tuple(reversed(context.ancestor_directories))
 
 
-def _instructions(*, context: DoctorContext, config_paths: Iterable[OpenCodeConfigPath]) -> tuple[DoctorResource, ...]:
+def _instructions(*, context: DoctorContext, resolved_config_paths: Iterable[OpenCodeConfigPath]) -> tuple[DoctorResource, ...]:
     resources: list[DoctorResource] = []
     global_path = context.xdg_config_directory / "opencode" / "AGENTS.md"
     if global_path.is_file():
@@ -111,7 +111,7 @@ def _instructions(*, context: DoctorContext, config_paths: Iterable[OpenCodeConf
                     detail="ambient project guidance" if not project_disabled else "disabled by OPENCODE_DISABLE_PROJECT_CONFIG=1",
                 )
             )
-    for origin, config_path in config_paths:
+    for origin, config_path in resolved_config_paths:
         if not config_path.is_file():
             continue
         mapping = load_config_mapping(path=config_path, config_format="json")
@@ -157,8 +157,8 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         *config_resources,
         *configured_plugins(config_paths=resolved_config_paths),
         *plugins,
-        *_skills(context=context, config_paths=resolved_config_paths),
-        *_instructions(context=context, config_paths=resolved_config_paths),
+        *_skills(context=context, resolved_config_paths=resolved_config_paths),
+        *_instructions(context=context, resolved_config_paths=resolved_config_paths),
     )
 
 

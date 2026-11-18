@@ -59,7 +59,7 @@ def collect_summary(backend: SessionMultiplexer, session: str | None, show_tabs:
                 names = list_session_names()
             for name in _select_entries(entries=names, session=session, aliases=lambda name: (name,)):
                 snapshot = load_trace_snapshot(session_name=name, until="idle-shell", expected_exit_code=None)
-                if snapshot.session_error or snapshot.pane_warning or not snapshot.session_exists:
+                if snapshot.session_error is not None or snapshot.pane_warning is not None or not snapshot.session_exists:
                     raise ValueError(snapshot.session_error or snapshot.pane_warning or f"""Session '{name}' disappeared.""")
                 record = {
                     "name": name,

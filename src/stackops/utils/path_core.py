@@ -295,7 +295,7 @@ def symlink_to(
     if overwrite and (source_path.is_symlink() or source_path.exists()):
         delete_path(source_path, verbose=verbose)
     if os.name == "nt" and not _is_user_admin():
-        import win32com.shell.shell  # type: ignore[import-not-found]
+        import win32com.shell.shell  # type: ignore[import-not-found]  # pylint: disable=import-error  # Windows-only pywin32 module, unresolvable on other platforms
 
         win32com.shell.shell.ShellExecuteEx(
             lpVerb="runas",

@@ -106,7 +106,7 @@ def collect_api_module_selections(*, repo_root: Path | None = None) -> dict[str,
             module, path, object_name = resolved
             selection = selections.setdefault(module, ApiModuleSelection(module=module, path=path))
             selection.docs_pages.add(relative_docs_path)
-            if object_name:
+            if object_name is not None:
                 selection.explicit_names.add(object_name.split(".", 1)[0])
             else:
                 selection.include_all = True

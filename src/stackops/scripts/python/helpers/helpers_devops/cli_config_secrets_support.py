@@ -203,7 +203,7 @@ def _build_secret_stats(*, secrets_file: SecretsFile, secret_source: SecretsFile
         login_email_count += int("email" in login)
         login_username_count += int("username" in login)
         login_account_name_count += int("accountName" in login)
-        login_metadata = login.get("metadata")
+        login_metadata = login.get("metadata", {})
         if login_metadata:
             login_metadata_count += 1
             login_metadata_fields += len(login_metadata)
@@ -216,7 +216,7 @@ def _build_secret_stats(*, secrets_file: SecretsFile, secret_source: SecretsFile
             secrets_with_scopes += int(bool(secret["scopes"]))
             secret_description_count += int("description" in secret)
             secret_rotation_count += int("rotation" in secret)
-            secret_metadata = secret.get("metadata")
+            secret_metadata = secret.get("metadata", {})
             if secret_metadata:
                 secret_metadata_count += 1
                 secret_metadata_fields += len(secret_metadata)

@@ -62,13 +62,8 @@ def _build_binary_installer_data(base_installer_data: InstallerData) -> Installe
     )
 
 
-def _is_root() -> bool:
-    geteuid = getattr(os, "geteuid", None)
-    return callable(geteuid) and geteuid() == 0
-
-
 def _with_sudo(command: Sequence[str]) -> list[str]:
-    if _is_root():
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
         return list(command)
     if shutil.which("sudo") is not None:
         return ["sudo", *command]

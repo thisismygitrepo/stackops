@@ -74,16 +74,16 @@ def _print_version_status(declared_version: DeclaredVersion, statuses: list[Repo
     table.add_column("State", no_wrap=True)
     table.add_column("Sync target", overflow="fold")
     table.add_column("Details", overflow="fold")
-    for status in statuses:
-        snapshot = status["snapshot"]
+    for repository_status in statuses:
+        snapshot = repository_status["snapshot"]
         branch = snapshot["branch"] if snapshot["branch"] is not None else "detached"
         dirty_suffix = " · dirty" if snapshot["isDirty"] else ""
         table.add_row(
             snapshot["path"],
             f"{branch}@{snapshot['commit'][:12]}{dirty_suffix}",
-            _state_label(state=status["state"]),
+            _state_label(state=repository_status["state"]),
             _remote_label(snapshot=snapshot),
-            status["detail"],
+            repository_status["detail"],
         )
     Console().print(table)
 

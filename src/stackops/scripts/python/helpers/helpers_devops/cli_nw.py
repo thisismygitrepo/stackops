@@ -104,7 +104,7 @@ def vscode_share(
     machine_mode = output_json or background or not is_interactive()
 
     accept = "--accept-server-license-terms"
-    name_part = f"--name {shlex.quote(name)}" if name else ""
+    name_part = f"--name {shlex.quote(name)}" if name is not None else ""
     extra = extra_args or ""
     if any(token == "--cli-data-dir" or token.startswith("--cli-data-dir=") for token in shlex.split(extra)):
         raise typer.BadParameter("Pass this option directly to vscode-share instead of through --extra-args", param_hint="--cli-data-dir")
@@ -174,8 +174,6 @@ def vscode_share(
         from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls
 
         print_serve_web_urls(cmd, folder_path=directory)
-        exit_then_run_shell_script(cmd)
-        return
     exit_then_run_shell_script(cmd)
 
 

@@ -116,7 +116,7 @@ def _choose_public_key_files() -> tuple[list[PublicKeyRecord], str]:
         tv=True,
         preview=None,
     )
-    if not selected_paths:
+    if selected_paths is None:
         raise ValueError("Public-key selection was cancelled.")
 
     records: list[PublicKeyRecord] = []

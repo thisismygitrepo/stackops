@@ -160,4 +160,3 @@ def launch_t3_threads(workspace_root: Path, requests: list[T3ThreadRequest], tar
                     call_t3_tool(session=session, name="t3_thread_update", arguments={"threadId": thread_id, "action": "regenerate_title"})
                     typer.echo(f"""Launched T3 Code thread {thread_id} ({launched.get("status")}); T3 Code is generating its title.""")
     typer.echo(f"""Follow up and monitor in T3 Code at {T3_SERVER_URL}.""")
-

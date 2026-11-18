@@ -170,7 +170,7 @@ def start_checker_processes() -> tuple[dict[str, RunningTool], dict[str, ToolRes
         stderr_handle = tempfile.TemporaryFile(mode="w+", encoding="utf-8")
         started_at = time.monotonic()
         try:
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # pylint: disable=consider-using-with  # checkers run concurrently and are reaped in finish_ready_processes
                 spec.command,
                 env=subprocess_environment,
                 stdout=report_handle,

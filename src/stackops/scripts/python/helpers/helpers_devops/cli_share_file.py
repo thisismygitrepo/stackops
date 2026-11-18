@@ -110,12 +110,12 @@ Usage examples:
     # Build the appropriate script for current OS
     if is_windows:
         # Windows PowerShell format: croc --relay server:port secret-code --yes
-        relay_arg = f"--relay {_quote_powershell_argument(relay_server)}" if relay_server else ""
+        relay_arg = f"--relay {_quote_powershell_argument(relay_server)}" if relay_server is not None else ""
         code_arg = _quote_powershell_argument(secret_code)
         script = f"""croc {relay_arg} {code_arg} --yes""".strip()
     else:
         # Linux/macOS Bash format: CROC_SECRET="secret-code" croc --relay server:port --yes
-        relay_arg = f"--relay {shlex.quote(relay_server)}" if relay_server else ""
+        relay_arg = f"--relay {shlex.quote(relay_server)}" if relay_server is not None else ""
         script = f"""export CROC_SECRET={shlex.quote(secret_code)}
 croc {relay_arg} --yes""".strip()
 

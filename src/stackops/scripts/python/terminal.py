@@ -215,7 +215,6 @@ def attach_to_session(
             typer.echo("Error: attach operation did not return a final handoff script.", err=True, color=True)
             raise typer.Exit(code=1)
         exit_then_run_shell_script(script=payload, strict=True)
-        return
     typer.echo("Error: attach operation did not return a final handoff script.", err=True, color=True)
     raise typer.Exit(code=1)
 
@@ -321,7 +320,6 @@ def kill_session_target(
                 typer.echo(f"Error: unable to start detached Herdr cleanup: {error}", err=True, color=True)
                 raise typer.Exit(code=1) from error
         exit_then_run_shell_script(script=script, strict=True)
-        return
     typer.echo("Error: kill operation did not return a final script.", err=True, color=True)
     raise typer.Exit(code=1)
 

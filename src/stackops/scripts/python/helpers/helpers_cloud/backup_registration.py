@@ -97,8 +97,8 @@ def register_backup_entry(
         local_display = (Path("~") / local_path.relative_to(Path.home())).as_posix()
     else:
         local_display = local_path.as_posix()
-    cloud_value = path_cloud.strip() if path_cloud and path_cloud.strip() else ES
-    share_url_value = share_url.strip() if share_url and share_url.strip() else None
+    cloud_value = path_cloud.strip() if path_cloud is not None and path_cloud.strip() else ES
+    share_url_value = share_url.strip() if share_url is not None and share_url.strip() else None
 
     encryption_mode: EncryptionMode | None = None if encryption is None else parse_encryption_mode(encryption, label="Encryption mode")
     if password is not None:

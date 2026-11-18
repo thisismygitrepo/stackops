@@ -60,7 +60,7 @@ def _print_section(console: "Console", title: str) -> None:
 def _has_staged_changes(repo: "Repo") -> bool:
     if repo.head.is_valid():
         return len(repo.index.diff("HEAD")) > 0
-    return repo.git.diff("--cached", "--name-only").strip() != ""
+    return str(repo.git.diff("--cached", "--name-only")).strip() != ""
 
 
 def _has_git_identity(repo: "Repo") -> bool:

@@ -23,7 +23,7 @@ def _filter_explanation() -> str:
 
 
 def materialize_python_api_graph_path(graph_path_str: str | None) -> str:
-    if graph_path_str:
+    if graph_path_str is not None:
         return graph_path_str
 
     from stackops.scripts.python.graph.python_api_graph import write_python_api_graph_temp
@@ -47,17 +47,17 @@ def tree(
 ) -> None:
     """Render a rich tree view in the terminal."""
 
-    def func(graph_path_str: str | None, show_help: bool, max_depth: int | None) -> None:
+    def func(graph_path_str: str, show_help: bool, max_depth: int | None) -> None:
         from stackops.scripts.python.graph.visualize.rich_tree import render_tree
-        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path
 
-        render_tree(path=materialize_python_api_graph_path(graph_path_str), show_help=show_help, show_aliases=False, max_depth=max_depth)
+        render_tree(path=graph_path_str, show_help=show_help, show_aliases=False, max_depth=max_depth)
 
     from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function
 
+    graph_file = materialize_python_api_graph_path(str(graph_path) if graph_path else None)
     uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])
     shell_script, _pyfile = get_shell_script_running_lambda_function(
-        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_help=not no_show_help, max_depth=max_depth),
+        lambda: func(graph_path_str=graph_file, show_help=not no_show_help, max_depth=max_depth),
         uv_with=uv_with,
         uv_project_dir=uv_project_dir,
     )

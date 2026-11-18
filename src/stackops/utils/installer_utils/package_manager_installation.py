@@ -4,7 +4,7 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 import requests
 from rich import print as rich_print
@@ -21,7 +21,7 @@ _POWERSHELL_DOWNLOAD_AND_EXECUTE_PATTERN = re.compile(
 
 def _extract_powershell_script_url(command: str) -> str | None:
     match = _POWERSHELL_DOWNLOAD_AND_EXECUTE_PATTERN.match(command)
-    return None if match is None else match.group("url")
+    return None if match is None else cast(str, match.group("url"))
 
 
 # Why `irm <url> | iex` installers are not run as-is on Windows:

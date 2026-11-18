@@ -24,7 +24,7 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
         aider_settings_target_global.parent.mkdir(parents=True, exist_ok=True)
         if aider_settings_source.exists():
             aider_settings_target_global.write_text(aider_settings_source.read_text())
-    if repo_root:
+    if repo_root is not None:
         aider_settings_target_repo = Path(repo_root).joinpath(".aider.conf.yml")
         if not aider_settings_target_repo.exists() or overwrite:
             aider_settings_target_repo.parent.mkdir(parents=True, exist_ok=True)
@@ -40,7 +40,7 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
         aichat_settings_target_global.parent.mkdir(parents=True, exist_ok=True)
         if aichat_settings_source.exists():
             aichat_settings_target_global.write_text(aichat_settings_source.read_text())
-    if repo_root:
+    if repo_root is not None:
         aichat_settings_target_repo = Path(repo_root).joinpath(".config/aichat/config.yaml")
         if not aichat_settings_target_repo.exists() or overwrite:
             aichat_settings_target_repo.parent.mkdir(parents=True, exist_ok=True)
@@ -56,7 +56,7 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
         copilot_settings_target_global.parent.mkdir(parents=True, exist_ok=True)
         if copilot_settings_source.exists():
             copilot_settings_target_global.write_text(copilot_settings_source.read_text())
-    if repo_root:
+    if repo_root is not None:
         copilot_settings_target_repo = Path(repo_root).joinpath(".config/gh-copilot/config.yml")
         if not copilot_settings_target_repo.exists() or overwrite:
             copilot_settings_target_repo.parent.mkdir(parents=True, exist_ok=True)
@@ -72,7 +72,7 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
         crush_settings_target_global.parent.mkdir(parents=True, exist_ok=True)
         if crush_settings_source.exists():
             crush_settings_target_global.write_text(crush_settings_source.read_text())
-    if repo_root:
+    if repo_root is not None:
         crush_settings_target_repo = Path(repo_root).joinpath(".crush.json")
         if not crush_settings_target_repo.exists() or overwrite:
             crush_settings_target_repo.parent.mkdir(parents=True, exist_ok=True)

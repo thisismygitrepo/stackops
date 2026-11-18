@@ -97,7 +97,7 @@ def read_title(window: int) -> str:
         buffer = ct.create_string_buffer(CORE.CFStringGetLength(value) * 4 + 1)
         if not CORE.CFStringGetCString(value, buffer, len(buffer), CF_UTF8):
             raise RuntimeError("macOS could not read the selected window's title.")
-        return buffer.value.decode("utf-8")
+        return str(buffer.value, "utf-8")
 
 
 def read_boolean(window: int, name: str) -> bool:
