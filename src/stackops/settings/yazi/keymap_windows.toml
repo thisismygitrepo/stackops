@@ -106,16 +106,28 @@ run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolate
 desc = "Open an interactive file-specific viewer, serving HTML over the network"
 [[mgr.prepend_keymap]]
 on   = ["B", "f"]
-run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" filebrowser'
-desc = "Serve this directory read-only with File Browser"
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" filebrowser local'
+desc = "Browse with filebrowser"
 [[mgr.prepend_keymap]]
 on   = ["B", "m"]
-run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" miniserve'
-desc = "Serve this directory read-only with miniserve"
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" miniserve local'
+desc = "Browse with miniserve"
 [[mgr.prepend_keymap]]
 on   = ["B", "c"]
-run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" copyparty'
-desc = "Serve this directory read-only with copyparty"
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" copyparty local'
+desc = "Browse with copyparty"
+[[mgr.prepend_keymap]]
+on   = ["B", "F"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" filebrowser network'
+desc = "Browse with filebrowser (LAN)"
+[[mgr.prepend_keymap]]
+on   = ["B", "M"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" miniserve network'
+desc = "Browse with miniserve (LAN)"
+[[mgr.prepend_keymap]]
+on   = ["B", "C"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" copyparty network'
+desc = "Browse with copyparty (LAN)"
 [[mgr.prepend_keymap]]
 on   = "n"
 run  = 'shell --block -- nano %h'
