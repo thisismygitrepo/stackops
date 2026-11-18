@@ -81,6 +81,18 @@ on   = "V"
 run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/interactive_view.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "Open an interactive file-specific viewer, serving HTML over the network"
 [[mgr.prepend_keymap]]
+on   = ["B", "f"]
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/serve_directory.py" filebrowser'
+desc = "Serve this directory read-only with File Browser"
+[[mgr.prepend_keymap]]
+on   = ["B", "m"]
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/serve_directory.py" miniserve'
+desc = "Serve this directory read-only with miniserve"
+[[mgr.prepend_keymap]]
+on   = ["B", "c"]
+run  = 'shell --block -- uv run --isolated --no-project --python 3.14 --with stackops "$HOME/.config/yazi/scripts/serve_directory.py" copyparty'
+desc = "Serve this directory read-only with copyparty"
+[[mgr.prepend_keymap]]
 on   = "n"
 run  = 'shell --block -- nano %h'
 desc = "nano the file"
