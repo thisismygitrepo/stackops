@@ -50,7 +50,7 @@ def normalized_command_name(command_name: str) -> str:
         stripped_name = stripped_name[1:]
     if stripped_name == "":
         return ""
-    return Path(stripped_name).name.casefold()
+    return Path(stripped_name).name.casefold().removesuffix(".exe")
 
 
 def process_command_name_candidates(process: PaneProcess) -> set[str]:

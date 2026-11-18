@@ -22,9 +22,10 @@ def window_is_idle(window: WindowEntry) -> bool | None:
         return None
     if not processes or not is_shell_process(processes[0]):
         return False if processes else None
-    if any(
+    shell_arguments = processes[0].argv[1:]
+    if "-NoExit" not in shell_arguments and any(
         argument == "--command" or (argument.startswith("-") and not argument.startswith("--") and "c" in argument[1:])
-        for argument in processes[0].argv[1:]
+        for argument in shell_arguments
     ):
         return False
     return all(is_shell_process(process) and len(process.argv) <= 1 for process in processes[1:])

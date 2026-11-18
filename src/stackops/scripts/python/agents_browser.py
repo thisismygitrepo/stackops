@@ -131,7 +131,7 @@ def launch_browser(
         typer.Option(
             "--new-window",
             "-w",
-            help="Claim a browser window per endpoint (CDP browsers): a browser that is already running gets a new window; its id and tabs are reported.",
+            help="Claim a browser window per endpoint (not Safari): a browser that is already running gets a new window; its id and tabs are reported.",
         ),
     ] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print browser endpoint and launch records as JSON.")] = False,
@@ -148,8 +148,8 @@ def launch_browser(
         resolved_runtime = resolve_browser_runtime(runtime=runtime)
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
-    if new_window and get_browser_launcher(browser=browser).endpoint_protocol != "cdp":
-        raise typer.BadParameter(f"--new-window needs a Chrome DevTools Protocol browser; {browser} does not expose one")
+    if new_window and get_browser_launcher(browser=browser).endpoint_protocol == "webdriver":
+        raise typer.BadParameter(f"--new-window is not available for {browser}: its WebDriver endpoint has no browser windows to manage")
     if attach:
         if resolved_runtime == "detached" or json_output:
             raise typer.BadParameter("--attach cannot be combined with --runtime detached or --json")
@@ -157,7 +157,8 @@ def launch_browser(
     profile_names: tuple[str | None, ...] = (None,) if profile is None else _parse_profile_names(raw_profile=profile)
     lan_address: InterfaceIPv4Address | None = None
     try:
-        from stackops.scripts.python.helpers.helpers_agents.agents_browser_cdp_windows import CdpWindow, claim_cdp_window
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_window_models import BrowserAppWindow
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_windows import claim_browser_window
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl
 
         if lan:
@@ -170,8 +171,10 @@ def launch_browser(
             launch_browser_impl(browser=browser, port=port + offset, profile_name=profile_name, temporary=tmp, lan=lan, runtime=resolved_runtime)
             for offset, profile_name in enumerate(profile_names)
         )
-        browser_windows: tuple[CdpWindow | None, ...] = tuple(
-            claim_cdp_window(port=result.browser_port, open_new=isinstance(result, ExistingBrowserLaunchResult)) if new_window else None
+        browser_windows: tuple[BrowserAppWindow | None, ...] = tuple(
+            claim_browser_window(browser=result.browser, port=result.browser_port, open_new=isinstance(result, ExistingBrowserLaunchResult))
+            if new_window
+            else None
             for result in results
         )
     except ValueError as error:
@@ -197,7 +200,7 @@ def launch_browser(
         console.print(build_browser_launches_summary(results=results, lan_address=lan_address))
     for result, browser_window in zip(results, browser_windows, strict=True):
         if browser_window is not None:
-            tab_ids = ", ".join(tab.target_id for tab in browser_window.tabs)
+            tab_ids = ", ".join(tab.tab_id for tab in browser_window.tabs)
             typer.echo(f"Browser window {browser_window.window_id} on port {result.port} · tab {tab_ids}")
     first_windows = next((result.windows for result in results if isinstance(result, NewBrowserLaunchResult) and result.windows is not None), None)
     if attach and first_windows is not None:
@@ -227,7 +230,7 @@ def close_browser(
         ),
     ] = None,
     window: Annotated[
-        int | None,
+        str | None,
         typer.Option(
             "--window", "-w", help="Close only this browser window id (see status) on the --port endpoint; the browser and its other windows keep running."
         ),
@@ -240,16 +243,18 @@ def close_browser(
             raise typer.BadParameter("--window closes one window on the --port endpoint; it cannot be combined with --profile")
         window_port = DEFAULT_BROWSER_PORT if port is None else port
         try:
-            from stackops.scripts.python.helpers.helpers_agents.agents_browser_cdp_windows import close_cdp_window
+            from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_windows import close_browser_window
 
-            closed_window = close_cdp_window(port=window_port, window_id=window)
+            closed_window = close_browser_window(browser=browser, port=window_port, window_id=window)
+        except ValueError as error:
+            raise typer.BadParameter(str(error)) from error
         except RuntimeError as error:
             typer.echo(str(error), err=True)
             raise typer.Exit(code=1) from error
         if json_output:
             emit_agent_json(closed_window)
             return
-        typer.echo(f"Closed browser window {closed_window.window_id} ({len(closed_window.tabs)} tab(s)) on port {window_port}; the browser keeps running.")
+        typer.echo(f"Closed {browser} window {closed_window.window_id} ({len(closed_window.tabs)} tab(s)) on port {window_port}; the browser keeps running.")
         return
     profile_names: tuple[str, ...] | None = None
     try:

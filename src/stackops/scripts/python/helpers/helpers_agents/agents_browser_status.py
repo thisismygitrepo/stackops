@@ -5,7 +5,8 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_cdp_windows import CdpWindow, collect_browser_windows
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_window_models import BrowserAppWindow, BrowserWindowsUnavailable
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_windows import collect_browser_windows
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserRuntime
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_records import BrowserLaunchStatus, collect_browser_launch_status
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_process_scan import OpenBrowserProcess, collect_open_browsers
@@ -16,12 +17,12 @@ class OpenBrowserStatus:
     browser: OpenBrowserProcess
     launch_id: str | None
     runtime: BrowserRuntime | None
-    browser_windows: tuple[CdpWindow, ...] | None
+    browser_windows: tuple[BrowserAppWindow, ...] | BrowserWindowsUnavailable
 
 
 @dataclass(frozen=True)
 class BrowserLaunchWindowsStatus(BrowserLaunchStatus):
-    browser_windows: tuple[CdpWindow, ...] | None
+    browser_windows: tuple[BrowserAppWindow, ...] | BrowserWindowsUnavailable
 
 
 def collect_open_browser_status() -> tuple[OpenBrowserStatus, ...]:
@@ -47,7 +48,7 @@ def collect_browser_launch_windows_status() -> tuple[BrowserLaunchWindowsStatus,
             state=status.state,
             browser_process_id=status.browser_process_id,
             relay_running=status.relay_running,
-            browser_windows=None
+            browser_windows=BrowserWindowsUnavailable(reason="no_endpoint")
             if status.browser_process_id is None
             else collect_browser_windows(browser=status.launch.browser, port=status.launch.browser_port),
         )
@@ -98,14 +99,18 @@ def show_open_browser_status(*, rows: tuple[OpenBrowserStatus, ...]) -> None:
     Console().print(table)
 
 
-def _windows_cell(*, browser_windows: tuple[CdpWindow, ...] | None) -> str:
-    if browser_windows is None:
-        return "-"
-    if not browser_windows:
-        return "none"
-    return "\n".join(
-        f"{window.window_id} · {len(window.tabs)} {'tab' if len(window.tabs) == 1 else 'tabs'} · {window.state}" for window in browser_windows
-    )
+def _windows_cell(*, browser_windows: tuple[BrowserAppWindow, ...] | BrowserWindowsUnavailable) -> str:
+    match browser_windows:
+        case BrowserWindowsUnavailable(reason="session_in_use"):
+            return "session in use"
+        case BrowserWindowsUnavailable():
+            return "-"
+        case ():
+            return "none"
+        case _:
+            return "\n".join(
+                f"{window.window_id} · {len(window.tabs)} {'tab' if len(window.tabs) == 1 else 'tabs'} · {window.state}" for window in browser_windows
+            )
 
 
 def _launch_row(*, status: BrowserLaunchWindowsStatus) -> tuple[str, ...]:

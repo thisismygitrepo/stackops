@@ -1,8 +1,9 @@
 import json
+import platform
 import shlex
 from typing import cast
 
-from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode
+from stackops.cluster.sessions_managers.session_exit_mode import SessionExitMode, build_powershell_exit_mode_command_parts
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import LaunchedWindow
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import kill_window_command, run_tuios
 from stackops.utils.schemas.layouts.layout_types import PaneConfig, TabConfig, resolve_start_dir
@@ -30,6 +31,16 @@ done"""
 
 
 def launch_window(session_name: str, pane: PaneConfig, exit_mode: SessionExitMode, workspace: int) -> str:
+    window_command: list[str]
+    if platform.system() == "Windows":
+        window_command = build_powershell_exit_mode_command_parts(
+            command=pane["command"],
+            exit_mode=exit_mode,
+            emit_osc133=True,
+            close_block="exit $stackopsExitCode",
+        )
+    else:
+        window_command = ["bash", "-c", build_window_script(command=pane["command"], exit_mode=exit_mode)]
     output = run_tuios(
         [
             "call", "new-window",
@@ -40,7 +51,7 @@ def launch_window(session_name: str, pane: PaneConfig, exit_mode: SessionExitMod
                 "focus": False,
                 "name": pane["paneName"],
                 "close_on_exit": True,
-                "command": ["bash", "-c", build_window_script(command=pane["command"], exit_mode=exit_mode)],
+                "command": window_command,
             }),
         ]
     )
