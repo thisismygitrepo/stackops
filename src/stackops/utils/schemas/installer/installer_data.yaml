@@ -2789,6 +2789,22 @@ installers:
         linux: miniserve-{version}-aarch64-unknown-linux-musl
         darwin: miniserve-{version}-aarch64-apple-darwin
         windows: null
+  - appName: copyparty
+    license: MIT license
+    repoURL: CMD
+    doc: 🦜 Portable file server with uploads, thumbnails, a media player and a web UI
+    categoryLabels:
+      - file-managers
+      - file-transfer-sharing
+    fileNamePattern:
+      amd64:
+        linux: uv tool install copyparty
+        darwin: uv tool install copyparty
+        windows: uv tool install copyparty
+      arm64:
+        linux: uv tool install copyparty
+        darwin: uv tool install copyparty
+        windows: uv tool install copyparty
   - appName: cloudreve
     license: GPL-3.0 license
     repoURL: https://github.com/cloudreve/Cloudreve
@@ -6144,4 +6160,19 @@ installers:
       arm64:
         linux: ortie.aarch64-linux.tgz
         darwin: ortie.aarch64-darwin.tgz
+        windows: null
+  - appName: jless
+    license: MIT License
+    repoURL: https://github.com/PaulJuliusMartinez/jless
+    doc: 🔎 Command-line JSON viewer with collapsible tree navigation
+    categoryLabels:
+      - data-format-tools
+    fileNamePattern:
+      amd64:
+        linux: jless-{version}-x86_64-unknown-linux-gnu.zip
+        darwin: jless-{version}-x86_64-apple-darwin.zip
+        windows: null
+      arm64:
+        linux: null
+        darwin: jless-{version}-aarch64-apple-darwin.zip
         windows: null

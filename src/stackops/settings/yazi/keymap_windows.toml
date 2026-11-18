@@ -34,11 +34,11 @@ desc = "Toggle preview pane / maximize pane"
 # https://yazi-rs.github.io/docs/tips#macos-quick-look
 [[mgr.prepend_keymap]]
 on   = "<C-p>"
-run  = 'shell -- qlmanage -p "$@"'
+run  = 'shell -- qlmanage -p %s'
 
 [[mgr.prepend_keymap]]
 on   = "F"
-run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" fire run "$0"'
+run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" fire run %h'
 desc = "Run fire on hovered file"
 
 
@@ -49,7 +49,7 @@ desc = "go to repo root"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "v"]
-run  = 'shell -- code "$0"'
+run  = 'shell -- code %h'
 desc = "Read with vscode"
 
 [[mgr.prepend_keymap]]
@@ -69,7 +69,7 @@ desc = "Edit with Helix (Python LSP setup)"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "p"]
-run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" preview "$0"'
+run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" preview %h'
 desc = "Read with preview"
 
 [[mgr.prepend_keymap]]
@@ -79,17 +79,17 @@ desc = "Read with VisiData"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "f"]
-run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" fire run "$0"'
+run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" fire run %h'
 desc = "Read with fire"
 
 [[mgr.prepend_keymap]]
 on   = ["R", "F"]
-run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" fire run -i "$0"'
+run  = 'shell --block -- powershell "~\.config\stackops\scripts\wrap_stackops" fire run -i %h'
 desc = "Read with fire interactively"
 
 [[mgr.prepend_keymap]]
 on   = "b"
-run  = 'shell --block -- bat "$0"'
+run  = 'shell --block -- bat %h'
 desc = "bat the file"
 
 [[mgr.prepend_keymap]]
@@ -105,8 +105,32 @@ on   = "V"
 run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/interactive_view.py" __YAZI_HOVERED__ %h __YAZI_SELECTED__ %s'
 desc = "Open an interactive file-specific viewer, serving HTML over the network"
 [[mgr.prepend_keymap]]
+on   = ["B", "f"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" filebrowser local'
+desc = "Browse with filebrowser"
+[[mgr.prepend_keymap]]
+on   = ["B", "m"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" miniserve local'
+desc = "Browse with miniserve"
+[[mgr.prepend_keymap]]
+on   = ["B", "c"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" copyparty local'
+desc = "Browse with copyparty"
+[[mgr.prepend_keymap]]
+on   = ["B", "F"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" filebrowser network'
+desc = "Browse with filebrowser (LAN)"
+[[mgr.prepend_keymap]]
+on   = ["B", "M"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" miniserve network'
+desc = "Browse with miniserve (LAN)"
+[[mgr.prepend_keymap]]
+on   = ["B", "C"]
+run  = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/serve_directory.py" copyparty network'
+desc = "Browse with copyparty (LAN)"
+[[mgr.prepend_keymap]]
 on   = "n"
-run  = 'shell --block -- nano "$0"'
+run  = 'shell --block -- nano %h'
 desc = "nano the file to edit"
 
 [[mgr.prepend_keymap]]
@@ -116,27 +140,27 @@ desc = "compress with ouch"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "d"]
-run  = 'shell --block -- ouch decompress "%h"'
+run  = 'shell --block -- ouch decompress %h'
 desc = "decompress with ouch"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "s"]
-run  = 'shell --block -- gpg --output "$0.gpg" --symmetric "$0"'
+run  = 'shell --block -- gpg --output %h.gpg --symmetric %h'
 desc = "encrypt symmetrically with gpg"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "a"]
-run  = 'shell --block -- gpg --output "$0.gpg" --default-recipient-self --encrypt "$0"'
+run  = 'shell --block -- gpg --output %h.gpg --default-recipient-self --encrypt %h'
 desc = "encrypt asymmetrically with gpg"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "S"]
-run  = "shell --block -- powershell -NoProfile -Command \"$input_path = $args[0]; if (-not $input_path.EndsWith('.gpg')) { Write-Error ('Expected a .gpg file: ' + $input_path); exit 1 }; $output_path = $input_path.Substring(0, $input_path.Length - 4); gpg --output $output_path --decrypt $input_path\" -- \"$0\""
+run  = "shell --block -- powershell -NoProfile -Command \"$input_path = $args[0]; if (-not $input_path.EndsWith('.gpg')) { Write-Error ('Expected a .gpg file: ' + $input_path); exit 1 }; $output_path = $input_path.Substring(0, $input_path.Length - 4); gpg --output $output_path --decrypt $input_path\" -- %h"
 desc = "decrypt symmetric gpg file"
 
 [[mgr.prepend_keymap]]
 on   = ["o", "A"]
-run  = "shell --block -- powershell -NoProfile -Command \"$input_path = $args[0]; if (-not $input_path.EndsWith('.gpg')) { Write-Error ('Expected a .gpg file: ' + $input_path); exit 1 }; $output_path = $input_path.Substring(0, $input_path.Length - 4); gpg --output $output_path --decrypt $input_path\" -- \"$0\""
+run  = "shell --block -- powershell -NoProfile -Command \"$input_path = $args[0]; if (-not $input_path.EndsWith('.gpg')) { Write-Error ('Expected a .gpg file: ' + $input_path); exit 1 }; $output_path = $input_path.Substring(0, $input_path.Length - 4); gpg --output $output_path --decrypt $input_path\" -- %h"
 desc = "decrypt asymmetric gpg file"
 
 [[mgr.prepend_keymap]]
@@ -156,33 +180,33 @@ desc = "Scroll one column to the right"
 
 [[mgr.prepend_keymap]]
 on = ["g", "o"]
-run = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/open_db_readonly.py" "$0"'
+run = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/open_db_readonly.py" %h'
 desc = "open with duckdb (read-only)"
 
 [[mgr.prepend_keymap]]
 on = ["g", "u"]
-run = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/open_db_readonly.py" --ui "$0"'
+run = 'shell --block -- powershell -NoLogo -NoProfile -Command uv run --isolated --no-project --python 3.14 --with stackops "$HOME/AppData/Roaming/yazi/config/scripts/open_db_readonly.py" --ui %h'
 desc = "open with duckdb ui (read-only target)"
 
 [[mgr.prepend_keymap]]
 on   = ["P", "c"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek "$0"'
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek %h'
 desc = "Search contents"
 [[mgr.prepend_keymap]]
 on   = ["P", "f"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -f "$0"'
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -f %h'
 desc = "Search files"
 [[mgr.prepend_keymap]]
 on   = ["P", "e"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -e "$0"'
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -e %h'
 desc = "Search then edit"
 [[mgr.prepend_keymap]]
 on   = ["P", "s"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -s "$0"'
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -s %h'
 desc = "Semantic search"
 [[mgr.prepend_keymap]]
 on   = ["P", "a"]
-run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -a "$0"'
+run  = 'shell --block -- $HOME/.config/stackops/scripts/wrap_stackops seek -a %h'
 desc = "Symbol search"
 
 [[mgr.append_keymap]]
