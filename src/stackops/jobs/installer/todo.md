@@ -20,7 +20,7 @@ if so, delete that path reference.
 
 
 # use reference files:
-# $caveman ultra. 
+# $ultracave. 
 ensure that for any python file, trying to reference any of those files (as a variable or path etc ...)
 Then that reference MUST occur via the corresponding variables defined in relevant __init__.py file next to that non-py file.
 the code must derive the full absolute path from the reference in init file + module path.

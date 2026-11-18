@@ -73,9 +73,9 @@ update-test:
   agent_load: 10
   prompt: |
 
-    /caveman wenyan
+    /megacave
 
-    $caveman wenyan
+    $megacave
 
 
     Please write test file for the following files.

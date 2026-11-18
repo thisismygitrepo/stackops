@@ -35,7 +35,7 @@ UpdateTest:
     Build the work list from git-visible `.py` files, excluding `tests` and ignored/generated directories. Give each agent about 10 files.
 
     Tell each agent:
-    - Use `$caveman wenyan`.
+    - Use `$megacave`.
     - Create one test file per assigned Python file.
     - Put tests under `tests/mirror/<same repo-relative path>`.
     - Test runtime behavior that static type checking cannot catch.
