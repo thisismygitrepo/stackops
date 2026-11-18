@@ -2789,6 +2789,22 @@ installers:
         linux: miniserve-{version}-aarch64-unknown-linux-musl
         darwin: miniserve-{version}-aarch64-apple-darwin
         windows: null
+  - appName: copyparty
+    license: MIT license
+    repoURL: CMD
+    doc: 🦜 Portable file server with uploads, thumbnails, a media player and a web UI
+    categoryLabels:
+      - file-managers
+      - file-transfer-sharing
+    fileNamePattern:
+      amd64:
+        linux: uv tool install copyparty
+        darwin: uv tool install copyparty
+        windows: uv tool install copyparty
+      arm64:
+        linux: uv tool install copyparty
+        darwin: uv tool install copyparty
+        windows: uv tool install copyparty
   - appName: cloudreve
     license: GPL-3.0 license
     repoURL: https://github.com/cloudreve/Cloudreve

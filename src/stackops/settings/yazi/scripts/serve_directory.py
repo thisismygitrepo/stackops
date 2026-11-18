@@ -2,13 +2,16 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 import secrets
+import shutil
 import subprocess
 import sys
 import tempfile
 from typing import Final, Literal, assert_never, cast, get_args
 import webbrowser
 
-from stackops.scripts.python.helpers.helpers_devops.network_service import start_service, stop_services, wait_for_service
+from typer import Exit
+
+from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency, start_service, stop_services, wait_for_service
 from stackops.settings.yazi.scripts.serve_browser_file import find_free_port, get_lan_addresses, wait_for_return_to_yazi
 
 type Command = list[str]
@@ -47,13 +50,16 @@ def build_serve_plan(backend: Backend, directory: Path, host: str, port: int, st
         case "copyparty":
             return ServePlan(
                 setup_commands=[],
-                serve_command=["uv", "tool", "run", "copyparty", "-i", host, "-p", str(port), "-v", f"{directory}::A", "--hist", str(state_directory / "copyparty-hist")],
+                serve_command=["copyparty", "-i", host, "-p", str(port), "-v", f"{directory}::A", "--hist", str(state_directory / "copyparty-hist")],
             )
         case _:
             assert_never(backend)
 
 
 def serve_directory(backend: Backend, exposure: Exposure, directory: Path) -> None:
+    if shutil.which(backend) is None:
+        print(f"{backend} is not installed, installing it with: devops software install {backend}")
+        install_service_dependency(backend)
     match exposure:
         case "local":
             host = LOCAL_HOST
@@ -91,6 +97,8 @@ def main(arguments: Sequence[str]) -> int:
         return 2
     try:
         serve_directory(backend=cast(Backend, arguments[0]), exposure=cast(Exposure, arguments[1]), directory=Path.cwd())
+    except Exit as error:
+        return error.exit_code
     except FileNotFoundError as error:
         sys.stderr.write(f"{error}\n")
         return 127
