@@ -15,11 +15,16 @@ def status(
     backup: Annotated[bool, typer.Option("--backup", "-b", help="Show the backup configuration section.")] = False,
     plain: Annotated[bool, typer.Option("--plain", "-p", help="Print a report instead of opening the interactive dashboard.")] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print structured section results.")] = False,
+    as_html: Annotated[
+        bool, typer.Option("--as-html", "-w", help="Write a navigable HTML dashboard of the selected sections and open it in the browser.")
+    ] = False,
 ) -> None:
     from stackops.scripts.python.helpers.helpers_devops import devops_status
 
+    if as_html and (json_output or plain):
+        raise typer.BadParameter("--as-html cannot be combined with --json or --plain.", param_hint="--as-html")
     sections = devops_status.resolve_sections(machine=machine, shell=shell, repos=repos, ssh=ssh, configs=configs, apps=apps, backup=backup)
-    if json_output:
+    if json_output or as_html:
         import json
         import sys
         from contextlib import redirect_stdout
@@ -27,7 +32,39 @@ def status(
 
         with redirect_stdout(sys.stderr):
             snapshots = {section: collect_status_section(section) for section in sections}
-        typer.echo(json.dumps({section: {"summary": snapshot.summary, "level": snapshot.level, "details": snapshot.details} for section, snapshot in snapshots.items()}, default=_serialize_status_value))
+        section_results = {section: {"summary": snapshot.summary, "level": snapshot.level, "details": snapshot.details} for section, snapshot in snapshots.items()}
+        if as_html:
+            from datetime import datetime
+            from pathlib import Path
+
+            from stackops.scripts.python.helpers.helpers_devops.devops_status_constants import STATUS_TITLES
+            from stackops.utils.html_report import show_html_report
+
+            asset_directory = Path(__file__).with_name("status_html_assets")
+            report_path = show_html_report(
+                title="StackOps status",
+                payload_json=json.dumps(
+                    {
+                        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "home_directory": str(Path.home()),
+                        "titles": STATUS_TITLES,
+                        "sections": section_results,
+                    },
+                    default=_serialize_status_value,
+                    ensure_ascii=False,
+                ),
+                style_path=asset_directory / "status.css",
+                script_paths=(
+                    asset_directory / "status_data.js",
+                    asset_directory / "status_inventory.js",
+                    asset_directory / "status_checks.js",
+                    asset_directory / "status_app.js",
+                ),
+                file_stem="devops_status",
+            )
+            typer.echo(f"""HTML report: {report_path}""")
+            return
+        typer.echo(json.dumps(section_results, default=_serialize_status_value))
         if any(snapshot.level == "error" for snapshot in snapshots.values()):
             raise typer.Exit(code=1)
         return

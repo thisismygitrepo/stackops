@@ -50,6 +50,7 @@ DOTFILES_ZIP_PATH = Path.home().joinpath("dotfiles.zip")
 INSTALL_VERSION_ROOT = CONFIG_ROOT.joinpath("cli_tools_installers/versions")
 INSTALL_TMP_DIR = Path.home().joinpath("tmp_results", "tmp_installers")
 INSTALL_LOGS_ROOT = Path.home().joinpath("tmp_results", "installer_logs")
+HTML_REPORTS_ROOT = Path.home().joinpath("tmp_results", "html_reports")
 
 # LINUX_INSTALL_PATH = '/usr/local/bin'
 LINUX_INSTALL_PATH = Path.home().joinpath(".local/bin").__str__()
