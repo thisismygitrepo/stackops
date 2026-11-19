@@ -3,7 +3,7 @@ import getpass
 import platform
 import re
 import socket
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -150,7 +150,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         return FileResponse(resolve_vendor_asset(name), media_type=VENDOR_ASSETS[name].media_type, headers={"Cache-Control": "no-cache"})
 
     @asynccontextmanager
-    async def lifespan(_app: Starlette) -> AsyncIterator[None]:
+    async def lifespan(_app: Starlette) -> AsyncGenerator[None]:
         yield
         await shutdown_runs(registry)
 

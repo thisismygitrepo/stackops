@@ -14,6 +14,7 @@ from stackops.scripts.python.helpers.helpers_serve.constants import (
     SCROLLBACK_LIMIT_BYTES,
     SHUTDOWN_JOIN_SECONDS,
     STOP_GRACE_SECONDS,
+    TERMINAL_RESTORE_SEQUENCE,
 )
 from stackops.scripts.python.helpers.helpers_serve.pty_process import PtyHandle, spawn_pty
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
@@ -166,7 +167,7 @@ def _finish_run(run: Run, exit_code: int) -> None:
     report_times = [(path.stat().st_mtime, path.name) for path in HTML_REPORTS_ROOT.glob("*.html")]
     outcome = RunExit(exit_code=exit_code, finished_at=finished_at, reports=tuple(name for modified_at, name in sorted(report_times, reverse=True) if modified_at >= run.started_at))
     status = "done" if exit_code == 0 else f"""exit {exit_code}"""
-    _publish_output(run, f"""\r\n\x1b[2m[{status} · {finished_at - run.started_at:.1f}s]\x1b[0m\r\n""".encode())
+    _publish_output(run, f"""{TERMINAL_RESTORE_SEQUENCE}\r\n\x1b[2m[{status} · {finished_at - run.started_at:.1f}s]\x1b[0m\r\n""".encode())
     run.handle.close()
     run.outcome = outcome
     for queue in run.subscribers:

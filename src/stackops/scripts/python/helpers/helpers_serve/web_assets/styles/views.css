@@ -5,7 +5,7 @@
 .view-head h1.mono { font-size: 19px; letter-spacing: 0; }
 .view-head .lede { margin-top: 3px; color: var(--text-secondary); max-width: 78ch; }
 .view-head .aside { display: flex; align-items: center; gap: 8px; margin-left: auto; padding-top: 4px; }
-.long-help { margin: -8px 0 22px; padding: 12px 14px; font-size: 13px; color: var(--text-secondary); white-space: pre-wrap; background: var(--plane); border-radius: var(--radius); }
+.long-help { margin: -8px 0 22px; padding: 12px 14px; font: 13px/1.5 var(--sans); color: var(--text-secondary); white-space: pre-wrap; background: var(--plane); border-radius: var(--radius); }
 
 .section { margin-top: 28px; }
 .section:first-of-type { margin-top: 0; }

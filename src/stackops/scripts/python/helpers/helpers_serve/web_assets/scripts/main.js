@@ -31,6 +31,7 @@ async function start() {
     rail.setActive(route);
     topbar.setCrumbs(crumbs);
     viewport.scrollTop = 0;
+    document.querySelector(".shell").classList.remove("rail-open");
     document.title = `${crumbs.at(-1).label} · StackOps`;
   };
   window.addEventListener("hashchange", render);

@@ -21,6 +21,7 @@ const ICONS = {
   alert: '<path d="M12 4 2.5 20h19zM12 10v4.5M12 17.4v.2"/>',
   report: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
 };
 
 export function h(tag, properties = {}, ...children) {

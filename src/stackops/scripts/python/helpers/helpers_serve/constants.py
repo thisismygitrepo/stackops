@@ -13,6 +13,8 @@ MIN_TERMINAL_CELLS: Final[int] = 2
 MAX_TERMINAL_CELLS: Final[int] = 1000
 PATH_SUGGESTION_LIMIT: Final[int] = 40
 SCROLLBACK_LIMIT_BYTES: Final[int] = 4 * 1024 * 1024
+# Leaves the alternate screen and turns off mouse reporting and bracketed paste, which a full-screen program leaves on when it is killed.
+TERMINAL_RESTORE_SEQUENCE: Final[str] = "\x1b[?1049l\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?2004l\x1b[0m"
 PTY_READ_CHUNK_BYTES: Final[int] = 65536
 PTY_POLL_SECONDS: Final[float] = 0.2
 STOP_GRACE_SECONDS: Final[float] = 3.0

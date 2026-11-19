@@ -129,6 +129,7 @@ export function createBrowseView({ dock, openReport }) {
       }),
     );
     copyButton.addEventListener("click", async () => {
+      if (!navigator.clipboard) return toast("The browser only allows copying on localhost or HTTPS. Select the command text instead.");
       await navigator.clipboard.writeText(preview.textContent);
       toast("Command copied.", "info");
     });

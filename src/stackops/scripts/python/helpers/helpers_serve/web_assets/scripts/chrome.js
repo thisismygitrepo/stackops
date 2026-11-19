@@ -125,5 +125,10 @@ export function createTopbar({ dock }) {
     );
   }
 
-  return { element: h("header", { class: "topbar" }, crumbs, directoryButton, directoryInput, attachPathCompletion(directoryInput), runButton), setCrumbs };
+  const menuButton = h(
+    "button",
+    { class: "icon-button menu-button", title: "Show navigation", "aria-label": "Show navigation", onclick: () => document.querySelector(".shell").classList.toggle("rail-open") },
+    icon("menu", 16),
+  );
+  return { element: h("header", { class: "topbar" }, menuButton, crumbs, directoryButton, directoryInput, attachPathCompletion(directoryInput), runButton), setCrumbs };
 }
