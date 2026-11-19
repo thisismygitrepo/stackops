@@ -24,7 +24,8 @@ function pathList(target) {
   };
   more.addEventListener("click", () => paint(PATH_LIMIT));
   paint(PATH_PREVIEW);
-  return h("div", { class: "cleanup-inside" }, h("h4", { text: target.paths.length > PATH_PREVIEW ? "Biggest items inside" : "What is removed" }), list, more);
+  const together = target.paths.length > 1 && target.commands.length === 0 && h("p", { class: "dim", text: "These are removed together: ticking this place removes all of them." });
+  return h("div", { class: "cleanup-inside" }, h("h4", { text: target.paths.length > PATH_PREVIEW ? "Biggest items inside" : "What is removed" }), list, more, together);
 }
 
 function detail(target) {
@@ -45,7 +46,7 @@ function detail(target) {
 
 function sizeCell(target, view) {
   if (target.phase === "error") {
-    return h("div", { class: "cleanup-size" }, h("span", { class: "dim", text: target.slow ? "Too big to measure quickly" : "Not measured" }), button({ label: "Try again", glyph: "refresh", small: true, onclick: () => view.retry(target.key) }));
+    return h("div", { class: "cleanup-size" }, h("span", { class: "dim", text: target.slow ? "Took too long to measure" : "Not measured" }), button({ label: "Try again", glyph: "refresh", small: true, onclick: () => view.retry(target.key) }));
   }
   if (target.phase !== "done") return h("div", { class: "cleanup-size pending" }, target.phase === "measuring" && h("i", { class: "ring" }), h("span", { text: target.phase === "measuring" ? "Measuring" : "In line" }));
   if (!target.sized) return h("div", { class: "cleanup-size" }, h("span", { class: "dim", text: "Size unknown" }));
@@ -65,7 +66,8 @@ export function targetRow(target, view) {
   box.checked = view.picked.has(key);
   box.addEventListener("change", () => view.toggle(key, box.checked));
   const more = h("button", { class: "icon-btn cleanup-more", type: "button", "data-part": "more", "aria-expanded": "false", title: "What this is and what is inside", "aria-label": `Details for ${target.title}` }, icon("down", 16));
-  const summary = target.phase === "error" ? [target.slow ? "It can still be removed; its size shows up afterwards." : target.problem] : codeNodes(firstSentence(target.note));
+  const slowText = `${target.action_kind === "projects" ? "The search for projects took too long: pick a project folder under Options. " : ""}It can still be removed; its size shows up afterwards.`;
+  const summary = target.phase === "error" ? [target.slow ? slowText : target.problem] : codeNodes(firstSentence(target.note));
   const main = h(
     "div",
     { class: "cleanup-main" },

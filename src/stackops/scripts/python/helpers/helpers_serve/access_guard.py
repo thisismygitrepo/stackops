@@ -51,6 +51,9 @@ def guard_access(app: ASGIApp, token: str, cookie_name: str) -> ASGIApp:
                 headers["Referrer-Policy"] = "no-referrer"
                 if path.startswith(("/api/", "/reports/")) or path in ("/", "/dev"):
                     headers["Cache-Control"] = "no-store"
+                elif path.startswith("/assets/"):
+                    # Without this a browser keeps scripts and styles for a while unasked, and an updated server meets a page running old modules.
+                    headers["Cache-Control"] = "no-cache"
             await send(message)
 
         # SameSite cookies ignore the port, so another page on this host could still send them; the Origin check is what stops that.

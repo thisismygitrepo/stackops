@@ -12,13 +12,14 @@ const FILTERS = [
 ];
 
 export const agentHash = (agent, kind) => `#/agents/health/${encodeURIComponent(agent.id)}${kind ? `/${kind}` : ""}`;
+export const pathChip = (path) => copyChip(path, shortPath(path));
 
 export function callout({ tone, title, text, where, lead, href, extra }) {
   return h(
     href ? "a" : "div",
     { class: `health-callout ${tone}`, href },
     h("span", { class: "callout-glyph" }, icon(tone === "" ? "info" : "alert", 17)),
-    h("div", { class: "callout-text" }, h("strong", {}, lead && h("em", { text: `${lead} · ` }), title), text && h("p", { text }), where && !href && copyChip(where, shortPath(where)), extra),
+    h("div", { class: "callout-text" }, h("strong", {}, lead && h("em", { text: `${lead} · ` }), title), text && h("p", { text }), where && !href && pathChip(where), extra),
     href && icon("arrow", 15),
   );
 }
@@ -107,7 +108,7 @@ export function renderOverview({ agents, view }) {
         { class: `health-hero ${verdict.tone}` },
         h("span", { class: "health-badge" }, icon(verdict.glyph, 26)),
         h("div", { class: "health-verdict" }, h("h3", { text: verdict.title }), h("p", { text: verdict.body })),
-        h("div", { class: "health-where" }, h("span", { class: "overline", text: "Checked from" }), copyChip(agents[0].directory, shortPath(agents[0].directory))),
+        h("div", { class: "health-where" }, h("span", { class: "overline", text: "Checked from" }), pathChip(agents[0].directory)),
       ),
       troubled.length > 0 && h("div", { class: "health-issues" }, troubled.flatMap((agent) => agent.issues.map((issue) => callout({ ...issue, lead: agent.name, href: agentHash(agent) })))),
       h("div", { class: "health-bar" }, h("div", { class: "health-tabs", role: "group", "aria-label": "Narrow the list" }, tabs), h("span", { class: "spacer" }), shown, search.element),

@@ -1,7 +1,7 @@
 import { formatClock, h, icon } from "/assets/scripts/dom.js";
 import { clockText, sizeText } from "./disk_cleanup_words.js";
 import { countUp } from "./motion.js";
-import { button, iconButton, pill } from "./widgets.js";
+import { button, glyphTile, iconButton, pill } from "./widgets.js";
 
 const NEARLY_FULL = 0.1;
 const NAMED_LIMIT = 2;
@@ -29,7 +29,7 @@ export function createCleanupSummary() {
     const working = scan.busy;
     overline.textContent = scan.loading ? "Looking around" : working ? "Found so far" : "Can be freed";
     if (!scan.loading) countUp(figure, found, (value) => (found === 0 ? "0 GB" : sizeText(value, found)));
-    line.replaceChildren(...(scan.loading ? ["Finding the places that collect clutter…"] : places === 0 ? [working ? "Nothing yet." : "Nothing to remove right now."] : [`in ${plural(places, "place")} · `, h("b", { text: sizeText(safe) }), " of it is safe to remove"]));
+    line.replaceChildren(...(scan.loading ? ["Finding the places that collect clutter…"] : places === 0 ? [working ? "Nothing yet." : "Nothing to remove right now."] : [`in ${plural(places, "place")} · `, ...(safe > 0 ? [h("b", { text: sizeText(safe) }), " of it is safe to remove"] : ["none of it is marked safe"])]));
     progress.hidden = !working;
     if (working) {
       const names = scan.measuring.map((target) => target.title);
@@ -56,6 +56,25 @@ export function createCleanupSummary() {
   }
 
   return { element, paint };
+}
+
+// The bar that stays in view: what is ticked, what that frees, and the one button that starts the cleanup.
+export function createCleanupTray({ onClear, onClean }) {
+  const title = h("strong");
+  const note = h("span");
+  const clear = button({ label: "Clear", tone: "ghost", onclick: onClear });
+  const clean = button({ label: "Clean selected", glyph: "trash", tone: "primary", onclick: onClean });
+  const element = h("div", { class: "tray cleanup-tray", hidden: true }, glyphTile("trash", 350, 38), h("div", { class: "cleanup-tray-text" }, title, note), h("span", { class: "spacer" }), clear, clean);
+  return {
+    element,
+    paint({ count, bytes, unsure, hidden }) {
+      element.hidden = hidden;
+      title.textContent = count ? `${plural(count, "place")} ticked` : "Nothing ticked yet";
+      note.textContent = count ? `You will free ${bytes > 0 ? `about ${sizeText(bytes)}` : "an unknown amount"}${unsure && bytes > 0 ? " or more" : ""}` : "Tick the places you want to empty.";
+      clear.hidden = count === 0;
+      clean.disabled = count === 0;
+    },
+  };
 }
 
 function outcomeItem(item) {

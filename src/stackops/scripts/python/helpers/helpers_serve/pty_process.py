@@ -7,7 +7,10 @@ from dataclasses import dataclass
 
 from stackops.scripts.python.helpers.helpers_serve.constants import PTY_POLL_SECONDS, PTY_READ_CHUNK_BYTES
 
-POSIX_TRAMPOLINE = "import os, sys; os.login_tty(int(sys.argv[1])); os.execvp(sys.argv[2], sys.argv[2:])"
+# Python starts with SIGPIPE ignored and an exec keeps that, which leaves a shell pipeline such as `tr … | head` in the command running for ever.
+POSIX_TRAMPOLINE = (
+    "import os, signal, sys; os.login_tty(int(sys.argv[1])); signal.signal(signal.SIGPIPE, signal.SIG_DFL); os.execvp(sys.argv[2], sys.argv[2:])"
+)
 
 
 @dataclass(frozen=True)

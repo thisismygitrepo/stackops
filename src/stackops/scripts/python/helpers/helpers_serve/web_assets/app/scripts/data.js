@@ -6,12 +6,16 @@ let catalog = null;
 
 const ANSI_PATTERN = /\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07/g;
 
-function lastLine(text) {
+// What a failed command said, in one line: from its first "Error" line to the end, so the cause is not dropped for the hint under it and a
+// wrapped message stays whole. With no such line it is the last line, which is where a traceback names the exception.
+function failureText(text) {
   const lines = text.replace(ANSI_PATTERN, "").split("\n").map((line) => line.replace(/[│╭╮╰╯─]/g, "").trim()).filter(Boolean);
-  return lines.at(-1) ?? "";
+  const start = lines.findIndex((line) => /^error(:|$)/i.test(line));
+  return (start < 0 ? lines.slice(-1) : lines.slice(/^error$/i.test(lines[start]) ? start + 1 : start)).join(" ");
 }
 
-async function capture(runArguments) {
+// One run, never cached: for results that must be current and are not worth keeping, such as a search. Pages use `query`.
+export async function capture(runArguments) {
   const result = await api.capture({ arguments: runArguments, working_directory: state.settings.workingDirectory });
   const text = result.stdout.replace(ANSI_PATTERN, "");
   const trimmed = text.trim();
@@ -23,7 +27,7 @@ async function capture(runArguments) {
       json = undefined;
     }
   }
-  if (json === undefined && result.exit_code !== 0) throw new Error(lastLine(result.stderr) || lastLine(result.stdout) || `It stopped with code ${result.exit_code}.`);
+  if (json === undefined && result.exit_code !== 0) throw new Error(failureText(result.stderr) || failureText(result.stdout) || `It stopped with code ${result.exit_code}.`);
   return { json, text: text.replace(/\s+$/, ""), notes: result.stderr.replace(ANSI_PATTERN, "").trim(), exitCode: result.exit_code };
 }
 

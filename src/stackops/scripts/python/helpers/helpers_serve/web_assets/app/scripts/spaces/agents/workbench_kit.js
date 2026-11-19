@@ -1,7 +1,8 @@
 import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { on, state } from "/assets/scripts/state.js";
+import { rise } from "../../motion.js";
 import { toolButton } from "../../space_kit.js";
-import { button, emojiTile, iconButton, notice, sectionHead, skeleton } from "../../widgets.js";
+import { button, emojiTile, iconButton, notice, sectionHead, skeleton, stat } from "../../widgets.js";
 import { friendlyText, titleOf } from "../../words.js";
 
 const INSTALL_TOOL = "devops software install";
@@ -50,7 +51,7 @@ export function createStatePanel({ title, load, render, explain = () => null, ac
 
   return {
     element,
-    reload: () => run(true),
+    load: () => run(),
     ensure() {
       if (!settled || stale) run(stale);
     },
@@ -103,6 +104,21 @@ export function pathText(path) {
 
 export function statusPill(label, tone, glyph) {
   return h("span", { class: `pill ${tone}` }, glyph && icon(glyph, 12), h("span", { text: label }));
+}
+
+// A row of figures, each { glyph, hue, label, value, note }. They count up once the row is on the page.
+export function statRow(tiles) {
+  const made = tiles.map((tile) => stat(tile));
+  requestAnimationFrame(() => made.forEach((item, index) => item.set(tiles[index].value, tiles[index].note)));
+  return rise(h("div", { class: "stats" }, made.map((item) => item.element)));
+}
+
+// The first rows in view, the rest behind "and N more".
+export function previewList(rows, limit, line) {
+  return [
+    h("ul", {}, rows.slice(0, limit).map(line)),
+    rows.length > limit && h("details", { class: "wb-more" }, h("summary", { text: `and ${rows.length - limit} more` }), h("ul", {}, rows.slice(limit).map(line))),
+  ];
 }
 
 // Rows of name, bar and figure on one shared scale, longest first.

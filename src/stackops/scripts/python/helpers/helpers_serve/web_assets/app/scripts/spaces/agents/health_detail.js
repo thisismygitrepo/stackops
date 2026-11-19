@@ -1,10 +1,26 @@
 import { h, icon } from "/assets/scripts/dom.js";
-import { avatar, copyChip, keyValue, pill, searchInput, sectionHead } from "../../widgets.js";
-import { KINDS, KIND_BY_ID, ORIGINS, matchesTerm, shortPath } from "./health_model.js";
-import { agentHash, callout } from "./health_overview.js";
+import { commandDetail } from "../../data.js";
+import { toolButton } from "../../space_kit.js";
+import { avatar, keyValue, pill, searchInput, sectionHead } from "../../widgets.js";
+import { KINDS, KIND_BY_ID, ORIGINS, matchesTerm } from "./health_model.js";
+import { agentHash, callout, pathChip } from "./health_overview.js";
 import { renderResources } from "./health_resources.js";
 
-const pathChip = (path) => copyChip(path, shortPath(path));
+const AGENT_TOOLS = [["agents run-interactive", "Start a chat", "play"], ["agents run-prompt", "Run a prompt", "sparkle"]];
+
+// What can be started for the agent on screen, with it filled in. A chat or a prompt is only offered for the agents those tools can drive.
+function agentActions(agent, tools) {
+  const row = h(
+    "div",
+    { class: "chip-row" },
+    toolButton(tools, "agents init", { label: "Set up this project", glyph: "wrench", preset: { agent: agent.id } }),
+    toolButton(tools, "agents add-mcp", { label: "Add a tool server", glyph: "plug", preset: { agents: agent.id } }),
+  );
+  for (const [path, label, glyph] of AGENT_TOOLS) {
+    commandDetail(path).then(({ parameters }) => parameters.find((spec) => spec.name === "agent").choices.includes(agent.id) && row.append(toolButton(tools, path, { label, glyph, preset: { agent: agent.id } })));
+  }
+  return row;
+}
 
 function limitsFold(agent) {
   const remarks = [...agent.coverage.map((text) => ({ text, where: null })), ...agent.limits];
@@ -20,7 +36,7 @@ function limitsFold(agent) {
 }
 
 // One agent, swapped in where the list was: what is wrong first, then everything it uses, one kind at a time.
-export function renderDetail({ agent, kind, view, previous, next }) {
+export function renderDetail({ agent, kind, view, tools, previous, next }) {
   const term = () => view.term.trim().toLowerCase();
   const passes = (item) => (view.showEmpty || item.present) && (view.origins.size === 0 || view.origins.has(item.origin)) && matchesTerm(item, term());
   const ofKind = (id) => agent.items.filter((item) => item.kind === id);
@@ -28,6 +44,8 @@ export function renderDetail({ agent, kind, view, previous, next }) {
   const choose = () => (KIND_BY_ID[kind] ? kind : (KINDS.find(({ id }) => ofKind(id).some(passes)) ?? KINDS.find(({ id }) => agent.counts[id] > 0) ?? KINDS[0]).id);
   const blurb = h("p", { class: "health-blurb dim" });
   const origins = Object.keys(ORIGINS).filter((origin) => agent.items.some((item) => item.origin === origin));
+  // The source filter is shared between agents. One this agent has no chip for could not be cleared, so it is dropped on the way in.
+  for (const origin of [...view.origins]) if (!origins.includes(origin)) view.origins.delete(origin);
   const holder = h("div", { class: "health-holder" });
 
   const tabs = KINDS.map((entry) => {
@@ -117,6 +135,7 @@ export function renderDetail({ agent, kind, view, previous, next }) {
       h("div", { class: "agent-id" }, h("h3", {}, agent.name, pill(agent.status.label, agent.status.tone)), h("p", { class: "dim", text: agent.installed ? agent.version ?? "Version unknown" : "Not installed on this machine" })),
       keyValue(facts),
     ),
+    agent.installed && agentActions(agent, tools),
     (agent.issues.length > 0 || agent.asides.length > 0) && h("div", { class: "health-issues" }, agent.issues.map(callout), asides.length > 0 && callout({ tone: "", title: "Worth knowing", extra: asides })),
     h("div", { class: "health-kinds", role: "group", "aria-label": "Kind" }, tabs.map(({ tab }) => tab)),
     h("div", { class: "health-filter" }, search.element, originChips.length > 1 && h("div", { class: "chip-row" }, originChips.map(({ chip }) => chip)), h("span", { class: "spacer" }), emptyChip),

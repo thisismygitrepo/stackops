@@ -24,7 +24,7 @@ export const WORDS = {
 export const TOOL_TITLES = {
   devops: "DevOps", "devops self": "StackOps itself", "devops software": "Software", "devops config": "Settings", "devops repos": "Repositories",
   "devops data": "Backups", "devops vault": "Vault", "devops network": "Network", "devops security": "Security", "devops scripts": "Scripts",
-  utils: "Utilities", "utils machine": "Machine", "utils file": "Files", "utils pyproject": "Python projects", fire: "Launch", seek: "Find anything",
+  utils: "Utilities", "utils machine": "Machine", "utils file": "Files", "utils pyproject": "Python projects", fire: "Launch", seek: "Find in files",
   "devops software install": "Install apps", "devops self update": "Update StackOps", "devops self status": "Machine status",
   "devops network show-address": "Network addresses", "devops network share-server": "Share a folder", "devops network share-terminal": "Share this terminal",
   "utils machine clean-drive": "Free up disk space", "utils machine kill-process": "Stop a process", "utils machine autostart": "Startup programs",
@@ -43,7 +43,7 @@ export const TOOL_TITLES = {
   "devops data encrypt": "Encrypt a file or folder", "devops data decrypt": "Decrypt a file", "devops data subset": "Split off part of the list",
   "devops data validate": "Check the backup list", cloud: "Cloud storage", "cloud sync": "Keep a folder in sync", "cloud copy": "Upload or download",
   "cloud mount": "Mount cloud storage", "cloud transfer": "Move files between machines",
-  "devops config terminal": "Terminal look", "devops config setup": "Guided setup", "terminal kill": "End a session", "terminal attach": "Open a session",
+  "devops config terminal": "Terminal look", "devops config setup": "Guided setup", "terminal kill": "End a session", "terminal attach": "Open a session", "terminal export": "Save sessions as layouts", "devops config terminal config-shell": "Shell profile",
   "agents browser": "Browser automation", "agents browser launch": "Open a browser", "agents browser batch-launch": "Open saved profiles",
   "agents browser close": "Close a browser", "agents browser batch-close": "Close saved profiles", "agents browser status": "Open browsers",
   "agents browser declutter": "Slim down a profile", "agents browser replicate": "Copy a profile", "agents browser install": "Set up browser tools",
@@ -59,7 +59,7 @@ export const TOOL_TITLES = {
 };
 
 // Options that only make sense on a command line: output formats, alternate renderers, and file overrides the app already picks for you.
-export const HIDDEN_FLAGS = new Set(["--json", "--as-html", "--tui", "--plain", "--custom-path", "--specs-path", "--show-format", "--non-interactive", "--reference"]);
+export const HIDDEN_FLAGS = new Set(["--json", "--as-html", "--tui", "--plain", "--custom-path", "--specs-path", "--show-format", "--non-interactive", "--reference", "--save"]);
 
 // Read-only tools: safe to run on arrival so the page shows something before anyone presses a button.
 export const LIVE_NAMES = new Set([
@@ -67,12 +67,40 @@ export const LIVE_NAMES = new Set([
   "doctor", "report", "discover",
 ]);
 
+// Read-only tools whose name is not one of the above. Each was run before it was listed; never add one whose output holds secrets (`devops vault search`).
+export const LIVE_PATHS = new Set([
+  "devops network ssh debug", "devops self explore-cli search", "devops self explore-python-api search", "cloud onedrive config-path", "devops software check",
+]);
+
+// What a read-only tool starts with when the CLI insists on a choice without marking it as required. Keyed by parameter name; a switch is "on".
+export const ARRIVAL_VALUES = {
+  "terminal validate": { source: "user" },
+  "devops vault validate": { source: "user" },
+  "agents iter status": { all_workspaces: "on" },
+};
+
+// Tools that hand whatever follows their own arguments on to a script or program. The command tree does not carry this, so the list is kept by hand.
+export const PASSTHROUGH_TOOLS = new Set(["devops scripts run", "fire run", "utils file ocr", "utils file scrape", "agents local serve"]);
+
+// Text parameters that always name a local file or folder, so the form gives them the box with folder suggestions. `root`, `source` and `target` are left out: in some tools they are remote.
+export const PATH_FIELDS = new Set([
+  "pdf_input", "data_path", "output", "output_dir", "output_path", "repo", "find_root", "search_root", "project_path", "context_path", "prompt_path", "agents_dir", "agent_dir",
+  "input_path", "file",
+]);
+
+// Options a read-only tool's sheet leaves out, by parameter name. The sheet re-runs on every change, so nothing in it may act: on `agents status`, Btw makes real agent calls,
+// Output and Force write files, and Format clashes with the `--json` the sheet asks for. The Agents page offers Btw as a button behind a confirmation.
+export const OMITTED_FIELDS = { "agents status": ["output_format", "output", "force", "btw"] };
+
 export const ESSENTIAL_FLAGS = {
   "devops software install": ["--update"],
-  "agents run-prompt": ["--agent", "--reasoning"],
-  "agents run-interactive": ["--agent"],
+  "agents run-prompt": ["--agent", "--reasoning", "--interactive"],
+  "agents add-skill": ["--scope"],
+  "agents add-mcp": ["--agent", "--scope"],
+  "agents run-interactive": ["--agent", "--followup", "--fork"],
   "terminal run": ["--choose-layouts", "--backend", "--on-conflict"],
-  "devops config dotfiles sync": ["--method", "--on-conflict"],
+  "terminal export": ["--sessions", "--all", "--output", "--merge", "--command-source"],
+  "devops config dotfiles sync": ["--which", "--method", "--on-conflict"],
   "devops repos action": ["--pull", "--push", "--commit", "--message", "--status"],
   "utils machine clean-drive": ["--dry-run", "--max-risk", "--category"],
   "devops network share-server": ["--port", "--over-internet"],
@@ -93,10 +121,11 @@ export const ESSENTIAL_FLAGS = {
   "agents local serve": ["--port"],
   "agents second-brain init": ["--overwrite"],
   "agents second-brain prune": ["--apply"],
-  "agents parallel create": ["--agent", "--prompt", "--context-path", "--job-name", "--run"],
+  "agents parallel create": ["--agent", "--prompt", "--context-path", "--job-name", "--run", "--save-as-yaml"],
   "agents parallel run": ["--agent", "--source"],
   "agents parallel create-context": ["--agent"],
   "agents iter status": ["--all"],
+  "cloud onedrive list": ["--account"],
   "agents iter close": ["--all", "--dry-run", "--retain-previous"],
   "agents iter clean": ["--all", "--dry-run"],
   "agents config path": ["--source"],
@@ -105,6 +134,20 @@ export const ESSENTIAL_FLAGS = {
   "agents init": ["--root", "--include-scripts", "--add-gitignore"],
   "agents reset": ["--scope", "--resource", "--apply"],
   "agents ask": ["--agent", "--second-brain", "--reasoning"],
+};
+
+// Runs a page only starts behind its own confirmation: the words the command begins with, then any switch it must also carry, wherever that sits.
+// Activity offers no "Run again" for these, because that would repeat them without asking. Left out on purpose, as repeating them is harmless:
+// collecting dotfiles (refuses once done), saving a session over a layout (only shown when it failed), installing from a link (same source again).
+export const CONFIRMED_RUNS = ["utils machine clean-drive", "terminal kill", "devops data sync down", "agents status --btw", "devops repos action --push"];
+
+// Names for the installer's bundles (`devops software install <name> --group`), whose own names are abbreviations.
+export const BUNDLE_TITLES = {
+  sysabc: "System basics", shell: "Shell upgrades", search: "Search & archive tools", "sys-monitor": "System monitors", "code-analysis": "Code analysis & Git",
+  termabc: "Terminal essentials", dev: "Developer workstation", "dev-utils": "Developer utilities", eye: "Terminal eye candy", agents: "AI agents",
+  terminal: "Terminal emulators", browsers: "Browsers", editors: "Code editors", "db-all": "All database tools", "db-cli": "Database command-line tools",
+  "db-desktop": "Database desktop apps", "db-web": "Database web apps", "db-tui": "Database terminal apps", media: "Media", gui: "Desktop apps",
+  nw: "Networking", "file-sharing": "File sharing", productivity: "Productivity",
 };
 
 export const REPORTS = [

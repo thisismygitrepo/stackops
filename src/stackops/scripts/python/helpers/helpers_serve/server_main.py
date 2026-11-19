@@ -7,7 +7,7 @@ def run_server(host: str, port: int, open_browser: bool, stackops_executable: st
     from rich.console import Console
     from rich.panel import Panel
 
-    from stackops.scripts.python.helpers.helpers_serve.constants import TOKEN_COOKIE_PREFIX
+    from stackops.scripts.python.helpers.helpers_serve.constants import GRACEFUL_SHUTDOWN_SECONDS, TOKEN_COOKIE_PREFIX
     from stackops.scripts.python.helpers.helpers_serve.server_app import create_app
     from stackops.utils.network.address import select_lan_ipv4
 
@@ -42,4 +42,5 @@ def run_server(host: str, port: int, open_browser: bool, stackops_executable: st
     )
     if open_browser:
         webbrowser.open(url)
-    uvicorn.Server(uvicorn.Config(app, log_level="warning", access_log=False, ws="websockets-sansio")).run(sockets=[listener])
+    config = uvicorn.Config(app, log_level="warning", access_log=False, ws="websockets-sansio", timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_SECONDS)
+    uvicorn.Server(config).run(sockets=[listener])

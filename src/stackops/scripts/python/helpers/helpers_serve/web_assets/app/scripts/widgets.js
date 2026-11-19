@@ -75,6 +75,22 @@ export function copyChip(text, label = text) {
   return element;
 }
 
+// Copy and Save for any text output; `read` is called at click time. Save is there because browsers only allow copying on localhost or HTTPS.
+export function outputActions(read, name) {
+  const copy = iconButton("copy", "Copy the output", async () => {
+    if (!navigator.clipboard) return toast("The browser only allows copying on localhost or HTTPS. Save the output instead.");
+    await navigator.clipboard.writeText(read());
+    copy.replaceChildren(icon("check", 16));
+    setTimeout(() => copy.replaceChildren(icon("copy", 16)), 1200);
+  });
+  const save = iconButton("download", "Save the output as a file", () => {
+    const address = URL.createObjectURL(new Blob([read()], { type: "text/plain" }));
+    h("a", { href: address, download: `${name}.txt` }).click();
+    setTimeout(() => URL.revokeObjectURL(address), 1000);
+  });
+  return [copy, save];
+}
+
 export function keyValue(pairs) {
   return h("dl", { class: "facts" }, pairs.filter(([, value]) => value !== null && value !== undefined && value !== "").flatMap(([key, value]) => [h("dt", { text: key }), h("dd", {}, value)]));
 }

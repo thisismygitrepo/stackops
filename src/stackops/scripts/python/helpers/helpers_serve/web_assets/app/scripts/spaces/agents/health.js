@@ -11,7 +11,7 @@ import { renderOverview } from "./health_overview.js";
 const REPORT_FILE = "agents_doctor.html";
 
 // The address is #/agents/health for everyone, #/agents/health/<agent> for one, and #/agents/health/<agent>/<kind> for one kind of thing it uses.
-export function createHealthSection({ openReport }) {
+export function createHealthSection({ openReport, tools }) {
   const view = { filter: null, term: "", origins: new Set(), showEmpty: false };
   const reportHashes = new Map();
   const holder = h("div", { class: "health" });
@@ -37,7 +37,7 @@ export function createHealthSection({ openReport }) {
     const index = agents.findIndex((candidate) => candidate.id === route[0]);
     const agent = agents[index];
     const key = agent?.id ?? "";
-    holder.replaceChildren(agent ? renderDetail({ agent, kind: route[1], view, previous: agents[index - 1], next: agents[index + 1] }) : renderOverview({ agents, view }));
+    holder.replaceChildren(agent ? renderDetail({ agent, kind: route[1], view, tools, previous: agents[index - 1], next: agents[index + 1] }) : renderOverview({ agents, view }));
     if (key === shownKey) return;
     if (agent) replay(holder, "health-swap");
     if (shownKey !== null && panel.element.getBoundingClientRect().top < 0) panel.element.scrollIntoView({ block: "start" });

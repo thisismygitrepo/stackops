@@ -2,6 +2,7 @@ import { debounce, h, icon } from "/assets/scripts/dom.js";
 import { on } from "/assets/scripts/state.js";
 import { commandDetail, query } from "./data.js";
 import { createFriendlyForm } from "./friendly_form.js";
+import { recall, remember } from "./memory.js";
 import { openPopover } from "./overlays.js";
 import { button, iconButton, notice, skeleton } from "./widgets.js";
 
@@ -12,7 +13,9 @@ export function createLivePanel({ title, path, extra = [], locked = [], render, 
   const body = h("div", { class: "panel-body" }, skeleton(3, skeletonShape));
   const count = h("span", { class: "count" });
   const badge = h("b", { hidden: true });
-  const values = new Map();
+  // The panel comes back the way it was left; the badge on Options shows that something is set.
+  const memoryId = `${path}|${title}`;
+  const values = recall(memoryId);
   let form = null;
   let tokens = [];
   let ticket = 0;
@@ -23,12 +26,35 @@ export function createLivePanel({ title, path, extra = [], locked = [], render, 
   const tuneButton = h("button", { class: "btn small ghost tune", type: "button", title: "Change what this shows" }, icon("sliders", 14), h("span", { text: "Options" }), badge);
   const element = h("section", { class: "panel" }, h("header", { class: "panel-head" }, h("h2", { text: title }), count, h("span", { class: "spacer" }), actions, tunable && tuneButton, refreshButton), body);
 
+  function applyOptions() {
+    tokens = form.collect().tokens;
+    const changed = form.filled().size;
+    badge.hidden = changed === 0;
+    badge.textContent = String(changed);
+  }
+
+  async function buildForm() {
+    const { parameters } = await commandDetail(path);
+    form ??= createFriendlyForm({
+      parameters: parameters ?? [], values, essentials: null, locked,
+      onChange: () => {
+        applyOptions();
+        remember(memoryId, form.filled());
+        reloadSoon();
+      },
+    });
+    applyOptions();
+  }
+
   async function load(fresh = false) {
     const mine = (ticket += 1);
     stale = false;
     element.classList.add("loading");
     try {
-      const result = await query([...path.split(" "), ...tokens, ...extra], fresh);
+      // Remembered options only become arguments once the command's parameters are known, so a panel with some asks for those first.
+      if (!form && values.size > 0) await buildForm();
+      // `extra` goes first: after an argument that starts with a dash the form writes `--`, and anything behind that is read as one more argument.
+      const result = await query([...path.split(" "), ...extra, ...tokens], fresh);
       if (mine !== ticket) return;
       body.replaceChildren(render(result.json ?? result.text, { result, setCount: (text) => (count.textContent = text), reload: () => load(true) }));
       loaded = true;
@@ -46,23 +72,13 @@ export function createLivePanel({ title, path, extra = [], locked = [], render, 
 
   tuneButton.addEventListener("click", async () => {
     if (tuneButton.classList.contains("open")) return;
-    const { parameters } = await commandDetail(path);
-    form ??= createFriendlyForm({
-      parameters: parameters ?? [], values, essentials: null, locked,
-      onChange: () => {
-        tokens = form.collect().tokens;
-        const changed = form.changed();
-        badge.hidden = changed === 0;
-        badge.textContent = String(changed);
-        reloadSoon();
-      },
-    });
+    if (!form) await buildForm();
     openPopover(
       tuneButton,
       h(
         "div",
         { class: "tune-panel" },
-        h("div", { class: "tune-head" }, h("h3", { text: `${title} options` }), form.count > 0 && button({ label: "Reset", small: true, tone: "ghost", onclick: () => form.reset() })),
+        h("div", { class: "tune-head" }, h("h3", { text: `${title} options` }), form.count > 0 && button({ label: "Reset", small: true, tone: "ghost", onclick: () => form.reset(new Map()) })),
         form.count > 0 ? form.element : h("p", { class: "dim", text: "There is nothing to adjust for this view." }),
       ),
     );

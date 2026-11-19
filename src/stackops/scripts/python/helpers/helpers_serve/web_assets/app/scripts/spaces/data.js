@@ -1,53 +1,20 @@
-import { h, icon, toast } from "/assets/scripts/dom.js";
+import { h, icon } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { query } from "../data.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
-import { confirmAction } from "../overlays.js";
-import { createView, toolButton, toolGrid } from "../space_kit.js";
-import { avatar, button, copyChip, notice, pill, sectionHead, stat } from "../widgets.js";
-import { plural } from "../words.js";
+import { createView, editButton, toolButton, toolGrid } from "../space_kit.js";
+import { emojiTile, glyphTile, notice, sectionHead, stat } from "../widgets.js";
+import { friendlyText, plural, titleOf } from "../words.js";
+import { appliesHere, backupGroup } from "./data_backups.js";
 
 const PROTECT_TOOLS = ["devops data encrypt", "devops data decrypt", "devops data subset", "devops data validate"];
 const CLOUD_TOOLS = ["cloud sync", "cloud copy", "cloud mount", "cloud transfer"];
-const SYSTEM_NAMES = { linux: "Linux", darwin: "macOS", windows: "Windows" };
-const AUTOMATIC_CLOUD_PATH = "^";
 
 export function createDataSpace({ activity, tools }) {
-  const thisSystem = Object.keys(SYSTEM_NAMES).find((system) => SYSTEM_NAMES[system] === state.boot.platform);
-  const appliesHere = (item) => item.entry.os.includes(thisSystem);
-  const sync = (title, emoji, direction, item, source) =>
-    activity.start({ title, emoji, arguments: ["devops", "data", "sync", direction, "--which", item.selector, "--source", source], interactive: true, reveal: true }).catch((error) => toast(error.message));
-
-  async function retrieve(item, source) {
-    const sure = await confirmAction({ title: `Retrieve “${item.name}”?`, body: `The copy in the cloud is brought back to ${item.entry.path_local} on this machine. What is already there may be replaced.`, confirm: "Retrieve" });
-    if (sure) sync(`Retrieve ${item.name}`, "📥", "down", item, source);
-  }
-
-  function row(item, source) {
-    const { entry } = item;
-    const applies = appliesHere(item);
-    const cloud = entry.path_cloud === null || entry.path_cloud === AUTOMATIC_CLOUD_PATH ? "Automatic" : entry.path_cloud;
-    return h(
-      "li",
-      { class: `session-row backup-row${applies ? "" : " muted"}` },
-      avatar(item.name, 40),
-      h("div", { class: "session-text" }, h("strong", { text: item.name }), copyChip(entry.path_local), entry.note && h("span", { class: "dim", text: entry.note })),
-      h(
-        "div",
-        { class: "backup-facts" },
-        h("span", { class: "fact", title: "Where it is kept in the cloud" }, icon("sync", 13), cloud),
-        entry.encryption ? pill(entry.encryption === "symmetric" ? "Encrypted · password" : "Encrypted · key", "good") : pill("Not encrypted", "warn"),
-        entry.zip && pill("Zipped"),
-        entry.share_url && pill("Share link", "accent"),
-        entry.os.length < Object.keys(SYSTEM_NAMES).length && pill(entry.os.map((system) => SYSTEM_NAMES[system]).join(" · ")),
-      ),
-      applies && button({ label: "Retrieve", glyph: "download", small: true, onclick: () => retrieve(item, source) }),
-      applies && button({ label: "Back up", glyph: "up", small: true, tone: "primary", onclick: () => sync(`Back up ${item.name}`, "📤", "up", item, source) }),
-    );
-  }
-
   const panel = createLivePanel({
     title: "What is backed up", path: "devops data list", extra: ["--json"],
+    actions: [editButton(activity, { title: "the backup list", kind: "data" }, { label: "Edit the list", small: true })],
     render: (data, { setCount }) => {
       const entries = data?.entries ?? [];
       if (entries.length === 0) {
@@ -58,7 +25,8 @@ export function createDataSpace({ activity, tools }) {
       const here = entries.filter(appliesHere).length;
       const encrypted = entries.filter((item) => item.entry.encryption).length;
       const linked = entries.filter((item) => item.entry.share_url).length;
-      setCount(`${plural(entries.length, "item")} · ${plural(groups.size, "group")}`);
+      const counted = `${plural(entries.length, "item")} · ${plural(groups.size, "group")}`;
+      setCount(counted);
       const tiles = [
         [stat({ glyph: "database", hue: 252, label: "Backed up" }), entries.length, `in ${plural(groups.size, "group")}`],
         [stat({ glyph: "cpu", hue: 200, label: "For this machine" }), here, here === entries.length ? "all of them apply here" : `${entries.length - here} are for other systems`],
@@ -66,14 +34,44 @@ export function createDataSpace({ activity, tools }) {
         [stat({ glyph: "share", hue: 30, label: "Share links" }), linked, linked ? "retrievable without signing in" : "none set up yet"],
       ];
       requestAnimationFrame(() => tiles.forEach(([tile, value, note]) => tile.set(value, note)));
-      return h(
-        "div",
-        { class: "stack" },
-        rise(h("div", { class: "stats" }, tiles.map(([tile]) => tile.element))),
-        [...groups].map(([name, items]) => h("section", { class: "backup-group" }, h("h3", {}, name, h("b", { text: String(items.length) })), rise(h("ul", { class: "session-list" }, items.map((item) => row(item, data.source)))))),
-      );
+      const sections = [...groups].map(([name, items]) => [name, backupGroup({ activity, tools, name, items, source: data.source })]);
+      const stack = h("div", { class: "stack" }, rise(h("div", { class: "stats" }, tiles.map(([tile]) => tile.element))), sections.map(([, section]) => section.element));
+      // One more read on arrival says where backups go and which groups are the user's own. It reads only the user's file, and a user group
+      // replaces a built-in group of the same name whole, so a group is either the user's or built in.
+      query(["devops", "self", "status", "--backup", "--json"]).then((result) => {
+        if (!stack.isConnected) return;
+        const { details } = result.json.backup;
+        for (const [name, section] of sections) section.setOrigin(data.source !== "library" && Object.hasOwn(details.backup_items, name));
+        setCount(`${counted} · ${details.cloud_config ? `kept in ${details.cloud_config}` : "no cloud chosen"}`);
+        if (details.cloud_selection_required) {
+          stack.prepend(
+            h(
+              "div",
+              { class: "session-row" },
+              glyphTile("alert", 30, 40),
+              h("div", { class: "session-text" }, h("strong", { text: "No cloud is chosen for your backups" }), h("span", { class: "dim", text: "Until one is, backing up or retrieving asks which cloud to use every time." })),
+              toolButton(tools, "devops config setup cloud", { label: "Choose a cloud", tone: "primary" }),
+            ),
+          );
+        }
+      });
+      return stack;
     },
   });
+
+  const cloudGrid = toolGrid(tools, CLOUD_TOOLS);
+  const onedrive = state.nodes.get("cloud onedrive");
+  if (onedrive) {
+    cloudGrid.append(
+      h(
+        "a",
+        { class: "tool-card lit", href: "#/tools/cloud/onedrive" },
+        emojiTile(onedrive.icon || "🗂️", onedrive.path, 40),
+        h("span", { class: "tool-card-text" }, h("strong", { text: titleOf(onedrive) }), h("span", { text: friendlyText(onedrive.summary) })),
+        icon("arrow", 14),
+      ),
+    );
+  }
 
   const element = createView(
     {
@@ -86,7 +84,7 @@ export function createDataSpace({ activity, tools }) {
     },
     panel.element,
     h("section", { class: "block" }, sectionHead("Protect and tidy"), toolGrid(tools, PROTECT_TOOLS)),
-    h("section", { class: "block" }, sectionHead("Cloud storage"), toolGrid(tools, CLOUD_TOOLS)),
+    h("section", { class: "block" }, sectionHead("Cloud storage"), cloudGrid),
   );
   return { element, show: () => panel.ensure() };
 }

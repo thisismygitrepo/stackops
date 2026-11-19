@@ -6,6 +6,7 @@ import { toolButton } from "../../space_kit.js";
 import { avatar, button, notice, sectionHead } from "../../widgets.js";
 import { humanize, plural } from "../../words.js";
 import { actionBlock, areaHead, createStatePanel, installButton, pathText, statusPill } from "./workbench_kit.js";
+import { createJobsPanel } from "./workbench_parallel_jobs.js";
 
 const PREVIEW_ALL = { all_workspaces: "on", dry_run: "on" };
 const MOODS = { working: ["Working", "accent", "bolt"], idle: ["Idle", "", null], done: ["Finished", "good", "check"], blocked: ["Waiting on you", "warn", "alert"] };
@@ -59,6 +60,7 @@ export function createParallelArea({ tools }, { setStatus }) {
     );
   }
 
+  const jobs = createJobsPanel({ tools });
   const loops = createStatePanel({
     title: "Loops in progress", skeletonShape: "card",
     load: async (fresh) => {
@@ -100,9 +102,16 @@ export function createParallelArea({ tools }, { setStatus }) {
       actions: [toolButton(tools, "agents parallel run", { label: "Run a saved workflow", glyph: "play" }), toolButton(tools, "agents parallel create", { label: "Split a job", glyph: "lanes", tone: "primary" })],
     }),
     h("section", { class: "wb-flow" }, sectionHead("One job, many agents"), steps),
+    jobs.element,
     loops.element,
     actionBlock(tools, "Tidy up loops", TIDY),
     actionBlock(tools, "Saved jobs and starters", SHORTCUTS),
   );
-  return { element, show: () => loops.ensure() };
+  return {
+    element,
+    show() {
+      jobs.ensure();
+      loops.ensure();
+    },
+  };
 }

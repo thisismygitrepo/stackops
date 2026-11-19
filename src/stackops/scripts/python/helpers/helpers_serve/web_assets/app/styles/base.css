@@ -111,7 +111,7 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 @keyframes drift-b { to { transform: translate(-16vmax, -14vmax) scale(0.9); } }
 @keyframes drift-c { to { transform: translate(-22vmax, 10vmax) scale(1.3); } }
 @keyframes rise { from { opacity: 0; transform: translateY(18px) scale(0.97); } }
-@keyframes view-in { from { opacity: 0; transform: translateY(14px) scale(0.985); filter: blur(6px); } }
+@keyframes view-in { from { opacity: 0; transform: translateY(14px) scale(0.985); } }
 @keyframes pulse { 40% { transform: scale(1.12); } }
 @keyframes bump { 35% { transform: translateX(-50%) translateY(-7px) scale(1.02); } }
 @keyframes ripple { to { transform: scale(1); opacity: 0; } }
@@ -123,9 +123,6 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 @keyframes pop-in { from { opacity: 0; transform: scale(0.92) translateY(8px); } }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes fade-out { to { opacity: 0; } }
-@keyframes slide-in { from { transform: translateX(100%); } }
-@keyframes slide-out { to { transform: translateX(100%); } }
-@keyframes draw { to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
   .aurora i { animation: none; }

@@ -2,7 +2,9 @@ import { h, toast } from "/assets/scripts/dom.js";
 import { api, initState } from "/assets/scripts/state.js";
 import { createActivity } from "./activity.js";
 import { SPACES, VIEW_KEY } from "./catalog.js";
+import { openFind } from "./find_sheet.js";
 import { installPointerEffects, replay } from "./motion.js";
+import { closeAll } from "./overlays.js";
 import { createShell } from "./shell.js";
 import { createAgentsSpace } from "./spaces/agents.js";
 import { createAppsSpace } from "./spaces/apps.js";
@@ -30,7 +32,7 @@ async function start() {
   const spaces = {};
   const openReport = (report) => spaces.reports.openAdHoc(report);
   const activity = createActivity({ openReport });
-  const tools = createToolSheet({ activity, openReport });
+  const tools = createToolSheet({ activity, openReport, guides: { seek: () => openFind({ activity }) } });
   const spotlight = createSpotlight({ tools });
   const context = { activity, tools, openReport, openSearch: spotlight.open };
   Object.assign(spaces, {
@@ -56,6 +58,7 @@ async function start() {
 
   let shown = null;
   const render = () => {
+    closeAll();
     const route = parseRoute();
     for (const [id, space] of Object.entries(spaces)) space.element.hidden = id !== route.space;
     const space = spaces[route.space];

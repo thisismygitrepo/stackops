@@ -1,8 +1,10 @@
 import { h, icon, tildify, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { replay } from "../../motion.js";
+import { editButton } from "../../space_kit.js";
 import { button, copyChip, pill, segmented } from "../../widgets.js";
 import { hueOf, initialsOf, plural } from "../../words.js";
+import { canChange, editTarget } from "./prompts_files.js";
 import { markAll, readingStats, renderPromptText, sourceLabel, titleOfPrompt } from "./prompts_text.js";
 
 const COPIED_MILLISECONDS = 1400;
@@ -32,7 +34,7 @@ function copyButton(text) {
   return element;
 }
 
-export function createPromptReader({ tools, onBack }) {
+export function createPromptReader({ activity, tools, onBack }) {
   let view = "formatted";
   let current = null;
   let currentTerm = "";
@@ -88,6 +90,7 @@ export function createPromptReader({ tools, onBack }) {
         "div",
         { class: "prompt-actions" },
         copyButton(prompt.text),
+        canChange(prompt) && editButton(activity, editTarget(prompt)),
         button({ label: "Run this prompt", glyph: "play", tone: "primary", title: "Hand this prompt to an agent", onclick: () => tools.open("agents run-prompt", { preset: runPreset(prompt) }) }),
       ),
     );

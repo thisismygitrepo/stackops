@@ -58,11 +58,13 @@ export function createToolboxSpace({ tools }) {
 
   function show(route) {
     const node = state.nodes.get(route.join(" "));
+    const previous = current;
     if (node?.kind === "command") {
       history.replaceState(null, "", hashOf(state.parents.get(node.path)));
       current = state.parents.get(node.path);
       tools.open(node.path);
     } else current = node ?? state.boot.tree;
+    if (current !== previous) element.closest(".stage")?.scrollTo(0, 0);
     term = "";
     filter.input.value = "";
     const chain = current.kind === "root" ? [] : lineage(current);

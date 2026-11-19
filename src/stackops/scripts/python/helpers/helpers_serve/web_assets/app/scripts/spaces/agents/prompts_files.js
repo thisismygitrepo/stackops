@@ -1,6 +1,7 @@
 import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { openPopover } from "../../overlays.js";
+import { editButton } from "../../space_kit.js";
 import { button, copyChip, pill } from "../../widgets.js";
 import { plural } from "../../words.js";
 import { sourceLabel } from "./prompts_text.js";
@@ -13,6 +14,8 @@ const BLURBS = {
 
 const kindOf = (record) => record.source.split(":")[0];
 export const canChange = (record) => kindOf(record) !== "library";
+// What the shared Edit control needs to open the file behind a place, or behind one prompt: both carry `source` and `path`.
+export const editTarget = (record) => ({ title: `prompts · ${sourceLabel(record.source)}`, kind: "prompts", path: record.path });
 const shortPath = (record) => tildify(record.path, state.boot.home);
 
 // Makes the file with one example prompt in it. Runs out of sight and only opens the activity panel if it goes wrong.
@@ -28,14 +31,15 @@ export async function createPromptFile(activity, record) {
   return true;
 }
 
-export function editPromptFile(activity, record) {
-  return activity.start({ title: `Edit prompts · ${sourceLabel(record.source)}`, emoji: "📝", arguments: ["agents", "run-prompt", "--edit", "--custom-path", record.path], interactive: true, reveal: true });
-}
-
-export function openPromptFiles(anchor, { sources, onCreate, onEdit }) {
-  const act = (callback, record) => () => {
+export function openPromptFiles(anchor, { activity, sources, onCreate }) {
+  const edit = (record) => {
+    const control = editButton(activity, editTarget(record), { small: true });
+    control.addEventListener("click", () => popover.close());
+    return control;
+  };
+  const create = (record) => () => {
     popover.close();
-    callback(record);
+    onCreate(record);
   };
   const popover = openPopover(
     anchor,
@@ -55,9 +59,7 @@ export function openPromptFiles(anchor, { sources, onCreate, onEdit }) {
             h(
               "div",
               { class: "prompt-file-actions" },
-              record.exists
-                ? button({ label: "Edit in the terminal", glyph: "terminal", small: true, title: "Opens the file in a text editor inside the activity panel", onclick: act(onEdit, record) })
-                : button({ label: "Create this file", glyph: "plus", small: true, tone: "primary", onclick: act(onCreate, record) }),
+              record.exists ? edit(record) : button({ label: "Create this file", glyph: "plus", small: true, tone: "primary", onclick: create(record) }),
             ),
         ),
       ),

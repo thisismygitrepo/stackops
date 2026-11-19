@@ -1,5 +1,6 @@
 import asyncio
 import os
+import platform
 import shlex
 import threading
 import time
@@ -9,6 +10,7 @@ from typing import TypedDict
 from uuid import uuid4
 
 from stackops.scripts.python.helpers.helpers_serve.constants import (
+    FINISHED_RUNS_KEPT,
     LAUNCH_PATH_VARIABLE,
     LAUNCH_VIRTUAL_ENV_VARIABLE,
     SCROLLBACK_LIMIT_BYTES,
@@ -17,7 +19,9 @@ from stackops.scripts.python.helpers.helpers_serve.constants import (
     TERMINAL_RESTORE_SEQUENCE,
 )
 from stackops.scripts.python.helpers.helpers_serve.pty_process import PtyHandle, spawn_pty
-from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
+from stackops.utils.source_of_truth import HTML_REPORTS_ROOT, LIBRARY_ROOT
+
+POSIX_SHELL_WRAPPER = LIBRARY_ROOT.joinpath("scripts", "linux", "wrap_stackops")
 
 
 @dataclass(frozen=True)
@@ -88,9 +92,12 @@ def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directo
     loop = asyncio.get_running_loop()
     environment = build_run_environment(interactive=interactive)
     started_at = time.time()
-    handle = spawn_pty(
-        argv=[registry.stackops_executable, *arguments], working_directory=working_directory, environment=environment, rows=rows, columns=columns
-    )
+    # Some commands finish by leaving a script for the shell wrapper to run once they exit (attach, end session, shell scripts), so a run goes
+    # through that wrapper as it does in a terminal. Design choice: not on Windows, where the PowerShell wrapper does not pass the exit code back
+    # and every run would report success; those commands still fail there.
+    command = [registry.stackops_executable, *arguments]
+    argv = command if platform.system() == "Windows" else ["bash", str(POSIX_SHELL_WRAPPER), *command]
+    handle = spawn_pty(argv=argv, working_directory=working_directory, environment=environment, rows=rows, columns=columns)
     run_id = uuid4().hex[:12]
     run = Run(
         run_id=run_id,
@@ -115,6 +122,10 @@ def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directo
 
     _publish_output(run, f"""\x1b[2m$ {run.command_line}\x1b[0m\r\n""".encode())
     pump_thread = threading.Thread(target=pump, name=f"""stackops-serve-run-{run_id}""", daemon=True)
+    finished_run_ids = [finished_id for finished_id, finished_run in registry.runs.items() if finished_run.outcome is not None]
+    for finished_id in finished_run_ids[:-FINISHED_RUNS_KEPT]:
+        del registry.runs[finished_id]
+        del registry.pump_threads[finished_id]
     registry.runs[run_id] = run
     registry.pump_threads[run_id] = pump_thread
     pump_thread.start()

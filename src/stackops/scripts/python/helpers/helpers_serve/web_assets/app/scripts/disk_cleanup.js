@@ -5,10 +5,10 @@ import { changedOptions, defaultOptions, openCleanupOptions } from "./disk_clean
 import { canPick, isMeasured, isQuiet } from "./disk_cleanup_rows.js";
 import { runCleanup } from "./disk_cleanup_run.js";
 import { createCleanupScanner } from "./disk_cleanup_scan.js";
-import { cleanupBanner, createCleanupSummary } from "./disk_cleanup_summary.js";
-import { RISKS, RISK_ORDER, categoryOf, sizeText } from "./disk_cleanup_words.js";
+import { cleanupBanner, createCleanupSummary, createCleanupTray } from "./disk_cleanup_summary.js";
+import { RISKS, RISK_ORDER, categoryOf } from "./disk_cleanup_words.js";
 import { replay } from "./motion.js";
-import { button, glyphTile, notice, searchInput } from "./widgets.js";
+import { button, notice, searchInput } from "./widgets.js";
 
 const ROOTS_DELAY_MILLISECONDS = 700;
 const total = (targets) => targets.reduce((sum, target) => sum + (isMeasured(target) ? target.bytes : 0), 0);
@@ -29,7 +29,7 @@ export function createDiskCleanup({ activity }) {
     matches: (target) => (risk === "all" || target.risk === risk) && (term === "" || `${target.title} ${target.note} ${categoryOf(target.category).title}`.toLowerCase().includes(term)),
     toggle: (key, on) => setMany([key], on),
     setMany,
-    retry: (key) => scanner.remeasure([key]),
+    retry: (key) => scanner.retry(key),
     clearFilters() {
       risk = "all";
       term = "";
@@ -59,11 +59,7 @@ export function createDiskCleanup({ activity }) {
   const badge = h("b", { hidden: true });
   const optionsButton = h("button", { class: "btn tune", type: "button", title: "What to look at and what to tick for you" }, icon("sliders", 16), h("span", { text: "Options" }), badge);
   const rescanButton = button({ label: "Scan again", glyph: "refresh", onclick: () => scan() });
-  const trayTitle = h("strong");
-  const trayNote = h("span");
-  const clearButton = button({ label: "Clear", tone: "ghost", onclick: () => setMany([...picked], false) });
-  const cleanButton = button({ label: "Clean selected", glyph: "trash", tone: "primary", onclick: clean });
-  const tray = h("div", { class: "tray cleanup-tray", hidden: true }, glyphTile("trash", 350, 38), h("div", { class: "cleanup-tray-text" }, trayTitle, trayNote), h("span", { class: "spacer" }), clearButton, cleanButton);
+  const tray = createCleanupTray({ onClear: () => setMany([...picked], false), onClean: clean });
 
   function setMany(keys, on) {
     for (const key of keys) {
@@ -73,7 +69,7 @@ export function createDiskCleanup({ activity }) {
     }
     list.syncPicks();
     paintTotals();
-    replay(tray, "bump");
+    replay(tray.element, "bump");
   }
 
   function paintTotals() {
@@ -81,15 +77,13 @@ export function createDiskCleanup({ activity }) {
     const ready = all().filter(isMeasured);
     const ticked = chosen();
     const bytes = total(ticked);
-    const unsure = ticked.some((target) => !isMeasured(target) || !target.sized || target.estimateKind === "at_least");
     summary.paint({ scan: progress, drive: scanner.disk(), found: total(ready), safe: total(ready.filter((target) => target.risk === "safe")), places: ready.length, picked: bytes });
-    tray.hidden = progress.loading || scanner.failure() !== "" || scanner.targets.size === 0 || run?.phase === "cleaning" || run?.phase === "checking";
-    trayTitle.textContent = ticked.length ? `${ticked.length} place${ticked.length === 1 ? "" : "s"} ticked` : "Nothing ticked yet";
-    trayNote.textContent = ticked.length ? `You will free ${bytes > 0 ? `about ${sizeText(bytes)}` : "an unknown amount"}${unsure && bytes > 0 ? " or more" : ""}` : "Tick the places you want to empty.";
-    clearButton.hidden = ticked.length === 0;
-    cleanButton.disabled = ticked.length === 0;
+    tray.paint({
+      count: ticked.length, bytes, unsure: ticked.some((target) => !isMeasured(target) || !target.sized || target.estimateKind === "at_least"),
+      hidden: progress.loading || scanner.failure() !== "" || scanner.targets.size === 0 || (run !== null && run.phase !== "done"),
+    });
     stamp.textContent = !progress.busy && progress.measuredAt && scanner.failure() === "" ? `Measured at ${formatClock(progress.measuredAt / 1000)}` : "";
-    rescanButton.disabled = progress.loading || view.locked;
+    rescanButton.disabled = progress.busy || view.locked;
   }
 
   function paintBanner() {
@@ -101,6 +95,7 @@ export function createDiskCleanup({ activity }) {
               // Letting go of a cleanup that is still running does not stop it: the page stops waiting and measures those places again.
               onDismiss() {
                 const waiting = run.phase !== "done" ? run.keys : [];
+                for (const key of waiting) picked.delete(key);
                 run = null;
                 view.locked = false;
                 paintBanner();
@@ -132,7 +127,7 @@ export function createDiskCleanup({ activity }) {
       ),
     );
     const failure = scanner.failure();
-    problemHolder.replaceChildren(...(failure ? [notice({ glyph: "alert", tone: "bad", title: "The scan could not start", body: `${failure} If StackOps was just updated, restart it and open this page again.`, action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => scan() }) })] : []));
+    problemHolder.replaceChildren(...(failure ? [notice({ glyph: "alert", tone: "bad", title: "The scan could not start", body: `${failure.replace(/[.\s]*$/, "")}. If StackOps was just updated, restart it and open this page again.`, action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => scan() }) })] : []));
     for (const part of [summary.element, tools, list.element]) part.hidden = failure !== "";
     badge.hidden = changedOptions(options) === 0;
     badge.textContent = String(changedOptions(options));
@@ -177,7 +172,12 @@ export function createDiskCleanup({ activity }) {
 
   async function clean() {
     const items = chosen().sort((left, right) => right.bytes - left.bytes);
-    if (items.length === 0 || !(await confirmCleanup({ items, bytes: total(items) }))) return;
+    if (items.length === 0) return;
+    // The dialog dims the page with a blur; nothing underneath keeps moving while it is open.
+    element.classList.add("still");
+    const sure = await confirmCleanup({ items, bytes: total(items) });
+    element.classList.remove("still");
+    if (!sure) return;
     await runCleanup({
       activity, scanner, items, roots: options.roots,
       onPhase(next) {
@@ -207,7 +207,7 @@ export function createDiskCleanup({ activity }) {
     tools,
     problemHolder,
     list.element,
-    tray,
+    tray.element,
   );
   paint();
   return { element, show: () => !started && scan() };

@@ -1,9 +1,11 @@
-import { formatDuration, h, icon, tildify, toast } from "/assets/scripts/dom.js";
+import { debounce, h, icon, toast } from "/assets/scripts/dom.js";
 import { api, emit, state } from "/assets/scripts/state.js";
+import { createHero, statusOf } from "./activity_hero.js";
 import { openConsole } from "./console_session.js";
 import { markStale } from "./data.js";
 import { burst, replay } from "./motion.js";
-import { button, emojiTile, iconButton, notice } from "./widgets.js";
+import { confirmAction } from "./overlays.js";
+import { emojiTile, iconButton } from "./widgets.js";
 import { fullTitleOf } from "./words.js";
 
 function describeArguments(runArguments) {
@@ -14,21 +16,23 @@ function describeArguments(runArguments) {
   return { title: "Task", emoji: "" };
 }
 
-const statusOf = (summary) => (summary.exit_code === null ? "running" : summary.exit_code === 0 ? "done" : "failed");
-
 export function createActivity({ openReport }) {
   const tasks = new Map();
   let activeId = null;
   const chips = h("div", { class: "task-chips", role: "tablist" });
-  const hero = h("div", { class: "task-hero" });
+  const hero = createHero({
+    openReport,
+    runAgain: (task) => start({ title: task.title, emoji: task.emoji, arguments: task.summary.arguments, interactive: task.summary.interactive, reveal: true }).catch((error) => toast(error.message)),
+  });
   const consoles = h("div", { class: "task-consoles" });
   const sizeButton = iconButton("expand", "Fill the window", () => setMode(element.dataset.mode === "max" ? "open" : "max"));
+  const clearButton = iconButton("trash", "Clear finished tasks", () => remove(...visible().filter((task) => task.summary.exit_code !== null).map((task) => task.id)));
   const element = h(
     "aside",
     { class: "activity", "data-mode": "closed", "aria-label": "Activity", inert: true },
-    h("header", { class: "activity-head" }, h("h2", { text: "Activity" }), h("span", { class: "spacer" }), sizeButton, iconButton("close", "Hide activity", () => setMode("closed"))),
+    h("header", { class: "activity-head" }, h("h2", { text: "Activity" }), h("span", { class: "spacer" }), clearButton, sizeButton, iconButton("close", "Hide activity", () => setMode("closed"))),
     chips,
-    hero,
+    hero.element,
     consoles,
   );
   const pillGlyph = h("span", { class: "activity-glyph" });
@@ -38,7 +42,7 @@ export function createActivity({ openReport }) {
   const visible = () => [...tasks.values()].filter((task) => !task.quiet);
 
   function fit(task) {
-    if (!task.fit || consoles.clientHeight < 40 || !task.fit.proposeDimensions()) return false;
+    if (!task?.fit || consoles.clientHeight < 40 || !task.fit.proposeDimensions()) return false;
     task.fit.fit();
     return true;
   }
@@ -47,35 +51,7 @@ export function createActivity({ openReport }) {
     element.dataset.mode = mode;
     element.inert = mode === "closed";
     sizeButton.replaceChildren(icon(mode === "max" ? "shrink" : "expand", 16));
-    document.body.classList.toggle("activity-open", mode !== "closed");
-    setTimeout(() => tasks.forEach(fit), 340);
-  }
-
-  function paintHero() {
-    const task = tasks.get(activeId);
-    if (!task) {
-      hero.replaceChildren(notice({ glyph: "bolt", title: "Nothing running", body: "Whatever you start shows up here, live." }));
-      return;
-    }
-    const { summary } = task;
-    const status = statusOf(summary);
-    const where = tildify(summary.working_directory, state.boot.home);
-    const elapsed = formatDuration((summary.finished_at ?? Date.now() / 1000) - summary.started_at);
-    const line = status === "running" ? `Running for ${elapsed} in ${where}` : status === "done" ? `Finished in ${elapsed}` : `Stopped after ${elapsed} with a problem (code ${summary.exit_code})`;
-    const mark = h("span", { class: `task-mark ${status}` }, status === "running" ? h("i", { class: "ring" }) : icon(status === "done" ? "check" : "alert", 22));
-    hero.replaceChildren(
-      mark,
-      h("div", { class: "task-text" }, h("h3", { text: task.title }), h("p", { text: line })),
-      h(
-        "div",
-        { class: "task-actions" },
-        summary.reports.map((name) => button({ label: "View report", glyph: "report", small: true, onclick: () => openReport({ title: task.title, blurb: "", file: name }) })),
-        status === "running"
-          ? button({ label: "Stop", glyph: "stop", small: true, tone: "danger", onclick: () => api.stopRun(task.id).catch((error) => toast(error.message)) })
-          : button({ label: "Run again", glyph: "refresh", small: true, onclick: () => start({ title: task.title, emoji: task.emoji, arguments: summary.arguments, interactive: summary.interactive, reveal: true }).catch((error) => toast(error.message)) }),
-      ),
-    );
-    hero.dataset.status = status;
+    activate(activeId);
   }
 
   function paint() {
@@ -87,23 +63,26 @@ export function createActivity({ openReport }) {
       task.pane.classList.toggle("active", task.id === activeId);
     }
     const running = shown.filter((task) => task.summary.exit_code === null).length;
+    clearButton.hidden = running === shown.length;
     pillGlyph.replaceChildren(running ? h("i", { class: "ring" }) : icon("bolt", 15));
     pillLabel.textContent = running ? `${running} running` : "Activity";
     indicator.classList.toggle("busy", running > 0);
     indicator.dataset.count = shown.length ? String(shown.length) : "";
-    paintHero();
+    hero.paint(tasks.get(activeId));
   }
 
   function activate(id) {
     activeId = id;
     paint();
-    requestAnimationFrame(() => {
-      const task = tasks.get(id);
-      if (task && fit(task) && element.dataset.mode !== "closed") task.terminal.focus();
-    });
+    const task = tasks.get(id);
+    if (!task || element.dataset.mode === "closed") return;
+    // A finished run's console is built only once someone looks at it: after a reload there can be many, each a terminal and a connection.
+    if (!task.linked) connect(task);
+    requestAnimationFrame(() => fit(task) && task.terminal.focus());
   }
 
   async function connect(task) {
+    task.linked = true;
     const session = await openConsole({
       pane: task.pane, runId: task.id, fitNow: () => fit(task),
       onSummary: (summary) => {
@@ -116,8 +95,17 @@ export function createActivity({ openReport }) {
         markStale();
         const succeeded = task.summary.exit_code === 0;
         if (element.dataset.mode === "closed") toast(succeeded ? `${task.title} finished.` : `${task.title} stopped with a problem.`, succeeded ? "info" : "error");
-        else if (succeeded && task.id === activeId) burst(hero.querySelector(".task-mark"));
+        else if (succeeded && task.id === activeId) burst(hero.element.querySelector(".task-mark"));
         replay(indicator, "pulse");
+      },
+      // A running task's connection lost to sleep or a network blip is reopened, and the server replays the output. Not exhaustive by choice:
+      // after five tries the task is left as it is, and a reload catches up. A finished run that cannot be read is one the server let go of.
+      onDrop: () => {
+        if (!tasks.has(task.id)) return;
+        task.terminal.dispose();
+        Object.assign(task, { terminal: null, fit: null, socket: null });
+        if (task.summary.exit_code !== null) task.pane.replaceChildren(h("p", { class: "console-error", text: "This task's output is no longer kept: only the most recent finished tasks are. Reload the page to see what is." }));
+        else if ((task.drops += 1) <= 5) setTimeout(() => tasks.has(task.id) && connect(task), 2000 * task.drops);
       },
     });
     if (!session) return;
@@ -131,29 +119,34 @@ export function createActivity({ openReport }) {
     const chip = h("button", { class: "task-chip", type: "button", role: "tab" }, h("i", { class: "dot" }), h("span", { text: title }), closer);
     let settle;
     const done = new Promise((resolve) => (settle = resolve));
-    const task = { id: summary.id, summary, title, emoji, quiet, pane, chip, done, settle, terminal: null, fit: null, socket: null };
-    chip.addEventListener("click", (event) => (closer.contains(event.target) ? remove(task.id) : activate(task.id)));
+    const task = { id: summary.id, summary, title, emoji, quiet, pane, chip, done, settle, linked: false, drops: 0, terminal: null, fit: null, socket: null };
+    chip.addEventListener("click", async (event) => {
+      if (!closer.contains(event.target)) return activate(task.id);
+      // Removing a run that is still going stops it on the server, so that takes a yes first.
+      const sure = task.summary.exit_code !== null || (await confirmAction({ title: `Stop “${title}”?`, body: "It is still running. Removing it stops it.", confirm: "Stop and remove", tone: "danger" }));
+      if (sure) remove(task.id);
+    });
     tasks.set(task.id, task);
     chips.append(chip);
     consoles.append(pane);
-    connect(task);
+    // A running task connects at once, open panel or not: the connection is how the app learns that it ended.
+    if (summary.exit_code === null) connect(task);
+    else settle(summary);
     return task;
   }
 
-  async function remove(id) {
-    const task = tasks.get(id);
-    if (!task) return;
-    try {
-      await api.deleteRun(id);
-    } catch (error) {
-      toast(error.message);
+  async function remove(...ids) {
+    const gone = ids.map((id) => tasks.get(id)).filter(Boolean);
+    if (!gone.length) return;
+    await Promise.all(gone.map((task) => api.deleteRun(task.id).catch((error) => toast(error.message))));
+    for (const task of gone) {
+      task.socket?.close();
+      task.terminal?.dispose();
+      task.chip.remove();
+      task.pane.remove();
+      tasks.delete(task.id);
     }
-    task.socket?.close();
-    task.terminal?.dispose();
-    task.chip.remove();
-    task.pane.remove();
-    tasks.delete(id);
-    if (activeId === id) activeId = visible().at(-1)?.id ?? null;
+    if (!tasks.has(activeId)) activeId = visible().at(-1)?.id ?? null;
     activate(activeId);
     emit("runs");
   }
@@ -162,12 +155,13 @@ export function createActivity({ openReport }) {
     const task = tasks.get(id);
     if (!task) return;
     task.quiet = false;
+    activeId = id;
     if (element.dataset.mode === "closed") setMode("open");
-    activate(id);
+    else activate(id);
     emit("runs");
   }
 
-  async function start({ title, emoji, arguments: runArguments, interactive, reveal: show }) {
+  async function start({ title, emoji, arguments: runArguments, interactive, reveal: show, wide }) {
     const fitted = tasks.get(activeId);
     const width = Math.min(element.offsetWidth || 760, window.innerWidth);
     const size = fitted?.terminal && fit(fitted) ? { rows: fitted.terminal.rows, columns: fitted.terminal.cols } : { rows: 28, columns: Math.max(60, Math.floor((width - 64) / 7.85)) };
@@ -176,6 +170,7 @@ export function createActivity({ openReport }) {
     const task = createTask(summary, { title: title ?? described.title, emoji: emoji ?? described.emoji, quiet: !show });
     if (show) reveal(task.id);
     else paint();
+    if (wide) setMode("max");
     emit("runs");
     return task;
   }
@@ -187,8 +182,9 @@ export function createActivity({ openReport }) {
     emit("runs");
   }
 
-  setInterval(() => element.dataset.mode !== "closed" && tasks.get(activeId)?.summary.exit_code === null && paintHero(), 1000);
-  new ResizeObserver(() => requestAnimationFrame(() => tasks.forEach(fit))).observe(consoles);
+  setInterval(() => element.dataset.mode !== "closed" && hero.tick(), 1000);
+  // Only the task on show is refitted, once the size settles: each refit re-wraps the console and resizes the program. The others catch up when selected.
+  new ResizeObserver(debounce(() => fit(tasks.get(activeId)), 120)).observe(consoles);
   paint();
 
   return {

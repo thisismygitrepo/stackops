@@ -1,9 +1,11 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { markStale } from "../../data.js";
 import { createLivePanel } from "../../live_panel.js";
 import { rise } from "../../motion.js";
+import { editFile } from "../../space_kit.js";
 import { button, searchInput, segmented } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { createPromptFile, editPromptFile, openPromptFiles } from "./prompts_files.js";
+import { canChange, createPromptFile, editTarget, openPromptFiles } from "./prompts_files.js";
 import { EVERYTHING, emptyNotice, groupChips, groupOf, keyOf, promptRow } from "./prompts_list.js";
 import { createPromptReader } from "./prompts_reader.js";
 import { sourceLabel, titleOfPrompt } from "./prompts_text.js";
@@ -27,10 +29,11 @@ export function createPromptsSection({ activity, tools }) {
   const places = h("div", { class: "prompt-places" });
   const blank = h("div", { class: "prompt-blank" });
   const reader = createPromptReader({
-    tools,
+    activity, tools,
     onBack: () => {
       panes.dataset.pane = "list";
       history.replaceState(null, "", ADDRESS);
+      list.querySelector(`[aria-selected="true"]`)?.scrollIntoView({ block: "center" });
     },
   });
   const panes = h("div", { class: "prompt-panes", "data-pane": "list" }, list, reader.element, blank);
@@ -43,7 +46,15 @@ export function createPromptsSection({ activity, tools }) {
   });
   const filesButton = button({
     label: "Where they're kept", glyph: "folder", small: true, tone: "ghost",
-    onclick: () => catalog && !filesButton.classList.contains("open") && openPromptFiles(filesButton, { sources: catalog.sources, onCreate: create, onEdit: (record) => editPromptFile(activity, record).catch((error) => toast(error.message)) }),
+    onclick: () => catalog && !filesButton.classList.contains("open") && openPromptFiles(filesButton, { activity, sources: catalog.sources, onCreate: create }),
+  });
+  // The CLI has no command that adds one prompt: a new one is typed into the file of the place being looked at, or into your own when that place is built in.
+  const newButton = button({
+    label: "New prompt", glyph: "plus", small: true, tone: "ghost", title: "Opens the prompts file in a text editor. Add a named entry and it shows up here.",
+    onclick: () => {
+      const record = catalog?.sources.find((candidate) => candidate.source === source && canChange(candidate)) ?? catalog?.sources.find((candidate) => candidate.source === "user");
+      if (record) editFile(activity, editTarget(record));
+    },
   });
 
   const inPlace = () => catalog.prompts.filter((prompt) => source === EVERYTHING || prompt.source === source);
@@ -53,7 +64,7 @@ export function createPromptsSection({ activity, tools }) {
     try {
       if (!(await createPromptFile(activity, record))) return;
       source = record.source;
-      await panel.load(true);
+      markStale();
     } catch (error) {
       toast(error.message);
     }
@@ -66,6 +77,8 @@ export function createPromptsSection({ activity, tools }) {
     reader.show(prompt, term);
     if (!deliberate) return;
     panes.dataset.pane = "reader";
+    // In a narrow window the reader takes the list's place in a page that may be scrolled far down that list.
+    if (list.offsetParent === null && reader.element.getBoundingClientRect().top < panes.closest(".stage").getBoundingClientRect().top) reader.element.scrollIntoView({ block: "start" });
     const twin = catalog.prompts.some((other) => other.name === prompt.name && other.source !== prompt.source);
     history.replaceState(null, "", `${ADDRESS}/${encodeURIComponent(prompt.name)}${twin ? `/${encodeURIComponent(prompt.source)}` : ""}`);
   }
@@ -126,7 +139,7 @@ export function createPromptsSection({ activity, tools }) {
   list.addEventListener("keydown", step);
 
   const panel = createLivePanel({
-    title: "Saved prompts", path: "agents run-prompt", extra: ["--list", "--json"], tunable: false, actions: [places, filesButton],
+    title: "Saved prompts", path: "agents run-prompt", extra: ["--list", "--json"], tunable: false, actions: [places, newButton, filesButton],
     render: (data, { setCount }) => {
       // A refresh that brings back the same prompts keeps everyone's place instead of starting the page over.
       const fresh = JSON.stringify(data ?? null);

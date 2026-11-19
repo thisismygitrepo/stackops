@@ -3,7 +3,7 @@ import { createLivePanel } from "../../live_panel.js";
 import { toolButton } from "../../space_kit.js";
 import { button, copyChip, keyValue, pill } from "../../widgets.js";
 import { formatBytes, plural, relativeTime } from "../../words.js";
-import { actionBlock, areaHead, installButton, stateCard, statusPill } from "./workbench_kit.js";
+import { actionBlock, areaHead, installButton, previewList, stateCard, statusPill } from "./workbench_kit.js";
 import { createCatalogPanel } from "./workbench_local_catalog.js";
 
 const DOCTOR = "agents local doctor";
@@ -16,12 +16,7 @@ const ACTIONS = [
 
 function modelList(rows) {
   const line = (row) => h("li", { title: row.title }, h("div", {}, h("strong", { text: row.name }), h("span", { class: "dim", text: row.detail })), row.trail);
-  return h(
-    "div",
-    { class: "wb-models" },
-    h("ul", {}, rows.slice(0, MODEL_PREVIEW).map(line)),
-    rows.length > MODEL_PREVIEW && h("details", { class: "wb-more" }, h("summary", { text: `and ${rows.length - MODEL_PREVIEW} more` }), h("ul", {}, rows.slice(MODEL_PREVIEW).map(line))),
-  );
+  return h("div", { class: "wb-models" }, previewList(rows, MODEL_PREVIEW, line));
 }
 
 const running = (data) => h("div", { class: "wb-server-head" }, statusPill("Running", "good", "check"), copyChip(data.host), data.errors.length > 0 && h("span", { class: "dim", text: "Some details couldn't be read just now." }));

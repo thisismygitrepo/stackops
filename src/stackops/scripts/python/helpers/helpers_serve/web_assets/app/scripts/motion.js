@@ -3,7 +3,7 @@ import { h } from "/assets/scripts/dom.js";
 const STAGGER_LIMIT = 22;
 const BURST_COLORS = ["#6a5cff", "#1ea7fd", "#12c99b", "#f5a524", "#f0527a"];
 
-export const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function rise(container, selector) {
   const items = selector ? container.querySelectorAll(selector) : container.children;

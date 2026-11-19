@@ -10,8 +10,8 @@ export function createCleanupScanner({ onChange }) {
   const targets = new Map();
   const lastBytes = new Map();
   const queue = [];
+  const waiters = [];
   let catalog = [];
-  let waiters = [];
   let disk = null;
   let failure = "";
   let loading = false;
@@ -64,12 +64,9 @@ export function createCleanupScanner({ onChange }) {
       const records = new Map(json.map((record) => [record.key, record]));
       for (const key of current()) apply(targets.get(key), records.get(key));
     } catch (error) {
-      const failed = current();
-      // A group that fails (usually because it ran out of time) is measured again one place at a time.
-      if (failed.length > 1) {
-        for (const key of failed) targets.get(key).phase = "waiting";
-        queue.unshift(...failed.map((key) => [key]));
-      } else for (const key of failed) Object.assign(targets.get(key), { phase: "error", problem: error.message, slow: (performance.now() - began) / 1000 >= SLOW_SECONDS });
+      // A design choice: a project search that fails (usually out of time) is not split into one request per place. Each of those would walk the
+      // same folders again, so a slow search became eight slow searches. Its places say so and point at Options, where the search can be narrowed.
+      for (const key of current()) Object.assign(targets.get(key), { phase: "error", problem: error.message, slow: (performance.now() - began) / 1000 >= SLOW_SECONDS });
     }
     active -= 1;
     pump();
@@ -136,6 +133,8 @@ export function createCleanupScanner({ onChange }) {
     whenIdle: () => (pending() || loading ? new Promise((resolve) => waiters.push(resolve)) : Promise.resolve()),
     refreshDisk: () => readCatalog().then(onChange),
     remeasure: (keys) => enqueue(keys),
+    // One search measures every project place, so trying one of them again takes along the others that failed.
+    retry: (key) => enqueue(targets.get(key).action_kind === "projects" ? [...targets.values()].filter((target) => target.action_kind === "projects" && target.phase === "error").map((target) => target.key) : [key]),
     setCategories: (categories) => enqueue(adopt(categories)),
     setRoots(searchRoots) {
       roots = searchRoots;

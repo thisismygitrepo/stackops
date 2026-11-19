@@ -1,22 +1,22 @@
-import { h, icon, toast } from "/assets/scripts/dom.js";
+import { h, toast } from "/assets/scripts/dom.js";
+import { query } from "../data.js";
 import { openLayoutView, tabMap } from "../layout_view.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
-import { confirmAction } from "../overlays.js";
-import { createView, toolButton } from "../space_kit.js";
-import { avatar, button, notice, pill } from "../widgets.js";
-import { plural, relativeTime } from "../words.js";
+import { createView, editButton, editFile, toolButton, toolGrid } from "../space_kit.js";
+import { button, notice, pill, sectionHead } from "../widgets.js";
+import { plural } from "../words.js";
+import { createRunningPanel } from "./sessions_running.js";
 
 const PREVIEW_TABS = 8;
+const MY_LAYOUTS = { title: "your layouts", kind: "layouts" };
+const TERMINAL_TOOLS = ["devops config setup multiplexer", "devops config terminal config-shell", "devops config terminal starship-theme", "devops config terminal wezterm-theme", "devops config terminal ghostty-theme"];
 
 export function createSessionsSpace({ activity, tools }) {
+  let selectors = [];
+  // The selector, not the name: a name can be in your layouts and in a project's at once, and only the selector tells them apart.
   const launch = (layout) =>
-    activity.start({ title: `Launch ${layout.name}`, emoji: "🏃", arguments: ["terminal", "run", "--choose-layouts", layout.name], interactive: true, reveal: true }).catch((error) => toast(error.message));
-
-  async function end(session) {
-    const sure = await confirmAction({ title: `End “${session.name}”?`, body: "Everything running inside this session stops. This cannot be undone.", confirm: "End session", tone: "danger" });
-    if (sure) activity.start({ title: `End ${session.name}`, emoji: "💀", arguments: ["terminal", "kill", session.name], interactive: true, reveal: true }).catch((error) => toast(error.message));
-  }
+    activity.start({ title: `Launch ${layout.name}`, emoji: "🏃", arguments: ["terminal", "run", "--choose-layouts", layout.selector], interactive: true, reveal: true }).catch((error) => toast(error.message));
 
   function layoutCard(layout) {
     let cells = 0;
@@ -26,7 +26,11 @@ export function createSessionsSpace({ activity, tools }) {
       return map;
     });
     const launchButton = button({ label: "Launch", glyph: "play", small: true, tone: "primary", onclick: () => launch(layout) });
-    const view = () => openLayoutView({ layout, onLaunch: () => launch(layout), onTune: () => tools.open("terminal run", { preset: { choose_layouts: layout.name } }) });
+    const view = () =>
+      openLayoutView({
+        layout, onLaunch: () => launch(layout), onTune: () => tools.open("terminal run", { preset: { choose_layouts: layout.selector } }),
+        onEdit: layout.source_file && (() => editFile(activity, { title: layout.selector.startsWith("user:") ? MY_LAYOUTS.title : "this project's layouts", kind: "layouts", path: layout.source_file })),
+      });
     const card = h(
       "article",
       { class: "layout-card lit", tabindex: "0", title: "See what this layout opens" },
@@ -41,50 +45,31 @@ export function createSessionsSpace({ activity, tools }) {
   }
 
   const layouts = createLivePanel({
-    title: "Saved layouts", path: "terminal list", extra: ["--json", "--tabs"], locked: ["show_tabs"], skeletonShape: "card",
+    title: "Saved layouts", path: "terminal list", extra: ["--json", "--tabs"], locked: ["show_tabs", "show_stats"], skeletonShape: "card",
+    actions: [editButton(activity, MY_LAYOUTS, { label: "Edit my layouts", small: true })],
     render: (data, { setCount }) => {
       const items = data?.layouts ?? [];
+      selectors = items.map((layout) => layout.selector);
       setCount(items.length ? plural(items.length, "layout") : "");
-      if (items.length === 0) return notice({ glyph: "layers", title: "No saved layouts", body: "A layout is a set of tabs and panes you can start in one click.", action: toolButton(tools, "terminal create-template", { label: "Create one", tone: "primary" }) });
+      // The CLI's template command writes into the working folder, which this panel does not read; editing your layouts file is what puts one here.
+      if (items.length === 0) return notice({ glyph: "layers", title: "No saved layouts", body: "A layout is a set of tabs and panes you can start in one click. Your layouts file starts from an example the first time you edit it.", action: editButton(activity, MY_LAYOUTS, { label: "Edit my layouts" }) });
       return rise(h("div", { class: "card-grid" }, items.map(layoutCard)));
     },
   });
 
-  const running = createLivePanel({
-    title: "Running now", path: "terminal summary", extra: ["--json"],
-    render: (data, { setCount }) => {
-      const sessions = data?.sessions ?? [];
-      setCount(sessions.length ? `${plural(sessions.length, "session")} · ${data.backend}` : "");
-      if (sessions.length === 0) return notice({ glyph: "layers", title: "Nothing is running", body: "Launch a layout above to start a session." });
-      return rise(
-        h(
-          "ul",
-          { class: "session-list" },
-          sessions.map((session) => {
-            const total = Math.max(session.running + session.idle + session.unknown, 1);
-            return h(
-              "li",
-              { class: "session-row" },
-              avatar(session.name, 40),
-              h("div", { class: "session-text" }, h("strong", { text: session.name }), h("span", { class: "dim", text: `${plural(session.window_count, "window")} · active ${relativeTime(session.last_active)}` })),
-              h("div", { class: "meter", title: `${session.running} busy, ${session.idle} idle` }, h("i", { class: "busy", style: `--share:${session.running / total}` }), h("i", { class: "idle", style: `--share:${session.idle / total}` })),
-              h("span", { class: "session-counts dim" }, `${session.running} busy · ${session.idle} idle`),
-              session.attached ? pill("In use", "good") : pill("In background", ""),
-              h("button", { class: "icon-btn danger", type: "button", title: "End this session", "aria-label": `End ${session.name}`, onclick: () => end(session) }, icon("stop", 15)),
-            );
-          }),
-        ),
-      );
-    },
-  });
+  const running = createRunningPanel({ activity, savedLayouts: () => selectors });
+
+  // Filled in to land in your layouts file, which "Saved layouts" reads; left alone, the command writes a file into the working folder.
+  const saveAll = async () => tools.open("terminal export", { preset: { all_sessions: "on", output_path: (await query(["terminal", "path"])).json.user.path, merge: "on" } });
 
   const element = createView(
     {
       title: "Sessions", lede: "Start a saved workspace, or see what is already running.",
-      actions: [toolButton(tools, "terminal export", { label: "Save current as layout", glyph: "plus" }), toolButton(tools, "terminal run", { label: "Launch with options", glyph: "sliders" })],
+      actions: [button({ label: "Save current as layout", glyph: "plus", title: "Save every running session as a layout of the same name", onclick: saveAll }), toolButton(tools, "terminal run", { label: "Launch with options", glyph: "sliders" })],
     },
     layouts.element,
     running.element,
+    h("section", { class: "block" }, sectionHead("Terminal setup"), toolGrid(tools, TERMINAL_TOOLS)),
   );
   return {
     element,

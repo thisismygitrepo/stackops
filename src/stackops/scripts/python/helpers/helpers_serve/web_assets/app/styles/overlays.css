@@ -1,4 +1,5 @@
-.backdrop { position: fixed; inset: 0; z-index: 70; display: flex; background: rgba(8, 9, 20, 0.42); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); animation: fade-in 0.25s; }
+/* A plain dim, on purpose: a backdrop blur over the moving background is recomputed for the whole window on every frame, which halves the frame rate without a GPU. */
+.backdrop { position: fixed; inset: 0; z-index: 70; display: flex; background: rgba(8, 9, 20, 0.6); animation: fade-in 0.25s; }
 .backdrop.side { justify-content: flex-end; padding: 12px; }
 .backdrop.center { align-items: flex-start; justify-content: center; padding: 11vh 16px 16px; }
 .backdrop.closing { animation: fade-out 0.22s forwards; }
@@ -97,3 +98,18 @@
 .term-pane .copy-chip svg { flex: none; margin-top: 3px; }
 .term-pane .copy-chip:hover { color: #fff; background: rgba(255, 255, 255, 0.07); }
 .term-idle { padding: 4px 8px; font: 12.5px var(--mono); color: var(--t-faint); }
+
+.find-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.find-bar .search-input { flex: 1 1 100%; height: 46px; background: var(--panel-solid); border-color: var(--line-strong); }
+.find-bar .text-input { width: 130px; min-height: 36px; padding: 6px 12px; }
+.find-results { display: grid; gap: 14px; min-width: 0; transition: opacity 0.25s; }
+.find-results.loading { opacity: 0.55; }
+.find-file { display: grid; gap: 1px; min-width: 0; }
+.find-file header { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.find-file header strong { flex: none; max-width: 60%; overflow: hidden; font-size: 13.5px; text-overflow: ellipsis; white-space: nowrap; }
+.find-file header .copy-chip { flex: 1; justify-content: flex-start; min-width: 0; margin: 0; color: var(--ink-faint); }
+.find-file header .btn { flex: none; }
+.find-hit { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 4px; }
+.find-hit .copy-chip { justify-content: flex-end; gap: 4px; margin: 0; color: var(--ink-faint); }
+.find-line { padding: 3px 8px; overflow: hidden; font: 12.5px var(--mono); color: var(--ink-soft); text-overflow: ellipsis; white-space: nowrap; border-radius: 8px; transition: background 0.2s, color 0.2s; }
+.find-line:hover { color: var(--ink); background: var(--brand-wash); }

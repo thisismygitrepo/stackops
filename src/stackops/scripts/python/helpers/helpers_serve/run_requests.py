@@ -34,7 +34,7 @@ def parse_run_request(body: object) -> RunRequest | RequestProblem:
     if not isinstance(arguments, list) or not all(isinstance(argument, str) for argument in cast(list[object], arguments)):
         return RequestProblem(message="`arguments` must be a list of strings.")
     working_directory = payload.get("working_directory")
-    if not isinstance(working_directory, str) or not Path(working_directory).expanduser().is_dir():
+    if not isinstance(working_directory, str) or not Path(os.path.expanduser(working_directory)).is_dir():
         return RequestProblem(message=f"""Working directory does not exist: {working_directory}""")
     rows = payload.get("rows")
     columns = payload.get("columns")
@@ -45,7 +45,7 @@ def parse_run_request(body: object) -> RunRequest | RequestProblem:
         return RequestProblem(message="`interactive` must be true or false.")
     return RunRequest(
         arguments=tuple(cast(list[str], arguments)),
-        working_directory=str(Path(working_directory).expanduser()),
+        working_directory=str(Path(os.path.expanduser(working_directory))),
         rows=cast(int, rows),
         columns=cast(int, columns),
         interactive=interactive,
@@ -60,14 +60,15 @@ def parse_capture_request(body: object) -> CaptureRequest | RequestProblem:
     if not isinstance(arguments, list) or not all(isinstance(argument, str) for argument in cast(list[object], arguments)):
         return RequestProblem(message="`arguments` must be a list of strings.")
     working_directory = payload.get("working_directory")
-    if not isinstance(working_directory, str) or not Path(working_directory).expanduser().is_dir():
+    if not isinstance(working_directory, str) or not Path(os.path.expanduser(working_directory)).is_dir():
         return RequestProblem(message=f"""Working directory does not exist: {working_directory}""")
-    return CaptureRequest(arguments=tuple(cast(list[str], arguments)), working_directory=str(Path(working_directory).expanduser()))
+    return CaptureRequest(arguments=tuple(cast(list[str], arguments)), working_directory=str(Path(os.path.expanduser(working_directory))))
 
 
 def suggest_paths(prefix: str, base_directory: str) -> list[str]:
-    typed = Path(prefix).expanduser()
-    resolved = typed if typed.is_absolute() else Path(base_directory).expanduser() / typed
+    # os.path.expanduser leaves `~name` as typed when there is no such user, where Path.expanduser raises.
+    typed = Path(os.path.expanduser(prefix))
+    resolved = typed if typed.is_absolute() else Path(os.path.expanduser(base_directory)) / typed
     complete_directory = prefix == "" or prefix.endswith(("/", os.sep))
     parent = resolved if complete_directory else resolved.parent
     stem = "" if complete_directory else resolved.name

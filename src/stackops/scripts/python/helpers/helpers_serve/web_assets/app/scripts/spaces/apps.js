@@ -3,35 +3,42 @@ import { on } from "/assets/scripts/state.js";
 import { createCombo } from "../combo.js";
 import { software } from "../data.js";
 import { replay, rise } from "../motion.js";
-import { openSheet } from "../overlays.js";
-import { avatar, button, keyValue, notice, pill, searchInput, skeleton } from "../widgets.js";
-import { plainText, plural, relativeTime } from "../words.js";
+import { confirmAction } from "../overlays.js";
+import { editButton } from "../space_kit.js";
+import { avatar, button, glyphTile, notice, pill, skeleton } from "../widgets.js";
+import { plainText, plural } from "../words.js";
+import { openAppDetail } from "./app_detail.js";
+import { createAppFilters } from "./app_filters.js";
 
 const SUGGESTION_LIMIT = 8;
-const CHIP_EDGE = 26;
+// Not strictly complete: the installer splits its argument on commas, so a link containing one is not offered.
+const LINK_PATTERN = /^https?:\/\/[^\s,]+$/;
+const MY_CATALOG = { title: "my app catalog", kind: "software" };
 
 export function createAppsSpace({ activity }) {
   const picked = new Set();
   let catalog = null;
   let term = "";
-  let filter = "all";
-  let tagTerm = "";
-  let shownTags = [];
+  let found = [];
   let update = false;
   let stale = true;
 
   const grid = h("div", { class: "app-grid" }, skeleton(12, "card"));
-  const chips = h("div", { class: "filter-row" });
+  const filters = createAppFilters({ onChange: () => paintGrid() });
   const summary = h("p", { class: "result-count" });
+  const selectAll = button({ label: "Select all", small: true, tone: "ghost", onclick: () => pickAllFound() });
+  const bundleButton = button({ label: "Install bundle", glyph: "download", small: true, tone: "primary", title: "Installs the apps of this bundle that are not here yet, several at a time.", onclick: () => installBundle() });
+  selectAll.hidden = bundleButton.hidden = true;
   const trayFaces = h("div", { class: "tray-faces" });
   const trayText = h("strong");
   const installButton = button({ label: "Install", glyph: "download", tone: "primary", onclick: () => install([...picked], update) });
-  const updateToggle = h("button", { class: "mini-toggle", type: "button", role: "switch", "aria-checked": "false" }, h("i", { class: "switch" }), h("span", { text: "Also update ones already installed" }));
+  const updateToggle = h("button", { class: "mini-toggle", type: "button", role: "switch", "aria-checked": "false", onclick: () => setUpdate(!update) }, h("i", { class: "switch" }), h("span", { text: "Also update ones already installed" }));
   const tray = h("div", { class: "tray", hidden: true }, trayFaces, trayText, updateToggle, h("span", { class: "spacer" }), button({ label: "Clear", tone: "ghost", onclick: () => setPicked([]) }), installButton);
-  updateToggle.addEventListener("click", () => {
-    update = !update;
+
+  function setUpdate(value) {
+    update = value;
     updateToggle.setAttribute("aria-checked", String(update));
-  });
+  }
 
   const matches = (text) => {
     const terms = text.toLowerCase().split(/\s+/).filter(Boolean);
@@ -42,52 +49,55 @@ export function createAppsSpace({ activity }) {
   const combo = createCombo({
     large: true, glyph: "search", label: "Search apps", placeholder: "Search apps — try “git”, “browser”, or “terminal”", emptyText: "No app matches that. Try another word.",
     suggest: (text) =>
-      catalog === null || text.trim() === ""
-        ? []
-        : matches(text).slice(0, SUGGESTION_LIMIT).map((app) => ({
-            value: app.name, label: app.name, hint: plainText(app.summary), lead: avatar(app.name, 34), fill: false,
-            trail: picked.has(app.name) ? pill("Selected", "accent") : app.installed ? pill("Installed", "good") : h("span", { class: "combo-add" }, icon("plus", 14)),
-          })),
+      LINK_PATTERN.test(text.trim())
+        ? [{ value: text.trim(), label: "Install from this link", hint: text.trim(), lead: glyphTile("download", 252, 34), fill: false, link: true }]
+        : catalog === null || text.trim() === ""
+          ? []
+          : matches(text).slice(0, SUGGESTION_LIMIT).map((app) => ({
+              value: app.name, label: app.name, hint: plainText(app.summary), lead: avatar(app.name, 34), fill: false,
+              trail: picked.has(app.name) ? pill("Selected", "accent") : app.installed ? pill("Installed", "good") : h("span", { class: "combo-add" }, icon("plus", 14)),
+            })),
     onInput: (text) => {
       term = text;
       paintGrid();
     },
     onPick: (option) => {
-      toggle(option.value);
+      if (option.link) installLink(option.value);
+      else toggle(option.value);
       combo.setValue("");
       term = "";
       paintGrid();
     },
   });
 
-  const pickTag = (value) => {
-    filter = value === filter ? "all" : value;
-    paintChips();
-    paintGrid();
-  };
-  const tagSearch = searchInput({
-    placeholder: "Search categories",
-    oninput: (value) => {
-      tagTerm = value.trim().toLowerCase();
-      if (catalog) paintChips();
-    },
-  });
-  tagSearch.input.addEventListener("keydown", (event) => {
-    const first = shownTags.find(([value]) => value !== filter);
-    if (event.key === "Enter" && tagTerm && first) pickTag(first[0]);
-  });
+  // A link installs whatever it points at, so it asks first; apps from the catalog do not.
+  async function installLink(link) {
+    const sure = await confirmAction({ title: "Install from this link?", body: `${link} is downloaded and installed on this machine. Only do this for a source you trust.`, confirm: "Install" });
+    if (sure) start("Install from a link", [link]).catch((error) => toast(error.message));
+  }
+
+  const start = (title, installArguments) => activity.start({ title, emoji: "📦", arguments: ["devops", "software", "install", ...installArguments], interactive: true, reveal: true });
 
   async function install(names, withUpdate) {
     if (names.length === 0) return;
     try {
-      await activity.start({
-        title: names.length === 1 ? `Install ${names[0]}` : `Install ${names.length} apps`, emoji: "📦",
-        arguments: ["devops", "software", "install", names.join(","), ...(withUpdate ? ["--update"] : [])], interactive: true, reveal: true,
-      });
+      await start(names.length === 1 ? `Install ${names[0]}` : `Install ${names.length} apps`, [names.join(","), ...(withUpdate ? ["--update"] : [])]);
       setPicked([]);
     } catch (error) {
       toast(error.message);
     }
+  }
+
+  // A bundle goes to the installer by name, which installs its apps several at a time; a list of names would install them one by one.
+  function installBundle() {
+    const { bundle, label } = filters.active();
+    start(`Install ${label}`, [bundle, "--group"]).catch((error) => toast(error.message));
+  }
+
+  // Selecting only installed apps can only mean updating them, and without the switch the installer would skip every one.
+  function pickAllFound() {
+    if (found.every((app) => app.installed)) setUpdate(true);
+    setPicked([...picked, ...found.map((app) => app.name)]);
   }
 
   function paintTray() {
@@ -112,37 +122,8 @@ export function createAppsSpace({ activity }) {
     grid.querySelector(`.app-card[data-name="${CSS.escape(name)}"]`)?.classList.toggle("picked", picked.has(name));
   }
 
-  function openDetail(app) {
-    const sheet = openSheet({ label: app.name });
-    const titles = app.categories.map((label) => catalog.categories.find((category) => category.label === label)?.title ?? label);
-    sheet.body.append(
-      h("header", { class: "app-detail-head" }, avatar(app.name, 72), h("div", {}, h("h1", { text: app.name }), h("p", { text: plainText(app.summary) }), app.installed && pill("Installed on this machine", "good"))),
-      keyValue([
-        ["Category", titles.join(", ")],
-        ["License", app.license],
-        ["Website", app.homepage && h("a", { class: "link", href: app.homepage, target: "_blank", rel: "noopener noreferrer", text: app.homepage.replace(/^https?:\/\/(www\.)?/, "") })],
-        ["Last updated", app.updated_at && relativeTime(app.updated_at)],
-      ]),
-    );
-    sheet.foot.hidden = false;
-    sheet.foot.append(
-      h("span", { class: "spacer" }),
-      button({
-        label: picked.has(app.name) ? "Remove from selection" : "Add to selection", glyph: picked.has(app.name) ? "close" : "plus",
-        onclick: () => {
-          toggle(app.name);
-          sheet.close();
-        },
-      }),
-      button({
-        label: app.installed ? "Update now" : "Install now", glyph: "download", tone: "primary",
-        onclick: () => {
-          sheet.close();
-          install([app.name], app.installed);
-        },
-      }),
-    );
-  }
+  const openDetail = (app) =>
+    openAppDetail({ app, categories: catalog.categories, picked: picked.has(app.name), onToggle: () => toggle(app.name), onInstall: () => install([app.name], app.installed) });
 
   function card(app) {
     const add = h("button", { class: "app-add", type: "button", title: "Select to install", "aria-label": `Select ${app.name}` }, icon("plus", 15), icon("check", 15));
@@ -158,50 +139,37 @@ export function createAppsSpace({ activity }) {
     return element;
   }
 
+  // A design choice: cards rise once per load. Rising on every keystroke restarted the animation on every card, most of them off screen.
   function paintGrid() {
-    const found = matches(term).filter((app) => filter === "all" || (filter === "installed" ? app.installed : filter === "new" ? !app.installed : app.categories.includes(filter)));
-    summary.textContent = term || filter !== "all" ? `${plural(found.length, "app")} found` : `${plural(found.length, "app")} ready to install`;
+    if (!catalog) return;
+    const active = filters.active();
+    const narrowed = term.trim() !== "" || active.value !== "all";
+    const missing = active.bundle ? catalog.apps.filter((app) => active.accepts(app) && !app.installed).length : 0;
+    found = matches(term).filter(active.accepts);
+    summary.textContent = narrowed ? `${plural(found.length, "app")} found` : `${plural(found.length, "app")} ready to install`;
+    selectAll.hidden = !narrowed || found.length === 0;
+    selectAll.querySelector("span").textContent = `Select all ${found.length}`;
+    bundleButton.hidden = missing === 0;
+    bundleButton.querySelector("span").textContent = `Install bundle · ${missing} missing`;
     grid.replaceChildren(...(found.length ? found.map(card) : [notice({ glyph: "search", title: "No apps match", body: "Try a different word, or clear the filter." })]));
-    rise(grid);
-  }
-
-  function paintChips() {
-    const counts = new Map();
-    for (const app of catalog.apps) for (const label of app.categories) counts.set(label, (counts.get(label) ?? 0) + 1);
-    const installed = catalog.apps.filter((app) => app.installed).length;
-    const options = [
-      ["all", "Everything", catalog.apps.length], ["installed", "Installed", installed], ["new", "Not installed", catalog.apps.length - installed],
-      ...catalog.categories.map((category) => [category.label, category.title, counts.get(category.label) ?? 0]).sort((left, right) => right[2] - left[2]),
-    ];
-    shownTags = options.filter(([value, label]) => value === filter || label.toLowerCase().includes(tagTerm));
-    const pressed = (value) => value === filter;
-    chips.replaceChildren(
-      ...shownTags.map(([value, label, count]) =>
-        h(
-          "button",
-          { class: "chip-button", type: "button", "aria-pressed": String(pressed(value)), title: pressed(value) && value !== "all" && "Click again to show everything", onclick: () => pickTag(value) },
-          h("span", { text: label }),
-          h("b", { text: String(count) }),
-        ),
-      ),
-      ...(shownTags.some(([, label]) => label.toLowerCase().includes(tagTerm)) ? [] : [h("span", { class: "filter-none", text: "No category matches that." })]),
-    );
-    const row = chips.getBoundingClientRect();
-    const box = chips.querySelector(`[aria-pressed="true"]`).getBoundingClientRect();
-    if (box.left < row.left + CHIP_EDGE || box.right > row.right - CHIP_EDGE) chips.scrollLeft += box.left - row.left - CHIP_EDGE;
   }
 
   async function load(route) {
     stale = false;
     try {
-      catalog = await software(true);
+      catalog = await software();
     } catch (error) {
-      grid.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The app catalog didn't load", body: error.message, action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => load([]) }) }));
+      catalog = null;
+      summary.textContent = "";
+      selectAll.hidden = bundleButton.hidden = true;
+      const actions = h("div", { class: "dialog-actions" }, button({ label: "Try again", glyph: "refresh", small: true, onclick: () => load([]) }), editButton(activity, MY_CATALOG, { label: "Edit my catalog", small: true }));
+      grid.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The app catalog didn't load", body: error.message, action: actions }));
       return;
     }
     for (const app of catalog.apps) app.haystack = `${app.name} ${app.summary} ${app.categories.join(" ")}`.toLowerCase();
-    paintChips();
+    filters.load(catalog);
     paintGrid();
+    rise(grid);
     openRoute(route);
   }
 
@@ -215,9 +183,15 @@ export function createAppsSpace({ activity }) {
   const element = h(
     "section",
     { class: "view apps", hidden: true },
-    h("header", { class: "store-hero" }, h("h1", { text: "Apps" }), h("p", { text: "Find something, select it, install it. Pick as many as you like." }), h("div", { class: "store-search" }, combo.element, tagSearch.element)),
-    chips,
-    summary,
+    h(
+      "header",
+      { class: "store-hero" },
+      h("div", { class: "store-top" }, h("h1", { text: "Apps" }), editButton(activity, MY_CATALOG, { label: "Edit my catalog" })),
+      h("p", { text: "Find something, select it, install it. Pick as many as you like." }),
+      h("div", { class: "store-search" }, combo.element, filters.search),
+    ),
+    filters.element,
+    h("div", { class: "result-row" }, summary, selectAll, bundleButton),
     grid,
     tray,
   );

@@ -1,6 +1,6 @@
 import { h, icon, splitArguments } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
-import { HIDDEN_FLAGS } from "./catalog.js";
+import { HIDDEN_FLAGS, PATH_FIELDS } from "./catalog.js";
 import { createCombo } from "./combo.js";
 import { segmented } from "./widgets.js";
 import { friendlyText, humanize } from "./words.js";
@@ -9,8 +9,8 @@ const SEGMENT_LIMIT = 4;
 const LONG_TEXT_NAMES = new Set(["prompt", "message", "command", "context", "note"]);
 
 const longOf = (flags) => flags.find((flag) => flag.startsWith("--")) ?? flags[0];
-export const labelOf = (spec) => humanize(spec.kind === "option" ? longOf(spec.flags) : spec.name);
-export const isHidden = (spec) => spec.flags.some((flag) => HIDDEN_FLAGS.has(flag));
+const labelOf = (spec) => humanize(spec.kind === "option" ? longOf(spec.flags) : spec.name);
+const isHidden = (spec) => spec.flags.some((flag) => HIDDEN_FLAGS.has(flag));
 
 function tokensOf(spec, value) {
   if (!value) return [];
@@ -64,7 +64,7 @@ function createField(spec, values, changed) {
     });
     field = h("div", { class: "field" }, caption, combo.element, note);
     paint = () => combo.setValue(read() ? humanize(read()) : "");
-  } else if (spec.control === "path") {
+  } else if (spec.control === "path" || (spec.control === "text" && !spec.multiple && PATH_FIELDS.has(spec.name))) {
     const combo = createCombo({
       label, placeholder: placeholder || "Type a path", glyph: "folder", emptyText: "No such file or folder",
       suggest: async (text) => (await api.paths(text, state.settings.workingDirectory)).entries.map((entry) => ({ value: entry, label: entry, keepOpen: entry.endsWith("/") })),
@@ -125,11 +125,15 @@ export function createFriendlyForm({ parameters, values, essentials, locked = []
     return { tokens: [...optionTokens, ...(argumentTokens.some((token) => token.startsWith("-")) ? ["--"] : []), ...argumentTokens], problems };
   }
 
-  function reset() {
-    for (const { spec } of fields) values.delete(spec.name);
+  // `start` is what the form goes back to: what its owner opened it with, or an empty map.
+  function reset(start) {
+    values.clear();
+    for (const [name, value] of start) values.set(name, value);
     for (const item of fields) item.sync();
     onChange();
   }
 
-  return { element, collect, reset, count: fields.length, changed: () => fields.filter(({ spec }) => values.has(spec.name)).length };
+  // What the fields on show are set to. Values the owner passed for parameters the form hides are left out, so they are never remembered.
+  const filled = () => new Map(fields.filter(({ spec }) => values.has(spec.name)).map(({ spec }) => [spec.name, values.get(spec.name)]));
+  return { element, collect, reset, count: fields.length, filled };
 }

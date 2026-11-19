@@ -4,8 +4,13 @@ import { QUICK_TASKS } from "../catalog.js";
 import { query, software } from "../data.js";
 import { createHeroOrbit } from "../hero_orbit.js";
 import { rise } from "../motion.js";
-import { glyphTile, notice, sectionHead, stat } from "../widgets.js";
+import { glyphTile, notice, pill, sectionHead, stat } from "../widgets.js";
 import { greeting } from "../words.js";
+
+// The parts of the CLI's health check the four counts do not already cover, and the page that deals with each.
+// A design choice: managed settings are left out, since that part alone takes several seconds and Dotfiles shows it.
+const HEALTH = [["shell", "Shell profile", "#/reports/status"], ["ssh", "SSH", "#/network"], ["backup", "Backups", "#/data"]];
+const HEALTH_TONES = { ready: "good", attention: "warn", error: "bad" };
 
 export function createHomeSpace({ activity, tools, openSearch }) {
   const { boot } = state;
@@ -17,9 +22,13 @@ export function createHomeSpace({ activity, tools, openSearch }) {
     sessions: stat({ glyph: "layers", hue: 290, label: "Sessions", href: "#/sessions" }),
     agents: stat({ glyph: "bot", hue: 20, label: "Agents", href: "#/agents" }),
   };
+  const health = HEALTH.map(([key, label, href]) => {
+    const mark = pill("Checking…");
+    return { key, mark, element: h("a", { href }, h("span", { text: label }), mark) };
+  });
   let stale = true;
 
-  const tasks = QUICK_TASKS.filter((task) => !task.tool || state.nodes.has(task.tool)).map((task) =>
+  const tasks =QUICK_TASKS.filter((task) => !task.tool || state.nodes.has(task.tool)).map((task) =>
     h(
       "button",
       { class: "task-card lit", type: "button", style: `--hue:${task.tint}`, onclick: () => (task.tool ? tools.open(task.tool, { preset: task.preset ?? {} }) : (location.hash = task.hash)) },
@@ -49,6 +58,7 @@ export function createHomeSpace({ activity, tools, openSearch }) {
       ),
     ),
     rise(h("div", { class: "stats" }, Object.values(stats).map((item) => item.element))),
+    h("div", { class: "home-health" }, health.map((item) => item.element)),
     h("section", { class: "block" }, sectionHead("Jump in"), rise(h("div", { class: "task-grid" }, tasks))),
     h("section", { class: "block" }, sectionHead("Recent activity"), recent),
   );
@@ -59,18 +69,25 @@ export function createHomeSpace({ activity, tools, openSearch }) {
     software().then((catalog) => stats.apps.set(catalog.apps.filter((app) => app.installed).length, `of ${catalog.apps.length} in the catalog`), fail(stats.apps));
     query(["devops", "repos", "list", "--json"]).then(({ json }) => {
       const repos = Array.isArray(json) ? json : [];
-      const changed = repos.filter((repo) => repo.state !== "Clean").length;
+      const changed = repos.filter((repo) => repo.state === "Changed").length;
       stats.projects.set(repos.length, changed ? `${changed} with changes` : "all clean");
     }, fail(stats.projects));
     query(["terminal", "summary", "--json"]).then(({ json }) => {
       const sessions = json?.sessions ?? [];
-      stats.sessions.set(sessions.length, `${sessions.filter((session) => session.attached).length} attached`);
+      // Only TUIOS says whether someone is looking at a session; for the others the tile names the multiplexer.
+      stats.sessions.set(sessions.length, json?.backend === "tuios" ? `${sessions.filter((session) => session.attached).length} attached` : `on ${json?.backend}`);
     }, fail(stats.sessions));
     query(["agents", "status", "--json"]).then(({ json }) => {
       const agents = json?.agents ?? [];
-      const working = agents.filter((agent) => agent.status !== "idle").length;
+      const working = agents.filter((agent) => agent.status === "working").length;
       stats.agents.set(agents.length, agents.length ? `${working} working` : "none running");
     }, fail(stats.agents));
+    const paintHealth = (sections) =>
+      health.forEach(({ key, mark }) => {
+        mark.textContent = sections?.[key]?.summary ?? "Unavailable";
+        mark.className = `pill ${HEALTH_TONES[sections?.[key]?.level] ?? ""}`;
+      });
+    query(["devops", "self", "status", "--shell", "--ssh", "--backup", "--json"]).then(({ json }) => paintHealth(json), () => paintHealth(null));
   }
 
   function showRecent() {

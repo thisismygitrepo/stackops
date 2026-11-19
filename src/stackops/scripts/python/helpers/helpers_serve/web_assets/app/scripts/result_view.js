@@ -1,7 +1,7 @@
 import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { rise } from "./motion.js";
-import { keyValue, notice, pill, searchInput } from "./widgets.js";
+import { copyChip, keyValue, notice, pill, searchInput } from "./widgets.js";
 import { humanize, plural, relativeTime } from "./words.js";
 
 const COLUMN_LIMIT = 6;
@@ -15,6 +15,8 @@ const WARN = /\b(not|attention|changed|differs?|behind|ahead|outdated|unknown|wa
 export const toneOf = (text) => (BAD.test(text) ? "bad" : WARN.test(text) ? "warn" : GOOD.test(text) ? "good" : "");
 const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const isScalar = (value) => value === null || typeof value !== "object";
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+const compareCells = (left, right) => (typeof left === "number" && typeof right === "number" ? left - right : collator.compare(String(left ?? ""), String(right ?? "")));
 
 export function formatCell(key, value) {
   if (value === null || value === undefined || value === "") return h("span", { class: "dim", text: "—" });
@@ -25,7 +27,8 @@ export function formatCell(key, value) {
   if (STATUS_KEYS.has(key) && value.length < 40) return pill(value, toneOf(value));
   if (/^https?:\/\//.test(value)) return h("a", { class: "link", href: value, target: "_blank", rel: "noopener noreferrer", text: value.replace(/^https?:\/\/(www\.)?/, "") });
   if (/^\d{4}-\d{2}-\d{2}T/.test(value)) return h("span", { title: value, text: relativeTime(value) });
-  if (/^(\/|~\/|[A-Za-z]:\\)/.test(value)) return h("code", { class: "path", title: value, text: tildify(value, state.boot.home) });
+  // A path copies on click. Without a clipboard (plain HTTP from another machine) it stays plain text, which can still be selected by hand.
+  if (/^(\/|~\/|[A-Za-z]:\\)/.test(value)) return navigator.clipboard ? copyChip(value, tildify(value, state.boot.home)) : h("code", { class: "path", title: value, text: tildify(value, state.boot.home) });
   return h("span", { title: value.length > 60 ? value : undefined, text: value });
 }
 
@@ -37,9 +40,32 @@ export function dataTable(rows) {
   const more = h("button", { class: "btn small ghost", type: "button" });
   let term = "";
   let limit = ROW_STEP;
+  let sortKey = null;
+  let descending = false;
+  // One click sorts by a column, a second flips it, a third goes back to the order the command gave.
+  const heads = columns.map((key) =>
+    h(
+      "th", {},
+      h(
+        "button",
+        {
+          type: "button", title: "Sort by this column",
+          onclick: () => {
+            if (sortKey !== key) [sortKey, descending] = [key, false];
+            else if (descending) sortKey = null;
+            else descending = true;
+            paint();
+          },
+        },
+        h("span", { text: humanize(key) }), icon("down", 12),
+      ),
+    ),
+  );
 
   function paint() {
-    const matches = term ? rows.filter((row) => JSON.stringify(row).toLowerCase().includes(term)) : rows;
+    const found = term ? rows.filter((row) => JSON.stringify(row).toLowerCase().includes(term)) : rows;
+    const matches = sortKey === null ? found : [...found].sort((left, right) => compareCells(left[sortKey], right[sortKey]) * (descending ? -1 : 1));
+    heads.forEach((head, index) => head.setAttribute("aria-sort", columns[index] !== sortKey ? "none" : descending ? "descending" : "ascending"));
     body.replaceChildren(
       ...matches.slice(0, limit).map((row) => {
         const line = h("tr", { class: "data-row" }, columns.map((key) => h("td", {}, formatCell(key, row[key]))), h("td", { class: "expander" }, icon("down", 14)));
@@ -78,7 +104,7 @@ export function dataTable(rows) {
     "div",
     { class: "table-block" },
     rows.length > FILTER_THRESHOLD && h("div", { class: "table-tools" }, filter.element),
-    h("div", { class: "table-scroll" }, h("table", { class: "data-table" }, h("thead", {}, h("tr", {}, columns.map((key) => h("th", { text: humanize(key) })), h("th"))), body)),
+    h("div", { class: "table-scroll" }, h("table", { class: "data-table" }, h("thead", {}, h("tr", {}, heads, h("th"))), body)),
     more,
   );
 }

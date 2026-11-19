@@ -1,4 +1,3 @@
-import asyncio
 import getpass
 import platform
 import re
@@ -13,7 +12,7 @@ from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Respon
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp
-from starlette.websockets import WebSocket, WebSocketDisconnect
+from starlette.websockets import WebSocket
 
 from stackops.scripts.python.helpers.helpers_serve.access_guard import guard_access
 from stackops.scripts.python.helpers.helpers_serve.capture import CaptureResult, CaptureTimeout, capture_command
@@ -27,7 +26,8 @@ from stackops.scripts.python.helpers.helpers_serve.run_requests import (
     parse_run_request,
     suggest_paths,
 )
-from stackops.scripts.python.helpers.helpers_serve.runs import RunEvent, RunRegistry, describe_run, shutdown_runs, start_run, stop_run, subscribe
+from stackops.scripts.python.helpers.helpers_serve.run_socket import relay_run
+from stackops.scripts.python.helpers.helpers_serve.runs import RunRegistry, describe_run, shutdown_runs, start_run, stop_run
 from stackops.scripts.python.helpers.helpers_serve.software_catalog import load_software_catalog
 from stackops.scripts.python.helpers.helpers_serve.vendor_assets import VENDOR_ASSETS, resolve_vendor_asset
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
@@ -103,11 +103,11 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             case RequestProblem():
                 return JSONResponse({"error": capture_request.message}, status_code=400)
             case CaptureRequest():
-                result = await asyncio.to_thread(
-                    capture_command,
+                result = await capture_command(
                     executable=stackops_executable,
                     arguments=capture_request.arguments,
                     working_directory=capture_request.working_directory,
+                    receive=request.receive,
                 )
         match result:
             case CaptureTimeout():
@@ -116,7 +116,8 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
                 return JSONResponse({"exit_code": result.exit_code, "stdout": result.stdout, "stderr": result.stderr})
 
     def software(_request: Request) -> JSONResponse:
-        return JSONResponse(load_software_catalog())
+        catalog = load_software_catalog()
+        return JSONResponse(catalog, status_code=422 if "error" in catalog else 200)
 
     async def stop_run_endpoint(request: Request) -> Response:
         run = registry.runs.get(request.path_params["run_id"])
@@ -138,39 +139,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         if run is None:
             await websocket.close(code=4404)
             return
-        await websocket.accept()
-        snapshot, queue = subscribe(run)
-        await websocket.send_bytes(snapshot)
-        if run.outcome is not None:
-            await websocket.send_json(describe_run(run))
-
-        async def forward_events() -> None:
-            while True:
-                event: RunEvent = await queue.get()
-                if isinstance(event, bytes):
-                    await websocket.send_bytes(event)
-                else:
-                    await websocket.send_json(describe_run(run))
-
-        forwarder = asyncio.create_task(forward_events())
-        try:
-            while True:
-                message: dict[str, object] = await websocket.receive_json()
-                if run.outcome is not None:
-                    continue
-                match message:
-                    case {"type": "input", "data": str() as data}:
-                        run.handle.write(data.encode())
-                    case {"type": "resize", "rows": int() as rows, "columns": int() as columns}:
-                        run.handle.resize(rows, columns)
-                    case _:
-                        raise ValueError(f"""Unexpected terminal message: {message}""")
-        except WebSocketDisconnect:
-            pass
-        finally:
-            forwarder.cancel()
-            await asyncio.gather(forwarder, return_exceptions=True)
-            run.subscribers.discard(queue)
+        await relay_run(websocket=websocket, run=run)
 
     def report_file(request: Request) -> Response:
         name: str = request.path_params["name"]
@@ -183,7 +152,11 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         name: str = request.path_params["name"]
         if name not in VENDOR_ASSETS:
             return Response(status_code=404)
-        return FileResponse(resolve_vendor_asset(name), media_type=VENDOR_ASSETS[name].media_type, headers={"Cache-Control": "no-cache"})
+        asset = VENDOR_ASSETS[name]
+        headers = {"Cache-Control": "no-cache", "ETag": f'''"{asset.sha384}"'''}
+        if request.headers.get("if-none-match") == headers["ETag"]:
+            return Response(status_code=304, headers=headers)
+        return FileResponse(resolve_vendor_asset(name), media_type=asset.media_type, headers=headers)
 
     @asynccontextmanager
     async def lifespan(_app: Starlette) -> AsyncGenerator[None]:

@@ -5,7 +5,7 @@ import { rise } from "../../motion.js";
 import { toolButton } from "../../space_kit.js";
 import { avatar, button, copyChip, notice } from "../../widgets.js";
 import { humanize, plural, relativeTime } from "../../words.js";
-import { actionBlock, areaHead, statusPill } from "./workbench_kit.js";
+import { actionBlock, areaHead, previewList, statusPill } from "./workbench_kit.js";
 
 const TAB_PREVIEW = 4;
 const SAVED_PROFILES = "/browsers-profiles/";
@@ -56,8 +56,7 @@ function tabList(windows) {
     "div",
     { class: "wb-pages" },
     h("span", { class: "stat-label", text: `${plural(windows.length, "window")} · ${plural(tabs.length, "page")} open` }),
-    h("ul", {}, tabs.slice(0, TAB_PREVIEW).map(line)),
-    tabs.length > TAB_PREVIEW && h("details", { class: "wb-more" }, h("summary", { text: `and ${tabs.length - TAB_PREVIEW} more` }), h("ul", {}, tabs.slice(TAB_PREVIEW).map(line))),
+    previewList(tabs, TAB_PREVIEW, line),
   );
 }
 

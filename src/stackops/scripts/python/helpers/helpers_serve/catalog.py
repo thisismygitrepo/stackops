@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Literal, TypedDict, cast
 
 from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
+from stackops.scripts.python.helpers.helpers_serve.constants import LOCAL_PATH_PARAMETER_NAMES
 
 SUMMARY_PATTERN = re.compile(r"^(?:(?P<icon>[^\w\s<]\S*)\s+)?(?:<(?P<alias>[^>\s]+)>\s+)?(?P<summary>.*)$")
 
@@ -89,15 +90,24 @@ def load_command_parameters(source: CommandSource) -> list[ParameterSpec] | None
         is_option = isinstance(parameter, TyperOption)
         raw_choices = [str(choice.value) if isinstance(choice, Enum) else str(choice) for choice in cast(tuple[object, ...], descriptor.choices or ())]
         # Loose literals list a one or two letter alias right after each full value; the form only needs the full values.
+        # Design choice: the CLI does not mark its aliases, so one is recognised by its letters appearing in order in the value before it.
+        # That keeps real short values (pi, q, oz, t3), and would hide one that happens to be spelled out of its predecessor.
         choices = [
-            choice for index, choice in enumerate(raw_choices) if not (len(choice) <= 2 and index > 0 and len(raw_choices[index - 1]) > len(choice))
+            choice
+            for index, choice in enumerate(raw_choices)
+            if not (
+                len(choice) <= 2
+                and index > 0
+                and len(raw_choices[index - 1]) > len(choice)
+                and re.search(".*".join(re.escape(letter) for letter in choice), raw_choices[index - 1], re.IGNORECASE)
+            )
         ]
         control: ParameterControl
         if isinstance(parameter, TyperOption) and (parameter.is_flag or parameter.count):
             control = "switch"
         elif choices:
             control = "choice"
-        elif descriptor.is_path:
+        elif descriptor.is_path or (descriptor.annotation is str and parameter.name in LOCAL_PATH_PARAMETER_NAMES):
             control = "path"
         elif descriptor.annotation in (int, float):
             control = "number"

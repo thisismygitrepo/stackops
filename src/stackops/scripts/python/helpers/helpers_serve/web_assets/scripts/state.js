@@ -62,7 +62,8 @@ async function request(method, path, body) {
     toast("This session's access expired because the server restarted. Open the new link it printed.");
     throw new Error("Access expired.");
   }
-  const payload = response.status === 204 ? null : await response.json();
+  // A server error can arrive as plain text; the status message below then stands in for it.
+  const payload = response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok) throw new Error(payload?.error ?? `${method} ${path} failed with status ${response.status}.`);
   return payload;
 }

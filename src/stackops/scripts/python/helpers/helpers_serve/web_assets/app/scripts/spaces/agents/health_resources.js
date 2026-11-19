@@ -1,14 +1,14 @@
 import { h, icon } from "/assets/scripts/dom.js";
-import { button, copyChip, highlight, notice, pill } from "../../widgets.js";
+import { button, highlight, notice, pill } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { KIND_BY_ID, ORIGINS, STATES, groupBySource, shortPath } from "./health_model.js";
+import { KIND_BY_ID, ORIGINS, STATES, groupBySource } from "./health_model.js";
+import { pathChip } from "./health_overview.js";
 
 const ROW_STEP = 12;
 const MOMENT_LIMIT = 8;
 
 const statePill = (id) => pill(STATES[id].label, STATES[id].tone);
 const originTag = (origin) => h("span", { class: `origin ${origin}`, title: ORIGINS[origin].hint, text: ORIGINS[origin].label });
-const pathChip = (path) => copyChip(path, shortPath(path));
 
 function serverLine(detail) {
   const cut = detail.indexOf(": ");

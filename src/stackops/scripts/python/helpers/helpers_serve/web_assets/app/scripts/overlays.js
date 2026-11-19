@@ -10,9 +10,15 @@ document.addEventListener("keydown", (event) => {
   stack.at(-1).close();
 });
 
+export function closeAll() {
+  for (const layer of [...stack]) layer.close();
+}
+
 function mount(backdrop, panel, dismissOnBackdrop) {
   let settle;
   const closed = new Promise((resolve) => (settle = resolve));
+  // A popover would paint above the new backdrop, so it does not outlive the dialog or sheet that opens over it.
+  for (const open of [...stack]) if (open.popover) open.close();
   const previousFocus = document.activeElement;
   const layer = {
     close(result) {
@@ -21,8 +27,11 @@ function mount(backdrop, panel, dismissOnBackdrop) {
       stack.splice(index, 1);
       backdrop.classList.add("closing");
       setTimeout(() => {
+        // Focus goes back only if nothing newer took it: an overlay opened straight after this one keeps the focus.
+        const focused = document.activeElement;
+        const kept = focused === document.body || backdrop.contains(focused);
         backdrop.remove();
-        if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
+        if (kept && previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
         settle(result);
       }, CLOSE_MILLISECONDS);
     },
@@ -86,6 +95,7 @@ export function openPopover(anchor, content, { align = "end" } = {}) {
     layer.close();
   };
   const layer = {
+    popover: true,
     close() {
       const index = stack.indexOf(layer);
       if (index < 0) return;

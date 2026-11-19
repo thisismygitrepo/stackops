@@ -1,7 +1,7 @@
 import { h } from "/assets/scripts/dom.js";
 import { query } from "../../data.js";
 import { rise } from "../../motion.js";
-import { toolButton } from "../../space_kit.js";
+import { editButton, toolButton } from "../../space_kit.js";
 import { button } from "../../widgets.js";
 import { actionBlock, areaHead, createStatePanel, pathText, statusPill } from "./workbench_kit.js";
 import { createResetPanel } from "./workbench_reset.js";
@@ -35,17 +35,26 @@ async function inspect(kind, place, fresh) {
   }
 }
 
-export function createSetupArea({ tools, openReport }, { setStatus }) {
-  function cell(check, place) {
+export function createSetupArea({ activity, tools, openReport }, { setStatus }) {
+  function cell(check, kind, place) {
     const [label, tone, glyph] = VERDICTS[check.verdict];
     const preset = { kind: check.kind, source: check.place };
+    const broken = check.verdict === "broken";
+    // Built-in lists stay read-only: a change made there is lost with the next update.
+    const editable = check.verdict !== "missing" && check.place !== "library" && check.path;
     return h(
       "div",
       { class: `wb-list-cell ${check.verdict}` },
       h("div", { class: "wb-line" }, h("span", { class: "stat-label", text: place.title }), statusPill(label, tone, glyph)),
       check.path && pathText(check.path),
       check.verdict === "missing" && check.place !== "library" && button({ label: "Create it", glyph: "plus", small: true, onclick: () => tools.open("agents config init", { preset }) }),
-      check.verdict === "broken" && button({ label: "See what's wrong", glyph: "search", small: true, onclick: () => tools.open("agents config validate", { preset }) }),
+      (broken || editable) &&
+        h(
+          "span",
+          { class: "wb-line-actions" },
+          broken && button({ label: "See what's wrong", glyph: "search", small: true, onclick: () => tools.open("agents config validate", { preset }) }),
+          editable && editButton(activity, { title: `${kind.title.toLowerCase()} (${place.title.toLowerCase()})`, kind: check.kind, path: check.path }, { label: broken ? "Fix it" : "Edit", small: true }),
+        ),
     );
   }
 
@@ -66,7 +75,7 @@ export function createSetupArea({ tools, openReport }, { setStatus }) {
               "div",
               { class: "wb-list-row" },
               h("div", { class: "wb-list-name" }, h("strong", { text: kind.title }), h("span", { class: "dim", text: kind.body })),
-              PLACES.map((place) => cell(checks.find((check) => check.kind === kind.id && check.place === place.id), place)),
+              PLACES.map((place) => cell(checks.find((check) => check.kind === kind.id && check.place === place.id), kind, place)),
             ),
           ),
         ),

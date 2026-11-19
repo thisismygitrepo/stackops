@@ -2,12 +2,14 @@ import { h, icon } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { QUICK_TASKS, REPORTS, SPACES } from "./catalog.js";
 import { software } from "./data.js";
-import { openDialog } from "./overlays.js";
+import { closeAll, openDialog } from "./overlays.js";
 import { avatar, emojiTile, glyphTile, highlight } from "./widgets.js";
-import { friendlyText, plainText, titleOf, trailOf } from "./words.js";
+import { friendlyText, fullTitleOf, plainText, trailOf } from "./words.js";
 
 const GROUP_LIMIT = 7;
-const GROUP_ORDER = ["Suggested", "Pages", "Apps", "Tools", "Collections", "Reports"];
+const GROUP_ORDER = ["Recent", "Suggested", "Pages", "Apps", "Tools", "Collections", "Reports"];
+// Written by the tool sheet: the last few command paths opened, newest first.
+const RECENT_KEY = "stackops-serve-recent";
 // Tools that have a guided page of their own: search lands there instead of on the bare tool.
 const GUIDED_TOOLS = { "utils machine clean-drive": "#/machine/cleanup" };
 
@@ -19,7 +21,8 @@ export function createSpotlight({ tools }) {
       .filter((node) => node.kind !== "root")
       .map((node) => ({
         group: node.kind === "command" ? "Tools" : "Collections",
-        title: titleOf(node),
+        // The parent is part of the title: a third of the tools share a one-word name (Validate, Status, Edit) with tools elsewhere.
+        title: fullTitleOf(node),
         hint: [trailOf(node), friendlyText(node.summary)].filter(Boolean).join(" — "),
         words: node.path,
         lead: () => emojiTile(node.icon || (node.kind === "command" ? "✨" : "🗂️"), node.path, 34),
@@ -31,19 +34,27 @@ export function createSpotlight({ tools }) {
     go: () => (task.tool ? tools.open(task.tool, { preset: task.preset ?? {} }) : (location.hash = task.hash)),
   }));
   let apps = [];
+  let recent = [];
   let dialog = null;
 
   function entriesFor(text) {
     const terms = text.toLowerCase().split(/\s+/).filter(Boolean);
-    if (terms.length === 0) return [...suggested, ...fixed.filter((entry) => entry.group === "Pages")];
-    const rank = (entry) => (entry.title.toLowerCase().startsWith(terms[0]) ? 0 : entry.title.toLowerCase().includes(terms[0]) ? 1 : 2);
+    if (terms.length === 0) return [...recent, ...suggested, ...fixed.filter((entry) => entry.group === "Pages")];
+    // Titles holding more of the typed words come first, then titles that start with the first word, then shorter ones.
+    const rank = (entry) => {
+      const title = entry.title.toLowerCase();
+      return (terms.length - terms.filter((term) => title.includes(term)).length) * 2 + (title.startsWith(terms[0]) ? 0 : 1);
+    };
     return [...fixed, ...apps]
       .filter((entry) => terms.every((term) => entry.haystack.includes(term)))
-      .sort((left, right) => rank(left) - rank(right) || left.title.length - right.title.length);
+      .map((entry) => ({ entry, rank: rank(entry) }))
+      .sort((left, right) => left.rank - right.rank || left.entry.title.length - right.entry.title.length)
+      .map(({ entry }) => entry);
   }
 
   function open(initial = "") {
     if (dialog) return;
+    recent = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]").flatMap((path) => fixed.filter((entry) => entry.group === "Tools" && entry.words === path).map((entry) => ({ ...entry, group: "Recent" })));
     const input = h("input", { type: "text", placeholder: "Search apps, tools, pages, and reports", spellcheck: "false", autocomplete: "off", "aria-label": "Search", value: initial });
     const list = h("div", { class: "spot-list", role: "listbox" });
     let rows = [];
@@ -58,7 +69,7 @@ export function createSpotlight({ tools }) {
     const choose = (index) => {
       const entry = rows[index]?.entry;
       if (!entry) return;
-      dialog.close();
+      closeAll();
       entry.go();
     };
     const search = () => {

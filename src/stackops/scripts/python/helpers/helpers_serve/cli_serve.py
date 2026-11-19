@@ -5,6 +5,7 @@ def serve(host: str, port: int, open_browser: bool) -> None:
     import os
     import platform
     import shutil
+    import signal
     import subprocess
     import sys
     from pathlib import Path
@@ -29,6 +30,8 @@ run_server(host={host!r}, port={port!r}, open_browser={open_browser!r}, stackops
     command.extend(["python", "-c", worker_source])
     environment = {**os.environ, LAUNCH_PATH_VARIABLE: os.environ["PATH"], LAUNCH_VIRTUAL_ENV_VARIABLE: os.environ.get("VIRTUAL_ENV", "")}
     server = subprocess.Popen(command, env=environment)
+    # Ctrl+C reaches the whole terminal group, but a plain `kill` reaches only this process and would leave the server holding the port.
+    signal.signal(signal.SIGTERM, lambda _number, _frame: server.terminate())
     try:
         return_code = server.wait()
     except KeyboardInterrupt:  # Ctrl+C reaches the server too; wait for it to stop its running commands.

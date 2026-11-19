@@ -17,7 +17,7 @@ export function createMachineSpace(context) {
   const fact = (label, value, glyph, hue) => h("article", { class: "spec-card lit" }, glyphTile(glyph, hue, 38), h("span", { class: "stat-label", text: label }), h("strong", { text: value || "—" }));
 
   const specs = createLivePanel({
-    title: "About this machine", path: "utils machine specs", extra: ["--json"], skeletonShape: "card",
+    title: "About this machine", path: "utils machine specs", extra: ["--json"], skeletonShape: "card", tunable: false,
     render: (data, { setCount }) => {
       if (!data?.system) return notice({ glyph: "cpu", title: "No details", body: "This machine did not describe itself." });
       setCount(data.hostname ?? "");

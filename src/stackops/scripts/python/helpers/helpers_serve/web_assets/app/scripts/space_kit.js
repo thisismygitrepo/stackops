@@ -1,7 +1,20 @@
-import { h, icon } from "/assets/scripts/dom.js";
+import { h, icon, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { button, emojiTile } from "./widgets.js";
 import { friendlyText, titleOf } from "./words.js";
+
+const FILE_EDITORS = { script: ["devops", "scripts", "edit"], file: ["utils", "file", "edit"] };
+
+// The one way a page offers Edit: the CLI's own edit command in the activity console. It creates a missing file and checks it when the
+// editor closes, and pages refresh when the run ends. A design choice: it needs the CLI's editor on the serving machine, in exchange for no file endpoints on the server.
+export function editFile(activity, { title, kind, path }) {
+  const editArguments = FILE_EDITORS[kind] ? [...FILE_EDITORS[kind], path] : ["devops", "config", "edit", kind, ...(path ? ["--custom-path", path] : [])];
+  return activity.start({ title: `Edit ${title}`, emoji: "📝", arguments: editArguments, interactive: true, reveal: true, wide: true }).catch((error) => toast(error.message));
+}
+
+export function editButton(activity, target, { label = "Edit", small = false } = {}) {
+  return button({ label, glyph: "terminal", small, title: "Opens the file in a text editor inside the activity panel. It is checked when you close the editor.", onclick: () => editFile(activity, target) });
+}
 
 export function createView({ title, lede, actions = [] }, ...content) {
   return h(

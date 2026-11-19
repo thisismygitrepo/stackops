@@ -1,10 +1,9 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { query } from "../../data.js";
-import { rise } from "../../motion.js";
 import { toolButton } from "../../space_kit.js";
-import { avatar, button, notice, stat } from "../../widgets.js";
+import { avatar, button, notice } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { actionBlock, areaHead, barList, createStatePanel, stateCard, tally } from "./workbench_kit.js";
+import { actionBlock, areaHead, barList, createStatePanel, stateCard, statRow, tally } from "./workbench_kit.js";
 
 const DAY = 86400000;
 const WEEK = 7 * DAY;
@@ -52,9 +51,12 @@ export function createBrainArea({ tools }, { setStatus }) {
   const question = h("input", { class: "wb-ask-input", type: "text", placeholder: "Ask a quick question…", "aria-label": "Your question", autocomplete: "off" });
   const toggle = h("button", { class: "mini-toggle", type: "button", role: "switch", "aria-checked": "true" }, h("i", { class: "switch" }), h("span", { text: "Answer from my Second Brain" }));
   const ask = () => tools.open("agents ask", { preset: { ...(question.value.trim() ? { prompt: question.value.trim() } : {}), ...(fromBrain ? { second_brain: "on" } : {}) } });
+  // The sessions to pick from are the ones the notebook records; the command shows its own list of them once it starts.
+  const resume = toolButton(tools, "agents run-interactive", { label: "Continue a session", glyph: "clock", preset: { followup: "on" } });
   function useBrain(wanted, available) {
     fromBrain = wanted && available;
     toggle.hidden = !available;
+    if (resume) resume.hidden = !available;
     toggle.setAttribute("aria-checked", String(fromBrain));
   }
   toggle.addEventListener("click", () => useBrain(!fromBrain, true));
@@ -88,17 +90,15 @@ export function createBrainArea({ tools }, { setStatus }) {
       setCount(`${plural(notes.length, "note")} · ${plural(files.length, "notebook")}`);
       setStatus(plural(notes.length, "note"), "good");
       if (toggle.hidden) useBrain(true, true);
-      const tiles = [
-        [stat({ glyph: "book", hue: 330, label: "Notes kept" }), notes.length, `across ${plural(files.length, "notebook")}`],
-        [stat({ glyph: "clock", hue: 200, label: "Added this week" }), notes.filter((note) => note.day >= monday).length, `${notes.filter((note) => note.day >= today).length} of them today`],
-        [stat({ glyph: "bot", hue: 262, label: "Agents writing" }), writers.length, writers.length ? `mostly ${writers[0].label}` : "none yet"],
-        [stat({ glyph: "sync", hue: 32, label: "Waiting to be saved" }), unsaved, unsaved ? `${tree.new_files} new · ${tree.changed_files} changed · ${tree.deleted_files} removed` : "everything is in its history"],
-      ];
-      requestAnimationFrame(() => tiles.forEach(([tile, value, note]) => tile.set(value, note)));
       return h(
         "div",
         { class: "stack" },
-        rise(h("div", { class: "stats" }, tiles.map(([tile]) => tile.element))),
+        statRow([
+          { glyph: "book", hue: 330, label: "Notes kept", value: notes.length, note: `across ${plural(files.length, "notebook")}` },
+          { glyph: "clock", hue: 200, label: "Added this week", value: notes.filter((note) => note.day >= monday).length, note: `${notes.filter((note) => note.day >= today).length} of them today` },
+          { glyph: "bot", hue: 262, label: "Agents writing", value: writers.length, note: writers.length ? `mostly ${writers[0].label}` : "none yet" },
+          { glyph: "sync", hue: 32, label: "Waiting to be saved", value: unsaved, note: unsaved ? `${tree.new_files} new · ${tree.changed_files} changed · ${tree.deleted_files} removed` : "everything is in its history" },
+        ]),
         (unreadable > 0 || broken > 0) &&
           stateCard({
             tone: "warn", glyph: "alert", title: broken ? `${plural(broken, "notebook")} can't be read at all` : `${unreadable} ${unreadable === 1 ? "entry is" : "entries are"} unreadable`,
@@ -130,7 +130,7 @@ export function createBrainArea({ tools }, { setStatus }) {
   const element = h(
     "div",
     { class: "wb-area" },
-    areaHead({ title: "Second Brain", lede: "A shared notebook your agents keep: what they worked on and what they learned, ready for the next one — or for you to ask." }),
+    areaHead({ title: "Second Brain", lede: "A shared notebook your agents keep: what they worked on and what they learned, ready for the next one — or for you to ask.", actions: [resume] }),
     h("div", { class: "wb-ask" }, icon("chat", 20), question, toggle, button({ label: "Ask", glyph: "sparkle", tone: "primary", onclick: ask })),
     panel.element,
     actionBlock(tools, "Look after it", ACTIONS),

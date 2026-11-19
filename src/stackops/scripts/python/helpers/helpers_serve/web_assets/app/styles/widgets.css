@@ -23,7 +23,7 @@
 .icon-btn { display: inline-grid; flex: none; place-items: center; width: 32px; height: 32px; color: var(--ink-faint); border-radius: 10px; transition: background 0.2s, color 0.2s, transform 0.25s var(--spring); }
 .icon-btn:hover { color: var(--ink); background: var(--well); transform: scale(1.08); }
 .icon-btn.danger:hover { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
-.loading .icon-btn svg, .icon-btn.spinning svg { animation: spin 0.9s linear infinite; }
+.loading .icon-btn svg { animation: spin 0.9s linear infinite; }
 
 .pill { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; font-size: 11.5px; font-weight: 600; white-space: nowrap; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
 .pill.good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
@@ -154,6 +154,13 @@
 .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
 .data-table { width: 100%; font-size: 13px; border-collapse: collapse; }
 .data-table th { padding: 10px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-align: left; text-transform: uppercase; white-space: nowrap; color: var(--ink-faint); background: var(--well); }
+.data-table th button { display: inline-flex; align-items: center; gap: 5px; letter-spacing: inherit; text-transform: inherit; transition: color 0.2s; }
+.data-table th button:hover { color: var(--ink); }
+.data-table th button svg { opacity: 0; transition: opacity 0.2s, transform 0.35s var(--spring); }
+.data-table th button:hover svg { opacity: 0.6; }
+.data-table th[aria-sort="ascending"] button, .data-table th[aria-sort="descending"] button { color: var(--violet); }
+.data-table th[aria-sort="ascending"] button svg, .data-table th[aria-sort="descending"] button svg { opacity: 1; }
+.data-table th[aria-sort="ascending"] button svg { transform: rotate(180deg); }
 .data-table td { max-width: 340px; padding: 10px 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: 1px solid var(--line); }
 .data-row { cursor: pointer; transition: background 0.2s; }
 .data-row:hover, .data-row.open { background: var(--brand-wash); }

@@ -58,17 +58,18 @@ export function createCombo({ value = "", placeholder = "", glyph, label, sugges
   function pick(option) {
     if (option.fill !== false) input.value = option.value;
     onPick?.(option);
-    if (option.keepOpen) refresh();
+    if (option.keepOpen) refresh(false);
     else hide();
   }
 
-  async function refresh() {
+  // Only typing pre-selects the first suggestion. On focus, or after a folder was just picked, Enter and Tab belong to the form, not to the list.
+  async function refresh(preselect) {
     const mine = (ticket += 1);
     const term = readOnly ? "" : input.value;
     const found = await suggest(term);
     if (mine !== ticket || document.activeElement !== input) return;
     options = found;
-    active = options.length && term ? 0 : -1;
+    active = preselect && options.length && term ? 0 : -1;
     list.replaceChildren(
       ...(options.length
         ? options.map((option, index) =>
@@ -98,17 +99,17 @@ export function createCombo({ value = "", placeholder = "", glyph, label, sugges
     mark();
   }
 
-  input.addEventListener("focus", refresh);
-  input.addEventListener("click", () => !shown && refresh());
+  input.addEventListener("focus", () => refresh(false));
+  input.addEventListener("click", () => !shown && refresh(false));
   input.addEventListener("blur", hide);
   input.addEventListener("input", () => {
     onInput?.(input.value);
-    refresh();
+    refresh(true);
   });
   input.addEventListener("keydown", (event) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
-      if (!shown) return void refresh();
+      if (!shown) return void refresh(false);
       active = (active + (event.key === "ArrowDown" ? 1 : options.length - 1) + (active < 0 && event.key === "ArrowUp" ? 1 : 0)) % Math.max(options.length, 1);
       mark();
     } else if ((event.key === "Enter" || event.key === "Tab") && shown && options[active]) {
