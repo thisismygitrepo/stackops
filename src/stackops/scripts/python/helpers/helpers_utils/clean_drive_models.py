@@ -11,6 +11,7 @@ type Anchor = Literal[
     "home",
     "xdg_cache",
     "xdg_data",
+    "xdg_config",
     "mac_caches",
     "local_app_data",
     "temp",

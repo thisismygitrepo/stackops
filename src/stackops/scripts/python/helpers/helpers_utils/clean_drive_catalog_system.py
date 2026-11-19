@@ -1,9 +1,11 @@
 from functools import partial
+from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import (
     ALL_PLATFORMS,
     BLEACHBIT_INSTALL_HINT,
     BLEACHBIT_PLATFORMS,
+    STACKOPS_TEMP_PATTERNS,
     STALE_TEMP_DAYS,
 )
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import CleanCategory, CleanTarget, CommandCleanup, PathCleanup, PathGlob, ToolWithPathFallback
@@ -78,7 +80,10 @@ SYSTEM_TARGETS: tuple[CleanTarget, ...] = (
                 tool=executable, install_hint=BLEACHBIT_INSTALL_HINT, requires_root=False,
                 plan=partial(plan_bleachbit, executable=executable, options=("system.tmp",)),
             ) for platform, executable in BLEACHBIT_PLATFORMS.items()},
-            "darwin": PathCleanup(globs=(PathGlob("temp", "*"),), excluded_globs=(), min_age_days=STALE_TEMP_DAYS, requires_root=False),
+            "darwin": PathCleanup(
+                globs=(PathGlob("temp", "*"),), excluded_globs=tuple(PathGlob("temp", Path(pattern).parts[0]) for pattern in STACKOPS_TEMP_PATTERNS),
+                min_age_days=STALE_TEMP_DAYS, requires_root=False,
+            ),
         },
     ),
     CleanTarget(

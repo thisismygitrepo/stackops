@@ -7,7 +7,6 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.context_estimate import context_estimate_table
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hook_tools import render_hook_tools
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import (
     DoctorContext,
     DoctorReport,
@@ -200,8 +199,6 @@ def render_doctor_reports(
     *, console: Console, reports: Sequence[DoctorReport], resource_focuses: tuple[DoctorResourceFocus, ...]
 ) -> None:
     console.print(_summary_table(reports=reports, resource_focuses=resource_focuses))
-    if "all" in resource_focuses or "hook" in resource_focuses:
-        render_hook_tools(console=console)
     for report in reports:
         if report.inspection_errors:
             console.print(Panel(Text("\n".join(report.inspection_errors)), title=f"{report.definition.display_name}: incomplete inspection", border_style="red"))

@@ -1,6 +1,6 @@
 from functools import partial
 
-from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import ALL_PLATFORMS
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import ALL_PLATFORMS, SEMTOOLS_HUB_MODEL
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import CleanCategory, CleanTarget, CommandCleanup, PathCleanup, PathGlob
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_plans import plan_tool_directory
 
@@ -21,6 +21,15 @@ DEV_TARGETS: tuple[CleanTarget, ...] = (
             tool="bun", install_hint=None, requires_root=False,
             plan=partial(plan_tool_directory, query=("bun", "pm", "cache"), clean=("bun", "pm", "cache", "rm"), estimate_kind="exact"),
         ) for platform in ALL_PLATFORMS},
+    ),
+    CleanTarget(
+        key="bun-transpiler-cache", title="Bun runtime transpiler cache", category=CleanCategory.DEV, risk="safe",
+        note="Transpiled sources that Bun-run tools (qmd among them) cache for faster startup; rebuilt on demand. Outside macOS it sits inside the install cache (bun-cache) unless XDG_CACHE_HOME is set.",
+        actions={
+            "linux": PathCleanup(globs=(PathGlob("xdg_cache", "bun/@t@"),), excluded_globs=(), min_age_days=None, requires_root=False),
+            "darwin": PathCleanup(globs=(PathGlob("xdg_cache", "bun/@t@"), PathGlob("mac_caches", "bun/@t@")), excluded_globs=(), min_age_days=None, requires_root=False),
+            "windows": PathCleanup(globs=(PathGlob("xdg_cache", "bun/@t@"),), excluded_globs=(), min_age_days=None, requires_root=False),
+        },
     ),
     CleanTarget(
         key="pnpm-store", title="pnpm store (unreferenced packages)", category=CleanCategory.DEV, risk="safe",
@@ -95,8 +104,11 @@ DEV_TARGETS: tuple[CleanTarget, ...] = (
     ),
     CleanTarget(
         key="huggingface-cache", title="Hugging Face hub cache", category=CleanCategory.DEV, risk="caution",
-        note="Downloaded models and datasets; they download again on next use, which can be large.",
-        actions={platform: PathCleanup(globs=(PathGlob("hf_home", "hub"), PathGlob("hf_home", "xet")), excluded_globs=(), min_age_days=None, requires_root=False) for platform in ALL_PLATFORMS},
+        note="Downloaded models and datasets; they download again on next use, which can be large. The semtools model belongs to seek-models.",
+        actions={platform: PathCleanup(
+            globs=(PathGlob("hf_home", "hub/*"), PathGlob("hf_home", "xet")), excluded_globs=(PathGlob("hf_home", SEMTOOLS_HUB_MODEL),),
+            min_age_days=None, requires_root=False,
+        ) for platform in ALL_PLATFORMS},
     ),
     CleanTarget(
         key="playwright-browsers", title="Playwright browsers", category=CleanCategory.DEV, risk="caution",

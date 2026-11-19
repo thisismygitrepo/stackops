@@ -16,6 +16,13 @@ STACKOPS_SCRATCH_ENTRIES: dict[str, str] = {
     "tmp_scripts": "*/*", "sessions": "*/*", "tmp_files": "*", "tmp_dirs": "*", "tmp_installers": "*",
     "installer_logs": "*", "tmp_unzips": "*", "textual_options_form": "*", "cache": "*",
 }
-CK_INDEX_MARKER = "manifest.json"
+STACKOPS_TEMP_PATTERNS: tuple[str, ...] = (
+    "stackops-browser-profiles/*/*", "stackops-python-api-graph-*", "stackops-serve-directory-*", "stackops-yazi-preview-*",
+    "stackops-dmg-*", "stackops-openshell-*", "stackops-sshd-*", "stackops-zellij-*", "stackops_bulk_install_*",
+    "stackops_agent_impl_interactive", "run_shell_script_*", "seek_stdin_*", "inspect_repos_*", "agents_ask_*", "generic_instructions.md",
+)
+CK_INDEX_MARKER = ".lock"
+GREPAI_OLLAMA_MODEL = "nomic-embed-text"
+SEMTOOLS_HUB_MODEL = "hub/models--minishlab--potion-multilingual-128M"
 PROJECT_SCAN_PRUNED_DIRECTORIES = frozenset({"node_modules"})
 PROJECT_SCAN_PRUNED_HOME_DIRECTORIES = frozenset({"AppData", "Library", "snap", "go"})
