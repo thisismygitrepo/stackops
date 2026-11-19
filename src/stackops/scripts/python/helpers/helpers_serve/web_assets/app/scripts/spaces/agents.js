@@ -20,7 +20,11 @@ export function createAgentsSpace(context) {
   const element = createView(
     {
       title: "Agents", lede: "See what your coding agents are doing, and give them more to work with.",
-      actions: [toolButton(context.tools, "agents run-prompt", { label: "Run a prompt", glyph: "sparkle" }), toolButton(context.tools, "agents run-interactive", { label: "Start a chat", glyph: "play", tone: "primary" })],
+      actions: [
+        toolButton(context.tools, "agents ask", { label: "Ask a question", glyph: "chat" }),
+        toolButton(context.tools, "agents run-prompt", { label: "Run a prompt", glyph: "sparkle" }),
+        toolButton(context.tools, "agents run-interactive", { label: "Start a chat", glyph: "play", tone: "primary" }),
+      ],
     },
     h("div", { class: "section-bar" }, picker.element),
     Object.values(sections).map((section) => section.element),

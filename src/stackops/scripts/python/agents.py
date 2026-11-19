@@ -661,7 +661,8 @@ def run_prompt(
             with _agent_working_directory(second_brain=second_brain):
                 catalog = collect_prompt_catalog(prompts_yaml_path=custom_path, source=source, group=group)
         except ValueError as error:
-            raise typer.BadParameter(str(error)) from error
+            typer.echo(f"""Error: {error}""", err=True)
+            raise typer.Exit(code=1) from error
         if json_output:
             emit_agent_json(catalog)
         else:

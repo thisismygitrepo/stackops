@@ -53,7 +53,8 @@ export function createReportsSpace({ activity }) {
       board.runId = run.id;
       const outcome = await run.done;
       const file = outcome.reports.includes(board.file) ? board.file : outcome.reports[0];
-      if (outcome.exit_code === 0 && file) {
+      // A check that found something to report exits non-zero and still writes its report, so the report itself is what counts.
+      if (file) {
         board.frame.src = `/reports/${encodeURIComponent(file)}?generated=${Date.now()}`;
         board.status = "ready";
         board.stamp = Date.now() / 1000;

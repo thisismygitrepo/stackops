@@ -106,7 +106,7 @@ SYSTEM_TARGETS: tuple[CleanTarget, ...] = (
     ),
     CleanTarget(
         key="systemd-journal", title="systemd journal", category=CleanCategory.SYSTEM, risk="caution",
-        note="Old system logs. Runs `journalctl --vacuum-size`, keeping the most recent ones.",
+        note="Old system logs; the most recent ones are kept. Runs `journalctl --vacuum-size`.",
         actions={"linux": CommandCleanup(tool="journalctl", install_hint=None, requires_root=True, plan=plan_journal)},
     ),
     CleanTarget(

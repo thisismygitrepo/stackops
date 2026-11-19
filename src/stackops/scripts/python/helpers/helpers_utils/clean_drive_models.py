@@ -22,6 +22,7 @@ type Anchor = Literal[
     "filesystem_root",
 ]
 type EstimateKind = Literal["exact", "at_least", "at_most", "approximate"]
+type ActionKind = Literal["paths", "command", "projects"]
 type TargetStatus = Literal["ready", "empty", "missing_tool", "failed"]
 type OutcomeStatus = Literal["cleaned", "partial", "failed", "skipped"]
 

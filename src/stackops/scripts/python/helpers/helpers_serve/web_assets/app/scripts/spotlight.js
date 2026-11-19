@@ -8,6 +8,8 @@ import { friendlyText, plainText, titleOf, trailOf } from "./words.js";
 
 const GROUP_LIMIT = 7;
 const GROUP_ORDER = ["Suggested", "Pages", "Apps", "Tools", "Collections", "Reports"];
+// Tools that have a guided page of their own: search lands there instead of on the bare tool.
+const GUIDED_TOOLS = { "utils machine clean-drive": "#/machine/cleanup" };
 
 export function createSpotlight({ tools }) {
   const fixed = [
@@ -21,7 +23,7 @@ export function createSpotlight({ tools }) {
         hint: [trailOf(node), friendlyText(node.summary)].filter(Boolean).join(" — "),
         words: node.path,
         lead: () => emojiTile(node.icon || (node.kind === "command" ? "✨" : "🗂️"), node.path, 34),
-        go: () => (node.kind === "command" ? tools.open(node.path) : (location.hash = `#/tools/${node.path.split(" ").map(encodeURIComponent).join("/")}`)),
+        go: () => (GUIDED_TOOLS[node.path] ? (location.hash = GUIDED_TOOLS[node.path]) : node.kind === "command" ? tools.open(node.path) : (location.hash = `#/tools/${node.path.split(" ").map(encodeURIComponent).join("/")}`)),
       })),
   ];
   const suggested = QUICK_TASKS.map((task) => ({

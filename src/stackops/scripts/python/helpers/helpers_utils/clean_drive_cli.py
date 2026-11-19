@@ -11,9 +11,10 @@ def clean_drive(
     dry_run: Annotated[bool, typer.Option("--dry-run", "-d", help="Scan and report estimated savings only; never deletes.")] = False,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Pick targets of any risk in a fuzzy multi-select, then confirm.")] = False,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Clean the selected (●) targets without asking.")] = False,
+    list_targets: Annotated[bool, typer.Option("--list", "-l", help="List the targets and the free space without measuring anything; never deletes.")] = False,
     target: Annotated[
         list[str] | None,
-        typer.Option("--target", "-t", help="Only this target key (see --dry-run); repeatable. Explicit targets ignore --max-risk and --sudo."),
+        typer.Option("--target", "-t", help="Only this target key (see --list); repeatable. Explicit targets ignore --max-risk and --sudo."),
     ] = None,
     category: Annotated[
         list[CleanCategory] | None,
@@ -26,15 +27,17 @@ def clean_drive(
         list[Path] | None,
         typer.Option("--root", "-R", exists=True, file_okay=False, help="Where to look for project folders (.ai, node_modules, .venv, ...); repeatable. Default: home."),
     ] = None,
-    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print JSON records; requires --dry-run or --yes.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="Print JSON records; requires --dry-run, --list or --yes.")] = False,
 ) -> None:
     if dry_run and (interactive or yes):
         raise typer.BadParameter("--dry-run cannot be combined with --interactive or --yes.", param_hint="--dry-run")
+    if list_targets and (dry_run or interactive or yes):
+        raise typer.BadParameter("--list cannot be combined with --dry-run, --interactive or --yes.", param_hint="--list")
     if interactive and yes:
         raise typer.BadParameter("--interactive already asks for confirmation; drop --yes.", param_hint="--interactive")
-    if output_json and not (dry_run or yes):
-        raise typer.BadParameter("--json requires --dry-run or --yes.", param_hint="--json")
-    if not (dry_run or yes):
+    if output_json and not (dry_run or list_targets or yes):
+        raise typer.BadParameter("--json requires --dry-run, --list or --yes.", param_hint="--json")
+    if not (dry_run or list_targets or yes):
         require_interactive("Choosing and confirming a drive cleanup; pass --yes to clean the selection or --dry-run to only report")
     import json
     import shutil
@@ -44,9 +47,11 @@ def clean_drive(
 
     from stackops.scripts.python.helpers.helpers_utils.clean_drive_execute import clean_target, is_elevated
     from stackops.scripts.python.helpers.helpers_utils.clean_drive_render import (
+        catalog_record,
         describe_action,
         format_estimate,
         outcome_records,
+        render_catalog,
         render_outcomes,
         render_report,
         scan_records,
@@ -61,6 +66,14 @@ def clean_drive(
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     console = Console(stderr=output_json)
+    if list_targets:
+        disk = shutil.disk_usage(Path.home())
+        catalog = catalog_record(scope=scope, auto_keys=auto_keys, free_bytes=disk.free, total_bytes=disk.total)
+        if output_json:
+            typer.echo(json.dumps(catalog, indent=2))
+        else:
+            render_catalog(console=console, record=catalog)
+        return
     elevated = is_elevated()
     roots = tuple(path.expanduser().resolve() for path in search_root) if search_root is not None else (Path.home(),)
     with console.status(f"""Measuring {len(scope)} cleanup target(s)…"""):

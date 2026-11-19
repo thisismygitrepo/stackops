@@ -17,7 +17,7 @@ export const SPACES = [
 export const WORDS = {
   devops: "DevOps", ssh: "SSH", onedrive: "OneDrive", mcp: "MCP", pdf: "PDF", ocr: "OCR", db: "database", wsl: "WSL", vscode: "VS Code", cli: "CLI",
   api: "API", ip: "IP", wifi: "Wi-Fi", tui: "TUI", pwsh: "PowerShell", warp: "WARP", url: "URL", json: "JSON", os: "OS", id: "ID", html: "HTML",
-  gpg: "GPG", pyproject: "Python project", utils: "utilities", attrs: "details", deps: "dependencies", repos: "repositories", config: "settings",
+  gpg: "GPG", pyproject: "Python project", directory: "folder", utils: "utilities", attrs: "details", deps: "dependencies", repos: "repositories", config: "settings",
   env: "environment", cpu: "CPU", pid: "process ID", nw: "network", t3: "T3", uv: "uv", wezterm: "WezTerm", ghostty: "Ghostty", tmux: "tmux",
 };
 
@@ -29,7 +29,7 @@ export const TOOL_TITLES = {
   "devops network show-address": "Network addresses", "devops network share-server": "Share a folder", "devops network share-terminal": "Share this terminal",
   "utils machine clean-drive": "Free up disk space", "utils machine kill-process": "Stop a process", "utils machine autostart": "Startup programs",
   "utils machine specs": "Machine specs", "agents run-prompt": "Run a prompt", "agents run-interactive": "Start a chat", "agents add-skill": "Add a skill",
-  "agents add-mcp": "Add an MCP server", "terminal run": "Launch a layout", "terminal summary": "Running sessions", "terminal list": "Saved layouts",
+  "agents add-mcp": "Add an MCP server", "agents doctor": "Agent health check", "terminal run": "Launch a layout", "terminal summary": "Running sessions", "terminal list": "Saved layouts",
   "devops network send": "Send files", "devops network receive": "Receive files", "devops network share-temp-file": "Share a temporary link",
   "devops network vscode-share": "Share this workspace", "devops network ssh": "SSH", "devops network ssh install-server": "Set up SSH access",
   "devops network ssh add-key": "Add an SSH key", "devops network ssh debug": "Diagnose SSH", "devops network ssh map-port": "Forward a port",
@@ -44,6 +44,18 @@ export const TOOL_TITLES = {
   "devops data validate": "Check the backup list", cloud: "Cloud storage", "cloud sync": "Keep a folder in sync", "cloud copy": "Upload or download",
   "cloud mount": "Mount cloud storage", "cloud transfer": "Move files between machines",
   "devops config terminal": "Terminal look", "devops config setup": "Guided setup", "terminal kill": "End a session", "terminal attach": "Open a session",
+  "agents browser": "Browser automation", "agents browser launch": "Open a browser", "agents browser batch-launch": "Open saved profiles",
+  "agents browser close": "Close a browser", "agents browser batch-close": "Close saved profiles", "agents browser status": "Open browsers",
+  "agents browser declutter": "Slim down a profile", "agents browser replicate": "Copy a profile", "agents browser install": "Set up browser tools",
+  "agents computer": "Desktop control", "agents computer control": "Turn on desktop control", "agents computer status": "Desktop control status",
+  "agents local": "Local models", "agents local doctor": "Model server check", "agents local discover": "Find a model", "agents local install": "Install vLLM",
+  "agents local serve": "Start a model server", "agents second-brain": "Second Brain", "agents second-brain init": "Set up Second Brain",
+  "agents second-brain status": "Second Brain activity", "agents second-brain prune": "Clean up Second Brain", "agents parallel": "Parallel runs",
+  "agents parallel create": "Split a job", "agents parallel create-context": "Gather a to-do list", "agents parallel run": "Run a saved workflow",
+  "agents parallel collect": "Collect the results", "agents parallel create-template": "Starter files", "agents iter": "Loops",
+  "agents iter status": "Loops in progress", "agents iter close": "Close finished tabs", "agents iter clean": "Clear old loop records",
+  "agents config": "Agent lists", "agents config path": "Where a list lives", "agents config init": "Create a list", "agents config validate": "Check a list",
+  "agents init": "Set up a project", "agents reset": "Reset agents", "agents ask": "Ask a question",
 };
 
 // Options that only make sense on a command line: output formats, alternate renderers, and file overrides the app already picks for you.
@@ -52,7 +64,7 @@ export const HIDDEN_FLAGS = new Set(["--json", "--as-html", "--tui", "--plain", 
 // Read-only tools: safe to run on arrival so the page shows something before anyone presses a button.
 export const LIVE_NAMES = new Set([
   "list", "status", "path", "summary", "specs", "stats", "history", "show-address", "list-devices", "autostart", "accounts", "tunnel-status", "validate",
-  "doctor", "report",
+  "doctor", "report", "discover",
 ]);
 
 export const ESSENTIAL_FLAGS = {
@@ -67,6 +79,32 @@ export const ESSENTIAL_FLAGS = {
   "devops self update": ["--sync-configs"],
   "devops data sync": ["--which", "--cloud", "--source"],
   "devops data register": ["--group", "--name", "--encryption", "--note"],
+  "agents browser launch": ["--browser", "--profile", "--new-window"],
+  "agents browser batch-launch": ["--browser", "--max-profiles"],
+  "agents browser close": ["--browser", "--port", "--profile"],
+  "agents browser batch-close": ["--browser"],
+  "agents browser status": ["--all", "--browser"],
+  "agents browser declutter": ["--browser", "--profile", "--all"],
+  "agents browser replicate": ["--browser", "--profile", "--target", "--native"],
+  "agents browser install": ["--tool", "--agent"],
+  "agents computer control": ["--headless"],
+  "agents local doctor": ["--backend", "--host"],
+  "agents local discover": ["--backend", "--capability", "--sort"],
+  "agents local serve": ["--port"],
+  "agents second-brain init": ["--overwrite"],
+  "agents second-brain prune": ["--apply"],
+  "agents parallel create": ["--agent", "--prompt", "--context-path", "--job-name", "--run"],
+  "agents parallel run": ["--agent", "--source"],
+  "agents parallel create-context": ["--agent"],
+  "agents iter status": ["--all"],
+  "agents iter close": ["--all", "--dry-run", "--retain-previous"],
+  "agents iter clean": ["--all", "--dry-run"],
+  "agents config path": ["--source"],
+  "agents config init": ["--source"],
+  "agents config validate": ["--source"],
+  "agents init": ["--root", "--include-scripts", "--add-gitignore"],
+  "agents reset": ["--scope", "--resource", "--apply"],
+  "agents ask": ["--agent", "--second-brain", "--reasoning"],
 };
 
 export const REPORTS = [
@@ -84,6 +122,6 @@ export const QUICK_TASKS = [
   { title: "Launch a layout", blurb: "Start a saved terminal workspace.", glyph: "layers", tint: 290, hash: "#/sessions" },
   { title: "Share a folder", blurb: "Serve files to another device.", glyph: "share", tint: 30, tool: "devops network share-server" },
   { title: "Run a prompt", blurb: "Hand a task to a coding agent.", glyph: "sparkle", tint: 330, tool: "agents run-prompt" },
-  { title: "Free up disk space", blurb: "Preview what can be cleaned safely.", glyph: "trash", tint: 10, tool: "utils machine clean-drive", preset: { dry_run: "on" } },
+  { title: "Free up disk space", blurb: "See what takes up room and choose what to remove.", glyph: "trash", tint: 10, hash: "#/machine/cleanup" },
   { title: "Sync repositories", blurb: "Clone and update every project.", glyph: "branch", tint: 140, tool: "devops repos sync" },
 ];

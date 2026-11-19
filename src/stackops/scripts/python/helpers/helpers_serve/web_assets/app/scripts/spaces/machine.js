@@ -1,14 +1,19 @@
-import { h } from "/assets/scripts/dom.js";
+import { h, icon } from "/assets/scripts/dom.js";
+import { state } from "/assets/scripts/state.js";
+import { createDiskCleanup } from "../disk_cleanup.js";
+import { CLEANUP_HASH } from "../disk_cleanup_words.js";
 import { createLivePanel } from "../live_panel.js";
-import { rise } from "../motion.js";
+import { replay, rise } from "../motion.js";
 import { dataTable } from "../result_view.js";
-import { createView, toolButton, toolGrid } from "../space_kit.js";
-import { glyphTile, notice, sectionHead } from "../widgets.js";
+import { toolButton, toolCard } from "../space_kit.js";
+import { button, emojiTile, glyphTile, notice, sectionHead } from "../widgets.js";
 import { plural } from "../words.js";
 
-const CARE_TOOLS = ["utils machine clean-drive", "utils machine kill-process", "utils machine list-devices", "utils machine mount", "utils machine window", "devops self update"];
+const CARE_TOOLS = ["utils machine kill-process", "utils machine list-devices", "utils machine mount", "utils machine window", "devops self update"];
 
-export function createMachineSpace({ tools }) {
+// Two views that swap in place: the overview at #/machine and the disk cleanup at #/machine/cleanup.
+export function createMachineSpace(context) {
+  const { tools } = context;
   const fact = (label, value, glyph, hue) => h("article", { class: "spec-card lit" }, glyphTile(glyph, hue, 38), h("span", { class: "stat-label", text: label }), h("strong", { text: value || "—" }));
 
   const specs = createLivePanel({
@@ -41,23 +46,46 @@ export function createMachineSpace({ tools }) {
     },
   });
 
-  const element = createView(
-    {
-      title: "Machine", lede: "What this computer is, what runs on it, and how to keep it tidy.",
-      actions: [
-        toolButton(tools, "utils machine kill-process", { label: "Stop a process", glyph: "stop" }),
-        toolButton(tools, "utils machine clean-drive", { label: "Free up disk space", glyph: "trash", tone: "primary", preset: { dry_run: "on" } }),
-      ],
-    },
+  const cleanupCard = h(
+    "a",
+    { class: "tool-card lit", href: CLEANUP_HASH },
+    emojiTile("🧹", "utils machine clean-drive", 40),
+    h("span", { class: "tool-card-text" }, h("strong", { text: "Free up disk space" }), h("span", { text: "See what is taking up room, choose what goes, and clean it." })),
+    icon("arrow", 14),
+  );
+  const overview = h(
+    "div",
+    { class: "machine-part" },
+    h(
+      "header",
+      { class: "view-head" },
+      h("div", { class: "view-title" }, h("h1", { text: "Machine" }), h("p", { text: "What this computer is, what runs on it, and how to keep it tidy." })),
+      h("div", { class: "view-actions" }, toolButton(tools, "utils machine kill-process", { label: "Stop a process", glyph: "stop" }), button({ label: "Free up disk space", glyph: "trash", tone: "primary", onclick: () => (location.hash = CLEANUP_HASH) })),
+    ),
     specs.element,
-    h("section", { class: "block" }, sectionHead("Look after it"), toolGrid(tools, CARE_TOOLS)),
+    h("section", { class: "block" }, sectionHead("Look after it"), h("div", { class: "tool-grid" }, cleanupCard, CARE_TOOLS.filter((path) => state.nodes.has(path)).map((path) => toolCard(tools, state.nodes.get(path))))),
     startup.element,
   );
+  const cleanup = createDiskCleanup(context);
+  cleanup.element.classList.add("machine-part");
+  const element = h("section", { class: "view", hidden: true }, overview, cleanup.element);
+  let shown = null;
+
   return {
     element,
-    show() {
-      specs.ensure();
-      startup.ensure();
+    show(route) {
+      const part = route[0] === "cleanup" ? cleanup.element : overview;
+      overview.hidden = part !== overview;
+      cleanup.element.hidden = part !== cleanup.element;
+      if (shown && shown !== part) {
+        replay(part, "swap");
+        element.closest(".stage")?.scrollTo(0, 0);
+      }
+      shown = part;
+      if (part === overview) {
+        specs.ensure();
+        startup.ensure();
+      } else cleanup.show();
     },
   };
 }

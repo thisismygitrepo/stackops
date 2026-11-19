@@ -66,7 +66,8 @@ export function createToolSheet({ activity, openReport }) {
 
     const reloadSoon = debounce(() => load(false), RELOAD_DELAY_MILLISECONDS);
     const form = createFriendlyForm({
-      parameters: specs, values, essentials: ESSENTIAL_FLAGS[path] ?? [],
+      // Whatever the caller filled in stays in view, so a pre-filled sheet never looks empty.
+      parameters: specs, values, essentials: [...(ESSENTIAL_FLAGS[path] ?? []), ...specs.filter((spec) => Object.hasOwn(preset, spec.name)).flatMap((spec) => spec.flags)],
       onChange: () => {
         const { problems } = form.collect();
         problem.textContent = problems[0] ?? "";

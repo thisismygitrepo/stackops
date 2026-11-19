@@ -155,7 +155,9 @@ def scan_plugin_roots(
                 if resolved_path in seen_paths or "node_modules" in resolved_path.parts:
                     continue
                 seen_paths.add(resolved_path)
-                name = resolved_path.parent.name if resolved_path.name.startswith("index.") else resolved_path.stem
+                owner_directory = resolved_path.parent.parent if resolved_path.parent.name.startswith(".") else resolved_path.parent
+                is_named_by_directory = resolved_path.suffix == ".json" or resolved_path.name.startswith("index.")
+                name = owner_directory.name if is_named_by_directory else resolved_path.stem
                 resources.append(
                     DoctorResource(kind="plugin", is_mcp=False, name=name, origin=origin, state=state, path=resolved_path, detail=detail)
                 )
