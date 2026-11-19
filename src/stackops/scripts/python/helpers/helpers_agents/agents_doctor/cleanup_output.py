@@ -44,6 +44,21 @@ def _render_resources(*, console: Console, entries: list[HookEntry], context: Do
     console.print(table)
 
 
+def cleanup_inspection_notes(
+    *, plan: CleanupPlan, inventory: HookInventory, context: DoctorContext, selection: CleanupSelection
+) -> tuple[str, ...]:
+    notes: dict[str, None] = {}
+    for diagnostic in inventory.diagnostics:
+        if selection.scope not in ("all", CLEANUP_ORIGIN_LABELS[diagnostic.origin]):
+            continue
+        if diagnostic.severity == "error" and f"""{diagnostic.path}: {diagnostic.message}""" in plan.blockers:
+            continue
+        label = "Notice" if diagnostic.severity == "notice" else "Inspection error covered by whole-source reset"
+        path = _display_path(path=diagnostic.path, context=context)
+        notes[f"""{label}: {path}: {diagnostic.message}"""] = None
+    return tuple(notes)
+
+
 def render_cleanup_plan(
     *, console: Console, error_console: Console, plan: CleanupPlan, inventory: HookInventory,
     context: DoctorContext, selection: CleanupSelection, applying: bool, verbose: bool,
@@ -92,15 +107,7 @@ def render_cleanup_plan(
     elif plan.entries:
         console.print("[dim]Use --verbose to show path sizes, resource names, states, commands, and sources.[/dim]")
 
-    notes: dict[str, None] = {}
-    for diagnostic in inventory.diagnostics:
-        if selection.scope not in ("all", CLEANUP_ORIGIN_LABELS[diagnostic.origin]):
-            continue
-        if diagnostic.severity == "error" and f"""{diagnostic.path}: {diagnostic.message}""" in plan.blockers:
-            continue
-        label = "Notice" if diagnostic.severity == "notice" else "Inspection error covered by whole-source reset"
-        path = _display_path(path=diagnostic.path, context=context)
-        notes[f"""{label}: {path}: {diagnostic.message}"""] = None
+    notes = cleanup_inspection_notes(plan=plan, inventory=inventory, context=context, selection=selection)
     if notes:
         console.print(Panel(Text("\n".join(notes)), title="Inspection notes", border_style="yellow"))
     if plan.blockers:

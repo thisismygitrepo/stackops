@@ -84,20 +84,35 @@ function dataTable({ columns, rows, sort, onSortChange, emptyText, onRowClick })
   return wrap;
 }
 
-function chipGroup({ label, counts, selected, labelFor, onChange }) {
+function chipGroup({ label, counts, modes, labelFor, onChange }) {
   const group = el("div", "chips");
   group.append(el("span", "chips-label", label));
   for (const [value, count] of counts) {
-    const chip = el("button", "chip");
-    chip.type = "button";
-    chip.setAttribute("aria-pressed", String(selected.has(value)));
-    chip.append(el("span", "", labelFor(value)), el("span", "chip-count", String(count)));
-    chip.addEventListener("click", () => {
-      if (selected.has(value)) selected.delete(value);
-      else selected.add(value);
-      chip.setAttribute("aria-pressed", String(selected.has(value)));
-      onChange();
-    });
+    const chip = el("span", "chip");
+    const only = el("button", "chip-only");
+    only.type = "button";
+    only.title = `Show only ${labelFor(value)}`;
+    only.append(el("span", "chip-name", labelFor(value)), el("span", "chip-count", String(count)));
+    const hide = el("button", "chip-hide");
+    hide.type = "button";
+    const sync = () => {
+      const mode = modes.get(value) ?? "";
+      chip.dataset.mode = mode;
+      only.setAttribute("aria-pressed", String(mode === "only"));
+      hide.textContent = mode === "hidden" ? "show" : "hide";
+      hide.title = `${mode === "hidden" ? "Show" : "Hide"} ${labelFor(value)}`;
+      hide.setAttribute("aria-label", hide.title);
+    };
+    for (const [button, mode] of [[only, "only"], [hide, "hidden"]]) {
+      button.addEventListener("click", () => {
+        if (modes.get(value) === mode) modes.delete(value);
+        else modes.set(value, mode);
+        sync();
+        onChange();
+      });
+    }
+    sync();
+    chip.append(only, hide);
     group.append(chip);
   }
   return group;

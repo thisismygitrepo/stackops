@@ -12,9 +12,9 @@ const agentStates = new Map();
 const overviewSort = { column: -1, direction: 1 };
 const searchSort = { column: -1, direction: 1 };
 
-function orderedCounts(rows, keyOf, order, selected) {
+function orderedCounts(rows, keyOf, order, modes) {
   const counts = countBy(rows, keyOf);
-  for (const value of selected) if (!counts.has(value)) counts.set(value, 0);
+  for (const value of modes.keys()) if (!counts.has(value)) counts.set(value, 0);
   return [...counts].sort((left, right) => order.indexOf(left[0]) - order.indexOf(right[0]));
 }
 
@@ -77,7 +77,7 @@ function contextBlock(agent) {
 }
 
 function renderAgent(agent, focus) {
-  if (!agentStates.has(agent.agent)) agentStates.set(agent.agent, { filter: "", origins: new Set(), states: new Set(), sort: { column: -1, direction: 1 } });
+  if (!agentStates.has(agent.agent)) agentStates.set(agent.agent, { filter: "", origins: new Map(), states: new Map(), sort: { column: -1, direction: 1 } });
   const state = agentStates.get(agent.agent);
   const health = agentHealth(agent);
   const view = el("article");
@@ -113,11 +113,9 @@ function renderAgent(agent, focus) {
   const tableHost = el("div");
   const refresh = () => {
     const terms = searchTerms(state.filter);
+    const shows = (modes, value) => modes.get(value) !== "hidden" && (modes.get(value) === "only" || ![...modes.values()].includes("only"));
     const rows = inFocus.filter(
-      ({ resource }) =>
-        (state.origins.size === 0 || state.origins.has(resource.origin)) &&
-        (state.states.size === 0 || state.states.has(resource.state)) &&
-        resourceMatches(agent, resource, terms),
+      ({ resource }) => shows(state.origins, resource.origin) && shows(state.states, resource.state) && resourceMatches(agent, resource, terms),
     );
     count.textContent = `${rows.length} of ${inFocus.length}`;
     const emptyText = inFocus.length === 0 ? "None discovered" : "No resources match these filters";
@@ -132,11 +130,11 @@ function renderAgent(agent, focus) {
     filter,
     chipGroup({
       label: "Source", counts: orderedCounts(inFocus, (row) => row.resource.origin, ORIGIN_ORDER, state.origins),
-      selected: state.origins, labelFor: (origin) => ORIGIN_LABELS[origin], onChange: refresh,
+      modes: state.origins, labelFor: (origin) => ORIGIN_LABELS[origin], onChange: refresh,
     }),
     chipGroup({
       label: "State", counts: orderedCounts(inFocus, (row) => row.resource.state, STATE_ORDER, state.states),
-      selected: state.states, labelFor: (resourceState) => resourceState, onChange: refresh,
+      modes: state.states, labelFor: (resourceState) => resourceState, onChange: refresh,
     }),
     count,
   );
