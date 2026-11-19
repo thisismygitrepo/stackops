@@ -7,6 +7,7 @@ APP_STYLESHEETS: Final[tuple[str, ...]] = (
     "/assets/app/styles/widgets.css",
     "/assets/app/styles/overlays.css",
     "/assets/app/styles/spaces.css",
+    "/assets/app/styles/app_updates.css",
     "/assets/app/styles/agents_prompts.css",
     "/assets/app/styles/agents_health.css",
     "/assets/app/styles/agents_workbench.css",

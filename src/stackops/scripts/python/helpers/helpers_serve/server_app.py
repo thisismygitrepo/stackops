@@ -4,6 +4,7 @@ import re
 import socket
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from pathlib import Path
 
 from starlette.applications import Starlette
@@ -29,6 +30,7 @@ from stackops.scripts.python.helpers.helpers_serve.run_requests import (
 from stackops.scripts.python.helpers.helpers_serve.run_socket import relay_run
 from stackops.scripts.python.helpers.helpers_serve.runs import RunRegistry, describe_run, shutdown_runs, start_run, stop_run
 from stackops.scripts.python.helpers.helpers_serve.software_catalog import load_software_catalog
+from stackops.scripts.python.helpers.helpers_serve.software_versions import LatestRelease, SoftwareVersion, VersionProblem, check_software_version
 from stackops.scripts.python.helpers.helpers_serve.text_files import FileProblem, TextFile, read_text_file, write_text_file
 from stackops.scripts.python.helpers.helpers_serve.vendor_assets import VENDOR_ASSETS, resolve_vendor_asset
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
@@ -42,6 +44,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
     registry = RunRegistry(stackops_executable=stackops_executable, runs={}, pump_threads={})
     tree, sources = load_command_tree()
     parameter_cache: dict[str, list[ParameterSpec] | None] = {}
+    release_cache: dict[str, LatestRelease] = {}
     system_name = platform.system()
     bootstrap_payload = {
         "version": get_stackops_version(),
@@ -120,6 +123,14 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         catalog = load_software_catalog()
         return JSONResponse(catalog, status_code=422 if "error" in catalog else 200)
 
+    def software_version(request: Request) -> JSONResponse:
+        result = check_software_version(name=request.query_params.get("name", ""), fresh=request.query_params.get("fresh") == "1", release_cache=release_cache)
+        match result:
+            case VersionProblem():
+                return JSONResponse({"error": result.message}, status_code=result.status)
+            case SoftwareVersion():
+                return JSONResponse(asdict(result))
+
     def file_response(result: TextFile | FileProblem) -> JSONResponse:
         match result:
             case FileProblem():
@@ -188,6 +199,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             Route("/api/paths", list_paths),
             Route("/api/capture", capture, methods=["POST"]),
             Route("/api/software", software),
+            Route("/api/software/version", software_version),
             Route("/api/file", read_file, methods=["GET"]),
             Route("/api/file", save_file, methods=["PUT"]),
             Route("/api/runs", list_runs, methods=["GET"]),

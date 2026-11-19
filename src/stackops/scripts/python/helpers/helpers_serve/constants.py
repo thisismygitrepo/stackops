@@ -33,6 +33,12 @@ CAPTURE_OUTPUT_COLUMNS: Final[int] = 118
 # The largest file the app view opens to read or edit in the browser.
 MAX_EDITABLE_FILE_BYTES: Final[int] = 1024 * 1024
 
+# An app that does not answer `--version` this fast is treated as having no readable version.
+VERSION_PROBE_TIMEOUT_SECONDS: Final[float] = 5.0
+GITHUB_RELEASE_TIMEOUT_SECONDS: Final[float] = 30.0
+# How long a repository's latest release is remembered, so checking again after an update only reads the installed versions.
+GITHUB_RELEASE_CACHE_SECONDS: Final[float] = 600.0
+
 VENDOR_DOWNLOAD_TIMEOUT_SECONDS: Final[float] = 120.0
 VENDOR_CACHE_FOLDER: Final[str] = "serve-vendor"
 

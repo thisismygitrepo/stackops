@@ -5,15 +5,20 @@ import { software } from "../data.js";
 import { replay, rise } from "../motion.js";
 import { confirmAction } from "../overlays.js";
 import { editButton } from "../space_kit.js";
-import { avatar, button, glyphTile, notice, pill, skeleton } from "../widgets.js";
+import { avatar, button, glyphTile, notice, pill, segmented, skeleton } from "../widgets.js";
 import { plainText, plural } from "../words.js";
 import { openAppDetail } from "./app_detail.js";
 import { createAppFilters } from "./app_filters.js";
+import { createAppUpdates } from "./app_updates.js";
 
 const SUGGESTION_LIMIT = 8;
 // Not strictly complete: the installer splits its argument on commas, so a link containing one is not offered.
 const LINK_PATTERN = /^https?:\/\/[^\s,]+$/;
 const MY_CATALOG = { title: "my app catalog", kind: "software" };
+const LEDES = {
+  browse: "Find something, select it, install it. Pick as many as you like.",
+  updates: "The apps on this machine that come from a GitHub repository: the version you have, and the latest one released.",
+};
 
 export function createAppsSpace({ activity }) {
   const picked = new Set();
@@ -77,6 +82,10 @@ export function createAppsSpace({ activity }) {
   }
 
   const start = (title, installArguments) => activity.start({ title, emoji: "📦", arguments: ["devops", "software", "install", ...installArguments], interactive: true, reveal: true });
+
+  const updates = createAppUpdates({
+    onUpdate: (names) => start(names.length === 1 ? `Update ${names[0]}` : `Update ${names.length} apps`, [names.join(","), "--update"]).catch((error) => toast(error.message)),
+  });
 
   async function install(names, withUpdate) {
     if (names.length === 0) return;
@@ -180,24 +189,33 @@ export function createAppsSpace({ activity }) {
     openDetail(app);
   }
 
+  // The address is #/apps for browsing and #/apps/updates for versions; #/apps/<name> opens that app over the browsing section.
+  const picker = segmented([["browse", "Browse"], ["updates", "Updates"]], (id) => (location.hash = id === "browse" ? "#/apps" : "#/apps/updates"));
+  const lede = h("p");
+  const searchRow = h("div", { class: "store-search" }, combo.element, filters.search);
+  const browse = h("div", {}, filters.element, h("div", { class: "result-row" }, summary, selectAll, bundleButton), grid, tray);
   const element = h(
     "section",
     { class: "view apps", hidden: true },
-    h(
-      "header",
-      { class: "store-hero" },
-      h("div", { class: "store-top" }, h("h1", { text: "Apps" }), editButton(activity, MY_CATALOG, { label: "Edit my catalog" })),
-      h("p", { text: "Find something, select it, install it. Pick as many as you like." }),
-      h("div", { class: "store-search" }, combo.element, filters.search),
-    ),
-    filters.element,
-    h("div", { class: "result-row" }, summary, selectAll, bundleButton),
-    grid,
-    tray,
+    h("header", { class: "store-hero" }, h("div", { class: "store-top" }, h("h1", { text: "Apps" }), editButton(activity, MY_CATALOG, { label: "Edit my catalog" })), lede, h("div", { class: "section-bar" }, picker.element), searchRow),
+    browse,
+    updates.element,
   );
   on("data-stale", () => {
     stale = true;
-    if (!element.hidden) load([]);
+    if (!element.hidden && !browse.hidden) load([]);
   });
-  return { element, show: (route) => (stale ? load(route) : openRoute(route)) };
+  return {
+    element,
+    show(route) {
+      const section = route[0] === "updates" ? "updates" : "browse";
+      picker.set(section);
+      lede.textContent = LEDES[section];
+      searchRow.hidden = browse.hidden = section !== "browse";
+      updates.element.hidden = section !== "updates";
+      if (section === "updates") updates.show();
+      else if (stale) load(route);
+      else openRoute(route);
+    },
+  };
 }

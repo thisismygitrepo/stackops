@@ -74,6 +74,7 @@ export const api = {
   paths: (prefix, base) => request("GET", `/api/paths?prefix=${encodeURIComponent(prefix)}&base=${encodeURIComponent(base)}`),
   capture: (body) => request("POST", "/api/capture", body),
   software: () => request("GET", "/api/software"),
+  softwareVersion: (name, fresh) => request("GET", `/api/software/version?name=${encodeURIComponent(name)}${fresh ? "&fresh=1" : ""}`),
   file: (path) => request("GET", `/api/file?path=${encodeURIComponent(path)}`),
   saveFile: (body) => request("PUT", "/api/file", body),
   runs: () => request("GET", "/api/runs"),

@@ -10,6 +10,7 @@ class SoftwareApp(TypedDict):
     installed: bool
     updated_at: str
     mine: bool
+    repository: str
 
 
 class SoftwareCategory(TypedDict):
@@ -34,6 +35,7 @@ class CatalogProblem(TypedDict):
 
 
 def load_software_catalog() -> SoftwareCatalog | CatalogProblem:
+    from stackops.scripts.python.helpers.helpers_serve.software_versions import github_release_repository
     from stackops.utils.cli_utils.command_lookup import check_tool_exists
     from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH, InstallerDataFileError, read_installer_data
     from stackops.utils.installer_utils.installer_class import Installer
@@ -59,6 +61,7 @@ def load_software_catalog() -> SoftwareCatalog | CatalogProblem:
             "installed": check_tool_exists(tool_name=Installer(installer).get_exe_name()),
             "updated_at": installer.get("lastCommitDate") or "",
             "mine": installer["appName"].casefold() in user_names,
+            "repository": github_release_repository(installer=installer) or "",
         }
         for installer in sorted(installers, key=lambda item: item["appName"].casefold())
     ]
