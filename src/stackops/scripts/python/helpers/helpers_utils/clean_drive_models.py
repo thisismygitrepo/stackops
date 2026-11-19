@@ -31,6 +31,7 @@ class CleanCategory(StrEnum):
     SYSTEM = "system"
     TRASH = "trash"
     PROJECTS = "projects"
+    STACKOPS = "stackops"
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +43,7 @@ class PathGlob:
 @dataclass(frozen=True, slots=True)
 class PathCleanup:
     globs: tuple[PathGlob, ...]
+    excluded_globs: tuple[PathGlob, ...]
     min_age_days: int | None
     requires_root: bool
 

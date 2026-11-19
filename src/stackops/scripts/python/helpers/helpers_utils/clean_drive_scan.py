@@ -103,7 +103,9 @@ def _scan_paths(*, target: CleanTarget, action: PathCleanup | ProjectCleanup, pa
 def scan_target(*, target: CleanTarget, action: CleanupAction, project_entries: dict[str, list[Path]]) -> TargetScan:
     match action:
         case PathCleanup():
-            return _scan_paths(target=target, action=action, paths=expand_globs(action.globs), min_age_days=action.min_age_days)
+            excluded = set(expand_globs(action.excluded_globs))
+            paths = [path for path in expand_globs(action.globs) if path not in excluded]
+            return _scan_paths(target=target, action=action, paths=paths, min_age_days=action.min_age_days)
         case ProjectCleanup():
             return _scan_paths(target=target, action=action, paths=project_entries[target.key], min_age_days=None)
         case CommandCleanup():

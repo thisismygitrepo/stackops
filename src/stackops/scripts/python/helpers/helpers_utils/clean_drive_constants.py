@@ -12,5 +12,10 @@ STALE_TEMP_DAYS = 3
 MIN_REMOVABLE_PATH_PARTS = 3
 PREVIEW_PATH_LIMIT = 40
 PICKER_PREVIEW_PERCENT = 55
+STACKOPS_SCRATCH_ENTRIES: dict[str, str] = {
+    "tmp_scripts": "*/*", "sessions": "*/*", "tmp_files": "*", "tmp_dirs": "*", "tmp_installers": "*",
+    "installer_logs": "*", "tmp_unzips": "*", "textual_options_form": "*", "cache": "*",
+}
+CK_INDEX_MARKER = "manifest.json"
 PROJECT_SCAN_PRUNED_DIRECTORIES = frozenset({"node_modules"})
 PROJECT_SCAN_PRUNED_HOME_DIRECTORIES = frozenset({"AppData", "Library", "snap", "go"})

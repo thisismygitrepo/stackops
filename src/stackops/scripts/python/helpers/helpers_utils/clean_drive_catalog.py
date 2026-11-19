@@ -1,4 +1,5 @@
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_catalog_dev import DEV_TARGETS
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_catalog_stackops import STACKOPS_TARGETS
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_catalog_system import CONTAINER_TARGETS, SYSTEM_TARGETS, TRASH_TARGETS
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import ALL_PLATFORMS
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import CleanCategory, CleanTarget, ProjectCleanup, ProjectMarker
@@ -32,6 +33,6 @@ PROJECT_TARGETS: tuple[CleanTarget, ...] = (
     ),
 )
 
-CATALOG: tuple[CleanTarget, ...] = (*CONTAINER_TARGETS, *DEV_TARGETS, *SYSTEM_TARGETS, *TRASH_TARGETS, *PROJECT_TARGETS)
+CATALOG: tuple[CleanTarget, ...] = (*CONTAINER_TARGETS, *DEV_TARGETS, *SYSTEM_TARGETS, *TRASH_TARGETS, *PROJECT_TARGETS, *STACKOPS_TARGETS)
 CATALOG_BY_KEY: dict[str, CleanTarget] = {target.key: target for target in CATALOG}
 assert len(CATALOG_BY_KEY) == len(CATALOG), "clean-drive target keys must be unique"

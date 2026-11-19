@@ -57,14 +57,14 @@ TRASH_TARGETS: tuple[CleanTarget, ...] = (
                 ),
                 fallback=PathCleanup(
                     globs=(PathGlob("xdg_data", "Trash/files/*"), PathGlob("xdg_data", "Trash/info/*"), PathGlob("xdg_data", "Trash/expunged/*")),
-                    min_age_days=None, requires_root=False,
+                    excluded_globs=(), min_age_days=None, requires_root=False,
                 ),
             ),
             "windows": CommandCleanup(
                 tool="bleachbit_console", install_hint=BLEACHBIT_INSTALL_HINT, requires_root=False,
                 plan=partial(plan_bleachbit, executable="bleachbit_console", options=("system.recycle_bin",)),
             ),
-            "darwin": PathCleanup(globs=(PathGlob("home", ".Trash/*"),), min_age_days=None, requires_root=False),
+            "darwin": PathCleanup(globs=(PathGlob("home", ".Trash/*"),), excluded_globs=(), min_age_days=None, requires_root=False),
         },
     ),
 )
@@ -78,7 +78,7 @@ SYSTEM_TARGETS: tuple[CleanTarget, ...] = (
                 tool=executable, install_hint=BLEACHBIT_INSTALL_HINT, requires_root=False,
                 plan=partial(plan_bleachbit, executable=executable, options=("system.tmp",)),
             ) for platform, executable in BLEACHBIT_PLATFORMS.items()},
-            "darwin": PathCleanup(globs=(PathGlob("temp", "*"),), min_age_days=STALE_TEMP_DAYS, requires_root=False),
+            "darwin": PathCleanup(globs=(PathGlob("temp", "*"),), excluded_globs=(), min_age_days=STALE_TEMP_DAYS, requires_root=False),
         },
     ),
     CleanTarget(
@@ -128,19 +128,19 @@ SYSTEM_TARGETS: tuple[CleanTarget, ...] = (
     CleanTarget(
         key="xcode-derived-data", title="Xcode DerivedData", category=CleanCategory.SYSTEM, risk="safe",
         note="Build products and indexes Xcode regenerates.",
-        actions={"darwin": PathCleanup(globs=(PathGlob("home", "Library/Developer/Xcode/DerivedData/*"),), min_age_days=None, requires_root=False)},
+        actions={"darwin": PathCleanup(globs=(PathGlob("home", "Library/Developer/Xcode/DerivedData/*"),), excluded_globs=(), min_age_days=None, requires_root=False)},
     ),
     CleanTarget(
         key="xcode-device-support", title="Xcode device support files", category=CleanCategory.SYSTEM, risk="caution",
         note="Debug symbols copied from devices; Xcode copies them again when that device reconnects.",
         actions={"darwin": PathCleanup(
             globs=(PathGlob("home", "Library/Developer/Xcode/iOS DeviceSupport/*"), PathGlob("home", "Library/Developer/Xcode/watchOS DeviceSupport/*")),
-            min_age_days=None, requires_root=False,
+            excluded_globs=(), min_age_days=None, requires_root=False,
         )},
     ),
     CleanTarget(
         key="windows-update-cache", title="Windows Update download cache", category=CleanCategory.SYSTEM, risk="safe",
         note="Already-installed update payloads in SoftwareDistribution\\Download. Needs an elevated terminal.",
-        actions={"windows": PathCleanup(globs=(PathGlob("system_root", "SoftwareDistribution/Download/*"),), min_age_days=None, requires_root=True)},
+        actions={"windows": PathCleanup(globs=(PathGlob("system_root", "SoftwareDistribution/Download/*"),), excluded_globs=(), min_age_days=None, requires_root=True)},
     ),
 )
