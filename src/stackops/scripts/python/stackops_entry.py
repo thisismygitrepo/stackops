@@ -8,6 +8,7 @@ from typing import Annotated
 
 import typer
 from stackops.scripts.python.enums import BACKENDS_LOOSE
+from stackops.scripts.python.helpers.helpers_serve.constants import DEFAULT_HOST, DEFAULT_PORT
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
 
@@ -94,6 +95,18 @@ def seek(ctx: typer.Context) -> None:
     _run_nested_app(ctx, get_app_seek)
 
 
+def serve(
+    host: Annotated[str, typer.Option("--host", "-H", help="Interface to listen on. Keep the loopback default unless you trust the network.")] = DEFAULT_HOST,
+    port: Annotated[int, typer.Option("--port", "-p", min=0, max=65535, help="Port to listen on; 0 picks a free port.")] = DEFAULT_PORT,
+    no_browser: Annotated[bool, typer.Option("--no-browser", "-n", help="Print the access link without opening it in the browser.")] = False,
+) -> None:
+    """🌐 <w> Web UI for commands, dashboards, and terminals."""
+    from stackops.scripts.python.helpers.helpers_serve.cli_serve import serve as serve_impl
+    from stackops.utils.cli_utils.interaction import is_interactive
+
+    serve_impl(host=host, port=port, open_browser=not no_browser and is_interactive())
+
+
 def cli(
     ctx: typer.Context,
     version: Annotated[bool, typer.Option("--version", "-V", is_eager=True, help="Show the StackOps version and exit.")] = False,
@@ -150,6 +163,8 @@ def get_app() -> typer.Typer:
     app.command(name="f", hidden=True, context_settings=fire_context)(fire)
     app.command("preview", no_args_is_help=False, help="👀 <p> Preview files and launch reader backends")(preview)
     app.command("p", no_args_is_help=False, hidden=True)(preview)
+    app.command("serve", no_args_is_help=False, help="🌐 <w> Web UI for commands, dashboards, and terminals")(serve)
+    app.command("w", no_args_is_help=False, hidden=True)(serve)
 
     return apply_alias_markers(app)
 

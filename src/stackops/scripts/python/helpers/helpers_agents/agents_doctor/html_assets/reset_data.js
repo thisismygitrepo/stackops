@@ -52,6 +52,21 @@ function pathCell(path) {
   return line;
 }
 
+function formatSize(change) {
+  let size = `${change.bytes} bytes`;
+  if (change.bytes >= 1000) {
+    const units = ["kB", "MB", "GB", "TB"];
+    let value = change.bytes / 1000;
+    let unit = 0;
+    while (value >= 1000 && unit < units.length - 1) {
+      value /= 1000;
+      unit += 1;
+    }
+    size = `${value.toFixed(1)} ${units[unit]}`;
+  }
+  return change.files === null ? size : `${size} · ${change.files.toLocaleString()} ${change.files === 1 ? "file" : "files"}`;
+}
+
 function stack(...children) {
   const node = el("span", "stack");
   node.append(...children);
@@ -100,10 +115,11 @@ function dataTable({ columns, rows, sort, onSortChange, emptyText }) {
   const tbody = el("tbody");
   const ordered = sort.column < 0
     ? rows
-    : [...rows].sort(
-        (left, right) =>
-          columns[sort.column].value(left).localeCompare(columns[sort.column].value(right), undefined, { numeric: true, sensitivity: "base" }) * sort.direction,
-      );
+    : [...rows].sort((left, right) => {
+        const [first, second] = [columns[sort.column].value(left), columns[sort.column].value(right)];
+        const order = typeof first === "number" ? first - second : first.localeCompare(second, undefined, { numeric: true, sensitivity: "base" });
+        return order * sort.direction;
+      });
   for (const row of ordered) {
     const tr = el("tr");
     for (const column of columns) {

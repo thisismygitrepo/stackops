@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Literal, TypedDict
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import CleanupSelection
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupPlan, CleanupRemoval
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupEdit, CleanupPlan, CleanupRemoval
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_output import cleanup_inspection_notes
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_scope import CleanupScope
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_sizes import describe_change_size
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_sizes import measure_tree
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext, DoctorResourceState
@@ -27,7 +27,8 @@ class CleanupHtmlEntry(TypedDict):
 
 class CleanupHtmlChange(TypedDict):
     action: Literal["delete", "edit"]
-    size: str
+    bytes: int
+    files: int | None
     path: str
 
 
@@ -54,6 +55,14 @@ class CleanupHtmlPayload(TypedDict):
 def show_cleanup_html_report(
     *, plan: CleanupPlan, inventory: HookInventory, context: DoctorContext, selection: CleanupSelection
 ) -> Path:
+    changes: list[CleanupHtmlChange] = []
+    for change in sorted(plan.changes, key=lambda item: str(item.path)):
+        match change:
+            case CleanupRemoval():
+                files, total_bytes = measure_tree(path=change.path)
+                changes.append({"action": "delete", "bytes": total_bytes, "files": files, "path": str(change.path)})
+            case CleanupEdit():
+                changes.append({"action": "edit", "bytes": len(change.original), "files": None, "path": str(change.path)})
     payload: CleanupHtmlPayload = {
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "project_root": str(context.project_root),
@@ -79,14 +88,7 @@ def show_cleanup_html_report(
             }
             for entry in plan.entries
         ],
-        "changes": [
-            {
-                "action": "delete" if isinstance(change, CleanupRemoval) else "edit",
-                "size": describe_change_size(change=change),
-                "path": str(change.path),
-            }
-            for change in sorted(plan.changes, key=lambda item: str(item.path))
-        ],
+        "changes": changes,
         "blockers": list(plan.blockers),
         "notes": list(cleanup_inspection_notes(plan=plan, inventory=inventory, context=context, selection=selection)),
     }

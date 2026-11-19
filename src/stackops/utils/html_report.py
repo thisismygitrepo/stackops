@@ -31,6 +31,8 @@ def show_html_report(*, title: str, payload_json: str, style_path: Path, script_
 """
     report_path = HTML_REPORTS_ROOT / f"{file_stem}.html"
     report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.touch(mode=0o600)
+    report_path.chmod(0o600)
     report_path.write_text(page, encoding="utf-8")
     if is_interactive():
         webbrowser.open(report_path.as_uri())
