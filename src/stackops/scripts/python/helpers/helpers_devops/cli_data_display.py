@@ -72,7 +72,7 @@ def display_data(
     if config is None:
         config = {}
     if json_output:
-        typer.echo(json.dumps({"source": source, "entries": [{"selector": f"{group_name}.{entry_name}", "group": group_name, "name": entry_name, "entry": entry} for group_name, entries in config.items() for entry_name, entry in entries.items()]}, indent=2))
+        typer.echo(json.dumps({"source": source, "entries": [{"selector": f"{group_name}.{entry_name}", "group": group_name, "name": entry_name, "entry": {**entry, "os": [value for value in ALL_OS_VALUES if value in entry["os"]]}} for group_name, entries in config.items() for entry_name, entry in entries.items()]}, indent=2))
         return
 
     console = Console()

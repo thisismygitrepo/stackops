@@ -6,6 +6,7 @@ import { installPointerEffects, replay } from "./motion.js";
 import { createShell } from "./shell.js";
 import { createAgentsSpace } from "./spaces/agents.js";
 import { createAppsSpace } from "./spaces/apps.js";
+import { createDataSpace } from "./spaces/data.js";
 import { createDotfilesSpace } from "./spaces/dotfiles.js";
 import { createHomeSpace } from "./spaces/home.js";
 import { createMachineSpace } from "./spaces/machine.js";
@@ -39,6 +40,7 @@ async function start() {
     sessions: createSessionsSpace(context),
     agents: createAgentsSpace(context),
     dotfiles: createDotfilesSpace(context),
+    data: createDataSpace(context),
     network: createNetworkSpace(context),
     machine: createMachineSpace(context),
     reports: createReportsSpace(context),

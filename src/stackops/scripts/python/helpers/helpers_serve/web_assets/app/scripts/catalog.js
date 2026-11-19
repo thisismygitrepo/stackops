@@ -7,6 +7,7 @@ export const SPACES = [
   { id: "sessions", hash: "#/sessions", label: "Sessions", glyph: "layers", title: "Sessions" },
   { id: "agents", hash: "#/agents", label: "Agents", glyph: "bot", title: "Agents" },
   { id: "dotfiles", hash: "#/dotfiles", label: "Dotfiles", glyph: "sync", title: "Dotfiles" },
+  { id: "data", hash: "#/data", label: "Data", glyph: "database", title: "Data" },
   { id: "network", hash: "#/network", label: "Network", glyph: "globe", title: "Network" },
   { id: "machine", hash: "#/machine", label: "Machine", glyph: "cpu", title: "Machine" },
   { id: "reports", hash: "#/reports", label: "Reports", glyph: "chart", title: "Reports" },
@@ -38,6 +39,10 @@ export const TOOL_TITLES = {
   "devops repos sync": "Sync projects", "devops repos register": "Register projects", "devops repos action": "Act on every project",
   "devops config dotfiles": "Dotfiles", "devops config dotfiles sync": "Sync dotfiles", "devops config dotfiles collect": "Collect my settings",
   "devops config dotfiles export": "Export dotfiles", "devops config dotfiles import": "Import dotfiles", "devops config dotfiles register": "Add a dotfile",
+  "devops data sync": "Back up or retrieve", "devops data register": "Add a backup", "devops data list": "What is backed up",
+  "devops data encrypt": "Encrypt a file or folder", "devops data decrypt": "Decrypt a file", "devops data subset": "Split off part of the list",
+  "devops data validate": "Check the backup list", cloud: "Cloud storage", "cloud sync": "Keep a folder in sync", "cloud copy": "Upload or download",
+  "cloud mount": "Mount cloud storage", "cloud transfer": "Move files between machines",
   "devops config terminal": "Terminal look", "devops config setup": "Guided setup", "terminal kill": "End a session", "terminal attach": "Open a session",
 };
 
@@ -60,6 +65,8 @@ export const ESSENTIAL_FLAGS = {
   "utils machine clean-drive": ["--dry-run", "--max-risk", "--category"],
   "devops network share-server": ["--port", "--over-internet"],
   "devops self update": ["--sync-configs"],
+  "devops data sync": ["--which", "--cloud", "--source"],
+  "devops data register": ["--group", "--name", "--encryption", "--note"],
 };
 
 export const REPORTS = [

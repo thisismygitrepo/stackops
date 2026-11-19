@@ -8,7 +8,7 @@ import { button, iconButton, notice, skeleton } from "./widgets.js";
 const RELOAD_DELAY_MILLISECONDS = 350;
 
 // A panel bound to one read-only command: it runs on arrival with defaults, shows the result, and lets the user change that command's choices.
-export function createLivePanel({ title, path, extra = [], render, actions = [], skeletonShape = "row", tunable = true }) {
+export function createLivePanel({ title, path, extra = [], locked = [], render, actions = [], skeletonShape = "row", tunable = true }) {
   const body = h("div", { class: "panel-body" }, skeleton(3, skeletonShape));
   const count = h("span", { class: "count" });
   const badge = h("b", { hidden: true });
@@ -48,7 +48,7 @@ export function createLivePanel({ title, path, extra = [], render, actions = [],
     if (tuneButton.classList.contains("open")) return;
     const { parameters } = await commandDetail(path);
     form ??= createFriendlyForm({
-      parameters: parameters ?? [], values, essentials: null,
+      parameters: parameters ?? [], values, essentials: null, locked,
       onChange: () => {
         tokens = form.collect().tokens;
         const changed = form.changed();

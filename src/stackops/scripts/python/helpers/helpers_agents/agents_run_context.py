@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Literal, cast
 import json
@@ -68,34 +69,30 @@ def _resolve_named_yaml_entry(raw_data: object, entry_name: str, *, entry_label:
     return _format_prompt_entry(cursor)
 
 
-def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | None) -> dict[str, tuple[str | None, str]]:
-    candidates: dict[str, tuple[str | None, str]] = {}
+def iter_named_yaml_entries(raw_data: object, *, prefix: str) -> Iterator[tuple[str, object]]:
     if not isinstance(raw_data, dict):
         raise ValueError("Prompts YAML must be a mapping")
 
-    for key, value in raw_data.items():
+    for key, value in cast(dict[object, object], raw_data).items():
         part = str(key).strip()
         if part == "":
             continue
         dotted_key = f"{prefix}.{part}" if prefix else part
         if value is None:
             raise ValueError(f"""Prompt '{dotted_key}' points to null in prompts YAML""")
-
-        if isinstance(value, dict):
-            if any(not isinstance(child, dict) for child in value.values()):
-                # Entry object with metadata fields (prompt/description/...): its children are metadata, not entries.
-                if group is None or value.get("group") == group:
-                    candidates[dotted_key] = (value.get("group"), _format_prompt_entry(value))
-                continue
-            # Namespace containing only nested entries: recurse.
-            nested_candidates = collect_named_yaml_candidates(raw_data=value, prefix=dotted_key, group=group)
-            for nested_key, nested_value in nested_candidates.items():
-                candidates[nested_key] = nested_value
+        if isinstance(value, dict) and all(isinstance(child, dict) for child in cast(dict[object, object], value).values()):
+            # Namespace containing only nested entries: recurse. Any other object is an entry whose children are metadata.
+            yield from iter_named_yaml_entries(raw_data=value, prefix=dotted_key)
             continue
+        yield dotted_key, value
 
-        if group is None:
-            candidates[dotted_key] = (None, _format_prompt_entry(value))
 
+def collect_named_yaml_candidates(raw_data: Any, *, prefix: str, group: str | None) -> dict[str, tuple[str | None, str]]:
+    candidates: dict[str, tuple[str | None, str]] = {}
+    for dotted_key, value in iter_named_yaml_entries(raw_data=raw_data, prefix=prefix):
+        entry_group = cast(dict[str, Any], value).get("group") if isinstance(value, dict) else None
+        if group is None or entry_group == group:
+            candidates[dotted_key] = (entry_group, _format_prompt_entry(value))
     return candidates
 
 

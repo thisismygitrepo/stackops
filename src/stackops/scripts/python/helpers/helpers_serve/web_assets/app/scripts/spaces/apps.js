@@ -4,16 +4,19 @@ import { createCombo } from "../combo.js";
 import { software } from "../data.js";
 import { replay, rise } from "../motion.js";
 import { openSheet } from "../overlays.js";
-import { avatar, button, keyValue, notice, pill, skeleton } from "../widgets.js";
+import { avatar, button, keyValue, notice, pill, searchInput, skeleton } from "../widgets.js";
 import { plainText, plural, relativeTime } from "../words.js";
 
 const SUGGESTION_LIMIT = 8;
+const CHIP_EDGE = 26;
 
 export function createAppsSpace({ activity }) {
   const picked = new Set();
   let catalog = null;
   let term = "";
   let filter = "all";
+  let tagTerm = "";
+  let shownTags = [];
   let update = false;
   let stale = true;
 
@@ -55,6 +58,23 @@ export function createAppsSpace({ activity }) {
       term = "";
       paintGrid();
     },
+  });
+
+  const pickTag = (value) => {
+    filter = value === filter ? "all" : value;
+    paintChips();
+    paintGrid();
+  };
+  const tagSearch = searchInput({
+    placeholder: "Search categories",
+    oninput: (value) => {
+      tagTerm = value.trim().toLowerCase();
+      if (catalog) paintChips();
+    },
+  });
+  tagSearch.input.addEventListener("keydown", (event) => {
+    const first = shownTags.find(([value]) => value !== filter);
+    if (event.key === "Enter" && tagTerm && first) pickTag(first[0]);
   });
 
   async function install(names, withUpdate) {
@@ -153,11 +173,22 @@ export function createAppsSpace({ activity }) {
       ["all", "Everything", catalog.apps.length], ["installed", "Installed", installed], ["new", "Not installed", catalog.apps.length - installed],
       ...catalog.categories.map((category) => [category.label, category.title, counts.get(category.label) ?? 0]).sort((left, right) => right[2] - left[2]),
     ];
+    shownTags = options.filter(([value, label]) => value === filter || label.toLowerCase().includes(tagTerm));
+    const pressed = (value) => value === filter;
     chips.replaceChildren(
-      ...options.map(([value, label, count]) =>
-        h("button", { class: "chip-button", type: "button", "aria-pressed": String(value === filter), onclick: () => ((filter = value), paintChips(), paintGrid()) }, h("span", { text: label }), h("b", { text: String(count) })),
+      ...shownTags.map(([value, label, count]) =>
+        h(
+          "button",
+          { class: "chip-button", type: "button", "aria-pressed": String(pressed(value)), title: pressed(value) && value !== "all" && "Click again to show everything", onclick: () => pickTag(value) },
+          h("span", { text: label }),
+          h("b", { text: String(count) }),
+        ),
       ),
+      ...(shownTags.some(([, label]) => label.toLowerCase().includes(tagTerm)) ? [] : [h("span", { class: "filter-none", text: "No category matches that." })]),
     );
+    const row = chips.getBoundingClientRect();
+    const box = chips.querySelector(`[aria-pressed="true"]`).getBoundingClientRect();
+    if (box.left < row.left + CHIP_EDGE || box.right > row.right - CHIP_EDGE) chips.scrollLeft += box.left - row.left - CHIP_EDGE;
   }
 
   async function load(route) {
@@ -184,7 +215,7 @@ export function createAppsSpace({ activity }) {
   const element = h(
     "section",
     { class: "view apps", hidden: true },
-    h("header", { class: "store-hero" }, h("h1", { text: "Apps" }), h("p", { text: "Find something, select it, install it. Pick as many as you like." }), combo.element),
+    h("header", { class: "store-hero" }, h("h1", { text: "Apps" }), h("p", { text: "Find something, select it, install it. Pick as many as you like." }), h("div", { class: "store-search" }, combo.element, tagSearch.element)),
     chips,
     summary,
     grid,

@@ -1,4 +1,5 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
+import { openLayoutView, tabMap } from "../layout_view.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
 import { confirmAction } from "../overlays.js";
@@ -6,7 +7,7 @@ import { createView, toolButton } from "../space_kit.js";
 import { avatar, button, notice, pill } from "../widgets.js";
 import { plural, relativeTime } from "../words.js";
 
-const PREVIEW_CELLS = 12;
+const PREVIEW_TABS = 8;
 
 export function createSessionsSpace({ activity, tools }) {
   const launch = (layout) =>
@@ -17,28 +18,35 @@ export function createSessionsSpace({ activity, tools }) {
     if (sure) activity.start({ title: `End ${session.name}`, emoji: "💀", arguments: ["terminal", "kill", session.name], interactive: true, reveal: true }).catch((error) => toast(error.message));
   }
 
+  function layoutCard(layout) {
+    let cells = 0;
+    const maps = layout.tabs.slice(0, PREVIEW_TABS).map((tab) => {
+      const map = tabMap(tab, cells);
+      cells += tab.panes.length;
+      return map;
+    });
+    const launchButton = button({ label: "Launch", glyph: "play", small: true, tone: "primary", onclick: () => launch(layout) });
+    const view = () => openLayoutView({ layout, onLaunch: () => launch(layout), onTune: () => tools.open("terminal run", { preset: { choose_layouts: layout.name } }) });
+    const card = h(
+      "article",
+      { class: "layout-card lit", tabindex: "0", title: "See what this layout opens" },
+      h("div", { class: "layout-preview", "aria-hidden": "true" }, maps, layout.tabs.length > PREVIEW_TABS && h("b", { text: `+${layout.tabs.length - PREVIEW_TABS}` })),
+      h("h3", { text: layout.name }),
+      h("p", { class: "dim", text: `${plural(layout.tab_count, "tab")} · ${plural(layout.pane_count, "pane")}` }),
+      h("footer", {}, pill(layout.selector.split(":")[0], ""), launchButton),
+    );
+    card.addEventListener("click", (event) => !launchButton.contains(event.target) && view());
+    card.addEventListener("keydown", (event) => event.key === "Enter" && event.target === card && view());
+    return card;
+  }
+
   const layouts = createLivePanel({
-    title: "Saved layouts", path: "terminal list", extra: ["--json"], skeletonShape: "card",
+    title: "Saved layouts", path: "terminal list", extra: ["--json", "--tabs"], locked: ["show_tabs"], skeletonShape: "card",
     render: (data, { setCount }) => {
       const items = data?.layouts ?? [];
       setCount(items.length ? plural(items.length, "layout") : "");
       if (items.length === 0) return notice({ glyph: "layers", title: "No saved layouts", body: "A layout is a set of tabs and panes you can start in one click.", action: toolButton(tools, "terminal create-template", { label: "Create one", tone: "primary" }) });
-      return rise(
-        h(
-          "div",
-          { class: "card-grid" },
-          items.map((layout) =>
-            h(
-              "article",
-              { class: "layout-card lit" },
-              h("div", { class: "layout-preview", "aria-hidden": "true" }, Array.from({ length: Math.min(layout.pane_count, PREVIEW_CELLS) }, (_, index) => h("i", { style: `--i:${index}` }))),
-              h("h3", { text: layout.name }),
-              h("p", { class: "dim", text: `${plural(layout.tab_count, "tab")} · ${plural(layout.pane_count, "pane")}` }),
-              h("footer", {}, pill(layout.selector.split(":")[0], ""), button({ label: "Launch", glyph: "play", small: true, tone: "primary", onclick: () => launch(layout) })),
-            ),
-          ),
-        ),
-      );
+      return rise(h("div", { class: "card-grid" }, items.map(layoutCard)));
     },
   });
 

@@ -341,7 +341,7 @@ def read_backup_config(source: CONFIG_SOURCE_LOOSE) -> BackupConfig | None:
             path = USER_BACKUP_PATH
             bu_file = load_backup_config_file(path, empty_as_config=False)
         case "all" | "a":
-            console = Console()
+            console = Console(stderr=True)
             console.print(Panel(f"🧰 LOADING LIBRARY BACKUP CONFIGURATION\n📄 File: {LIBRARY_BACKUP_PATH}", title="[bold blue]Backup Configuration[/bold blue]", border_style="blue"))
             bu_library = load_backup_config_file(LIBRARY_BACKUP_PATH, empty_as_config=False)
             console.print(Panel(f"🧰 LOADING USER BACKUP CONFIGURATION\n📄 File: {USER_BACKUP_PATH}", title="[bold blue]Backup Configuration[/bold blue]", border_style="blue"))            
