@@ -7,14 +7,21 @@ def run_server(host: str, port: int, open_browser: bool, stackops_executable: st
     from rich.console import Console
     from rich.panel import Panel
 
-    from stackops.scripts.python.helpers.helpers_serve.constants import GRACEFUL_SHUTDOWN_SECONDS, TOKEN_COOKIE_PREFIX
+    from stackops.scripts.python.helpers.helpers_serve.constants import GRACEFUL_SHUTDOWN_SECONDS, PORT_PROBE_SECONDS, TOKEN_COOKIE_PREFIX
     from stackops.scripts.python.helpers.helpers_serve.server_app import create_app
     from stackops.utils.network.address import select_lan_ipv4
 
     console = Console()
     is_ipv6 = ":" in host
+    family = socket.AF_INET6 if is_ipv6 else socket.AF_INET
+    local_host = "127.0.0.1" if host == "0.0.0.0" else "::1" if host == "::" else host
     try:
-        listener = socket.create_server((host, port), family=socket.AF_INET6 if is_ipv6 else socket.AF_INET)
+        # macOS lets an all-interfaces listener and a loopback one share a port without an error, and the loopback one then takes every local connection.
+        with socket.socket(family) as probe:
+            probe.settimeout(PORT_PROBE_SECONDS)
+            if port != 0 and probe.connect_ex((local_host, port)) == 0:
+                raise OSError(f"""another server already answers on {local_host}:{port}""")
+        listener = socket.create_server((host, port), family=family)
     except OSError as error:
         console.print(f"""[red]Cannot listen on {host}:{port}[/red] ({error}). Choose another port with --port, or --port 0 for a free one.""")
         raise SystemExit(1) from error

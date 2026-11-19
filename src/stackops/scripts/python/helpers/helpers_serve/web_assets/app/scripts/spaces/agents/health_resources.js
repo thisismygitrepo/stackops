@@ -1,8 +1,10 @@
 import { h, icon } from "/assets/scripts/dom.js";
-import { button, highlight, notice, pill } from "../../widgets.js";
+import { button, highlight, iconButton, notice, pill } from "../../widgets.js";
 import { plural } from "../../words.js";
+import { openResourceFile } from "./health_file.js";
 import { KIND_BY_ID, ORIGINS, STATES, groupBySource } from "./health_model.js";
 import { pathChip } from "./health_overview.js";
+import { canRemove, removeResource } from "./health_remove.js";
 
 const ROW_STEP = 12;
 const MOMENT_LIMIT = 8;
@@ -35,15 +37,28 @@ function what(row, kind, term) {
   return h("div", { class: "what" }, h("strong", {}, highlight(row.name, term), row.holdsServers && h("span", { class: "health-tag", title: "Tool servers can be listed in this file.", text: "Tool servers go here" })), detail && h("p", {}, highlight(detail, term)));
 }
 
-function line(row, kind, term, grouped) {
+// A row opens the file behind it in a window, and can be taken away. Under a shared file the window is offered once, on the file's own line.
+function line(agent, row, kind, term, grouped) {
   const states = row.command ? [...row.states] : row.state ? [row.state] : [];
-  return h(
+  const remove = async () => {
+    const removed = await removeResource({ agent, row });
+    if (removed) item.classList.add("gone");
+    return removed;
+  };
+  const open = () => openResourceFile({ kind, origin: row.origin, path: row.path, status: row.state, remove: canRemove(row) && !grouped ? remove : null });
+  const trash = canRemove(row) && iconButton("trash", `Remove this ${KIND_BY_ID[kind].one}`, remove);
+  if (trash) trash.classList.add("danger");
+  const item = h(
     "li",
-    { class: `health-item${grouped ? " grouped" : ""}${row.present ? "" : " empty"}` },
+    { class: `health-item${grouped ? " grouped" : ""}${row.present ? "" : " empty"}${row.reachable ? " opens" : ""}` },
     what(row, kind, term),
     !grouped && h("div", { class: "where" }, originTag(row.origin), pathChip(row.path)),
     h("div", { class: "states" }, states.map(statePill)),
+    h("div", { class: "acts" }, row.reachable && !grouped && iconButton("eye", "Open this file", open), trash),
   );
+  // A click that ends a text selection, or lands on a button, is not a request to open the file.
+  if (row.reachable) item.addEventListener("click", (event) => !event.target.closest("button, a") && String(getSelection()) === "" && open());
+  return item;
 }
 
 // One kind of thing for one agent, laid out by where it comes from.
@@ -71,8 +86,11 @@ export function renderResources({ agent, kind, items, term, hiddenEmpty, onShowE
       const rows = group.rows.slice(0, room);
       room -= rows.length;
       const shared = group.rows.length > 1;
-      if (shared) nodes.push(h("li", { class: "health-source" }, icon("folder", 14), pathChip(group.path), originTag(group.origin), h("span", { class: "dim", text: `${plural(group.rows.length, kind === "hook" ? "command" : label.one)} from this file` })));
-      nodes.push(...rows.map((row) => line(row, kind, term, shared)));
+      if (shared) {
+        const open = group.rows[0].reachable && button({ label: "Open", glyph: "eye", small: true, tone: "ghost", title: "Open this file", onclick: () => openResourceFile({ kind, origin: group.origin, path: group.path, status: null, remove: null }) });
+        nodes.push(h("li", { class: "health-source" }, icon("folder", 14), pathChip(group.path), originTag(group.origin), h("span", { class: "dim", text: `${plural(group.rows.length, kind === "hook" ? "command" : label.one)} from this file` }), open));
+      }
+      nodes.push(...rows.map((row) => line(agent, row, kind, term, shared)));
     }
     list.replaceChildren(...nodes);
     more.hidden = total <= limit;

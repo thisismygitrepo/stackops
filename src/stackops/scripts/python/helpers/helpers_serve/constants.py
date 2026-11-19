@@ -6,6 +6,7 @@ WINDOWS_PTY_DEPENDENCY: Final[str] = "pywinpty"
 DEFAULT_HOST: Final[str] = "127.0.0.1"
 DEFAULT_PORT: Final[int] = 8420
 TOKEN_COOKIE_PREFIX: Final[str] = "stackops_serve_token"
+PORT_PROBE_SECONDS: Final[float] = 1.0
 LAUNCH_PATH_VARIABLE: Final[str] = "STACKOPS_SERVE_LAUNCH_PATH"
 LAUNCH_VIRTUAL_ENV_VARIABLE: Final[str] = "STACKOPS_SERVE_LAUNCH_VIRTUAL_ENV"
 
@@ -29,6 +30,8 @@ GRACEFUL_SHUTDOWN_SECONDS: Final[int] = 3
 
 CAPTURE_TIMEOUT_SECONDS: Final[float] = 90.0
 CAPTURE_OUTPUT_COLUMNS: Final[int] = 118
+# The largest file the app view opens to read or edit in the browser.
+MAX_EDITABLE_FILE_BYTES: Final[int] = 1024 * 1024
 
 VENDOR_DOWNLOAD_TIMEOUT_SECONDS: Final[float] = 120.0
 VENDOR_CACHE_FOLDER: Final[str] = "serve-vendor"

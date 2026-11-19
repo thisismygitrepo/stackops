@@ -7,20 +7,22 @@ const stack = [];
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape" || stack.length === 0) return;
   event.preventDefault();
-  stack.at(-1).close();
+  stack.at(-1).dismiss();
 });
 
 export function closeAll() {
   for (const layer of [...stack]) layer.close();
 }
 
-function mount(backdrop, panel, dismissOnBackdrop) {
+// `canDismiss` is asked when Escape or a click outside would close the layer, so one holding unsaved work can ask first. `close` never asks.
+function mount(backdrop, panel, dismissOnBackdrop, canDismiss = () => true) {
   let settle;
   const closed = new Promise((resolve) => (settle = resolve));
   // A popover would paint above the new backdrop, so it does not outlive the dialog or sheet that opens over it.
   for (const open of [...stack]) if (open.popover) open.close();
   const previousFocus = document.activeElement;
   const layer = {
+    dismiss: () => canDismiss() && layer.close(),
     close(result) {
       const index = stack.indexOf(layer);
       if (index < 0) return;
@@ -36,12 +38,12 @@ function mount(backdrop, panel, dismissOnBackdrop) {
       }, CLOSE_MILLISECONDS);
     },
   };
-  if (dismissOnBackdrop) backdrop.addEventListener("pointerdown", (event) => event.target === backdrop && layer.close());
+  if (dismissOnBackdrop) backdrop.addEventListener("pointerdown", (event) => event.target === backdrop && layer.dismiss());
   stack.push(layer);
   document.body.append(backdrop);
   panel.tabIndex = -1;
   panel.focus({ preventScroll: true });
-  return { close: layer.close, closed };
+  return { close: layer.close, dismiss: layer.dismiss, closed };
 }
 
 export function openSheet({ label, wide = false }) {
@@ -54,11 +56,11 @@ export function openSheet({ label, wide = false }) {
   return { body, foot, panel, ...layer };
 }
 
-export function openDialog({ label, size = "" }) {
+export function openDialog({ label, size = "", canDismiss }) {
   const body = h("div", { class: "dialog-body" });
   const panel = h("div", { class: `dialog ${size}`, role: "dialog", "aria-label": label, "aria-modal": "true" }, body);
   const backdrop = h("div", { class: "backdrop center" }, panel);
-  return { body, panel, ...mount(backdrop, panel, true) };
+  return { body, panel, ...mount(backdrop, panel, true, canDismiss) };
 }
 
 export function confirmAction({ title, body, confirm, tone = "primary" }) {
@@ -96,6 +98,7 @@ export function openPopover(anchor, content, { align = "end" } = {}) {
   };
   const layer = {
     popover: true,
+    dismiss: () => layer.close(),
     close() {
       const index = stack.indexOf(layer);
       if (index < 0) return;

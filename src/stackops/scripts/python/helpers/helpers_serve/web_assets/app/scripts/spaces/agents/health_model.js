@@ -35,7 +35,7 @@ const STATUSES = {
 const PROTECTED_DETAIL = "Protected path excluded from inspection";
 
 export const shortPath = (path) => tildify(path, state.boot.home);
-const softenPaths = (text) => text.replaceAll(`${state.boot.home}/`, "~/");
+export const softenPaths = (text) => text.replaceAll(`${state.boot.home}/`, "~/");
 
 // The check reports a remark as "<where>: <what>"; the place is worth showing as its own copyable path.
 function splitRemark(remark) {
@@ -45,8 +45,10 @@ function splitRemark(remark) {
 
 function toItem(kind, source) {
   const label = STATES[source.state]?.label ?? "";
-  const item = { kind, name: softenPaths(source.name), origin: source.origin, state: source.state ?? null, path: source.path, detail: softenPaths(source.detail), holdsServers: source.is_mcp === true };
+  // `raw` keeps the name and detail as the check reported them: taking one thing away is asked for in those exact words.
+  const item = { kind, raw: source, name: softenPaths(source.name), origin: source.origin, state: source.state ?? null, path: source.path, detail: softenPaths(source.detail), holdsServers: source.is_mcp === true };
   item.present = item.state !== "missing";
+  item.reachable = item.present && source.detail !== PROTECTED_DETAIL;
   item.text = [item.name, KIND_BY_ID[kind].label, ORIGINS[item.origin].label, label, shortPath(item.path), item.detail].join(" ").toLowerCase();
   return item;
 }

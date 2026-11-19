@@ -5,8 +5,9 @@ import { friendlyText, titleOf } from "./words.js";
 
 const FILE_EDITORS = { script: ["devops", "scripts", "edit"], file: ["utils", "file", "edit"] };
 
-// The one way a page offers Edit: the CLI's own edit command in the activity console. It creates a missing file and checks it when the
-// editor closes, and pages refresh when the run ends. A design choice: it needs the CLI's editor on the serving machine, in exchange for no file endpoints on the server.
+// How a page offers Edit for a file the CLI knows how to check: the CLI's own edit command in the activity console. It creates a missing file and
+// checks it when the editor closes, and pages refresh when the run ends. It needs the CLI's editor on the serving machine. The one exception is the
+// file window in Agents › Health, which reads and saves a file as plain text through /api/file.
 export function editFile(activity, { title, kind, path }) {
   const editArguments = FILE_EDITORS[kind] ? [...FILE_EDITORS[kind], path] : ["devops", "config", "edit", kind, ...(path ? ["--custom-path", path] : [])];
   return activity.start({ title: `Edit ${title}`, emoji: "📝", arguments: editArguments, interactive: true, reveal: true, wide: true }).catch((error) => toast(error.message));

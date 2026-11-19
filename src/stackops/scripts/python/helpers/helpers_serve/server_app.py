@@ -29,6 +29,7 @@ from stackops.scripts.python.helpers.helpers_serve.run_requests import (
 from stackops.scripts.python.helpers.helpers_serve.run_socket import relay_run
 from stackops.scripts.python.helpers.helpers_serve.runs import RunRegistry, describe_run, shutdown_runs, start_run, stop_run
 from stackops.scripts.python.helpers.helpers_serve.software_catalog import load_software_catalog
+from stackops.scripts.python.helpers.helpers_serve.text_files import FileProblem, TextFile, read_text_file, write_text_file
 from stackops.scripts.python.helpers.helpers_serve.vendor_assets import VENDOR_ASSETS, resolve_vendor_asset
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
 from stackops.version import get_stackops_version
@@ -119,6 +120,21 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         catalog = load_software_catalog()
         return JSONResponse(catalog, status_code=422 if "error" in catalog else 200)
 
+    def file_response(result: TextFile | FileProblem) -> JSONResponse:
+        match result:
+            case FileProblem():
+                return JSONResponse({"error": result.message}, status_code=result.status)
+            case TextFile():
+                return JSONResponse({"path": result.path, "text": result.text, "version": result.version})
+
+    def read_file(request: Request) -> JSONResponse:
+        return file_response(read_text_file(path=request.query_params.get("path", "")))
+
+    async def save_file(request: Request) -> JSONResponse:
+        if request.headers.get("content-type") != "application/json":
+            return JSONResponse({"error": "Send the file as application/json."}, status_code=415)
+        return file_response(write_text_file(body=await request.json()))
+
     async def stop_run_endpoint(request: Request) -> Response:
         run = registry.runs.get(request.path_params["run_id"])
         if run is None:
@@ -172,6 +188,8 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             Route("/api/paths", list_paths),
             Route("/api/capture", capture, methods=["POST"]),
             Route("/api/software", software),
+            Route("/api/file", read_file, methods=["GET"]),
+            Route("/api/file", save_file, methods=["PUT"]),
             Route("/api/runs", list_runs, methods=["GET"]),
             Route("/api/runs", create_run, methods=["POST"]),
             Route("/api/runs/{run_id}/stop", stop_run_endpoint, methods=["POST"]),
