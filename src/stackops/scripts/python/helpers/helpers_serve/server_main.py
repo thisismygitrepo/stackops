@@ -9,6 +9,7 @@ def run_server(host: str, port: int, open_browser: bool, stackops_executable: st
 
     from stackops.scripts.python.helpers.helpers_serve.constants import TOKEN_COOKIE_PREFIX
     from stackops.scripts.python.helpers.helpers_serve.server_app import create_app
+    from stackops.utils.network.address import select_lan_ipv4
 
     console = Console()
     is_ipv6 = ":" in host
@@ -27,7 +28,14 @@ def run_server(host: str, port: int, open_browser: bool, stackops_executable: st
         else f"""\n[yellow]Listening on {host}: anyone who can reach this port and has the link can run commands on this machine, over plain HTTP.[/yellow]"""
     )
     console.print(Panel("[bold]StackOps web UI[/bold]  [dim]Ctrl+C stops the server and the commands it is running.[/dim]", border_style="blue", expand=False))
-    console.print(url, soft_wrap=True, highlight=False, markup=False)
+    lan_address = select_lan_ipv4(prefer_vpn=False) if host == "0.0.0.0" else None
+    if lan_address is None:
+        console.print(url, soft_wrap=True, highlight=False, markup=False)
+    else:
+        console.print("[bold]On this machine[/bold]")
+        console.print(url, soft_wrap=True, highlight=False, markup=False)
+        console.print("[bold]From other devices on the network[/bold]")
+        console.print(f"""http://{lan_address}:{bound_port}/?token={token}""", soft_wrap=True, highlight=False, markup=False)
     console.print(f"""[dim]The link carries this session's access token and changes on every start.[/dim]{exposure_note}""")
     app = create_app(
         token=token, cookie_name=f"""{TOKEN_COOKIE_PREFIX}_{bound_port}""", stackops_executable=stackops_executable, working_directory=working_directory

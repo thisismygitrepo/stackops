@@ -73,10 +73,18 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 .boot-note { position: relative; z-index: 1; display: grid; place-items: center; height: 100vh; color: var(--ink-soft); animation: breathe 1.6s ease-in-out infinite; }
 
 .aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-.aurora i { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; filter: blur(96px); opacity: var(--aurora-opacity); will-change: transform; }
-.aurora i:nth-child(1) { top: -20vmax; left: -10vmax; background: #6a5cff; animation: drift-a 26s ease-in-out infinite alternate; }
-.aurora i:nth-child(2) { right: -12vmax; bottom: -24vmax; background: #1ea7fd; animation: drift-b 32s ease-in-out infinite alternate; }
-.aurora i:nth-child(3) { top: 28%; left: 46%; width: 30vmax; height: 30vmax; background: #12c99b; opacity: calc(var(--aurora-opacity) * 0.55); animation: drift-c 38s ease-in-out infinite alternate; }
+/* The glows are painted soft, not blurred: a blur filter on a moving layer, and a backdrop blur over one, are recomputed on every frame. */
+.aurora i {
+  --reach: 23vmax; position: absolute; width: calc(var(--reach) * 2 + 480px); height: calc(var(--reach) * 2 + 480px); margin: -240px; opacity: var(--aurora-opacity); will-change: transform;
+  background: radial-gradient(
+    closest-side, rgb(var(--tint)) calc(var(--reach) - 240px), rgb(var(--tint) / 0.977) calc(var(--reach) - 192px), rgb(var(--tint) / 0.933) calc(var(--reach) - 144px),
+    rgb(var(--tint) / 0.841) calc(var(--reach) - 96px), rgb(var(--tint) / 0.691) calc(var(--reach) - 48px), rgb(var(--tint) / 0.5) var(--reach), rgb(var(--tint) / 0.309) calc(var(--reach) + 48px),
+    rgb(var(--tint) / 0.159) calc(var(--reach) + 96px), rgb(var(--tint) / 0.067) calc(var(--reach) + 144px), rgb(var(--tint) / 0.023) calc(var(--reach) + 192px), rgb(var(--tint) / 0) 100%
+  );
+}
+.aurora i:nth-child(1) { --tint: 106 92 255; top: -20vmax; left: -10vmax; animation: drift-a 26s ease-in-out infinite alternate; }
+.aurora i:nth-child(2) { --tint: 30 167 253; right: -12vmax; bottom: -24vmax; animation: drift-b 32s ease-in-out infinite alternate; }
+.aurora i:nth-child(3) { --reach: 15vmax; --tint: 18 201 155; top: 28%; left: 46%; opacity: calc(var(--aurora-opacity) * 0.55); animation: drift-c 38s ease-in-out infinite alternate; }
 .aurora::after {
   content: ""; position: absolute; inset: 0; background-image: radial-gradient(var(--line-strong) 1px, transparent 1px); background-size: 28px 28px;
   -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 75%); mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 75%); opacity: 0.6;

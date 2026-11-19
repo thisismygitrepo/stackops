@@ -1,6 +1,6 @@
 .hero {
   position: relative; display: grid; justify-items: start; gap: 8px; margin: 6px 0 22px; padding: 44px 44px 40px; overflow: hidden; background: var(--panel); border: 1px solid var(--line);
-  border-radius: 32px; box-shadow: var(--shadow); -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
+  border-radius: 32px; box-shadow: var(--shadow);
 }
 .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(620px 260px at 0% 0%, rgba(106, 92, 255, 0.2), transparent 70%), radial-gradient(520px 260px at 100% 100%, rgba(30, 167, 253, 0.18), transparent 70%); }
 .hero > * { position: relative; }
@@ -14,17 +14,20 @@
 .hero-search span { flex: 1; }
 .hero-search:hover { border-color: var(--violet); box-shadow: 0 0 0 5px rgba(106, 92, 255, 0.14), var(--shadow); transform: translateY(-2px); }
 .hero-orbit { position: absolute; top: 50%; right: 70px; width: 250px; height: 250px; margin-top: -125px; pointer-events: none; }
-.hero-orbit i { position: absolute; inset: 0; border: 1.5px solid color-mix(in srgb, var(--violet) 34%, transparent); border-radius: 50%; animation: spin 18s linear infinite; }
-.hero-orbit i::after { content: ""; position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; margin-left: -6px; background: var(--brand); border-radius: 50%; box-shadow: 0 0 18px var(--violet); }
-.hero-orbit i:nth-child(2) { inset: 34px; border-color: color-mix(in srgb, var(--azure) 34%, transparent); animation-duration: 12s; animation-direction: reverse; }
-.hero-orbit i:nth-child(2)::after { background: var(--azure); box-shadow: 0 0 18px var(--azure); }
-.hero-orbit i:nth-child(3) { inset: 70px; border-color: color-mix(in srgb, var(--mint) 38%, transparent); animation-duration: 8s; }
-.hero-orbit i:nth-child(3)::after { background: var(--mint); box-shadow: 0 0 18px var(--mint); }
+.hero-orbit > i { position: absolute; inset: 0; border: 1.5px solid color-mix(in srgb, var(--violet) 34%, transparent); border-radius: 50%; }
+.hero-orbit > i > i { position: absolute; inset: 0; animation: spin 18s linear infinite; }
+.hero-orbit > i > i::after { content: ""; position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; margin-left: -6px; background: var(--brand); border-radius: 50%; box-shadow: 0 0 18px var(--violet); }
+.hero-orbit > i:nth-child(2) { inset: 34px; border-color: color-mix(in srgb, var(--azure) 34%, transparent); }
+.hero-orbit > i:nth-child(2) > i { animation-duration: 12s; animation-direction: reverse; }
+.hero-orbit > i:nth-child(2) > i::after { background: var(--azure); box-shadow: 0 0 18px var(--azure); }
+.hero-orbit > i:nth-child(3) { inset: 70px; border-color: color-mix(in srgb, var(--mint) 38%, transparent); }
+.hero-orbit > i:nth-child(3) > i { animation-duration: 8s; }
+.hero-orbit > i:nth-child(3) > i::after { background: var(--mint); box-shadow: 0 0 18px var(--mint); }
 .hero-orbit b { position: absolute; inset: 100px; background: var(--brand); border-radius: 50%; box-shadow: 0 0 50px var(--violet); animation: float 4s ease-in-out infinite; }
 @keyframes sheen { to { background-position: -300% 0; } }
 
 .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-.task-card { display: grid; align-content: start; justify-items: start; gap: 3px; padding: 18px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.task-card { display: grid; align-content: start; justify-items: start; gap: 3px; padding: 18px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; }
 .task-card .tile { margin-bottom: 10px; transition: transform 0.45s var(--spring); }
 .task-card:hover .tile { transform: scale(1.12) rotate(-6deg); }
 .task-card strong { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
@@ -47,7 +50,7 @@
 .result-count { margin-bottom: 12px; font-size: 13px; color: var(--ink-faint); }
 .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .app-grid > .notice { grid-column: 1 / -1; }
-.app-card { display: flex; align-items: center; gap: 14px; padding: 14px; cursor: pointer; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); outline-offset: 2px; }
+.app-card { display: flex; align-items: center; gap: 14px; padding: 14px; cursor: pointer; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; outline-offset: 2px; }
 .app-card .avatar { transition: transform 0.45s var(--spring); }
 .app-card:hover .avatar { transform: scale(1.08) rotate(-5deg); }
 .app-text { flex: 1; min-width: 0; }
@@ -108,7 +111,7 @@
 
 .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 14px; }
 .block .tool-grid { margin-top: 0; }
-.tool-card { display: flex; align-items: center; gap: 13px; padding: 13px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.tool-card { display: flex; align-items: center; gap: 13px; padding: 13px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }
 .tool-card .tile { transition: transform 0.45s var(--spring); }
 .tool-card:hover .tile { transform: scale(1.1) rotate(-6deg); }
 .tool-card-text { display: grid; flex: 1; min-width: 0; }
@@ -117,7 +120,7 @@
 .tool-card > svg { color: var(--ink-faint); transition: transform 0.35s var(--spring), color 0.2s; }
 .tool-card:hover > svg { color: var(--violet); transform: translateX(4px); }
 .group-grid, .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
-.group-card, .report-card { display: grid; align-content: start; justify-items: start; gap: 4px; padding: 20px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.group-card, .report-card { display: grid; align-content: start; justify-items: start; gap: 4px; padding: 20px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; }
 .group-card .tile, .report-card .tile { margin-bottom: 10px; transition: transform 0.45s var(--spring); }
 .group-card:hover .tile, .report-card:hover .tile { transform: scale(1.1) rotate(-6deg); }
 .group-card strong, .report-card strong { font-size: 16px; font-weight: 700; letter-spacing: -0.015em; }
