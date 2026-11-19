@@ -64,8 +64,7 @@ class RunSummary(TypedDict):
     reports: list[str]
 
 
-def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directory: str, rows: int, columns: int, interactive: bool) -> Run:
-    loop = asyncio.get_running_loop()
+def build_run_environment(interactive: bool) -> dict[str, str]:
     environment = dict(os.environ)
     environment["PATH"] = environment.pop(LAUNCH_PATH_VARIABLE)
     launch_virtual_env = environment.pop(LAUNCH_VIRTUAL_ENV_VARIABLE)
@@ -82,7 +81,12 @@ def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directo
     environment["COLORTERM"] = "truecolor"
     if not interactive:
         environment["STACKOPS_NON_INTERACTIVE"] = "1"
+    return environment
 
+
+def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directory: str, rows: int, columns: int, interactive: bool) -> Run:
+    loop = asyncio.get_running_loop()
+    environment = build_run_environment(interactive=interactive)
     started_at = time.time()
     handle = spawn_pty(
         argv=[registry.stackops_executable, *arguments], working_directory=working_directory, environment=environment, rows=rows, columns=columns

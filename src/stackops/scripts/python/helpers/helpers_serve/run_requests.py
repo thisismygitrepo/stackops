@@ -16,6 +16,12 @@ class RunRequest:
 
 
 @dataclass(frozen=True)
+class CaptureRequest:
+    arguments: tuple[str, ...]
+    working_directory: str
+
+
+@dataclass(frozen=True)
 class RequestProblem:
     message: str
 
@@ -44,6 +50,19 @@ def parse_run_request(body: object) -> RunRequest | RequestProblem:
         columns=cast(int, columns),
         interactive=interactive,
     )
+
+
+def parse_capture_request(body: object) -> CaptureRequest | RequestProblem:
+    if not isinstance(body, dict):
+        return RequestProblem(message="Expected a JSON object.")
+    payload = cast(dict[str, object], body)
+    arguments = payload.get("arguments")
+    if not isinstance(arguments, list) or not all(isinstance(argument, str) for argument in cast(list[object], arguments)):
+        return RequestProblem(message="`arguments` must be a list of strings.")
+    working_directory = payload.get("working_directory")
+    if not isinstance(working_directory, str) or not Path(working_directory).expanduser().is_dir():
+        return RequestProblem(message=f"""Working directory does not exist: {working_directory}""")
+    return CaptureRequest(arguments=tuple(cast(list[str], arguments)), working_directory=str(Path(working_directory).expanduser()))
 
 
 def suggest_paths(prefix: str, base_directory: str) -> list[str]:

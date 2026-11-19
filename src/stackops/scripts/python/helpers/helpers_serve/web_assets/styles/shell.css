@@ -24,6 +24,11 @@
   text-transform: uppercase; color: var(--text-muted); border-top: 1px solid var(--hairline);
 }
 .rail-tree { flex: 1; min-height: 0; overflow: auto; padding: 0 8px 12px; }
+.rail-switch {
+  display: flex; flex: none; align-items: center; justify-content: center; gap: 8px; height: 32px; margin: 8px 12px; font-size: 12.5px; font-weight: 500; color: var(--accent);
+  background: var(--accent-wash); border-radius: var(--radius); transition: background 0.12s;
+}
+.rail-switch:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
 .rail-foot { display: flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--hairline); }
 .rail-foot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

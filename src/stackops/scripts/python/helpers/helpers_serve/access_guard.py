@@ -49,7 +49,7 @@ def guard_access(app: ASGIApp, token: str, cookie_name: str) -> ASGIApp:
                 headers["Content-Security-Policy"] = REPORT_CONTENT_SECURITY_POLICY if path.startswith("/reports/") else APP_CONTENT_SECURITY_POLICY
                 headers["X-Content-Type-Options"] = "nosniff"
                 headers["Referrer-Policy"] = "no-referrer"
-                if path.startswith(("/api/", "/reports/")) or path == "/":
+                if path.startswith(("/api/", "/reports/")) or path in ("/", "/dev"):
                     headers["Cache-Control"] = "no-store"
             await send(message)
 

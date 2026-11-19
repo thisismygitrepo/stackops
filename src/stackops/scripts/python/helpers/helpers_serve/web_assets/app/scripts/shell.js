@@ -1,0 +1,81 @@
+import { h, icon, tildify } from "/assets/scripts/dom.js";
+import { api, setSetting, state } from "/assets/scripts/state.js";
+import { SPACES, VIEW_KEY } from "./catalog.js";
+import { createCombo } from "./combo.js";
+import { markStale } from "./data.js";
+import { openPopover } from "./overlays.js";
+import { button } from "./widgets.js";
+
+export function createShell({ openSearch, activity }) {
+  const { boot } = state;
+  const marker = h("i", { class: "rail-marker" });
+  const items = new Map(SPACES.map((space) => [space.id, h("a", { class: "rail-item", href: space.hash, title: space.title }, icon(space.glyph, 21), h("span", { text: space.label }))]));
+  const switchButton = h(
+    "button",
+    {
+      class: "rail-item rail-switch", type: "button", title: "Switch to the developer view: every command, flag, and terminal",
+      onclick: () => {
+        localStorage.setItem(VIEW_KEY, "dev");
+        location.href = "/dev";
+      },
+    },
+    icon("code", 20),
+    h("span", { text: "Dev view" }),
+  );
+  const rail = h(
+    "nav",
+    { class: "rail", "aria-label": "Pages" },
+    h("a", { class: "rail-brand", href: "#/", title: `StackOps ${boot.version}` }, h("img", { src: "/assets/favicon.svg", alt: "StackOps" })),
+    h("div", { class: "rail-items" }, marker, [...items.values()]),
+    switchButton,
+  );
+
+  const folderLabel = h("span");
+  const folderButton = h("button", { class: "folder-chip", type: "button", title: "The folder tasks run in. Click to change." }, icon("folder", 15), folderLabel);
+  const showFolder = () => (folderLabel.textContent = `‎${tildify(state.settings.workingDirectory, boot.home)}`);
+  folderButton.addEventListener("click", () => {
+    if (folderButton.classList.contains("open")) return;
+    let chosen = state.settings.workingDirectory;
+    const apply = () => {
+      const cleaned = chosen.trim().replace(/(.)\/+$/, "$1");
+      if (cleaned && cleaned !== state.settings.workingDirectory) {
+        setSetting("workingDirectory", cleaned);
+        showFolder();
+        markStale();
+      }
+      popover.close();
+    };
+    const combo = createCombo({
+      value: chosen, label: "Working folder", glyph: "folder", placeholder: "Type a folder", emptyText: "No such folder",
+      suggest: async (text) => (await api.paths(text, state.settings.workingDirectory)).entries.filter((entry) => entry.endsWith("/")).map((entry) => ({ value: entry, label: entry, keepOpen: true })),
+      onInput: (text) => (chosen = text),
+      onPick: (option) => (chosen = option.value),
+    });
+    combo.input.addEventListener("keydown", (event) => event.key === "Enter" && !event.defaultPrevented && apply());
+    const popover = openPopover(
+      folderButton,
+      h("div", { class: "tune-panel" }, h("div", { class: "tune-head" }, h("h3", { text: "Working folder" })), h("p", { class: "dim", text: "Tasks run here, and pages show what belongs to this folder." }), combo.element, h("div", { class: "dialog-actions" }, button({ label: "Use this folder", tone: "primary", small: true, onclick: apply }))),
+    );
+    combo.input.focus();
+    combo.input.select();
+  });
+  showFolder();
+
+  const searchButton = h(
+    "button",
+    { class: "search-pill", type: "button", onclick: () => openSearch() },
+    icon("search", 16),
+    h("span", { text: "Search apps, tools, and pages" }),
+    h("kbd", { text: navigator.platform.startsWith("Mac") ? "⌘K" : "Ctrl K" }),
+  );
+  const topbar = h("header", { class: "topbar" }, searchButton, h("span", { class: "spacer" }), folderButton, activity.indicator);
+
+  function setActive(spaceId) {
+    for (const [id, item] of items) item.setAttribute("aria-current", String(id === spaceId));
+    const current = items.get(spaceId);
+    marker.style.opacity = current ? "1" : "0";
+    if (current) marker.style.transform = `translateY(${current.offsetTop}px)`;
+  }
+
+  return { rail, topbar, setActive };
+}

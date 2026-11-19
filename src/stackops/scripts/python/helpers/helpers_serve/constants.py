@@ -14,11 +14,15 @@ MAX_TERMINAL_CELLS: Final[int] = 1000
 PATH_SUGGESTION_LIMIT: Final[int] = 40
 SCROLLBACK_LIMIT_BYTES: Final[int] = 4 * 1024 * 1024
 # Leaves the alternate screen and turns off mouse reporting and bracketed paste, which a full-screen program leaves on when it is killed.
-TERMINAL_RESTORE_SEQUENCE: Final[str] = "\x1b[?1049l\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?2004l\x1b[0m"
+# Leaving the alternate screen also restores the saved cursor, so the cursor is saved first: otherwise a run that never entered it jumps back to the top.
+TERMINAL_RESTORE_SEQUENCE: Final[str] = "\x1b7\x1b[?1049l\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?2004l\x1b[0m"
 PTY_READ_CHUNK_BYTES: Final[int] = 65536
 PTY_POLL_SECONDS: Final[float] = 0.2
 STOP_GRACE_SECONDS: Final[float] = 3.0
 SHUTDOWN_JOIN_SECONDS: Final[float] = 2.0
+
+CAPTURE_TIMEOUT_SECONDS: Final[float] = 90.0
+CAPTURE_OUTPUT_COLUMNS: Final[int] = 118
 
 VENDOR_DOWNLOAD_TIMEOUT_SECONDS: Final[float] = 120.0
 VENDOR_CACHE_FOLDER: Final[str] = "serve-vendor"

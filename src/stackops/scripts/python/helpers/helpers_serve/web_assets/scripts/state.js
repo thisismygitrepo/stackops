@@ -71,6 +71,8 @@ export const api = {
   bootstrap: () => request("GET", "/api/bootstrap"),
   command: (path) => request("GET", `/api/command?path=${encodeURIComponent(path)}`),
   paths: (prefix, base) => request("GET", `/api/paths?prefix=${encodeURIComponent(prefix)}&base=${encodeURIComponent(base)}`),
+  capture: (body) => request("POST", "/api/capture", body),
+  software: () => request("GET", "/api/software"),
   runs: () => request("GET", "/api/runs"),
   startRun: (body) => request("POST", "/api/runs", body),
   stopRun: (id) => request("POST", `/api/runs/${id}/stop`, {}),

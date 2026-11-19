@@ -64,6 +64,18 @@ export function createRail({ openPalette }) {
     h("nav", { class: "rail-nav", "aria-label": "Views" }, Object.values(links)),
     h("div", { class: "rail-label" }, h("span", { text: "Commands" }), h("a", { href: "#/c", text: `${boot.tree.leaves} total` })),
     tree,
+    h(
+      "button",
+      {
+        class: "rail-switch", title: "Switch to the app view: pages, search, and one-click tasks",
+        onclick: () => {
+          localStorage.setItem("stackops-serve-view", "app");
+          location.href = "/";
+        },
+      },
+      icon("sparkle", 14),
+      h("span", { text: "Switch to app view" }),
+    ),
     h("div", { class: "rail-foot" }, icon("terminal", 14), h("span", { text: `${boot.user}@${boot.host} · ${boot.platform}` })),
   );
 

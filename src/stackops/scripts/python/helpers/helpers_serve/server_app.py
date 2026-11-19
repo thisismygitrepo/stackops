@@ -9,16 +9,26 @@ from pathlib import Path
 
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import FileResponse, JSONResponse, Response
+from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from stackops.scripts.python.helpers.helpers_serve.access_guard import guard_access
+from stackops.scripts.python.helpers.helpers_serve.capture import CaptureResult, CaptureTimeout, capture_command
 from stackops.scripts.python.helpers.helpers_serve.catalog import ParameterSpec, load_command_parameters, load_command_tree
-from stackops.scripts.python.helpers.helpers_serve.run_requests import RequestProblem, RunRequest, parse_run_request, suggest_paths
+from stackops.scripts.python.helpers.helpers_serve.pages import APP_PAGE, DEVELOPER_PAGE
+from stackops.scripts.python.helpers.helpers_serve.run_requests import (
+    CaptureRequest,
+    RequestProblem,
+    RunRequest,
+    parse_capture_request,
+    parse_run_request,
+    suggest_paths,
+)
 from stackops.scripts.python.helpers.helpers_serve.runs import RunEvent, RunRegistry, describe_run, shutdown_runs, start_run, stop_run, subscribe
+from stackops.scripts.python.helpers.helpers_serve.software_catalog import load_software_catalog
 from stackops.scripts.python.helpers.helpers_serve.vendor_assets import VENDOR_ASSETS, resolve_vendor_asset
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
 from stackops.version import get_stackops_version
@@ -42,8 +52,11 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         "tree": tree,
     }
 
-    async def index(_request: Request) -> FileResponse:
-        return FileResponse(WEB_ASSETS_ROOT / "index.html", media_type="text/html")
+    async def index(_request: Request) -> HTMLResponse:
+        return HTMLResponse(APP_PAGE)
+
+    async def developer_index(_request: Request) -> HTMLResponse:
+        return HTMLResponse(DEVELOPER_PAGE)
 
     async def bootstrap(_request: Request) -> JSONResponse:
         return JSONResponse(bootstrap_payload)
@@ -81,6 +94,29 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
                     interactive=run_request.interactive,
                 )
                 return JSONResponse(describe_run(run), status_code=201)
+
+    async def capture(request: Request) -> JSONResponse:
+        if request.headers.get("content-type") != "application/json":
+            return JSONResponse({"error": "Send the capture request as application/json."}, status_code=415)
+        capture_request = parse_capture_request(await request.json())
+        match capture_request:
+            case RequestProblem():
+                return JSONResponse({"error": capture_request.message}, status_code=400)
+            case CaptureRequest():
+                result = await asyncio.to_thread(
+                    capture_command,
+                    executable=stackops_executable,
+                    arguments=capture_request.arguments,
+                    working_directory=capture_request.working_directory,
+                )
+        match result:
+            case CaptureTimeout():
+                return JSONResponse({"error": f"""This took longer than {result.seconds:.0f} seconds and was stopped."""}, status_code=504)
+            case CaptureResult():
+                return JSONResponse({"exit_code": result.exit_code, "stdout": result.stdout, "stderr": result.stderr})
+
+    def software(_request: Request) -> JSONResponse:
+        return JSONResponse(load_software_catalog())
 
     async def stop_run_endpoint(request: Request) -> Response:
         run = registry.runs.get(request.path_params["run_id"])
@@ -157,9 +193,12 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
     app = Starlette(
         routes=[
             Route("/", index),
+            Route("/dev", developer_index),
             Route("/api/bootstrap", bootstrap),
             Route("/api/command", command_detail),
             Route("/api/paths", list_paths),
+            Route("/api/capture", capture, methods=["POST"]),
+            Route("/api/software", software),
             Route("/api/runs", list_runs, methods=["GET"]),
             Route("/api/runs", create_run, methods=["POST"]),
             Route("/api/runs/{run_id}/stop", stop_run_endpoint, methods=["POST"]),
