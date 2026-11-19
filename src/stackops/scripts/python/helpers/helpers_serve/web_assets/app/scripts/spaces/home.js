@@ -2,6 +2,7 @@ import { formatClock, formatDuration, h, icon } from "/assets/scripts/dom.js";
 import { on, state } from "/assets/scripts/state.js";
 import { QUICK_TASKS } from "../catalog.js";
 import { query, software } from "../data.js";
+import { createHeroOrbit } from "../hero_orbit.js";
 import { rise } from "../motion.js";
 import { glyphTile, notice, sectionHead, stat } from "../widgets.js";
 import { greeting } from "../words.js";
@@ -35,6 +36,7 @@ export function createHomeSpace({ activity, tools, openSearch }) {
     h(
       "header",
       { class: "hero" },
+      createHeroOrbit(),
       h("span", { class: "overline", text: `${boot.host} · ${boot.platform}` }),
       h("h1", {}, `${greeting()}, `, h("em", { text: name })),
       h("p", { text: "Your machine, apps, projects, and agents — one click away." }),
