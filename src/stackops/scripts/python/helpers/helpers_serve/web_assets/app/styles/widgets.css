@@ -44,7 +44,7 @@
 .skeleton.row { height: 52px; margin-bottom: 10px; }
 .skeleton.card { height: 132px; }
 .notice { display: grid; justify-items: center; gap: 6px; padding: 38px 24px; text-align: center; color: var(--ink-soft); border: 1px dashed var(--line-strong); border-radius: var(--radius); animation: pop-in 0.4s var(--smooth); }
-.notice-glyph { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 4px; color: var(--violet); background: rgba(106, 92, 255, 0.13); border-radius: 17px; animation: float 3.6s ease-in-out infinite; }
+.notice-glyph { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 4px; color: var(--violet); background: rgba(106, 92, 255, 0.13); border-radius: 17px; }
 .notice.bad .notice-glyph { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
 .notice.good .notice-glyph { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
 .notice h3 { font-size: 16px; font-weight: 700; color: var(--ink); }

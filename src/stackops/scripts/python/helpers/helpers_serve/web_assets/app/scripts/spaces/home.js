@@ -35,7 +35,6 @@ export function createHomeSpace({ activity, tools, openSearch }) {
     h(
       "header",
       { class: "hero" },
-      h("div", { class: "hero-orbit", "aria-hidden": "true" }, h("i", {}, h("i")), h("i", {}, h("i")), h("i", {}, h("i")), h("b")),
       h("span", { class: "overline", text: `${boot.host} · ${boot.platform}` }),
       h("h1", {}, `${greeting()}, `, h("em", { text: name })),
       h("p", { text: "Your machine, apps, projects, and agents — one click away." }),

@@ -20,7 +20,6 @@
   --glow: 0 10px 30px -10px rgba(106, 92, 255, 0.55);
   --shadow: 0 1px 2px rgba(18, 20, 43, 0.04), 0 14px 34px -16px rgba(18, 20, 43, 0.18);
   --shadow-pop: 0 30px 90px -20px rgba(18, 20, 43, 0.4);
-  --aurora-opacity: 0.3;
   --radius: 20px;
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --smooth: cubic-bezier(0.22, 1, 0.36, 1);
@@ -43,7 +42,6 @@
     --bad: #ff6b88;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 18px 44px -18px rgba(0, 0, 0, 0.7);
     --shadow-pop: 0 40px 110px -20px rgba(0, 0, 0, 0.85);
-    --aurora-opacity: 0.22;
   }
 }
 
@@ -72,24 +70,6 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 .overline { font-size: 11.5px; font-weight: 650; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-faint); }
 .boot-note { position: relative; z-index: 1; display: grid; place-items: center; height: 100vh; color: var(--ink-soft); animation: breathe 1.6s ease-in-out infinite; }
 
-.aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-/* The glows are painted soft, not blurred: a blur filter on a moving layer, and a backdrop blur over one, are recomputed on every frame. */
-.aurora i {
-  --reach: 23vmax; position: absolute; width: calc(var(--reach) * 2 + 480px); height: calc(var(--reach) * 2 + 480px); margin: -240px; opacity: var(--aurora-opacity); will-change: transform;
-  background: radial-gradient(
-    closest-side, rgb(var(--tint)) calc(var(--reach) - 240px), rgb(var(--tint) / 0.977) calc(var(--reach) - 192px), rgb(var(--tint) / 0.933) calc(var(--reach) - 144px),
-    rgb(var(--tint) / 0.841) calc(var(--reach) - 96px), rgb(var(--tint) / 0.691) calc(var(--reach) - 48px), rgb(var(--tint) / 0.5) var(--reach), rgb(var(--tint) / 0.309) calc(var(--reach) + 48px),
-    rgb(var(--tint) / 0.159) calc(var(--reach) + 96px), rgb(var(--tint) / 0.067) calc(var(--reach) + 144px), rgb(var(--tint) / 0.023) calc(var(--reach) + 192px), rgb(var(--tint) / 0) 100%
-  );
-}
-.aurora i:nth-child(1) { --tint: 106 92 255; top: -20vmax; left: -10vmax; animation: drift-a 26s ease-in-out infinite alternate; }
-.aurora i:nth-child(2) { --tint: 30 167 253; right: -12vmax; bottom: -24vmax; animation: drift-b 32s ease-in-out infinite alternate; }
-.aurora i:nth-child(3) { --reach: 15vmax; --tint: 18 201 155; top: 28%; left: 46%; opacity: calc(var(--aurora-opacity) * 0.55); animation: drift-c 38s ease-in-out infinite alternate; }
-.aurora::after {
-  content: ""; position: absolute; inset: 0; background-image: radial-gradient(var(--line-strong) 1px, transparent 1px); background-size: 28px 28px;
-  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 75%); mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 75%); opacity: 0.6;
-}
-
 .rise { animation: rise 0.6s var(--smooth) backwards; animation-delay: calc(var(--i, 0) * 38ms); }
 .enter { animation: view-in 0.5s var(--smooth) backwards; }
 .pulse { animation: pulse 0.7s var(--spring); }
@@ -107,9 +87,6 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 .burst i { position: absolute; width: 8px; height: 8px; margin: -4px; border-radius: 2px; background: var(--tint); animation: burst 0.85s var(--smooth) forwards; }
 .ring { display: block; width: 16px; height: 16px; border: 2px solid color-mix(in srgb, currentColor 22%, transparent); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; }
 
-@keyframes drift-a { to { transform: translate(18vmax, 12vmax) scale(1.15); } }
-@keyframes drift-b { to { transform: translate(-16vmax, -14vmax) scale(0.9); } }
-@keyframes drift-c { to { transform: translate(-22vmax, 10vmax) scale(1.3); } }
 @keyframes rise { from { opacity: 0; transform: translateY(18px) scale(0.97); } }
 @keyframes view-in { from { opacity: 0; transform: translateY(14px) scale(0.985); filter: blur(6px); } }
 @keyframes pulse { 40% { transform: scale(1.12); } }
@@ -119,7 +96,6 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes breathe { 50% { opacity: 0.45; } }
 @keyframes shimmer { to { background-position: -200% 0; } }
-@keyframes float { 50% { transform: translateY(-6px); } }
 @keyframes pop-in { from { opacity: 0; transform: scale(0.92) translateY(8px); } }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes fade-out { to { opacity: 0; } }
@@ -127,8 +103,7 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 @keyframes slide-out { to { transform: translateX(100%); } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
-  .aurora i { animation: none; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
 }
 
 .toasts { position: fixed; right: 20px; bottom: 20px; z-index: 130; display: grid; gap: 10px; }

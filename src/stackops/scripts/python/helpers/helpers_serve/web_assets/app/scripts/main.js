@@ -47,7 +47,6 @@ async function start() {
   const shell = createShell({ openSearch: spotlight.open, activity });
   const stage = h("main", { class: "stage" }, Object.values(spaces).map((space) => space.element));
   document.getElementById("app").replaceChildren(
-    h("div", { class: "aurora", "aria-hidden": "true" }, h("i"), h("i"), h("i")),
     h("div", { class: "frame" }, shell.rail, h("div", { class: "column" }, shell.topbar, stage)),
     activity.element,
   );

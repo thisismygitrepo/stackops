@@ -13,17 +13,6 @@
 }
 .hero-search span { flex: 1; }
 .hero-search:hover { border-color: var(--violet); box-shadow: 0 0 0 5px rgba(106, 92, 255, 0.14), var(--shadow); transform: translateY(-2px); }
-.hero-orbit { position: absolute; top: 50%; right: 70px; width: 250px; height: 250px; margin-top: -125px; pointer-events: none; }
-.hero-orbit > i { position: absolute; inset: 0; border: 1.5px solid color-mix(in srgb, var(--violet) 34%, transparent); border-radius: 50%; }
-.hero-orbit > i > i { position: absolute; inset: 0; animation: spin 18s linear infinite; }
-.hero-orbit > i > i::after { content: ""; position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; margin-left: -6px; background: var(--brand); border-radius: 50%; box-shadow: 0 0 18px var(--violet); }
-.hero-orbit > i:nth-child(2) { inset: 34px; border-color: color-mix(in srgb, var(--azure) 34%, transparent); }
-.hero-orbit > i:nth-child(2) > i { animation-duration: 12s; animation-direction: reverse; }
-.hero-orbit > i:nth-child(2) > i::after { background: var(--azure); box-shadow: 0 0 18px var(--azure); }
-.hero-orbit > i:nth-child(3) { inset: 70px; border-color: color-mix(in srgb, var(--mint) 38%, transparent); }
-.hero-orbit > i:nth-child(3) > i { animation-duration: 8s; }
-.hero-orbit > i:nth-child(3) > i::after { background: var(--mint); box-shadow: 0 0 18px var(--mint); }
-.hero-orbit b { position: absolute; inset: 100px; background: var(--brand); border-radius: 50%; box-shadow: 0 0 50px var(--violet); animation: float 4s ease-in-out infinite; }
 @keyframes sheen { to { background-position: -300% 0; } }
 
 .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
@@ -158,7 +147,6 @@
 @media (max-width: 860px) {
   .hero { padding: 28px 22px; }
   .hero h1 { font-size: 34px; }
-  .hero-orbit { display: none; }
   .teach { grid-template-columns: minmax(0, 1fr); }
   .tray { width: calc(100vw - 110px); }
   .mini-toggle span, .session-counts, .meter { display: none; }
