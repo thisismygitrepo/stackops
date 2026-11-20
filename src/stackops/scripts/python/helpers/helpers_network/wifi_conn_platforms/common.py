@@ -16,6 +16,11 @@ def run_text_command(command: list[str], *, check: bool) -> subprocess.Completed
     return subprocess.run(command, capture_output=True, text=True, check=check)
 
 
+def describe_command_failure(error: subprocess.CalledProcessError) -> str:
+    output: str = error.stderr.strip() or error.stdout.strip()
+    return f"exit code {error.returncode}: {output or '<no output>'}"
+
+
 def deduplicate_networks(networks: list[WifiNetwork]) -> list[WifiNetwork]:
     seen: set[str] = set()
     unique_networks: list[WifiNetwork] = []

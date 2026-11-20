@@ -5,6 +5,7 @@ from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common 
     WifiNetwork,
     console,
     deduplicate_networks,
+    describe_command_failure,
     run_text_command,
 )
 
@@ -34,7 +35,7 @@ def get_available_networks() -> list[WifiNetwork]:
                 networks.append({"ssid": current_ssid, "signal": raw_signal.strip()})
                 current_ssid = None
     except subprocess.CalledProcessError as error:
-        raise RuntimeError(f"WiFi scan failed with exit code {error.returncode}.") from None
+        raise RuntimeError(f"WiFi scan failed with {describe_command_failure(error)}") from None
     except Exception as error:
         raise RuntimeError(f"WiFi scan failed: {error}") from error
 
