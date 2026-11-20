@@ -10,6 +10,7 @@ export const SPACES = [
   { id: "data", hash: "#/data", label: "Data", glyph: "database", title: "Data" },
   { id: "network", hash: "#/network", label: "Network", glyph: "globe", title: "Network" },
   { id: "machine", hash: "#/machine", label: "Machine", glyph: "cpu", title: "Machine" },
+  { id: "security", hash: "#/security", label: "Security", glyph: "shield", title: "Security" },
   { id: "reports", hash: "#/reports", label: "Reports", glyph: "chart", title: "Reports" },
   { id: "tools", hash: "#/tools", label: "Toolbox", glyph: "cube", title: "Toolbox" },
 ];
@@ -56,6 +57,10 @@ export const TOOL_TITLES = {
   "agents iter status": "Loops in progress", "agents iter close": "Close finished tabs", "agents iter clean": "Clear old loop records",
   "agents config": "Agent lists", "agents config path": "Where a list lives", "agents config init": "Create a list", "agents config validate": "Check a list",
   "agents init": "Set up a project", "agents reset": "Reset agents", "agents ask": "Ask a question",
+  "devops security scan": "Scan apps or a file", "devops security status": "Security overview", "devops security list": "Installed apps",
+  "devops security history": "Scan history", "devops security report": "Look at one scan", "devops security export": "Export a scan",
+  "devops security install": "Install from a scan", "devops security upload": "Upload a file to cloud storage", "devops security download": "Download from Google Drive",
+  "devops vault stats": "What the vault holds", "devops vault validate": "Check the vault file", "devops vault add": "Add a secret", "devops vault rotate": "Replace a secret",
 };
 
 // Options that only make sense on a command line: output formats, alternate renderers, and file overrides the app already picks for you.
@@ -90,7 +95,10 @@ export const PATH_FIELDS = new Set([
 
 // Options a read-only tool's sheet leaves out, by parameter name. The sheet re-runs on every change, so nothing in it may act: on `agents status`, Btw makes real agent calls,
 // Output and Force write files, and Format clashes with the `--json` the sheet asks for. The Agents page offers Btw as a button behind a confirmation.
-export const OMITTED_FIELDS = { "agents status": ["output_format", "output", "force", "btw"] };
+// The scan tools' Format and View only shape the table that `--json` replaces.
+export const OMITTED_FIELDS = {
+  "agents status": ["output_format", "output", "force", "btw"], "devops security history": ["format_type"], "devops security report": ["format_type", "view"],
+};
 
 export const ESSENTIAL_FLAGS = {
   "devops software install": ["--update"],
@@ -134,12 +142,16 @@ export const ESSENTIAL_FLAGS = {
   "agents init": ["--root", "--include-scripts", "--add-gitignore"],
   "agents reset": ["--scope", "--resource", "--apply"],
   "agents ask": ["--agent", "--second-brain", "--reasoning"],
+  "devops security scan": ["--path", "--all", "--upload"],
+  "devops security report": ["--run"],
+  "devops security install": ["--all", "--run"],
+  "devops security export": ["--output", "--run"],
 };
 
 // Runs a page only starts behind its own confirmation: the words the command begins with, then any switch it must also carry, wherever that sits.
 // Activity offers no "Run again" for these, because that would repeat them without asking. Left out on purpose, as repeating them is harmless:
 // collecting dotfiles (refuses once done), saving a session over a layout (only shown when it failed), installing from a link (same source again).
-export const CONFIRMED_RUNS = ["utils machine clean-drive", "terminal kill", "devops data sync down", "agents status --btw", "devops repos action --push"];
+export const CONFIRMED_RUNS = ["utils machine clean-drive", "terminal kill", "devops data sync down", "agents status --btw", "devops repos action --push", "devops security scan"];
 
 // Names for the installer's bundles (`devops software install <name> --group`), whose own names are abbreviations.
 export const BUNDLE_TITLES = {

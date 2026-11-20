@@ -15,6 +15,7 @@ import { createMachineSpace } from "./spaces/machine.js";
 import { createNetworkSpace } from "./spaces/network.js";
 import { createProjectsSpace } from "./spaces/projects.js";
 import { createReportsSpace } from "./spaces/reports.js";
+import { createSecuritySpace } from "./spaces/security.js";
 import { createSessionsSpace } from "./spaces/sessions.js";
 import { createToolboxSpace } from "./spaces/toolbox.js";
 import { createSpotlight } from "./spotlight.js";
@@ -45,6 +46,7 @@ async function start() {
     data: createDataSpace(context),
     network: createNetworkSpace(context),
     machine: createMachineSpace(context),
+    security: createSecuritySpace(context),
     reports: createReportsSpace(context),
     tools: createToolboxSpace(context),
   });

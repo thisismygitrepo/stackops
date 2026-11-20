@@ -22,17 +22,35 @@ export function createProjectsSpace({ activity, tools }) {
 
   function card(repo) {
     const present = repo.state === "Clean" || repo.state === "Changed";
+    const guarded = repo.sync.mode === "guard";
     return h(
       "article",
       { class: "project-card lit" },
-      h("header", {}, avatar(repo.name, 44), h("div", {}, h("h3", { text: repo.name }), copyChip(repo.destination, tildify(repo.destination, state.boot.home)))),
+      h(
+        "header",
+        {},
+        avatar(repo.name, 44),
+        h(
+          "div",
+          {},
+          h(
+            "div",
+            { class: "project-title" },
+            h("h3", { text: repo.name }),
+            guarded
+              ? h("span", { class: "pill accent", title: `Kept as an encrypted copy in ${repo.sync.cloud}, not on Git remotes` }, icon("lock", 12), "Guarded")
+              : h("span", { class: "pill", title: "Synced through its Git remotes" }, icon("branch", 12), "Git"),
+          ),
+          copyChip(repo.destination, tildify(repo.destination, state.boot.home)),
+        ),
+      ),
       h(
         "div",
         { class: "project-facts" },
         repo.branch && h("span", { class: "fact" }, icon("branch", 13), repo.branch),
         pill(repo.state, toneOf(repo.state)),
         repo.changes && h("span", { class: "fact", title: "Uncommitted changes" }, repo.changes.split("/").map((part) => `${part.slice(0, -1)} ${CHANGE_WORDS[part.at(-1)]}`).join(" · ")),
-        repo.sync.mode === "guard" && h("span", { class: "fact", title: `Encrypted copy kept in ${repo.sync.cloud}` }, icon("sync", 13), repo.sync.cloud),
+        guarded && h("span", { class: "fact", title: `Encrypted copy kept in ${repo.sync.cloud}` }, icon("sync", 13), repo.sync.cloud),
         repo.committed_at && h("span", { class: "fact", title: "Last commit" }, icon("clock", 13), relativeTime(repo.committed_at)),
       ),
       h(
@@ -47,7 +65,7 @@ export function createProjectsSpace({ activity, tools }) {
           repo.state === "Changed" && iconButton("check", "Commit what is staged", () => tools.open("devops repos action", { preset: { directory: repo.destination, commit: "on" } })),
         ),
         // Sync only does something for a guarded repository or a missing one: a cloned Git repository is skipped by the command.
-        repo.sync.mode === "guard"
+        guarded
           ? button({ label: "Sync", glyph: "sync", small: true, onclick: () => run(`Sync ${repo.name}`, "🔄", ["devops", "repos", "sync", "--which", repo.destination]) })
           : repo.state === "Missing" && button({ label: "Clone", glyph: "download", small: true, onclick: () => run(`Clone ${repo.name}`, "📥", ["devops", "repos", "sync", "--which", repo.destination]) }),
       ),
@@ -62,7 +80,8 @@ export function createProjectsSpace({ activity, tools }) {
         return notice({ glyph: "branch", title: "No projects yet", body: "Register the repositories on this machine to track and sync them.", action: toolButton(tools, "devops repos register", { label: "Register projects", tone: "primary" }) });
       }
       const changed = repos.filter((repo) => repo.state === "Changed").length;
-      setCount(`${plural(repos.length, "project")} · ${changed ? `${changed} with changes` : "no changes"}`);
+      const guarded = repos.filter((repo) => repo.sync.mode === "guard").length;
+      setCount(`${plural(repos.length, "project")} · ${repos.length - guarded} Git · ${guarded} guarded · ${changed ? `${changed} with changes` : "no changes"}`);
       return rise(h("div", { class: "card-grid" }, repos.map(card)));
     },
   });

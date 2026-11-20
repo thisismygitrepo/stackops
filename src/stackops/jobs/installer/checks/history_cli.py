@@ -25,6 +25,7 @@ def history(
     apps: Annotated[str | None, typer.Argument(help="Only runs targeting these comma-separated app names")] = None,
     limit: Annotated[int, typer.Option("--limit", "-l", min=1, help="Maximum runs to show, newest first")] = 20,
     format_type: Annotated[ReportFormat, typer.Option("--format", "-f", help="Table or raw CSV")] = "table",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the matching runs as JSON.")] = False,
     records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
     from stackops.jobs.installer.checks.scan_history import list_runs
@@ -36,13 +37,25 @@ def history(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     names = {name.lower() for name in app_names} if app_names is not None else None
-    rows: list[dict[str, object]] = []
+    selected: list["ScanRun"] = []
     for run in list_runs(records_dir):
         run_names = {Path(target["path"]).stem.lower() for target in run["targets"]}
         if run["scope"] == "apps":
             run_names.update(name.lower() for name in run["requested"])
         if names is not None and not names.intersection(run_names):
             continue
+        selected.append(run)
+        if len(selected) == limit:
+            break
+    if json_output:
+        import json
+
+        from stackops.jobs.installer.checks.scan_overview import summarize_run
+
+        typer.echo(json.dumps([summarize_run(run) for run in selected]))
+        return
+    rows: list[dict[str, object]] = []
+    for run in selected:
         completed = sum(target["record"] is not None for target in run["targets"])
         failed = sum(target["error"] is not None for target in run["targets"])
         rows.append({
@@ -51,8 +64,6 @@ def history(
             "status": "unfinished" if run["status"] == "running" else run["status"],
             "results": f"""{completed}/{len(run['targets'])}""", "failed": failed,
         })
-        if len(rows) == limit:
-            break
     columns = ("run_id", "started_at", "scope", "requested", "status", "results", "failed")
     if format_type == "csv":
         typer.echo(render_csv_text(rows, columns))
@@ -73,6 +84,7 @@ def report(
     run: Annotated[str | None, typer.Option("--run", "-R", help="Exact run ID; defaults to the latest started run")] = None,
     view: Annotated[ReportView, typer.Option("--view", "-v", help="Report view")] = "engines",
     format_type: Annotated[ReportFormat, typer.Option("--format", "-f", help="Table or raw CSV")] = "table",
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the run as JSON: its targets, engine results, and account statistics.")] = False,
     records_dir: Annotated[Path, typer.Option("--records-dir", "-d", help="Scan history directory")] = SECURITY_RECORDS_ROOT,
 ) -> None:
     records_dir = records_dir.expanduser().absolute()
@@ -101,6 +113,13 @@ def report(
     if names is not None and not app_rows:
         typer.echo(f"""No matching targets in run {saved['run_id']}. Use history to find another run.""", err=True)
         raise typer.Exit(code=1)
+    if json_output:
+        import json
+
+        from stackops.jobs.installer.checks.scan_overview import build_run_view
+
+        typer.echo(json.dumps(build_run_view(saved, names)))
+        return
     if format_type == "csv":
         if view == "accounts":
             typer.echo(saved["account_csv"], nl=False)

@@ -89,7 +89,7 @@ def _build_verdict_ratio(row: AppData) -> str:
     return f"{row['flagged_engines']}/{row['verdict_engines']}"
 
 
-def _get_row_status(row: AppData) -> RowStatus:
+def get_row_status(row: AppData) -> RowStatus:
     if row["positive_pct"] is None:
         return "failed"
     if row["verdict_engines"] == 0:
@@ -102,7 +102,7 @@ def _get_row_status(row: AppData) -> RowStatus:
 
 
 def app_safety_sort_key(row: AppData) -> tuple[int, float, str, str]:
-    row_status = _get_row_status(row)
+    row_status = get_row_status(row)
     match row_status:
         case "failed":
             priority = 0
@@ -120,7 +120,7 @@ def app_safety_sort_key(row: AppData) -> tuple[int, float, str, str]:
 
 
 def _build_safety_label(row: AppData) -> str:
-    row_status = _get_row_status(row)
+    row_status = get_row_status(row)
     match row_status:
         case "failed":
             return "Failed"
@@ -136,7 +136,7 @@ def _build_safety_label(row: AppData) -> str:
 
 
 def _build_safety_cell(row: AppData) -> Text:
-    row_status = _get_row_status(row)
+    row_status = get_row_status(row)
     match row_status:
         case "failed":
             return Text(_build_safety_label(row), style="bold red")
@@ -152,7 +152,7 @@ def _build_safety_cell(row: AppData) -> Text:
 
 
 def _build_latest_scan_border_style(row: AppData) -> str:
-    row_status = _get_row_status(row)
+    row_status = get_row_status(row)
     match row_status:
         case "failed":
             return "red"
@@ -204,7 +204,7 @@ def _summarize_report(data: list[AppData]) -> ReportSummary:
         "flagged_engines": 0,
     }
     for row in data:
-        row_status = _get_row_status(row)
+        row_status = get_row_status(row)
         match row_status:
             case "failed":
                 summary["failed_apps"] += 1
@@ -242,7 +242,7 @@ def build_latest_scan_panel(last_scanned: AppData | None, completed_count: int, 
         details.add_row("VT analyzed (UTC)", Text(last_scanned["scan_time"], style="dim"))
     if last_scanned["app_url"]:
         upload_state = Text("Open uploaded copy", style=Style(color="cyan", underline=True, link=last_scanned["app_url"]))
-    elif _get_row_status(last_scanned) == "failed":
+    elif get_row_status(last_scanned) == "failed":
         upload_state = Text("Skipped because scan failed", style="dim")
     else:
         upload_state = Text("No uploaded copy", style="dim")

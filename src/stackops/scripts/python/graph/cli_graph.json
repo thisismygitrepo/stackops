@@ -13808,6 +13808,134 @@
               },
               {
                 "kind": "command",
+                "name": "status",
+                "fullPath": "devops security status",
+                "shortPath": "d y t",
+                "help": "🛡️ <t> Show installed apps with their latest scan verdict",
+                "source": {
+                  "file": "src/stackops/jobs/installer/checks/status_cli.py",
+                  "module": "stackops.jobs.installer.checks.status_cli",
+                  "callable": "status"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def status(",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the overview as JSON.\")] = False,",
+                    "    records_dir: Annotated[Path, typer.Option(\"--records-dir\", \"-d\", help=\"Scan history directory\")] = SECURITY_RECORDS_ROOT,",
+                    ") -> None:",
+                    "    import contextlib",
+                    "    import sys",
+                    "",
+                    "    from stackops.jobs.installer.checks.check_installations import collect_apps_to_scan",
+                    "    from stackops.jobs.installer.checks.scan_history import list_runs",
+                    "    from stackops.jobs.installer.checks.scan_overview import build_overview, summarize_run",
+                    "    from stackops.secrets.readers import read_virus_total_api_keys",
+                    "",
+                    "    records_dir = records_dir.expanduser().absolute()",
+                    "    # Gathering the apps prints progress lines; they go to stderr so that stdout holds only the overview.",
+                    "    with contextlib.redirect_stdout(sys.stderr):",
+                    "        installed = collect_apps_to_scan(None)",
+                    "    runs = list_runs(records_dir)",
+                    "    apps = build_overview(runs, installed)",
+                    "    account_count = 0",
+                    "    account_problem: str | None = None",
+                    "    try:",
+                    "        account_count = len(read_virus_total_api_keys())",
+                    "    except ValueError as exc:",
+                    "        account_problem = str(exc)",
+                    "    if json_output:",
+                    "        import json",
+                    "",
+                    "        typer.echo(",
+                    "            json.dumps(",
+                    "                {",
+                    "                    \"records_dir\": str(records_dir),",
+                    "                    \"accounts\": {\"count\": account_count, \"problem\": account_problem},",
+                    "                    \"runs\": len(runs),",
+                    "                    \"latest_run\": summarize_run(runs[0]) if runs else None,",
+                    "                    \"apps\": apps,",
+                    "                }",
+                    "            )",
+                    "        )",
+                    "        return",
+                    "    from rich.console import Console",
+                    "",
+                    "    from stackops.jobs.installer.checks.security_helper import build_raw_csv_table",
+                    "",
+                    "    rows: list[dict[str, object]] = [",
+                    "        {",
+                    "            \"app_name\": app[\"name\"],",
+                    "            \"version\": app[\"version\"],",
+                    "            \"verdict\": \"changed since its check\" if app[\"changed_since\"] else app[\"verdict\"].replace(\"_\", \" \"),",
+                    "            \"flagged\": f\"\"\"{app[\"flagged_engines\"]}/{app[\"verdict_engines\"]}\"\"\" if app[\"verdict_engines\"] else None,",
+                    "            \"checked_at\": app[\"checked_at\"],",
+                    "            \"app_path\": app[\"path\"],",
+                    "        }",
+                    "        for app in apps",
+                    "    ]",
+                    "    Console().print(build_raw_csv_table(\"Installed Apps: Latest Scan Verdict\", rows, (\"app_name\", \"version\", \"verdict\", \"flagged\", \"checked_at\", \"app_path\")))",
+                    "    unchecked = sum(app[\"verdict\"] == \"unchecked\" for app in apps)",
+                    "    typer.echo(f\"\"\"{len(apps)} installed apps; {len(apps) - unchecked} with a saved result from {len(runs)} scan runs in {records_dir}.\"\"\")",
+                    "    typer.echo(f\"\"\"VirusTotal accounts ready: {account_count}.\"\"\" if account_problem is None else f\"\"\"Scans cannot run: {account_problem}\"\"\")"
+                  ],
+                  "name": "status",
+                  "parameters": [
+                    {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the overview as JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print the overview as JSON."
+                      }
+                    },
+                    {
+                      "name": "records_dir",
+                      "kind": "positional_or_keyword",
+                      "type": "Path",
+                      "default": "SECURITY_RECORDS_ROOT",
+                      "required": false,
+                      "annotation_raw": "Annotated[Path, typer.Option('--records-dir', '-d', help='Scan history directory')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--records-dir",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--records-dir"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Scan history directory"
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "t",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "list",
                 "fullPath": "devops security list",
                 "shortPath": "d y l",
@@ -13833,12 +13961,17 @@
                     "        app_names = parse_apps_argument(apps)",
                     "    except ValueError as exc:",
                     "        raise typer.BadParameter(str(exc)) from exc",
-                    "    apps_to_scan = collect_apps_to_scan(app_names)",
                     "    if json_output:",
+                    "        import contextlib",
                     "        import json",
+                    "        import sys",
                     "",
+                    "        # Gathering the apps prints progress lines; they go to stderr so that stdout holds only the JSON.",
+                    "        with contextlib.redirect_stdout(sys.stderr):",
+                    "            apps_to_scan = collect_apps_to_scan(app_names)",
                     "        typer.echo(json.dumps([{\"name\": path.stem, \"version\": version, \"path\": str(path)} for path, version in apps_to_scan]))",
                     "        return",
+                    "    apps_to_scan = collect_apps_to_scan(app_names)",
                     "    if not apps_to_scan:",
                     "        typer.echo(\"No matching installed CLI apps found.\", err=True)",
                     "        raise typer.Exit(code=1)",
@@ -14138,6 +14271,7 @@
                     "    run: Annotated[str | None, typer.Option(\"--run\", \"-R\", help=\"Exact run ID; defaults to the latest started run\")] = None,",
                     "    view: Annotated[ReportView, typer.Option(\"--view\", \"-v\", help=\"Report view\")] = \"engines\",",
                     "    format_type: Annotated[ReportFormat, typer.Option(\"--format\", \"-f\", help=\"Table or raw CSV\")] = \"table\",",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the run as JSON: its targets, engine results, and account statistics.\")] = False,",
                     "    records_dir: Annotated[Path, typer.Option(\"--records-dir\", \"-d\", help=\"Scan history directory\")] = SECURITY_RECORDS_ROOT,",
                     ") -> None:",
                     "    records_dir = records_dir.expanduser().absolute()",
@@ -14166,6 +14300,13 @@
                     "    if names is not None and not app_rows:",
                     "        typer.echo(f\"\"\"No matching targets in run {saved['run_id']}. Use history to find another run.\"\"\", err=True)",
                     "        raise typer.Exit(code=1)",
+                    "    if json_output:",
+                    "        import json",
+                    "",
+                    "        from stackops.jobs.installer.checks.scan_overview import build_run_view",
+                    "",
+                    "        typer.echo(json.dumps(build_run_view(saved, names)))",
+                    "        return",
                     "    if format_type == \"csv\":",
                     "        if view == \"accounts\":",
                     "            typer.echo(saved[\"account_csv\"], nl=False)",
@@ -14185,7 +14326,7 @@
                     "        f\"\"\"Started: {saved['started_at']}\"\"\", f\"\"\"Finished: {saved['finished_at'] or '-'}\"\"\",",
                     "        f\"\"\"Status: {status}\"\"\", f\"\"\"Record: {records_dir / saved['run_id'] / 'run.json'}\"\"\",",
                     "    )))",
-                    "    if saved[\"message\"]:",
+                    "    if saved[\"message\"] is not None:",
                     "        typer.echo(saved[\"message\"])",
                     "    if view == \"accounts\":",
                     "        import csv",
@@ -14305,6 +14446,28 @@
                       }
                     },
                     {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the run as JSON: its targets, engine results, and account statistics.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print the run as JSON: its targets, engine results, and account statistics."
+                      }
+                    },
+                    {
                       "name": "records_dir",
                       "kind": "positional_or_keyword",
                       "type": "Path",
@@ -14353,6 +14516,7 @@
                     "    apps: Annotated[str | None, typer.Argument(help=\"Only runs targeting these comma-separated app names\")] = None,",
                     "    limit: Annotated[int, typer.Option(\"--limit\", \"-l\", min=1, help=\"Maximum runs to show, newest first\")] = 20,",
                     "    format_type: Annotated[ReportFormat, typer.Option(\"--format\", \"-f\", help=\"Table or raw CSV\")] = \"table\",",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the matching runs as JSON.\")] = False,",
                     "    records_dir: Annotated[Path, typer.Option(\"--records-dir\", \"-d\", help=\"Scan history directory\")] = SECURITY_RECORDS_ROOT,",
                     ") -> None:",
                     "    from stackops.jobs.installer.checks.scan_history import list_runs",
@@ -14364,13 +14528,25 @@
                     "    except ValueError as exc:",
                     "        raise typer.BadParameter(str(exc)) from exc",
                     "    names = {name.lower() for name in app_names} if app_names is not None else None",
-                    "    rows: list[dict[str, object]] = []",
+                    "    selected: list[\"ScanRun\"] = []",
                     "    for run in list_runs(records_dir):",
                     "        run_names = {Path(target[\"path\"]).stem.lower() for target in run[\"targets\"]}",
                     "        if run[\"scope\"] == \"apps\":",
                     "            run_names.update(name.lower() for name in run[\"requested\"])",
                     "        if names is not None and not names.intersection(run_names):",
                     "            continue",
+                    "        selected.append(run)",
+                    "        if len(selected) == limit:",
+                    "            break",
+                    "    if json_output:",
+                    "        import json",
+                    "",
+                    "        from stackops.jobs.installer.checks.scan_overview import summarize_run",
+                    "",
+                    "        typer.echo(json.dumps([summarize_run(run) for run in selected]))",
+                    "        return",
+                    "    rows: list[dict[str, object]] = []",
+                    "    for run in selected:",
                     "        completed = sum(target[\"record\"] is not None for target in run[\"targets\"])",
                     "        failed = sum(target[\"error\"] is not None for target in run[\"targets\"])",
                     "        rows.append({",
@@ -14379,8 +14555,6 @@
                     "            \"status\": \"unfinished\" if run[\"status\"] == \"running\" else run[\"status\"],",
                     "            \"results\": f\"\"\"{completed}/{len(run['targets'])}\"\"\", \"failed\": failed,",
                     "        })",
-                    "        if len(rows) == limit:",
-                    "            break",
                     "    columns = (\"run_id\", \"started_at\", \"scope\", \"requested\", \"status\", \"results\", \"failed\")",
                     "    if format_type == \"csv\":",
                     "        typer.echo(render_csv_text(rows, columns))",
@@ -14454,6 +14628,28 @@
                           "-f"
                         ],
                         "help": "Table or raw CSV"
+                      }
+                    },
+                    {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the matching runs as JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print the matching runs as JSON."
                       }
                     },
                     {

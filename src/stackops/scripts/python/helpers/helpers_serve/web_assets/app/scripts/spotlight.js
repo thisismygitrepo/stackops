@@ -11,7 +11,7 @@ const GROUP_ORDER = ["Recent", "Suggested", "Pages", "Apps", "Tools", "Collectio
 // Written by the tool sheet: the last few command paths opened, newest first.
 const RECENT_KEY = "stackops-serve-recent";
 // Tools that have a guided page of their own: search lands there instead of on the bare tool.
-const GUIDED_TOOLS = { "utils machine clean-drive": "#/machine/cleanup" };
+const GUIDED_TOOLS = { "utils machine clean-drive": "#/machine/cleanup", "devops security status": "#/security", "devops security history": "#/security/scans" };
 
 export function createSpotlight({ tools }) {
   const fixed = [
