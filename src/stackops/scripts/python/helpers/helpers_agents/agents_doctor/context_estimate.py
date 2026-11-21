@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Literal
 
@@ -22,6 +23,18 @@ _CONTEXT_DEFINITION_SOURCES: Final[tuple[ContextDefinitionSource, ...]] = (
     "Other configuration",
 )
 _CONTEXT_RESOURCE_STATES: Final[tuple[DoctorResourceState, ...]] = ("active", "available", "configured", "referenced")
+CONTEXT_ESTIMATE_CAPTION: Final[str] = (
+    f"≈{DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN} characters/token · skill catalog metadata only · config/plugin files are proxies · "
+    "runtime tool schemas are unavailable · cumulative % is the share of this estimate"
+)
+
+
+@dataclass(frozen=True)
+class ContextDefinitionEstimate:
+    source: ContextDefinitionSource
+    file_count: int
+    word_count: int
+    estimated_tokens: int
 
 
 def _definition_source(*, resource: DoctorResource) -> ContextDefinitionSource:
@@ -67,25 +80,8 @@ def _skill_catalog_counts(*, path: Path) -> tuple[int, int]:
     return len(metadata) + len(path_text), len(metadata.split()) + len(path_text.split())
 
 
-def context_estimate_table(*, report: DoctorReport) -> Table:
-    table = Table(
-        title="Estimated context definition overhead",
-        caption=(
-            f"≈{DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN} characters/token · skill catalog metadata only · config/plugin files are proxies · "
-            "runtime tool schemas are unavailable · cumulative % is the share of this estimate"
-        ),
-        caption_style="dim",
-        header_style="bold cyan",
-        show_lines=False,
-    )
-    table.add_column("Source", style="bold", overflow="fold")
-    table.add_column("Files", justify="right")
-    table.add_column("Words", justify="right")
-    table.add_column("Est. tokens", justify="right")
-    table.add_column("Cumulative", justify="right")
-    table.add_column("Cum. %", justify="right")
-
-    estimates: list[tuple[ContextDefinitionSource, int, int, int]] = []
+def estimate_context_definitions(*, report: DoctorReport) -> tuple[ContextDefinitionEstimate, ...]:
+    estimates: list[ContextDefinitionEstimate] = []
     paths_by_source = _definition_paths(report=report)
     for source in _CONTEXT_DEFINITION_SOURCES:
         paths = paths_by_source[source]
@@ -102,21 +98,41 @@ def context_estimate_table(*, report: DoctorReport) -> Table:
             character_count += path_character_count
             word_count += path_word_count
         estimated_tokens = (character_count + DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN - 1) // DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN
-        estimates.append((source, len(paths), word_count, estimated_tokens))
-    estimates.sort(key=lambda estimate: (-estimate[3], _CONTEXT_DEFINITION_SOURCES.index(estimate[0])))
+        estimates.append(
+            ContextDefinitionEstimate(source=source, file_count=len(paths), word_count=word_count, estimated_tokens=estimated_tokens)
+        )
+    estimates.sort(key=lambda estimate: (-estimate.estimated_tokens, _CONTEXT_DEFINITION_SOURCES.index(estimate.source)))
+    return tuple(estimates)
 
-    total_files = sum(file_count for _, file_count, _, _ in estimates)
-    total_words = sum(word_count for _, _, word_count, _ in estimates)
-    total_tokens = sum(estimated_tokens for _, _, _, estimated_tokens in estimates)
+
+def context_estimate_table(*, report: DoctorReport) -> Table:
+    table = Table(
+        title="Estimated context definition overhead",
+        caption=CONTEXT_ESTIMATE_CAPTION,
+        caption_style="dim",
+        header_style="bold cyan",
+        show_lines=False,
+    )
+    table.add_column("Source", style="bold", overflow="fold")
+    table.add_column("Files", justify="right")
+    table.add_column("Words", justify="right")
+    table.add_column("Est. tokens", justify="right")
+    table.add_column("Cumulative", justify="right")
+    table.add_column("Cum. %", justify="right")
+
+    estimates = estimate_context_definitions(report=report)
+    total_files = sum(estimate.file_count for estimate in estimates)
+    total_words = sum(estimate.word_count for estimate in estimates)
+    total_tokens = sum(estimate.estimated_tokens for estimate in estimates)
     cumulative_tokens = 0
-    for source, file_count, word_count, estimated_tokens in estimates:
-        cumulative_tokens += estimated_tokens
+    for estimate in estimates:
+        cumulative_tokens += estimate.estimated_tokens
         cumulative_percentage = cumulative_tokens / total_tokens * 100.0 if total_tokens > 0 else 0.0
         table.add_row(
-            source,
-            f"{file_count:,}",
-            f"{word_count:,}",
-            f"{estimated_tokens:,}",
+            estimate.source,
+            f"{estimate.file_count:,}",
+            f"{estimate.word_count:,}",
+            f"{estimate.estimated_tokens:,}",
             f"{cumulative_tokens:,}",
             f"{cumulative_percentage:.1f}%",
         )

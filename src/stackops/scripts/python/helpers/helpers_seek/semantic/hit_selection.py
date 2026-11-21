@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_seek.semantic.constants import SEMANTIC_PREVIEW_SIZE_PERCENT
+from stackops.scripts.python.helpers.helpers_seek.semantic.constants import (
+    SEMANTIC_PREVIEW_SIZE_PERCENT,
+    TV_CANCELLED_EXIT_CODE,
+    TV_PREVIEW_CHROME_COLUMNS,
+)
 from stackops.scripts.python.helpers.helpers_seek.semantic.semantic_models import SemanticHit
 
 
@@ -20,34 +24,48 @@ def limit_distinct_hits(hits: list[SemanticHit], limit: int) -> list[SemanticHit
 
 
 def choose_and_open_hit(hits: list[SemanticHit], edit: bool) -> None:
+    import shutil
     import subprocess
+    import tempfile
 
-    from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+    from stackops.utils.cli_utils.interaction import require_interactive
 
+    require_interactive("Interactive selection")
     working_directory = Path.cwd().resolve()
-    hits_by_label: dict[str, SemanticHit] = {}
-    previews_by_label: dict[str, str] = {}
-    for hit in hits:
+    preview_width = shutil.get_terminal_size().columns * SEMANTIC_PREVIEW_SIZE_PERCENT // 100 - TV_PREVIEW_CHROME_COLUMNS
+    rows: list[str] = []
+    for index, hit in enumerate(hits):
         display_path = hit.path.relative_to(working_directory) if hit.path.is_relative_to(working_directory) else hit.path
-        location = f"""{display_path}:{hit.start_line}-{hit.end_line}"""
-        label = f"""{location}  {hit.metric} {hit.value:.3f}"""
-        hits_by_label[label] = hit
-        previews_by_label[label] = f"""{location}
-{hit.metric}: {hit.value:.4f}
-
-{hit.content}"""
-
-    suffixes = {hit.path.suffix for hit in hits}
-    selected_label = choose_from_dict_with_preview(
-        options_to_preview_mapping=previews_by_label,
-        extension=suffixes.pop() if len(suffixes) == 1 else None,
-        multi=False,
-        preview_size_percent=SEMANTIC_PREVIEW_SIZE_PERCENT,
-    )
-    if selected_label is None:
+        label = f"""{display_path}:{hit.start_line}-{hit.end_line}  {hit.metric} {hit.value:.3f}"""
+        rows.append(f"""{index}\t{hit.path}\t{hit.start_line}\t{hit.end_line}\t{hit.focus_line}\t{label}""")
+    with tempfile.TemporaryDirectory(prefix="seek_semantic_") as temp_dir:
+        entries_path = Path(temp_dir) / "entries.tsv"
+        entries_path.write_text("\n".join(rows), encoding="utf-8")
+        completed = subprocess.run(
+            [
+                "tv",
+                "--source-command",
+                f"""bat "{entries_path}" --style=plain --color=never --paging=never""",
+                "--source-display",
+                "{split:\t:5}",
+                "--source-output",
+                "{split:\t:0}",
+                "--preview-command",
+                f"""bat "{{split:\t:1}}" --color=always --style=numbers --wrap=character --terminal-width {preview_width} --highlight-line {{split:\t:4}} --line-range {{split:\t:2}}:{{split:\t:3}}""",
+                "--preview-size",
+                str(SEMANTIC_PREVIEW_SIZE_PERCENT),
+            ],
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+            check=False,
+        )
+    if completed.returncode not in (0, TV_CANCELLED_EXIT_CODE):
+        raise SystemExit(completed.returncode)
+    selected_index = completed.stdout.strip()
+    if selected_index == "":
         print("❓ Selection cancelled.")
         return
-    selected_hit = hits_by_label[selected_label]
+    selected_hit = hits[int(selected_index)]
     selected_location = f"""{selected_hit.path}:{selected_hit.focus_line}"""
     if edit:
         subprocess.run(["hx", selected_location], check=True)

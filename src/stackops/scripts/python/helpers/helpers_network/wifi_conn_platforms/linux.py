@@ -7,6 +7,7 @@ from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common 
     WifiNetwork,
     console,
     deduplicate_networks,
+    describe_command_failure,
     render_networks_table,
     run_text_command,
 )
@@ -146,9 +147,8 @@ def get_available_networks() -> list[WifiNetwork]:
 
     try:
         device_name = _ensure_linux_wifi_ready()
-        run_text_command(["nmcli", "device", "wifi", "rescan"], check=True)
         result = run_text_command(
-            ["nmcli", "-t", "-f", "SSID,SIGNAL", "device", "wifi", "list", "ifname", device_name],
+            ["nmcli", "-t", "-f", "SSID,SIGNAL", "device", "wifi", "list", "ifname", device_name, "--rescan", "yes"],
             check=True,
         )
         networks = _parse_linux_wifi_scan_output(result.stdout)
@@ -157,7 +157,7 @@ def get_available_networks() -> list[WifiNetwork]:
                 f"[yellow]⚠️  WiFi scan completed on '{device_name}', but NetworkManager did not report any visible networks[/yellow]"
             )
     except subprocess.CalledProcessError as error:
-        raise RuntimeError(f"WiFi scan failed with exit code {error.returncode}.") from None
+        raise RuntimeError(f"WiFi scan failed with {describe_command_failure(error)}") from None
     except Exception as error:
         raise RuntimeError(f"WiFi scan failed: {error}") from error
 
@@ -189,7 +189,7 @@ def connect_to_new_network(ssid: str, password: str) -> None:
             create_new_connection(ssid, ssid, password)
             connect(ssid, ssid)
     except subprocess.CalledProcessError as error:
-        raise RuntimeError(f"WiFi connection failed with exit code {error.returncode}.") from None
+        raise RuntimeError(f"WiFi connection failed with {describe_command_failure(error)}") from None
 
 
 def display_available_networks() -> None:
@@ -255,7 +255,7 @@ def create_new_connection(name: str, ssid: str, password: str) -> None:
 
         console.print("[green]✅ Connection created successfully![/green]\n")
     except subprocess.CalledProcessError as error:
-        raise RuntimeError(f"WiFi profile creation failed with exit code {error.returncode}.") from None
+        raise RuntimeError(f"WiFi profile creation failed with {describe_command_failure(error)}") from None
     except Exception as error:
         console.print(f"[red]❌ Unexpected error: {error}[/red]")
         raise

@@ -10,7 +10,7 @@ def browser_launch_lock() -> Generator[None, None, None]:
     BROWSER_LAUNCH_LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
     with BROWSER_LAUNCH_LOCK_PATH.open("a+b") as lock_file:
         if sys.platform == "win32":
-            import msvcrt
+            import msvcrt  # pylint: disable=import-error  # Windows-only stdlib module, unresolvable on other platforms
 
             if lock_file.tell() == 0:
                 lock_file.write(b"\0")

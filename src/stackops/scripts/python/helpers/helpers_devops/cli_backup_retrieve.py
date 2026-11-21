@@ -144,7 +144,7 @@ def main_backup_retrieve(
     bu_file = read_backup_config(source=source)
     if bu_file is None:
         raise ValueError(describe_missing_backup_config(source=source))
-    cloud_override = cloud.strip() if cloud and cloud.strip() else None
+    cloud_override = None if cloud is None else cloud.strip() or None
     fallback_cloud: str | None = None
     if use_link_retrieve:
         cloud_message = "🔗 LINK RETRIEVE MODE\n⬇️  Using share_url downloads instead of rclone."

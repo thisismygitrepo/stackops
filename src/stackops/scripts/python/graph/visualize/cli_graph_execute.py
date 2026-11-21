@@ -71,7 +71,7 @@ def build_command_line(entry: CliGraphSearchEntry) -> str | None:
             )
         ]
         for index, option in enumerate(options):
-            set_tokens = option_tokens.get(index)
+            set_tokens = option_tokens.get(index, [])
             menu.append(
                 Choice(
                     title=f"""{"●" if set_tokens else "○"} {", ".join([*option.opts, *option.secondary_opts])}{" (required)" if option.required else ""}{f"  → {_join_tokens(tokens=set_tokens)}" if set_tokens else ""}""",

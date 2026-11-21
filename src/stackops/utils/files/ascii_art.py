@@ -61,7 +61,7 @@ def get_art(comment: str | None = None, artlib: BOX_OR_CHAR | None = None, style
             comment = "stackops"
     if artlib is None:
         artlib = random.choice(['boxes', 'cowsay'])
-    to_file = '' if not file else f'> {file}'
+    to_file = '' if file is None else f'> {file}'
     if artlib == 'boxes':
         if style is None:
             style = random.choice(BoxStyles.__dict__[super_style or random.choice(['language', 'scene', 'character'])])

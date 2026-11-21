@@ -113,7 +113,7 @@ def get_release_info(
 ) -> ReleaseInfo | None:
     """Return sanitized release information for the requested repository."""
     release_data = fetch_github_release_data(username, repo_name, version)
-    if not release_data:
+    if release_data is None:
         return None
     return extract_release_info(release_data)
 

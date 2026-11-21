@@ -1,0 +1,77 @@
+.view { max-width: 1120px; margin: 0 auto; padding: 28px 32px 48px; }
+.view-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 22px; }
+.view-head .glyph { display: grid; flex: none; place-items: center; width: 44px; height: 44px; font-size: 22px; background: var(--raised); border-radius: 11px; }
+.view-head h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.015em; }
+.view-head h1.mono { font-size: 19px; letter-spacing: 0; }
+.view-head .lede { margin-top: 3px; color: var(--text-secondary); max-width: 78ch; }
+.view-head .aside { display: flex; align-items: center; gap: 8px; margin-left: auto; padding-top: 4px; }
+.long-help { margin: -8px 0 22px; padding: 12px 14px; font: 13px/1.5 var(--sans); color: var(--text-secondary); white-space: pre-wrap; background: var(--plane); border-radius: var(--radius); }
+
+.section { margin-top: 28px; }
+.section:first-of-type { margin-top: 0; }
+.section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.section-head h2 { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.section-head .count { font-size: 12px; color: var(--text-muted); }
+.section-head .input { width: 220px; height: 28px; margin-left: auto; font-size: 12.5px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.card {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; align-items: start; align-content: start; padding: 14px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 11px; transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+}
+.card:hover { border-color: var(--border-strong); box-shadow: var(--shadow); transform: translateY(-1px); }
+.card .emoji { grid-row: span 2; display: grid; place-items: center; width: 34px; height: 34px; font-size: 17px; background: var(--raised); border-radius: 9px; }
+.card .title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.card .title .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .title .tail { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 11.5px; font-weight: 400; color: var(--text-muted); }
+.card .blurb { display: -webkit-box; overflow: hidden; font-size: 12.5px; color: var(--text-secondary); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.card.action .tail { color: var(--accent); }
+.card.busy { pointer-events: none; opacity: 0.6; }
+
+.hero { position: relative; margin-bottom: 26px; padding: 26px 28px; background: var(--plane); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(520px 200px at 8% -30%, var(--accent-wash), transparent 70%), radial-gradient(520px 220px at 96% 140%, var(--accent-wash), transparent 70%);
+}
+.hero h1 { position: relative; font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
+.hero p { position: relative; margin-top: 4px; color: var(--text-secondary); }
+.hero .facts { position: relative; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+
+.runs-list { border: 1px solid var(--border); border-radius: 11px; overflow: hidden; }
+.runs-list li { display: flex; align-items: center; gap: 10px; padding: 9px 14px; font-size: 13px; cursor: pointer; }
+.runs-list li + li { border-top: 1px solid var(--hairline); }
+.runs-list li:hover { background: var(--plane); }
+.runs-list code { flex: 1; overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.runs-list .when { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.empty { padding: 22px; font-size: 13px; color: var(--text-muted); text-align: center; border: 1px dashed var(--border-strong); border-radius: 11px; }
+
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px 20px; }
+.field { display: grid; gap: 5px; align-content: start; min-width: 0; }
+.field-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; min-height: 20px; }
+.field-head code { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.field-head code.alt { font-weight: 400; color: var(--text-muted); }
+.field-help { font-size: 12px; color: var(--text-muted); }
+.field.set .field-head code:first-child { color: var(--accent); }
+.field.toggle { grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+.field.toggle:hover { border-color: var(--border-strong); }
+.field.toggle.set { border-color: var(--accent); background: var(--accent-wash); }
+.field.toggle .switch { grid-row: span 2; margin-top: 2px; }
+.field.toggle.tri { cursor: default; grid-template-columns: minmax(0, 1fr) auto; }
+.field.toggle.tri .segmented { grid-row: span 2; align-self: center; }
+.toggles { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.choice-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.choice-chips button { height: 26px; padding: 0 10px; font-size: 12.5px; color: var(--text-secondary); border: 1px solid var(--border-strong); border-radius: 999px; }
+.choice-chips button[aria-pressed="true"] { color: #fff; background: var(--accent-solid); border-color: transparent; }
+.form-note { padding: 12px 14px; font-size: 13px; color: var(--text-secondary); background: var(--plane); border-radius: var(--radius); }
+
+.runbar {
+  position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 8px; margin: 28px -32px -48px; padding: 12px 32px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent); border-top: 1px solid var(--hairline); backdrop-filter: blur(10px);
+}
+.runbar .preview {
+  display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; height: 34px; padding: 0 4px 0 12px; font: 12.5px var(--mono);
+  background: var(--plane); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.runbar .preview .prompt { color: var(--text-muted); }
+.runbar .preview code { flex: 1; overflow-x: auto; white-space: pre; scrollbar-width: none; }
+.runbar .problem { font-size: 12.5px; color: var(--bad); white-space: nowrap; }

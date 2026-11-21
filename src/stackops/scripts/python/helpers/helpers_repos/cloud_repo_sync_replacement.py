@@ -17,7 +17,7 @@ def _replacement_repository_head(repo_root: Path) -> str | None:
             raise RuntimeError(f"Replacement repository refers to external Git metadata or a different worktree: {repo_root}")
         if repo.is_dirty(untracked_files=True):
             raise RuntimeError(f"Replacement repository has uncommitted changes: {repo_root}")
-        return repo.head.commit.hexsha if repo.head.is_valid() else None
+        return str(repo.head.commit.hexsha) if repo.head.is_valid() else None
 
 
 def overwrite_local_with_remote(repo_local_root: Path, repo_remote_root: Path) -> None:

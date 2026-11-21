@@ -6,6 +6,7 @@ from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common 
     WifiNetwork,
     console,
     deduplicate_networks,
+    describe_command_failure,
     render_networks_table,
     run_text_command,
 )
@@ -44,7 +45,7 @@ def get_available_networks() -> list[WifiNetwork]:
         result = run_text_command([_AIRPORT_BINARY, "-s"], check=True)
         networks = _parse_airport_scan_output(result.stdout)
     except subprocess.CalledProcessError as error:
-        raise RuntimeError(f"WiFi scan failed with exit code {error.returncode}.") from None
+        raise RuntimeError(f"WiFi scan failed with {describe_command_failure(error)}") from None
     except Exception as error:
         raise RuntimeError(f"WiFi scan failed: {error}") from error
 

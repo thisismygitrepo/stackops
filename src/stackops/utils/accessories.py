@@ -12,7 +12,7 @@ def randstr(length: int = 10, lower: bool = True, upper: bool = True, digits: bo
     if noun:
         import randomname
 
-        return randomname.get_name()
+        return str(randomname.get_name())
     import string
     import random
 

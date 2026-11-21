@@ -41,7 +41,7 @@ def choose_existing_session_names(msg: str) -> TraceSessionChoice:
 
 
 def attach_session_script(name: str, tab: TabEntry | None, pane: PaneEntry | None) -> str:
-    current_session = os.environ.get("ZELLIJ_SESSION_NAME")
+    current_session = os.environ.get("ZELLIJ_SESSION_NAME", "")
     focus_args: list[str] = []
     switch_args = ["zellij", "action", "switch-session"]
     if pane is not None:
@@ -73,7 +73,7 @@ def new_session_script(kill_all: bool, sessions: list[SessionEntry]) -> str:
     while f"""session-{session_number}""" in existing_names:
         session_number += 1
     name = f"""session-{session_number}"""
-    current_session = os.environ.get("ZELLIJ_SESSION_NAME")
+    current_session = os.environ.get("ZELLIJ_SESSION_NAME", "")
     running = sorted((session for session in sessions if not session.exited), key=lambda session: session.name == current_session)
     kill_commands = [shell_command(["zellij", "kill-session", "--", session.name]) for session in running if kill_all]
     if current_session:

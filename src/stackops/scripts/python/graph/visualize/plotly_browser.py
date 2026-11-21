@@ -107,8 +107,8 @@ Set BROWSER_PATH to a working non-snap Chrome/Chromium executable and retry."""
 
 
 def _plotly_browser_cache_root() -> Path:
-    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
-    cache_root = Path(xdg_cache_home).expanduser() if xdg_cache_home else Path.home().joinpath(".cache")
+    xdg_cache_home = os.environ.get("XDG_CACHE_HOME", "")
+    cache_root = Path(xdg_cache_home).expanduser() if xdg_cache_home != "" else Path.home().joinpath(".cache")
     return cache_root.joinpath("stackops", "plotly-browser")
 
 
@@ -133,7 +133,7 @@ def _downloaded_browser_relative_path() -> Path | None:
     from choreographer.cli._cli_utils import get_google_supported_platform_string
 
     platform_string = get_google_supported_platform_string()
-    if not platform_string:
+    if platform_string is None:
         return None
     if platform_string.startswith("linux"):
         return Path(rf"chrome-{platform_string}").joinpath("chrome")

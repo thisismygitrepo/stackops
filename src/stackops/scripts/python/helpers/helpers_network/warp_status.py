@@ -26,7 +26,7 @@ def _flatten_reason(reason: object) -> str | None:
 
 def parse_warp_status(raw_output: str) -> WarpStatus:
     match json.loads(raw_output):
-        case {"code": str(code), "error": str(error)}:
+        case {"code": str() as code, "error": str() as error}:
             return WarpStatus(state="daemon_down", detail=f"""{code}: {error}""")
         case {"status": "Unable", "reason": {"RegistrationMissing": cause}}:
             return WarpStatus(state="registration_missing", detail=_flatten_reason(cause))
@@ -44,7 +44,7 @@ def parse_warp_status(raw_output: str) -> WarpStatus:
 
 def parse_warp_rejection(raw_output: str) -> WarpRejection:
     match json.loads(raw_output):
-        case {"code": str(code), "error": str(error)}:
+        case {"code": str() as code, "error": str() as error}:
             return WarpRejection(code=code, message=error)
         case _:
             raise ValueError(f"""Unrecognized warp-cli error output: {raw_output}""")

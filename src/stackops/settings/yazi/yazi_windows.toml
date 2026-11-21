@@ -5,24 +5,24 @@ ratio = [1, 3, 5]
 
 [opener]
 system_default = [
-  { run = "cmd /C start \"\" \"%1\"", desc = "System Default (Windows)", for = "windows", block = false, orphan = false }
+  { run = "cmd /C start \"\" %s1", desc = "System Default (Windows)", for = "windows", block = false, orphan = false }
 ]
 # Edit files in your editor (replace "code" with your editor if you like)
 edit = [
-  { run = "code \"%*\"", desc = "VS Code (Editor)", block = true, orphan = false, for = "windows" }
+  { run = "code %s", desc = "VS Code (Editor)", block = true, orphan = false, for = "windows" }
 ]
 helix = [
-  { run = "hx \"%*\"", desc = "Helix (Editor)", block = true, orphan = false, for = "windows" }
+  { run = "hx %s", desc = "Helix (Editor)", block = true, orphan = false, for = "windows" }
 ]
 
 # Play media files
 play = [
-  { run = "start \"\" \"%*\"", desc = "System Default (Media)", block = false, orphan = false, for = "windows" }
+  { run = "start \"\" %s", desc = "System Default (Media)", block = false, orphan = false, for = "windows" }
 ]
 
 # Open files/folders with system default program/explorer
 open = [
-  { run = "start \"\" \"%1\"", desc = "System Default (Open)", block = false, orphan = false, for = "windows" }
+  { run = "start \"\" %s1", desc = "System Default (Open)", block = false, orphan = false, for = "windows" }
 ]
 
 

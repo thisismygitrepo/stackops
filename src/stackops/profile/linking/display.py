@@ -3,7 +3,7 @@ import subprocess
 from collections import Counter
 from itertools import takewhile
 from pathlib import Path
-from typing import Final, Literal, assert_never, get_args
+from typing import Final, Literal, assert_never, cast, get_args
 
 from rich.console import Console
 from rich.text import Text
@@ -14,7 +14,7 @@ from stackops.profile.linking.options import DIRECTION_STRICT
 
 type SyncOutcome = Literal["failed", "replaced", "moved", "new", "unchanged"]
 
-OUTCOMES_BY_IMPORTANCE: Final[tuple[SyncOutcome, ...]] = get_args(SyncOutcome.__value__)
+OUTCOMES_BY_IMPORTANCE: Final[tuple[SyncOutcome, ...]] = cast(tuple[SyncOutcome, ...], get_args(SyncOutcome.__value__))  # pylint: disable=no-member  # PEP 695 aliases expose __value__.
 
 
 def classify_action(action: ActionType) -> SyncOutcome:

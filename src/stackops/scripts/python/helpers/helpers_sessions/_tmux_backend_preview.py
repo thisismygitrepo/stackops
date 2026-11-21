@@ -271,7 +271,7 @@ def build_preview(
     lines.extend(_render_process_summary_table(classified_panes_by_window=classified_panes_by_window))
     lines.extend(_render_window_summary_table(windows))
     lines.extend(_render_pane_details_table(windows, classified_panes_by_window))
-    if pane_warning:
+    if pane_warning is not None:
         lines.append(f"> ⚠ pane query warning: {pane_warning}")
     return "\n".join(lines)
 
@@ -298,7 +298,7 @@ def build_window_preview(
     ]
     lines.extend(_render_process_summary_table(classified_panes_by_window=classified_panes_by_window))
     lines.extend(_render_window_pane_details_table(classified_panes=classified_panes))
-    if pane_warning:
+    if pane_warning is not None:
         lines.append(f"> ⚠ pane query warning: {pane_warning}")
     return "\n".join(lines)
 

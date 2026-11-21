@@ -93,7 +93,6 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     script = """
 ya pkg add 'ndtoan96/ouch'  # make ouch default previewer in yazi for compressed files
 ya pkg add 'AnirudhG07/rich-preview'  # rich-cli based previewer for yazi
-ya pkg add 'stelcodes/bunny'
 ya pkg add 'Tyarel8/goto-drives'
 ya pkg add 'uhs-robert/sshfs'
 ya pkg add 'boydaihungst/file-extra-metadata'

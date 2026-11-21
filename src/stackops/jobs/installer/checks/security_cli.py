@@ -5,6 +5,7 @@ import typer
 
 from stackops.jobs.installer.checks.constants import SCAN_HELP, SECURITY_RECORDS_ROOT
 from stackops.jobs.installer.checks.history_cli import export, history, report, selected_run
+from stackops.jobs.installer.checks.status_cli import status
 
 
 def _run_scan(app_names: list[str] | None, path_value: str | None, record: bool, upload: bool, concurrency: int | None, records_dir: str) -> None:
@@ -76,12 +77,17 @@ def list_apps(
         app_names = parse_apps_argument(apps)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    apps_to_scan = collect_apps_to_scan(app_names)
     if json_output:
+        import contextlib
         import json
+        import sys
 
+        # Gathering the apps prints progress lines; they go to stderr so that stdout holds only the JSON.
+        with contextlib.redirect_stdout(sys.stderr):
+            apps_to_scan = collect_apps_to_scan(app_names)
         typer.echo(json.dumps([{"name": path.stem, "version": version, "path": str(path)} for path, version in apps_to_scan]))
         return
+    apps_to_scan = collect_apps_to_scan(app_names)
     if not apps_to_scan:
         typer.echo("No matching installed CLI apps found.", err=True)
         raise typer.Exit(code=1)
@@ -128,6 +134,8 @@ def get_app() -> typer.Typer:
                       add_help_option=True, add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})
     app.command(name="scan", help=SCAN_HELP, no_args_is_help=True)(scan)
     app.command(name="s", help=SCAN_HELP, hidden=True, no_args_is_help=True)(scan)
+    app.command(name="status", help="🛡️ <t> Show installed apps with their latest scan verdict")(status)
+    app.command(name="t", hidden=True)(status)
     app.command(name="list", help="📋 <l> List installed apps")(list_apps)
     app.command(name="l", hidden=True)(list_apps)
     app.command(name="upload", help="📤 <u> Upload a local file", no_args_is_help=True)(upload_file)

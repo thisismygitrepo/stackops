@@ -58,7 +58,7 @@ def link_wsl_and_windows_home(
 
 def connect_wifi(
     ssid: Annotated[str | None, typer.Option("-n", "--ssid", help="Exact SSID, or configured WiFi login name when no password source is supplied.")] = None,
-    manual: Annotated[bool, typer.Option("-m", "--manual", help="🔍 Manual network selection mode")] = False,
+    interactive: Annotated[bool, typer.Option("-i", "--interactive", help="🔍 Pick a network interactively from the scanned list")] = False,
     list_: Annotated[bool, typer.Option("-l", "--list", help="📡 List available networks only")] = False,
     password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read the network password from a file; '-' reads stdin.")] = None,
     password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the network password.")] = None,
@@ -70,18 +70,18 @@ def connect_wifi(
     from stackops.utils.cli_utils.interaction import require_interactive
     from stackops.utils.cli_utils.secret_input import read_secret_input
 
-    if list_ and (ssid is not None or manual or password_file is not None or password_env is not None):
+    if list_ and (ssid is not None or interactive or password_file is not None or password_env is not None):
         raise typer.BadParameter("--list cannot be combined with connection options.")
-    if manual:
+    if interactive:
         if ssid is not None or password_file is not None or password_env is not None or output_json:
-            raise typer.BadParameter("--manual cannot be combined with an SSID, password source, or --json.")
+            raise typer.BadParameter("--interactive cannot be combined with an SSID, password source, or --json.")
         require_interactive("WiFi network selection; use --ssid and a password source")
-    if not list_ and not manual and not ssid:
-        raise typer.BadParameter("Provide --ssid, --manual, or --list.")
+    if not list_ and not interactive and not ssid:
+        raise typer.BadParameter("Provide --ssid, --interactive, or --list.")
     if password_file is not None and password_env is not None:
         raise typer.BadParameter("Choose one of --password-file and --password-env.")
 
-    from stackops.scripts.python.helpers.helpers_network.wifi_conn import connect_to_new_network, get_available_networks, manual_network_selection, try_config_connection
+    from stackops.scripts.python.helpers.helpers_network.wifi_conn import connect_to_new_network, get_available_networks, interactive_network_selection, try_config_connection
     from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import render_networks_table
 
     try:
@@ -92,8 +92,8 @@ def connect_wifi(
             else:
                 render_networks_table(networks, title="Available WiFi Networks")
             return
-        if manual:
-            if not manual_network_selection():
+        if interactive:
+            if not interactive_network_selection():
                 raise typer.Exit(1)
         elif ssid is not None:
             if password_file is not None or password_env is not None:

@@ -117,7 +117,7 @@ def lambda_to_python_script(lmb: Callable[[], Any],
     
     # Also capture closure variables from the lambda
     closure_dict: dict[str, Any] = {}
-    if lmb.__closure__:
+    if lmb.__closure__ is not None:
         code_obj = lmb.__code__
         freevars = code_obj.co_freevars
         for i, var_name in enumerate(freevars):
@@ -132,7 +132,7 @@ def lambda_to_python_script(lmb: Callable[[], Any],
     except AttributeError:
         func_ref_src = _ast.get_source_segment(src, body.func) or ""
     try:
-        func_obj = eval(func_ref_src, eval_namespace)
+        func_obj = eval(func_ref_src, eval_namespace)  # pylint: disable=eval-used  # evaluates the caller's own lambda source in its namespace
     except Exception as e:
         raise RuntimeError(f"Could not resolve function reference '{func_ref_src}': {e}") from e
 
@@ -153,7 +153,7 @@ def lambda_to_python_script(lmb: Callable[[], Any],
         if kw.arg is None:
             # **kwargs in call — evaluate to dict and merge
             try:
-                val = eval(compile(_ast.Expression(kw.value), "<lambda_eval>", "eval"), eval_namespace)
+                val = eval(compile(_ast.Expression(kw.value), "<lambda_eval>", "eval"), eval_namespace)  # pylint: disable=eval-used  # evaluates the caller's own lambda source in its namespace
                 if isinstance(val, dict):
                     call_kwargs.update(val)
                 else:
@@ -162,7 +162,7 @@ def lambda_to_python_script(lmb: Callable[[], Any],
                 raise RuntimeError(f"Failed to evaluate **kwargs expression: {e}") from e
         else:
             try:
-                val = eval(compile(_ast.Expression(kw.value), "<lambda_eval>", "eval"), eval_namespace)
+                val = eval(compile(_ast.Expression(kw.value), "<lambda_eval>", "eval"), eval_namespace)  # pylint: disable=eval-used  # evaluates the caller's own lambda source in its namespace
                 call_kwargs[kw.arg] = val
             except Exception as e:
                 raise RuntimeError(f"Failed to evaluate value for kw '{kw.arg}': {e}") from e

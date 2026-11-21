@@ -30,6 +30,6 @@ def upload_app(path: Path, expected_sha256: str | None) -> str:
             show_progress=False,
             transfers=SECURITY_UPLOAD_TRANSFERS,
         )
-        if not share_url:
+        if share_url is None:
             raise RuntimeError(f"""No sharing URL returned for {remote_path.as_posix()}.""")
         return share_url

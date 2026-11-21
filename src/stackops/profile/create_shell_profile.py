@@ -36,11 +36,11 @@ def get_nu_shell_profile_path() -> Path:
 
     system = platform.system()
     console = Console()
-    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME", "")
     if xdg_config_home and Path(xdg_config_home).is_absolute():
         profile_path = Path(xdg_config_home).joinpath("nushell")
     elif system == "Windows":
-        appdata = os.environ.get("APPDATA")
+        appdata = os.environ.get("APPDATA", "")
         config_root = Path(appdata) if appdata else Path.home().joinpath("AppData", "Roaming")
         profile_path = config_root.joinpath("nushell")
     elif system == "Linux":

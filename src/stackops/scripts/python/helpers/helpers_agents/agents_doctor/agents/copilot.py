@@ -47,7 +47,7 @@ def collect(*, context: DoctorContext) -> tuple[DoctorResource, ...]:
         ("local", context.project_root / ".github/skills", "Copilot project skill"),
     )
     plugin_roots: tuple[tuple[DoctorOrigin, Path, str], ...] = (
-        ("global", copilot_home / "plugins", "Copilot user plugin"),
+        ("global", copilot_home / "installed-plugins", "Copilot user plugin"),
         ("local", context.project_root / ".github/plugins", "Copilot project plugin"),
     )
     return collect_standard_resources(

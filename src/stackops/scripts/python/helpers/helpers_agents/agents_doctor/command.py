@@ -7,6 +7,8 @@ from typing import Final, cast, get_args
 from rich.console import Console
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.html_report import show_doctor_html_report
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.mcp_servers import declared_mcp_servers
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorReport, DoctorResourceFocus
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.registry import resolve_doctor_definitions
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.rich_output import render_doctor_reports
@@ -32,7 +34,7 @@ def resolve_resource_focuses(*, requested_resources: str) -> tuple[DoctorResourc
     return resource_focuses
 
 
-def run_doctor(*, requested_agent: str, working_directory: Path, requested_resources: str, json_output: bool) -> bool:
+def run_doctor(*, requested_agent: str, working_directory: Path, requested_resources: str, json_output: bool, html_output: bool) -> bool:
     definitions = resolve_doctor_definitions(requested_agent=requested_agent)
     resource_focuses = resolve_resource_focuses(requested_resources=requested_resources)
     console = Console(stderr=json_output)
@@ -56,6 +58,7 @@ def run_doctor(*, requested_agent: str, working_directory: Path, requested_resou
             {
                 "agent": report.definition.agent,
                 "display_name": report.definition.display_name,
+                "support_level": report.definition.support_level,
                 "directory": str(report.context.working_directory),
                 "project_root": str(report.context.project_root),
                 "executable": {
@@ -78,11 +81,16 @@ def run_doctor(*, requested_agent: str, working_directory: Path, requested_resou
                     for resource in report.resources
                     if "all" in resource_focuses or resource.kind in resource_focuses or resource.is_mcp and "mcp" in resource_focuses
                 ],
+                "mcp_servers": declared_mcp_servers(report=report) if "all" in resource_focuses or "mcp" in resource_focuses else [],
+                "coverage_notes": report.definition.notes,
                 "notes": report.inspection_notes,
                 "errors": report.inspection_errors,
             }
             for report in reports
         ], ensure_ascii=False))
+    elif html_output:
+        report_path = show_doctor_html_report(reports=reports, resource_focuses=resource_focuses)
+        console.print(f"""HTML report: {report_path}""", markup=False, highlight=False, soft_wrap=True)
     else:
         render_doctor_reports(console=console, reports=reports, resource_focuses=resource_focuses)
     return not any(report.inspection_errors for report in reports)

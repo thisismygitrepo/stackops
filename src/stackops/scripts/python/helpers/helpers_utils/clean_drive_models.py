@@ -11,6 +11,7 @@ type Anchor = Literal[
     "home",
     "xdg_cache",
     "xdg_data",
+    "xdg_config",
     "mac_caches",
     "local_app_data",
     "temp",
@@ -21,6 +22,7 @@ type Anchor = Literal[
     "filesystem_root",
 ]
 type EstimateKind = Literal["exact", "at_least", "at_most", "approximate"]
+type ActionKind = Literal["paths", "command", "projects"]
 type TargetStatus = Literal["ready", "empty", "missing_tool", "failed"]
 type OutcomeStatus = Literal["cleaned", "partial", "failed", "skipped"]
 
@@ -31,6 +33,7 @@ class CleanCategory(StrEnum):
     SYSTEM = "system"
     TRASH = "trash"
     PROJECTS = "projects"
+    STACKOPS = "stackops"
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +45,7 @@ class PathGlob:
 @dataclass(frozen=True, slots=True)
 class PathCleanup:
     globs: tuple[PathGlob, ...]
+    excluded_globs: tuple[PathGlob, ...]
     min_age_days: int | None
     requires_root: bool
 

@@ -79,15 +79,10 @@ def choose_from_options[T](
         tv_out_path = options_txt_path.with_name(options_txt_path.stem + "_out.txt")
         if preview is None:
             preview_line = ""
-        elif preview == "bat":
+        else:
             preview_line = (
                 r"""--preview-command "bat -n --color=always {}" --preview-size 70 """
             )
-        else:
-            console.print(Panel(f"❓ Unknown preview type: {preview}", title="Error", expand=False))
-            options_txt_path.unlink(missing_ok=True)
-            tv_out_path.unlink(missing_ok=True)
-            return None
         import platform
 
         if platform.system() == "Windows":

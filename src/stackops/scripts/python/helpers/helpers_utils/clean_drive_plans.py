@@ -86,6 +86,16 @@ def plan_journal() -> CommandPlan | PlanFailure:
     )
 
 
+def plan_ollama_model(*, model: str) -> CommandPlan | PlanFailure:
+    output = query_tool(("ollama", "list"))
+    if isinstance(output, PlanFailure):
+        return output
+    return _reported_plan(
+        output=output, pattern=rf"""^{re.escape(model)}(?::\S+)?\s+\S+\s+(\d+(?:\.\d+)?\s*[kKMGT]?B)\s""", estimate_kind="approximate",
+        clean=("ollama", "rm", model), retain_bytes=0,
+    )
+
+
 def plan_brew() -> CommandPlan | PlanFailure:
     output = query_tool(("brew", "cleanup", "--prune=all", "-s", "--dry-run"))
     if isinstance(output, PlanFailure):

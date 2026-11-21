@@ -27,9 +27,14 @@ def depoison(
         bool, typer.Option("--tui", "-t", help="Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.")
     ] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the reset plan and optional applied result as JSON.")] = False,
+    as_html: Annotated[
+        bool, typer.Option("--as-html", "-w", help="Write a navigable HTML preview of the reset plan and open it in the browser. Never applies changes.")
+    ] = False,
 ) -> None:
     if json_output and (interactive or tui):
         raise typer.BadParameter("--json cannot be combined with --interactive or --tui")
+    if as_html and (json_output or interactive or tui or apply):
+        raise typer.BadParameter("--as-html is a read-only preview and cannot be combined with --json, --interactive, --tui, or --apply.", param_hint="--as-html")
     if interactive or tui:
         from stackops.utils.cli_utils.interaction import require_interactive
 
@@ -64,6 +69,7 @@ def depoison(
             interactive=interactive,
             verbose=verbose,
             json_output=json_output,
+            html_output=as_html,
         ),
         in_global=True,
         import_module=False,
@@ -77,16 +83,17 @@ def depoison(
 
 def _run_depoison(
     *, agent: str, directory: str, scope: CleanupScope, resource: str, recursive: bool,
-    match: str | None, apply: bool, interactive: bool, verbose: bool, json_output: bool,
+    match: str | None, apply: bool, interactive: bool, verbose: bool, json_output: bool, html_output: bool,
 ) -> None:
-    from pathlib import Path
+    from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is serialized standalone via lambda_to_python_script
 
-    import typer
+    import typer  # pylint: disable=redefined-outer-name,reimported  # body is serialized standalone via lambda_to_python_script
     from rich.console import Console
     from rich.panel import Panel
     from rich.text import Text
 
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_apply import apply_cleanup_plan
+    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_html import show_cleanup_html_report
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_interactive import (
         CleanupSelection,
         choose_cleanup_action,
@@ -130,6 +137,10 @@ def _run_depoison(
                     diagnostics=tuple(diagnostic for item in inventories for diagnostic in item.diagnostics),
                 )
             plan = build_cleanup_plan(inventory=inventory, scope=selection.scope, match=selection.match, home_directory=context.home_directory)
+            if html_output:
+                report_path = show_cleanup_html_report(plan=plan, inventory=inventory, context=context, selection=selection)
+                console.print(f"""HTML report: {report_path}""", markup=False, highlight=False, soft_wrap=True)
+                raise SystemExit(1 if plan.blockers else 0)
             if json_output:
                 result = None
                 if apply and not plan.blockers:

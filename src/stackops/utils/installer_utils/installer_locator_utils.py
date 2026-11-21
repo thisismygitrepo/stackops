@@ -209,7 +209,7 @@ def find_move_delete_windows(downloaded_file_path: Path, tool_name: str | None, 
                 else:
                     exe = max(search_res, key=lambda x: x.stat().st_size)
                     print(f"✅ Selected largest executable ({round(exe.stat().st_size / 1024, 1)} KB): {exe}")
-        if rename_to and exe.name != rename_to:
+        if rename_to is not None and exe.name != rename_to:
             print(f"🏷️  Renaming '{exe.name}' to '{rename_to}'")
             exe = path_core.with_name(exe, name=rename_to, inplace=True)
 
@@ -269,7 +269,7 @@ def find_move_delete_linux(downloaded: Path, tool_name: str | None, delete: bool
             _raise_linux_executable_error(downloaded=downloaded, tool_name=tool_name, files=all_files, executable_files=executable_files)
 
     assert exe is not None
-    if rename_to and exe.name != rename_to:
+    if rename_to is not None and exe.name != rename_to:
         print(f"🏷️  Renaming '{exe.name}' to '{rename_to}'")
         exe = path_core.with_name(exe, name=rename_to, inplace=True)
 

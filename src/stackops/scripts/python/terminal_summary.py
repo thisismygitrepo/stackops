@@ -141,17 +141,17 @@ def _print_aoe_summary() -> None:
 
 
 def _aoe_session_detail_markdown(session: JsonObject) -> str:
-    summary = collect_aoe_summary(session)
+    aoe_summary = collect_aoe_summary(session)
     return "\n".join(
         [
-            f"# AoE Session: {summary.name}",
+            f"# AoE Session: {aoe_summary.name}",
             "",
             "**backend:** aoe",
-            f"**id:** {summary.session_id}",
-            f"**status:** {summary.status}",
-            f"**group:** {summary.group}",
-            f"**agent:** {summary.agent}",
-            f"**path:** {summary.path}",
+            f"**id:** {aoe_summary.session_id}",
+            f"**status:** {aoe_summary.status}",
+            f"**group:** {aoe_summary.group}",
+            f"**agent:** {aoe_summary.agent}",
+            f"**path:** {aoe_summary.path}",
         ]
     )
 

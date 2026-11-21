@@ -93,6 +93,6 @@ def print_autostart_report(
         console.print(build_autostart_table(visible, show_all=show_all))
         console.print("[dim]scope 'boot' = system startup; 'login' = user session. Event-triggered entries run when triggered.[/dim]")
     else:
-        console.print("No auto-start entries match the filters" if categories or scope or name or source else "No notable auto-start entries found")
+        console.print("No auto-start entries match the filters" if categories or scope or name_query or source_query else "No notable auto-start entries found")
     if not show_all and hidden_count:
         console.print(f"[dim]{hidden_count} standard OS services hidden; pass --all to include them.[/dim]")

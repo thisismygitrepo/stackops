@@ -771,6 +771,6 @@ def _extract_bearer_token_env_var(*, headers: dict[str, str], server_name: str) 
     braced_name = match.group("braced")
     plain_name = match.group("plain")
     bearer_token_env_var = braced_name if braced_name is not None else plain_name
-    if bearer_token_env_var is None:
+    if not isinstance(bearer_token_env_var, str):
         raise ValueError(f"Failed to resolve bearer token env var for server '{server_name}'")
     return bearer_token_env_var

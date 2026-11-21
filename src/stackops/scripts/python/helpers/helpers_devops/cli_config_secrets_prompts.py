@@ -28,7 +28,7 @@ def prompt_secret_login() -> Login:
     if account_name is not None:
         entry["accountName"] = account_name
     metadata = _prompt_string_map("login")
-    if metadata:
+    if metadata is not None:
         entry["metadata"] = metadata
     while True:
         entry["secrets"].append(_prompt_secret_record(secret_number=len(entry["secrets"]) + 1))
@@ -52,10 +52,10 @@ def _prompt_secret_record(*, secret_number: int) -> SecretRecord:
     if description is not None:
         secret["description"] = description
     rotation = _prompt_secret_rotation()
-    if rotation:
+    if rotation is not None:
         secret["rotation"] = rotation
     metadata = _prompt_string_map("secret")
-    if metadata:
+    if metadata is not None:
         secret["metadata"] = metadata
     return secret
 

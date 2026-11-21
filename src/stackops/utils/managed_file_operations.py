@@ -17,9 +17,10 @@ if TYPE_CHECKING:
 
 
 def _validate_schema_document() -> None:
-    import json
-    import sys
-    from typing import cast
+    # This body is serialized for a subprocess without the module globals.
+    import json  # pylint: disable=redefined-outer-name,reimported
+    import sys  # pylint: disable=redefined-outer-name,reimported
+    from typing import cast  # pylint: disable=redefined-outer-name,reimported
 
     import yaml
     from jsonschema.exceptions import ValidationError
@@ -102,7 +103,11 @@ def validate_managed_file(*, kind: ManagedFileKind, data_path: Path) -> None:
         "content": content,
         "yaml": spec.user_path.suffix in {".yaml", ".yml"},
     })
-    worker_source = lambda_to_python_script(lambda: _validate_schema_document(), in_global=True, import_module=False)
+    worker_source = lambda_to_python_script(
+        lambda: _validate_schema_document(),  # pylint: disable=unnecessary-lambda  # The helper parses the lambda's call expression.
+        in_global=True,
+        import_module=False,
+    )
     result = subprocess.run(
         ["uv", "run", "--no-project", "--python", sys.executable, "--with", "jsonschema", "python", "-c", worker_source],
         input=payload,

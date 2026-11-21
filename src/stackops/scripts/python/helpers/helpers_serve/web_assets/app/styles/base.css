@@ -1,0 +1,136 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f2f3fb;
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel-solid: #ffffff;
+  --well: rgba(18, 20, 43, 0.045);
+  --line: rgba(18, 20, 43, 0.09);
+  --line-strong: rgba(18, 20, 43, 0.17);
+  --ink: #12142b;
+  --ink-soft: #4d5174;
+  --ink-faint: #8a8eac;
+  --violet: #6a5cff;
+  --azure: #1ea7fd;
+  --mint: #12c99b;
+  --brand: linear-gradient(135deg, #6a5cff 0%, #1ea7fd 100%);
+  --brand-wash: linear-gradient(135deg, rgba(106, 92, 255, 0.13), rgba(30, 167, 253, 0.13));
+  --good: #0f9f6e;
+  --warn: #b96f00;
+  --bad: #d9365a;
+  --glow: 0 10px 30px -10px rgba(106, 92, 255, 0.55);
+  --shadow: 0 1px 2px rgba(18, 20, 43, 0.04), 0 14px 34px -16px rgba(18, 20, 43, 0.18);
+  --shadow-pop: 0 30px 90px -20px rgba(18, 20, 43, 0.4);
+  --aurora-opacity: 0.3;
+  --radius: 20px;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #090a13;
+    --panel: rgba(23, 25, 44, 0.62);
+    --panel-solid: #15172b;
+    --well: rgba(255, 255, 255, 0.05);
+    --line: rgba(255, 255, 255, 0.085);
+    --line-strong: rgba(255, 255, 255, 0.17);
+    --ink: #f1f2ff;
+    --ink-soft: #b3b7d6;
+    --ink-faint: #73789c;
+    --good: #34d6a0;
+    --warn: #f5b84a;
+    --bad: #ff6b88;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 18px 44px -18px rgba(0, 0, 0, 0.7);
+    --shadow-pop: 0 40px 110px -20px rgba(0, 0, 0, 0.85);
+    --aurora-opacity: 0.22;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; overflow: hidden; font: 14px/1.5 var(--sans); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p, ul, ol, dl, dd, pre, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; text-align: inherit; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+::selection { background: rgba(106, 92, 255, 0.28); }
+svg.icon { flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+code, kbd, .mono { font-family: var(--mono); }
+kbd { padding: 2px 6px; font-size: 11px; color: var(--ink-soft); background: var(--well); border: 1px solid var(--line); border-radius: 6px; }
+mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px; padding: 0 1px; }
+.dim { color: var(--ink-faint); }
+.num { font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+.link { color: var(--violet); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color 0.2s; }
+.link:hover { text-decoration-color: currentColor; }
+.path { font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.overline { font-size: 11.5px; font-weight: 650; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-faint); }
+.boot-note { position: relative; z-index: 1; display: grid; place-items: center; height: 100vh; color: var(--ink-soft); animation: breathe 1.6s ease-in-out infinite; }
+
+.aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+/* The glows are painted soft, not blurred: a blur filter on a moving layer, and a backdrop blur over one, are recomputed on every frame. */
+.aurora i {
+  --reach: 23vmax; position: absolute; width: calc(var(--reach) * 2 + 480px); height: calc(var(--reach) * 2 + 480px); margin: -240px; opacity: var(--aurora-opacity); will-change: transform;
+  background: radial-gradient(
+    closest-side, rgb(var(--tint)) calc(var(--reach) - 240px), rgb(var(--tint) / 0.977) calc(var(--reach) - 192px), rgb(var(--tint) / 0.933) calc(var(--reach) - 144px),
+    rgb(var(--tint) / 0.841) calc(var(--reach) - 96px), rgb(var(--tint) / 0.691) calc(var(--reach) - 48px), rgb(var(--tint) / 0.5) var(--reach), rgb(var(--tint) / 0.309) calc(var(--reach) + 48px),
+    rgb(var(--tint) / 0.159) calc(var(--reach) + 96px), rgb(var(--tint) / 0.067) calc(var(--reach) + 144px), rgb(var(--tint) / 0.023) calc(var(--reach) + 192px), rgb(var(--tint) / 0) 100%
+  );
+}
+.aurora i:nth-child(1) { --tint: 106 92 255; top: -20vmax; left: -10vmax; animation: drift-a 26s ease-in-out infinite alternate; }
+.aurora i:nth-child(2) { --tint: 30 167 253; right: -12vmax; bottom: -24vmax; animation: drift-b 32s ease-in-out infinite alternate; }
+.aurora i:nth-child(3) { --reach: 15vmax; --tint: 18 201 155; top: 28%; left: 46%; opacity: calc(var(--aurora-opacity) * 0.55); animation: drift-c 38s ease-in-out infinite alternate; }
+.aurora::after {
+  content: ""; position: absolute; inset: 0; background-image: radial-gradient(var(--line-strong) 1px, transparent 1px); background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 75%); mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 75%); opacity: 0.6;
+}
+
+.rise { animation: rise 0.6s var(--smooth) backwards; animation-delay: calc(var(--i, 0) * 38ms); }
+.enter { animation: view-in 0.5s var(--smooth) backwards; }
+.pulse { animation: pulse 0.7s var(--spring); }
+.bump { animation: bump 0.45s var(--spring); }
+.lit { position: relative; transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.35s var(--smooth), box-shadow 0.3s, border-color 0.3s, background 0.3s; }
+.lit::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.35s;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(106, 92, 255, 0.2), transparent 65%);
+}
+.lit:hover::before { opacity: 1; }
+.lit:hover { border-color: var(--line-strong); box-shadow: var(--shadow), 0 22px 50px -28px var(--violet); }
+.lit > * { position: relative; z-index: 1; }
+.ripple { position: absolute; z-index: 0; border-radius: 50%; background: currentColor; opacity: 0.16; transform: scale(0); pointer-events: none; animation: ripple 0.6s ease-out forwards; }
+.burst { position: fixed; z-index: 120; width: 0; height: 0; pointer-events: none; }
+.burst i { position: absolute; width: 8px; height: 8px; margin: -4px; border-radius: 2px; background: var(--tint); animation: burst 0.85s var(--smooth) forwards; }
+.ring { display: block; width: 16px; height: 16px; border: 2px solid color-mix(in srgb, currentColor 22%, transparent); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+@keyframes drift-a { to { transform: translate(18vmax, 12vmax) scale(1.15); } }
+@keyframes drift-b { to { transform: translate(-16vmax, -14vmax) scale(0.9); } }
+@keyframes drift-c { to { transform: translate(-22vmax, 10vmax) scale(1.3); } }
+@keyframes rise { from { opacity: 0; transform: translateY(18px) scale(0.97); } }
+@keyframes view-in { from { opacity: 0; transform: translateY(14px) scale(0.985); } }
+@keyframes pulse { 40% { transform: scale(1.12); } }
+@keyframes bump { 35% { transform: translateX(-50%) translateY(-7px) scale(1.02); } }
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+@keyframes burst { to { transform: translate(var(--dx), var(--dy)) rotate(var(--spin)) scale(0.2); opacity: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes breathe { 50% { opacity: 0.45; } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes float { 50% { transform: translateY(-6px); } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.92) translateY(8px); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
+  .aurora i { animation: none; }
+}
+
+.toasts { position: fixed; right: 20px; bottom: 20px; z-index: 130; display: grid; gap: 10px; }
+.toast {
+  display: flex; align-items: flex-start; gap: 10px; max-width: 420px; padding: 12px 16px; font-size: 13.5px; background: var(--panel-solid); border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--bad); border-radius: 14px; box-shadow: var(--shadow-pop); animation: pop-in 0.4s var(--spring);
+}
+.toast.info { border-left-color: var(--mint); }

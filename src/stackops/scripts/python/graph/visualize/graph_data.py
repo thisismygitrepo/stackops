@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, cast
 
 from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
 
@@ -99,31 +99,34 @@ def _compute_leaf_counts(node: GraphNode) -> int:
 
 def _node_description(node: dict[str, Any]) -> str:
     if node.get("kind") == "group":
-        return (
+        return cast(
+            str,
             (node.get("app") or {}).get("help")
             or node.get("help")
             or node.get("doc")
             or node.get("name")
-            or ""
+            or "",
         )
-    return (
+    return cast(
+        str,
         node.get("short_help")
         or node.get("help")
         or node.get("doc")
         or node.get("name")
-        or ""
+        or "",
     )
 
 
 def _node_long_description(node: dict[str, Any], fallback: str) -> str:
     if node.get("kind") == "group":
-        return (
+        return cast(
+            str,
             (node.get("app") or {}).get("help")
             or node.get("help")
             or node.get("doc")
-            or fallback
+            or fallback,
         )
-    return node.get("help") or node.get("doc") or fallback
+    return cast(str, node.get("help") or node.get("doc") or fallback)
 
 
 def _node_aliases(node: dict[str, Any]) -> list[str]:

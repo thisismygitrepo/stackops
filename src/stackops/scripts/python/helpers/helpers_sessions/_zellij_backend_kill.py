@@ -20,7 +20,7 @@ def choose_kill_target(name: str | None, kill_all: bool, idle: bool, window: boo
         sessions.sort(key=lambda session: session.name == os.environ.get("ZELLIJ_SESSION_NAME"))
         if not sessions:
             status = "exited" if delete else "running"
-            detail = f"""No {status} Zellij session named '{name}' is available.""" if name else f"""No {status} Zellij sessions are available."""
+            detail = f"""No {status} Zellij session named '{name}' is available.""" if name is not None else f"""No {status} Zellij sessions are available."""
             return "error", detail, []
         if idle:
             selected_names = [session.name for session in sessions]
@@ -81,7 +81,7 @@ def choose_kill_target(name: str | None, kill_all: bool, idle: bool, window: boo
     if unknown_selection is not None:
         return "error", f"""Unknown Zellij target selected: {unknown_selection}""", []
     current_session = os.environ.get("ZELLIJ_SESSION_NAME")
-    if current_session:
+    if current_session is not None:
         current_kill = shell_command(["zellij", "kill-session", "--", current_session])
         scripts.sort(key=lambda script: script == current_kill)
     return "run_script", "\n".join(scripts), []

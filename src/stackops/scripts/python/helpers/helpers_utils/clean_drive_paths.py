@@ -17,6 +17,8 @@ def anchor_directory(anchor: Anchor) -> Path | None:
             return xdg_cache
         case "xdg_data":
             return Path(os.environ.get("XDG_DATA_HOME") or home / ".local" / "share")
+        case "xdg_config":
+            return Path(os.environ.get("XDG_CONFIG_HOME") or home / ".config")
         case "mac_caches":
             return home / "Library" / "Caches"
         case "local_app_data":

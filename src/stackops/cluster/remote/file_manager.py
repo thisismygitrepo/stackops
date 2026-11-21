@@ -29,7 +29,7 @@ class FileManager:
         self.max_simultaneous_jobs = max_simultaneous_jobs
         self.lock_resources = lock_resources
         self.submission_time = datetime.now()
-        base_path = Path(base).expanduser() if base else DEFAULT_BASE
+        base_path = Path(base).expanduser() if base is not None else DEFAULT_BASE
         self.base_dir = base_path
         self.job_root = self.base_dir / f"queued/{self.job_id}"
 

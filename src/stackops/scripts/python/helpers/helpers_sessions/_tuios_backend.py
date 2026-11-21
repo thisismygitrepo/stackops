@@ -57,8 +57,8 @@ def choose_existing_session_names(msg: str) -> TraceSessionChoice:
 
 def new_session_script(kill_all: bool, sessions: list[SessionEntry]) -> str:
     running_sessions = [session for session in sessions if not session.saved]
-    pane_id = os.environ.get("TUIOS_PANE_ID")
-    if pane_id and kill_all:
+    pane_id = os.environ.get("TUIOS_PANE_ID", "")
+    if pane_id != "" and kill_all:
         current_session = next((
             session.name for session in running_sessions
             if any(window.window_id == pane_id for window in list_window_entries(session.name))

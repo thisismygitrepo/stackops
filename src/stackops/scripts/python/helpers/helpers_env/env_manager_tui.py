@@ -211,7 +211,7 @@ class EnvExplorerApp(App[None]):
         env_value = self._env_lookup.get(self._selected_key, "")
         payload = f"{self._selected_key}={env_value}"
         try:
-            import pyperclip  # type: ignore[import]
+            import pyperclip  # type: ignore[import]  # ty: ignore[import-not-found]
 
             pyperclip.copy(payload)
             self._status().show_message(f"Copied {self._selected_key} to clipboard.", "success")

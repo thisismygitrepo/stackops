@@ -133,9 +133,9 @@ def resolve_callable(
     root = parts[0]
     imported_modules = dict(module_info.imported_modules)
     imported_names = dict(module_info.imported_names)
-    if local_modules:
+    if local_modules is not None:
         imported_modules.update(local_modules)
-    if local_names:
+    if local_names is not None:
         imported_names.update(local_names)
 
     if root in module_info.functions and len(parts) == 1:

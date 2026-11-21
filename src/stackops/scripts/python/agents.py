@@ -608,6 +608,11 @@ def run_prompt(
             help="Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no prompt/context input is provided, exits after editing.",
         ),
     ] = False,
+    list_prompts: Annotated[
+        bool,
+        typer.Option("--list", "-l", help="List the saved prompts from the prompts YAML files without running an agent. Honors --source, --custom-path and --group."),
+    ] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the --list prompt catalog as JSON, including each prompt's text and source file.")] = False,
     sandbox: Annotated[
         SandboxBackend,
         typer.Option(
@@ -644,6 +649,25 @@ def run_prompt(
     ] = None,
 ) -> None:
     """Run a prompt via the selected agent, optionally continuing interactively."""
+    if json_output and not list_prompts:
+        raise typer.BadParameter("--json requires --list")
+    if list_prompts:
+        if prompt or edit or show_prompts_yaml_format or context is not None or context_path is not None or context_name is not None:
+            raise typer.BadParameter("--list cannot be combined with prompt text, context options, --edit or --show-format")
+        from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json
+        from stackops.scripts.python.helpers.helpers_agents.agents_run_prompt_catalog import collect_prompt_catalog
+
+        try:
+            with _agent_working_directory(second_brain=second_brain):
+                catalog = collect_prompt_catalog(prompts_yaml_path=custom_path, source=source, group=group)
+        except ValueError as error:
+            typer.echo(f"""Error: {error}""", err=True)
+            raise typer.Exit(code=1) from error
+        if json_output:
+            emit_agent_json(catalog)
+        else:
+            typer.echo("\n".join(dict.fromkeys(entry.name for entry in catalog.prompts)))
+        return
     from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl
     from stackops.utils.sandbox.options import SandboxOptions
 
@@ -824,11 +848,16 @@ def doctor(
     ] = "all",
     tui: Annotated[bool, typer.Option("--tui", "-t", help="Browse agent health and resources in a terminal app.")] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print agent health and resources as JSON without a picker.")] = False,
+    as_html: Annotated[
+        bool, typer.Option("--as-html", "-w", help="Write a navigable HTML report of every inspected agent and open it in the browser.")
+    ] = False,
 ) -> None:
     """Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance."""
     working_directory = directory if directory is not None else Path.cwd()
     if json_output and tui:
         raise typer.BadParameter("--json cannot be combined with --tui.", param_hint="--json")
+    if as_html and (json_output or tui):
+        raise typer.BadParameter("--as-html cannot be combined with --json or --tui.", param_hint="--as-html")
     if tui:
         require_interactive("Agent doctor terminal UI; use --json")
         from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui
@@ -840,7 +869,9 @@ def doctor(
     from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor
 
     try:
-        complete = run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource, json_output=json_output)
+        complete = run_doctor(
+            requested_agent=agent, working_directory=working_directory, requested_resources=resource, json_output=json_output, html_output=as_html,
+        )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     if not complete:

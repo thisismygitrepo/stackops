@@ -165,7 +165,7 @@ async def send_question(
 def load_questions(question_options: list[str] | None, questions_file: Path | None) -> list[str]:
     questions: list[str] = []
 
-    if question_options:
+    if question_options is not None:
         questions.extend(q.strip() for q in question_options if q.strip())
 
     if questions_file:

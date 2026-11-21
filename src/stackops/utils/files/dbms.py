@@ -133,7 +133,7 @@ class DBMS:
         sch_tab = {schema_name: insp.get_table_names(schema=schema_name) for schema_name in schema}
         if sch is None:
             # First try to find schemas that have tables (excluding system schemas)
-            schemas_with_tables = []
+            schemas_with_tables: list[str] = []
             for schema_name in schema:
                 if self._is_system_schema_name(schema_name):
                     continue

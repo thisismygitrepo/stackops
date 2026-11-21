@@ -8,7 +8,7 @@ def doctor_health(*, report: DoctorReport) -> Text:
         return Text("Incomplete", style="bold red")
     if not report.executable.installed:
         return Text("Missing", style="red")
-    if report.executable.error:
+    if report.executable.error is not None:
         return Text("Version error", style="yellow")
     return Text("Installed", style="green")
 
@@ -25,7 +25,7 @@ def doctor_health_details(*, report: DoctorReport) -> str:
         f"""Working directory: {report.context.working_directory}""",
         f"""Project root: {report.context.project_root}""",
     ]
-    if report.executable.error:
+    if report.executable.error is not None:
         lines.extend(("", "Version error", report.executable.error))
     if report.inspection_errors:
         lines.extend(("", "Inspection errors", *report.inspection_errors))

@@ -50,7 +50,7 @@ def send_with_receipts(
 
     with tempfile.NamedTemporaryFile(mode="w+b", delete_on_close=False) as log:
         try:
-            process = subprocess.Popen(arguments, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, env=environment)
+            process = subprocess.Popen(arguments, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, env=environment)  # pylint: disable=consider-using-with  # terminated and reaped in the finally block below
         except OSError as failure:
             typer.echo(f"Unable to start transfer: {failure}", err=True)
             raise typer.Exit(1) from None
@@ -72,7 +72,7 @@ def send_with_receipts(
                     if output_json:
                         typer.echo(json.dumps({"status": "waiting", "backend": "croc" if backend in {"croc", "c"} else "wormhole", "code": code, "relay": relay, "pid": process.pid}))
                     else:
-                        typer.echo(f"Transfer code: {code}" + (f" (relay {relay})" if relay else ""), err=True)
+                        typer.echo(f"Transfer code: {code}" + (f" (relay {relay})" if relay is not None else ""), err=True)
                     announced = True
                 returncode = process.poll()
                 if returncode is not None:

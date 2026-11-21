@@ -148,7 +148,7 @@ class DepoisonApp(App[int]):
             self.query_one("#cleanup-status", Static).update(Text(str(error), style="red"))
 
     def reset_reviewed(self, confirmed: bool | None) -> None:
-        if confirmed and self.cleanup_plan is not None and self.cleanup_context is not None:
+        if confirmed is True and self.cleanup_plan is not None and self.cleanup_context is not None:
             self.cleanup_applying = True
             self.query_one("#cleanup-status", Static).update("Applying the reviewed cleanup…")
             self.apply_reviewed_cleanup(self.cleanup_plan, self.cleanup_context)

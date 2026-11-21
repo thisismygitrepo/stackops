@@ -56,7 +56,7 @@ def _prompt_capture_options(
         choices=("keep", "git", "guard"), default="keep" if guard is None else "guard" if guard else "git",
     )
     guard = None if mode == "keep" else mode == "guard"
-    if guard:
+    if guard is True:
         cloud = ask_text("Cloud profile", help_text="Rclone storage profile. Leave empty to use the saved or default profile.", default=cloud, allow_empty=True)
         ignore_gitignore = ask_bool("Include ignored files", help_text="Include files excluded by Git ignore rules in the encrypted archive.", default=ignore_gitignore is True)
     confirm_summary("Repository Register Review", [f"directory: {prompted_directory}", f"specs_path: {prompted_specs_path}", f"sync: {mode}", f"cloud: {cloud or 'saved/default'}"])
@@ -119,7 +119,6 @@ def action(
         from stackops.utils.code import exit_then_run_shell_script
 
         exit_then_run_shell_script(script=script, strict=False)
-        return
 
     summary = perform_git_operations(
         repos_root=repos_root,

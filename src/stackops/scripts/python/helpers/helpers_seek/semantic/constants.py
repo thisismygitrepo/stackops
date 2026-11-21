@@ -3,7 +3,9 @@ from typing import Final
 
 
 SEMANTIC_TOP_K: Final[int] = 10
-SEMANTIC_PREVIEW_SIZE_PERCENT: Final[float] = 75.0
+SEMANTIC_PREVIEW_SIZE_PERCENT: Final[int] = 75
+TV_CANCELLED_EXIT_CODE: Final[int] = 130
+TV_PREVIEW_CHROME_COLUMNS: Final[int] = 4
 IDENTIFIER_HASH_LENGTH: Final[int] = 12
 
 RG_NO_MATCH_EXIT_CODE: Final[int] = 1

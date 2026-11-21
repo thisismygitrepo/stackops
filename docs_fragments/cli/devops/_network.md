@@ -402,7 +402,7 @@ devops network device [SUBCOMMAND] [ARGS]...
 
 | Command | Description |
 |---------|-------------|
-| `connect-wifi` | Connect using configured or manually selected WiFi |
+| `connect-wifi` | Connect using configured or interactively selected WiFi |
 | `bind-wsl-port` | Bind a WSL port onto the Windows host |
 | `open-wsl-port` | Open Windows Firewall rules for WSL ports |
 | `link-wsl-windows` | Link WSL home and Windows home directories |
@@ -420,14 +420,14 @@ Key options from current help:
 | Option | Description |
 |--------|-------------|
 | `--ssid`, `-n` | Configured SSID to try first |
-| `--manual`, `-m` | Jump directly to manual selection |
+| `--interactive`, `-i` | Pick a network interactively from the scanned list |
 | `--list`, `-l` | Only list visible networks |
 
 Examples:
 
 ```bash
 devops network device connect-wifi --list
-devops network device connect-wifi --manual
+devops network device connect-wifi --interactive
 ```
 
 #### bind-wsl-port

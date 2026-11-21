@@ -14,7 +14,7 @@ def _referenced_env_name(*, pattern: re.Pattern[str], value: str) -> str | None:
     match = pattern.match(value)
     if match is None:
         return None
-    return match.group("braced") or match.group("plain")
+    return cast(str, match.group("braced") or match.group("plain"))
 
 
 def _prime_agent_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:

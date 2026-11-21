@@ -6,31 +6,52 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import (
+    ActionKind,
     CleanOutcome,
+    CleanTarget,
+    CleanupAction,
     CommandCleanup,
     Estimate,
     EstimateKind,
     OutcomeStatus,
+    PathCleanup,
+    ProjectCleanup,
     Risk,
     TargetScan,
     TargetStatus,
 )
-from stackops.scripts.python.helpers.helpers_utils.clean_drive_scan import requires_root, total_estimate
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_scan import ScopedTarget, requires_root, total_estimate
 
 
-class ScanRecord(TypedDict):
+class TargetRecord(TypedDict):
     key: str
     title: str
     category: str
     risk: Risk
+    note: str
+    action_kind: ActionKind
+    requires_root: bool
+    selected: bool
+
+
+class PathRecord(TypedDict):
+    path: str
+    bytes: int
+
+
+class ScanRecord(TargetRecord):
     status: TargetStatus
     message: str
-    selected: bool
-    requires_root: bool
     estimate_bytes: int | None
     estimate_kind: EstimateKind
-    paths: list[str]
+    paths: list[PathRecord]
     commands: list[list[str]]
+
+
+class CatalogRecord(TypedDict):
+    free_bytes: int
+    total_bytes: int
+    targets: list[TargetRecord]
 
 
 class OutcomeRecord(TypedDict):
@@ -116,13 +137,50 @@ def render_outcomes(*, console: Console, outcomes: list[CleanOutcome], free_befo
     console.print(f"""Free space on the home filesystem: {decimal(free_before)} → {decimal(free_after)} ({"+" if change >= 0 else "-"}{decimal(abs(change))})""")
 
 
+def render_catalog(*, console: Console, record: CatalogRecord) -> None:
+    table = Table(title="🧹 Cleanup targets", title_justify="left", show_lines=False)
+    table.add_column("", justify="center")
+    for column in ("Target", "Category", "Risk", "Root"):
+        table.add_column(column, no_wrap=True)
+    table.add_column("What it is", overflow="fold")
+    for target in record["targets"]:
+        table.add_row(
+            "●" if target["selected"] else "", target["key"], target["category"], Text(target["risk"], style=RISK_STYLES[target["risk"]]),
+            "yes" if target["requires_root"] else "", target["note"],
+        )
+    console.print(table)
+    console.print(f"""Free space on the home filesystem: {decimal(record["free_bytes"])} of {decimal(record["total_bytes"])}""")
+
+
+def target_record(*, target: CleanTarget, action: CleanupAction, selected: bool) -> TargetRecord:
+    action_kind: ActionKind
+    match action:
+        case PathCleanup():
+            action_kind = "paths"
+        case CommandCleanup():
+            action_kind = "command"
+        case ProjectCleanup():
+            action_kind = "projects"
+    return {
+        "key": target.key, "title": target.title, "category": target.category.value, "risk": target.risk, "note": target.note,
+        "action_kind": action_kind, "requires_root": requires_root(action), "selected": selected,
+    }
+
+
+def catalog_record(*, scope: list[ScopedTarget], auto_keys: set[str], free_bytes: int, total_bytes: int) -> CatalogRecord:
+    return {
+        "free_bytes": free_bytes, "total_bytes": total_bytes,
+        "targets": [target_record(target=target, action=action, selected=target.key in auto_keys) for target, action in scope],
+    }
+
+
 def scan_records(*, scans: list[TargetScan], auto_keys: set[str]) -> list[ScanRecord]:
     return [
         {
-            "key": scan.target.key, "title": scan.target.title, "category": scan.target.category.value, "risk": scan.target.risk,
-            "status": scan.status, "message": scan.message, "selected": scan.target.key in auto_keys and scan.status == "ready",
-            "requires_root": requires_root(scan.action), "estimate_bytes": scan.estimate.bytes, "estimate_kind": scan.estimate.kind,
-            "paths": [str(measured.path) for measured in scan.paths], "commands": [list(command) for command in scan.commands],
+            **target_record(target=scan.target, action=scan.action, selected=scan.target.key in auto_keys and scan.status == "ready"),
+            "status": scan.status, "message": scan.message, "estimate_bytes": scan.estimate.bytes, "estimate_kind": scan.estimate.kind,
+            "paths": [{"path": str(measured.path), "bytes": measured.bytes} for measured in scan.paths],
+            "commands": [list(command) for command in scan.commands],
         }
         for scan in scans
     ]

@@ -74,7 +74,7 @@ def _build_trace_kill_command(
         window=window_name,
         detail=detail,
     )
-    return TraceKillCommand(argv=argv, summary=summary)
+    return TraceKillCommand(argv=argv, summary=summary)  # pyrefly: ignore[unbound-name]  # the (backend, action) match above is exhaustive
 
 
 def build_trace_kill_plan(

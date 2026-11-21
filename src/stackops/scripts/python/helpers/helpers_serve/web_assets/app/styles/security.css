@@ -1,0 +1,84 @@
+.security-section > .panel:first-child { margin-top: 0; }
+.security-section .panel.quiet.loading .panel-body { opacity: 1; }
+.scan-swap { animation: scan-in 0.32s var(--smooth); }
+@keyframes scan-in { from { opacity: 0; transform: translateY(10px); } }
+
+/* This machine: the ring and the sentence that say how the installed apps stand. */
+.posture { display: flex; flex-wrap: wrap; align-items: center; gap: 22px 26px; padding: 22px 24px; background: var(--well); border: 1px solid var(--line); border-radius: 22px; }
+.posture.good { background: color-mix(in srgb, var(--good) 8%, transparent); border-color: color-mix(in srgb, var(--good) 26%, transparent); }
+.posture.warn { background: color-mix(in srgb, var(--warn) 9%, transparent); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+.posture.bad { background: color-mix(in srgb, var(--bad) 8%, transparent); border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
+.posture-ring { position: relative; flex: none; width: 120px; height: 120px; color: var(--ink-faint); }
+.posture-ring.good { color: var(--good); }
+.posture-ring.warn { color: var(--warn); }
+.posture-ring.bad { color: var(--bad); }
+.posture-ring > svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+.posture-ring circle { fill: none; stroke-width: 11; }
+.ring-track { stroke: var(--line-strong); opacity: 0.6; }
+.ring-arc { animation: ring-draw 1s var(--smooth) backwards; }
+.ring-arc.good { stroke: var(--good); }
+.ring-arc.warn { stroke: var(--warn); }
+.ring-arc.bad { stroke: var(--bad); }
+@keyframes ring-draw { from { stroke-dasharray: 0 290; } }
+.posture-centre { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; }
+.posture-centre strong { font-size: 26px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.posture-centre span { font-size: 11.5px; font-weight: 600; color: var(--ink-faint); }
+.posture-text { display: grid; flex: 1 1 320px; gap: 8px; min-width: 0; }
+.posture-text h3 { font-size: 22px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.2; }
+.posture-text p { max-width: 66ch; color: var(--ink-soft); }
+.posture-text p.dim { font-size: 12.5px; color: var(--ink-faint); }
+.posture-last { transition: color 0.2s; }
+.posture-last:hover { color: var(--violet); }
+.posture-last .pill { height: 18px; margin: 0 -5px 0 3px; padding: 0 7px; font-family: var(--sans); font-size: 10.5px; }
+.posture-actions { display: flex; flex: none; flex-direction: column; gap: 8px; }
+.posture-actions:empty { display: none; }
+
+/* The list of checked files, in groups, here and inside one scan. */
+.scan-filter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.scan-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.scan-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.scan-group h3 { display: flex; align-items: center; gap: 8px; min-height: 30px; padding-left: 4px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.scan-group h3 b { padding: 1px 7px; font-size: 11px; letter-spacing: 0; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
+.scan-group h3 .btn { letter-spacing: 0; text-transform: none; }
+.scan-group > .btn { justify-self: start; }
+.scan-row { flex-wrap: wrap; row-gap: 6px; }
+.scan-row .session-text { flex: 1 1 200px; grid-template-columns: minmax(0, 1fr); justify-items: start; }
+.scan-row .session-text strong { display: flex; align-items: center; gap: 8px; max-width: 100%; overflow: hidden; white-space: nowrap; }
+.scan-row .version { flex: 0 1 auto; min-width: 0; }
+.scan-verdict { display: flex; flex: 1.5 1 300px; align-items: center; gap: 8px; min-width: 0; }
+.scan-verdict .pill { flex: none; }
+.scan-detail { overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.engine-meter { flex: 0 0 96px; }
+.engine-meter .m-bad { min-width: 4px; background: var(--bad); }
+.engine-meter .m-warn { min-width: 4px; background: var(--warn); }
+.engine-meter .m-good { background: var(--good); }
+.engine-meter .m-none { background: var(--line-strong); }
+.scan-when { flex: 0 0 150px; font-size: 12.5px; }
+.scan-actions { display: flex; flex: none; align-items: center; justify-content: flex-end; gap: 8px; min-width: 132px; margin-left: auto; }
+.scan-go { display: grid; place-items: center; color: var(--ink-faint); transition: transform 0.3s var(--spring), color 0.2s; }
+.session-row:hover .scan-go { color: var(--violet); transform: translateX(3px); }
+
+/* Scans: the history rows, and one scan opened in their place. */
+.scan-run .session-text { flex: 1 1 220px; }
+.scan-counts { flex: 0 1 auto; overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.scan-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.scan-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.scan-title h2 { overflow: hidden; font-size: 22px; font-weight: 750; letter-spacing: -0.025em; text-overflow: ellipsis; white-space: nowrap; }
+
+/* One checked file, in its sheet. */
+.scan-sheet-head > div { flex: 1; min-width: 0; }
+.verdict-card { display: grid; gap: 10px; padding: 16px 18px; background: var(--well); border-radius: 16px; }
+.verdict-card p { color: var(--ink-soft); }
+.verdict-card .verdict-caution { color: var(--warn); }
+.verdict-card .engine-meter { flex: 1 1 96px; max-width: 220px; }
+.engine-flags { display: grid; border: 1px solid var(--line); border-radius: 14px; }
+.engine-flags li { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 9px 14px; font-size: 13px; }
+.engine-flags li + li { border-top: 1px solid var(--line); }
+.engine-flags strong { flex: 0 0 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.engine-flags code { flex: 1; min-width: 0; font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
+
+@media (max-width: 860px) {
+  .scan-when, .scan-counts { display: none; }
+  .scan-row .session-text { flex-basis: 150px; }
+  .scan-verdict { flex-basis: 200px; }
+}

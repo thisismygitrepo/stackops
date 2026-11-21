@@ -11,7 +11,7 @@ Windows requirements:
 Usage examples:
   python wifi_conn.py                     # Use default SSID from config
   python wifi_conn.py -n HomeWiFi         # Use specific configured network
-  python wifi_conn.py -m                  # Manual network selection
+  python wifi_conn.py -i                  # Interactive network selection
   python wifi_conn.py -l                  # List available networks only
 
 """
@@ -22,10 +22,9 @@ import platform
 from importlib import import_module
 from typing import Protocol, cast
 
-from rich.prompt import Prompt
-
-from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import WifiNetwork, console, render_networks_table
+from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import WifiNetwork, console
 from stackops.utils.cli_utils.interaction import require_interactive
+from stackops.utils.options_utils.options import choose_from_options
 
 
 class WifiPlatformModule(Protocol):
@@ -63,30 +62,15 @@ def get_available_networks() -> list[WifiNetwork]:
 def display_and_select_network() -> WifiNetwork | None:
     require_interactive("WiFi network selection; pass --ssid")
     console.print("\n[blue]📡 Scanning for available WiFi networks...[/blue]")
-
     networks = get_available_networks()
-
-    if not networks:
-        console.print("[red]❌ No networks found or error occurred[/red]")
+    if len(networks) == 0:
+        console.print("[red]❌ No visible WiFi networks were reported[/red]")
         return None
-
-    render_networks_table(networks, title="Available WiFi Networks")
-
-    try:
-        choice = Prompt.ask("\n[blue]Select network number (or 'q' to quit)[/blue]", default="q")
-
-        if choice.lower() == "q":
-            return None
-
-        index = int(choice) - 1
-        if 0 <= index < len(networks):
-            return networks[index]
-        console.print(f"[red]❌ Invalid selection. Please choose 1-{len(networks)}[/red]")
+    networks_by_label: dict[str, WifiNetwork] = {f"{network['ssid']}  ({network['signal']})": network for network in networks}
+    label = choose_from_options(options=list(networks_by_label), msg="Select a WiFi network", multi=False, tv=True)
+    if label is None:
         return None
-
-    except ValueError:
-        console.print("[red]❌ Invalid input. Please enter a number.[/red]")
-        return None
+    return networks_by_label[label]
 
 
 def connect(name: str, ssid: str) -> None:
@@ -137,27 +121,21 @@ def try_config_connection(config_ssid: str) -> bool:
         return False
 
 
-def manual_network_selection() -> bool:
+def interactive_network_selection() -> bool:
     require_interactive("WiFi network selection and authentication")
     network = display_and_select_network()
-
-    if not network:
+    if network is None:
         return False
 
     ssid = network["ssid"]
     console.print(f"\n[blue]Selected network: {ssid}[/blue]")
-
     password = getpass.getpass(f"Enter password for '{ssid}': ")
-
-    if not password:
+    if password == "":
         console.print("[red]❌ Password cannot be empty[/red]")
         return False
 
-    try:
-        connect_to_new_network(ssid, password)
-        return True
-    except Exception:
-        return False
+    connect_to_new_network(ssid, password)
+    return True
 
 
 def get_current_wifi_name() -> str:

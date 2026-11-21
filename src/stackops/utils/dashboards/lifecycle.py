@@ -52,7 +52,7 @@ def run_dashboard(
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
                 probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 probe.bind(("0.0.0.0", port))
-            child = subprocess.Popen(command, cwd=cwd, env=os.environ | environment, start_new_session=True)
+            child = subprocess.Popen(command, cwd=cwd, env=os.environ | environment, start_new_session=True)  # pylint: disable=consider-using-with  # outlives the lock block; stopped and reaped in finally
             try:
                 created_at = psutil.Process(child.pid).create_time()
             except psutil.NoSuchProcess:

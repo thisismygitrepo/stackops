@@ -117,7 +117,9 @@ def subset(
     from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source
 
-    if json_output and not (names or entry_indices or all_matches):
+    selected_names = names or []
+    selected_entry_indices = entry_indices or []
+    if json_output and not (selected_names or selected_entry_indices or all_matches):
         raise typer.BadParameter("--json requires --name, --entry-index, or --all-matches.")
     with redirect_stdout(sys.stderr):
         secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)
@@ -125,7 +127,7 @@ def subset(
         receipt = secret_actions.subset_secrets_file(
             source_path=secret_source.path, output_path=resolved_output_path,
             on_conflict=cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict], preview_secrets=preview_secrets,
-            names=names or [], entry_indices=entry_indices or [], all_matches=all_matches, dry_run=dry_run,
+            names=selected_names, entry_indices=selected_entry_indices, all_matches=all_matches, dry_run=dry_run,
         )
     if json_output:
         typer.echo(json.dumps(receipt, indent=2))

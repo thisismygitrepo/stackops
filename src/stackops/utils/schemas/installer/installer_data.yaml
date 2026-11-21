@@ -267,7 +267,7 @@ installers:
       - graphics-images-ocr-diagrams
     fileNamePattern:
       amd64:
-        linux: ImageMagick-{version}-gcc-x86_64.AppImage
+        linux: ImageMagick-{version}-x86_64.AppImage
         darwin: brew install imagemagick
         windows: ImageMagick-{version}-portable-Q16-x64.7z
       arm64:
@@ -393,22 +393,22 @@ installers:
         linux: joshuto-{version}-aarch64-unknown-linux-musl.tar.gz
         darwin: joshuto-{version}-aarch64-apple-darwin.tar.gz
         windows: null
-  - appName: mprocs
+  - appName: dekit
     license: MIT License
-    repoURL: https://github.com/pvolok/mprocs
+    repoURL: https://github.com/pvolok/dekit
     lastCommitDate: '2026-11-08T22:25:25Z'
     lastCommitDateCheckDate: '2026-11-13T00:53:03Z'
-    doc: 🖥️ Windows/Linux/macOS terminal process manager
+    doc: 🖥️ Process manager for dev and prod, the successor of mprocs
     categoryLabels:
       - terminal-workspaces
     fileNamePattern:
       amd64:
-        linux: mprocs-{version}-linux-x86_64-musl.tar.gz
-        darwin: mprocs-{version}-darwin-x86_64.tar.gz
-        windows: mprocs-{version}-windows-x86_64.zip
+        linux: dekit-x86_64-unknown-linux-musl.tar.gz
+        darwin: dekit-x86_64-apple-darwin.tar.gz
+        windows: dekit-x86_64-pc-windows-msvc.zip
       arm64:
-        linux: mprocs-{version}-linux-aarch64-musl.tar.gz
-        darwin: mprocs-{version}-darwin-aarch64.tar.gz
+        linux: dekit-aarch64-unknown-linux-musl.tar.gz
+        darwin: dekit-aarch64-apple-darwin.tar.gz
         windows: null
   - appName: process-compose
     license: Apache License 2.0
@@ -1007,11 +1007,11 @@ installers:
     fileNamePattern:
       amd64:
         linux: fastfetch-musl-amd64.tar.gz
-        darwin: fastfetch-macos-amd64.tar.gz
+        darwin: fastfetch-macos-universal.tar.gz
         windows: fastfetch-windows-amd64.zip
       arm64:
         linux: fastfetch-linux-aarch64.tar.gz
-        darwin: fastfetch-macos-aarch64.tar.gz
+        darwin: fastfetch-macos-universal.tar.gz
         windows: fastfetch-windows-aarch64.zip
   - appName: fd
     license: Apache-2.0 license / MIT license
@@ -2205,13 +2205,13 @@ installers:
       - databases
     fileNamePattern:
       amd64:
-        linux: duckdb_cli-linux-amd64-musl.zip
-        darwin: duckdb_cli-osx-amd64.zip
-        windows: duckdb_cli-windows-amd64.zip
+        linux: duckdb-cli-linux-amd64.tar.gz
+        darwin: duckdb-cli-osx-amd64.tar.gz
+        windows: duckdb-cli-windows-amd64.tar.gz
       arm64:
-        linux: duckdb_cli-linux-arm64-musl.zip
-        darwin: duckdb_cli-osx-arm64.zip
-        windows: duckdb_cli-windows-arm64.zip
+        linux: duckdb-cli-linux-arm64.tar.gz
+        darwin: duckdb-cli-osx-arm64.tar.gz
+        windows: duckdb-cli-windows-arm64.tar.gz
   - appName: gonzo
     license: MIT license
     repoURL: https://github.com/control-theory/gonzo
@@ -2426,7 +2426,7 @@ installers:
       amd64:
         linux:
           apk: null
-          apt: obs-backgroundremoval-{version}-x86_64-linux-gnu.deb
+          apt: obs-backgroundremoval_{version}.forky_amd64.deb
           dnf: null
           pacman: null
         darwin: obs-backgroundremoval-{version}-macos-universal.pkg
@@ -2789,6 +2789,22 @@ installers:
         linux: miniserve-{version}-aarch64-unknown-linux-musl
         darwin: miniserve-{version}-aarch64-apple-darwin
         windows: null
+  - appName: copyparty
+    license: MIT license
+    repoURL: CMD
+    doc: 🦜 Portable file server with uploads, thumbnails, a media player and a web UI
+    categoryLabels:
+      - file-managers
+      - file-transfer-sharing
+    fileNamePattern:
+      amd64:
+        linux: uv tool install copyparty
+        darwin: uv tool install copyparty
+        windows: uv tool install copyparty
+      arm64:
+        linux: uv tool install copyparty
+        darwin: uv tool install copyparty
+        windows: uv tool install copyparty
   - appName: cloudreve
     license: GPL-3.0 license
     repoURL: https://github.com/cloudreve/Cloudreve
@@ -5425,7 +5441,7 @@ installers:
     repoURL: https://github.com/PowerShell/PowerShell
     lastCommitDate: '2026-11-12T17:45:48Z'
     lastCommitDateCheckDate: '2026-11-13T00:53:03Z'
-    doc: PowerShell via GitHub release MSI
+    doc: PowerShell via GitHub release archives
     categoryLabels:
       - system-setup
       - terminals-shells
@@ -5434,11 +5450,11 @@ installers:
       amd64:
         linux: powershell-{version}-linux-musl-x64.tar.gz
         darwin: powershell-{version}-osx-x64.tar.gz
-        windows: PowerShell-{version}-win-x64.msi
+        windows: null
       arm64:
         linux: powershell-{version}-linux-arm64.tar.gz
         darwin: powershell-{version}-osx-arm64.tar.gz
-        windows: PowerShell-{version}-win-arm64.msi
+        windows: null
   - appName: psmuxWinget
     license: MIT License
     repoURL: CMD
@@ -5851,11 +5867,11 @@ installers:
     fileNamePattern:
       amd64:
         linux: FreeLLMAPI-{version}.AppImage
-        darwin: FreeLLMAPI-{version}-x64.dmg
+        darwin: FreeLLMAPI-{version}-macos-x64.dmg
         windows: freellmapi.py
       arm64:
         linux: null
-        darwin: FreeLLMAPI-{version}-arm64.dmg
+        darwin: FreeLLMAPI-{version}-macos-arm64.dmg
         windows: null
   - appName: free-claude-code
     license: AGPL-3.0-only
@@ -6144,4 +6160,19 @@ installers:
       arm64:
         linux: ortie.aarch64-linux.tgz
         darwin: ortie.aarch64-darwin.tgz
+        windows: null
+  - appName: jless
+    license: MIT License
+    repoURL: https://github.com/PaulJuliusMartinez/jless
+    doc: 🔎 Command-line JSON viewer with collapsible tree navigation
+    categoryLabels:
+      - data-format-tools
+    fileNamePattern:
+      amd64:
+        linux: jless-{version}-x86_64-unknown-linux-gnu.zip
+        darwin: jless-{version}-x86_64-apple-darwin.zip
+        windows: null
+      arm64:
+        linux: null
+        darwin: jless-{version}-aarch64-apple-darwin.zip
         windows: null

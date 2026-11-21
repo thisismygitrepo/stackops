@@ -2101,7 +2101,7 @@
                     "    if config is None:",
                     "        config = {}",
                     "    if json_output:",
-                    "        typer.echo(json.dumps({\"source\": source, \"entries\": [{\"selector\": f\"{group_name}.{entry_name}\", \"group\": group_name, \"name\": entry_name, \"entry\": entry} for group_name, entries in config.items() for entry_name, entry in entries.items()]}, indent=2))",
+                    "        typer.echo(json.dumps({\"source\": source, \"entries\": [{\"selector\": f\"{group_name}.{entry_name}\", \"group\": group_name, \"name\": entry_name, \"entry\": {**entry, \"os\": [value for value in ALL_OS_VALUES if value in entry[\"os\"]]}} for group_name, entries in config.items() for entry_name, entry in entries.items()]}, indent=2))",
                     "        return",
                     "",
                     "    console = Console()",
@@ -4082,7 +4082,6 @@
                     "        from stackops.utils.code import exit_then_run_shell_script",
                     "",
                     "        exit_then_run_shell_script(script=script, strict=False)",
-                    "        return",
                     "",
                     "    summary = perform_git_operations(",
                     "        repos_root=repos_root,",
@@ -11131,7 +11130,9 @@
                     "    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions",
                     "    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_support import resolve_single_secret_source",
                     "",
-                    "    if json_output and not (names or entry_indices or all_matches):",
+                    "    selected_names = names or []",
+                    "    selected_entry_indices = entry_indices or []",
+                    "    if json_output and not (selected_names or selected_entry_indices or all_matches):",
                     "        raise typer.BadParameter(\"--json requires --name, --entry-index, or --all-matches.\")",
                     "    with redirect_stdout(sys.stderr):",
                     "        secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)",
@@ -11139,7 +11140,7 @@
                     "        receipt = secret_actions.subset_secrets_file(",
                     "            source_path=secret_source.path, output_path=resolved_output_path,",
                     "            on_conflict=cli_subset_support.SUBSET_OUTPUT_CONFLICT_ACTIONS[on_conflict], preview_secrets=preview_secrets,",
-                    "            names=names or [], entry_indices=entry_indices or [], all_matches=all_matches, dry_run=dry_run,",
+                    "            names=selected_names, entry_indices=selected_entry_indices, all_matches=all_matches, dry_run=dry_run,",
                     "        )",
                     "    if json_output:",
                     "        typer.echo(json.dumps(receipt, indent=2))",
@@ -13808,6 +13809,134 @@
               },
               {
                 "kind": "command",
+                "name": "status",
+                "fullPath": "devops security status",
+                "shortPath": "d y t",
+                "help": "🛡️ <t> Show installed apps with their latest scan verdict",
+                "source": {
+                  "file": "src/stackops/jobs/installer/checks/status_cli.py",
+                  "module": "stackops.jobs.installer.checks.status_cli",
+                  "callable": "status"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def status(",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the overview as JSON.\")] = False,",
+                    "    records_dir: Annotated[Path, typer.Option(\"--records-dir\", \"-d\", help=\"Scan history directory\")] = SECURITY_RECORDS_ROOT,",
+                    ") -> None:",
+                    "    import contextlib",
+                    "    import sys",
+                    "",
+                    "    from stackops.jobs.installer.checks.check_installations import collect_apps_to_scan",
+                    "    from stackops.jobs.installer.checks.scan_history import list_runs",
+                    "    from stackops.jobs.installer.checks.scan_overview import build_overview, summarize_run",
+                    "    from stackops.secrets.readers import read_virus_total_api_keys",
+                    "",
+                    "    records_dir = records_dir.expanduser().absolute()",
+                    "    # Gathering the apps prints progress lines; they go to stderr so that stdout holds only the overview.",
+                    "    with contextlib.redirect_stdout(sys.stderr):",
+                    "        installed = collect_apps_to_scan(None)",
+                    "    runs = list_runs(records_dir)",
+                    "    apps = build_overview(runs, installed)",
+                    "    account_count = 0",
+                    "    account_problem: str | None = None",
+                    "    try:",
+                    "        account_count = len(read_virus_total_api_keys())",
+                    "    except ValueError as exc:",
+                    "        account_problem = str(exc)",
+                    "    if json_output:",
+                    "        import json",
+                    "",
+                    "        typer.echo(",
+                    "            json.dumps(",
+                    "                {",
+                    "                    \"records_dir\": str(records_dir),",
+                    "                    \"accounts\": {\"count\": account_count, \"problem\": account_problem},",
+                    "                    \"runs\": len(runs),",
+                    "                    \"latest_run\": summarize_run(runs[0]) if runs else None,",
+                    "                    \"apps\": apps,",
+                    "                }",
+                    "            )",
+                    "        )",
+                    "        return",
+                    "    from rich.console import Console",
+                    "",
+                    "    from stackops.jobs.installer.checks.security_helper import build_raw_csv_table",
+                    "",
+                    "    rows: list[dict[str, object]] = [",
+                    "        {",
+                    "            \"app_name\": app[\"name\"],",
+                    "            \"version\": app[\"version\"],",
+                    "            \"verdict\": \"changed since its check\" if app[\"changed_since\"] else app[\"verdict\"].replace(\"_\", \" \"),",
+                    "            \"flagged\": f\"\"\"{app[\"flagged_engines\"]}/{app[\"verdict_engines\"]}\"\"\" if app[\"verdict_engines\"] else None,",
+                    "            \"checked_at\": app[\"checked_at\"],",
+                    "            \"app_path\": app[\"path\"],",
+                    "        }",
+                    "        for app in apps",
+                    "    ]",
+                    "    Console().print(build_raw_csv_table(\"Installed Apps: Latest Scan Verdict\", rows, (\"app_name\", \"version\", \"verdict\", \"flagged\", \"checked_at\", \"app_path\")))",
+                    "    unchecked = sum(app[\"verdict\"] == \"unchecked\" for app in apps)",
+                    "    typer.echo(f\"\"\"{len(apps)} installed apps; {len(apps) - unchecked} with a saved result from {len(runs)} scan runs in {records_dir}.\"\"\")",
+                    "    typer.echo(f\"\"\"VirusTotal accounts ready: {account_count}.\"\"\" if account_problem is None else f\"\"\"Scans cannot run: {account_problem}\"\"\")"
+                  ],
+                  "name": "status",
+                  "parameters": [
+                    {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the overview as JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print the overview as JSON."
+                      }
+                    },
+                    {
+                      "name": "records_dir",
+                      "kind": "positional_or_keyword",
+                      "type": "Path",
+                      "default": "SECURITY_RECORDS_ROOT",
+                      "required": false,
+                      "annotation_raw": "Annotated[Path, typer.Option('--records-dir', '-d', help='Scan history directory')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--records-dir",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--records-dir"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "Scan history directory"
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "aliases": [
+                  {
+                    "name": "t",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "list",
                 "fullPath": "devops security list",
                 "shortPath": "d y l",
@@ -13833,12 +13962,17 @@
                     "        app_names = parse_apps_argument(apps)",
                     "    except ValueError as exc:",
                     "        raise typer.BadParameter(str(exc)) from exc",
-                    "    apps_to_scan = collect_apps_to_scan(app_names)",
                     "    if json_output:",
+                    "        import contextlib",
                     "        import json",
+                    "        import sys",
                     "",
+                    "        # Gathering the apps prints progress lines; they go to stderr so that stdout holds only the JSON.",
+                    "        with contextlib.redirect_stdout(sys.stderr):",
+                    "            apps_to_scan = collect_apps_to_scan(app_names)",
                     "        typer.echo(json.dumps([{\"name\": path.stem, \"version\": version, \"path\": str(path)} for path, version in apps_to_scan]))",
                     "        return",
+                    "    apps_to_scan = collect_apps_to_scan(app_names)",
                     "    if not apps_to_scan:",
                     "        typer.echo(\"No matching installed CLI apps found.\", err=True)",
                     "        raise typer.Exit(code=1)",
@@ -14138,6 +14272,7 @@
                     "    run: Annotated[str | None, typer.Option(\"--run\", \"-R\", help=\"Exact run ID; defaults to the latest started run\")] = None,",
                     "    view: Annotated[ReportView, typer.Option(\"--view\", \"-v\", help=\"Report view\")] = \"engines\",",
                     "    format_type: Annotated[ReportFormat, typer.Option(\"--format\", \"-f\", help=\"Table or raw CSV\")] = \"table\",",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the run as JSON: its targets, engine results, and account statistics.\")] = False,",
                     "    records_dir: Annotated[Path, typer.Option(\"--records-dir\", \"-d\", help=\"Scan history directory\")] = SECURITY_RECORDS_ROOT,",
                     ") -> None:",
                     "    records_dir = records_dir.expanduser().absolute()",
@@ -14166,6 +14301,13 @@
                     "    if names is not None and not app_rows:",
                     "        typer.echo(f\"\"\"No matching targets in run {saved['run_id']}. Use history to find another run.\"\"\", err=True)",
                     "        raise typer.Exit(code=1)",
+                    "    if json_output:",
+                    "        import json",
+                    "",
+                    "        from stackops.jobs.installer.checks.scan_overview import build_run_view",
+                    "",
+                    "        typer.echo(json.dumps(build_run_view(saved, names)))",
+                    "        return",
                     "    if format_type == \"csv\":",
                     "        if view == \"accounts\":",
                     "            typer.echo(saved[\"account_csv\"], nl=False)",
@@ -14185,7 +14327,7 @@
                     "        f\"\"\"Started: {saved['started_at']}\"\"\", f\"\"\"Finished: {saved['finished_at'] or '-'}\"\"\",",
                     "        f\"\"\"Status: {status}\"\"\", f\"\"\"Record: {records_dir / saved['run_id'] / 'run.json'}\"\"\",",
                     "    )))",
-                    "    if saved[\"message\"]:",
+                    "    if saved[\"message\"] is not None:",
                     "        typer.echo(saved[\"message\"])",
                     "    if view == \"accounts\":",
                     "        import csv",
@@ -14305,6 +14447,28 @@
                       }
                     },
                     {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the run as JSON: its targets, engine results, and account statistics.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print the run as JSON: its targets, engine results, and account statistics."
+                      }
+                    },
+                    {
                       "name": "records_dir",
                       "kind": "positional_or_keyword",
                       "type": "Path",
@@ -14353,6 +14517,7 @@
                     "    apps: Annotated[str | None, typer.Argument(help=\"Only runs targeting these comma-separated app names\")] = None,",
                     "    limit: Annotated[int, typer.Option(\"--limit\", \"-l\", min=1, help=\"Maximum runs to show, newest first\")] = 20,",
                     "    format_type: Annotated[ReportFormat, typer.Option(\"--format\", \"-f\", help=\"Table or raw CSV\")] = \"table\",",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the matching runs as JSON.\")] = False,",
                     "    records_dir: Annotated[Path, typer.Option(\"--records-dir\", \"-d\", help=\"Scan history directory\")] = SECURITY_RECORDS_ROOT,",
                     ") -> None:",
                     "    from stackops.jobs.installer.checks.scan_history import list_runs",
@@ -14364,13 +14529,25 @@
                     "    except ValueError as exc:",
                     "        raise typer.BadParameter(str(exc)) from exc",
                     "    names = {name.lower() for name in app_names} if app_names is not None else None",
-                    "    rows: list[dict[str, object]] = []",
+                    "    selected: list[\"ScanRun\"] = []",
                     "    for run in list_runs(records_dir):",
                     "        run_names = {Path(target[\"path\"]).stem.lower() for target in run[\"targets\"]}",
                     "        if run[\"scope\"] == \"apps\":",
                     "            run_names.update(name.lower() for name in run[\"requested\"])",
                     "        if names is not None and not names.intersection(run_names):",
                     "            continue",
+                    "        selected.append(run)",
+                    "        if len(selected) == limit:",
+                    "            break",
+                    "    if json_output:",
+                    "        import json",
+                    "",
+                    "        from stackops.jobs.installer.checks.scan_overview import summarize_run",
+                    "",
+                    "        typer.echo(json.dumps([summarize_run(run) for run in selected]))",
+                    "        return",
+                    "    rows: list[dict[str, object]] = []",
+                    "    for run in selected:",
                     "        completed = sum(target[\"record\"] is not None for target in run[\"targets\"])",
                     "        failed = sum(target[\"error\"] is not None for target in run[\"targets\"])",
                     "        rows.append({",
@@ -14379,8 +14556,6 @@
                     "            \"status\": \"unfinished\" if run[\"status\"] == \"running\" else run[\"status\"],",
                     "            \"results\": f\"\"\"{completed}/{len(run['targets'])}\"\"\", \"failed\": failed,",
                     "        })",
-                    "        if len(rows) == limit:",
-                    "            break",
                     "    columns = (\"run_id\", \"started_at\", \"scope\", \"requested\", \"status\", \"results\", \"failed\")",
                     "    if format_type == \"csv\":",
                     "        typer.echo(render_csv_text(rows, columns))",
@@ -14454,6 +14629,28 @@
                           "-f"
                         ],
                         "help": "Table or raw CSV"
+                      }
+                    },
+                    {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the matching runs as JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print the matching runs as JSON."
                       }
                     },
                     {
@@ -14714,7 +14911,7 @@
                     "            print(f\"❌ Error: SSL key file not found: {ssl_key}\")",
                     "            raise typer.Exit(code=1)",
                     "        ",
-                    "        if ssl_ca and not Path(ssl_ca).exists():",
+                    "        if ssl_ca is not None and not Path(ssl_ca).exists():",
                     "            print(f\"❌ Error: SSL CA file not found: {ssl_ca}\")",
                     "            raise typer.Exit(code=1)",
                     "",
@@ -14737,7 +14934,7 @@
                     "        resolved_ssl_cert = ssl_cert",
                     "        resolved_ssl_key = ssl_key",
                     "        ssl_args = [\"--ssl\", \"--ssl-cert\", resolved_ssl_cert, \"--ssl-key\", resolved_ssl_key]",
-                    "        if ssl_ca:",
+                    "        if ssl_ca is not None:",
                     "            ssl_args.extend([\"--ssl-ca\", ssl_ca])",
                     "",
                     "    if start_command is None:",
@@ -16026,12 +16223,12 @@
                     "    # Build the appropriate script for current OS",
                     "    if is_windows:",
                     "        # Windows PowerShell format: croc --relay server:port secret-code --yes",
-                    "        relay_arg = f\"--relay {_quote_powershell_argument(relay_server)}\" if relay_server else \"\"",
+                    "        relay_arg = f\"--relay {_quote_powershell_argument(relay_server)}\" if relay_server is not None else \"\"",
                     "        code_arg = _quote_powershell_argument(secret_code)",
                     "        script = f\"\"\"croc {relay_arg} {code_arg} --yes\"\"\".strip()",
                     "    else:",
                     "        # Linux/macOS Bash format: CROC_SECRET=\"secret-code\" croc --relay server:port --yes",
-                    "        relay_arg = f\"--relay {shlex.quote(relay_server)}\" if relay_server else \"\"",
+                    "        relay_arg = f\"--relay {shlex.quote(relay_server)}\" if relay_server is not None else \"\"",
                     "        script = f\"\"\"export CROC_SECRET={shlex.quote(secret_code)}",
                     "croc {relay_arg} --yes\"\"\".strip()",
                     "",
@@ -16817,7 +17014,7 @@
                         "            service = start_service(\"ssh-forward\", list(command), background, None)",
                         "            ssh_process = service.process",
                         "        else:",
-                        "            ssh_process = subprocess.Popen(command)",
+                        "            ssh_process = subprocess.Popen(command)  # pylint: disable=consider-using-with  # must outlive this block; waited on below and stopped by stop_ssh_process on failure",
                         "    except OSError as error:",
                         "        typer.echo(f\"Unable to start OpenSSH: {error}\", err=True)",
                         "        raise typer.Exit(code=1) from error",
@@ -18380,7 +18577,7 @@
                       "raw_lines": [
                         "def connect_wifi(",
                         "    ssid: Annotated[str | None, typer.Option(\"-n\", \"--ssid\", help=\"Exact SSID, or configured WiFi login name when no password source is supplied.\")] = None,",
-                        "    manual: Annotated[bool, typer.Option(\"-m\", \"--manual\", help=\"🔍 Manual network selection mode\")] = False,",
+                        "    interactive: Annotated[bool, typer.Option(\"-i\", \"--interactive\", help=\"🔍 Pick a network interactively from the scanned list\")] = False,",
                         "    list_: Annotated[bool, typer.Option(\"-l\", \"--list\", help=\"📡 List available networks only\")] = False,",
                         "    password_file: Annotated[Path | None, typer.Option(\"--password-file\", \"-f\", help=\"Read the network password from a file; '-' reads stdin.\")] = None,",
                         "    password_env: Annotated[str | None, typer.Option(\"--password-env\", \"-E\", help=\"Environment variable containing the network password.\")] = None,",
@@ -18392,18 +18589,18 @@
                         "    from stackops.utils.cli_utils.interaction import require_interactive",
                         "    from stackops.utils.cli_utils.secret_input import read_secret_input",
                         "",
-                        "    if list_ and (ssid is not None or manual or password_file is not None or password_env is not None):",
+                        "    if list_ and (ssid is not None or interactive or password_file is not None or password_env is not None):",
                         "        raise typer.BadParameter(\"--list cannot be combined with connection options.\")",
-                        "    if manual:",
+                        "    if interactive:",
                         "        if ssid is not None or password_file is not None or password_env is not None or output_json:",
-                        "            raise typer.BadParameter(\"--manual cannot be combined with an SSID, password source, or --json.\")",
+                        "            raise typer.BadParameter(\"--interactive cannot be combined with an SSID, password source, or --json.\")",
                         "        require_interactive(\"WiFi network selection; use --ssid and a password source\")",
-                        "    if not list_ and not manual and not ssid:",
-                        "        raise typer.BadParameter(\"Provide --ssid, --manual, or --list.\")",
+                        "    if not list_ and not interactive and not ssid:",
+                        "        raise typer.BadParameter(\"Provide --ssid, --interactive, or --list.\")",
                         "    if password_file is not None and password_env is not None:",
                         "        raise typer.BadParameter(\"Choose one of --password-file and --password-env.\")",
                         "",
-                        "    from stackops.scripts.python.helpers.helpers_network.wifi_conn import connect_to_new_network, get_available_networks, manual_network_selection, try_config_connection",
+                        "    from stackops.scripts.python.helpers.helpers_network.wifi_conn import connect_to_new_network, get_available_networks, interactive_network_selection, try_config_connection",
                         "    from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import render_networks_table",
                         "",
                         "    try:",
@@ -18414,8 +18611,8 @@
                         "            else:",
                         "                render_networks_table(networks, title=\"Available WiFi Networks\")",
                         "            return",
-                        "        if manual:",
-                        "            if not manual_network_selection():",
+                        "        if interactive:",
+                        "            if not interactive_network_selection():",
                         "                raise typer.Exit(1)",
                         "        elif ssid is not None:",
                         "            if password_file is not None or password_env is not None:",
@@ -18459,25 +18656,25 @@
                           }
                         },
                         {
-                          "name": "manual",
+                          "name": "interactive",
                           "kind": "positional_or_keyword",
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('-m', '--manual', help='🔍 Manual network selection mode')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('-i', '--interactive', help='🔍 Pick a network interactively from the scanned list')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "-m",
-                              "--manual"
+                              "-i",
+                              "--interactive"
                             ],
                             "long_flags": [
-                              "--manual"
+                              "--interactive"
                             ],
                             "short_flags": [
-                              "-m"
+                              "-i"
                             ],
-                            "help": "🔍 Manual network selection mode"
+                            "help": "🔍 Pick a network interactively from the scanned list"
                           }
                         },
                         {
@@ -18940,7 +19137,7 @@
                     "    machine_mode = output_json or background or not is_interactive()",
                     "",
                     "    accept = \"--accept-server-license-terms\"",
-                    "    name_part = f\"--name {shlex.quote(name)}\" if name else \"\"",
+                    "    name_part = f\"--name {shlex.quote(name)}\" if name is not None else \"\"",
                     "    extra = extra_args or \"\"",
                     "    if any(token == \"--cli-data-dir\" or token.startswith(\"--cli-data-dir=\") for token in shlex.split(extra)):",
                     "        raise typer.BadParameter(\"Pass this option directly to vscode-share instead of through --extra-args\", param_hint=\"--cli-data-dir\")",
@@ -19010,8 +19207,6 @@
                     "        from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls",
                     "",
                     "        print_serve_web_urls(cmd, folder_path=directory)",
-                    "        exit_then_run_shell_script(cmd)",
-                    "        return",
                     "    exit_then_run_shell_script(cmd)"
                   ],
                   "name": "vscode_share",
@@ -19856,11 +20051,16 @@
                     "    backup: Annotated[bool, typer.Option(\"--backup\", \"-b\", help=\"Show the backup configuration section.\")] = False,",
                     "    plain: Annotated[bool, typer.Option(\"--plain\", \"-p\", help=\"Print a report instead of opening the interactive dashboard.\")] = False,",
                     "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print structured section results.\")] = False,",
+                    "    as_html: Annotated[",
+                    "        bool, typer.Option(\"--as-html\", \"-w\", help=\"Write a navigable HTML dashboard of the selected sections and open it in the browser.\")",
+                    "    ] = False,",
                     ") -> None:",
                     "    from stackops.scripts.python.helpers.helpers_devops import devops_status",
                     "",
+                    "    if as_html and (json_output or plain):",
+                    "        raise typer.BadParameter(\"--as-html cannot be combined with --json or --plain.\", param_hint=\"--as-html\")",
                     "    sections = devops_status.resolve_sections(machine=machine, shell=shell, repos=repos, ssh=ssh, configs=configs, apps=apps, backup=backup)",
-                    "    if json_output:",
+                    "    if json_output or as_html:",
                     "        import json",
                     "        import sys",
                     "        from contextlib import redirect_stdout",
@@ -19868,7 +20068,39 @@
                     "",
                     "        with redirect_stdout(sys.stderr):",
                     "            snapshots = {section: collect_status_section(section) for section in sections}",
-                    "        typer.echo(json.dumps({section: {\"summary\": snapshot.summary, \"level\": snapshot.level, \"details\": snapshot.details} for section, snapshot in snapshots.items()}, default=_serialize_status_value))",
+                    "        section_results = {section: {\"summary\": snapshot.summary, \"level\": snapshot.level, \"details\": snapshot.details} for section, snapshot in snapshots.items()}",
+                    "        if as_html:",
+                    "            from datetime import datetime",
+                    "            from pathlib import Path",
+                    "",
+                    "            from stackops.scripts.python.helpers.helpers_devops.devops_status_constants import STATUS_TITLES",
+                    "            from stackops.utils.html_report import show_html_report",
+                    "",
+                    "            asset_directory = Path(__file__).with_name(\"status_html_assets\")",
+                    "            report_path = show_html_report(",
+                    "                title=\"StackOps status\",",
+                    "                payload_json=json.dumps(",
+                    "                    {",
+                    "                        \"generated_at\": datetime.now().strftime(\"%Y-%m-%d %H:%M\"),",
+                    "                        \"home_directory\": str(Path.home()),",
+                    "                        \"titles\": STATUS_TITLES,",
+                    "                        \"sections\": section_results,",
+                    "                    },",
+                    "                    default=_serialize_status_value,",
+                    "                    ensure_ascii=False,",
+                    "                ),",
+                    "                style_path=asset_directory / \"status.css\",",
+                    "                script_paths=(",
+                    "                    asset_directory / \"status_data.js\",",
+                    "                    asset_directory / \"status_inventory.js\",",
+                    "                    asset_directory / \"status_checks.js\",",
+                    "                    asset_directory / \"status_app.js\",",
+                    "                ),",
+                    "                file_stem=\"devops_status\",",
+                    "            )",
+                    "            typer.echo(f\"\"\"HTML report: {report_path}\"\"\")",
+                    "            return",
+                    "        typer.echo(json.dumps(section_results, default=_serialize_status_value))",
                     "        if any(snapshot.level == \"error\" for snapshot in snapshots.values()):",
                     "            raise typer.Exit(code=1)",
                     "        return",
@@ -20084,6 +20316,28 @@
                           "-j"
                         ],
                         "help": "Print structured section results."
+                      }
+                    },
+                    {
+                      "name": "as_html",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--as-html', '-w', help='Write a navigable HTML dashboard of the selected sections and open it in the browser.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--as-html",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--as-html"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Write a navigable HTML dashboard of the selected sections and open it in the browser."
                       }
                     }
                   ],
@@ -20830,7 +21084,7 @@
                         "        main_devops_navigator()",
                         "    from stackops.utils.code import get_shell_script_running_lambda_function, exit_then_run_shell_script",
                         "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[\"textual\"], external_uv_with=[\"textual\"])",
-                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),",
+                        "    shell_script, _pyfile = get_shell_script_running_lambda_function(lambda: func(),  # pylint: disable=unnecessary-lambda  # The helper parses the lambda's call expression.",
                         "            uv_with=uv_with, uv_project_dir=uv_project_dir)",
                         "    exit_then_run_shell_script(str(shell_script), strict=False)"
                       ],
@@ -21045,17 +21299,17 @@
                         ") -> None:",
                         "    \"\"\"Render a rich tree view in the terminal.\"\"\"",
                         "",
-                        "    def func(graph_path_str: str | None, show_help: bool, max_depth: int | None) -> None:",
+                        "    def func(graph_path_str: str, show_help: bool, max_depth: int | None) -> None:",
                         "        from stackops.scripts.python.graph.visualize.rich_tree import render_tree",
-                        "        from stackops.scripts.python.graph.visualize.python_api_graph_app import materialize_python_api_graph_path",
                         "",
-                        "        render_tree(path=materialize_python_api_graph_path(graph_path_str), show_help=show_help, show_aliases=False, max_depth=max_depth)",
+                        "        render_tree(path=graph_path_str, show_help=show_help, show_aliases=False, max_depth=max_depth)",
                         "",
                         "    from stackops.utils.code import exit_then_run_shell_script, get_shell_script_running_lambda_function",
                         "",
+                        "    graph_file = materialize_python_api_graph_path(str(graph_path) if graph_path else None)",
                         "    uv_with, uv_project_dir = resolve_uv_context(local_uv_with=[], external_uv_with=[])",
                         "    shell_script, _pyfile = get_shell_script_running_lambda_function(",
-                        "        lambda: func(graph_path_str=str(graph_path) if graph_path else None, show_help=not no_show_help, max_depth=max_depth),",
+                        "        lambda: func(graph_path_str=graph_file, show_help=not no_show_help, max_depth=max_depth),",
                         "        uv_with=uv_with,",
                         "        uv_project_dir=uv_project_dir,",
                         "    )",
@@ -26446,7 +26700,6 @@
                 "            typer.echo(\"Error: attach operation did not return a final handoff script.\", err=True, color=True)",
                 "            raise typer.Exit(code=1)",
                 "        exit_then_run_shell_script(script=payload, strict=True)",
-                "        return",
                 "    typer.echo(\"Error: attach operation did not return a final handoff script.\", err=True, color=True)",
                 "    raise typer.Exit(code=1)"
               ],
@@ -26704,7 +26957,6 @@
                 "                typer.echo(f\"Error: unable to start detached Herdr cleanup: {error}\", err=True, color=True)",
                 "                raise typer.Exit(code=1) from error",
                 "        exit_then_run_shell_script(script=script, strict=True)",
-                "        return",
                 "    typer.echo(\"Error: kill operation did not return a final script.\", err=True, color=True)",
                 "    raise typer.Exit(code=1)"
               ],
@@ -28012,7 +28264,7 @@
                 "name": "create",
                 "fullPath": "agents parallel create",
                 "shortPath": "a p c",
-                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse, maki\n",
+                "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse, maki, prime-agent\n",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_parallel_commands.py",
                   "module": "stackops.scripts.python.agents_parallel_commands",
@@ -28026,7 +28278,7 @@
                     "    reasoning_effort: Annotated[",
                     "        ReasoningEffort | None,",
                     "        typer.Option(",
-                    "            ..., \"--reasoning\", \"-r\", help=\"Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default.\"",
+                    "            ..., \"--reasoning\", \"-r\", help=\"Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.\"",
                     "        ),",
                     "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Provider to use (if agent support many)\")] = None,",
@@ -28221,7 +28473,7 @@
                       "type": "ReasoningEffort | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default.')]",
+                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -28234,7 +28486,7 @@
                         "short_flags": [
                           "-r"
                         ],
-                        "help": "Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default.",
+                        "help": "Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.",
                         "default": "..."
                       }
                     },
@@ -28728,7 +28980,7 @@
                   {
                     "name": "c",
                     "hidden": true,
-                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse, maki\n"
+                    "help": "\n<c> Create agents layout file, ready to run.\n\n\nPROVIDER options: azure, azure-openai-responses, google, aws, amazon-bedrock, openai, anthropic, openrouter, xai, mistral, groq, cerebras, vercel-ai-gateway, zai, opencode, opencode-go, huggingface, kimi-coding, minimax, minimax-cn\n\n\nAGENT options: agy, cursor-agent, claude, qwen, copilot, codex, cortex, deepseek, forge, crush, q, opencode, kilocode, cline, auggie, oz, droid, pi, muse, maki, prime-agent\n"
                   }
                 ]
               },
@@ -28948,7 +29200,7 @@
                     "    model: Annotated[str | None, typer.Option(..., \"--model\", \"-m\", help=\"Override model.\")] = None,",
                     "    reasoning_effort: Annotated[",
                     "        ReasoningEffort | None,",
-                    "        typer.Option(..., \"--reasoning\", \"-r\", help=\"Override reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it.\"),",
+                    "        typer.Option(..., \"--reasoning\", \"-r\", help=\"Override reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it.\"),",
                     "    ] = None,",
                     "    provider: Annotated[PROVIDER | None, typer.Option(..., \"--provider\", \"-v\", help=\"Override provider.\")] = None,",
                     "    host: Annotated[HOST | None, typer.Option(..., \"--host\", \"-H\", help=f\"Override machine. One of {', '.join(get_args(HOST))}\")] = None,",
@@ -29223,7 +29475,7 @@
                       "type": "ReasoningEffort | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Override reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it.')]",
+                      "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Override reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -29236,7 +29488,7 @@
                         "short_flags": [
                           "-r"
                         ],
-                        "help": "Override reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it.",
+                        "help": "Override reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it.",
                         "default": "..."
                       }
                     },
@@ -30081,23 +30333,49 @@
                     "    ] = None,",
                     "    tmp: Annotated[bool, typer.Option(\"--tmp\", \"-t\", help=\"Copy --profile to <profile>/.tmp/<random-alias> and launch the copy.\")] = False,",
                     "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Expose endpoints on 0.0.0.0 through a localhost relay.\")] = False,",
-                    "    detached: Annotated[bool, typer.Option(\"--detached\", \"-d\", help=\"Launch as background processes instead of tmux windows.\")] = False,",
-                    "    attach: Annotated[bool, typer.Option(\"--attach\", \"-a\", help=\"Attach to the launched tmux browser window.\")] = False,",
+                    "    runtime: Annotated[",
+                    "        BrowserRuntimeOption | None,",
+                    "        typer.Option(",
+                    "            \"--runtime\",",
+                    "            \"-m\",",
+                    "            help=f\"Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}\",",
+                    "            case_sensitive=False,",
+                    "        ),",
+                    "    ] = None,",
+                    "    attach: Annotated[bool, typer.Option(\"--attach\", \"-a\", help=\"Attach to the launched browser window; not available with --runtime detached.\")] = False,",
+                    "    new_window: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--new-window\",",
+                    "            \"-w\",",
+                    "            help=\"Claim a browser window per endpoint (not Safari): a browser that is already running gets a new window; its id and tabs are reported.\",",
+                    "        ),",
+                    "    ] = False,",
                     "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print browser endpoint and launch records as JSON.\")] = False,",
                     ") -> None:",
                     "    \"\"\"Launch browser automation endpoints with isolated profiles when supported.\"\"\"",
                     "    from rich.console import Console",
                     "",
-                    "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import resolve_browser_runtime",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import ExistingBrowserLaunchResult, NewBrowserLaunchResult",
                     "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launch_summary, build_browser_launches_summary",
+                    "    from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher",
                     "",
+                    "    try:",
+                    "        resolved_runtime = resolve_browser_runtime(runtime=runtime)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    if new_window and get_browser_launcher(browser=browser).endpoint_protocol == \"webdriver\":",
+                    "        raise typer.BadParameter(f\"--new-window is not available for {browser}: its WebDriver endpoint has no browser windows to manage\")",
                     "    if attach:",
-                    "        if detached or json_output:",
-                    "            raise typer.BadParameter(\"--attach cannot be combined with --detached or --json\")",
+                    "        if resolved_runtime == \"detached\" or json_output:",
+                    "            raise typer.BadParameter(\"--attach cannot be combined with --runtime detached or --json\")",
                     "        require_interactive(\"Attaching to a browser window\")",
                     "    profile_names: tuple[str | None, ...] = (None,) if profile is None else _parse_profile_names(raw_profile=profile)",
                     "    lan_address: InterfaceIPv4Address | None = None",
                     "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_window_models import BrowserAppWindow",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_windows import claim_browser_window",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch import launch_browser as launch_browser_impl",
                     "",
                     "        if lan:",
@@ -30107,8 +30385,14 @@
                     "            if lan_address is None:",
                     "                raise RuntimeError(\"Could not determine a local LAN IPv4 address for the browser endpoint.\")",
                     "        results = tuple(",
-                    "            launch_browser_impl(browser=browser, port=port + offset, profile_name=profile_name, temporary=tmp, lan=lan, detached=detached)",
+                    "            launch_browser_impl(browser=browser, port=port + offset, profile_name=profile_name, temporary=tmp, lan=lan, runtime=resolved_runtime)",
                     "            for offset, profile_name in enumerate(profile_names)",
+                    "        )",
+                    "        browser_windows: tuple[BrowserAppWindow | None, ...] = tuple(",
+                    "            claim_browser_window(browser=result.browser, port=result.browser_port, open_new=isinstance(result, ExistingBrowserLaunchResult))",
+                    "            if new_window",
+                    "            else None",
+                    "            for result in results",
                     "        )",
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
@@ -30119,21 +30403,30 @@
                     "    if json_output:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_json import browser_launch_receipt",
                     "",
-                    "        emit_agent_json([browser_launch_receipt(result=result) for result in results])",
+                    "        emit_agent_json(",
+                    "            [",
+                    "                browser_launch_receipt(result=result, browser_window=browser_window)",
+                    "                for result, browser_window in zip(results, browser_windows, strict=True)",
+                    "            ]",
+                    "        )",
                     "        return",
                     "    console = Console()",
                     "    if len(results) == 1:",
                     "        console.print(build_browser_launch_summary(result=results[0], lan_address=lan_address))",
                     "    else:",
                     "        console.print(build_browser_launches_summary(results=results, lan_address=lan_address))",
-                    "    first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)",
-                    "    if attach and first_tmux_result is not None:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window",
+                    "    for result, browser_window in zip(results, browser_windows, strict=True):",
+                    "        if browser_window is not None:",
+                    "            tab_ids = \", \".join(tab.tab_id for tab in browser_window.tabs)",
+                    "            typer.echo(f\"Browser window {browser_window.window_id} on port {result.port} · tab {tab_ids}\")",
+                    "    first_windows = next((result.windows for result in results if isinstance(result, NewBrowserLaunchResult) and result.windows is not None), None)",
+                    "    if attach and first_windows is not None:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import attach_browser_windows",
                     "",
                     "        try:",
-                    "            attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)",
+                    "            attach_browser_windows(handle=first_windows)",
                     "        except RuntimeError as error:",
-                    "            typer.echo(f\"Browser endpoint is running, but tmux attachment failed: {error}\", err=True)",
+                    "            typer.echo(f\"Browser endpoint is running, but attachment failed: {error}\", err=True)",
                     "            raise typer.Exit(code=1) from error"
                   ],
                   "name": "launch_browser",
@@ -30249,25 +30542,24 @@
                       }
                     },
                     {
-                      "name": "detached",
+                      "name": "runtime",
                       "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
+                      "type": "BrowserRuntimeOption | None",
+                      "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--detached', '-d', help='Launch as background processes instead of tmux windows.')]",
+                      "annotation_raw": "Annotated[BrowserRuntimeOption | None, typer.Option('--runtime', '-m', help=f'Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}', case_sensitive=False)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--detached",
-                          "-d"
+                          "--runtime",
+                          "-m"
                         ],
                         "long_flags": [
-                          "--detached"
+                          "--runtime"
                         ],
                         "short_flags": [
-                          "-d"
-                        ],
-                        "help": "Launch as background processes instead of tmux windows."
+                          "-m"
+                        ]
                       }
                     },
                     {
@@ -30276,7 +30568,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--attach', '-a', help='Attach to the launched tmux browser window.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--attach', '-a', help='Attach to the launched browser window; not available with --runtime detached.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -30289,7 +30581,29 @@
                         "short_flags": [
                           "-a"
                         ],
-                        "help": "Attach to the launched tmux browser window."
+                        "help": "Attach to the launched browser window; not available with --runtime detached."
+                      }
+                    },
+                    {
+                      "name": "new_window",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--new-window', '-w', help='Claim a browser window per endpoint (not Safari): a browser that is already running gets a new window; its id and tabs are reported.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--new-window",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--new-window"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Claim a browser window per endpoint (not Safari): a browser that is already running gets a new window; its id and tabs are reported."
                       }
                     },
                     {
@@ -30334,7 +30648,7 @@
                 "name": "close",
                 "fullPath": "agents browser close",
                 "shortPath": "a b c",
-                "help": "Close one tracked browser endpoint by --port or its saved profiles by --profile.",
+                "help": "Close one tracked browser endpoint by --port, its saved profiles by --profile, or one browser window by --window.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_browser.py",
                   "module": "stackops.scripts.python.agents_browser",
@@ -30358,12 +30672,40 @@
                     "            help=\"Comma-separated saved StackOps profiles under ~/data/browsers-profiles/<browser>/<profile> whose tracked launches should be closed.\",",
                     "        ),",
                     "    ] = None,",
+                    "    window: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(",
+                    "            \"--window\", \"-w\", help=\"Close only this browser window id (see status) on the --port endpoint; the browser and its other windows keep running.\"",
+                    "        ),",
+                    "    ] = None,",
                     "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print closed launch identities as JSON.\")] = False,",
                     ") -> None:",
-                    "    \"\"\"Close one tracked browser endpoint by --port or its saved profiles by --profile.\"\"\"",
+                    "    \"\"\"Close one tracked browser endpoint by --port, its saved profiles by --profile, or one browser window by --window.\"\"\"",
+                    "    if window is not None:",
+                    "        if profile is not None:",
+                    "            raise typer.BadParameter(\"--window closes one window on the --port endpoint; it cannot be combined with --profile\")",
+                    "        window_port = DEFAULT_BROWSER_PORT if port is None else port",
+                    "        try:",
+                    "            from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_windows import close_browser_window",
+                    "",
+                    "            closed_window = close_browser_window(browser=browser, port=window_port, window_id=window)",
+                    "        except ValueError as error:",
+                    "            raise typer.BadParameter(str(error)) from error",
+                    "        except RuntimeError as error:",
+                    "            typer.echo(str(error), err=True)",
+                    "            raise typer.Exit(code=1) from error",
+                    "        if json_output:",
+                    "            emit_agent_json(closed_window)",
+                    "            return",
+                    "        typer.echo(f\"Closed {browser} window {closed_window.window_id} ({len(closed_window.tabs)} tab(s)) on port {window_port}; the browser keeps running.\")",
+                    "        return",
                     "    profile_names: tuple[str, ...] | None = None",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import close_browser_launch, close_named_browser_profile_launches",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import (",
+                    "            close_browser_launch,",
+                    "            close_named_browser_profile_launches,",
+                    "            describe_closed_runtimes,",
+                    "        )",
                     "",
                     "        if profile is not None:",
                     "            if port is not None:",
@@ -30387,19 +30729,18 @@
                     "        return",
                     "    if profile_names is not None:",
                     "        profile_label = \", \".join(profile_names)",
-                    "        if result.closed_count == 0:",
+                    "        if not result.closed:",
                     "            typer.echo(f\"No active {browser} saved-profile launches found for: {profile_label}.\")",
                     "            return",
                     "        typer.echo(",
-                    "            f\"Closed {result.closed_count} {browser} saved-profile launch(es) for {profile_label} \"",
-                    "            f\"({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached).\"",
+                    "            f\"Closed {len(result.closed)} {browser} saved-profile launch(es) for {profile_label} ({describe_closed_runtimes(result=result)}).\"",
                     "        )",
                     "        return",
                     "    resolved_port = DEFAULT_BROWSER_PORT if port is None else port",
-                    "    if result.closed_count == 0:",
+                    "    if not result.closed:",
                     "        typer.echo(f\"No active {browser} launch found on port {resolved_port}.\")",
                     "        return",
-                    "    typer.echo(f\"Closed {browser} launch on port {resolved_port} ({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached).\")"
+                    "    typer.echo(f\"Closed {browser} launch on port {resolved_port} ({describe_closed_runtimes(result=result)}).\")"
                   ],
                   "name": "close_browser",
                   "parameters": [
@@ -30470,6 +30811,28 @@
                       }
                     },
                     {
+                      "name": "window",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--window', '-w', help='Close only this browser window id (see status) on the --port endpoint; the browser and its other windows keep running.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--window",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--window"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Close only this browser window id (see status) on the --port endpoint; the browser and its other windows keep running."
+                      }
+                    },
+                    {
                       "name": "json_output",
                       "kind": "positional_or_keyword",
                       "type": "bool",
@@ -30498,7 +30861,7 @@
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Close one tracked browser endpoint by --port or its saved profiles by --profile.",
+                "doc": "Close one tracked browser endpoint by --port, its saved profiles by --profile, or one browser window by --window.",
                 "aliases": [
                   {
                     "name": "c",
@@ -30531,19 +30894,34 @@
                     "        int | None, typer.Option(\"--max-profiles\", \"--max\", \"-n\", min=1, help=\"Maximum profiles to launch; fewer are used when fewer are available.\")",
                     "    ] = None,",
                     "    lan: Annotated[bool, typer.Option(\"--lan\", \"-l\", help=\"Expose endpoints on 0.0.0.0 through localhost relays.\")] = False,",
-                    "    detached: Annotated[bool, typer.Option(\"--detached\", \"-d\", help=\"Launch as background processes instead of tmux windows.\")] = False,",
-                    "    attach: Annotated[bool, typer.Option(\"--attach\", \"-a\", help=\"Attach to the first launched tmux browser window.\")] = False,",
+                    "    runtime: Annotated[",
+                    "        BrowserRuntimeOption | None,",
+                    "        typer.Option(",
+                    "            \"--runtime\",",
+                    "            \"-m\",",
+                    "            help=f\"Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}\",",
+                    "            case_sensitive=False,",
+                    "        ),",
+                    "    ] = None,",
+                    "    attach: Annotated[",
+                    "        bool, typer.Option(\"--attach\", \"-a\", help=\"Attach to the first launched browser window; not available with --runtime detached.\")",
+                    "    ] = False,",
                     "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print browser endpoint and launch records as JSON.\")] = False,",
                     ") -> None:",
                     "    \"\"\"Launch every saved profile for one browser on its assigned port.\"\"\"",
                     "    from rich.console import Console",
                     "",
-                    "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import TmuxBrowserLaunchResult",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import resolve_browser_runtime",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import NewBrowserLaunchResult",
                     "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_rich_output import build_browser_launches_summary",
                     "",
+                    "    try:",
+                    "        resolved_runtime = resolve_browser_runtime(runtime=runtime)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
                     "    if attach:",
-                    "        if detached or json_output:",
-                    "            raise typer.BadParameter(\"--attach cannot be combined with --detached or --json\")",
+                    "        if resolved_runtime == \"detached\" or json_output:",
+                    "            raise typer.BadParameter(\"--attach cannot be combined with --runtime detached or --json\")",
                     "        require_interactive(\"Attaching to a browser window\")",
                     "    lan_address: InterfaceIPv4Address | None = None",
                     "    try:",
@@ -30560,7 +30938,7 @@
                     "            if lan_address is None:",
                     "                raise RuntimeError(\"Could not determine a local LAN IPv4 address for the browser endpoints.\")",
                     "        results = tuple(",
-                    "            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, temporary=False, lan=lan, detached=detached)",
+                    "            launch_browser_impl(browser=spec.browser, port=spec.port, profile_name=spec.profile_name, temporary=False, lan=lan, runtime=resolved_runtime)",
                     "            for spec in specs",
                     "        )",
                     "    except ValueError as error:",
@@ -30572,17 +30950,17 @@
                     "    if json_output:",
                     "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_json import browser_launch_receipt",
                     "",
-                    "        emit_agent_json([browser_launch_receipt(result=result) for result in results])",
+                    "        emit_agent_json([browser_launch_receipt(result=result, browser_window=None) for result in results])",
                     "        return",
                     "    Console().print(build_browser_launches_summary(results=results, lan_address=lan_address))",
-                    "    first_tmux_result = next((result for result in results if isinstance(result, TmuxBrowserLaunchResult)), None)",
-                    "    if attach and first_tmux_result is not None:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import attach_or_switch_tmux_window",
+                    "    first_windows = next((result.windows for result in results if isinstance(result, NewBrowserLaunchResult) and result.windows is not None), None)",
+                    "    if attach and first_windows is not None:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_hosts import attach_browser_windows",
                     "",
                     "        try:",
-                    "            attach_or_switch_tmux_window(session_name=first_tmux_result.tmux.session_name, window_name=first_tmux_result.tmux.browser_window_name)",
+                    "            attach_browser_windows(handle=first_windows)",
                     "        except RuntimeError as error:",
-                    "            typer.echo(f\"Browser endpoints are running, but tmux attachment failed: {error}\", err=True)",
+                    "            typer.echo(f\"Browser endpoints are running, but attachment failed: {error}\", err=True)",
                     "            raise typer.Exit(code=1) from error"
                   ],
                   "name": "batch_launch",
@@ -30680,25 +31058,24 @@
                       }
                     },
                     {
-                      "name": "detached",
+                      "name": "runtime",
                       "kind": "positional_or_keyword",
-                      "type": "bool",
-                      "default": false,
+                      "type": "BrowserRuntimeOption | None",
+                      "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--detached', '-d', help='Launch as background processes instead of tmux windows.')]",
+                      "annotation_raw": "Annotated[BrowserRuntimeOption | None, typer.Option('--runtime', '-m', help=f'Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}', case_sensitive=False)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--detached",
-                          "-d"
+                          "--runtime",
+                          "-m"
                         ],
                         "long_flags": [
-                          "--detached"
+                          "--runtime"
                         ],
                         "short_flags": [
-                          "-d"
-                        ],
-                        "help": "Launch as background processes instead of tmux windows."
+                          "-m"
+                        ]
                       }
                     },
                     {
@@ -30707,7 +31084,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--attach', '-a', help='Attach to the first launched tmux browser window.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--attach', '-a', help='Attach to the first launched browser window; not available with --runtime detached.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -30720,7 +31097,7 @@
                         "short_flags": [
                           "-a"
                         ],
-                        "help": "Attach to the first launched tmux browser window."
+                        "help": "Attach to the first launched browser window; not available with --runtime detached."
                       }
                     },
                     {
@@ -30784,7 +31161,7 @@
                     ") -> None:",
                     "    \"\"\"Close tracked saved-profile launches for one browser.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import close_all_browser_profile_launches",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_close import close_all_browser_profile_launches, describe_closed_runtimes",
                     "",
                     "        result = close_all_browser_profile_launches(browser=browser)",
                     "    except RuntimeError as error:",
@@ -30795,13 +31172,10 @@
                     "        emit_agent_json(result)",
                     "        return",
                     "    browser_label = browser.title()",
-                    "    if result.closed_count == 0:",
+                    "    if not result.closed:",
                     "        typer.echo(f\"No active {browser_label} saved-profile launches found.\")",
                     "        return",
-                    "    typer.echo(",
-                    "        f\"Closed {result.closed_count} {browser_label} saved-profile launch(es) \"",
-                    "        f\"({len(result.tmux_launch_ids)} tmux, {len(result.detached_launch_ids)} detached).\"",
-                    "    )"
+                    "    typer.echo(f\"Closed {len(result.closed)} {browser_label} saved-profile launch(es) ({describe_closed_runtimes(result=result)}).\")"
                   ],
                   "name": "batch_close",
                   "parameters": [
@@ -30869,7 +31243,7 @@
                 "name": "status",
                 "fullPath": "agents browser status",
                 "shortPath": "a b s",
-                "help": "Show active StackOps browser launches.",
+                "help": "Show StackOps browser launches across tmux, tuios, zellij and detached runtimes.",
                 "source": {
                   "file": "src/stackops/scripts/python/agents_browser.py",
                   "module": "stackops.scripts.python.agents_browser",
@@ -30878,24 +31252,36 @@
                 "signature": {
                   "raw_lines": [
                     "def status(",
-                    "    detached: Annotated[",
-                    "        bool, typer.Option(\"--detached\", \"-d\", help=\"Show browser processes launched with --detached instead of tmux windows.\")",
+                    "    all_browsers: Annotated[",
+                    "        bool, typer.Option(\"--all\", \"-a\", help=\"Show every open browser, whether StackOps launched it or not, instead of tracked launches.\")",
                     "    ] = False,",
+                    "    browser: Annotated[",
+                    "        BrowserName | None,",
+                    "        typer.Option(\"--browser\", \"-b\", help=\"Only show this browser. Omit to show all browsers.\", case_sensitive=False, show_choices=True),",
+                    "    ] = None,",
                     "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print collected browser status records as JSON.\")] = False,",
                     ") -> None:",
-                    "    \"\"\"Show active StackOps browser launches.\"\"\"",
+                    "    \"\"\"Show StackOps browser launches across tmux, tuios, zellij and detached runtimes.\"\"\"",
                     "    try:",
-                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import show_detached_browser_status, show_tmux_browser_status",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import (",
+                    "            collect_browser_launch_windows_status,",
+                    "            collect_open_browser_status,",
+                    "            show_browser_launch_status,",
+                    "            show_open_browser_status,",
+                    "        )",
                     "",
-                    "        if json_output:",
-                    "            from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_status import collect_detached_browser_status",
-                    "            from stackops.scripts.python.helpers.helpers_agents.agents_browser_tmux import collect_browser_tmux_status",
-                    "",
-                    "            emit_agent_json(collect_detached_browser_status() if detached else collect_browser_tmux_status())",
-                    "        elif detached:",
-                    "            show_detached_browser_status()",
+                    "        if all_browsers:",
+                    "            rows = tuple(row for row in collect_open_browser_status() if browser is None or row.browser.browser == browser)",
+                    "            if json_output:",
+                    "                emit_agent_json(rows)",
+                    "            else:",
+                    "                show_open_browser_status(rows=rows)",
                     "        else:",
-                    "            show_tmux_browser_status()",
+                    "            statuses = tuple(status for status in collect_browser_launch_windows_status() if browser is None or status.launch.browser == browser)",
+                    "            if json_output:",
+                    "                emit_agent_json(statuses)",
+                    "            else:",
+                    "                show_browser_launch_status(statuses=statuses)",
                     "    except RuntimeError as error:",
                     "        typer.echo(str(error), err=True)",
                     "        raise typer.Exit(code=1) from error"
@@ -30903,25 +31289,47 @@
                   "name": "status",
                   "parameters": [
                     {
-                      "name": "detached",
+                      "name": "all_browsers",
                       "kind": "positional_or_keyword",
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--detached', '-d', help='Show browser processes launched with --detached instead of tmux windows.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--all', '-a', help='Show every open browser, whether StackOps launched it or not, instead of tracked launches.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--detached",
-                          "-d"
+                          "--all",
+                          "-a"
                         ],
                         "long_flags": [
-                          "--detached"
+                          "--all"
                         ],
                         "short_flags": [
-                          "-d"
+                          "-a"
                         ],
-                        "help": "Show browser processes launched with --detached instead of tmux windows."
+                        "help": "Show every open browser, whether StackOps launched it or not, instead of tracked launches."
+                      }
+                    },
+                    {
+                      "name": "browser",
+                      "kind": "positional_or_keyword",
+                      "type": "BrowserName | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[BrowserName | None, typer.Option('--browser', '-b', help='Only show this browser. Omit to show all browsers.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--browser",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--browser"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Only show this browser. Omit to show all browsers."
                       }
                     },
                     {
@@ -30953,7 +31361,7 @@
                 "typer": {
                   "no_args_is_help": false
                 },
-                "doc": "Show active StackOps browser launches.",
+                "doc": "Show StackOps browser launches across tmux, tuios, zellij and detached runtimes.",
                 "aliases": [
                   {
                     "name": "s",
@@ -34388,9 +34796,14 @@
                 "        bool, typer.Option(\"--tui\", \"-t\", help=\"Browse resources and select resets in a terminal app; always confirm before applying, even with --apply.\")",
                 "    ] = False,",
                 "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the reset plan and optional applied result as JSON.\")] = False,",
+                "    as_html: Annotated[",
+                "        bool, typer.Option(\"--as-html\", \"-w\", help=\"Write a navigable HTML preview of the reset plan and open it in the browser. Never applies changes.\")",
+                "    ] = False,",
                 ") -> None:",
                 "    if json_output and (interactive or tui):",
                 "        raise typer.BadParameter(\"--json cannot be combined with --interactive or --tui\")",
+                "    if as_html and (json_output or interactive or tui or apply):",
+                "        raise typer.BadParameter(\"--as-html is a read-only preview and cannot be combined with --json, --interactive, --tui, or --apply.\", param_hint=\"--as-html\")",
                 "    if interactive or tui:",
                 "        from stackops.utils.cli_utils.interaction import require_interactive",
                 "",
@@ -34425,6 +34838,7 @@
                 "            interactive=interactive,",
                 "            verbose=verbose,",
                 "            json_output=json_output,",
+                "            html_output=as_html,",
                 "        ),",
                 "        in_global=True,",
                 "        import_module=False,",
@@ -34671,6 +35085,28 @@
                     ],
                     "help": "Print the reset plan and optional applied result as JSON."
                   }
+                },
+                {
+                  "name": "as_html",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--as-html', '-w', help='Write a navigable HTML preview of the reset plan and open it in the browser. Never applies changes.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--as-html",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--as-html"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Write a navigable HTML preview of the reset plan and open it in the browser. Never applies changes."
+                  }
                 }
               ],
               "return": "None"
@@ -34726,11 +35162,16 @@
                 "    ] = \"all\",",
                 "    tui: Annotated[bool, typer.Option(\"--tui\", \"-t\", help=\"Browse agent health and resources in a terminal app.\")] = False,",
                 "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print agent health and resources as JSON without a picker.\")] = False,",
+                "    as_html: Annotated[",
+                "        bool, typer.Option(\"--as-html\", \"-w\", help=\"Write a navigable HTML report of every inspected agent and open it in the browser.\")",
+                "    ] = False,",
                 ") -> None:",
                 "    \"\"\"Inspect agent binaries, configuration, hooks, plugins, skills, and instruction provenance.\"\"\"",
                 "    working_directory = directory if directory is not None else Path.cwd()",
                 "    if json_output and tui:",
                 "        raise typer.BadParameter(\"--json cannot be combined with --tui.\", param_hint=\"--json\")",
+                "    if as_html and (json_output or tui):",
+                "        raise typer.BadParameter(\"--as-html cannot be combined with --json or --tui.\", param_hint=\"--as-html\")",
                 "    if tui:",
                 "        require_interactive(\"Agent doctor terminal UI; use --json\")",
                 "        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.tui_launch import launch_agent_tui",
@@ -34742,7 +35183,9 @@
                 "    from stackops.scripts.python.helpers.helpers_agents.agents_doctor.command import run_doctor",
                 "",
                 "    try:",
-                "        complete = run_doctor(requested_agent=agent, working_directory=working_directory, requested_resources=resource, json_output=json_output)",
+                "        complete = run_doctor(",
+                "            requested_agent=agent, working_directory=working_directory, requested_resources=resource, json_output=json_output, html_output=as_html,",
+                "        )",
                 "    except ValueError as error:",
                 "        raise typer.BadParameter(str(error)) from error",
                 "    if not complete:",
@@ -34851,6 +35294,28 @@
                       "-j"
                     ],
                     "help": "Print agent health and resources as JSON without a picker."
+                  }
+                },
+                {
+                  "name": "as_html",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--as-html', '-w', help='Write a navigable HTML report of every inspected agent and open it in the browser.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--as-html",
+                      "-w"
+                    ],
+                    "long_flags": [
+                      "--as-html"
+                    ],
+                    "short_flags": [
+                      "-w"
+                    ],
+                    "help": "Write a navigable HTML report of every inspected agent and open it in the browser."
                   }
                 }
               ],
@@ -35472,7 +35937,7 @@
                 "            ...,",
                 "            \"--reasoning\",",
                 "            \"-r\",",
-                "            help=\"Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default.\",",
+                "            help=\"Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.\",",
                 "        ),",
                 "    ] = None,",
                 "    context: Annotated[str | None, typer.Option(..., \"--context\", \"-c\", help=\"Context string. Mutually exclusive with --context-path.\")] = None,",
@@ -35532,6 +35997,11 @@
                 "            help=\"Edit prompts YAML (hx preferred, nano fallback). Choose one source interactively unless --source or --custom-path specifies it. If no prompt/context input is provided, exits after editing.\",",
                 "        ),",
                 "    ] = False,",
+                "    list_prompts: Annotated[",
+                "        bool,",
+                "        typer.Option(\"--list\", \"-l\", help=\"List the saved prompts from the prompts YAML files without running an agent. Honors --source, --custom-path and --group.\"),",
+                "    ] = False,",
+                "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the --list prompt catalog as JSON, including each prompt's text and source file.\")] = False,",
                 "    sandbox: Annotated[",
                 "        SandboxBackend,",
                 "        typer.Option(",
@@ -35568,6 +36038,25 @@
                 "    ] = None,",
                 ") -> None:",
                 "    \"\"\"Run a prompt via the selected agent, optionally continuing interactively.\"\"\"",
+                "    if json_output and not list_prompts:",
+                "        raise typer.BadParameter(\"--json requires --list\")",
+                "    if list_prompts:",
+                "        if prompt or edit or show_prompts_yaml_format or context is not None or context_path is not None or context_name is not None:",
+                "            raise typer.BadParameter(\"--list cannot be combined with prompt text, context options, --edit or --show-format\")",
+                "        from stackops.scripts.python.helpers.helpers_agents.agents_json import emit_agent_json",
+                "        from stackops.scripts.python.helpers.helpers_agents.agents_run_prompt_catalog import collect_prompt_catalog",
+                "",
+                "        try:",
+                "            with _agent_working_directory(second_brain=second_brain):",
+                "                catalog = collect_prompt_catalog(prompts_yaml_path=custom_path, source=source, group=group)",
+                "        except ValueError as error:",
+                "            typer.echo(f\"\"\"Error: {error}\"\"\", err=True)",
+                "            raise typer.Exit(code=1) from error",
+                "        if json_output:",
+                "            emit_agent_json(catalog)",
+                "        else:",
+                "            typer.echo(\"\\n\".join(dict.fromkeys(entry.name for entry in catalog.prompts)))",
+                "        return",
                 "    from stackops.scripts.python.helpers.helpers_agents.agents_run_impl import run as impl",
                 "    from stackops.utils.sandbox.options import SandboxOptions",
                 "",
@@ -35771,7 +36260,7 @@
                   "type": "ReasoningEffort | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default.')]",
+                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -35784,7 +36273,7 @@
                     "short_flags": [
                       "-r"
                     ],
-                    "help": "Reasoning effort for codex, copilot, cortex, and pi agents. Unsupported agents ignore it and use their default.",
+                    "help": "Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.",
                     "default": "..."
                   }
                 },
@@ -35995,6 +36484,50 @@
                   }
                 },
                 {
+                  "name": "list_prompts",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--list', '-l', help='List the saved prompts from the prompts YAML files without running an agent. Honors --source, --custom-path and --group.')]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--list",
+                      "-l"
+                    ],
+                    "long_flags": [
+                      "--list"
+                    ],
+                    "short_flags": [
+                      "-l"
+                    ],
+                    "help": "List the saved prompts from the prompts YAML files without running an agent. Honors --source, --custom-path and --group."
+                  }
+                },
+                {
+                  "name": "json_output",
+                  "kind": "positional_or_keyword",
+                  "type": "bool",
+                  "default": false,
+                  "required": false,
+                  "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help=\"Print the --list prompt catalog as JSON, including each prompt's text and source file.\")]",
+                  "typer": {
+                    "kind": "option",
+                    "param_decls": [
+                      "--json",
+                      "-j"
+                    ],
+                    "long_flags": [
+                      "--json"
+                    ],
+                    "short_flags": [
+                      "-j"
+                    ],
+                    "help": "Print the --list prompt catalog as JSON, including each prompt's text and source file."
+                  }
+                },
+                {
                   "name": "sandbox",
                   "kind": "positional_or_keyword",
                   "type": "SandboxBackend",
@@ -36166,7 +36699,7 @@
                 "        INTERACTIVE_AGENT | None,",
                 "        typer.Option(",
                 "            ..., \"--agent\", \"-a\",",
-                "            help=f\"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}\",",
+                "            help=f\"Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, prime-agent/pa, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}\",",
                 "        ),",
                 "    ] = None,",
                 "    second_brain: Annotated[",
@@ -36298,7 +36831,7 @@
                 "                else:",
                 "                    script = shlex.join(command)",
                 "            else:",
-                "                if resolved_agent in (\"deepseek\", \"cortex\", \"maki\") and is_windows_host():",
+                "                if resolved_agent in (\"deepseek\", \"cortex\", \"maki\", \"prime-agent\") and is_windows_host():",
                 "                    from stackops.scripts.python.helpers.helpers_agents.agents_shell import quote_for_shell",
                 "",
                 "                    script = \"& \" + \" \".join(quote_for_shell(argument, is_windows=True) for argument in command)",
@@ -36337,7 +36870,7 @@
                   "type": "INTERACTIVE_AGENT | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[INTERACTIVE_AGENT | None, typer.Option(..., '--agent', '-a', help=f'Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}')]",
+                  "annotation_raw": "Annotated[INTERACTIVE_AGENT | None, typer.Option(..., '--agent', '-a', help=f'Agent to launch: codex/x, copilot/c, cortex, pi/p, opencode/oc, omp/o, maki, prime-agent/pa, or deepseek/dsh (web interface). {DEFAULT_AGENT_HELP}')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -36953,7 +37486,7 @@
                     "            typer.echo(json.dumps(results, indent=2))",
                     "        else:",
                     "            for result in results:",
-                    "                typer.echo(f\"{result['pid']} {result['name']}: {result['status']}\" + (f\" ({result['error']})\" if result['error'] else \"\"))",
+                    "                typer.echo(f\"{result['pid']} {result['name']}: {result['status']}\" + (f\" ({result['error']})\" if result['error'] is not None else \"\"))",
                     "            if not results:",
                     "                typer.echo(\"No processes match the requested selector.\")",
                     "        if any(result[\"status\"] == \"failed\" for result in results):",
@@ -37235,7 +37768,18 @@
                     "def tui_env(",
                     "    which: Annotated[EnvironmentSelector, typer.Argument(help=\"Which environment variable to display.\")] = \"ENV\",",
                     "    tui: Annotated[bool, typer.Option(\"--tui\", \"-t\", help=\"Use the full-screen Textual TUI instead of the default fuzzy picker.\")] = False,",
+                    "    as_html: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--as-html\", \"-w\", help=\"Write a navigable HTML page and open it in the browser. Values of secret-looking variables are left out of the file.\"),",
+                    "    ] = False,",
                     ") -> None:",
+                    "    if as_html:",
+                    "        if tui:",
+                    "            raise typer.BadParameter(\"--as-html cannot be combined with --tui.\", param_hint=\"--as-html\")",
+                    "        from stackops.scripts.python.helpers.helpers_utils.environment_html import show_environment_html_report",
+                    "",
+                    "        typer.echo(f\"\"\"HTML report: {show_environment_html_report(which=which)}\"\"\")",
+                    "        return",
                     "    require_interactive(\"Environment navigator\")",
                     "    from stackops.scripts.python.helpers.helpers_utils.python import tui_env as impl",
                     "",
@@ -37278,6 +37822,28 @@
                           "-t"
                         ],
                         "help": "Use the full-screen Textual TUI instead of the default fuzzy picker."
+                      }
+                    },
+                    {
+                      "name": "as_html",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--as-html', '-w', help='Write a navigable HTML page and open it in the browser. Values of secret-looking variables are left out of the file.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--as-html",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--as-html"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "Write a navigable HTML page and open it in the browser. Values of secret-looking variables are left out of the file."
                       }
                     }
                   ],
@@ -38136,9 +38702,10 @@
                     "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-d\", help=\"Scan and report estimated savings only; never deletes.\")] = False,",
                     "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Pick targets of any risk in a fuzzy multi-select, then confirm.\")] = False,",
                     "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Clean the selected (●) targets without asking.\")] = False,",
+                    "    list_targets: Annotated[bool, typer.Option(\"--list\", \"-l\", help=\"List the targets and the free space without measuring anything; never deletes.\")] = False,",
                     "    target: Annotated[",
                     "        list[str] | None,",
-                    "        typer.Option(\"--target\", \"-t\", help=\"Only this target key (see --dry-run); repeatable. Explicit targets ignore --max-risk and --sudo.\"),",
+                    "        typer.Option(\"--target\", \"-t\", help=\"Only this target key (see --list); repeatable. Explicit targets ignore --max-risk and --sudo.\"),",
                     "    ] = None,",
                     "    category: Annotated[",
                     "        list[CleanCategory] | None,",
@@ -38151,15 +38718,17 @@
                     "        list[Path] | None,",
                     "        typer.Option(\"--root\", \"-R\", exists=True, file_okay=False, help=\"Where to look for project folders (.ai, node_modules, .venv, ...); repeatable. Default: home.\"),",
                     "    ] = None,",
-                    "    output_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print JSON records; requires --dry-run or --yes.\")] = False,",
+                    "    output_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print JSON records; requires --dry-run, --list or --yes.\")] = False,",
                     ") -> None:",
                     "    if dry_run and (interactive or yes):",
                     "        raise typer.BadParameter(\"--dry-run cannot be combined with --interactive or --yes.\", param_hint=\"--dry-run\")",
+                    "    if list_targets and (dry_run or interactive or yes):",
+                    "        raise typer.BadParameter(\"--list cannot be combined with --dry-run, --interactive or --yes.\", param_hint=\"--list\")",
                     "    if interactive and yes:",
                     "        raise typer.BadParameter(\"--interactive already asks for confirmation; drop --yes.\", param_hint=\"--interactive\")",
-                    "    if output_json and not (dry_run or yes):",
-                    "        raise typer.BadParameter(\"--json requires --dry-run or --yes.\", param_hint=\"--json\")",
-                    "    if not (dry_run or yes):",
+                    "    if output_json and not (dry_run or list_targets or yes):",
+                    "        raise typer.BadParameter(\"--json requires --dry-run, --list or --yes.\", param_hint=\"--json\")",
+                    "    if not (dry_run or list_targets or yes):",
                     "        require_interactive(\"Choosing and confirming a drive cleanup; pass --yes to clean the selection or --dry-run to only report\")",
                     "    import json",
                     "    import shutil",
@@ -38169,9 +38738,11 @@
                     "",
                     "    from stackops.scripts.python.helpers.helpers_utils.clean_drive_execute import clean_target, is_elevated",
                     "    from stackops.scripts.python.helpers.helpers_utils.clean_drive_render import (",
+                    "        catalog_record,",
                     "        describe_action,",
                     "        format_estimate,",
                     "        outcome_records,",
+                    "        render_catalog,",
                     "        render_outcomes,",
                     "        render_report,",
                     "        scan_records,",
@@ -38186,6 +38757,14 @@
                     "    except ValueError as error:",
                     "        raise typer.BadParameter(str(error)) from error",
                     "    console = Console(stderr=output_json)",
+                    "    if list_targets:",
+                    "        disk = shutil.disk_usage(Path.home())",
+                    "        catalog = catalog_record(scope=scope, auto_keys=auto_keys, free_bytes=disk.free, total_bytes=disk.total)",
+                    "        if output_json:",
+                    "            typer.echo(json.dumps(catalog, indent=2))",
+                    "        else:",
+                    "            render_catalog(console=console, record=catalog)",
+                    "        return",
                     "    elevated = is_elevated()",
                     "    roots = tuple(path.expanduser().resolve() for path in search_root) if search_root is not None else (Path.home(),)",
                     "    with console.status(f\"\"\"Measuring {len(scope)} cleanup target(s)…\"\"\"):",
@@ -38295,12 +38874,34 @@
                       }
                     },
                     {
+                      "name": "list_targets",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--list', '-l', help='List the targets and the free space without measuring anything; never deletes.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--list",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--list"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "List the targets and the free space without measuring anything; never deletes."
+                      }
+                    },
+                    {
                       "name": "target",
                       "kind": "positional_or_keyword",
                       "type": "list[str] | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--target', '-t', help='Only this target key (see --dry-run); repeatable. Explicit targets ignore --max-risk and --sudo.')]",
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--target', '-t', help='Only this target key (see --list); repeatable. Explicit targets ignore --max-risk and --sudo.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -38313,7 +38914,7 @@
                         "short_flags": [
                           "-t"
                         ],
-                        "help": "Only this target key (see --dry-run); repeatable. Explicit targets ignore --max-risk and --sudo."
+                        "help": "Only this target key (see --list); repeatable. Explicit targets ignore --max-risk and --sudo."
                       }
                     },
                     {
@@ -38432,7 +39033,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print JSON records; requires --dry-run or --yes.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print JSON records; requires --dry-run, --list or --yes.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -38445,7 +39046,7 @@
                         "short_flags": [
                           "-j"
                         ],
-                        "help": "Print JSON records; requires --dry-run or --yes."
+                        "help": "Print JSON records; requires --dry-run, --list or --yes."
                       }
                     }
                   ],
@@ -43283,6 +43884,112 @@
         "aliases": [
           {
             "name": "p",
+            "hidden": true
+          }
+        ]
+      },
+      {
+        "kind": "command",
+        "name": "serve",
+        "fullPath": "serve",
+        "shortPath": "w",
+        "help": "🌐 <w> Web UI for commands, dashboards, and terminals",
+        "source": {
+          "file": "src/stackops/scripts/python/stackops_entry.py",
+          "module": "stackops.scripts.python.stackops_entry",
+          "callable": "serve"
+        },
+        "signature": {
+          "raw_lines": [
+            "def serve(",
+            "    host: Annotated[str, typer.Option(\"--host\", \"-H\", help=\"Interface to listen on. Keep the loopback default unless you trust the network.\")] = DEFAULT_HOST,",
+            "    port: Annotated[int, typer.Option(\"--port\", \"-p\", min=0, max=65535, help=\"Port to listen on; 0 picks a free port.\")] = DEFAULT_PORT,",
+            "    no_browser: Annotated[bool, typer.Option(\"--no-browser\", \"-n\", help=\"Print the access link without opening it in the browser.\")] = False,",
+            ") -> None:",
+            "    \"\"\"🌐 <w> Web UI for commands, dashboards, and terminals.\"\"\"",
+            "    from stackops.scripts.python.helpers.helpers_serve.cli_serve import serve as serve_impl",
+            "    from stackops.utils.cli_utils.interaction import is_interactive",
+            "",
+            "    serve_impl(host=host, port=port, open_browser=not no_browser and is_interactive())"
+          ],
+          "name": "serve",
+          "parameters": [
+            {
+              "name": "host",
+              "kind": "positional_or_keyword",
+              "type": "str",
+              "default": "DEFAULT_HOST",
+              "required": false,
+              "annotation_raw": "Annotated[str, typer.Option('--host', '-H', help='Interface to listen on. Keep the loopback default unless you trust the network.')]",
+              "typer": {
+                "kind": "option",
+                "param_decls": [
+                  "--host",
+                  "-H"
+                ],
+                "long_flags": [
+                  "--host"
+                ],
+                "short_flags": [
+                  "-H"
+                ],
+                "help": "Interface to listen on. Keep the loopback default unless you trust the network."
+              }
+            },
+            {
+              "name": "port",
+              "kind": "positional_or_keyword",
+              "type": "int",
+              "default": "DEFAULT_PORT",
+              "required": false,
+              "annotation_raw": "Annotated[int, typer.Option('--port', '-p', min=0, max=65535, help='Port to listen on; 0 picks a free port.')]",
+              "typer": {
+                "kind": "option",
+                "param_decls": [
+                  "--port",
+                  "-p"
+                ],
+                "long_flags": [
+                  "--port"
+                ],
+                "short_flags": [
+                  "-p"
+                ],
+                "help": "Port to listen on; 0 picks a free port."
+              }
+            },
+            {
+              "name": "no_browser",
+              "kind": "positional_or_keyword",
+              "type": "bool",
+              "default": false,
+              "required": false,
+              "annotation_raw": "Annotated[bool, typer.Option('--no-browser', '-n', help='Print the access link without opening it in the browser.')]",
+              "typer": {
+                "kind": "option",
+                "param_decls": [
+                  "--no-browser",
+                  "-n"
+                ],
+                "long_flags": [
+                  "--no-browser"
+                ],
+                "short_flags": [
+                  "-n"
+                ],
+                "help": "Print the access link without opening it in the browser."
+              }
+            }
+          ],
+          "return": "None"
+        },
+        "typer": {
+          "no_args_is_help": false
+        },
+        "doc": "🌐 <w> Web UI for commands, dashboards, and terminals.",
+        "aliases": [
+          {
+            "name": "w",
             "hidden": true
           }
         ]

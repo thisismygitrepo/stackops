@@ -174,7 +174,7 @@ def _resolve_attach_or_switch_command(command: str) -> str:
     )
     if len(attach_or_switch_commands) != 2:
         return command
-    if os.environ.get("TMUX"):
+    if os.environ.get("TMUX", ""):
         return attach_or_switch_commands[0]
     return attach_or_switch_commands[1]
 
@@ -256,7 +256,7 @@ def start_tmux_new_session(
                 command=f"tmux new-session -s {shell_quote(session_name)}",
                 result=result,
             )
-        if os.environ.get("TMUX"):
+        if os.environ.get("TMUX", ""):
             _run_tmux_command(
                 command=f"tmux switch-client -t {shell_quote(session_name)}",
                 timeout_seconds=timeout_seconds,

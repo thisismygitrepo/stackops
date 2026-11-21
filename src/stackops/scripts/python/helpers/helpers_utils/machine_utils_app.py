@@ -125,7 +125,7 @@ def kill_process(
             typer.echo(json.dumps(results, indent=2))
         else:
             for result in results:
-                typer.echo(f"{result['pid']} {result['name']}: {result['status']}" + (f" ({result['error']})" if result['error'] else ""))
+                typer.echo(f"{result['pid']} {result['name']}: {result['status']}" + (f" ({result['error']})" if result['error'] is not None else ""))
             if not results:
                 typer.echo("No processes match the requested selector.")
         if any(result["status"] == "failed" for result in results):
@@ -137,7 +137,18 @@ def kill_process(
 def tui_env(
     which: Annotated[EnvironmentSelector, typer.Argument(help="Which environment variable to display.")] = "ENV",
     tui: Annotated[bool, typer.Option("--tui", "-t", help="Use the full-screen Textual TUI instead of the default fuzzy picker.")] = False,
+    as_html: Annotated[
+        bool,
+        typer.Option("--as-html", "-w", help="Write a navigable HTML page and open it in the browser. Values of secret-looking variables are left out of the file."),
+    ] = False,
 ) -> None:
+    if as_html:
+        if tui:
+            raise typer.BadParameter("--as-html cannot be combined with --tui.", param_hint="--as-html")
+        from stackops.scripts.python.helpers.helpers_utils.environment_html import show_environment_html_report
+
+        typer.echo(f"""HTML report: {show_environment_html_report(which=which)}""")
+        return
     require_interactive("Environment navigator")
     from stackops.scripts.python.helpers.helpers_utils.python import tui_env as impl
 

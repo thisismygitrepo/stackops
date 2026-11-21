@@ -16,7 +16,7 @@ def merge_pdfs(
             reader = PdfReader(pdf_path)
             for page in reader.pages:
                 writer.add_page(page)
-        output_path = output if output else "merged.pdf"
+        output_path = output if output is not None else "merged.pdf"
         if compress:
             try:
                 for p in writer.pages:

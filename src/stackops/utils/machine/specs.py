@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict, cast
+from typing import Literal, TypedDict
 
 
 MACHINE_SPECS_COMMAND_NAME = "specs"
@@ -37,11 +37,16 @@ def get_machine_specs() -> MachineSpecs:
             distro = detected_distro
     except OSError:
         pass
-    system = platform.system()
-    if system not in {"Windows", "Linux", "Darwin"}:
-        system = "Linux"
+    system: Literal["Windows", "Linux", "Darwin"]
+    match platform.system():
+        case "Windows":
+            system = "Windows"
+        case "Darwin":
+            system = "Darwin"
+        case _:
+            system = "Linux"
     specs: MachineSpecs = {
-        "system": cast(Literal["Windows", "Linux", "Darwin"], system),
+        "system": system,
         "distro": distro,
         "home_dir": str(Path.home()),
         "hostname": socket.gethostname(),

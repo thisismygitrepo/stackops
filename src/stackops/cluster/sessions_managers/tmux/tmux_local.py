@@ -96,14 +96,9 @@ class TmuxLayoutGenerator:
             layout_file.chmod(layout_file.stat().st_mode | 0o111)
         self.script_path = str(layout_file.absolute())
 
-    def check_all_commands_status(self) -> dict[str, CommandStatus]:
-        if not self.layout_config:
-            return {}
-        return build_unknown_commands_status(self.layout_config)
-
     def get_status_report(self) -> TmuxLayoutStatus:
         tmux_status = check_tmux_session_status(self.session_name or "default")
-        commands_status = self.check_all_commands_status()
+        commands_status = build_unknown_commands_status(self.layout_config)
         running_count = sum(1 for status in commands_status.values() if status.get("running", False))
         total_count = len(commands_status)
         return {

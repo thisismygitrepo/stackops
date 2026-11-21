@@ -43,7 +43,7 @@ def _commit_exists(repository: Repo, commit: str) -> bool:
 
 
 def _current_remote(repository: Repo, snapshot: RemoteSnapshot, repository_path: Path) -> Remote:
-    matching_remotes = [remote for remote in repository.remotes if remote.name == snapshot["name"]]
+    matching_remotes: list[Remote] = [remote for remote in repository.remotes if remote.name == snapshot["name"]]
     if len(matching_remotes) != 1:
         raise VersionOperationError(f"Remote {snapshot['name']!r} is missing from {repository_path}")
     remote = matching_remotes[0]

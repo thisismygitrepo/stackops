@@ -37,7 +37,7 @@ def choose_optional_option(*, options: tuple[str, ...] | list[str], current: str
 
 
 def prompt_text(*, label: str, current: str | None, required: bool, hint: str) -> str | None:
-    suffix = f" [{current}]" if current else ""
+    suffix = f" [{current}]" if current is not None and current != "" else ""
     while True:
         raw = input(f"{label}{suffix}{hint}: ").strip()
         if raw != "":
@@ -86,8 +86,8 @@ def prompt_positive_int(*, label: str, current: int) -> int:
 
 
 def _discover_editor_command() -> list[str] | None:
-    configured_editor = os.environ.get("VISUAL") or os.environ.get("EDITOR")
-    if configured_editor:
+    configured_editor = os.environ.get("VISUAL", "") or os.environ.get("EDITOR", "")
+    if configured_editor != "":
         return shlex.split(configured_editor)
     for candidate in ("nano", "vim", "vi"):
         resolved = shutil.which(candidate)
@@ -140,7 +140,7 @@ def prompt_multiline_text(*, label: str, current: str | None, required: bool) ->
 
 
 def prompt_existing_path(*, label: str, current: str | None, must_be_file: bool) -> str:
-    suffix = f" [{current}]" if current else ""
+    suffix = f" [{current}]" if current is not None and current != "" else ""
     while True:
         raw = input(f"{label}{suffix}: ").strip()
         path_raw = raw if raw != "" else current

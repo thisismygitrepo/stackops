@@ -140,7 +140,7 @@ def connect_warp(update: bool, timeout_seconds: float, wait_seconds: float) -> W
         return failure
     before = WarpSnapshot(status=read_warp_status(), public_ip=_read_public_ip(retry_seconds=0.0, wait_seconds=wait_seconds))
     console.print(f"""🔍 Public IP before connecting: {before.public_ip["ip"] if before.public_ip else "unavailable"}""")
-    outcome = _update_warp_cli() if update else None
+    outcome: WarpConnected | WarpFailure | None = _update_warp_cli() if update else None
     if outcome is None:
         outcome = _drive_to_connected(timeout_seconds=timeout_seconds, wait_seconds=wait_seconds, console=console)
     ip_retry_seconds = timeout_seconds if isinstance(outcome, WarpConnected) else 0.0

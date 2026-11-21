@@ -25,7 +25,7 @@ def google_drive_direct_download_url(*, share_url: str) -> str | None:
     file_id: str | None = None
     if parsed_url.path == "/open":
         values = parse_qs(parsed_url.query).get("id")
-        if values:
+        if values is not None:
             file_id = values[0]
     else:
         path_parts = [part for part in parsed_url.path.split("/") if part]

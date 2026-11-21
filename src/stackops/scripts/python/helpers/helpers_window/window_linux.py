@@ -7,9 +7,9 @@ from stackops.scripts.python.helpers.helpers_window.window_models import WindowA
 
 
 def collect_windows() -> list[WindowEntry]:
-    if os.environ.get("WAYLAND_DISPLAY") or os.environ.get("XDG_SESSION_TYPE", "").casefold() == "wayland":
+    if os.environ.get("WAYLAND_DISPLAY", "") != "" or os.environ.get("XDG_SESSION_TYPE", "").casefold() == "wayland":
         raise RuntimeError("Window management requires an X11 desktop on Linux; native Wayland sessions are unsupported.")
-    if not os.environ.get("DISPLAY"):
+    if os.environ.get("DISPLAY", "") == "":
         raise RuntimeError("Window management requires a graphical desktop; DISPLAY is not set.")
 
     entries: list[WindowEntry] = []
