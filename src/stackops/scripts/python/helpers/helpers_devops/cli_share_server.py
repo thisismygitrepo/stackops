@@ -25,6 +25,7 @@ def web_file_explorer(
     password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the access password.")] = None,
 ) -> None:
     import subprocess
+    from stackops.secrets.paths import SECRETS_DOFILE
     from stackops.secrets.readers import read_quick_password
     from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency
     from stackops.utils.cli_utils.secret_input import read_secret_input
@@ -53,8 +54,10 @@ def web_file_explorer(
 
     auth_username: str | None = None
     auth_password: str | None = None
+    password_source = "value passed with --password"
     if password_file is not None or password_env is not None:
         password = read_secret_input(value=password, file=password_file, env=password_env, prompt="Share access password")
+        password_source = f"read from --password-file {password_file}" if password_file is not None else f"read from environment variable {password_env} (--password-env)"
     if not no_auth:
         import getpass
 
@@ -65,9 +68,14 @@ def web_file_explorer(
                 auth_password = read_quick_password()
             except Exception:
                 auth_password = None
+            password_source = f"quick password, login 'quickPassword' in {SECRETS_DOFILE}; override with --password, --password-file or --password-env"
         if auth_password is None or auth_password == "":
             typer.echo("❌ ERROR: Password not provided. Pass --password or use --no-auth.", err=True)
             raise typer.Exit(code=1)
+        typer.echo(f"Username: {auth_username} ({'passed with --username' if username is not None else 'current OS user; override with --username'})", err=True)
+        typer.echo(f"Password: {password_source}", err=True)
+    else:
+        typer.echo("Auth: none (--no-auth), anyone who can reach the port has access", err=True)
 
     if install_missing_dependencies:
         install_service_dependency(backend)
