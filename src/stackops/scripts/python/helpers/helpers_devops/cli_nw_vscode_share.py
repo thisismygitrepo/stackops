@@ -1,23 +1,30 @@
 import platform
+import secrets
 import shlex
 from pathlib import Path
 from urllib.parse import quote
 
+import typer
 
-def ensure_without_connection_token(extra_args: str) -> str:
-    tokens = shlex.split(extra_args) if extra_args.strip() else []
+
+def resolve_serve_web_auth(extra_args: str, token: str | None, token_file: str | None, no_auth: bool) -> tuple[str, str | None]:
     if any(
-        token == "--without-connection-token"
-        or token == "--connection-token"
-        or token.startswith("--connection-token=")
-        or token == "--connection-token-file"
-        or token.startswith("--connection-token-file=")
-        for token in tokens
+        item == option or item.startswith(f"{option}=")
+        for item in shlex.split(extra_args)
+        for option in ("--connection-token", "--connection-token-file", "--without-connection-token")
     ):
-        return extra_args
-    if extra_args.strip():
-        return f"--without-connection-token {extra_args}".strip()
-    return "--without-connection-token"
+        raise typer.BadParameter("Pass --token, --token-file or --no-auth to vscode-share instead of connection token options through --extra-args", param_hint="--extra-args")
+    if sum((token is not None, token_file is not None, no_auth)) > 1:
+        raise typer.BadParameter("--token, --token-file and --no-auth are mutually exclusive.")
+    if no_auth:
+        return "--without-connection-token", None
+    if token_file is not None:
+        token_path = Path(token_file).expanduser().resolve(strict=False)
+        if not token_path.is_file():
+            raise typer.BadParameter(f"File not found: {token_path}", param_hint="--token-file")
+        return f"--connection-token-file {shlex.quote(str(token_path))}", token_path.read_text(encoding="utf-8").strip()
+    connection_token = secrets.token_urlsafe(16) if token is None else token
+    return f"--connection-token {shlex.quote(connection_token)}", connection_token
 
 
 def _extract_option_value(args: list[str], option: str) -> str | None:
@@ -56,17 +63,19 @@ def resolve_share_local_folder(directory: str | None) -> str:
     return str(Path(directory).expanduser().resolve(strict=False))
 
 
-def build_http_url(host: str, port: int, server_base_path: str, folder_path: str | None) -> str:
+def build_http_url(host: str, port: int, server_base_path: str, folder_path: str | None, connection_token: str | None) -> str:
     normalized_path = _normalize_server_base_path(server_base_path)
     suffix = "/" if normalized_path == "" else f"{normalized_path}/"
-    url = f"http://{host}:{port}{suffix}"
+    query_parts: list[str] = []
+    if connection_token is not None:
+        query_parts.append(f"tkn={quote(connection_token, safe='')}")
     if folder_path is not None:
-        encoded_folder = quote(folder_path, safe="/:")
-        url = f"{url}?folder={encoded_folder}"
-    return url
+        query_parts.append(f"folder={quote(folder_path, safe='/:')}")
+    url = f"http://{host}:{port}{suffix}"
+    return url if len(query_parts) == 0 else f"{url}?{'&'.join(query_parts)}"
 
 
-def print_serve_web_urls(cmd: str, folder_path: str | None) -> None:
+def print_serve_web_urls(cmd: str, folder_path: str | None, connection_token: str | None) -> None:
     from rich import box
     from rich.console import Console, ConsoleRenderable, Group
     from rich.panel import Panel
@@ -99,7 +108,7 @@ def print_serve_web_urls(cmd: str, folder_path: str | None) -> None:
     seen_urls: set[str] = set()
 
     def add_url(label: str, target_host: str) -> None:
-        url = build_http_url(target_host, port, server_base_path, folder_path)
+        url = build_http_url(target_host, port, server_base_path, folder_path, connection_token)
         if url in seen_urls:
             return
         seen_urls.add(url)
@@ -142,7 +151,8 @@ def print_serve_web_urls(cmd: str, folder_path: str | None) -> None:
         if normalized_host != "0.0.0.0"
         else "Bound to 0.0.0.0, so localhost and each non-loopback IPv4 can be used from this machine or your LAN."
     )
-    note = Text(f"Base path: {base_path_note}    Port: {port}", style="dim")
+    auth_note = "none" if connection_token is None else "connection token, included in the URLs"
+    note = Text(f"Base path: {base_path_note}    Port: {port}    Auth: {auth_note}", style="dim")
     body: list[ConsoleRenderable] = [Text(binding_note, style="bold green"), table]
     if address_warning is not None:
         body.append(address_warning)

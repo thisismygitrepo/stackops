@@ -87,6 +87,9 @@ def vscode_share(
     directory: Annotated[
         str | None, typer.Option("--directory", "-d", help="Folder to open in local web mode (share-local), defaults to the current working directory")
     ] = None,
+    token: Annotated[str | None, typer.Option("--token", "-t", help="Connection token for local web mode (share-local), defaults to a generated one")] = None,
+    token_file: Annotated[str | None, typer.Option("--token-file", "-f", help="File holding the connection token for local web mode (share-local)")] = None,
+    no_auth: Annotated[bool, typer.Option("--no-auth", "-N", help="Serve local web mode without a connection token (share-local)")] = False,
     cli_data_dir: Annotated[str | None, typer.Option("--cli-data-dir", "-D", help="VS Code CLI data directory to use for every generated command")] = None,
     extra_args: Annotated[str | None, typer.Option("--extra-args", "-e", help="Extra args to append to the generated VS Code command")] = None,
     background: Annotated[bool, typer.Option("--background", "-B", help="Keep a run/share-local process running after readiness.")] = False,
@@ -114,6 +117,7 @@ def vscode_share(
     action_normalized = {"r": "run", "i": "install-service", "u": "uninstall-service", "l": "share-local", "s": "status"}.get(action, action)
     if background and action_normalized not in {"run", "share-local"}:
         raise typer.BadParameter("--background applies to run and share-local.")
+    connection_token: str | None = None
     match action_normalized:
         case "run" | "r":
             cmd = f"code tunnel {name_part} {accept} {cli_data_dir_part} {extra}".strip()
@@ -128,14 +132,14 @@ def vscode_share(
             cmd = f"code tunnel status {cli_data_dir_part}".strip()
             desc = "Inspect VS Code tunnel status"
         case "share-local" | "l":
-            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder
+            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import resolve_serve_web_auth, resolve_share_local_folder
 
             host_part = f"--host {shlex.quote(host)}" if host else ""
             server_base_path_part = f"--server-base-path {shlex.quote(path)}" if path else ""
             directory = resolve_share_local_folder(directory)
             directory_part = f"--default-folder {shlex.quote(directory)}"
-            extra = ensure_without_connection_token(extra)
-            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {cli_data_dir_part} {extra} {directory_part}".strip()
+            auth_part, connection_token = resolve_serve_web_auth(extra_args=extra, token=token, token_file=token_file, no_auth=no_auth)
+            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {cli_data_dir_part} {auth_part} {extra} {directory_part}".strip()
             desc = "Run local VS Code web server (serve-web)"
         case _:
             print(f"Unknown action: {action_normalized}")
@@ -161,7 +165,7 @@ def vscode_share(
             if port == 0:
                 raise typer.BadParameter("Use a fixed --port in --extra-args for machine readiness.")
             url_host = "127.0.0.1" if bind_host == "0.0.0.0" else bind_host
-            url = build_http_url(url_host, port, base_path, directory)
+            url = build_http_url(url_host, port, base_path, directory, connection_token)
             run_network_service(name="vscode-web", arguments=shlex.split(cmd), host=bind_host, port=port, url=url, over_internet=False, background=background, output_json=output_json, timeout=timeout, url_from_log=False)
         else:
             from stackops.scripts.python.helpers.helpers_devops.vscode_share_runtime import run_vscode_tunnel
@@ -173,7 +177,7 @@ def vscode_share(
     if action_normalized == "share-local":
         from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls
 
-        print_serve_web_urls(cmd, folder_path=directory)
+        print_serve_web_urls(cmd, folder_path=directory, connection_token=connection_token)
     exit_then_run_shell_script(cmd)
 
 
