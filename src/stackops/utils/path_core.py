@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import sys
-import time
 from urllib.parse import parse_qs, unquote, urlparse
 
 from stackops.utils.accessories import randstr
@@ -235,6 +235,29 @@ def with_name(
     return source_path if orig else destination
 
 
+def _delete_if_released(target: Path, *, verbose: bool) -> None:
+    try:
+        delete_path(target, verbose=verbose)
+    except PermissionError:
+        _emit(f"KEPT {target!r} because it is still in use; the next overwrite of its original path removes it.", verbose=verbose)
+
+
+def _swap_into_place(*, staged: Path, destination: Path, verbose: bool) -> None:
+    displaced_prefix = f"{destination.name}.old-"
+    for stale in [item for item in destination.parent.iterdir() if item.name.startswith(displaced_prefix)]:
+        _delete_if_released(stale, verbose=verbose)
+    if not destination.exists() and not destination.is_symlink():
+        staged.rename(destination)
+        return
+    displaced = destination.rename(destination.parent / f"{displaced_prefix}{randstr()}")
+    try:
+        staged.rename(destination)
+    except OSError:
+        displaced.rename(destination)
+        raise
+    _delete_if_released(displaced, verbose=verbose)
+
+
 def move(
     source: PathLike,
     *,
@@ -266,9 +289,12 @@ def move(
             move(child, folder=destination.parent, overwrite=overwrite, verbose=verbose, parents=parents, content=False)
         return destination
     if overwrite:
-        temporary_path = source_resolved.rename(destination.parent.absolute() / randstr())
-        delete_path(destination, verbose=verbose)
-        temporary_path.rename(destination)
+        staged_path = source_resolved.rename(destination.parent.absolute() / randstr())
+        try:
+            _swap_into_place(staged=staged_path, destination=destination, verbose=verbose)
+        except OSError:
+            staged_path.rename(source_resolved)
+            raise
     else:
         try:
             source_resolved.rename(destination)
@@ -276,6 +302,19 @@ def move(
             shutil.move(str(source_resolved), str(destination))
     _emit(f"MOVED {Path(source)!r} -> {destination!r}", verbose=verbose)
     return destination
+
+
+_ELEVATED_SYMLINK_WORKER = """
+import subprocess
+import sys
+import win32con
+import win32event
+from win32com.shell import shell, shellcon
+link_path, target_path, target_is_directory = sys.argv[1], sys.argv[2], sys.argv[3] == "1"
+code = f"from pathlib import Path; Path({link_path!r}).symlink_to({target_path!r}, target_is_directory={target_is_directory!r})"
+info = shell.ShellExecuteEx(fMask=shellcon.SEE_MASK_NOCLOSEPROCESS, lpVerb="runas", lpFile=sys.executable, lpParameters=subprocess.list2cmdline(["-c", code]), nShow=win32con.SW_HIDE)
+win32event.WaitForSingleObject(info["hProcess"], win32event.INFINITE)
+"""
 
 
 def symlink_to(
@@ -295,17 +334,16 @@ def symlink_to(
     if overwrite and (source_path.is_symlink() or source_path.exists()):
         delete_path(source_path, verbose=verbose)
     if os.name == "nt" and not _is_user_admin():
-        import win32com.shell.shell  # type: ignore[import-not-found]
-
-        win32com.shell.shell.ShellExecuteEx(
-            lpVerb="runas",
-            lpFile=sys.executable,
-            lpParameters=(
-                f""" -c "from pathlib import Path; """
-                f"""Path(r'{source_path}').symlink_to(r'{target_path}', target_is_directory={target_path.is_dir()!r})" """
-            ),
+        worker_args = [str(source_path), str(target_path), "1" if target_path.is_dir() else "0"]
+        result = subprocess.run(
+            ["uv", "run", "--no-project", "--python", sys.executable, "--with", "pywin32", "python", "-c", _ELEVATED_SYMLINK_WORKER, *worker_args],
+            capture_output=True,
+            text=True,
+            check=False,
         )
-        time.sleep(1)
+        if result.returncode != 0 or not source_path.is_symlink():
+            detail = result.stderr.strip() or f"""elevated process finished (worker exit code {result.returncode}) without creating the link"""
+            raise OSError(f"""Elevated symlink creation failed for `{source_path}` -> `{target_path}`: {detail}""")
     else:
         source_path.symlink_to(target_path, target_is_directory=target_path.is_dir())
     _emit(f"LINKED {source_path!r} -> {target_path!r}", verbose=verbose)
