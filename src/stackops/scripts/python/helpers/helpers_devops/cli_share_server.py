@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_devops.cli_share_file import share_
 
 def web_file_explorer(
     path: Annotated[str, typer.Argument(help="Path to the file or directory to share")],
-    port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the share server on (default: 8080)")] = None,
+    port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the share server on (default: any free port)")] = None,
     username: Annotated[str | None, typer.Option("--username", "-u", help="Username for share access (default: current user)")] = None,
     no_auth: Annotated[bool, typer.Option("--no-auth", "-n", help="Disable authentication for share access")] = False,
     password: Annotated[str | None, typer.Option("--password", "-w", help="Password for share access (default: configured quick password)")] = None,
@@ -34,10 +34,17 @@ def web_file_explorer(
         typer.echo(f"❌ ERROR: Invalid backend '{backend}'. Must be one of: filebrowser, miniserve, qrcp, easy-sharing", err=True)
         raise typer.Exit(code=1)
 
-    selected_port = port if port is not None else 8080
-    if selected_port < 1 or selected_port > 65535:
-        typer.echo(f"❌ ERROR: Invalid port '{selected_port}'. Port must be between 1 and 65535.", err=True)
+    if port is None:
+        import socket
+
+        with socket.socket(socket.AF_INET6 if ":" in bind_address else socket.AF_INET, socket.SOCK_STREAM) as port_probe:
+            port_probe.bind((bind_address, 0))
+            selected_port = int(port_probe.getsockname()[1])
+    elif port < 1 or port > 65535:
+        typer.echo(f"❌ ERROR: Invalid port '{port}'. Port must be between 1 and 65535.", err=True)
         raise typer.Exit(code=1)
+    else:
+        selected_port = port
 
     path_obj = Path(path).expanduser().resolve()
     if not path_obj.exists():
