@@ -133,7 +133,7 @@ def vscode_share(
             host_part = f"--host {shlex.quote(host)}" if host else ""
             server_base_path_part = f"--server-base-path {shlex.quote(path)}" if path else ""
             directory = resolve_share_local_folder(directory)
-            directory_part = shlex.quote(str(directory))
+            directory_part = f"--default-folder {shlex.quote(directory)}"
             extra = ensure_without_connection_token(extra)
             cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {cli_data_dir_part} {extra} {directory_part}".strip()
             desc = "Run local VS Code web server (serve-web)"
