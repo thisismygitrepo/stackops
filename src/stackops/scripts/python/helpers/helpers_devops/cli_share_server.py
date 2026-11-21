@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 from typer._completion_classes import completion_init
@@ -16,7 +16,7 @@ def web_file_explorer(
     password: Annotated[str | None, typer.Option("--password", "-w", help="Password for share access (default: configured quick password)")] = None,
     host: Annotated[str, typer.Option("--host", "-H", help="Address to bind the server to")] = "0.0.0.0",
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Expose the share server over the internet using ngrok")] = False,
-    backend: Annotated[str, typer.Option("--backend", "-b", help="Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing")] = "miniserve",
+    backend: Annotated[Literal["filebrowser", "miniserve", "qrcp", "easy-sharing"], typer.Option("--backend", "-b", help="Backend that serves the files")] = "filebrowser",
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
     background: Annotated[bool, typer.Option("--background", "-B", help="Keep the server running after this command exits.")] = False,
     output_json: Annotated[bool, typer.Option("--json", "-j", help="Print ready URLs, process IDs, and log files as JSON.")] = False,
@@ -24,15 +24,12 @@ def web_file_explorer(
     password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read access password from a file; '-' reads stdin.")] = None,
     password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the access password.")] = None,
 ) -> None:
+    import shutil
     import subprocess
     from stackops.secrets.paths import SECRETS_DOFILE
     from stackops.secrets.readers import read_quick_password
-    from stackops.scripts.python.helpers.helpers_devops.network_service import find_free_port, install_service_dependency
+    from stackops.scripts.python.helpers.helpers_devops.network_service import find_free_port, install_service_dependency, run_network_service
     from stackops.utils.cli_utils.secret_input import read_secret_input
-
-    if backend not in ["filebrowser", "miniserve", "qrcp", "easy-sharing"]:
-        typer.echo(f"❌ ERROR: Invalid backend '{backend}'. Must be one of: filebrowser, miniserve, qrcp, easy-sharing", err=True)
-        raise typer.Exit(code=1)
 
     if port is None:
         selected_port = find_free_port(host=host, preferred_port=0)
@@ -94,47 +91,63 @@ def web_file_explorer(
 
     protocol = "http"
     display_host = local_ip_v4 if host == "0.0.0.0" else host
-    pre_commands: list[list[str]] = []
-    if backend == "filebrowser":
-        db_path = Path.home().joinpath(".config/filebrowser/filebrowser.db")
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        if auth_username is None or auth_password is None:
-            server_args = ["filebrowser", "--address", host, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path), "--noauth"]
-        else:
-            pre_commands.append(["filebrowser", "users", "add", auth_username, auth_password, "--database", str(db_path)])
-            server_args = ["filebrowser", "--address", host, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path)]
-    elif backend == "miniserve":
-        server_args = ["miniserve", "--port", str(selected_port), "--interfaces", host]
-        if auth_username is not None and auth_password is not None:
-            server_args.extend(["--auth", f"{auth_username}:{auth_password}"])
-        server_args.extend(["--upload-files", "--mkdir", "--enable-tar", "--enable-tar-gz", "--enable-zip", "--qrcode", str(path_obj)])
-    elif backend == "easy-sharing":
-        server_args = ["easy-sharing", "--port", str(selected_port)]
-        if auth_username is not None and auth_password is not None:
-            server_args.extend(["--username", auth_username, "--password", auth_password])
-        server_args.append(str(path_obj))
-    elif backend == "qrcp":
-        interfaces = helper.get_all_interface_ipv4_addresses()
-        interface = "any" if host == "0.0.0.0" else next((entry.interface for entry in interfaces if entry.ipv4_address == host), None)
-        if interface is None:
-            raise typer.BadParameter("The qrcp bind address must match a local network interface.")
-        server_args = ["qrcp", "--port", str(selected_port), "--interface", interface, "--fqdn", display_host, *(["--keep-alive"] if background else []), str(path_obj)]
-    else:
-        typer.echo(f"❌ ERROR: Unknown backend '{backend}'", err=True)
-        raise typer.Exit(code=1)
+    setup_steps: list[tuple[str, list[str]]] = []
+    setup_secret: str | None = auth_password
+    state_directory: Path | None = None
+    match backend:
+        case "filebrowser":
+            import secrets
+            import tempfile
+
+            services_directory = Path.home().joinpath(".cache/stackops/network-services")
+            services_directory.mkdir(parents=True, exist_ok=True)
+            # A database per run: filebrowser refuses to add a user to a missing database or one that already has that user, and holds a lock on it while serving.
+            state_directory = Path(tempfile.mkdtemp(prefix="filebrowser-db-", dir=services_directory))
+            database = str(state_directory.joinpath("filebrowser.db"))
+            if auth_username is None or auth_password is None:
+                auth_method, account_name, setup_secret = "noauth", "anonymous", secrets.token_urlsafe(24)
+            else:
+                auth_method, account_name, setup_secret = "json", auth_username, auth_password
+            setup_steps.append(("filebrowser config init", ["filebrowser", "config", "init", "--database", database, "--auth.method", auth_method, "--minimumPasswordLength", "1"]))
+            setup_steps.append(("filebrowser users add", ["filebrowser", "users", "add", account_name, setup_secret, "--database", database]))
+            server_args = ["filebrowser", "--address", host, "--port", str(selected_port), "--root", str(path_obj), "--database", database]
+        case "miniserve":
+            server_args = ["miniserve", "--port", str(selected_port), "--interfaces", host]
+            if auth_username is not None and auth_password is not None:
+                server_args.extend(["--auth", f"{auth_username}:{auth_password}"])
+            server_args.extend(["--upload-files", "--mkdir", "--enable-tar", "--enable-tar-gz", "--enable-zip", "--qrcode", str(path_obj)])
+        case "easy-sharing":
+            server_args = ["easy-sharing", "--port", str(selected_port)]
+            if auth_username is not None and auth_password is not None:
+                server_args.extend(["--username", auth_username, "--password", auth_password])
+            server_args.append(str(path_obj))
+        case "qrcp":
+            interfaces = helper.get_all_interface_ipv4_addresses()
+            interface = "any" if host == "0.0.0.0" else next((entry.interface for entry in interfaces if entry.ipv4_address == host), None)
+            if interface is None:
+                raise typer.BadParameter("The qrcp bind address must match a local network interface.")
+            server_args = ["qrcp", "--port", str(selected_port), "--interface", interface, "--fqdn", display_host, *(["--keep-alive"] if background else []), str(path_obj)]
 
     try:
-        for command in pre_commands:
-            result = subprocess.run(command, capture_output=True, text=True, check=False, timeout=timeout)
+        for step, command in setup_steps:
+            try:
+                result = subprocess.run(command, capture_output=True, text=True, check=False, timeout=timeout)
+            except FileNotFoundError:
+                typer.echo(f"❌ ERROR: '{command[0]}' is not installed or not on PATH. Pass --install-dep to install it.", err=True)
+                raise typer.Exit(code=1) from None
+            except subprocess.TimeoutExpired:
+                typer.echo(f"❌ ERROR: '{step}' did not finish within {timeout:g} seconds.", err=True)
+                raise typer.Exit(code=1) from None
             if result.returncode != 0:
-                raise RuntimeError(f"{backend} setup failed with code {result.returncode}.")
-    except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
-        typer.echo(f"Share setup failed ({type(error).__name__}).", err=True)
-        raise typer.Exit(1) from None
-
-    from stackops.scripts.python.helpers.helpers_devops.network_service import run_network_service
-
-    run_network_service(name=backend, arguments=server_args, host=host, port=selected_port, url=f"{protocol}://{display_host}:{selected_port}/", over_internet=over_internet, background=background, output_json=output_json, timeout=timeout, url_from_log=backend == "qrcp")
+                output = "\n".join(line for line in f"{result.stdout}\n{result.stderr}".splitlines() if line.strip() != "")
+                if setup_secret is not None:
+                    output = output.replace(setup_secret, "<password>")
+                typer.echo(f"❌ ERROR: '{step}' failed with exit code {result.returncode}:\n{output}", err=True)
+                raise typer.Exit(code=1)
+        run_network_service(name=backend, arguments=server_args, host=host, port=selected_port, url=f"{protocol}://{display_host}:{selected_port}/", over_internet=over_internet, background=background, output_json=output_json, timeout=timeout, url_from_log=backend == "qrcp")
+    finally:
+        if state_directory is not None and not background:
+            shutil.rmtree(state_directory, ignore_errors=True)
 
 
 def get_share_file_app() -> typer.Typer:
