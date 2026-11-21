@@ -10,6 +10,7 @@ import typer
 
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 from stackops.utils.cloud.defaults import read_default_cloud_config
+from stackops.utils.default_multiplexer import DEFAULT_SESSION_MULTIPLEXER_HELP
 from stackops.utils.cloud.encryption import EncryptionModeChoice
 from stackops.utils.cloud.share_models import ShareLinkTypeChoice, ShareScopeChoice
 
@@ -107,7 +108,7 @@ def mount(
     ] = None,
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
-    backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "tuios", "u"] | None, typer.Option("--backend", "-b", help=f"Session multiplexer for Linux/macOS: tmux/t or tuios/u. {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
     daemon: Annotated[bool, typer.Option("--daemon", "-D", help="Keep mounts running in the background independently of a terminal.")] = False,
     output_json: Annotated[bool, typer.Option("--json", "-j", help="Print background mount locations and process identities as JSON.")] = False,
     timeout: Annotated[float, typer.Option("--timeout", "-T", min=1, help="Seconds to wait for each background mount.")] = 30.0,

@@ -7,6 +7,7 @@ from typing import Annotated, Literal, cast
 from typer._completion_classes import completion_init
 from typer.completion import install_callback, show_callback
 from stackops.utils.cli_utils.interaction import require_interactive
+from stackops.utils.default_multiplexer import DEFAULT_SESSION_MULTIPLEXER_HELP, resolve_session_multiplexer
 from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_background import MountReceipt, launch_background_mount
 
 
@@ -63,7 +64,7 @@ def mount(
     ] = None,
     destination: Annotated[str | None, typer.Option("--destination", "-d", help="destination to mount")] = None,
     network: Annotated[str | None, typer.Option("--network", "-n", help="Windows network mount target, for example X:")] = None,
-    backend: Annotated[Literal["tmux", "t", "auto", "a"], typer.Option("--backend", "-b", help="terminal backend for Linux/macOS")] = "tmux",
+    backend: Annotated[Literal["tmux", "t", "tuios", "u"] | None, typer.Option("--backend", "-b", help=f"Session multiplexer for Linux/macOS: tmux/t or tuios/u. {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
     daemon: Annotated[bool, typer.Option("--daemon", "-D", help="Keep mounts running in the background independently of a terminal.")] = False,
     output_json: Annotated[bool, typer.Option("--json", "-j", help="Return a JSON receipt for background mounts.")] = False,
     timeout: Annotated[float, typer.Option("--timeout", "-T", min=1, help="Seconds to wait for each background mount to become ready.")] = 30.0,
@@ -92,6 +93,7 @@ def mount(
     from rich.text import Text
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_directory import prepare_unix_mount_directory
     from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tmux import build_tmux_launch_command
+    from stackops.scripts.python.helpers.helpers_cloud.cloud_mount_tuios import launch_tuios_mount_session
     console = Console()
     error_console = Console(stderr=True)
     DEFAULT_MOUNT = "~/data/rclone"
@@ -197,6 +199,7 @@ def mount(
     console.print(Panel(f"🚀 Preparing mount command(s):\n{mount_command_info}", border_style="blue"))
 
     launch_commands: list[str | list[str]]
+    launcher: Literal["mprocs", "tmux", "tuios"]
     if daemon:
         try:
             receipts = [launch_background_mount(cloud_name, arguments, Path(mount_locations[cloud_name]), timeout) for cloud_name, arguments in mount_arguments.items()]
@@ -220,23 +223,30 @@ def mount(
             cloud_brand=cloud_brand,
         )
         launch_commands = [txt]
+        launcher = "mprocs"
     elif system_name in ["Linux", "Darwin"]:
-        match backend:
-            case "tmux" | "t" | "auto" | "a":
-                pass
-            case _:
-                print(f"❌ Error: Unsupported backend '{backend}'")
-                raise typer.Exit(code=1)
-
-        txt = build_tmux_launch_command(
-            mount_commands=mount_commands, mount_locations=mount_locations, session_name="cloud-mount", unmounted_clouds=unmounted_clouds
-        )
+        try:
+            match resolve_session_multiplexer(multiplexer=backend):
+                case "tmux":
+                    txt = build_tmux_launch_command(
+                        mount_commands=mount_commands, mount_locations=mount_locations, session_name="cloud-mount", unmounted_clouds=unmounted_clouds
+                    )
+                    launcher = "tmux"
+                case "tuios":
+                    txt = launch_tuios_mount_session(
+                        mount_commands=mount_commands, mount_locations=mount_locations, session_name="cloud-mount", unmounted_clouds=unmounted_clouds
+                    )
+                    launcher = "tuios"
+                case unsupported:
+                    raise ValueError(f"""cloud mount supports the tmux and tuios session multiplexers, not the configured {unsupported}. Pass --backend tmux or --backend tuios.""")
+        except ValueError as error:
+            error_console.print(Text(f"""❌ {error}""", style="red"))
+            raise typer.Exit(code=1) from None
         launch_commands = [txt]
     else:
         print("❌ Error: Unsupported platform")
         raise typer.Exit(code=1)
 
-    launcher = "mprocs" if system_name == "Windows" else "tmux"
     try:
         for command in launch_commands:
             subprocess.run(command, shell=True, check=True)
