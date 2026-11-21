@@ -1,4 +1,4 @@
-def run_server(host: str, port: int, open_browser: bool, stackops_executable: str, working_directory: str) -> None:
+def run_server(host: str, port: int | None, open_browser: bool, stackops_executable: str, working_directory: str) -> None:
     import secrets
     import socket
     import webbrowser
@@ -7,7 +7,7 @@ def run_server(host: str, port: int, open_browser: bool, stackops_executable: st
     from rich.console import Console
     from rich.panel import Panel
 
-    from stackops.scripts.python.helpers.helpers_serve.constants import GRACEFUL_SHUTDOWN_SECONDS, PORT_PROBE_SECONDS, TOKEN_COOKIE_PREFIX
+    from stackops.scripts.python.helpers.helpers_serve.constants import DEFAULT_PORT, GRACEFUL_SHUTDOWN_SECONDS, PORT_PROBE_SECONDS, TOKEN_COOKIE_PREFIX
     from stackops.scripts.python.helpers.helpers_serve.server_app import create_app
     from stackops.utils.network.address import select_lan_ipv4
 
@@ -15,16 +15,20 @@ def run_server(host: str, port: int, open_browser: bool, stackops_executable: st
     is_ipv6 = ":" in host
     family = socket.AF_INET6 if is_ipv6 else socket.AF_INET
     local_host = "127.0.0.1" if host == "0.0.0.0" else "::1" if host == "::" else host
+    requested_port = DEFAULT_PORT if port is None else port
     try:
         # macOS lets an all-interfaces listener and a loopback one share a port without an error, and the loopback one then takes every local connection.
         with socket.socket(family) as probe:
             probe.settimeout(PORT_PROBE_SECONDS)
-            if port != 0 and probe.connect_ex((local_host, port)) == 0:
-                raise OSError(f"""another server already answers on {local_host}:{port}""")
-        listener = socket.create_server((host, port), family=family)
+            if requested_port != 0 and probe.connect_ex((local_host, requested_port)) == 0:
+                raise OSError(f"""another server already answers on {local_host}:{requested_port}""")
+        listener = socket.create_server((host, requested_port), family=family)
     except OSError as error:
-        console.print(f"""[red]Cannot listen on {host}:{port}[/red] ({error}). Choose another port with --port, or --port 0 for a free one.""")
-        raise SystemExit(1) from error
+        if port is not None:
+            console.print(f"""[red]Cannot listen on {host}:{port}[/red] ({error}). Choose another port with --port, or --port 0 for a free one.""")
+            raise SystemExit(1) from error
+        listener = socket.create_server((host, 0), family=family)
+        console.print(f"""[dim]Port {DEFAULT_PORT} is in use ({error}), so this start uses a free port instead.[/dim]""")
     bound_port: int = listener.getsockname()[1]
     token = secrets.token_urlsafe(32)
     url_host = "localhost" if host in ("0.0.0.0", "::") else f"""[{host}]""" if is_ipv6 else host

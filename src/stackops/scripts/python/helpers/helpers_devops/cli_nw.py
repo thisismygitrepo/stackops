@@ -132,14 +132,15 @@ def vscode_share(
             cmd = f"code tunnel status {cli_data_dir_part}".strip()
             desc = "Inspect VS Code tunnel status"
         case "share-local" | "l":
-            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import resolve_serve_web_auth, resolve_share_local_folder
+            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import resolve_serve_web_auth, resolve_serve_web_port_part, resolve_share_local_folder
 
             host_part = f"--host {shlex.quote(host)}" if host else ""
             server_base_path_part = f"--server-base-path {shlex.quote(path)}" if path else ""
             directory = resolve_share_local_folder(directory)
             directory_part = f"--default-folder {shlex.quote(directory)}"
             auth_part, connection_token = resolve_serve_web_auth(extra_args=extra, token=token, token_file=token_file, no_auth=no_auth)
-            cmd = f"code serve-web {accept} {host_part} {server_base_path_part} {cli_data_dir_part} {auth_part} {extra} {directory_part}".strip()
+            port_part = resolve_serve_web_port_part(extra_args=extra, host=host)
+            cmd = f"code serve-web {accept} {host_part} {port_part} {server_base_path_part} {cli_data_dir_part} {auth_part} {extra} {directory_part}".strip()
             desc = "Run local VS Code web server (serve-web)"
         case _:
             print(f"Unknown action: {action_normalized}")

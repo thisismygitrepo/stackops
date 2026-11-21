@@ -44,7 +44,7 @@ def display_terminal_url(local_ip_v4: str, port: int, protocol: str = "http") ->
 
 
 def share_terminal(
-    port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the terminal server on (default: 7681)")] = None,
+    port: Annotated[int | None, typer.Option("--port", "-p", help="Port to run the terminal server on (default: any free port)")] = None,
     username: Annotated[str | None, typer.Option("--username", "-u", help="Username for terminal access (default: current user)")] = None,
     password: Annotated[str | None, typer.Option("--password", "-w", help="Password for terminal access (default: configured quick password)")] = None,
     no_auth: Annotated[bool, typer.Option("--no-auth", "-n", help="Disable authentication (not recommended)")] = False,
@@ -83,7 +83,9 @@ def share_terminal(
             raise typer.Exit(code=1) from exc
 
     if port is None:
-        port = 7681  # Default port for ttyd
+        from stackops.scripts.python.helpers.helpers_devops.network_service import find_free_port
+
+        port = find_free_port(host="0.0.0.0", preferred_port=0)
     if port < 1 or port > 65535:
         print(f"❌ Error: Invalid port '{port}'. Port must be between 1 and 65535.")
         raise typer.Exit(code=1)

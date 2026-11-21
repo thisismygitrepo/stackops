@@ -27,7 +27,7 @@ def web_file_explorer(
     import subprocess
     from stackops.secrets.paths import SECRETS_DOFILE
     from stackops.secrets.readers import read_quick_password
-    from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency
+    from stackops.scripts.python.helpers.helpers_devops.network_service import find_free_port, install_service_dependency
     from stackops.utils.cli_utils.secret_input import read_secret_input
 
     if backend not in ["filebrowser", "miniserve", "qrcp", "easy-sharing"]:
@@ -35,11 +35,7 @@ def web_file_explorer(
         raise typer.Exit(code=1)
 
     if port is None:
-        import socket
-
-        with socket.socket(socket.AF_INET6 if ":" in bind_address else socket.AF_INET, socket.SOCK_STREAM) as port_probe:
-            port_probe.bind((bind_address, 0))
-            selected_port = int(port_probe.getsockname()[1])
+        selected_port = find_free_port(host=bind_address, preferred_port=0)
     elif port < 1 or port > 65535:
         typer.echo(f"❌ ERROR: Invalid port '{port}'. Port must be between 1 and 65535.", err=True)
         raise typer.Exit(code=1)

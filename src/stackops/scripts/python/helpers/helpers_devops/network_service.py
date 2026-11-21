@@ -63,6 +63,16 @@ def require_free_port(host: str, port: int) -> None:
             raise RuntimeError(f"Port {host}:{port} is unavailable: {failure}") from failure
 
 
+def find_free_port(host: str, preferred_port: int) -> int:
+    family = socket.AF_INET6 if ":" in host else socket.AF_INET
+    with socket.socket(family, socket.SOCK_STREAM) as probe:
+        try:
+            probe.bind((host, preferred_port))
+        except OSError:
+            probe.bind((host, 0))
+        return int(probe.getsockname()[1])
+
+
 def wait_for_service(service: ServiceProcess, host: str, port: int, timeout: float) -> None:
     probe_host = "127.0.0.1" if host == "0.0.0.0" else "::1" if host == "::" else host
     deadline = time.monotonic() + timeout

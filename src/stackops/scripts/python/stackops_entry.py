@@ -97,7 +97,7 @@ def seek(ctx: typer.Context) -> None:
 
 def serve(
     host: Annotated[str, typer.Option("--host", "-H", help="Interface to listen on. Keep the loopback default unless you trust the network.")] = DEFAULT_HOST,
-    port: Annotated[int, typer.Option("--port", "-p", min=0, max=65535, help="Port to listen on; 0 picks a free port.")] = DEFAULT_PORT,
+    port: Annotated[int | None, typer.Option("--port", "-p", min=0, max=65535, help=f"Port to listen on; 0 picks a free port. Defaults to {DEFAULT_PORT} when it is free, otherwise a free port.")] = None,
     no_browser: Annotated[bool, typer.Option("--no-browser", "-n", help="Print the access link without opening it in the browser.")] = False,
 ) -> None:
     """🌐 <w> Web UI for commands, dashboards, and terminals."""

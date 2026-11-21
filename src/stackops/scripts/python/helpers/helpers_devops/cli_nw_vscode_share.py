@@ -2,9 +2,12 @@ import platform
 import secrets
 import shlex
 from pathlib import Path
+from typing import Final
 from urllib.parse import quote
 
 import typer
+
+SERVE_WEB_USUAL_PORT: Final[int] = 8000
 
 
 def resolve_serve_web_auth(extra_args: str, token: str | None, token_file: str | None, no_auth: bool) -> tuple[str, str | None]:
@@ -27,6 +30,14 @@ def resolve_serve_web_auth(extra_args: str, token: str | None, token_file: str |
     return f"--connection-token {shlex.quote(connection_token)}", connection_token
 
 
+def resolve_serve_web_port_part(extra_args: str, host: str) -> str:
+    if _extract_option_value(shlex.split(extra_args), "--port") is not None:
+        return ""
+    from stackops.scripts.python.helpers.helpers_devops.network_service import find_free_port
+
+    return f"--port {find_free_port(host=host, preferred_port=SERVE_WEB_USUAL_PORT)}"
+
+
 def _extract_option_value(args: list[str], option: str) -> str | None:
     for index, token in enumerate(args):
         if token == option and index + 1 < len(args):
@@ -43,9 +54,9 @@ def get_serve_web_details(cmd: str) -> tuple[str, int, str]:
     server_base_path = _extract_option_value(tokens, "--server-base-path") or ""
 
     try:
-        port = int(port_raw) if port_raw is not None else 8000
+        port = int(port_raw) if port_raw is not None else SERVE_WEB_USUAL_PORT
     except ValueError:
-        port = 8000
+        port = SERVE_WEB_USUAL_PORT
 
     return host, port, server_base_path
 

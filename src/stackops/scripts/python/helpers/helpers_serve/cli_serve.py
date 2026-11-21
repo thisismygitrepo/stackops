@@ -1,7 +1,7 @@
 import typer
 
 
-def serve(host: str, port: int, open_browser: bool) -> None:
+def serve(host: str, port: int | None, open_browser: bool) -> None:
     import os
     import platform
     import shutil
