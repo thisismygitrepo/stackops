@@ -52,6 +52,11 @@ def quote(value: str | Path) -> str:
     return shlex.quote(str(value))
 
 
+def quote_powershell(value: str) -> str:
+    escaped_value = value.replace("'", "''")
+    return f"""'{escaped_value}'"""
+
+
 @overload
 def interactive_choose_with_preview(
     msg: str,

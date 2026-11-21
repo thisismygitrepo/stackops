@@ -1,11 +1,13 @@
 from collections.abc import Sequence
 from pathlib import Path
+import platform
 import shlex
 import shutil
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BROWSER_MULTIPLEXER_SESSION_NAME, BROWSER_TUIOS_WORKSPACE
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import BrowserWindowHandle
-from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import attach_session_script
+from stackops.scripts.python.helpers.helpers_sessions._attach_common import quote_powershell
+from stackops.scripts.python.helpers.helpers_sessions._tuios_backend import focus_window_attach_script
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_state import list_session_entries, list_window_entries, run_tuios
 from stackops.scripts.python.helpers.helpers_sessions.sessions_tuios_commands import close_window, launch_window
 
@@ -27,8 +29,7 @@ def open_tuios_browser_windows(*, launch_id: str, browser_command: Sequence[str]
         multiplexer="tuios",
         session_name=session_name,
         targets=tuple(window_ids),
-        attach_script=f"""tuios focus-window --session {shlex.quote(session_name)} -- {shlex.quote(window_ids[0])} &&
-{attach_session_script(session_name)}""",
+        attach_script=focus_window_attach_script(session_name=session_name, window_id=window_ids[0]),
     )
 
 
@@ -58,7 +59,13 @@ def _session_is_running(*, session_name: str) -> bool:
 def _open_window(*, window_name: str, command: Sequence[str]) -> str:
     return launch_window(
         session_name=BROWSER_MULTIPLEXER_SESSION_NAME,
-        pane={"paneName": window_name, "startDir": str(Path.home()), "command": shlex.join(command)},
+        pane={"paneName": window_name, "startDir": str(Path.home()), "command": _window_command_text(command=command)},
         exit_mode="backToShell",
         workspace=BROWSER_TUIOS_WORKSPACE,
     )
+
+
+def _window_command_text(*, command: Sequence[str]) -> str:
+    if platform.system() == "Windows":
+        return "& " + " ".join(quote_powershell(part) for part in command)
+    return shlex.join(command)

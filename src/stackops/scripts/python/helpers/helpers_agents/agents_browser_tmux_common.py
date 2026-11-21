@@ -16,7 +16,8 @@ def run_optional_tmux_command(*, command: Sequence[str]) -> subprocess.Completed
         return result
     detail = (result.stderr or result.stdout or "").strip().lower()
     missing_socket = "error connecting to" in detail and "no such file or directory" in detail
-    if missing_socket or any(marker in detail for marker in ("no server running", "failed to connect to server", "can't find session", "can't find window")):
+    silent_psmux_miss = detail == ""
+    if missing_socket or silent_psmux_miss or any(marker in detail for marker in ("no server running", "failed to connect to server", "can't find session", "can't find window")):
         return None
     raise_tmux_command_failure(command=command, result=result)
 

@@ -1,4 +1,5 @@
 import os
+import platform
 from typing import Literal
 
 from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
@@ -7,6 +8,7 @@ from stackops.scripts.python.helpers.helpers_sessions._attach_common import (
     NEW_SESSION_LABEL,
     interactive_choose_with_preview,
     quote,
+    quote_powershell,
 )
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_models import SessionEntry
 from stackops.scripts.python.helpers.helpers_sessions._tuios_backend_preview import (
@@ -86,12 +88,28 @@ fi"""
 
 
 def attach_session_script(name: str) -> str:
+    if platform.system() == "Windows":
+        powershell_name = quote_powershell(name)
+        return f"""if ($env:TUIOS_PANE_ID) {{
+    tuios switch-session -- {powershell_name}
+}} else {{
+    tuios attach -- {powershell_name}
+}}"""
     quoted_name = quote(name)
     return f"""if [ -n "${{TUIOS_PANE_ID:-}}" ]; then
     tuios switch-session -- {quoted_name}
 else
     tuios attach -- {quoted_name}
 fi"""
+
+
+def focus_window_attach_script(session_name: str, window_id: str) -> str:
+    if platform.system() == "Windows":
+        return f"""tuios focus-window --session {quote_powershell(session_name)} -- {quote_powershell(window_id)}
+if ($LASTEXITCODE -ne 0) {{ exit $LASTEXITCODE }}
+{attach_session_script(session_name)}"""
+    return f"""tuios focus-window --session {quote(session_name)} -- {quote(window_id)} &&
+{attach_session_script(session_name)}"""
 
 
 def choose_session(
@@ -117,10 +135,7 @@ def choose_session(
                     continue
                 for entry in list_window_entries(session.name):
                     label = window_label(session.name, entry)
-                    scripts[label] = (
-                        f"""tuios focus-window --session {quote(session.name)} -- {quote(entry.window_id)} &&\n"""
-                        + attach_session_script(session.name)
-                    )
+                    scripts[label] = focus_window_attach_script(session_name=session.name, window_id=entry.window_id)
                     previews[label] = window_preview(session.name, entry)
             else:
                 scripts[session.name] = attach_session_script(session.name)

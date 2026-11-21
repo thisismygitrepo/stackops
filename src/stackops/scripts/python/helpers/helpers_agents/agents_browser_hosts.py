@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+import platform
 import subprocess
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserMultiplexer, BrowserRuntime, BrowserRuntimeOption
@@ -84,6 +85,10 @@ def close_browser_windows(*, handle: BrowserWindowHandle) -> None:
 
 
 def attach_browser_windows(*, handle: BrowserWindowHandle) -> None:
-    result = subprocess.run(("bash", "-c", handle.attach_script), check=False)
+    if platform.system() == "Windows":
+        attach_command = ("pwsh", "-NoLogo", "-NoProfile", "-Command", handle.attach_script)
+    else:
+        attach_command = ("bash", "-c", handle.attach_script)
+    result = subprocess.run(attach_command, check=False)
     if result.returncode != 0:
         raise RuntimeError(f"{handle.multiplexer} attach failed with exit code {result.returncode}: {handle.attach_script}")
