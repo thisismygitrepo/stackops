@@ -57,6 +57,9 @@ def stop_services(services: list[ServiceProcess]) -> None:
 def require_free_port(host: str, port: int) -> None:
     family = socket.AF_INET6 if ":" in host else socket.AF_INET
     with socket.socket(family, socket.SOCK_STREAM) as probe:
+        # Servers bind with address reuse, so a port whose last server just stopped is free to them; on Windows the same flag would also accept a port in active use.
+        if sys.platform != "win32":
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             probe.bind((host, port))
         except OSError as failure:
@@ -64,12 +67,15 @@ def require_free_port(host: str, port: int) -> None:
 
 
 def find_free_port(host: str, preferred_port: int) -> int:
-    family = socket.AF_INET6 if ":" in host else socket.AF_INET
-    with socket.socket(family, socket.SOCK_STREAM) as probe:
+    if preferred_port != 0:
         try:
-            probe.bind((host, preferred_port))
-        except OSError:
-            probe.bind((host, 0))
+            require_free_port(host, preferred_port)
+        except RuntimeError:
+            pass
+        else:
+            return preferred_port
+    with socket.socket(socket.AF_INET6 if ":" in host else socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind((host, 0))
         return int(probe.getsockname()[1])
 
 
