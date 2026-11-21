@@ -1,5 +1,4 @@
 import os
-import platform
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LOCALHOST
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import process_created_at
@@ -23,7 +22,6 @@ def launch_detached_browser(*, details: BrowserLaunchDetails, lan: bool) -> NewB
     prepare_browser_launch_registry()
     browser_process = start_browser_process(
         command=details.command,
-        system_name=platform.system(),
         process_label=details.process_label,
         environment=os.environ,
     )
@@ -42,7 +40,6 @@ def launch_detached_browser(*, details: BrowserLaunchDetails, lan: bool) -> NewB
             relay_process = start_endpoint_relay(
                 listen_port=details.port,
                 target_port=details.browser_port,
-                system_name=platform.system(),
             )
             wait_for_tcp_endpoint(
                 host=REMOTE_DEBUGGING_LOCALHOST,
@@ -84,7 +81,6 @@ def repair_detached_browser_relay(
     relay_process = start_endpoint_relay(
         listen_port=details.port,
         target_port=details.browser_port,
-        system_name=platform.system(),
     )
     try:
         wait_for_tcp_endpoint(
