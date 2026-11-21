@@ -14,7 +14,7 @@ def web_file_explorer(
     username: Annotated[str | None, typer.Option("--username", "-u", help="Username for share access (default: current user)")] = None,
     no_auth: Annotated[bool, typer.Option("--no-auth", "-n", help="Disable authentication for share access")] = False,
     password: Annotated[str | None, typer.Option("--password", "-w", help="Password for share access (default: configured quick password)")] = None,
-    bind_address: Annotated[str, typer.Option("--bind", "-a", help="Address to bind the server to")] = "0.0.0.0",
+    host: Annotated[str, typer.Option("--host", "-H", help="Address to bind the server to")] = "0.0.0.0",
     over_internet: Annotated[bool, typer.Option("--over-internet", "-i", help="Expose the share server over the internet using ngrok")] = False,
     backend: Annotated[str, typer.Option("--backend", "-b", help="Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing")] = "miniserve",
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
@@ -35,7 +35,7 @@ def web_file_explorer(
         raise typer.Exit(code=1)
 
     if port is None:
-        selected_port = find_free_port(host=bind_address, preferred_port=0)
+        selected_port = find_free_port(host=host, preferred_port=0)
     elif port < 1 or port > 65535:
         typer.echo(f"❌ ERROR: Invalid port '{port}'. Port must be between 1 and 65535.", err=True)
         raise typer.Exit(code=1)
@@ -93,18 +93,18 @@ def web_file_explorer(
     local_ip_v4 = res
 
     protocol = "http"
-    display_host = local_ip_v4 if bind_address == "0.0.0.0" else bind_address
+    display_host = local_ip_v4 if host == "0.0.0.0" else host
     pre_commands: list[list[str]] = []
     if backend == "filebrowser":
         db_path = Path.home().joinpath(".config/filebrowser/filebrowser.db")
         db_path.parent.mkdir(parents=True, exist_ok=True)
         if auth_username is None or auth_password is None:
-            server_args = ["filebrowser", "--address", bind_address, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path), "--noauth"]
+            server_args = ["filebrowser", "--address", host, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path), "--noauth"]
         else:
             pre_commands.append(["filebrowser", "users", "add", auth_username, auth_password, "--database", str(db_path)])
-            server_args = ["filebrowser", "--address", bind_address, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path)]
+            server_args = ["filebrowser", "--address", host, "--port", str(selected_port), "--root", str(path_obj), "--database", str(db_path)]
     elif backend == "miniserve":
-        server_args = ["miniserve", "--port", str(selected_port), "--interfaces", bind_address]
+        server_args = ["miniserve", "--port", str(selected_port), "--interfaces", host]
         if auth_username is not None and auth_password is not None:
             server_args.extend(["--auth", f"{auth_username}:{auth_password}"])
         server_args.extend(["--upload-files", "--mkdir", "--enable-tar", "--enable-tar-gz", "--enable-zip", "--qrcode", str(path_obj)])
@@ -115,7 +115,7 @@ def web_file_explorer(
         server_args.append(str(path_obj))
     elif backend == "qrcp":
         interfaces = helper.get_all_interface_ipv4_addresses()
-        interface = "any" if bind_address == "0.0.0.0" else next((entry.interface for entry in interfaces if entry.ipv4_address == bind_address), None)
+        interface = "any" if host == "0.0.0.0" else next((entry.interface for entry in interfaces if entry.ipv4_address == host), None)
         if interface is None:
             raise typer.BadParameter("The qrcp bind address must match a local network interface.")
         server_args = ["qrcp", "--port", str(selected_port), "--interface", interface, "--fqdn", display_host, *(["--keep-alive"] if background else []), str(path_obj)]
@@ -134,7 +134,7 @@ def web_file_explorer(
 
     from stackops.scripts.python.helpers.helpers_devops.network_service import run_network_service
 
-    run_network_service(name=backend, arguments=server_args, host=bind_address, port=selected_port, url=f"{protocol}://{display_host}:{selected_port}/", over_internet=over_internet, background=background, output_json=output_json, timeout=timeout, url_from_log=backend == "qrcp")
+    run_network_service(name=backend, arguments=server_args, host=host, port=selected_port, url=f"{protocol}://{display_host}:{selected_port}/", over_internet=over_internet, background=background, output_json=output_json, timeout=timeout, url_from_log=backend == "qrcp")
 
 
 def get_share_file_app() -> typer.Typer:
