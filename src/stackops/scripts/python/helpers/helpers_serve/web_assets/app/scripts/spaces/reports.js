@@ -2,6 +2,7 @@ import { h, icon } from "/assets/scripts/dom.js";
 import { on, state } from "/assets/scripts/state.js";
 import { REPORTS } from "../catalog.js";
 import { replay, rise } from "../motion.js";
+import { viewHead } from "../space_kit.js";
 import { button, glyphTile, notice } from "../widgets.js";
 import { relativeTime } from "../words.js";
 
@@ -23,7 +24,7 @@ export function createReportsSpace({ activity }) {
   const stamp = h("span", { class: "dim" });
   const refresh = button({ label: "Refresh", glyph: "refresh", small: true, onclick: () => generate(boards.get(currentId)) });
   const viewer = h("div", { class: "report-viewer", hidden: true }, h("div", { class: "report-bar" }, h("a", { class: "btn small ghost", href: "#/reports" }, icon("back", 14), h("span", { text: "All reports" })), barTitle, h("span", { class: "spacer" }), stamp, refresh), h("div", { class: "report-body" }, frames, overlay));
-  const list = h("div", {}, h("header", { class: "view-head" }, h("div", { class: "view-title" }, h("h1", { text: "Reports" }), h("p", { text: "Rich, browsable snapshots of this machine. Each one opens on its last build and brings itself up to date." }))), gallery);
+  const list = h("div", {}, viewHead({ title: "Reports", lede: "Rich, browsable snapshots of this machine. Each one opens on its last build and brings itself up to date." }), gallery);
   const element = h("section", { class: "view reports", hidden: true }, list, viewer);
   let currentId = null;
   let adHocCount = 0;
@@ -93,7 +94,7 @@ export function createReportsSpace({ activity }) {
       board.status = "failed";
       board.problem = error.message;
     }
-    if (boards.has(board.id)) paintViewer();
+    paintViewer();
   }
 
   function paintViewer() {

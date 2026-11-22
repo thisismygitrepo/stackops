@@ -92,7 +92,7 @@
 .chip-close:hover { color: var(--ink); background: var(--line); }
 .task-hero { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 0 18px 12px; padding: 14px 16px; background: var(--well); border-radius: 18px; }
 .task-hero .notice { flex: 1; padding: 18px; border: 0; background: none; }
-.task-mark { display: grid; flex: none; place-items: center; width: 46px; height: 46px; color: var(--violet); background: rgba(106, 92, 255, 0.14); border-radius: 15px; }
+.task-mark { display: grid; flex: none; place-items: center; width: 46px; height: 46px; color: var(--violet); background: var(--violet-wash); border-radius: 15px; }
 .task-mark .ring { width: 22px; height: 22px; border-width: 2.5px; }
 .task-mark.done { color: var(--good); background: color-mix(in srgb, var(--good) 16%, transparent); animation: pop-in 0.5s var(--spring); }
 .task-mark.failed { color: var(--bad); background: color-mix(in srgb, var(--bad) 16%, transparent); animation: pop-in 0.5s var(--spring); }

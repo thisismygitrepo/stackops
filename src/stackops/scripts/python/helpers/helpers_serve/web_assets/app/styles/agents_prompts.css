@@ -39,8 +39,7 @@
 .prompt-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; min-height: 36px; padding: 0 18px 12px 20px; font-size: 12.5px; }
 .prompt-meta .copy-chip, .prompt-origin .copy-chip, .prompt-file .copy-chip { margin-left: 0; background: var(--well); }
 .prompt-meta .copy-chip svg, .prompt-origin .copy-chip svg, .prompt-file .copy-chip svg { flex: none; opacity: 0.55; }
-.prompt-origin .copy-chip, .prompt-file .copy-chip { padding: 4px 8px; text-align: left; }
-.prompt-origin .copy-chip span, .prompt-file .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.prompt-origin .copy-chip, .prompt-file .copy-chip { padding: 4px 8px; }
 .prompt-meta .segmented button { height: 26px; padding: 0 11px; font-size: 12px; }
 .prompt-meta .segmented-thumb { height: 26px; }
 .prompt-progress { flex: none; height: 2px; background: var(--line); }

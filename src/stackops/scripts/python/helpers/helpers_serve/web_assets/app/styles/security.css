@@ -1,8 +1,6 @@
 .security-section > .panel:first-child { margin-top: 0; }
 /* posture.js marks its panel "quiet" for the refresh it runs every few seconds during a scan, so the list does not dim each time. */
 .security-section .panel.quiet.loading .panel-body { opacity: 1; }
-.scan-swap { animation: scan-in 0.32s var(--smooth); }
-@keyframes scan-in { from { opacity: 0; transform: translateY(10px); } }
 
 /* This machine: the ring and the sentence that say how the installed apps stand. */
 .posture { display: flex; flex-wrap: wrap; align-items: center; gap: 22px 26px; padding: 22px 24px; background: var(--well); border: 1px solid var(--line); border-radius: 22px; }
@@ -38,9 +36,7 @@
 /* The list of checked files, in groups, here and inside one scan. */
 .scan-filter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .scan-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
-.scan-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.scan-group h3 { display: flex; align-items: center; gap: 8px; min-height: 30px; padding-left: 4px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
-.scan-group h3 b { padding: 1px 7px; font-size: 11px; letter-spacing: 0; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
+.scan-group h3 { min-height: 30px; }
 .scan-group h3 .btn { letter-spacing: 0; text-transform: none; }
 .scan-group > .btn { justify-self: start; }
 .scan-row { flex-wrap: wrap; row-gap: 6px; }

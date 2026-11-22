@@ -17,13 +17,12 @@ export function editButton(activity, target, { label = "Edit", small = false } =
   return button({ label, glyph: "terminal", small, title: "Opens the file in a text editor inside the activity panel. It is checked when you close the editor.", onclick: () => editFile(activity, target) });
 }
 
+export function viewHead({ title, lede, actions }) {
+  return h("header", { class: "view-head" }, h("div", { class: "view-title" }, h("h1", { text: title }), h("p", { text: lede })), actions && h("div", { class: "view-actions" }, actions));
+}
+
 export function createView({ title, lede, actions = [] }, ...content) {
-  return h(
-    "section",
-    { class: "view", hidden: true },
-    h("header", { class: "view-head" }, h("div", { class: "view-title" }, h("h1", { text: title }), h("p", { text: lede })), h("div", { class: "view-actions" }, actions)),
-    ...content,
-  );
+  return h("section", { class: "view", hidden: true }, viewHead({ title, lede, actions }), ...content);
 }
 
 export function toolButton(tools, path, { label, glyph, tone, preset = {} } = {}) {
@@ -31,14 +30,15 @@ export function toolButton(tools, path, { label, glyph, tone, preset = {} } = {}
   return node && button({ label: label ?? titleOf(node), glyph, tone, title: friendlyText(node.summary), onclick: () => tools.open(path, { preset }) });
 }
 
+const cardParts = (emoji, name, title, blurb) => [emojiTile(emoji, name, 40), h("span", { class: "tool-card-text" }, h("strong", { text: title }), h("span", { text: blurb })), icon("arrow", 14)];
+
 export function toolCard(tools, node, label) {
-  return h(
-    "button",
-    { class: "tool-card lit", type: "button", onclick: () => tools.open(node.path) },
-    emojiTile(node.icon || "✨", node.path, 40),
-    h("span", { class: "tool-card-text" }, h("strong", { text: label ?? titleOf(node) }), h("span", { text: friendlyText(node.summary) })),
-    icon("arrow", 14),
-  );
+  return h("button", { class: "tool-card lit", type: "button", onclick: () => tools.open(node.path) }, cardParts(node.icon || "✨", node.path, label ?? titleOf(node), friendlyText(node.summary)));
+}
+
+// The same card for somewhere to go instead of a tool to open. `name` only picks the tile's colour.
+export function linkCard({ href, emoji, name, title, blurb }) {
+  return h("a", { class: "tool-card lit", href }, cardParts(emoji, name, title, blurb));
 }
 
 export function toolGrid(tools, paths) {

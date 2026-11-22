@@ -1,8 +1,8 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { rise } from "../../motion.js";
-import { avatar, copyChip, highlight, notice, pill, searchInput } from "../../widgets.js";
+import { avatar, callout, highlight, notice, pathChip, pill, searchInput } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { KINDS, matchesTerm, shortPath, summarize } from "./health_model.js";
+import { KINDS, matchesTerm, summarize } from "./health_model.js";
 
 const FILTERS = [
   { id: "all", label: "Known agents", test: () => true },
@@ -12,17 +12,6 @@ const FILTERS = [
 ];
 
 export const agentHash = (agent, kind) => `#/agents/health/${encodeURIComponent(agent.id)}${kind ? `/${kind}` : ""}`;
-export const pathChip = (path) => copyChip(path, shortPath(path));
-
-export function callout({ tone, title, text, where, lead, href, extra }) {
-  return h(
-    href ? "a" : "div",
-    { class: `health-callout ${tone}`, href },
-    h("span", { class: "callout-glyph" }, icon(tone === "" ? "info" : "alert", 17)),
-    h("div", { class: "callout-text" }, h("strong", {}, lead && h("em", { text: `${lead} · ` }), title), text && h("p", { text }), where && !href && pathChip(where), extra),
-    href && icon("arrow", 15),
-  );
-}
 
 // While a search finds things inside an agent's setup, its numbers count the finds, so the row says where they are.
 function matrixRow(agent, term, found) {

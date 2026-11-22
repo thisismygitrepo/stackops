@@ -5,10 +5,9 @@ import { rise } from "../../motion.js";
 import { editFile } from "../../space_kit.js";
 import { button, searchInput, segmented } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { canChange, createPromptFile, editTarget, openPromptFiles } from "./prompts_files.js";
+import { canChange, createPromptFile, editTarget, openPromptFiles, sourceLabel } from "./prompts_files.js";
 import { EVERYTHING, emptyNotice, groupChips, groupOf, keyOf, promptRow } from "./prompts_list.js";
-import { createPromptReader } from "./prompts_reader.js";
-import { sourceLabel, titleOfPrompt } from "./prompts_text.js";
+import { createPromptReader, titleOfPrompt } from "./prompts_reader.js";
 
 const ADDRESS = "#/agents/prompts";
 const STEP_KEYS = { ArrowDown: 1, ArrowUp: -1, Enter: 0 };

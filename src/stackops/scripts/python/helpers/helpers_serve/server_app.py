@@ -47,7 +47,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
     # On Windows the registry can map .js to text/plain, and a browser refuses to run a module served that way. A no-op on macOS and Linux.
     mimetypes.add_type("text/javascript", ".js")
     mimetypes.add_type("text/css", ".css")
-    registry = RunRegistry(stackops_executable=stackops_executable, runs={}, pump_threads={})
+    registry = RunRegistry(stackops_executable=stackops_executable, runs={})
     tree, sources = load_command_tree()
     parameter_cache: dict[str, list[ParameterSpec] | None] = {}
     release_cache: dict[str, LatestRelease] = {}
@@ -174,7 +174,6 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         # A run that is already gone counts as removed: old finished runs are forgotten unasked, and another tab may have removed it first.
         run = registry.runs.pop(request.path_params["run_id"], None)
         if run is not None:
-            registry.pump_threads.pop(run.run_id)
             stop_run(run)
         return Response(status_code=204)
 

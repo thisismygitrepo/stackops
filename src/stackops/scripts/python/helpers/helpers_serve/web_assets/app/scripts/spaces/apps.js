@@ -1,7 +1,6 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
-import { on } from "/assets/scripts/state.js";
 import { createCombo } from "../combo.js";
-import { software } from "../data.js";
+import { software, staleKeeper } from "../data.js";
 import { replay, rise } from "../motion.js";
 import { confirmAction } from "../overlays.js";
 import { editButton } from "../space_kit.js";
@@ -26,7 +25,6 @@ export function createAppsSpace({ activity }) {
   let term = "";
   let found = [];
   let update = false;
-  let stale = true;
 
   const grid = h("div", { class: "app-grid" }, skeleton(12, "card"));
   const filters = createAppFilters({ onChange: () => paintGrid() });
@@ -86,7 +84,7 @@ export function createAppsSpace({ activity }) {
   const updates = createAppUpdates({
     onUpdate: (names) => start(names.length === 1 ? `Update ${names[0]}` : `Update ${names.length} apps`, [names.join(","), "--update"]).catch((error) => toast(error.message)),
     // Updates read the list of apps again, so Browse reads it too on its next visit and the two sections agree.
-    onRefresh: () => (stale = true),
+    onRefresh: () => keeper.spoil(),
   });
 
   async function install(names, withUpdate) {
@@ -168,16 +166,16 @@ export function createAppsSpace({ activity }) {
     grid.replaceChildren(...(found.length ? found.map(card) : [notice({ glyph: "search", title: "No apps match", body: "Try a different word, or clear the filter." })]));
   }
 
-  async function load(route) {
-    stale = false;
+  async function load() {
     const arriving = catalog === null;
     try {
       catalog = await software();
     } catch (error) {
+      keeper.spoil();
       catalog = null;
       summary.textContent = "";
       selectAll.hidden = bundleButton.hidden = true;
-      const actions = h("div", { class: "dialog-actions" }, button({ label: "Try again", glyph: "refresh", small: true, onclick: () => load([]) }), editButton(activity, MY_CATALOG, { label: "Edit my catalog", small: true }));
+      const actions = h("div", { class: "dialog-actions" }, button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load() }), editButton(activity, MY_CATALOG, { label: "Edit my catalog", small: true }));
       grid.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The app catalog didn't load", body: error.message, action: actions }));
       return;
     }
@@ -185,7 +183,6 @@ export function createAppsSpace({ activity }) {
     filters.load(catalog);
     paintGrid();
     if (arriving) rise(grid);
-    openRoute(route);
   }
 
   function openRoute(route) {
@@ -207,21 +204,18 @@ export function createAppsSpace({ activity }) {
     browse,
     updates.element,
   );
-  on("data-stale", () => {
-    stale = true;
-    if (!element.hidden && !browse.hidden) load([]);
-  });
+  const keeper = staleKeeper(browse, load);
   return {
     element,
-    show(route) {
+    async show(route) {
       const section = route[0] === "updates" ? "updates" : "browse";
       picker.set(section);
       lede.textContent = LEDES[section];
       searchRow.hidden = browse.hidden = section !== "browse";
       updates.element.hidden = section !== "updates";
-      if (section === "updates") updates.show();
-      else if (stale) load(route);
-      else openRoute(route);
+      if (section === "updates") return updates.show();
+      await keeper.ensure();
+      openRoute(route);
     },
   };
 }

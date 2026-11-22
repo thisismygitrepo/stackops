@@ -35,7 +35,8 @@ export function createHealthSection({ openReport, tools }) {
     if (onTab) holder.querySelector(`.health-kinds [aria-pressed="true"]`)?.focus({ preventScroll: true });
     if (key === shownKey) return;
     if (agent) replay(holder, "health-swap");
-    if (shownKey !== null && panel.element.getBoundingClientRect().top < 0) panel.element.scrollIntoView({ block: "start" });
+    // Running's paint ends the same way: keep the two alike. The stage is found from the panel, since the holder is off the page while a failed load is on show.
+    if (shownKey !== null && panel.element.getBoundingClientRect().top < panel.element.closest(".stage").getBoundingClientRect().top) panel.element.scrollIntoView({ block: "start" });
     shownKey = key;
   }
 

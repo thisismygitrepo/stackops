@@ -1,9 +1,8 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { capture, markStale } from "../../data.js";
 import { openDialog } from "../../overlays.js";
-import { button, skeleton } from "../../widgets.js";
+import { button, pathChip, skeleton } from "../../widgets.js";
 import { KIND_BY_ID, softenPaths } from "./health_model.js";
-import { pathChip } from "./health_overview.js";
 
 const FOCUSES = { configuration: "configuration", server: "mcp", hook: "hook", plugin: "plugin", skill: "skill", instructions: "instructions" };
 const SCOPES = { local: "workspace", global: "user" };

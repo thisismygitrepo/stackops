@@ -1,9 +1,8 @@
 import { h, icon } from "/assets/scripts/dom.js";
-import { button, highlight, iconButton, notice, pill } from "../../widgets.js";
+import { button, highlight, iconButton, notice, pathChip, pill } from "../../widgets.js";
 import { plural } from "../../words.js";
 import { openResourceFile } from "./health_file.js";
 import { KIND_BY_ID, ORIGINS, STATES, groupBySource } from "./health_model.js";
-import { pathChip } from "./health_overview.js";
 import { canRemove, removeResource } from "./health_remove.js";
 
 const ROW_STEP = 12;

@@ -1,23 +1,15 @@
-import { h, icon, splitArguments } from "/assets/scripts/dom.js";
+import { collectTokens, LONG_TEXT_NAMES, longOf } from "/assets/scripts/command_tokens.js";
+import { h, icon } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
-import { HIDDEN_FLAGS, PATH_FIELDS } from "./catalog.js";
+import { HIDDEN_FLAGS } from "./catalog.js";
 import { createCombo } from "./combo.js";
 import { segmented } from "./widgets.js";
 import { friendlyText, humanize } from "./words.js";
 
 const SEGMENT_LIMIT = 4;
-const LONG_TEXT_NAMES = new Set(["prompt", "message", "command", "context", "note"]);
 
-const longOf = (flags) => flags.find((flag) => flag.startsWith("--")) ?? flags[0];
 const labelOf = (spec) => humanize(spec.kind === "option" ? longOf(spec.flags) : spec.name);
 const isHidden = (spec) => spec.flags.some((flag) => HIDDEN_FLAGS.has(flag));
-
-function tokensOf(spec, value) {
-  if (!value) return [];
-  if (spec.control === "switch") return [value === "off" ? longOf(spec.off_flags) : longOf(spec.flags)];
-  const items = !spec.multiple || LONG_TEXT_NAMES.has(spec.name) ? [value] : spec.control === "choice" ? value.split("\n") : splitArguments(value);
-  return spec.kind === "option" ? items.flatMap((item) => [longOf(spec.flags), item]) : items;
-}
 
 function createField(spec, values, changed) {
   const read = () => values.get(spec.name) ?? "";
@@ -64,7 +56,7 @@ function createField(spec, values, changed) {
     });
     field = h("div", { class: "field" }, caption, combo.element, note);
     paint = () => combo.setValue(read() ? humanize(read()) : "");
-  } else if (spec.control === "path" || (spec.control === "text" && !spec.multiple && PATH_FIELDS.has(spec.name))) {
+  } else if (spec.control === "path") {
     const combo = createCombo({
       label, placeholder: placeholder || "Type a path", glyph: "folder", emptyText: "Nothing to suggest",
       suggest: async (text) => (await api.paths(text, state.settings.workingDirectory)).entries.map((entry) => ({ value: entry, label: entry, keepOpen: entry.endsWith("/") })),
@@ -110,19 +102,8 @@ export function createFriendlyForm({ parameters, values, essentials, locked = []
   const element = h("div", { class: "form" }, primary.length > 0 && h("div", { class: "fields" }, primary.map((item) => item.field)), rest.length > 0 && h("div", { class: "more" }, toggle, drawer));
 
   function collect() {
-    const optionTokens = [];
-    const argumentTokens = [];
-    const problems = [];
-    let gap = null;
-    for (const spec of parameters) {
-      const tokens = tokensOf(spec, values.get(spec.name) ?? "");
-      if (spec.required && tokens.length === 0) problems.push(`${labelOf(spec)} is needed`);
-      if (spec.kind === "option") optionTokens.push(...tokens);
-      else if (tokens.length === 0) gap ??= spec;
-      else if (gap) problems.push(`Fill in ${labelOf(gap)} before ${labelOf(spec)}`);
-      else argumentTokens.push(...tokens);
-    }
-    return { tokens: [...optionTokens, ...(argumentTokens.some((token) => token.startsWith("-")) ? ["--"] : []), ...argumentTokens], problems };
+    const { tokens, problems } = collectTokens(parameters, values, []);
+    return { tokens, problems: problems.map(({ spec, gap }) => (gap ? `Fill in ${labelOf(gap)} before ${labelOf(spec)}` : `${labelOf(spec)} is needed`)) };
   }
 
   // `start` is what the form goes back to: what its owner opened it with, or an empty map.

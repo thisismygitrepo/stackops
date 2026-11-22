@@ -1,9 +1,10 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { query } from "../../data.js";
+import { createPanel } from "../../live_panel.js";
 import { toolButton } from "../../space_kit.js";
 import { avatar, button, notice } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { actionBlock, areaHead, barList, createStatePanel, stateCard, statRow, tally } from "./workbench_kit.js";
+import { actionBlock, areaHead, barList, stateCard, statRow, tally } from "./workbench_kit.js";
 
 const DAY = 86400000;
 const WEEK = 7 * DAY;
@@ -46,7 +47,7 @@ function weekChart(notes, monday) {
   );
 }
 
-export function createBrainArea({ tools }, { setStatus }) {
+export function createBrainArea({ tools }, { setStatus, failStatus }) {
   let fromBrain = true;
   const question = h("input", { class: "wb-ask-input", type: "text", placeholder: "Ask a quick question…", "aria-label": "Your question", autocomplete: "off" });
   const toggle = h("button", { class: "mini-toggle", type: "button", role: "switch", "aria-checked": "true" }, h("i", { class: "switch" }), h("span", { text: "Answer from my Second Brain" }));
@@ -62,8 +63,8 @@ export function createBrainArea({ tools }, { setStatus }) {
   toggle.addEventListener("click", () => useBrain(!fromBrain, true));
   question.addEventListener("keydown", (event) => event.key === "Enter" && ask());
 
-  const panel = createStatePanel({
-    title: "What's in the notebook", skeletonShape: "card",
+  const panel = createPanel({
+    title: "What's in the notebook", skeletonShape: "card", onFail: failStatus,
     load: async (fresh) => (await query(["agents", "second-brain", "status", "--json"], fresh)).json,
     explain: (error, { reload }) => {
       // Setting it up only makes the folder, and the status command also reads the folder's git history. Until it has one, this is the answer.

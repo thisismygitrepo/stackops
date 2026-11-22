@@ -66,7 +66,8 @@ export function createRunningSection({ activity, tools }) {
     else holder.replaceChildren(notice({ glyph: "bot", title: "No agents are running", body: "Start a chat or hand off a prompt and it will appear here.", action: toolButton(tools, "agents run-interactive", { label: "Start a chat", tone: "primary" }) }), ...unseen);
     if (key === shownKey) return;
     if (agent) replay(holder, "health-swap");
-    if (shownKey !== null && panel.element.getBoundingClientRect().top < holder.closest(".stage").getBoundingClientRect().top) panel.element.scrollIntoView({ block: "start" });
+    // Health's paint ends the same way: keep the two alike. The stage is found from the panel, since the holder is off the page while a failed load is on show.
+    if (shownKey !== null && panel.element.getBoundingClientRect().top < panel.element.closest(".stage").getBoundingClientRect().top) panel.element.scrollIntoView({ block: "start" });
     shownKey = key;
   }
 

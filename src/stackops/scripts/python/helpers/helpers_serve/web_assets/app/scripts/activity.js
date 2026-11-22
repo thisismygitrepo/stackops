@@ -51,6 +51,8 @@ export function createActivity({ openReport }) {
     element.dataset.mode = mode;
     element.inert = mode === "closed";
     sizeButton.replaceChildren(icon(mode === "max" ? "shrink" : "expand", 16));
+    sizeButton.title = mode === "max" ? "Back to the usual size" : "Fill the window";
+    sizeButton.setAttribute("aria-label", sizeButton.title);
     activate(activeId);
   }
 

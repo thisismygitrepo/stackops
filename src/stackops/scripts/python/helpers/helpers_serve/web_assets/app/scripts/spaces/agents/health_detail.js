@@ -1,9 +1,9 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { commandDetail } from "../../data.js";
 import { toolButton } from "../../space_kit.js";
-import { avatar, keyValue, pill, searchInput, sectionHead } from "../../widgets.js";
+import { avatar, callout, keyValue, pathChip, pill, searchInput, sectionHead } from "../../widgets.js";
 import { KINDS, KIND_BY_ID, ORIGINS, matchesTerm } from "./health_model.js";
-import { agentHash, callout, pathChip } from "./health_overview.js";
+import { agentHash } from "./health_overview.js";
 import { renderResources } from "./health_resources.js";
 
 const AGENT_TOOLS = [["agents run-interactive", "Start a chat", "play"], ["agents run-prompt", "Run a prompt", "sparkle"]];

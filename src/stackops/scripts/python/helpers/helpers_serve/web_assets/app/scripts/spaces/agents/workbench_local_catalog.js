@@ -42,8 +42,10 @@ function huggingFaceCard(model, tools) {
 }
 
 export function createCatalogPanel({ tools }) {
+  // The catalog is read from the internet and takes seconds, and nothing done on this machine changes it. So it is `lasting`: it is fetched on
+  // arrival, by its refresh button and when its Options change, and not again each time a task finishes somewhere in the app.
   return createLivePanel({
-    title: "Models you can download", path: "agents local discover", extra: ["--json"], skeletonShape: "card",
+    title: "Models you can download", path: "agents local discover", extra: ["--json"], skeletonShape: "card", lasting: true,
     render: (data, { setCount }) => {
       const models = Array.isArray(data) ? data : [];
       setCount(models.length ? `${plural(models.length, "model")} · fetched live` : "");

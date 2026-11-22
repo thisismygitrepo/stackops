@@ -1,10 +1,10 @@
-import { h, icon } from "/assets/scripts/dom.js";
+import { h } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { query } from "../data.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
-import { createView, editButton, toolButton, toolGrid } from "../space_kit.js";
-import { emojiTile, glyphTile, notice, sectionHead, stat } from "../widgets.js";
+import { createView, editButton, linkCard, toolButton, toolGrid } from "../space_kit.js";
+import { glyphTile, notice, sectionHead, stat } from "../widgets.js";
 import { friendlyText, plural, titleOf } from "../words.js";
 import { appliesHere, backupGroup } from "./data_backups.js";
 
@@ -64,17 +64,7 @@ export function createDataSpace({ activity, tools }) {
 
   const cloudGrid = toolGrid(tools, CLOUD_TOOLS);
   const onedrive = state.nodes.get("cloud onedrive");
-  if (onedrive) {
-    cloudGrid.append(
-      h(
-        "a",
-        { class: "tool-card lit", href: "#/tools/cloud/onedrive" },
-        emojiTile(onedrive.icon || "🗂️", onedrive.path, 40),
-        h("span", { class: "tool-card-text" }, h("strong", { text: titleOf(onedrive) }), h("span", { text: friendlyText(onedrive.summary) })),
-        icon("arrow", 14),
-      ),
-    );
-  }
+  if (onedrive) cloudGrid.append(linkCard({ href: "#/tools/cloud/onedrive", emoji: onedrive.icon || "🗂️", name: onedrive.path, title: titleOf(onedrive), blurb: friendlyText(onedrive.summary) }));
 
   const element = createView(
     {

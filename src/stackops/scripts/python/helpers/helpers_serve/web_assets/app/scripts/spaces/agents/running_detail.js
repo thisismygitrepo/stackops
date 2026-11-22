@@ -1,10 +1,8 @@
-import { h, icon, tildify } from "/assets/scripts/dom.js";
-import { state } from "/assets/scripts/state.js";
+import { h, icon } from "/assets/scripts/dom.js";
 import { toneOf } from "../../result_view.js";
-import { avatar, button, copyChip, keyValue, pill } from "../../widgets.js";
+import { avatar, button, callout, copyChip, keyValue, pathChip, pill } from "../../widgets.js";
 import { humanize, plural, relativeTime } from "../../words.js";
-import { callout } from "./health_overview.js";
-import { renderPromptText } from "./prompts_text.js";
+import { renderLooseText } from "./loose_text.js";
 
 const ADDRESS = "#/agents/running";
 const TASK_LABEL = /^(First retained request|Retained goal context):\s*/;
@@ -37,10 +35,10 @@ export function fold(opened, title, size, build) {
 }
 
 function said(message) {
-  return h("li", {}, h("header", {}, h("strong", { text: KINDS[message.kind] ?? humanize(message.kind) }), message.timestamp && h("span", { class: "dim", title: message.timestamp, text: relativeTime(message.timestamp) })), renderPromptText(message.text, ""));
+  return h("li", {}, h("header", {}, h("strong", { text: KINDS[message.kind] ?? humanize(message.kind) }), message.timestamp && h("span", { class: "dim", title: message.timestamp, text: relativeTime(message.timestamp) })), renderLooseText(message.text, ""));
 }
 
-// One running agent, swapped in where the cards were, drawn from what the list already downloaded. It borrows Health's one-agent header and callout.
+// One running agent, swapped in where the cards were, drawn from what the list already downloaded. Its header is styled by the classes of Health's one-agent header.
 export function renderAgent({ agent, opened, onAsk }) {
   const { history, process } = agent;
   const question = pendingQuestion(agent.prompt);
@@ -48,7 +46,7 @@ export function renderAgent({ agent, opened, onAsk }) {
   const later = history.messages.filter((message) => message !== first);
   const limits = [...new Set([...agent.limitations, ...history.limitations, ...process.limitations])];
   const facts = [
-    ["Folder", agent.cwd && copyChip(agent.cwd, tildify(agent.cwd, state.boot.home))],
+    ["Folder", agent.cwd && pathChip(agent.cwd)],
     ["Where", [agent.session, agent.workspace_name, agent.tab_name].filter(Boolean).join(" › ")],
     ["Pane", copyChip(agent.window_id)],
     ["Conversation", process.session_id && copyChip(process.session_id)],
@@ -71,9 +69,9 @@ export function renderAgent({ agent, opened, onAsk }) {
       keyValue(facts),
     ),
     question && callout({ tone: "warn", title: "Waiting on you", extra: h("pre", { class: "agent-question", text: question }) }),
-    part("The task", first?.timestamp, renderPromptText(first ? first.text : taskText(agent), "")),
+    part("The task", first?.timestamp, renderLooseText(first ? first.text : taskText(agent), "")),
     history.latest_reply
-      ? part("Its latest reply", history.latest_reply_at, renderPromptText(history.latest_reply, ""))
+      ? part("Its latest reply", history.latest_reply_at, renderLooseText(history.latest_reply, ""))
       : agent.latest_activity && part("Latest activity", "", h("p", { class: "dim", text: agent.latest_activity })),
     history.latest_reply && agent.latest_activity && !REPLY_LABEL.test(agent.latest_activity) && h("p", { class: "agent-latest dim", text: agent.latest_activity }),
     later.length + history.omitted_messages > 0 &&

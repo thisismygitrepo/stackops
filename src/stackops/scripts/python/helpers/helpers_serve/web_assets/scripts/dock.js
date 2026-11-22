@@ -5,6 +5,8 @@ import { api, emit, setSetting, state } from "./state.js";
 export function statusGlyph(run) {
   if (run.exit_code === null) return h("span", { class: "status", title: "Running" }, h("span", { class: "spinner" }));
   if (run.exit_code === 0) return h("span", { class: "status ok", title: "Finished" }, icon("check", 14));
+  // A command the user ended (Stop, or closing its tab while it ran) is not a failure; the server remembers that it was asked to.
+  if (run.stopped) return h("span", { class: "status", title: "Stopped" }, icon("stop", 14));
   return h("span", { class: "status failed", title: `Exited with code ${run.exit_code}` }, icon("alert", 14));
 }
 
@@ -66,7 +68,7 @@ export function createDock() {
     rerunButton.hidden = !active;
     if (!active) meta.textContent = "";
     else if (active.summary.exit_code === null) meta.textContent = `running in ${tildify(active.summary.working_directory, state.boot.home)}`;
-    else meta.textContent = `${active.summary.exit_code === 0 ? "done" : `exit ${active.summary.exit_code}`} · ${formatDuration(active.summary.finished_at - active.summary.started_at)}`;
+    else meta.textContent = `${active.summary.exit_code === 0 ? "done" : active.summary.stopped ? "stopped" : `exit ${active.summary.exit_code}`} · ${formatDuration(active.summary.finished_at - active.summary.started_at)}`;
   }
 
   function activate(id) {

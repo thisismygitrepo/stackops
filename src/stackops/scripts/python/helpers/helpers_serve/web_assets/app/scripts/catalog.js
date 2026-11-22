@@ -92,12 +92,6 @@ export const ARRIVAL_VALUES = {
 // Tools that hand whatever follows their own arguments on to a script or program. The command tree does not carry this, so the list is kept by hand.
 export const PASSTHROUGH_TOOLS = new Set(["devops scripts run", "fire run", "utils file ocr", "utils file scrape", "agents local serve"]);
 
-// Text parameters that always name a local file or folder, so the form gives them the box with folder suggestions. `root`, `source` and `target` are left out: in some tools they are remote.
-export const PATH_FIELDS = new Set([
-  "pdf_input", "data_path", "output", "output_dir", "output_path", "repo", "find_root", "search_root", "project_path", "context_path", "prompt_path", "agents_dir", "agent_dir",
-  "input_path", "file",
-]);
-
 // Options a read-only tool's sheet leaves out, by parameter name. The sheet re-runs on every change, so nothing in it may act: on `agents status`, Btw makes real agent calls,
 // Output and Force write files, and Format clashes with the `--json` the sheet asks for. The Agents page offers Btw as a button behind a confirmation.
 // The scan tools' Format and View only shape the table that `--json` replaces. The last three are switches that ask for a picker in a terminal, which a sheet does not have.

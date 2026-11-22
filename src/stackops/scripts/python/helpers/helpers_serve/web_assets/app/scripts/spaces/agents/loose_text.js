@@ -1,9 +1,9 @@
 import { h } from "/assets/scripts/dom.js";
-import { humanize } from "../../words.js";
 
+// Text that is plain but usually loosely structured: a saved prompt, a file an agent reads, what an agent was told and what it answered.
+// The `prompt-` class names are from its first use, on the Prompts tab; their rules are in agents_prompts.css.
 const WORDS_PER_MINUTE = 220;
 const SNIPPET_RADIUS = 46;
-const SOURCE_LABELS = { workspace: "This project", user: "Yours", library: "Built in", "custom-file": "Chosen file" };
 const FENCE = /^\s*(```|~~~)/;
 const RULE = /^\s*([-=*_])\1{2,}\s*$/;
 const HEADING = /^\s*(#{1,6})\s+(.+?)\s*#*\s*$/;
@@ -11,18 +11,8 @@ const ITEM = /^(\s*)([-*•+]|\d{1,3}[.)])\s+(.*)$/;
 const LABEL = /^[^\n]{1,64}:$/;
 const INLINE = /(`[^`\n]+`|\*\*[^*\n]+\*\*)/;
 
-export function sourceLabel(source) {
-  const [kind, member] = source.split(":");
-  const label = SOURCE_LABELS[kind] ?? humanize(kind);
-  return member ? `${label} · ${member}` : label;
-}
-
-// "team.updateDocs" reads as "Update docs"; the exact name stays available to copy.
-export function titleOfPrompt(name) {
-  const words = name.split(".").at(-1).replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2").split(/[-_\s]+/).filter(Boolean);
-  const text = words.map((word) => (word.length > 1 && /^[A-Z0-9]+$/.test(word) ? word : word.toLowerCase())).join(" ");
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
+// The two ways such a text is shown, as the choices of a `segmented` picker.
+export const TEXT_VIEWS = [["formatted", "Easy to read"], ["plain", "As written"]];
 
 export function readingStats(text) {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
@@ -52,8 +42,8 @@ export function snippetAround(text, term) {
   return `${start > 0 ? "…" : ""}${text.slice(start, end).replace(/\s+/g, " ").trim()}${end < text.length ? "…" : ""}`;
 }
 
-// Prompts are plain text, usually loosely structured: underlined or #-marked headings, bullets, and fenced examples.
-function parsePrompt(text) {
+// The structure looked for: underlined or #-marked headings, bullets, and fenced examples.
+function parseLooseText(text) {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const blocks = [];
   let paragraph = [];
@@ -104,11 +94,11 @@ function inline(text, term) {
   });
 }
 
-export function renderPromptText(text, term) {
+export function renderLooseText(text, term) {
   return h(
     "div",
     { class: "prompt-prose" },
-    parsePrompt(text).map((block) => {
+    parseLooseText(text).map((block) => {
       if (block.kind === "code") return h("pre", { class: "prompt-code" }, markAll(block.text, term));
       if (block.kind === "rule") return h("hr");
       if (block.kind === "heading") return h(block.level <= 2 ? "h3" : "h4", {}, inline(block.text, term));

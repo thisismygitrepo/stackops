@@ -1,6 +1,6 @@
 import { formatClock, h, icon, shellQuote } from "./dom.js";
 import { DASHBOARDS } from "./presets.js";
-import { nodeHash, state } from "./state.js";
+import { nodeHash, on, state } from "./state.js";
 
 export function createDashboardsView({ dock }) {
   const boards = new Map();
@@ -47,9 +47,12 @@ export function createDashboardsView({ dock }) {
     board.status = "running";
     paint();
     try {
+      const folder = state.settings.workingDirectory;
       const run = await dock.start({ arguments: board.arguments, interactive: false, reveal: false });
       board.runId = run.id;
       const outcome = await run.done;
+      // The working folder changed while this was being built, so what was built belongs to the old folder: build it again for the new one.
+      if (folder !== state.settings.workingDirectory) return generate(board);
       // The run lists every report written while it was going, whoever wrote it, so a board that knows its file takes that file or none.
       const file = board.file ? outcome.reports.find((name) => name === board.file) : outcome.reports[0];
       if (outcome.exit_code === 0 && file) {
@@ -115,6 +118,12 @@ export function createDashboardsView({ dock }) {
   }
 
   for (const definition of DASHBOARDS) addBoard(definition, false);
+  // Some reports depend on the working folder, so a change of folder makes every built one due again; the one on show is rebuilt at once.
+  on("workingDirectory", () => {
+    for (const board of boards.values()) if (board.status === "ready") board.status = "idle";
+    const current = boards.get(currentId);
+    if (current.status === "idle" && !element.hidden) generate(current);
+  });
 
   function show(route) {
     const board = boards.get(route.id) ?? boards.get(currentId);

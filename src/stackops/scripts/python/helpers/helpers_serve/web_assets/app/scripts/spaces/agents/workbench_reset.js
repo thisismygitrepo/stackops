@@ -1,9 +1,10 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { query } from "../../data.js";
+import { createPanel } from "../../live_panel.js";
 import { dataTable } from "../../result_view.js";
 import { button, notice, segmented } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { barList, createStatePanel, stateCard, statRow, tally } from "./workbench_kit.js";
+import { barList, stateCard, statRow, tally } from "./workbench_kit.js";
 
 const SCOPES = [["all", "Everywhere"], ["workspace", "This project"], ["user", "Your account"]];
 const KINDS = { skill: "Skills", instructions: "Instruction files", configuration: "Settings", plugin: "Plugins", mcp: "Tool servers", workspace: "Project scratch folders" };
@@ -27,7 +28,7 @@ export function createResetPanel({ tools, openReport }) {
     panel.load();
   });
 
-  const panel = createStatePanel({
+  const panel = createPanel({
     title: "If you reset your agents", actions: [picker.element], skeletonShape: "card",
     load: async (fresh) => (await query(["agents", "reset", "--scope", scope, "--json"], fresh)).json,
     render: (data, { setCount }) => {

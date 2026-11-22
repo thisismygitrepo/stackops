@@ -16,9 +16,6 @@
 .wb-tab-status[data-tone="warn"]::before { background: var(--warn); }
 .wb-tab-status[data-tone="bad"]::before { background: var(--bad); }
 
-.wb-in { animation: wb-in 0.34s var(--smooth) backwards; }
-@keyframes wb-in { from { opacity: 0; transform: translateY(10px); } }
-@keyframes wb-grow { from { transform: scaleX(0); } }
 @keyframes wb-rise { from { transform: scaleY(0); } }
 .wb-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; margin-bottom: 16px; }
 .wb-head-text { flex: 1; min-width: 260px; }
@@ -36,14 +33,10 @@
 .wb-split.even { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; }
 .wb-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
 
-.wb-card { display: grid; gap: 12px; align-content: start; min-width: 0; padding: 18px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 20px; }
-.wb-card header { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.wb-card header > div { display: grid; flex: 1; min-width: 0; }
-.wb-card h3 { overflow: hidden; font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; text-overflow: ellipsis; white-space: nowrap; }
+.wb-card { min-width: 0; }
 .wb-card header .dim { font-size: 12.5px; }
 .wb-address { display: grid; justify-items: start; gap: 2px; }
 .wb-address .copy-chip { font-size: 13.5px; color: var(--ink); }
-.wb-card footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 12.5px; }
 .wb-card .facts { font-size: 13px; }
 .wb-signin { display: grid; gap: 4px; justify-items: start; min-width: 0; }
 .wb-signin .wb-line-actions { align-items: center; }
@@ -90,7 +83,7 @@
   display: flex; align-items: center; gap: 12px; height: 58px; margin-bottom: 22px; padding: 0 10px 0 18px; color: var(--ink-faint); background: var(--panel-solid); border: 1px solid var(--line-strong);
   border-radius: 19px; box-shadow: var(--shadow); transition: border-color 0.2s, box-shadow 0.25s;
 }
-.wb-ask:focus-within { border-color: var(--violet); box-shadow: 0 0 0 4px rgba(106, 92, 255, 0.14), var(--shadow); }
+.wb-ask:focus-within { border-color: var(--violet); box-shadow: var(--ring), var(--shadow); }
 .wb-ask-input { flex: 1; min-width: 0; height: 100%; font-size: 15.5px; color: var(--ink); background: none; border: 0; outline: none; }
 .wb-ask-input::placeholder { color: var(--ink-faint); }
 .wb-ask .mini-toggle { flex: none; }
@@ -117,7 +110,7 @@
 .wb-bar-track { display: block; height: 8px; }
 .wb-bar-track i {
   display: block; width: calc(var(--share) * 100%); min-width: 3px; height: 100%; background: var(--violet); border-radius: 0 4px 4px 0; transform-origin: left;
-  animation: wb-grow 0.7s var(--smooth) backwards; animation-delay: calc(var(--i) * 40ms);
+  animation: grow 0.7s var(--smooth) backwards; animation-delay: calc(var(--i) * 40ms);
 }
 .wb-bar-value { min-width: 3ch; font-weight: 650; text-align: right; }
 

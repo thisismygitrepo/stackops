@@ -29,7 +29,7 @@
 .pill.good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
 .pill.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
 .pill.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
-.pill.accent { color: var(--violet); background: rgba(106, 92, 255, 0.14); }
+.pill.accent { color: var(--violet); background: var(--violet-wash); }
 .avatar {
   display: grid; flex: none; place-items: center; width: var(--size); height: var(--size); font-size: calc(var(--size) * 0.36); font-weight: 750; letter-spacing: -0.02em; color: #fff;
   background: linear-gradient(135deg, hsl(var(--hue) 78% 60%), hsl(calc(var(--hue) + 42) 80% 48%)); border-radius: calc(var(--size) * 0.3);
@@ -52,9 +52,12 @@
 .notice .btn, .notice .dialog-actions { margin-top: 10px; }
 .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .section-head h2 { font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-faint); }
+.backup-group, .update-group, .scan-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.backup-group h3, .update-group h3, .scan-group h3 { display: flex; align-items: center; gap: 8px; padding-left: 4px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.backup-group h3 b, .update-group h3 b, .scan-group h3 b { padding: 1px 7px; font-size: 11px; letter-spacing: 0; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
 
 .search-input { display: flex; align-items: center; gap: 8px; width: 260px; height: 38px; padding: 0 12px; color: var(--ink-faint); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; transition: border-color 0.2s, box-shadow 0.2s; }
-.search-input:focus-within { border-color: var(--violet); box-shadow: 0 0 0 4px rgba(106, 92, 255, 0.14); }
+.search-input:focus-within { border-color: var(--violet); box-shadow: var(--ring); }
 .search-input input { flex: 1; min-width: 0; color: var(--ink); background: none; border: 0; outline: none; }
 .segmented { position: relative; display: inline-flex; justify-self: start; max-width: 100%; padding: 3px; overflow-x: auto; background: var(--well); border-radius: 12px; scrollbar-width: none; }
 .segmented button { position: relative; z-index: 1; height: 30px; padding: 0 13px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); border-radius: 9px; transition: color 0.2s; }
@@ -76,6 +79,10 @@
 .copy-chip:hover { color: var(--ink); background: var(--well); }
 .copy-chip:hover svg { opacity: 1; }
 .copy-chip.copied { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+/* Where a chip's text wraps instead of being cut short. The icon rule stays below the hover rule above: there the icon is always shown, dimmed. */
+:is(.health, .agent-open, .prompt-origin, .prompt-file, .removal-plan, .app-sheet) .copy-chip { text-align: left; }
+:is(.health, .agent-open, .prompt-origin, .prompt-file, .removal-plan, .app-sheet) .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+:is(.health, .agent-open) .copy-chip svg { flex: none; opacity: 0.4; }
 .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 9px 18px; font-size: 13.5px; }
 .facts dt { color: var(--ink-faint); }
 .facts dd { min-width: 0; overflow-wrap: anywhere; }
@@ -94,7 +101,7 @@
 .mini-toggle { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; color: var(--ink-soft); }
 
 .combo { position: relative; display: flex; align-items: center; gap: 9px; height: 40px; padding: 0 12px; color: var(--ink-faint); background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 12px; transition: border-color 0.2s, box-shadow 0.25s; }
-.combo:focus-within, .combo.open { border-color: var(--violet); box-shadow: 0 0 0 4px rgba(106, 92, 255, 0.14); }
+.combo:focus-within, .combo.open { border-color: var(--violet); box-shadow: var(--ring); }
 .combo-input { flex: 1; min-width: 0; height: 100%; color: var(--ink); background: none; border: 0; outline: none; }
 .combo-input::placeholder, .text-input::placeholder { color: var(--ink-faint); }
 .combo.pick-only .combo-input { cursor: pointer; }
@@ -110,7 +117,7 @@
 .combo-label { overflow: hidden; font-weight: 600; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
 .combo-hint { overflow: hidden; font-size: 12.5px; color: var(--ink-soft); text-overflow: ellipsis; white-space: nowrap; }
 .combo-empty { padding: 18px; text-align: center; color: var(--ink-faint); }
-.combo-add { display: grid; place-items: center; width: 26px; height: 26px; color: var(--violet); background: rgba(106, 92, 255, 0.14); border-radius: 50%; }
+.combo-add { display: grid; place-items: center; width: 26px; height: 26px; color: var(--violet); background: var(--violet-wash); border-radius: 50%; }
 @keyframes drop { from { opacity: 0; transform: scaleY(0.9) translateY(-6px); } }
 
 .form, .fields { display: grid; gap: 14px; }
@@ -123,7 +130,7 @@
 .toggle-row:hover { border-color: var(--line-strong); }
 .toggle-row[aria-checked="true"] { background: var(--brand-wash); border-color: color-mix(in srgb, var(--violet) 40%, transparent); }
 .text-input { width: 100%; min-height: 40px; padding: 9px 12px; color: var(--ink); background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 12px; outline: none; resize: vertical; transition: border-color 0.2s, box-shadow 0.25s; }
-.text-input:focus { border-color: var(--violet); box-shadow: 0 0 0 4px rgba(106, 92, 255, 0.14); }
+.text-input:focus { border-color: var(--violet); box-shadow: var(--ring); }
 .more-toggle { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 2px; font-size: 13px; font-weight: 650; color: var(--ink-soft); }
 .more-toggle:hover { color: var(--ink); }
 .more-toggle > svg:last-child { margin-left: auto; transition: transform 0.35s var(--spring); }
@@ -152,8 +159,8 @@
 .table-block { display: grid; gap: 10px; min-width: 0; }
 .table-tools { display: flex; }
 .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
-.data-table { width: 100%; font-size: 13px; border-collapse: collapse; }
-.data-table th { padding: 10px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-align: left; text-transform: uppercase; white-space: nowrap; color: var(--ink-faint); background: var(--well); }
+.data-table, .health-matrix { width: 100%; font-size: 13px; border-collapse: collapse; }
+.data-table th, .health-matrix th { padding: 10px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-align: left; text-transform: uppercase; white-space: nowrap; color: var(--ink-faint); background: var(--well); }
 .data-table th button { display: inline-flex; align-items: center; gap: 5px; letter-spacing: inherit; text-transform: inherit; transition: color 0.2s; }
 .data-table th button:hover { color: var(--ink); }
 .data-table th button svg { opacity: 0; transition: opacity 0.2s, transform 0.35s var(--spring); }

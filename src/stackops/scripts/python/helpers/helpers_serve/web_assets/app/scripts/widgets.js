@@ -1,4 +1,5 @@
-import { h, icon, toast } from "/assets/scripts/dom.js";
+import { h, icon, tildify, toast } from "/assets/scripts/dom.js";
+import { state } from "/assets/scripts/state.js";
 import { countUp } from "./motion.js";
 import { hueOf, initialsOf } from "./words.js";
 
@@ -15,6 +16,17 @@ export const skeleton = (count, shape) => Array.from({ length: count }, (_, inde
 
 export function notice({ glyph, title, body, action, tone = "" }) {
   return h("div", { class: `notice ${tone}` }, h("span", { class: "notice-glyph" }, icon(glyph, 22)), h("h3", { text: title }), body && h("p", { text: body }), action);
+}
+
+// A remark in a tone, or a link to where it is dealt with when `href` is given. The class names are Health's, where it was first used; its rules are in agents_health.css.
+export function callout({ tone, title, text, where, lead, href, extra }) {
+  return h(
+    href ? "a" : "div",
+    { class: `health-callout ${tone}`, href },
+    h("span", { class: "callout-glyph" }, icon(tone === "" ? "info" : "alert", 17)),
+    h("div", { class: "callout-text" }, h("strong", {}, lead && h("em", { text: `${lead} · ` }), title), text && h("p", { text }), where && !href && pathChip(where), extra),
+    href && icon("arrow", 15),
+  );
 }
 
 export function sectionHead(title, ...tail) {
@@ -67,23 +79,30 @@ export function stat({ glyph, hue, label, href }) {
   };
 }
 
+// Resolves to whether the text was copied, so each caller shows its own sign of it. Where the browser does not allow copying it says so, with `instead` as what to do about it.
+export async function copyText(text, instead = "") {
+  if (navigator.clipboard) await navigator.clipboard.writeText(text);
+  else toast(`The browser only allows copying on localhost or HTTPS. ${instead}`.trimEnd());
+  return Boolean(navigator.clipboard);
+}
+
 export function copyChip(text, label = text) {
   const element = h("button", { class: "copy-chip", type: "button", title: "Copy" }, h("span", { text: label }), icon("copy", 13));
   element.addEventListener("click", async (event) => {
     event.stopPropagation();
-    if (!navigator.clipboard) return toast("The browser only allows copying on localhost or HTTPS.");
-    await navigator.clipboard.writeText(text);
+    if (!(await copyText(text))) return;
     element.classList.add("copied");
     setTimeout(() => element.classList.remove("copied"), 1200);
   });
   return element;
 }
 
+export const pathChip = (path) => copyChip(path, tildify(path, state.boot.home));
+
 // Copy and Save for any text output; `read` is called at click time. Save is there because browsers only allow copying on localhost or HTTPS.
 export function outputActions(read, name) {
   const copy = iconButton("copy", "Copy the output", async () => {
-    if (!navigator.clipboard) return toast("The browser only allows copying on localhost or HTTPS. Save the output instead.");
-    await navigator.clipboard.writeText(read());
+    if (!(await copyText(read(), "Save the output instead."))) return;
     copy.replaceChildren(icon("check", 16));
     setTimeout(() => copy.replaceChildren(icon("copy", 16)), 1200);
   });
@@ -95,6 +114,7 @@ export function outputActions(read, name) {
   return [copy, save];
 }
 
+// A pair whose value is nothing is left out, `false` included, so a value can be written as `condition && node`.
 export function keyValue(pairs) {
-  return h("dl", { class: "facts" }, pairs.filter(([, value]) => value !== null && value !== undefined && value !== "").flatMap(([key, value]) => [h("dt", { text: key }), h("dd", {}, value)]));
+  return h("dl", { class: "facts" }, pairs.filter(([, value]) => value !== null && value !== undefined && value !== "" && value !== false).flatMap(([key, value]) => [h("dt", { text: key }), h("dd", {}, value)]));
 }

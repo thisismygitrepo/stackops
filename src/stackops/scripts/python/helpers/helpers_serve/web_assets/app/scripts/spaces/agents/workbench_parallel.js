@@ -1,11 +1,12 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { query } from "../../data.js";
+import { createPanel } from "../../live_panel.js";
 import { rise } from "../../motion.js";
 import { toolButton } from "../../space_kit.js";
 import { avatar, button, notice, sectionHead } from "../../widgets.js";
 import { humanize, plural } from "../../words.js";
-import { actionBlock, areaHead, cardHead, createStatePanel, installButton, pathText, statusPill } from "./workbench_kit.js";
+import { actionBlock, areaHead, cardHead, installButton, pathText, statusPill } from "./workbench_kit.js";
 import { createJobsPanel } from "./workbench_parallel_jobs.js";
 
 const PREVIEW_ALL = { all_workspaces: "on", dry_run: "on" };
@@ -26,7 +27,7 @@ const TIDY = [
   { path: "agents iter status", title: "Inspect every loop", blurb: "Each loop with its tabs, and which of them are safe to close.", preset: { all_workspaces: "on" } },
 ];
 
-export function createParallelArea({ tools }, { setStatus }) {
+export function createParallelArea({ tools }, { setStatus, failStatus }) {
   const steps = h(
     "ol",
     { class: "wb-steps" },
@@ -62,8 +63,8 @@ export function createParallelArea({ tools }, { setStatus }) {
   }
 
   const jobs = createJobsPanel({ tools });
-  const loops = createStatePanel({
-    title: "Loops in progress", skeletonShape: "card",
+  const loops = createPanel({
+    title: "Loops in progress", skeletonShape: "card", onFail: failStatus,
     load: async (fresh) => {
       const [status, leftovers] = await Promise.allSettled([
         query(["agents", "iter", "status", "--all", "--json"], fresh),

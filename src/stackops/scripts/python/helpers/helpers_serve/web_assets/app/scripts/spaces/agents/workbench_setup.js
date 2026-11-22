@@ -1,9 +1,10 @@
 import { h } from "/assets/scripts/dom.js";
 import { query } from "../../data.js";
+import { createPanel } from "../../live_panel.js";
 import { rise } from "../../motion.js";
 import { editButton, toolButton } from "../../space_kit.js";
 import { button } from "../../widgets.js";
-import { actionBlock, areaHead, createStatePanel, pathText, statusPill } from "./workbench_kit.js";
+import { actionBlock, areaHead, pathText, statusPill } from "./workbench_kit.js";
 import { createResetPanel } from "./workbench_reset.js";
 
 const KINDS = [
@@ -36,7 +37,7 @@ async function inspect(kind, place, fresh) {
   }
 }
 
-export function createSetupArea({ activity, tools, openReport }, { setStatus }) {
+export function createSetupArea({ activity, tools, openReport }, { setStatus, failStatus }) {
   function cell(check, kind, place) {
     const preset = { kind: check.kind, source: check.place };
     const broken = check.verdict === "broken";
@@ -61,8 +62,8 @@ export function createSetupArea({ activity, tools, openReport }, { setStatus }) 
   // The reset preview is asked for before the lists, here and on every refresh signal (panels answer that in the order they were made). The lists
   // start nine commands at once and a browser sends six requests at a time, so the one preview would otherwise wait behind them.
   const reset = createResetPanel({ tools, openReport });
-  const lists = createStatePanel({
-    title: "Lists your agents draw from",
+  const lists = createPanel({
+    title: "Lists your agents draw from", onFail: failStatus,
     load: (fresh) => Promise.all(KINDS.flatMap((kind) => PLACES.map((place) => inspect(kind.id, place.id, fresh)))),
     render: (checks, { setCount }) => {
       const ready = checks.filter((check) => check.verdict === "ready").length;

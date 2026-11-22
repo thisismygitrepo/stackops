@@ -1,18 +1,11 @@
 import { attachPathCompletion } from "./chrome.js";
+import { collectTokens, LONG_TEXT_NAMES, longOf } from "./command_tokens.js";
 import { h, splitArguments } from "./dom.js";
 
 const EXTRA = "__extra__";
 const FILTER_THRESHOLD = 9;
 
-const longOf = (flags) => flags.find((flag) => flag.startsWith("--")) ?? flags[0];
 const labelOf = (spec) => (spec.kind === "option" ? longOf(spec.flags) : spec.name.toUpperCase());
-
-function tokensOf(spec, value) {
-  if (!value) return [];
-  if (spec.control === "switch") return [value === "off" ? longOf(spec.off_flags) : longOf(spec.flags)];
-  const items = !spec.multiple ? [value] : spec.control === "choice" ? value.split("\n") : splitArguments(value);
-  return spec.kind === "option" ? items.flatMap((item) => [longOf(spec.flags), item]) : items;
-}
 
 function createField(spec, draft, changed) {
   const read = () => draft.get(spec.name) ?? "";
@@ -72,7 +65,7 @@ function createField(spec, draft, changed) {
     const control = h("input", {
       class: `input${spec.control === "text" ? "" : " mono"}`, type: spec.control === "number" ? "number" : "text", step: spec.control === "number" && "any",
       spellcheck: "false", autocomplete: "off", "aria-label": labelOf(spec),
-      placeholder: spec.default ? `default · ${spec.default}` : spec.multiple ? "space-separated values" : spec.control === "path" ? "path" : "",
+      placeholder: spec.default ? `default · ${spec.default}` : spec.multiple ? (LONG_TEXT_NAMES.has(spec.name) ? "one value, passed as typed" : "space-separated values") : spec.control === "path" ? "path" : "",
       oninput: () => write(control.value.trim() ? control.value : ""),
     });
     field.append(head, control, spec.control === "path" ? attachPathCompletion(control) : "", help);
@@ -130,20 +123,8 @@ export function createCommandForm(parameters, draft, changed) {
   );
 
   function collect() {
-    const optionTokens = [];
-    const argumentTokens = [];
-    const problems = [];
-    let gap = null;
-    for (const { spec } of fields) {
-      const tokens = tokensOf(spec, draft.get(spec.name) ?? "");
-      if (spec.required && tokens.length === 0) problems.push(`${labelOf(spec)} is required`);
-      if (spec.kind === "option") optionTokens.push(...tokens);
-      else if (tokens.length === 0) gap ??= spec;
-      else if (gap) problems.push(`Fill ${labelOf(gap)} before ${labelOf(spec)}`);
-      else argumentTokens.push(...tokens);
-    }
-    const separator = argumentTokens.some((token) => token.startsWith("-")) ? ["--"] : [];
-    return { tokens: [...optionTokens, ...separator, ...argumentTokens, ...splitArguments(draft.get(EXTRA) ?? "")], problems };
+    const { tokens, problems } = collectTokens(parameters ?? [], draft, splitArguments(draft.get(EXTRA) ?? ""));
+    return { tokens, problems: problems.map(({ spec, gap }) => (gap ? `Fill ${labelOf(gap)} before ${labelOf(spec)}` : `${labelOf(spec)} is required`)) };
   }
 
   function reset() {

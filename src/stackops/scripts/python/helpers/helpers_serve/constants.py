@@ -13,8 +13,31 @@ LAUNCH_VIRTUAL_ENV_VARIABLE: Final[str] = "STACKOPS_SERVE_LAUNCH_VIRTUAL_ENV"
 MIN_TERMINAL_CELLS: Final[int] = 2
 MAX_TERMINAL_CELLS: Final[int] = 1000
 PATH_SUGGESTION_LIMIT: Final[int] = 40
-# Parameters the CLI types as plain text that take a local file or folder; the form offers path suggestions for them and still accepts any text.
-LOCAL_PATH_PARAMETER_NAMES: Final[frozenset[str]] = frozenset({"path", "path_local", "file_path", "directory"})
+# Parameters the CLI types as plain text that take a local file or folder; both views' forms offer path suggestions for them and still accept any text.
+# `root`, `source` and `target` are left out: in some tools they are remote.
+LOCAL_PATH_PARAMETER_NAMES: Final[frozenset[str]] = frozenset(
+    {
+        "path",
+        "path_local",
+        "file_path",
+        "directory",
+        "pdf_input",
+        "data_path",
+        "output",
+        "output_dir",
+        "output_path",
+        "repo",
+        "find_root",
+        "search_root",
+        "project_path",
+        "context_path",
+        "prompt_path",
+        "agents_dir",
+        "agent_dir",
+        "input_path",
+        "file",
+    }
+)
 SCROLLBACK_LIMIT_BYTES: Final[int] = 4 * 1024 * 1024
 # Finished runs beyond this many are forgotten, oldest first, each time a run starts; each one can hold a full scrollback.
 FINISHED_RUNS_KEPT: Final[int] = 20

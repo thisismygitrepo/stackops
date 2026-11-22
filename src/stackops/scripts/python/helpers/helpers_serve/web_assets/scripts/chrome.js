@@ -8,7 +8,8 @@ export function attachPathCompletion(input) {
   const list = h("datalist", { id: `path-completions-${(completionCount += 1)}` });
   input.setAttribute("list", list.id);
   const refresh = debounce(async () => {
-    const { entries } = await api.paths(input.value, state.settings.workingDirectory);
+    // A design choice: suggestions are a convenience, so when they cannot be fetched the field shows none and says nothing. Whatever is done with the path next reports the problem, once.
+    const { entries } = await api.paths(input.value, state.settings.workingDirectory).catch(() => ({ entries: [] }));
     list.replaceChildren(...entries.map((entry) => h("option", { value: entry })));
   }, 120);
   input.addEventListener("input", refresh);

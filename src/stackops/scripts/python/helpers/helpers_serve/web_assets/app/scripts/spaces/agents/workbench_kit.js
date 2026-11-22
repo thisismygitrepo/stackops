@@ -2,63 +2,12 @@ import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { on, state } from "/assets/scripts/state.js";
 import { rise } from "../../motion.js";
 import { toolButton } from "../../space_kit.js";
-import { button, emojiTile, iconButton, notice, sectionHead, skeleton, stat } from "../../widgets.js";
+import { emojiTile, sectionHead, stat } from "../../widgets.js";
 import { friendlyText, titleOf } from "../../words.js";
 
 const INSTALL_TOOL = "devops software install";
 const SAVED_PROFILES_FOLDER = "browsers-profiles";
 const START_SETTLE_MILLISECONDS = 3000;
-
-// Like createLivePanel, for views that join several read-only commands or must turn a failed command into a "not set up yet" explanation.
-// It never offers an Options popover, so nothing a person toggles here can change what the commands do.
-export function createStatePanel({ title, load, render, explain = () => null, actions = [], skeletonShape = "row" }) {
-  const body = h("div", { class: "panel-body" }, skeleton(3, skeletonShape));
-  const count = h("span", { class: "count" });
-  const element = h(
-    "section",
-    { class: "panel" },
-    h("header", { class: "panel-head" }, h("h2", { text: title }), count, h("span", { class: "spacer" }), actions, iconButton("refresh", `Refresh ${title.toLowerCase()}`, () => run(true))),
-    body,
-  );
-  let ticket = 0;
-  let settled = false;
-  let stale = false;
-
-  async function run(fresh = false) {
-    const mine = (ticket += 1);
-    const hooks = { setCount: (text) => (count.textContent = text), reload: () => run(true) };
-    stale = false;
-    element.classList.add("loading");
-    try {
-      const data = await load(fresh);
-      if (mine !== ticket) return;
-      body.replaceChildren(render(data, hooks));
-      settled = true;
-    } catch (error) {
-      if (mine !== ticket) return;
-      const explained = explain(error, hooks);
-      count.textContent = "";
-      settled = Boolean(explained);
-      body.replaceChildren(
-        explained ?? notice({ glyph: "alert", tone: "bad", title: "This didn't load", body: error.message, action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => run(true) }) }),
-      );
-    }
-    element.classList.remove("loading");
-  }
-
-  on("data-stale", () => {
-    stale = true;
-    if (element.isConnected && !element.closest("[hidden]")) run(true);
-  });
-
-  return {
-    element,
-    load: () => run(),
-    ensure() {
-      if (!settled || stale) run(stale);
-    },
-  };
-}
 
 export const isRunning = (activity, path) => activity.runs().some((run) => run.exit_code === null && run.arguments.join(" ").startsWith(path));
 
@@ -79,7 +28,7 @@ export function areaHead({ title, lede, actions = [] }) {
 }
 
 // A tool card with its own plain wording and starting values. `caution` marks tools that delete things: they still only open the sheet.
-export function actionCard(tools, { path, title, blurb, preset = {}, caution = "" }) {
+function actionCard(tools, { path, title, blurb, preset = {}, caution = "" }) {
   const node = state.nodes.get(path);
   return (
     node &&

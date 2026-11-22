@@ -43,6 +43,7 @@ class Run:
     interactive: bool
     started_at: float
     handle: PtyHandle
+    pump_thread: threading.Thread
     scrollback: deque[bytes]
     scrollback_bytes: int
     subscribers: set[asyncio.Queue[RunEvent]]
@@ -54,7 +55,6 @@ class Run:
 class RunRegistry:
     stackops_executable: str
     runs: dict[str, Run]
-    pump_threads: dict[str, threading.Thread]
 
 
 class RunSummary(TypedDict):
@@ -101,20 +101,6 @@ def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directo
     argv = command if platform.system() == "Windows" else ["bash", str(POSIX_SHELL_WRAPPER), *command]
     handle = spawn_pty(argv=argv, working_directory=working_directory, environment=environment, rows=rows, columns=columns)
     run_id = uuid4().hex[:12]
-    run = Run(
-        run_id=run_id,
-        command_line=shlex.join(["stackops", *arguments]),
-        arguments=arguments,
-        working_directory=working_directory,
-        interactive=interactive,
-        started_at=started_at,
-        handle=handle,
-        scrollback=deque(),
-        scrollback_bytes=0,
-        subscribers=set(),
-        stop_requested=False,
-        outcome=None,
-    )
 
     def publish(chunk: bytes) -> None:
         loop.call_soon_threadsafe(_publish_output, run, chunk)
@@ -123,15 +109,27 @@ def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directo
         exit_code = handle.pump(publish)
         loop.call_soon_threadsafe(_finish_run, run, exit_code)
 
+    run = Run(
+        run_id=run_id,
+        command_line=shlex.join(["stackops", *arguments]),
+        arguments=arguments,
+        working_directory=working_directory,
+        interactive=interactive,
+        started_at=started_at,
+        handle=handle,
+        pump_thread=threading.Thread(target=pump, name=f"""stackops-serve-run-{run_id}""", daemon=True),
+        scrollback=deque(),
+        scrollback_bytes=0,
+        subscribers=set(),
+        stop_requested=False,
+        outcome=None,
+    )
     _publish_output(run, f"""\x1b[2m$ {run.command_line}\x1b[0m\r\n""".encode())
-    pump_thread = threading.Thread(target=pump, name=f"""stackops-serve-run-{run_id}""", daemon=True)
     finished_run_ids = [finished_id for finished_id, finished_run in registry.runs.items() if finished_run.outcome is not None]
     for finished_id in finished_run_ids[:-FINISHED_RUNS_KEPT]:
         del registry.runs[finished_id]
-        del registry.pump_threads[finished_id]
     registry.runs[run_id] = run
-    registry.pump_threads[run_id] = pump_thread
-    pump_thread.start()
+    run.pump_thread.start()
     return run
 
 
@@ -154,7 +152,7 @@ async def shutdown_runs(registry: RunRegistry) -> None:
     for run in active_runs:
         run.handle.stop(True)
     for run in active_runs:
-        await asyncio.to_thread(registry.pump_threads[run.run_id].join, SHUTDOWN_JOIN_SECONDS)
+        await asyncio.to_thread(run.pump_thread.join, SHUTDOWN_JOIN_SECONDS)
     await asyncio.sleep(0)
 
 

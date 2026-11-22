@@ -1,11 +1,10 @@
-import { h, tildify, toast } from "/assets/scripts/dom.js";
-import { state } from "/assets/scripts/state.js";
+import { h, toast } from "/assets/scripts/dom.js";
 import { openPopover } from "../../overlays.js";
 import { editButton } from "../../space_kit.js";
-import { button, copyChip, pill } from "../../widgets.js";
-import { plural } from "../../words.js";
-import { sourceLabel } from "./prompts_text.js";
+import { button, pathChip, pill } from "../../widgets.js";
+import { humanize, plural } from "../../words.js";
 
+const SOURCE_LABELS = { workspace: "This project", user: "Yours", library: "Built in", "custom-file": "Chosen file" };
 const BLURBS = {
   workspace: "Shared with everyone who works in this project.",
   user: "Your own, on hand in every project.",
@@ -13,10 +12,14 @@ const BLURBS = {
 };
 
 const kindOf = (record) => record.source.split(":")[0];
+export function sourceLabel(source) {
+  const [kind, member] = source.split(":");
+  const label = SOURCE_LABELS[kind] ?? humanize(kind);
+  return member ? `${label} · ${member}` : label;
+}
 export const canChange = (record) => kindOf(record) !== "library";
 // What the shared Edit control needs to open the file behind a place, or behind one prompt: both carry `source` and `path`.
 export const editTarget = (record) => ({ title: `prompts · ${sourceLabel(record.source)}`, kind: "prompts", path: record.path });
-const shortPath = (record) => tildify(record.path, state.boot.home);
 
 // Makes the file with one example prompt in it. Runs out of sight and only opens the activity panel if it goes wrong.
 export async function createPromptFile(activity, record) {
@@ -54,7 +57,7 @@ export function openPromptFiles(anchor, { activity, sources, onCreate }) {
           { class: "prompt-file" },
           h("div", { class: "prompt-file-head" }, h("strong", { text: sourceLabel(record.source) }), record.exists ? pill(plural(record.prompt_count, "prompt"), record.prompt_count ? "accent" : "") : pill("Not created yet", "warn")),
           h("p", { class: "dim", text: BLURBS[kindOf(record)] ?? "" }),
-          copyChip(record.path, shortPath(record)),
+          pathChip(record.path),
           canChange(record) &&
             h(
               "div",

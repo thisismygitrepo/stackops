@@ -1,6 +1,7 @@
-import { api, emit, state } from "/assets/scripts/state.js";
+import { api, emit, on, state } from "/assets/scripts/state.js";
 
 const cache = new Map();
+const running = new Set();
 const details = new Map();
 let catalog = null;
 
@@ -33,12 +34,17 @@ export async function capture(runArguments, signal) {
   return { json, text: text.replace(/\s+$/, ""), notes: result.stderr.replace(ANSI_PATTERN, "").trim(), exitCode: result.exit_code };
 }
 
+// A design choice: `fresh` asked for while the same command is still running joins that run, so a second press on Refresh, or one during a reload,
+// does not run it twice. Not strictly fresh: the joined run began a moment earlier and can miss a change made outside this app in between.
+// A change made through the app empties the cache first (`markStale`), so what is asked for after it never joins a run from before it.
 export function query(runArguments, fresh = false) {
   const key = `${state.settings.workingDirectory}\n${runArguments.join("\u0000")}`;
-  if (fresh || !cache.has(key)) {
+  if (!cache.has(key) || (fresh && !running.has(cache.get(key)))) {
     const pending = capture(runArguments);
     cache.set(key, pending);
+    running.add(pending);
     pending.catch(() => cache.get(key) === pending && cache.delete(key));
+    pending.then(() => running.delete(pending), () => running.delete(pending));
   }
   return cache.get(key);
 }
@@ -65,4 +71,22 @@ export function markStale() {
   cache.clear();
   catalog = null;
   emit("data-stale");
+}
+
+// The bookkeeping of a view that shows fetched data, kept in one place. Its data starts out stale. `load` runs the view's `loader` and lowers the
+// flag; a loader whose answer did not arrive calls `spoil`, so the next visit asks again. `ensure` is for each time the view is shown.
+// With `signalled`, the refresh signal raises the flag too, and reloads at once when `element` is on screen.
+export function staleKeeper(element, loader, signalled = true) {
+  let stale = true;
+  const load = (...given) => {
+    stale = false;
+    return loader(...given);
+  };
+  if (signalled) {
+    on("data-stale", () => {
+      stale = true;
+      if (element.isConnected && !element.closest("[hidden]")) load();
+    });
+  }
+  return { load, ensure: () => stale && load(), spoil: () => (stale = true) };
 }

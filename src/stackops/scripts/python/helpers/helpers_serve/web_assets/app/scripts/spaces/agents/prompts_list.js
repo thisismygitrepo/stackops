@@ -1,9 +1,9 @@
 import { h, tildify } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { button, notice, pill } from "../../widgets.js";
-import { canChange } from "./prompts_files.js";
-import { promptFace } from "./prompts_reader.js";
-import { markAll, snippetAround, sourceLabel, titleOfPrompt } from "./prompts_text.js";
+import { markAll, snippetAround } from "./loose_text.js";
+import { canChange, sourceLabel } from "./prompts_files.js";
+import { promptFace, titleOfPrompt } from "./prompts_reader.js";
 
 export const EVERYTHING = "all";
 export const keyOf = (prompt) => `${prompt.source}\n${prompt.name}`;

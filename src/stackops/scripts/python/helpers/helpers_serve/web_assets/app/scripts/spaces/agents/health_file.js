@@ -1,11 +1,11 @@
-import { h, icon, tildify, toast } from "/assets/scripts/dom.js";
-import { api, state } from "/assets/scripts/state.js";
+import { h, icon, toast } from "/assets/scripts/dom.js";
+import { api } from "/assets/scripts/state.js";
 import { markStale } from "../../data.js";
 import { confirmAction, openDialog } from "../../overlays.js";
-import { button, copyChip, glyphTile, iconButton, notice, pill, segmented, skeleton } from "../../widgets.js";
+import { button, copyText, glyphTile, iconButton, notice, pathChip, pill, segmented, skeleton } from "../../widgets.js";
 import { plural } from "../../words.js";
 import { KIND_BY_ID, ORIGINS, STATES } from "./health_model.js";
-import { readingStats, renderPromptText } from "./prompts_text.js";
+import { TEXT_VIEWS, readingStats, renderLooseText } from "./loose_text.js";
 
 const MARKDOWN = /\.(md|mdc|markdown)$/i;
 // The settings block some files open with. Read as prose it would turn into a heading, so it is shown as written above the text.
@@ -13,7 +13,7 @@ const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 
 function formatted(text) {
   const front = text.match(FRONT_MATTER);
-  return [front && h("pre", { class: "prompt-code file-front", title: "Settings at the top of this file", text: front[1] }), renderPromptText(front ? text.slice(front[0].length) : text, "")].filter(Boolean);
+  return [front && h("pre", { class: "prompt-code file-front", title: "Settings at the top of this file", text: front[1] }), renderLooseText(front ? text.slice(front[0].length) : text, "")].filter(Boolean);
 }
 
 // One file an agent reads, in a window of its own: read it, change it and save, or take it away. `remove` is left out for a file that holds several things.
@@ -41,15 +41,11 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
   dialog.closed.then(() => window.removeEventListener("beforeunload", warnUnsaved));
   const bar = h("div", { class: "file-bar" });
   const scroll = h("div", { class: "file-scroll", tabindex: "0" });
-  const picker = segmented([["formatted", "Easy to read"], ["plain", "As written"]], (value) => {
+  const picker = segmented(TEXT_VIEWS, (value) => {
     view = value;
     read();
   });
-  const copy = iconButton("copy", "Copy the whole file", async () => {
-    if (!navigator.clipboard) return toast("The browser only allows copying on localhost or HTTPS.");
-    await navigator.clipboard.writeText(file.text);
-    toast(`Copied ${fileName}.`, "info");
-  });
+  const copy = iconButton("copy", "Copy the whole file", async () => (await copyText(file.text)) && toast(`Copied ${fileName}.`, "info"));
   const removeButton = remove && button({ label: "Remove", glyph: "trash", title: `Remove this ${label.one}. You are shown what changes first.`, onclick: async () => (await remove()) && dialog.close() });
   if (removeButton) removeButton.classList.add("caution");
 
@@ -125,7 +121,7 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
       "header",
       { class: "file-head" },
       glyphTile(label.glyph, label.hue, 46),
-      h("div", { class: "file-title" }, h("span", { class: "overline", text: `${label.label} · ${ORIGINS[origin].label}` }), h("h2", {}, fileName, status && pill(STATES[status].label, STATES[status].tone)), copyChip(path, tildify(path, state.boot.home))),
+      h("div", { class: "file-title" }, h("span", { class: "overline", text: `${label.label} · ${ORIGINS[origin].label}` }), h("h2", {}, fileName, status && pill(STATES[status].label, STATES[status].tone)), pathChip(path)),
       iconButton("close", "Close", () => dialog.dismiss()),
     ),
     bar,

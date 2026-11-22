@@ -34,12 +34,12 @@ export function createWorkbenchSection(context) {
 
   function build(area) {
     const { status } = tabs.get(area.id);
-    const made = area.create(context, {
-      setStatus(text, tone = "") {
-        status.textContent = text;
-        status.dataset.tone = tone || "quiet";
-      },
-    });
+    const setStatus = (text, tone = "") => {
+      status.textContent = text;
+      status.dataset.tone = tone || "quiet";
+    };
+    // `failStatus` is for the panel an area takes its status from: when that panel does not load, the strip says so instead of keeping the last good status.
+    const made = area.create(context, { setStatus, failStatus: () => setStatus("Couldn't check", "warn") });
     built.set(area.id, made);
     stage.append(made.element);
     return made;

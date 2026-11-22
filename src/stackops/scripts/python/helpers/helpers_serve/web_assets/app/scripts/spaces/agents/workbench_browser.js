@@ -68,7 +68,7 @@ function tabList(windows) {
   );
 }
 
-export function createBrowserArea({ tools }, { setStatus }) {
+export function createBrowserArea({ tools }, { setStatus, failStatus }) {
   const open = () => toolButton(tools, "agents browser launch", { label: "Open a browser", glyph: "plus", tone: "primary" });
 
   function card(item) {
@@ -89,7 +89,7 @@ export function createBrowserArea({ tools }, { setStatus }) {
   }
 
   const panel = createLivePanel({
-    title: "Open right now", path: "agents browser status", extra: ["--json"], skeletonShape: "card",
+    title: "Open right now", path: "agents browser status", extra: ["--json"], skeletonShape: "card", onFail: failStatus,
     render: (data, { setCount }) => {
       const items = (Array.isArray(data) ? data : []).map(describe);
       const tracked = items.filter((item) => item.tracked).length;

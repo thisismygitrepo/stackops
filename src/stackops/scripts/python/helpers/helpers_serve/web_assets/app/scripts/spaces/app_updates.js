@@ -1,6 +1,6 @@
 import { h, icon } from "/assets/scripts/dom.js";
-import { api, on } from "/assets/scripts/state.js";
-import { software } from "../data.js";
+import { api } from "/assets/scripts/state.js";
+import { software, staleKeeper } from "../data.js";
 import { rise } from "../motion.js";
 import { avatar, button, iconButton, notice, pill, stat } from "../widgets.js";
 import { relativeTime } from "../words.js";
@@ -21,8 +21,6 @@ export function createAppUpdates({ onUpdate, onRefresh }) {
   const rows = new Map();
   let apps = [];
   let ticket = 0;
-  let loaded = false;
-  let stale = false;
 
   const tiles = {
     all: stat({ glyph: "cube", hue: 252, label: "From GitHub" }),
@@ -37,7 +35,7 @@ export function createAppUpdates({ onUpdate, onRefresh }) {
   const element = h(
     "section",
     { class: "panel updates-panel", hidden: true },
-    h("header", { class: "panel-head" }, h("h2", { text: "Installed from GitHub" }), count, h("span", { class: "spacer" }), updateAll, iconButton("refresh", "Ask GitHub again", () => check(true))),
+    h("header", { class: "panel-head" }, h("h2", { text: "Installed from GitHub" }), count, h("span", { class: "spacer" }), updateAll, iconButton("refresh", "Ask GitHub again", () => keeper.load(true))),
     h("div", { class: "panel-body stack" }, h("div", { class: "stats" }, Object.values(tiles).map((tile) => tile.element)), list),
   );
 
@@ -104,8 +102,6 @@ export function createAppUpdates({ onUpdate, onRefresh }) {
   // what it learned in the last few minutes and only the installed versions are read again, which is all that changes when an install finishes.
   async function check(fresh) {
     const mine = (ticket += 1);
-    loaded = true;
-    stale = false;
     element.classList.add("loading");
     try {
       apps = (await software(fresh)).apps.filter((app) => app.installed && app.repository);
@@ -113,10 +109,10 @@ export function createAppUpdates({ onUpdate, onRefresh }) {
     } catch (error) {
       if (mine !== ticket) return;
       element.classList.remove("loading");
-      loaded = false;
+      keeper.spoil();
       apps = [];
       paintSummary(0);
-      list.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The app catalog didn't load", body: error.message, action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => check(fresh) }) }));
+      list.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The app catalog didn't load", body: error.message, action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load(fresh) }) }));
       return;
     }
     if (mine !== ticket) return;
@@ -143,10 +139,6 @@ export function createAppUpdates({ onUpdate, onRefresh }) {
     paintList();
   }
 
-  on("data-stale", () => {
-    stale = true;
-    if (element.isConnected && !element.closest("[hidden]")) check(false);
-  });
-
-  return { element, show: () => (!loaded || stale) && check(false) };
+  const keeper = staleKeeper(element, check);
+  return { element, show: keeper.ensure };
 }

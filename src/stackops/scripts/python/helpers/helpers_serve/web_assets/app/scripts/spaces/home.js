@@ -2,7 +2,7 @@ import { formatClock, formatDuration, h, icon } from "/assets/scripts/dom.js";
 import { on, state } from "/assets/scripts/state.js";
 import { statusOf } from "../activity_hero.js";
 import { QUICK_TASKS } from "../catalog.js";
-import { query, software } from "../data.js";
+import { query, software, staleKeeper } from "../data.js";
 import { createHeroOrbit } from "../hero_orbit.js";
 import { rise } from "../motion.js";
 import { glyphTile, notice, pill, sectionHead, stat } from "../widgets.js";
@@ -28,7 +28,6 @@ export function createHomeSpace({ activity, tools, openSearch }) {
     const mark = pill("Checking…");
     return { key, mark, element: h("a", { href }, h("span", { text: label }), mark) };
   });
-  let stale = true;
 
   const tasks =QUICK_TASKS.filter((task) => !task.tool || state.nodes.has(task.tool)).map((task) =>
     h(
@@ -66,11 +65,10 @@ export function createHomeSpace({ activity, tools, openSearch }) {
   );
 
   function loadStats() {
-    stale = false;
     // A design choice: a count that did not load marks the page stale again, so the next visit asks once more. Only the commands that failed run
     // then, since the answers that arrived are kept. On a machine where one always fails, that command runs on every visit to Home.
     const fail = (item) => () => {
-      stale = true;
+      keeper.spoil();
       item.set("—", "Unavailable right now");
     };
     software().then((catalog) => stats.apps.set(catalog.apps.filter((app) => app.installed).length, `of ${catalog.apps.length} in the catalog`), fail(stats.apps));
@@ -95,7 +93,7 @@ export function createHomeSpace({ activity, tools, openSearch }) {
         mark.className = `pill ${HEALTH_TONES[sections?.[key]?.level] ?? ""}`;
       });
     query(["devops", "self", "status", "--shell", "--ssh", "--backup", "--json"]).then(({ json }) => paintHealth(json), () => {
-      stale = true;
+      keeper.spoil();
       paintHealth(null);
     });
   }
@@ -131,10 +129,7 @@ export function createHomeSpace({ activity, tools, openSearch }) {
   }
 
   on("runs", showRecent);
-  on("data-stale", () => {
-    stale = true;
-    if (!element.hidden) loadStats();
-  });
+  const keeper = staleKeeper(element, loadStats);
   showRecent();
-  return { element, show: () => stale && loadStats() };
+  return { element, show: keeper.ensure };
 }

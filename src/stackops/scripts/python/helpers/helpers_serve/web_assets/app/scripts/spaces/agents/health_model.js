@@ -34,7 +34,7 @@ const STATUSES = {
 };
 const PROTECTED_DETAIL = "Protected path excluded from inspection";
 
-export const shortPath = (path) => tildify(path, state.boot.home);
+const shortPath = (path) => tildify(path, state.boot.home);
 export const softenPaths = (text) => text.replaceAll(`${state.boot.home}/`, "~/");
 
 // The check reports a remark as "<where>: <what>"; the place is worth showing as its own copyable path.

@@ -22,18 +22,20 @@ function modelList(rows) {
 
 const running = (data) => h("div", { class: "wb-server-head" }, statusPill("Running", "good", "check"), copyChip(data.host), data.errors.length > 0 && h("span", { class: "dim", text: "Some details couldn't be read just now." }));
 
-export function createLocalArea({ activity, tools }, { setStatus }) {
+export function createLocalArea({ activity, tools }, { setStatus, failStatus }) {
   const seen = {};
+  // A panel that did not load reports `up` as null, so what it said before is no longer counted. With no server known to be running, the strip then says it could not check.
   function report(name, up, installed) {
     seen[name] = { up, installed };
     const servers = Object.entries(seen);
     const live = servers.filter(([, server]) => server.up).map(([label]) => label);
     if (live.length) setStatus(live.length === 1 ? `${live[0]} running` : `${live.length} servers running`, "good");
+    else if (servers.some(([, server]) => server.up === null)) failStatus();
     else setStatus(servers.some(([, server]) => server.installed) ? "Nothing running" : "Not set up", "");
   }
 
   const ollama = createLivePanel({
-    title: "Ollama", path: DOCTOR, extra: ["--backend", "ollama", "--json"], locked: ["backend", "api_key"],
+    title: "Ollama", path: DOCTOR, extra: ["--backend", "ollama", "--json"], locked: ["backend", "api_key"], onFail: () => report("Ollama", null, false),
     render: (data, { setCount, reload }) => {
       const up = data.version !== null || data.models !== null;
       report("Ollama", up, Boolean(data.cli_path));
@@ -75,7 +77,7 @@ export function createLocalArea({ activity, tools }, { setStatus }) {
   });
 
   const vllm = createLivePanel({
-    title: "vLLM", path: DOCTOR, extra: ["--backend", "vllm", "--json"], locked: ["backend"],
+    title: "vLLM", path: DOCTOR, extra: ["--backend", "vllm", "--json"], locked: ["backend"], onFail: () => report("vLLM", null, false),
     render: (data, { setCount, reload }) => {
       report("vLLM", data.healthy, Boolean(data.cli_path));
       setCount(data.version ? `version ${data.version}` : "");

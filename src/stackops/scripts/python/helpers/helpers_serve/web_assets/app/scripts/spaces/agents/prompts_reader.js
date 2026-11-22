@@ -1,14 +1,21 @@
-import { h, icon, tildify, toast } from "/assets/scripts/dom.js";
+import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { replay } from "../../motion.js";
 import { editButton } from "../../space_kit.js";
-import { button, copyChip, pill, segmented } from "../../widgets.js";
+import { button, copyChip, copyText, pathChip, pill, segmented } from "../../widgets.js";
 import { hueOf, initialsOf, plural } from "../../words.js";
-import { canChange, editTarget } from "./prompts_files.js";
-import { markAll, readingStats, renderPromptText, sourceLabel, titleOfPrompt } from "./prompts_text.js";
+import { TEXT_VIEWS, markAll, readingStats, renderLooseText } from "./loose_text.js";
+import { canChange, editTarget, sourceLabel } from "./prompts_files.js";
 
 const COPIED_MILLISECONDS = 1400;
 const NAMED_SOURCES = new Set(["workspace", "user", "library"]);
+
+// "team.updateDocs" reads as "Update docs"; the exact name stays available to copy.
+export function titleOfPrompt(name) {
+  const words = name.split(".").at(-1).replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2").split(/[-_\s]+/).filter(Boolean);
+  const text = words.map((word) => (word.length > 1 && /^[A-Z0-9]+$/.test(word) ? word : word.toLowerCase())).join(" ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 export const promptFace = (prompt, size) => h("span", { class: "avatar", style: `--hue:${hueOf(prompt.group ?? prompt.name)};--size:${size}px`, text: initialsOf(titleOfPrompt(prompt.name)) });
 
@@ -22,8 +29,7 @@ function copyButton(text) {
   const face = (glyph, label) => [icon(glyph, 16), h("span", { text: label })];
   const element = h("button", { class: "btn plain", type: "button", title: "Copy the whole prompt" }, face("copy", "Copy"));
   element.addEventListener("click", async () => {
-    if (!navigator.clipboard) return toast("The browser only allows copying on localhost or HTTPS.");
-    await navigator.clipboard.writeText(text);
+    if (!(await copyText(text))) return;
     element.classList.add("copied");
     element.replaceChildren(...face("check", "Copied"));
     setTimeout(() => {
@@ -46,7 +52,7 @@ export function createPromptReader({ activity, tools, onBack }) {
   const progress = h("i");
   const scroll = h("div", { class: "prompt-scroll", tabindex: "0" });
   const element = h("article", { class: "prompt-reader" }, head, blurb, meta, h("div", { class: "prompt-progress", "aria-hidden": "true" }, progress), scroll);
-  const viewPicker = segmented([["formatted", "Easy to read"], ["plain", "As written"]], (value) => {
+  const viewPicker = segmented(TEXT_VIEWS, (value) => {
     view = value;
     viewPicker.set(view);
     paintBody();
@@ -60,8 +66,8 @@ export function createPromptReader({ activity, tools, onBack }) {
 
   function paintBody() {
     scroll.replaceChildren(
-      view === "plain" ? h("pre", { class: "prompt-plain" }, markAll(current.text, currentTerm)) : renderPromptText(current.text, currentTerm),
-      h("footer", { class: "prompt-origin" }, h("span", { text: "Kept in" }), copyChip(current.path, tildify(current.path, state.boot.home))),
+      view === "plain" ? h("pre", { class: "prompt-plain" }, markAll(current.text, currentTerm)) : renderLooseText(current.text, currentTerm),
+      h("footer", { class: "prompt-origin" }, h("span", { text: "Kept in" }), pathChip(current.path)),
     );
     const hit = currentTerm ? scroll.querySelector("mark") : null;
     scroll.scrollTop = hit ? Math.max(0, hit.offsetTop - scroll.clientHeight / 3) : 0;

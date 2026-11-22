@@ -22,7 +22,7 @@ const ACTIONS = [
   { path: "agents add-mcp", title: "Connect an agent to it", blurb: "Add desktop control to an agent's tools so it can start using this computer.", preset: { requested_mcp_servers: HELPER } },
 ];
 
-export function createComputerArea({ activity, tools }, { setStatus }) {
+export function createComputerArea({ activity, tools }, { setStatus, failStatus }) {
   const turnOn = (tone) => toolButton(tools, CONTROL, { label: "Turn it on", glyph: "power", tone });
 
   function endpointCard(endpoint) {
@@ -70,7 +70,7 @@ export function createComputerArea({ activity, tools }, { setStatus }) {
   }
 
   const panel = createLivePanel({
-    title: "Right now", path: "agents computer status", extra: ["--json"],
+    title: "Right now", path: "agents computer status", extra: ["--json"], onFail: failStatus,
     render: (data, { setCount }) => {
       const helper = data?.agent_desktop;
       const endpoint = data?.endpoint;

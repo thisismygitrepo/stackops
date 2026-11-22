@@ -1,8 +1,9 @@
 import { h, tildify } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { createPanel } from "../../live_panel.js";
 import { avatar, button, notice } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { createStatePanel, previewList } from "./workbench_kit.js";
+import { previewList } from "./workbench_kit.js";
 
 const JOBS_FOLDER = ".ai/agents/";
 const JOB_PREVIEW = 6;
@@ -27,7 +28,7 @@ export function createJobsPanel({ tools }) {
     );
   }
 
-  return createStatePanel({
+  return createPanel({
     title: "Jobs in this project",
     load: async () => {
       const folders = await foldersIn(JOBS_FOLDER);

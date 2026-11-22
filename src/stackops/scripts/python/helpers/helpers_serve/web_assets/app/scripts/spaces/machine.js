@@ -1,12 +1,11 @@
-import { h, icon } from "/assets/scripts/dom.js";
-import { state } from "/assets/scripts/state.js";
+import { h } from "/assets/scripts/dom.js";
 import { createDiskCleanup } from "../disk_cleanup.js";
 import { CLEANUP_HASH } from "../disk_cleanup_words.js";
 import { createLivePanel } from "../live_panel.js";
 import { replay, rise } from "../motion.js";
 import { dataTable } from "../result_view.js";
-import { toolButton, toolCard } from "../space_kit.js";
-import { button, emojiTile, glyphTile, notice, sectionHead } from "../widgets.js";
+import { linkCard, toolButton, toolGrid, viewHead } from "../space_kit.js";
+import { button, glyphTile, notice, sectionHead } from "../widgets.js";
 import { plural } from "../words.js";
 
 const CARE_TOOLS = ["utils machine kill-process", "utils machine list-devices", "utils machine mount", "utils machine window", "devops self update"];
@@ -46,24 +45,17 @@ export function createMachineSpace(context) {
     },
   });
 
-  const cleanupCard = h(
-    "a",
-    { class: "tool-card lit", href: CLEANUP_HASH },
-    emojiTile("🧹", "utils machine clean-drive", 40),
-    h("span", { class: "tool-card-text" }, h("strong", { text: "Free up disk space" }), h("span", { text: "See what is taking up room, choose what goes, and clean it." })),
-    icon("arrow", 14),
-  );
+  const careGrid = toolGrid(tools, CARE_TOOLS);
+  careGrid.prepend(linkCard({ href: CLEANUP_HASH, emoji: "🧹", name: "utils machine clean-drive", title: "Free up disk space", blurb: "See what is taking up room, choose what goes, and clean it." }));
   const overview = h(
     "div",
     { class: "machine-part" },
-    h(
-      "header",
-      { class: "view-head" },
-      h("div", { class: "view-title" }, h("h1", { text: "Machine" }), h("p", { text: "What this computer is, what runs on it, and how to keep it tidy." })),
-      h("div", { class: "view-actions" }, toolButton(tools, "utils machine kill-process", { label: "Stop a process", glyph: "stop" }), button({ label: "Free up disk space", glyph: "trash", tone: "primary", onclick: () => (location.hash = CLEANUP_HASH) })),
-    ),
+    viewHead({
+      title: "Machine", lede: "What this computer is, what runs on it, and how to keep it tidy.",
+      actions: [toolButton(tools, "utils machine kill-process", { label: "Stop a process", glyph: "stop" }), button({ label: "Free up disk space", glyph: "trash", tone: "primary", onclick: () => (location.hash = CLEANUP_HASH) })],
+    }),
     specs.element,
-    h("section", { class: "block" }, sectionHead("Look after it"), h("div", { class: "tool-grid" }, cleanupCard, CARE_TOOLS.filter((path) => state.nodes.has(path)).map((path) => toolCard(tools, state.nodes.get(path))))),
+    h("section", { class: "block" }, sectionHead("Look after it"), careGrid),
     startup.element,
   );
   const cleanup = createDiskCleanup(context);
