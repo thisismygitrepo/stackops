@@ -22,6 +22,7 @@ from stackops.scripts.python.helpers.helpers_cloud.backup_config import (
     normalize_os_name,
     os_applies,
     read_backup_config,
+    resolve_backup_local_path,
 )
 from stackops.scripts.python.helpers.helpers_cloud.backup_selection import parse_backup_entry_selectors, resolve_backup_entry_keys
 from stackops.scripts.python.helpers.helpers_cloud.backup_registration import all_os_values
@@ -240,10 +241,7 @@ def main_backup_retrieve(
             flags += "z" if item["zip"] else ""
             flags += "r" if item["rel2home"] else ""
             flags += "o" if not all_os_values(item["os"]) else ""
-            local_path_value = Path(item["path_local"]).expanduser()
-            if item["rel2home"] and not local_path_value.is_absolute():
-                local_path_value = Path.home() / local_path_value
-            local_path = local_path_value.as_posix()
+            local_path = resolve_backup_local_path(item).as_posix()
             path_cloud = item["path_cloud"]
             if use_link_retrieve:
                 console.print(Panel(

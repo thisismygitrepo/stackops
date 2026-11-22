@@ -19,6 +19,7 @@ from starlette.websockets import WebSocket
 from stackops.scripts.python.helpers.helpers_webui.access_guard import guard_access
 from stackops.scripts.python.helpers.helpers_webui.capture import CaptureResult, CaptureTimeout, capture_command
 from stackops.scripts.python.helpers.helpers_webui.catalog import ParameterSpec, load_command_parameters, load_command_tree
+from stackops.scripts.python.helpers.helpers_webui.field_choices import read_field_choices
 from stackops.scripts.python.helpers.helpers_webui.pages import APP_PAGE, DEVELOPER_PAGE
 from stackops.scripts.python.helpers.helpers_webui.run_requests import (
     CaptureRequest,
@@ -80,6 +81,9 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         if path not in parameter_cache:
             parameter_cache[path] = load_command_parameters(source)
         return JSONResponse({"path": path, "parameters": parameter_cache[path]})
+
+    def field_choices(request: Request) -> JSONResponse:
+        return JSONResponse({"fields": read_field_choices(path=request.query_params.get("path", ""))})
 
     def list_paths(request: Request) -> JSONResponse:
         entries = suggest_paths(prefix=request.query_params.get("prefix", ""), base_directory=request.query_params.get("base", working_directory))
@@ -212,6 +216,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             Route("/dev", developer_index),
             Route("/api/bootstrap", bootstrap),
             Route("/api/command", command_detail),
+            Route("/api/choices", field_choices),
             Route("/api/paths", list_paths),
             Route("/api/directory", directory),
             Route("/api/capture", capture, methods=["POST"]),

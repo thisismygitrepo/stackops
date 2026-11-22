@@ -40,13 +40,20 @@ export function backupGroup({ activity, tools, name, items, source }) {
   function row(item) {
     const { entry } = item;
     const applies = appliesHere(item);
+    // The list says whether the path is on this machine. One that is not has nothing to send, so its Back up is switched off and the row says why.
+    const missing = applies && !item.local_exists;
     const cloud = entry.path_cloud === null || entry.path_cloud === AUTOMATIC_CLOUD_PATH ? "Automatic" : entry.path_cloud;
+    const backUp = button({
+      label: "Back up", glyph: "up", small: true, tone: "primary", title: missing ? "Nothing to back up. This path does not exist on this machine." : undefined,
+      onclick: () => sync(`Back up ${item.name}`, "📤", "up", item.selector, []),
+    });
+    backUp.disabled = missing;
     const actions = h(
       "div",
       { class: "backup-actions" },
       entry.share_url && button({ label: "By link", glyph: "share", small: true, title: "Retrieve it from its share link, without signing in to cloud storage", onclick: () => retrieve(item, true) }),
       button({ label: "Retrieve", glyph: "download", small: true, onclick: () => retrieve(item, false) }),
-      button({ label: "Back up", glyph: "up", small: true, tone: "primary", onclick: () => sync(`Back up ${item.name}`, "📤", "up", item.selector, []) }),
+      backUp,
     );
     // `register` refuses a path that is not on this machine, so entries for other systems get no Edit.
     if (applies && KEPT_NAME.test(name) && KEPT_NAME.test(item.name)) editable.push([actions, item]);
@@ -58,6 +65,7 @@ export function backupGroup({ activity, tools, name, items, source }) {
       h(
         "div",
         { class: "backup-facts" },
+        missing && pill("Missing on this machine", "warn"),
         h("span", { class: "fact", title: "Where it is kept in the cloud" }, icon("sync", 13), cloud),
         entry.encryption ? pill(entry.encryption === "symmetric" ? "Encrypted · password" : "Encrypted · key", "good") : pill("Not encrypted", "warn"),
         entry.zip && pill("Zipped"),
@@ -69,8 +77,10 @@ export function backupGroup({ activity, tools, name, items, source }) {
   }
 
   const title = h("h3", {}, name, h("b", { text: String(items.length) }));
-  // A design choice: the group button only shows where it saves clicks, on a group with several entries for this machine.
-  const several = items.filter(appliesHere).length > 1;
+  // A design choice: the group button only shows where it saves clicks, on a group with several entries that are on this machine.
+  // It names the group, unless some of its entries are missing here: one missing path stops the whole run, so then it names the ones that can be sent.
+  const here = items.filter(appliesHere);
+  const present = here.filter((item) => item.local_exists);
   const element = h(
     "section",
     { class: "backup-group" },
@@ -79,7 +89,11 @@ export function backupGroup({ activity, tools, name, items, source }) {
       { class: "backup-head" },
       title,
       h("span", { class: "spacer" }),
-      several && button({ label: "Back up group", glyph: "up", small: true, title: `Back up every “${name}” entry that applies to this machine`, onclick: () => sync(`Back up ${name}`, "📤", "up", name, []) }),
+      present.length > 1 &&
+        button({
+          label: "Back up group", glyph: "up", small: true, title: "Back up every entry in this group that exists on this machine",
+          onclick: () => sync(`Back up ${name}`, "📤", "up", present.length === here.length ? name : present.map((item) => item.selector).join(","), []),
+        }),
     ),
     rise(h("ul", { class: "session-list" }, items.map(row))),
   );

@@ -73,6 +73,7 @@ async function request(method, path, body, signal) {
 export const api = {
   bootstrap: () => request("GET", "/api/bootstrap"),
   command: (path) => request("GET", `/api/command?path=${encodeURIComponent(path)}`),
+  choices: (path) => request("GET", `/api/choices?path=${encodeURIComponent(path)}`),
   paths: (prefix, base) => request("GET", `/api/paths?prefix=${encodeURIComponent(prefix)}&base=${encodeURIComponent(base)}`),
   directory: (path, base) => request("GET", `/api/directory?path=${encodeURIComponent(path)}&base=${encodeURIComponent(base)}`),
   capture: (body, signal) => request("POST", "/api/capture", body, signal),

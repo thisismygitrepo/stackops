@@ -122,6 +122,13 @@ def os_applies(os_values: set[OsName], system_name: str) -> bool:
     return normalize_os_name(system_name) in os_values
 
 
+def resolve_backup_local_path(item: BackupItem) -> Path:
+    local_path = Path(item["path_local"]).expanduser()
+    if item["rel2home"] and not local_path.is_absolute():
+        return Path.home() / local_path
+    return local_path
+
+
 def _parse_bool(value: object, field: str, item_name: str) -> bool:
     if isinstance(value, bool):
         return value

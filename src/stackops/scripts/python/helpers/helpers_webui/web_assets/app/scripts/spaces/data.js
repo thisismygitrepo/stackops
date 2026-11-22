@@ -4,7 +4,7 @@ import { query } from "../data.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
 import { createView, editButton, linkCard, toolButton, toolGrid } from "../space_kit.js";
-import { glyphTile, notice, sectionHead, stat } from "../widgets.js";
+import { glyphTile, notice, sectionHead, segmented, stat } from "../widgets.js";
 import { friendlyText, plural, titleOf } from "../words.js";
 import { appliesHere, backupGroup } from "./data_backups.js";
 
@@ -12,6 +12,9 @@ const PROTECT_TOOLS = ["devops data encrypt", "devops data decrypt", "devops dat
 const CLOUD_TOOLS = ["cloud sync", "cloud copy", "cloud mount", "cloud transfer"];
 
 export function createDataSpace({ activity, tools }) {
+  // Kept outside the panel's render so it survives a refresh: the panel reloads when a backup ends.
+  let everySystem = false;
+
   const panel = createLivePanel({
     title: "What is backed up", path: "devops data list", extra: ["--json"],
     actions: [editButton(activity, { title: "the backup list", kind: "data" }, { label: "Edit the list", small: true })],
@@ -21,29 +24,57 @@ export function createDataSpace({ activity, tools }) {
         setCount("");
         return notice({ glyph: "database", title: "Nothing is backed up yet", body: "Add a file or folder and StackOps keeps a copy of it in your cloud storage.", action: toolButton(tools, "devops data register", { label: "Add a backup", tone: "primary" }) });
       }
-      const groups = Map.groupBy([...entries].sort((left, right) => appliesHere(right) - appliesHere(left)), (item) => item.group);
-      const here = entries.filter(appliesHere).length;
-      const encrypted = entries.filter((item) => item.entry.encryption).length;
-      const linked = entries.filter((item) => item.entry.share_url).length;
-      const counted = `${plural(entries.length, "item")} · ${plural(groups.size, "group")}`;
-      setCount(counted);
-      const tiles = [
-        [stat({ glyph: "database", hue: 252, label: "Backed up" }), entries.length, `in ${plural(groups.size, "group")}`],
-        [stat({ glyph: "cpu", hue: 200, label: "For this machine" }), here, here === entries.length ? "all of them apply here" : `${entries.length - here} are for other systems`],
-        [stat({ glyph: "lock", hue: 155, label: "Encrypted" }), encrypted, encrypted === entries.length ? "everything is protected" : `${entries.length - encrypted} kept as they are`],
-        [stat({ glyph: "share", hue: 30, label: "Share links" }), linked, linked ? "retrievable without signing in" : "none set up yet"],
-      ];
-      requestAnimationFrame(() => tiles.forEach(([tile, value, note]) => tile.set(value, note)));
-      const sections = [...groups].map(([name, items]) => [name, backupGroup({ activity, tools, name, items, source: data.source })]);
-      const stack = h("div", { class: "stack" }, rise(h("div", { class: "stats" }, tiles.map(([tile]) => tile.element))), sections.map(([, section]) => section.element));
+      const sorted = [...entries].sort((left, right) => appliesHere(right) - appliesHere(left));
+      const local = sorted.filter(appliesHere);
+      const others = entries.length - local.length;
+      const total = stat({ glyph: "database", hue: 252, label: "Backed up" });
+      const here = stat({ glyph: "cpu", hue: 200, label: "For this machine" });
+      const encrypted = stat({ glyph: "lock", hue: 155, label: "Encrypted" });
+      const linked = stat({ glyph: "share", hue: 30, label: "Share links" });
+      const holder = h("div", { class: "stack" });
+      let sections = [];
+      let counted = "";
+      // Both are filled in by the second read below.
+      let origin = null;
+      let kept = "";
+
+      // Entries for other systems stay out of the way unless they are asked for, and the numbers describe what is listed.
+      const paint = () => {
+        const shown = everySystem ? sorted : local;
+        const groups = Map.groupBy(shown, (item) => item.group);
+        const safe = shown.filter((item) => item.entry.encryption).length;
+        const links = shown.filter((item) => item.entry.share_url).length;
+        counted = `${plural(shown.length, "item")} · ${plural(groups.size, "group")}`;
+        setCount(`${counted}${kept}`);
+        requestAnimationFrame(() => {
+          total.set(shown.length, `in ${plural(groups.size, "group")}`);
+          here.set(local.length, others === 0 ? "all of them apply here" : everySystem ? `${others} are for other systems` : `${others} for other systems are hidden`);
+          encrypted.set(safe, safe < shown.length ? `${shown.length - safe} kept as they are` : safe ? "everything is protected" : "nothing listed");
+          linked.set(links, links ? "retrievable without signing in" : "none set up yet");
+        });
+        sections = [...groups].map(([name, items]) => [name, backupGroup({ activity, tools, name, items, source: data.source })]);
+        if (origin) for (const [name, section] of sections) section.setOrigin(origin(name));
+        if (sections.length) holder.replaceChildren(...sections.map(([, section]) => section.element));
+        else holder.replaceChildren(notice({ glyph: "database", title: "Nothing here is for this machine", body: "Everything on the list is for other systems. Choose All systems to see it." }));
+      };
+      const picker = segmented([[false, `This machine · ${local.length}`], [true, `All systems · ${entries.length}`]], (value) => {
+        everySystem = value;
+        picker.set(everySystem);
+        paint();
+      });
+      picker.set(everySystem);
+      paint();
+      const stack = h("div", { class: "stack" }, rise(h("div", { class: "stats" }, [total, here, encrypted, linked].map((tile) => tile.element))), others > 0 && h("div", { class: "table-bar" }, picker.element), holder);
       // One more read on every load says where backups go and which groups are the user's own, asked afresh so that Refresh covers it too.
       // It reads only the user's file, and a user group replaces a built-in group of the same name whole, so a group is either the user's or built in.
       query(["devops", "self", "status", "--backup", "--json"], true).then(
         (result) => {
           if (!stack.isConnected) return;
           const { details } = result.json.backup;
-          for (const [name, section] of sections) section.setOrigin(data.source !== "library" && Object.hasOwn(details.backup_items, name));
-          setCount(`${counted} · ${details.cloud_config ? `kept in ${details.cloud_config}` : "no cloud chosen"}`);
+          origin = (name) => data.source !== "library" && Object.hasOwn(details.backup_items, name);
+          kept = ` · ${details.cloud_config ? `kept in ${details.cloud_config}` : "no cloud chosen"}`;
+          for (const [name, section] of sections) section.setOrigin(origin(name));
+          setCount(`${counted}${kept}`);
           if (details.cloud_selection_required) {
             stack.prepend(
               h(

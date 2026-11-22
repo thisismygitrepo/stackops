@@ -1,7 +1,7 @@
 import { debounce, h, icon, toast } from "/assets/scripts/dom.js";
 import { nodeHash, state } from "/assets/scripts/state.js";
-import { ARRIVAL_VALUES, ESSENTIAL_FLAGS, LIVE_PATHS, OMITTED_FIELDS, PASSTHROUGH_TOOLS } from "./catalog.js";
-import { commandDetail, query } from "./data.js";
+import { ARRIVAL_VALUES, ESSENTIAL_FLAGS, HOME_PATH_FIELDS, LIVE_PATHS, OMITTED_FIELDS, PASSTHROUGH_TOOLS } from "./catalog.js";
+import { formDetail, query } from "./data.js";
 import { createFriendlyForm } from "./friendly_form.js";
 import { noteOpened, recall, remember } from "./memory.js";
 import { openSheet } from "./overlays.js";
@@ -41,7 +41,7 @@ export function createToolSheet({ activity, openReport, guides = {} }) {
 
     let parameters = null;
     try {
-      ({ parameters } = await commandDetail(path));
+      ({ parameters } = await formDetail(path));
     } catch (error) {
       formHolder.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "This tool's options could not be read", body: error.message }));
       return;
@@ -101,6 +101,7 @@ export function createToolSheet({ activity, openReport, guides = {} }) {
     const form = createFriendlyForm({
       // Whatever the sheet opens with stays in view, so a pre-filled or remembered choice is never tucked away under "More options".
       parameters: specs, values, essentials: [...(ESSENTIAL_FLAGS[path] ?? []), ...specs.filter((spec) => values.has(spec.name)).flatMap((spec) => spec.flags)],
+      homePaths: HOME_PATH_FIELDS[path] ?? [],
       onChange: () => {
         touched = true;
         const { problems } = form.collect();

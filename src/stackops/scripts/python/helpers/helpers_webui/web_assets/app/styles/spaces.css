@@ -82,8 +82,11 @@
 .project-card header > div, .agent-card header > div, .wb-card header > div { display: grid; flex: 1; min-width: 0; }
 .project-card h3, .layout-card h3, .agent-card h3, .wb-card h3 { overflow: hidden; font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; text-overflow: ellipsis; white-space: nowrap; }
 .project-facts { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
-.project-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.project-title h3 { flex: 1; min-width: 0; }
+/* The column is held to the card's width: left to size itself it grows to fit the long path under the name, and the pill beside the name is pushed out of the card. */
+.project-card header > div { grid-template-columns: minmax(0, 1fr); }
+/* A name too long to share its line with the pill keeps the line, and the pill goes under it. Only a name longer than the whole line is cut short. */
+.project-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.project-title h3 { flex: 1 1 auto; min-width: 0; }
 .project-title .pill { flex: none; gap: 5px; }
 .fact { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; font: 11.5px var(--mono); color: var(--ink-soft); background: var(--well); border-radius: 999px; }
 .project-card footer, .layout-card footer, .agent-card footer, .wb-card footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 12.5px; }

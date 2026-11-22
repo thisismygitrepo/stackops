@@ -67,6 +67,15 @@ export function commandDetail(path) {
   return details.get(path);
 }
 
+// A tool's parameters as its form shows them. Where this machine can list the valid values of a parameter the CLI takes as text (the server's
+// `field_choices`), the field becomes a choice from that list. The lists are read afresh each time, so a sheet opened after a cloud was added
+// offers it. A server that cannot give them leaves every field the way the CLI declares it.
+export async function formDetail(path) {
+  const [{ parameters }, { fields }] = await Promise.all([commandDetail(path), api.choices(path).catch(() => ({ fields: {} }))]);
+  const listed = (spec) => ({ ...spec, control: "choice", listed: true, ...fields[spec.name], default: fields[spec.name].default ?? spec.default });
+  return { parameters: parameters && parameters.map((spec) => (fields[spec.name] ? listed(spec) : spec)) };
+}
+
 export function markStale() {
   cache.clear();
   catalog = null;

@@ -100,6 +100,9 @@ export const OMITTED_FIELDS = {
   "devops scripts path": ["interactive"], "agents iter status": ["interactive"], "terminal summary": ["choose_session"],
 };
 
+// Path fields whose suggestions start in the home folder, by parameter name. What they ask for is a place on this machine, not a file of the working folder.
+export const HOME_PATH_FIELDS = { "devops repos register": ["directory"] };
+
 export const ESSENTIAL_FLAGS = {
   "devops software install": ["--update"],
   "agents run-prompt": ["--agent", "--reasoning", "--interactive"],

@@ -11,10 +11,14 @@ const SEGMENT_LIMIT = 4;
 const labelOf = (spec) => humanize(spec.kind === "option" ? longOf(spec.flags) : spec.name);
 const isHidden = (spec) => spec.flags.some((flag) => HIDDEN_FLAGS.has(flag));
 
-function createField(spec, values, changed) {
+function createField(spec, values, changed, fromHome) {
   const read = () => values.get(spec.name) ?? "";
   const label = labelOf(spec);
-  const hint = spec.help ? friendlyText(spec.help) : "";
+  const help = spec.help ? friendlyText(spec.help) : "";
+  // A listed field (see `formDetail`) is picked from, not typed into, so the sentences that say how to type a list are left out of its hint.
+  const hint = spec.listed ? help.split(/(?<=[.;])\s+/).filter((sentence) => !/comma/i.test(sentence)).join(" ") : help;
+  // A listed choice is a name on this machine and comes with the text to show for it. The CLI's own choices are keywords, put into words here.
+  const wordOf = (choice) => spec.labels?.[choice] ?? humanize(choice);
   const placeholder = spec.default ? `Default: ${spec.default}` : LONG_TEXT_NAMES.has(spec.name) ? "Type here…" : spec.multiple ? "Separate several with spaces" : "";
   let paint = () => {};
   const write = (value) => {
@@ -29,20 +33,27 @@ function createField(spec, values, changed) {
   if (spec.control === "switch" && spec.off_flags.length === 0) {
     field = h("button", { class: "field toggle-row", type: "button", role: "switch", onclick: () => write(read() ? "" : "on") }, h("div", {}, caption, note), h("i", { class: "switch" }));
     paint = () => field.setAttribute("aria-checked", String(Boolean(read())));
-  } else if (spec.control === "switch" || (spec.control === "choice" && !spec.multiple && spec.choices.length <= SEGMENT_LIMIT)) {
+  } else if (spec.control === "switch" || (spec.control === "choice" && !spec.multiple && !spec.listed && spec.choices.length <= SEGMENT_LIMIT)) {
     const options = spec.control === "switch" ? [["on", "On"], ["off", "Off"]] : spec.choices.map((choice) => [choice, humanize(choice)]);
     const control = segmented(options, (value) => write(read() === value ? "" : value));
     field = h("div", { class: "field" }, caption, control.element, note);
     paint = () => control.set(read() || (spec.control === "choice" ? spec.default : ""));
-  } else if (spec.control === "choice" && spec.multiple) {
-    const picked = () => new Set(read() ? read().split("\n") : []);
+  } else if (spec.control === "choice" && (spec.multiple || spec.separator)) {
+    // Several picks, written as one value per repeat of the parameter or, with a separator, as the one list the CLI splits at it. A list with a
+    // separator shows what the command will use, so an untouched one has its default pressed, and going back to the default empties the field.
+    // `whole` is the choice that stands for all of them: it is only ever picked alone.
+    const joiner = spec.separator || "\n";
+    const usual = spec.separator && spec.default ? spec.default.split(joiner) : [];
+    const picked = () => new Set(read() ? read().split(joiner) : usual);
     const chips = spec.choices.map((choice) =>
       h("button", {
-        class: "chip-button", type: "button", text: humanize(choice),
+        class: "chip-button", type: "button", text: wordOf(choice),
         onclick: () => {
-          const next = picked();
-          if (!next.delete(choice)) next.add(choice);
-          write(spec.choices.filter((item) => next.has(item)).join("\n"));
+          const now = picked();
+          const next = choice === spec.whole ? new Set(now.has(choice) ? [] : [choice]) : new Set([...now].filter((item) => item !== spec.whole));
+          if (choice !== spec.whole && !next.delete(choice)) next.add(choice);
+          const kept = spec.choices.filter((item) => next.has(item));
+          write(kept.length === usual.length && usual.every((item) => next.has(item)) ? "" : kept.join(joiner));
         },
       }),
     );
@@ -50,16 +61,20 @@ function createField(spec, values, changed) {
     paint = () => chips.forEach((chip, index) => chip.setAttribute("aria-pressed", String(picked().has(spec.choices[index]))));
   } else if (spec.control === "choice") {
     const combo = createCombo({
-      label, placeholder: spec.default ? `Default: ${humanize(spec.default)}` : "Choose…", readOnly: true,
-      suggest: () => [...(read() ? [{ value: "", label: "Use the default", fill: true }] : []), ...spec.choices.map((choice) => ({ value: choice, label: humanize(choice) }))],
+      label, placeholder: spec.default ? `Default: ${wordOf(spec.default)}` : "Choose…", readOnly: true,
+      suggest: () => [
+        ...(read() ? [{ value: "", label: spec.default ? `Default: ${wordOf(spec.default)}` : "Use the default", fill: true }] : []),
+        ...spec.choices.map((choice) => ({ value: choice, label: wordOf(choice), hint: choice === spec.default && "Default" })),
+      ],
       onPick: (option) => write(option.value),
     });
     field = h("div", { class: "field" }, caption, combo.element, note);
-    paint = () => combo.setValue(read() ? humanize(read()) : "");
+    paint = () => combo.setValue(read() ? wordOf(read()) : "");
   } else if (spec.control === "path") {
     const combo = createCombo({
       label, placeholder: placeholder || "Type a path", glyph: "folder", emptyText: "Nothing to suggest",
-      suggest: async (text) => (await api.paths(text, state.settings.workingDirectory)).entries.map((entry) => ({ value: entry, label: entry, keepOpen: entry.endsWith("/") })),
+      // An empty box lists the working folder, or the home folder for a field that starts there. Typed text is read the same way in both.
+      suggest: async (text) => (await api.paths(text || (fromHome ? "~/" : ""), state.settings.workingDirectory)).entries.map((entry) => ({ value: entry, label: entry, keepOpen: entry.endsWith("/") })),
       onInput: (text) => write(text.trim() ? text : ""),
       onPick: (option) => write(option.value),
     });
@@ -86,9 +101,10 @@ function createField(spec, values, changed) {
 }
 
 // `essentials` is the list of option flags to keep in view; everything else folds under "More options". Pass null to show every field.
-export function createFriendlyForm({ parameters, values, essentials, locked = [], onChange }) {
+// `homePaths` names the path fields whose suggestions start in the home folder.
+export function createFriendlyForm({ parameters, values, essentials, locked = [], homePaths = [], onChange }) {
   const visible = parameters.filter((spec) => !isHidden(spec) && !locked.includes(spec.name));
-  const fields = visible.map((spec) => createField(spec, values, onChange));
+  const fields = visible.map((spec) => createField(spec, values, onChange, homePaths.includes(spec.name)));
   const isPrimary = ({ spec }) => essentials === null || spec.kind === "argument" || spec.required || spec.flags.some((flag) => essentials.includes(flag));
   const primary = fields.filter(isPrimary);
   const rest = fields.filter((item) => !isPrimary(item));

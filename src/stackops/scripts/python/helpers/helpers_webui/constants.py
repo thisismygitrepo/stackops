@@ -1,4 +1,6 @@
-from typing import Final
+from typing import Final, Literal
+
+type FieldChoiceSource = Literal["default_cloud", "any_cloud", "backup_entries", "operating_systems", "projects"]
 
 SERVER_RUNTIME_DEPENDENCIES: Final[tuple[str, ...]] = ("starlette", "uvicorn")
 WINDOWS_PTY_DEPENDENCY: Final[str] = "pywinpty"
@@ -38,6 +40,23 @@ LOCAL_PATH_PARAMETER_NAMES: Final[frozenset[str]] = frozenset(
         "file",
     }
 )
+# Parameters the CLI takes as plain text although their valid values are a list this machine can read in milliseconds. The app view's form offers
+# that list in place of the text box (`field_choices.py`); the CLI and the developer view stay as they are. Keyed by command path, then parameter name.
+# Left out on purpose: lists that need the network or a disk scan, lists that depend on another field's value, and names kept in the secrets file.
+FIELD_CHOICE_SOURCES: Final[dict[str, dict[str, FieldChoiceSource]]] = {
+    "devops data sync": {"cloud": "default_cloud", "which": "backup_entries"},
+    "devops data register": {"os": "operating_systems"},
+    "devops repos register": {"cloud": "default_cloud"},
+    "devops repos guard": {"cloud": "default_cloud"},
+    "devops repos sync": {"which": "projects"},
+    "devops config setup cloud": {"cloud": "any_cloud"},
+    "devops config dotfiles register": {"os_filter": "operating_systems"},
+    "cloud mount": {"clouds": "any_cloud"},
+    "cloud copy": {"record_os": "operating_systems"},
+}
+OPERATING_SYSTEM_TITLES: Final[dict[str, str]] = {"linux": "Linux", "darwin": "macOS", "windows": "Windows"}
+# The word the CLI takes for every entry of a list at once.
+EVERY_ITEM_CHOICE: Final[str] = "all"
 SCROLLBACK_LIMIT_BYTES: Final[int] = 4 * 1024 * 1024
 # Finished runs beyond this many are forgotten, oldest first, each time a run starts; each one can hold a full scrollback.
 FINISHED_RUNS_KEPT: Final[int] = 20

@@ -19,6 +19,7 @@ function describeArguments(runArguments) {
 export function createActivity({ openReport }) {
   const tasks = new Map();
   let activeId = null;
+  let closing = 0;
   const chips = h("div", { class: "task-chips", role: "tablist" });
   const hero = createHero({
     openReport,
@@ -172,6 +173,7 @@ export function createActivity({ openReport }) {
   function reveal(id) {
     const task = tasks.get(id);
     if (!task) return;
+    clearTimeout(closing);
     task.quiet = false;
     activeId = id;
     if (element.dataset.mode === "closed") setMode("open");
@@ -181,6 +183,7 @@ export function createActivity({ openReport }) {
 
   // `workingDirectory` is only given by "Run again", which repeats a task in the folder it ran in; everything else runs in the folder selected now.
   async function start({ title, emoji, arguments: runArguments, interactive, reveal: show, wide, workingDirectory }) {
+    if (show) clearTimeout(closing);
     const fitted = tasks.get(activeId);
     const width = Math.min(element.offsetWidth || 760, window.innerWidth);
     const size = fitted?.terminal && fit(fitted) ? { rows: fitted.terminal.rows, columns: fitted.terminal.cols } : { rows: 28, columns: Math.max(60, Math.floor((width - 64) / 7.85)) };
@@ -201,6 +204,14 @@ export function createActivity({ openReport }) {
     emit("runs");
   }
 
+  // A click on the page behind the open panel puts the panel away, the way a click beside a sheet closes the sheet. Sheets, dialogs and messages lie
+  // outside the frame, so a click in one of them is not a click on the page. The closing waits one turn: a click that starts or shows a task has to
+  // keep the panel open, so `start` and `reveal` call it off.
+  document.addEventListener("click", (event) => {
+    if (element.dataset.mode === "closed" || !(event.target instanceof Element) || !event.target.closest(".frame")) return;
+    clearTimeout(closing);
+    closing = setTimeout(() => setMode("closed"));
+  }, true);
   setInterval(() => element.dataset.mode !== "closed" && hero.tick(), 1000);
   // Only the task on show is refitted, once the size settles: each refit re-wraps the console and resizes the program. The others catch up when selected.
   new ResizeObserver(debounce(() => fit(tasks.get(activeId)), 120)).observe(consoles);
