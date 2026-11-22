@@ -44,7 +44,7 @@
 .skeleton.row { height: 52px; margin-bottom: 10px; }
 .skeleton.card { height: 132px; }
 .notice { display: grid; justify-items: center; gap: 6px; padding: 38px 24px; text-align: center; color: var(--ink-soft); border: 1px dashed var(--line-strong); border-radius: var(--radius); animation: pop-in 0.4s var(--smooth); }
-.notice-glyph { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 4px; color: var(--violet); background: rgba(106, 92, 255, 0.13); border-radius: 17px; animation: float 3.6s ease-in-out infinite; }
+.notice-glyph { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 4px; color: var(--violet); background: var(--violet-wash); border-radius: 17px; animation: float 3.6s ease-in-out infinite; }
 .notice.bad .notice-glyph { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
 .notice.good .notice-glyph { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
 .notice h3 { font-size: 16px; font-weight: 700; color: var(--ink); }
@@ -79,7 +79,7 @@
 .copy-chip:hover { color: var(--ink); background: var(--well); }
 .copy-chip:hover svg { opacity: 1; }
 .copy-chip.copied { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
-/* Where a chip's text wraps instead of being cut short. The icon rule stays below the hover rule above: there the icon is always shown, dimmed. */
+/* The places where a chip's text wraps instead of being cut short. In the first two its icon always shows, dimmed, so that rule has to stay below the hover rule above. */
 :is(.health, .agent-open, .prompt-origin, .prompt-file, .removal-plan, .app-sheet) .copy-chip { text-align: left; }
 :is(.health, .agent-open, .prompt-origin, .prompt-file, .removal-plan, .app-sheet) .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
 :is(.health, .agent-open) .copy-chip svg { flex: none; opacity: 0.4; }
@@ -123,7 +123,7 @@
 .form, .fields { display: grid; gap: 14px; }
 .field { display: grid; gap: 6px; min-width: 0; text-align: left; }
 .field-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650; }
-.field-label em { padding: 0 7px; font-size: 10.5px; font-style: normal; font-weight: 650; line-height: 17px; color: var(--violet); background: rgba(106, 92, 255, 0.13); border-radius: 999px; }
+.field-label em { padding: 0 7px; font-size: 10.5px; font-style: normal; font-weight: 650; line-height: 17px; color: var(--violet); background: var(--violet-wash); border-radius: 999px; }
 .field.filled .field-label span { color: var(--violet); }
 .field-hint { font-size: 12.5px; color: var(--ink-faint); }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 14px; background: var(--well); border: 1px solid transparent; border-radius: 14px; transition: border-color 0.2s, background 0.2s; }

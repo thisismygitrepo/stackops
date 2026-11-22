@@ -42,6 +42,7 @@ a.health-callout > svg { color: var(--ink-faint); }
 .health-tab.attention strong { color: var(--warn); }
 .health-tab.zero strong { color: var(--ink-faint); }
 
+/* The table and its head are .data-table's, in widgets.css; this head is set a little tighter. */
 .health-matrix th { padding: 10px 12px; letter-spacing: 0.06em; }
 .health-matrix th.tally span { display: inline-flex; align-items: center; gap: 5px; }
 .health-matrix td { padding: 9px 12px; white-space: nowrap; border-top: 1px solid var(--line); }

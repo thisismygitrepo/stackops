@@ -58,7 +58,7 @@
 .app-text h3 { display: flex; align-items: center; gap: 7px; font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; }
 .app-text p { display: -webkit-box; overflow: hidden; font-size: 12.5px; color: var(--ink-soft); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .installed-dot { width: 8px; height: 8px; background: var(--good); border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 22%, transparent); }
-.app-add { display: grid; flex: none; place-items: center; width: 34px; height: 34px; color: var(--violet); background: rgba(106, 92, 255, 0.13); border-radius: 50%; transition: transform 0.35s var(--spring), background 0.25s, color 0.25s; }
+.app-add { display: grid; flex: none; place-items: center; width: 34px; height: 34px; color: var(--violet); background: var(--violet-wash); border-radius: 50%; transition: transform 0.35s var(--spring), background 0.25s, color 0.25s; }
 .app-add:hover { transform: scale(1.15); }
 .app-add svg { grid-area: 1 / 1; transition: transform 0.4s var(--spring), opacity 0.2s; }
 .app-add svg:last-child { opacity: 0; transform: scale(0.3) rotate(-90deg); }
