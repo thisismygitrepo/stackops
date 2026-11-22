@@ -1,5 +1,6 @@
 """Terminal management commands - lazy loading subcommands."""
 
+from stackops.utils.cli_utils.standard_streams import use_utf8_standard_streams
 from typing import Literal, Annotated
 import typer
 from stackops.utils.cli_utils.interaction import configure_interaction, require_interactive
@@ -531,6 +532,7 @@ def get_app() -> typer.Typer:
 
 
 def main() -> None:
+    use_utf8_standard_streams()
     layouts_app = get_app()
     layouts_app()
 

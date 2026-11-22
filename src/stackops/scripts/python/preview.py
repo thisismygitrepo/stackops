@@ -2,6 +2,7 @@
 
 """preview - File preview and backend launcher."""
 
+from stackops.utils.cli_utils.standard_streams import use_utf8_standard_streams
 from typing import Annotated, cast
 import typer
 from stackops.scripts.python.enums import BACKENDS, BACKENDS_LOOSE, BACKENDS_MAP
@@ -119,6 +120,7 @@ def preview(
 
 
 def main() -> None:
+    use_utf8_standard_streams()
     from stackops.utils.constants import AGENT_SKILL_HINT
 
     app = typer.Typer(add_completion=False, context_settings={"help_option_names": ["-h", "--help"]})

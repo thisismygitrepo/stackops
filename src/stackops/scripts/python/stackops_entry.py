@@ -3,6 +3,7 @@
 Submodules are only imported when their commands are actually invoked, not at startup.
 This makes `stackops --help` much faster by avoiding loading heavy dependencies.
 """
+from stackops.utils.cli_utils.standard_streams import use_utf8_standard_streams
 from collections.abc import Callable
 from typing import Annotated
 
@@ -170,6 +171,7 @@ def get_app() -> typer.Typer:
 
 
 def main() -> None:
+    use_utf8_standard_streams()
     app = get_app()
     app()
 

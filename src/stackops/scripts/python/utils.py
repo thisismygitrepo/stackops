@@ -1,5 +1,6 @@
 """Utility commands - lazy loading nested subcommands."""
 
+from stackops.utils.cli_utils.standard_streams import use_utf8_standard_streams
 from typing import TYPE_CHECKING
 
 import typer
@@ -63,6 +64,7 @@ def get_app() -> typer.Typer:
 
 
 def main() -> None:
+    use_utf8_standard_streams()
     app = get_app()
     app()
 

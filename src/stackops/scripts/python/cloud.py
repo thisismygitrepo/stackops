@@ -1,5 +1,6 @@
 """Cloud management commands - lazy loading subcommands."""
 
+from stackops.utils.cli_utils.standard_streams import use_utf8_standard_streams
 from typing import Annotated, Literal
 from pathlib import Path
 from contextlib import redirect_stdout
@@ -166,6 +167,7 @@ def get_app() -> typer.Typer:
 
 
 def main() -> None:
+    use_utf8_standard_streams()
     app = get_app()
     app()
 

@@ -30399,7 +30399,7 @@
                     "        typer.Option(",
                     "            \"--runtime\",",
                     "            \"-m\",",
-                    "            help=f\"Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}\",",
+                    "            help=BROWSER_RUNTIME_HELP,",
                     "            case_sensitive=False,",
                     "        ),",
                     "    ] = None,",
@@ -30608,7 +30608,7 @@
                       "type": "BrowserRuntimeOption | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[BrowserRuntimeOption | None, typer.Option('--runtime', '-m', help=f'Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}', case_sensitive=False)]",
+                      "annotation_raw": "Annotated[BrowserRuntimeOption | None, typer.Option('--runtime', '-m', help=BROWSER_RUNTIME_HELP, case_sensitive=False)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -30960,7 +30960,7 @@
                     "        typer.Option(",
                     "            \"--runtime\",",
                     "            \"-m\",",
-                    "            help=f\"Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}\",",
+                    "            help=BROWSER_RUNTIME_HELP,",
                     "            case_sensitive=False,",
                     "        ),",
                     "    ] = None,",
@@ -31124,7 +31124,7 @@
                       "type": "BrowserRuntimeOption | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[BrowserRuntimeOption | None, typer.Option('--runtime', '-m', help=f'Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}', case_sensitive=False)]",
+                      "annotation_raw": "Annotated[BrowserRuntimeOption | None, typer.Option('--runtime', '-m', help=BROWSER_RUNTIME_HELP, case_sensitive=False)]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [

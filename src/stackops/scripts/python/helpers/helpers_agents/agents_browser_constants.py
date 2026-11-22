@@ -48,6 +48,15 @@ BROWSER_RELAY_STARTUP_GRACE_SECONDS: Final[float] = 10.0
 BROWSER_RELAY_TARGET_UNAVAILABLE_GRACE_SECONDS: Final[float] = 3.0
 BROWSER_RELAY_TARGET_PROBE_INTERVAL_SECONDS: Final[float] = 0.5
 BROWSER_RELAY_TARGET_PROBE_TIMEOUT_SECONDS: Final[float] = 1.0
+CHROMIUM_BACKGROUND_THROTTLING_SWITCHES: Final[tuple[str, ...]] = (
+    "--disable-background-timer-throttling",
+    "--disable-backgrounding-occluded-windows",
+    "--disable-renderer-backgrounding",
+    "--disable-features=CalculateNativeWinOcclusion",
+)
+WINDOWS_SERVICES_SESSION_ID: Final[int] = 0
+WINDOWS_DESKTOP_TASK_PREFIX: Final[str] = "stackops-browser-"
+WINDOWS_DESKTOP_TASK_PRIORITY: Final[int] = 5
 AGENT_BROWSER_INSTALLER_NAME: Final[str] = "agent-browser"
 AGENT_BROWSER_SKILL_REPO: Final[str] = "vercel-labs/agent-browser"
 BROWSER_USE_INSTALLER_NAME: Final[str] = "browser-use"

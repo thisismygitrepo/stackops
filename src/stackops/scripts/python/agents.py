@@ -1,5 +1,6 @@
 """Agents management commands - lazy loading subcommands."""
 
+from stackops.utils.cli_utils.standard_streams import use_utf8_standard_streams
 import shutil
 from collections.abc import Callable, Generator
 from contextlib import chdir, contextmanager
@@ -957,6 +958,7 @@ def get_app() -> typer.Typer:
 
 
 def main() -> None:
+    use_utf8_standard_streams()
     agents_app = get_app()
     agents_app()
 

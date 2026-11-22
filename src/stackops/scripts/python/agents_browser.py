@@ -23,6 +23,12 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 if TYPE_CHECKING:
     from stackops.utils.network.address import InterfaceIPv4Address
 
+BROWSER_RUNTIME_HELP: str = (
+    "Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes; "
+    "on Windows a detached launch from session 0 (e.g. over SSH) opens on the logged-on user's desktop through a scheduled task. "
+    f"{DEFAULT_SESSION_MULTIPLEXER_HELP}"
+)
+
 
 def install_tech(
     tool: Annotated[
@@ -122,7 +128,7 @@ def launch_browser(
         typer.Option(
             "--runtime",
             "-m",
-            help=f"Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}",
+            help=BROWSER_RUNTIME_HELP,
             case_sensitive=False,
         ),
     ] = None,
@@ -318,7 +324,7 @@ def batch_launch(
         typer.Option(
             "--runtime",
             "-m",
-            help=f"Where browser processes run: tmux/t, tuios/u, zellij/z (Zellij 0.45+), or detached/d background processes. {DEFAULT_SESSION_MULTIPLEXER_HELP}",
+            help=BROWSER_RUNTIME_HELP,
             case_sensitive=False,
         ),
     ] = None,

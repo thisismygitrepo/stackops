@@ -1,7 +1,7 @@
 import os
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LOCALHOST
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import process_created_at
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_detached_processes import process_created_at, terminate_registered_process
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_models import (
     BrowserLaunchDetails,
     NewBrowserLaunchResult,
@@ -15,27 +15,22 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_runtim
     verify_cdp_endpoint,
     wait_for_tcp_endpoint,
 )
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_windows_desktop import (
+    runs_in_windows_services_session,
+    start_browser_on_interactive_desktop,
+)
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry import get_browser_launcher
 
 
 def launch_detached_browser(*, details: BrowserLaunchDetails, lan: bool) -> NewBrowserLaunchResult:
     prepare_browser_launch_registry()
-    browser_process = start_browser_process(
-        command=details.command,
-        process_label=details.process_label,
-        environment=os.environ,
+    browser_process_id, browser_created_at = (
+        start_browser_on_interactive_desktop(details=details)
+        if runs_in_windows_services_session()
+        else _start_browser_in_this_session(details=details)
     )
     relay_process = None
     try:
-        wait_for_tcp_endpoint(
-            host=REMOTE_DEBUGGING_LOCALHOST,
-            port=details.browser_port,
-            process=browser_process,
-            process_label=details.process_label,
-        )
-        if get_browser_launcher(browser=details.browser).endpoint_protocol == "cdp":
-            verify_cdp_endpoint(port=details.browser_port)
-        browser_created_at = process_created_at(process_id=browser_process.pid, process_label=details.process_label)
         if lan:
             relay_process = start_endpoint_relay(
                 listen_port=details.port,
@@ -57,17 +52,33 @@ def launch_detached_browser(*, details: BrowserLaunchDetails, lan: bool) -> NewB
         )
         record_browser_launch(
             details=details,
-            process_id=browser_process.pid,
+            process_id=browser_process_id,
             process_created_at=browser_created_at,
             relay_expected=lan,
             relay_process_id=relay_process_id,
             relay_process_created_at=relay_created_at,
             windows=None,
         )
-        return build_new_launch_result(details=details, process_id=browser_process.pid, relay_process_id=relay_process_id, windows=None)
+        return build_new_launch_result(details=details, process_id=browser_process_id, relay_process_id=relay_process_id, windows=None)
     except RuntimeError:
         if relay_process is not None:
             terminate_background_process(process=relay_process, process_label="browser endpoint LAN relay")
+        terminate_registered_process(
+            process_id=browser_process_id, process_created_at=browser_created_at, process_label=details.process_label
+        )
+        raise
+
+
+def _start_browser_in_this_session(*, details: BrowserLaunchDetails) -> tuple[int, float]:
+    browser_process = start_browser_process(command=details.command, process_label=details.process_label, environment=os.environ)
+    try:
+        wait_for_tcp_endpoint(
+            host=REMOTE_DEBUGGING_LOCALHOST, port=details.browser_port, process=browser_process, process_label=details.process_label
+        )
+        if get_browser_launcher(browser=details.browser).endpoint_protocol == "cdp":
+            verify_cdp_endpoint(port=details.browser_port)
+        return browser_process.pid, process_created_at(process_id=browser_process.pid, process_label=details.process_label)
+    except RuntimeError:
         terminate_background_process(process=browser_process, process_label=details.process_label)
         raise
 
