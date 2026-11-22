@@ -92,8 +92,8 @@
               "callable": "software"
             },
             "app": {
-              "cls": "ordered_group(('install', 'explore', 'check', 'list', 'report', 'update-attrs', 'path', 'init', 'edit', 'validate'))",
-              "help": "Browse, install, and check software, report GitHub activity, and manage catalogs. Matching user names override library entries.",
+              "cls": "ordered_group(('install', 'uninstall', 'explore', 'check', 'list', 'report', 'update-attrs', 'path', 'init', 'edit', 'validate'))",
+              "help": "Browse, install, delete, and check software, report GitHub activity, and manage catalogs. Matching user names override library entries.",
               "no_args_is_help": true,
               "add_completion": false,
               "context_settings": {
@@ -300,6 +300,76 @@
                 "aliases": [
                   {
                     "name": "i",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "uninstall",
+                "fullPath": "devops software uninstall",
+                "shortPath": "d w U",
+                "help": "🗑️ <U> Delete the program file of an app that StackOps installed.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_install.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_install",
+                  "callable": "uninstall"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def uninstall(",
+                    "    which: Annotated[str, typer.Argument(help=\"Comma-separated program names.\")],",
+                    "    as_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print what happened to each program as JSON.\")] = False,",
+                    ") -> None:"
+                  ],
+                  "name": "uninstall",
+                  "parameters": [
+                    {
+                      "name": "which",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Comma-separated program names.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Comma-separated program names."
+                      }
+                    },
+                    {
+                      "name": "as_json",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print what happened to each program as JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print what happened to each program as JSON."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "U",
                     "hidden": true
                   }
                 ]

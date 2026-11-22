@@ -4,6 +4,7 @@ import { software } from "../data.js";
 import { rise } from "../motion.js";
 import { avatar, button, iconButton, notice, pill, stat } from "../widgets.js";
 import { relativeTime } from "../words.js";
+import { removeApp } from "./app_remove.js";
 
 // One short of what a browser opens to one address at a time, so a click elsewhere is not left waiting behind the checks.
 const CHECKS_AT_ONCE = 5;
@@ -11,7 +12,7 @@ const CHECKS_AT_ONCE = 5;
 const GROUPS = [["outdated", "Updates available"], ["unknown", "Could not compare"], ["current", "Up to date"]];
 
 const groupOf = (answer) => (answer.error || answer.standing === "unknown" ? "unknown" : answer.standing === "outdated" ? "outdated" : "current");
-const version = (text, tone = "") => h("span", { class: `version ${tone}`, text });
+export const version = (text, tone = "") => h("span", { class: `version ${tone}`, text });
 
 // The Updates section of Apps: every installed app that is downloaded from a GitHub repository, with the version on this machine next to the
 // repository's latest release. It checks on arrival; apps installed another way are left out because GitHub cannot say what their latest version is.
@@ -56,6 +57,7 @@ export function createAppUpdates({ onUpdate, onRefresh }) {
       actions.append(h("a", { class: "btn plain small", href: answer.release_url, target: "_blank", rel: "noopener noreferrer", title: "Opens the release on GitHub" }, icon("external", 14), h("span", { text: answer.latest_version ? "Release notes" : "Releases" })));
       if (groupOf(answer) !== "current" && answer.latest_version) actions.append(button({ label: "Update", glyph: "download", small: true, tone: "primary", onclick: () => onUpdate([app.name]) }));
     }
+    actions.append(h("button", { class: "icon-btn danger", type: "button", title: `Delete ${app.name}`, "aria-label": `Delete ${app.name}`, onclick: () => removeApp(app) }, icon("trash", 15)));
     const element = h(
       "li",
       { class: "session-row update-row" },

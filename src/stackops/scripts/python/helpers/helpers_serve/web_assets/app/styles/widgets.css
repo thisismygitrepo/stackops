@@ -23,7 +23,7 @@
 .icon-btn { display: inline-grid; flex: none; place-items: center; width: 32px; height: 32px; color: var(--ink-faint); border-radius: 10px; transition: background 0.2s, color 0.2s, transform 0.25s var(--spring); }
 .icon-btn:hover { color: var(--ink); background: var(--well); transform: scale(1.08); }
 .icon-btn.danger:hover { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
-.loading .icon-btn svg { animation: spin 0.9s linear infinite; }
+.panel.loading > .panel-head > .icon-btn:last-child svg { animation: spin 0.9s linear infinite; }
 
 .pill { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; font-size: 11.5px; font-weight: 600; white-space: nowrap; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
 .pill.good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }

@@ -140,12 +140,24 @@ def check_software_version(
             return VersionProblem(message=str(error), status=422)
         installers_by_name.update({candidate["appName"]: candidate for candidate in installers})
     installer = installers_by_name.get(name)
-    repository = None if installer is None else github_release_repository(installer=installer)
-    if installer is None or repository is None:
-        return VersionProblem(message=f"""{name} is not an app that is installed from GitHub releases.""", status=404)
+    if installer is None:
+        return VersionProblem(message=f"""{name} is not in the app catalog.""", status=404)
+    repository = github_release_repository(installer=installer)
+    exe_name = Installer(installer).get_exe_name()
+    # An app installed another way has no release to compare with, so only the version on this machine is read.
+    if repository is None:
+        return SoftwareVersion(
+            name=name,
+            repository="",
+            installed_version=read_installed_version(exe_name=exe_name),
+            latest_version="",
+            released_at="",
+            release_url="",
+            standing="unknown",
+        )
     release = release_cache.get(repository)
     with ThreadPoolExecutor(max_workers=1) as pool:
-        installed = pool.submit(read_installed_version, exe_name=Installer(installer).get_exe_name())
+        installed = pool.submit(read_installed_version, exe_name=exe_name)
         if release is None or fresh or time() - release.fetched_at > GITHUB_RELEASE_CACHE_SECONDS:
             fetched = fetch_latest_release(repository=repository)
             match fetched:

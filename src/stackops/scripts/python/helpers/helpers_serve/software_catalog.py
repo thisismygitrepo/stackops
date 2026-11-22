@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import TypedDict
 
 from stackops.utils.schemas.installer.installer_types import InstallerData
@@ -10,6 +11,9 @@ class SoftwareApp(TypedDict):
     homepage: str
     categories: list[str]
     installed: bool
+    binary: str
+    installed_at: str
+    removal_problem: str
     updated_at: str
     mine: bool
     repository: str
@@ -41,6 +45,7 @@ def load_software_catalog(installers_by_name: dict[str, InstallerData]) -> Softw
     from stackops.utils.cli_utils.command_lookup import check_tool_exists
     from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH, InstallerDataFileError, read_installer_data
     from stackops.utils.installer_utils.installer_class import Installer
+    from stackops.utils.installer_utils.installer_removal import locate_installed_binary
     from stackops.utils.installer_utils.installer_runner import get_installers_from_source
     from stackops.utils.schemas.installer.installer_categories import installer_category_definition
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
@@ -56,20 +61,32 @@ def load_software_catalog(installers_by_name: dict[str, InstallerData]) -> Softw
     # catalog stays in here unused.
     installers_by_name.update({installer["appName"]: installer for installer in installers})
     user_names = {installer["appName"].casefold() for installer in user_installers}
-    apps: list[SoftwareApp] = [
-        {
-            "name": installer["appName"],
-            "summary": installer["doc"],
-            "license": installer["license"],
-            "homepage": installer["repoURL"] if installer["repoURL"].startswith("http") else "",
-            "categories": list(installer["categoryLabels"]),
-            "installed": check_tool_exists(tool_name=Installer(installer).get_exe_name()),
-            "updated_at": installer.get("lastCommitDate") or "",
-            "mine": installer["appName"].casefold() in user_names,
-            "repository": github_release_repository(installer=installer) or "",
-        }
-        for installer in sorted(installers, key=lambda item: item["appName"].casefold())
-    ]
+    apps: list[SoftwareApp] = []
+    for installer in sorted(installers, key=lambda item: item["appName"].casefold()):
+        exe_name = Installer(installer).get_exe_name()
+        installed = check_tool_exists(tool_name=exe_name)
+        binary = locate_installed_binary(exe_name=exe_name) if installed else None
+        apps.append(
+            {
+                "name": installer["appName"],
+                "summary": installer["doc"],
+                "license": installer["license"],
+                "homepage": installer["repoURL"] if installer["repoURL"].startswith("http") else "",
+                "categories": list(installer["categoryLabels"]),
+                "installed": installed,
+                "binary": "" if binary is None else str(binary.path),
+                # When the program file was put in place: installing renames it into its folder, which is the last change to the file itself.
+                "installed_at": "" if binary is None else datetime.fromtimestamp(binary.path.stat().st_ctime, tz=UTC).isoformat(),
+                "removal_problem": binary.removal_problem
+                if binary is not None
+                else f"""The program file of {installer["appName"]} could not be found."""
+                if installed
+                else "",
+                "updated_at": installer.get("lastCommitDate") or "",
+                "mine": installer["appName"].casefold() in user_names,
+                "repository": github_release_repository(installer=installer) or "",
+            }
+        )
     definitions = {label: installer_category_definition(label=label) for installer in installers for label in installer["categoryLabels"]}
     categories: list[SoftwareCategory] = [
         {"label": label, "title": definition["title"], "description": definition["description"]} for label, definition in definitions.items()

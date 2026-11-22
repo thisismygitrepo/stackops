@@ -30,7 +30,8 @@
 }
 .rail-item svg { transition: transform 0.4s var(--spring); }
 .rail-item:hover { color: var(--ink); }
-.rail-item:focus-visible { outline-offset: -3px; outline-color: currentColor; }
+.rail-item:focus-visible { outline-offset: -3px; }
+.rail-item[aria-current="true"]:focus-visible { outline-color: currentColor; }
 .rail-item:hover svg { transform: translateY(-2px) scale(1.14); }
 .rail-item[aria-current="true"] { color: #fff; }
 .rail-item[aria-current="true"] svg { transform: scale(1.08); }

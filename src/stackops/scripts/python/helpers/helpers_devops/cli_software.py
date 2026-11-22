@@ -57,18 +57,20 @@ def list_software(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops.cli_software_attrs import update_attrs
     from stackops.scripts.python.helpers.helpers_devops.cli_software_files import edit_software, init_software, software_path, validate_software
-    from stackops.scripts.python.helpers.helpers_devops.cli_software_install import check, explore, install
+    from stackops.scripts.python.helpers.helpers_devops.cli_software_install import check, explore, install, uninstall
     from stackops.scripts.python.helpers.helpers_devops.cli_software_report import report
 
     app = typer.Typer(
-        cls=ordered_group(("install", "explore", "check", "list", "report", "update-attrs", "path", "init", "edit", "validate")),
-        help="Browse, install, and check software, report GitHub activity, and manage catalogs. Matching user names override library entries.",
+        cls=ordered_group(("install", "uninstall", "explore", "check", "list", "report", "update-attrs", "path", "init", "edit", "validate")),
+        help="Browse, install, delete, and check software, report GitHub activity, and manage catalogs. Matching user names override library entries.",
         no_args_is_help=True,
         add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     app.command("install", no_args_is_help=True, help="📦 <i> Install software from the catalog.")(install)
     app.command("i", no_args_is_help=True, hidden=True)(install)
+    app.command("uninstall", no_args_is_help=True, help="🗑️ <U> Delete the program file of an app that StackOps installed.")(uninstall)
+    app.command("U", no_args_is_help=True, hidden=True)(uninstall)
     app.command("explore", help="🔎 <x> Browse software by category and install selected apps.")(explore)
     app.command("x", hidden=True)(explore)
     app.command("check", no_args_is_help=True, help="✅ <c> Check whether executables are installed.")(check)

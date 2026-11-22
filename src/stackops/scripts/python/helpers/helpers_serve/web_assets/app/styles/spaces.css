@@ -5,7 +5,8 @@
 .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(620px 260px at 0% 0%, rgba(106, 92, 255, 0.2), transparent 70%), radial-gradient(520px 260px at 100% 100%, rgba(30, 167, 253, 0.18), transparent 70%); }
 .hero > * { position: relative; }
 .hero h1 { font-size: 46px; font-weight: 780; letter-spacing: -0.045em; line-height: 1.05; }
-.hero h1 em { font-style: normal; color: transparent; background: linear-gradient(110deg, #6a5cff, #1ea7fd, #12c99b, #6a5cff); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; animation: sheen 9s linear infinite; }
+/* The shimmer moves 20 times a second, not 60: it repaints text, which cannot be handed to the compositor, so every move is a full main-thread frame. A move shifts the colours by about 4/255. */
+.hero h1 em { font-style: normal; color: transparent; background: linear-gradient(110deg, #6a5cff, #1ea7fd, #12c99b, #6a5cff); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; animation: sheen 9s steps(180) infinite; }
 .hero p { max-width: 52ch; font-size: 16px; color: var(--ink-soft); }
 .hero-search {
   display: flex; align-items: center; gap: 12px; width: min(560px, 100%); height: 58px; margin-top: 16px; padding: 0 16px 0 20px; font-size: 16px; color: var(--ink-faint);
@@ -162,7 +163,8 @@
 .report-art i:nth-child(3) { height: 60%; animation-delay: 0.6s; }
 .report-art i:nth-child(4) { height: 100%; animation-delay: 0.9s; }
 @keyframes bars { 50% { transform: scaleY(0.5); } }
-.view.reports.viewing { display: flex; flex-direction: column; max-width: none; height: calc(100vh - 92px); }
+/* The open report fills the window, so the page area's 130px of bottom padding (room for the selection tray on other pages) is taken back, less a 10px gap. Without this the page behind the viewer scrolled. */
+.view.reports.viewing { display: flex; flex-direction: column; max-width: none; height: calc(100vh - 92px); margin-bottom: -120px; }
 .report-viewer { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
 .report-bar { display: flex; flex: none; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
 .report-title { display: flex; align-items: center; gap: 10px; font-size: 15px; }
@@ -187,6 +189,7 @@
   .hero h1 { font-size: 34px; }
   .teach { grid-template-columns: minmax(0, 1fr); }
   .tray { left: calc(50% + 38px); width: calc(100vw - 110px); }
+  .filter-row { margin: 0 -16px 6px -14px; padding: 6px 16px 12px 14px; }
   .mini-toggle span, .session-counts, .meter { display: none; }
 }
 

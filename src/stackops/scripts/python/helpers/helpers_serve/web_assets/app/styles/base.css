@@ -15,7 +15,7 @@
   --brand: linear-gradient(135deg, #6a5cff 0%, #1ea7fd 100%);
   --brand-wash: linear-gradient(135deg, rgba(106, 92, 255, 0.13), rgba(30, 167, 253, 0.13));
   --good: #0c7f58;
-  --warn: #a16100;
+  --warn: #a16000;
   --bad: #d9365a;
   --glow: 0 10px 30px -10px rgba(106, 92, 255, 0.55);
   --shadow: 0 1px 2px rgba(18, 20, 43, 0.04), 0 14px 34px -16px rgba(18, 20, 43, 0.18);
@@ -85,7 +85,7 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
   );
 }
 /* The drift moves five times a second, not on every frame: with no GPU each move redraws the whole window, and that alone took 40-100% of a core. A move shifts a glow by a few pixels
-   of a 480px falloff, so no pixel changes by more than 3/255 and the steps do not show. Keep duration / steps at 200ms for all three: on one beat they share a redraw. */
+   of a 480px falloff, which changes a pixel by 3/255 at most (measured up to a 2560px window), so the steps do not show. Keep duration / steps at 200ms for all three: on one beat they share a redraw. */
 .aurora i:nth-child(1) { --tint: 106 92 255; top: -20vmax; left: -10vmax; animation: drift-a 26s steps(130) infinite alternate; }
 .aurora i:nth-child(2) { --tint: 30 167 253; right: -12vmax; bottom: -24vmax; animation: drift-b 32s steps(160) infinite alternate; }
 .aurora i:nth-child(3) { --reach: 15vmax; --tint: 18 201 155; top: 28%; left: 46%; opacity: calc(var(--aurora-opacity) * 0.55); animation: drift-c 38s steps(190) infinite alternate; }
