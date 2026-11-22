@@ -13,6 +13,7 @@ class SoftwareApp(TypedDict):
     installed: bool
     binary: str
     installed_at: str
+    removal_command: str
     removal_problem: str
     updated_at: str
     mine: bool
@@ -65,7 +66,7 @@ def load_software_catalog(installers_by_name: dict[str, InstallerData]) -> Softw
     for installer in sorted(installers, key=lambda item: item["appName"].casefold()):
         exe_name = Installer(installer).get_exe_name()
         installed = check_tool_exists(tool_name=exe_name)
-        binary = locate_installed_binary(exe_name=exe_name) if installed else None
+        binary = locate_installed_binary(exe_name=exe_name, installer_data=installer) if installed else None
         apps.append(
             {
                 "name": installer["appName"],
@@ -77,6 +78,7 @@ def load_software_catalog(installers_by_name: dict[str, InstallerData]) -> Softw
                 "binary": "" if binary is None else str(binary.path),
                 # When the program file was put in place: installing renames it into its folder, which is the last change to the file itself.
                 "installed_at": "" if binary is None else datetime.fromtimestamp(binary.path.stat().st_ctime, tz=UTC).isoformat(),
+                "removal_command": "" if binary is None else binary.removal_command,
                 "removal_problem": binary.removal_problem
                 if binary is not None
                 else f"""The program file of {installer["appName"]} could not be found."""

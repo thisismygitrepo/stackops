@@ -309,7 +309,7 @@
                 "name": "uninstall",
                 "fullPath": "devops software uninstall",
                 "shortPath": "d w U",
-                "help": "🗑️ <U> Delete the program file of an app that StackOps installed.",
+                "help": "🗑️ <U> Remove an app: delete the program file StackOps installed, or run its package manager's uninstall command.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_software_install.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_software_install",

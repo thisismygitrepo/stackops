@@ -82,6 +82,7 @@ export function createAppsSpace({ activity }) {
   const start = (title, installArguments) => activity.start({ title, emoji: "📦", arguments: ["devops", "software", "install", ...installArguments], interactive: true, reveal: true });
 
   const updates = createAppUpdates({
+    activity,
     onUpdate: (names) => start(names.length === 1 ? `Update ${names[0]}` : `Update ${names.length} apps`, [names.join(","), "--update"]).catch((error) => toast(error.message)),
     // Updates read the list of apps again, so Browse reads it too on its next visit and the two sections agree.
     onRefresh: () => keeper.spoil(),
@@ -134,7 +135,7 @@ export function createAppsSpace({ activity }) {
   }
 
   const openDetail = (app) =>
-    openAppDetail({ app, categories: catalog.categories, picked: picked.has(app.name), onToggle: () => toggle(app.name), onInstall: () => install([app.name], app.installed) });
+    openAppDetail({ app, categories: catalog.categories, picked: picked.has(app.name), activity, onToggle: () => toggle(app.name), onInstall: () => install([app.name], app.installed) });
 
   function card(app) {
     const add = h("button", { class: "app-add", type: "button", title: "Select to install", "aria-label": `Select ${app.name}` }, icon("plus", 15), icon("check", 15));

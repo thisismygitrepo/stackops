@@ -10,7 +10,7 @@ import { version } from "./app_updates.js";
 const dated = (lead, value) =>
   value && h("span", { class: "dim", title: new Date(value).toLocaleString(), text: `${lead} ${new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })} (${relativeTime(value)})` });
 
-export function openAppDetail({ app, categories, picked, onToggle, onInstall }) {
+export function openAppDetail({ app, categories, picked, activity, onToggle, onInstall }) {
   const sheet = openSheet({ label: app.name });
   sheet.panel.classList.add("app-sheet");
   const titles = app.categories.map((label) => categories.find((category) => category.label === label)?.title ?? label);
@@ -69,7 +69,7 @@ export function openAppDetail({ app, categories, picked, onToggle, onInstall }) 
       },
     );
   }
-  const remove = button({ label: "Delete", glyph: "trash", tone: "ghost", title: "Deletes this app from this machine", onclick: async () => (await removeApp(app)) && sheet.close() });
+  const remove = button({ label: "Delete", glyph: "trash", tone: "ghost", title: "Deletes this app from this machine", onclick: async () => (await removeApp(app, activity)) && sheet.close() });
   remove.classList.add("app-delete");
   sheet.foot.hidden = false;
   sheet.foot.append(

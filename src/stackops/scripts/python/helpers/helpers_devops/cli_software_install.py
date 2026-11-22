@@ -72,10 +72,12 @@ def uninstall(
     for name in requested_names:
         installer = installers_by_name[INSTALLER_NAME_ALIASES.get(name.lower(), name).casefold()]
         exe_name = Installer(installer).get_exe_name()
-        result = remove_installed_binary(exe_name=exe_name)
+        result = remove_installed_binary(exe_name=exe_name, installer_data=installer, show_output=not as_json)
         match result:
             case BinaryRemoved():
-                outcomes.append({"name": installer["appName"], "exe": exe_name, "path": str(result.path), "removed": True, "problem": ""})
+                outcomes.append(
+                    {"name": installer["appName"], "exe": exe_name, "path": str(result.path), "removed": True, "command": result.command, "problem": ""}
+                )
             case BinaryKept():
                 outcomes.append(
                     {
@@ -83,6 +85,7 @@ def uninstall(
                         "exe": exe_name,
                         "path": None if result.path is None else str(result.path),
                         "removed": False,
+                        "command": "",
                         "problem": result.problem,
                     }
                 )
@@ -90,7 +93,12 @@ def uninstall(
         typer.echo(json.dumps(outcomes, indent=2))
     else:
         for outcome in outcomes:
-            typer.echo(f"""🗑️  Deleted {outcome["path"]} ({outcome["name"]})""" if outcome["removed"] else f"""⏭️  Kept {outcome["name"]}: {outcome["problem"]}""")
+            if not outcome["removed"]:
+                typer.echo(f"""⏭️  Kept {outcome["name"]}: {outcome["problem"]}""")
+            elif outcome["command"] == "":
+                typer.echo(f"""🗑️  Deleted {outcome["path"]} ({outcome["name"]})""")
+            else:
+                typer.echo(f"""🗑️  Removed {outcome["name"]} with: {outcome["command"]}""")
     if not all(outcome["removed"] for outcome in outcomes):
         raise typer.Exit(code=1)
 

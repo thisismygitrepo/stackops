@@ -16,7 +16,7 @@ export const version = (text, tone = "") => h("span", { class: `version ${tone}`
 
 // The Updates section of Apps: every installed app that is downloaded from a GitHub repository, with the version on this machine next to the
 // repository's latest release. It checks on arrival; apps installed another way are left out because GitHub cannot say what their latest version is.
-export function createAppUpdates({ onUpdate, onRefresh }) {
+export function createAppUpdates({ activity, onUpdate, onRefresh }) {
   const answers = new Map();
   const rows = new Map();
   let apps = [];
@@ -55,7 +55,7 @@ export function createAppUpdates({ onUpdate, onRefresh }) {
       actions.append(h("a", { class: "btn plain small", href: answer.release_url, target: "_blank", rel: "noopener noreferrer", title: "Opens the release on GitHub" }, icon("external", 14), h("span", { text: answer.latest_version ? "Release notes" : "Releases" })));
       if (groupOf(answer) !== "current" && answer.latest_version) actions.append(button({ label: "Update", glyph: "download", small: true, tone: "primary", onclick: () => onUpdate([app.name]) }));
     }
-    actions.append(h("button", { class: "icon-btn danger", type: "button", title: `Delete ${app.name}`, "aria-label": `Delete ${app.name}`, onclick: () => removeApp(app) }, icon("trash", 15)));
+    actions.append(h("button", { class: "icon-btn danger", type: "button", title: `Delete ${app.name}`, "aria-label": `Delete ${app.name}`, onclick: () => removeApp(app, activity) }, icon("trash", 15)));
     const element = h(
       "li",
       { class: "session-row update-row" },

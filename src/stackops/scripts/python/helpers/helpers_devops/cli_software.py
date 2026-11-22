@@ -69,7 +69,7 @@ def get_app() -> typer.Typer:
     )
     app.command("install", no_args_is_help=True, help="📦 <i> Install software from the catalog.")(install)
     app.command("i", no_args_is_help=True, hidden=True)(install)
-    app.command("uninstall", no_args_is_help=True, help="🗑️ <U> Delete the program file of an app that StackOps installed.")(uninstall)
+    app.command("uninstall", no_args_is_help=True, help="🗑️ <U> Remove an app: delete the program file StackOps installed, or run its package manager's uninstall command.")(uninstall)
     app.command("U", no_args_is_help=True, hidden=True)(uninstall)
     app.command("explore", help="🔎 <x> Browse software by category and install selected apps.")(explore)
     app.command("x", hidden=True)(explore)

@@ -12,4 +12,5 @@ BULK_INSTALL_FAILURE_EXCERPT_COUNT: Final[int] = 5
 BULK_INSTALL_SLOWEST_COUNT: Final[int] = 3
 BULK_INSTALL_SUDO_EXAMPLE_COUNT: Final[int] = 4
 BULK_INSTALL_VERSION_WIDTH: Final[int] = 48
+UNINSTALL_FAILURE_TAIL_LINES: Final[int] = 5
 SYSTEM_INSTALLER_COMMANDS: Final[frozenset[str]] = frozenset(("winget", "brew", "choco", "msiexec", "msiexec.exe", "snap"))
