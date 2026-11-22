@@ -74,7 +74,10 @@ On the remote machine, run:
 d c d i -u http://{local_ipv4}:{port} && d c d s d -s user -m s -w all
 devops config dotfiles import --url http://{local_ipv4}:{port} && devops config dotfiles sync down --source user --method symlink --which all
 """, title="Remote Machine Instructions")
-    cli_share_server.web_file_explorer(path=str(zipfile_encrypted_path), no_auth=True, port=port)
+    cli_share_server.web_file_explorer(
+        path=str(zipfile_encrypted_path), port=port, username=None, no_auth=True, password=None, host="0.0.0.0", over_internet=False,
+        backend="miniserve", install_missing_dependencies=False, background=False, output_json=False, timeout=30.0, password_file=None, password_env=None,
+    )
 
 
 def _validate_dotfiles_archive(zip_ref: "zipfile.ZipFile", destination: Path) -> None:
