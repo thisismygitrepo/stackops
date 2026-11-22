@@ -2,7 +2,7 @@ import re
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from time import monotonic
+from time import time
 from typing import Literal, TypeAlias
 from urllib.parse import unquote
 
@@ -99,9 +99,9 @@ def fetch_latest_release(repository: str) -> LatestRelease | VersionProblem:
         return VersionProblem(message=f"""GitHub answered {response.status_code} for {repository}.""", status=502)
     _, marker, tag = response.url.partition(RELEASE_TAG_MARKER)
     if marker == "":
-        return LatestRelease(tag="", published_at="", url=f"""https://github.com/{repository}/releases""", fetched_at=monotonic())
+        return LatestRelease(tag="", published_at="", url=f"""https://github.com/{repository}/releases""", fetched_at=time())
     published = PUBLISHED_AT_PATTERN.search(response.text)
-    return LatestRelease(tag=unquote(tag), published_at="" if published is None else published.group(1), url=response.url, fetched_at=monotonic())
+    return LatestRelease(tag=unquote(tag), published_at="" if published is None else published.group(1), url=response.url, fetched_at=time())
 
 
 def compare_versions(installed: str, tag: str) -> VERSION_STANDING:
@@ -123,24 +123,30 @@ def compare_versions(installed: str, tag: str) -> VERSION_STANDING:
     return "outdated" if my_numbers < their_numbers else "ahead"
 
 
-def check_software_version(name: str, fresh: bool, release_cache: dict[str, LatestRelease]) -> SoftwareVersion | VersionProblem:
+def check_software_version(
+    name: str, fresh: bool, release_cache: dict[str, LatestRelease], installers_by_name: dict[str, InstallerData]
+) -> SoftwareVersion | VersionProblem:
     from stackops.utils.installer_utils.installer_catalog import InstallerDataFileError
     from stackops.utils.installer_utils.installer_class import Installer
     from stackops.utils.installer_utils.installer_runner import get_installers_from_source
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
 
-    try:
-        installers = get_installers_from_source(source="all", user_path=None, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
-    except InstallerDataFileError as error:
-        return VersionProblem(message=str(error), status=422)
-    installer = next((candidate for candidate in installers if candidate["appName"] == name), None)
+    # The catalog route fills `installers_by_name`, and a page reads the catalog before it checks versions. Reading it here on every check made a sweep
+    # several times slower. It is empty only when a page that outlived a server restart checks first.
+    if len(installers_by_name) == 0:
+        try:
+            installers = get_installers_from_source(source="all", user_path=None, os=get_os_name(), arch=get_normalized_arch(), which_cats=None)
+        except InstallerDataFileError as error:
+            return VersionProblem(message=str(error), status=422)
+        installers_by_name.update({candidate["appName"]: candidate for candidate in installers})
+    installer = installers_by_name.get(name)
     repository = None if installer is None else github_release_repository(installer=installer)
     if installer is None or repository is None:
         return VersionProblem(message=f"""{name} is not an app that is installed from GitHub releases.""", status=404)
     release = release_cache.get(repository)
     with ThreadPoolExecutor(max_workers=1) as pool:
         installed = pool.submit(read_installed_version, exe_name=Installer(installer).get_exe_name())
-        if release is None or fresh or monotonic() - release.fetched_at > GITHUB_RELEASE_CACHE_SECONDS:
+        if release is None or fresh or time() - release.fetched_at > GITHUB_RELEASE_CACHE_SECONDS:
             fetched = fetch_latest_release(repository=repository)
             match fetched:
                 case VersionProblem():

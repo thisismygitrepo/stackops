@@ -138,7 +138,7 @@
 .wb-list-name .dim { font-size: 12.5px; }
 .wb-list-cell { display: grid; gap: 8px; align-content: start; justify-items: start; min-width: 0; padding: 12px 14px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px; }
 .wb-list-cell .wb-line { width: 100%; }
-.wb-list-cell.missing { background: transparent; border-style: dashed; border-color: var(--line-strong); }
+.wb-list-cell.missing, .wb-list-cell.absent { background: transparent; border-style: dashed; border-color: var(--line-strong); }
 
 @media (max-width: 1340px) {
   .wb-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }

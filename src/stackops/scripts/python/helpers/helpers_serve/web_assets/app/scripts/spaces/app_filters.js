@@ -12,9 +12,13 @@ export function createAppFilters({ onChange }) {
   let active = null;
   let term = "";
 
+  // Painting replaces every chip, the one just pressed included. Focus goes to the chip that is pressed now, where the row has scrolled to;
+  // left alone it fell back to the top of the page. Picking from the search box leaves the focus in the box.
   function pick(option) {
+    const focused = element.contains(document.activeElement);
     active = option === active ? options[0] : option;
     paint();
+    if (focused) element.querySelector(`[aria-pressed="true"]`).focus({ preventScroll: true });
     onChange();
   }
 

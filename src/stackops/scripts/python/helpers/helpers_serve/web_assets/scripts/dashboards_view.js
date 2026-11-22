@@ -15,15 +15,18 @@ export function createDashboardsView({ dock }) {
     const board = {
       ...definition,
       status: "idle", stamp: null, runId: null, problem: "",
-      frame: h("iframe", { class: "report-frame", sandbox: "allow-scripts", title: definition.title, hidden: true }),
+      frame: h("iframe", { class: "report-frame", sandbox: "allow-scripts", allow: "clipboard-write", title: definition.title, hidden: true }),
       overlay: h("div", { class: "panel-state", hidden: true }),
       tab: h("a", { class: "panel-tab", role: "tab", href: `#/d/${definition.id}` }, h("span", { text: definition.icon }), h("span", { text: definition.title })),
     };
+    boards.set(board.id, board);
+    strip.append(board.tab);
+    body.append(board.frame, board.overlay);
     if (closable) {
-      const closer = h("span", { class: "close", role: "button", title: "Close this report" }, icon("close", 12));
-      closer.addEventListener("click", (event) => {
-        event.preventDefault();
+      const closer = h("button", { class: "panel-tab-close", title: "Close this report", "aria-label": "Close this report" }, icon("close", 12));
+      closer.addEventListener("click", () => {
         board.tab.remove();
+        closer.remove();
         board.frame.remove();
         board.overlay.remove();
         boards.delete(board.id);
@@ -32,11 +35,9 @@ export function createDashboardsView({ dock }) {
         location.hash = "#/d";
         paint();
       });
-      board.tab.append(closer);
+      board.tab.classList.add("closable");
+      strip.append(closer);
     }
-    boards.set(board.id, board);
-    strip.append(board.tab);
-    body.append(board.frame, board.overlay);
     return board;
   }
 
@@ -49,9 +50,13 @@ export function createDashboardsView({ dock }) {
       const run = await dock.start({ arguments: board.arguments, interactive: false, reveal: false });
       board.runId = run.id;
       const outcome = await run.done;
-      const file = outcome.reports.includes(board.file) ? board.file : outcome.reports[0];
+      // The run lists every report written while it was going, whoever wrote it, so a board that knows its file takes that file or none.
+      const file = board.file ? outcome.reports.find((name) => name === board.file) : outcome.reports[0];
       if (outcome.exit_code === 0 && file) {
-        board.frame.src = `/reports/${encodeURIComponent(file)}?generated=${Date.now()}`;
+        const url = `/reports/${encodeURIComponent(file)}?generated=${Date.now()}`;
+        // A frame that already holds a report has it replaced: assigning `src` again would add a Back-button step that changes nothing.
+        if (board.frame.dataset.loaded) board.frame.contentWindow.location.replace(url);
+        else board.frame.src = url;
         board.frame.dataset.loaded = "true";
         board.status = "ready";
         board.stamp = Date.now() / 1000;

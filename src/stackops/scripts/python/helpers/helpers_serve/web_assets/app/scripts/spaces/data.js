@@ -36,25 +36,28 @@ export function createDataSpace({ activity, tools }) {
       requestAnimationFrame(() => tiles.forEach(([tile, value, note]) => tile.set(value, note)));
       const sections = [...groups].map(([name, items]) => [name, backupGroup({ activity, tools, name, items, source: data.source })]);
       const stack = h("div", { class: "stack" }, rise(h("div", { class: "stats" }, tiles.map(([tile]) => tile.element))), sections.map(([, section]) => section.element));
-      // One more read on arrival says where backups go and which groups are the user's own. It reads only the user's file, and a user group
-      // replaces a built-in group of the same name whole, so a group is either the user's or built in.
-      query(["devops", "self", "status", "--backup", "--json"]).then((result) => {
-        if (!stack.isConnected) return;
-        const { details } = result.json.backup;
-        for (const [name, section] of sections) section.setOrigin(data.source !== "library" && Object.hasOwn(details.backup_items, name));
-        setCount(`${counted} · ${details.cloud_config ? `kept in ${details.cloud_config}` : "no cloud chosen"}`);
-        if (details.cloud_selection_required) {
-          stack.prepend(
-            h(
-              "div",
-              { class: "session-row" },
-              glyphTile("alert", 30, 40),
-              h("div", { class: "session-text" }, h("strong", { text: "No cloud is chosen for your backups" }), h("span", { class: "dim", text: "Until one is, backing up or retrieving asks which cloud to use every time." })),
-              toolButton(tools, "devops config setup cloud", { label: "Choose a cloud", tone: "primary" }),
-            ),
-          );
-        }
-      });
+      // One more read on every load says where backups go and which groups are the user's own, asked afresh so that Refresh covers it too.
+      // It reads only the user's file, and a user group replaces a built-in group of the same name whole, so a group is either the user's or built in.
+      query(["devops", "self", "status", "--backup", "--json"], true).then(
+        (result) => {
+          if (!stack.isConnected) return;
+          const { details } = result.json.backup;
+          for (const [name, section] of sections) section.setOrigin(data.source !== "library" && Object.hasOwn(details.backup_items, name));
+          setCount(`${counted} · ${details.cloud_config ? `kept in ${details.cloud_config}` : "no cloud chosen"}`);
+          if (details.cloud_selection_required) {
+            stack.prepend(
+              h(
+                "div",
+                { class: "session-row" },
+                glyphTile("alert", 30, 40),
+                h("div", { class: "session-text" }, h("strong", { text: "No cloud is chosen for your backups" }), h("span", { class: "dim", text: "Until one is, backing up or retrieving asks which cloud to use every time." })),
+                toolButton(tools, "devops config setup cloud", { label: "Choose a cloud", tone: "primary" }),
+              ),
+            );
+          }
+        },
+        (error) => stack.isConnected && stack.prepend(h("p", { class: "dim", text: `Could not tell which groups are yours, or where your backups are kept: ${error.message}` })),
+      );
       return stack;
     },
   });

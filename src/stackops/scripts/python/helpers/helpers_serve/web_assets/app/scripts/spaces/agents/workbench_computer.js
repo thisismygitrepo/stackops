@@ -4,7 +4,7 @@ import { toneOf } from "../../result_view.js";
 import { toolButton } from "../../space_kit.js";
 import { copyChip, keyValue, notice } from "../../widgets.js";
 import { humanize, plural, relativeTime } from "../../words.js";
-import { actionBlock, areaHead, installButton, pathText, stateCard, statusPill } from "./workbench_kit.js";
+import { actionBlock, areaHead, installButton, pathText, reloadAfterStart, stateCard, statusPill } from "./workbench_kit.js";
 
 const CONTROL = "agents computer control";
 const HELPER = "agent-desktop";
@@ -22,7 +22,7 @@ const ACTIONS = [
   { path: "agents add-mcp", title: "Connect an agent to it", blurb: "Add desktop control to an agent's tools so it can start using this computer.", preset: { requested_mcp_servers: HELPER } },
 ];
 
-export function createComputerArea({ tools }, { setStatus }) {
+export function createComputerArea({ activity, tools }, { setStatus }) {
   const turnOn = (tone) => toolButton(tools, CONTROL, { label: "Turn it on", glyph: "power", tone });
 
   function endpointCard(endpoint) {
@@ -62,8 +62,8 @@ export function createComputerArea({ tools }, { setStatus }) {
         {},
         entries.map(([name, grant]) => {
           const known = PERMISSIONS[name] ?? { title: humanize(name), body: "", glyph: "shield" };
-          const [label, tone, glyph] = GRANTS[grant] ?? [humanize(grant), toneOf(grant), null];
-          return h("li", {}, h("header", {}, h("span", { class: "wb-permission-glyph" }, icon(known.glyph, 17)), h("strong", { text: known.title }), statusPill(label, tone, glyph)), known.body && h("p", { class: "wb-note", text: known.body }));
+          const granted = statusPill(...(GRANTS[grant] ?? [humanize(grant), toneOf(grant), null]));
+          return h("li", {}, h("header", {}, h("span", { class: "wb-permission-glyph" }, icon(known.glyph, 17)), h("strong", { text: known.title }), granted), known.body && h("p", { class: "wb-note", text: known.body }));
         }),
       ),
     );
@@ -88,6 +88,7 @@ export function createComputerArea({ tools }, { setStatus }) {
       return h("div", { class: "stack" }, endpointCard(endpoint), permissionList(helper), h("p", { class: "wb-note" }, `Helper app ${helper.version} for ${PLATFORMS[helper.platform] ?? helper.platform} · `, pathText(helper.executable)));
     },
   });
+  reloadAfterStart(activity, CONTROL, panel);
 
   const element = h(
     "div",

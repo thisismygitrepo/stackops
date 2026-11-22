@@ -11,7 +11,11 @@ import { COLLECT_WORDS, foundGroups, managedGroups } from "./dotfiles_groups.js"
 const IN_SYNC = "Configured";
 
 export function createDotfilesSpace({ activity, tools }) {
+  // What the person chose is kept here, outside the panel's render, so it survives a refresh: the panel reloads when a sync ends, which is
+  // exactly when the group that was open is the one to look at.
   let scope = "user";
+  let typed = "";
+  const opened = { user: new Set(), library: new Set(), found: new Set() };
 
   async function collect(group) {
     const sure = await confirmAction({ title: `Collect “${group}”?`, body: "Its files are moved into your dotfiles folder, linked back to where they were, and added to your list.", confirm: "Collect" });
@@ -34,13 +38,13 @@ export function createDotfilesSpace({ activity, tools }) {
         [stat({ glyph: "folder", hue: 200, label: "Stored" }), formatBytes(data.storage.dotfiles_root_footprint?.size_bytes ?? 0), `${(data.storage.dotfiles_root_footprint?.files ?? 0).toLocaleString()} files kept safe`],
       ];
       const holder = h("div", { class: "session-list" });
-      let term = "";
       const paint = () => {
+        const term = typed.trim().toLowerCase();
         const matches = (...words) => words.join(" ").toLowerCase().includes(term);
         const groups =
           scope === "found"
-            ? foundGroups(found.filter((plan) => matches(plan.group, plan.name)), collect)
-            : managedGroups(data.sync[scope].filter((entry) => matches(entry.program, entry.file_name, entry.status)), (direction, group) => tools.open("devops config dotfiles sync", { preset: { direction, which: group, source: scope } }));
+            ? foundGroups(found.filter((plan) => matches(plan.group, plan.name)), collect, opened.found)
+            : managedGroups(data.sync[scope].filter((entry) => matches(entry.program, entry.file_name, entry.status)), (direction, group) => tools.open("devops config dotfiles sync", { preset: { direction, which: group, source: scope } }), opened[scope]);
         if (groups.length) return holder.replaceChildren(...groups);
         const body = term ? "No group, file, or status matches that filter." : scope === "found" ? "Every settings file StackOps recognises on this machine is already on a list." : "No files of this kind are managed.";
         holder.replaceChildren(notice({ glyph: "folder", title: "Nothing here", body }));
@@ -53,10 +57,11 @@ export function createDotfilesSpace({ activity, tools }) {
       const filter = searchInput({
         placeholder: "Filter groups",
         oninput: (value) => {
-          term = value.trim().toLowerCase();
+          typed = value;
           paint();
         },
       });
+      filter.input.value = typed;
       picker.set(scope);
       paint();
       requestAnimationFrame(() => tiles.forEach(([tile, value, note]) => tile.set(value, note)));

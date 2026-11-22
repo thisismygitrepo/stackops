@@ -36,14 +36,18 @@ export function segmented(options, onPick) {
   const buttons = options.map(([value, label]) => h("button", { type: "button", text: label, onclick: () => onPick(value) }));
   const thumb = h("i", { class: "segmented-thumb" });
   const element = h("div", { class: "segmented", role: "group" }, thumb, buttons);
+  let index = -1;
+  const place = () => {
+    const chosen = buttons[index];
+    if (chosen) thumb.style.cssText = `width:${chosen.offsetWidth}px;transform:translateX(${chosen.offsetLeft}px)`;
+  };
+  // A control can be set before it is on the page (a panel's remembered options), where a button has no width yet. So the highlight is also placed whenever the control gets or changes its size.
+  new ResizeObserver(place).observe(element);
   function set(value) {
-    const index = options.findIndex(([candidate]) => candidate === value);
+    index = options.findIndex(([candidate]) => candidate === value);
     buttons.forEach((item, position) => item.setAttribute("aria-pressed", String(position === index)));
     element.classList.toggle("unset", index < 0);
-    requestAnimationFrame(() => {
-      const chosen = buttons[index];
-      if (chosen) thumb.style.cssText = `width:${chosen.offsetWidth}px;transform:translateX(${chosen.offsetLeft}px)`;
-    });
+    requestAnimationFrame(place);
   }
   return { element, set };
 }

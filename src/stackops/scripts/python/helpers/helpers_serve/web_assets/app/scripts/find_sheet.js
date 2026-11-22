@@ -25,7 +25,8 @@ export function openFind({ activity }) {
   const more = h("button", { class: "btn small ghost", type: "button", hidden: true });
   let hits = [];
   let limit = HIT_STEP;
-  let ticket = 0;
+  // The search on its way. A newer search, or closing the sheet, aborts it: that stops the command on the server, where otherwise each one would run to its end.
+  let running = new AbortController();
 
   // The editor reads `file:line`, so the Edit every page uses also lands on the matching line. The sheet closes because the editor opens in the activity panel behind it.
   const edit = (path, line) => {
@@ -69,7 +70,9 @@ export function openFind({ activity }) {
   }
 
   async function search() {
-    const mine = (ticket += 1);
+    running.abort();
+    running = new AbortController();
+    const { signal } = running;
     const term = last.term.trim();
     const extension = last.extension.trim();
     more.hidden = true;
@@ -82,13 +85,14 @@ export function openFind({ activity }) {
     results.classList.add("loading");
     if (!results.querySelector(".find-file")) results.replaceChildren(...skeleton(4, "row"));
     try {
-      const { json } = await capture(["seek", ".", ...(term ? [term] : []), ...(last.mode === "file" ? ["--file"] : []), ...(extension ? ["--extension", extension] : []), "--json"]);
-      if (mine !== ticket) return;
+      // Options first, then `--`: what was typed is always read as the text to find, even when it starts with a dash.
+      const { json } = await capture(["seek", "--json", ...(last.mode === "file" ? ["--file"] : []), ...(extension ? ["--extension", extension] : []), "--", ".", ...(term ? [term] : [])], signal);
+      if (signal.aborted) return;
       hits = json ?? [];
       limit = HIT_STEP;
       paint();
     } catch (error) {
-      if (mine !== ticket) return;
+      if (signal.aborted) return;
       count.textContent = "";
       results.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The search didn't run", body: error.message }));
     }
@@ -132,4 +136,5 @@ export function openFind({ activity }) {
   modes.set(last.mode);
   box.input.focus();
   search();
+  sheet.closed.then(() => running.abort());
 }

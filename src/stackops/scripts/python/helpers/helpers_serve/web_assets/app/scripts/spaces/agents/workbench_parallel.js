@@ -5,7 +5,7 @@ import { rise } from "../../motion.js";
 import { toolButton } from "../../space_kit.js";
 import { avatar, button, notice, sectionHead } from "../../widgets.js";
 import { humanize, plural } from "../../words.js";
-import { actionBlock, areaHead, createStatePanel, installButton, pathText, statusPill } from "./workbench_kit.js";
+import { actionBlock, areaHead, cardHead, createStatePanel, installButton, pathText, statusPill } from "./workbench_kit.js";
 import { createJobsPanel } from "./workbench_parallel_jobs.js";
 
 const PREVIEW_ALL = { all_workspaces: "on", dry_run: "on" };
@@ -13,7 +13,8 @@ const MOODS = { working: ["Working", "accent", "bolt"], idle: ["Idle", "", null]
 const STEPS = [
   { path: "agents parallel create-context", title: "Gather the to-do list", blurb: "Have an agent write down every piece of the job that needs doing." },
   { path: "agents parallel create", title: "Split it across agents", blurb: "Give each agent its share of the list and start them side by side." },
-  { path: "agents parallel collect", title: "Collect the results", blurb: "Bring what every agent produced together into a single file." },
+  // Not "results": with no pattern the command joins each agent's share of the list as it stands, which holds answers only if the agents wrote them there.
+  { path: "agents parallel collect", title: "Join the pieces", blurb: "Put each agent's share of the list back into one file, as the agent left it. Or name the files they wrote under Pattern." },
 ];
 const SHORTCUTS = [
   { path: "agents parallel run", blurb: "Start a job you have set up before. Leave the name empty to pick from a list." },
@@ -42,13 +43,13 @@ export function createParallelArea({ tools }, { setStatus }) {
 
   function loopCard(loop) {
     const { workspace, plan } = loop;
-    const [label, tone, glyph] = MOODS[workspace.agent_status] ?? [humanize(workspace.agent_status), "", null];
+    const mood = statusPill(...(MOODS[workspace.agent_status] ?? [humanize(workspace.agent_status), "", null]));
     const agent = loop.latest_agent;
     const closable = plan.closable_tabs.length;
     return h(
       "article",
       { class: "wb-card lit" },
-      h("header", {}, avatar(workspace.label, 44), h("div", {}, h("h3", { text: workspace.label }), h("span", { class: "dim", text: loop.latest_iteration === null ? "No round yet" : `Round ${loop.latest_iteration}` })), statusPill(label, tone, glyph)),
+      cardHead(avatar(workspace.label, 44), workspace.label, loop.latest_iteration === null ? "No round yet" : `Round ${loop.latest_iteration}`, mood),
       agent && h("p", { class: "wb-note", text: `${agent.display_agent ?? agent.agent ?? "An agent"} has the current round${loop.latest_agent_tab ? `, in the tab “${loop.latest_agent_tab.label}”` : ""}.` }),
       h("span", { class: "stat-label", text: `${plural(plan.tabs.length, "tab")} · ${closable} finished and safe to close · ${plan.retained_tabs.length + plan.protected_tabs.length} kept` }),
       h(

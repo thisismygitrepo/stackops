@@ -1,5 +1,7 @@
 from typing import TypedDict
 
+from stackops.utils.schemas.installer.installer_types import InstallerData
+
 
 class SoftwareApp(TypedDict):
     name: str
@@ -34,7 +36,7 @@ class CatalogProblem(TypedDict):
     error: str
 
 
-def load_software_catalog() -> SoftwareCatalog | CatalogProblem:
+def load_software_catalog(installers_by_name: dict[str, InstallerData]) -> SoftwareCatalog | CatalogProblem:
     from stackops.scripts.python.helpers.helpers_serve.software_versions import github_release_repository
     from stackops.utils.cli_utils.command_lookup import check_tool_exists
     from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH, InstallerDataFileError, read_installer_data
@@ -50,6 +52,9 @@ def load_software_catalog() -> SoftwareCatalog | CatalogProblem:
         user_installers = read_installer_data(source="user", user_path=None) if USER_INSTALLER_DATA_PATH.exists() else []
     except InstallerDataFileError as error:
         return {"error": str(error)}
+    # Kept for the version checks that follow. Added to and never emptied, so a check running at this moment still finds its app; an app that left the
+    # catalog stays in here unused.
+    installers_by_name.update({installer["appName"]: installer for installer in installers})
     user_names = {installer["appName"].casefold() for installer in user_installers}
     apps: list[SoftwareApp] = [
         {

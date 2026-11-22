@@ -37,7 +37,7 @@ export const TOOL_TITLES = {
   "devops network ssh change-port": "Change the SSH port", "devops network device connect-wifi": "Connect to Wi-Fi", "devops network cloudflare": "Cloudflare",
   "devops network cloudflare run-tunnel": "Run a tunnel", "devops network cloudflare connect-warp": "Connect WARP", "utils machine window": "Manage windows",
   "utils machine mount": "Mount a device", "utils machine list-devices": "Storage devices", "utils machine environment": "Environment",
-  "devops repos sync": "Sync projects", "devops repos register": "Register projects", "devops repos action": "Act on every project",
+  "devops repos sync": "Sync projects", "devops repos register": "Register projects", "devops repos action": "Pull, commit or push a folder",
   "devops config dotfiles": "Dotfiles", "devops config dotfiles sync": "Sync dotfiles", "devops config dotfiles collect": "Collect my settings",
   "devops config dotfiles export": "Export dotfiles", "devops config dotfiles import": "Import dotfiles", "devops config dotfiles register": "Add a dotfile",
   "devops data sync": "Back up or retrieve", "devops data register": "Add a backup", "devops data list": "What is backed up",
@@ -67,16 +67,19 @@ export const TOOL_TITLES = {
 // Options that only make sense on a command line: output formats, alternate renderers, and file overrides the app already picks for you.
 export const HIDDEN_FLAGS = new Set(["--json", "--as-html", "--tui", "--plain", "--custom-path", "--specs-path", "--show-format", "--non-interactive", "--reference", "--save"]);
 
-// Read-only tools: safe to run on arrival so the page shows something before anyone presses a button.
-export const LIVE_NAMES = new Set([
-  "list", "status", "path", "summary", "specs", "stats", "history", "show-address", "list-devices", "autostart", "accounts", "tunnel-status", "validate",
-  "doctor", "report", "discover",
-]);
-
-// Read-only tools whose name is not one of the above. Each was run before it was listed; never add one whose output holds secrets (`devops vault search`).
+// Read-only tools: safe to run on arrival, and again on every change in their form, so the sheet shows something before anyone presses a button.
+// Design choice: every one is listed by its full path, not matched by a name such as "status" or "report". A new command stays behind its Start button
+// until someone has run it and added it here. Never add one that changes anything, or whose output holds secrets (`devops vault search`).
 export const LIVE_PATHS = new Set([
-  "devops network ssh debug", "devops self explore-cli search", "devops self explore-python-api search", "cloud onedrive config-path", "devops software check",
-  "agents browser profiles",
+  "devops software check", "devops software list", "devops software report", "devops software path", "devops software validate", "devops data list", "devops data path",
+  "devops data validate", "devops repos path", "devops repos validate", "devops repos list", "devops repos version list", "devops repos version status", "devops config dotfiles path",
+  "devops config dotfiles validate", "devops config dotfiles status", "devops config path", "devops config validate", "devops config terminal tmux-style status", "devops vault stats",
+  "devops vault path", "devops vault validate", "devops scripts list", "devops scripts path", "devops security status", "devops security list", "devops security report",
+  "devops security history", "devops network ssh debug", "devops network cloudflare tunnel-status", "devops network show-address", "devops self status", "devops self explore-cli search",
+  "devops self explore-python-api search", "cloud onedrive status", "cloud onedrive accounts", "cloud onedrive list", "cloud onedrive config-path", "terminal list", "terminal path",
+  "terminal validate", "terminal summary", "agents browser status", "agents browser profiles", "agents computer status", "agents iter status", "agents second-brain status",
+  "agents local doctor", "agents local discover", "agents config path", "agents config validate", "agents doctor", "agents status", "utils machine specs", "utils machine list-devices",
+  "utils machine autostart",
 ]);
 
 // What a read-only tool starts with when the CLI insists on a choice without marking it as required. Keyed by parameter name; a switch is "on".
@@ -97,9 +100,10 @@ export const PATH_FIELDS = new Set([
 
 // Options a read-only tool's sheet leaves out, by parameter name. The sheet re-runs on every change, so nothing in it may act: on `agents status`, Btw makes real agent calls,
 // Output and Force write files, and Format clashes with the `--json` the sheet asks for. The Agents page offers Btw as a button behind a confirmation.
-// The scan tools' Format and View only shape the table that `--json` replaces.
+// The scan tools' Format and View only shape the table that `--json` replaces. The last three are switches that ask for a picker in a terminal, which a sheet does not have.
 export const OMITTED_FIELDS = {
   "agents status": ["output_format", "output", "force", "btw"], "devops security history": ["format_type"], "devops security report": ["format_type", "view"],
+  "devops scripts path": ["interactive"], "agents iter status": ["interactive"], "terminal summary": ["choose_session"],
 };
 
 export const ESSENTIAL_FLAGS = {

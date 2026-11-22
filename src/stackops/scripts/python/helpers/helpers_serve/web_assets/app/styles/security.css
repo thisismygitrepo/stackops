@@ -1,4 +1,5 @@
 .security-section > .panel:first-child { margin-top: 0; }
+/* posture.js marks its panel "quiet" for the refresh it runs every few seconds during a scan, so the list does not dim each time. */
 .security-section .panel.quiet.loading .panel-body { opacity: 1; }
 .scan-swap { animation: scan-in 0.32s var(--smooth); }
 @keyframes scan-in { from { opacity: 0; transform: translateY(10px); } }
@@ -16,6 +17,7 @@
 .posture-ring circle { fill: none; stroke-width: 11; }
 .ring-track { stroke: var(--line-strong); opacity: 0.6; }
 .ring-arc { animation: ring-draw 1s var(--smooth) backwards; }
+.posture-ring.settled .ring-arc { animation: none; }
 .ring-arc.good { stroke: var(--good); }
 .ring-arc.warn { stroke: var(--warn); }
 .ring-arc.bad { stroke: var(--bad); }
@@ -45,6 +47,10 @@
 .scan-row .session-text { flex: 1 1 200px; grid-template-columns: minmax(0, 1fr); justify-items: start; }
 .scan-row .session-text strong { display: flex; align-items: center; gap: 8px; max-width: 100%; overflow: hidden; white-space: nowrap; }
 .scan-row .version { flex: 0 1 auto; min-width: 0; }
+/* The name is the control that opens a row from the keyboard. The focus ring goes around the whole row, since that is what opens. */
+.scan-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.scan-name:focus-visible { outline: none; }
+.scan-row:has(.scan-name:focus-visible) { outline: 2px solid var(--violet); outline-offset: 2px; }
 .scan-verdict { display: flex; flex: 1.5 1 300px; align-items: center; gap: 8px; min-width: 0; }
 .scan-verdict .pill { flex: none; }
 .scan-detail { overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }

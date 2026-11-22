@@ -1,9 +1,9 @@
 import { h } from "/assets/scripts/dom.js";
-import { canPick, isMeasured, isQuiet, quietFold, targetRow } from "./disk_cleanup_rows.js";
+import { canPick, isMeasured, isQuiet, quietFold, targetRow, total } from "./disk_cleanup_rows.js";
 import { CATEGORY_ORDER, categoryOf, sizeText } from "./disk_cleanup_words.js";
 import { button, glyphTile, notice, skeleton } from "./widgets.js";
+import { plural } from "./words.js";
 
-const total = (targets) => targets.reduce((sum, target) => sum + target.bytes, 0);
 const isWaiting = (target) => target.phase !== "done" && target.phase !== "error";
 // Places still being measured stay on top: the slow ones are usually the big ones, so they barely move once their size arrives.
 const rankOf = (target) => (isWaiting(target) || target.slow ? 0 : target.phase === "error" ? 2 : 1);
@@ -46,8 +46,8 @@ export function createCleanupList(view) {
       const pickable = members.filter(canPick);
       const chosen = pickable.filter((target) => view.picked.has(target.key));
       const waiting = members.filter(isWaiting).length;
-      sum.textContent = pickable.length || !waiting ? sizeText(total(members.filter(isMeasured))) : "";
-      hint.textContent = chosen.length ? `${chosen.length} of ${pickable.length} ticked · ${sizeText(total(chosen))}` : waiting ? `${waiting} still being measured` : `${pickable.length} place${pickable.length === 1 ? "" : "s"}`;
+      sum.textContent = pickable.length || !waiting ? sizeText(total(members)) : "";
+      hint.textContent = chosen.length ? `${chosen.length} of ${pickable.length} ticked · ${sizeText(total(chosen))}` : waiting ? `${waiting} still being measured` : plural(pickable.length, "place");
       all.disabled = view.locked || pickable.length === 0 || chosen.length === pickable.length;
       none.disabled = view.locked || chosen.length === 0;
     }

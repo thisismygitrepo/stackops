@@ -15,7 +15,7 @@ const version = (text, tone = "") => h("span", { class: `version ${tone}`, text 
 
 // The Updates section of Apps: every installed app that is downloaded from a GitHub repository, with the version on this machine next to the
 // repository's latest release. It checks on arrival; apps installed another way are left out because GitHub cannot say what their latest version is.
-export function createAppUpdates({ onUpdate }) {
+export function createAppUpdates({ onUpdate, onRefresh }) {
   const answers = new Map();
   const rows = new Map();
   let apps = [];
@@ -98,15 +98,16 @@ export function createAppUpdates({ onUpdate }) {
     list.replaceChildren(...groups.map(([title, members]) => h("section", { class: "update-group" }, h("h3", {}, title, h("b", { text: String(members.length) })), h("ul", { class: "session-list" }, members.map(row)))));
   }
 
-  // `fresh` asks GitHub again; without it the server answers from what it learned in the last few minutes and only the installed versions are read
-  // again, which is all that changes when an install finishes.
+  // `fresh` asks GitHub again and reads the list of apps again, for one installed or removed outside this page. Without it the server answers from
+  // what it learned in the last few minutes and only the installed versions are read again, which is all that changes when an install finishes.
   async function check(fresh) {
     const mine = (ticket += 1);
     loaded = true;
     stale = false;
     element.classList.add("loading");
     try {
-      apps = (await software()).apps.filter((app) => app.installed && app.repository);
+      apps = (await software(fresh)).apps.filter((app) => app.installed && app.repository);
+      if (fresh) onRefresh();
     } catch (error) {
       if (mine !== ticket) return;
       element.classList.remove("loading");

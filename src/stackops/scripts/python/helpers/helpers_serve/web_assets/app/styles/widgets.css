@@ -165,6 +165,7 @@
 .data-row { cursor: pointer; transition: background 0.2s; }
 .data-row:hover, .data-row.open { background: var(--brand-wash); }
 .expander { width: 34px; color: var(--ink-faint); }
+.expander button { display: grid; place-items: center; padding: 5px; margin: -5px; border-radius: 8px; }
 .expander svg { transition: transform 0.35s var(--spring); }
 .data-row.open .expander svg { transform: rotate(180deg); }
 .detail-row td { max-width: none; padding: 16px 18px; white-space: normal; background: var(--well); animation: fade-in 0.3s; }

@@ -4,21 +4,19 @@ import { rise } from "../../motion.js";
 import { toolButton } from "../../space_kit.js";
 import { avatar, button, copyChip, keyValue, notice, pill } from "../../widgets.js";
 import { humanize, plural, relativeTime } from "../../words.js";
-import { pathText, statusPill } from "./workbench_kit.js";
+import { cardHead, pathText, savedProfileName, statusPill } from "./workbench_kit.js";
 
 const HOST_PREVIEW = 3;
-const SAVED_PROFILES = "/browsers-profiles/";
 // The sites the command checks in every profile without being asked, by the names it reports them under.
 const SERVICES = { google: "Google", microsoft: "Microsoft", github: "GitHub", slack: "Slack" };
 const SIGN_INS = { "signed-in": ["Signed in", "good", "check"], likely: ["Probably signed in", "warn", null], none: ["Not signed in", "", null] };
 
 function siteSignIn(signIn) {
-  const [label, tone, glyph] = SIGN_INS[signIn.state];
   const extra = signIn.hosts.length - HOST_PREVIEW;
   return h(
     "div",
     { class: "wb-signin" },
-    h("div", { class: "wb-line-actions" }, statusPill(label, tone, glyph), signIn.last_active && h("span", { class: "dim", text: `used ${relativeTime(signIn.last_active)}` })),
+    h("div", { class: "wb-line-actions" }, statusPill(...SIGN_INS[signIn.state]), signIn.last_active && h("span", { class: "dim", text: `used ${relativeTime(signIn.last_active)}` })),
     signIn.accounts.map((account) => h("span", { text: account })),
     signIn.saved_usernames.length > 0 && h("span", { text: `Saved login: ${signIn.saved_usernames.join(", ")}` }),
     signIn.hosts.length > 0 &&
@@ -31,20 +29,12 @@ export function createProfilesPanel({ tools }) {
     const folder = String(row.user_data_path);
     const address = row.debugging_port && `http://127.0.0.1:${row.debugging_port}`;
     // Only a saved profile can be opened by name; the browser's own profiles are listed to be looked at or copied.
-    const open =
-      folder.includes(SAVED_PROFILES) &&
-      !row.running &&
-      button({ label: "Open", glyph: "plus", small: true, onclick: () => tools.open("agents browser launch", { preset: { browser: row.browser, profile: folder.split("/").at(-1) } }) });
+    const saved = savedProfileName(folder);
+    const open = saved && !row.running && button({ label: "Open", glyph: "plus", small: true, onclick: () => tools.open("agents browser launch", { preset: { browser: row.browser, profile: saved } }) });
     return h(
       "article",
       { class: "wb-card lit" },
-      h(
-        "header",
-        {},
-        avatar(row.profile, 44),
-        h("div", {}, h("h3", { text: row.profile }), h("span", { class: "dim", text: `${humanize(row.browser)} · ${row.last_used ? `used ${relativeTime(row.last_used)}` : "never opened"}` })),
-        row.running ? statusPill("Running", "good", "check") : statusPill("Closed", "", null),
-      ),
+      cardHead(avatar(row.profile, 44), row.profile, `${humanize(row.browser)} · ${row.last_used ? `used ${relativeTime(row.last_used)}` : "never opened"}`, row.running ? statusPill("Running", "good", "check") : statusPill("Closed", "", null)),
       keyValue([
         ["Browser account", row.browser_account ?? h("span", { class: "dim", text: "Not signed in" })],
         [
@@ -69,7 +59,8 @@ export function createProfilesPanel({ tools }) {
         return notice({
           glyph: "browser", title: "No saved profiles yet",
           body: "A saved profile keeps its sign-ins between runs. Copy one from your everyday browser and agents can use the accounts you are signed in to.",
-          action: toolButton(tools, "agents browser replicate", { label: "Copy a profile", glyph: "copy" }),
+          // Started with nothing filled in, the copy command only prints how to use it. With "native" set it lists the everyday browser's profiles to pick from.
+          action: toolButton(tools, "agents browser replicate", { label: "Copy a profile", glyph: "copy", preset: { native: "on" } }),
         });
       }
       return h(

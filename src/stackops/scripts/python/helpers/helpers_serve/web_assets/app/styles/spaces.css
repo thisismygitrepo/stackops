@@ -30,11 +30,12 @@
 .task-card:hover .task-go { opacity: 1; transform: none; }
 .run-list, .session-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .run-row, .session-row { display: flex; align-items: center; gap: 13px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; transition: transform 0.25s var(--spring), border-color 0.2s; }
-.run-row { cursor: pointer; }
+.run-row { width: 100%; cursor: pointer; }
 .run-row:hover, .session-row:hover { border-color: var(--line-strong); transform: translateX(4px); }
 .run-row strong { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .run-state { font-size: 12.5px; font-weight: 600; color: var(--good); }
 .run-state.running { color: var(--violet); }
+.run-state.stopped { color: var(--ink-soft); }
 .run-state.failed { color: var(--bad); }
 
 .store-hero { display: grid; gap: 8px; margin: 10px 0 18px; }
@@ -208,6 +209,7 @@
 .agent-said li + li { padding-top: 14px; border-top: 1px dashed var(--line-strong); }
 .agent-limits { gap: 8px; color: var(--ink-soft); }
 .agent-limits li { padding-left: 12px; border-left: 2px solid var(--line-strong); overflow-wrap: anywhere; }
+.agent-holder > .fold { margin-top: 16px; }
 
 /* Apps: the catalog button beside the title, the actions beside the result count, bundle chips, and the pills in an app's sheet. */
 .store-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }

@@ -30,13 +30,29 @@ const INSIDE = {
   zellij: { unit: "pane", read: panesOf },
 };
 
-export function createRunningPanel({ activity, savedLayouts }) {
-  const opened = new Set();
+export function createRunningPanel({ activity }) {
+  // The detail element of each session left open, by session name. It outlives a reload of the panel, so an open session keeps showing what it
+  // held until the new answer lands, instead of blanking to a skeleton each time.
+  const opened = new Map();
+  let busy = false;
+  let asks = 0;
+  let risen = false;
 
   // Runs out of sight and only opens the activity panel if it goes wrong. Quiet runs do not refresh the pages on their own, so this does.
-  async function quietly({ title, emoji, arguments: runArguments, done }) {
-    const run = await activity.start({ title, emoji, arguments: runArguments, interactive: false, reveal: false });
-    const outcome = await run.done;
+  // One at a time: the panel shows as loading while one is going and a second press is ignored, so the same pane is not closed twice.
+  // `ask` is the question to put first, where there is one.
+  async function quietly({ ask, title, emoji, arguments: runArguments, done }) {
+    if (busy || (ask && !(await confirmAction(ask)))) return;
+    busy = true;
+    panel.element.classList.add("loading");
+    let run, outcome;
+    try {
+      run = await activity.start({ title, emoji, arguments: runArguments, interactive: false, reveal: false });
+      outcome = await run.done;
+    } finally {
+      busy = false;
+      panel.element.classList.remove("loading");
+    }
     if (outcome.exit_code !== 0) return activity.reveal(run.id);
     activity.remove(run.id);
     toast(done, "info");
@@ -48,27 +64,40 @@ export function createRunningPanel({ activity, savedLayouts }) {
     if (sure) await activity.start({ title: `End ${session.name}`, emoji: "💀", arguments: ["terminal", "kill", session.name, "--backend", backend], interactive: true, reveal: true });
   }
 
+  // Whether a layout gets replaced is asked of the CLI at the moment of saving, not read off the Saved layouts panel: that panel may be showing
+  // another source, or be out of date. Not strictly complete: the list command fails while there is no layouts file yet, and any failure of it
+  // is read as nothing to replace.
   async function save(session, backend) {
-    const { json } = await query(["terminal", "path"]);
-    const replaces = savedLayouts().includes(`user:${session.name}`);
-    if (replaces && !(await confirmAction({ title: `Replace the layout “${session.name}”?`, body: "One of your saved layouts already has this name. Saving again replaces it with what the session holds now.", confirm: "Replace" }))) return;
-    await quietly({ title: `Save ${session.name} as a layout`, emoji: "💾", arguments: ["terminal", "export", "--sessions", session.name, "--output", json.user.path, "--merge", "--backend", backend], done: `Saved “${session.name}” to your layouts.` });
+    if (busy) return;
+    const [path, replaces] = await Promise.all([
+      query(["terminal", "path"]),
+      query(["terminal", "list", "--json", "--source", "user"], true).then(({ json }) => json.layouts.some((layout) => layout.name === session.name), () => false),
+    ]);
+    await quietly({
+      ask: replaces && { title: `Replace the layout “${session.name}”?`, body: "One of your saved layouts already has this name. Saving again replaces it with what the session holds now.", confirm: "Replace" },
+      title: `Save ${session.name} as a layout`, emoji: "💾", arguments: ["terminal", "export", "--sessions", session.name, "--output", path.json.user.path, "--merge", "--backend", backend], done: `Saved “${session.name}” to your layouts.`,
+    });
   }
 
-  function inside(session, backend) {
+  // Fills `holder` with what the session holds. The holder may already show an earlier answer, which stays until this one lands; an answer that a
+  // newer request for the same holder has overtaken is dropped.
+  function inside(session, backend, holder) {
     const { unit, read } = INSIDE[backend];
-    const holder = h("div", { class: "session-inside" }, skeleton(2, "row"));
+    const mine = (holder.dataset.ask = String((asks += 1)));
     const scope = ["terminal", "kill", session.name, "--backend", backend];
-    async function closeIdle() {
-      const sure = await confirmAction({ title: `Close what is idle in “${session.name}”?`, body: `Every ${unit} sitting at an empty prompt is closed. If all of them are idle, the session ends.`, confirm: "Close idle ones", tone: "danger" });
-      if (sure) await quietly({ title: `Tidy ${session.name}`, emoji: "🧹", arguments: [...scope, "--idle"], done: `Closed what was idle in “${session.name}”.` });
-    }
-    async function close(item) {
-      const sure = await confirmAction({ title: `Close “${item.name}”?`, body: `Whatever is running in this ${unit} stops. This cannot be undone.`, confirm: `Close ${unit}`, tone: "danger" });
-      if (sure) await quietly({ title: `Close ${item.name}`, emoji: "✖️", arguments: [...scope, item.flag, item.id], done: `Closed “${item.name}”.` });
-    }
+    const closeIdle = () =>
+      quietly({
+        ask: { title: `Close what is idle in “${session.name}”?`, body: `Every ${unit} sitting at an empty prompt is closed. If all of them are idle, the session ends.`, confirm: "Close idle ones", tone: "danger" },
+        title: `Tidy ${session.name}`, emoji: "🧹", arguments: [...scope, "--idle"], done: `Closed what was idle in “${session.name}”.`,
+      });
+    const close = (item) =>
+      quietly({
+        ask: { title: `Close “${item.name}”?`, body: `Whatever is running in this ${unit} stops. This cannot be undone.`, confirm: `Close ${unit}`, tone: "danger" },
+        title: `Close ${item.name}`, emoji: "✖️", arguments: [...scope, item.flag, item.id], done: `Closed “${item.name}”.`,
+      });
     query(["terminal", "summary", "--json", "--session", session.name, "--backend", backend], true).then(
       ({ json }) => {
+        if (holder.dataset.ask !== mine) return;
         const items = read(json.sessions[0]);
         holder.replaceChildren(
           h("div", { class: "session-inside-head" }, h("span", { class: "dim", text: plural(items.length, unit) }), button({ label: "Close idle ones", small: true, tone: "ghost", onclick: closeIdle })),
@@ -89,9 +118,8 @@ export function createRunningPanel({ activity, savedLayouts }) {
           ),
         );
       },
-      (error) => holder.replaceChildren(h("p", { class: "dim", text: error.message })),
+      (error) => holder.dataset.ask === mine && holder.replaceChildren(h("p", { class: "dim", text: error.message })),
     );
-    return holder;
   }
 
   // Each backend reports different facts about a session, so a row shows what its record carries instead of expecting one shape.
@@ -122,31 +150,52 @@ export function createRunningPanel({ activity, savedLayouts }) {
     );
     const item = h("li", {}, line);
     if (!INSIDE[backend]) return item;
-    let detail = null;
+    const open = (holder) => {
+      opened.set(session.name, holder);
+      inside(session, backend, holder);
+      item.append(holder);
+      line.setAttribute("aria-expanded", "true");
+    };
     const toggle = () => {
-      const show = detail === null;
-      detail?.remove();
-      detail = show ? inside(session, backend) : null;
-      if (show) item.append(detail);
-      opened[show ? "add" : "delete"](session.name);
-      line.setAttribute("aria-expanded", String(show));
+      const holder = opened.get(session.name);
+      if (!holder) return open(h("div", { class: "session-inside" }, skeleton(2, "row")));
+      holder.remove();
+      opened.delete(session.name);
+      line.setAttribute("aria-expanded", "false");
     };
     line.classList.add("opens");
     line.tabIndex = 0;
     line.title = "See what is inside";
+    line.setAttribute("aria-expanded", "false");
     line.addEventListener("click", (event) => !event.target.closest("button") && toggle());
-    line.addEventListener("keydown", (event) => event.key === "Enter" && event.target === line && toggle());
-    if (opened.has(session.name)) toggle();
+    // A design choice: the row takes Enter and Space like a button but is not given that role, because it holds real buttons of its own and a
+    // screen reader hides what is inside a button.
+    line.addEventListener("keydown", (event) => {
+      if (event.target !== line || (event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      toggle();
+    });
+    const kept = opened.get(session.name);
+    if (kept) {
+      // Its fade-in is for a session being opened, not for one that stayed open across a reload.
+      kept.style.animation = "none";
+      open(kept);
+    }
     return item;
   }
 
-  return createLivePanel({
+  const panel = createLivePanel({
     title: "Running now", path: "terminal summary", extra: ["--json"], locked: ["session", "choose_session", "show_tabs"],
     render: (data, { setCount }) => {
       const sessions = data?.sessions ?? [];
       setCount(sessions.length ? `${plural(sessions.length, "session")} · ${data.backend}` : "");
       if (sessions.length === 0) return notice({ glyph: "layers", title: "Nothing is running", body: "Launch a layout above to start a session." });
-      return rise(h("ul", { class: "session-list" }, sessions.map((session) => row(session, data.backend))));
+      const list = h("ul", { class: "session-list" }, sessions.map((session) => row(session, data.backend)));
+      // A design choice: the rows rise once, on arrival. This panel reloads after every pane it closes, and rising each time made the list blink.
+      if (!risen) rise(list);
+      risen = true;
+      return list;
     },
   });
+  return panel;
 }

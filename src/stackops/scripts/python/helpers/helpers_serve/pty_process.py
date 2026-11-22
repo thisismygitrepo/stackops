@@ -1,3 +1,4 @@
+import asyncio
 import os
 import platform
 import subprocess
@@ -36,6 +37,8 @@ def _spawn_posix_pty(argv: list[str], working_directory: str, environment: dict[
     import struct
     import termios
 
+    loop = asyncio.get_running_loop()
+    pending_input = bytearray()
     master_fd, slave_fd = pty.openpty()
     fcntl.ioctl(slave_fd, termios.TIOCSWINSZ, struct.pack("HHHH", rows, columns, 0, 0))
     # The trampoline makes the pty the controlling terminal in a fresh interpreter, so no Python runs between fork and exec in this threaded server.
@@ -60,14 +63,24 @@ def _spawn_posix_pty(argv: list[str], working_directory: str, environment: dict[
                 break
         return process.wait()
 
-    def write(data: bytes) -> None:
-        remaining = data
-        while remaining:
+    # Runs on the event loop only, like `write` and `close`. What the terminal's input queue cannot take yet (a paste into a busy program) is kept
+    # and written once the program reads again, in order. Design choice: no cap on what is kept; it is what one person typed or pasted.
+    def flush_input() -> None:
+        while pending_input:
             try:
-                written = os.write(master_fd, remaining)
-            except BlockingIOError:  # The terminal input queue is full; a real terminal drops the keystrokes too.
+                written = os.write(master_fd, pending_input)
+            except BlockingIOError:
+                loop.add_writer(master_fd, flush_input)
                 return
-            remaining = remaining[written:]
+            except OSError:  # The program is gone, so nothing is left to read the rest.
+                pending_input.clear()
+                break
+            del pending_input[:written]
+        loop.remove_writer(master_fd)
+
+    def write(data: bytes) -> None:
+        pending_input.extend(data)
+        flush_input()
 
     def resize(new_rows: int, new_columns: int) -> None:
         fcntl.ioctl(master_fd, termios.TIOCSWINSZ, struct.pack("HHHH", new_rows, new_columns, 0, 0))
@@ -79,6 +92,7 @@ def _spawn_posix_pty(argv: list[str], working_directory: str, environment: dict[
             return
 
     def close() -> None:
+        loop.remove_writer(master_fd)
         os.close(master_fd)
 
     return PtyHandle(pump=pump, write=write, resize=resize, stop=stop, close=close)

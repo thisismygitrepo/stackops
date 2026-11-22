@@ -15,6 +15,7 @@ export function createPalette() {
   ].map((entry) => ({ ...entry, haystack: `${entry.path} ${entry.summary}`.toLowerCase() }));
   let matches = [];
   let selected = 0;
+  let opener = null;
 
   const input = h("input", { type: "text", placeholder: "Search commands, groups, and dashboards", spellcheck: "false", autocomplete: "off", "aria-label": "Search" });
   const list = h("div", { class: "palette-list", role: "listbox" });
@@ -69,6 +70,7 @@ export function createPalette() {
 
   function close() {
     element.hidden = true;
+    opener?.focus();
   }
 
   function choose(index) {
@@ -78,6 +80,7 @@ export function createPalette() {
   }
 
   function open() {
+    if (element.hidden) opener = document.activeElement;
     element.hidden = false;
     input.value = "";
     search();
@@ -85,12 +88,14 @@ export function createPalette() {
   }
 
   input.addEventListener("input", search);
-  input.addEventListener("keydown", (event) => {
+  // On the whole palette and not on the search box alone: the browser lets the scrolling result list take focus, and the keys must still work there.
+  element.addEventListener("keydown", (event) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       selected = (selected + (event.key === "ArrowDown" ? 1 : matches.length - 1)) % Math.max(matches.length, 1);
       mark();
-    } else if (event.key === "Enter") choose(selected);
+    } else if (event.key === "Tab") event.preventDefault();
+    else if (event.key === "Enter") choose(selected);
     else if (event.key === "Escape") close();
   });
   element.addEventListener("mousedown", (event) => event.target === element && close());

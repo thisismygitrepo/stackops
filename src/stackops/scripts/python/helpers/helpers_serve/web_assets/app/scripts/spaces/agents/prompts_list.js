@@ -16,7 +16,8 @@ export function promptRow(prompt, { term, chosen, onPick }) {
   const blurb = (named ? null : snippetAround(prompt.text, term)) ?? prompt.description ?? prompt.text.trim().split("\n")[0];
   return h(
     "button",
-    { class: "prompt-row", type: "button", role: "option", "data-key": keyOf(prompt), "aria-selected": String(chosen), onclick: () => onPick(prompt) },
+    // Only the chosen row is a tab stop: the arrow keys move between rows, and Tab goes on to the reader.
+    { class: "prompt-row", type: "button", role: "option", "data-key": keyOf(prompt), "aria-selected": String(chosen), tabindex: chosen ? "0" : "-1", onclick: () => onPick(prompt) },
     promptFace(prompt, 38),
     h(
       "span",

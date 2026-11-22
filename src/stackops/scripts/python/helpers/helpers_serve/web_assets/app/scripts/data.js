@@ -15,8 +15,10 @@ function failureText(text) {
 }
 
 // One run, never cached: for results that must be current and are not worth keeping, such as a search. Pages use `query`.
-export async function capture(runArguments) {
-  const result = await api.capture({ arguments: runArguments, working_directory: state.settings.workingDirectory });
+// `signal` is an AbortSignal for a caller that may give up on the answer: aborting it drops the request, which makes the server stop the command.
+// `query` passes none on purpose: its answer is cached and may be shared with another reader.
+export async function capture(runArguments, signal) {
+  const result = await api.capture({ arguments: runArguments, working_directory: state.settings.workingDirectory }, signal);
   const text = result.stdout.replace(ANSI_PATTERN, "");
   const trimmed = text.trim();
   let json;

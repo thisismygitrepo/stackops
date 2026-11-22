@@ -46,6 +46,7 @@ class Run:
     scrollback: deque[bytes]
     scrollback_bytes: int
     subscribers: set[asyncio.Queue[RunEvent]]
+    stop_requested: bool
     outcome: RunExit | None
 
 
@@ -65,6 +66,7 @@ class RunSummary(TypedDict):
     started_at: float
     finished_at: float | None
     exit_code: int | None
+    stopped: bool
     reports: list[str]
 
 
@@ -110,6 +112,7 @@ def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directo
         scrollback=deque(),
         scrollback_bytes=0,
         subscribers=set(),
+        stop_requested=False,
         outcome=None,
     )
 
@@ -141,6 +144,7 @@ def subscribe(run: Run) -> tuple[bytes, asyncio.Queue[RunEvent]]:
 def stop_run(run: Run) -> None:
     if run.outcome is not None:
         return
+    run.stop_requested = True
     run.handle.stop(False)
     asyncio.get_running_loop().call_later(STOP_GRACE_SECONDS, _force_stop, run)
 
@@ -164,6 +168,7 @@ def describe_run(run: Run) -> RunSummary:
         "started_at": run.started_at,
         "finished_at": None if run.outcome is None else run.outcome.finished_at,
         "exit_code": None if run.outcome is None else run.outcome.exit_code,
+        "stopped": run.stop_requested,
         "reports": [] if run.outcome is None else list(run.outcome.reports),
     }
 
@@ -179,9 +184,11 @@ def _publish_output(run: Run, chunk: bytes) -> None:
 
 def _finish_run(run: Run, exit_code: int) -> None:
     finished_at = time.time()
+    # Not exact by design: a run is credited with every report written while it was going, also one that another run wrote at that time.
+    # A command does not say which file it wrote, and guessing an owner could leave a report's own build without it.
     report_times = [(path.stat().st_mtime, path.name) for path in HTML_REPORTS_ROOT.glob("*.html")]
     outcome = RunExit(exit_code=exit_code, finished_at=finished_at, reports=tuple(name for modified_at, name in sorted(report_times, reverse=True) if modified_at >= run.started_at))
-    status = "done" if exit_code == 0 else f"""exit {exit_code}"""
+    status = "done" if exit_code == 0 else "stopped" if run.stop_requested else f"""exit {exit_code}"""
     _publish_output(run, f"""{TERMINAL_RESTORE_SEQUENCE}\r\n\x1b[2m[{status} · {finished_at - run.started_at:.1f}s]\x1b[0m\r\n""".encode())
     run.handle.close()
     run.outcome = outcome

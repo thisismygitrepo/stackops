@@ -90,12 +90,22 @@ export function createBrowseView({ dock, openReport }) {
     runShown = () => {};
 
     if (!details.has(node.path)) details.set(node.path, api.command(node.path));
-    let parameters = null;
+    let parameters;
     try {
       ({ parameters } = await details.get(node.path));
     } catch (error) {
       details.delete(node.path);
-      toast(`Could not read the options of ${node.path}: ${error.message}`);
+      if (shownPath !== node.path) return;
+      runbar.remove();
+      body.replaceChildren(
+        h(
+          "div",
+          { class: "form-note retry" },
+          h("span", { text: `This command's options could not be read: ${error.message}` }),
+          h("button", { class: "button small", onclick: () => renderCommand(node) }, icon("refresh", 13), "Try again"),
+        ),
+      );
+      return;
     }
     if (shownPath !== node.path) return;
     if (!drafts.has(node.path)) drafts.set(node.path, new Map());
@@ -136,7 +146,7 @@ export function createBrowseView({ dock, openReport }) {
   }
 
   element.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) runShown();
+    if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && !event.repeat) runShown();
   });
 
   function show(route) {

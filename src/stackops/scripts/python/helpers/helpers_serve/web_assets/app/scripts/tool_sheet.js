@@ -1,6 +1,6 @@
 import { debounce, h, icon, toast } from "/assets/scripts/dom.js";
 import { nodeHash, state } from "/assets/scripts/state.js";
-import { ARRIVAL_VALUES, ESSENTIAL_FLAGS, LIVE_NAMES, LIVE_PATHS, OMITTED_FIELDS, PASSTHROUGH_TOOLS } from "./catalog.js";
+import { ARRIVAL_VALUES, ESSENTIAL_FLAGS, LIVE_PATHS, OMITTED_FIELDS, PASSTHROUGH_TOOLS } from "./catalog.js";
 import { commandDetail, query } from "./data.js";
 import { createFriendlyForm } from "./friendly_form.js";
 import { noteOpened, recall, remember } from "./memory.js";
@@ -51,7 +51,7 @@ export function createToolSheet({ activity, openReport, guides = {} }) {
     const specs = [...(parameters ?? []).filter((spec) => !omitted.includes(spec.name)), ...(PASSTHROUGH_TOOLS.has(path) ? [EXTRA_ARGUMENTS] : [])];
     const flagged = (flag) => specs.some((spec) => spec.flags.includes(flag));
     // A read-only tool queries on arrival and again on every change. One that still needs something typed shows its form and queries once that is filled in.
-    const live = LIVE_NAMES.has(node.name) || LIVE_PATHS.has(path);
+    const live = LIVE_PATHS.has(path);
     const starting = new Map(Object.entries({ ...ARRIVAL_VALUES[path], ...preset }));
     // A read-only tool reopens the way it was left, with whatever the caller filled in on top. Reset goes back to `starting`.
     const recalled = live ? recall(path) : new Map();
@@ -112,14 +112,19 @@ export function createToolSheet({ activity, openReport, guides = {} }) {
       },
     });
 
+    // One start per sheet: a double click or a held Ctrl+Enter also lands while the request is on its way, and on the button as the sheet slides out.
+    let launching = false;
     async function run() {
       const { tokens, problems } = form.collect();
-      if (problems.length) return;
+      if (problems.length || launching) return;
+      launching = true;
       try {
         await activity.start({ title: givenTitle ?? fullTitleOf(node), emoji: node.icon, arguments: [...pathTokens, ...tokens], interactive: true, reveal: true });
         sheet.close();
       } catch (error) {
-        toast(error.message);
+        launching = false;
+        // Shown in the sheet's own problem line, not a toast: a toast lies on top of this footer and its buttons until it leaves.
+        problem.textContent = error.message;
       }
     }
 
@@ -134,7 +139,7 @@ export function createToolSheet({ activity, openReport, guides = {} }) {
           openReport({ title, blurb: friendlyText(node.summary), arguments: [...pathTokens, REPORT_FLAG, ...tokens.filter((token) => token !== REPORT_FLAG)] });
         },
       });
-    const note = parameters === null ? "This tool asks for what it needs once it starts." : "Nothing to fill in — it is ready to go.";
+    const note = parameters === null ? "This tool's options can't be listed here, so it starts with its usual settings. To set them yourself, open it in the developer view." : "Nothing to fill in — it is ready to go.";
     formHolder.replaceChildren(...(form.count > 0 ? [form.element] : live ? [] : [h("p", { class: "tool-note", text: note })]));
     formHolder.hidden = !formHolder.hasChildNodes();
     sheet.foot.hidden = false;

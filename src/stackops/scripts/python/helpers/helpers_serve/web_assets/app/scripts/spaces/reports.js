@@ -1,11 +1,18 @@
 import { h, icon } from "/assets/scripts/dom.js";
-import { on } from "/assets/scripts/state.js";
+import { on, state } from "/assets/scripts/state.js";
 import { REPORTS } from "../catalog.js";
 import { replay, rise } from "../motion.js";
 import { button, glyphTile, notice } from "../widgets.js";
 import { relativeTime } from "../words.js";
 
 const fileUrl = (file) => `/reports/${encodeURIComponent(file)}?at=${Date.now()}`;
+
+// A frame that already holds a report has it replaced: assigning `src` again would add a Back-button step that changes nothing.
+// The `src` attribute then keeps the first address, which is fine, as it is only read to tell whether the frame holds anything.
+function showFile(board, file) {
+  if (board.frame.src) board.frame.contentWindow.location.replace(fileUrl(file));
+  else board.frame.src = fileUrl(file);
+}
 
 export function createReportsSpace({ activity }) {
   const boards = new Map();
@@ -23,8 +30,8 @@ export function createReportsSpace({ activity }) {
   const built = (board) => `Built ${relativeTime(board.stamp)}`;
 
   function addBoard(definition) {
-    const board = { ...definition, status: definition.file && !definition.arguments ? "ready" : "idle", stamp: null, runId: null, problem: "", frame: h("iframe", { class: "report-frame", sandbox: "allow-scripts", title: definition.title, hidden: true }) };
-    if (board.status === "ready") board.frame.src = fileUrl(definition.file);
+    const board = { ...definition, status: definition.file && !definition.arguments ? "ready" : "idle", stamp: null, runId: null, problem: "", frame: h("iframe", { class: "report-frame", sandbox: "allow-scripts", allow: "clipboard-write", title: definition.title, hidden: true }) };
+    if (board.status === "ready") showFile(board, definition.file);
     boards.set(board.id, board);
     frames.append(board.frame);
     return board;
@@ -58,18 +65,22 @@ export function createReportsSpace({ activity }) {
       if (board.file && !board.frame.src) {
         const lastBuild = await fetch(fileUrl(board.file), { method: "HEAD" });
         if (lastBuild.ok) {
-          board.frame.src = fileUrl(board.file);
+          showFile(board, board.file);
           board.stamp = Date.parse(lastBuild.headers.get("Last-Modified")) / 1000;
           paintViewer();
         }
       }
+      const folder = state.settings.workingDirectory;
       const run = await activity.start({ title: `${board.title} report`, emoji: "📊", arguments: board.arguments, interactive: false, reveal: false });
       board.runId = run.id;
       const outcome = await run.done;
-      const file = outcome.reports.includes(board.file) ? board.file : outcome.reports[0];
+      // The working folder changed while this was being built, so what was built belongs to the old folder: build it again for the new one.
+      if (folder !== state.settings.workingDirectory) return generate(board);
+      // The run lists every report written while it was going, whoever wrote it, so a board that knows its file takes that file or none.
+      const file = board.file ? outcome.reports.find((name) => name === board.file) : outcome.reports[0];
       // A check that found something to report exits non-zero and still writes its report, so the report itself is what counts.
       if (file) {
-        board.frame.src = fileUrl(file);
+        showFile(board, file);
         board.status = "ready";
         board.stamp = Date.now() / 1000;
         board.runId = null;
@@ -131,7 +142,7 @@ export function createReportsSpace({ activity }) {
     if (!board) {
       adHocCount += 1;
       board = addBoard({ id: `custom-${adHocCount}`, glyph: "report", hue: 290, title, blurb: blurb || "Opened from a tool.", arguments: reportArguments, file: file ?? null });
-    } else if (!board.arguments) board.frame.src = fileUrl(file);
+    } else if (!board.arguments) showFile(board, file);
     else if (board.status === "ready" || board.status === "failed") generate(board);
     location.hash = `#/reports/${board.id}`;
   }

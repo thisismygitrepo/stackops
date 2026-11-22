@@ -8,14 +8,14 @@
   --line-strong: rgba(18, 20, 43, 0.17);
   --ink: #12142b;
   --ink-soft: #4d5174;
-  --ink-faint: #8a8eac;
+  --ink-faint: #6a6d84;
   --violet: #6a5cff;
   --azure: #1ea7fd;
   --mint: #12c99b;
   --brand: linear-gradient(135deg, #6a5cff 0%, #1ea7fd 100%);
   --brand-wash: linear-gradient(135deg, rgba(106, 92, 255, 0.13), rgba(30, 167, 253, 0.13));
-  --good: #0f9f6e;
-  --warn: #b96f00;
+  --good: #0c7f58;
+  --warn: #a16100;
   --bad: #d9365a;
   --glow: 0 10px 30px -10px rgba(106, 92, 255, 0.55);
   --shadow: 0 1px 2px rgba(18, 20, 43, 0.04), 0 14px 34px -16px rgba(18, 20, 43, 0.18);
@@ -37,7 +37,8 @@
     --line-strong: rgba(255, 255, 255, 0.17);
     --ink: #f1f2ff;
     --ink-soft: #b3b7d6;
-    --ink-faint: #73789c;
+    --ink-faint: #7a7fa1;
+    --violet: #796cff;
     --good: #34d6a0;
     --warn: #f5b84a;
     --bad: #ff6b88;
@@ -71,6 +72,7 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 .path { font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
 .overline { font-size: 11.5px; font-weight: 650; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-faint); }
 .boot-note { position: relative; z-index: 1; display: grid; place-items: center; height: 100vh; color: var(--ink-soft); animation: breathe 1.6s ease-in-out infinite; }
+.boot-note.failed { color: var(--bad); animation: none; }
 
 .aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 /* The glows are painted soft, not blurred: a blur filter on a moving layer, and a backdrop blur over one, are recomputed on every frame. */
@@ -82,9 +84,11 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
     rgb(var(--tint) / 0.159) calc(var(--reach) + 96px), rgb(var(--tint) / 0.067) calc(var(--reach) + 144px), rgb(var(--tint) / 0.023) calc(var(--reach) + 192px), rgb(var(--tint) / 0) 100%
   );
 }
-.aurora i:nth-child(1) { --tint: 106 92 255; top: -20vmax; left: -10vmax; animation: drift-a 26s ease-in-out infinite alternate; }
-.aurora i:nth-child(2) { --tint: 30 167 253; right: -12vmax; bottom: -24vmax; animation: drift-b 32s ease-in-out infinite alternate; }
-.aurora i:nth-child(3) { --reach: 15vmax; --tint: 18 201 155; top: 28%; left: 46%; opacity: calc(var(--aurora-opacity) * 0.55); animation: drift-c 38s ease-in-out infinite alternate; }
+/* The drift moves five times a second, not on every frame: with no GPU each move redraws the whole window, and that alone took 40-100% of a core. A move shifts a glow by a few pixels
+   of a 480px falloff, so no pixel changes by more than 3/255 and the steps do not show. Keep duration / steps at 200ms for all three: on one beat they share a redraw. */
+.aurora i:nth-child(1) { --tint: 106 92 255; top: -20vmax; left: -10vmax; animation: drift-a 26s steps(130) infinite alternate; }
+.aurora i:nth-child(2) { --tint: 30 167 253; right: -12vmax; bottom: -24vmax; animation: drift-b 32s steps(160) infinite alternate; }
+.aurora i:nth-child(3) { --reach: 15vmax; --tint: 18 201 155; top: 28%; left: 46%; opacity: calc(var(--aurora-opacity) * 0.55); animation: drift-c 38s steps(190) infinite alternate; }
 .aurora::after {
   content: ""; position: absolute; inset: 0; background-image: radial-gradient(var(--line-strong) 1px, transparent 1px); background-size: 28px 28px;
   -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 75%); mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 75%); opacity: 0.6;
@@ -94,13 +98,14 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 .enter { animation: view-in 0.5s var(--smooth) backwards; }
 .pulse { animation: pulse 0.7s var(--spring); }
 .bump { animation: bump 0.45s var(--spring); }
-.lit { position: relative; transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.35s var(--smooth), box-shadow 0.3s, border-color 0.3s, background 0.3s; }
+/* The tilt is applied only under the pointer: a 3D transform at rest made every card its own compositor layer (293 on Apps). `isolation` keeps the stacking context the z-index rules below need. */
+.lit { position: relative; isolation: isolate; transition: transform 0.35s var(--smooth), box-shadow 0.3s, border-color 0.3s, background 0.3s; }
 .lit::before {
   content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.35s;
   background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(106, 92, 255, 0.2), transparent 65%);
 }
 .lit:hover::before { opacity: 1; }
-.lit:hover { border-color: var(--line-strong); box-shadow: var(--shadow), 0 22px 50px -28px var(--violet); }
+.lit:hover { border-color: var(--line-strong); box-shadow: var(--shadow), 0 22px 50px -28px var(--violet); transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
 .lit > * { position: relative; z-index: 1; }
 .ripple { position: absolute; z-index: 0; border-radius: 50%; background: currentColor; opacity: 0.16; transform: scale(0); pointer-events: none; animation: ripple 0.6s ease-out forwards; }
 .burst { position: fixed; z-index: 120; width: 0; height: 0; pointer-events: none; }
@@ -125,12 +130,12 @@ mark { color: inherit; background: rgba(106, 92, 255, 0.24); border-radius: 4px;
 @keyframes fade-out { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
-  .aurora i { animation: none; }
+  .lit:hover { transform: none; }
 }
 
 .toasts { position: fixed; right: 20px; bottom: 20px; z-index: 130; display: grid; gap: 10px; }
 .toast {
   display: flex; align-items: flex-start; gap: 10px; max-width: 420px; padding: 12px 16px; font-size: 13.5px; background: var(--panel-solid); border: 1px solid var(--line-strong);
-  border-left: 3px solid var(--bad); border-radius: 14px; box-shadow: var(--shadow-pop); animation: pop-in 0.4s var(--spring);
+  border-left: 3px solid var(--bad); border-radius: 14px; box-shadow: var(--shadow-pop); animation: pop-in 0.4s var(--spring); cursor: pointer;
 }
 .toast.info { border-left-color: var(--mint); }

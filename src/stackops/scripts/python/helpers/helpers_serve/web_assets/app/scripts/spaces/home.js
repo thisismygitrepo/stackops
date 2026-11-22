@@ -1,5 +1,6 @@
 import { formatClock, formatDuration, h, icon } from "/assets/scripts/dom.js";
 import { on, state } from "/assets/scripts/state.js";
+import { statusOf } from "../activity_hero.js";
 import { QUICK_TASKS } from "../catalog.js";
 import { query, software } from "../data.js";
 import { createHeroOrbit } from "../hero_orbit.js";
@@ -11,6 +12,7 @@ import { greeting } from "../words.js";
 // A design choice: managed settings are left out, since that part alone takes several seconds and Dotfiles shows it.
 const HEALTH = [["shell", "Shell profile", "#/reports/status"], ["ssh", "SSH", "#/network"], ["backup", "Backups", "#/data"]];
 const HEALTH_TONES = { ready: "good", attention: "warn", error: "bad" };
+const RUN_WORDS = { running: "Running", done: "Finished", stopped: "Stopped", failed: "Had a problem" };
 
 export function createHomeSpace({ activity, tools, openSearch }) {
   const { boot } = state;
@@ -65,7 +67,12 @@ export function createHomeSpace({ activity, tools, openSearch }) {
 
   function loadStats() {
     stale = false;
-    const fail = (item) => () => item.set("—", "Unavailable right now");
+    // A design choice: a count that did not load marks the page stale again, so the next visit asks once more. Only the commands that failed run
+    // then, since the answers that arrived are kept. On a machine where one always fails, that command runs on every visit to Home.
+    const fail = (item) => () => {
+      stale = true;
+      item.set("—", "Unavailable right now");
+    };
     software().then((catalog) => stats.apps.set(catalog.apps.filter((app) => app.installed).length, `of ${catalog.apps.length} in the catalog`), fail(stats.apps));
     query(["devops", "repos", "list", "--json"]).then(({ json }) => {
       const repos = Array.isArray(json) ? json : [];
@@ -87,7 +94,10 @@ export function createHomeSpace({ activity, tools, openSearch }) {
         mark.textContent = sections?.[key]?.summary ?? "Unavailable";
         mark.className = `pill ${HEALTH_TONES[sections?.[key]?.level] ?? ""}`;
       });
-    query(["devops", "self", "status", "--shell", "--ssh", "--backup", "--json"]).then(({ json }) => paintHealth(json), () => paintHealth(null));
+    query(["devops", "self", "status", "--shell", "--ssh", "--backup", "--json"]).then(({ json }) => paintHealth(json), () => {
+      stale = true;
+      paintHealth(null);
+    });
   }
 
   function showRecent() {
@@ -104,11 +114,15 @@ export function createHomeSpace({ activity, tools, openSearch }) {
           runs.map((run) =>
             h(
               "li",
-              { class: "run-row", onclick: () => activity.reveal(run.id) },
-              run.tile,
-              h("strong", { text: run.title }),
-              h("span", { class: `run-state ${run.exit_code === null ? "running" : run.exit_code === 0 ? "done" : "failed"}`, text: run.exit_code === null ? "Running" : run.exit_code === 0 ? "Finished" : "Had a problem" }),
-              h("span", { class: "dim", text: `${formatClock(run.started_at)} · ${run.finished_at === null ? "in progress" : formatDuration(run.finished_at - run.started_at)}` }),
+              {},
+              h(
+                "button",
+                { class: "run-row", type: "button", onclick: () => activity.reveal(run.id) },
+                run.tile,
+                h("strong", { text: run.title }),
+                h("span", { class: `run-state ${statusOf(run)}`, text: RUN_WORDS[statusOf(run)] }),
+                h("span", { class: "dim", text: `${formatClock(run.started_at)} · ${run.finished_at === null ? "in progress" : formatDuration(run.finished_at - run.started_at)}` }),
+              ),
             ),
           ),
         ),

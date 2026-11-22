@@ -127,6 +127,7 @@ export function createMapView() {
     };
     try {
       const Plotly = await loadChartLibrary();
+      if (!plot.isConnected) plotHolder.replaceChildren(plot);
       await Plotly.react(plot, [trace], layout, { displayModeBar: false, responsive: true });
       drawn = scheme;
       if (wired) return;

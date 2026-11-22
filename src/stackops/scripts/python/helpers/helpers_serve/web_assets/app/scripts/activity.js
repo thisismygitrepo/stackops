@@ -22,7 +22,7 @@ export function createActivity({ openReport }) {
   const chips = h("div", { class: "task-chips", role: "tablist" });
   const hero = createHero({
     openReport,
-    runAgain: (task) => start({ title: task.title, emoji: task.emoji, arguments: task.summary.arguments, interactive: task.summary.interactive, reveal: true }).catch((error) => toast(error.message)),
+    runAgain: (task) => start({ title: task.title, emoji: task.emoji, arguments: task.summary.arguments, interactive: task.summary.interactive, reveal: true, workingDirectory: task.summary.working_directory }).catch((error) => toast(error.message)),
   });
   const consoles = h("div", { class: "task-consoles" });
   const sizeButton = iconButton("expand", "Fill the window", () => setMode(element.dataset.mode === "max" ? "open" : "max"));
@@ -58,7 +58,7 @@ export function createActivity({ openReport }) {
     const shown = visible();
     for (const task of tasks.values()) {
       task.chip.hidden = task.quiet;
-      task.chip.setAttribute("aria-selected", String(task.id === activeId));
+      task.tab.setAttribute("aria-selected", String(task.id === activeId));
       task.chip.dataset.status = statusOf(task.summary);
       task.pane.classList.toggle("active", task.id === activeId);
     }
@@ -78,13 +78,17 @@ export function createActivity({ openReport }) {
     if (!task || element.dataset.mode === "closed") return;
     // A finished run's console is built only once someone looks at it: after a reload there can be many, each a terminal and a connection.
     if (!task.linked) connect(task);
-    requestAnimationFrame(() => fit(task) && task.terminal.focus());
+    // The first console of a page is still loading at this point, so the wish to type into it is noted and `connect` honours it.
+    requestAnimationFrame(() => {
+      if (fit(task)) task.terminal.focus();
+      else if (!task.terminal) task.focusWanted = true;
+    });
   }
 
   async function connect(task) {
     task.linked = true;
     const session = await openConsole({
-      pane: task.pane, runId: task.id, fitNow: () => fit(task),
+      pane: task.pane, runId: task.id, echo: false, fitNow: () => fit(task),
       onSummary: (summary) => {
         const wasRunning = task.summary.exit_code === null;
         Object.assign(task.summary, summary);
@@ -93,35 +97,44 @@ export function createActivity({ openReport }) {
         emit("runs");
         if (!wasRunning || task.quiet) return;
         markStale();
-        const succeeded = task.summary.exit_code === 0;
-        if (element.dataset.mode === "closed") toast(succeeded ? `${task.title} finished.` : `${task.title} stopped with a problem.`, succeeded ? "info" : "error");
-        else if (succeeded && task.id === activeId) burst(hero.element.querySelector(".task-mark"));
+        const status = statusOf(task.summary);
+        if (element.dataset.mode === "closed") toast(`${task.title} ${{ done: "finished", stopped: "stopped", failed: "stopped with a problem" }[status]}.`, status === "failed" ? "error" : "info");
+        else if (status === "done" && task.id === activeId) burst(hero.element.querySelector(".task-mark"));
         replay(indicator, "pulse");
       },
       // A running task's connection lost to sleep or a network blip is reopened, and the server replays the output. Not exhaustive by choice:
-      // after five tries the task is left as it is, and a reload catches up. A finished run that cannot be read is one the server let go of.
+      // after five failed tries in a row the task is given up on. It keeps showing as running, because how it went is not known, but whatever
+      // waits for it is told it did not succeed, and a reload catches up. A finished run that cannot be read is one the server let go of.
       onDrop: () => {
         if (!tasks.has(task.id)) return;
         task.terminal.dispose();
         Object.assign(task, { terminal: null, fit: null, socket: null });
         if (task.summary.exit_code !== null) task.pane.replaceChildren(h("p", { class: "console-error", text: "This task's output is no longer kept: only the most recent finished tasks are. Reload the page to see what is." }));
         else if ((task.drops += 1) <= 5) setTimeout(() => tasks.has(task.id) && connect(task), 2000 * task.drops);
+        else {
+          task.pane.replaceChildren(h("p", { class: "console-error", text: "The live view lost its connection. Reload the page to pick this task up again." }));
+          task.settle({ ...task.summary, exit_code: -1, finished_at: Date.now() / 1000 });
+        }
       },
     });
     if (!session) return;
     Object.assign(task, session);
-    if (task.id === activeId) fit(task);
+    // A connection that delivers anything was a good one, so the next drop starts counting from one again.
+    session.socket.addEventListener("message", () => (task.drops = 0), { once: true });
+    if (task.id === activeId && fit(task) && task.focusWanted) task.terminal.focus();
+    task.focusWanted = false;
   }
 
   function createTask(summary, { title, emoji, quiet }) {
     const pane = h("div", { class: "console" });
-    const closer = h("span", { class: "chip-close", role: "button", title: "Remove" }, icon("close", 11));
-    const chip = h("button", { class: "task-chip", type: "button", role: "tab" }, h("i", { class: "dot" }), h("span", { text: title }), closer);
+    // The chip holds two buttons side by side, the tab and its remove control, so that both can be reached and pressed from the keyboard.
+    const tab = h("button", { class: "chip-tab", type: "button", role: "tab", onclick: () => activate(summary.id) }, h("i", { class: "dot" }), h("span", { text: title }));
+    const closer = h("button", { class: "chip-close", type: "button", title: "Remove", "aria-label": `Remove ${title}` }, icon("close", 11));
+    const chip = h("div", { class: "task-chip", role: "presentation" }, tab, closer);
     let settle;
     const done = new Promise((resolve) => (settle = resolve));
-    const task = { id: summary.id, summary, title, emoji, quiet, pane, chip, done, settle, linked: false, drops: 0, terminal: null, fit: null, socket: null };
-    chip.addEventListener("click", async (event) => {
-      if (!closer.contains(event.target)) return activate(task.id);
+    const task = { id: summary.id, summary, title, emoji, quiet, pane, chip, tab, done, settle, linked: false, focusWanted: false, drops: 0, terminal: null, fit: null, socket: null };
+    closer.addEventListener("click", async () => {
       // Removing a run that is still going stops it on the server, so that takes a yes first.
       const sure = task.summary.exit_code !== null || (await confirmAction({ title: `Stop “${title}”?`, body: "It is still running. Removing it stops it.", confirm: "Stop and remove", tone: "danger" }));
       if (sure) remove(task.id);
@@ -140,14 +153,17 @@ export function createActivity({ openReport }) {
     if (!gone.length) return;
     await Promise.all(gone.map((task) => api.deleteRun(task.id).catch((error) => toast(error.message))));
     for (const task of gone) {
+      // Removing a running task stops it, and its connection is closed here before the end can be reported: whatever waits for it is told now.
+      if (task.summary.exit_code === null) task.settle({ ...task.summary, exit_code: -1, stopped: true, finished_at: Date.now() / 1000 });
       task.socket?.close();
       task.terminal?.dispose();
       task.chip.remove();
       task.pane.remove();
       tasks.delete(task.id);
     }
-    if (!tasks.has(activeId)) activeId = visible().at(-1)?.id ?? null;
-    activate(activeId);
+    // Only taking away the task on show moves on to another and gives it the keyboard: a background run tidied away must not pull focus from the page.
+    if (tasks.has(activeId)) paint();
+    else activate(visible().at(-1)?.id ?? null);
     emit("runs");
   }
 
@@ -161,11 +177,12 @@ export function createActivity({ openReport }) {
     emit("runs");
   }
 
-  async function start({ title, emoji, arguments: runArguments, interactive, reveal: show, wide }) {
+  // `workingDirectory` is only given by "Run again", which repeats a task in the folder it ran in; everything else runs in the folder selected now.
+  async function start({ title, emoji, arguments: runArguments, interactive, reveal: show, wide, workingDirectory }) {
     const fitted = tasks.get(activeId);
     const width = Math.min(element.offsetWidth || 760, window.innerWidth);
     const size = fitted?.terminal && fit(fitted) ? { rows: fitted.terminal.rows, columns: fitted.terminal.cols } : { rows: 28, columns: Math.max(60, Math.floor((width - 64) / 7.85)) };
-    const summary = await api.startRun({ arguments: runArguments, working_directory: state.settings.workingDirectory, interactive, ...size });
+    const summary = await api.startRun({ arguments: runArguments, working_directory: workingDirectory ?? state.settings.workingDirectory, interactive, ...size });
     const described = describeArguments(runArguments);
     const task = createTask(summary, { title: title ?? described.title, emoji: emoji ?? described.emoji, quiet: !show });
     if (show) reveal(task.id);

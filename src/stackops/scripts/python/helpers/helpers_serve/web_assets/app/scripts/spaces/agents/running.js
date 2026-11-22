@@ -1,5 +1,5 @@
-import { h, icon, tildify, toast } from "/assets/scripts/dom.js";
-import { state } from "/assets/scripts/state.js";
+import { formatClock, h, icon, tildify, toast } from "/assets/scripts/dom.js";
+import { on, state } from "/assets/scripts/state.js";
 import { createCombo } from "../../combo.js";
 import { query } from "../../data.js";
 import { createLivePanel } from "../../live_panel.js";
@@ -8,8 +8,9 @@ import { confirmAction } from "../../overlays.js";
 import { toolButton } from "../../space_kit.js";
 import { avatar, button, notice, pill, sectionHead } from "../../widgets.js";
 import { plural } from "../../words.js";
-import { agentHash, agentName, findAgent, renderAgent, statusPills, taskText } from "./running_detail.js";
+import { agentHash, agentName, findAgent, fold, renderAgent, statusPills, taskText } from "./running_detail.js";
 
+const FRESH_MILLISECONDS = 60_000;
 const trim = (text, limit) => (text.length > limit ? `${text.slice(0, limit).trimEnd()}…` : text);
 
 function agentCard(agent) {
@@ -41,7 +42,7 @@ export function createRunningSection({ activity, tools }) {
     });
     if (!sure) return;
     const only = !agent ? [] : snapshot.backend === "t3" ? ["--agent-session", agent.window_id] : ["--session", agent.session, "--pane", agent.window_id];
-    const runArguments = ["agents", "status", "--btw", "--format", "rich", "--backend", snapshot.backend, ...(snapshot.server ? ["--server", snapshot.server] : []), ...only];
+    const runArguments = ["agents", "status", "--btw", "--format", "rich", "--backend", snapshot.backend, ...(snapshot.backend === "tuios" && snapshot.server ? ["--server", snapshot.server] : []), ...only];
     activity.start({ title: agent ? `Update from ${agentName(agent)}` : "Updates from your agents", emoji: "💬", arguments: runArguments, interactive: false, reveal: true }).catch((error) => toast(error.message));
   }
   const askButton = button({ label: "Ask for an update", glyph: "chat", small: true, tone: "ghost", title: "Ask every running agent what it is doing, without interrupting its work", onclick: () => askForUpdate(null) });
@@ -49,14 +50,20 @@ export function createRunningSection({ activity, tools }) {
 
   function paint() {
     const agent = findAgent(snapshot.agents, route);
-    // An agent that has finished since it was opened has nothing left to show, so its address falls back to the list.
-    if (route.length > 0 && !agent) history.replaceState(null, "", "#/agents/running");
+    // An agent that has finished since it was opened has nothing left to show, so the list takes its place and it is forgotten: if it comes back
+    // it is a card again. The address follows only while this tab is on show, since a list can arrive after the tab was left.
+    if (route.length > 0 && !agent) {
+      route = [];
+      if (!panel.element.closest("[hidden]")) history.replaceState(null, "", "#/agents/running");
+    }
     const key = agent ? route.join("\n") : "";
     if (key !== shownKey) opened.clear();
     askButton.hidden = Boolean(agent) || snapshot.agents.length === 0;
+    // What the status command says it could not look at goes under the list. Without it a list that is short for a stated reason reads as complete.
+    const unseen = snapshot.limitations.length > 0 ? [fold(opened, "What this list cannot see", snapshot.limitations.length, () => h("ul", { class: "agent-limits" }, snapshot.limitations.map((text) => h("li", { text }))))] : [];
     if (agent) holder.replaceChildren(renderAgent({ agent, opened, onAsk: () => askForUpdate(agent) }));
-    else if (snapshot.agents.length > 0) holder.replaceChildren(rise(h("div", { class: "card-grid wide" }, snapshot.agents.map(agentCard))));
-    else holder.replaceChildren(notice({ glyph: "bot", title: "No agents are running", body: "Start a chat or hand off a prompt and it will appear here.", action: toolButton(tools, "agents run-interactive", { label: "Start a chat", tone: "primary" }) }));
+    else if (snapshot.agents.length > 0) holder.replaceChildren(rise(h("div", { class: "card-grid wide" }, snapshot.agents.map(agentCard))), ...unseen);
+    else holder.replaceChildren(notice({ glyph: "bot", title: "No agents are running", body: "Start a chat or hand off a prompt and it will appear here.", action: toolButton(tools, "agents run-interactive", { label: "Start a chat", tone: "primary" }) }), ...unseen);
     if (key === shownKey) return;
     if (agent) replay(holder, "health-swap");
     if (shownKey !== null && panel.element.getBoundingClientRect().top < holder.closest(".stage").getBoundingClientRect().top) panel.element.scrollIntoView({ block: "start" });
@@ -68,19 +75,43 @@ export function createRunningSection({ activity, tools }) {
   const panel = createLivePanel({
     title: "Agents right now", path: "agents status", extra: ["--json"], locked: ["output_format", "output", "force", "btw"], skeletonShape: "card", actions: [askButton],
     render: (data, { setCount }) => {
-      snapshot = { backend: data?.backend, server: data?.server, agents: data?.agents ?? [] };
-      setCount(`${plural(snapshot.agents.length, "agent")} · ${plural(data?.coverage?.sessions_inspected ?? 0, "session")} checked`);
+      snapshot = { backend: data?.backend, server: data?.server, agents: data?.agents ?? [], limitations: data?.limitations ?? [], observedAt: Date.parse(data?.observed_at) };
+      // T3 Code has projects where the other backends have sessions. The time is the snapshot's own, so a list left on screen shows its age.
+      const coverage = data?.coverage ?? {};
+      const checked = "projects" in coverage ? plural(coverage.projects, "project") : plural(coverage.sessions_inspected ?? 0, "session");
+      setCount(`${plural(snapshot.agents.length, "agent")} · ${checked} checked${Number.isNaN(snapshot.observedAt) ? "" : ` · as of ${formatClock(snapshot.observedAt / 1000)}`}`);
       paint();
       return holder;
     },
   });
 
+  // "Right now" is the point of this list, so one that is over a minute old when the tab is arrived at is asked for again. The first look can
+  // be that old too, since it shares Home's copy. Age is judged by the snapshot's own time: a browser clock that disagrees with the server's
+  // costs one extra run per arrival, and never a loop.
+  let reloading = false;
+  async function arrive() {
+    const old = () => Date.now() - snapshot?.observedAt > FRESH_MILLISECONDS;
+    if (!snapshot) await panel.load();
+    else if (!old()) return panel.ensure();
+    if (!old() || reloading) return;
+    reloading = true;
+    await panel.load(true);
+    reloading = false;
+  }
+
   const skillCombo = createCombo({
     large: true, glyph: "sparkle", label: "Add a skill", placeholder: "Add a skill — type to search", emptyText: "No skill matches that.",
     suggest: async (text) => {
-      skills ??= await query(["agents", "add-skill", "--list", "--json"]).then(({ json }) => Object.entries(json ?? {}).map(([name, detail]) => ({ name, ...detail })));
+      // Asked once and kept, failure included: a list that did not load says so once and reads as empty, instead of running again on every keystroke.
+      skills ??= query(["agents", "add-skill", "--list", "--json"]).then(
+        ({ json }) => Object.entries(json ?? {}).map(([name, detail]) => ({ name, ...detail })),
+        (error) => {
+          toast(`The skill list didn't load: ${error.message}`);
+          return [];
+        },
+      );
       const word = text.trim().toLowerCase();
-      return skills
+      return (await skills)
         .filter((skill) => `${skill.name} ${skill.group} ${skill.source}`.toLowerCase().includes(word))
         .map((skill) => ({ value: skill.name, label: skill.name, hint: skill.source, lead: avatar(skill.name, 32), trail: pill(skill.group, ""), fill: false }));
     },
@@ -97,8 +128,10 @@ export function createRunningSection({ activity, tools }) {
     asked = true;
     try {
       const { json } = await query(["agents", "add-mcp", "--list", "--json"]);
+      const names = Array.isArray(json) ? json : [];
       servers.replaceChildren(
-        ...(Array.isArray(json) ? json : []).map((name) => h("button", { class: "chip-button", type: "button", onclick: () => tools.open("agents add-mcp", { preset: { requested_mcp_servers: name } }) }, h("span", { text: name }))),
+        ...names.map((name) => h("button", { class: "chip-button", type: "button", onclick: () => tools.open("agents add-mcp", { preset: { requested_mcp_servers: name } }) }, h("span", { text: name }))),
+        ...(names.length === 0 ? [h("span", { class: "dim", text: "No tool servers in your catalogs yet." })] : []),
       );
     } catch (error) {
       servers.replaceChildren(h("span", { class: "dim", text: `The server list didn't load: ${error.message}` }));
@@ -117,12 +150,19 @@ export function createRunningSection({ activity, tools }) {
       h("div", { class: "panel-body teach" }, h("div", {}, sectionHead("Skills"), skillCombo.element), h("div", {}, sectionHead("Tool servers"), servers)),
     ),
   );
+  // Both lists come from catalogs that a finished run or a saved file may have changed, so they are asked for again when the data is marked stale.
+  on("data-stale", () => {
+    skills = null;
+    asked = false;
+    if (!element.closest("[hidden]")) loadServers();
+  });
+
   return {
     element,
     show(next) {
       route = next;
-      panel.ensure();
       if (snapshot) paint();
+      arrive();
       if (!asked) loadServers();
     },
   };

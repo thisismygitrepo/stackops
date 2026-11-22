@@ -28,15 +28,19 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
 
   const dirty = () => editor !== null && editor.value !== baseline;
   const leave = (after) => confirmAction({ title: "Leave without saving?", body: `What you changed in ${fileName} has not been saved.`, confirm: "Discard changes", tone: "danger" }).then((yes) => yes && after());
+  // Unsaved text outlives a move to another page (⌘K, Back, Forward): `holdsWork` keeps the window open over it. A reload or a closed tab is the browser's to question.
   const dialog = openDialog({
-    label: fileName, size: "file-view",
+    label: fileName, size: "file-view", holdsWork: dirty,
     canDismiss: () => {
       if (dirty()) leave(() => dialog.close());
       return !dirty();
     },
   });
+  const warnUnsaved = (event) => dirty() && event.preventDefault();
+  window.addEventListener("beforeunload", warnUnsaved);
+  dialog.closed.then(() => window.removeEventListener("beforeunload", warnUnsaved));
   const bar = h("div", { class: "file-bar" });
-  const scroll = h("div", { class: "file-scroll", tabindex: "0" }, skeleton(4, "row"));
+  const scroll = h("div", { class: "file-scroll", tabindex: "0" });
   const picker = segmented([["formatted", "Easy to read"], ["plain", "As written"]], (value) => {
     view = value;
     read();
@@ -48,6 +52,20 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
   });
   const removeButton = remove && button({ label: "Remove", glyph: "trash", title: `Remove this ${label.one}. You are shown what changes first.`, onclick: async () => (await remove()) && dialog.close() });
   if (removeButton) removeButton.classList.add("caution");
+
+  function load() {
+    editor = null;
+    bar.replaceChildren();
+    scroll.classList.remove("editing");
+    scroll.replaceChildren(...skeleton(4, "row"));
+    api.file(path).then(
+      (loaded) => {
+        file = loaded;
+        read();
+      },
+      (error) => scroll.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "This could not be opened", body: error.message })),
+    );
+  }
 
   function read() {
     editor = null;
@@ -66,6 +84,8 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
     // Compared with what the box itself holds, since a browser may hand line endings back differently from how the file had them.
     baseline = editor.value;
     const save = button({ label: "Save", glyph: "check", tone: "primary", title: "Write these changes to the file (⌘S or Ctrl+S)", onclick: store });
+    const note = h("span", { class: "file-editing" }, icon("pencil", 14), h("span", { text: "Editing · the file only changes when you save" }));
+    let conflicted = false;
     save.disabled = true;
 
     async function store() {
@@ -73,7 +93,13 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
       try {
         file = await api.saveFile({ path, text: editor.value, version: file.version });
       } catch (error) {
-        save.disabled = false;
+        // A 409 means something else wrote to the file since it was opened. Save stays off from then on, since taking the newer version here
+        // would silently undo that other write, and Cancel fetches what the file holds now.
+        if (error.status === 409) {
+          conflicted = true;
+          note.classList.add("conflict");
+          note.replaceChildren(icon("alert", 14), h("span", { text: "Not saved: the file changed on disk. Copy what you need, then Cancel shows what it holds now." }));
+        } else save.disabled = false;
         return toast(error.message);
       }
       toast(`Saved ${fileName}.`, "info");
@@ -81,18 +107,14 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
       read();
     }
 
-    editor.addEventListener("input", () => (save.disabled = !dirty()));
+    editor.addEventListener("input", () => (save.disabled = conflicted || !dirty()));
     editor.addEventListener("keydown", (event) => {
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "s") return;
       event.preventDefault();
       if (!save.disabled) store();
     });
-    bar.replaceChildren(
-      h("span", { class: "file-editing" }, icon("pencil", 14), h("span", { text: "Editing · the file only changes when you save" })),
-      h("span", { class: "spacer" }),
-      button({ label: "Cancel", onclick: () => (dirty() ? leave(read) : read()) }),
-      save,
-    );
+    const back = () => (conflicted ? load() : read());
+    bar.replaceChildren(note, h("span", { class: "spacer" }), button({ label: "Cancel", onclick: () => (dirty() ? leave(back) : back()) }), save);
     scroll.classList.add("editing");
     scroll.replaceChildren(editor);
     editor.focus({ preventScroll: true });
@@ -109,11 +131,5 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
     bar,
     scroll,
   );
-  api.file(path).then(
-    (loaded) => {
-      file = loaded;
-      read();
-    },
-    (error) => scroll.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "This could not be opened", body: error.message })),
-  );
+  load();
 }

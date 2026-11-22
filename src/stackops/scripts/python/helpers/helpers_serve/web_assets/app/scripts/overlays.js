@@ -3,6 +3,8 @@ import { button } from "./widgets.js";
 
 const CLOSE_MILLISECONDS = 220;
 const stack = [];
+// Everything behind a sheet or dialog lives in here; overlays, suggestion lists and messages are attached to the body.
+const app = document.getElementById("app");
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape" || stack.length === 0) return;
@@ -10,37 +12,49 @@ document.addEventListener("keydown", (event) => {
   stack.at(-1).dismiss();
 });
 
+// From the top down, so each layer hands the focus to the one under it.
+// A design choice: a layer holding unsaved work is left open and lies over whatever page comes next, until the person saves or discards. Asking here would mean every page change waits for an answer.
 export function closeAll() {
-  for (const layer of [...stack]) layer.close();
+  for (const layer of [...stack].reverse()) if (!layer.holdsWork?.()) layer.close();
 }
 
 // `canDismiss` is asked when Escape or a click outside would close the layer, so one holding unsaved work can ask first. `close` never asks.
-function mount(backdrop, panel, dismissOnBackdrop, canDismiss = () => true) {
+// `holdsWork` says the same without asking anything: it is what `closeAll` reads, and it must have no side effects.
+function mount(backdrop, panel, dismissOnBackdrop, canDismiss = () => true, holdsWork = () => false) {
   let settle;
   const closed = new Promise((resolve) => (settle = resolve));
   // A popover would paint above the new backdrop, so it does not outlive the dialog or sheet that opens over it.
   for (const open of [...stack]) if (open.popover) open.close();
   const previousFocus = document.activeElement;
   const layer = {
+    holdsWork,
     dismiss: () => canDismiss() && layer.close(),
+    // Only the fade waits for the animation. The page, the focus and the answer are handed back straight away, so search reopens and a confirmed action starts without the wait.
     close(result) {
       const index = stack.indexOf(layer);
       if (index < 0) return;
       stack.splice(index, 1);
       backdrop.classList.add("closing");
+      app.inert = stack.some((open) => !open.popover);
+      setTimeout(() => backdrop.remove(), CLOSE_MILLISECONDS);
+      // One turn later and not in this one: an Enter that closes a layer from its keydown would otherwise also press the button the focus lands on.
       setTimeout(() => {
-        // Focus goes back only if nothing newer took it: an overlay opened straight after this one keeps the focus.
+        // Focus goes back unless something outside this layer already took it. A layer that cannot hand it back still lets go of it: a suggestion list closes when its box loses focus, and not every browser says so when the box is removed.
         const focused = document.activeElement;
-        const kept = focused === document.body || backdrop.contains(focused);
-        backdrop.remove();
-        if (kept && previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
+        if (focused === document.body || backdrop.contains(focused)) {
+          if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
+          if (backdrop.contains(document.activeElement)) document.activeElement.blur();
+        }
+        // After the focus, so a layer opened on this answer finds the focus where it belongs and hands it back there in its turn.
         settle(result);
-      }, CLOSE_MILLISECONDS);
+      });
     },
   };
   if (dismissOnBackdrop) backdrop.addEventListener("pointerdown", (event) => event.target === backdrop && layer.dismiss());
   stack.push(layer);
   document.body.append(backdrop);
+  // The dim stops the mouse; this stops the keyboard from working the page behind it.
+  app.inert = true;
   panel.tabIndex = -1;
   panel.focus({ preventScroll: true });
   return { close: layer.close, dismiss: layer.dismiss, closed };
@@ -49,18 +63,18 @@ function mount(backdrop, panel, dismissOnBackdrop, canDismiss = () => true) {
 export function openSheet({ label, wide = false }) {
   const body = h("div", { class: "sheet-body" });
   const foot = h("div", { class: "sheet-foot", hidden: true });
-  const panel = h("aside", { class: `sheet${wide ? " wide" : ""}`, role: "dialog", "aria-label": label }, body, foot);
+  const panel = h("aside", { class: `sheet${wide ? " wide" : ""}`, role: "dialog", "aria-label": label, "aria-modal": "true" }, body, foot);
   const backdrop = h("div", { class: "backdrop side" }, panel);
   const layer = mount(backdrop, panel, true);
   panel.prepend(h("button", { class: "icon-btn sheet-close", type: "button", "aria-label": "Close", onclick: () => layer.close() }, icon("close", 16)));
   return { body, foot, panel, ...layer };
 }
 
-export function openDialog({ label, size = "", canDismiss }) {
+export function openDialog({ label, size = "", canDismiss, holdsWork }) {
   const body = h("div", { class: "dialog-body" });
   const panel = h("div", { class: `dialog ${size}`, role: "dialog", "aria-label": label, "aria-modal": "true" }, body);
   const backdrop = h("div", { class: "backdrop center" }, panel);
-  return { body, panel, ...mount(backdrop, panel, true, canDismiss) };
+  return { body, panel, ...mount(backdrop, panel, true, canDismiss, holdsWork) };
 }
 
 export function confirmAction({ title, body, confirm, tone = "primary" }) {
@@ -76,24 +90,36 @@ export function confirmAction({ title, body, confirm, tone = "primary" }) {
 export function openPopover(anchor, content, { align = "end" } = {}) {
   const panel = h("div", { class: "popover", role: "dialog" }, content);
   document.body.append(panel);
+  // Under the button, or over it when there is more room there, and always inside the window: a panel that fits on neither side lies over its button, and one taller than the window scrolls.
   const place = () => {
     const box = anchor.getBoundingClientRect();
     const width = panel.offsetWidth;
+    const height = panel.offsetHeight;
     const left = align === "end" ? box.right - width : box.left;
     panel.style.left = `${Math.max(12, Math.min(left, window.innerWidth - width - 12))}px`;
     const below = window.innerHeight - box.bottom;
-    if (below < panel.offsetHeight + 24 && box.top > below) {
-      panel.style.top = "auto";
-      panel.style.bottom = `${window.innerHeight - box.top + 8}px`;
-      panel.classList.add("above");
-    } else {
-      panel.style.top = `${box.bottom + 8}px`;
-      panel.style.bottom = "auto";
-    }
+    const above = below < height + 24 && box.top > below;
+    panel.classList.toggle("above", above);
+    panel.style.top = `${Math.max(12, Math.min(above ? box.top - height - 8 : box.bottom + 8, window.innerHeight - height - 12))}px`;
   };
   place();
+  // Placed again when its content grows, as when "More options" opens.
+  const resized = new ResizeObserver(place);
+  resized.observe(panel);
   const outside = (event) => {
     if (!(event.target instanceof Element) || panel.contains(event.target) || anchor.contains(event.target) || event.target.closest(".combo-list")) return;
+    layer.close();
+  };
+  // The popover follows its button when the page scrolls, and goes when the button leaves the window.
+  const follow = (event) => {
+    if (event.target instanceof Element && (panel.contains(event.target) || event.target.closest(".combo-list"))) return;
+    const box = anchor.getBoundingClientRect();
+    if (box.bottom < 0 || box.top > window.innerHeight) layer.close();
+    else place();
+  };
+  // A second press on the button closes the popover. This runs ahead of the button's own handler, which would open another one.
+  const toggle = (event) => {
+    event.stopImmediatePropagation();
     layer.close();
   };
   const layer = {
@@ -105,8 +131,15 @@ export function openPopover(anchor, content, { align = "end" } = {}) {
       stack.splice(index, 1);
       document.removeEventListener("pointerdown", outside, true);
       window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", follow, true);
+      anchor.removeEventListener("click", toggle, true);
+      resized.disconnect();
       panel.classList.add("closing");
       anchor.classList.remove("open");
+      // Focus held inside goes back to the button, which also closes a suggestion list one of the popover's boxes had open.
+      // At once, unlike a sheet or dialog: a dialog opened straight after has to find the focus on the button. A design choice with a known edge: a popover closed from an Enter keydown, which nothing does today, would be opened again by that same key press.
+      if (panel.contains(document.activeElement)) anchor.focus({ preventScroll: true });
+      if (panel.contains(document.activeElement)) document.activeElement.blur();
       setTimeout(() => panel.remove(), CLOSE_MILLISECONDS);
     },
   };
@@ -114,5 +147,10 @@ export function openPopover(anchor, content, { align = "end" } = {}) {
   anchor.classList.add("open");
   document.addEventListener("pointerdown", outside, true);
   window.addEventListener("resize", place);
-  return { close: layer.close, place };
+  window.addEventListener("scroll", follow, true);
+  anchor.addEventListener("click", toggle, true);
+  // The popover is the last thing in the page, so Tab from its button would never reach it: focus starts inside, unless the caller puts it on a control of its own.
+  panel.tabIndex = -1;
+  panel.focus({ preventScroll: true });
+  return { close: layer.close };
 }

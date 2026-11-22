@@ -3,6 +3,8 @@
 .backdrop.side { justify-content: flex-end; padding: 12px; }
 .backdrop.center { align-items: flex-start; justify-content: center; padding: 11vh 16px 16px; }
 .backdrop.closing { animation: fade-out 0.22s forwards; }
+/* A closing layer still covers what is under it but its controls take no clicks: the second click of a double click must not press a button twice, nor reach the page behind. */
+.backdrop.closing > *, .popover.closing > * { pointer-events: none; }
 
 .sheet {
   position: relative; display: flex; flex-direction: column; width: min(520px, 100%); max-height: 100%; background: var(--panel-solid); border: 1px solid var(--line-strong);
@@ -26,7 +28,7 @@
 @keyframes dialog-in { from { opacity: 0; transform: translateY(-14px) scale(0.95); } }
 @keyframes dialog-out { to { opacity: 0; transform: translateY(-8px) scale(0.97); } }
 
-.popover { position: fixed; z-index: 90; padding: 18px; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 20px; box-shadow: var(--shadow-pop); transform-origin: top right; animation: popover-in 0.32s var(--spring); }
+.popover { position: fixed; z-index: 90; max-height: calc(100vh - 24px); padding: 18px; overflow-y: auto; overscroll-behavior: contain; outline: none; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 20px; box-shadow: var(--shadow-pop); transform-origin: top right; animation: popover-in 0.32s var(--spring); }
 .popover.above { transform-origin: bottom right; }
 .popover.closing { animation: fade-out 0.2s forwards; }
 @keyframes popover-in { from { opacity: 0; transform: scale(0.9) translateY(-8px); } }

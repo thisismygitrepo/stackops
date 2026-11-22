@@ -13,7 +13,6 @@ const MY_LAYOUTS = { title: "your layouts", kind: "layouts" };
 const TERMINAL_TOOLS = ["devops config setup multiplexer", "devops config terminal config-shell", "devops config terminal starship-theme", "devops config terminal wezterm-theme", "devops config terminal ghostty-theme"];
 
 export function createSessionsSpace({ activity, tools }) {
-  let selectors = [];
   // The selector, not the name: a name can be in your layouts and in a project's at once, and only the selector tells them apart.
   const launch = (layout) =>
     activity.start({ title: `Launch ${layout.name}`, emoji: "🏃", arguments: ["terminal", "run", "--choose-layouts", layout.selector], interactive: true, reveal: true }).catch((error) => toast(error.message));
@@ -40,7 +39,11 @@ export function createSessionsSpace({ activity, tools }) {
       h("footer", {}, pill(layout.selector.split(":")[0], ""), launchButton),
     );
     card.addEventListener("click", (event) => !launchButton.contains(event.target) && view());
-    card.addEventListener("keydown", (event) => event.key === "Enter" && event.target === card && view());
+    card.addEventListener("keydown", (event) => {
+      if (event.target !== card || (event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      view();
+    });
     return card;
   }
 
@@ -49,7 +52,6 @@ export function createSessionsSpace({ activity, tools }) {
     actions: [editButton(activity, MY_LAYOUTS, { label: "Edit my layouts", small: true })],
     render: (data, { setCount }) => {
       const items = data?.layouts ?? [];
-      selectors = items.map((layout) => layout.selector);
       setCount(items.length ? plural(items.length, "layout") : "");
       // The CLI's template command writes into the working folder, which this panel does not read; editing your layouts file is what puts one here.
       if (items.length === 0) return notice({ glyph: "layers", title: "No saved layouts", body: "A layout is a set of tabs and panes you can start in one click. Your layouts file starts from an example the first time you edit it.", action: editButton(activity, MY_LAYOUTS, { label: "Edit my layouts" }) });
@@ -57,7 +59,7 @@ export function createSessionsSpace({ activity, tools }) {
     },
   });
 
-  const running = createRunningPanel({ activity, savedLayouts: () => selectors });
+  const running = createRunningPanel({ activity });
 
   // Filled in to land in your layouts file, which "Saved layouts" reads; left alone, the command writes a file into the working folder.
   const saveAll = async () => tools.open("terminal export", { preset: { all_sessions: "on", output_path: (await query(["terminal", "path"])).json.user.path, merge: "on" } });

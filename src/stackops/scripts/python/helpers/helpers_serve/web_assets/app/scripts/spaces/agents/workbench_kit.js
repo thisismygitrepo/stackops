@@ -6,6 +6,8 @@ import { button, emojiTile, iconButton, notice, sectionHead, skeleton, stat } fr
 import { friendlyText, titleOf } from "../../words.js";
 
 const INSTALL_TOOL = "devops software install";
+const SAVED_PROFILES_FOLDER = "browsers-profiles";
+const START_SETTLE_MILLISECONDS = 3000;
 
 // Like createLivePanel, for views that join several read-only commands or must turn a failed command into a "not set up yet" explanation.
 // It never offers an Options popover, so nothing a person toggles here can change what the commands do.
@@ -58,6 +60,20 @@ export function createStatePanel({ title, load, render, explain = () => null, ac
   };
 }
 
+export const isRunning = (activity, path) => activity.runs().some((run) => run.exit_code === null && run.arguments.join(" ").startsWith(path));
+
+// A tool that keeps serving (desktop control, a model server) never ends, so the refresh signal that follows a finished run never comes for it.
+// The panel that says whether it is up therefore looks again a few seconds after a run of that tool starts, on show or not.
+// A design choice: one look and no polling. A tool slower to come up than that still reads as off until the refresh button is pressed.
+export function reloadAfterStart(activity, path, panel) {
+  let alive = false;
+  on("runs", () => {
+    const now = isRunning(activity, path);
+    if (now && !alive) setTimeout(() => panel.load(true), START_SETTLE_MILLISECONDS);
+    alive = now;
+  });
+}
+
 export function areaHead({ title, lede, actions = [] }) {
   return h("header", { class: "wb-head" }, h("div", { class: "wb-head-text" }, h("h2", { text: title }), h("p", { text: lede })), h("div", { class: "view-actions" }, actions));
 }
@@ -100,6 +116,17 @@ export function stateCard({ tone = "", glyph, title, body, children = [], action
 export function pathText(path) {
   const parts = tildify(String(path), state.boot.home).split("/");
   return h("code", { class: "path wb-path", title: String(path) }, parts.flatMap((part, index) => (index < parts.length - 1 ? [`${part}/`, h("wbr")] : [part])));
+}
+
+// The top of a .wb-card: a tile, a name with one dim line under it, and a pill where the card has a state.
+export function cardHead(tile, title, sub, pill) {
+  return h("header", {}, tile, h("div", {}, h("h3", { text: title }), h("span", { class: "dim", text: sub })), pill);
+}
+
+// The name of a profile saved for agents: the last part of a path inside the saved-profiles folder. Any other profile has none.
+export function savedProfileName(path) {
+  const parts = String(path).split(/[\\/]/);
+  return parts.includes(SAVED_PROFILES_FOLDER) ? parts.at(-1) : null;
 }
 
 export function statusPill(label, tone, glyph) {

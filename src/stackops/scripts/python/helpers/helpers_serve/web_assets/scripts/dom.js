@@ -122,10 +122,14 @@ export function splitArguments(text) {
   return tokens;
 }
 
+// Rounded first and split into units after, so a part never shows as "60".
 export function formatDuration(seconds) {
-  if (seconds < 60) return `${seconds < 10 ? seconds.toFixed(1) : Math.round(seconds)}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
-  return `${Math.floor(seconds / 3600)}h ${Math.round((seconds % 3600) / 60)}m`;
+  if (seconds < 9.95) return `${seconds.toFixed(1)}s`;
+  const whole = Math.round(seconds);
+  if (whole < 60) return `${whole}s`;
+  if (whole < 3600) return `${Math.floor(whole / 60)}m ${whole % 60}s`;
+  const minutes = Math.round(whole / 60);
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 
 export function formatClock(epochSeconds) {
@@ -148,7 +152,7 @@ const toasts = h("div", { class: "toasts", role: "status" });
 
 export function toast(message, tone = "error") {
   if (!toasts.isConnected) document.body.append(toasts);
-  const note = h("div", { class: `toast ${tone}` }, h("span", { text: message }));
+  const note = h("div", { class: `toast ${tone}`, title: "Click to dismiss", onclick: () => note.remove() }, h("span", { text: message }));
   toasts.append(note);
   setTimeout(() => note.remove(), tone === "error" ? 9000 : 4000);
 }

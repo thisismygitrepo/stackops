@@ -73,12 +73,19 @@ export function createPromptsSection({ activity, tools }) {
   // A deliberate pick (a click, Enter, or a link) also moves a narrow window over to the reader and puts the prompt in the address.
   function select(prompt, deliberate) {
     selected = keyOf(prompt);
-    for (const item of list.children) item.setAttribute("aria-selected", String(item.dataset.key === selected));
+    for (const item of list.children) {
+      item.setAttribute("aria-selected", String(item.dataset.key === selected));
+      item.tabIndex = item.dataset.key === selected ? 0 : -1;
+    }
     reader.show(prompt, term);
-    if (!deliberate) return;
-    panes.dataset.pane = "reader";
-    // In a narrow window the reader takes the list's place in a page that may be scrolled far down that list.
-    if (list.offsetParent === null && reader.element.getBoundingClientRect().top < panes.closest(".stage").getBoundingClientRect().top) reader.element.scrollIntoView({ block: "start" });
+    if (deliberate) {
+      panes.dataset.pane = "reader";
+      // In a narrow window the reader takes the list's place in a page that may be scrolled far down that list.
+      if (list.offsetParent === null && reader.element.getBoundingClientRect().top < panes.closest(".stage").getBoundingClientRect().top) reader.element.scrollIntoView({ block: "start" });
+    }
+    // Once the address names a prompt it follows every move (arrow keys, a search, a filter), since this tab is come back to by its address.
+    // An address that is not this tab's is left alone: a list that arrives after the tab was left must not rewrite another page's.
+    if (!deliberate && !location.hash.startsWith(`${ADDRESS}/`)) return;
     const twin = catalog.prompts.some((other) => other.name === prompt.name && other.source !== prompt.source);
     history.replaceState(null, "", `${ADDRESS}/${encodeURIComponent(prompt.name)}${twin ? `/${encodeURIComponent(prompt.source)}` : ""}`);
   }
@@ -91,12 +98,17 @@ export function createPromptsSection({ activity, tools }) {
       paint();
     });
     chips.hidden = groups.length === 0;
+    // The chips are rebuilt, so one pressed with the keyboard is given its focus back.
+    const focused = [...chips.children].indexOf(document.activeElement);
     chips.replaceChildren(...groups);
+    chips.children[focused]?.focus({ preventScroll: true });
     const shown = shownPrompts();
     list.replaceChildren(...shown.map((prompt) => promptRow(prompt, { term, chosen: keyOf(prompt) === selected, onPick: (picked) => select(picked, true) })));
     panes.classList.toggle("empty", shown.length === 0);
-    if (shown.length === 0) blank.replaceChildren(emptyNotice({ catalog, source, term, onCreate: create, onShowAll: showAll }));
-    else select(shown.find((prompt) => keyOf(prompt) === selected) ?? shown[0], false);
+    if (shown.length > 0) return select(shown.find((prompt) => keyOf(prompt) === selected) ?? shown[0], false);
+    blank.replaceChildren(emptyNotice({ catalog, source, term, onCreate: create, onShowAll: showAll }));
+    // With nothing on show the address stops naming a prompt, so coming back to this tab keeps the search instead of reopening that prompt.
+    if (location.hash.startsWith(`${ADDRESS}/`)) history.replaceState(null, "", ADDRESS);
   }
 
   function showAll() {
@@ -108,8 +120,9 @@ export function createPromptsSection({ activity, tools }) {
     paint();
   }
 
+  // Waits while this tab is not on show: the next `show` asks again, and a prompt must not be opened, or missed out loud, behind another page.
   function openWanted() {
-    if (!catalog || !wanted) return;
+    if (!catalog || !wanted || panel.element.closest("[hidden]")) return;
     const [name, place] = wanted;
     wanted = null;
     const prompt = catalog.prompts.find((candidate) => candidate.name === name && (!place || candidate.source === place));

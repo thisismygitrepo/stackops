@@ -30,7 +30,10 @@ def read_text_file(path: str) -> TextFile | FileProblem:
         return FileProblem(status=404, message=f"""There is no file at {path}. It may be a folder, or it was removed.""")
     if target.stat().st_size > MAX_EDITABLE_FILE_BYTES:
         return FileProblem(status=413, message=f"""This file is larger than {MAX_EDITABLE_FILE_BYTES // 1024} KB, which is more than is opened here.""")
-    content = target.read_bytes()
+    try:
+        content = target.read_bytes()
+    except PermissionError:
+        return FileProblem(status=403, message="This file cannot be read by your user, so it is not opened here.")
     try:
         text = content.decode(encoding="utf-8")
     except UnicodeDecodeError:
@@ -55,8 +58,15 @@ def write_text_file(body: object) -> TextFile | FileProblem:
             # The version is the hash of what the editor was opened on, so a save never silently replaces what something else wrote meanwhile.
             if current.version != version:
                 return FileProblem(status=409, message="This file changed on disk after it was opened. Reopen it to see what it holds now, then edit again.")
+            # A browser's text box hands back LF line endings only. A file with Windows line endings keeps them, so an edit does not rewrite every line.
+            # Not strictly correct: a file that mixed both kinds comes out with Windows endings throughout.
+            if "\r\n" in current.text:
+                text = text.replace("\r\n", "\n").replace("\n", "\r\n")
     content = text.encode(encoding="utf-8")
     if len(content) > MAX_EDITABLE_FILE_BYTES:
         return FileProblem(status=413, message=f"""That is more than the {MAX_EDITABLE_FILE_BYTES // 1024} KB that is saved from here.""")
-    Path(path).write_bytes(content)
+    try:
+        Path(path).write_bytes(content)
+    except PermissionError:
+        return FileProblem(status=403, message="This file cannot be changed by your user, so it was not saved.")
     return TextFile(path=path, text=text, version=hashlib.sha256(content).hexdigest())

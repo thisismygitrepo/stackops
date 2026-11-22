@@ -23,7 +23,7 @@ export function createJobsPanel({ tools }) {
       { title: job.folder },
       avatar(job.name, 34),
       h("div", {}, h("strong", { text: job.name }), h("span", { class: "dim", text: size })),
-      job.agents > 0 && button({ label: "Collect results", glyph: "download", small: true, onclick: collect }),
+      job.agents > 0 && button({ label: "Join the pieces", glyph: "download", small: true, title: "Puts every agent's share of the list, as the agent left it, back into one file.", onclick: collect }),
     );
   }
 
@@ -40,7 +40,7 @@ export function createJobsPanel({ tools }) {
       if (jobs.length === 0) {
         return notice({
           glyph: "lanes", title: "No jobs here yet",
-          body: `Splitting a job writes it to ${JOBS_FOLDER} at the top of a project, and it then shows up here with its results ready to collect. Nothing is there under ${tildify(state.settings.workingDirectory, state.boot.home)}.`,
+          body: `Splitting a job writes it to ${JOBS_FOLDER} at the top of a project, and it then shows up here, ready for its pieces to be joined back into one file. Nothing is there under ${tildify(state.settings.workingDirectory, state.boot.home)}.`,
         });
       }
       return h("div", { class: "wb-models" }, previewList(jobs, JOB_PREVIEW, row));

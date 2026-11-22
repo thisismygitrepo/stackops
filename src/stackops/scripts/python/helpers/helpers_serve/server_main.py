@@ -54,4 +54,8 @@ def run_server(host: str, port: int | None, open_browser: bool, stackops_executa
     if open_browser:
         webbrowser.open(url)
     config = uvicorn.Config(app, log_level="warning", access_log=False, ws="websockets-sansio", timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_SECONDS)
-    uvicorn.Server(config).run(sockets=[listener])
+    try:
+        uvicorn.Server(config).run(sockets=[listener])
+    except KeyboardInterrupt:
+        # Once it has shut down, uvicorn raises the Ctrl+C it caught again. That is the normal way to stop this server, so it ends quietly with exit code 0.
+        pass

@@ -3,11 +3,12 @@ import { state } from "/assets/scripts/state.js";
 import { RISKS, adminHow, codeNodes, plainNote, sizeText } from "./disk_cleanup_words.js";
 import { openDialog } from "./overlays.js";
 import { button, glyphTile } from "./widgets.js";
+import { plural } from "./words.js";
 
 // The last stop before anything is deleted: every place by name, what is lost with it, and the total. Resolves to true only on an explicit yes.
 export function confirmCleanup({ items, bytes }) {
   const dialog = openDialog({ label: "Confirm cleanup", size: "cleanup-confirm" });
-  const count = `${items.length} place${items.length === 1 ? "" : "s"}`;
+  const count = plural(items.length, "place");
   const risky = items.filter((target) => target.risk === "danger");
   const admin = items.filter((target) => target.requires_root);
   const unsized = items.filter((target) => target.phase !== "done" || !target.sized);

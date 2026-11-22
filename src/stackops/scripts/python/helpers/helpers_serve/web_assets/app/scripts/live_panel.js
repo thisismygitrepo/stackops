@@ -84,16 +84,17 @@ export function createLivePanel({ title, path, extra = [], locked = [], render, 
     );
   });
 
+  // No `fresh` after a stale mark: the cache was emptied by it, so a plain load already runs the command, and panels that show the same one share that run.
   on("data-stale", () => {
     stale = true;
-    if (element.isConnected && !element.closest("[hidden]")) load(true);
+    if (element.isConnected && !element.closest("[hidden]")) load();
   });
 
   return {
     element,
     load,
     ensure() {
-      if (!loaded || stale) load(stale);
+      if (!loaded || stale) load();
     },
   };
 }

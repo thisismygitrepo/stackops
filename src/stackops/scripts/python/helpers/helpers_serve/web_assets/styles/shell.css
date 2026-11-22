@@ -59,6 +59,8 @@
 .run-indicator:hover { color: var(--text); background: var(--raised); }
 
 .dock { display: flex; flex: none; flex-direction: column; height: var(--dock-height, 320px); min-height: 0; background: var(--surface); border-top: 1px solid var(--hairline); }
+/* A height saved in a taller window is held to this one, with the same room left above as a drag leaves. */
+.dock[data-mode="open"] { max-height: calc(100vh - 140px); }
 .dock[data-mode="collapsed"] { height: auto; }
 .dock[data-mode="collapsed"] .dock-body, .dock[data-mode="collapsed"] .dock-resizer { display: none; }
 .dock[data-mode="max"] { flex: 1; height: auto; }
@@ -68,13 +70,15 @@
 .dock-head { display: flex; align-items: center; gap: 4px; height: 36px; padding: 0 8px 0 4px; background: var(--plane); border-bottom: 1px solid var(--hairline); }
 .dock-tabs { display: flex; flex: 1; gap: 2px; min-width: 0; height: 100%; padding-top: 4px; overflow-x: auto; scrollbar-width: none; }
 .dock-tab {
-  display: flex; flex: none; align-items: center; gap: 7px; max-width: 280px; padding: 0 4px 0 10px; font: 12px var(--mono); color: var(--text-secondary);
+  display: flex; flex: none; align-items: center; max-width: 280px; padding-right: 4px; font: 12px var(--mono); color: var(--text-secondary);
   border: 1px solid transparent; border-bottom: 0; border-radius: 7px 7px 0 0;
 }
+.dock-tab-button { display: flex; align-items: center; gap: 7px; min-width: 0; height: 100%; padding: 0 7px 0 10px; border-radius: 6px 0 0 0; }
+.dock-tab-button:focus-visible { outline-offset: -2px; }
 .dock-tab:hover { color: var(--text); background: var(--raised); }
-.dock-tab[aria-selected="true"] { color: var(--text); background: var(--surface); border-color: var(--hairline); }
+.dock-tab:has([aria-selected="true"]) { color: var(--text); background: var(--surface); border-color: var(--hairline); }
 .dock-tab .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dock-tab .close { display: grid; place-items: center; width: 18px; height: 18px; color: var(--text-muted); border-radius: 4px; }
+.dock-tab .close { display: grid; flex: none; place-items: center; width: 18px; height: 18px; color: var(--text-muted); border-radius: 4px; }
 .dock-tab .close:hover { color: var(--text); background: var(--sunken); }
 .status { display: inline-grid; place-items: center; width: 14px; height: 14px; }
 .status.ok { color: var(--good); }
@@ -85,9 +89,9 @@
 .dock-pane.active { visibility: visible; }
 .dock-pane .xterm { height: 100%; }
 .dock-pane .xterm-viewport { background: transparent !important; }
-.dock-error { padding: 16px; color: #e66767; font: 13px var(--mono); }
+.console-error { padding: 16px; color: #e66767; font: 13px var(--mono); }
 
-.palette-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: start center; padding-top: 12vh; background: rgba(0, 0, 0, 0.32); backdrop-filter: blur(3px); }
+.palette-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: start center; padding-top: 12vh; background: rgba(0, 0, 0, 0.45); }
 .palette { width: min(660px, 92vw); overflow: hidden; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: var(--shadow-pop); }
 .palette-field { display: flex; align-items: center; gap: 10px; padding: 0 16px; color: var(--text-muted); border-bottom: 1px solid var(--hairline); }
 .palette-field input { flex: 1; height: 48px; font-size: 15px; background: none; border: 0; outline: none; }

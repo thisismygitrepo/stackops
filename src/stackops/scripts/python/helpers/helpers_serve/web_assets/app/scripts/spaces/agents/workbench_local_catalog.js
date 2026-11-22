@@ -3,7 +3,7 @@ import { createLivePanel } from "../../live_panel.js";
 import { rise } from "../../motion.js";
 import { avatar, button, copyChip, notice, pill } from "../../widgets.js";
 import { humanize, plural, relativeTime } from "../../words.js";
-import { compact } from "./workbench_kit.js";
+import { cardHead, compact } from "./workbench_kit.js";
 
 const outside = (href, label) => h("a", { class: "link wb-outside", href, target: "_blank", rel: "noopener noreferrer" }, h("span", { text: label }), icon("external", 12));
 const gigabytes = (size) => (size ? (size.minimum_gb === size.maximum_gb ? `${size.minimum_gb} GB` : `${size.minimum_gb}–${size.maximum_gb} GB`) : "");
@@ -13,7 +13,7 @@ function ollamaCard(model) {
   return h(
     "article",
     { class: "wb-card lit" },
-    h("header", {}, avatar(model.name, 40), h("div", {}, h("h3", { text: model.name }), h("span", { class: "dim", text: `${model.pulls} downloads · updated ${model.updated}` }))),
+    cardHead(avatar(model.name, 40), model.name, `${model.pulls} downloads · updated ${model.updated}`),
     h("p", { class: "wb-clamp", title: model.description, text: model.description }),
     h(
       "div",
@@ -29,7 +29,7 @@ function huggingFaceCard(model, tools) {
   return h(
     "article",
     { class: "wb-card lit" },
-    h("header", {}, avatar(owner || name, 40), h("div", {}, h("h3", { text: name }), h("span", { class: "dim", text: owner }))),
+    cardHead(avatar(owner || name, 40), name, owner),
     h("div", { class: "chip-row" }, pill(`${(model.parameters / 1e9).toFixed(1)} billion parameters`), model.task && pill(humanize(model.task))),
     h("span", { class: "dim", text: `${compact(model.downloads)} downloads · updated ${relativeTime(model.updated)}` }),
     h(

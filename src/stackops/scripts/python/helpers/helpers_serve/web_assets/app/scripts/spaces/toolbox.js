@@ -36,12 +36,14 @@ export function createToolboxSpace({ tools }) {
     return node.kind === "command" ? [node] : node.children.flatMap(everyTool);
   }
 
+  // A design choice: filtered results do not rise and are not cut short. Rising restarted on every keystroke and left the results blank while
+  // typing, and every match is drawn so the count in the heading is the number of cards under it.
   function paint() {
     if (term) {
       const found = everyTool(current).filter((node) => `${titleOf(node)} ${trailOf(node)} ${node.summary} ${node.path}`.toLowerCase().includes(term));
       content.replaceChildren(
         found.length
-          ? h("section", { class: "block" }, sectionHead(`${plural(found.length, "tool")} found`), rise(h("div", { class: "tool-grid" }, found.slice(0, 80).map((node) => toolCard(tools, node, `${titleOf(node)}${trailOf(node) ? ` · ${trailOf(node)}` : ""}`)))))
+          ? h("section", { class: "block" }, sectionHead(`${plural(found.length, "tool")} found`), h("div", { class: "tool-grid" }, found.map((node) => toolCard(tools, node, `${titleOf(node)}${trailOf(node) ? ` · ${trailOf(node)}` : ""}`))))
           : notice({ glyph: "search", title: "No tool matches", body: "Try a different word." }),
       );
       return;

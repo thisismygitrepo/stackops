@@ -1,7 +1,7 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { api, initState } from "/assets/scripts/state.js";
 import { createActivity } from "./activity.js";
-import { SPACES, VIEW_KEY } from "./catalog.js";
+import { SPACES } from "./catalog.js";
 import { openFind } from "./find_sheet.js";
 import { installPointerEffects, replay } from "./motion.js";
 import { closeAll } from "./overlays.js";
@@ -22,7 +22,13 @@ import { createSpotlight } from "./spotlight.js";
 import { createToolSheet } from "./tool_sheet.js";
 
 function parseRoute() {
-  const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).map(decodeURIComponent);
+  let parts;
+  try {
+    parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).map(decodeURIComponent);
+  } catch {
+    // The address is input from outside. One that cannot be decoded (cut off, or edited by hand) shows Home, as an unknown page does.
+    parts = [];
+  }
   const space = SPACES.find((candidate) => candidate.id === parts[0]);
   return { space: space?.id ?? "home", rest: parts.slice(1) };
 }
@@ -81,9 +87,6 @@ async function start() {
   await activity.restore();
 }
 
-if (localStorage.getItem(VIEW_KEY) === "dev") location.replace("/dev");
-else {
-  start().catch((error) => {
-    document.getElementById("app").replaceChildren(h("p", { class: "boot-note", text: `StackOps could not start: ${error.message}` }));
-  });
-}
+start().catch((error) => {
+  document.getElementById("app").replaceChildren(h("p", { class: "boot-note failed", text: `StackOps could not start: ${error.message}` }));
+});

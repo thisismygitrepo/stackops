@@ -16,12 +16,12 @@ const PLACES = [
   { id: "user", title: "Yours, everywhere" },
   { id: "library", title: "Built in" },
 ];
-const VERDICTS = { ready: ["Ready", "good", "check"], missing: ["Not created", "", null], broken: ["Needs fixing", "bad", "alert"] };
+const VERDICTS = { ready: ["Ready", "good", "check"], missing: ["Not created", "", null], absent: ["No project here", "", null], broken: ["Needs fixing", "bad", "alert"] };
 const ACTIONS = [
   { path: "agents init", blurb: "Add the instructions and settings your agents look for to a project folder." },
   { path: "agents config init", blurb: "Start a list of saved prompts, parallel workflows or tool servers." },
   { path: "agents config validate", blurb: "Make sure a list is written correctly before an agent relies on it." },
-  { path: "agents reset", blurb: "Remove what has been added to your agents. You see the plan and confirm first.", caution: "Permanent, no backup" },
+  { path: "agents reset", blurb: "Remove what has been added to your agents. It only shows the plan, and removes nothing until you switch Apply on.", caution: "Permanent, no backup" },
 ];
 
 async function inspect(kind, place, fresh) {
@@ -31,13 +31,13 @@ async function inspect(kind, place, fresh) {
     return { kind, place, verdict: "ready", path: text.slice(text.indexOf(": ") + 2).trim() };
   } catch (error) {
     const located = await query([...about, "path", kind, "--source", place], fresh).then(({ json }) => json?.path ?? "", () => "");
-    return { kind, place, verdict: /no such file/i.test(error.message) ? "missing" : "broken", path: located };
+    // The path lookup only works out where a list lives, so it fails only when that place is not there: "This project" outside of a project.
+    return { kind, place, verdict: !located ? "absent" : /no such file/i.test(error.message) ? "missing" : "broken", path: located };
   }
 }
 
 export function createSetupArea({ activity, tools, openReport }, { setStatus }) {
   function cell(check, kind, place) {
-    const [label, tone, glyph] = VERDICTS[check.verdict];
     const preset = { kind: check.kind, source: check.place };
     const broken = check.verdict === "broken";
     // Built-in lists stay read-only: a change made there is lost with the next update.
@@ -45,7 +45,7 @@ export function createSetupArea({ activity, tools, openReport }, { setStatus }) 
     return h(
       "div",
       { class: `wb-list-cell ${check.verdict}` },
-      h("div", { class: "wb-line" }, h("span", { class: "stat-label", text: place.title }), statusPill(label, tone, glyph)),
+      h("div", { class: "wb-line" }, h("span", { class: "stat-label", text: place.title }), statusPill(...VERDICTS[check.verdict])),
       check.path && pathText(check.path),
       check.verdict === "missing" && check.place !== "library" && button({ label: "Create it", glyph: "plus", small: true, onclick: () => tools.open("agents config init", { preset }) }),
       (broken || editable) &&
@@ -58,6 +58,9 @@ export function createSetupArea({ activity, tools, openReport }, { setStatus }) 
     );
   }
 
+  // The reset preview is asked for before the lists, here and on every refresh signal (panels answer that in the order they were made). The lists
+  // start nine commands at once and a browser sends six requests at a time, so the one preview would otherwise wait behind them.
+  const reset = createResetPanel({ tools, openReport });
   const lists = createStatePanel({
     title: "Lists your agents draw from",
     load: (fresh) => Promise.all(KINDS.flatMap((kind) => PLACES.map((place) => inspect(kind.id, place.id, fresh)))),
@@ -82,7 +85,6 @@ export function createSetupArea({ activity, tools, openReport }, { setStatus }) 
       );
     },
   });
-  const reset = createResetPanel({ tools, openReport });
 
   const element = h(
     "div",
@@ -98,8 +100,8 @@ export function createSetupArea({ activity, tools, openReport }, { setStatus }) 
   return {
     element,
     show() {
-      lists.ensure();
       reset.ensure();
+      lists.ensure();
     },
   };
 }

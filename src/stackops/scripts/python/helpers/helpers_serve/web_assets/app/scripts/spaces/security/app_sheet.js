@@ -61,7 +61,7 @@ export function openTargetSheet({ target, loadEngines, onScan }) {
       ["Answer came from", SOURCES[target.source]],
       ["Fingerprint", target.sha256 && copyChip(target.sha256, `${target.sha256.slice(0, 16)}…`)],
       ["Scan", target.run_id && h("a", { class: "link", href: `${SCANS_HASH}/${target.run_id}`, text: "Open the scan it was part of" })],
-      ["Notes", target.verdict !== "failed" && target.notes],
+      ["Notes", target.verdict === "failed" ? "" : target.notes],
       ["Uploaded copy", target.app_url && h("a", { class: "link", href: target.app_url, target: "_blank", rel: "noopener noreferrer", text: "Open in cloud storage" })],
     ]),
     engines,

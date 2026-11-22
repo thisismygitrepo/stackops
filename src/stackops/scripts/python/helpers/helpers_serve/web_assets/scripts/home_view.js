@@ -79,13 +79,17 @@ export function createHomeView({ dock }) {
         runs.map((run) =>
           h(
             "li",
-            { onclick: () => dock.focus(run.id) },
-            statusGlyph(run),
-            h("code", { text: run.command_line }),
-            h("span", {
-              class: "when",
-              text: `${formatClock(run.started_at)} · ${run.finished_at === null ? "running" : formatDuration(run.finished_at - run.started_at)}`,
-            }),
+            {},
+            h(
+              "button",
+              { title: "Show this run in the terminal dock", onclick: () => dock.focus(run.id) },
+              statusGlyph(run),
+              h("code", { text: run.command_line }),
+              h("span", {
+                class: "when",
+                text: `${formatClock(run.started_at)} · ${run.finished_at === null ? "running" : formatDuration(run.finished_at - run.started_at)}`,
+              }),
+            ),
           ),
         ),
       ),

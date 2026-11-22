@@ -1,5 +1,3 @@
-import { toast } from "./dom.js";
-
 const LAYOUT_KEY = "stackops-serve-layout";
 const DIRECTORY_KEY = "stackops-serve-directory";
 const listeners = new Map();
@@ -52,27 +50,32 @@ export function parseRoute() {
   return { view: "home" };
 }
 
-async function request(method, path, body) {
+// Every failure is thrown with a sentence fit to show as it is, and nothing is shown from here: the caller decides where it appears, once.
+// An answer that is not OK also carries `status`, its HTTP status number. A call cancelled through `signal` rejects with the browser's AbortError.
+async function request(method, path, body, signal) {
   const response = await fetch(path, {
     method,
+    signal,
     headers: body === undefined ? {} : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
+  }).catch((error) => {
+    if (signal?.aborted) throw error;
+    throw new Error("The StackOps server is not answering. Check that it is still running.");
   });
-  if (response.status === 401) {
-    toast("This session's access expired because the server restarted. Open the new link it printed.");
-    throw new Error("Access expired.");
-  }
   // A server error can arrive as plain text; the status message below then stands in for it.
   const payload = response.status === 204 ? null : await response.json().catch(() => null);
-  if (!response.ok) throw new Error(payload?.error ?? `${method} ${path} failed with status ${response.status}.`);
-  return payload;
+  signal?.throwIfAborted();
+  if (response.ok) return payload;
+  const message = response.status === 401 ? "This session's access expired because the server restarted. Open the new link it printed." : (payload?.error ?? `${method} ${path} failed with status ${response.status}.`);
+  throw Object.assign(new Error(message), { status: response.status });
 }
 
 export const api = {
   bootstrap: () => request("GET", "/api/bootstrap"),
   command: (path) => request("GET", `/api/command?path=${encodeURIComponent(path)}`),
   paths: (prefix, base) => request("GET", `/api/paths?prefix=${encodeURIComponent(prefix)}&base=${encodeURIComponent(base)}`),
-  capture: (body) => request("POST", "/api/capture", body),
+  directory: (path, base) => request("GET", `/api/directory?path=${encodeURIComponent(path)}&base=${encodeURIComponent(base)}`),
+  capture: (body, signal) => request("POST", "/api/capture", body, signal),
   software: () => request("GET", "/api/software"),
   softwareVersion: (name, fresh) => request("GET", `/api/software/version?name=${encodeURIComponent(name)}${fresh ? "&fresh=1" : ""}`),
   file: (path) => request("GET", `/api/file?path=${encodeURIComponent(path)}`),

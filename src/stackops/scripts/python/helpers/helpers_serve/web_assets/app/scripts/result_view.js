@@ -11,6 +11,8 @@ const STATUS_KEYS = new Set(["status", "state", "level", "verdict", "kind", "sco
 const GOOD = /\b(ok|ready|clean|synced|in sync|configured|linked|up to date|running|active|recorded|installed|healthy|pass|passed|valid|yes|done|attached|completed)\b/i;
 const BAD = /\b(error|failed|broken|conflict|invalid|missing|denied|dead|no)\b/i;
 const WARN = /\b(not|attention|changed|differs?|behind|ahead|outdated|unknown|warning|stale|dirty|pending|detached)\b/i;
+// Numbers that name something are written as they are; every other number gets thousands separators. Not exhaustive by choice: it goes by the key's last word.
+const NAMING_KEYS = /(^|_)(port|pid|id|year)$/;
 
 export const toneOf = (text) => (BAD.test(text) ? "bad" : WARN.test(text) ? "warn" : GOOD.test(text) ? "good" : "");
 const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -18,10 +20,10 @@ const isScalar = (value) => value === null || typeof value !== "object";
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 const compareCells = (left, right) => (typeof left === "number" && typeof right === "number" ? left - right : collator.compare(String(left ?? ""), String(right ?? "")));
 
-export function formatCell(key, value) {
+function formatCell(key, value) {
   if (value === null || value === undefined || value === "") return h("span", { class: "dim", text: "—" });
   if (typeof value === "boolean") return pill(value ? "Yes" : "No", value ? "good" : "");
-  if (typeof value === "number") return h("span", { class: "num", text: value.toLocaleString() });
+  if (typeof value === "number") return h("span", { class: "num", text: NAMING_KEYS.test(key) ? String(value) : value.toLocaleString() });
   if (Array.isArray(value)) return value.length <= 4 && value.every(isScalar) ? h("span", { text: value.join(", ") || "—" }) : h("span", { class: "dim", text: plural(value.length, "item") });
   if (typeof value === "object") return h("span", { class: "dim", text: plural(Object.keys(value).length, "field") });
   if (STATUS_KEYS.has(key) && value.length < 40) return pill(value, toneOf(value));
@@ -39,6 +41,8 @@ export function dataTable(rows) {
   const body = h("tbody");
   const more = h("button", { class: "btn small ghost", type: "button" });
   let term = "";
+  // What the filter looks through: each row's values without its column names, made once, at the first filter, because a large result may never be filtered.
+  let searchTexts = null;
   let limit = ROW_STEP;
   let sortKey = null;
   let descending = false;
@@ -63,21 +67,24 @@ export function dataTable(rows) {
   );
 
   function paint() {
-    const found = term ? rows.filter((row) => JSON.stringify(row).toLowerCase().includes(term)) : rows;
+    if (term) searchTexts ??= rows.map((row) => JSON.stringify(Object.values(row)).toLowerCase());
+    const found = term ? rows.filter((_, index) => searchTexts[index].includes(term)) : rows;
     const matches = sortKey === null ? found : [...found].sort((left, right) => compareCells(left[sortKey], right[sortKey]) * (descending ? -1 : 1));
     heads.forEach((head, index) => head.setAttribute("aria-sort", columns[index] !== sortKey ? "none" : descending ? "descending" : "ascending"));
     body.replaceChildren(
       ...matches.slice(0, limit).map((row) => {
-        const line = h("tr", { class: "data-row" }, columns.map((key) => h("td", {}, formatCell(key, row[key]))), h("td", { class: "expander" }, icon("down", 14)));
+        // The arrow is a real button, so a row also opens from the keyboard; a click anywhere else on the row does the same.
+        const toggle = () => {
+          const open = !line.classList.contains("open");
+          line.classList.toggle("open", open);
+          expander.setAttribute("aria-expanded", String(open));
+          if (open) line.after(h("tr", { class: "detail-row" }, h("td", { colspan: String(columns.length + 1) }, renderValue(row, 1))));
+          else line.nextElementSibling.remove();
+        };
+        const expander = h("button", { type: "button", "aria-label": "Show this row's details", "aria-expanded": "false", onclick: toggle }, icon("down", 14));
+        const line = h("tr", { class: "data-row" }, columns.map((key) => h("td", {}, formatCell(key, row[key]))), h("td", { class: "expander" }, expander));
         line.addEventListener("click", (event) => {
-          if (event.target instanceof Element && event.target.closest("a, button")) return;
-          if (line.nextElementSibling?.classList.contains("detail-row")) {
-            line.nextElementSibling.remove();
-            line.classList.remove("open");
-            return;
-          }
-          line.classList.add("open");
-          line.after(h("tr", { class: "detail-row" }, h("td", { colspan: String(columns.length + 1) }, renderValue(row, 1))));
+          if (!(event.target instanceof Element && event.target.closest("a, button"))) toggle();
         });
         return line;
       }),
@@ -109,7 +116,7 @@ export function dataTable(rows) {
   );
 }
 
-export function renderValue(value, depth = 0) {
+function renderValue(value, depth = 0) {
   if (Array.isArray(value)) {
     if (value.length === 0) return h("p", { class: "dim", text: "Nothing here." });
     if (value.every(isRecord)) return dataTable(value);
@@ -120,6 +127,7 @@ export function renderValue(value, depth = 0) {
   if (entries.length > 2 && entries.every(([, item]) => isRecord(item))) return dataTable(entries.map(([name, item]) => ({ name, ...item })));
   const scalars = entries.filter(([, item]) => isScalar(item));
   const nested = entries.filter(([, item]) => !isScalar(item) && (Array.isArray(item) ? item.length > 0 : Object.keys(item).length > 0));
+  if (scalars.length === 0 && nested.length === 0) return h("p", { class: "dim", text: "Nothing here." });
   if (depth === 0 && scalars.length === 0 && nested.length === 1) return renderValue(nested[0][1], 0);
   return h(
     "div",

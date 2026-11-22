@@ -6,10 +6,9 @@ import { toolButton } from "../../space_kit.js";
 import { avatar, button, copyChip, notice } from "../../widgets.js";
 import { humanize, plural, relativeTime } from "../../words.js";
 import { createProfilesPanel } from "./workbench_browser_profiles.js";
-import { actionBlock, areaHead, previewList, statusPill } from "./workbench_kit.js";
+import { actionBlock, areaHead, cardHead, previewList, savedProfileName, statusPill } from "./workbench_kit.js";
 
 const TAB_PREVIEW = 4;
-const SAVED_PROFILES = "/browsers-profiles/";
 const WINDOW_NOTES = {
   no_endpoint: "It isn't open to agents, so its windows can't be listed.",
   unsupported_browser: "This browser can't list its windows.",
@@ -28,20 +27,28 @@ const PROFILES = [
   { path: "agents browser install", blurb: "Install the browser tool or connector your agent needs." },
 ];
 
+// A profile in the same words in both shapes below: a saved one by its name, the browser's own, or one made for a single launch.
+function profileText(folder) {
+  const saved = folder && savedProfileName(folder);
+  return !folder ? "Your everyday profile" : saved ? `Profile ${saved}` : "A throwaway profile";
+}
+
 // The command answers in two shapes: launches StackOps tracks, or (with "All") every browser process it can find.
 function describe(row) {
   if (row.launch) {
     const { launch } = row;
     return {
-      browser: launch.browser, profile: `Profile ${launch.profile.replace(/^profile-/, "")}`, port: launch.port, address: `http://${launch.host === "0.0.0.0" ? "127.0.0.1" : launch.host}:${launch.port}`, tracked: true, healthy: row.state === "running",
+      browser: launch.browser, profile: profileText(launch.profile_path), port: launch.port, address: `http://${launch.host === "0.0.0.0" ? "127.0.0.1" : launch.host}:${launch.port}`, tracked: true, healthy: row.state === "running",
       home: HOMES[launch.windows?.multiplexer ?? "detached"], shared: launch.relay_expected, folder: launch.profile_path, started: launch.process_created_at, windows: row.browser_windows,
     };
   }
-  const port = row.browser.debugging_port;
-  const folder = row.browser.profile_path ? String(row.browser.profile_path) : "";
+  const own = row.browser.debugging_port;
+  // A browser shared on the network is closed by its public port, not its own. This shape carries the public one only at the end of the launch id
+  // ("…-p9331"). Not strictly clean, since it leans on how the CLI writes that id; chosen over changing the CLI's answer for one button.
+  const port = row.launch_id ? Number(row.launch_id.match(/-p(\d+)$/)[1]) : own;
   return {
-    browser: row.browser.browser, profile: !folder ? "Your everyday profile" : folder.includes(SAVED_PROFILES) ? `Profile ${folder.split("/").at(-1)}` : "A throwaway profile", port, address: port ? `http://127.0.0.1:${port}` : null, tracked: row.launch_id !== null, healthy: true,
-    home: row.runtime ? HOMES[row.runtime] : "Opened outside StackOps", shared: false, folder: row.browser.profile_path, started: row.browser.started_at, windows: row.browser_windows,
+    browser: row.browser.browser, profile: profileText(row.browser.profile_path), port, address: own ? `http://127.0.0.1:${own}` : null, tracked: row.launch_id !== null, healthy: true,
+    home: row.runtime ? HOMES[row.runtime] : "Opened outside StackOps", shared: own !== null && port !== own, folder: row.browser.profile_path, started: row.browser.started_at, windows: row.browser_windows,
   };
 }
 
@@ -69,13 +76,7 @@ export function createBrowserArea({ tools }, { setStatus }) {
     return h(
       "article",
       { class: "wb-card lit" },
-      h(
-        "header",
-        {},
-        avatar(item.browser, 44),
-        h("div", {}, h("h3", { text: humanize(item.browser) }), h("span", { class: "dim", text: item.profile })),
-        item.healthy ? statusPill("Running", "good", "check") : statusPill("Needs attention", "warn", "alert"),
-      ),
+      cardHead(avatar(item.browser, 44), humanize(item.browser), item.profile, item.healthy ? statusPill("Running", "good", "check") : statusPill("Needs attention", "warn", "alert")),
       h("div", { class: "wb-address" }, h("span", { class: "stat-label", text: "Agents connect at" }), item.address ? copyChip(item.address) : h("span", { class: "dim", text: "Not open to agents" })),
       item.healthy ? tabList(item.windows) : h("p", { class: "wb-note", text: "It has stopped or lost part of its connection. Close it here, then open it again." }),
       h(

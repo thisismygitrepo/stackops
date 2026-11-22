@@ -7,6 +7,7 @@ import { enginesLine, GROUPS, groupOf, VERDICTS } from "./words.js";
 
 // The groups that are folded to their first few rows until asked for: the ones nobody has to act on.
 const FOLDED = { clean: 6 };
+const OPENS = "See what each engine said";
 
 // How the engines answered, as one bar: flags first, then the ones that found nothing, then the ones that gave no answer.
 export function engineMeter(target) {
@@ -28,23 +29,26 @@ export function verdictPills(target) {
 
 function targetRow(target, { onOpen, onScan }) {
   const detail = target.verdict === "failed" ? target.notes : enginesLine(target);
+  // The name is the row's control for the keyboard and for a screen reader: the row holds other buttons, so it cannot be one itself.
+  // A click anywhere else on the row opens it too, which is for the mouse.
+  const name = h("button", { class: "scan-name", type: "button", title: OPENS, text: target.name, onclick: () => onOpen(target) });
   const row = h(
     "li",
-    { class: "session-row scan-row opens", tabindex: "0", title: "See what each engine said" },
+    { class: "session-row scan-row opens", title: OPENS },
     avatar(target.name, 40),
-    h("div", { class: "session-text" }, h("strong", {}, target.name, target.version && h("span", { class: "version", text: target.version })), copyChip(target.path, tildify(target.path, state.boot.home))),
+    h("div", { class: "session-text" }, h("strong", {}, name, target.version && h("span", { class: "version", text: target.version })), copyChip(target.path, tildify(target.path, state.boot.home))),
     h("div", { class: "scan-verdict" }, verdictPills(target), engineMeter(target), detail && h("span", { class: "dim scan-detail", title: detail, text: detail })),
     h("span", { class: "dim scan-when", title: target.checked_at && new Date(target.checked_at).toLocaleString(), text: target.checked_at ? `Checked ${relativeTime(target.checked_at)}` : "" }),
     h("div", { class: "scan-actions" }, onScan && button({ label: target.checked_at ? "Scan again" : "Scan", glyph: "shield", small: true, onclick: () => onScan(target) }), h("span", { class: "scan-go" }, icon("chevron", 14))),
   );
   row.addEventListener("click", (event) => !event.target.closest("button") && onOpen(target));
-  row.addEventListener("keydown", (event) => event.key === "Enter" && event.target === row && onOpen(target));
   return row;
 }
 
 // Targets under the group each belongs to, worst first. `groupAction(id, members)` may return a button for the group's heading;
-// `settled` skips the entrance animation, for a list that is refreshed in place.
-export function targetGroups(targets, { onOpen, onScan, groupAction, settled = false, unfolded = false }) {
+// `settled` skips the entrance animation, for a list that is refreshed in place. `onUnfold` is told when a folded group is opened,
+// so that a caller which rebuilds the list can keep it open.
+export function targetGroups(targets, { onOpen, onScan, groupAction, settled = false, unfolded = false, onUnfold }) {
   return GROUPS.map(([id, title]) => [id, title, targets.filter((target) => groupOf(target) === id)])
     .filter(([, , members]) => members.length > 0)
     .map(([id, title, members]) => {
@@ -57,6 +61,7 @@ export function targetGroups(targets, { onOpen, onScan, groupAction, settled = f
           onclick: () => {
             list.append(...members.slice(cap).map((target) => targetRow(target, { onOpen, onScan })));
             more.remove();
+            onUnfold?.();
           },
         });
       return h("section", { class: "scan-group" }, h("h3", {}, title, h("b", { text: String(members.length) }), h("span", { class: "spacer" }), groupAction?.(id, members)), settled ? list : rise(list), more);

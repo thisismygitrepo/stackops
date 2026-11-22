@@ -122,7 +122,7 @@ export function createCommandForm(parameters, draft, changed) {
     "div",
     {},
     parameters === null &&
-      h("p", { class: "form-note", text: "This command builds its options at runtime, so there is no form for it. Type its arguments below; adding --help prints what it accepts." }),
+      h("p", { class: "form-note", text: "This command's options cannot be listed here, so there is no form for it. Type its arguments below; adding --help prints what it accepts." }),
     section("Arguments", fields.filter((item) => item.spec.kind === "argument"), "fields"),
     section("Options", values, "fields", useFilter),
     section("Flags", flags, "fields toggles", values.length === 0 && useFilter),

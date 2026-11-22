@@ -25,7 +25,7 @@ code { font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 <body>
 <main>
 <h1>This session needs its access link</h1>
-<p>Open the full URL that <code>stackops serve</code> printed in your terminal. It carries a one-time token for this server.</p>
+<p>Open the full URL that <code>stackops serve</code> printed in your terminal. It carries the access token for this server.</p>
 <p>The link changes every time the server starts.</p>
 </main>
 </body>
@@ -62,12 +62,16 @@ def guard_access(app: ASGIApp, token: str, cookie_name: str) -> ASGIApp:
         denial: Response | None = None
         if (origin is None and origin_required) or (origin is not None and origin != f"""http://{connection.headers.get("host", "")}"""):
             denial = PlainTextResponse("Cross-origin requests are not allowed.", status_code=403)
-        elif not secrets.compare_digest(connection.cookies.get(cookie_name, "").encode(), expected):
-            offered = connection.query_params.get("token", "") if scope["type"] == "http" and path == "/" else ""
-            if secrets.compare_digest(offered.encode(), expected):
+        else:
+            signed_in = secrets.compare_digest(connection.cookies.get(cookie_name, "").encode(), expected)
+            offered = connection.query_params.get("token") if scope["type"] == "http" and path == "/" else None
+            if offered is not None and (signed_in or secrets.compare_digest(offered.encode(), expected)):
+                # The redirect also runs for a browser that is already signed in, so the token never stays in the address bar or the history.
                 denial = RedirectResponse("/", status_code=303)
-                denial.set_cookie(cookie_name, token, httponly=True, samesite="strict")
-            else:
+                # A design choice: Lax, not Strict, so the link also works when clicked on a web page (webmail, a chat app, a terminal in the browser).
+                # The cost: another site can open a GET route in the top window. No GET route changes anything, and that site cannot read the answer.
+                denial.set_cookie(cookie_name, token, httponly=True, samesite="lax")
+            elif not signed_in:
                 denial = HTMLResponse(LOCKED_PAGE, status_code=401)
         if denial is None:
             await app(scope, receive, send_with_headers)

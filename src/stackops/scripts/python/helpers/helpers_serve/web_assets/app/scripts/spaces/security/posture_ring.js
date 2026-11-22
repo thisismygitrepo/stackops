@@ -14,7 +14,8 @@ function circle(className, attributes) {
 }
 
 // The share of installed apps that are clean, worth a look, and flagged, drawn as arcs of one ring; what is left of the ring is still to scan.
-export function postureRing({ clean, review, flagged, total, tone }) {
+// `settled` leaves out the arcs' drawing-in, for a ring that is refreshed in place.
+export function postureRing({ clean, review, flagged, total, tone, settled }) {
   const svg = document.createElementNS(SVG_NAMESPACE, "svg");
   svg.setAttribute("viewBox", "0 0 120 120");
   svg.setAttribute("aria-hidden", "true");
@@ -29,7 +30,7 @@ export function postureRing({ clean, review, flagged, total, tone }) {
   const answered = clean + review + flagged;
   return h(
     "div",
-    { class: `posture-ring ${tone}` },
+    { class: `posture-ring ${tone}${settled ? " settled" : ""}` },
     svg,
     h("div", { class: "posture-centre" }, answered > 0 ? [h("strong", { text: `${Math.round((clean / total) * 100)}%` }), h("span", { text: "clean" })] : icon("shield", 34)),
   );

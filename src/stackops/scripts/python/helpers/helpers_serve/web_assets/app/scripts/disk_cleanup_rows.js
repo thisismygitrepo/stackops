@@ -2,6 +2,7 @@ import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { RISKS, actionText, adminText, codeNodes, estimateText, firstSentence, plainNote, qualifierNoteOf, qualifierOf, quietReason, sizeText } from "./disk_cleanup_words.js";
 import { button, keyValue } from "./widgets.js";
+import { plural } from "./words.js";
 
 const PATH_PREVIEW = 6;
 const PATH_LIMIT = 200;
@@ -10,10 +11,13 @@ export const isMeasured = (target) => target.phase === "done" && target.status =
 // A place that took too long to measure can still be cleaned: the cleanup measures it again, without a time limit.
 export const canPick = (target) => isMeasured(target) || (target.phase === "error" && target.slow);
 export const isQuiet = (target) => target.phase === "done" && target.status !== "ready";
+// A place that failed to measure keeps the size it had before, so only measured places count.
+export const total = (targets) => targets.reduce((sum, target) => sum + (isMeasured(target) ? target.bytes : 0), 0);
 
-function pathList(target) {
+// `view.open` holds, for each place whose details are open, how many of its items are listed, so both survive the rows being rebuilt.
+function pathList(target, view) {
   const list = h("ul", { class: "cleanup-paths" });
-  const more = h("button", { class: "link", type: "button", text: `Show all ${target.paths.length.toLocaleString()}` });
+  const more = h("button", { class: "link", type: "button", text: target.paths.length > PATH_LIMIT ? `Show the first ${PATH_LIMIT}` : `Show all ${target.paths.length}` });
   const paint = (limit) => {
     const hidden = target.paths.length - Math.min(limit, target.paths.length);
     list.replaceChildren(
@@ -22,17 +26,20 @@ function pathList(target) {
     );
     more.hidden = limit === PATH_LIMIT || hidden === 0;
   };
-  more.addEventListener("click", () => paint(PATH_LIMIT));
-  paint(PATH_PREVIEW);
+  more.addEventListener("click", () => {
+    view.open.set(target.key, PATH_LIMIT);
+    paint(PATH_LIMIT);
+  });
+  paint(view.open.get(target.key));
   const together = target.paths.length > 1 && target.commands.length === 0 && h("p", { class: "dim", text: "These are removed together: ticking this place removes all of them." });
   return h("div", { class: "cleanup-inside" }, h("h4", { text: target.paths.length > PATH_PREVIEW ? "Biggest items inside" : "What is removed" }), list, more, together);
 }
 
-function detail(target) {
+function detail(target, view, restored) {
   const measured = isMeasured(target);
   return h(
     "div",
-    { class: "cleanup-detail" },
+    { class: `cleanup-detail${restored ? " restored" : ""}` },
     h("p", { class: "cleanup-note" }, codeNodes(plainNote(target.note))),
     keyValue([
       ["What happens", measured && actionText(target)],
@@ -40,7 +47,7 @@ function detail(target) {
       ["How risky", `${RISKS[target.risk].label}. ${RISKS[target.risk].hint}`],
       ["Permission", target.requires_root && adminText(state.boot.platform)],
     ].filter(([, value]) => value)),
-    measured && target.paths.length > 0 && pathList(target),
+    measured && target.paths.length > 0 && pathList(target, view),
   );
 }
 
@@ -79,23 +86,24 @@ export function targetRow(target, view) {
     more,
   );
   const row = h("li", { class: `cleanup-row${box.checked ? " picked" : ""}${pickable ? "" : " unpickable"}${target.phase === "error" && !target.slow ? " failed" : ""}`, "data-key": key }, main);
-  const setOpen = (open) => {
+  // Details that were open before the rows were rebuilt come back in place, without sliding in again.
+  const setOpen = (open, restored) => {
     more.setAttribute("aria-expanded", String(open));
     row.querySelector(".cleanup-detail")?.remove();
-    if (open) row.append(detail(target));
+    if (open) row.append(detail(target, view, restored));
   };
   more.addEventListener("click", () => {
     const open = !view.open.has(key);
-    if (open) view.open.add(key);
+    if (open) view.open.set(key, PATH_PREVIEW);
     else view.open.delete(key);
-    setOpen(open);
+    setOpen(open, false);
   });
   main.addEventListener("click", (event) => {
     if (event.target.closest("button, input") || !pickable || view.locked) return;
     box.checked = !box.checked;
     view.toggle(key, box.checked);
   });
-  setOpen(view.open.has(key));
+  setOpen(view.open.has(key), true);
   return { row, box };
 }
 
@@ -103,7 +111,7 @@ export function quietFold(targets, open, onToggle) {
   const fold = h(
     "details",
     { class: "fold cleanup-quiet", open },
-    h("summary", {}, icon("chevron", 14), h("span", { text: `Nothing to free in ${targets.length} other place${targets.length === 1 ? "" : "s"}` })),
+    h("summary", {}, icon("chevron", 14), h("span", { text: `Nothing to free in ${plural(targets.length, "other place")}` })),
     h(
       "ul",
       {},

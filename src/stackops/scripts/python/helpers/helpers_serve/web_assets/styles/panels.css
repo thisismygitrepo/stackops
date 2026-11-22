@@ -6,8 +6,10 @@
 }
 .panel-tab:hover { color: var(--text); }
 .panel-tab[aria-selected="true"] { font-weight: 600; color: var(--text); border-bottom-color: var(--accent); }
-.panel-tab .close { display: grid; place-items: center; width: 18px; height: 18px; color: var(--text-muted); border-radius: 4px; }
-.panel-tab .close:hover { color: var(--text); background: var(--raised); }
+/* A report tab's close button is a control of its own after the tab, pulled back over the room the tab keeps free at its end. */
+.panel-tab.closable { padding-right: 37px; }
+.panel-tab-close { display: grid; flex: none; place-items: center; align-self: center; width: 18px; height: 18px; margin: 0 12px 0 -32px; color: var(--text-muted); border-radius: 4px; }
+.panel-tab-close:hover { color: var(--text); background: var(--raised); }
 .panel-bar { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 48px; padding: 8px 20px; border-bottom: 1px solid var(--hairline); }
 .panel-bar .about { display: flex; flex: 1; align-items: baseline; gap: 10px; min-width: 200px; }
 .panel-bar .about strong { white-space: nowrap; }

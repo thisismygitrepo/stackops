@@ -1,17 +1,14 @@
-import { debounce, formatClock, h, icon } from "/assets/scripts/dom.js";
+import { formatClock, h, icon } from "/assets/scripts/dom.js";
 import { confirmCleanup } from "./disk_cleanup_confirm.js";
 import { createCleanupList } from "./disk_cleanup_list.js";
 import { changedOptions, defaultOptions, openCleanupOptions } from "./disk_cleanup_options.js";
-import { canPick, isMeasured, isQuiet } from "./disk_cleanup_rows.js";
+import { canPick, isMeasured, isQuiet, total } from "./disk_cleanup_rows.js";
 import { runCleanup } from "./disk_cleanup_run.js";
 import { createCleanupScanner } from "./disk_cleanup_scan.js";
 import { cleanupBanner, createCleanupSummary, createCleanupTray } from "./disk_cleanup_summary.js";
 import { RISKS, RISK_ORDER, categoryOf } from "./disk_cleanup_words.js";
 import { replay } from "./motion.js";
 import { button, notice, searchInput } from "./widgets.js";
-
-const ROOTS_DELAY_MILLISECONDS = 700;
-const total = (targets) => targets.reduce((sum, target) => sum + (isMeasured(target) ? target.bytes : 0), 0);
 
 // Free up disk space: measure on arrival, let the person choose what goes, confirm, clean exactly that, then show what it freed.
 export function createDiskCleanup({ activity }) {
@@ -22,10 +19,11 @@ export function createDiskCleanup({ activity }) {
   let term = "";
   let run = null;
   let started = false;
+  let starting = false;
   let clock = 0;
 
   const view = {
-    picked, open: new Set(), locked: false, loading: true, scale: 0,
+    picked, open: new Map(), locked: false, loading: true, scale: 0,
     matches: (target) => (risk === "all" || target.risk === risk) && (term === "" || `${target.title} ${target.note} ${categoryOf(target.category).title}`.toLowerCase().includes(term)),
     toggle: (key, on) => setMany([key], on),
     setMany,
@@ -80,7 +78,7 @@ export function createDiskCleanup({ activity }) {
     summary.paint({ scan: progress, drive: scanner.disk(), found: total(ready), safe: total(ready.filter((target) => target.risk === "safe")), places: ready.length, picked: bytes });
     tray.paint({
       count: ticked.length, bytes, unsure: ticked.some((target) => !isMeasured(target) || !target.sized || target.estimateKind === "at_least"),
-      hidden: progress.loading || scanner.failure() !== "" || scanner.targets.size === 0 || (run !== null && run.phase !== "done"),
+      hidden: progress.loading || scanner.failure() !== "" || scanner.targets.size === 0 || starting || (run !== null && run.phase !== "done"),
     });
     stamp.textContent = !progress.busy && progress.measuredAt && scanner.failure() === "" ? `Measured at ${formatClock(progress.measuredAt / 1000)}` : "";
     rescanButton.disabled = progress.busy || view.locked;
@@ -155,10 +153,11 @@ export function createDiskCleanup({ activity }) {
     return scanner.start({ categories: options.categories, searchRoots: options.roots });
   }
 
-  const rootsSoon = debounce(() => scanner.setRoots(options.roots), ROOTS_DELAY_MILLISECONDS);
   function optionsChanged(kind) {
     if (kind === "categories") scanner.setCategories(options.categories);
-    else if (kind === "roots") rootsSoon();
+    // A design choice: the search starts again at once, with no delay to gather several changes. Until it answers, the project places cannot be
+    // ticked or cleaned, so a size found in the old folders is never confirmed for the new ones. Each folder removed costs one more search.
+    else if (kind === "roots") scanner.setRoots(options.roots);
     else {
       picked.clear();
       decided.clear();
@@ -173,23 +172,26 @@ export function createDiskCleanup({ activity }) {
   async function clean() {
     const items = chosen().sort((left, right) => right.bytes - left.bytes);
     if (items.length === 0) return;
-    // The dialog dims the page with a blur; nothing underneath keeps moving while it is open.
-    element.classList.add("still");
-    const sure = await confirmCleanup({ items, bytes: total(items) });
-    element.classList.remove("still");
-    if (!sure) return;
+    if (!(await confirmCleanup({ items, bytes: total(items) }))) return;
+    // The task takes a moment to start. The tray stays away until its banner is up, so the same places are not sent twice.
+    starting = true;
+    paintTotals();
     await runCleanup({
       activity, scanner, items, roots: options.roots,
       onPhase(next) {
         if (run !== next && next.phase !== "cleaning") return;
+        starting = false;
         run = next;
         if (run.phase === "checking") for (const key of run.keys) picked.delete(key);
         view.locked = run.phase !== "done";
         paintBanner();
         paint();
-        if (run.phase !== "checking") element.closest(".stage")?.scrollTo({ top: 0, behavior: "smooth" });
+        if (run.phase !== "checking" && !element.closest("[hidden]")) element.closest(".stage")?.scrollTo({ top: 0, behavior: "smooth" });
       },
     });
+    // A task that could not start never got a banner, so the tray comes back.
+    starting = false;
+    paintTotals();
   }
 
   optionsButton.addEventListener("click", () => !optionsButton.classList.contains("open") && openCleanupOptions(optionsButton, { options, onChange: optionsChanged }));

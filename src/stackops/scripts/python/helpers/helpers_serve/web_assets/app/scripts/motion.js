@@ -76,4 +76,6 @@ export function installPointerEffects() {
     target.append(wave);
     setTimeout(() => wave.remove(), 600);
   });
+  // Scroll events do not bubble, so the page area's are caught on the way down. The class switches its top fade on (shell.css says why it is not always on).
+  document.addEventListener("scroll", (event) => event.target instanceof Element && event.target.matches(".stage") && event.target.classList.toggle("scrolled", event.target.scrollTop > 0), { capture: true, passive: true });
 }

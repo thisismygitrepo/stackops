@@ -90,7 +90,7 @@ export function createProjectsSpace({ activity, tools }) {
     {
       title: "Projects", lede: "Every repository StackOps tracks on this machine, and where it stands.",
       actions: [
-        toolButton(tools, "devops repos action", { label: "Pull everything", glyph: "download", preset: { pull: "on" } }),
+        toolButton(tools, "devops repos action", { label: "Pull working folder", glyph: "download", preset: { pull: "on" } }),
         toolButton(tools, "devops repos register", { label: "Register", glyph: "plus" }),
         toolButton(tools, "devops repos sync", { label: "Sync all", glyph: "sync", tone: "primary" }),
       ],

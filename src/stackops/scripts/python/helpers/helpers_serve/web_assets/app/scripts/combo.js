@@ -62,14 +62,14 @@ export function createCombo({ value = "", placeholder = "", glyph, label, sugges
     else hide();
   }
 
-  // Only typing pre-selects the first suggestion. On focus, or after a folder was just picked, Enter and Tab belong to the form, not to the list.
+  // Only typing pre-selects the first suggestion, and not once the text ends in a slash: a finished folder name is not a prefix to complete. Then, as on focus or after a folder was just picked, Enter and Tab belong to the form, not to the list.
   async function refresh(preselect) {
     const mine = (ticket += 1);
     const term = readOnly ? "" : input.value;
     const found = await suggest(term);
     if (mine !== ticket || document.activeElement !== input) return;
     options = found;
-    active = preselect && options.length && term ? 0 : -1;
+    active = preselect && options.length && term && !/[\\/]$/.test(term) ? 0 : -1;
     list.replaceChildren(
       ...(options.length
         ? options.map((option, index) =>
@@ -123,7 +123,7 @@ export function createCombo({ value = "", placeholder = "", glyph, label, sugges
   });
 
   return {
-    element, input, hide,
+    element, input,
     setValue(next) {
       input.value = next;
     },

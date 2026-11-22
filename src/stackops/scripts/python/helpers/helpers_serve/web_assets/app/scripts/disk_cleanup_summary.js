@@ -2,10 +2,10 @@ import { formatClock, h, icon } from "/assets/scripts/dom.js";
 import { clockText, sizeText } from "./disk_cleanup_words.js";
 import { countUp } from "./motion.js";
 import { button, glyphTile, iconButton, pill } from "./widgets.js";
+import { plural } from "./words.js";
 
 const NEARLY_FULL = 0.1;
 const NAMED_LIMIT = 2;
-const plural = (count, word) => `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`;
 
 // The top of the page: how much can be freed, how the scan is going, and what the selection does to the disk.
 export function createCleanupSummary() {
@@ -97,13 +97,19 @@ export function cleanupBanner(run, { onReveal, onDismiss }) {
     );
   }
   const failed = run.exitCode !== 0;
-  const title = run.freed > 0 ? `Freed ${sizeText(run.freed)}` : "Nothing was freed";
+  // Not strictly correct: when a cleaned place has no size to compare, before or after, the figure is what the disk itself gained meanwhile,
+  // which other programs move too. It is only used when the places add up to nothing, and it says "about".
+  const unsure = run.items.some((item) => item.before === null || item.after === null);
+  const gained = run.freed === 0 && unsure && run.freeBefore !== null && run.freeAfter !== null ? Math.max(run.freeAfter - run.freeBefore, 0) : 0;
+  const emptied = !failed && run.items.every((item) => item.after === 0);
+  const title = run.freed > 0 ? `Freed ${sizeText(run.freed)}` : gained > 0 ? `Freed about ${sizeText(gained)}` : emptied ? "Cleaned" : "Nothing was freed";
+  const poor = failed || (run.freed === 0 && gained === 0 && !emptied);
   const diskLine = run.freeBefore !== null && run.freeAfter !== null ? `This disk has ${sizeText(run.freeAfter)} free now; it had ${sizeText(run.freeBefore)} before.` : "";
   const problem = failed ? "At least one place could not be cleaned. " : "";
   return h(
     "section",
-    { class: `cleanup-banner ${failed || run.freed === 0 ? "warn" : "good"}` },
-    h("span", { class: `task-mark ${failed || run.freed === 0 ? "failed" : "done"}` }, icon(failed || run.freed === 0 ? "alert" : "check", 22)),
+    { class: `cleanup-banner ${poor ? "warn" : "good"}` },
+    h("span", { class: `task-mark ${poor ? "failed" : "done"}` }, icon(poor ? "alert" : "check", 22)),
     h("div", { class: "cleanup-banner-text" }, h("h2", { text: title }), h("p", { text: `${problem}${diskLine}` }), h("ul", { class: "cleanup-outcome" }, run.items.map(outcomeItem)), h("small", { class: "dim", text: `Finished at ${formatClock(run.finishedAt)}` })),
     button({ label: "Show what happened", glyph: "terminal", small: true, onclick: onReveal }),
     iconButton("close", "Dismiss", onDismiss),

@@ -22,7 +22,14 @@ async function start() {
   const rail = createRail({ openPalette: palette.open });
   const topbar = createTopbar({ dock });
   const viewport = h("main", { class: "viewport" }, Object.values(views).map((view) => view.element));
-  document.getElementById("app").replaceChildren(h("div", { class: "shell" }, rail.element, h("div", { class: "stage" }, topbar.element, viewport, dock.element)), palette.element);
+  const stage = h("div", { class: "stage" }, topbar.element, viewport, dock.element);
+  const shell = h("div", { class: "shell" }, rail.element, stage);
+  document.getElementById("app").replaceChildren(shell, palette.element);
+  // In a narrow window the navigation opens over the page and over its own button, so Escape, a press on the page, and a press on any of its links close it.
+  const closeRail = () => shell.classList.remove("rail-open");
+  window.addEventListener("keydown", (event) => event.key === "Escape" && closeRail());
+  stage.addEventListener("pointerdown", closeRail);
+  rail.element.addEventListener("click", (event) => event.target.closest("a") && closeRail());
 
   const render = () => {
     const route = parseRoute();
@@ -31,7 +38,7 @@ async function start() {
     rail.setActive(route);
     topbar.setCrumbs(crumbs);
     viewport.scrollTop = 0;
-    document.querySelector(".shell").classList.remove("rail-open");
+    closeRail();
     document.title = `${crumbs.at(-1).label} · StackOps`;
   };
   window.addEventListener("hashchange", render);

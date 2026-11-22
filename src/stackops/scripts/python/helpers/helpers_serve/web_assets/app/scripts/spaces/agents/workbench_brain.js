@@ -65,10 +65,19 @@ export function createBrainArea({ tools }, { setStatus }) {
   const panel = createStatePanel({
     title: "What's in the notebook", skeletonShape: "card",
     load: async (fresh) => (await query(["agents", "second-brain", "status", "--json"], fresh)).json,
-    explain: (error) => {
-      if (!/not available|agents\/second-brain\/?$/i.test(error.message)) return null;
+    explain: (error, { reload }) => {
+      // Setting it up only makes the folder, and the status command also reads the folder's git history. Until it has one, this is the answer.
+      const unversioned = /not a git repository/i.test(error.message);
+      if (!unversioned && !/not available|agents\/second-brain\/?$/i.test(error.message)) return null;
       setStatus("Not set up", "");
       useBrain(false, false);
+      if (unversioned) {
+        return notice({
+          glyph: "book", title: "The notebook has no history yet",
+          body: "Its folder is there, but it is not a git repository yet, and the notebook keeps its history in one. Run “git init” in ~/code/agents/second-brain, then check again.",
+          action: button({ label: "Check again", glyph: "refresh", small: true, onclick: reload }),
+        });
+      }
       return notice({
         glyph: "book", title: "Second Brain isn't set up yet",
         body: "It is a folder your agents share. Set it up once and they start writing down what they worked on, so the next one can pick up where the last stopped.",

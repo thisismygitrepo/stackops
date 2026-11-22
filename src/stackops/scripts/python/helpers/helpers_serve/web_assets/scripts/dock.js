@@ -1,14 +1,6 @@
-import { formatDuration, h, icon, tildify, toast } from "./dom.js";
-import { TERMINAL_THEME } from "./presets.js";
+import { openConsole } from "/assets/app/scripts/console_session.js";
+import { debounce, formatDuration, h, icon, tildify, toast } from "./dom.js";
 import { api, emit, setSetting, state } from "./state.js";
-
-const TERMINAL_FONT = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace';
-let terminalLibrary = null;
-
-function loadTerminalLibrary() {
-  terminalLibrary ??= Promise.all([import("/vendor/xterm.mjs"), import("/vendor/addon-fit.mjs")]).then(([terminal, fit]) => ({ Terminal: terminal.Terminal, FitAddon: fit.FitAddon }));
-  return terminalLibrary;
-}
 
 export function statusGlyph(run) {
   if (run.exit_code === null) return h("span", { class: "status", title: "Running" }, h("span", { class: "spinner" }));
@@ -26,7 +18,7 @@ export function createDock() {
   const stopButton = control("Stop this command", () => api.stopRun(activeId).catch((error) => toast(error.message)));
   const rerunButton = control("Run it again", () => {
     const { summary } = tabs.get(activeId);
-    start({ arguments: summary.arguments, interactive: summary.interactive, reveal: true }).catch((error) => toast(error.message));
+    start({ arguments: summary.arguments, interactive: summary.interactive, reveal: true, workingDirectory: summary.working_directory }).catch((error) => toast(error.message));
   });
   const sizeButton = control("Fill the window", () => setMode(element.dataset.mode === "max" ? "open" : "max"));
   const foldButton = control("Hide the terminal", () => setMode(element.dataset.mode === "collapsed" ? "open" : "collapsed"));
@@ -42,7 +34,7 @@ export function createDock() {
   rerunButton.append(icon("refresh", 14));
 
   function fit(tab) {
-    if (!tab.fit || body.clientHeight < 40 || !tab.fit.proposeDimensions()) return false;
+    if (!tab?.fit || body.clientHeight < 40 || !tab.fit.proposeDimensions()) return false;
     tab.fit.fit();
     return true;
   }
@@ -52,15 +44,19 @@ export function createDock() {
     element.style.setProperty("--dock-height", `${state.settings.dockHeight}px`);
     sizeButton.replaceChildren(icon(mode === "max" ? "shrink" : "expand", 14));
     foldButton.replaceChildren(icon(mode === "collapsed" ? "up" : "down", 15));
+    for (const [button, label] of [[sizeButton, mode === "max" ? "Back to the usual size" : "Fill the window"], [foldButton, mode === "collapsed" ? "Show the terminal" : "Hide the terminal"]]) {
+      button.title = label;
+      button.setAttribute("aria-label", label);
+    }
     sizeButton.hidden = mode === "collapsed";
-    requestAnimationFrame(() => tabs.forEach(fit));
+    activate(activeId);
   }
 
   function paint() {
     const visible = [...tabs.values()].filter((tab) => !tab.quiet);
     element.hidden = visible.length === 0;
     for (const tab of tabs.values()) {
-      tab.button.hidden = tab.quiet;
+      tab.chip.hidden = tab.quiet;
       tab.button.setAttribute("aria-selected", String(tab.id === activeId));
       tab.pane.classList.toggle("active", tab.id === activeId);
       tab.glyph.replaceChildren(statusGlyph(tab.summary));
@@ -76,59 +72,57 @@ export function createDock() {
   function activate(id) {
     activeId = id;
     paint();
-    requestAnimationFrame(() => {
-      const tab = tabs.get(id);
-      if (tab && fit(tab)) tab.terminal.focus();
-    });
+    const tab = tabs.get(id);
+    if (!tab || element.dataset.mode === "collapsed") return;
+    // A finished run's terminal is built only once its tab is shown: after a reload there can be twenty, each a terminal and a connection.
+    if (!tab.linked) connect(tab);
+    requestAnimationFrame(() => fit(tab) && tab.terminal.focus());
   }
 
+  // The terminal and its connection are the app view's, with the command line kept as the first line of the output.
   async function connect(tab) {
-    let library;
-    try {
-      library = await loadTerminalLibrary();
-    } catch {
-      terminalLibrary = null;
-      tab.pane.replaceChildren(h("p", { class: "dock-error", text: "The terminal could not be loaded. Its library is downloaded once, on first use: check the connection, then reload this page." }));
-      return;
-    }
-    const background = getComputedStyle(document.documentElement).getPropertyValue("--terminal").trim();
-    const terminal = new library.Terminal({ fontFamily: TERMINAL_FONT, fontSize: 13, lineHeight: 1.2, cursorBlink: true, scrollback: 20000, theme: { ...TERMINAL_THEME, background } });
-    Object.assign(tab, { terminal, fit: new library.FitAddon() });
-    terminal.loadAddon(tab.fit);
-    terminal.open(tab.pane);
-    const socket = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/runs/${tab.id}`);
-    socket.binaryType = "arraybuffer";
-    const send = (message) => socket.readyState === WebSocket.OPEN && socket.send(JSON.stringify(message));
-    socket.addEventListener("open", () => fit(tab) && send({ type: "resize", rows: terminal.rows, columns: terminal.cols }));
-    socket.addEventListener("message", (event) => {
-      if (typeof event.data !== "string") return terminal.write(new Uint8Array(event.data));
-      Object.assign(tab.summary, JSON.parse(event.data));
-      terminal.write("\x1b[?25l");
-      terminal.options.disableStdin = true;
-      paint();
-      tab.settle(tab.summary);
-      emit("runs");
+    tab.linked = true;
+    const session = await openConsole({
+      pane: tab.pane, runId: tab.id, echo: true, fitNow: () => fit(tab),
+      onSummary: (summary) => {
+        Object.assign(tab.summary, summary);
+        paint();
+        tab.settle(tab.summary);
+        emit("runs");
+      },
+      // Design choice: unlike the app view, a lost connection is not reopened here. The tab says so, whatever waits for the command is told it
+      // did not succeed, and a reload picks a running command up again. A finished run that cannot be read is one the server let go of.
+      onDrop: () => {
+        if (!tabs.has(tab.id)) return;
+        tab.terminal.dispose();
+        Object.assign(tab, { terminal: null, fit: null, socket: null });
+        const running = tab.summary.exit_code === null;
+        tab.pane.replaceChildren(h("p", { class: "console-error", text: running ? "The connection to this command was lost. Reload the page to pick it up again." : "This command's output is no longer kept: only the most recent finished runs are." }));
+        if (running) tab.settle({ ...tab.summary, exit_code: -1, finished_at: Date.now() / 1000 });
+      },
     });
-    terminal.onData((data) => send({ type: "input", data }));
-    terminal.onResize(({ rows, cols }) => send({ type: "resize", rows, columns: cols }));
-    tab.socket = socket;
-    if (tab.id === activeId && fit(tab)) terminal.focus();
+    if (!session) return;
+    Object.assign(tab, session);
+    if (tab.id === activeId && fit(tab)) tab.terminal.focus();
   }
 
   function createTab(summary, quiet) {
     const pane = h("div", { class: "dock-pane" });
     const glyph = h("span");
-    const closer = h("span", { class: "close", role: "button", title: "Close" }, icon("close", 12));
-    const label = h("span", { class: "label", text: summary.command_line.replace(/^stackops /, "") });
-    const button = h("button", { class: "dock-tab", role: "tab", title: `${summary.command_line}\nin ${summary.working_directory}` }, glyph, label, closer);
+    const label = summary.command_line.replace(/^stackops /, "");
+    // The tab and its closer are two buttons side by side, so that both can be reached and pressed from the keyboard.
+    const button = h("button", { class: "dock-tab-button", role: "tab", title: `${summary.command_line}\nin ${summary.working_directory}`, onclick: () => focus(summary.id) }, glyph, h("span", { class: "label", text: label }));
+    const closer = h("button", { class: "close", title: "Close", "aria-label": `Close ${label}`, onclick: () => close(summary.id, true) }, icon("close", 12));
+    const chip = h("div", { class: "dock-tab", role: "presentation" }, button, closer);
     let settle;
     const done = new Promise((resolve) => (settle = resolve));
-    const tab = { id: summary.id, summary, quiet, pane, glyph, button, done, settle, terminal: null, fit: null, socket: null };
-    button.addEventListener("click", (event) => (closer.contains(event.target) ? close(tab.id, true) : focus(tab.id)));
+    const tab = { id: summary.id, summary, quiet, pane, glyph, chip, button, done, settle, linked: false, terminal: null, fit: null, socket: null };
     tabs.set(tab.id, tab);
-    strip.append(button);
+    strip.append(chip);
     body.append(pane);
-    connect(tab);
+    // A running command connects at once, shown or not: the connection is how the page learns that it ended.
+    if (summary.exit_code === null) connect(tab);
+    else settle(summary);
     return tab;
   }
 
@@ -141,13 +135,16 @@ export function createDock() {
     } catch (error) {
       toast(error.message);
     }
+    // Closing a running command stops it, and its connection is closed here before the end can be reported: whatever waits for it is told now.
+    if (tab.summary.exit_code === null) tab.settle({ ...tab.summary, exit_code: -1, stopped: true, finished_at: Date.now() / 1000 });
     tab.socket?.close();
     tab.terminal?.dispose();
-    tab.button.remove();
+    tab.chip.remove();
     tab.pane.remove();
     tabs.delete(id);
-    if (activeId === id) activeId = [...tabs.values()].filter((other) => !other.quiet).at(-1)?.id ?? null;
-    activate(activeId);
+    // Only closing the tab on show moves on to another and gives it the keyboard: a background report tidied away must not pull focus from the page.
+    if (activeId === id) activate([...tabs.values()].filter((other) => !other.quiet).at(-1)?.id ?? null);
+    else paint();
     emit("runs");
   }
 
@@ -155,17 +152,19 @@ export function createDock() {
     const tab = tabs.get(id);
     if (!tab) return;
     tab.quiet = false;
+    activeId = id;
     if (element.dataset.mode === "collapsed") setMode("open");
-    activate(id);
+    else activate(id);
     emit("runs");
   }
 
-  async function start({ arguments: runArguments, interactive, reveal }) {
+  // `workingDirectory` is only given by "Run it again", which repeats a command in the folder it ran in; everything else runs in the folder selected now.
+  async function start({ arguments: runArguments, interactive, reveal, workingDirectory }) {
     const shown = tabs.get(activeId);
     const size = shown?.terminal && fit(shown)
       ? { rows: shown.terminal.rows, columns: shown.terminal.cols }
       : { rows: Math.max(12, Math.floor((state.settings.dockHeight - 52) / 17)), columns: Math.max(60, Math.floor((window.innerWidth - 300) / 7.85)) };
-    const summary = await api.startRun({ arguments: runArguments, working_directory: state.settings.workingDirectory, interactive, ...size });
+    const summary = await api.startRun({ arguments: runArguments, working_directory: workingDirectory ?? state.settings.workingDirectory, interactive, ...size });
     const tab = createTab(summary, !reveal);
     if (reveal) focus(tab.id);
     else paint();
@@ -200,7 +199,8 @@ export function createDock() {
     resizer.addEventListener("pointermove", move);
     resizer.addEventListener("pointerup", release, { once: true });
   });
-  new ResizeObserver(() => requestAnimationFrame(() => tabs.forEach(fit))).observe(body);
+  // Only the tab on show is refitted, once the size settles: each refit re-wraps the terminal and resizes the program. The others catch up when shown.
+  new ResizeObserver(debounce(() => fit(tabs.get(activeId)), 120)).observe(body);
   setMode("collapsed");
 
   return { element, start, focus, close: (id) => close(id, false), toggle, restore, runs: () => [...tabs.values()].filter((tab) => !tab.quiet).map((tab) => tab.summary) };

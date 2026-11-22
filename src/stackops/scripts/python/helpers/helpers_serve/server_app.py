@@ -1,4 +1,5 @@
 import getpass
+import mimetypes
 import platform
 import re
 import socket
@@ -25,6 +26,7 @@ from stackops.scripts.python.helpers.helpers_serve.run_requests import (
     RunRequest,
     parse_capture_request,
     parse_run_request,
+    resolve_directory,
     suggest_paths,
 )
 from stackops.scripts.python.helpers.helpers_serve.run_socket import relay_run
@@ -33,6 +35,7 @@ from stackops.scripts.python.helpers.helpers_serve.software_catalog import load_
 from stackops.scripts.python.helpers.helpers_serve.software_versions import LatestRelease, SoftwareVersion, VersionProblem, check_software_version
 from stackops.scripts.python.helpers.helpers_serve.text_files import FileProblem, TextFile, read_text_file, write_text_file
 from stackops.scripts.python.helpers.helpers_serve.vendor_assets import VENDOR_ASSETS, resolve_vendor_asset
+from stackops.utils.schemas.installer.installer_types import InstallerData
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
 from stackops.version import get_stackops_version
 
@@ -41,10 +44,14 @@ REPORT_NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]+\.html")
 
 
 def create_app(token: str, cookie_name: str, stackops_executable: str, working_directory: str) -> ASGIApp:
+    # On Windows the registry can map .js to text/plain, and a browser refuses to run a module served that way. A no-op on macOS and Linux.
+    mimetypes.add_type("text/javascript", ".js")
+    mimetypes.add_type("text/css", ".css")
     registry = RunRegistry(stackops_executable=stackops_executable, runs={}, pump_threads={})
     tree, sources = load_command_tree()
     parameter_cache: dict[str, list[ParameterSpec] | None] = {}
     release_cache: dict[str, LatestRelease] = {}
+    installers_by_name: dict[str, InstallerData] = {}
     system_name = platform.system()
     bootstrap_payload = {
         "version": get_stackops_version(),
@@ -77,6 +84,14 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
     def list_paths(request: Request) -> JSONResponse:
         entries = suggest_paths(prefix=request.query_params.get("prefix", ""), base_directory=request.query_params.get("base", working_directory))
         return JSONResponse({"entries": entries})
+
+    def directory(request: Request) -> JSONResponse:
+        result = resolve_directory(text=request.query_params.get("path", ""), base_directory=request.query_params.get("base", working_directory))
+        match result:
+            case RequestProblem():
+                return JSONResponse({"error": result.message}, status_code=400)
+            case str():
+                return JSONResponse({"path": result})
 
     async def list_runs(_request: Request) -> JSONResponse:
         return JSONResponse({"runs": [describe_run(run) for run in registry.runs.values()]})
@@ -120,11 +135,13 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
                 return JSONResponse({"exit_code": result.exit_code, "stdout": result.stdout, "stderr": result.stderr})
 
     def software(_request: Request) -> JSONResponse:
-        catalog = load_software_catalog()
+        catalog = load_software_catalog(installers_by_name=installers_by_name)
         return JSONResponse(catalog, status_code=422 if "error" in catalog else 200)
 
     def software_version(request: Request) -> JSONResponse:
-        result = check_software_version(name=request.query_params.get("name", ""), fresh=request.query_params.get("fresh") == "1", release_cache=release_cache)
+        result = check_software_version(
+            name=request.query_params.get("name", ""), fresh=request.query_params.get("fresh") == "1", release_cache=release_cache, installers_by_name=installers_by_name
+        )
         match result:
             case VersionProblem():
                 return JSONResponse({"error": result.message}, status_code=result.status)
@@ -154,11 +171,11 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
         return Response(status_code=204)
 
     async def delete_run(request: Request) -> Response:
+        # A run that is already gone counts as removed: old finished runs are forgotten unasked, and another tab may have removed it first.
         run = registry.runs.pop(request.path_params["run_id"], None)
-        if run is None:
-            return JSONResponse({"error": "Unknown run."}, status_code=404)
-        registry.pump_threads.pop(run.run_id)
-        stop_run(run)
+        if run is not None:
+            registry.pump_threads.pop(run.run_id)
+            stop_run(run)
         return Response(status_code=204)
 
     async def run_socket(websocket: WebSocket) -> None:
@@ -197,6 +214,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             Route("/api/bootstrap", bootstrap),
             Route("/api/command", command_detail),
             Route("/api/paths", list_paths),
+            Route("/api/directory", directory),
             Route("/api/capture", capture, methods=["POST"]),
             Route("/api/software", software),
             Route("/api/software/version", software_version),

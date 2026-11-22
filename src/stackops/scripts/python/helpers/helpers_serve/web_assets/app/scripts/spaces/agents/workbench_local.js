@@ -3,13 +3,14 @@ import { createLivePanel } from "../../live_panel.js";
 import { toolButton } from "../../space_kit.js";
 import { button, copyChip, keyValue, pill } from "../../widgets.js";
 import { formatBytes, plural, relativeTime } from "../../words.js";
-import { actionBlock, areaHead, installButton, previewList, stateCard, statusPill } from "./workbench_kit.js";
+import { actionBlock, areaHead, installButton, isRunning, previewList, reloadAfterStart, stateCard, statusPill } from "./workbench_kit.js";
 import { createCatalogPanel } from "./workbench_local_catalog.js";
 
 const DOCTOR = "agents local doctor";
+const SERVE = "agents local serve";
 const MODEL_PREVIEW = 6;
 const ACTIONS = [
-  { path: "agents local serve", blurb: "Serve one model fast enough for several agents at once. Needs vLLM." },
+  { path: SERVE, blurb: "Serve one model fast enough for several agents at once. Needs vLLM." },
   { path: "agents local install", blurb: "Set up vLLM, the fast model server, for this machine's graphics hardware." },
   { path: DOCTOR, title: "Check a server elsewhere", blurb: "Look at a model server on another machine or at another address." },
 ];
@@ -21,7 +22,7 @@ function modelList(rows) {
 
 const running = (data) => h("div", { class: "wb-server-head" }, statusPill("Running", "good", "check"), copyChip(data.host), data.errors.length > 0 && h("span", { class: "dim", text: "Some details couldn't be read just now." }));
 
-export function createLocalArea({ tools }, { setStatus }) {
+export function createLocalArea({ activity, tools }, { setStatus }) {
   const seen = {};
   function report(name, up, installed) {
     seen[name] = { up, installed };
@@ -75,7 +76,7 @@ export function createLocalArea({ tools }, { setStatus }) {
 
   const vllm = createLivePanel({
     title: "vLLM", path: DOCTOR, extra: ["--backend", "vllm", "--json"], locked: ["backend"],
-    render: (data, { setCount }) => {
+    render: (data, { setCount, reload }) => {
       report("vLLM", data.healthy, Boolean(data.cli_path));
       setCount(data.version ? `version ${data.version}` : "");
       if (!data.healthy && !data.cli_path) {
@@ -84,10 +85,17 @@ export function createLocalArea({ tools }, { setStatus }) {
           actions: [toolButton(tools, "agents local install", { label: "Install vLLM", glyph: "download", tone: "primary" })],
         });
       }
+      // A server takes minutes to load its model, far longer than the one look after its start waits, so a start from this page is said in words.
+      if (!data.healthy && isRunning(activity, SERVE)) {
+        return stateCard({
+          glyph: "clock", title: "A model server was started from here", body: "It is not answering at this address yet. Loading a model can take a few minutes.",
+          actions: [button({ label: "Check again", glyph: "refresh", onclick: reload })],
+        });
+      }
       if (!data.healthy) {
         return stateCard({
           glyph: "power", title: "vLLM is installed, but no server is running", body: "Start one with the model you want agents to use.",
-          actions: [toolButton(tools, "agents local serve", { label: "Start a model server", glyph: "play", tone: "primary" })],
+          actions: [toolButton(tools, SERVE, { label: "Start a model server", glyph: "play", tone: "primary" })],
         });
       }
       const percent = (share) => (share === null || share === undefined ? null : `${Math.round(share * 100)}%`);
@@ -101,13 +109,15 @@ export function createLocalArea({ tools }, { setStatus }) {
     },
   });
 
+  reloadAfterStart(activity, SERVE, vllm);
+
   const catalog = createCatalogPanel({ tools });
   const element = h(
     "div",
     { class: "wb-area" },
     areaHead({
       title: "Local models", lede: "Run AI models on this machine instead of a cloud service, so nothing you ask leaves your computer.",
-      actions: [toolButton(tools, "agents local serve", { label: "Start a model server", glyph: "play", tone: "primary" })],
+      actions: [toolButton(tools, SERVE, { label: "Start a model server", glyph: "play", tone: "primary" })],
     }),
     h("div", { class: "wb-pair" }, ollama.element, vllm.element),
     actionBlock(tools, "Run and install", ACTIONS),

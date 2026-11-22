@@ -27,7 +27,7 @@ export async function runCleanup({ activity, scanner, items, roots, onPhase }) {
   Object.assign(run, { phase: "checking", exitCode: outcome.exit_code, finishedAt: outcome.finished_at ?? Date.now() / 1000 });
   onPhase(run);
   scanner.remeasure(keys);
-  const [, freeAfter] = await Promise.all([scanner.whenIdle(), freeNow()]);
+  const [, freeAfter] = await Promise.all([scanner.whenMeasured(keys), freeNow()]);
   for (const item of run.items) {
     const target = scanner.targets.get(item.key);
     item.after = target?.phase !== "done" ? null : target.status === "empty" ? 0 : target.status === "ready" && target.sized ? target.bytes : null;

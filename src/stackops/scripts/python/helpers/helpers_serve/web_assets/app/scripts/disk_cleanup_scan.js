@@ -1,4 +1,4 @@
-import { query } from "./data.js";
+import { capture } from "./data.js";
 import { CLEANUP_TOOL } from "./disk_cleanup_words.js";
 
 const PARALLEL_SCANS = 4;
@@ -23,15 +23,18 @@ export function createCleanupScanner({ onChange }) {
   let finishedAt = 0;
   let measuredAt = 0;
 
-  const pending = () => [...targets.values()].some((target) => target.phase === "waiting" || target.phase === "measuring");
+  const isPending = (key) => ["waiting", "measuring"].includes(targets.get(key)?.phase);
+  const pending = () => [...targets.keys()].some(isPending);
 
   function settle() {
-    if (pending() || loading) return;
-    if (startedAt && !finishedAt) {
-      finishedAt = performance.now();
-      measuredAt = Date.now();
+    if (loading) return;
+    for (const waiter of waiters.splice(0)) {
+      if (waiter.keys.some(isPending)) waiters.push(waiter);
+      else waiter.resolve();
     }
-    for (const resolve of waiters.splice(0)) resolve();
+    if (pending() || !startedAt || finishedAt) return;
+    finishedAt = performance.now();
+    measuredAt = Date.now();
   }
 
   function pump() {
@@ -59,7 +62,7 @@ export function createCleanupScanner({ onChange }) {
     active += 1;
     for (const key of current()) targets.get(key).phase = "measuring";
     try {
-      const { json } = await query([...CLEANUP_TOOL, "--dry-run", "--json", ...current().flatMap((key) => ["--target", key]), ...(searching ? roots.flatMap((root) => ["--root", root]) : [])], true);
+      const { json } = await capture([...CLEANUP_TOOL, "--dry-run", "--json", ...current().flatMap((key) => ["--target", key]), ...(searching ? roots.flatMap((root) => ["--root", root]) : [])]);
       if (!Array.isArray(json)) throw new Error("The scan answered in a form this page does not understand.");
       const records = new Map(json.map((record) => [record.key, record]));
       for (const key of current()) apply(targets.get(key), records.get(key));
@@ -90,7 +93,7 @@ export function createCleanupScanner({ onChange }) {
   }
 
   async function readCatalog() {
-    const { json } = await query([...CLEANUP_TOOL, "--list", "--json"], true);
+    const { json } = await capture([...CLEANUP_TOOL, "--list", "--json"]);
     if (!Array.isArray(json?.targets)) throw new Error("The list of places to clean could not be read.");
     disk = { free: json.free_bytes, total: json.total_bytes };
     return json.targets;
@@ -130,7 +133,8 @@ export function createCleanupScanner({ onChange }) {
     targets, start,
     disk: () => disk,
     failure: () => failure,
-    whenIdle: () => (pending() || loading ? new Promise((resolve) => waiters.push(resolve)) : Promise.resolve()),
+    // Resolves once these places have an answer, however much of the scan is still going for the others.
+    whenMeasured: (keys) => (loading || keys.some(isPending) ? new Promise((resolve) => waiters.push({ keys, resolve })) : Promise.resolve()),
     refreshDisk: () => readCatalog().then(onChange),
     remeasure: (keys) => enqueue(keys),
     // One search measures every project place, so trying one of them again takes along the others that failed.

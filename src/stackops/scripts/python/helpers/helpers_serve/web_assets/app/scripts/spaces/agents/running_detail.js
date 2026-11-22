@@ -28,7 +28,7 @@ function pendingQuestion(prompt) {
 const part = (title, when, ...content) => h("section", { class: "agent-part" }, h("header", {}, h("h3", { text: title }), when && h("span", { class: "dim", title: when, text: relativeTime(when) })), ...content);
 
 // Built only when opened: a long session keeps hundreds of lines. `opened` outlives a repaint, so a refresh leaves an open fold open.
-function fold(opened, title, size, build) {
+export function fold(opened, title, size, build) {
   const details = h("details", { class: "fold", open: opened.has(title) }, h("summary", {}, icon("chevron", 13), h("span", { text: title }), size > 0 && h("b", { text: String(size) })));
   if (details.open) details.append(build());
   else details.addEventListener("toggle", () => details.append(build()), { once: true });

@@ -1,5 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { plural } from "./words.js";
 
 export const CLEANUP_HASH = "#/machine/cleanup";
 export const CLEANUP_TOOL = ["utils", "machine", "clean-drive"];
@@ -73,8 +74,8 @@ export const codeNodes = (text) => text.split("`").map((piece, index) => (index 
 export function actionText(target) {
   if (target.commands.length) return ["Uses the tool's own cleanup: ", ...target.commands.flatMap((command, index) => [index > 0 && ", then ", h("code", { text: command.join(" ") })])];
   const count = target.paths.length;
-  if (target.action_kind === "projects") return [`Deletes ${count.toLocaleString()} folder${count === 1 ? "" : "s"} found in your projects.`];
-  return [`Deletes ${count.toLocaleString()} item${count === 1 ? "" : "s"} from this machine.`];
+  if (target.action_kind === "projects") return [`Deletes ${plural(count, "folder")} found in your projects.`];
+  return [`Deletes ${plural(count, "item")} from this machine.`];
 }
 
 export const adminHow = (platform) => (platform === "Windows" ? "That only works when StackOps was started from an administrator window; otherwise that part is skipped." : "The console asks for your password when it gets there.");

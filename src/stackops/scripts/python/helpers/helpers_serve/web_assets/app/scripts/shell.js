@@ -34,19 +34,19 @@ export function createShell({ openSearch, activity }) {
   const folderButton = h("button", { class: "folder-chip", type: "button", title: "The folder tasks run in. Click to change." }, icon("folder", 15), folderLabel);
   const showFolder = () => (folderLabel.textContent = `‎${tildify(state.settings.workingDirectory, boot.home)}`);
   folderButton.addEventListener("click", () => {
-    if (folderButton.classList.contains("open")) return;
     let chosen = state.settings.workingDirectory;
-    const apply = () => {
-      const cleaned = chosen.trim().replace(/(.)\/+$/, "$1");
-      if (cleaned && cleaned !== state.settings.workingDirectory) {
-        setSetting("workingDirectory", cleaned);
+    // The server reads the text the way the suggestions do and answers with the folder's full path, which is what gets stored. Text that names no folder is refused: the reason shows as a message and the popover stays open.
+    const apply = async () => {
+      const { path } = await api.directory(chosen.trim(), state.settings.workingDirectory);
+      if (path !== state.settings.workingDirectory) {
+        setSetting("workingDirectory", path);
         showFolder();
         markStale();
       }
       popover.close();
     };
     const combo = createCombo({
-      value: chosen, label: "Working folder", glyph: "folder", placeholder: "Type a folder", emptyText: "No such folder",
+      value: chosen, label: "Working folder", glyph: "folder", placeholder: "Type a folder", emptyText: "No folders to suggest",
       suggest: async (text) => (await api.paths(text, state.settings.workingDirectory)).entries.filter((entry) => entry.endsWith("/")).map((entry) => ({ value: entry, label: entry, keepOpen: true })),
       onInput: (text) => (chosen = text),
       onPick: (option) => (chosen = option.value),
@@ -54,7 +54,8 @@ export function createShell({ openSearch, activity }) {
     combo.input.addEventListener("keydown", (event) => event.key === "Enter" && !event.defaultPrevented && apply());
     const popover = openPopover(
       folderButton,
-      h("div", { class: "tune-panel" }, h("div", { class: "tune-head" }, h("h3", { text: "Working folder" })), h("p", { class: "dim", text: "Tasks run here, and pages show what belongs to this folder." }), combo.element, h("div", { class: "dialog-actions" }, button({ label: "Use this folder", tone: "primary", small: true, onclick: apply }))),
+      // The button sits beside the title, clear of the suggestion list that drops under the box.
+      h("div", { class: "tune-panel" }, h("div", { class: "tune-head" }, h("h3", { text: "Working folder" }), button({ label: "Use this folder", tone: "primary", small: true, onclick: apply })), h("p", { class: "dim", text: "Tasks run here, and pages show what belongs to this folder." }), combo.element),
     );
     combo.input.focus();
     combo.input.select();
@@ -74,7 +75,10 @@ export function createShell({ openSearch, activity }) {
     for (const [id, item] of items) item.setAttribute("aria-current", String(id === spaceId));
     const current = items.get(spaceId);
     marker.style.opacity = current ? "1" : "0";
-    if (current) marker.style.transform = `translateY(${current.offsetTop}px)`;
+    if (!current) return;
+    marker.style.transform = `translateY(${current.offsetTop}px)`;
+    // On a short window the list of pages scrolls, so the page being shown is brought into view.
+    current.scrollIntoView({ block: "nearest" });
   }
 
   return { rail, topbar, setActive };

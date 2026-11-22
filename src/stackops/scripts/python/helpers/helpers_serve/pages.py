@@ -32,7 +32,6 @@ def render_page(stylesheets: tuple[str, ...], script: str, boot_note: str) -> st
 <title>StackOps</title>
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 {stylesheet_links}
-<link rel="stylesheet" href="/vendor/xterm.css">
 </head>
 <body>
 <div id="app"><p class="boot-note">{boot_note}</p></div>
@@ -42,5 +41,5 @@ def render_page(stylesheets: tuple[str, ...], script: str, boot_note: str) -> st
 """
 
 
-APP_PAGE: Final[str] = render_page(stylesheets=APP_STYLESHEETS, script="/assets/app/scripts/main.js", boot_note="Getting things ready…")
+APP_PAGE: Final[str] = render_page(stylesheets=APP_STYLESHEETS, script="/assets/app/scripts/entry.js", boot_note="Getting things ready…")
 DEVELOPER_PAGE: Final[str] = render_page(stylesheets=DEVELOPER_STYLESHEETS, script="/assets/scripts/main.js", boot_note="Loading StackOps…")

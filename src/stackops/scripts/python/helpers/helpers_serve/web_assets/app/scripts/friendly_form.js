@@ -66,7 +66,7 @@ function createField(spec, values, changed) {
     paint = () => combo.setValue(read() ? humanize(read()) : "");
   } else if (spec.control === "path" || (spec.control === "text" && !spec.multiple && PATH_FIELDS.has(spec.name))) {
     const combo = createCombo({
-      label, placeholder: placeholder || "Type a path", glyph: "folder", emptyText: "No such file or folder",
+      label, placeholder: placeholder || "Type a path", glyph: "folder", emptyText: "Nothing to suggest",
       suggest: async (text) => (await api.paths(text, state.settings.workingDirectory)).entries.map((entry) => ({ value: entry, label: entry, keepOpen: entry.endsWith("/") })),
       onInput: (text) => write(text.trim() ? text : ""),
       onPick: (option) => write(option.value),

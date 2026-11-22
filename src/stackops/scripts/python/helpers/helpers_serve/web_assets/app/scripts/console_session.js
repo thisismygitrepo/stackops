@@ -2,17 +2,31 @@ import { h } from "/assets/scripts/dom.js";
 import { TERMINAL_THEME } from "/assets/scripts/presets.js";
 
 const TERMINAL_FONT = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace';
-const CONSOLE_BACKGROUND = "#0b0c16";
+const TERMINAL_STYLES = "/vendor/xterm.css";
 const ECHO_PREFIX = [0x1b, 0x5b, 0x32, 0x6d, 0x24, 0x20];
 const LINK_PATTERN = /https?:\/\/[^\s"'<>]+[^\s"'<>.,;:!?)\]]/g;
 let terminalLibrary = null;
 
+// The terminal's stylesheet is fetched with its library, on first use, so that no page waits for it before its first paint.
+function loadTerminalStyles() {
+  if (document.querySelector(`link[href="${TERMINAL_STYLES}"]`)) return null;
+  return new Promise((resolve, reject) => {
+    const link = h("link", { rel: "stylesheet", href: TERMINAL_STYLES, onload: resolve });
+    // A link that failed is taken out again, so the next console to open asks for the styles afresh.
+    link.addEventListener("error", () => {
+      link.remove();
+      reject(new Error("The terminal styles did not load."));
+    });
+    document.head.append(link);
+  });
+}
+
 function loadTerminalLibrary() {
-  terminalLibrary ??= Promise.all([import("/vendor/xterm.mjs"), import("/vendor/addon-fit.mjs")]).then(([terminal, fit]) => ({ Terminal: terminal.Terminal, FitAddon: fit.FitAddon }));
+  terminalLibrary ??= Promise.all([import("/vendor/xterm.mjs"), import("/vendor/addon-fit.mjs"), loadTerminalStyles()]).then(([terminal, fit]) => ({ Terminal: terminal.Terminal, FitAddon: fit.FitAddon }));
   return terminalLibrary;
 }
 
-// Every run's output opens with a dimmed echo of its command line; the app view names the task instead.
+// Every run's output opens with a dimmed echo of its command line; the app view names the task instead, the developer view keeps the line.
 function withoutCommandEcho(bytes) {
   const lineEnd = bytes.indexOf(0x0a);
   return ECHO_PREFIX.every((byte, index) => bytes[index] === byte) && lineEnd > 0 ? bytes.subarray(lineEnd + 1) : bytes;
@@ -48,9 +62,9 @@ function linkProvider(terminal) {
   };
 }
 
-// Shows one run live inside `pane` and forwards typing to it. `fitNow` sizes the console to its pane; `onSummary` gets the run's final state;
-// `onDrop` is called when the connection ends before that.
-export async function openConsole({ pane, runId, fitNow, onSummary, onDrop }) {
+// Shows one run live inside `pane` and forwards typing to it. Both views use it. `echo` keeps the run's opening line, its command; `fitNow` sizes
+// the console to its pane; `onSummary` gets the run's final state; `onDrop` is called when the connection ends before that.
+export async function openConsole({ pane, runId, echo, fitNow, onSummary, onDrop }) {
   let library;
   try {
     library = await loadTerminalLibrary();
@@ -59,7 +73,9 @@ export async function openConsole({ pane, runId, fitNow, onSummary, onDrop }) {
     pane.replaceChildren(h("p", { class: "console-error", text: "The live view could not be loaded. It is downloaded once, on first use: check the connection, then reload this page." }));
     return null;
   }
-  const terminal = new library.Terminal({ fontFamily: TERMINAL_FONT, fontSize: 13, lineHeight: 1.25, cursorBlink: true, scrollback: 20000, theme: { ...TERMINAL_THEME, background: CONSOLE_BACKGROUND } });
+  // The console takes the colour of the box its pane sits in, which each view sets in its stylesheet.
+  const background = getComputedStyle(pane.parentElement).backgroundColor;
+  const terminal = new library.Terminal({ fontFamily: TERMINAL_FONT, fontSize: 13, lineHeight: 1.25, cursorBlink: true, scrollback: 20000, theme: { ...TERMINAL_THEME, background } });
   const fit = new library.FitAddon();
   terminal.loadAddon(fit);
   terminal.registerLinkProvider(linkProvider(terminal));
@@ -73,7 +89,7 @@ export async function openConsole({ pane, runId, fitNow, onSummary, onDrop }) {
   socket.addEventListener("message", (event) => {
     if (typeof event.data !== "string") {
       const bytes = new Uint8Array(event.data);
-      terminal.write(first ? withoutCommandEcho(bytes) : bytes);
+      terminal.write(first && !echo ? withoutCommandEcho(bytes) : bytes);
       first = false;
       return;
     }

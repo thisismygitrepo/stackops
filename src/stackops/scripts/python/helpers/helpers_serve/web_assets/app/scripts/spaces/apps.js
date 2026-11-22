@@ -85,6 +85,8 @@ export function createAppsSpace({ activity }) {
 
   const updates = createAppUpdates({
     onUpdate: (names) => start(names.length === 1 ? `Update ${names[0]}` : `Update ${names.length} apps`, [names.join(","), "--update"]).catch((error) => toast(error.message)),
+    // Updates read the list of apps again, so Browse reads it too on its next visit and the two sections agree.
+    onRefresh: () => (stale = true),
   });
 
   async function install(names, withUpdate) {
@@ -112,6 +114,8 @@ export function createAppsSpace({ activity }) {
   function paintTray() {
     const names = [...picked];
     tray.hidden = names.length === 0;
+    // The switch belongs to one selection: left on, it would quietly reinstall the installed apps of the next one.
+    if (names.length === 0) setUpdate(false);
     trayFaces.replaceChildren(...names.slice(0, 5).map((name) => avatar(name, 30)), ...(names.length > 5 ? [h("span", { class: "tray-more", text: `+${names.length - 5}` })] : []));
     trayText.textContent = `${plural(names.length, "app")} selected`;
     installButton.querySelector("span").textContent = `Install ${plural(names.length, "app")}`;
@@ -144,11 +148,12 @@ export function createAppsSpace({ activity }) {
       add,
     );
     element.addEventListener("click", (event) => (add.contains(event.target) ? toggle(app.name) : openDetail(app)));
-    element.addEventListener("keydown", (event) => event.key === "Enter" && openDetail(app));
+    element.addEventListener("keydown", (event) => event.key === "Enter" && event.target === element && openDetail(app));
     return element;
   }
 
-  // A design choice: cards rise once per load. Rising on every keystroke restarted the animation on every card, most of them off screen.
+  // A design choice: cards rise once, when the grid first arrives. Rising on every keystroke restarted the animation on every card, most of them
+  // off screen, and rising on every refresh made the whole catalog blink each time a task ended somewhere in the app.
   function paintGrid() {
     if (!catalog) return;
     const active = filters.active();
@@ -165,6 +170,7 @@ export function createAppsSpace({ activity }) {
 
   async function load(route) {
     stale = false;
+    const arriving = catalog === null;
     try {
       catalog = await software();
     } catch (error) {
@@ -178,7 +184,7 @@ export function createAppsSpace({ activity }) {
     for (const app of catalog.apps) app.haystack = `${app.name} ${app.summary} ${app.categories.join(" ")}`.toLowerCase();
     filters.load(catalog);
     paintGrid();
-    rise(grid);
+    if (arriving) rise(grid);
     openRoute(route);
   }
 

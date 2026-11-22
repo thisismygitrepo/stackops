@@ -32,13 +32,16 @@ function changeLine(change, entries) {
   const text = deleted
     ? `This ${taken.some((entry) => entry.removal.format === "directory") ? "folder, with everything in it," : "file"} is deleted`
     : `${count} ${taken.every((entry) => entry.removal.action === "disable") ? "switched off" : "taken out"} in this file, and the rest of it stays`;
-  return h("li", {}, icon(deleted ? "trash" : "pencil", 15), h("div", {}, h("span", { text }), pathChip(change.path)));
+  // Several entries are named, a hook with its moment: the reset picks by a piece of text, so the count alone does not say they are all this row's.
+  const named = deleted || taken.length < 2 ? [] : taken.map((entry) => h("span", { class: "removal-entry", text: [entry.event, entry.name].filter(Boolean).join(" · ") }));
+  return h("li", {}, icon(deleted ? "trash" : "pencil", 15), h("div", {}, h("span", { text }), pathChip(change.path), named));
 }
 
 // Shows what would change before anything does. Resolves to true once the thing is gone.
 export function removeResource({ agent, row }) {
   const label = KIND_BY_ID[row.kind];
-  const dialog = openDialog({ label: `Remove this ${label.one}`, size: "small removal" });
+  let busy = false;
+  const dialog = openDialog({ label: `Remove this ${label.one}`, size: "small removal", canDismiss: () => !busy });
   const area = h("div", { class: "removal-area" }, skeleton(2, "row"));
   const cancel = button({ label: "Cancel", onclick: () => dialog.close(false) });
   const confirm = button({ label: "Remove", glyph: "trash", tone: "danger", onclick: apply });
@@ -51,7 +54,11 @@ export function removeResource({ agent, row }) {
     confirm.hidden = true;
   }
 
+  // Not strictly what was shown: the reset command cannot apply a plan it printed earlier, so the same text is sent again and it plans afresh.
+  // Something matching that text that appeared while this window was open goes too, unseen. A design choice we accept: the gap is only as long
+  // as the window stayed open, and closing it needs a change to the command itself.
   async function apply() {
+    busy = true;
     confirm.disabled = true;
     cancel.disabled = true;
     try {
@@ -63,6 +70,7 @@ export function removeResource({ agent, row }) {
     } catch (error) {
       stop(`This could not be removed. ${error.message}`);
     } finally {
+      busy = false;
       cancel.disabled = false;
     }
   }

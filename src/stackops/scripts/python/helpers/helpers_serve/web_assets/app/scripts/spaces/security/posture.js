@@ -30,6 +30,17 @@ export function createPostureSection({ activity, starter }) {
   let filter = "all";
   let term = "";
   let settled = false;
+  let unfolded = false;
+  let paint = () => {};
+
+  // Made once and moved into each new render: the panel rebuilds its content on every refresh, and a new input would lose what is being typed.
+  const search = searchInput({
+    placeholder: "Filter apps",
+    oninput: (value) => {
+      term = value.trim().toLowerCase();
+      paint(false);
+    },
+  });
 
   const open = (target) =>
     openTargetSheet({
@@ -58,7 +69,7 @@ export function createPostureSection({ activity, starter }) {
           onclick: () => {
             filter = id;
             for (const chip of chips) chip.setAttribute("aria-pressed", String(chip.dataset.id === id));
-            paint();
+            paint(true);
           },
           "data-id": id,
         },
@@ -66,30 +77,27 @@ export function createPostureSection({ activity, starter }) {
         h("b", { text: String(apps.filter(accepts).length) }),
       ),
     );
-    const search = searchInput({
-      placeholder: "Filter apps",
-      oninput: (value) => {
-        term = value.trim().toLowerCase();
-        paint();
-      },
-    });
-    search.input.value = term;
+    // Moving the input into the new content takes the focus off it, so someone typing in it gets it back before the next key arrives.
+    if (document.activeElement === search.input) queueMicrotask(() => search.input.focus({ preventScroll: true }));
 
-    function paint() {
+    // `entering` plays the rows' entrance. Typing in the filter does not: it would hide most of the list again after every letter.
+    paint = (entering) => {
       const accepts = FILTERS.find(([id]) => id === filter)[2];
       const found = apps.filter((app) => accepts(app) && `${app.name} ${app.path}`.toLowerCase().includes(term));
       list.replaceChildren(
-        ...(found.length ? targetGroups(found, { onOpen: open, onScan: (app) => starter.apps([app.name]), groupAction, settled, unfolded: filter !== "all" || term !== "" }) : [notice({ glyph: "search", title: "Nothing here", body: term ? "No app matches that. Try another word." : "No app is in this group right now." })]),
+        ...(found.length
+          ? targetGroups(found, { onOpen: open, onScan: (app) => starter.apps([app.name]), groupAction, settled: !entering, unfolded: unfolded || filter !== "all" || term !== "", onUnfold: () => (unfolded = true) })
+          : [notice({ glyph: "search", title: "Nothing here", body: term ? "No app matches that. Try another word." : "No app is in this group right now." })]),
       );
-    }
-    paint();
+    };
+    paint(!settled);
     return h(
       "div",
       { class: "stack" },
       h(
         "div",
         { class: `posture ${tone}` },
-        postureRing({ clean, review, flagged, total: apps.length, tone }),
+        postureRing({ clean, review, flagged, total: apps.length, tone, settled }),
         h(
           "div",
           { class: "posture-text" },

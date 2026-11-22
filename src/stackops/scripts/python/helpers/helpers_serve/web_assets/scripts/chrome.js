@@ -1,4 +1,5 @@
-import { debounce, h, icon, tildify } from "./dom.js";
+import { VIEW_KEY } from "/assets/app/scripts/catalog.js";
+import { debounce, h, icon, tildify, toast } from "./dom.js";
 import { api, lineage, nodeHash, on, setSetting, state } from "./state.js";
 
 let completionCount = 0;
@@ -40,7 +41,7 @@ export function createRail({ openPalette }) {
     const list = isGroup ? h("ul", { hidden: true }, node.children.map((child) => branch(child, depth + 1))) : null;
     const toggle = h(
       "button",
-      { class: `tree-toggle${isGroup ? "" : " leaf"}`, "aria-expanded": "false", "aria-label": `Expand ${node.name}`, onclick: () => setExpanded(node.path, list.hidden) },
+      { class: `tree-toggle${isGroup ? "" : " leaf"}`, "aria-expanded": "false", "aria-label": `${node.name} commands`, onclick: () => setExpanded(node.path, list.hidden) },
       icon("chevron", 12),
     );
     const row = h(
@@ -69,7 +70,7 @@ export function createRail({ openPalette }) {
       {
         class: "rail-switch", title: "Switch to the app view: pages, search, and one-click tasks",
         onclick: () => {
-          localStorage.setItem("stackops-serve-view", "app");
+          localStorage.setItem(VIEW_KEY, "app");
           location.href = "/";
         },
       },
@@ -112,9 +113,17 @@ export function createTopbar({ dock }) {
     directoryInput.focus();
     directoryInput.select();
   });
-  directoryInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && directoryInput.value.trim()) setSetting("workingDirectory", directoryInput.value.trim().replace(/(.)\/+$/, "$1"));
-    if (event.key === "Enter" || event.key === "Escape") showDirectory();
+  directoryInput.addEventListener("keydown", async (event) => {
+    const typed = directoryInput.value.trim();
+    if (event.key === "Escape" || (event.key === "Enter" && !typed)) return showDirectory();
+    if (event.key !== "Enter") return;
+    // The server names the folder the text stands for, so what is kept is a full path to a folder that exists. Anything else stays in the box with the reason.
+    try {
+      setSetting("workingDirectory", (await api.directory(typed, state.settings.workingDirectory)).path);
+      showDirectory();
+    } catch (error) {
+      toast(error.message);
+    }
   });
   directoryInput.addEventListener("blur", showDirectory);
 
