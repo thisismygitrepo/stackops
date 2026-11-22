@@ -6,6 +6,8 @@ from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 BrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox", "safari"]
 ProfileBrowserName: TypeAlias = Literal["chrome", "brave", "edge", "firefox"]
+ChromiumBrowserName: TypeAlias = Literal["chrome", "brave", "edge"]
+BrowserSignInState: TypeAlias = Literal["signed-in", "likely", "none"]
 BrowserMultiplexer: TypeAlias = Literal["tmux", "tuios", "zellij"]
 BrowserRuntime: TypeAlias = Literal["detached", "tmux", "tuios", "zellij"]
 BrowserRuntimeOption: TypeAlias = Literal["detached", "d", "tmux", "t", "tuios", "u", "zellij", "z"]
@@ -94,6 +96,15 @@ CHROMIUM_PROFILE_CLEANUP_PATHS: Final[tuple[tuple[str, ...], ...]] = (
 )
 FIREFOX_PROFILE_CLEANUP_PATHS: Final[tuple[tuple[str, ...], ...]] = (("cache2",), ("shader-cache",), ("startupCache",))
 CHROMIUM_ACTIVE_PORT_FILE_NAME: Final[str] = "DevToolsActivePort"
+CHROMIUM_EPOCH_OFFSET_SECONDS: Final[int] = 11_644_473_600
+CHROMIUM_COOKIE_DATABASE_PATHS: Final[tuple[tuple[str, ...], ...]] = (("Network", "Cookies"), ("Cookies",))
+CHROMIUM_NON_USER_PROFILE_FOLDERS: Final[frozenset[str]] = frozenset({"Guest Profile", "System Profile"})
+KNOWN_SERVICE_SIGN_IN_COOKIE_NAMES: Final[dict[str, frozenset[str]]] = {
+    "google": frozenset({"SID", "__Secure-1PSID"}),
+    "microsoft": frozenset({"ESTSAUTH", "ESTSAUTHPERSISTENT"}),
+    "github": frozenset({"user_session"}),
+    "slack": frozenset({"d"}),
+}
 REMOTE_DEBUGGING_LOCALHOST: Final[str] = "127.0.0.1"
 REMOTE_DEBUGGING_LAN: Final[str] = "0.0.0.0"
 BROWSER_SKILLS_CLI_AGENT_BY_STACKOPS_AGENT: Final[dict[AGENTS, str]] = {

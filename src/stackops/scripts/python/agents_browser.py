@@ -11,6 +11,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants imp
     BrowserRuntimeOption,
     BrowserTechName,
     BrowserTechSelection,
+    ChromiumBrowserName,
     DEFAULT_BROWSER_PORT,
     DEFAULT_BROWSER_PROFILE_PORT_START,
     ProfileBrowserName,
@@ -446,6 +447,59 @@ def status(
         raise typer.Exit(code=1) from error
 
 
+def list_profiles(
+    sites: Annotated[
+        list[str] | None,
+        typer.Argument(
+            help=(
+                "Sites to check in every profile, e.g. google slack oracle. Each is matched as a case-insensitive part of the cookie host "
+                "and adds a column with the sign-in state, accounts, saved logins and last activity."
+            )
+        ),
+    ] = None,
+    browser: Annotated[
+        ChromiumBrowserName,
+        typer.Option("--browser", "-b", help="Chromium-family browser whose profiles should be listed.", case_sensitive=False, show_choices=True),
+    ] = "chrome",
+    native: Annotated[
+        bool,
+        typer.Option("--native", "-n", help="List the browser's own profiles from its normal location instead of saved StackOps profiles."),
+    ] = False,
+    json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the profile rows as JSON.")] = False,
+) -> None:
+    """List a browser's profiles with their state, browser account and what each is signed in to.
+
+    Reads profile files only: cookie hosts, names and expiry, saved-login usernames and the browser's own account. Cookie values and
+    passwords are never read or decrypted, so account names are known for Google (recorded by the browser) and for saved logins.
+    """
+    from datetime import UTC, datetime
+
+    resolved_sites = tuple(site.strip() for site in sites or ())
+    if any(site == "" for site in resolved_sites):
+        raise typer.BadParameter("Sites cannot be empty")
+    if len(set(resolved_sites)) != len(resolved_sites):
+        raise typer.BadParameter("Sites must be unique")
+    now = datetime.now(tz=UTC)
+    try:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_inventory import collect_browser_profile_inventory
+
+        rows = collect_browser_profile_inventory(browser=browser, native=native, sites=resolved_sites, now=now)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    except RuntimeError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(code=1) from error
+
+    if json_output:
+        emit_agent_json(rows)
+        return
+    from rich.console import Console
+
+    from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_inventory_output import build_browser_profile_inventory_table
+
+    Console().print(build_browser_profile_inventory_table(browser=browser, native=native, sites=resolved_sites, rows=rows, now=now))
+
+
 def declutter(
     profile: Annotated[
         str | None, typer.Option("--profile", "-r", help="StackOps profile under ~/data/browsers-profiles/<browser>/<profile>. Omit with --all.")
@@ -572,6 +626,8 @@ def get_app() -> typer.Typer:
     browser_app.command(name="C", no_args_is_help=False, hidden=True)(batch_close)
     browser_app.command(name="status", no_args_is_help=False, short_help="📊 <s> Show active browser launches")(status)
     browser_app.command(name="s", no_args_is_help=False, hidden=True)(status)
+    browser_app.command(name="profiles", no_args_is_help=False, short_help="🪪 <p> List profiles and what each is signed in to")(list_profiles)
+    browser_app.command(name="p", no_args_is_help=False, hidden=True)(list_profiles)
     browser_app.command(name="declutter", no_args_is_help=False, short_help="🧹 <d> Remove rebuildable browser profile data")(declutter)
     browser_app.command(name="d", no_args_is_help=False, hidden=True)(declutter)
     browser_app.command(name="replicate", no_args_is_help=True, short_help="🧬 <r> Copy a StackOps or native profile to named destinations")(replicate)
