@@ -4,6 +4,7 @@ from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import Pla
 ALL_PLATFORMS: tuple[Platform, ...] = ("linux", "darwin", "windows")
 BLEACHBIT_PLATFORMS: dict[Platform, str] = {"linux": "bleachbit", "windows": "bleachbit_console"}
 BLEACHBIT_INSTALL_HINT = "install BleachBit from your distro (e.g. `sudo apt install bleachbit`) or bleachbit.org on Windows"
+MACOS_FULL_DISK_ACCESS_HINT = "grant your terminal app Full Disk Access in System Settings → Privacy & Security, then restart it"
 RISK_ORDER: dict[Risk, int] = {"safe": 0, "caution": 1, "danger": 2}
 QUERY_TIMEOUT_SECONDS = 300
 SCAN_WORKERS = 8

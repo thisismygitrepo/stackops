@@ -90,7 +90,7 @@ class Installer:
     def _read_installed_version(self, exe_name: str) -> str:
         try:
             result = subprocess.run([exe_name, "--version"], capture_output=True, text=True, check=False)
-        except FileNotFoundError:
+        except OSError:
             return ""
         return result.stdout.strip()
 

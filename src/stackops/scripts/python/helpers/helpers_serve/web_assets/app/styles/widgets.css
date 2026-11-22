@@ -108,6 +108,7 @@
 .combo-caret { display: grid; place-items: center; transition: transform 0.35s var(--spring); }
 .combo.open .combo-caret { transform: rotate(180deg); }
 .combo.large { height: 58px; padding: 0 20px; font-size: 16px; border-radius: 19px; box-shadow: var(--shadow); }
+.combo.large:focus-within, .combo.large.open { box-shadow: var(--ring), var(--shadow); }
 .combo.large .combo-caret { display: none; }
 .combo-list { position: fixed; z-index: 110; padding: 6px; overflow-y: auto; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 16px; box-shadow: var(--shadow-pop); transform-origin: top center; animation: drop 0.28s var(--spring); }
 .combo-list.above { transform-origin: bottom center; }

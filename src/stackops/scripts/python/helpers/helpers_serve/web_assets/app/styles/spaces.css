@@ -113,8 +113,6 @@
 .backup-head { display: flex; align-items: center; gap: 8px; }
 .section-bar { display: flex; margin: -6px 0 18px; }
 .agents-section > .panel:first-child { margin-top: 0; }
-.agent-task { font-size: 13.5px; }
-.agent-latest { padding-left: 11px; font-size: 12.5px; border-left: 2px solid var(--line-strong); }
 .teach { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 26px; }
 .teach .combo.large { height: 50px; font-size: 14.5px; border-radius: 16px; box-shadow: none; }
 
@@ -152,31 +150,6 @@
 .crumbs a:hover { color: var(--violet); }
 .crumbs .here { font-weight: 650; color: var(--ink); }
 
-.report-art { position: absolute !important; top: 16px; right: 16px; display: flex; align-items: flex-end; gap: 4px; height: 44px; opacity: 0.5; }
-.report-art i { width: 7px; background: var(--brand); border-radius: 3px; transform-origin: bottom; animation: bars 2.6s ease-in-out infinite; }
-.report-art i:nth-child(1) { height: 40%; }
-.report-art i:nth-child(2) { height: 85%; animation-delay: 0.3s; }
-.report-art i:nth-child(3) { height: 60%; animation-delay: 0.6s; }
-.report-art i:nth-child(4) { height: 100%; animation-delay: 0.9s; }
-@keyframes bars { 50% { transform: scaleY(0.5); } }
-/* The open report fills the window, so the page area's 130px of bottom padding (room for the selection tray on other pages) is taken back, less a 10px gap. Without this the page behind the viewer scrolled. */
-.view.reports.viewing { display: flex; flex-direction: column; max-width: none; height: calc(100vh - 92px); margin-bottom: -120px; }
-.report-viewer { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
-.report-bar { display: flex; flex: none; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
-.report-title { display: flex; align-items: center; gap: 10px; font-size: 15px; }
-.report-body { position: relative; flex: 1; min-height: 0; }
-.report-frame { position: absolute; inset: 0; width: 100%; height: 100%; background: #fff; border: 0; transition: opacity 0.3s; animation: fade-in 0.5s; }
-.report-frame.stale { opacity: 0.35; }
-.report-overlay { position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 24px; text-align: center; }
-.report-overlay h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
-.report-overlay p { color: var(--ink-soft); }
-.report-overlay .notice { background: var(--panel-solid); }
-.loader { display: flex; gap: 9px; margin-bottom: 14px; }
-.loader i { width: 15px; height: 15px; background: var(--brand); border-radius: 50%; animation: hop 1s var(--smooth) infinite; }
-.loader i:nth-child(2) { animation-delay: 0.14s; }
-.loader i:nth-child(3) { animation-delay: 0.28s; }
-@keyframes hop { 40% { transform: translateY(-16px) scale(1.12); } 70% { transform: translateY(0) scale(0.92); } }
-
 @media (max-width: 1100px) {
   .hero-orbit { display: none; }
 }
@@ -188,24 +161,6 @@
   .filter-row { margin: 0 -16px 6px -14px; padding: 6px 16px 12px 14px; }
   .mini-toggle span, .session-counts, .meter { display: none; }
 }
-
-/* Agents › Running: one agent opened in place of the cards. */
-.agent-go { display: inline-flex; flex: none; align-items: center; gap: 8px; color: var(--ink-faint); }
-.agent-go svg { transition: transform 0.3s var(--spring), color 0.2s; }
-.agent-card:hover .agent-go svg { color: var(--violet); transform: translateX(3px); }
-.agent-open { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.agent-part { display: grid; gap: 10px; min-width: 0; padding: 16px 20px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 20px; }
-.agent-part > header, .agent-said header { display: flex; align-items: baseline; gap: 10px; font-size: 12.5px; }
-.agent-part > header h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
-.agent-part .prompt-prose { max-height: 320px; padding-right: 10px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
-.agent-question, .agent-screen { font: 12.5px/1.6 var(--mono); color: var(--ink-soft); }
-.agent-question { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.agent-screen { max-height: 460px; padding: 14px 16px; overflow: auto; white-space: pre; background: var(--well); border-radius: 12px; }
-.agent-said, .agent-limits { display: grid; gap: 14px; font-size: 13px; }
-.agent-said li + li { padding-top: 14px; border-top: 1px dashed var(--line-strong); }
-.agent-limits { gap: 8px; color: var(--ink-soft); }
-.agent-limits li { padding-left: 12px; border-left: 2px solid var(--line-strong); overflow-wrap: anywhere; }
-.agent-holder > .fold { margin-top: 16px; }
 
 /* Apps: the catalog button beside the title, the actions beside the result count, bundle chips, and the pills in an app's sheet. */
 .store-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }

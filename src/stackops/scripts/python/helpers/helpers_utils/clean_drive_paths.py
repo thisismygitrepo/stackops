@@ -1,5 +1,6 @@
 import os
 import tempfile
+from itertools import takewhile
 from pathlib import Path
 from typing import get_args
 
@@ -46,6 +47,23 @@ def expand_globs(globs: tuple[PathGlob, ...]) -> list[Path]:
         if base is not None and base.is_dir():
             matches.extend(sorted(base.glob(path_glob.pattern)))
     return list(dict.fromkeys(matches))
+
+
+def unlistable_glob_directories(globs: tuple[PathGlob, ...]) -> list[Path]:
+    unlistable: list[Path] = []
+    for path_glob in globs:
+        base = anchor_directory(path_glob.anchor)
+        if base is None:
+            continue
+        literal_parts = takewhile(lambda part: not any(char in part for char in "*?["), Path(path_glob.pattern).parts[:-1])
+        directory = base.joinpath(*literal_parts)
+        if not directory.is_dir():
+            continue
+        try:
+            os.scandir(directory).close()
+        except PermissionError:
+            unlistable.append(directory)
+    return list(dict.fromkeys(unlistable))
 
 
 def removal_block_reason(path: Path) -> str | None:

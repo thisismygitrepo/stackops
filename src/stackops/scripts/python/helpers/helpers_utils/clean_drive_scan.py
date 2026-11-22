@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_catalog import CATALOG, CATALOG_BY_KEY
-from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import RISK_ORDER, SCAN_WORKERS
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import MACOS_FULL_DISK_ACCESS_HINT, RISK_ORDER, SCAN_WORKERS
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import (
     CatalogAction,
     CleanCategory,
@@ -24,7 +24,7 @@ from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import (
     TargetScan,
     ToolWithPathFallback,
 )
-from stackops.scripts.python.helpers.helpers_utils.clean_drive_paths import expand_globs
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_paths import expand_globs, unlistable_glob_directories
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_projects import find_project_entries
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_usage import combine_usages, measure_path, reclaimable_bytes
 
@@ -105,7 +105,16 @@ def scan_target(*, target: CleanTarget, action: CleanupAction, project_entries: 
         case PathCleanup():
             excluded = set(expand_globs(action.excluded_globs))
             paths = [path for path in expand_globs(action.globs) if path not in excluded]
-            return _scan_paths(target=target, action=action, paths=paths, min_age_days=action.min_age_days)
+            scan = _scan_paths(target=target, action=action, paths=paths, min_age_days=action.min_age_days)
+            unlistable = unlistable_glob_directories(action.globs)
+            if scan.status == "ready" or not unlistable:
+                return scan
+            hint = f"""; {MACOS_FULL_DISK_ACCESS_HINT}""" if current_platform() == "darwin" else ""
+            return TargetScan(
+                target=target, action=action, status="failed",
+                message=f"""blocked from reading {", ".join(str(directory) for directory in unlistable)}{hint}""",
+                paths=(), commands=(), usage=None, reported_bytes=None, estimate=Estimate(bytes=None, kind="approximate"),
+            )
         case ProjectCleanup():
             return _scan_paths(target=target, action=action, paths=project_entries[target.key], min_age_days=None)
         case CommandCleanup():

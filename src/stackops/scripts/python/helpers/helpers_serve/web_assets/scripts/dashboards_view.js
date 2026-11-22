@@ -109,7 +109,7 @@ export function createDashboardsView({ dock }) {
     }
     bar.replaceChildren(
       h("div", { class: "about" }, h("strong", { text: current.title }), h("span", { text: current.blurb })),
-      current.stamp && h("span", { class: "stamp", text: `Generated ${formatClock(current.stamp)}` }),
+      current.stamp ? h("span", { class: "stamp", text: `Generated ${formatClock(current.stamp)}` }) : "",
       ...current.actions
         .filter((action) => state.nodes.has(action.path))
         .map((action) => h("a", { class: "button small", href: nodeHash(state.nodes.get(action.path)), title: `stackops ${action.path}`, text: action.label })),

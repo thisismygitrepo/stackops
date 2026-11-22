@@ -80,7 +80,7 @@ export function createPromptsSection({ activity, tools }) {
     if (deliberate) {
       panes.dataset.pane = "reader";
       // In a narrow window the reader takes the list's place in a page that may be scrolled far down that list.
-      if (list.offsetParent === null && reader.element.getBoundingClientRect().top < panes.closest(".stage").getBoundingClientRect().top) reader.element.scrollIntoView({ block: "start" });
+      if (list.offsetParent === null && reader.element.getBoundingClientRect().top < panel.element.closest(".stage").getBoundingClientRect().top) reader.element.scrollIntoView({ block: "start" });
     }
     // Once the address names a prompt it follows every move (arrow keys, a search, a filter), since this tab is come back to by its address.
     // An address that is not this tab's is left alone: a list that arrives after the tab was left must not rewrite another page's.

@@ -1,0 +1,19 @@
+/* Agents › Running: what a card says about its agent, and one agent opened in place of the cards. The card itself is the solid card in spaces.css. */
+.agent-task { font-size: 13.5px; }
+.agent-latest { padding-left: 11px; font-size: 12.5px; border-left: 2px solid var(--line-strong); }
+.agent-go { display: inline-flex; flex: none; align-items: center; gap: 8px; color: var(--ink-faint); }
+.agent-go svg { transition: transform 0.3s var(--spring), color 0.2s; }
+.agent-card:hover .agent-go svg { color: var(--violet); transform: translateX(3px); }
+.agent-open { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.agent-part { display: grid; gap: 10px; min-width: 0; padding: 16px 20px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 20px; }
+.agent-part > header, .agent-said header { display: flex; align-items: baseline; gap: 10px; font-size: 12.5px; }
+.agent-part > header h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.agent-part .prompt-prose { max-height: 320px; padding-right: 10px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.agent-question, .agent-screen { font: 12.5px/1.6 var(--mono); color: var(--ink-soft); }
+.agent-question { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.agent-screen { max-height: 460px; padding: 14px 16px; overflow: auto; white-space: pre; background: var(--well); border-radius: 12px; }
+.agent-said, .agent-limits { display: grid; gap: 14px; font-size: 13px; }
+.agent-said li + li { padding-top: 14px; border-top: 1px dashed var(--line-strong); }
+.agent-limits { gap: 8px; color: var(--ink-soft); }
+.agent-limits li { padding-left: 12px; border-left: 2px solid var(--line-strong); overflow-wrap: anywhere; }
+.agent-holder > .fold { margin-top: 16px; }
