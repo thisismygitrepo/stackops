@@ -14849,7 +14849,7 @@
                 "signature": {
                   "raw_lines": [
                     "def share_terminal(",
-                    "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", help=\"Port to run the terminal server on (default: 7681)\")] = None,",
+                    "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", help=\"Port to run the terminal server on (default: any free port)\")] = None,",
                     "    username: Annotated[str | None, typer.Option(\"--username\", \"-u\", help=\"Username for terminal access (default: current user)\")] = None,",
                     "    password: Annotated[str | None, typer.Option(\"--password\", \"-w\", help=\"Password for terminal access (default: configured quick password)\")] = None,",
                     "    no_auth: Annotated[bool, typer.Option(\"--no-auth\", \"-n\", help=\"Disable authentication (not recommended)\")] = False,",
@@ -14888,7 +14888,9 @@
                     "            raise typer.Exit(code=1) from exc",
                     "",
                     "    if port is None:",
-                    "        port = 7681  # Default port for ttyd",
+                    "        from stackops.scripts.python.helpers.helpers_devops.network_service import find_free_port",
+                    "",
+                    "        port = find_free_port(host=\"0.0.0.0\", preferred_port=0)",
                     "    if port < 1 or port > 65535:",
                     "        print(f\"❌ Error: Invalid port '{port}'. Port must be between 1 and 65535.\")",
                     "        raise typer.Exit(code=1)",
@@ -14974,7 +14976,7 @@
                       "type": "int | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[int | None, typer.Option('--port', '-p', help='Port to run the terminal server on (default: 7681)')]",
+                      "annotation_raw": "Annotated[int | None, typer.Option('--port', '-p', help='Port to run the terminal server on (default: any free port)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -14987,7 +14989,7 @@
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Port to run the terminal server on (default: 7681)"
+                        "help": "Port to run the terminal server on (default: any free port)"
                       }
                     },
                     {
@@ -15346,13 +15348,13 @@
                   "raw_lines": [
                     "def web_file_explorer(",
                     "    path: Annotated[str, typer.Argument(help=\"Path to the file or directory to share\")],",
-                    "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", help=\"Port to run the share server on (default: 8080)\")] = None,",
+                    "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", help=\"Port to run the share server on (default: any free port)\")] = None,",
                     "    username: Annotated[str | None, typer.Option(\"--username\", \"-u\", help=\"Username for share access (default: current user)\")] = None,",
                     "    no_auth: Annotated[bool, typer.Option(\"--no-auth\", \"-n\", help=\"Disable authentication for share access\")] = False,",
                     "    password: Annotated[str | None, typer.Option(\"--password\", \"-w\", help=\"Password for share access (default: configured quick password)\")] = None,",
-                    "    bind_address: Annotated[str, typer.Option(\"--bind\", \"-a\", help=\"Address to bind the server to\")] = \"0.0.0.0\",",
+                    "    host: Annotated[str, typer.Option(\"--host\", \"-H\", help=\"Address to bind the server to\")] = \"0.0.0.0\",",
                     "    over_internet: Annotated[bool, typer.Option(\"--over-internet\", \"-i\", help=\"Expose the share server over the internet using ngrok\")] = False,",
-                    "    backend: Annotated[str, typer.Option(\"--backend\", \"-b\", help=\"Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing\")] = \"miniserve\",",
+                    "    backend: Annotated[Literal[\"filebrowser\", \"miniserve\", \"qrcp\", \"easy-sharing\"], typer.Option(\"--backend\", \"-b\", help=\"Backend that serves the files\")] = \"filebrowser\",",
                     "    install_missing_dependencies: Annotated[bool, typer.Option(\"--install-dep\", \"-D\", help=\"Install missing dependencies\", show_default=False)] = False,",
                     "    background: Annotated[bool, typer.Option(\"--background\", \"-B\", help=\"Keep the server running after this command exits.\")] = False,",
                     "    output_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print ready URLs, process IDs, and log files as JSON.\")] = False,",
@@ -15360,19 +15362,18 @@
                     "    password_file: Annotated[Path | None, typer.Option(\"--password-file\", \"-f\", help=\"Read access password from a file; '-' reads stdin.\")] = None,",
                     "    password_env: Annotated[str | None, typer.Option(\"--password-env\", \"-E\", help=\"Environment variable containing the access password.\")] = None,",
                     ") -> None:",
-                    "    import subprocess",
+                    "    from stackops.secrets.paths import SECRETS_DOFILE",
                     "    from stackops.secrets.readers import read_quick_password",
-                    "    from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency",
+                    "    from stackops.scripts.python.helpers.helpers_devops.network_service import find_free_port, install_service_dependency, run_network_service",
                     "    from stackops.utils.cli_utils.secret_input import read_secret_input",
                     "",
-                    "    if backend not in [\"filebrowser\", \"miniserve\", \"qrcp\", \"easy-sharing\"]:",
-                    "        typer.echo(f\"❌ ERROR: Invalid backend '{backend}'. Must be one of: filebrowser, miniserve, qrcp, easy-sharing\", err=True)",
+                    "    if port is None:",
+                    "        selected_port = find_free_port(host=host, preferred_port=0)",
+                    "    elif port < 1 or port > 65535:",
+                    "        typer.echo(f\"❌ ERROR: Invalid port '{port}'. Port must be between 1 and 65535.\", err=True)",
                     "        raise typer.Exit(code=1)",
-                    "",
-                    "    selected_port = port if port is not None else 8080",
-                    "    if selected_port < 1 or selected_port > 65535:",
-                    "        typer.echo(f\"❌ ERROR: Invalid port '{selected_port}'. Port must be between 1 and 65535.\", err=True)",
-                    "        raise typer.Exit(code=1)",
+                    "    else:",
+                    "        selected_port = port",
                     "",
                     "    path_obj = Path(path).expanduser().resolve()",
                     "    if not path_obj.exists():",
@@ -15389,8 +15390,10 @@
                     "",
                     "    auth_username: str | None = None",
                     "    auth_password: str | None = None",
+                    "    password_source = \"value passed with --password\"",
                     "    if password_file is not None or password_env is not None:",
                     "        password = read_secret_input(value=password, file=password_file, env=password_env, prompt=\"Share access password\")",
+                    "        password_source = f\"read from --password-file {password_file}\" if password_file is not None else f\"read from environment variable {password_env} (--password-env)\"",
                     "    if not no_auth:",
                     "        import getpass",
                     "",
@@ -15401,9 +15404,14 @@
                     "                auth_password = read_quick_password()",
                     "            except Exception:",
                     "                auth_password = None",
+                    "            password_source = f\"quick password, login 'quickPassword' in {SECRETS_DOFILE}; override with --password, --password-file or --password-env\"",
                     "        if auth_password is None or auth_password == \"\":",
                     "            typer.echo(\"❌ ERROR: Password not provided. Pass --password or use --no-auth.\", err=True)",
                     "            raise typer.Exit(code=1)",
+                    "        typer.echo(f\"Username: {auth_username} ({'passed with --username' if username is not None else 'current OS user; override with --username'})\", err=True)",
+                    "        typer.echo(f\"Password: {password_source}\", err=True)",
+                    "    else:",
+                    "        typer.echo(\"Auth: none (--no-auth), anyone who can reach the port has access\", err=True)",
                     "",
                     "    if install_missing_dependencies:",
                     "        install_service_dependency(backend)",
@@ -15418,48 +15426,31 @@
                     "    local_ip_v4 = res",
                     "",
                     "    protocol = \"http\"",
-                    "    display_host = local_ip_v4 if bind_address == \"0.0.0.0\" else bind_address",
-                    "    pre_commands: list[list[str]] = []",
-                    "    if backend == \"filebrowser\":",
-                    "        db_path = Path.home().joinpath(\".config/filebrowser/filebrowser.db\")",
-                    "        db_path.parent.mkdir(parents=True, exist_ok=True)",
-                    "        if auth_username is None or auth_password is None:",
-                    "            server_args = [\"filebrowser\", \"--address\", bind_address, \"--port\", str(selected_port), \"--root\", str(path_obj), \"--database\", str(db_path), \"--noauth\"]",
-                    "        else:",
-                    "            pre_commands.append([\"filebrowser\", \"users\", \"add\", auth_username, auth_password, \"--database\", str(db_path)])",
-                    "            server_args = [\"filebrowser\", \"--address\", bind_address, \"--port\", str(selected_port), \"--root\", str(path_obj), \"--database\", str(db_path)]",
-                    "    elif backend == \"miniserve\":",
-                    "        server_args = [\"miniserve\", \"--port\", str(selected_port), \"--interfaces\", bind_address]",
-                    "        if auth_username is not None and auth_password is not None:",
-                    "            server_args.extend([\"--auth\", f\"{auth_username}:{auth_password}\"])",
-                    "        server_args.extend([\"--upload-files\", \"--mkdir\", \"--enable-tar\", \"--enable-tar-gz\", \"--enable-zip\", \"--qrcode\", str(path_obj)])",
-                    "    elif backend == \"easy-sharing\":",
-                    "        server_args = [\"easy-sharing\", \"--port\", str(selected_port)]",
-                    "        if auth_username is not None and auth_password is not None:",
-                    "            server_args.extend([\"--username\", auth_username, \"--password\", auth_password])",
-                    "        server_args.append(str(path_obj))",
-                    "    elif backend == \"qrcp\":",
-                    "        interfaces = helper.get_all_interface_ipv4_addresses()",
-                    "        interface = \"any\" if bind_address == \"0.0.0.0\" else next((entry.interface for entry in interfaces if entry.ipv4_address == bind_address), None)",
-                    "        if interface is None:",
-                    "            raise typer.BadParameter(\"The qrcp bind address must match a local network interface.\")",
-                    "        server_args = [\"qrcp\", \"--port\", str(selected_port), \"--interface\", interface, \"--fqdn\", display_host, *([\"--keep-alive\"] if background else []), str(path_obj)]",
-                    "    else:",
-                    "        typer.echo(f\"❌ ERROR: Unknown backend '{backend}'\", err=True)",
-                    "        raise typer.Exit(code=1)",
+                    "    display_host = local_ip_v4 if host == \"0.0.0.0\" else host",
+                    "    match backend:",
+                    "        case \"filebrowser\":",
+                    "            from stackops.scripts.python.helpers.helpers_devops.share_server_filebrowser import prepare_filebrowser_database",
                     "",
-                    "    try:",
-                    "        for command in pre_commands:",
-                    "            result = subprocess.run(command, capture_output=True, text=True, check=False, timeout=timeout)",
-                    "            if result.returncode != 0:",
-                    "                raise RuntimeError(f\"{backend} setup failed with code {result.returncode}.\")",
-                    "    except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:",
-                    "        typer.echo(f\"Share setup failed ({type(error).__name__}).\", err=True)",
-                    "        raise typer.Exit(1) from None",
+                    "            database = prepare_filebrowser_database(root=path_obj, username=auth_username, password=auth_password, timeout=timeout)",
+                    "            server_args = [\"filebrowser\", \"--address\", host, \"--port\", str(selected_port), \"--root\", str(path_obj), \"--database\", str(database)]",
+                    "        case \"miniserve\":",
+                    "            server_args = [\"miniserve\", \"--port\", str(selected_port), \"--interfaces\", host]",
+                    "            if auth_username is not None and auth_password is not None:",
+                    "                server_args.extend([\"--auth\", f\"{auth_username}:{auth_password}\"])",
+                    "            server_args.extend([\"--upload-files\", \"--mkdir\", \"--enable-tar\", \"--enable-tar-gz\", \"--enable-zip\", \"--qrcode\", str(path_obj)])",
+                    "        case \"easy-sharing\":",
+                    "            server_args = [\"easy-sharing\", \"--port\", str(selected_port)]",
+                    "            if auth_username is not None and auth_password is not None:",
+                    "                server_args.extend([\"--username\", auth_username, \"--password\", auth_password])",
+                    "            server_args.append(str(path_obj))",
+                    "        case \"qrcp\":",
+                    "            interfaces = helper.get_all_interface_ipv4_addresses()",
+                    "            interface = \"any\" if host == \"0.0.0.0\" else next((entry.interface for entry in interfaces if entry.ipv4_address == host), None)",
+                    "            if interface is None:",
+                    "                raise typer.BadParameter(\"The qrcp bind address must match a local network interface.\")",
+                    "            server_args = [\"qrcp\", \"--port\", str(selected_port), \"--interface\", interface, \"--fqdn\", display_host, *([\"--keep-alive\"] if background else []), str(path_obj)]",
                     "",
-                    "    from stackops.scripts.python.helpers.helpers_devops.network_service import run_network_service",
-                    "",
-                    "    run_network_service(name=backend, arguments=server_args, host=bind_address, port=selected_port, url=f\"{protocol}://{display_host}:{selected_port}/\", over_internet=over_internet, background=background, output_json=output_json, timeout=timeout, url_from_log=backend == \"qrcp\")"
+                    "    run_network_service(name=backend, arguments=server_args, host=host, port=selected_port, url=f\"{protocol}://{display_host}:{selected_port}/\", over_internet=over_internet, background=background, output_json=output_json, timeout=timeout, url_from_log=backend == \"qrcp\")"
                   ],
                   "name": "web_file_explorer",
                   "parameters": [
@@ -15484,7 +15475,7 @@
                       "type": "int | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[int | None, typer.Option('--port', '-p', help='Port to run the share server on (default: 8080)')]",
+                      "annotation_raw": "Annotated[int | None, typer.Option('--port', '-p', help='Port to run the share server on (default: any free port)')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -15497,7 +15488,7 @@
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Port to run the share server on (default: 8080)"
+                        "help": "Port to run the share server on (default: any free port)"
                       }
                     },
                     {
@@ -15567,23 +15558,23 @@
                       }
                     },
                     {
-                      "name": "bind_address",
+                      "name": "host",
                       "kind": "positional_or_keyword",
                       "type": "str",
                       "default": "0.0.0.0",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--bind', '-a', help='Address to bind the server to')]",
+                      "annotation_raw": "Annotated[str, typer.Option('--host', '-H', help='Address to bind the server to')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
-                          "--bind",
-                          "-a"
+                          "--host",
+                          "-H"
                         ],
                         "long_flags": [
-                          "--bind"
+                          "--host"
                         ],
                         "short_flags": [
-                          "-a"
+                          "-H"
                         ],
                         "help": "Address to bind the server to"
                       }
@@ -15613,10 +15604,10 @@
                     {
                       "name": "backend",
                       "kind": "positional_or_keyword",
-                      "type": "str",
-                      "default": "miniserve",
+                      "type": "Literal['filebrowser', 'miniserve', 'qrcp', 'easy-sharing']",
+                      "default": "filebrowser",
                       "required": false,
-                      "annotation_raw": "Annotated[str, typer.Option('--backend', '-b', help='Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing')]",
+                      "annotation_raw": "Annotated[Literal['filebrowser', 'miniserve', 'qrcp', 'easy-sharing'], typer.Option('--backend', '-b', help='Backend that serves the files')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -15629,7 +15620,7 @@
                         "short_flags": [
                           "-b"
                         ],
-                        "help": "Backend to use: filebrowser (default), miniserve, qrcp, or easy-sharing"
+                        "help": "Backend that serves the files"
                       }
                     },
                     {
@@ -19120,6 +19111,9 @@
                     "    directory: Annotated[",
                     "        str | None, typer.Option(\"--directory\", \"-d\", help=\"Folder to open in local web mode (share-local), defaults to the current working directory\")",
                     "    ] = None,",
+                    "    token: Annotated[str | None, typer.Option(\"--token\", \"-t\", help=\"Connection token for local web mode (share-local), defaults to a generated one\")] = None,",
+                    "    token_file: Annotated[str | None, typer.Option(\"--token-file\", \"-f\", help=\"File holding the connection token for local web mode (share-local)\")] = None,",
+                    "    no_auth: Annotated[bool, typer.Option(\"--no-auth\", \"-N\", help=\"Serve local web mode without a connection token (share-local)\")] = False,",
                     "    cli_data_dir: Annotated[str | None, typer.Option(\"--cli-data-dir\", \"-D\", help=\"VS Code CLI data directory to use for every generated command\")] = None,",
                     "    extra_args: Annotated[str | None, typer.Option(\"--extra-args\", \"-e\", help=\"Extra args to append to the generated VS Code command\")] = None,",
                     "    background: Annotated[bool, typer.Option(\"--background\", \"-B\", help=\"Keep a run/share-local process running after readiness.\")] = False,",
@@ -19147,6 +19141,7 @@
                     "    action_normalized = {\"r\": \"run\", \"i\": \"install-service\", \"u\": \"uninstall-service\", \"l\": \"share-local\", \"s\": \"status\"}.get(action, action)",
                     "    if background and action_normalized not in {\"run\", \"share-local\"}:",
                     "        raise typer.BadParameter(\"--background applies to run and share-local.\")",
+                    "    connection_token: str | None = None",
                     "    match action_normalized:",
                     "        case \"run\" | \"r\":",
                     "            cmd = f\"code tunnel {name_part} {accept} {cli_data_dir_part} {extra}\".strip()",
@@ -19161,14 +19156,15 @@
                     "            cmd = f\"code tunnel status {cli_data_dir_part}\".strip()",
                     "            desc = \"Inspect VS Code tunnel status\"",
                     "        case \"share-local\" | \"l\":",
-                    "            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import ensure_without_connection_token, resolve_share_local_folder",
+                    "            from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import resolve_serve_web_auth, resolve_serve_web_port_part, resolve_share_local_folder",
                     "",
                     "            host_part = f\"--host {shlex.quote(host)}\" if host else \"\"",
                     "            server_base_path_part = f\"--server-base-path {shlex.quote(path)}\" if path else \"\"",
                     "            directory = resolve_share_local_folder(directory)",
-                    "            directory_part = shlex.quote(str(directory))",
-                    "            extra = ensure_without_connection_token(extra)",
-                    "            cmd = f\"code serve-web {accept} {host_part} {server_base_path_part} {cli_data_dir_part} {extra} {directory_part}\".strip()",
+                    "            directory_part = f\"--default-folder {shlex.quote(directory)}\"",
+                    "            auth_part, connection_token = resolve_serve_web_auth(extra_args=extra, token=token, token_file=token_file, no_auth=no_auth)",
+                    "            port_part = resolve_serve_web_port_part(extra_args=extra, host=host)",
+                    "            cmd = f\"code serve-web {accept} {host_part} {port_part} {server_base_path_part} {cli_data_dir_part} {auth_part} {extra} {directory_part}\".strip()",
                     "            desc = \"Run local VS Code web server (serve-web)\"",
                     "        case _:",
                     "            print(f\"Unknown action: {action_normalized}\")",
@@ -19194,7 +19190,7 @@
                     "            if port == 0:",
                     "                raise typer.BadParameter(\"Use a fixed --port in --extra-args for machine readiness.\")",
                     "            url_host = \"127.0.0.1\" if bind_host == \"0.0.0.0\" else bind_host",
-                    "            url = build_http_url(url_host, port, base_path, directory)",
+                    "            url = build_http_url(url_host, port, base_path, directory, connection_token)",
                     "            run_network_service(name=\"vscode-web\", arguments=shlex.split(cmd), host=bind_host, port=port, url=url, over_internet=False, background=background, output_json=output_json, timeout=timeout, url_from_log=False)",
                     "        else:",
                     "            from stackops.scripts.python.helpers.helpers_devops.vscode_share_runtime import run_vscode_tunnel",
@@ -19206,7 +19202,7 @@
                     "    if action_normalized == \"share-local\":",
                     "        from stackops.scripts.python.helpers.helpers_devops.cli_nw_vscode_share import print_serve_web_urls",
                     "",
-                    "        print_serve_web_urls(cmd, folder_path=directory)",
+                    "        print_serve_web_urls(cmd, folder_path=directory, connection_token=connection_token)",
                     "    exit_then_run_shell_script(cmd)"
                   ],
                   "name": "vscode_share",
@@ -19313,6 +19309,72 @@
                           "-d"
                         ],
                         "help": "Folder to open in local web mode (share-local), defaults to the current working directory"
+                      }
+                    },
+                    {
+                      "name": "token",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--token', '-t', help='Connection token for local web mode (share-local), defaults to a generated one')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--token",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--token"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Connection token for local web mode (share-local), defaults to a generated one"
+                      }
+                    },
+                    {
+                      "name": "token_file",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--token-file', '-f', help='File holding the connection token for local web mode (share-local)')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--token-file",
+                          "-f"
+                        ],
+                        "long_flags": [
+                          "--token-file"
+                        ],
+                        "short_flags": [
+                          "-f"
+                        ],
+                        "help": "File holding the connection token for local web mode (share-local)"
+                      }
+                    },
+                    {
+                      "name": "no_auth",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--no-auth', '-N', help='Serve local web mode without a connection token (share-local)')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--no-auth",
+                          "-N"
+                        ],
+                        "long_flags": [
+                          "--no-auth"
+                        ],
+                        "short_flags": [
+                          "-N"
+                        ],
+                        "help": "Serve local web mode without a connection token (share-local)"
                       }
                     },
                     {
@@ -23888,7 +23950,7 @@
                 "    ] = None,",
                 "    destination: Annotated[str | None, typer.Option(\"--destination\", \"-d\", help=\"destination to mount\")] = None,",
                 "    network: Annotated[str | None, typer.Option(\"--network\", \"-n\", help=\"Windows network mount target, for example X:\")] = None,",
-                "    backend: Annotated[Literal[\"tmux\", \"t\", \"auto\", \"a\"], typer.Option(\"--backend\", \"-b\", help=\"terminal backend for Linux/macOS\")] = \"tmux\",",
+                "    backend: Annotated[Literal[\"tmux\", \"t\", \"tuios\", \"u\"] | None, typer.Option(\"--backend\", \"-b\", help=f\"Session multiplexer for Linux/macOS: tmux/t or tuios/u. {DEFAULT_SESSION_MULTIPLEXER_HELP}\")] = None,",
                 "    daemon: Annotated[bool, typer.Option(\"--daemon\", \"-D\", help=\"Keep mounts running in the background independently of a terminal.\")] = False,",
                 "    output_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print background mount locations and process identities as JSON.\")] = False,",
                 "    timeout: Annotated[float, typer.Option(\"--timeout\", \"-T\", min=1, help=\"Seconds to wait for each background mount.\")] = 30.0,",
@@ -23964,10 +24026,10 @@
                 {
                   "name": "backend",
                   "kind": "positional_or_keyword",
-                  "type": "Literal['tmux', 't', 'auto', 'a']",
-                  "default": "tmux",
+                  "type": "Literal['tmux', 't', 'tuios', 'u'] | None",
+                  "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[Literal['tmux', 't', 'auto', 'a'], typer.Option('--backend', '-b', help='terminal backend for Linux/macOS')]",
+                  "annotation_raw": "Annotated[Literal['tmux', 't', 'tuios', 'u'] | None, typer.Option('--backend', '-b', help=f'Session multiplexer for Linux/macOS: tmux/t or tuios/u. {DEFAULT_SESSION_MULTIPLEXER_HELP}')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -23979,8 +24041,7 @@
                     ],
                     "short_flags": [
                       "-b"
-                    ],
-                    "help": "terminal backend for Linux/macOS"
+                    ]
                   }
                 },
                 {
@@ -31365,6 +31426,169 @@
                 "aliases": [
                   {
                     "name": "s",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "profiles",
+                "fullPath": "agents browser profiles",
+                "shortPath": "a b p",
+                "help": "List a browser's profiles with their state, browser account and what each is signed in to.\n\nReads profile files only: cookie hosts, names and expiry, saved-login usernames and the browser's own account. Cookie values and\npasswords are never read or decrypted, so account names are known for Google (recorded by the browser) and for saved logins.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_browser.py",
+                  "module": "stackops.scripts.python.agents_browser",
+                  "callable": "list_profiles"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def list_profiles(",
+                    "    sites: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Argument(",
+                    "            help=(",
+                    "                \"Sites to check in every profile, e.g. google slack oracle. Each is matched as a case-insensitive part of the cookie host \"",
+                    "                \"and reports the sign-in state, accounts, saved logins and last activity.\"",
+                    "            )",
+                    "        ),",
+                    "    ] = None,",
+                    "    browser: Annotated[",
+                    "        ChromiumBrowserName,",
+                    "        typer.Option(\"--browser\", \"-b\", help=\"Chromium-family browser whose profiles should be listed.\", case_sensitive=False, show_choices=True),",
+                    "    ] = \"chrome\",",
+                    "    native: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--native\", \"-n\", help=\"List the browser's own profiles from its normal location instead of saved StackOps profiles.\"),",
+                    "    ] = False,",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print the profile rows as JSON.\")] = False,",
+                    ") -> None:",
+                    "    \"\"\"List a browser's profiles with their state, browser account and what each is signed in to.",
+                    "",
+                    "    Reads profile files only: cookie hosts, names and expiry, saved-login usernames and the browser's own account. Cookie values and",
+                    "    passwords are never read or decrypted, so account names are known for Google (recorded by the browser) and for saved logins.",
+                    "    \"\"\"",
+                    "    from datetime import UTC, datetime",
+                    "",
+                    "    resolved_sites = tuple(site.strip() for site in sites or ())",
+                    "    if any(site == \"\" for site in resolved_sites):",
+                    "        raise typer.BadParameter(\"Sites cannot be empty\")",
+                    "    if len(set(resolved_sites)) != len(resolved_sites):",
+                    "        raise typer.BadParameter(\"Sites must be unique\")",
+                    "    now = datetime.now(tz=UTC)",
+                    "    try:",
+                    "        from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_inventory import collect_browser_profile_inventory",
+                    "",
+                    "        rows = collect_browser_profile_inventory(browser=browser, native=native, sites=resolved_sites, now=now)",
+                    "    except ValueError as error:",
+                    "        raise typer.BadParameter(str(error)) from error",
+                    "    except RuntimeError as error:",
+                    "        typer.echo(str(error), err=True)",
+                    "        raise typer.Exit(code=1) from error",
+                    "",
+                    "    if json_output:",
+                    "        emit_agent_json(rows)",
+                    "        return",
+                    "    from rich.console import Console",
+                    "",
+                    "    from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_inventory_output import build_browser_profile_inventory_table",
+                    "",
+                    "    Console().print(build_browser_profile_inventory_table(browser=browser, native=native, sites=resolved_sites, rows=rows, now=now))"
+                  ],
+                  "name": "list_profiles",
+                  "parameters": [
+                    {
+                      "name": "sites",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Sites to check in every profile, e.g. google slack oracle. Each is matched as a case-insensitive part of the cookie host and reports the sign-in state, accounts, saved logins and last activity.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Sites to check in every profile, e.g. google slack oracle. Each is matched as a case-insensitive part of the cookie host and reports the sign-in state, accounts, saved logins and last activity."
+                      }
+                    },
+                    {
+                      "name": "browser",
+                      "kind": "positional_or_keyword",
+                      "type": "ChromiumBrowserName",
+                      "default": "chrome",
+                      "required": false,
+                      "annotation_raw": "Annotated[ChromiumBrowserName, typer.Option('--browser', '-b', help='Chromium-family browser whose profiles should be listed.', case_sensitive=False, show_choices=True)]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--browser",
+                          "-b"
+                        ],
+                        "long_flags": [
+                          "--browser"
+                        ],
+                        "short_flags": [
+                          "-b"
+                        ],
+                        "help": "Chromium-family browser whose profiles should be listed."
+                      }
+                    },
+                    {
+                      "name": "native",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--native', '-n', help=\"List the browser's own profiles from its normal location instead of saved StackOps profiles.\")]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--native",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--native"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "List the browser's own profiles from its normal location instead of saved StackOps profiles."
+                      }
+                    },
+                    {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the profile rows as JSON.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print the profile rows as JSON."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "🪪 <p> List profiles and what each is signed in to",
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "doc": "List a browser's profiles with their state, browser account and what each is signed in to.\n\nReads profile files only: cookie hosts, names and expiry, saved-login usernames and the browser's own account. Cookie values and\npasswords are never read or decrypted, so account names are known for Google (recorded by the browser) and for saved logins.",
+                "aliases": [
+                  {
+                    "name": "p",
                     "hidden": true
                   }
                 ]
@@ -43903,7 +44127,7 @@
           "raw_lines": [
             "def serve(",
             "    host: Annotated[str, typer.Option(\"--host\", \"-H\", help=\"Interface to listen on. Keep the loopback default unless you trust the network.\")] = DEFAULT_HOST,",
-            "    port: Annotated[int, typer.Option(\"--port\", \"-p\", min=0, max=65535, help=\"Port to listen on; 0 picks a free port.\")] = DEFAULT_PORT,",
+            "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", min=0, max=65535, help=f\"Port to listen on; 0 picks a free port. Defaults to {DEFAULT_PORT} when it is free, otherwise a free port.\")] = None,",
             "    no_browser: Annotated[bool, typer.Option(\"--no-browser\", \"-n\", help=\"Print the access link without opening it in the browser.\")] = False,",
             ") -> None:",
             "    \"\"\"🌐 <w> Web UI for commands, dashboards, and terminals.\"\"\"",
@@ -43939,10 +44163,10 @@
             {
               "name": "port",
               "kind": "positional_or_keyword",
-              "type": "int",
-              "default": "DEFAULT_PORT",
+              "type": "int | None",
+              "default": null,
               "required": false,
-              "annotation_raw": "Annotated[int, typer.Option('--port', '-p', min=0, max=65535, help='Port to listen on; 0 picks a free port.')]",
+              "annotation_raw": "Annotated[int | None, typer.Option('--port', '-p', min=0, max=65535, help=f'Port to listen on; 0 picks a free port. Defaults to {DEFAULT_PORT} when it is free, otherwise a free port.')]",
               "typer": {
                 "kind": "option",
                 "param_decls": [
@@ -43954,8 +44178,7 @@
                 ],
                 "short_flags": [
                   "-p"
-                ],
-                "help": "Port to listen on; 0 picks a free port."
+                ]
               }
             },
             {

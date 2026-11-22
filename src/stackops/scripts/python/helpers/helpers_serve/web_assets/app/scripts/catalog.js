@@ -48,6 +48,7 @@ export const TOOL_TITLES = {
   "agents browser": "Browser automation", "agents browser launch": "Open a browser", "agents browser batch-launch": "Open saved profiles",
   "agents browser close": "Close a browser", "agents browser batch-close": "Close saved profiles", "agents browser status": "Open browsers",
   "agents browser declutter": "Slim down a profile", "agents browser replicate": "Copy a profile", "agents browser install": "Set up browser tools",
+  "agents browser profiles": "Profiles and sign-ins",
   "agents computer": "Desktop control", "agents computer control": "Turn on desktop control", "agents computer status": "Desktop control status",
   "agents local": "Local models", "agents local doctor": "Model server check", "agents local discover": "Find a model", "agents local install": "Install vLLM",
   "agents local serve": "Start a model server", "agents second-brain": "Second Brain", "agents second-brain init": "Set up Second Brain",
@@ -75,6 +76,7 @@ export const LIVE_NAMES = new Set([
 // Read-only tools whose name is not one of the above. Each was run before it was listed; never add one whose output holds secrets (`devops vault search`).
 export const LIVE_PATHS = new Set([
   "devops network ssh debug", "devops self explore-cli search", "devops self explore-python-api search", "cloud onedrive config-path", "devops software check",
+  "agents browser profiles",
 ]);
 
 // What a read-only tool starts with when the CLI insists on a choice without marking it as required. Keyed by parameter name; a switch is "on".
@@ -120,6 +122,7 @@ export const ESSENTIAL_FLAGS = {
   "agents browser close": ["--browser", "--port", "--profile"],
   "agents browser batch-close": ["--browser"],
   "agents browser status": ["--all", "--browser"],
+  "agents browser profiles": ["--browser", "--native"],
   "agents browser declutter": ["--browser", "--profile", "--all"],
   "agents browser replicate": ["--browser", "--profile", "--target", "--native"],
   "agents browser install": ["--tool", "--agent"],

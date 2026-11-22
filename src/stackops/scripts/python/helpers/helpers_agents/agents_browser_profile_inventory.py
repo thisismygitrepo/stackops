@@ -3,10 +3,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import CHROMIUM_NON_USER_PROFILE_FOLDERS, ChromiumBrowserName
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
+    BROWSER_PROFILES_ROOT,
+    CHROMIUM_NON_USER_PROFILE_FOLDERS,
+    ChromiumBrowserName,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_native_profiles import list_native_browser_profiles
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_process_scan import OpenBrowserProcess, collect_open_browsers
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_listing import list_browser_profile_paths
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_listing import natural_profile_name_key
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_sign_in import (
     BrowserProfileSiteSignIn,
     list_signed_in_known_services,
@@ -20,16 +24,16 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_sign_
 
 @dataclass(frozen=True, slots=True)
 class BrowserProfileInventoryRow:
-    browser: ChromiumBrowserName
     profile: str
-    user_data_path: Path
-    profile_folder: str | None
     running: bool
     debugging_port: int | None
     browser_account: str | None
     signed_in_services: tuple[str, ...]
     last_used: datetime | None
     sites: tuple[BrowserProfileSiteSignIn, ...]
+    browser: ChromiumBrowserName
+    profile_folder: str | None
+    user_data_path: Path
 
 
 def collect_browser_profile_inventory(
@@ -42,20 +46,27 @@ def collect_browser_profile_inventory(
             for profile in list_native_browser_profiles(browser=browser)
         )
     else:
-        for user_data_path in list_browser_profile_paths(browser=browser):
-            try:
+        profiles_root = BROWSER_PROFILES_ROOT.expanduser().joinpath(browser)
+        try:
+            user_data_paths = (
+                sorted((child for child in profiles_root.iterdir() if child.is_dir()), key=lambda child: natural_profile_name_key(name=child.name))
+                if profiles_root.is_dir()
+                else []
+            )
+            for user_data_path in user_data_paths:
                 folders = sorted(
                     child.name
                     for child in user_data_path.iterdir()
                     if child.name not in CHROMIUM_NON_USER_PROFILE_FOLDERS and child.joinpath("Preferences").is_file()
                 )
-            except OSError as error:
-                raise RuntimeError(f"""Could not inspect browser profile directory {user_data_path}: {error}""") from error
-            if len(folders) == 0:
-                targets.append((user_data_path.name, user_data_path, None))
-            targets.extend(
-                (user_data_path.name if folder == "Default" else f"""{user_data_path.name}/{folder}""", user_data_path, folder) for folder in folders
-            )
+                if len(folders) == 0:
+                    targets.append((user_data_path.name, user_data_path, None))
+                targets.extend(
+                    (user_data_path.name if folder == "Default" else f"""{user_data_path.name}/{folder}""", user_data_path, folder)
+                    for folder in folders
+                )
+        except OSError as error:
+            raise RuntimeError(f"""Could not inspect browser profiles under {profiles_root}: {error}""") from error
     open_browsers = tuple(open_browser for open_browser in collect_open_browsers() if open_browser.browser == browser)
     info_cache_by_user_data_path: dict[Path, dict[str, object]] = {}
     rows: list[BrowserProfileInventoryRow] = []
@@ -117,16 +128,16 @@ def _build_inventory_row(
                 resolve_site_sign_in(site=site, cookies=cookies, saved_logins=saved_logins, google_accounts=google_accounts) for site in sites
             )
     return BrowserProfileInventoryRow(
-        browser=browser,
         profile=profile,
-        user_data_path=user_data_path,
-        profile_folder=profile_folder,
         running=open_browser is not None,
         debugging_port=None if open_browser is None else open_browser.debugging_port,
         browser_account=user_name if isinstance(user_name, str) and user_name != "" else None,
         signed_in_services=signed_in_services,
         last_used=datetime.fromtimestamp(active_time, tz=UTC) if isinstance(active_time, (int, float)) and active_time > 0 else None,
         sites=site_sign_ins,
+        browser=browser,
+        profile_folder=profile_folder,
+        user_data_path=user_data_path,
     )
 
 

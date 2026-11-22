@@ -5,6 +5,7 @@ import { rise } from "../../motion.js";
 import { toolButton } from "../../space_kit.js";
 import { avatar, button, copyChip, notice } from "../../widgets.js";
 import { humanize, plural, relativeTime } from "../../words.js";
+import { createProfilesPanel } from "./workbench_browser_profiles.js";
 import { actionBlock, areaHead, previewList, statusPill } from "./workbench_kit.js";
 
 const TAB_PREVIEW = 4;
@@ -98,6 +99,8 @@ export function createBrowserArea({ tools }, { setStatus }) {
     },
   });
 
+  const profiles = createProfilesPanel({ tools });
+
   const element = h(
     "div",
     { class: "wb-area" },
@@ -106,8 +109,15 @@ export function createBrowserArea({ tools }, { setStatus }) {
       actions: [toolButton(tools, "agents browser install", { label: "Set up browser tools", glyph: "download" }), open()],
     }),
     panel.element,
+    profiles.element,
     actionBlock(tools, "Open and close", OPEN_CLOSE),
     actionBlock(tools, "Profiles and setup", PROFILES),
   );
-  return { element, show: () => panel.ensure() };
+  return {
+    element,
+    show: () => {
+      panel.ensure();
+      profiles.ensure();
+    },
+  };
 }

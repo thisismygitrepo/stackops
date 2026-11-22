@@ -44,6 +44,10 @@
 .wb-address { display: grid; justify-items: start; gap: 2px; }
 .wb-address .copy-chip { font-size: 13.5px; color: var(--ink); }
 .wb-card footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 12.5px; }
+.wb-card .facts { font-size: 13px; }
+.wb-signin { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.wb-signin .wb-line-actions { align-items: center; }
+.wb-signin .dim { font-size: 12px; }
 .wb-clamp { display: -webkit-box; overflow: hidden; font-size: 13px; color: var(--ink-soft); -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .wb-sizes { display: flex; flex-wrap: wrap; gap: 6px; }
 .wb-sizes .copy-chip, .wb-server-head .copy-chip { margin-left: 0; }

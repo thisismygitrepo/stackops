@@ -453,7 +453,7 @@ def list_profiles(
         typer.Argument(
             help=(
                 "Sites to check in every profile, e.g. google slack oracle. Each is matched as a case-insensitive part of the cookie host "
-                "and adds a column with the sign-in state, accounts, saved logins and last activity."
+                "and reports the sign-in state, accounts, saved logins and last activity."
             )
         ),
     ] = None,
