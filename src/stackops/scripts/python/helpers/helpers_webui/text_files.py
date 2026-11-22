@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import cast
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths import permitted_resource_path
-from stackops.scripts.python.helpers.helpers_serve.constants import MAX_EDITABLE_FILE_BYTES
+from stackops.scripts.python.helpers.helpers_webui.constants import MAX_EDITABLE_FILE_BYTES
 
 
 @dataclass(frozen=True)

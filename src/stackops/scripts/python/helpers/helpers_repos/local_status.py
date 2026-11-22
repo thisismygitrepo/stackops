@@ -25,7 +25,8 @@ def inspect_local_repository(destination: Path) -> LocalRepositoryStatus:
     try:
         with Repo(path, search_parent_directories=False) as repository:
             counts: dict[ChangeKind, int] = {"m": 0, "n": 0, "d": 0, "r": 0, "u": 0}
-            status_output = "" if repository.bare else repository.git.status(
+            # A plain status holds index.lock for its whole run: it fails a commit made meanwhile, and leaves the lock behind when killed.
+            status_output = "" if repository.bare else repository.git(no_optional_locks=True).status(
                 porcelain="v1", z=True, untracked_files="all", ignore_submodules="none"
             )
             entries = iter(status_output.split("\0"))

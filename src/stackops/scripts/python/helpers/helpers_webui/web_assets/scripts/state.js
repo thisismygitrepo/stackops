@@ -1,5 +1,5 @@
-const LAYOUT_KEY = "stackops-serve-layout";
-const DIRECTORY_KEY = "stackops-serve-directory";
+const LAYOUT_KEY = "stackops-webui-layout";
+const DIRECTORY_KEY = "stackops-webui-directory";
 const listeners = new Map();
 
 export const state = { boot: null, nodes: new Map(), parents: new Map(), settings: { workingDirectory: "", dockHeight: 320, expanded: [] } };

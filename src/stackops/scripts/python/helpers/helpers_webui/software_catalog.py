@@ -42,7 +42,7 @@ class CatalogProblem(TypedDict):
 
 
 def load_software_catalog(installers_by_name: dict[str, InstallerData]) -> SoftwareCatalog | CatalogProblem:
-    from stackops.scripts.python.helpers.helpers_serve.software_versions import github_release_repository
+    from stackops.scripts.python.helpers.helpers_webui.software_versions import github_release_repository
     from stackops.utils.cli_utils.command_lookup import check_tool_exists
     from stackops.utils.installer_utils.installer_catalog import USER_INSTALLER_DATA_PATH, InstallerDataFileError, read_installer_data
     from stackops.utils.installer_utils.installer_class import Installer

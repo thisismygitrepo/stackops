@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
-from stackops.scripts.python.helpers.helpers_serve.constants import VENDOR_CACHE_FOLDER, VENDOR_DOWNLOAD_TIMEOUT_SECONDS
+from stackops.scripts.python.helpers.helpers_webui.constants import VENDOR_CACHE_FOLDER, VENDOR_DOWNLOAD_TIMEOUT_SECONDS
 
 
 @dataclass(frozen=True)

@@ -1,4 +1,4 @@
-export const VIEW_KEY = "stackops-serve-view";
+export const VIEW_KEY = "stackops-webui-view";
 
 export const SPACES = [
   { id: "home", hash: "#/", label: "Home", glyph: "home", title: "Home" },

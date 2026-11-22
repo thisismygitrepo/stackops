@@ -37452,24 +37452,24 @@
       },
       {
         "kind": "command",
-        "name": "serve",
-        "fullPath": "serve",
+        "name": "webui",
+        "fullPath": "webui",
         "shortPath": "w",
         "help": "🌐 <w> Web UI for commands, dashboards, and terminals",
         "source": {
           "file": "src/stackops/scripts/python/stackops_entry.py",
           "module": "stackops.scripts.python.stackops_entry",
-          "callable": "serve"
+          "callable": "webui"
         },
         "signature": {
           "raw_lines": [
-            "def serve(",
+            "def webui(",
             "    host: Annotated[str, typer.Option(\"--host\", \"-H\", help=\"Interface to listen on. Keep the loopback default unless you trust the network.\")] = DEFAULT_HOST,",
             "    port: Annotated[int | None, typer.Option(\"--port\", \"-p\", min=0, max=65535, help=f\"Port to listen on; 0 picks a free port. Defaults to {DEFAULT_PORT} when it is free, otherwise a free port.\")] = None,",
             "    no_browser: Annotated[bool, typer.Option(\"--no-browser\", \"-n\", help=\"Print the access link without opening it in the browser.\")] = False,",
             ") -> None:"
           ],
-          "name": "serve",
+          "name": "webui",
           "parameters": [
             {
               "name": "host",

@@ -2,7 +2,7 @@ import asyncio
 
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from stackops.scripts.python.helpers.helpers_serve.runs import Run, RunEvent, describe_run, subscribe
+from stackops.scripts.python.helpers.helpers_webui.runs import Run, RunEvent, describe_run, subscribe
 
 
 async def relay_run(websocket: WebSocket, run: Run) -> None:

@@ -1,5 +1,5 @@
-const OPTIONS_KEY = "stackops-serve-options";
-const RECENT_KEY = "stackops-serve-recent";
+const OPTIONS_KEY = "stackops-webui-options";
+const RECENT_KEY = "stackops-webui-recent";
 const RECENT_LIMIT = 6;
 // A bearer token or password typed into a read-only view stays out of the browser's storage.
 const SECRET_NAME = /key|token|password|pwd|secret/i;

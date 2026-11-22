@@ -11,7 +11,7 @@ import typer
 from typer._click import Context
 from typer.core import TyperCommand
 from stackops.scripts.python.enums import BACKENDS_LOOSE
-from stackops.scripts.python.helpers.helpers_serve.constants import DEFAULT_HOST, DEFAULT_PORT
+from stackops.scripts.python.helpers.helpers_webui.constants import DEFAULT_HOST, DEFAULT_PORT
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
 
@@ -106,16 +106,16 @@ def seek(ctx: typer.Context) -> None:
     _run_nested_app(ctx, get_app_seek)
 
 
-def serve(
+def webui(
     host: Annotated[str, typer.Option("--host", "-H", help="Interface to listen on. Keep the loopback default unless you trust the network.")] = DEFAULT_HOST,
     port: Annotated[int | None, typer.Option("--port", "-p", min=0, max=65535, help=f"Port to listen on; 0 picks a free port. Defaults to {DEFAULT_PORT} when it is free, otherwise a free port.")] = None,
     no_browser: Annotated[bool, typer.Option("--no-browser", "-n", help="Print the access link without opening it in the browser.")] = False,
 ) -> None:
     """🌐 <w> Web UI for commands, dashboards, and terminals."""
-    from stackops.scripts.python.helpers.helpers_serve.cli_serve import serve as serve_impl
+    from stackops.scripts.python.helpers.helpers_webui.cli_webui import webui as webui_impl
     from stackops.utils.cli_utils.interaction import is_interactive
 
-    serve_impl(host=host, port=port, open_browser=not no_browser and is_interactive())
+    webui_impl(host=host, port=port, open_browser=not no_browser and is_interactive())
 
 
 def cli(
@@ -172,8 +172,8 @@ def get_app() -> typer.Typer:
     app.command(name="f", hidden=True, context_settings=ctx_settings)(fire)
     app.command("preview", no_args_is_help=False, help="👀 <p> Preview files and launch reader backends")(preview)
     app.command("p", no_args_is_help=False, hidden=True)(preview)
-    app.command("serve", no_args_is_help=False, help="🌐 <w> Web UI for commands, dashboards, and terminals")(serve)
-    app.command("w", no_args_is_help=False, hidden=True)(serve)
+    app.command("webui", no_args_is_help=False, help="🌐 <w> Web UI for commands, dashboards, and terminals")(webui)
+    app.command("w", no_args_is_help=False, hidden=True)(webui)
 
     return apply_alias_markers(app)
 

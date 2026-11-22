@@ -16,11 +16,11 @@ from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp
 from starlette.websockets import WebSocket
 
-from stackops.scripts.python.helpers.helpers_serve.access_guard import guard_access
-from stackops.scripts.python.helpers.helpers_serve.capture import CaptureResult, CaptureTimeout, capture_command
-from stackops.scripts.python.helpers.helpers_serve.catalog import ParameterSpec, load_command_parameters, load_command_tree
-from stackops.scripts.python.helpers.helpers_serve.pages import APP_PAGE, DEVELOPER_PAGE
-from stackops.scripts.python.helpers.helpers_serve.run_requests import (
+from stackops.scripts.python.helpers.helpers_webui.access_guard import guard_access
+from stackops.scripts.python.helpers.helpers_webui.capture import CaptureResult, CaptureTimeout, capture_command
+from stackops.scripts.python.helpers.helpers_webui.catalog import ParameterSpec, load_command_parameters, load_command_tree
+from stackops.scripts.python.helpers.helpers_webui.pages import APP_PAGE, DEVELOPER_PAGE
+from stackops.scripts.python.helpers.helpers_webui.run_requests import (
     CaptureRequest,
     RequestProblem,
     RunRequest,
@@ -29,12 +29,12 @@ from stackops.scripts.python.helpers.helpers_serve.run_requests import (
     resolve_directory,
     suggest_paths,
 )
-from stackops.scripts.python.helpers.helpers_serve.run_socket import relay_run
-from stackops.scripts.python.helpers.helpers_serve.runs import RunRegistry, describe_run, shutdown_runs, start_run, stop_run
-from stackops.scripts.python.helpers.helpers_serve.software_catalog import load_software_catalog
-from stackops.scripts.python.helpers.helpers_serve.software_versions import LatestRelease, SoftwareVersion, VersionProblem, check_software_version
-from stackops.scripts.python.helpers.helpers_serve.text_files import FileProblem, TextFile, read_text_file, write_text_file
-from stackops.scripts.python.helpers.helpers_serve.vendor_assets import VENDOR_ASSETS, resolve_vendor_asset
+from stackops.scripts.python.helpers.helpers_webui.run_socket import relay_run
+from stackops.scripts.python.helpers.helpers_webui.runs import RunRegistry, describe_run, shutdown_runs, start_run, stop_run
+from stackops.scripts.python.helpers.helpers_webui.software_catalog import load_software_catalog
+from stackops.scripts.python.helpers.helpers_webui.software_versions import LatestRelease, SoftwareVersion, VersionProblem, check_software_version
+from stackops.scripts.python.helpers.helpers_webui.text_files import FileProblem, TextFile, read_text_file, write_text_file
+from stackops.scripts.python.helpers.helpers_webui.vendor_assets import VENDOR_ASSETS, resolve_vendor_asset
 from stackops.utils.schemas.installer.installer_types import InstallerData
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
 from stackops.version import get_stackops_version

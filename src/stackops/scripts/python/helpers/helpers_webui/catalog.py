@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Literal, TypedDict, cast
 
 from stackops.scripts.python.graph.visualize.graph_paths import DEFAULT_GRAPH_PATH
-from stackops.scripts.python.helpers.helpers_serve.constants import LOCAL_PATH_PARAMETER_NAMES
+from stackops.scripts.python.helpers.helpers_webui.constants import LOCAL_PATH_PARAMETER_NAMES
 
 SUMMARY_PATTERN = re.compile(r"^(?:(?P<icon>[^\w\s<]\S*)\s+)?(?:<(?P<alias>[^>\s]+)>\s+)?(?P<summary>.*)$")
 

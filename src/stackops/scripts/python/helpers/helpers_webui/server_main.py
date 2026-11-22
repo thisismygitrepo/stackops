@@ -7,8 +7,8 @@ def run_server(host: str, port: int | None, open_browser: bool, stackops_executa
     from rich.console import Console
     from rich.panel import Panel
 
-    from stackops.scripts.python.helpers.helpers_serve.constants import DEFAULT_PORT, GRACEFUL_SHUTDOWN_SECONDS, PORT_PROBE_SECONDS, TOKEN_COOKIE_PREFIX
-    from stackops.scripts.python.helpers.helpers_serve.server_app import create_app
+    from stackops.scripts.python.helpers.helpers_webui.constants import DEFAULT_PORT, GRACEFUL_SHUTDOWN_SECONDS, PORT_PROBE_SECONDS, TOKEN_COOKIE_PREFIX
+    from stackops.scripts.python.helpers.helpers_webui.server_app import create_app
     from stackops.utils.network.address import select_lan_ipv4
 
     console = Console()

@@ -7,8 +7,8 @@ from dataclasses import dataclass
 
 from starlette.types import Receive
 
-from stackops.scripts.python.helpers.helpers_serve.constants import CAPTURE_OUTPUT_COLUMNS, CAPTURE_TIMEOUT_SECONDS
-from stackops.scripts.python.helpers.helpers_serve.runs import build_run_environment
+from stackops.scripts.python.helpers.helpers_webui.constants import CAPTURE_OUTPUT_COLUMNS, CAPTURE_TIMEOUT_SECONDS
+from stackops.scripts.python.helpers.helpers_webui.runs import build_run_environment
 
 
 @dataclass(frozen=True)

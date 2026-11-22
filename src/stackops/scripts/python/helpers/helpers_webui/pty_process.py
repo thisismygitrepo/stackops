@@ -6,7 +6,7 @@ import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from stackops.scripts.python.helpers.helpers_serve.constants import PTY_POLL_SECONDS, PTY_READ_CHUNK_BYTES
+from stackops.scripts.python.helpers.helpers_webui.constants import PTY_POLL_SECONDS, PTY_READ_CHUNK_BYTES
 
 # Python starts with SIGPIPE ignored and an exec keeps that, which leaves a shell pipeline such as `tr … | head` in the command running for ever.
 POSIX_TRAMPOLINE = (
@@ -99,7 +99,7 @@ def _spawn_posix_pty(argv: list[str], working_directory: str, environment: dict[
 
 
 def _spawn_windows_pty(argv: list[str], working_directory: str, environment: dict[str, str], rows: int, columns: int) -> PtyHandle:
-    from winpty import PtyProcess  # type: ignore[import-not-found]  # pywinpty is supplied on the fly by `stackops serve` on Windows.
+    from winpty import PtyProcess  # type: ignore[import-not-found]  # pywinpty is supplied on the fly by `stackops webui` on Windows.
 
     process = PtyProcess.spawn(argv, cwd=working_directory, env=environment, dimensions=(rows, columns))
 

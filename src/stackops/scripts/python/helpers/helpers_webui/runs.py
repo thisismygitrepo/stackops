@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import TypedDict
 from uuid import uuid4
 
-from stackops.scripts.python.helpers.helpers_serve.constants import (
+from stackops.scripts.python.helpers.helpers_webui.constants import (
     FINISHED_RUNS_KEPT,
     LAUNCH_PATH_VARIABLE,
     LAUNCH_VIRTUAL_ENV_VARIABLE,
@@ -18,7 +18,7 @@ from stackops.scripts.python.helpers.helpers_serve.constants import (
     STOP_GRACE_SECONDS,
     TERMINAL_RESTORE_SEQUENCE,
 )
-from stackops.scripts.python.helpers.helpers_serve.pty_process import PtyHandle, spawn_pty
+from stackops.scripts.python.helpers.helpers_webui.pty_process import PtyHandle, spawn_pty
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT, LIBRARY_ROOT
 
 POSIX_SHELL_WRAPPER = LIBRARY_ROOT.joinpath("scripts", "linux", "wrap_stackops")
@@ -117,7 +117,7 @@ def start_run(registry: RunRegistry, arguments: tuple[str, ...], working_directo
         interactive=interactive,
         started_at=started_at,
         handle=handle,
-        pump_thread=threading.Thread(target=pump, name=f"""stackops-serve-run-{run_id}""", daemon=True),
+        pump_thread=threading.Thread(target=pump, name=f"""stackops-webui-run-{run_id}""", daemon=True),
         scrollback=deque(),
         scrollback_bytes=0,
         subscribers=set(),

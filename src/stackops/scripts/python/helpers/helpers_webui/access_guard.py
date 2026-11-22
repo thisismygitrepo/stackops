@@ -5,7 +5,7 @@ from starlette.requests import HTTPConnection
 from starlette.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from stackops.scripts.python.helpers.helpers_serve.constants import APP_CONTENT_SECURITY_POLICY, REPORT_CONTENT_SECURITY_POLICY
+from stackops.scripts.python.helpers.helpers_webui.constants import APP_CONTENT_SECURITY_POLICY, REPORT_CONTENT_SECURITY_POLICY
 
 LOCKED_PAGE = """<!doctype html>
 <html lang="en">
@@ -25,7 +25,7 @@ code { font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 <body>
 <main>
 <h1>This session needs its access link</h1>
-<p>Open the full URL that <code>stackops serve</code> printed in your terminal. It carries the access token for this server.</p>
+<p>Open the full URL that <code>stackops webui</code> printed in your terminal. It carries the access token for this server.</p>
 <p>The link changes every time the server starts.</p>
 </main>
 </body>

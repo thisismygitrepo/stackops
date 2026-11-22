@@ -8,7 +8,7 @@ from urllib.parse import unquote
 
 import requests
 
-from stackops.scripts.python.helpers.helpers_serve.constants import (
+from stackops.scripts.python.helpers.helpers_webui.constants import (
     GITHUB_RELEASE_CACHE_SECONDS,
     GITHUB_RELEASE_TIMEOUT_SECONDS,
     VERSION_PROBE_TIMEOUT_SECONDS,

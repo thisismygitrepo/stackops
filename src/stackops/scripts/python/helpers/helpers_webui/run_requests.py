@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from stackops.scripts.python.helpers.helpers_serve.constants import MAX_TERMINAL_CELLS, MIN_TERMINAL_CELLS, PATH_SUGGESTION_LIMIT
+from stackops.scripts.python.helpers.helpers_webui.constants import MAX_TERMINAL_CELLS, MIN_TERMINAL_CELLS, PATH_SUGGESTION_LIMIT
 
 
 @dataclass(frozen=True)

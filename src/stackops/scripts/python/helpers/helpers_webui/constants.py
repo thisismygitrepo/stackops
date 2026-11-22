@@ -5,10 +5,10 @@ WINDOWS_PTY_DEPENDENCY: Final[str] = "pywinpty"
 
 DEFAULT_HOST: Final[str] = "127.0.0.1"
 DEFAULT_PORT: Final[int] = 8420
-TOKEN_COOKIE_PREFIX: Final[str] = "stackops_serve_token"
+TOKEN_COOKIE_PREFIX: Final[str] = "stackops_webui_token"
 PORT_PROBE_SECONDS: Final[float] = 1.0
-LAUNCH_PATH_VARIABLE: Final[str] = "STACKOPS_SERVE_LAUNCH_PATH"
-LAUNCH_VIRTUAL_ENV_VARIABLE: Final[str] = "STACKOPS_SERVE_LAUNCH_VIRTUAL_ENV"
+LAUNCH_PATH_VARIABLE: Final[str] = "STACKOPS_WEBUI_LAUNCH_PATH"
+LAUNCH_VIRTUAL_ENV_VARIABLE: Final[str] = "STACKOPS_WEBUI_LAUNCH_VIRTUAL_ENV"
 
 MIN_TERMINAL_CELLS: Final[int] = 2
 MAX_TERMINAL_CELLS: Final[int] = 1000
@@ -63,7 +63,7 @@ GITHUB_RELEASE_TIMEOUT_SECONDS: Final[float] = 30.0
 GITHUB_RELEASE_CACHE_SECONDS: Final[float] = 600.0
 
 VENDOR_DOWNLOAD_TIMEOUT_SECONDS: Final[float] = 120.0
-VENDOR_CACHE_FOLDER: Final[str] = "serve-vendor"
+VENDOR_CACHE_FOLDER: Final[str] = "webui-vendor"
 
 APP_CONTENT_SECURITY_POLICY: Final[str] = (
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; "

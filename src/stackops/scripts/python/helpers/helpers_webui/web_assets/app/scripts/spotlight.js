@@ -9,7 +9,7 @@ import { friendlyText, fullTitleOf, plainText, trailOf } from "./words.js";
 const GROUP_LIMIT = 7;
 const GROUP_ORDER = ["Recent", "Suggested", "Pages", "Apps", "Tools", "Collections", "Reports"];
 // Written by the tool sheet: the last few command paths opened, newest first.
-const RECENT_KEY = "stackops-serve-recent";
+const RECENT_KEY = "stackops-webui-recent";
 // Tools that have a guided page of their own: search lands there instead of on the bare tool.
 const GUIDED_TOOLS = { "utils machine clean-drive": "#/machine/cleanup", "devops security status": "#/security", "devops security history": "#/security/scans" };
 
