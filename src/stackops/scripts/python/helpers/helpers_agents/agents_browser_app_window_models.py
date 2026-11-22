@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
 BrowserAppWindowState: TypeAlias = Literal["normal", "minimized", "maximized", "fullscreen"]
-BrowserWindowsUnavailableReason: TypeAlias = Literal["no_endpoint", "unsupported_browser", "session_in_use"]
+BrowserWindowsUnavailableReason: TypeAlias = Literal["no_endpoint", "unsupported_browser", "session_in_use", "automation_denied"]
 
 
 @dataclass(frozen=True)

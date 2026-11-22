@@ -1,6 +1,7 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 import json
+import time
 from typing import TypedDict, cast
 from urllib.request import urlopen
 
@@ -9,7 +10,12 @@ from websockets.sync.client import connect
 from websockets.sync.connection import Connection
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_window_models import BrowserAppTab, BrowserAppWindow, BrowserAppWindowState
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BROWSER_CDP_REQUEST_TIMEOUT_SECONDS, REMOTE_DEBUGGING_LOCALHOST
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import (
+    BROWSER_CDP_REQUEST_TIMEOUT_SECONDS,
+    BROWSER_ENDPOINT_PROBE_INTERVAL_SECONDS,
+    BROWSER_WINDOW_RESTORE_TIMEOUT_SECONDS,
+    REMOTE_DEBUGGING_LOCALHOST,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_endpoint_rpc import call_browser_endpoint
 
 
@@ -74,6 +80,35 @@ def close_cdp_tabs(*, port: int, tabs: tuple[BrowserAppTab, ...]) -> None:
             closed = _call(connection=connection, method="Target.closeTarget", params={"targetId": tab.tab_id})
             if "result" not in closed:
                 raise RuntimeError(f"Browser on CDP port {port} could not close tab {tab.tab_id}: {closed.get('error')}")
+
+
+def focus_cdp_tab(*, port: int, tab_id: str) -> None:
+    with _cdp_session(port=port) as connection:
+        placed = _call(connection=connection, method="Browser.getWindowForTarget", params={"targetId": tab_id})
+        if "result" not in placed:
+            raise RuntimeError(f"Browser on CDP port {port} no longer has tab {tab_id}: {placed.get('error')}")
+        target_window = cast(_TargetWindow, placed["result"])
+        if target_window["bounds"]["windowState"] == "minimized":
+            restored = _call(
+                connection=connection,
+                method="Browser.setWindowBounds",
+                params={"windowId": target_window["windowId"], "bounds": {"windowState": "normal"}},
+            )
+            if "result" not in restored:
+                raise RuntimeError(f"Browser on CDP port {port} could not restore the minimized window of tab {tab_id}: {restored.get('error')}")
+            deadline = time.monotonic() + BROWSER_WINDOW_RESTORE_TIMEOUT_SECONDS
+            while target_window["bounds"]["windowState"] == "minimized":
+                if time.monotonic() >= deadline:
+                    raise RuntimeError(
+                        f"Browser on CDP port {port} kept the window of tab {tab_id} minimized for {BROWSER_WINDOW_RESTORE_TIMEOUT_SECONDS:g} seconds"
+                    )
+                time.sleep(BROWSER_ENDPOINT_PROBE_INTERVAL_SECONDS)
+                target_window = cast(
+                    _TargetWindow, _call(connection=connection, method="Browser.getWindowForTarget", params={"targetId": tab_id})["result"]
+                )
+        activated = _call(connection=connection, method="Target.activateTarget", params={"targetId": tab_id})
+        if "result" not in activated:
+            raise RuntimeError(f"Browser on CDP port {port} could not bring tab {tab_id} to the front: {activated.get('error')}")
 
 
 @contextmanager

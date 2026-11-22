@@ -25,7 +25,7 @@ class BrowserLaunchWindowsStatus(BrowserLaunchStatus):
     browser_windows: tuple[BrowserAppWindow, ...] | BrowserWindowsUnavailable
 
 
-def collect_open_browser_status(*, browser: BrowserName | None) -> tuple[OpenBrowserStatus, ...]:
+def collect_open_browser_status(*, browser: BrowserName | None, without_endpoint: bool) -> tuple[OpenBrowserStatus, ...]:
     launches_by_process_id = {status.browser_process_id: status.launch for status in collect_browser_launch_status() if status.browser_process_id is not None}
     rows: list[OpenBrowserStatus] = []
     for open_browser in collect_open_browsers():
@@ -37,7 +37,12 @@ def collect_open_browser_status(*, browser: BrowserName | None) -> tuple[OpenBro
                 browser=open_browser,
                 launch_id=None if launch is None else launch.launch_id,
                 runtime=None if launch is None else "detached" if launch.windows is None else launch.windows.multiplexer,
-                browser_windows=collect_browser_windows(browser=open_browser.browser, port=open_browser.debugging_port),
+                browser_windows=collect_browser_windows(
+                    browser=open_browser.browser,
+                    process_id=open_browser.process_id,
+                    port=open_browser.debugging_port,
+                    without_endpoint=without_endpoint,
+                ),
             )
         )
     return tuple(rows)
@@ -52,7 +57,9 @@ def collect_browser_launch_windows_status(*, browser: BrowserName | None) -> tup
             relay_running=status.relay_running,
             browser_windows=BrowserWindowsUnavailable(reason="no_endpoint")
             if status.browser_process_id is None
-            else collect_browser_windows(browser=status.launch.browser, port=status.launch.browser_port),
+            else collect_browser_windows(
+                browser=status.launch.browser, process_id=status.browser_process_id, port=status.launch.browser_port, without_endpoint=False
+            ),
         )
         for status in collect_browser_launch_status()
         if browser is None or status.launch.browser == browser
@@ -106,6 +113,8 @@ def _windows_cell(*, browser_windows: tuple[BrowserAppWindow, ...] | BrowserWind
     match browser_windows:
         case BrowserWindowsUnavailable(reason="session_in_use"):
             return "session in use"
+        case BrowserWindowsUnavailable(reason="automation_denied"):
+            return "automation denied"
         case BrowserWindowsUnavailable():
             return "-"
         case ():

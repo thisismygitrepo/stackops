@@ -49,6 +49,11 @@ def close_bidi_tabs(*, port: int, tabs: tuple[BrowserAppTab, ...]) -> None:
             _command(connection=connection, method="browsingContext.close", params={"context": tab.tab_id})
 
 
+def focus_bidi_tab(*, port: int, tab_id: str) -> None:
+    with _bidi_session(port=port) as connection:
+        _command(connection=connection, method="browsingContext.activate", params={"context": tab_id})
+
+
 @contextmanager
 def _bidi_session(*, port: int) -> Generator[Connection, None, None]:
     try:

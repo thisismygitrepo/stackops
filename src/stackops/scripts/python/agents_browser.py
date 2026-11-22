@@ -425,29 +425,84 @@ def status(
         BrowserName | None,
         typer.Option("--browser", "-b", help="Only show this browser. Omit to show all browsers.", case_sensitive=False, show_choices=True),
     ] = None,
+    tabs: Annotated[
+        bool,
+        typer.Option(
+            "--tabs",
+            "-t",
+            help=(
+                "Also list the title and URL of every open tab. With --all on macOS, Chromium browsers without a debug port are read "
+                "through Apple events, which macOS asks to allow once."
+            ),
+        ),
+    ] = False,
+    focus: Annotated[
+        bool,
+        typer.Option("--focus", "-f", help="Pick one open tab interactively, then bring its browser window to the front with that tab selected."),
+    ] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print collected browser status records as JSON.")] = False,
 ) -> None:
     """Show StackOps browser launches across tmux, tuios, zellij and detached runtimes."""
+    if focus and json_output:
+        raise typer.BadParameter("--focus picks a tab interactively and cannot be combined with --json.")
+    if focus:
+        require_interactive("Choosing a browser tab to focus")
     try:
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_window_models import BrowserWindowsUnavailable
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_status import (
             collect_browser_launch_windows_status,
             collect_open_browser_status,
             show_browser_launch_status,
             show_open_browser_status,
         )
+        from stackops.scripts.python.helpers.helpers_agents.agents_browser_tabs import (
+            choose_browser_tab,
+            collect_launch_tabs,
+            collect_open_browser_tabs,
+            show_browser_tabs,
+        )
 
         if all_browsers:
-            rows = collect_open_browser_status(browser=browser)
+            rows = collect_open_browser_status(browser=browser, without_endpoint=tabs or focus)
+            browser_tabs = collect_open_browser_tabs(rows=rows)
+            unreadable_browser_count = sum(1 for row in rows if isinstance(row.browser_windows, BrowserWindowsUnavailable))
             if json_output:
                 emit_agent_json(rows)
-            else:
+            elif not focus:
                 show_open_browser_status(rows=rows)
         else:
             statuses = collect_browser_launch_windows_status(browser=browser)
+            browser_tabs = collect_launch_tabs(statuses=statuses)
+            unreadable_browser_count = sum(1 for launch_status in statuses if isinstance(launch_status.browser_windows, BrowserWindowsUnavailable))
             if json_output:
                 emit_agent_json(statuses)
-            else:
+            elif not focus:
                 show_browser_launch_status(statuses=statuses)
+        if focus:
+            if not browser_tabs:
+                raise RuntimeError(
+                    f"No tabs to focus: none of the {unreadable_browser_count} open browser(s) has readable tabs."
+                    if all_browsers
+                    else "No tabs to focus in StackOps browser launches. Add --all to include browsers StackOps did not launch."
+                )
+            selected = choose_browser_tab(tabs=browser_tabs)
+            if selected is None:
+                raise typer.Exit(code=1)
+            from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_windows import focus_browser_tab
+
+            focus_browser_tab(
+                browser=selected.browser,
+                process_id=selected.process_id,
+                port=selected.port,
+                window_id=selected.window.window_id,
+                tab_id=selected.tab.tab_id,
+            )
+            typer.echo(f"Focused {selected.browser} (PID {selected.process_id}): {selected.tab.title or selected.tab.url}")
+        elif tabs and not json_output:
+            show_browser_tabs(tabs=browser_tabs, unreadable_browser_count=unreadable_browser_count)
+    except FileNotFoundError as error:
+        typer.echo("Choosing a tab interactively requires Television (tv) on PATH.", err=True)
+        raise typer.Exit(code=1) from error
     except RuntimeError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(code=1) from error
