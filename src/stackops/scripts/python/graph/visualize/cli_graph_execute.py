@@ -172,7 +172,8 @@ def _load_typer_parameters(entry: CliGraphSearchEntry) -> list[TyperArgument | T
                     type_descriptor=resolve_type_descriptor(Path, typer.Option()),
                     help=help_text,
                 )]
-        raise ValueError(f"""Expected one optional path in the graph signature for `{entry.command}`.""")
+            case _:
+                raise ValueError(f"""Expected one optional path in the graph signature for `{entry.command}`.""")
     function = getattr(importlib.import_module(module_name), callable_name, None)
     if not callable(function):
         raise ValueError(f"""Cannot load `{module_name}.{callable_name}` to guide `{entry.command}`: it is not a module-level callable.""")

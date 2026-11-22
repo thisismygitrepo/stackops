@@ -1,5 +1,5 @@
 import sys
-from collections.abc import Iterator, Mapping
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from stat import S_IMODE
@@ -71,7 +71,7 @@ def upsert_parallel_yaml_entry(*, yaml_path: Path, entry_name: str, entry_values
 
 
 @contextmanager
-def _parallel_yaml_save_lock(target: Path) -> Iterator[None]:
+def _parallel_yaml_save_lock(target: Path) -> Generator[None]:
     target.parent.mkdir(parents=True, exist_ok=True)
     # Keep a stable lock file so waiting writers share the same lock across catalog replacements.
     with target.with_name(f".{target.name}.lock").open("a+b") as lock:

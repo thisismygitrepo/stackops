@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import PurePath
 from typing import TYPE_CHECKING
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 @contextmanager
-def remote_transfer_archive(sftp: "SFTPClient", parent: PurePath) -> Iterator[str]:
+def remote_transfer_archive(sftp: "SFTPClient", parent: PurePath) -> Generator[str]:
     directory = parent / f".stackops-{uuid4().hex}"
     path = str(directory / "payload.zip")
     sftp.mkdir(str(directory), mode=0o700)

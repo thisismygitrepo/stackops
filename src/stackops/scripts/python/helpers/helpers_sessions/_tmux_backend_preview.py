@@ -7,7 +7,7 @@ from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common import RUN_A
 
 
 # Require line editing and a recognizable prompt on the cursor row. Custom prompts can stay unknown.
-_PROMPT_ROW = "#{C/r:([$%##❯]|^PS .*>)[[:space:]]*$}"
+_PROMPT_ROW = "#{C/r:([$%##❯➜]|^PS .*>)[[:space:]]*$}"
 _AT_SHELL_PROMPT = "#{?bracket_paste_flag,#{==:" + _PROMPT_ROW + ",#{e|+:#{cursor_y},1}},0}"
 
 PaneStatusCategory: TypeAlias = Literal["idle", "running", "exited", "unknown"]

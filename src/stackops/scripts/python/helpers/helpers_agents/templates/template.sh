@@ -17,6 +17,7 @@ agents parallel create \
     --prompt-path "$PROMPT_PATH" \
     --job-name "$JOB_NAME" \
     --agents-dir "$AGENTS_DIR" \
+    --on-directory-conflict replace-owned \
     --separator $'\n'
 
 terminal balance-load "$AGENTS_DIR/layout.yaml" \

@@ -1,7 +1,7 @@
 import csv
 import os
 import stat
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -126,7 +126,7 @@ def read_second_brain_updates(*, second_brain_root: Path) -> list[UpdateFile]:
 
 
 @contextmanager
-def _update_lock(path: Path) -> Iterator[None]:
+def _update_lock(path: Path) -> Generator[None]:
     # The lock must survive replacement of the CSV so waiting writers open the new file.
     lock_path = path.parent / ".ai" / f"{path.name}.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)

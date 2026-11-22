@@ -50,7 +50,9 @@ def ftpx(source: str, target: str, recursive: bool, zip_first: bool, cloud: bool
     ssh = _create_ssh_connection(machine=machine, console=console, password=password)
 
     if cloud:
-        received_file = _handle_cloud_transfer(ssh=ssh, resolved_source=resolved_source, resolved_target=resolved_target, console=console)
+        received_file = _handle_cloud_transfer(
+            ssh=ssh, resolved_source=resolved_source, resolved_target=resolved_target, source_is_remote=source_is_remote, console=console
+        )
     else:
         received_file = _handle_direct_transfer(
             ssh=ssh,
@@ -194,25 +196,43 @@ def _create_ssh_connection(machine: str, console: Console, password: str | None)
 
 
 def _handle_cloud_transfer(
-    ssh: SSH, resolved_source: str | None, resolved_target: str | None, console: Console
+    ssh: SSH, resolved_source: str | None, resolved_target: str | None, source_is_remote: bool, console: Console
 ) -> Path | None:
     """Handle cloud transfer mode."""
+    import json
+    import subprocess
+
     from rich.panel import Panel
+    from stackops.scripts.python.helpers.helpers_agents.agents_shell import build_shell_invocation
 
     if resolved_source is None or resolved_target is None:
         raise ValueError("Cloud transfer mode requires both source and target paths.")
 
-    console.print(Panel.fit("☁️  Cloud transfer mode — uploading from remote to cloud...", title="Cloud Upload", border_style="cyan"))
-    ssh.run_shell_cmd_on_remote(
-        command=f"cloud copy {resolved_source} :^",
-        verbose_output=True,
-        description="Uploading from remote to the cloud.",
-        strict_stderr=False,
-        strict_return_code=False,
-    )
-    console.print(Panel.fit("⬇️  Cloud transfer mode — downloading from cloud to local...", title="Cloud Download", border_style="cyan"))
-    ssh.run_shell_cmd_on_local(command=f"cloud copy :^ {resolved_target}")
-    return Path(resolved_target)
+    def copy(source: str, target: str, *, on_remote: bool, description: str) -> str:
+        console.print(Panel.fit(description, border_style="cyan"))
+        arguments = ["copy", "--json", "--", source, target]
+        if on_remote:
+            windows = ssh.remote_specs["system"] == "Windows"
+            command = build_shell_invocation(executable="cloud", arguments=arguments, is_windows=windows)
+            if windows:
+                from stackops.scripts.python.helpers.helpers_network.ssh.ssh_remote_connection import encode_powershell_command
+
+                command = encode_powershell_command(f"""$ErrorActionPreference = 'Stop'
+{command}
+exit $LASTEXITCODE""")
+            return ssh.run_shell_cmd_on_remote(
+                command=command, verbose_output=True, description=description, strict_stderr=False, strict_return_code=True
+            ).op
+        result = subprocess.run(["cloud", *arguments], stdout=subprocess.PIPE, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(f"""{description} failed with exit code {result.returncode}.""")
+        return result.stdout
+
+    source_host, target_host = ("remote", "local") if source_is_remote else ("local", "remote")
+    upload = copy(resolved_source, ":^", on_remote=source_is_remote, description=f"Upload from {source_host} to cloud")
+    cloud_object = json.loads(upload)["target"]
+    copy(cloud_object, resolved_target, on_remote=not source_is_remote, description=f"Download from cloud to {target_host}")
+    return Path(resolved_target) if source_is_remote else None
 
 
 def _handle_direct_transfer(

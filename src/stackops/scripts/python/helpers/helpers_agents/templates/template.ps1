@@ -17,6 +17,7 @@ try {
         --prompt-path $PROMPT_PATH `
         --job-name $JOB_NAME `
         --agents-dir $AGENTS_DIR `
+        --on-directory-conflict replace-owned `
         --separator "\n"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
