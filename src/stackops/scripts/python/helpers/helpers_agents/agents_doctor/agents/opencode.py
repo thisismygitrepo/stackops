@@ -105,10 +105,10 @@ def _instructions(*, context: DoctorContext, resolved_config_paths: Iterable[Ope
                     kind="instructions",
                     is_mcp=False,
                     name="AGENTS.md",
-                    origin="local",
+                    origin="local" if directory.is_relative_to(context.project_root) else "global",
                     state="disabled" if project_disabled else "active",
                     path=path.absolute(),
-                    detail="ambient project guidance" if not project_disabled else "disabled by OPENCODE_DISABLE_PROJECT_CONFIG=1",
+                    detail="ambient OpenCode guidance" if not project_disabled else "disabled by OPENCODE_DISABLE_PROJECT_CONFIG=1",
                 )
             )
     for origin, config_path in resolved_config_paths:

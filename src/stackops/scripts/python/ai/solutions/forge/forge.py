@@ -31,14 +31,13 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
     changes: list[ArtifactChange] = []
     if add_instructions:
         instructions_path = get_generic_instructions_path()
-        change = write_text_artifact(
+        change = _write_text_if_missing(
             repo_root=repo_root,
             path=repo_root.joinpath("AGENTS.md"),
             content=instructions_path.read_text(encoding="utf-8"),
-            write_mode="always",
         )
-        assert change is not None
-        changes.append(change)
+        if change is not None:
+            changes.append(change)
 
     if add_private_config:
         forge_change = _write_text_if_missing(

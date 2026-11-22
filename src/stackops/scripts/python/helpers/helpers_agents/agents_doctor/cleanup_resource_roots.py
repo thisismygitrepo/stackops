@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.omp_plugin_state import plugin_roots
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CODEX_SYSTEM_PLUGIN_SOURCES
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths import permitted_resource_path
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorContext, DoctorOrigin
 
@@ -11,6 +12,29 @@ def validate_resource_location(*, path: Path, context: DoctorContext) -> None:
         raise ValueError("Protected resource excluded from cleanup")
     if not permitted_resource_path(path=path.parent, home_directory=context.home_directory):
         raise ValueError("Protected resource parent excluded from cleanup")
+
+
+def plugin_removal_targets(*, agent: DoctorAgent, root: Path, context: DoctorContext) -> tuple[Path, ...]:
+    validate_resource_location(path=root, context=context)
+    if root.is_symlink():
+        return (root,)
+    if not root.exists():
+        return ()
+    if agent != "codex" or root != context.codex_home / "plugins":
+        return (root,)
+    cache = root / "cache"
+    if cache.is_symlink():
+        return (root,)
+    try:
+        sources = sorted(cache.iterdir())
+    except (FileNotFoundError, NotADirectoryError):
+        return (root,)
+    if not any(source.name in CODEX_SYSTEM_PLUGIN_SOURCES for source in sources):
+        return (root,)
+    return (
+        *(child for child in sorted(root.iterdir()) if child.name.casefold() != cache.name),
+        *(source for source in sources if source.name not in CODEX_SYSTEM_PLUGIN_SOURCES),
+    )
 
 
 def reset_plugin_roots(*, agent: DoctorAgent, context: DoctorContext) -> tuple[tuple[DoctorOrigin, Path], ...]:

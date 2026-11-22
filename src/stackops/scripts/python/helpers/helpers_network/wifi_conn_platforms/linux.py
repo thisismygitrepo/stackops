@@ -21,6 +21,7 @@ class LinuxWifiDevice:
 
 _DEVICE_MANAGEMENT_RECOVERY_ATTEMPTS: Final[int] = 5
 _DEVICE_MANAGEMENT_RECOVERY_DELAY_SECONDS: Final[float] = 0.5
+_NMCLI_NOT_FOUND: Final[int] = 10
 
 
 def _split_nmcli_fields(raw_line: str, *, field_count: int) -> list[str]:
@@ -186,7 +187,8 @@ def connect_to_new_network(ssid: str, password: str) -> None:
             subprocess.run(["nmcli", "device", "wifi", "connect", ssid, "password", password, "ifname", device_name], check=True, capture_output=True, text=True)
             console.print("[green]✅ Connected successfully![/green]\n")
         except subprocess.CalledProcessError:
-            create_new_connection(ssid, ssid, password)
+            if not _create_connection_if_missing(ssid, ssid, password):
+                raise
             connect(ssid, ssid)
     except subprocess.CalledProcessError as error:
         raise RuntimeError(f"WiFi connection failed with {describe_command_failure(error)}") from None
@@ -221,17 +223,17 @@ def get_current_wifi_name() -> str:
         return "Error detecting WiFi"
 
 
-def create_new_connection(name: str, ssid: str, password: str) -> None:
-    console.print(f"\n[blue]🔧 Creating new connection: {name} (SSID: {ssid})[/blue]")
-
+def _create_connection_if_missing(name: str, ssid: str, password: str) -> bool:
     try:
-        device_name = _ensure_linux_wifi_ready()
-        check_result = run_text_command(["nmcli", "connection", "show", name], check=False)
-
+        check_result = run_text_command(["nmcli", "connection", "show", "id", name], check=False)
         if check_result.returncode == 0:
-            console.print(f"[yellow]⚠️  Connection '{name}' already exists, deleting old one...[/yellow]")
-            run_text_command(["nmcli", "connection", "delete", name], check=True)
+            console.print(f"[yellow]Connection '{name}' already exists.[/yellow]")
+            return False
+        if check_result.returncode != _NMCLI_NOT_FOUND:
+            check_result.check_returncode()
 
+        console.print(f"\n[blue]🔧 Creating new connection: {name} (SSID: {ssid})[/blue]")
+        device_name = _ensure_linux_wifi_ready()
         run_text_command(
             [
                 "nmcli",
@@ -254,8 +256,13 @@ def create_new_connection(name: str, ssid: str, password: str) -> None:
         )
 
         console.print("[green]✅ Connection created successfully![/green]\n")
+        return True
     except subprocess.CalledProcessError as error:
         raise RuntimeError(f"WiFi profile creation failed with {describe_command_failure(error)}") from None
     except Exception as error:
         console.print(f"[red]❌ Unexpected error: {error}[/red]")
         raise
+
+
+def create_new_connection(name: str, ssid: str, password: str) -> None:
+    _create_connection_if_missing(name, ssid, password)

@@ -1,5 +1,9 @@
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_configuration import configuration_cleanup
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resource_roots import reset_plugin_roots, validate_resource_location
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_resource_roots import (
+    plugin_removal_targets,
+    reset_plugin_roots,
+    validate_resource_location,
+)
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookDiagnostic, HookEntry, HookInventory, HookRemoval
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths import permitted_resource_path
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorContext, DoctorResourceFocus
@@ -18,14 +22,14 @@ def collect_cleanup_resources(
     roots = reset_plugin_roots(agent=agent, context=context) if resetting_all else ()
     for origin, root in roots:
         try:
-            validate_resource_location(path=root, context=context)
-        except ValueError as error:
+            targets = plugin_removal_targets(agent=agent, root=root, context=context)
+        except (OSError, ValueError) as error:
             diagnostics.append(HookDiagnostic(agent, origin, root, str(error), "error"))
             continue
-        if not root.is_symlink() and not root.exists():
-            continue
-        entries.append(HookEntry(agent, origin, root, root.name, "plugin", "Remove plugin installation directory", "configured",
-                                 HookRemoval(root, "directory", (), "delete")))
+        for target in targets:
+            directory = target == root or (not target.is_symlink() and target.is_dir())
+            removal = HookRemoval(target, "directory" if directory else "file", (), "delete")
+            entries.append(HookEntry(agent, origin, target, target.name, "plugin", f"""Remove plugin installation {removal.format}""", "configured", removal))
     for resource in resources:
         if resource.state == "missing":
             continue
@@ -78,9 +82,9 @@ def collect_cleanup_resources(
         )
         entries.append(HookEntry(agent, resource.origin, resource.path, resource.name, resource.kind, resource.detail, resource.state, removal))
     if "plugin" in resource_focuses and agent in ("pi", "omp", "opencode"):
-        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.extensions import collect_extensions
+        from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.extensions import collect_plugin_extensions
 
-        inventory = collect_extensions(agent=agent, context=context)
+        inventory = collect_plugin_extensions(agent=agent, context=context)
         entries.extend(inventory.entries)
         diagnostics.extend(inventory.diagnostics)
     return HookInventory(tuple(entries), tuple(diagnostics))

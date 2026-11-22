@@ -2,10 +2,11 @@ import json
 import os
 from pathlib import Path
 
+from stackops.scripts.python.helpers.helpers_agents.privacy.configs.common.json_settings import read_privacy_settings
+
 
 def secure_kilocode_config() -> None:
     config_dir = Path.home() / ".config" / "kilocode"
-    config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "config.json"
     secure_settings = {
         "telemetry": False,
@@ -19,12 +20,10 @@ def secure_kilocode_config() -> None:
         "telemetry_enabled": False,
         "offline_mode": True,
     }
-    current_config = {}
-    if config_file.exists():
-        try:
-            current_config = json.loads(config_file.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+    current_config = read_privacy_settings(config_file)
+    if current_config is None:
+        return
+    config_dir.mkdir(parents=True, exist_ok=True)
     current_config.update(secure_settings)
     config_file.write_text(json.dumps(current_config, indent=4), encoding="utf-8")
     try:

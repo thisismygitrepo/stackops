@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Literal, TypedDict
 
 import psutil
@@ -12,12 +13,19 @@ class TerminationResult(TypedDict):
     error: str | None
 
 
+def kill_scanned_process(process: ProcessInfo) -> None:
+    target = psutil.Process(process["pid"])
+    if datetime.fromtimestamp(target.create_time(), UTC) != process["create_time"].astimezone(UTC):
+        raise psutil.NoSuchProcess(process["pid"])
+    target.kill()
+
+
 def terminate_processes(processes: list[ProcessInfo]) -> list[TerminationResult]:
     results: list[TerminationResult] = []
     for process in processes:
         result: TerminationResult = {"pid": process["pid"], "name": process["name"], "status": "killed", "error": None}
         try:
-            psutil.Process(process["pid"]).kill()
+            kill_scanned_process(process)
         except psutil.NoSuchProcess:
             result["status"] = "already_exited"
         except psutil.Error as error:

@@ -86,7 +86,8 @@ def run_layouts_with_tuios(
                     existing_workspaces = list_workspace_entries(session_name)
             for window_id in initial_window_ids:
                 close_window(session_name=session_name, window_id=window_id)
-            launched_windows[session_name] = tuple(windows)
+            if windows:
+                launched_windows[session_name] = tuple(windows)
             results[session_name] = {"success": True, "message": f"""Started TUIOS session '{session_name}' with {len(windows)} window(s)."""}
             print_launch_table(
                 backend="tuios",

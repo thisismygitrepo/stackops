@@ -11,7 +11,9 @@ def download(
     output: Annotated[str | None, typer.Option("--output", "-o", help="The output file path.")] = None,
     output_dir: Annotated[str | None, typer.Option("--output-dir", "-O", help="Directory to place the downloaded file in.")] = None,
 ) -> Path | None:
+    import os
     import subprocess
+    from tempfile import mkstemp
     from urllib.parse import parse_qs, unquote, urlparse
     from requests import Response
     import requests
@@ -91,20 +93,23 @@ def download(
                 total_size = int(total_size_header)
             except (TypeError, ValueError):
                 total_size = 0
-            if total_size <= 0:
-                download_path.write_bytes(response.content)
-            else:
-                downloaded = 0
-                chunk_size = 8192 * 40
-                download_buffer = bytearray()
-                for chunk in response.iter_content(chunk_size=chunk_size):
-                    if not chunk:
-                        continue
-                    download_buffer.extend(chunk)
-                    downloaded += len(chunk)
-                    progress = (downloaded / total_size) * 100
-                    typer.echo(f"\r⏬ Progress: {progress:.1f}% ({downloaded}/{total_size} bytes)", nl=False, err=True)
-                download_path.write_bytes(bytes(download_buffer))
+            descriptor, temporary_name = mkstemp(prefix=".download-", dir=download_path.parent)
+            temporary_path = Path(temporary_name)
+            try:
+                with os.fdopen(descriptor, "wb") as destination:
+                    downloaded = 0
+                    for chunk in response.iter_content(chunk_size=8192 * 40):
+                        if not chunk:
+                            continue
+                        destination.write(chunk)
+                        if total_size > 0:
+                            downloaded += len(chunk)
+                            progress = (downloaded / total_size) * 100
+                            typer.echo(f"\r⏬ Progress: {progress:.1f}% ({downloaded}/{total_size} bytes)", nl=False, err=True)
+                temporary_path.replace(download_path)
+            finally:
+                temporary_path.unlink(missing_ok=True)
+            if total_size > 0:
                 typer.echo(err=True)
     except requests.exceptions.RequestException as exception:
         typer.echo(f"❌ Download failed: {exception}", err=True)

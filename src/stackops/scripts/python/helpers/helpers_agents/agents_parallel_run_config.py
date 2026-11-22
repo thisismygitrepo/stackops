@@ -102,6 +102,8 @@ def empty_parallel_create_values() -> ParallelCreateValues:
 
 
 def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: ParallelCreateValues) -> ResolvedParallelCreateValues:
+    prompt_values = overrides if overrides.prompt is not None or overrides.prompt_path is not None or overrides.prompt_name is not None else base
+    context_values = overrides if overrides.context is not None or overrides.context_path is not None else base
     agent = overrides.agent if overrides.agent is not None else base.agent
     host = overrides.host if overrides.host is not None else base.host
     backend = overrides.backend if overrides.backend is not None else base.backend
@@ -124,14 +126,14 @@ def merge_parallel_create_values(*, base: ParallelCreateValues, overrides: Paral
         provider=overrides.provider if overrides.provider is not None else base.provider,
         host="local" if host is None else host,
         backend=resolve_agent_multiplexer(multiplexer=None) if backend is None else backend,
-        context=overrides.context if overrides.context is not None else base.context,
-        context_path=overrides.context_path if overrides.context_path is not None else base.context_path,
+        context=context_values.context,
+        context_path=context_values.context_path,
         separator=decode_separator_value(separator=resolved_separator),
         agent_load=3 if agent_load is None else agent_load,
         stagger_max=DEFAULT_STAGGER_MAX if stagger_max is None else stagger_max,
-        prompt=overrides.prompt if overrides.prompt is not None else base.prompt,
-        prompt_path=overrides.prompt_path if overrides.prompt_path is not None else base.prompt_path,
-        prompt_name=overrides.prompt_name if overrides.prompt_name is not None else base.prompt_name,
+        prompt=prompt_values.prompt,
+        prompt_path=prompt_values.prompt_path,
+        prompt_name=prompt_values.prompt_name,
         job_name="AI_Agents" if job_name is None else job_name,
         join_prompt_and_context=False if join_prompt_and_context is None else join_prompt_and_context,
         run=True if run is None else run,

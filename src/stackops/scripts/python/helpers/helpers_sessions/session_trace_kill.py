@@ -40,7 +40,7 @@ def _build_trace_kill_command(
     argv: tuple[str, ...]
     match backend, action:
         case "tmux", "session":
-            argv = ("tmux", "kill-session", "-t", target)
+            argv = ("tmux", "kill-session", "-t", f"={target}")
         case "tmux", "window":
             argv = ("tmux", "kill-window", "-t", target)
         case "tmux", "pane":

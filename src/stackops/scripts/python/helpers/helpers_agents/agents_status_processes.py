@@ -11,7 +11,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_status_links import (
     codex_transcript_paths,
     readable_status_path,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_status_models import ProcessEvidence
+from stackops.scripts.python.helpers.helpers_agents.agents_status_models import ProcessEvidence, StatusOptions
 
 
 @dataclass(frozen=True)
@@ -87,7 +87,7 @@ def _open_codex_transcripts(*, process: psutil.Process, timeout: float) -> tuple
 
 
 def inspect_processes(
-    *, root_pid: int, harness_hint: str, agent_session_id: str, cwd: str, claude_home: Path, codex_home: Path, timeout: float
+    *, root_pid: int, harness_hint: str, agent_session_id: str, cwd: str, options: StatusOptions,
 ) -> ProcessEvidence:
     limitations: list[str] = []
     inspected_pid = root_pid
@@ -97,6 +97,8 @@ def inspect_processes(
             limitations=("The session manager did not expose a process identifier; process-based transcript linkage is unavailable.",),
         )
     hint = "claude-code" if harness_hint in {"claude", "claude-code"} else harness_hint
+    harness = hint
+    session_id = agent_session_id
     try:
         root = psutil.Process(root_pid)
         processes = [root, *root.children(recursive=True)]
@@ -124,38 +126,41 @@ def inspect_processes(
         process = selected.process
         inspected_pid = process.pid
         process_cwd = process.cwd()
-        session_id = agent_session_id
+        harness = selected.harness
+        session_id = ""
         paths: tuple[Path, ...] = ()
-        try:
-            if selected.harness == "claude-code":
-                session_id, metadata_limitations = claude_session_id(
-                    home=claude_home, pid=process.pid, cwd=process_cwd, created_at=process.create_time(), registered_id=agent_session_id
-                )
-                limitations.extend(metadata_limitations)
-                paths = claude_transcript_paths(home=claude_home, session_id=session_id)
-            elif selected.harness == "codex":
-                open_paths, open_limitations = _open_codex_transcripts(process=process, timeout=timeout)
-                limitations.extend(open_limitations)
-                session_id, paths, link_limitations = codex_transcript_paths(paths=open_paths, home=codex_home, registered_id=agent_session_id)
-                limitations.extend(link_limitations)
-            else:
-                limitations.append(f"""Transcript linkage is not supported for harness {selected.harness}.""")
-        except (OSError, ValueError) as error:
-            limitations.append(str(error))
-        if hint and hint != selected.harness:
-            limitations.append(f"""Session-manager harness {hint} conflicts with process harness {selected.harness}.""")
+        if options.link_conversation:
+            try:
+                if harness == "claude-code":
+                    session_id, metadata_limitations = claude_session_id(
+                        home=options.claude_home, pid=process.pid, cwd=process_cwd, created_at=process.create_time(), registered_id=agent_session_id
+                    )
+                    limitations.extend(metadata_limitations)
+                    paths = claude_transcript_paths(home=options.claude_home, session_id=session_id)
+                elif harness == "codex":
+                    open_paths, open_limitations = _open_codex_transcripts(process=process, timeout=options.timeout)
+                    limitations.extend(open_limitations)
+                    session_id, paths, link_limitations = codex_transcript_paths(paths=open_paths, home=options.codex_home, registered_id=agent_session_id)
+                    limitations.extend(link_limitations)
+                else:
+                    session_id = agent_session_id
+                    limitations.append(f"""Transcript linkage is not supported for harness {harness}.""")
+            except (OSError, ValueError) as error:
+                limitations.append(str(error))
+        if hint and hint != harness:
+            limitations.append(f"""Session-manager harness {hint} conflicts with process harness {harness}.""")
         return ProcessEvidence(
-            pid=process.pid, live=process.is_running() and process.status() != psutil.STATUS_ZOMBIE, harness=selected.harness,
+            pid=process.pid, live=process.is_running() and process.status() != psutil.STATUS_ZOMBIE, harness=harness,
             cwd=process_cwd, command=str(readable_status_path(path=Path(selected.executable))), session_id=session_id,
             transcript_paths=paths, limitations=tuple(limitations),
         )
     except (psutil.NoSuchProcess, psutil.ZombieProcess):
         return ProcessEvidence(
-            pid=inspected_pid, live=False, harness=hint, cwd=cwd, command="", session_id=agent_session_id, transcript_paths=(),
+            pid=inspected_pid, live=False, harness=harness, cwd=cwd, command="", session_id=session_id, transcript_paths=(),
             limitations=tuple([*limitations, "Process exited during inspection."]),
         )
     except (psutil.AccessDenied, OSError, ValueError) as error:
         return ProcessEvidence(
-            pid=None, live=None, harness=hint, cwd=cwd, command="", session_id=agent_session_id, transcript_paths=(),
+            pid=None, live=None, harness=harness, cwd=cwd, command="", session_id=session_id, transcript_paths=(),
             limitations=tuple([*limitations, f"""Process inspection unavailable ({type(error).__name__})."""]),
         )

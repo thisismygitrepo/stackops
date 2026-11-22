@@ -61,7 +61,7 @@ def launch_multiplexed_browser(
             relay_process_created_at=relay_created_at,
             windows=windows,
         )
-    except RuntimeError:
+    except BaseException:
         close_browser_windows(handle=windows)
         raise
     return build_new_launch_result(details=details, process_id=browser_process_id, relay_process_id=relay_process_id, windows=windows)
@@ -88,7 +88,7 @@ def repair_multiplexed_browser_relay(
             relay_process_created_at=relay_created_at,
             windows=repaired_windows,
         )
-    except RuntimeError:
+    except BaseException:
         close_browser_windows(
             handle=BrowserWindowHandle(
                 multiplexer=repaired_windows.multiplexer,

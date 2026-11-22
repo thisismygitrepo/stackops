@@ -122,6 +122,8 @@ def _build_recreate_command_args(
         str(layout_output_path),
         "--agents-dir",
         str(agents_dir),
+        "--on-directory-conflict",
+        "replace-owned",
     ]
     if prompt_source_kind == "yaml_name":
         if prompt_name is None:

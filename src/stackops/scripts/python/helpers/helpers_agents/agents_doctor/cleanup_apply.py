@@ -10,7 +10,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models
     CleanupRemoval,
     CleanupResult,
 )
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import read_editable_file, validate_removal_target
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import read_editable_file, validate_cleanup_path
 
 
 def apply_cleanup_plan(*, plan: CleanupPlan, home_directory: Path) -> CleanupResult:
@@ -19,7 +19,8 @@ def apply_cleanup_plan(*, plan: CleanupPlan, home_directory: Path) -> CleanupRes
     for change in plan.changes:
         match change:
             case CleanupRemoval():
-                validate_removal_target(path=change.path, home_directory=home_directory)
+                validate_cleanup_path(path=change.path, home_directory=home_directory, allow_leaf_symlink=True)
+                change.verify_identity(path=change.path)
             case CleanupEdit():
                 if read_editable_file(path=change.path, home_directory=home_directory) != (change.original, change.mode):
                     raise ValueError(f"Resource changed since inspection; run agents reset again: {change.path}")
@@ -33,7 +34,10 @@ def apply_cleanup_plan(*, plan: CleanupPlan, home_directory: Path) -> CleanupRes
                 staging_directory.rmdir()
                 raise
             moved.append((change, staging_directory))
-            if isinstance(change, CleanupEdit):
+            if isinstance(change, CleanupRemoval):
+                # A replacement between preflight and rename must be rolled back before purge.
+                change.verify_identity(path=staging_directory / "original")
+            else:
                 descriptor = os.open(change.path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, change.mode)
                 with os.fdopen(descriptor, "wb") as target:
                     target.write(change.replacement)

@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from contextlib import ExitStack
 from pathlib import Path
 import platform
 import shlex
@@ -16,21 +17,27 @@ def open_tuios_browser_windows(*, launch_id: str, browser_command: Sequence[str]
     if shutil.which("tuios") is None:
         raise RuntimeError("tuios is required for browser tuios launches. Pass --runtime detached to use background processes.")
     session_name = BROWSER_MULTIPLEXER_SESSION_NAME
-    bootstrap_window_ids: list[str] = []
-    if not _session_is_running(session_name=session_name):
-        run_tuios(["new", "--detach", "--", session_name])
-        bootstrap_window_ids = [window.window_id for window in list_window_entries(session_name)]
-    window_ids = [_open_window(window_name=f"{launch_id}-endpoint", command=browser_command)]
-    if relay_command is not None:
-        window_ids.append(_open_window(window_name=f"{launch_id}-relay", command=relay_command))
-    for bootstrap_window_id in bootstrap_window_ids:
-        close_window(session_name=session_name, window_id=bootstrap_window_id)
-    return BrowserWindowHandle(
-        multiplexer="tuios",
-        session_name=session_name,
-        targets=tuple(window_ids),
-        attach_script=focus_window_attach_script(session_name=session_name, window_id=window_ids[0]),
-    )
+    with ExitStack() as rollback:
+        with ExitStack() as bootstrap:
+            if not _session_is_running(session_name=session_name):
+                run_tuios(["new", "--detach", "--", session_name])
+                for window in list_window_entries(session_name):
+                    bootstrap.callback(close_window, session_name=session_name, window_id=window.window_id)
+            endpoint_id = _open_window(window_name=f"{launch_id}-endpoint", command=browser_command)
+            rollback.callback(close_window, session_name=session_name, window_id=endpoint_id)
+        window_ids = [endpoint_id]
+        if relay_command is not None:
+            relay_id = _open_window(window_name=f"{launch_id}-relay", command=relay_command)
+            rollback.callback(close_window, session_name=session_name, window_id=relay_id)
+            window_ids.append(relay_id)
+        handle = BrowserWindowHandle(
+            multiplexer="tuios",
+            session_name=session_name,
+            targets=tuple(window_ids),
+            attach_script=focus_window_attach_script(session_name=session_name, window_id=endpoint_id),
+        )
+        rollback.pop_all()
+    return handle
 
 
 def open_tuios_relay_window(*, handle: BrowserWindowHandle, launch_id: str, relay_command: Sequence[str]) -> BrowserWindowHandle:

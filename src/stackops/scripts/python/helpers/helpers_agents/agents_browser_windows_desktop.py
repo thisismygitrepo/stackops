@@ -41,7 +41,7 @@ def start_browser_on_interactive_desktop(*, details: BrowserLaunchDetails) -> tu
         if process_id is None:
             raise RuntimeError(f"""{details.process_label} answered on port {details.browser_port}, but its process could not be found""")
         return process_id, process_created_at(process_id=process_id, process_label=details.process_label)
-    except RuntimeError as error:
+    except BaseException as error:
         error.add_note(
             f"""This process runs in Windows session 0 (services, SSH), whose desktop nobody sees, so {details.process_label} was started """
             f"""on the logged-on user's desktop through scheduled task {task_name}. That needs this Windows user logged on to the desktop."""

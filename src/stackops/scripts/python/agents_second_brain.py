@@ -64,6 +64,25 @@ def status(
         show_second_brain_status(second_brain_root=second_brain_root, update_files=update_files, git_activity=git_activity, today=today)
 
 
+def append(
+    directory: Annotated[Path, typer.Argument(help="Work-item directory containing update.csv.")],
+    agent: str,
+    session_id: str,
+    topic: str,
+    actions_taken: str,
+    updated_on: str,
+) -> None:
+    from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_records import append_second_brain_update
+
+    try:
+        append_second_brain_update(update_path=directory / "update.csv", fields=[agent, session_id, topic, actions_taken, updated_on])
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    except OSError as error:
+        typer.echo(f"""Could not append Second Brain update: {error}""", err=True)
+        raise typer.Exit(code=1) from error
+
+
 def prune(
     apply: Annotated[bool, typer.Option("--apply", "-a", help="Delete the invalid updates shown in the preview.")] = False,
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print the pruning plan or result as JSON.")] = False,
@@ -85,7 +104,12 @@ def prune(
         raise typer.Exit(code=1) from error
 
     if json_output:
-        emit_agent_json({"root": second_brain_root, "applied": apply, "removed_rows": removed_rows, "scanned_file_count": len(update_files)})
+        emit_agent_json({
+            "root": second_brain_root,
+            "applied": apply,
+            "removed_rows": {str(path): count for path, count in removed_rows.items()},
+            "scanned_file_count": len(update_files),
+        })
         return
     show_second_brain_prune_result(
         second_brain_root=second_brain_root,
@@ -107,6 +131,7 @@ def get_app() -> typer.Typer:
         help="Install bundled instructions at ~/code/agents/second-brain/AGENTS.md. Existing instructions are kept unless --overwrite is set.",
     )(config)
     second_brain_app.command(name="i", no_args_is_help=False, hidden=True)(config)
+    second_brain_app.command(name="append", help="Append one update and create the CSV with its header if needed.")(append)
     second_brain_app.command(name="status", no_args_is_help=False, short_help="📊 <s> Show Second Brain statistics and invalid updates")(status)
     second_brain_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     second_brain_app.command(name="prune", no_args_is_help=False, short_help="🧹 <p> Preview invalid updates; --apply deletes them")(prune)

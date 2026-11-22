@@ -7,10 +7,8 @@
 Second step is to check for specialized agents under `~/code/agents`, e.g. for browser, go with this one `~/code/agents/browser/agent-browser`
 Always opt for skills there, rather than controlling my computer, whenever possible.
 
-* Once you finish working on a work-item, please update the csv `./work-items/<some-item>/<may-be-sub-item>/update.csv` by adding one row about the work done, if it doesn't fall into one work-item and was a random question, then go with ./work-items/msc/update.csv
-Columns are: agent, session-id, topic, actionsTaken, date
-create the file if it doesn't exist.
-session id is the agent session id, you probably have it in env variables or somewhere, its agent dependent. This allows user to follow up on discussion or get more context on work done.
+* Once you finish working on a work-item, record one row with `agents second-brain append "./work-items/<item>/<sub-item>" "<agent>" "<session-id>" "<topic>" "<actions taken>" "<ISO date>"`. Use the item's directory, or `./work-items/msc` for a random question. Use this command for every append so it shares the lock with prune. It creates `update.csv` with its header when needed.
+The session ID is the agent's current session ID so the user can follow up on the discussion.
 
 # Ethos of maintinance of second-brain
 * The second-brain is meant to be a mirror of the human user. Thus, if the agent was creating and dumping files around the place, we quickly run a risk of developing a place that the human user cannot recognize nor associate with, even though, those files are absolutely necessary context to get the jobs done, or keep track of details of how the job was done etc. To solve this dilemma, we either put those byproduct files in a space relevant to the job, e.g. a repo, or (more preferrably) we put those files in `.agents` directories across the relevant folders in second-brain, in order to distinguish them from md files that contain kknowledge that the human user is aware of of, because they talked about it. Still, even within .agents dir, please make sure to behave and keep it a clean spaces, so other agents in the future can find there way around easily.

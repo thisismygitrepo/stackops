@@ -22,7 +22,8 @@ from stackops.scripts.python.helpers.helpers_agents.agents_status_tuios import (
 
 def collect_status(options: StatusOptions) -> StatusSnapshot:
     started_at = datetime.now(UTC).isoformat()
-    validate_history_roots(options=options)
+    if options.link_conversation:
+        validate_history_roots(options=options)
     inventory = {"tuios": read_inventory, "herdr": read_herdr_inventory, "aoe": read_aoe_inventory}[options.backend]
     sessions, all_panes, registrations, limitations = inventory(options=options)
     live_sessions = [session for session in sessions if not session.get("saved")]

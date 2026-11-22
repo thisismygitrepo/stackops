@@ -3,6 +3,12 @@ from collections.abc import Sequence
 from subprocess import CompletedProcess
 from typing import Callable, Literal, TypeAlias, TypedDict
 
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common import RUN_ALL_STATE_OPTION
+
+
+# Require line editing and a recognizable prompt on the cursor row. Custom prompts can stay unknown.
+_PROMPT_ROW = "#{C/r:([$%##❯]|^PS .*>)[[:space:]]*$}"
+_AT_SHELL_PROMPT = "#{?bracket_paste_flag,#{==:" + _PROMPT_ROW + ",#{e|+:#{cursor_y},1}},0}"
 
 PaneStatusCategory: TypeAlias = Literal["idle", "running", "exited", "unknown"]
 
@@ -80,7 +86,8 @@ def collect_session_snapshot(
             "-t",
             session_name,
             "-F",
-            "#{window_index}\t#{pane_index}\t#{pane_current_path}\t#{pane_current_command}\t#{?pane_active,active,}\t#{?pane_dead,dead,}\t#{pane_dead_status}\t#{pane_pid}\t#{window_id}\t#{pane_id}\t#{pane_start_command}\t#{pane_left}\t#{pane_top}",
+            "#{window_index}\t#{pane_index}\t#{pane_current_path}\t#{pane_current_command}\t#{?pane_active,active,}\t#{?pane_dead,dead,}\t#{pane_dead_status}\t#{pane_pid}\t#{window_id}\t#{pane_id}\t#{pane_start_command}\t#{pane_left}\t#{pane_top}"
+            + "\t" + _AT_SHELL_PROMPT + "\t#{" + RUN_ALL_STATE_OPTION + "}",
         ]
     )
 
@@ -91,7 +98,7 @@ def collect_session_snapshot(
             if not pane_line.strip():
                 continue
             parts = pane_line.split("\t")
-            while len(parts) < 13:
+            while len(parts) < 15:
                 parts.append("")
             panes_by_window[parts[0].strip()].append(
                 {
@@ -107,6 +114,8 @@ def collect_session_snapshot(
                     "pane_start_command": parts[10].strip(),
                     "pane_left": parts[11].strip(),
                     "pane_top": parts[12].strip(),
+                    "at_shell_prompt": parts[-2],
+                    "run_all_state": parts[-1],
                 }
             )
         for pane_list in panes_by_window.values():

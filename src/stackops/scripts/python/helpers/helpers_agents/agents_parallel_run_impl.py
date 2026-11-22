@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from pathlib import Path
 from stackops.scripts.python.helpers.helpers_agents.agents_impl import AgentCreationResult, AgentsDirectoryConflict
 from stackops.utils.cli_utils.interaction import require_interactive
@@ -170,11 +171,17 @@ def _reject_multi_run_collision_overrides(
 def _reject_duplicate_multi_run_outputs(*, resolved_entries: tuple[tuple[str, ResolvedParallelCreateValues], ...]) -> None:
     if len(resolved_entries) < 2:
         return
-    workspace_owner: dict[str, str] = {}
-    layout_owner: dict[str, str] = {}
+    from stackops.scripts.python.helpers.helpers_agents.agents_create_inputs import resolve_agents_layout_path, resolve_agents_output_dir
+    from stackops.utils.repos.project import resolve_project_root
+
+    cwd = Path.cwd()
+    repo_root = resolve_project_root(current_dir=cwd) or cwd
+    workspace_owner: dict[Path, str] = {}
+    layout_owner: dict[Path, str] = {}
     for selected_name, resolved in resolved_entries:
-        workspace_key = resolved.agents_dir if resolved.agents_dir is not None else f"job:{resolved.job_name}"
-        layout_key = resolved.output_path if resolved.output_path is not None else f"workspace:{workspace_key}/layout.yaml"
+        agents_dir, _ = resolve_agents_output_dir(repo_root=repo_root, agents_dir=resolved.agents_dir, job_name=resolved.job_name)
+        workspace_key = agents_dir.resolve()
+        layout_key = resolve_agents_layout_path(agents_dir=agents_dir, output_path=resolved.output_path)
         existing_workspace_owner = workspace_owner.get(workspace_key)
         if existing_workspace_owner is not None:
             raise ValueError(
@@ -243,10 +250,10 @@ def _edit_existing_parallel_yaml_files(*, yaml_locations: list[tuple[str, Path]]
         edit_parallel_yaml(yaml_path=yaml_path)
 
 
-def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path]]) -> list[ParallelYamlEntry]:
+def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path]]) -> Iterator[ParallelYamlEntry]:
     from stackops.utils.files.read import read_yaml
 
-    yaml_entries: list[ParallelYamlEntry] = []
+    found_file = False
     for location_name, yaml_path in yaml_locations:
         if not yaml_path.exists():
             continue
@@ -257,11 +264,11 @@ def _read_existing_parallel_yaml_entries(*, yaml_locations: list[tuple[str, Path
             raise ValueError(f"""Parallel YAML must be a mapping: {yaml_path}""")
         if not all(isinstance(key, str) for key in raw_data):
             raise ValueError(f"""Parallel YAML must use string keys: {yaml_path}""")
-        yaml_entries.append((location_name, yaml_path, raw_data))
-    if len(yaml_entries) == 0:
+        found_file = True
+        yield location_name, yaml_path, raw_data
+    if not found_file:
         searched = "\n".join(str(yaml_path) for _location_name, yaml_path in yaml_locations)
         raise ValueError(f"No parallel YAML files found. Searched:\n{searched}")
-    return yaml_entries
 
 
 def _should_scaffold_parallel_yaml(*, location_name: str, parallel_yaml_path: str | None, source: PARALLEL_RUNS_SOURCE) -> bool:

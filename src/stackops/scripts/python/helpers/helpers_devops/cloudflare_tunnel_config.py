@@ -74,10 +74,26 @@ def merge_ingress_routes(source_text: str, target_text: str, hostnames: tuple[st
     if len(catch_all_routes) != 1:
         raise ValueError("Target configuration must contain exactly one catch-all route.")
 
-    requested_hostnames = set(hostnames)
-    retained_routes = [route for route in target_routes if route.hostname is not None and route.hostname not in requested_hostnames]
-    copied_routes = [source_by_hostname[hostname] for hostname in hostnames]
-    merged_routes = [*retained_routes, *copied_routes, catch_all_routes[0]]
+    pending_routes = {hostname: source_by_hostname[hostname] for hostname in hostnames}
+    replaced_hostnames: set[str] = set()
+    merged_routes: list[IngressRoute] = []
+    for route in target_routes:
+        if route.hostname is None or route.hostname in replaced_hostnames:
+            continue
+        if route.hostname in pending_routes:
+            replaced_hostnames.add(route.hostname)
+            route = pending_routes.pop(route.hostname)
+        merged_routes.append(route)
+
+    for hostname, route in pending_routes.items():
+        for index, existing in enumerate(merged_routes):
+            wildcard = existing.hostname
+            if wildcard and wildcard.startswith("*") and hostname.endswith(wildcard[1:]):
+                merged_routes.insert(index, route)
+                break
+        else:
+            merged_routes.append(route)
+    merged_routes.append(catch_all_routes[0])
 
     merged_configuration = deepcopy(target_configuration)
     merged_configuration["ingress"] = [deepcopy(route.values) for route in merged_routes]

@@ -1,5 +1,6 @@
 import subprocess
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from stackops.scripts.python.helpers.helpers_network.wifi_conn_platforms.common import (
     WifiNetwork,
@@ -104,7 +105,6 @@ def get_current_wifi_name() -> str:
 
 def create_new_connection(name: str, ssid: str, password: str) -> None:
     console.print(f"\n[blue]🔧 Creating new connection: {name} (SSID: {ssid})[/blue]")
-    profile_path = Path(f"{name}.xml")
 
     xml_config = f"""<?xml version="1.0"?>
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
@@ -133,11 +133,13 @@ def create_new_connection(name: str, ssid: str, password: str) -> None:
 </WLANProfile>"""
 
     try:
-        profile_path.write_text(xml_config, encoding="utf-8")
-        run_text_command(
-            ["netsh", "wlan", "add", "profile", f"filename={profile_path}", "interface=Wi-Fi"],
-            check=True,
-        )
+        with TemporaryDirectory() as directory:
+            profile_path = Path(directory) / "profile.xml"
+            profile_path.write_text(xml_config, encoding="utf-8")
+            run_text_command(
+                ["netsh", "wlan", "add", "profile", f"filename={profile_path}", "interface=Wi-Fi"],
+                check=True,
+            )
         console.print("[green]✅ Connection created successfully![/green]\n")
     except subprocess.CalledProcessError as error:
         console.print(f"[red]❌ Error creating connection: {error}[/red]")
@@ -145,5 +147,3 @@ def create_new_connection(name: str, ssid: str, password: str) -> None:
     except Exception as error:
         console.print(f"[red]❌ Unexpected error: {error}[/red]")
         raise
-    finally:
-        profile_path.unlink(missing_ok=True)

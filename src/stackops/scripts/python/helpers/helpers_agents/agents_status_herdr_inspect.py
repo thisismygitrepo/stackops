@@ -43,7 +43,7 @@ def inspect_herdr_window(
     registered_id = text_field(identity, ("value",)) if identity.get("kind") == "id" and identity_harness == hint else ""
     process = inspect_processes(
         root_pid=root_pid, harness_hint=hint, agent_session_id=registered_id, cwd=cwd,
-        claude_home=options.claude_home, codex_home=options.codex_home, timeout=options.timeout,
+        options=options,
     )
     errors = [process_error] if process_error is not None else []
     if not registered and not hint and not process.harness:

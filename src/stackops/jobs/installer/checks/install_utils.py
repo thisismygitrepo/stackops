@@ -7,6 +7,7 @@ This module provides functionality to download and install pre-checked applicati
 
 import platform
 from concurrent.futures import ThreadPoolExecutor
+from hashlib import file_digest
 from pathlib import Path
 from typing import cast
 
@@ -46,15 +47,20 @@ def download_google_drive_file(url: str) -> Path:
     except Exception as e:
         raise RuntimeError(f"Failed to download from Google Drive: {e}") from e
 
-def install_cli_app(app_url: str) -> bool:
+def install_cli_app(app_url: str, expected_sha256: str | None, filename: str) -> bool:
     """Downloads and installs a CLI app."""
     try:
         if not app_url:
             return False
-            
+        if not expected_sha256:
+            raise ValueError(f"""No SHA-256 recorded for {filename}.""")
+
         exe_path = download_google_drive_file(app_url)
         console.print(f"[green]Downloaded {exe_path.name}[/green]")
-        
+        with exe_path.open("rb") as downloaded_file:
+            if file_digest(downloaded_file, "sha256").hexdigest() != expected_sha256:
+                raise ValueError(f"""Downloaded {filename} does not match the scanned SHA-256.""")
+
         system = platform.system().lower()
         if system in ["linux", "darwin"]:
             exe_path.chmod(0o755) # Make executable
@@ -62,13 +68,13 @@ def install_cli_app(app_url: str) -> bool:
             # Using LINUX_INSTALL_PATH is safer
             install_path = Path(LINUX_INSTALL_PATH)
             install_path.mkdir(parents=True, exist_ok=True)
-            target = install_path / exe_path.name
+            target = install_path / filename
             exe_path.rename(target)
             console.print(f"[green]Installed to {target}[/green]")
         elif system == "windows":
             install_path = Path(WINDOWS_INSTALL_PATH)
             install_path.mkdir(parents=True, exist_ok=True)
-            target = install_path / exe_path.name
+            target = install_path / filename
             # Use shutil.move or path_core.move
             path_core.move(exe_path, path=target, overwrite=True)
             console.print(f"[green]Installed to {target}[/green]")
@@ -82,16 +88,18 @@ def download_safe_apps(name: str | None, run: ScanRun) -> bool:
     if run["status"] not in {"completed", "completed_with_errors"}:
         console.print("[red]Select a finished scan run before installing apps.[/red]")
         return False
-    safe_apps = [
-        target["record"]["app_data"] for target in run["targets"]
-        if target["record"] is not None
-        and target["record"]["app_data"]["positive_pct"] == 0.0
-        and target["record"]["app_data"]["verdict_engines"] > 0
-    ]
-    apps_to_install = [
-        item["app_url"] for item in safe_apps
-        if item["app_url"] and (name is None or item["app_name"].casefold() == name.casefold())
-    ]
+    apps_to_install: list[tuple[str, str | None, str]] = []
+    for target in run["targets"]:
+        if target["record"] is None:
+            continue
+        app = target["record"]["app_data"]
+        if (
+            app["positive_pct"] == 0.0
+            and app["verdict_engines"] > 0
+            and app["app_url"]
+            and (name is None or app["app_name"].casefold() == name.casefold())
+        ):
+            apps_to_install.append((app["app_url"], target["sha256"], Path(target["path"]).name))
 
     if not apps_to_install:
         selected_apps = "the selected scan run" if name is None else f"""'{name}'"""
@@ -101,9 +109,9 @@ def download_safe_apps(name: str | None, run: ScanRun) -> bool:
     console.print(f"[bold]Installing {len(apps_to_install)} apps...[/bold]")
     
     with ThreadPoolExecutor(max_workers=5) as executor:
-        results = list(executor.map(install_cli_app, apps_to_install))
-    
-    success_count = sum(results)
+        futures = [executor.submit(install_cli_app, *app_args) for app_args in apps_to_install]
+        success_count = sum(future.result() for future in futures)
+
     if success_count != len(apps_to_install):
         console.print(f"[bold yellow]Installed {success_count}/{len(apps_to_install)} apps.[/bold yellow]")
         return False

@@ -2,6 +2,8 @@ import json
 import os
 import pathlib
 
+from stackops.scripts.python.helpers.helpers_agents.privacy.configs.common.json_settings import read_privacy_settings
+
 
 def secure_chatgpt_cli() -> None:
     config_paths = [
@@ -25,17 +27,14 @@ def secure_chatgpt_cli() -> None:
     }
     for path_str in config_paths:
         path = pathlib.Path(path_str).expanduser()
+        config_data = read_privacy_settings(path)
+        if config_data is None:
+            continue
         if not path.parent.exists():
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
             except Exception:
                 continue
-        config_data = {}
-        if path.exists() and path.is_file():
-            try:
-                config_data = json.loads(path.read_text(encoding="utf-8"))
-            except Exception:
-                pass
         config_data.update(privacy_settings)
         try:
             path.write_text(json.dumps(config_data, indent=4), encoding="utf-8")

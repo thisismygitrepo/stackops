@@ -1,20 +1,35 @@
 import ast
+import tokenize
 from typing import Any
 
 from stackops.scripts.python.graph.cli_graph_resolver import is_name
 from stackops.scripts.python.graph.cli_graph_shared import ModuleInfo
 
 
+def _declaration_lines(lines: list[str]) -> list[str]:
+    depth = 0
+    for token in tokenize.generate_tokens(iter(lines).__next__):
+        if token.type != tokenize.OP:
+            continue
+        if token.string in ("(", "[", "{"):
+            depth += 1
+        elif token.string in (")", "]", "}"):
+            depth -= 1
+        elif token.string == ":" and depth == 0:
+            row, column = token.end
+            return [line.rstrip("\n") for line in lines[: row - 1]] + [
+                lines[row - 1][:column]
+            ]
+    raise ValueError("Missing colon at the end of the function declaration")
+
+
 def build_signature(
     module_info: ModuleInfo, function_info: ast.FunctionDef
 ) -> dict[str, Any]:
     parameters = build_parameters(function_info)
-    raw_lines = [
-        line.rstrip("\n")
-        for line in module_info.lines[
-            function_info.lineno - 1 : function_info.end_lineno
-        ]
-    ]
+    raw_lines = _declaration_lines(
+        module_info.lines[function_info.lineno - 1 : function_info.body[0].lineno]
+    )
     return_type = (
         ast.unparse(function_info.returns)
         if function_info.returns is not None

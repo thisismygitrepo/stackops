@@ -78,26 +78,18 @@ def _handle_wsl_transfer(source: str, target: str, overwrite_existing: bool) -> 
     """Handle WSL transfer when inside Windows."""
     from stackops.utils.ssh_utils.wsl import copy_when_inside_windows
 
-    if target == "wsl":
-        target_obj = Path(source).expanduser().absolute().relative_to(Path.home())
-        source_obj = target_obj
-    else:
-        source_obj = Path(target).expanduser().absolute().relative_to(Path.home())
-        target_obj = source_obj
-    copy_when_inside_windows(source_obj, target_obj, overwrite_existing)
+    source_is_remote = source == "wsl"
+    relative_path = Path(target if source_is_remote else source).expanduser().absolute().relative_to(Path.home())
+    copy_when_inside_windows(relative_path, relative_path, overwrite_existing, source_is_remote=source_is_remote)
 
 
 def _handle_win_transfer(source: str, target: str, overwrite_existing: bool, windows_username: str | None) -> None:
     """Handle Windows transfer when inside WSL."""
     from stackops.utils.ssh_utils.wsl import copy_when_inside_wsl
 
-    if source == "win":
-        source_obj = Path(target).expanduser().absolute().relative_to(Path.home())
-        target_obj = source_obj
-    else:
-        target_obj = Path(source).expanduser().absolute().relative_to(Path.home())
-        source_obj = target_obj
-    copy_when_inside_wsl(source_obj, target_obj, overwrite_existing, windows_username=windows_username)
+    source_is_remote = source == "win"
+    relative_path = Path(target if source_is_remote else source).expanduser().absolute().relative_to(Path.home())
+    copy_when_inside_wsl(relative_path, relative_path, overwrite_existing, windows_username=windows_username, source_is_remote=source_is_remote)
 
 
 def _resolve_paths(source: str, target: str) -> tuple[str | None, str | None, str, bool]:

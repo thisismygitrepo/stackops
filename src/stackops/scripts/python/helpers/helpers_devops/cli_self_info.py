@@ -197,7 +197,9 @@ def explore_cli(ctx: typer.Context) -> None:
     from stackops.scripts.python.graph.visualize import cli_graph_app
     from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
-    apply_alias_markers(cli_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
+    nested_result: object = apply_alias_markers(cli_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
+    if isinstance(nested_result, int):
+        raise typer.Exit(code=nested_result)
 
 
 def explore_python_api(ctx: typer.Context) -> None:
@@ -205,7 +207,9 @@ def explore_python_api(ctx: typer.Context) -> None:
     from stackops.scripts.python.graph.visualize import python_api_graph_app
     from stackops.utils.cli_utils.alias_markers import apply_alias_markers
 
-    apply_alias_markers(python_api_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
+    nested_result: object = apply_alias_markers(python_api_graph_app.get_app())(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
+    if isinstance(nested_result, int):
+        raise typer.Exit(code=nested_result)
 
 
 def docs(

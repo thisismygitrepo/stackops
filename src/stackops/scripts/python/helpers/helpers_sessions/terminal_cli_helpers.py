@@ -49,7 +49,7 @@ def print_kill_summary(
         for line in script.splitlines():
             line = line.strip()
             if match := re.match(r"tmux kill-session\s+-t\s+(.+)", line):
-                target = match.group(1).strip("'\"")
+                target = match.group(1).strip("'\"").removeprefix("=")
                 rows.append(("session", target, "-", "-"))
             elif match := re.match(r"tmux kill-window\s+-t\s+(.+)", line):
                 target = match.group(1).strip("'\"")

@@ -232,6 +232,14 @@ def resolve_agents_output_dir(*, repo_root: Path, agents_dir: str | None, job_na
     return agents_dir_obj, job_name_resolved
 
 
+def resolve_agents_layout_path(*, agents_dir: Path, output_path: str | None) -> Path:
+    from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX
+
+    if output_path is None:
+        return (agents_dir / f"layout{LAYOUT_FILE_SUFFIX}").resolve()
+    return Path(output_path).expanduser().resolve()
+
+
 def validate_agents_output_dir_cleanup(*, repo_root: Path, agents_dir_obj: Path) -> None:
     if not agents_dir_obj.exists():
         raise ValueError(f"--agents-dir cleanup target no longer exists: {agents_dir_obj}")

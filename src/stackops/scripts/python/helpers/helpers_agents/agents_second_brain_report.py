@@ -114,6 +114,9 @@ def show_second_brain_status(
     console.print(Columns([summary, agents], padding=(0, 2)))
     if invalid_file_count:
         console.print(Text("Update totals exclude invalid logs.", style="dim"))
+        for update_file in update_files:
+            if update_file.error is not None:
+                console.print(Text(f"""{update_file.path.relative_to(second_brain_root)}: {update_file.error}"""))
 
 
 def show_second_brain_prune_result(

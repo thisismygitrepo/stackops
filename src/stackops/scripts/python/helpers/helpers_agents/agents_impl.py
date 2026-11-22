@@ -1,5 +1,6 @@
 """Pure Python implementations for agents commands - no typer dependencies."""
 
+from contextlib import nullcontext
 from dataclasses import dataclass
 from math import isfinite
 from pathlib import Path
@@ -69,15 +70,18 @@ def agents_create(
     )
     from stackops.scripts.python.helpers.helpers_agents.agents_create_inputs import (
         resolve_context_input,
+        resolve_agents_layout_path,
         resolve_agents_output_dir,
         resolve_agents_workspace_root,
         resolve_prompt_input,
         validate_agents_output_dir_cleanup,
     )
+    from stackops.scripts.python.helpers.helpers_agents.agents_create_replacement import replace_owned_job
     from stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch import (
         get_agents_launch_layout,
         get_prompt_directories,
         prep_agent_launch,
+        validate_parallel_agent_host,
     )
     from stackops.scripts.python.helpers.helpers_agents.agents_t3_launch import (
         T3LaunchTarget,
@@ -92,8 +96,7 @@ def agents_create(
     )
     from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
     from stackops.utils.repos.project import resolve_project_root
-    from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX
-    from stackops.utils.schemas.layouts.layout_file import write_layouts_file
+    from stackops.utils.schemas.layouts.layout_file import require_layout_suffix, write_layouts_file
 
     launch_plan: SessionMultiplexer | T3LaunchTarget
     match backend:
@@ -102,6 +105,7 @@ def agents_create(
                 agent=agent, host=host, provider=provider, model=model, reasoning_effort=normalized_reasoning_effort
             )
         case _:
+            validate_parallel_agent_host(agent=agent, host=host)
             launch_plan = backend
 
     project_root = resolve_project_root(current_dir=Path.cwd())
@@ -119,23 +123,40 @@ def agents_create(
         elif provider != "openai":
             raise ValueError("Codex agent only works with openai provider.")
 
-    agents_dir_obj, job_name_resolved = resolve_agents_output_dir(repo_root=repo_root, agents_dir=agents_dir, job_name=job_name)
+    requested_job_dir, job_name_resolved = resolve_agents_output_dir(repo_root=repo_root, agents_dir=agents_dir, job_name=job_name)
     del job_name
     requested_agents_dir = agents_dir
+    agents_dir_obj = requested_job_dir
+    directory_conflict = agents_dir_obj.exists()
     cleanup_existing_agents_dir = False
-    if agents_dir_obj.exists():
-        match on_directory_conflict:
-            case "error":
-                raise ValueError(f"Agents directory already exists: {agents_dir_obj}. Pass --on-directory-conflict new-directory or replace-owned.")
-            case "new-directory":
-                from uuid import uuid4
+    while True:
+        if directory_conflict:
+            match on_directory_conflict:
+                case "error":
+                    raise ValueError(f"Agents directory already exists: {agents_dir_obj}. Pass --on-directory-conflict new-directory or replace-owned.")
+                case "new-directory":
+                    from uuid import uuid4
 
-                agents_dir_obj = agents_dir_obj.with_name(f"{agents_dir_obj.name}-{uuid4().hex[:12]}")
-            case "replace-owned":
-                cleanup_existing_agents_dir = True
+                    agents_dir_obj = requested_job_dir.with_name(f"{requested_job_dir.name}-{uuid4().hex[:12]}")
+                case "replace-owned":
+                    validate_agents_output_dir_cleanup(repo_root=repo_root, agents_dir_obj=agents_dir_obj)
+                    cleanup_existing_agents_dir = True
+
+        layout_output_path = resolve_agents_layout_path(agents_dir=agents_dir_obj, output_path=output_path)
+        require_layout_suffix(layout_output_path)
+        prompt_input = resolve_prompt_input(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
+        context_input = resolve_context_input(
+            context=context, context_path=context_path, separator=separator, agent_load=agent_load, agents_dir_obj=agents_dir_obj
+        )
+        if cleanup_existing_agents_dir:
+            break
+        try:
+            agents_dir_obj.mkdir(parents=True)
+        except FileExistsError:
+            directory_conflict = True
+            continue
+        break
     workspace_root = resolve_agents_workspace_root(preferred_root=repo_root, agents_dir_obj=agents_dir_obj)
-    if cleanup_existing_agents_dir:
-        validate_agents_output_dir_cleanup(repo_root=repo_root, agents_dir_obj=agents_dir_obj)
     del agents_dir
 
     show_agents_create_overview(
@@ -154,72 +175,65 @@ def agents_create(
         run=run,
     )
 
-    prompt_input = resolve_prompt_input(prompt=prompt, prompt_path=prompt_path, prompt_name=prompt_name)
-    context_input = resolve_context_input(
-        context=context, context_path=context_path, separator=separator, agent_load=agent_load, agents_dir_obj=agents_dir_obj
-    )
-
-    if cleanup_existing_agents_dir:
-        validate_agents_output_dir_cleanup(repo_root=repo_root, agents_dir_obj=agents_dir_obj)
-        import shutil
-
-        shutil.rmtree(agents_dir_obj)
-
     agent_selected = agent
-    prep_agent_launch(
-        repo_root=workspace_root,
-        agents_dir=agents_dir_obj,
-        prompts_material=context_input.prompt_materials,
-        material_suffix=context_input.material_suffix,
-        join_prompt_and_context=join_prompt_and_context,
-        prompt_prefix=prompt_input.prompt_text,
-        machine=host,
-        agent=agent_selected,
-        model=model,
-        reasoning_effort=normalized_reasoning_effort,
-        provider=provider,
-        job_name=job_name_resolved,
-        stagger_max=stagger_max,
+    destination = (
+        replace_owned_job(repo_root=repo_root, agents_dir=agents_dir_obj, layout_path=layout_output_path)
+        if cleanup_existing_agents_dir
+        else nullcontext(layout_output_path)
     )
-    prompt_directories = get_prompt_directories(prompt_root=agents_dir_obj / "prompts")
-    show_generated_agents_table(repo_root=workspace_root, prompt_dirs=prompt_directories)
-    layoutfile = get_agents_launch_layout(session_root=agents_dir_obj, job_name=job_name_resolved, start_dir=workspace_root)
-
-    layout_output_path = Path(output_path).expanduser().resolve() if output_path is not None else agents_dir_obj / f"layout{LAYOUT_FILE_SUFFIX}"
-    write_layouts_file(path=layout_output_path, layouts_file=layoutfile)
-    create_artifacts = write_create_artifacts(
-        repo_root=workspace_root,
-        agents_dir=agents_dir_obj,
-        layout_output_path=layout_output_path.resolve(),
-        agent=agent_selected,
-        host=host,
-        model=model,
-        reasoning_effort=normalized_reasoning_effort,
-        provider=provider,
-        backend=backend,
-        agent_load=agent_load,
-        stagger_max=stagger_max,
-        separator=separator,
-        prompt=CreatePromptArtifactsInput(
-            source_kind=prompt_input.source_kind,
-            source_path=prompt_input.source_path,
-            source_name=prompt_input.source_name,
-            content=prompt_input.prompt_text,
-        ),
-        context=CreateContextArtifactsInput(
-            source_kind=context_input.source_kind,
-            source_path=context_input.source_path,
-            file_content=context_input.file_content,
-            directory_entries=context_input.directory_entries,
-        ),
-        job_name=job_name_resolved,
-        join_prompt_and_context=join_prompt_and_context,
-        run=run,
-    )
+    with destination as layout_write_path:
+        prep_agent_launch(
+            repo_root=workspace_root,
+            agents_dir=agents_dir_obj,
+            prompts_material=context_input.prompt_materials,
+            material_suffix=context_input.material_suffix,
+            join_prompt_and_context=join_prompt_and_context,
+            prompt_prefix=prompt_input.prompt_text,
+            machine=host,
+            agent=agent_selected,
+            model=model,
+            reasoning_effort=normalized_reasoning_effort,
+            provider=provider,
+            job_name=job_name_resolved,
+            stagger_max=stagger_max,
+        )
+        prompt_directories = get_prompt_directories(prompt_root=agents_dir_obj / "prompts")
+        show_generated_agents_table(repo_root=workspace_root, prompt_dirs=prompt_directories)
+        layoutfile = get_agents_launch_layout(session_root=agents_dir_obj, job_name=job_name_resolved, start_dir=workspace_root)
+        write_layouts_file(path=layout_write_path, layouts_file=layoutfile)
+        create_artifacts = write_create_artifacts(
+            repo_root=workspace_root,
+            agents_dir=agents_dir_obj,
+            layout_output_path=layout_output_path,
+            agent=agent_selected,
+            host=host,
+            model=model,
+            reasoning_effort=normalized_reasoning_effort,
+            provider=provider,
+            backend=backend,
+            agent_load=agent_load,
+            stagger_max=stagger_max,
+            separator=separator,
+            prompt=CreatePromptArtifactsInput(
+                source_kind=prompt_input.source_kind,
+                source_path=prompt_input.source_path,
+                source_name=prompt_input.source_name,
+                content=prompt_input.prompt_text,
+            ),
+            context=CreateContextArtifactsInput(
+                source_kind=context_input.source_kind,
+                source_path=context_input.source_path,
+                file_content=context_input.file_content,
+                directory_entries=context_input.directory_entries,
+            ),
+            job_name=job_name_resolved,
+            join_prompt_and_context=join_prompt_and_context,
+            run=run,
+        )
     show_created_artifacts_panel(
         repo_root=workspace_root,
         agents_dir=agents_dir_obj,
-        layout_output_path=layout_output_path.resolve(),
+        layout_output_path=layout_output_path,
         artifacts_dir=create_artifacts.artifacts_dir,
         recreate_script_path=create_artifacts.recreate_script_path,
         agent_count=len(prompt_directories),
@@ -259,10 +273,10 @@ def agents_create(
                     target=launch_plan,
                 )
             case _:
-                run_generated_layout(layout_output_path=layout_output_path.resolve(), backend=launch_plan, agent=agent_selected)
+                run_generated_layout(layout_output_path=layout_output_path, backend=launch_plan, agent=agent_selected)
     return AgentCreationResult(
         agents_dir=agents_dir_obj,
-        layout_path=layout_output_path.resolve(),
+        layout_path=layout_output_path,
         artifacts_dir=create_artifacts.artifacts_dir,
         recreate_script_path=create_artifacts.recreate_script_path,
         agent_count=len(prompt_directories),

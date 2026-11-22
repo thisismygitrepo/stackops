@@ -23,10 +23,10 @@ def build_configuration(repo_root: Path, add_private_config: bool, add_instructi
             repo_root=repo_root,
             path=repo_root.joinpath("AGENTS.md"),
             content=instructions_text,
-            write_mode="always",
+            write_mode="if_missing",
         )
-        assert change is not None
-        changes.append(change)
+        if change is not None:
+            changes.append(change)
 
     if add_private_config:
         change = _write_json_if_missing(

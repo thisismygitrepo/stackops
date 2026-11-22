@@ -5,6 +5,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import 
 
 DOCTOR_ESTIMATED_CHARACTERS_PER_TOKEN: Final[int] = 4
 DOCTOR_VERSION_TIMEOUT_SECONDS: Final[int] = 3
+CODEX_SYSTEM_PLUGIN_SOURCES: Final[frozenset[str]] = frozenset({"openai-bundled", "openai-primary-runtime"})
 CLEANUP_RESOURCE_CHOICES: Final[tuple[str, ...]] = ("all", "workspace", "configuration", "mcp", "hook", "plugin", "skill", "instructions")
 CLEANUP_ORIGIN_LABELS: Final[dict[DoctorOrigin, Literal["workspace", "user", "admin", "system"]]] = {
     "local": "workspace",

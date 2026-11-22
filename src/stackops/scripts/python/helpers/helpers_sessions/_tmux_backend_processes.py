@@ -68,7 +68,11 @@ def classify_pane_status(
         child_process = pane_process_label_finder(pane.get("pane_pid", ""))
         if child_process is not None:
             return child_process, f"running: `{child_process}`"
-        return process_name, "idle shell"
+        if pane.get("run_all_state") == "running":
+            return process_name, f"running: `{process_name}`"
+        if pane.get("at_shell_prompt") == "1":
+            return process_name, "idle shell"
+        return process_name, "unknown"
     if cmd:
         return process_name, f"running: `{pane['pane_command']}`"
     return process_name, "unknown"

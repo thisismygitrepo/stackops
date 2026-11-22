@@ -258,7 +258,7 @@ def choose_entry_interactive(items: List[VaultItem]) -> VaultItem:
             f"Password: {'(set)' if e.password else '-'}",
             f"TOTP:     {'(set)' if login.get('totp') else '-'}",
             f"URLs:     {uris or '-'}",
-            f"Notes:    {(get_item_notes(e.raw) or '-')[:200]}",
+            f"Notes:    {'(set)' if get_item_notes(e.raw) else '-'}",
         ]
         return "\n".join(lines)
 
@@ -537,11 +537,12 @@ def search(
         tbl.add_row("ID:", entry.id)
         tbl.add_row("Username:", entry.username or "-")
         tbl.add_row("Password:", "********" if entry.password else "-")
-        tbl.add_row("Notes:", notes_value or "-")
+        tbl.add_row("Notes:", "(set)" if notes_value else "-")
         console.print(Panel(tbl, title="Credential summary"))
 
     totp_value: Optional[str] = None
-    if use_totp:
+    show_credentials = show and not silent
+    if use_totp and (show_credentials or copy == "totp"):
         login = entry.raw.get("login", {}) or {}
         if login.get("totp"):
             info("[blue]Fetching TOTP...[/blue]")
@@ -549,46 +550,9 @@ def search(
             try:
                 totp_value = run_bw_command(totp_cmd).strip()
             except VaultExit:
-                raw_totp_seed = login.get("totp")
-                if isinstance(raw_totp_seed, str) and raw_totp_seed:
-                    info(f"[red]Failed to fetch TOTP via bw — raw TOTP seed:[/red] [bold]{raw_totp_seed}[/bold]")
-                    totp_value = raw_totp_seed
-                else:
-                    info("[red]Failed to fetch TOTP.[/red]")
+                info("[red]Failed to fetch TOTP.[/red]")
 
-    copied = False
-    copy_target_value: Optional[str] = None
-    copy_slot: int = password_slot
-    if copy != "none":
-        if copy == "password":
-            copy_target_value = entry.password
-            copy_slot = password_slot
-        elif copy == "username":
-            copy_target_value = entry.username
-            copy_slot = username_slot
-        else:
-            copy_target_value = totp_value
-            copy_slot = totp_slot
-
-        if copy_target_value:
-            if copy_to_clipboard(copy_target_value, slot=copy_slot):
-                info(f"✅ [bold]{copy}[/bold] copied to clipboard (slot {copy_slot}).")
-                copied = True
-            else:
-                console.print(f"[yellow]Clipboard tool not available — cannot copy {copy}. Showing credentials instead:[/yellow]")
-                fallback_tbl = Table(show_header=False, box=None)
-                fallback_tbl.add_column(style="bold", width=12)
-                fallback_tbl.add_column()
-                if entry.username:
-                    fallback_tbl.add_row("Username:", entry.username)
-                if entry.password:
-                    fallback_tbl.add_row("Password:", entry.password)
-                if totp_value:
-                    fallback_tbl.add_row("TOTP:", totp_value)
-                console.print(Panel(fallback_tbl, title="Credentials (cleartext fallback)"))
-                copied = True
-
-    if not silent and (show or not copied):
+    if show_credentials:
         panel_rows = []
         if entry.username:
             panel_rows.append(("Username", entry.username))
@@ -608,6 +572,22 @@ def search(
             console.print(Panel(out_tbl, title="Credential (cleartext)"))
         else:
             console.print("[yellow]No credential fields available to display.[/yellow]")
+
+    if copy != "none":
+        if copy == "password":
+            copy_target_value, copy_slot = entry.password, password_slot
+        elif copy == "username":
+            copy_target_value, copy_slot = entry.username, username_slot
+        else:
+            copy_target_value, copy_slot = totp_value, totp_slot
+
+        if not copy_target_value:
+            err_console.print(f"[red]Cannot copy {copy}: field unavailable.[/red]")
+            raise VaultExit(code=1)
+        if not copy_to_clipboard(copy_target_value, slot=copy_slot):
+            err_console.print(f"[red]Failed to copy {copy} to the clipboard (slot {copy_slot}).[/red]")
+            raise VaultExit(code=1)
+        info(f"✅ [bold]{copy}[/bold] copied to clipboard (slot {copy_slot}).")
 
     time.sleep(0.05)
 

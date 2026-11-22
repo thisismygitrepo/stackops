@@ -324,7 +324,7 @@ def kill_existing_session(backend: SessionBackend, session_name: str) -> None:
     try:
         if backend == "tmux":
             subprocess.run(
-                ["tmux", "kill-session", "-t", session_name],
+                ["tmux", "kill-session", "-t", f"={session_name}"],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -352,20 +352,28 @@ def kill_existing_session(backend: SessionBackend, session_name: str) -> None:
             workspaces = result_payload.get("workspaces")
             if not isinstance(workspaces, list):
                 return
+            matching_ids: set[str] = set()
             for item in workspaces:
                 if not isinstance(item, dict):
                     continue
                 if str(item.get("label", "")).strip() != session_name:
                     continue
-                workspace_id = str(item.get("workspace_id", "")).strip()
-                if workspace_id == "":
-                    continue
+                workspace_id = item.get("workspace_id")
+                if isinstance(workspace_id, str) and workspace_id.strip():
+                    matching_ids.add(workspace_id.strip())
+            if len(matching_ids) > 1:
+                raise SessionConflictError(
+                    f"Cannot restart Herdr workspace '{session_name}' because multiple workspaces share that label."
+                )
+            if matching_ids:
                 subprocess.run(
-                    ["herdr", "workspace", "close", workspace_id],
+                    ["herdr", "workspace", "close", matching_ids.pop()],
                     capture_output=True,
                     text=True,
                     timeout=10,
                     check=False,
                 )
+    except SessionConflictError:
+        raise
     except Exception:
         return

@@ -9,7 +9,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths im
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext, DoctorOrigin, DoctorResourceState
 
 
-def collect_omp_hooks(*, context: DoctorContext) -> HookInventory:
+def collect_omp_plugin_registrations(*, context: DoctorContext) -> HookInventory:
     entries: list[HookEntry] = []
     diagnostics: list[HookDiagnostic] = []
     for origin, root, _detail in plugin_roots(context=context):
@@ -36,6 +36,12 @@ def collect_omp_hooks(*, context: DoctorContext) -> HookInventory:
         for name, (value, removal) in declarations.items():
             state: DoctorResourceState = "disabled" if isinstance(value, dict) and value.get("enabled") is False else "configured"
             entries.append(HookEntry("omp", origin, removal.path, name, "plugin lifecycle (dynamic)", name, state, removal))
+    return HookInventory(tuple(entries), tuple(diagnostics))
+
+
+def collect_omp_hook_factories(*, context: DoctorContext) -> HookInventory:
+    entries: list[HookEntry] = []
+    diagnostics: list[HookDiagnostic] = []
     hook_roots: tuple[tuple[DoctorOrigin, Path], ...] = (
         ("global", context.omp_home / "hooks"),
         ("local", context.working_directory / ".omp" / "hooks"),

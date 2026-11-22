@@ -1,3 +1,4 @@
+import stat
 from pathlib import Path
 
 import yaml
@@ -5,7 +6,7 @@ import yaml
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_documents import edit_cleanup_document
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_models import CleanupChange, CleanupEdit, CleanupPlan, CleanupRemoval
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_scope import CleanupScope
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import read_editable_file, validate_removal_target
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.cleanup_paths import read_editable_file, validate_cleanup_path
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CLEANUP_ORIGIN_LABELS
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookInventory, HookRemoval
 
@@ -49,8 +50,14 @@ def build_cleanup_plan(*, inventory: HookInventory, scope: CleanupScope, match: 
     for path, removals in targets:
         try:
             if path in entire_paths:
-                validate_removal_target(path=path, home_directory=home_directory)
-                changes.append(CleanupRemoval(path=path))
+                validate_cleanup_path(path=path, home_directory=home_directory, allow_leaf_symlink=True)
+                change = CleanupRemoval(path=path)
+                mode = change.reviewed_stat.st_mode
+                if stat.S_ISDIR(mode) and any(removal.format == "file" for removal in removals):
+                    raise ValueError("Expected a file, found a directory")
+                if stat.S_ISREG(mode) and path in directory_paths:
+                    raise ValueError("Expected a directory, found a regular file")
+                changes.append(change)
             else:
                 original, mode = read_editable_file(path=path, home_directory=home_directory)
                 replacement = edit_cleanup_document(original=original, removals=tuple(removals))

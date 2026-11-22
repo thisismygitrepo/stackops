@@ -5,12 +5,22 @@ This makes `stackops --help` much faster by avoiding loading heavy dependencies.
 """
 from stackops.utils.cli_utils.standard_streams import use_utf8_standard_streams
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, override
 
 import typer
+from typer._click import Context
+from typer.core import TyperCommand
 from stackops.scripts.python.enums import BACKENDS_LOOSE
 from stackops.scripts.python.helpers.helpers_serve.constants import DEFAULT_HOST, DEFAULT_PORT
 from stackops.utils.cli_utils.alias_markers import apply_alias_markers
+
+
+class _ForwardArgsCommand(TyperCommand):
+    @override
+    def parse_args(self, ctx: Context, args: list[str]) -> list[str]:
+        # The leaf owns every token, including a leading "--".
+        ctx.args = args
+        return args
 
 
 def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) -> None:
@@ -143,11 +153,10 @@ def get_app() -> typer.Typer:
     )
     app.callback(invoke_without_command=True)(cli)
 
-    ctx_settings: dict[str, object] = {"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True, "help_option_names": []}
+    ctx_settings: dict[str, object] = {"allow_extra_args": True, "allow_interspersed_args": False, "ignore_unknown_options": True, "help_option_names": []}
 
-    devops_context = {**ctx_settings, "allow_interspersed_args": False}
-    app.command(name="devops", help="🔧 <d> DevOps related commands", context_settings=devops_context)(devops)
-    app.command(name="d", hidden=True, context_settings=devops_context)(devops)
+    app.command(name="devops", help="🔧 <d> DevOps related commands", context_settings=ctx_settings)(devops)
+    app.command(name="d", hidden=True, context_settings=ctx_settings)(devops)
     app.command(name="cloud", help="⛅ <c> Cloud management commands", context_settings=ctx_settings)(cloud)
     app.command(name="c", hidden=True, context_settings=ctx_settings)(cloud)
     app.command(name="terminal", help="📟 <t> Terminal and layout management", context_settings=ctx_settings)(terminal)
@@ -156,12 +165,11 @@ def get_app() -> typer.Typer:
     app.command(name="a", hidden=True, context_settings=ctx_settings)(agents)
     app.command(name="utils", help="🧰 <u> Utility commands", context_settings=ctx_settings)(utils)
     app.command(name="u", hidden=True, context_settings=ctx_settings)(utils)
-    app.command(name="seek", help="🔎 <s> Search across files, text matches, and code symbols", context_settings=ctx_settings)(seek)
-    app.command(name="s", hidden=True, context_settings=ctx_settings)(seek)
+    app.command(name="seek", help="🔎 <s> Search across files, text matches, and code symbols", cls=_ForwardArgsCommand, add_help_option=False)(seek)
+    app.command(name="s", hidden=True, cls=_ForwardArgsCommand, add_help_option=False)(seek)
 
-    fire_context = {**ctx_settings, "allow_interspersed_args": False}
-    app.command(name="fire", help="🔥 <f> Fire and manage jobs", context_settings=fire_context)(fire)
-    app.command(name="f", hidden=True, context_settings=fire_context)(fire)
+    app.command(name="fire", help="🔥 <f> Fire and manage jobs", context_settings=ctx_settings)(fire)
+    app.command(name="f", hidden=True, context_settings=ctx_settings)(fire)
     app.command("preview", no_args_is_help=False, help="👀 <p> Preview files and launch reader backends")(preview)
     app.command("p", no_args_is_help=False, hidden=True)(preview)
     app.command("serve", no_args_is_help=False, help="🌐 <w> Web UI for commands, dashboards, and terminals")(serve)

@@ -1,7 +1,10 @@
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.codex_plugins import CodexPluginSetting
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CODEX_SYSTEM_PLUGIN_SOURCES
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.paths import hook_directory_files, permitted_resource_path
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorContext, DoctorOrigin, DoctorResource, DoctorResourceState
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning import load_config_mapping, scan_skill_roots
 
@@ -30,17 +33,32 @@ def _load_plugin_manifest(*, path: Path) -> _PluginManifest:
     return _PluginManifest(plugin_id=plugin_id, version=version, path=path, skill_root=skill_root, error=None)
 
 
+def _cached_manifest_paths(*, context: DoctorContext) -> Iterator[Path]:
+    roots = [context.codex_home / "plugins" / "cache"]
+    for _ in range(3):  # source / plugin / version
+        children: list[Path] = []
+        for root in roots:
+            entries = hook_directory_files(directory=root, context=context)
+            if isinstance(entries, tuple):
+                children.extend(entries)
+        roots = children
+
+    for version in roots:
+        path = version / ".codex-plugin" / "plugin.json"
+        if permitted_resource_path(path=path, home_directory=context.home_directory) and path.exists(follow_symlinks=False):
+            yield path
+
+
 def cached_plugins(
     *, context: DoctorContext, effective_settings: dict[str, CodexPluginSetting]
 ) -> tuple[tuple[DoctorResource, ...], tuple[DoctorResource, ...]]:
-    cache_root = context.codex_home / "plugins" / "cache"
-    manifests = tuple(_load_plugin_manifest(path=path) for path in sorted(cache_root.glob("*/*/*/.codex-plugin/plugin.json")))
     resources: list[DoctorResource] = []
     enabled_skill_roots: list[tuple[DoctorOrigin, Path, str]] = []
-    for manifest in manifests:
+    for path in _cached_manifest_paths(context=context):
+        manifest = _load_plugin_manifest(path=path)
         setting = effective_settings.get(manifest.plugin_id)
         source = manifest.path.parents[3].name
-        origin: DoctorOrigin = "system" if source in ("openai-bundled", "openai-primary-runtime") else "global"
+        origin: DoctorOrigin = "system" if source in CODEX_SYSTEM_PLUGIN_SOURCES else "global"
         if setting is None:
             state: DoctorResourceState = "available"
         elif setting.enabled is True:

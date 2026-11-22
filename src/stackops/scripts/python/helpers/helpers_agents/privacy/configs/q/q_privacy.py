@@ -4,6 +4,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from stackops.scripts.python.helpers.helpers_agents.privacy.configs.common.json_settings import read_privacy_settings
+
 
 def secure_q_cli() -> None:
     privacy_settings = {
@@ -24,21 +26,23 @@ def secure_q_cli() -> None:
         home / ".config" / "kiro" / "settings.json",
         home / ".kiro" / "settings.json",
     ]
+    read_failed = False
     for config_file in config_paths:
+        current_settings = read_privacy_settings(config_file)
+        if current_settings is None:
+            read_failed = True
+            continue
         try:
             config_file.parent.mkdir(parents=True, exist_ok=True)
-            current_settings = {}
-            if config_file.exists():
-                try:
-                    current_settings = json.loads(config_file.read_text(encoding="utf-8"))
-                except Exception:
-                    pass
             current_settings.update(privacy_settings)
             config_file.write_text(json.dumps(current_settings, indent=2), encoding="utf-8")
             if os.name != "nt":
                 config_file.chmod(0o600)
         except Exception:
             pass
+    if read_failed:
+        # Either CLI could write to a settings file we skipped.
+        return
     for exe in ["q", "kiro"]:
         if shutil.which(exe) is not None:
             for key, value in privacy_settings.items():

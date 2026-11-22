@@ -17,6 +17,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_lock i
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_filesystem import (
     copy_directory_tree_excluding,
     directory_size_bytes,
+    path_is_filesystem_boundary,
     remove_owned_profile_directories,
     require_tree_without_filesystem_boundaries,
 )
@@ -196,6 +197,11 @@ def _remove_existing_destination_profiles(*, browser: BrowserName, destination_p
         require_browser_profile_directory(profile_path=destination_path)
         require_browser_profile_not_in_use(browser=browser, profile_path=destination_path)
         require_tree_without_filesystem_boundaries(directory=destination_path, include_root=True, excluded_root_directory_names=frozenset())
+        temporary_root = destination_path / TEMPORARY_BROWSER_PROFILE_DIRECTORY_NAME
+        if temporary_root.is_dir(follow_symlinks=False):
+            for temporary_profile in temporary_root.iterdir():
+                if temporary_profile.is_dir(follow_symlinks=False):
+                    require_browser_profile_not_in_use(browser=browser, profile_path=temporary_profile)
     for destination_path in destination_paths:
         try:
             shutil.rmtree(destination_path)
@@ -209,14 +215,14 @@ def _resolve_cleanup_paths(*, browser: BrowserName, profile_path: Path) -> tuple
             cleanup_paths = [profile_path.joinpath(*relative_path) for relative_path in CHROMIUM_USER_DATA_CLEANUP_PATHS]
             profile_roots = [profile_path]
             try:
-                profile_roots.extend(
-                    child
-                    for child in profile_path.iterdir()
-                    if child.is_dir()
-                    and not child.is_symlink()
-                    and not child.is_junction()
-                    and _is_chromium_profile_directory_name(directory_name=child.name)
-                )
+                for child in profile_path.iterdir():
+                    if not _is_chromium_profile_directory_name(directory_name=child.name):
+                        continue
+                    if not child.is_dir(follow_symlinks=False) or child.is_junction():
+                        continue
+                    if path_is_filesystem_boundary(path=child):
+                        raise RuntimeError(f"""Browser profile operation refuses filesystem boundary: {child}""")
+                    profile_roots.append(child)
             except OSError as error:
                 raise RuntimeError(f"""Could not inspect browser profile directory {profile_path}: {error}""") from error
             cleanup_paths.extend(

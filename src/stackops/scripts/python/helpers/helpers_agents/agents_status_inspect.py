@@ -49,7 +49,7 @@ def inspect_window(
     registered_id = text_field(registered, ("agent_session_id",))
     process = inspect_processes(
         root_pid=root_pid, harness_hint=hint, agent_session_id=registered_id, cwd=cwd,
-        claude_home=options.claude_home, codex_home=options.codex_home, timeout=options.timeout,
+        options=options,
     )
     is_agent = bool(registered) or detector.get("matched") is True or bool(process.harness)
     errors = [error for error in (detail_error, detector_error) if error is not None]
@@ -60,10 +60,13 @@ def inspect_window(
         candidate: JsonObject | None = {"session": session, "window_id": window_id, "name": name, "command": command, "reason": "; ".join(errors)} if errors else None
         return PaneInspection(agent=None, candidate=candidate, excluded="", limitations=tuple(errors))
     evidence_data: dict[str, JsonObject] = {}
-    for verb, extra in (
-        ("get-agent-state", []), ("peek-prompt", []), ("agent-log", ["--limit", str(options.event_limit)]),
+    queries: list[tuple[str, list[str]]] = [
+        ("get-agent-state", []), ("peek-prompt", []),
         ("capture-pane", ["--scrollback", "--lines", str(options.capture_lines)]),
-    ):
+    ]
+    if options.history == "auto":
+        queries.append(("agent-log", ["--limit", str(options.event_limit)]))
+    for verb, extra in queries:
         payload, error = query_tuios(options=options, arguments=[verb, *target, "--window", window_id, *extra, "--json"])
         evidence_data[verb] = json_object(payload)
         if error is not None:
@@ -72,7 +75,8 @@ def inspect_window(
     if not state:
         state = {"state": registered.get("state", "unknown"), "source": registered.get("source", "inventory")}
     prompt = evidence_data["peek-prompt"]
-    events = object_rows(payload=evidence_data["agent-log"], key="entries") if "entries" in evidence_data["agent-log"] else []
+    log = evidence_data.get("agent-log", {})
+    events = object_rows(payload=log, key="entries") if "entries" in log else []
     capture_data = evidence_data["capture-pane"]
     capture = text_field(capture_data, ("content", "text"))
     if not capture:

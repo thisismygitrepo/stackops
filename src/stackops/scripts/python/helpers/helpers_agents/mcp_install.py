@@ -1,9 +1,12 @@
+from collections.abc import MutableMapping
 import json
 import os
 from pathlib import Path
 from platform import system
 import re
 from typing import Final, Literal, cast, get_args
+
+import tomlkit
 
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 from stackops.scripts.python.helpers.helpers_agents.cortex_paths import resolve_cortex_home
@@ -387,6 +390,8 @@ def _sanitize_existing_oz_mcp_root(*, root: dict[str, object], path: Path) -> di
 
 def _resolved_server_to_oz_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
     definition = resolved_server["definition"]
+    if not definition["enabled"]:
+        raise ValueError(f"""Oz --mcp cannot install disabled MCP server '{resolved_server['name']}'""")
     if definition["cwd"] is not None:
         raise ValueError(
             f"Oz MCP config for '{resolved_server['name']}' cannot include cwd because oz --mcp config files do not support it"
@@ -487,6 +492,8 @@ def _resolved_server_to_antigravity_entry(*, resolved_server: ResolvedMcpServer)
         entry = {"serverUrl": url}
         if len(definition["headers"]) > 0:
             entry["headers"] = dict(definition["headers"])
+    if not definition["enabled"]:
+        entry["disabled"] = True
     return entry
 
 
@@ -500,6 +507,8 @@ def _write_antigravity_mcp_config(*, path: Path, resolved_servers: tuple[Resolve
 
 def _resolved_server_to_pi_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
     definition = resolved_server["definition"]
+    if not definition["enabled"]:
+        raise ValueError(f"""The Pi MCP installer cannot install disabled MCP server '{resolved_server['name']}'""")
     if definition["transport"] == "stdio":
         command = definition["command"]
         if command is None:
@@ -670,6 +679,7 @@ def _resolved_server_to_crush_entry(*, resolved_server: ResolvedMcpServer) -> di
             raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a command")
         entry: dict[str, object] = {
             "type": "stdio",
+            "disabled": not definition["enabled"],
             "command": command,
             "args": list(definition["args"]),
         }
@@ -684,6 +694,7 @@ def _resolved_server_to_crush_entry(*, resolved_server: ResolvedMcpServer) -> di
         raise ValueError(f"Resolved MCP server '{resolved_server['name']}' is missing a URL")
     entry = {
         "type": "http",
+        "disabled": not definition["enabled"],
         "url": url,
     }
     if len(definition["headers"]) > 0:
@@ -703,58 +714,40 @@ def _write_codex_config(*, path: Path, resolved_servers: tuple[ResolvedMcpServer
     if path.exists() and not path.is_file():
         raise ValueError(f"Config path exists but is not a file: {path}")
 
-    existing_text = path.read_text(encoding="utf-8") if path.exists() else ""
-    updated_text = existing_text
+    document = tomlkit.parse(path.read_text(encoding="utf-8")) if path.exists() else tomlkit.document()
+    raw_servers = document.setdefault("mcp_servers", tomlkit.table())
+    if not isinstance(raw_servers, MutableMapping):
+        raise ValueError(f"Codex MCP configuration must contain an mcp_servers table: {path}")
+    servers = cast(MutableMapping[str, object], raw_servers)
     for resolved_server in resolved_servers:
-        updated_text = _remove_codex_server_block(text=updated_text, server_name=resolved_server["name"])
-    updated_text = updated_text.rstrip()
-
-    rendered_blocks = [_render_codex_server_block(resolved_server=resolved_server) for resolved_server in resolved_servers]
-    combined_blocks = "\n\n".join(rendered_blocks)
-
-    if updated_text == "":
-        final_text = combined_blocks + "\n"
-    else:
-        final_text = updated_text + "\n\n" + combined_blocks + "\n"
+        servers[resolved_server["name"]] = _resolved_server_to_codex_entry(resolved_server=resolved_server)
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(final_text, encoding="utf-8")
+    path.write_text(tomlkit.dumps(document), encoding="utf-8")
 
 
-def _remove_codex_server_block(*, text: str, server_name: str) -> str:
-    escaped_name = re.escape(server_name)
-    pattern = re.compile(
-        rf"""(?ms)^\[mcp_servers\.{escaped_name}\]\n.*?(?=^\[(?!mcp_servers\.{escaped_name}\.)|\Z)"""
-    )
-    return pattern.sub("", text)
-
-
-def _render_codex_server_block(*, resolved_server: ResolvedMcpServer) -> str:
+def _resolved_server_to_codex_entry(*, resolved_server: ResolvedMcpServer) -> dict[str, object]:
     name = resolved_server["name"]
     definition = resolved_server["definition"]
-    lines = [f"[mcp_servers.{name}]"]
 
     if definition["transport"] == "stdio":
         command = definition["command"]
         if command is None:
             raise ValueError(f"Resolved MCP server '{name}' is missing a command")
-        lines.append(f"""command = {json.dumps(command)}""")
-        lines.append(f"""args = {json.dumps(definition["args"])}""")
-        if len(definition["env"]) > 0:
-            lines.append("")
-            lines.append(f"[mcp_servers.{name}.env]")
-            for env_key, env_value in definition["env"].items():
-                lines.append(f"""{env_key} = {json.dumps(env_value)}""")
-        return "\n".join(lines)
+        entry: dict[str, object] = {"command": command, "args": definition["args"], "enabled": definition["enabled"]}
+        if definition["cwd"] is not None:
+            entry["cwd"] = definition["cwd"]
+        if definition["env"]:
+            entry["env"] = definition["env"]
+        return entry
 
     url = definition["url"]
     if url is None:
         raise ValueError(f"Resolved MCP server '{name}' is missing a URL")
-    lines.append(f"""url = {json.dumps(url)}""")
-    if len(definition["headers"]) > 0:
-        bearer_token_env_var = _extract_bearer_token_env_var(headers=definition["headers"], server_name=name)
-        lines.append(f"""bearer_token_env_var = {json.dumps(bearer_token_env_var)}""")
-    return "\n".join(lines)
+    entry = {"url": url, "enabled": definition["enabled"]}
+    if definition["headers"]:
+        entry["bearer_token_env_var"] = _extract_bearer_token_env_var(headers=definition["headers"], server_name=name)
+    return entry
 
 
 def _extract_bearer_token_env_var(*, headers: dict[str, str], server_name: str) -> str:

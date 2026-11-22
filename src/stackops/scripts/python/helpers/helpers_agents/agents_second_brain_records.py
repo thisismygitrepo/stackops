@@ -1,7 +1,13 @@
 import csv
+import os
+import stat
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime
+from io import StringIO
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from stackops.scripts.python.helpers.helpers_agents.agents_second_brain_constants import (
     AGENT_BY_LABEL,
@@ -63,50 +69,96 @@ def _parse_update_row(*, fields: list[str], line_number: int) -> UpdateRecord | 
     )
 
 
+def _read_update_file(update_path: Path, file_stat: os.stat_result) -> UpdateFile:
+    if not stat.S_ISREG(file_stat.st_mode):
+        reason = "Refusing to read a symbolic link." if stat.S_ISLNK(file_stat.st_mode) else "Expected a regular file."
+        return UpdateFile(path=update_path, records=[], invalid_rows=[], error=reason, cleaned_text="")
+    flags = os.O_RDONLY if os.name == "nt" else os.O_RDONLY | os.O_NOFOLLOW
+    with os.fdopen(os.open(update_path, flags), "r", encoding="utf-8", newline="") as update_file:
+        # Windows lacks O_NOFOLLOW. Verify the opened file against lstat before reading.
+        if os.name == "nt" and not os.path.samestat(file_stat, os.fstat(update_file.fileno())):
+            raise ValueError(f"""Update file changed while opening {update_path}.""")
+        lines = update_file.readlines()
+    reader = csv.reader(lines, strict=True)
+    records: list[UpdateRecord] = []
+    invalid_rows: list[InvalidUpdateRow] = []
+    retained_lines: list[str] = []
+    file_error: str | None = None
+    try:
+        header = next(reader, None)
+        if header != list(UPDATE_COLUMNS):
+            expected = ",".join(UPDATE_COLUMNS)
+            actual = ",".join(header or [])
+            file_error = f"""Invalid header. Expected '{expected}', found '{actual}'."""
+        else:
+            previous_line = reader.line_num
+            retained_lines.extend(lines[:previous_line])
+            for fields in reader:
+                row_start = previous_line
+                previous_line = reader.line_num
+                parsed_row = _parse_update_row(fields=fields, line_number=row_start + 1)
+                match parsed_row:
+                    case UpdateRecord():
+                        records.append(parsed_row)
+                        retained_lines.extend(lines[row_start:reader.line_num])
+                    case InvalidUpdateRow():
+                        invalid_rows.append(parsed_row)
+    except csv.Error as parse_error:
+        file_error = f"""Malformed CSV at line {reader.line_num}: {parse_error}."""
+    return UpdateFile(
+        path=update_path,
+        records=records if file_error is None else [],
+        invalid_rows=invalid_rows if file_error is None else [],
+        error=file_error,
+        cleaned_text="".join(retained_lines) if file_error is None else "".join(lines),
+    )
+
+
 def read_second_brain_updates(*, second_brain_root: Path) -> list[UpdateFile]:
     if not second_brain_root.is_dir():
         raise ValueError(f"""Second Brain directory is not available: {second_brain_root}""")
-
     update_files: list[UpdateFile] = []
-    for update_path in sorted(path for path in second_brain_root.rglob("update.csv") if path.is_file()):
-        with update_path.open(mode="r", encoding="utf-8", newline="") as update_file:
-            lines = update_file.readlines()
-        reader = csv.reader(lines, strict=True)
-        records: list[UpdateRecord] = []
-        invalid_rows: list[InvalidUpdateRow] = []
-        retained_lines: list[str] = []
-        file_error: str | None = None
-        try:
-            header = next(reader, None)
-            if header != list(UPDATE_COLUMNS):
-                expected = ",".join(UPDATE_COLUMNS)
-                actual = ",".join(header or [])
-                file_error = f"""Invalid header. Expected '{expected}', found '{actual}'."""
-            else:
-                previous_line = reader.line_num
-                retained_lines.extend(lines[:previous_line])
-                for fields in reader:
-                    row_start = previous_line
-                    previous_line = reader.line_num
-                    parsed_row = _parse_update_row(fields=fields, line_number=row_start + 1)
-                    match parsed_row:
-                        case UpdateRecord():
-                            records.append(parsed_row)
-                            retained_lines.extend(lines[row_start:reader.line_num])
-                        case InvalidUpdateRow():
-                            invalid_rows.append(parsed_row)
-        except csv.Error as parse_error:
-            file_error = f"""Malformed CSV at line {reader.line_num}: {parse_error}."""
-        update_files.append(
-            UpdateFile(
-                path=update_path,
-                records=records if file_error is None else [],
-                invalid_rows=invalid_rows if file_error is None else [],
-                error=file_error,
-                cleaned_text="".join(retained_lines) if file_error is None else "".join(lines),
-            )
-        )
+    for path in sorted(second_brain_root.rglob("update.csv")):
+        file_stat = path.lstat()
+        if stat.S_ISREG(file_stat.st_mode) or stat.S_ISLNK(file_stat.st_mode):
+            update_files.append(_read_update_file(path, file_stat))
     return update_files
+
+
+@contextmanager
+def _update_lock(path: Path) -> Iterator[None]:
+    # The lock must survive replacement of the CSV so waiting writers open the new file.
+    lock_path = path.parent / ".ai" / f"{path.name}.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+b") as lock:
+        if os.name == "nt":
+            import msvcrt
+
+            lock.seek(0)
+            msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
+
+
+def append_second_brain_update(*, update_path: Path, fields: list[str]) -> None:
+    parsed_row = _parse_update_row(fields=fields, line_number=1)
+    if isinstance(parsed_row, InvalidUpdateRow):
+        raise ValueError(parsed_row.reason)
+    path = update_path.resolve()
+    with _update_lock(path), path.open("a+b") as update_file:
+        buffer = StringIO(newline="")
+        writer = csv.writer(buffer)
+        if update_file.tell() == 0:
+            writer.writerow(UPDATE_COLUMNS)
+        else:
+            update_file.seek(-1, os.SEEK_END)
+            if update_file.read(1) not in (b"\r", b"\n"):
+                buffer.write("\n")
+        writer.writerow(fields)
+        update_file.write(buffer.getvalue().encode("utf-8"))
 
 
 def prune_second_brain_updates(*, update_files: list[UpdateFile], apply: bool) -> dict[Path, int]:
@@ -118,8 +170,22 @@ def prune_second_brain_updates(*, update_files: list[UpdateFile], apply: bool) -
 
     removed_by_path: dict[Path, int] = {}
     for update_file in update_files:
-        if update_file.invalid_rows:
-            if apply:
-                update_file.path.write_text(update_file.cleaned_text, encoding="utf-8", newline="")
+        if not update_file.invalid_rows:
+            continue
+        if not apply:
             removed_by_path[update_file.path] = len(update_file.invalid_rows)
+            continue
+        path = update_file.path
+        with _update_lock(path):
+            file_stat = path.lstat()
+            current = _read_update_file(path, file_stat)
+            if current.error is not None:
+                raise ValueError(f"""Cannot prune {path}: {current.error}""")
+            if current.invalid_rows:
+                with TemporaryDirectory(dir=path.parent) as directory:
+                    replacement = Path(directory) / "cleaned.csv"
+                    replacement.write_text(current.cleaned_text, encoding="utf-8", newline="")
+                    replacement.chmod(stat.S_IMODE(file_stat.st_mode))
+                    replacement.replace(path)
+                removed_by_path[update_file.path] = len(current.invalid_rows)
     return removed_by_path

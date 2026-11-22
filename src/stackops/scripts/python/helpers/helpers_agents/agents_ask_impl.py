@@ -51,9 +51,22 @@ def _compose_ask_prompt_text(prompt_parts: Sequence[str], file_prompt: Path | No
 --- END FILE {resolved_prompt_path} ---"""
 
 
-def build_ask_command(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> str:
-    normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning_effort)
-    return build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=normalized_reasoning_effort)
+def _build_ask_commands(agent: AGENTS, prompt_file: Path, reasoning_effort: ReasoningEffort | None) -> tuple[str, str]:
+    if agent != "cortex":
+        command_line = build_agent_command(agent=agent, prompt_file=prompt_file, reasoning_effort=reasoning_effort)
+        return command_line, command_line
+
+    from stackops.scripts.python.helpers.helpers_agents.cortex_launch import build_cortex_command, render_cortex_prompt_command
+
+    command = build_cortex_command(model=None, provider=None, reasoning_effort=reasoning_effort, directory=Path.cwd())
+    is_windows = system() == "Windows"
+    command_line = render_cortex_prompt_command(command=command, prompt_file=prompt_file, is_windows=is_windows)
+    if "--mcp-config" not in command:
+        return command_line, command_line
+    display_args = command.copy()
+    display_args[command.index("--mcp-config") + 1] = "<redacted>"
+    display_command = render_cortex_prompt_command(command=display_args, prompt_file=prompt_file, is_windows=is_windows)
+    return command_line, display_command
 
 
 def _run_subprocess(command: Sequence[str], stdin_text: str | None) -> int:
@@ -86,7 +99,7 @@ def _print_ask_summary(
     prompt_text: str,
     file_prompt: Path | None,
     prompt_path: Path,
-    command_line: str,
+    display_command: str,
 ) -> None:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold cyan", no_wrap=True)
@@ -96,7 +109,7 @@ def _print_ask_summary(
     table.add_row("Prompt", Text(f"{len(prompt_text)} chars, {prompt_text.count('\n') + 1} lines"))
     table.add_row("File prompt", Text("none" if file_prompt is None else str(file_prompt.expanduser().resolve())))
     table.add_row("Temp prompt", Text(str(prompt_path)))
-    table.add_row("Command", Text(command_line))
+    table.add_row("Command", Text(display_command))
 
     console = Console()
     console.print(Panel(table, title="Agent Ask", border_style="blue"))
@@ -108,7 +121,7 @@ def run_ask(*, prompt_parts: Sequence[str], agent: AGENTS, reasoning: ReasoningE
     prompt_text = _compose_ask_prompt_text(prompt_parts=prompt_parts, file_prompt=prompt_path)
     temporary_prompt_path = _write_temporary_prompt_file(prompt_text=prompt_text)
     try:
-        command_line = build_ask_command(agent=agent, prompt_file=temporary_prompt_path, reasoning_effort=reasoning_effort)
+        command_line, display_command = _build_ask_commands(agent=agent, prompt_file=temporary_prompt_path, reasoning_effort=reasoning_effort)
         if not quiet:
             _print_ask_summary(
                 agent=agent,
@@ -116,7 +129,7 @@ def run_ask(*, prompt_parts: Sequence[str], agent: AGENTS, reasoning: ReasoningE
                 prompt_text=prompt_text,
                 file_prompt=prompt_path,
                 prompt_path=temporary_prompt_path,
-                command_line=command_line,
+                display_command=display_command,
             )
         return run_shell_command(command_line=command_line)
     finally:

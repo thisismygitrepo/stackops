@@ -57,7 +57,10 @@ def create_from_function(
     # =========================  choosing function to run
     if function is None or function.strip() == "":
         from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_route_helper import choose_function_or_lines
-        choice_function, choice_file, _kwargs_dict = choose_function_or_lines(choice_file, kwargs_dict={})
+        selection = choose_function_or_lines(choice_file, kwargs_dict={})
+        if selection is None:
+            return
+        choice_function, choice_file, _kwargs_dict = selection
     else:
         choice_function = function
 

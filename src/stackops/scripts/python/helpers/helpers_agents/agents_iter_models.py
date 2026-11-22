@@ -9,7 +9,7 @@ PaneId = NewType("PaneId", str)
 TerminalId = NewType("TerminalId", str)
 
 type HerdrStatus = Literal["blocked", "done", "idle", "unknown", "working"]
-type KeepReason = Literal["active", "selected", "handoff_unverified", "unmanaged", "incomplete_snapshot"]
+type KeepReason = Literal["active", "selected", "handoff_unverified", "predecessor_present", "unmanaged", "incomplete_snapshot"]
 type CloseSkipReason = Literal["state_changed", "workspace_absent"]
 
 

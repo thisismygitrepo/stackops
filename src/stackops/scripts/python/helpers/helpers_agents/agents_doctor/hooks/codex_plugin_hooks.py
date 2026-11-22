@@ -2,6 +2,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.constants import CODEX_SYSTEM_PLUGIN_SOURCES
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.json_inventory import collect_hook_mapping, collect_json_hooks
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import (
     HookDiagnostic,
@@ -79,13 +80,16 @@ def collect_codex_plugin_hooks(
         roots = children
     inventories: list[HookInventory] = []
     for root in roots:
-        plugin_id = f"""{root.parent.name}@{root.parent.parent.name}"""
+        source = root.parent.parent.name
+        plugin_id = f"""{root.parent.name}@{source}"""
         setting = settings.get(plugin_id)
-        origin: DoctorOrigin = "global" if setting is None else setting[0]
+        origin: DoctorOrigin
         if setting is None:
+            origin = "system" if source in CODEX_SYSTEM_PLUGIN_SOURCES else "global"
             state: DoctorResourceState = "available"
             removal = None
         else:
+            origin = setting[0]
             state = "disabled" if setting[2] is False or not enabled else "configured"
             removal = HookRemoval(setting[1], "toml", ("plugins", plugin_id, "enabled"), "disable") if origin in ("global", "local") else None
         inventories.append(

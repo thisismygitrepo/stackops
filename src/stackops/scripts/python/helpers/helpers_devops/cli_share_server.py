@@ -24,6 +24,9 @@ def web_file_explorer(
     password_file: Annotated[Path | None, typer.Option("--password-file", "-f", help="Read access password from a file; '-' reads stdin.")] = None,
     password_env: Annotated[str | None, typer.Option("--password-env", "-E", help="Environment variable containing the access password.")] = None,
 ) -> None:
+    if backend == "easy-sharing" and host != "0.0.0.0":
+        raise typer.BadParameter("easy-sharing listens on all interfaces. Use filebrowser or miniserve to bind to a specific address.", param_hint="--host")
+
     from stackops.secrets.paths import SECRETS_DOFILE
     from stackops.secrets.readers import read_quick_password
     from stackops.scripts.python.helpers.helpers_devops.network_service import find_free_port, install_service_dependency, run_network_service

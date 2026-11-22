@@ -1,18 +1,16 @@
 import json
 from pathlib import Path
 
+from stackops.scripts.python.helpers.helpers_agents.privacy.configs.common.json_settings import read_privacy_settings
+
 
 def secure_droid_cli() -> None:
     config_dir = Path.home() / ".factory"
     config_file = config_dir / "settings.json"
+    settings = read_privacy_settings(config_file)
+    if settings is None:
+        return
     config_dir.mkdir(parents=True, exist_ok=True)
-
-    settings = {}
-    if config_file.exists():
-        try:
-            settings = json.loads(config_file.read_text(encoding="utf-8"))
-        except Exception:
-            pass
     settings.update(
         {
             "cloudSessionSync": False,

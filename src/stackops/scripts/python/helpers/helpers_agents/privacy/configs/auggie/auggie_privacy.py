@@ -1,17 +1,16 @@
 import json
 from pathlib import Path
 
+from stackops.scripts.python.helpers.helpers_agents.privacy.configs.common.json_settings import read_privacy_settings
+
 
 def secure_auggie_config() -> None:
     config_dir = Path.home() / ".augment"
-    config_dir.mkdir(parents=True, exist_ok=True)
     settings_file = config_dir / "settings.json"
-    settings = {}
-    if settings_file.exists():
-        try:
-            settings = json.loads(settings_file.read_text())
-        except Exception:
-            pass
+    settings = read_privacy_settings(settings_file)
+    if settings is None:
+        return
+    config_dir.mkdir(parents=True, exist_ok=True)
     settings["indexingAllowDirs"] = []
     settings["indexingDenyDirs"] = ["/"]
     settings["autoUpdate"] = False

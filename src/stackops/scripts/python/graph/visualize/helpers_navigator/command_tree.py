@@ -29,7 +29,7 @@ class CommandTree(Tree[CommandInfo]):
         """Build the hierarchical command structure from the CLI graph."""
         try:
             graph = load_cli_graph()
-            nodes = build_command_nodes(graph)
+            nodes = build_command_nodes(graph, include_root=True)
         except Exception as exc:
             self.root.add(f"Error loading CLI graph: {exc}", data=None)
             return

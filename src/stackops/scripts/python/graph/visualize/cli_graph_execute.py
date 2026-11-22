@@ -11,6 +11,7 @@ import questionary
 import typer
 import typer.main
 from questionary import Choice
+from typer._coercion import resolve_type_descriptor
 from typer.core import TyperArgument, TyperOption
 
 from stackops.scripts.python.graph.visualize.cli_graph_app import RunActionLoose
@@ -36,7 +37,7 @@ def run_cli_graph(graph_path: Path, query: str, action: RunActionLoose, skip_pro
     entry = pick_entry(entries=matching_entries(graph_path=graph_path, query=query), graph_path=graph_path, query=query)
     if entry is None:
         return 0
-    command_line = _join_tokens(tokens=list(entry.command_tokens)) if skip_prompts else build_command_line(entry=entry)
+    command_line = _join_tokens(tokens=list(entry.executable_command_tokens)) if skip_prompts else build_command_line(entry=entry)
     if command_line is None:
         return 0
 
@@ -51,7 +52,7 @@ def run_cli_graph(graph_path: Path, query: str, action: RunActionLoose, skip_pro
 
 
 def build_command_line(entry: CliGraphSearchEntry) -> str | None:
-    tokens = list(entry.command_tokens)
+    tokens = list(entry.executable_command_tokens)
     if entry.entry.get("kind") == "group":
         return _join_tokens(tokens=tokens)
 
@@ -159,6 +160,19 @@ def _load_typer_parameters(entry: CliGraphSearchEntry) -> list[TyperArgument | T
     callable_name = source_object.get("callable")
     if not isinstance(module_name, str) or not isinstance(callable_name, str):
         raise ValueError(f"""CLI graph entry `{entry.command}` has no module/callable source.""")
+    if module_name == "stackops.utils.managed_file_commands":
+        # Registration creates closures, so read their single path option from the graph.
+        match entry.entry.get("signature"):
+            case {"parameters": [{
+                "name": str(name), "type": "Path | None", "required": False,
+                "typer": {"kind": "option", "param_decls": list(flags), "help": str(help_text)},
+            }]}:
+                return [TyperOption(
+                    param_decls=[name, *cast(list[str], flags)],
+                    type_descriptor=resolve_type_descriptor(Path, typer.Option()),
+                    help=help_text,
+                )]
+        raise ValueError(f"""Expected one optional path in the graph signature for `{entry.command}`.""")
     function = getattr(importlib.import_module(module_name), callable_name, None)
     if not callable(function):
         raise ValueError(f"""Cannot load `{module_name}.{callable_name}` to guide `{entry.command}`: it is not a module-level callable.""")

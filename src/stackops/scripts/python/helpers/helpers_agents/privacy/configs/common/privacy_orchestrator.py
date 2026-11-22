@@ -116,6 +116,10 @@ def apply_max_privacy_and_security_rules_and_configs(overwrite: bool, repo_root:
     except Exception:
         pass
     try:
-        secure_codex_configs()
+        secure_codex_configs(
+            user_config_path=Path.home() / ".codex/config.toml",
+            project_config_path=Path(repo_root) / ".codex/config.toml" if repo_root is not None else None,
+            overwrite=overwrite,
+        )
     except Exception:
         pass

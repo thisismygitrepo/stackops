@@ -17,13 +17,6 @@ def validate_cleanup_path(*, path: Path, home_directory: Path, allow_leaf_symlin
             raise ValueError(f"Symlink paths cannot be changed: {path}")
 
 
-def validate_removal_target(*, path: Path, home_directory: Path) -> None:
-    validate_cleanup_path(path=path, home_directory=home_directory, allow_leaf_symlink=True)
-    mode = path.lstat().st_mode
-    if not (stat.S_ISLNK(mode) or stat.S_ISREG(mode) or stat.S_ISDIR(mode)):
-        raise ValueError(f"Only regular files, directories, and symlinks can be removed: {path}")
-
-
 def read_editable_file(*, path: Path, home_directory: Path) -> tuple[bytes, int]:
     validate_cleanup_path(path=path, home_directory=home_directory, allow_leaf_symlink=False)
     path_stat = path.lstat()

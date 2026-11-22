@@ -25,6 +25,7 @@ class StatusOptions:
     states: tuple[str, ...]
     include_self: bool
     history: HistoryMode
+    link_conversation: bool
     capture_lines: int
     message_limit: int
     text_limit: int

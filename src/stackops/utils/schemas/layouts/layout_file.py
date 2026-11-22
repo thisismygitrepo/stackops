@@ -11,13 +11,13 @@ from stackops.utils.schemas.yaml_schema import JsonValue
 LayoutFileWriteMode: TypeAlias = Literal["replace_file", "merge_by_layout_name"]
 
 
-def _require_layout_suffix(path: Path) -> None:
+def require_layout_suffix(path: Path) -> None:
     if path.suffix != LAYOUT_FILE_SUFFIX:
         raise ValueError(f"""Layout files must be YAML with the '{LAYOUT_FILE_SUFFIX}' suffix: {path}""")
 
 
 def read_layouts_file(path: Path) -> LayoutsFile:
-    _require_layout_suffix(path)
+    require_layout_suffix(path)
     try:
         document = cast(JsonValue, yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.CSafeLoader))
     except yaml.YAMLError as error:
@@ -66,7 +66,7 @@ def read_layouts_file(path: Path) -> LayoutsFile:
 
 
 def write_layouts_file(path: Path, layouts_file: LayoutsFile) -> None:
-    _require_layout_suffix(path)
+    require_layout_suffix(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         f"""# yaml-language-server: $schema={LAYOUT_SCHEMA_URL}

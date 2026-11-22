@@ -9,6 +9,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from stackops.scripts.python.helpers.helpers_utils.process_models import ProcessInfo, ProcessSelector, SearchField, process_matches_selector
+from stackops.scripts.python.helpers.helpers_utils.process_termination import kill_scanned_process
 from stackops.utils.accessories import pprint
 
 console = Console()
@@ -217,47 +218,39 @@ class ProcessManager:
         self.kill(pids=[p["pid"] for p in filtered_processes])
         console.print(Panel("", title="[bold blue]Process Info[/bold blue]", border_style="blue"))
 
-    def kill(self, names: list[str] | None = None, pids: list[int] | None = None, commands: list[str] | None = None):
+    def kill(self, names: list[str] | None = None, pids: list[int] | None = None, commands: list[str] | None = None) -> None:
         title = "💀  PROCESS TERMINATION"
         console.print(Panel(title, title="[bold blue]Process Info[/bold blue]", border_style="blue"))
         if names is None and pids is None and commands is None:
             print("❌ Error: No termination targets specified (names, pids, or commands)")
             raise ValueError("names, pids and commands cannot all be None")
-        if names is None:
-            names = []
-        if pids is None:
-            pids = []
-        if commands is None:
-            commands = []
-        killed_count = 0
-        for name in names:
+        targets: list[ProcessInfo] = []
+        for name in names or []:
             matching_processes = [p for p in self.data if p["name"] == name]
-            if len(matching_processes) > 0:
-                for process in matching_processes:
-                    psutil.Process(process["pid"]).kill()
-                    print(f"💀 Killed process {name} with PID {process['pid']}. It lived {get_age(process['create_time'])}. RIP 💐")
-                    killed_count += 1
-            else:
+            if not matching_processes:
                 print(f'❓ No process named "{name}" found')
-        for pid in pids:
-            try:
-                proc = psutil.Process(pid)
-                proc_name = proc.name()
-                proc_lifetime = get_age(datetime.fromtimestamp(proc.create_time(), tz=None))
-                proc.kill()
-                print(f'💀 Killed process with PID {pid} and name "{proc_name}". It lived {proc_lifetime}. RIP 💐')
-                killed_count += 1
-            except psutil.NoSuchProcess:
-                print(f"❓ No process with PID {pid} found")
-        for command in commands:
+            targets.extend(matching_processes)
+        if pids:
+            scanned_by_pid = {process["pid"]: process for process in self.data}
+            for pid in pids:
+                if pid in scanned_by_pid:
+                    targets.append(scanned_by_pid[pid])
+                else:
+                    print(f"❓ No process with PID {pid} found in the scan")
+        for command in commands or []:
             matching_processes = [p for p in self.data if command in p["command"]]
-            if len(matching_processes) > 0:
-                for process in matching_processes:
-                    psutil.Process(process["pid"]).kill()
-                    print(f'💀 Killed process with "{command}" in its command & PID {process["pid"]}. It lived {get_age(process["create_time"])}. RIP 💐')
-                    killed_count += 1
-            else:
+            if not matching_processes:
                 print(f'❓ No process has "{command}" in its command.')
+            targets.extend(matching_processes)
+        killed_count = 0
+        for process in targets:
+            try:
+                kill_scanned_process(process)
+            except psutil.NoSuchProcess:
+                print(f"❓ Selected process with PID {process['pid']} has already exited")
+                continue
+            print(f"""💀 Killed process with PID {process['pid']} and name "{process['name']}". It lived {get_age(process['create_time'])}. RIP 💐""")
+            killed_count += 1
         console.print(Panel(f"✅ Termination complete: {killed_count} processes terminated", title="[bold blue]Process Info[/bold blue]", border_style="blue"))
 
 

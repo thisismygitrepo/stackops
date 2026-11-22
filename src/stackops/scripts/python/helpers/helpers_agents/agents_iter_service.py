@@ -87,12 +87,13 @@ def close_iter_workspace_plan(*, close_plan: IterWorkspaceClosePlan, report: Cal
             if records.run_path != close_plan.run_path:
                 skipped_tabs.append(SkippedTabClose(tab=candidate, reason="state_changed"))
                 continue
+            # Recheck only this close so the plan cannot assume a still-live predecessor has closed.
             current_plan = build_workspace_close_plan(
                 snapshot=snapshot,
                 workspace=current_workspace,
                 run_path=records.run_path,
                 retain_previous=close_plan.retain_previous,
-                handoffs=records.handoffs,
+                handoffs={iteration: handoff for iteration, handoff in records.handoffs.items() if handoff.source_tab_id == candidate.tab_id},
             )
             if candidate.tab_id not in {tab.tab_id for tab in current_plan.closable_tabs}:
                 skipped_tabs.append(SkippedTabClose(tab=candidate, reason="state_changed"))

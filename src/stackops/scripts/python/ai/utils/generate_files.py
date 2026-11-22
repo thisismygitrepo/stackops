@@ -21,7 +21,7 @@ def make_todo_files(
     split_to: Annotated[int | None, typer.Option("--split-to", "-t", help="Split output into exactly this many files")] = None,
 ) -> None:
     """Generate checklist with Python and shell script files in the repository or workspace filtered by pattern."""
-    import shutil
+    import re
 
     from rich.console import Console
     from rich.panel import Panel
@@ -46,10 +46,6 @@ def make_todo_files(
     except ValueError as error:
         console.print(Panel(f"❌ ERROR | {error}", border_style="bold red", expand=False))
         raise typer.Exit(code=1) from error
-
-    todo_dir = repo_path / ".ai" / "todo"
-    if todo_dir.exists():
-        shutil.rmtree(todo_dir)
 
     output_base.parent.mkdir(parents=True, exist_ok=True)
 
@@ -76,7 +72,8 @@ def make_todo_files(
     
     extension = {"csv": ".csv", "md": ".md", "txt": ".txt"}[format_type]
     
-    output_files = []
+    single_output = output_base.with_suffix(extension)
+    output_files: list[Path] = []
     for i, chunk in enumerate(file_chunks):
         chunk_python = [f for f in chunk if f in python_files]
         chunk_shell = [f for f in chunk if f in shell_files]
@@ -84,12 +81,21 @@ def make_todo_files(
         content = generate_content(chunk_python, chunk_shell, repo_path, format_type, include_line_count)
         
         if len(file_chunks) == 1:
-            output_file = output_base.with_suffix(extension)
+            output_file = single_output
         else:
             output_file = output_base.parent / f"{output_base.name}_{i+1}{extension}"
         
         output_file.write_text(content)
         output_files.append(output_file)
+
+    written_files = set(output_files)
+    chunk_name = re.compile(rf"""{re.escape(output_base.name)}_[1-9][0-9]*{re.escape(extension)}""")
+    for previous in output_base.parent.iterdir():
+        if previous in written_files:
+            continue
+        if previous == single_output or chunk_name.fullmatch(previous.name):
+            if previous.is_file(follow_symlinks=False):
+                previous.unlink()
 
     console = Console()
     success_msg = f"""✅ SUCCESS | Files generated successfully!

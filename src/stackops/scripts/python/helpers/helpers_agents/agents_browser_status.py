@@ -7,7 +7,7 @@ from rich.table import Table
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_window_models import BrowserAppWindow, BrowserWindowsUnavailable
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_app_windows import collect_browser_windows
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserRuntime
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import BrowserName, BrowserRuntime
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_launch_records import BrowserLaunchStatus, collect_browser_launch_status
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_process_scan import OpenBrowserProcess, collect_open_browsers
 
@@ -25,10 +25,12 @@ class BrowserLaunchWindowsStatus(BrowserLaunchStatus):
     browser_windows: tuple[BrowserAppWindow, ...] | BrowserWindowsUnavailable
 
 
-def collect_open_browser_status() -> tuple[OpenBrowserStatus, ...]:
+def collect_open_browser_status(*, browser: BrowserName | None) -> tuple[OpenBrowserStatus, ...]:
     launches_by_process_id = {status.browser_process_id: status.launch for status in collect_browser_launch_status() if status.browser_process_id is not None}
     rows: list[OpenBrowserStatus] = []
     for open_browser in collect_open_browsers():
+        if browser is not None and open_browser.browser != browser:
+            continue
         launch = launches_by_process_id.get(open_browser.process_id)
         rows.append(
             OpenBrowserStatus(
@@ -41,7 +43,7 @@ def collect_open_browser_status() -> tuple[OpenBrowserStatus, ...]:
     return tuple(rows)
 
 
-def collect_browser_launch_windows_status() -> tuple[BrowserLaunchWindowsStatus, ...]:
+def collect_browser_launch_windows_status(*, browser: BrowserName | None) -> tuple[BrowserLaunchWindowsStatus, ...]:
     return tuple(
         BrowserLaunchWindowsStatus(
             launch=status.launch,
@@ -53,6 +55,7 @@ def collect_browser_launch_windows_status() -> tuple[BrowserLaunchWindowsStatus,
             else collect_browser_windows(browser=status.launch.browser, port=status.launch.browser_port),
         )
         for status in collect_browser_launch_status()
+        if browser is None or status.launch.browser == browser
     )
 
 

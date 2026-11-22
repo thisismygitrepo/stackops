@@ -17,18 +17,30 @@ from stackops.utils.ssh_utils.wsl_helper import (
 )
 
 
-def copy_when_inside_wsl(source: Path | str, target: Path | str, overwrite: bool, windows_username: str | None) -> None:
-    ensure_wsl_environment()
-    source_relative = ensure_relative_path(source)
-    target_relative = ensure_relative_path(target)
-    source_path = Path.home() / source_relative
-    target_path = resolve_windows_home_from_wsl(windows_username) / target_relative
-    if not source_path.exists():
-        raise FileNotFoundError(f"""Local source does not exist: {source_path}. Check the source path and try again.""")
+def _prepare_copy_target(home: Path, relative_target: Path, overwrite: bool) -> Path:
+    target_path = home / relative_target
     if target_path.exists():
+        if target_path.samefile(home):
+            raise ValueError("Choose a transfer target below the destination home directory.")
         if not overwrite:
             raise FileExistsError(f"""Target already exists: {target_path}. Use --overwrite to replace it.""")
         remove_path(target_path)
+    return target_path
+
+
+def _prepare_copy_paths(source: Path | str, target: Path | str, remote_home: Path, source_is_remote: bool, overwrite: bool) -> tuple[Path, Path]:
+    local_home = Path.home()
+    source_home, target_home = (remote_home, local_home) if source_is_remote else (local_home, remote_home)
+    source_path = source_home / ensure_relative_path(source)
+    target_relative = ensure_relative_path(target)
+    if not source_path.exists():
+        raise FileNotFoundError(f"""Source does not exist: {source_path}. Check the source path and try again.""")
+    return source_path, _prepare_copy_target(target_home, target_relative, overwrite)
+
+
+def copy_when_inside_wsl(source: Path | str, target: Path | str, overwrite: bool, windows_username: str | None, *, source_is_remote: bool) -> None:
+    ensure_wsl_environment()
+    source_path, target_path = _prepare_copy_paths(source, target, resolve_windows_home_from_wsl(windows_username), source_is_remote, overwrite)
     target_path.parent.mkdir(parents=True, exist_ok=True)
     if source_path.is_dir():
         shutil.copytree(source_path, target_path, dirs_exist_ok=False)
@@ -37,18 +49,9 @@ def copy_when_inside_wsl(source: Path | str, target: Path | str, overwrite: bool
     shutil.copy2(source_path, target_path)
 
 
-def copy_when_inside_windows(source: Path | str, target: Path | str, overwrite: bool) -> None:
+def copy_when_inside_windows(source: Path | str, target: Path | str, overwrite: bool, *, source_is_remote: bool) -> None:
     ensure_windows_environment()
-    source_relative = ensure_relative_path(source)
-    target_relative = ensure_relative_path(target)
-    source_path = Path.home() / source_relative
-    target_path = resolve_wsl_home_on_windows() / target_relative
-    if not source_path.exists():
-        raise FileNotFoundError(f"""Local source does not exist: {source_path}. Check the source path and try again.""")
-    if target_path.exists():
-        if not overwrite:
-            raise FileExistsError(f"""Target already exists: {target_path}. Use --overwrite to replace it.""")
-        remove_path(target_path)
+    source_path, target_path = _prepare_copy_paths(source, target, resolve_wsl_home_on_windows(), source_is_remote, overwrite)
     run_windows_copy_command(source_path, target_path)
 
 
@@ -108,5 +111,5 @@ def change_ssh_port(port: int) -> None:
 
 
 if __name__ == "__main__":
-    copy_when_inside_wsl(Path("projects/source.txt"), Path("windows_projects/source.txt"), overwrite=True, windows_username=None)
-    copy_when_inside_windows(Path("documents/example.txt"), Path("linux_documents/example.txt"), overwrite=True)
+    copy_when_inside_wsl(Path("projects/source.txt"), Path("windows_projects/source.txt"), overwrite=True, windows_username=None, source_is_remote=False)
+    copy_when_inside_windows(Path("documents/example.txt"), Path("linux_documents/example.txt"), overwrite=True, source_is_remote=False)

@@ -46,9 +46,14 @@ def route(args: FireJobArgs, fire_args: str) -> None:
         return
 
     kwargs_dict = _prepare_kwargs(args=args, choice_file=choice_file)
-    choice_function = _choose_function(choose_function=args.choose_function, function=args.function, choice_file=choice_file, kwargs_dict=kwargs_dict)
-    if isinstance(choice_function, tuple):
-        choice_function, choice_file, kwargs_dict = choice_function
+    choice_function = args.function
+    if args.choose_function:
+        from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_route_helper import choose_function_or_lines
+
+        selection = choose_function_or_lines(choice_file, kwargs_dict)
+        if selection is None:
+            return
+        choice_function, choice_file, kwargs_dict = selection
 
     command = _build_command(
         args=args,
@@ -133,18 +138,6 @@ def _prepare_kwargs(args: FireJobArgs, choice_file: Path) -> dict[str, object]:
 
         return extract_kwargs(args)
     return {}
-
-
-def _choose_function(
-    choose_function: bool, function: str | None, choice_file: Path, kwargs_dict: dict[str, object]
-) -> str | None | tuple[str | None, Path, dict[str, object]]:
-    """Choose function to run, possibly interactively."""
-    if choose_function:
-        from stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_route_helper import choose_function_or_lines
-
-        choice_function, choice_file, kwargs_dict = choose_function_or_lines(choice_file, kwargs_dict)
-        return (choice_function, choice_file, kwargs_dict)
-    return function
 
 
 def _build_command(

@@ -83,6 +83,7 @@ def status(
         windows=tuple(window or ()), exclude_windows=tuple(exclude_window or ()), agent_sessions=tuple(agent_session or ()),
         harnesses=tuple("claude-code" if value.lower() == "claude" else value.lower() for value in harness or ()),
         states=selected_states, include_self=include_self, history=history, capture_lines=lines,
+        link_conversation=resolved_backend != "tuios" or history == "auto" or bool(agent_session) or btw,
         message_limit=messages, text_limit=text_limit, event_limit=AGENTS_STATUS_EVENT_LIMIT,
         timeout=AGENTS_STATUS_TIMEOUT_SECONDS, workers=AGENTS_STATUS_WORKERS,
         server=server, claude_home=Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))).expanduser(),

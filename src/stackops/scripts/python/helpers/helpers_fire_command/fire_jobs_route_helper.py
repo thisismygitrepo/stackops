@@ -8,11 +8,12 @@ from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.options_utils.options import choose_from_options
 
 
-def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) -> tuple[str | None, Path, dict[str, object]]:
+def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) -> tuple[str | None, Path, dict[str, object]] | None:
     """
     Choose a function to run from a Python file or lines from a shell script.
     
     Returns:
+        None if the picker was cancelled or the selection was empty.
         tuple: (choice_function, choice_file, kwargs_dict)
         - choice_function: The selected function name or None
         - choice_file: The file path (potentially modified for shell scripts)
@@ -24,8 +25,8 @@ def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) 
         from stackops.scripts.python.helpers.helpers_fire_command.file_wrangler import parse_pyfile
         options, func_args = parse_pyfile(file_path=str(choice_file))
         choice_function_tmp: object = choose_from_options(msg="Choose a function to run", options=options, tv=True, multi=False)
-        if choice_function_tmp is None:
-            return None, choice_file, kwargs_dict
+        if not choice_function_tmp:
+            return None
         assert isinstance(choice_function_tmp, str), f"choice_function must be a string. Got {type(choice_function_tmp)}"
         choice_index = options.index(choice_function_tmp)
         choice_function = choice_function_tmp.split(" -- ")[0]
@@ -47,8 +48,8 @@ def choose_function_or_lines(choice_file: Path, kwargs_dict: dict[str, object]) 
                 continue
             options.append(line)
         chosen_lines = choose_from_options(msg="Choose a line to run", options=options, tv=True, multi=True)
-        if chosen_lines is None or len(chosen_lines) == 0:
-            return None, choice_file, kwargs_dict
+        if not chosen_lines:
+            return None
         choice_file = Path.home().joinpath(f"""tmp_results/tmp_scripts/shell/fire_{randstr(10)}.sh""")
         choice_file.parent.mkdir(parents=True, exist_ok=True)
         choice_file.write_text("\n".join(chosen_lines), encoding="utf-8")

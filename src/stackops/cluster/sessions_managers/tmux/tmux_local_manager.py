@@ -107,7 +107,7 @@ class TmuxLocalManager:
         for manager in self.launched_managers:
             session_name = manager.session_name or "unknown"
             try:
-                result = subprocess.run(["tmux", "kill-session", "-t", session_name], capture_output=True, text=True, timeout=10, check=False)
+                result = subprocess.run(["tmux", "kill-session", "-t", f"={session_name}"], capture_output=True, text=True, timeout=10, check=False)
                 if result.returncode == 0:
                     results[session_name] = {"success": True, "message": "Session killed"}
                 else:

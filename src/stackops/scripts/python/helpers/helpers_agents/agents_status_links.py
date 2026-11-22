@@ -1,3 +1,4 @@
+from collections.abc import Iterable, Iterator
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -80,29 +81,38 @@ def claude_transcript_paths(*, home: Path, session_id: str) -> tuple[Path, ...]:
     return paths
 
 
+def _codex_transcript_identities(*, paths: Iterable[Path], limitations: list[str]) -> Iterator[tuple[str, Path, bool]]:
+    for path in paths:
+        try:
+            metadata = codex_transcript_metadata(path=path)
+            candidate_id = conversation_id(value=metadata.get("id"))
+            yield candidate_id, path, metadata.get("source") == "cli"
+        except (OSError, ValueError) as error:
+            limitations.append(f"""Cannot validate Codex transcript {path.name}: {error}""")
+
+
 def codex_transcript_paths(
     *, paths: tuple[Path, ...], home: Path, registered_id: str
 ) -> tuple[str, tuple[Path, ...], tuple[str, ...]]:
     session_id = conversation_id(value=registered_id) if registered_id else ""
-    candidates = set(paths)
-    if session_id and not any(path.name.endswith(f"""-{session_id}.jsonl""") for path in candidates):
-        root = readable_status_path(path=home / "sessions")
-        candidates.update(root.rglob(f"""rollout-*-{session_id}.jsonl"""))
-    matches: list[tuple[str, Path]] = []
     limitations: list[str] = []
-    for path in sorted(candidates):
-        try:
-            metadata = codex_transcript_metadata(path=path)
-            candidate_id = conversation_id(value=metadata.get("id"))
-            if (session_id and candidate_id == session_id) or (not session_id and metadata.get("source") == "cli"):
-                matches.append((candidate_id, readable_status_path(path=path)))
-        except (OSError, ValueError) as error:
-            limitations.append(f"""Cannot validate Codex transcript {path.name}: {error}""")
+    matches: list[tuple[str, Path]] = []
+    for candidate_id, path, is_main in _codex_transcript_identities(paths=paths, limitations=limitations):
+        if session_id and is_main and candidate_id != session_id:
+            return "", (), (*limitations, "Registered conversation ID conflicts with a main transcript open in the Codex process.")
+        if candidate_id == session_id or (not session_id and is_main):
+            matches.append((candidate_id, path))
+    child_count = len(paths) - len(matches)
+    if session_id and not matches and not any(path.name.endswith(f"""-{session_id}.jsonl""") for path in paths):
+        root = readable_status_path(path=home / "sessions")
+        archived = root.rglob(f"""rollout-*-{session_id}.jsonl""")
+        for candidate_id, path, _ in _codex_transcript_identities(paths=archived, limitations=limitations):
+            if candidate_id == session_id:
+                matches.append((candidate_id, path))
     if len(matches) != 1:
         limitations.append(f"""Codex process resolved to {len(matches)} matching main transcripts; no transcript was selected.""")
         return session_id, (), tuple(limitations)
     selected_id, selected_path = matches[0]
-    child_count = len(candidates) - len(matches)
     if child_count:
         limitations.append(f"""Excluded {child_count} open transcripts that did not match the main conversation.""")
-    return selected_id, (selected_path,), tuple(limitations)
+    return selected_id, (readable_status_path(path=selected_path),), tuple(limitations)

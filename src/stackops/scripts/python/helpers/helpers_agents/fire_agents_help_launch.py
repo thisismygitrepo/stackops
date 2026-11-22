@@ -95,14 +95,6 @@ def _runtime_api_key_environment_lines(
     ]
 
 
-def _forward_docker_environment(*, command: str, env_name: str) -> str:
-    marker = "docker run -it --rm \\\n"
-    if marker not in command:
-        raise RuntimeError("Docker agent command does not contain the expected docker run invocation.")
-    replacement = f"docker run -it --rm \\\n  -e {env_name} \\\n"
-    return command.replace(marker, replacement, 1)
-
-
 def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list[API_SPEC]:
     from stackops.utils.io import read_ini
 
@@ -127,6 +119,11 @@ def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list
     return res
 
 
+def validate_parallel_agent_host(*, agent: AGENTS, host: HOST) -> None:
+    if host == "docker" and agent not in ("codex", "copilot", "cortex", "crush", "deepseek", "maki", "pi", "prime-agent"):
+        raise ValueError(f"""Parallel launches for '{agent}' do not support --host docker. Use --host local.""")
+
+
 def prep_agent_launch(
     repo_root: Path,
     agents_dir: Path,
@@ -143,6 +140,7 @@ def prep_agent_launch(
     job_name: str,
     stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> None:
+    validate_parallel_agent_host(agent=agent, host=machine)
     if not isfinite(stagger_max) or stagger_max < 0:
         raise ValueError("stagger_max must be a finite number greater than or equal to 0")
 
@@ -152,7 +150,6 @@ def prep_agent_launch(
         elif provider != "openai":
             raise ValueError("Codex agent only works with openai provider.")
 
-    agents_dir.mkdir(parents=True, exist_ok=True)
     prompt_folder = agents_dir / "prompts"
     prompt_folder.mkdir(parents=True, exist_ok=True)
     is_windows = agent_shell.is_windows_host()
@@ -242,7 +239,6 @@ def prep_agent_launch(
                     from stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex import fire_codex
 
                     cmd = fire_codex(ai_spec=_without_api_key(ai_spec=ai_spec), prompt_path=prompt_path, repo_root=repo_root)
-                    cmd = _forward_docker_environment(command=cmd, env_name=api_key_environment_name)
             case "pi":
                 api_spec = API_SPEC(api_key=None, api_name="", api_label="", api_account="")
                 ai_spec = AI_SPEC(provider=provider, model=model, agent=agent, machine=machine, api_spec=api_spec, reasoning_effort=reasoning_effort)

@@ -79,7 +79,7 @@ agents iter clean -i -n
 
 ## `reset`
 
-`reset [AGENT]` previews resets of agent customizations and `.ai` workspace directories. `--scope/-s` selects `workspace/w`, `user/u`, or `all/a` (the default); `.ai` directories belong to the workspace scope. Use `--directory/-d` to select the workspace or directory containing repositories, `--resource workspace` to target `.ai` directories only, and `--recursive/-R` to search nested repositories. `--apply/-a` applies the reset and preserves backups; `--interactive/-i` presents a selection and confirmation flow. `--tui/-t` opens the resource browser and always confirms before applying.
+`reset [AGENT]` previews resets of agent customizations and `.ai` workspace directories. `--scope/-s` selects `workspace/w`, `user/u`, or `all/a` (the default); `.ai` directories belong to the workspace scope. Use `--directory/-d` to select the workspace or directory containing repositories, `--resource workspace` to target `.ai` directories only, and `--recursive/-R` to search nested repositories. `--apply/-a` permanently applies the reset without keeping a backup. `--interactive/-i` presents a selection and confirmation flow. `--tui/-t` opens the resource browser and always confirms before applying.
 
 ```bash
 agents reset --directory ~/code --resource workspace

@@ -1,13 +1,17 @@
 """Tmux backend operations for dynamic tab scheduling."""
 
+import os
+import shlex
 import subprocess
 
 from stackops.cluster.sessions_managers.session_conflict import SessionConflictAction
+from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common import RUN_ALL_STATE_OPTION
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_execution import run_tmux_commands
 from stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout import build_tmux_new_window_tab_commands
-from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_processes import classify_pane_status, find_meaningful_pane_process_label
+from stackops.scripts.python.helpers.helpers_sessions._attach_common import quote_powershell
+from stackops.scripts.python.helpers.helpers_sessions._tmux_backend_processes import find_meaningful_pane_process_label
 from stackops.scripts.python.helpers.helpers_sessions.sessions_dynamic_display import DynamicStartResult, DynamicTabTask
-from stackops.utils.schemas.layouts.layout_types import LayoutConfig
+from stackops.utils.schemas.layouts.layout_types import LayoutConfig, PaneConfig, TabConfig
 
 
 def _run_command(args: list[str]) -> None:
@@ -25,9 +29,22 @@ def _run_capture(args: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
 
+def _tracked_tab(tab: TabConfig) -> TabConfig:
+    panes: list[PaneConfig] = []
+    for pane in tab["panes"]:
+        if os.name == "nt":
+            set_state = f"""tmux set-option -p -t $env:TMUX_PANE '{RUN_ALL_STATE_OPTION}'"""
+            command = f"""{set_state} running; try {{ Invoke-Expression {quote_powershell(pane["command"])} }} finally {{ {set_state} finished }}"""
+        else:
+            set_state = f"""tmux set-option -p -t "$TMUX_PANE" {RUN_ALL_STATE_OPTION}"""
+            command = f"""{set_state} running; eval {shlex.quote(pane["command"])}; {set_state} finished"""
+        panes.append({**pane, "command": command})
+    return {**tab, "panes": panes}
+
+
 def spawn_tab(session_name: str, task: DynamicTabTask) -> None:
     run_tmux_commands(
-        commands=build_tmux_new_window_tab_commands(session_name=session_name, tab=task["tab"], exit_mode="backToShell"),
+        commands=build_tmux_new_window_tab_commands(session_name=session_name, tab=_tracked_tab(task["tab"]), exit_mode="backToShell"),
         timeout_seconds=30,
     )
 
@@ -41,7 +58,7 @@ def _start_initial_session_raw(session_name: str, initial_tasks: list[DynamicTab
         raise ValueError("No initial tasks provided for tmux startup.")
     from stackops.cluster.sessions_managers.tmux.tmux_local import TmuxLayoutGenerator
 
-    initial_layout: LayoutConfig = {"layoutName": session_name, "layoutTabs": [task["tab"] for task in initial_tasks]}
+    initial_layout: LayoutConfig = {"layoutName": session_name, "layoutTabs": [_tracked_tab(task["tab"]) for task in initial_tasks]}
     generator = TmuxLayoutGenerator(layout_config=initial_layout, session_name=session_name, exit_mode="backToShell")
     generator.create_layout_file()
     generator.run(on_conflict=on_conflict)
@@ -59,13 +76,6 @@ def start_initial_session(
     return [actual_session_name], {actual_session_name: {"success": True, "message": "tmux dynamic session started"}}
 
 
-def _parse_pane_line(line: str) -> dict[str, str]:
-    parts = line.split("\t")
-    if len(parts) != 5:
-        raise RuntimeError(f"Unexpected tmux pane status line: {line}")
-    return {"pane_index": parts[0], "pane_command": parts[1], "pane_dead": parts[2], "pane_dead_status": parts[3], "pane_pid": parts[4]}
-
-
 def _target_is_missing(stderr: str) -> bool:
     error_text = stderr.strip().lower()
     return "can't find session" in error_text or "can't find window" in error_text or "no server running" in error_text
@@ -78,7 +88,7 @@ def is_task_running(session_name: str, task: DynamicTabTask) -> bool:
             "-t",
             f"{session_name}:{task['runtime_tab_name']}",
             "-F",
-            "#{pane_index}\t#{pane_current_command}\t#{?pane_dead,dead,}\t#{pane_dead_status}\t#{pane_pid}",
+            "#{?pane_dead,exited,#{" + RUN_ALL_STATE_OPTION + "}}\t#{pane_pid}",
         ]
     )
     if result.returncode != 0:
@@ -87,13 +97,11 @@ def is_task_running(session_name: str, task: DynamicTabTask) -> bool:
         detail = (result.stderr or result.stdout or "Unknown tmux error").strip()
         raise RuntimeError(f"Failed to inspect tmux tab '{task['runtime_tab_name']}': {detail}")
 
-    pane_lines = [line for line in result.stdout.splitlines() if line.strip()]
-    if len(pane_lines) == 0:
-        return False
-
-    for line in pane_lines:
-        pane = _parse_pane_line(line=line)
-        _, status_text = classify_pane_status(pane, pane_process_label_finder=find_meaningful_pane_process_label)
-        if status_text.startswith("running:"):
+    for line in result.stdout.splitlines():
+        state, _, pane_pid = line.partition("\t")
+        if state == "exited":
+            continue
+        # A command can return to its shell while a background job still uses the pane.
+        if state != "finished" or find_meaningful_pane_process_label(pane_pid) is not None:
             return True
     return False

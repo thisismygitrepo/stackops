@@ -167,3 +167,7 @@ def main() -> None:
     use_utf8_standard_streams()
     app = get_app()
     app()
+
+
+if __name__ == "__main__":
+    main()

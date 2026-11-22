@@ -239,17 +239,14 @@ def _delete_if_released(target: Path, *, verbose: bool) -> None:
     try:
         delete_path(target, verbose=verbose)
     except PermissionError:
-        _emit(f"KEPT {target!r} because it is still in use; the next overwrite of its original path removes it.", verbose=verbose)
+        _emit(f"KEPT {target!r} because permission was denied.", verbose=verbose)
 
 
 def _swap_into_place(*, staged: Path, destination: Path, verbose: bool) -> None:
-    displaced_prefix = f"{destination.name}.old-"
-    for stale in [item for item in destination.parent.iterdir() if item.name.startswith(displaced_prefix)]:
-        _delete_if_released(stale, verbose=verbose)
     if not destination.exists() and not destination.is_symlink():
         staged.rename(destination)
         return
-    displaced = destination.rename(destination.parent / f"{displaced_prefix}{randstr()}")
+    displaced = destination.rename(destination.with_name(f"{destination.name}.old-{randstr()}"))
     try:
         staged.rename(destination)
     except OSError:

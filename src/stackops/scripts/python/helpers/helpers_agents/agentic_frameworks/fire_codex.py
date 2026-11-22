@@ -29,11 +29,10 @@ def fire_codex(ai_spec: AI_SPEC, prompt_path: Path, repo_root: Path) -> str:
         return f"""
 {local_cmd}
 """
-    env_flag = f"-e CODEX_API_KEY={shlex.quote(api_key)}" if api_key is not None else ""
     safe_cmd = shlex.quote(base_cmd)
     return f"""
 docker run -it --rm \
-  {env_flag} \
+  -e CODEX_API_KEY \
   -v "{repo_root}:/workspace/{repo_root.name}" \
   -w "/workspace/{repo_root.name}" \
   statistician/stackops-ai:latest \

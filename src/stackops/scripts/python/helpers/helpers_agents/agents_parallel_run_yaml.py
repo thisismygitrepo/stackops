@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Final, TypeAlias, cast, get_args
 
@@ -101,7 +101,7 @@ def select_parallel_create_values(*, raw_data: object, requested_name: str | Non
 
 
 def select_parallel_create_values_from_locations(
-    *, yaml_entries: list[ParallelYamlEntry], requested_name: str | None
+    *, yaml_entries: Iterable[ParallelYamlEntry], requested_name: str | None
 ) -> tuple[SelectedParallelCreateValues, ...]:
     if requested_name is not None:
         normalized_name = validate_parallel_run_name(entry_name=requested_name)
@@ -116,8 +116,9 @@ def select_parallel_create_values_from_locations(
 
     candidate_previews: dict[str, str] = {}
     candidate_sources: dict[str, tuple[str, Path, object]] = {}
-    use_location_prefix = len(yaml_entries) > 1
-    for location_name, yaml_path, raw_data in yaml_entries:
+    picker_entries = list(yaml_entries)
+    use_location_prefix = len(picker_entries) > 1
+    for location_name, yaml_path, raw_data in picker_entries:
         candidates = _collect_entry_candidates(raw_data=raw_data)
         for candidate_name, candidate_preview in candidates.items():
             label = f"{location_name}:{candidate_name}" if use_location_prefix else candidate_name

@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 import os
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import REMOTE_DEBUGGING_LOCALHOST
@@ -24,18 +25,23 @@ from stackops.scripts.python.helpers.helpers_agents.browser_launchers.registry i
 
 def launch_detached_browser(*, details: BrowserLaunchDetails, lan: bool) -> NewBrowserLaunchResult:
     prepare_browser_launch_registry()
-    browser_process_id, browser_created_at = (
-        start_browser_on_interactive_desktop(details=details)
-        if runs_in_windows_services_session()
-        else _start_browser_in_this_session(details=details)
-    )
-    relay_process = None
-    try:
+    with ExitStack() as rollback:
+        browser_process_id, browser_created_at = (
+            start_browser_on_interactive_desktop(details=details)
+            if runs_in_windows_services_session()
+            else _start_browser_in_this_session(details=details)
+        )
+        rollback.callback(
+            terminate_registered_process,
+            process_id=browser_process_id, process_created_at=browser_created_at, process_label=details.process_label,
+        )
+        relay_process = None
         if lan:
             relay_process = start_endpoint_relay(
                 listen_port=details.port,
                 target_port=details.browser_port,
             )
+            rollback.callback(terminate_background_process, process=relay_process, process_label="browser endpoint LAN relay")
             wait_for_tcp_endpoint(
                 host=REMOTE_DEBUGGING_LOCALHOST,
                 port=details.port,
@@ -59,14 +65,8 @@ def launch_detached_browser(*, details: BrowserLaunchDetails, lan: bool) -> NewB
             relay_process_created_at=relay_created_at,
             windows=None,
         )
-        return build_new_launch_result(details=details, process_id=browser_process_id, relay_process_id=relay_process_id, windows=None)
-    except RuntimeError:
-        if relay_process is not None:
-            terminate_background_process(process=relay_process, process_label="browser endpoint LAN relay")
-        terminate_registered_process(
-            process_id=browser_process_id, process_created_at=browser_created_at, process_label=details.process_label
-        )
-        raise
+        rollback.pop_all()
+    return build_new_launch_result(details=details, process_id=browser_process_id, relay_process_id=relay_process_id, windows=None)
 
 
 def _start_browser_in_this_session(*, details: BrowserLaunchDetails) -> tuple[int, float]:
@@ -78,7 +78,7 @@ def _start_browser_in_this_session(*, details: BrowserLaunchDetails) -> tuple[in
         if get_browser_launcher(browser=details.browser).endpoint_protocol == "cdp":
             verify_cdp_endpoint(port=details.browser_port)
         return browser_process.pid, process_created_at(process_id=browser_process.pid, process_label=details.process_label)
-    except RuntimeError:
+    except BaseException:
         terminate_background_process(process=browser_process, process_label=details.process_label)
         raise
 
@@ -116,6 +116,6 @@ def repair_detached_browser_relay(
             windows=None,
         )
         return relay_process.pid
-    except RuntimeError:
+    except BaseException:
         terminate_background_process(process=relay_process, process_label="browser endpoint LAN relay")
         raise

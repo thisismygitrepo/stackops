@@ -1,4 +1,5 @@
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 
 def _git_archive_relative_paths(repo_root: Path) -> tuple[Path, ...]:
@@ -25,13 +26,6 @@ def _git_archive_relative_paths(repo_root: Path) -> tuple[Path, ...]:
     return tuple(sorted(selected_paths, key=lambda path: path.as_posix()))
 
 
-def _cleanup_temp_paths(paths: tuple[Path, ...]) -> None:
-    from stackops.utils.path_core import delete_path
-
-    for temp_path in paths:
-        delete_path(temp_path, verbose=False)
-
-
 def get_repo_remote_archive_path(repo_root: Path) -> Path:
     from stackops.utils.cloud import rclone_wrapper
 
@@ -50,28 +44,28 @@ def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str
     included_relative_paths = None if ignore_gitignore else _git_archive_relative_paths(repo_root=repo_root)
     archive_scope = "including Git-ignored files" if ignore_gitignore else "excluding Git-ignored files"
     console = Console()
-    with console.status(
-        f"[bold cyan]Compressing local repository[/bold cyan] [dim]{escape(str(repo_root))} ({archive_scope})[/dim]", spinner="dots"
-    ):
-        archive_path = path_compression.zip_path(
-            repo_root,
-            path=None,
-            folder=None,
-            name=None,
-            arcname=None,
-            inplace=False,
-            verbose=True,
-            content=False,
-            orig=False,
-            mode="w",
-            included_relative_paths=included_relative_paths,
-        )
-    with console.status(f"[bold cyan]Encrypting repository archive[/bold cyan] [dim]{escape(str(archive_path))}[/dim]", spinner="dots"):
-        if pwd is None:
-            encrypted_archive_path = encrypt_file_asymmetric(file_path=archive_path, recipient=None)
-        else:
-            encrypted_archive_path = encrypt_file_symmetric(file_path=archive_path, pwd=pwd)
-    try:
+    with TemporaryDirectory(prefix=".stackops-guard-", dir=repo_root.expanduser().resolve().parent) as temporary_directory:
+        with console.status(
+            f"[bold cyan]Compressing local repository[/bold cyan] [dim]{escape(str(repo_root))} ({archive_scope})[/dim]", spinner="dots"
+        ):
+            archive_path = path_compression.zip_path(
+                repo_root,
+                path=None,
+                folder=Path(temporary_directory),
+                name=None,
+                arcname=None,
+                inplace=False,
+                verbose=True,
+                content=False,
+                orig=False,
+                mode="w",
+                included_relative_paths=included_relative_paths,
+            )
+        with console.status(f"[bold cyan]Encrypting repository archive[/bold cyan] [dim]{escape(str(archive_path))}[/dim]", spinner="dots"):
+            if pwd is None:
+                encrypted_archive_path = encrypt_file_asymmetric(file_path=archive_path, recipient=None)
+            else:
+                encrypted_archive_path = encrypt_file_symmetric(file_path=archive_path, pwd=pwd)
         rclone_wrapper.to_cloud(
             local_path=encrypted_archive_path,
             cloud=cloud,
@@ -83,8 +77,6 @@ def upload_repo_archive(repo_root: Path, cloud: str, remote_path: Path, pwd: str
             show_progress=True,
             transfers=10,
         )
-    finally:
-        _cleanup_temp_paths(paths=(archive_path, encrypted_archive_path))
 
 
 def download_repo_archive(repo_remote_root: Path, cloud: str, remote_path: Path, pwd: str | None) -> Path:

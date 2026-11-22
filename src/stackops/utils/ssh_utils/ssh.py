@@ -1,7 +1,9 @@
 from typing import Callable, Any, cast, Union, Literal, override
+from contextlib import ExitStack
 import subprocess
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import platform
+from tempfile import TemporaryDirectory, TemporaryFile
 
 import rich.console
 
@@ -13,6 +15,7 @@ from stackops.utils.meta import lambda_to_python_script
 from stackops.utils.ssh_utils.abc import DEFAULT_PICKLE_SUBDIR, STACKOPS_REQUIREMENT
 from stackops.utils.ssh_utils.connection_target import resolve_ssh_connection_profile
 from stackops.utils.ssh_utils.open_ssh_config import lookup_open_ssh_config
+from stackops.utils.ssh_utils.transfer_archive import create_transfer_archive, extract_uploaded_archive, remote_transfer_archive
 
 
 class SSH:
@@ -253,7 +256,15 @@ print("SSH key added successfully")
     def run_shell_cmd_on_remote(
         self, command: str, verbose_output: bool, description: str, strict_stderr: bool, strict_return_code: bool
     ) -> Response:
+        return self._execute_remote_command(command, verbose_output, description, strict_stderr, strict_return_code, input_text=None)
+
+    def _execute_remote_command(
+        self, command: str, verbose_output: bool, description: str, strict_stderr: bool, strict_return_code: bool, input_text: str | None
+    ) -> Response:
         raw = self.ssh.exec_command(command)
+        if input_text is not None:
+            with raw[0] as stdin:
+                stdin.write(input_text.encode("utf-8"))
         res = Response(stdin=raw[0], stdout=raw[1], stderr=raw[2], cmd=command, desc=description)  # type: ignore
         res.capture()
         stdout_channel = getattr(raw[1], "channel", None)
@@ -360,6 +371,16 @@ stderr:
             return str(PureWindowsPath(rel_path))
         return rel_path.replace("\\", "/")
 
+    def _run_transfer_script(self, script: str, description: str) -> Response:
+        return self._execute_remote_command(
+            command=f"""{get_uv_command(platform=self.remote_specs["system"])} run python -""",
+            input_text=script,
+            verbose_output=False,
+            description=description,
+            strict_stderr=False,
+            strict_return_code=True,
+        )
+
     def create_parent_dir_and_check_if_exists(self, path_rel2home: str, overwrite_existing: bool) -> None:
         path_rel2home_normalized = self._normalize_rel_path_for_remote(path_rel2home)
 
@@ -383,20 +404,7 @@ stderr:
             lambda: create_target_dir(target_rel2home=path_rel2home_normalized, overwrite=overwrite_existing),
             in_global=True, import_module=False,
         )
-        tmp_py_file = Path.home().joinpath(f"""{DEFAULT_PICKLE_SUBDIR}/ssh_create_target_dir_{randstr()}.py""")
-        tmp_py_file.parent.mkdir(parents=True, exist_ok=True)
-        tmp_py_file.write_text(command, encoding="utf-8")
-        assert self.sftp is not None
-        tmp_remote_path = ".tmp_pyfile.py"
-        remote_tmp_full = self._build_remote_path(self.remote_specs["home_dir"], tmp_remote_path)
-        self.sftp.put(localpath=str(tmp_py_file), remotepath=remote_tmp_full)
-        resp = self.run_shell_cmd_on_remote(
-            command=f"""{get_uv_command(platform=self.remote_specs['system'])} run python {tmp_remote_path}""",
-            verbose_output=False,
-            description=f"Creating target dir {path_rel2home}",
-            strict_stderr=False,
-            strict_return_code=True,
-        )
+        resp = self._run_transfer_script(command, f"Creating target dir {path_rel2home}")
         resp.print(desc=f"Created target dir {path_rel2home}")
 
     def check_remote_is_dir(self, source_path: Union[str, Path]) -> bool:
@@ -498,101 +506,48 @@ stderr:
                     overwrite_existing=overwrite_existing,
                 )
             return None
-        upload_obj = source_obj
-        if compress_with_zip:
-            import shutil
-            zip_path = Path(str(source_obj) + "_archive")
-            if source_obj.is_dir():
-                shutil.make_archive(str(zip_path), "zip", source_obj)
-            else:
-                shutil.make_archive(str(zip_path), "zip", source_obj.parent, source_obj.name)
-            upload_obj = Path(str(zip_path) + ".zip")
-            if not target_rel2home.endswith(".zip"):
-                target_rel2home = target_rel2home + ".zip"
-        if Path(target_rel2home).parent.as_posix() not in {"", "."}:
+        if compress_with_zip and not target_rel2home.endswith(".zip"):
+            target_rel2home += ".zip"
+        remote_path = PureWindowsPath if self.remote_specs["system"] == "Windows" else PurePosixPath
+        if remote_path(self._normalize_rel_path_for_remote(target_rel2home)).parent != remote_path("."):
             self.create_parent_dir_and_check_if_exists(
-                path_rel2home=target_rel2home, overwrite_existing=overwrite_existing
+                path_rel2home=target_rel2home, overwrite_existing=overwrite_existing and not compress_with_zip
             )
-        remote_target_full = self._build_remote_path(
-            self.remote_specs["home_dir"], target_rel2home
-        )
-        print(f"""[SFTP UPLOAD] Sending file: {repr(upload_obj)}  ==>  Remote Path: {remote_target_full}""")
-        try:
+        target = remote_path(self._build_remote_path(self.remote_specs["home_dir"], target_rel2home))
+        with ExitStack() as scratch:
+            upload_obj = source_obj
+            remote_target_full = str(target)
+            if compress_with_zip:
+                temporary = scratch.enter_context(TemporaryDirectory(prefix=".stackops-", dir=source_obj.parent))
+                upload_obj = Path(temporary) / "payload.zip"
+                create_transfer_archive(source_path=str(source_obj), archive_path=str(upload_obj))
+                remote_target_full = scratch.enter_context(remote_transfer_archive(sftp, target.parent))
+            print(f"""[SFTP UPLOAD] Sending file: {repr(upload_obj)}  ==>  Remote Path: {remote_target_full}""")
             with self.tqdm_wrap(ascii=True, unit="b", unit_scale=True) as pbar:
                 print(f"Uploading {upload_obj} to\n{remote_target_full}")
-                sftp.put(
-                    localpath=str(upload_obj),
-                    remotepath=remote_target_full,
-                    callback=pbar.view_bar,
-                )
-        except Exception:
-            if compress_with_zip and upload_obj.exists() and str(upload_obj).endswith("_archive.zip"):
-                upload_obj.unlink()
-            raise
-        if compress_with_zip:
-            import stat
-            archive_root = source_obj if source_obj.is_dir() else source_obj.parent
-            archive_root_posix_mode = (
-                None if "Windows" in (platform.system(), self.remote_specs["system"]) else stat.S_IMODE(archive_root.stat().st_mode)
-            )
-
-            def unzip_archive(zip_file_path: str, overwrite_flag: bool, archive_root_posix_mode: int | None) -> None:
-                from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
-                import shutil
+                file_size = upload_obj.stat().st_size
+                transferred = 0
+                # Paramiko uses 'w' for write access and 'x' for exclusive creation.
+                mode = "w" if overwrite_existing and not compress_with_zip else "wx"
+                with upload_obj.open("rb") as source, sftp.open(remote_target_full, mode) as destination:
+                    destination.set_pipelined(True)
+                    while chunk := source.read(32 * 1024):
+                        destination.write(chunk)
+                        transferred += len(chunk)
+                        pbar.view_bar(transferred, file_size)
+                remote_size = sftp.stat(remote_target_full).st_size
+                if remote_size != transferred:
+                    raise OSError(f"""Upload size mismatch for {remote_target_full}: sent {transferred} bytes, found {remote_size}""")
+            if compress_with_zip:
                 import stat
-                import zipfile
-                archive_path = Path(zip_file_path).expanduser()
-                extraction_directory = archive_path.parent / archive_path.stem
-                if overwrite_flag and extraction_directory.exists():
-                    shutil.rmtree(extraction_directory)
-                with zipfile.ZipFile(archive_path, "r") as archive_handle:
-                    if archive_root_posix_mode is None:
-                        archive_handle.extractall(extraction_directory)
-                    else:
-                        extraction_directory.mkdir(parents=True, exist_ok=True)
-                        extraction_directory.chmod(0o700)
-                        extracted_directory_modes: list[tuple[Path, int]] = []
-                        for member in archive_handle.infolist():
-                            extracted_path = Path(archive_handle.extract(member, extraction_directory))
-                            member_posix_mode = stat.S_IMODE(member.external_attr >> 16)
-                            if member.is_dir():
-                                extracted_directory_modes.append((extracted_path, member_posix_mode))
-                            else:
-                                extracted_path.chmod(member_posix_mode)
-                        for directory_path, directory_mode in sorted(extracted_directory_modes, key=lambda item: len(item[0].parts), reverse=True):
-                            directory_path.chmod(directory_mode)
-                        extraction_directory.chmod(archive_root_posix_mode)
-                archive_path.unlink()
-
-            remote_zip_path = self._build_remote_path(
-                self.remote_specs["home_dir"], target_rel2home
-            )
-            command = lambda_to_python_script(
-                lambda: unzip_archive(zip_file_path=remote_zip_path, overwrite_flag=overwrite_existing, archive_root_posix_mode=archive_root_posix_mode),
-                in_global=True, import_module=False,
-            )
-            tmp_py_file = Path.home().joinpath(
-                f"""{DEFAULT_PICKLE_SUBDIR}/ssh_unzip_archive_{randstr()}.py"""
-            )
-            tmp_py_file.parent.mkdir(parents=True, exist_ok=True)
-            tmp_py_file.write_text(command, encoding="utf-8")
-            remote_tmp_py = tmp_py_file.relative_to(Path.home()).as_posix()
-            self.copy_from_here(
-                source_path=str(tmp_py_file),
-                target_rel2home=None,
-                compress_with_zip=False,
-                recursive=False,
-                overwrite_existing=True,
-            )
-            self.run_shell_cmd_on_remote(
-                command=f"""{get_uv_command(platform=self.remote_specs["system"])} run python {remote_tmp_py}""",
-                verbose_output=False,
-                description=f"UNZIPPING {target_rel2home}",
-                strict_stderr=False,
-                strict_return_code=True,
-            )
-            upload_obj.unlink()
-            tmp_py_file.unlink(missing_ok=True)
+                archive_root = source_obj if source_obj.is_dir() else source_obj.parent
+                root_mode = None if "Windows" in (platform.system(), self.remote_specs["system"]) else stat.S_IMODE(archive_root.stat().st_mode)
+                extract_to = target.parent / target.stem
+                command = lambda_to_python_script(
+                    lambda: extract_uploaded_archive(archive_path=remote_target_full, target_path=str(extract_to), overwrite=overwrite_existing, root_mode=root_mode),
+                    in_global=True, import_module=False,
+                )
+                self._run_transfer_script(command, f"Extracting upload to {extract_to}")
         return None
 
     def copy_to_here(
@@ -712,54 +667,32 @@ stderr:
                     self.copy_to_here(source=file_path, target=local_file_target, compress_with_zip=False, recursive=False, internal_call=True)
                 return None
         if compress_with_zip:
-
-            def zip_source(path_to_zip: str, json_output_path: str) -> str:
-                from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
-                import shutil
-                import json
-                source_to_compress = Path(path_to_zip).expanduser().absolute()
-                archive_base_path = source_to_compress.parent / (source_to_compress.name + "_archive")
-                if source_to_compress.is_dir():
-                    shutil.make_archive(str(archive_base_path), "zip", source_to_compress)
-                else:
-                    shutil.make_archive(str(archive_base_path), "zip", source_to_compress.parent, source_to_compress.name)
-                zip_file_path = str(archive_base_path) + ".zip"
-                json_result_path = Path(json_output_path)
-                json_result_path.parent.mkdir(parents=True, exist_ok=True)
-                json_result_path.write_text(json.dumps(zip_file_path, indent=2), encoding="utf-8")
-                print(json_result_path.as_posix())
-                return zip_file_path
-
-            remote_json_output = self._build_remote_json_output_path()
-            command = lambda_to_python_script(
-                lambda: zip_source(path_to_zip=expanded_source, json_output_path=remote_json_output),
-                in_global=True, import_module=False,
-            )
-            response = self.run_py_remotely(
-                python_code=command,
-                uv_with=[STACKOPS_REQUIREMENT],
-                uv_project_dir=None,
-                description=f"Zipping source file {source}",
-                verbose_output=False,
-                strict_stderr=False,
-                strict_return_code=True,
-            )
-            remote_json_path = response.op.strip()
-            if not remote_json_path:
-                raise RuntimeError(f"Could not zip {source} - no response from remote")
-            local_json = Path.home().joinpath(f"{DEFAULT_PICKLE_SUBDIR}/local_{randstr()}.json")
-            self.simple_sftp_get(remote_path=remote_json_path, local_path=local_json)
-            import json
-            try:
-                zipped_path = json.loads(local_json.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, FileNotFoundError) as err:
-                raise RuntimeError(f"Could not zip {source} - invalid JSON response: {err}") from err
-            finally:
-                if local_json.exists():
-                    local_json.unlink()
-            assert isinstance(zipped_path, str), f"Could not zip {source}"
-            source_obj = Path(zipped_path)
-            expanded_source = zipped_path
+            import zipfile
+            remote_source = PureWindowsPath(expanded_source) if self.remote_specs["system"] == "Windows" else PurePosixPath(expanded_source)
+            if target is None:
+                default_target = remote_source.parent / f"{remote_source.name}_archive"
+                try:
+                    relative = default_target.relative_to(self.remote_specs["home_dir"])
+                except ValueError as exc:
+                    raise RuntimeError(f"Source path must be relative to home directory: {expanded_source}") from exc
+                extract_to = Path.home().joinpath(*relative.parts)
+            else:
+                extract_to = Path(target).expanduser().absolute()
+                if extract_to.suffix == ".zip":
+                    extract_to = extract_to.with_suffix("")
+            extract_to.parent.mkdir(parents=True, exist_ok=True)
+            print(f"""[DOWNLOAD] Receiving: {expanded_source}  ==>  Local Path: {extract_to}""")
+            with remote_transfer_archive(sftp, remote_source.parent) as remote_zip, TemporaryFile(dir=extract_to.parent) as local_zip:
+                command = lambda_to_python_script(
+                    lambda: create_transfer_archive(source_path=expanded_source, archive_path=remote_zip),
+                    in_global=True, import_module=False,
+                )
+                self._run_transfer_script(command, f"Zipping source {source}")
+                with self.tqdm_wrap(ascii=True, unit="b", unit_scale=True) as pbar:
+                    sftp.getfo(remote_zip, local_zip, callback=pbar.view_bar)
+                with zipfile.ZipFile(local_zip, "r") as archive:
+                    archive.extractall(extract_to)
+            return
         if target is None:
             def collapse_to_home(absolute_path: str, json_output_path: str) -> str:
                 from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
@@ -806,49 +739,16 @@ stderr:
             assert isinstance(target_str, str), "Could not resolve target path"
             target = Path(target_str)
             assert str(target).startswith("~"), f"If target is not specified, source must be relative to home.\n{target=}"
-        target_obj = Path(target).expanduser().absolute()
+        target_obj = Path(target).expanduser().resolve()
         target_obj.parent.mkdir(parents=True, exist_ok=True)
-        if compress_with_zip and target_obj.suffix != ".zip":
-            target_obj = target_obj.with_suffix(target_obj.suffix + ".zip")
         print(f"""[DOWNLOAD] Receiving: {expanded_source}  ==>  Local Path: {target_obj}""")
-        try:
+        with TemporaryDirectory(prefix=".stackops-", dir=target_obj.parent) as temporary:
+            downloaded = Path(temporary) / "download"
             with self.tqdm_wrap(ascii=True, unit="b", unit_scale=True) as pbar:
-                sftp.get(remotepath=expanded_source, localpath=str(target_obj), callback=pbar.view_bar)
-        except Exception:
-            if target_obj.exists():
-                target_obj.unlink()
-            raise
-        if compress_with_zip:
-            import zipfile
-            extract_to = target_obj.parent / target_obj.stem
-            with zipfile.ZipFile(target_obj, "r") as zip_ref:
-                zip_ref.extractall(extract_to)
-            target_obj.unlink()
-            target_obj = extract_to
-
-            def delete_temp_zip(path_to_delete: str) -> None:
-                from pathlib import Path  # pylint: disable=redefined-outer-name,reimported  # body is emitted as a standalone remote script
-                import shutil
-                file_or_dir_path = Path(path_to_delete)
-                if file_or_dir_path.exists():
-                    if file_or_dir_path.is_dir():
-                        shutil.rmtree(file_or_dir_path)
-                    else:
-                        file_or_dir_path.unlink()
-
-            command = lambda_to_python_script(
-                lambda: delete_temp_zip(path_to_delete=expanded_source),
-                in_global=True, import_module=False,
-            )
-            self.run_py_remotely(
-                python_code=command,
-                uv_with=[STACKOPS_REQUIREMENT],
-                uv_project_dir=None,
-                description="Cleaning temp zip files @ remote.",
-                verbose_output=False,
-                strict_stderr=False,
-                strict_return_code=True,
-            )
+                sftp.get(remotepath=expanded_source, localpath=str(downloaded), callback=pbar.view_bar)
+            if target_obj.is_file():
+                downloaded.chmod(target_obj.stat().st_mode & 0o777)
+            downloaded.replace(target_obj)
         print("\n")
         return None
 

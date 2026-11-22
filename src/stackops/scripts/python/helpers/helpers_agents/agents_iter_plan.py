@@ -87,7 +87,8 @@ def build_workspace_close_plan(
         raise ValueError(f"Herdr workspace {workspace.label!r} is not an iter workspace.")
     tabs = tuple(sorted((tab for tab in snapshot.tabs if tab.workspace_id == workspace.workspace_id), key=lambda tab: (tab.number, str(tab.tab_id))))
     numbered = {tab.tab_id: iteration for tab in tabs if (iteration := _iteration_from_tab(workspace=workspace, tab=tab)) is not None}
-    duplicate_iterations = len(numbered) != len(set(numbered.values()))
+    remaining_iterations = set(numbered.values())
+    duplicate_iterations = len(numbered) != len(remaining_iterations)
     workspace_has_unmanaged_tabs = len(numbered) != len(tabs)
     incomplete = duplicate_iterations or inventory_is_incomplete(snapshot=snapshot, workspace=workspace, tabs=tabs, numbered=numbered)
     latest_iteration = max(numbered.values(), default=None)
@@ -96,7 +97,7 @@ def build_workspace_close_plan(
     retained_tabs: list[HerdrTab] = []
     protected_tabs: list[ProtectedTab] = []
     closable_tabs: list[HerdrTab] = []
-    for tab in tabs:
+    for tab in sorted(tabs, key=lambda tab: numbered.get(tab.tab_id, 0)):
         iteration = numbered.get(tab.tab_id)
         reason = _protection_reason(iteration=iteration, incomplete=incomplete, workspace_has_unmanaged_tabs=workspace_has_unmanaged_tabs)
         if reason is not None:
@@ -116,7 +117,11 @@ def build_workspace_close_plan(
         ):
             protected_tabs.append(ProtectedTab(tab=tab, reason="handoff_unverified"))
             continue
+        if iteration - 1 in remaining_iterations:
+            protected_tabs.append(ProtectedTab(tab=tab, reason="predecessor_present"))
+            continue
         closable_tabs.append(tab)
+        remaining_iterations.remove(iteration)
     return IterWorkspaceClosePlan(
         workspace=workspace,
         run_path=run_path,

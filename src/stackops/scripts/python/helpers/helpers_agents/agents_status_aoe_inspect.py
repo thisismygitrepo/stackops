@@ -47,7 +47,7 @@ def inspect_aoe_window(
     else:
         process = inspect_processes(
             root_pid=root_pid, harness_hint=harness, agent_session_id="", cwd=cwd,
-            claude_home=options.claude_home, codex_home=options.codex_home, timeout=options.timeout,
+            options=options,
         )
         harness = process.harness or harness
         payload, capture_error = query_aoe(options=options, arguments=[

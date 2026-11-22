@@ -195,7 +195,7 @@ def launch_browser(
 
         emit_agent_json(
             [
-                browser_launch_receipt(result=result, browser_window=browser_window)
+                browser_launch_receipt(result=result, browser_window=browser_window, lan_address=lan_address)
                 for result, browser_window in zip(results, browser_windows, strict=True)
             ]
         )
@@ -375,7 +375,7 @@ def batch_launch(
     if json_output:
         from stackops.scripts.python.helpers.helpers_agents.agents_browser_json import browser_launch_receipt
 
-        emit_agent_json([browser_launch_receipt(result=result, browser_window=None) for result in results])
+        emit_agent_json([browser_launch_receipt(result=result, browser_window=None, lan_address=lan_address) for result in results])
         return
     Console().print(build_browser_launches_summary(results=results, lan_address=lan_address))
     first_windows = next((result.windows for result in results if isinstance(result, NewBrowserLaunchResult) and result.windows is not None), None)
@@ -437,13 +437,13 @@ def status(
         )
 
         if all_browsers:
-            rows = tuple(row for row in collect_open_browser_status() if browser is None or row.browser.browser == browser)
+            rows = collect_open_browser_status(browser=browser)
             if json_output:
                 emit_agent_json(rows)
             else:
                 show_open_browser_status(rows=rows)
         else:
-            statuses = tuple(status for status in collect_browser_launch_windows_status() if browser is None or status.launch.browser == browser)
+            statuses = collect_browser_launch_windows_status(browser=browser)
             if json_output:
                 emit_agent_json(statuses)
             else:

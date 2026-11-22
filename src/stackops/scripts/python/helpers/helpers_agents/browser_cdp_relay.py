@@ -81,6 +81,7 @@ async def _pipe(*, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -
     while True:
         data = await reader.read(65_536)
         if len(data) == 0:
+            writer.write_eof()
             return
         writer.write(data)
         await writer.drain()

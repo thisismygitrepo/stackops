@@ -84,7 +84,7 @@ class _PanelOrderedAgentsGroup(TyperGroup):
 
 _NESTED_APP_CONTEXT: Final[dict[str, object]] = {
     "allow_extra_args": True,
-    "allow_interspersed_args": True,
+    "allow_interspersed_args": False,
     "ignore_unknown_options": True,
     "help_option_names": [],
 }

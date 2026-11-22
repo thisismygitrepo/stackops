@@ -6,7 +6,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.omp_con
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.agents.opencode_config import config_paths
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.extension_sources import collect_auto_extensions, read_extension_config
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.models import HookDiagnostic, HookEntry, HookInventory, HookRemoval
-from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.omp_hooks import collect_omp_hooks
+from stackops.scripts.python.helpers.helpers_agents.agents_doctor.hooks.omp_hooks import collect_omp_hook_factories, collect_omp_plugin_registrations
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.models import DoctorAgent, DoctorContext, DoctorOrigin, DoctorResourceState
 from stackops.scripts.python.helpers.helpers_agents.agents_doctor.scanning import ConfigFormat
 
@@ -52,7 +52,7 @@ def _configured_extensions(
     return HookInventory(tuple(entries), tuple(diagnostics))
 
 
-def collect_extensions(*, agent: DoctorAgent, context: DoctorContext) -> HookInventory:
+def collect_plugin_extensions(*, agent: DoctorAgent, context: DoctorContext) -> HookInventory:
     configs: list[tuple[DoctorOrigin, Path, ConfigFormat]] = []
     directories: list[tuple[DoctorOrigin, Path]] = []
     match agent:
@@ -88,7 +88,7 @@ def collect_extensions(*, agent: DoctorAgent, context: DoctorContext) -> HookInv
         collect_auto_extensions(agent=agent, origin=origin, directory=directory, context=context) for origin, directory in dict.fromkeys(directories)
     )
     if agent == "omp":
-        inventories.append(collect_omp_hooks(context=context))
+        inventories.append(collect_omp_plugin_registrations(context=context))
     notice = HookDiagnostic(
         agent,
         "local",
@@ -100,3 +100,11 @@ def collect_extensions(*, agent: DoctorAgent, context: DoctorContext) -> HookInv
         tuple(entry for inventory in inventories for entry in inventory.entries),
         (*tuple(diagnostic for inventory in inventories for diagnostic in inventory.diagnostics), notice),
     )
+
+
+def collect_extensions(*, agent: DoctorAgent, context: DoctorContext) -> HookInventory:
+    plugins = collect_plugin_extensions(agent=agent, context=context)
+    if agent != "omp":
+        return plugins
+    factories = collect_omp_hook_factories(context=context)
+    return HookInventory(plugins.entries + factories.entries, plugins.diagnostics + factories.diagnostics)

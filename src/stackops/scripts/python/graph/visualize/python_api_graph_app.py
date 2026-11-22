@@ -26,9 +26,9 @@ def materialize_python_api_graph_path(graph_path_str: str | None) -> str:
     if graph_path_str is not None:
         return graph_path_str
 
-    from stackops.scripts.python.graph.python_api_graph import write_python_api_graph_temp
+    from stackops.scripts.python.graph.python_api_graph import resolve_python_api_graph_path
 
-    return str(write_python_api_graph_temp())
+    return str(resolve_python_api_graph_path(output=None))
 
 
 def explain_filter() -> None:
@@ -139,9 +139,9 @@ def dump(
     output: Annotated[Path, typer.Argument(help="Write the Python API graph JSON to this path.")],
 ) -> None:
     """Write the generated Python API graph JSON."""
-    from stackops.scripts.python.graph.python_api_graph import write_python_api_graph_json
+    from stackops.scripts.python.graph.python_api_graph import resolve_python_api_graph_path
 
-    written = write_python_api_graph_json(output=output)
+    written = resolve_python_api_graph_path(output=output)
     typer.echo(f"Wrote {written}")
 
 

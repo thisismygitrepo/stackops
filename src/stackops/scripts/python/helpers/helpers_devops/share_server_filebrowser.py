@@ -19,10 +19,10 @@ def _run_filebrowser(arguments: list[str], database: Path, timeout: float) -> su
         raise typer.Exit(code=1) from None
 
 
-def _require_filebrowser_success(arguments: list[str], database: Path, timeout: float, secret: str) -> None:
+def _require_filebrowser_success(arguments: list[str], database: Path, timeout: float, secret: str) -> str:
     result = _run_filebrowser(arguments=arguments, database=database, timeout=timeout)
     if result.returncode == 0:
-        return
+        return result.stdout
     output = "\n".join(line for line in f"{result.stdout}\n{result.stderr}".splitlines() if line.strip() != "").replace(secret, "<password>")
     hint = f"\nAnother share of this folder may still be running and holding its database: {database}" if "timeout" in output else ""
     typer.echo(f"❌ ERROR: 'filebrowser {' '.join(arguments[:2])}' failed with exit code {result.returncode}:\n{output}{hint}", err=True)
@@ -44,9 +44,15 @@ def prepare_filebrowser_database(root: Path, username: str | None, password: str
         if _run_filebrowser(arguments=["users", "find", "1"], database=database, timeout=timeout).returncode != 0:
             _require_filebrowser_success(arguments=["users", "add", "anonymous", secret], database=database, timeout=timeout, secret=secret)
     else:
+        user_table = _require_filebrowser_success(arguments=["users", "ls"], database=database, timeout=timeout, secret=secret)
+        user_rows = user_table.splitlines()[1:]
+        if len(user_rows) > 1:
+            typer.echo(f"❌ ERROR: Multiple accounts exist in {database}. Keep one account before restarting the share.", err=True)
+            raise typer.Exit(code=1)
         _require_filebrowser_success(arguments=["config", "set", "--auth.method", "json", *minimum_length], database=database, timeout=timeout, secret=secret)
-        if _run_filebrowser(arguments=["users", "find", username], database=database, timeout=timeout).returncode == 0:
-            _require_filebrowser_success(arguments=["users", "update", username, "--password", password], database=database, timeout=timeout, secret=secret)
+        if user_rows:
+            user_id = user_rows[0].split(maxsplit=1)[0]
+            _require_filebrowser_success(arguments=["users", "update", user_id, "--username", username, "--password", password], database=database, timeout=timeout, secret=secret)
         else:
             _require_filebrowser_success(arguments=["users", "add", username, password], database=database, timeout=timeout, secret=secret)
     return database

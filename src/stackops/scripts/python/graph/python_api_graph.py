@@ -10,6 +10,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[5]
 SRC_ROOT = REPO_ROOT / "src"
 DOCS_API_ROOT = REPO_ROOT / "docs" / "api"
+BUNDLED_GRAPH_PATH = Path(__file__).resolve().with_suffix(".json")
 
 DOCS_DIRECTIVE_RE = re.compile(r"^:{3,4}\s+([A-Za-z_][\w.]*)(?:\s|$)")
 FROM_IMPORT_RE = re.compile(r"^\s*from\s+(stackops(?:\.[A-Za-z_][\w]*)*)\s+import\s+(.+)$")
@@ -116,14 +117,25 @@ def collect_api_module_selections(*, repo_root: Path | None = None) -> dict[str,
 
 def write_python_api_graph_json(*, output: Path, repo_root: Path | None = None) -> Path:
     payload = build_python_api_graph(repo_root=repo_root)
+    if output.resolve() == BUNDLED_GRAPH_PATH:
+        payload["meta"]["repo_root"] = "."
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return output
 
 
-def write_python_api_graph_temp(*, repo_root: Path | None = None) -> Path:
-    temp_dir = Path(tempfile.mkdtemp(prefix="stackops-python-api-graph-"))
-    return write_python_api_graph_json(output=temp_dir / "python_api_graph.json", repo_root=repo_root)
+def resolve_python_api_graph_path(*, output: Path | None) -> Path:
+    if BUNDLED_GRAPH_PATH.is_relative_to(SRC_ROOT) and DOCS_API_ROOT.is_dir():
+        if output is None:
+            temp_dir = Path(tempfile.mkdtemp(prefix="stackops-python-api-graph-"))
+            output = temp_dir / BUNDLED_GRAPH_PATH.name
+        return write_python_api_graph_json(output=output, repo_root=REPO_ROOT)
+
+    if output is None:
+        return BUNDLED_GRAPH_PATH
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_bytes(BUNDLED_GRAPH_PATH.read_bytes())
+    return output
 
 
 def _iter_docs_targets(text: str) -> list[str]:

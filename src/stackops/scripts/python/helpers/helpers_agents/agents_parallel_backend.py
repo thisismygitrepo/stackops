@@ -19,7 +19,7 @@ def run_generated_layout(*, layout_output_path: Path, backend: SessionMultiplexe
                 parallel_layouts=None,
                 kill_upon_completion=False,
                 backend=backend,
-                on_conflict="restart",
+                on_conflict="error",
                 exit_mode="backToShell",
                 layouts_selected=read_layouts_file(path=layout_output_path)["layouts"],
             )
@@ -56,7 +56,7 @@ def _run_generated_layout_with_tmux(*, layout_output_path: Path) -> None:
         monitor=False,
         parallel_layouts=None,
         backend="tmux",
-        on_conflict="restart",
+        on_conflict="error",
         exit_mode="backToShell",
         kill_upon_completion=False,
         subsitute_home=False,
