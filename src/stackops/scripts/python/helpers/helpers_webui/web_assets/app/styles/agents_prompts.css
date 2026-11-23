@@ -76,7 +76,7 @@
 
 @media (max-width: 860px) {
   .prompt-tools, .prompt-panes { display: block; height: auto; }
-  .prompt-groups { margin-top: 10px; }
+  .prompt-groups, .prompt-tools .prompt-places { margin-top: 10px; }
   .prompt-panes[data-pane="list"] > .prompt-reader, .prompt-panes[data-pane="reader"] > .prompt-list { display: none; }
   .prompt-list { margin-right: 0; padding: 0; overflow: visible; }
   .prompt-reader { scroll-margin-top: 16px; }

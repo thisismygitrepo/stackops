@@ -111,6 +111,41 @@ VAULT_MASK: Final[str] = "•" * 8
 VAULT_PARTIAL_EDGE_LIMIT: Final[int] = 4
 VAULT_PARTIAL_EDGE_SHARE: Final[int] = 6
 
+# The Scripts page says what a script does with its first comment or docstring line, looked for in this much of the start of the file.
+SCRIPT_SUMMARY_READ_BYTES: Final[int] = 4096
+SCRIPT_SUMMARY_LIMIT: Final[int] = 200
+# Comments that speak to a tool and not to a person, by how they start once the comment mark is gone. They are never taken as what a script does.
+SCRIPT_DIRECTIVE_PREFIXES: Final[tuple[str, ...]] = ("!", "-*-", "coding", "vim:", "type:", "pylint:", "pyright:", "mypy:", "ruff:", "noqa", "flake8:", "shellcheck ")
+# What a script made by the page starts as, by the file ending of each kind it makes.
+SCRIPT_STARTERS: Final[dict[str, str]] = {
+    ".py": """# {summary}
+
+print("Hello from {name}")
+""",
+    ".sh": """#!/usr/bin/env bash
+# {summary}
+
+echo "Hello from {name}"
+""",
+    ".ps1": """# {summary}
+
+Write-Output "Hello from {name}"
+""",
+    ".bat": """@echo off
+REM {summary}
+
+echo Hello from {name}
+""",
+}
+SCRIPT_STARTER_SUMMARY: Final[str] = "Say here, in one line, what this script does. The Scripts page shows it in its list."
+# The parts of a new script's name: a slash between them puts the script in a folder.
+SCRIPT_NAME_PATTERN: Final[str] = r"[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*"
+# Scripts that are not on this machine: they are fetched from the StackOps repository when one is run.
+ONLINE_SCRIPTS_RAW_ROOT: Final[str] = "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/jobs/scripts_dynamic"
+# GitHub answers a machine that is not signed in sixty times an hour, and the page asks again after every finished run.
+ONLINE_SCRIPTS_CACHE_SECONDS: Final[float] = 600.0
+ONLINE_SCRIPT_TIMEOUT_SECONDS: Final[float] = 30.0
+
 APP_CONTENT_SECURITY_POLICY: Final[str] = (
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; "
     "connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"

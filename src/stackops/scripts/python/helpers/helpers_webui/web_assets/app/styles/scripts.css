@@ -1,0 +1,22 @@
+/* Scripts: the list and the script beside it are laid out by the saved prompts' rules (agents_prompts.css). What follows is the page's own. */
+.scripts .prompt-panes { height: clamp(440px, calc(100vh - 356px), 1400px); }
+.scripts .prompt-panes.empty { height: auto; }
+.script-face { font-family: var(--mono); font-size: calc(var(--size) * 0.3); letter-spacing: 0; }
+.script-unreached { font-size: 12.5px; }
+.script-run { display: flex; align-items: center; gap: 10px; padding: 0 18px 12px 20px; }
+.script-arguments { flex: 1; min-width: 0; font-family: var(--mono); font-size: 13px; }
+.scripts .prompt-meta { min-height: 0; }
+.scripts .prompt-scroll { border-top: 1px solid var(--line); }
+/* Every line is numbered by a counter, so the numbers are neither selected nor copied with the text. */
+.script-code { font: 12.5px/1.65 var(--mono); color: var(--ink-soft); white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; counter-reset: line; }
+.script-code > span { position: relative; display: block; min-height: 1.65em; padding-left: 50px; counter-increment: line; }
+.script-code > span::before { content: counter(line); position: absolute; left: 0; width: 34px; text-align: right; color: var(--ink-faint); opacity: 0.75; user-select: none; }
+
+/* The form a script is added from. */
+.dialog.script-new { width: min(580px, 100%); margin-top: -6vh; }
+.script-new-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 6px 22px 22px; }
+
+@media (max-width: 860px) {
+  .scripts .prompt-panes { height: auto; }
+  .script-run { flex-wrap: wrap; }
+}

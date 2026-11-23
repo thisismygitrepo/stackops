@@ -2,9 +2,9 @@ import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
 import { markStale } from "../../data.js";
 import { confirmAction, openDialog } from "../../overlays.js";
-import { button, glyphTile, iconButton, segmented } from "../../widgets.js";
+import { button, field, glyphTile, iconButton, segmented, textBox } from "../../widgets.js";
 import { detailRow, rowList } from "./pair_rows.js";
-import { detailProblem, field, folded, secretForm, textBox } from "./secret_form.js";
+import { detailProblem, folded, secretForm } from "./secret_form.js";
 import { PLACE_BLURBS, kindOf, listOf, placeLabel } from "./words.js";
 
 // The form for one login. With `login`, the one picked in the list, it changes that login; without, it adds a new one that starts as `preset`

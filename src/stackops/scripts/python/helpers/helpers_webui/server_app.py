@@ -32,6 +32,7 @@ from stackops.scripts.python.helpers.helpers_webui.run_requests import (
 )
 from stackops.scripts.python.helpers.helpers_webui.run_socket import relay_run
 from stackops.scripts.python.helpers.helpers_webui.runs import RunRegistry, describe_run, shutdown_runs, start_run, stop_run
+from stackops.scripts.python.helpers.helpers_webui.scripts_routes import scripts_routes
 from stackops.scripts.python.helpers.helpers_webui.software_catalog import load_software_catalog
 from stackops.scripts.python.helpers.helpers_webui.software_versions import LatestRelease, SoftwareVersion, VersionProblem, check_software_version
 from stackops.scripts.python.helpers.helpers_webui.text_files import FileProblem, TextFile, read_text_file, write_text_file
@@ -226,6 +227,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             Route("/api/file", read_file, methods=["GET"]),
             Route("/api/file", save_file, methods=["PUT"]),
             *vault_routes(working_directory=working_directory),
+            *scripts_routes(working_directory=working_directory),
             Route("/api/runs", list_runs, methods=["GET"]),
             Route("/api/runs", create_run, methods=["POST"]),
             Route("/api/runs/{run_id}/stop", stop_run_endpoint, methods=["POST"]),

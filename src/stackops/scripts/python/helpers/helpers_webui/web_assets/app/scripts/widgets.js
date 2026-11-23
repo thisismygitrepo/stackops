@@ -44,6 +44,10 @@ export function searchInput({ placeholder, oninput }) {
   return { element: h("label", { class: "search-input" }, icon("search", 15), input), input };
 }
 
+// A one-line box to type in, and a control under its label with an optional hint: the parts of a form that is laid out by hand.
+export const textBox = (value, properties = {}) => h("input", { class: "text-input", type: "text", value, spellcheck: "false", autocomplete: "off", autocapitalize: "off", ...properties });
+export const field = (label, control, hint) => h("label", { class: "field" }, h("span", { class: "field-label" }, h("span", { text: label })), control, hint && h("span", { class: "field-hint", text: hint }));
+
 export function segmented(options, onPick) {
   const buttons = options.map(([value, label]) => h("button", { type: "button", text: label, onclick: () => onPick(value) }));
   const thumb = h("i", { class: "segmented-thumb" });

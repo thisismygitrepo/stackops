@@ -16,6 +16,7 @@ APP_STYLESHEETS: Final[tuple[str, ...]] = (
     "/assets/app/styles/disk_cleanup.css",
     "/assets/app/styles/security.css",
     "/assets/app/styles/vault.css",
+    "/assets/app/styles/scripts.css",
 )
 DEVELOPER_STYLESHEETS: Final[tuple[str, ...]] = (
     "/assets/styles/base.css",

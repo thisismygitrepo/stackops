@@ -5,6 +5,7 @@ export const SPACES = [
   { id: "apps", hash: "#/apps", label: "Apps", glyph: "apps", title: "Apps" },
   { id: "projects", hash: "#/projects", label: "Projects", glyph: "branch", title: "Projects" },
   { id: "sessions", hash: "#/sessions", label: "Sessions", glyph: "layers", title: "Sessions" },
+  { id: "scripts", hash: "#/scripts", label: "Scripts", glyph: "terminal", title: "Scripts" },
   { id: "agents", hash: "#/agents", label: "Agents", glyph: "bot", title: "Agents" },
   { id: "dotfiles", hash: "#/dotfiles", label: "Dotfiles", glyph: "sync", title: "Dotfiles" },
   { id: "data", hash: "#/data", label: "Data", glyph: "database", title: "Data" },
@@ -65,6 +66,7 @@ export const TOOL_TITLES = {
   "devops vault load": "Load secrets into a terminal", "devops vault bitwarden": "Bitwarden", "devops vault bitwarden search": "Find a Bitwarden login",
   "devops vault bitwarden login-and-unlock": "Unlock Bitwarden", "devops vault bitwarden sync": "Sync Bitwarden", "devops vault bitwarden clean-cache": "Clear the Bitwarden cache",
   "devops vault bitwarden export-session": "Hand the Bitwarden session to a terminal",
+  "devops scripts run": "Run a script or a command", "devops scripts list": "Saved scripts", "devops scripts path": "Where scripts are kept", "devops scripts edit": "Edit a script",
 };
 
 // Options that only make sense on a command line: output formats, alternate renderers, and file overrides the app already picks for you.

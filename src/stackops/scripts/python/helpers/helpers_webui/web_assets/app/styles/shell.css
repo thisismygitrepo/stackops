@@ -123,6 +123,6 @@
 @media (max-width: 520px) {
   .search-pill kbd { display: none; }
 }
-@media (max-height: 940px) {
+@media (max-height: 1010px) {
   .rail-item, .rail-marker { height: 48px; }
 }

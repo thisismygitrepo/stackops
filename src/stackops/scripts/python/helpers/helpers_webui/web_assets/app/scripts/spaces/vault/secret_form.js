@@ -1,12 +1,10 @@
 import { h, icon } from "/assets/scripts/dom.js";
-import { button } from "../../widgets.js";
+import { button, field, textBox } from "../../widgets.js";
 import { detailRow, rowList, valueRow } from "./pair_rows.js";
 import { listOf, today } from "./words.js";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-export const textBox = (value, properties = {}) => h("input", { class: "text-input", type: "text", value, spellcheck: "false", autocomplete: "off", autocapitalize: "off", ...properties });
-export const field = (label, control, hint) => h("label", { class: "field" }, h("span", { class: "field-label" }, h("span", { text: label })), control, hint && h("span", { class: "field-hint", text: hint }));
 
 // A part of the form that stays folded until it is asked for. `count` is how many things inside it are filled in.
 export function folded(label, count, ...content) {
