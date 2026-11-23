@@ -1,5 +1,5 @@
 import { debounce, h, icon } from "/assets/scripts/dom.js";
-import { commandDetail, query, staleKeeper } from "./data.js";
+import { formDetail, query, staleKeeper } from "./data.js";
 import { createFriendlyForm } from "./friendly_form.js";
 import { recall, remember } from "./memory.js";
 import { openPopover } from "./overlays.js";
@@ -64,7 +64,7 @@ export function createLivePanel({ title, path, extra = [], locked = [], render, 
   }
 
   async function buildForm() {
-    const { parameters } = await commandDetail(path);
+    const { parameters } = await formDetail(path);
     form ??= createFriendlyForm({
       parameters: parameters ?? [], values, essentials: null, locked,
       onChange: () => {

@@ -3,20 +3,30 @@ import { h, icon } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
 import { HIDDEN_FLAGS } from "./catalog.js";
 import { createCombo } from "./combo.js";
-import { segmented } from "./widgets.js";
+import { pill, segmented } from "./widgets.js";
 import { friendlyText, humanize } from "./words.js";
 
 const SEGMENT_LIMIT = 4;
+// A list to pick several from is laid out as chips up to this many, and folds into a dropdown beyond it.
+const CHIP_LIMIT = 12;
+const NO_CHOICES = [];
 
 const labelOf = (spec) => humanize(spec.kind === "option" ? longOf(spec.flags) : spec.name);
 const isHidden = (spec) => spec.flags.some((flag) => HIDDEN_FLAGS.has(flag));
 
-function createField(spec, values, changed, fromHome) {
+// `followed` is the field whose value picks this one's list (`spec.follows`), for a listed field that has one.
+function createField(spec, values, changed, fromHome, followed) {
   const read = () => values.get(spec.name) ?? "";
   const label = labelOf(spec);
   const help = spec.help ? friendlyText(spec.help) : "";
-  // A listed field (see `formDetail`) is picked from, not typed into, so the sentences that say how to type a list are left out of its hint.
-  const hint = spec.listed ? help.split(/(?<=[.;])\s+/).filter((sentence) => !/comma/i.test(sentence)).join(" ") : help;
+  // A listed field (see `formDetail`) is picked from, not typed into, so the sentences that say how to type a list, or spell one out, are left out of its hint.
+  const kept = help.split(/(?<=[.;])\s+/).filter((sentence) => !/comma|repeat|\w,\w/i.test(sentence)).join(" ");
+  const hint = spec.listed ? kept.charAt(0).toUpperCase() + kept.slice(1) : help;
+  // The list to pick from. One that follows another field is the list kept for that field's value, or for its default while it is unset.
+  const choices = () => (followed ? spec.choices_by[values.get(followed.name) || followed.default] ?? NO_CHOICES : spec.choices);
+  const noChoices = followed ? `None for this ${labelOf(followed).toLowerCase()} yet` : "Nothing matches";
+  const joiner = spec.separator || "\n";
+  const parts = () => (!read() ? [] : spec.multiple || spec.separator ? read().split(joiner) : [read()]);
   // A listed choice is a name on this machine and comes with the text to show for it. The CLI's own choices are keywords, put into words here.
   const wordOf = (choice) => spec.labels?.[choice] ?? humanize(choice);
   const placeholder = spec.default ? `Default: ${spec.default}` : LONG_TEXT_NAMES.has(spec.name) ? "Type here…" : spec.multiple ? "Separate several with spaces" : "";
@@ -42,29 +52,50 @@ function createField(spec, values, changed, fromHome) {
     // Several picks, written as one value per repeat of the parameter or, with a separator, as the one list the CLI splits at it. A list with a
     // separator shows what the command will use, so an untouched one has its default pressed, and going back to the default empties the field.
     // `whole` is the choice that stands for all of them: it is only ever picked alone.
-    const joiner = spec.separator || "\n";
     const usual = spec.separator && spec.default ? spec.default.split(joiner) : [];
-    const picked = () => new Set(read() ? read().split(joiner) : usual);
-    const chips = spec.choices.map((choice) =>
-      h("button", {
-        class: "chip-button", type: "button", text: wordOf(choice),
-        onclick: () => {
-          const now = picked();
-          const next = choice === spec.whole ? new Set(now.has(choice) ? [] : [choice]) : new Set([...now].filter((item) => item !== spec.whole));
-          if (choice !== spec.whole && !next.delete(choice)) next.add(choice);
-          const kept = spec.choices.filter((item) => next.has(item));
-          write(kept.length === usual.length && usual.every((item) => next.has(item)) ? "" : kept.join(joiner));
-        },
-      }),
-    );
-    field = h("div", { class: "field" }, caption, h("div", { class: "chip-row" }, chips), note);
-    paint = () => chips.forEach((chip, index) => chip.setAttribute("aria-pressed", String(picked().has(spec.choices[index]))));
+    const picked = () => new Set(read() ? parts() : usual);
+    const toggle = (choice) => {
+      const now = picked();
+      const next = choice === spec.whole ? new Set(now.has(choice) ? [] : [choice]) : new Set([...now].filter((item) => item !== spec.whole));
+      if (choice !== spec.whole && !next.delete(choice)) next.add(choice);
+      const chosen = choices().filter((item) => next.has(item));
+      write(chosen.length === usual.length && usual.every((item) => next.has(item)) ? "" : chosen.join(joiner));
+    };
+    if (Math.max(...(followed ? Object.values(spec.choices_by) : [spec.choices]).map((list) => list.length)) > CHIP_LIMIT) {
+      // The dropdown stays open while picking, marks what is picked, and its box reads the picks back.
+      const usualText = usual.length > 0 ? `Default: ${usual.map(wordOf).join(", ")}` : "";
+      const combo = createCombo({
+        label, placeholder: usualText || "Choose…", readOnly: true, emptyText: noChoices,
+        suggest: () => [
+          ...(read() ? [{ value: "", label: usualText || "Clear the selection", fill: false }] : []),
+          ...choices().map((choice) => ({
+            value: choice, label: wordOf(choice), fill: false, keepOpen: true,
+            trail: picked().has(choice) ? pill("Selected", "accent") : h("span", { class: "combo-add" }, icon("plus", 14)),
+          })),
+        ],
+        onPick: (option) => (option.value ? toggle(option.value) : write("")),
+      });
+      field = h("div", { class: "field" }, caption, combo.element, note);
+      paint = () => combo.setValue(parts().map(wordOf).join(", "));
+    } else {
+      const chip = (choice) => h("button", { class: "chip-button", type: "button", text: wordOf(choice), onclick: () => toggle(choice) });
+      const row = h("div", { class: "chip-row" });
+      let drawn = null;
+      field = h("div", { class: "field" }, caption, row, note);
+      // The chips are only made again when the list is another one, so a chip that was just pressed keeps the focus.
+      paint = () => {
+        const list = choices();
+        if (list !== drawn) row.replaceChildren(...(list.length > 0 ? list.map(chip) : [h("span", { class: "dim", text: noChoices })]));
+        drawn = list;
+        if (list.length > 0) [...row.children].forEach((item, index) => item.setAttribute("aria-pressed", String(picked().has(list[index]))));
+      };
+    }
   } else if (spec.control === "choice") {
     const combo = createCombo({
-      label, placeholder: spec.default ? `Default: ${wordOf(spec.default)}` : "Choose…", readOnly: true,
+      label, placeholder: spec.default ? `Default: ${wordOf(spec.default)}` : "Choose…", readOnly: true, emptyText: noChoices,
       suggest: () => [
         ...(read() ? [{ value: "", label: spec.default ? `Default: ${wordOf(spec.default)}` : "Use the default", fill: true }] : []),
-        ...spec.choices.map((choice) => ({ value: choice, label: wordOf(choice), hint: choice === spec.default && "Default" })),
+        ...choices().map((choice) => ({ value: choice, label: wordOf(choice), hint: choice === spec.default && "Default" })),
       ],
       onPick: (option) => write(option.value),
     });
@@ -93,6 +124,12 @@ function createField(spec, values, changed, fromHome) {
     };
   }
   const sync = () => {
+    // What was picked from one list is dropped once the field it follows has moved on to another, so it never reaches the command.
+    const lasting = followed ? parts().filter((item) => choices().includes(item)) : parts();
+    if (lasting.length < parts().length) {
+      if (lasting.length > 0) values.set(spec.name, lasting.join(joiner));
+      else values.delete(spec.name);
+    }
     field.classList.toggle("filled", Boolean(read()));
     paint();
   };
@@ -104,7 +141,12 @@ function createField(spec, values, changed, fromHome) {
 // `homePaths` names the path fields whose suggestions start in the home folder.
 export function createFriendlyForm({ parameters, values, essentials, locked = [], homePaths = [], onChange }) {
   const visible = parameters.filter((spec) => !isHidden(spec) && !locked.includes(spec.name));
-  const fields = visible.map((spec) => createField(spec, values, onChange, homePaths.includes(spec.name)));
+  // A field whose list follows another one is looked at again after every change, before the owner hears of it: its list may be another one now.
+  const changed = () => {
+    for (const item of fields) if (item.spec.follows) item.sync();
+    onChange();
+  };
+  const fields = visible.map((spec) => createField(spec, values, changed, homePaths.includes(spec.name), spec.follows && parameters.find((other) => other.name === spec.follows)));
   const isPrimary = ({ spec }) => essentials === null || spec.kind === "argument" || spec.required || spec.flags.some((flag) => essentials.includes(flag));
   const primary = fields.filter(isPrimary);
   const rest = fields.filter((item) => !isPrimary(item));
