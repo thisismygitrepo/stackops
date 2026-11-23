@@ -7,8 +7,11 @@ import { runCleanup } from "./disk_cleanup_run.js";
 import { createCleanupScanner } from "./disk_cleanup_scan.js";
 import { cleanupBanner, createCleanupSummary, createCleanupTray } from "./disk_cleanup_summary.js";
 import { RISKS, RISK_ORDER, categoryOf } from "./disk_cleanup_words.js";
+import { recall, remember } from "./memory.js";
 import { replay } from "./motion.js";
-import { button, notice, searchInput } from "./widgets.js";
+import { button, notice, searchInput, segmented } from "./widgets.js";
+
+const MEMORY_ID = "machine cleanup";
 
 // Free up disk space: measure on arrival, let the person choose what goes, confirm, clean exactly that, then show what it freed.
 export function createDiskCleanup({ activity }) {
@@ -23,7 +26,7 @@ export function createDiskCleanup({ activity }) {
   let clock = 0;
 
   const view = {
-    picked, open: new Map(), locked: false, loading: true, scale: 0,
+    picked, open: new Map(), locked: false, loading: true, scale: 0, order: recall(MEMORY_ID).get("order") === "size" ? "size" : "kind",
     matches: (target) => (risk === "all" || target.risk === risk) && (term === "" || `${target.title} ${target.note} ${categoryOf(target.category).title}`.toLowerCase().includes(term)),
     toggle: (key, on) => setMany([key], on),
     setMany,
@@ -52,7 +55,14 @@ export function createDiskCleanup({ activity }) {
       list.render(all());
     },
   });
-  const tools = h("div", { class: "cleanup-tools" }, chips, h("span", { class: "spacer" }), search.element);
+  const orderPick = segmented([["kind", "By kind"], ["size", "Biggest first"]], (order) => {
+    view.order = order;
+    orderPick.set(order);
+    remember(MEMORY_ID, new Map([["order", order]]));
+    list.render(all());
+  });
+  orderPick.set(view.order);
+  const tools = h("div", { class: "cleanup-tools" }, chips, h("span", { class: "spacer" }), orderPick.element, search.element);
   const stamp = h("span", { class: "cleanup-stamp" });
   const badge = h("b", { hidden: true });
   const optionsButton = h("button", { class: "btn tune", type: "button", title: "What to look at and what to tick for you" }, icon("sliders", 16), h("span", { text: "Options" }), badge);

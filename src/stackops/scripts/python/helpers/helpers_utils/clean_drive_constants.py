@@ -12,6 +12,7 @@ JOURNAL_RETAIN_MEBIBYTES = 500
 STALE_TEMP_DAYS = 3
 MIN_REMOVABLE_PATH_PARTS = 3
 PREVIEW_PATH_LIMIT = 40
+DETAIL_ITEM_LIMIT = 200
 PICKER_PREVIEW_PERCENT = 55
 STACKOPS_SCRATCH_ENTRIES: dict[str, str] = {
     "tmp_scripts": "*/*", "sessions": "*/*", "tmp_files": "*", "tmp_dirs": "*", "tmp_installers": "*",

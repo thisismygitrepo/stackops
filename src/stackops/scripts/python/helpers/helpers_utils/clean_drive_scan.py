@@ -7,12 +7,14 @@ from pathlib import Path
 
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_catalog import CATALOG, CATALOG_BY_KEY
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_constants import MACOS_FULL_DISK_ACCESS_HINT, RISK_ORDER, SCAN_WORKERS
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_details import biggest_details
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import (
     CatalogAction,
     CleanCategory,
     CleanTarget,
     CleanupAction,
     CommandCleanup,
+    DetailItem,
     Estimate,
     EstimateKind,
     MeasuredPath,
@@ -21,12 +23,14 @@ from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import (
     Platform,
     ProjectCleanup,
     Risk,
+    TargetDetails,
     TargetScan,
     ToolWithPathFallback,
+    Usage,
 )
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_paths import expand_globs, unlistable_glob_directories
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_projects import find_project_entries
-from stackops.scripts.python.helpers.helpers_utils.clean_drive_usage import combine_usages, measure_path, reclaimable_bytes
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_usage import combine_usages, measure_directory, measure_path, reclaimable_bytes
 
 
 type ScopedTarget = tuple[CleanTarget, CleanupAction]
@@ -87,16 +91,24 @@ def combine_kinds(kinds: set[EstimateKind]) -> EstimateKind:
     return "approximate"
 
 
+def _measure_paths(paths: Sequence[Path]) -> tuple[list[tuple[Path, Usage]], TargetDetails | None]:
+    if len(paths) != 1 or paths[0].is_symlink() or not paths[0].is_dir():
+        return [(path, measure_path(path)) for path in paths], None
+    usage, entry_bytes = measure_directory(paths[0])
+    inside = biggest_details(title="Biggest items inside", items=(DetailItem(name=name, note="", bytes=size) for name, size in entry_bytes.items()))
+    return [(paths[0], usage)], inside if len(entry_bytes) > 1 else None
+
+
 def _scan_paths(*, target: CleanTarget, action: PathCleanup | ProjectCleanup, paths: list[Path], min_age_days: int | None) -> TargetScan:
     cutoff = None if min_age_days is None else time.time() - min_age_days * 86_400
-    measured = [(path, measure_path(path)) for path in paths]
+    measured, inside = _measure_paths(paths)
     kept = [(path, usage) for path, usage in measured if cutoff is None or usage.newest_mtime < cutoff]
     usage = combine_usages(usage for _path, usage in kept)
     return TargetScan(
         target=target, action=action, status="ready" if kept else "empty", message=f"""{len(kept)} path(s)""",
         paths=tuple(sorted((MeasuredPath(path=path, bytes=reclaimable_bytes(entry)) for path, entry in kept), key=lambda item: -item.bytes)),
         commands=(), usage=usage, reported_bytes=None,
-        estimate=Estimate(bytes=reclaimable_bytes(usage), kind="at_least" if usage.denied else "exact"),
+        estimate=Estimate(bytes=reclaimable_bytes(usage), kind="at_least" if usage.denied else "exact"), details=inside if kept else None,
     )
 
 
@@ -113,7 +125,7 @@ def scan_target(*, target: CleanTarget, action: CleanupAction, project_entries: 
             return TargetScan(
                 target=target, action=action, status="failed",
                 message=f"""blocked from reading {", ".join(str(directory) for directory in unlistable)}{hint}""",
-                paths=(), commands=(), usage=None, reported_bytes=None, estimate=Estimate(bytes=None, kind="approximate"),
+                paths=(), commands=(), usage=None, reported_bytes=None, estimate=Estimate(bytes=None, kind="approximate"), details=None,
             )
         case ProjectCleanup():
             return _scan_paths(target=target, action=action, paths=project_entries[target.key], min_age_days=None)
@@ -123,23 +135,24 @@ def scan_target(*, target: CleanTarget, action: CleanupAction, project_entries: 
                 hint = "" if action.install_hint is None else f"""; {action.install_hint}"""
                 return TargetScan(
                     target=target, action=action, status="missing_tool", message=f"""{action.tool} not found{hint}""",
-                    paths=(), commands=(), usage=None, reported_bytes=None, estimate=unknown,
+                    paths=(), commands=(), usage=None, reported_bytes=None, estimate=unknown, details=None,
                 )
             plan = action.plan()
             if isinstance(plan, PlanFailure):
                 return TargetScan(
                     target=target, action=action, status="failed", message=plan.message,
-                    paths=(), commands=(), usage=None, reported_bytes=None, estimate=unknown,
+                    paths=(), commands=(), usage=None, reported_bytes=None, estimate=unknown, details=None,
                 )
-            measured = [(path, measure_path(path)) for path in plan.measured_paths]
+            measured, inside = _measure_paths(plan.measured_paths)
             usage = combine_usages(entry for _path, entry in measured) if measured else None
             estimate_bytes = reclaimable_bytes(usage) if usage is not None else plan.reported_bytes
             kind = "at_least" if usage is not None and usage.denied else plan.estimate_kind
             return TargetScan(
                 target=target, action=action, status="ready" if plan.commands and estimate_bytes != 0 else "empty",
                 message=" && ".join(" ".join(command) for command in plan.commands),
-                paths=tuple(MeasuredPath(path=path, bytes=reclaimable_bytes(entry)) for path, entry in measured),
+                paths=tuple(sorted((MeasuredPath(path=path, bytes=reclaimable_bytes(entry)) for path, entry in measured), key=lambda item: -item.bytes)),
                 commands=plan.commands, usage=usage, reported_bytes=plan.reported_bytes, estimate=Estimate(bytes=estimate_bytes, kind=kind),
+                details=plan.details or inside,
             )
 
 

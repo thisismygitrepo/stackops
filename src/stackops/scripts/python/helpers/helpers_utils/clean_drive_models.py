@@ -25,6 +25,7 @@ type EstimateKind = Literal["exact", "at_least", "at_most", "approximate"]
 type ActionKind = Literal["paths", "command", "projects"]
 type TargetStatus = Literal["ready", "empty", "missing_tool", "failed"]
 type OutcomeStatus = Literal["cleaned", "partial", "failed", "skipped"]
+type DockerKind = Literal["Containers", "Images", "Local Volumes", "Build Cache"]
 
 
 class CleanCategory(StrEnum):
@@ -51,11 +52,26 @@ class PathCleanup:
 
 
 @dataclass(frozen=True, slots=True)
+class DetailItem:
+    name: str
+    note: str
+    bytes: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class TargetDetails:
+    title: str
+    count: int
+    items: tuple[DetailItem, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class CommandPlan:
     commands: tuple[tuple[str, ...], ...]
     measured_paths: tuple[Path, ...]
     reported_bytes: int | None
     estimate_kind: EstimateKind
+    details: TargetDetails | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,6 +159,7 @@ class TargetScan:
     usage: Usage | None
     reported_bytes: int | None
     estimate: Estimate
+    details: TargetDetails | None
 
 
 @dataclass(frozen=True, slots=True)

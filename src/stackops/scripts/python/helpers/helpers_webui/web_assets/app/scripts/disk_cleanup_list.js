@@ -4,19 +4,19 @@ import { CATEGORY_ORDER, categoryOf, sizeText } from "./disk_cleanup_words.js";
 import { button, glyphTile, notice, skeleton } from "./widgets.js";
 import { plural } from "./words.js";
 
+const RANKED = { title: "Everything, biggest first", blurb: "Every place in one list, whatever kind it is.", glyph: "chart", hue: 252 };
 const isWaiting = (target) => target.phase !== "done" && target.phase !== "error";
 // Places still being measured stay on top: the slow ones are usually the big ones, so they barely move once their size arrives.
 const rankOf = (target) => (isWaiting(target) || target.slow ? 0 : target.phase === "error" ? 2 : 1);
 
-// The places that can be cleaned, grouped by kind. `render` rebuilds the rows; `syncPicks` only updates what a tick changes, so ticking never rebuilds anything.
+// The places that can be cleaned, grouped by kind or, when `view.order` is "size", in one list. `render` rebuilds the rows; `syncPicks` only updates what a tick changes, so ticking never rebuilds anything.
 export function createCleanupList(view) {
   const element = h("div", { class: "cleanup-list" });
   const rows = new Map();
   const groups = [];
   let quietOpen = false;
 
-  function group(category, members) {
-    const meta = categoryOf(category);
+  function group(category, meta, members) {
     const sum = h("strong", { class: "num" });
     const hint = h("span");
     const all = button({ label: "Select all", small: true, tone: "ghost", onclick: () => view.setMany(members.filter(canPick).map((target) => target.key), true) });
@@ -63,7 +63,8 @@ export function createCleanupList(view) {
     rows.clear();
     groups.length = 0;
     const order = [...new Set([...CATEGORY_ORDER, ...shown.map((target) => target.category)])];
-    const sections = order.map((category) => [category, shown.filter((target) => target.category === category)]).filter(([, members]) => members.length).map(([category, members]) => group(category, members));
+    const kinds = order.map((category) => [category, shown.filter((target) => target.category === category)]).filter(([, members]) => members.length);
+    const sections = view.order === "size" ? (shown.length ? [group("ranked", RANKED, shown)] : []) : kinds.map(([category, members]) => group(category, categoryOf(category), members));
     let empty = null;
     if (view.loading) empty = h("div", { class: "cleanup-loading" }, skeleton(6, "row"));
     else if (listed.length === 0) empty = notice({ glyph: "check", tone: "good", title: "Nothing worth cleaning", body: "Every place that usually collects clutter is already clean." });

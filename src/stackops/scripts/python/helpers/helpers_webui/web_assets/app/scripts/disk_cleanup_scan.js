@@ -49,7 +49,7 @@ export function createCleanupScanner({ onChange }) {
     lastBytes.set(target.key, bytes);
     Object.assign(target, {
       phase: "done", status: record.status === "ready" && record.estimate_bytes === 0 ? "empty" : record.status, bytes, sized: record.estimate_bytes !== null,
-      estimateKind: record.estimate_kind, paths: record.paths, commands: record.commands, message: record.message, requires_root: record.requires_root,
+      estimateKind: record.estimate_kind, paths: record.paths, commands: record.commands, details: record.details ?? null, message: record.message, requires_root: record.requires_root,
     });
   }
 
@@ -102,7 +102,7 @@ export function createCleanupScanner({ onChange }) {
   function adopt(categories) {
     for (const key of [...targets.keys()]) if (!categories.has(targets.get(key).category)) targets.delete(key);
     const added = catalog.filter((record) => categories.has(record.category) && !targets.has(record.key));
-    for (const record of added) targets.set(record.key, { ...record, phase: "new", ticket: 0, status: "", bytes: 0, sized: false, estimateKind: "exact", paths: [], commands: [], message: "", problem: "", slow: false });
+    for (const record of added) targets.set(record.key, { ...record, phase: "new", ticket: 0, status: "", bytes: 0, sized: false, estimateKind: "exact", paths: [], commands: [], details: null, message: "", problem: "", slow: false });
     return added.map((record) => record.key);
   }
 

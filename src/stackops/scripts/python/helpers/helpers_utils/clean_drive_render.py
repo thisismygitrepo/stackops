@@ -5,6 +5,7 @@ from rich.filesize import decimal
 from rich.table import Table
 from rich.text import Text
 
+from stackops.scripts.python.helpers.helpers_utils.clean_drive_details import DetailsRecord, details_record
 from stackops.scripts.python.helpers.helpers_utils.clean_drive_models import (
     ActionKind,
     CleanOutcome,
@@ -46,6 +47,7 @@ class ScanRecord(TargetRecord):
     estimate_kind: EstimateKind
     paths: list[PathRecord]
     commands: list[list[str]]
+    details: DetailsRecord | None
 
 
 class CatalogRecord(TypedDict):
@@ -180,7 +182,7 @@ def scan_records(*, scans: list[TargetScan], auto_keys: set[str]) -> list[ScanRe
             **target_record(target=scan.target, action=scan.action, selected=scan.target.key in auto_keys and scan.status == "ready"),
             "status": scan.status, "message": scan.message, "estimate_bytes": scan.estimate.bytes, "estimate_kind": scan.estimate.kind,
             "paths": [{"path": str(measured.path), "bytes": measured.bytes} for measured in scan.paths],
-            "commands": [list(command) for command in scan.commands],
+            "commands": [list(command) for command in scan.commands], "details": details_record(scan.details),
         }
         for scan in scans
     ]

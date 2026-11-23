@@ -60,19 +60,40 @@ def measure_path(path: Path) -> Usage:
     return usage
 
 
+def _absorb(combined: Usage, usage: Usage) -> None:
+    combined.exclusive += usage.exclusive
+    combined.newest_mtime = max(combined.newest_mtime, usage.newest_mtime)
+    combined.denied = combined.denied or usage.denied
+    for inode, shared in usage.shared.items():
+        existing = combined.shared.get(inode)
+        if existing is None:
+            combined.shared[inode] = SharedInode(links=shared.links, size=shared.size, seen=shared.seen)
+        else:
+            existing.seen += shared.seen
+
+
 def combine_usages(usages: Iterable[Usage]) -> Usage:
     combined = Usage(exclusive=0, shared={}, newest_mtime=0.0, denied=False)
     for usage in usages:
-        combined.exclusive += usage.exclusive
-        combined.newest_mtime = max(combined.newest_mtime, usage.newest_mtime)
-        combined.denied = combined.denied or usage.denied
-        for inode, shared in usage.shared.items():
-            existing = combined.shared.get(inode)
-            if existing is None:
-                combined.shared[inode] = SharedInode(links=shared.links, size=shared.size, seen=shared.seen)
-            else:
-                existing.seen += shared.seen
+        _absorb(combined, usage)
     return combined
+
+
+def measure_directory(path: Path) -> tuple[Usage, dict[str, int]]:
+    usage = Usage(exclusive=0, shared={}, newest_mtime=0.0, denied=False)
+    _record(usage, path.lstat())
+    entry_bytes: dict[str, int] = {}
+    try:
+        with os.scandir(path) as entries:
+            names = [entry.name for entry in entries]
+    except PermissionError:
+        usage.denied = True
+        return usage, entry_bytes
+    for name in names:
+        entry_usage = measure_path(path / name)
+        entry_bytes[name] = reclaimable_bytes(entry_usage)
+        _absorb(usage, entry_usage)
+    return usage, entry_bytes
 
 
 def reclaimable_bytes(usage: Usage) -> int:
