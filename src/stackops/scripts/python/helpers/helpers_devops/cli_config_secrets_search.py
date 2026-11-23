@@ -16,6 +16,12 @@ def search(
             )
         ),
     ] = None,
+    load_environment: Annotated[
+        bool,
+        typer.Option(
+            "--load", "-L", help="After listing the matches, define their environment variables in the calling shell, as devops vault load does."
+        ),
+    ] = False,
     custom_path: Annotated[
         Path | None,
         typer.Option(
@@ -42,7 +48,7 @@ def search(
     json_output: Annotated[
         bool,
         typer.Option(
-            "--json", "-j", help="Print matching entries as JSON, including secret values, without prompts or loading environment variables."
+            "--json", "-j", help="Print matching entries as JSON, including secret values, without prompts or loading environment variables. Cannot be combined with --load."
         ),
     ] = False,
     preview_secrets: Annotated[
@@ -79,7 +85,7 @@ def search(
         preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,
         secret_tags=secret_tags, scopes=scopes, keys=keys,
     )
-    search_secrets(request, json_output=json_output, verbose=verbose)
+    search_secrets(request, json_output=json_output, verbose=verbose, load_environment=load_environment)
 
 
 def load(

@@ -8359,7 +8359,7 @@
                 "name": "search",
                 "fullPath": "devops vault search",
                 "shortPath": "d v s",
-                "help": "🔎 <s> Inspect matching secret bundles without loading environment variables.",
+                "help": "🔎 <s> Inspect matching secret bundles; add --load to also define their environment variables.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets_search.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_search",
@@ -8377,6 +8377,12 @@
                     "            )",
                     "        ),",
                     "    ] = None,",
+                    "    load_environment: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--load\", \"-L\", help=\"After listing the matches, define their environment variables in the calling shell, as devops vault load does.\"",
+                    "        ),",
+                    "    ] = False,",
                     "    custom_path: Annotated[",
                     "        Path | None,",
                     "        typer.Option(",
@@ -8403,7 +8409,7 @@
                     "    json_output: Annotated[",
                     "        bool,",
                     "        typer.Option(",
-                    "            \"--json\", \"-j\", help=\"Print matching entries as JSON, including secret values, without prompts or loading environment variables.\"",
+                    "            \"--json\", \"-j\", help=\"Print matching entries as JSON, including secret values, without prompts or loading environment variables. Cannot be combined with --load.\"",
                     "        ),",
                     "    ] = False,",
                     "    preview_secrets: Annotated[",
@@ -8449,6 +8455,28 @@
                         "long_flags": [],
                         "short_flags": [],
                         "help": "Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys."
+                      }
+                    },
+                    {
+                      "name": "load_environment",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--load', '-L', help='After listing the matches, define their environment variables in the calling shell, as devops vault load does.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--load",
+                          "-L"
+                        ],
+                        "long_flags": [
+                          "--load"
+                        ],
+                        "short_flags": [
+                          "-L"
+                        ],
+                        "help": "After listing the matches, define their environment variables in the calling shell, as devops vault load does."
                       }
                     },
                     {
@@ -8545,7 +8573,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print matching entries as JSON, including secret values, without prompts or loading environment variables.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print matching entries as JSON, including secret values, without prompts or loading environment variables. Cannot be combined with --load.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -8558,7 +8586,7 @@
                         "short_flags": [
                           "-j"
                         ],
-                        "help": "Print matching entries as JSON, including secret values, without prompts or loading environment variables."
+                        "help": "Print matching entries as JSON, including secret values, without prompts or loading environment variables. Cannot be combined with --load."
                       }
                     },
                     {
@@ -8766,7 +8794,7 @@
                 },
                 "typer": {
                   "no_args_is_help": true,
-                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --all-matches --json mail\n\nSearch displays bundle labels and environment keys without loading them; use devops vault load to define them.\nUse --json to print matching secrets JSON, including values.\nUse --all-matches to select every matching bundle.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --custom-path takes precedence; otherwise workspace is preferred over user.\nThe workspace file is .stackops/secrets/secrets.json at the workspace root.\nUse --source workspace/w, user/u, or all/a to select sources explicitly.\n"
+                  "epilog": "Examples:\n  devops vault search github personal-access-token\n  devops vault search --interactive\n  devops vault search --load github personal-access-token\n  devops vault search --all-matches --json mail\n\nSearch displays bundle labels and environment keys without loading them.\nAdd --load/-L to also define them in the calling shell in the same run, as devops vault load does.\nUse --json to print matching secrets JSON, including values.\nUse --all-matches to select every matching bundle.\nTerms are case-insensitive substring matches; exact selectors are case-sensitive.\nUse --interactive to select a bundle and --preview-secrets to show values in its preview.\nWhen --source is omitted, --custom-path takes precedence; otherwise workspace is preferred over user.\nThe workspace file is .stackops/secrets/secrets.json at the workspace root.\nUse --source workspace/w, user/u, or all/a to select sources explicitly.\n"
                 },
                 "aliases": [
                   {

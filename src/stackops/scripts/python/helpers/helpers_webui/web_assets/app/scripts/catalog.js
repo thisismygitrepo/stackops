@@ -11,6 +11,7 @@ export const SPACES = [
   { id: "network", hash: "#/network", label: "Network", glyph: "globe", title: "Network" },
   { id: "machine", hash: "#/machine", label: "Machine", glyph: "cpu", title: "Machine" },
   { id: "security", hash: "#/security", label: "Security", glyph: "shield", title: "Security" },
+  { id: "vault", hash: "#/vault", label: "Vault", glyph: "key", title: "Vault" },
   { id: "reports", hash: "#/reports", label: "Reports", glyph: "chart", title: "Reports" },
   { id: "tools", hash: "#/tools", label: "Toolbox", glyph: "cube", title: "Toolbox" },
 ];
@@ -60,6 +61,10 @@ export const TOOL_TITLES = {
   "devops security history": "Scan history", "devops security report": "Look at one scan", "devops security export": "Export a scan",
   "devops security install": "Install from a scan", "devops security upload": "Upload a file to cloud storage", "devops security download": "Download from Google Drive",
   "devops vault stats": "What the vault holds", "devops vault validate": "Check the vault file", "devops vault add": "Add a secret", "devops vault rotate": "Replace a secret",
+  "devops vault subset": "Copy part of the vault", "devops vault init": "Create a vault file", "devops vault path": "Where the vault is kept", "devops vault search": "Search the vault",
+  "devops vault load": "Load secrets into a terminal", "devops vault bitwarden": "Bitwarden", "devops vault bitwarden search": "Find a Bitwarden login",
+  "devops vault bitwarden login-and-unlock": "Unlock Bitwarden", "devops vault bitwarden sync": "Sync Bitwarden", "devops vault bitwarden clean-cache": "Clear the Bitwarden cache",
+  "devops vault bitwarden export-session": "Hand the Bitwarden session to a terminal",
 };
 
 // Options that only make sense on a command line: output formats, alternate renderers, and file overrides the app already picks for you.

@@ -104,6 +104,13 @@ GITHUB_RELEASE_CACHE_SECONDS: Final[float] = 600.0
 VENDOR_DOWNLOAD_TIMEOUT_SECONDS: Final[float] = 120.0
 VENDOR_CACHE_FOLDER: Final[str] = "webui-vendor"
 
+# How much of a secret's value the Vault page is sent. Partly shown is a few characters at each end around a fixed run of dots, so the length is
+# not given away; each end is a sixth of the text and at most the limit, which leaves a short value fully covered.
+type VaultReveal = Literal["hidden", "partial", "full"]
+VAULT_MASK: Final[str] = "•" * 8
+VAULT_PARTIAL_EDGE_LIMIT: Final[int] = 4
+VAULT_PARTIAL_EDGE_SHARE: Final[int] = 6
+
 APP_CONTENT_SECURITY_POLICY: Final[str] = (
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; "
     "connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"

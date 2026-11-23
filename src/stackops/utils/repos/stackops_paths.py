@@ -46,7 +46,11 @@ def require_current_repo_stackops_path(path_kind: RepoStackopsPathKind) -> Path:
 
 
 def current_workspace_stackops_paths(path_kind: RepoStackopsPathKind) -> tuple[tuple[str, Path], ...]:
-    project_root = resolve_project_root(current_dir=Path.cwd())
+    return workspace_stackops_paths(current_dir=Path.cwd(), path_kind=path_kind)
+
+
+def workspace_stackops_paths(*, current_dir: Path, path_kind: RepoStackopsPathKind) -> tuple[tuple[str, Path], ...]:
+    project_root = resolve_project_root(current_dir=current_dir)
     if project_root is None:
         return ()
     member_paths = tuple(

@@ -5,6 +5,7 @@ import { query } from "../../data.js";
 import { confirmAction, openDialog } from "../../overlays.js";
 import { button } from "../../widgets.js";
 import { plural } from "../../words.js";
+import { addLogin } from "../vault/login_editor.js";
 import { SCAN_COMMAND, STATUS_QUERY } from "./words.js";
 
 const WHAT_HAPPENS = "Each file's fingerprint is looked up on VirusTotal. A file it has never seen is uploaded there for analysis, and VirusTotal shares uploaded files with its security partners.";
@@ -13,7 +14,7 @@ const KEY_ENTRY = "A scan needs a login named virusTotal in your secrets, with a
 
 // Every scan from this page starts behind a yes: it sends file fingerprints, and sometimes the files themselves, to VirusTotal.
 // Not strictly complete: the scanner splits app names on commas, so an app with a comma in its name cannot be picked out here.
-export function createScanStarter({ activity, tools }) {
+export function createScanStarter({ activity }) {
   async function start(title, body, scanArguments) {
     const { accounts } = (await query(STATUS_QUERY)).json;
     if (accounts.problem) {
@@ -26,7 +27,8 @@ export function createScanStarter({ activity, tools }) {
   }
   const guarded = (...parameters) => start(...parameters).catch((error) => toast(error.message));
 
-  const addKey = () => tools.open("devops vault add", { preset: { secrets_source: "user" }, title: "Add a VirusTotal key" });
+  // The Vault page's form, started as the login a scan looks for: what is left to fill in is the account and the key itself.
+  const addKey = () => addLogin({ preset: { name: "virusTotal", secrets: [{ name: "api-key", values: [{ key: "API_KEY", json: false }] }] }, title: "Add a VirusTotal key" }).catch((error) => toast(error.message));
   const apps = (names) => guarded(names.length === 1 ? `Scan ${names[0]}` : `Scan ${plural(names.length, "app")}`, `${WHAT_HAPPENS}${names.length > 4 ? PACE : ""}`, [names.join(",")]);
   const everything = () => guarded("Scan every installed app", `${WHAT_HAPPENS}${PACE}`, ["--all"]);
   const path = (file) => guarded(`Scan ${file.split(/[\\/]/).at(-1)}`, WHAT_HAPPENS, ["--path", file]);

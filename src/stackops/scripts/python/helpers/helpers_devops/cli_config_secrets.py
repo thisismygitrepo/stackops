@@ -11,16 +11,18 @@ from stackops.scripts.python.helpers.helpers_devops import cli_subset_support
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import SecretsSource, WritableSecretsSource
 
 SECRETS_HELP = "Manage StackOps secrets JSON files and define env vars."
-SECRETS_SEARCH_HELP = "Inspect matching secret bundles without loading environment variables."
+SECRETS_SEARCH_HELP = "Inspect matching secret bundles; add --load to also define their environment variables."
 SECRETS_LOAD_HELP = "Load matching secret bundles into environment variables."
 SECRETS_STATS_HELP = "Show aggregate StackOps secrets inventory stats without printing secret values."
 SECRETS_SUBSET_HELP = "Create a StackOps secrets subset and choose output conflicts with --on-conflict."
 SECRETS_SEARCH_EPILOG = """Examples:
   devops vault search github personal-access-token
   devops vault search --interactive
+  devops vault search --load github personal-access-token
   devops vault search --all-matches --json mail
 
-Search displays bundle labels and environment keys without loading them; use devops vault load to define them.
+Search displays bundle labels and environment keys without loading them.
+Add --load/-L to also define them in the calling shell in the same run, as devops vault load does.
 Use --json to print matching secrets JSON, including values.
 Use --all-matches to select every matching bundle.
 Terms are case-insensitive substring matches; exact selectors are case-sensitive.

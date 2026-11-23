@@ -35,6 +35,7 @@ from stackops.scripts.python.helpers.helpers_webui.runs import RunRegistry, desc
 from stackops.scripts.python.helpers.helpers_webui.software_catalog import load_software_catalog
 from stackops.scripts.python.helpers.helpers_webui.software_versions import LatestRelease, SoftwareVersion, VersionProblem, check_software_version
 from stackops.scripts.python.helpers.helpers_webui.text_files import FileProblem, TextFile, read_text_file, write_text_file
+from stackops.scripts.python.helpers.helpers_webui.vault_routes import vault_routes
 from stackops.scripts.python.helpers.helpers_webui.vendor_assets import VENDOR_ASSETS, resolve_vendor_asset
 from stackops.utils.schemas.installer.installer_types import InstallerData
 from stackops.utils.source_of_truth import HTML_REPORTS_ROOT
@@ -224,6 +225,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             Route("/api/software/version", software_version),
             Route("/api/file", read_file, methods=["GET"]),
             Route("/api/file", save_file, methods=["PUT"]),
+            *vault_routes(working_directory=working_directory),
             Route("/api/runs", list_runs, methods=["GET"]),
             Route("/api/runs", create_run, methods=["POST"]),
             Route("/api/runs/{run_id}/stop", stop_run_endpoint, methods=["POST"]),

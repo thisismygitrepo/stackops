@@ -77,12 +77,21 @@ def resolve_selection(request: SecretSelectionRequest) -> SecretSelection:
     return SecretSelection(candidates=candidates, secret_sources=secret_sources)
 
 
-def search_secrets(request: SecretSelectionRequest, *, json_output: bool, verbose: bool) -> None:
+def search_secrets(request: SecretSelectionRequest, *, json_output: bool, verbose: bool, load_environment: bool) -> None:
+    import os
+
     with redirect_stdout(sys.stderr) if json_output else nullcontext():
         if json_output and verbose:
             fail("--json/-j cannot be combined with --verbose/-v because JSON output must contain only JSON.")
         if json_output and request.interactive:
             fail("--json/-j cannot be combined with --interactive/-i. Use exact selectors or --all-matches instead.")
+        if json_output and load_environment:
+            fail("--json/-j cannot be combined with --load/-L because JSON output must contain only JSON.")
+        if load_environment and not os.environ.get("OP_PROGRAM_PATH"):
+            raise typer.BadParameter(
+                "--load/-L defines variables in the calling shell, so invoke search through the StackOps shell wrapper. "
+                + "To run one program with the secrets, use devops vault load --command 'PROGRAM ARGUMENTS'."
+            )
         selection = resolve_selection(request)
     if json_output:
         typer.echo(render_secret_search_json(selection.candidates), nl=False)
@@ -95,7 +104,24 @@ def search_secrets(request: SecretSelectionRequest, *, json_output: bool, verbos
             echo_verbose_selection(
                 candidate=candidate, secrets_path=candidate_source_path(candidate=candidate, secret_sources=selection.secret_sources)
             )
-    typer.echo("""Nothing was loaded. Use "devops vault load" with the same arguments to define these variables.""", err=True)
+    if not load_environment:
+        typer.echo("""Nothing was loaded. Add --load/-L, or use "devops vault load" with the same arguments, to define these variables.""", err=True)
+        return
+    prepare_shell_environment(selection.candidates, all_matches=request.all_matches, verbose=verbose)
+
+
+def prepare_shell_environment(candidates: tuple[SecretCandidate, ...], *, all_matches: bool, verbose: bool) -> None:
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+
+    key_values = merge_candidate_key_values(candidates)
+    secret_actions.validate_env_names(key_values)
+    secret_actions.write_env_handoff(key_values, verbose=verbose)
+    variable_noun = "variable" if len(key_values) == 1 else "variables"
+    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(key_values)} environment {variable_noun}"
+    if all_matches:
+        bundle_noun = "bundle" if len(candidates) == 1 else "bundles"
+        msg += f" from {len(candidates)} matching secret {bundle_noun}"
+    typer.echo(f"{msg}: {', '.join(key_values)}.")
 
 
 def load_secrets(request: SecretSelectionRequest, *, verbose: bool, command: str | None) -> None:
@@ -121,9 +147,9 @@ def load_secrets(request: SecretSelectionRequest, *, verbose: bool, command: str
         echo_jq_login_entry_hint(
             candidate=candidate, secrets_path=candidate_source_path(candidate=candidate, secret_sources=selection.secret_sources)
         )
-    key_values = merge_candidate_key_values(selection.candidates)
-    secret_actions.validate_env_names(key_values)
     if command_args is not None:
+        key_values = merge_candidate_key_values(selection.candidates)
+        secret_actions.validate_env_names(key_values)
         environment = os.environ.copy()
         environment.update({key: render_secret_value(value) for key, value in key_values.items()})
         try:
@@ -132,16 +158,9 @@ def load_secrets(request: SecretSelectionRequest, *, verbose: bool, command: str
             typer.echo(f"Could not start child command: {error.strerror}", err=True)
             raise typer.Exit(code=1) from error
         raise typer.Exit(code=result.returncode if result.returncode >= 0 else 128 - result.returncode)
-    secret_actions.write_env_handoff(key_values, verbose=verbose)
     if verbose:
         for candidate in selection.candidates:
             echo_verbose_selection(
                 candidate=candidate, secrets_path=candidate_source_path(candidate=candidate, secret_sources=selection.secret_sources)
             )
-
-    variable_noun = "variable" if len(key_values) == 1 else "variables"
-    msg = typer.style("✅ Success: ", fg=typer.colors.GREEN) + f"Prepared {len(key_values)} environment {variable_noun}"
-    if request.all_matches:
-        bundle_noun = "bundle" if len(selection.candidates) == 1 else "bundles"
-        msg += f" from {len(selection.candidates)} matching secret {bundle_noun}"
-    typer.echo(f"{msg}: {', '.join(key_values)}.")
+    prepare_shell_environment(selection.candidates, all_matches=request.all_matches, verbose=verbose)
