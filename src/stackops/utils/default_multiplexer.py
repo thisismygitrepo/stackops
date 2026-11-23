@@ -2,8 +2,6 @@ import platform
 from typing import Final
 
 from stackops.utils.schemas.config.multiplexer_types import (
-    AgentLaunchBackend,
-    AgentLaunchBackendOption,
     AgentMultiplexer,
     SessionMultiplexer,
     SessionMultiplexerOption,
@@ -57,13 +55,3 @@ def resolve_agent_multiplexer(multiplexer: AgentMultiplexer | None) -> AgentMult
             resolved = multiplexer
     _require_supported_platform(multiplexer=resolved)
     return resolved
-
-
-def resolve_agent_launch_backend(backend: AgentLaunchBackendOption | None) -> AgentLaunchBackend:
-    match backend:
-        case None:
-            return resolve_agent_multiplexer(multiplexer=None)
-        case "t3":
-            return "t3"
-        case _:
-            return resolve_session_multiplexer(multiplexer=backend)

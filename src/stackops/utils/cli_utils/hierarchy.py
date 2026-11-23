@@ -118,13 +118,6 @@ if TYPE_CHECKING:
         StackOpsTerminalSummarizeCommand,
         StackOpsTerminalSubcommands,
         StackOpsTerminalCommand,
-        StackOpsAgentsParallelCreateCommand,
-        StackOpsAgentsParallelCreateContextCommand,
-        StackOpsAgentsParallelRunParallelCommand,
-        StackOpsAgentsParallelCollectCommand,
-        StackOpsAgentsParallelMakeTemplateCommand,
-        StackOpsAgentsParallelSubcommands,
-        StackOpsAgentsParallelCommand,
         StackOpsAgentsBrowserInstallTechCommand,
         StackOpsAgentsBrowserLaunchBrowserCommand,
         StackOpsAgentsBrowserSubcommands,
@@ -1015,56 +1008,6 @@ STACKOPS_TERMINAL_COMMAND: "StackOpsTerminalCommand" = {
     "subcommands": STACKOPS_TERMINAL_SUBCOMMANDS,
 }
 
-STACKOPS_AGENTS_PARALLEL_CREATE_COMMAND: "StackOpsAgentsParallelCreateCommand" = {
-    "command_name": "create",
-    "short_name": "c",
-    "help": "<c> Create agents layout file, ready to run.",
-    "subcommands": {},
-}
-
-STACKOPS_AGENTS_PARALLEL_CREATE_CONTEXT_COMMAND: "StackOpsAgentsParallelCreateContextCommand" = {
-    "command_name": "create-context",
-    "short_name": "x",
-    "help": "<x> Run prompt and ask agent to persist context",
-    "subcommands": {},
-}
-
-STACKOPS_AGENTS_PARALLEL_RUN_PARALLEL_COMMAND: "StackOpsAgentsParallelRunParallelCommand" = {
-    "command_name": "run-parallel",
-    "short_name": "r",
-    "help": "<r> Run named parallel workflow from YAML",
-    "subcommands": {},
-}
-
-STACKOPS_AGENTS_PARALLEL_COLLECT_COMMAND: "StackOpsAgentsParallelCollectCommand" = {
-    "command_name": "collect",
-    "short_name": "T",
-    "help": "<T> Collect all agent materials into a single file.",
-    "subcommands": {},
-}
-
-STACKOPS_AGENTS_PARALLEL_MAKE_TEMPLATE_COMMAND: "StackOpsAgentsParallelMakeTemplateCommand" = {
-    "command_name": "make-template",
-    "short_name": "p",
-    "help": "<p> Create a template for fire agents",
-    "subcommands": {},
-}
-
-STACKOPS_AGENTS_PARALLEL_SUBCOMMANDS: "StackOpsAgentsParallelSubcommands" = {
-    "create": STACKOPS_AGENTS_PARALLEL_CREATE_COMMAND,
-    "create-context": STACKOPS_AGENTS_PARALLEL_CREATE_CONTEXT_COMMAND,
-    "run-parallel": STACKOPS_AGENTS_PARALLEL_RUN_PARALLEL_COMMAND,
-    "collect": STACKOPS_AGENTS_PARALLEL_COLLECT_COMMAND,
-    "make-template": STACKOPS_AGENTS_PARALLEL_MAKE_TEMPLATE_COMMAND,
-}
-
-STACKOPS_AGENTS_PARALLEL_COMMAND: "StackOpsAgentsParallelCommand" = {
-    "command_name": "parallel",
-    "short_name": "p",
-    "help": "<p> Parallel agent workflow commands",
-    "subcommands": STACKOPS_AGENTS_PARALLEL_SUBCOMMANDS,
-}
-
 STACKOPS_AGENTS_BROWSER_INSTALL_TECH_COMMAND: "StackOpsAgentsBrowserInstallTechCommand" = {
     "command_name": "install-tech",
     "short_name": "i",
@@ -1127,7 +1070,6 @@ STACKOPS_AGENTS_ASK_COMMAND: "StackOpsAgentsAskCommand" = {
 }
 
 STACKOPS_AGENTS_SUBCOMMANDS: "StackOpsAgentsSubcommands" = {
-    "parallel": STACKOPS_AGENTS_PARALLEL_COMMAND,
     "browser": STACKOPS_AGENTS_BROWSER_COMMAND,
     "add-mcp": STACKOPS_AGENTS_ADD_MCP_COMMAND,
     "add-skill": STACKOPS_AGENTS_ADD_SKILL_COMMAND,

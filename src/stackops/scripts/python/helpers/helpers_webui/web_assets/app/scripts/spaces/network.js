@@ -17,7 +17,7 @@ export function createNetworkSpace({ tools }) {
     h("article", { class: "address-card lit" }, glyphTile(glyph, hue, 42), h("span", { class: "stat-label", text: label }), value ? copyChip(value) : h("strong", { class: "dim", text: "Unavailable" }), h("span", { class: "dim", text: note }));
 
   const panel = createLivePanel({
-    title: "This machine on the network", path: "devops network show-address", extra: ["--json"], skeletonShape: "card",
+    title: "This machine on the network", path: "devops network show-address", extra: ["--json"], skeletonShape: "card", tunable: false,
     render: (data, { setCount }) => {
       if (!data?.interfaces) return notice({ glyph: "globe", title: "No network details", body: "This machine did not report any addresses." });
       const interfaces = data.interfaces.filter((item) => item.interface !== data.lan?.interface);

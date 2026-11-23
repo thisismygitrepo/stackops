@@ -1146,77 +1146,6 @@ StackOpsTerminalCommand = TypedDict(
     },
 )
 
-StackOpsAgentsParallelCreateCommand = TypedDict(
-    "StackOpsAgentsParallelCreateCommand",
-    {
-        "command_name": Literal["create"],
-        "short_name": Literal["c"],
-        "help": Literal["<c> Create agents layout file, ready to run."],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsAgentsParallelCreateContextCommand = TypedDict(
-    "StackOpsAgentsParallelCreateContextCommand",
-    {
-        "command_name": Literal["create-context"],
-        "short_name": Literal["x"],
-        "help": Literal["<x> Run prompt and ask agent to persist context"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsAgentsParallelRunParallelCommand = TypedDict(
-    "StackOpsAgentsParallelRunParallelCommand",
-    {
-        "command_name": Literal["run-parallel"],
-        "short_name": Literal["r"],
-        "help": Literal["<r> Run named parallel workflow from YAML"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsAgentsParallelCollectCommand = TypedDict(
-    "StackOpsAgentsParallelCollectCommand",
-    {
-        "command_name": Literal["collect"],
-        "short_name": Literal["T"],
-        "help": Literal["<T> Collect all agent materials into a single file."],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsAgentsParallelMakeTemplateCommand = TypedDict(
-    "StackOpsAgentsParallelMakeTemplateCommand",
-    {
-        "command_name": Literal["make-template"],
-        "short_name": Literal["p"],
-        "help": Literal["<p> Create a template for fire agents"],
-        "subcommands": EmptySubcommands,
-    },
-)
-
-StackOpsAgentsParallelSubcommands = TypedDict(
-    "StackOpsAgentsParallelSubcommands",
-    {
-        "create": StackOpsAgentsParallelCreateCommand,
-        "create-context": StackOpsAgentsParallelCreateContextCommand,
-        "run-parallel": StackOpsAgentsParallelRunParallelCommand,
-        "collect": StackOpsAgentsParallelCollectCommand,
-        "make-template": StackOpsAgentsParallelMakeTemplateCommand,
-    },
-)
-
-StackOpsAgentsParallelCommand = TypedDict(
-    "StackOpsAgentsParallelCommand",
-    {
-        "command_name": Literal["parallel"],
-        "short_name": Literal["p"],
-        "help": Literal["<p> Parallel agent workflow commands"],
-        "subcommands": StackOpsAgentsParallelSubcommands,
-    },
-)
-
 StackOpsAgentsBrowserInstallTechCommand = TypedDict(
     "StackOpsAgentsBrowserInstallTechCommand",
     {
@@ -1305,7 +1234,6 @@ StackOpsAgentsAskCommand = TypedDict(
 StackOpsAgentsSubcommands = TypedDict(
     "StackOpsAgentsSubcommands",
     {
-        "parallel": StackOpsAgentsParallelCommand,
         "browser": StackOpsAgentsBrowserCommand,
         "add-mcp": StackOpsAgentsAddMcpCommand,
         "add-skill": StackOpsAgentsAddSkillCommand,

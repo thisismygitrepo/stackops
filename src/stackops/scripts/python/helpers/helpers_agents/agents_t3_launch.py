@@ -116,18 +116,6 @@ class T3ThreadRequest:
     message: str
 
 
-def t3_requests_from_prompt_directories(job_name: str, prompt_directories: list[Path]) -> list[T3ThreadRequest]:
-    from stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch import get_agent_prompt_file
-
-    return [
-        T3ThreadRequest(
-            title=T3FixedTitle(text=f"""{job_name}-{prompt_directory.name.split("_")[-1]}"""),
-            message=get_agent_prompt_file(prompt_directory=prompt_directory).read_text(encoding="utf-8"),
-        )
-        for prompt_directory in prompt_directories
-    ]
-
-
 def launch_t3_threads(workspace_root: Path, requests: list[T3ThreadRequest], target: T3LaunchTarget) -> None:
     with open_t3_mcp_session(access=T3_RUNTIME_MODE) as session:
         capabilities = call_t3_tool(session=session, name="orchestrator_capabilities", arguments={})

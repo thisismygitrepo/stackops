@@ -66,14 +66,14 @@ def install_tech(
         resolved_agent = agent
         if resolved_agent is None and any(technology not in BROWSER_TECH_NAMES_WITHOUT_AGENT for technology in selected_technologies):
             require_interactive("Choosing a browser agent; supply --agent")
-            from stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common import choose_required_option, order_current_first
             from stackops.utils.default_agent import resolve_agent
+            from stackops.utils.options_utils.options import choose_from_options
 
-            agent_options = cast(tuple[AGENTS, ...], get_args(AGENTS))
-            resolved_agent = cast(
-                AGENTS,
-                choose_required_option(options=order_current_first(options=agent_options, current=resolve_agent(agent=None)), msg="Choose agent", header="Agent"),
-            )
+            default_agent = resolve_agent(agent=None)
+            agent_options: list[AGENTS] = [default_agent, *(option for option in cast(tuple[AGENTS, ...], get_args(AGENTS)) if option != default_agent)]
+            resolved_agent = choose_from_options(options=agent_options, msg="Choose agent", multi=False, custom_input=False, header="Agent", tv=True)
+            if resolved_agent is None:
+                raise ValueError("Selection cancelled for agent")
         results = tuple(
             install_browser_tech(which=selected_technology, agent=resolved_agent, backend=backend) for selected_technology in selected_technologies
         )

@@ -73,7 +73,7 @@ export function createProjectsSpace({ activity, tools }) {
   }
 
   const panel = createLivePanel({
-    title: "Your projects", path: "devops repos list", extra: ["--json"], skeletonShape: "card", actions: [editButton(activity, { title: "the project list", kind: "repos" }, { label: "Edit list", small: true })],
+    title: "Your projects", path: "devops repos list", extra: ["--json"], surface: { guarded: "Guarded only" }, skeletonShape: "card", actions: [editButton(activity, { title: "the project list", kind: "repos" }, { label: "Edit list", small: true })],
     render: (repos, { setCount }) => {
       if (!Array.isArray(repos) || repos.length === 0) {
         setCount("");

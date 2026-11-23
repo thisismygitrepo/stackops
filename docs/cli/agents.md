@@ -1,6 +1,6 @@
 # agents
 
-`agents` manages StackOps's AI-agent scaffolding, prompt execution, MCP catalog installs, and parallel multi-agent job files.
+`agents` manages StackOps's AI-agent scaffolding, prompt execution, and MCP catalog installs.
 
 ---
 
@@ -17,7 +17,7 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `add-mcp` | Resolve MCP entries from StackOps catalogs and install them into agent configs |
 | `add-skill` | Add a supported skill into an agent directory |
 | `init` | Scaffold AI config files, instructions, and optional shared `.ai` assets in a repository |
-| `config` | Locate, initialize, and validate StackOps prompts, parallel workflow, and MCP catalogs |
+| `config` | Locate, initialize, and validate StackOps prompts and MCP catalogs |
 | `browser` | Prepare browser automation tooling or launch supported browser automation endpoints |
 | `second-brain` | Configure the Second Brain repository and its agent instructions |
 | `doctor` | Inspect agent binaries, configuration, plugins, skills, and instruction provenance |
@@ -26,7 +26,6 @@ agents [OPTIONS] COMMAND [ARGS]...
 | `run-prompt` | Run a prompt through a selected agent, with context and an optional interactive session |
 | `run-interactive` | Launch an agent with reasonable defaults |
 | `ask` | Ask a selected agent directly |
-| `parallel` | Create or run agent layouts, create shared context, collect outputs, or write starter scripts |
 | `iter` | Inspect and maintain current-format Agent-Ops iteration workspaces through Herdr |
 | `reset` | Preview and apply resets of agent customizations and repository `.ai` directories |
 
@@ -112,71 +111,6 @@ agents second-brain prune --apply
 
 ---
 
-## `parallel`
-
-Current subcommands:
-
-| Command | Behavior |
-| --- | --- |
-| `create` | Build an agent layout file with prompt/context splitting and output paths |
-| `create-context` | Ask one agent to persist a shared `context.md` for a job |
-| `run` | Launch a named parallel workflow from `parallel.yaml`, with `create` option overrides |
-| `collect` | Concatenate collected agent material files into one output file |
-| `create-template` | Write a starter shell/PowerShell script, file list, and prompt file |
-
-`agents parallel create` accepts `--agent`, `--model`, `--reasoning`, `--provider`, `--host`, `--backend`, `--context` or `--context-path`, `--prompt` or `--prompt-path`, `--prompt-name`, `--job-name`, `--agent-load`, `--stagger-max`, `--separator`, `--join-prompt-context`, `--run`, `--agents-dir`, `--output`, `--save-as-yaml`, and `--interactive`. It creates files without launching unless `--run` is set. `--backend` accepts `tmux`, `herdr`, `tuios`, or `aoe`; omitted, it uses `default_agent_multiplexer` from the StackOps config, else `tuios`. A parallel YAML entry with `backend: null` resolves the same way. `--save-as-yaml` writes or updates `.stackops/agents/parallel.yaml` using the resolved job name as the top-level entry key, including the chosen launch behavior.
-
-`agents parallel run` reads flat top-level named entries from `parallel.yaml`. It launches when the entry omits `run`; an explicitly saved `run: false` still creates files without launching. By default it searches `<workspace-root>/.stackops/agents/parallel.yaml` first, then `.stackops/agents/parallel.yaml` in each immediate child directory of the root that has one, labelled `workspace:<child>`, then StackOps user and library locations. The workspace root is the enclosing Git repository root, or the current directory when it contains at least two immediate child Git repositories. `--source/-S` accepts `all/a` (the default), `workspace/w`, `user/u`, or `library/l`. `--custom-path` selects one explicit workflow YAML file and overrides `--source`. Use `--show-format` to print the standard, `--edit` to open the YAML, and `--add-entry` to append a template entry. `--add-entry` defaults to the workspace root file; `--source` or `--custom-path` chooses its target. Workflow fields can be overridden on the command line; `--prompt-path` still supplies the workflow's prompt text file.
-
-`agents parallel create` takes `--run`, `--interactive`, and `--join-prompt-context` as plain switches that are off unless given. `agents parallel run` accepts `--run`, `--interactive`, and `--join-prompt-context` with an explicit `true` or `false` value. Omitting one of these options on `parallel run` preserves the YAML setting. Use `--run false` to create the named workflow's files without launching agents.
-
-Standard `parallel.yaml` shape:
-
-```yaml
-entryExample:
-  agent: codex
-  model: null
-  reasoning: null
-  provider: null
-  host: local
-  backend: tmux
-  context: null
-  context_path: null
-  separator: "\n@-@\n"
-  agent_load: 3
-  stagger_max: 3.0
-  prompt: null
-  prompt_path: null
-  prompt_name: null
-  job_name: AI_Agents
-  join_prompt_and_context: false
-  run: true
-  output_path: null
-  agents_dir: null
-  interactive: false
-```
-
-Examples:
-
-```bash
-agents parallel --help
-agents parallel create --help
-agents parallel create --agent codex --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs
-agents parallel create --agent codex --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocs --save-as-yaml
-agents parallel create --agent codex --backend herdr --run --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsHerdr
-agents parallel create --agent codex --backend aoe --run --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsAoe
-agents parallel create --agent copilot --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsCopilot
-agents parallel create --agent pi --provider openai --model gpt-5.4 --reasoning high --context-path ./.ai/agents/docs/context.md --prompt-path ./.ai/prompts/update.md --job-name updateDocsPi
-agents parallel run default -S workspace --agent-load 5
-agents parallel run docs_update --custom-path ./.ai/parallel.yaml --agent pi --reasoning high
-agents parallel run docs_update --add-entry --custom-path ./.ai/parallel.yaml
-agents parallel run docs_update --run false --interactive false
-agents parallel create-context "Collect the repo context for this doc task" updateDocs
-agents parallel collect ./.ai/agents/updateDocs ./tmp/materials.txt
-```
-
----
-
 ## Prompt-running commands
 
 `run-prompt` is the structured workflow entrypoint. It supports:
@@ -235,7 +169,7 @@ agents run-interactive --agent copilot --caveman -- "--help output is wrong"
 `ask` is the lighter-weight direct path. Current behavior to keep in mind:
 
 - omitting `--agent` uses the configured default agent
-- `--reasoning` accepts `none`, `low`, `medium`, `high`, `xhigh`, matching `run-prompt` and `parallel`
+- `--reasoning` accepts `none`, `low`, `medium`, `high`, `xhigh`, matching `run-prompt`
 - reasoning is supported for `codex`, `copilot`, `cortex`, and `pi`; unsupported agents or levels use their default
 - prompt tokens are always prompt text; reasoning requires `--reasoning`
 - `--prompt-path` appends the file contents into the final prompt with explicit file boundary markers
@@ -264,7 +198,7 @@ agents init codex,copilot,agy,pi,omp --root . --include-scripts --add-gitignore
 agents init codex --root . -a
 ```
 
-`config path/init/validate` handles StackOps catalogs of kind `prompts`, `parallel`, or `mcp`. `--source/-s` accepts `workspace/w` (the default), `user/u`, or `library/l`. Workspace files use the same root resolution as `run-prompt` and `parallel run`: `.stackops/agents/prompts.yaml`, `.stackops/agents/parallel.yaml`, or `.stackops/mcp.json` under that root. An explicit `--custom-path/-p` overrides source selection. They do not initialize native agent configuration; use `agents init` for that.
+`config path/init/validate` handles StackOps catalogs of kind `prompts` or `mcp`. `--source/-s` accepts `workspace/w` (the default), `user/u`, or `library/l`. Workspace files use the same root resolution as `run-prompt`: `.stackops/agents/prompts.yaml` or `.stackops/mcp.json` under that root. An explicit `--custom-path/-p` overrides source selection. They do not initialize native agent configuration; use `agents init` for that.
 
 `add-mcp` resolves MCP server names from StackOps catalogs and installs them for one or more agents. Install ordinary skills with `add-skill`. Notes:
 
@@ -379,7 +313,6 @@ agents config --help
 agents local doctor --help
 agents doctor --help
 agents second-brain --help
-agents parallel --help
 agents init --help
 agents add-mcp --help
 agents run-prompt --help

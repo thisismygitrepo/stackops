@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-ManagedFileKind: TypeAlias = Literal["config", "layouts", "dotfiles", "data", "secrets", "repos", "software", "prompts", "parallel", "mcp"]
+ManagedFileKind: TypeAlias = Literal["config", "layouts", "dotfiles", "data", "secrets", "repos", "software", "prompts", "mcp"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,7 +17,7 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
     from stackops.utils.path_reference import get_path_reference_path
 
     match kind:
-        case "prompts" | "parallel" | "mcp":
+        case "prompts" | "mcp":
             from stackops.utils.managed_agent_files import get_agent_managed_file_spec
 
             return get_agent_managed_file_spec(kind)
@@ -103,7 +103,7 @@ def resolve_managed_file(*, kind: ManagedFileKind, path: Path | None) -> tuple[M
     spec = get_managed_file_spec(kind)
     if path is not None:
         data_path = path.expanduser().absolute()
-    elif kind in ("prompts", "parallel", "mcp"):
+    elif kind in ("prompts", "mcp"):
         from stackops.utils.managed_agent_files import resolve_agent_managed_file_path
 
         data_path = resolve_agent_managed_file_path(kind=kind, source="workspace")

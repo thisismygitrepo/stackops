@@ -8,7 +8,6 @@ from rich.panel import Panel
 from rich.table import Table
 
 import stackops.scripts.python.helpers.helpers_agents.agents_shell as agent_shell
-from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackend
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS, HOST, PROVIDER, ReasoningEffort
 
 _CONSOLE: Final[Console] = Console()
@@ -58,14 +57,12 @@ def build_agents_create_overview_panel(
     job_name: str,
     agent: AGENTS,
     host: HOST,
-    backend: AgentLaunchBackend,
     provider: PROVIDER | None,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     agent_load: int,
     stagger_max: float,
     join_prompt_and_context: bool,
-    run: bool,
 ) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold cyan", no_wrap=True)
@@ -75,14 +72,12 @@ def build_agents_create_overview_panel(
     table.add_row("Job", job_name)
     table.add_row("Agent", agent)
     table.add_row("Host", host)
-    table.add_row("Backend", backend)
     table.add_row("Provider", _optional_label(value=provider))
     table.add_row("Model", _optional_label(value=model))
     table.add_row("Reasoning", _optional_label(value=reasoning_effort))
     table.add_row("Rows per agent", str(agent_load))
     table.add_row("Startup stagger max", f"{stagger_max:g}s")
     table.add_row("Prompt mode", "joined prompt/context" if join_prompt_and_context else "separate prompt/material")
-    table.add_row("Run after create", str(run))
     return Panel(table, title="Agent Create", border_style="blue")
 
 
@@ -93,14 +88,12 @@ def show_agents_create_overview(
     job_name: str,
     agent: AGENTS,
     host: HOST,
-    backend: AgentLaunchBackend,
     provider: PROVIDER | None,
     model: str | None,
     reasoning_effort: ReasoningEffort | None,
     agent_load: int,
     stagger_max: float,
     join_prompt_and_context: bool,
-    run: bool,
 ) -> None:
     _CONSOLE.print(
         build_agents_create_overview_panel(
@@ -109,14 +102,12 @@ def show_agents_create_overview(
             job_name=job_name,
             agent=agent,
             host=host,
-            backend=backend,
             provider=provider,
             model=model,
             reasoning_effort=reasoning_effort,
             agent_load=agent_load,
             stagger_max=stagger_max,
             join_prompt_and_context=join_prompt_and_context,
-            run=run,
         )
     )
 
@@ -156,7 +147,7 @@ def show_generated_agents_table(*, repo_root: Path, prompt_dirs: Sequence[Path])
 
 
 def build_created_artifacts_panel(
-    *, repo_root: Path, agents_dir: Path, layout_output_path: Path, artifacts_dir: Path, recreate_script_path: Path, agent_count: int
+    *, repo_root: Path, agents_dir: Path, layout_output_path: Path, artifacts_dir: Path, agent_count: int
 ) -> Panel:
     table = Table(box=box.SIMPLE_HEAVY, show_header=False, expand=True)
     table.add_column("Field", style="bold green", no_wrap=True)
@@ -165,12 +156,11 @@ def build_created_artifacts_panel(
     table.add_row("Prompts dir", _repo_relative_path(path=agents_dir / "prompts", repo_root=repo_root))
     table.add_row("Layout", _repo_relative_path(path=layout_output_path, repo_root=repo_root))
     table.add_row("Create inputs", _repo_relative_path(path=artifacts_dir, repo_root=repo_root))
-    table.add_row("Recreate script", _repo_relative_path(path=recreate_script_path, repo_root=repo_root))
     return Panel(table, title="Created", border_style="green")
 
 
 def show_created_artifacts_panel(
-    *, repo_root: Path, agents_dir: Path, layout_output_path: Path, artifacts_dir: Path, recreate_script_path: Path, agent_count: int
+    *, repo_root: Path, agents_dir: Path, layout_output_path: Path, artifacts_dir: Path, agent_count: int
 ) -> None:
     _CONSOLE.print(
         build_created_artifacts_panel(
@@ -178,7 +168,6 @@ def show_created_artifacts_panel(
             agents_dir=agents_dir,
             layout_output_path=layout_output_path,
             artifacts_dir=artifacts_dir,
-            recreate_script_path=recreate_script_path,
             agent_count=agent_count,
         )
     )

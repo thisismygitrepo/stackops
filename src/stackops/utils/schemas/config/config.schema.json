@@ -45,7 +45,7 @@
     },
     "default_agent_multiplexer": {
       "type": "string",
-      "description": "Default multiplexer used by agents commands (status, parallel) when --backend is not passed.",
+      "description": "Default multiplexer used by agents status when --backend is not passed.",
       "enum": ["tuios", "herdr", "aoe"]
     }
   },

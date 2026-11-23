@@ -65,7 +65,7 @@ devops config setup [SUBCOMMAND] [ARGS]...
 | `layouts` | Install starter terminal layouts and their JSON schema |
 | `secrets` | Interactively create the global secrets file and schema |
 
-`multiplexer` writes two keys. `default_session_multiplexer` (`tmux`, `herdr`, `tuios`, or `aoe`) is used by `terminal run`, `run-all`, `attach`, `kill`, `trace`, `summary`, and `export` when `--backend` is omitted; the built-in fallback is `tmux`. `default_agent_multiplexer` (`tuios`, `herdr`, or `aoe`) is used by `agents status` and by `agents parallel` launches when `--backend` is omitted; the built-in fallback is `tuios`. An explicit `--backend` always wins. Commands that support fewer multiplexers (`run-all` supports only tmux and tuios; `export` has no aoe) reject a configured value they cannot use instead of silently switching.
+`multiplexer` writes two keys. `default_session_multiplexer` (`tmux`, `herdr`, `tuios`, or `aoe`) is used by `terminal run`, `run-all`, `attach`, `kill`, `trace`, `summary`, and `export` when `--backend` is omitted; the built-in fallback is `tmux`. `default_agent_multiplexer` (`tuios`, `herdr`, or `aoe`) is used by `agents status` when `--backend` is omitted; the built-in fallback is `tuios`. An explicit `--backend` always wins. Commands that support fewer multiplexers (`run-all` supports only tmux and tuios; `export` has no aoe) reject a configured value they cannot use instead of silently switching.
 
 Examples:
 

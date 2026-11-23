@@ -13,12 +13,12 @@ def choose_edit_source(*, locations: list[tuple[str, Path]]) -> tuple[Literal["w
     source_descriptions: dict[str, str] = {
         "workspace": """Workspace configuration
 
-Use for prompts, parallel runs and MCP definitions that belong with a workspace.
+Use for prompts and MCP definitions that belong with a workspace.
 These files can be committed and shared with the workspace.
 """,
         "user": """Personal configuration
 
-Use for your own prompts, parallel runs and MCP definitions, reused across workspaces.
+Use for your own prompts and MCP definitions, reused across workspaces.
 These files are kept in your user dotfiles storage, separately from each workspace.
 The source name does not set file permissions or encrypt the contents.
 """,

@@ -4,13 +4,12 @@ from typing import Literal, TypeAlias, cast
 from stackops.utils.managed_files import ManagedFileSpec
 from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
 
-AgentManagedFileKind: TypeAlias = Literal["prompts", "parallel", "mcp"]
+AgentManagedFileKind: TypeAlias = Literal["prompts", "mcp"]
 AgentManagedFileSource: TypeAlias = Literal["workspace", "w", "user", "u", "library", "l"]
 
 
 def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[str, Path], ...]:
     import stackops.jobs.agents.mcps as mcp_assets
-    import stackops.utils.schemas.agents as agent_schema_assets
     from stackops.utils.path_reference import get_path_reference_path
     from stackops.utils.repos.stackops_paths import current_workspace_stackops_paths
     from stackops.utils.source_of_truth import DOTFILES_STACKOPS_ROOT, LIBRARY_ROOT
@@ -20,10 +19,6 @@ def agent_managed_file_locations(*, kind: AgentManagedFileKind) -> tuple[tuple[s
             workspace_paths = current_workspace_stackops_paths(path_kind="prompts_yaml")
             relative_user_path = Path("agents/prompts/prompts.yaml")
             library_path = LIBRARY_ROOT / relative_user_path
-        case "parallel":
-            workspace_paths = current_workspace_stackops_paths(path_kind="parallel_yaml")
-            relative_user_path = Path("agents/parallel/parallel.yaml")
-            library_path = get_path_reference_path(module=agent_schema_assets, path_reference="parallel.yaml")
         case "mcp":
             workspace_paths = current_workspace_stackops_paths(path_kind="mcp_json")
             relative_user_path = Path("agents/mcps/mcp.json")
@@ -56,9 +51,9 @@ def get_agent_managed_file_spec(kind: AgentManagedFileKind) -> ManagedFileSpec:
         relative_path = ".stackops/mcp.json" if kind == "mcp" else f""".stackops/agents/{kind}.yaml"""
         user_path = Path.cwd() / relative_path
     match kind:
-        case "prompts" | "parallel":
-            schema_path = get_path_reference_path(module=agent_schema_assets, path_reference=f"""{kind}.schema.json""")
-            example_path = get_path_reference_path(module=agent_schema_assets, path_reference=f"""{kind}.example.yaml""")
+        case "prompts":
+            schema_path = get_path_reference_path(module=agent_schema_assets, path_reference="prompts.schema.json")
+            example_path = get_path_reference_path(module=agent_schema_assets, path_reference="prompts.example.yaml")
         case "mcp":
             import stackops.jobs.agents.mcps as mcp_assets
 
@@ -86,15 +81,6 @@ def validate_agent_managed_file(*, kind: AgentManagedFileKind, data_path: Path) 
             from stackops.scripts.python.helpers.helpers_agents.agents_run_context import collect_named_yaml_candidates
 
             collect_named_yaml_candidates(raw_data=entries, prefix="", group=None)
-        case "parallel":
-            from stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_yaml import (
-                parse_parallel_create_values,
-                validate_parallel_run_name,
-            )
-
-            for name, entry in entries.items():
-                validate_parallel_run_name(entry_name=name)
-                parse_parallel_create_values(raw_entry=entry, entry_name=name)
         case "mcp":
             from stackops.scripts.python.helpers.helpers_agents.mcp_catalog import resolve_requested_mcp_servers
             from stackops.scripts.python.helpers.helpers_agents.mcp_types import McpCatalogLocation

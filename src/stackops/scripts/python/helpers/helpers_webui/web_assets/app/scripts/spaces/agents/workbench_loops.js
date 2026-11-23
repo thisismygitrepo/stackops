@@ -1,45 +1,20 @@
-import { h, icon } from "/assets/scripts/dom.js";
-import { state } from "/assets/scripts/state.js";
+import { h } from "/assets/scripts/dom.js";
 import { query } from "../../data.js";
 import { createPanel } from "../../live_panel.js";
 import { rise } from "../../motion.js";
-import { toolButton } from "../../space_kit.js";
-import { avatar, button, notice, sectionHead } from "../../widgets.js";
+import { avatar, button, notice } from "../../widgets.js";
 import { humanize, plural } from "../../words.js";
 import { actionBlock, areaHead, cardHead, installButton, pathText, statusPill } from "./workbench_kit.js";
-import { createJobsPanel } from "./workbench_parallel_jobs.js";
 
 const PREVIEW_ALL = { all_workspaces: "on", dry_run: "on" };
 const MOODS = { working: ["Working", "accent", "bolt"], idle: ["Idle", "", null], done: ["Finished", "good", "check"], blocked: ["Waiting on you", "warn", "alert"] };
-const STEPS = [
-  { path: "agents parallel create-context", title: "Gather the to-do list", blurb: "Have an agent write down every piece of the job that needs doing." },
-  { path: "agents parallel create", title: "Split it across agents", blurb: "Give each agent its share of the list and start them side by side." },
-  // Not "results": with no pattern the command joins each agent's share of the list as it stands, which holds answers only if the agents wrote them there.
-  { path: "agents parallel collect", title: "Join the pieces", blurb: "Put each agent's share of the list back into one file, as the agent left it. Or name the files they wrote under Pattern." },
-];
-const SHORTCUTS = [
-  { path: "agents parallel run", blurb: "Start a job you have set up before. Leave the name empty to pick from a list." },
-  { path: "agents parallel create-template", blurb: "Write an example script, list and prompt that you can adapt." },
-];
 const TIDY = [
   { path: "agents iter close", blurb: "Close tabs from rounds that have already handed over. You see the plan first.", preset: PREVIEW_ALL },
   { path: "agents iter clean", blurb: "Remove records left behind by loops that are gone. You see the list first.", preset: PREVIEW_ALL, caution: "Deletes records" },
   { path: "agents iter status", title: "Inspect every loop", blurb: "Each loop with its tabs, and which of them are safe to close.", preset: { all_workspaces: "on" } },
 ];
 
-export function createParallelArea({ tools }, { setStatus, failStatus }) {
-  const steps = h(
-    "ol",
-    { class: "wb-steps" },
-    STEPS.filter((step) => state.nodes.has(step.path)).map((step, index) =>
-      h(
-        "li",
-        {},
-        h("button", { class: "wb-step lit", type: "button", onclick: () => tools.open(step.path) }, h("b", { text: String(index + 1) }), h("strong", { text: step.title }), h("span", { text: step.blurb }), icon("arrow", 14)),
-      ),
-    ),
-  );
-
+export function createLoopsArea({ tools }, { setStatus, failStatus }) {
   const clearButton = (count) => button({ label: `Clear ${plural(count, "old record")}`, glyph: "trash", small: true, onclick: () => tools.open("agents iter clean", { preset: PREVIEW_ALL }) });
 
   function loopCard(loop) {
@@ -62,7 +37,6 @@ export function createParallelArea({ tools }, { setStatus, failStatus }) {
     );
   }
 
-  const jobs = createJobsPanel({ tools });
   const loops = createPanel({
     title: "Loops in progress", skeletonShape: "card", onFail: failStatus,
     load: async (fresh) => {
@@ -77,7 +51,7 @@ export function createParallelArea({ tools }, { setStatus, failStatus }) {
       if (!/herdr/i.test(error.message) || !/not found/i.test(error.message)) return null;
       setStatus("Loops need Herdr", "");
       return notice({
-        glyph: "lanes", title: "Loops need Herdr", body: "A loop runs inside Herdr, a workspace that keeps each round of an agent's work in its own tab. Install it to use loops; splitting a job across agents works without it.",
+        glyph: "lanes", title: "Loops need Herdr", body: "A loop runs inside Herdr, a workspace that keeps each round of an agent's work in its own tab. Install it to use loops.",
         action: installButton(tools, "herdr", "Install Herdr"),
       });
     },
@@ -96,23 +70,10 @@ export function createParallelArea({ tools }, { setStatus, failStatus }) {
     },
   });
 
-  const element = h(
-    "div",
-    { class: "wb-area" },
-    areaHead({
-      title: "Parallel runs", lede: "Split a big job into pieces and give each piece to its own agent, or let agents work in rounds until a goal is met.",
-      actions: [toolButton(tools, "agents parallel run", { label: "Run a saved workflow", glyph: "play" }), toolButton(tools, "agents parallel create", { label: "Split a job", glyph: "lanes", tone: "primary" })],
-    }),
-    h("section", { class: "wb-flow" }, sectionHead("One job, many agents"), steps),
-    jobs.element,
-    loops.element,
-    actionBlock(tools, "Tidy up loops", TIDY),
-    actionBlock(tools, "Saved jobs and starters", SHORTCUTS),
-  );
+  const element = h("div", { class: "wb-area" }, areaHead({ title: "Loops", lede: "Let agents work in rounds until a goal is met." }), loops.element, actionBlock(tools, "Tidy up loops", TIDY));
   return {
     element,
     show() {
-      jobs.ensure();
       loops.ensure();
     },
   };

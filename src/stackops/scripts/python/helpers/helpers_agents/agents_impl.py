@@ -6,14 +6,10 @@ from math import isfinite
 from pathlib import Path
 from typing import Literal
 
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults import ParallelCreateYamlEntry
-from stackops.scripts.python.helpers.helpers_agents.agents_parallel_backend import run_generated_layout
-from stackops.utils.schemas.config.multiplexer_types import AgentLaunchBackend, SessionMultiplexer
 from stackops.utils.schemas.fire_agents.fire_agents_types import (
     AGENTS,
     CONFIG_AGENTS,
     CONFIG_AGENT_VALUES,
-    DEFAULT_STAGGER_MAX,
     HOST,
     PROVIDER,
     ReasoningEffort,
@@ -29,7 +25,6 @@ class AgentCreationResult:
     agents_dir: Path
     layout_path: Path
     artifacts_dir: Path
-    recreate_script_path: Path
     agent_count: int
     launched: bool
 
@@ -46,23 +41,18 @@ def agents_create(
     prompt_name: str | None,
     job_name: str | None,
     join_prompt_and_context: bool,
-    run: bool,
     output_path: str | None,
     agents_dir: str | None,
-    save_as_yaml: bool,
     host: HOST,
     reasoning: ReasoningEffort | None,
     provider: PROVIDER | None,
-    interactive: bool,
-    backend: AgentLaunchBackend,
     on_directory_conflict: AgentsDirectoryConflict,
-    stagger_max: float = DEFAULT_STAGGER_MAX,
+    stagger_max: float,
 ) -> AgentCreationResult:
-    """Create agents layout file, ready to run."""
+    """Split the context across agents and write their prompts, launchers and layout file."""
     normalized_reasoning_effort = normalize_reasoning_effort(agent=agent, reasoning_effort=reasoning)
-    _validate_stagger_max(stagger_max=stagger_max)
-    if interactive:
-        raise RuntimeError("Interactive agent creation must be dispatched before agents_impl.agents_create.")
+    if not isfinite(stagger_max) or stagger_max < 0:
+        raise ValueError("stagger_max must be a finite number greater than or equal to 0")
     from stackops.scripts.python.helpers.helpers_agents.agents_create_artifacts import (
         CreateContextArtifactsInput,
         CreatePromptArtifactsInput,
@@ -81,41 +71,19 @@ def agents_create(
         get_agents_launch_layout,
         get_prompt_directories,
         prep_agent_launch,
-        validate_parallel_agent_host,
-    )
-    from stackops.scripts.python.helpers.helpers_agents.agents_t3_launch import (
-        T3LaunchTarget,
-        launch_t3_threads,
-        resolve_t3_launch_target,
-        t3_requests_from_prompt_directories,
+        validate_agent_host,
     )
     from stackops.scripts.python.helpers.helpers_agents.agents_rich_output import (
         show_agents_create_overview,
         show_created_artifacts_panel,
         show_generated_agents_table,
     )
-    from stackops.utils.repos.constants import PROJECT_ROOT_REQUIREMENT
     from stackops.utils.repos.project import resolve_project_root
     from stackops.utils.schemas.layouts.layout_file import require_layout_suffix, write_layouts_file
 
-    launch_plan: SessionMultiplexer | T3LaunchTarget
-    match backend:
-        case "t3":
-            launch_plan = resolve_t3_launch_target(
-                agent=agent, host=host, provider=provider, model=model, reasoning_effort=normalized_reasoning_effort
-            )
-        case _:
-            validate_parallel_agent_host(agent=agent, host=host)
-            launch_plan = backend
-
+    validate_agent_host(agent=agent, host=host)
     project_root = resolve_project_root(current_dir=Path.cwd())
-    if save_as_yaml and project_root is None:
-        raise RuntimeError(f"""`--save-as-yaml` requires {PROJECT_ROOT_REQUIREMENT}.""")
-    repo_root = project_root
-    if repo_root is None:
-        repo_root = Path.cwd().resolve()
-    else:
-        repo_root = repo_root.resolve()
+    repo_root = Path.cwd().resolve() if project_root is None else project_root.resolve()
 
     if agent == "codex":
         if provider is None:
@@ -125,7 +93,6 @@ def agents_create(
 
     requested_job_dir, job_name_resolved = resolve_agents_output_dir(repo_root=repo_root, agents_dir=agents_dir, job_name=job_name)
     del job_name
-    requested_agents_dir = agents_dir
     agents_dir_obj = requested_job_dir
     directory_conflict = agents_dir_obj.exists()
     cleanup_existing_agents_dir = False
@@ -165,17 +132,14 @@ def agents_create(
         job_name=job_name_resolved,
         agent=agent,
         host=host,
-        backend=backend,
         provider=provider,
         model=model,
         reasoning_effort=normalized_reasoning_effort,
         agent_load=agent_load,
         stagger_max=stagger_max,
         join_prompt_and_context=join_prompt_and_context,
-        run=run,
     )
 
-    agent_selected = agent
     destination = (
         replace_owned_job(repo_root=repo_root, agents_dir=agents_dir_obj, layout_path=layout_output_path)
         if cleanup_existing_agents_dir
@@ -190,7 +154,7 @@ def agents_create(
             join_prompt_and_context=join_prompt_and_context,
             prompt_prefix=prompt_input.prompt_text,
             machine=host,
-            agent=agent_selected,
+            agent=agent,
             model=model,
             reasoning_effort=normalized_reasoning_effort,
             provider=provider,
@@ -205,12 +169,11 @@ def agents_create(
             repo_root=workspace_root,
             agents_dir=agents_dir_obj,
             layout_output_path=layout_output_path,
-            agent=agent_selected,
+            agent=agent,
             host=host,
             model=model,
             reasoning_effort=normalized_reasoning_effort,
             provider=provider,
-            backend=backend,
             agent_load=agent_load,
             stagger_max=stagger_max,
             separator=separator,
@@ -228,268 +191,21 @@ def agents_create(
             ),
             job_name=job_name_resolved,
             join_prompt_and_context=join_prompt_and_context,
-            run=run,
         )
     show_created_artifacts_panel(
         repo_root=workspace_root,
         agents_dir=agents_dir_obj,
         layout_output_path=layout_output_path,
         artifacts_dir=create_artifacts.artifacts_dir,
-        recreate_script_path=create_artifacts.recreate_script_path,
         agent_count=len(prompt_directories),
     )
-    if save_as_yaml:
-        saved_yaml_path = _save_parallel_yaml_entry(
-            repo_root=repo_root,
-            agent=agent_selected,
-            model=model,
-            reasoning_effort=normalized_reasoning_effort,
-            provider=provider,
-            host=host,
-            backend=backend,
-            context=context,
-            context_path=context_path,
-            separator=separator,
-            agent_load=agent_load,
-            stagger_max=stagger_max,
-            prompt=prompt,
-            prompt_path=prompt_path,
-            prompt_name=prompt_name,
-            job_name=job_name_resolved,
-            join_prompt_and_context=join_prompt_and_context,
-            run=run,
-            output_path=output_path,
-            agents_dir=requested_agents_dir,
-        )
-        import typer
-
-        typer.echo(f"Saved parallel YAML entry '{job_name_resolved}' to: {saved_yaml_path}")
-    if run:
-        match launch_plan:
-            case T3LaunchTarget():
-                launch_t3_threads(
-                    workspace_root=workspace_root,
-                    requests=t3_requests_from_prompt_directories(job_name=job_name_resolved, prompt_directories=prompt_directories),
-                    target=launch_plan,
-                )
-            case _:
-                run_generated_layout(layout_output_path=layout_output_path, backend=launch_plan, agent=agent_selected)
     return AgentCreationResult(
         agents_dir=agents_dir_obj,
         layout_path=layout_output_path,
         artifacts_dir=create_artifacts.artifacts_dir,
-        recreate_script_path=create_artifacts.recreate_script_path,
         agent_count=len(prompt_directories),
-        launched=run,
+        launched=False,
     )
-
-
-def _validate_stagger_max(*, stagger_max: float) -> None:
-    if not isfinite(stagger_max) or stagger_max < 0:
-        raise ValueError("stagger_max must be a finite number greater than or equal to 0")
-
-
-def _save_parallel_yaml_entry(
-    *,
-    repo_root: Path,
-    agent: AGENTS,
-    model: str | None,
-    reasoning_effort: ReasoningEffort | None,
-    provider: PROVIDER | None,
-    host: HOST,
-    backend: AgentLaunchBackend,
-    context: str | None,
-    context_path: str | None,
-    separator: str,
-    agent_load: int,
-    prompt: str | None,
-    prompt_path: str | None,
-    prompt_name: str | None,
-    job_name: str,
-    join_prompt_and_context: bool,
-    run: bool,
-    output_path: str | None,
-    agents_dir: str | None,
-    stagger_max: float = DEFAULT_STAGGER_MAX,
-) -> Path:
-    from stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry import upsert_parallel_yaml_entry
-
-    parallel_yaml_path = repo_root / ".stackops" / "agents" / "parallel.yaml"
-    upsert_parallel_yaml_entry(
-        yaml_path=parallel_yaml_path,
-        entry_name=job_name,
-        entry_values=_build_parallel_yaml_entry(
-            repo_root=repo_root,
-            agent=agent,
-            model=model,
-            reasoning_effort=reasoning_effort,
-            provider=provider,
-            host=host,
-            backend=backend,
-            context=context,
-            context_path=context_path,
-            separator=separator,
-            agent_load=agent_load,
-            stagger_max=stagger_max,
-            prompt=prompt,
-            prompt_path=prompt_path,
-            prompt_name=prompt_name,
-            job_name=job_name,
-            join_prompt_and_context=join_prompt_and_context,
-            run=run,
-            output_path=output_path,
-            agents_dir=agents_dir,
-        ),
-    )
-    return parallel_yaml_path
-
-
-def _build_parallel_yaml_entry(
-    *,
-    repo_root: Path,
-    agent: AGENTS,
-    model: str | None,
-    reasoning_effort: ReasoningEffort | None,
-    provider: PROVIDER | None,
-    host: HOST,
-    backend: AgentLaunchBackend,
-    context: str | None,
-    context_path: str | None,
-    separator: str,
-    agent_load: int,
-    prompt: str | None,
-    prompt_path: str | None,
-    prompt_name: str | None,
-    job_name: str,
-    join_prompt_and_context: bool,
-    run: bool,
-    output_path: str | None,
-    agents_dir: str | None,
-    stagger_max: float = DEFAULT_STAGGER_MAX,
-) -> ParallelCreateYamlEntry:
-    return {
-        "agent": agent,
-        "model": model,
-        "reasoning": reasoning_effort,
-        "provider": provider,
-        "host": host,
-        "backend": backend,
-        "context": context,
-        "context_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=context_path),
-        "separator": _encode_separator_value(separator=separator),
-        "agent_load": agent_load,
-        "stagger_max": stagger_max,
-        "prompt": prompt,
-        "prompt_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=prompt_path),
-        "prompt_name": prompt_name,
-        "job_name": job_name,
-        "join_prompt_and_context": join_prompt_and_context,
-        "run": run,
-        "output_path": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=output_path),
-        "agents_dir": _normalize_parallel_yaml_path_value(repo_root=repo_root, raw_path=agents_dir),
-        "interactive": False,
-    }
-
-
-def _normalize_parallel_yaml_path_value(*, repo_root: Path, raw_path: str | None) -> str | None:
-    if raw_path is None:
-        return None
-
-    path = Path(raw_path).expanduser().resolve()
-    try:
-        return _repo_relative_cli_path(repo_root=repo_root, target_path=path)
-    except ValueError:
-        return str(path)
-
-
-def _repo_relative_cli_path(*, repo_root: Path, target_path: Path) -> str:
-    relative_path = target_path.relative_to(repo_root)
-    return f"./{relative_path.as_posix()}"
-
-
-def _encode_separator_value(*, separator: str) -> str:
-    return separator.encode("unicode_escape").decode("ascii")
-
-
-def collect(agent_dir: str, output_path: str, separator: str, pattern: str | None) -> None:
-    """Collect all material files from an agent directory and concatenate them."""
-    if not Path(agent_dir).exists() or not Path(agent_dir).is_dir():
-        raise ValueError(f"Agent directory does not exist or is not a directory: {agent_dir}")
-
-    prompts_dir = Path(agent_dir) / "prompts"
-    if not prompts_dir.exists():
-        raise ValueError(f"Prompts directory not found: {prompts_dir}")
-
-    material_files: list[Path] = []
-    for agent_subdir in prompts_dir.iterdir():
-        if pattern is None:
-            if agent_subdir.is_dir() and agent_subdir.name.startswith("agent_"):
-                for material_suffix in (".txt", ".json"):
-                    material_file = agent_subdir / f"""{agent_subdir.name}_material{material_suffix}"""
-                    if material_file.is_file():
-                        material_files.append(material_file)
-        else:
-            if agent_subdir.is_dir():
-                for material_file in agent_subdir.glob(pattern):
-                    if material_file.is_file():
-                        material_files.append(material_file)
-
-    if not material_files:
-        print("No material files found in the agent directory.")
-        return
-    print(f"Found {len(material_files)} material files. Concatenating...")
-    for idx, a_file in enumerate(material_files):
-        print(f"{idx + 1}. {a_file}")
-    material_files.sort(key=lambda x: int(x.parent.name.split("_")[-1]))
-    concatenated_content: list[str] = []
-    for material_file in material_files:
-        content = material_file.read_text(encoding="utf-8")
-        concatenated_content.append(content)
-    result = separator.join(concatenated_content)
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    Path(output_path).write_text(result, encoding="utf-8")
-    print(f"Concatenated material written to {output_path}")
-
-
-def make_agents_command_template() -> None:
-    """Create a template for fire agents."""
-    from platform import system
-    import stackops.scripts.python.helpers.helpers_agents.templates as template_assets
-    from stackops.utils.path_reference import get_path_reference_path
-
-    os_name = system()
-    match os_name:
-        case "Linux" | "Darwin":
-            template_path = get_path_reference_path(module=template_assets, path_reference=template_assets.TEMPLATE_SH_PATH_REFERENCE)
-            template_filename = "template_fire_agents.sh"
-            template_label = "shell"
-        case "Windows":
-            template_path = get_path_reference_path(module=template_assets, path_reference=template_assets.TEMPLATE_PS1_PATH_REFERENCE)
-            template_filename = "template_fire_agents.ps1"
-            template_label = "PowerShell"
-        case _:
-            raise ValueError(f"Unsupported OS: {os_name}")
-
-    from stackops.utils.accessories import get_repo_root
-
-    repo_root = get_repo_root(Path.cwd())
-    if repo_root is None:
-        raise RuntimeError("💥 Could not determine the repository root. Please run this script from within a git repository.")
-
-    save_path_root = repo_root / ".ai" / "agents" / "template"
-    save_path_root.mkdir(parents=True, exist_ok=True)
-    save_path = save_path_root / template_filename
-    save_path.write_text(template_path.read_text(encoding="utf-8"), encoding="utf-8")
-    print(f"Template {template_label} script written to {save_path}")
-    todo_output_path = save_path_root.relative_to(repo_root) / "files.md"
-
-    from stackops.scripts.python.ai.utils.generate_files import make_todo_files
-
-    make_todo_files(pattern=".py", repo=str(repo_root), strategy="name", output_path=str(todo_output_path), split_every=None, split_to=None)
-
-    prompt_path = get_path_reference_path(module=template_assets, path_reference=template_assets.PROMPT_PATH_REFERENCE)
-    save_path_root.joinpath("prompt.txt").write_text(prompt_path.read_text(encoding="utf-8"), encoding="utf-8")
-    print(f"Prompt template written to {save_path_root}")
 
 
 def init_config(

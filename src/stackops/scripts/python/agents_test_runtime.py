@@ -108,7 +108,9 @@ def launch_test_runtime(
     on_directory_conflict: Annotated[AgentsDirectoryConflict, typer.Option("--on-directory-conflict", "-D", help="Existing agents directory: error, new-directory, or replace-owned.")] = "error",
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print generated artifact paths and launch state as JSON.")] = False,
 ) -> None:
-    from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
+    from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create
+    from stackops.utils.default_agent import resolve_agent
+    from stackops.utils.schemas.fire_agents.fire_agents_types import DEFAULT_STAGGER_MAX
 
     search_root = Path.cwd().resolve()
     try:
@@ -131,18 +133,32 @@ def launch_test_runtime(
     )
 
     with redirect_stdout(sys.stderr if json_output else sys.stdout):
-        result = agents_create_command(
-            agent=agent,
-            context_path=str(context_path),
-            separator=FILE_SEPARATOR,
-            agent_load=agent_load,
-            prompt=_build_prompt(),
-            job_name=JOB_NAME,
-            on_directory_conflict=on_directory_conflict,
-            run=False,
-        )
-        if result is None:
-            raise RuntimeError("Runtime-test generation did not return artifact paths")
+        try:
+            result = agents_create(
+                agent=resolve_agent(agent=agent),
+                model=None,
+                agent_load=agent_load,
+                context=None,
+                context_path=str(context_path),
+                separator=FILE_SEPARATOR,
+                prompt=_build_prompt(),
+                prompt_path=None,
+                prompt_name=None,
+                job_name=JOB_NAME,
+                join_prompt_and_context=False,
+                output_path=None,
+                agents_dir=None,
+                host="local",
+                reasoning=None,
+                provider=None,
+                on_directory_conflict=on_directory_conflict,
+                stagger_max=DEFAULT_STAGGER_MAX,
+            )
+        except ValueError as error:
+            raise typer.BadParameter(str(error)) from error
+        except RuntimeError as error:
+            typer.echo(str(error))
+            raise typer.Exit(code=1) from error
         if run:
             from stackops.scripts.python.terminal import run as terminal_run_command
 

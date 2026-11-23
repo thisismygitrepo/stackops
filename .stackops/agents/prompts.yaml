@@ -22,7 +22,7 @@ maintainPakageManager:
     - Only edit `fileNamePattern` fields.
     - Prefer musl Linux binaries over gnu binaries when both are available.
 
-    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Do not use internal subagents or generated layout workflows.
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 UpdateTest:
@@ -42,7 +42,7 @@ UpdateTest:
     - Do not write tests whose only value is checking type correctness.
     - Keep edits scoped to assigned tests unless a tiny source fix is clearly necessary.
 
-    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Do not use internal subagents or generated layout workflows.
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 UpdateDocs:
@@ -61,7 +61,7 @@ UpdateDocs:
     - Inspect current Python sources and CLI/API behavior as needed.
     - Prefer current implemented behavior. Remove stale wording instead of documenting legacy behavior.
 
-    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Do not use internal subagents or generated layout workflows.
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 UpdateLogic:
@@ -82,7 +82,7 @@ UpdateLogic:
     - Use modern Python style, including `| None` instead of `Optional`.
     - Expect other external agents may edit nearby command code.
 
-    Do not use `agents parallel create`, `agents parallel run-parallel`, internal subagents, or generated layout workflows.
+    Do not use internal subagents or generated layout workflows.
     Start Herdr-managed interactive agents, submit their prompts, verify each accepted the prompt, then report the Herdr targets and visible status.
 
 UpdateAgentsConfig:
@@ -105,7 +105,7 @@ UpdateAgentsConfig:
     - Give each spawned agent one supported target only, and name the Herdr target after that assigned target.
     - Do not group multiple supported targets into one spawned agent.
     - Do not split one supported target across multiple spawned agents unless the user explicitly asks for that later.
-    - Do not use internal subagents, `agents parallel create`, `agents parallel run-parallel`, generated layout workflows, `--run`, `--Run`, or `-R`.
+    - Do not use internal subagents or generated layout workflows.
     - Submit every spawned-agent prompt and verify each agent accepted it before reporting launch status.
 
     Tell each spawned agent to handle only its assigned supported target:
@@ -148,7 +148,7 @@ AssessConfigSourceConsistency:
     - Do not create tests or validation infrastructure or run repository-wide checks. An existing focused check is optional only when permitted by repository instructions and free of operational side effects. Internal use of private configuration is allowed under the privacy rules above. Clearly state what was actually verified.
     - Use parallel read-only reviews for independent command families when available, then reconcile their findings against the same checkout.
 
-    Discover the command surface before evaluating it. Include relevant commands for agent prompts, parallel workflows, MCP catalogs, agent configuration management, scripts, dotfiles, data backups, software catalogs/installers, secrets/vault, terminal layouts, and generic configuration management. Include other command families if they expose the same concepts. Inspect actual CLI registration and callers, not only helper functions or documentation.
+    Discover the command surface before evaluating it. Include relevant commands for agent prompts, MCP catalogs, agent configuration management, scripts, dotfiles, data backups, software catalogs/installers, secrets/vault, terminal layouts, and generic configuration management. Include other command families if they expose the same concepts. Inspect actual CLI registration and callers, not only helper functions or documentation.
 
     Use terminology such as source, scope, sensitivity, project, repo, user, private, public, library, local, global, all, and both as search clues. Do not impose those names as a required interface. Distinguish where data is read from, where an operation writes or installs, which project owns a file, and how sensitivity is classified.
 

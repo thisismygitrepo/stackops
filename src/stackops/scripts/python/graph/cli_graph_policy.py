@@ -56,7 +56,6 @@ SHORT_OVERRIDES: dict[tuple[str, str], str] = {
     ("devops vault load", "--scope"): "-S",
     ("devops vault rotate", "--scope"): "-S",
     ("agents add-mcp", "--source"): "-S",
-    ("agents parallel run", "--source"): "-S",
     ("devops network share-terminal", "--password"): "-w",
     ("devops network share-server", "--password"): "-w",
     ("utils file download", "--output-dir"): "-O",
@@ -79,12 +78,6 @@ REQUIRED_OPTION_ALLOWLIST: set[tuple[str, str]] = {
     ("terminal balance-load", "--max-threshold"),
     ("terminal run-all", "--max-parallel-tabs"),
     ("terminal run-function", "--num-process"),
-}
-
-PAIRED_OPTION_ALLOWLIST: set[tuple[str, str]] = {
-    (f"agents parallel {command}", option)
-    for command in ("create", "run")
-    for option in ("--run", "--interactive", "--join-prompt-context")
 }
 
 
@@ -140,7 +133,7 @@ def validate_cli_graph(payload: dict[str, Any]) -> None:
             has_secondary = any("/" in d for d in longs + shorts)
             name = cast(str, param["name"])
 
-            if has_secondary and (path, primary_long) not in PAIRED_OPTION_ALLOWLIST:
+            if has_secondary:
                 violations.append(f"{path}: {name} declares paired flags; expose only the flag that changes the default")
             if param.get("type") == "bool" and param.get("default") is True:
                 violations.append(f"{path}: {name} bool flag {primary_long or name} defaults True; use a disabling flag with default False")

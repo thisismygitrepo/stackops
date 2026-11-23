@@ -3,7 +3,8 @@ import { formDetail, query, staleKeeper } from "./data.js";
 import { createFriendlyForm } from "./friendly_form.js";
 import { recall, remember } from "./memory.js";
 import { openPopover } from "./overlays.js";
-import { button, iconButton, notice, skeleton } from "./widgets.js";
+import { button, iconButton, notice, searchInput, segmented, skeleton } from "./widgets.js";
+import { humanize } from "./words.js";
 
 const RELOAD_DELAY_MILLISECONDS = 350;
 
@@ -44,17 +45,51 @@ export function createPanel({ title, load, render, explain = () => null, onFail 
   return { element, load: keeper.load, ensure: keeper.ensure };
 }
 
+// One of a command's choices as a control small enough for a panel's head: a switch, a pick between a few, or a box to type in.
+function quickControl(spec, caption, values, changed) {
+  let paint = () => {};
+  const write = (value) => {
+    if (value) values.set(spec.name, value);
+    else values.delete(spec.name);
+    paint();
+    changed();
+  };
+  if (spec.control === "switch") {
+    const toggle = h("button", { class: "mini-toggle", type: "button", role: "switch", title: caption, onclick: () => write(values.has(spec.name) ? "" : "on") }, h("i", { class: "switch" }), h("span", { text: caption }));
+    paint = () => toggle.setAttribute("aria-checked", String(values.has(spec.name)));
+    paint();
+    return toggle;
+  }
+  if (spec.control === "choice") {
+    const picker = segmented(spec.choices.map((choice) => [choice, humanize(choice)]), (choice) => write(choice === spec.default ? "" : choice));
+    picker.element.title = caption;
+    paint = () => picker.set(values.get(spec.name) ?? spec.default);
+    paint();
+    return picker.element;
+  }
+  const box = searchInput({ placeholder: caption, oninput: (typed) => write(typed.trim()) });
+  box.input.value = values.get(spec.name) ?? "";
+  return box.element;
+}
+
 // A panel bound to one read-only command: it runs on arrival with defaults, shows the result, and lets the user change that command's choices.
 // `render` is also handed `options`, the choices that are set by parameter name, for a view whose wording depends on one.
-export function createLivePanel({ title, path, extra = [], locked = [], render, onFail, actions = [], skeletonShape = "row", tunable = true, lasting = false }) {
+// `surface` names the choices that matter enough to sit in the panel's head, each with the words to show for it; Options holds the rest, and
+// is left out when nothing is left for it.
+export function createLivePanel({ title, path, extra = [], locked = [], surface = {}, render, onFail, actions = [], skeletonShape = "row", tunable = true, lasting = false }) {
   const badge = h("b", { hidden: true });
   // The panel comes back the way it was left; the badge on Options shows that something is set.
   const memoryId = `${path}|${title}`;
-  const values = recall(memoryId);
+  // A panel without Options starts clean: what was set while it still had them could not be seen or undone.
+  const values = tunable ? recall(memoryId) : new Map();
+  const surfaced = Object.keys(surface);
+  const quick = h("div", { class: "panel-quick", hidden: true });
   let form = null;
+  let building = null;
   let tokens = [];
 
   const tuneButton = h("button", { class: "btn small ghost tune", type: "button", title: "Change what this shows" }, icon("sliders", 14), h("span", { text: "Options" }), badge);
+  const inHead = () => new Map(surfaced.filter((name) => values.has(name)).map((name) => [name, values.get(name)]));
 
   function applyOptions() {
     tokens = form.collect().tokens;
@@ -63,24 +98,38 @@ export function createLivePanel({ title, path, extra = [], locked = [], render, 
     badge.textContent = String(changed);
   }
 
-  async function buildForm() {
-    const { parameters } = await formDetail(path);
-    form ??= createFriendlyForm({
-      parameters: parameters ?? [], values, essentials: null, locked,
-      onChange: () => {
-        applyOptions();
-        remember(memoryId, form.filled());
-        reloadSoon();
-      },
-    });
+  function changed() {
     applyOptions();
+    remember(memoryId, new Map([...form.filled(), ...inHead()]));
+    reloadSoon();
+  }
+
+  // Asked for once: by the first load of a panel with something remembered or something in its head, or by the first press of Options.
+  function buildForm() {
+    building ??= formDetail(path).then(({ parameters }) => {
+      const specs = parameters ?? [];
+      form = createFriendlyForm({ parameters: specs, values, essentials: null, locked: [...locked, ...surfaced], onChange: changed });
+      // What was remembered for a choice this panel no longer offers is dropped, or it would go on narrowing the answer out of sight.
+      const offered = new Map([...form.filled(), ...inHead()]);
+      for (const name of [...values.keys()]) if (!offered.has(name)) values.delete(name);
+      quick.replaceChildren(...specs.filter((spec) => surfaced.includes(spec.name)).map((spec) => quickControl(spec, surface[spec.name], values, changed)));
+      quick.hidden = quick.childElementCount === 0;
+      tuneButton.hidden = surfaced.length > 0 && form.count === 0;
+      applyOptions();
+    });
+    building.catch(() => (building = null));
+    return building;
   }
 
   const panel = createPanel({
-    title, onFail, skeletonShape, lasting, actions: [...actions, tunable && tuneButton],
+    title, onFail, skeletonShape, lasting, actions: [quick, ...actions, tunable && tuneButton],
     load: async (fresh) => {
-      // Remembered options only become arguments once the command's parameters are known, so a panel with some asks for those first.
-      if (!form && values.size > 0) await buildForm();
+      // Remembered options only become arguments once the command's parameters are known, so a panel with some asks for those first. One with
+      // a choice in its head asks too, without keeping the first answer waiting for it.
+      if (!form && (values.size > 0 || surfaced.length > 0)) {
+        const ready = buildForm();
+        if (values.size > 0) await ready;
+      }
       // `extra` goes first: after an argument that starts with a dash the form writes `--`, and anything behind that is read as one more argument.
       return query([...path.split(" "), ...extra, ...tokens], fresh);
     },
@@ -98,7 +147,8 @@ export function createLivePanel({ title, path, extra = [], locked = [], render, 
       h(
         "div",
         { class: "tune-panel" },
-        h("div", { class: "tune-head" }, h("h3", { text: `${title} options` }), form.count > 0 && button({ label: "Reset", small: true, tone: "ghost", onclick: () => form.reset(new Map()) })),
+        // Reset empties what Options holds; a choice in the head is in plain view and stays as it is.
+        h("div", { class: "tune-head" }, h("h3", { text: `${title} options` }), form.count > 0 && button({ label: "Reset", small: true, tone: "ghost", onclick: () => form.reset(inHead()) })),
         form.count > 0 ? form.element : h("p", { class: "dim", text: "There is nothing to adjust for this view." }),
       ),
     );

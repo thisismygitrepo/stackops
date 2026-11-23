@@ -15,7 +15,7 @@ For day-to-day use, prefer the standalone command when you already know which to
 | --- | --- |
 | [`devops`](devops.md) | Package installation, repo automation, config sync, data sync, self-management, networking, and script execution |
 | [`terminal`](terminal.md) | Terminal session and layout management |
-| [`agents`](agents.md) | AI agent scaffolding, MCP catalog installs, prompt runs, and parallel agent workflows |
+| [`agents`](agents.md) | AI agent scaffolding, MCP catalog installs, and prompt runs |
 | [`utils`](utils.md) | General-purpose utility commands |
 | [`preview`](preview.md) | File preview and `uv run` backend launcher |
 | [`seek`](seek.md) | Interactive search across files, text matches, and symbols |

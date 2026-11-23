@@ -23,7 +23,7 @@
       "Private names and common CLI command wiring names are excluded.",
       "If a module defines __all__, it narrows include-all member selection to exported names."
     ],
-    "module_count": 93
+    "module_count": 92
   },
   "root": {
     "kind": "root",
@@ -2966,7 +2966,7 @@
                               "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_common.py",
                               "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common",
                               "object": "generate_random_suffix",
-                              "line": 7,
+                              "line": 10,
                               "docs_pages": [
                                 "docs/api/cluster/layouts.md"
                               ]
@@ -2987,7 +2987,24 @@
                               "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_common.py",
                               "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common",
                               "object": "shell_quote",
-                              "line": 11,
+                              "line": 14,
+                              "docs_pages": [
+                                "docs/api/cluster/layouts.md"
+                              ]
+                            },
+                            "children": []
+                          },
+                          {
+                            "kind": "constant",
+                            "name": "RUN_ALL_STATE_OPTION",
+                            "qualified_name": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common.RUN_ALL_STATE_OPTION",
+                            "fullPath": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common.RUN_ALL_STATE_OPTION",
+                            "help": "'@stackops-run-all-state'",
+                            "source": {
+                              "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_common.py",
+                              "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_common",
+                              "object": "RUN_ALL_STATE_OPTION",
+                              "line": 7,
                               "docs_pages": [
                                 "docs/api/cluster/layouts.md"
                               ]
@@ -11125,7 +11142,7 @@
                       "file": "src/stackops/utils/repos/stackops_paths.py",
                       "module": "stackops.utils.repos.stackops_paths",
                       "object": "current_repo_stackops_path",
-                      "line": 37,
+                      "line": 34,
                       "docs_pages": [
                         "docs/api/utils/environment-and-projects.md"
                       ]
@@ -11146,7 +11163,7 @@
                       "file": "src/stackops/utils/repos/stackops_paths.py",
                       "module": "stackops.utils.repos.stackops_paths",
                       "object": "current_workspace_stackops_paths",
-                      "line": 51,
+                      "line": 48,
                       "docs_pages": [
                         "docs/api/utils/environment-and-projects.md"
                       ]
@@ -11167,7 +11184,7 @@
                       "file": "src/stackops/utils/repos/stackops_paths.py",
                       "module": "stackops.utils.repos.stackops_paths",
                       "object": "require_current_repo_stackops_path",
-                      "line": 44,
+                      "line": 41,
                       "docs_pages": [
                         "docs/api/utils/environment-and-projects.md"
                       ]
@@ -11188,7 +11205,7 @@
                       "file": "src/stackops/utils/repos/stackops_paths.py",
                       "module": "stackops.utils.repos.stackops_paths",
                       "object": "require_current_workspace_stackops_paths",
-                      "line": 63,
+                      "line": 60,
                       "docs_pages": [
                         "docs/api/utils/environment-and-projects.md"
                       ]
@@ -11205,23 +11222,6 @@
                       "file": "src/stackops/utils/repos/stackops_paths.py",
                       "module": "stackops.utils.repos.stackops_paths",
                       "object": "REPO_MCP_JSON_FILE_NAME",
-                      "line": 12,
-                      "docs_pages": [
-                        "docs/api/utils/environment-and-projects.md"
-                      ]
-                    },
-                    "children": []
-                  },
-                  {
-                    "kind": "constant",
-                    "name": "REPO_PARALLEL_YAML_FILE_NAME",
-                    "qualified_name": "stackops.utils.repos.stackops_paths.REPO_PARALLEL_YAML_FILE_NAME",
-                    "fullPath": "stackops.utils.repos.stackops_paths.REPO_PARALLEL_YAML_FILE_NAME",
-                    "help": "'parallel.yaml'",
-                    "source": {
-                      "file": "src/stackops/utils/repos/stackops_paths.py",
-                      "module": "stackops.utils.repos.stackops_paths",
-                      "object": "REPO_PARALLEL_YAML_FILE_NAME",
                       "line": 11,
                       "docs_pages": [
                         "docs/api/utils/environment-and-projects.md"
@@ -11256,7 +11256,7 @@
                       "file": "src/stackops/utils/repos/stackops_paths.py",
                       "module": "stackops.utils.repos.stackops_paths",
                       "object": "REPO_SCRIPTS_DIRECTORY_NAME",
-                      "line": 13,
+                      "line": 12,
                       "docs_pages": [
                         "docs/api/utils/environment-and-projects.md"
                       ]
@@ -11307,7 +11307,7 @@
                       "file": "src/stackops/utils/repos/stackops_paths.py",
                       "module": "stackops.utils.repos.stackops_paths",
                       "object": "WORKSPACE_SOURCE_LABEL",
-                      "line": 14,
+                      "line": 13,
                       "docs_pages": [
                         "docs/api/utils/environment-and-projects.md"
                       ]
@@ -11383,158 +11383,6 @@
                           "module": "stackops.utils.schemas.config.config_types",
                           "object": "StackOpsConfigValues",
                           "line": 10,
-                          "docs_pages": [
-                            "docs/api/utils/environment-and-projects.md"
-                          ]
-                        },
-                        "children": []
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "kind": "package",
-                "name": "fire_agents",
-                "qualified_name": "stackops.utils.schemas.fire_agents",
-                "fullPath": "stackops.utils.schemas.fire_agents",
-                "help": "stackops.utils.schemas.fire_agents",
-                "children": [
-                  {
-                    "kind": "module",
-                    "name": "fire_agents_input",
-                    "qualified_name": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                    "fullPath": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                    "help": "TypedDict definitions for fire_agents.py inputs.",
-                    "doc": "TypedDict definitions for fire_agents.py inputs.\n\nThis module defines the structured input types for the fire_agents main function,\ncapturing all user inputs collected during interactive execution.",
-                    "source": {
-                      "file": "src/stackops/utils/schemas/fire_agents/fire_agents_input.py",
-                      "module": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                      "docs_pages": [
-                        "docs/api/utils/environment-and-projects.md"
-                      ]
-                    },
-                    "children": [
-                      {
-                        "kind": "class",
-                        "name": "FilePathSearchInput",
-                        "qualified_name": "stackops.utils.schemas.fire_agents.fire_agents_input.FilePathSearchInput",
-                        "fullPath": "stackops.utils.schemas.fire_agents.fire_agents_input.FilePathSearchInput",
-                        "help": "Input for file_path search strategy.",
-                        "doc": "Input for file_path search strategy.",
-                        "signature": {
-                          "text": "class FilePathSearchInput(TypedDict)"
-                        },
-                        "source": {
-                          "file": "src/stackops/utils/schemas/fire_agents/fire_agents_input.py",
-                          "module": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                          "object": "FilePathSearchInput",
-                          "line": 12,
-                          "docs_pages": [
-                            "docs/api/utils/environment-and-projects.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "class",
-                        "name": "FilenamePatternSearchInput",
-                        "qualified_name": "stackops.utils.schemas.fire_agents.fire_agents_input.FilenamePatternSearchInput",
-                        "fullPath": "stackops.utils.schemas.fire_agents.fire_agents_input.FilenamePatternSearchInput",
-                        "help": "Input for filename_pattern search strategy.",
-                        "doc": "Input for filename_pattern search strategy.",
-                        "signature": {
-                          "text": "class FilenamePatternSearchInput(TypedDict)"
-                        },
-                        "source": {
-                          "file": "src/stackops/utils/schemas/fire_agents/fire_agents_input.py",
-                          "module": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                          "object": "FilenamePatternSearchInput",
-                          "line": 24,
-                          "docs_pages": [
-                            "docs/api/utils/environment-and-projects.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "class",
-                        "name": "FireAgentsMainInput",
-                        "qualified_name": "stackops.utils.schemas.fire_agents.fire_agents_input.FireAgentsMainInput",
-                        "fullPath": "stackops.utils.schemas.fire_agents.fire_agents_input.FireAgentsMainInput",
-                        "help": "Complete input structure for fire_agents main function.",
-                        "doc": "Complete input structure for fire_agents main function.",
-                        "signature": {
-                          "text": "class FireAgentsMainInput(TypedDict)"
-                        },
-                        "source": {
-                          "file": "src/stackops/utils/schemas/fire_agents/fire_agents_input.py",
-                          "module": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                          "object": "FireAgentsMainInput",
-                          "line": 34,
-                          "docs_pages": [
-                            "docs/api/utils/environment-and-projects.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "class",
-                        "name": "FireAgentsRuntimeData",
-                        "qualified_name": "stackops.utils.schemas.fire_agents.fire_agents_input.FireAgentsRuntimeData",
-                        "fullPath": "stackops.utils.schemas.fire_agents.fire_agents_input.FireAgentsRuntimeData",
-                        "help": "Runtime data derived from inputs during execution.",
-                        "doc": "Runtime data derived from inputs during execution.",
-                        "signature": {
-                          "text": "class FireAgentsRuntimeData(TypedDict)"
-                        },
-                        "source": {
-                          "file": "src/stackops/utils/schemas/fire_agents/fire_agents_input.py",
-                          "module": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                          "object": "FireAgentsRuntimeData",
-                          "line": 55,
-                          "docs_pages": [
-                            "docs/api/utils/environment-and-projects.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "class",
-                        "name": "KeywordSearchInput",
-                        "qualified_name": "stackops.utils.schemas.fire_agents.fire_agents_input.KeywordSearchInput",
-                        "fullPath": "stackops.utils.schemas.fire_agents.fire_agents_input.KeywordSearchInput",
-                        "help": "Input for keyword_search strategy.",
-                        "doc": "Input for keyword_search strategy.",
-                        "signature": {
-                          "text": "class KeywordSearchInput(TypedDict)"
-                        },
-                        "source": {
-                          "file": "src/stackops/utils/schemas/fire_agents/fire_agents_input.py",
-                          "module": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                          "object": "KeywordSearchInput",
-                          "line": 19,
-                          "docs_pages": [
-                            "docs/api/utils/environment-and-projects.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "class",
-                        "name": "TasksPerPromptSplittingInput",
-                        "qualified_name": "stackops.utils.schemas.fire_agents.fire_agents_input.TasksPerPromptSplittingInput",
-                        "fullPath": "stackops.utils.schemas.fire_agents.fire_agents_input.TasksPerPromptSplittingInput",
-                        "help": "Input for tasks_per_prompt splitting strategy.",
-                        "doc": "Input for tasks_per_prompt splitting strategy.",
-                        "signature": {
-                          "text": "class TasksPerPromptSplittingInput(TypedDict)"
-                        },
-                        "source": {
-                          "file": "src/stackops/utils/schemas/fire_agents/fire_agents_input.py",
-                          "module": "stackops.utils.schemas.fire_agents.fire_agents_input",
-                          "object": "TasksPerPromptSplittingInput",
-                          "line": 29,
                           "docs_pages": [
                             "docs/api/utils/environment-and-projects.md"
                           ]
@@ -12394,6 +12242,27 @@
                       },
                       {
                         "kind": "function",
+                        "name": "require_layout_suffix",
+                        "qualified_name": "stackops.utils.schemas.layouts.layout_file.require_layout_suffix",
+                        "fullPath": "stackops.utils.schemas.layouts.layout_file.require_layout_suffix",
+                        "help": "require_layout_suffix",
+                        "doc": "",
+                        "signature": {
+                          "text": "def require_layout_suffix(path: Path) -> None"
+                        },
+                        "source": {
+                          "file": "src/stackops/utils/schemas/layouts/layout_file.py",
+                          "module": "stackops.utils.schemas.layouts.layout_file",
+                          "object": "require_layout_suffix",
+                          "line": 14,
+                          "docs_pages": [
+                            "docs/api/cluster/layouts.md"
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "kind": "function",
                         "name": "serialize_layouts_to_file",
                         "qualified_name": "stackops.utils.schemas.layouts.layout_file.serialize_layouts_to_file",
                         "fullPath": "stackops.utils.schemas.layouts.layout_file.serialize_layouts_to_file",
@@ -13095,7 +12964,7 @@
                     "name": "STACKOPS_VERSION",
                     "qualified_name": "stackops.utils.ssh_utils.abc.STACKOPS_VERSION",
                     "fullPath": "stackops.utils.ssh_utils.abc.STACKOPS_VERSION",
-                    "help": "'26.11.8'",
+                    "help": "'26.11.9'",
                     "source": {
                       "file": "src/stackops/utils/ssh_utils/abc.py",
                       "module": "stackops.utils.ssh_utils.abc",
@@ -13139,7 +13008,7 @@
                       "file": "src/stackops/utils/ssh_utils/ssh.py",
                       "module": "stackops.utils.ssh_utils.ssh",
                       "object": "SSH",
-                      "line": 18,
+                      "line": 21,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md"
@@ -13160,7 +13029,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "check_remote_is_dir",
-                          "line": 402,
+                          "line": 410,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13182,7 +13051,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "close",
-                          "line": 180,
+                          "line": 183,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13204,7 +13073,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "copy_from_here",
-                          "line": 458,
+                          "line": 466,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13226,7 +13095,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "copy_to_here",
-                          "line": 612,
+                          "line": 553,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13248,7 +13117,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "create_parent_dir_and_check_if_exists",
-                          "line": 363,
+                          "line": 384,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13270,7 +13139,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "expand_remote_path",
-                          "line": 443,
+                          "line": 451,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13292,7 +13161,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "from_config_file",
-                          "line": 27,
+                          "line": 30,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13314,7 +13183,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "get_local_repr",
-                          "line": 230,
+                          "line": 233,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13336,7 +13205,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "get_remote_repr",
-                          "line": 225,
+                          "line": 228,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13358,7 +13227,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "get_ssh_conn_str",
-                          "line": 235,
+                          "line": 238,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13380,7 +13249,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "restart_computer",
-                          "line": 186,
+                          "line": 189,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13402,7 +13271,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "run_lambda_function",
-                          "line": 327,
+                          "line": 338,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13424,7 +13293,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "run_py_remotely",
-                          "line": 308,
+                          "line": 319,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13446,7 +13315,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "run_shell_cmd_on_local",
-                          "line": 247,
+                          "line": 250,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13468,7 +13337,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "run_shell_cmd_on_remote",
-                          "line": 253,
+                          "line": 256,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13490,7 +13359,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "send_ssh_key",
-                          "line": 195,
+                          "line": 198,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"
@@ -13512,7 +13381,7 @@
                           "file": "src/stackops/utils/ssh_utils/ssh.py",
                           "module": "stackops.utils.ssh_utils.ssh",
                           "object": "simple_sftp_get",
-                          "line": 342,
+                          "line": 353,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md"

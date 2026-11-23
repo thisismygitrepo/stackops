@@ -16,7 +16,7 @@ export function createDataSpace({ activity, tools }) {
   let everySystem = false;
 
   const panel = createLivePanel({
-    title: "What is backed up", path: "devops data list", extra: ["--json"],
+    title: "What is backed up", path: "devops data list", extra: ["--json"], surface: { source: "Which backup list to read" },
     actions: [editButton(activity, { title: "the backup list", kind: "data" }, { label: "Edit the list", small: true })],
     render: (data, { setCount }) => {
       const entries = data?.entries ?? [];

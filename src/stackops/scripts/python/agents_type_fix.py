@@ -37,7 +37,9 @@ def launch_type_fix(
     on_directory_conflict: Annotated[AgentsDirectoryConflict, typer.Option("--on-directory-conflict", "-D", help="Existing agents directory: error, new-directory, or replace-owned.")] = "error",
     json_output: Annotated[bool, typer.Option("--json", "-j", help="Print generated artifact paths and launch state as JSON.")] = False,
 ) -> None:
-    from stackops.scripts.python.agents_parallel_commands import agents_create as agents_create_command
+    from stackops.scripts.python.helpers.helpers_agents.agents_impl import agents_create
+    from stackops.utils.default_agent import resolve_agent
+    from stackops.utils.schemas.fire_agents.fire_agents_types import DEFAULT_SEAPRATOR, DEFAULT_STAGGER_MAX
 
     issues_path: Path = REPORTS_DIR / f"""issues_{which_checker}.json"""
     try:
@@ -55,17 +57,32 @@ def launch_type_fix(
             typer.echo(f"""No diagnostics reported by {which_checker}; no agents created.""")
         return
     with redirect_stdout(sys.stderr if json_output else sys.stdout):
-        result = agents_create_command(
-            agent=agent,
-            context_path=str(issues_path),
-            agent_load=agent_load,
-            prompt=PROMPT,
-            job_name=f"""fix_{which_checker}_issues""",
-            on_directory_conflict=on_directory_conflict,
-            run=False,
-        )
-        if result is None:
-            raise RuntimeError("Type-fix generation did not return artifact paths")
+        try:
+            result = agents_create(
+                agent=resolve_agent(agent=agent),
+                model=None,
+                agent_load=agent_load,
+                context=None,
+                context_path=str(issues_path),
+                separator=DEFAULT_SEAPRATOR,
+                prompt=PROMPT,
+                prompt_path=None,
+                prompt_name=None,
+                job_name=f"""fix_{which_checker}_issues""",
+                join_prompt_and_context=False,
+                output_path=None,
+                agents_dir=None,
+                host="local",
+                reasoning=None,
+                provider=None,
+                on_directory_conflict=on_directory_conflict,
+                stagger_max=DEFAULT_STAGGER_MAX,
+            )
+        except ValueError as error:
+            raise typer.BadParameter(str(error)) from error
+        except RuntimeError as error:
+            typer.echo(str(error))
+            raise typer.Exit(code=1) from error
         if run:
             from stackops.scripts.python.terminal import run as terminal_run_command
 

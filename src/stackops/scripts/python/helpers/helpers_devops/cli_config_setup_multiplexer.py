@@ -15,7 +15,7 @@ def setup_multiplexer(
     ] = None,
     agent: Annotated[
         AgentMultiplexer | None,
-        typer.Option("--agent", "-a", help="Use this agent multiplexer (agents status/parallel) instead of prompting."),
+        typer.Option("--agent", "-a", help="Use this agent multiplexer (agents status) instead of prompting."),
     ] = None,
 ) -> None:
     from rich.console import Console
@@ -40,7 +40,7 @@ def setup_multiplexer(
     )
     selected_agent: AgentMultiplexer = agent if agent is not None else ask_choice(
         "Default agent multiplexer",
-        help_text="agents status and agents parallel use this one when --backend is omitted.",
+        help_text="agents status uses this one when --backend is omitted.",
         choices=AGENT_MULTIPLEXERS,
         default=configured_agent if configured_agent is not None else BUILTIN_DEFAULT_AGENT_MULTIPLEXER,
     )

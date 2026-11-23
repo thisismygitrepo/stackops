@@ -1,2 +1,1 @@
 PROMPTS_YAML_SCHEMA_PATH_REFERENCE = "prompts.schema.json"
-PARALLEL_YAML_SCHEMA_PATH_REFERENCE = "parallel.schema.json"

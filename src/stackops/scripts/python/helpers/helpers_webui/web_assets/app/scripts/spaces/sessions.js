@@ -48,7 +48,7 @@ export function createSessionsSpace({ activity, tools }) {
   }
 
   const layouts = createLivePanel({
-    title: "Saved layouts", path: "terminal list", extra: ["--json", "--tabs"], locked: ["show_tabs", "show_stats"], skeletonShape: "card",
+    title: "Saved layouts", path: "terminal list", extra: ["--json", "--tabs"], locked: ["show_tabs", "show_stats"], surface: { source: "Which layouts to list" }, skeletonShape: "card",
     actions: [editButton(activity, MY_LAYOUTS, { label: "Edit my layouts", small: true })],
     render: (data, { setCount }) => {
       const items = data?.layouts ?? [];

@@ -118,7 +118,7 @@ StackOps exposes standalone commands and an umbrella wrapper:
 | `devops` | Package installation, repo automation, config/data sync, self-management, networking, script execution, vault |
 | `cloud` | Cloud sync, copy, mount, SSH transfer, and OneDrive helpers |
 | `terminal` | Terminal session and layout management |
-| `agents` | AI agent scaffolding, MCP catalog installs, prompt runs, parallel workflows |
+| `agents` | AI agent scaffolding, MCP catalog installs, prompt runs |
 | `utils` | General-purpose utility commands |
 | `fire` | File, function, notebook, and app runner |
 | `preview` | File preview and `uv run` backend launcher |

@@ -164,14 +164,6 @@ machine-local symlink changes are command implementation modules, not general-pu
       show_source: false
       members_order: source
 
-## Fire agent input schema
-
-::: stackops.utils.schemas.fire_agents.fire_agents_input
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
 ## Repository schema
 
 ::: stackops.utils.schemas.repos.repos_types

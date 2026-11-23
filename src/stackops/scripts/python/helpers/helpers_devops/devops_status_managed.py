@@ -35,7 +35,6 @@ def check_managed_files_status() -> list[ManagedFileStatus]:
         "secrets": "Secrets",
         "repos": "Repository registry",
         "prompts": "Prompts / contexts",
-        "parallel": "Parallel runs",
         "mcp": "MCP catalog",
     }
     statuses: list[ManagedFileStatus] = []
@@ -52,7 +51,7 @@ def check_managed_files_status() -> list[ManagedFileStatus]:
                     (source.name, source.path)
                     for source in resolve_secret_sources(secrets_path=None, secrets_source="all")
                 )
-            case "prompts" | "parallel" | "mcp":
+            case "prompts" | "mcp":
                 locations = agent_managed_file_locations(kind=kind)
             case _:
                 locations = (("", spec.user_path),)

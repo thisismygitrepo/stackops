@@ -70,7 +70,6 @@ _AGENTS_COMMAND_PANEL_ORDER: Final[tuple[str, ...]] = (
     "run-prompt",
     "run-interactive",
     "ask",
-    "parallel",
     "iter",
 )
 
@@ -97,12 +96,6 @@ def _run_nested_app(ctx: typer.Context, app_factory: Callable[[], typer.Typer]) 
     nested_result: object = nested_app(ctx.args, prog_name=ctx.command_path, standalone_mode=False)
     if isinstance(nested_result, int):
         raise typer.Exit(code=nested_result)
-
-
-def parallel_group(ctx: typer.Context) -> None:
-    from stackops.scripts.python.agents_parallel import get_app as get_parallel_app
-
-    _run_nested_app(ctx, get_parallel_app)
 
 
 def browser_group(ctx: typer.Context) -> None:
@@ -894,10 +887,6 @@ def get_app() -> typer.Typer:
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     agents_app.callback()(configure_interaction)
-    agents_app.command(
-        "parallel", help="🧵 <p> Parallel agent workflow commands", short_help="🧵 <p> Parallel agent workflow commands", context_settings=_NESTED_APP_CONTEXT
-    )(parallel_group)
-    agents_app.command("p", help="Parallel agent workflow commands", hidden=True, context_settings=_NESTED_APP_CONTEXT)(parallel_group)
     agents_app.command(
         "browser", help="🌐 <b> Browser automation for agent CLIs and MCP", short_help="🌐 <b> Browser automation for agent CLIs/MCP",
         context_settings=_NESTED_APP_CONTEXT,

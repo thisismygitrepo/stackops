@@ -61,7 +61,12 @@ export function segmented(options, onPick) {
     element.classList.toggle("unset", index < 0);
     requestAnimationFrame(place);
   }
-  return { element, set };
+  // For captions that carry a count which changes while the control is on the page.
+  function label(texts) {
+    buttons.forEach((item, position) => (item.textContent = texts[position]));
+    requestAnimationFrame(place);
+  }
+  return { element, set, label };
 }
 
 export function stat({ glyph, hue, label, href }) {

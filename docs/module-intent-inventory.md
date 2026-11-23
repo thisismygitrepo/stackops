@@ -195,7 +195,6 @@ These **96** modules are the strongest candidates for `api` markers after manual
 | `stackops.utils.cloud.rclone_wrapper` | `python-api-candidate` | `medium` | funcs:8 | src/stackops/utils/cloud/rclone_wrapper.py | Was `utils.rclone_wrapper`; moved under `cloud/`. |
 | `stackops.cluster.scheduler` | `python-api` | `high` | api-doc, classes:4, funcs:2 | src/stackops/cluster/scheduler.py | Was `utils.scheduler`; moved to `cluster/`. |
 | `stackops.utils.schemas.config.config_types` | `python-api-candidate` | `medium` | - | src/stackops/utils/schemas/config/config_types.py |  |
-| `stackops.utils.schemas.fire_agents.fire_agents_input` | `python-api-candidate` | `medium` | classes:6 | src/stackops/utils/schemas/fire_agents/fire_agents_input.py |  |
 | `stackops.utils.schemas.installer.installer_types` | `python-api` | `high` | api-doc, classes:6, funcs:2 | src/stackops/utils/schemas/installer/installer_types.py |  |
 | `stackops.utils.schemas.layouts.layout_types` | `python-api` | `high` | api-doc, classes:3, funcs:2 | src/stackops/utils/schemas/layouts/layout_types.py |  |
 | `stackops.utils.schemas.repos.repos_types` | `python-api-candidate` | `medium` | classes:4 | src/stackops/utils/schemas/repos/repos_types.py |  |
@@ -212,9 +211,6 @@ These **263** modules are likely direct CLI modules or CLI-only implementation h
 | --- | --- | --- | --- | --- | --- | --- |
 | `stackops.scripts.python.agents` | `cli` | `cli-entrypoint` | `high` | entry:agents, typer, typer-app, cli-registration, get_app, main, __main__, funcs:10 | src/stackops/scripts/python/agents.py |  |
 | `stackops.scripts.python.agents_browser` | `cli` | `cli-module` | `high` | typer, typer-app, cli-registration, get_app, funcs:3 | src/stackops/scripts/python/agents_browser.py |  |
-| `stackops.scripts.python.agents_parallel` | `cli` | `cli-module` | `high` | typer, typer-app, cli-registration, get_app, funcs:1 | src/stackops/scripts/python/agents_parallel.py |  |
-| `stackops.scripts.python.agents_parallel_commands` | `cli` | `cli-module` | `high` | typer, funcs:5 | src/stackops/scripts/python/agents_parallel_commands.py |  |
-| `stackops.scripts.python.agents_parallel_run_command` | `cli` | `cli-module` | `high` | typer, funcs:1 | src/stackops/scripts/python/agents_parallel_run_command.py |  |
 | `stackops.scripts.python.ai.initai` | `cli-helper` | `cli-helper` | `medium` | funcs:4 | src/stackops/scripts/python/ai/initai.py |  |
 | `stackops.scripts.python.ai.scripts.dashboard` | `cli-helper` | `cli-helper` | `medium` | funcs:6 | src/stackops/scripts/python/ai/scripts/dashboard.py |  |
 | `stackops.scripts.python.ai.scripts.lint_and_type_check` | `cli-helper` | `cli-helper` | `medium` | main, __main__, funcs:9 | src/stackops/scripts/python/ai/scripts/lint_and_type_check.py |  |
@@ -279,9 +275,6 @@ These **263** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.graph.visualize.plotly_browser` | `cli-helper` | `cli-helper` | `medium` | classes:1, funcs:11 | src/stackops/scripts/python/graph/visualize/plotly_browser.py |  |
 | `stackops.scripts.python.graph.visualize.plotly_views` | `cli-helper` | `cli-helper` | `medium` | __main__, funcs:2 | src/stackops/scripts/python/graph/visualize/plotly_views.py |  |
 | `stackops.scripts.python.graph.visualize.rich_tree` | `cli-helper` | `cli-helper` | `medium` | funcs:4 | src/stackops/scripts/python/graph/visualize/rich_tree.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common` | `cli-helper` | `cli-helper` | `medium` | funcs:16 | src/stackops/scripts/python/helpers/helpers_agents/agent_impl_interactive/common.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:25 | src/stackops/scripts/python/helpers/helpers_agents/agent_impl_interactive/create_options.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main` | `cli-helper` | `cli-helper` | `medium` | main, classes:1, funcs:3 | src/stackops/scripts/python/helpers/helpers_agents/agent_impl_interactive/main.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex` | `cli-helper` | `cli-helper` | `medium` | funcs:1 | src/stackops/scripts/python/helpers/helpers_agents/agentic_frameworks/fire_codex.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_copilot` | `cli-helper` | `cli-helper` | `medium` | funcs:1 | src/stackops/scripts/python/helpers/helpers_agents/agentic_frameworks/fire_copilot.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_crush` | `cli-helper` | `cli-helper` | `medium` | funcs:1 | src/stackops/scripts/python/helpers/helpers_agents/agentic_frameworks/fire_crush.py |  |
@@ -297,11 +290,6 @@ These **263** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_agents.agents_create_inputs` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:5 | src/stackops/scripts/python/helpers/helpers_agents/agents_create_inputs.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_impl` | `cli` | `cli-module` | `high` | typer, funcs:12 | src/stackops/scripts/python/helpers/helpers_agents/agents_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl` | `cli-helper` | `cli-helper` | `medium` | funcs:2 | src/stackops/scripts/python/helpers/helpers_agents/agents_mcp_impl.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry` | `cli-helper` | `cli-helper` | `medium` | funcs:9 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_add_entry.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:9 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_run_config.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_impl` | `cli` | `cli-module` | `high` | typer, funcs:10 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_run_impl.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_yaml` | `cli-helper` | `cli-helper` | `medium` | funcs:18 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_run_yaml.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults` | `cli-helper` | `cli-helper` | `medium` | classes:1 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_yaml_defaults.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_rich_output` | `cli-helper` | `cli-helper` | `medium` | funcs:12 | src/stackops/scripts/python/helpers/helpers_agents/agents_rich_output.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_run_context` | `cli` | `cli-module` | `high` | typer, funcs:17 | src/stackops/scripts/python/helpers/helpers_agents/agents_run_context.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_run_impl` | `cli` | `cli-module` | `high` | typer, funcs:12 | src/stackops/scripts/python/helpers/helpers_agents/agents_run_impl.py |  |
@@ -309,9 +297,7 @@ These **263** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_agents.agents_skill_impl` | `cli-helper` | `cli-helper` | `medium` | funcs:9 | src/stackops/scripts/python/helpers/helpers_agents/agents_skill_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas` | `cli-helper` | `cli-helper` | `medium` | funcs:2 | src/stackops/scripts/python/helpers/helpers_agents/agents_yaml_schemas.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch` | `cli-helper` | `cli-helper` | `medium` | funcs:7 | src/stackops/scripts/python/helpers/helpers_agents/fire_agents_help_launch.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.fire_agents_help_search` | `cli-helper` | `cli-helper` | `medium` | funcs:2 | src/stackops/scripts/python/helpers/helpers_agents/fire_agents_help_search.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types` | `cli-helper` | `cli-helper` | `medium` | classes:2 | src/stackops/scripts/python/helpers/helpers_agents/fire_agents_helper_types.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.fire_agents_load_balancer` | `cli-helper` | `cli-helper` | `medium` | funcs:1 | src/stackops/scripts/python/helpers/helpers_agents/fire_agents_load_balancer.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.mcp_catalog` | `cli-helper` | `cli-helper` | `medium` | funcs:17 | src/stackops/scripts/python/helpers/helpers_agents/mcp_catalog.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.mcp_install` | `cli-helper` | `cli-helper` | `medium` | funcs:33 | src/stackops/scripts/python/helpers/helpers_agents/mcp_install.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.mcp_types` | `cli-helper` | `cli-helper` | `medium` | classes:5 | src/stackops/scripts/python/helpers/helpers_agents/mcp_types.py |  |
@@ -544,7 +530,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.graph.visualize.helpers_navigator` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/graph/visualize/helpers_navigator/__init__.py |  |
 | `stackops.scripts.python.helpers` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/__init__.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/agent_impl_interactive/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agentic_frameworks` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/agentic_frameworks/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.browser_guides` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/browser_guides/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.privacy.configs.aichat` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/privacy/configs/aichat/__init__.py |  |
@@ -562,7 +547,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_agents.privacy.configs.opencode` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/privacy/configs/opencode/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.privacy.configs.q` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/privacy/configs/q/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.privacy.configs.qwen` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/privacy/configs/qwen/__init__.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.templates` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_agents/templates/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_cloud/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_devops` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_devops/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_self_ai` | `package` | `package-marker` | `high` | - | src/stackops/scripts/python/helpers/helpers_devops/cli_self_ai/__init__.py |  |
@@ -755,9 +739,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/scripts/python/__init__.py |  |
 | `stackops.scripts.python.agents` | `cli` | `cli-entrypoint` | `high` | 1 | 326 | entry:agents, typer, typer-app, cli-registration, get_app, main, __main__, funcs:10 | src/stackops/scripts/python/agents.py |  |
 | `stackops.scripts.python.agents_browser` | `cli` | `cli-module` | `high` | 1 | 84 | typer, typer-app, cli-registration, get_app, funcs:3 | src/stackops/scripts/python/agents_browser.py |  |
-| `stackops.scripts.python.agents_parallel` | `cli` | `cli-module` | `high` | 1 | 62 | typer, typer-app, cli-registration, get_app, funcs:1 | src/stackops/scripts/python/agents_parallel.py |  |
-| `stackops.scripts.python.agents_parallel_commands` | `cli` | `cli-module` | `high` | 3 | 195 | typer, funcs:5 | src/stackops/scripts/python/agents_parallel_commands.py |  |
-| `stackops.scripts.python.agents_parallel_run_command` | `cli` | `cli-module` | `high` | 1 | 111 | typer, funcs:1 | src/stackops/scripts/python/agents_parallel_run_command.py |  |
 | `stackops.scripts.python.ai` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/scripts/python/ai/__init__.py |  |
 | `stackops.scripts.python.ai.initai` | `cli-helper` | `cli-helper` | `medium` | 1 | 189 | funcs:4 | src/stackops/scripts/python/ai/initai.py |  |
 | `stackops.scripts.python.ai.scripts` | `package` | `package-marker` | `high` | 5 | 6 | - | src/stackops/scripts/python/ai/scripts/__init__.py |  |
@@ -849,10 +830,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.graph.visualize.rich_tree` | `cli-helper` | `cli-helper` | `medium` | 1 | 73 | funcs:4 | src/stackops/scripts/python/graph/visualize/rich_tree.py |  |
 | `stackops.scripts.python.helpers` | `package` | `package-marker` | `high` | 1 | 0 | - | src/stackops/scripts/python/helpers/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/scripts/python/helpers/helpers_agents/__init__.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive` | `package` | `package-marker` | `high` | 0 | 2 | - | src/stackops/scripts/python/helpers/helpers_agents/agent_impl_interactive/__init__.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.common` | `cli-helper` | `cli-helper` | `medium` | 2 | 198 | funcs:16 | src/stackops/scripts/python/helpers/helpers_agents/agent_impl_interactive/common.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.create_options` | `cli-helper` | `cli-helper` | `medium` | 1 | 414 | classes:2, funcs:25 | src/stackops/scripts/python/helpers/helpers_agents/agent_impl_interactive/create_options.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main` | `cli-helper` | `cli-helper` | `medium` | 1 | 227 | main, classes:1, funcs:3 | src/stackops/scripts/python/helpers/helpers_agents/agent_impl_interactive/main.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agentic_frameworks` | `package` | `package-marker` | `high` | 1 | 2 | - | src/stackops/scripts/python/helpers/helpers_agents/agentic_frameworks/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_codex` | `cli-helper` | `cli-helper` | `medium` | 1 | 41 | funcs:1 | src/stackops/scripts/python/helpers/helpers_agents/agentic_frameworks/fire_codex.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agentic_frameworks.fire_copilot` | `cli-helper` | `cli-helper` | `medium` | 1 | 33 | funcs:1 | src/stackops/scripts/python/helpers/helpers_agents/agentic_frameworks/fire_copilot.py |  |
@@ -869,11 +846,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_agents.agents_create_inputs` | `cli-helper` | `cli-helper` | `medium` | 1 | 219 | classes:2, funcs:5 | src/stackops/scripts/python/helpers/helpers_agents/agents_create_inputs.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_impl` | `cli` | `cli-module` | `high` | 8 | 522 | typer, funcs:12 | src/stackops/scripts/python/helpers/helpers_agents/agents_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_mcp_impl` | `cli-helper` | `cli-helper` | `medium` | 1 | 116 | funcs:2 | src/stackops/scripts/python/helpers/helpers_agents/agents_mcp_impl.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_add_entry` | `cli-helper` | `cli-helper` | `medium` | 2 | 96 | funcs:9 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_add_entry.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_config` | `cli-helper` | `cli-helper` | `medium` | 6 | 204 | classes:2, funcs:9 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_run_config.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_impl` | `cli` | `cli-module` | `high` | 1 | 176 | typer, funcs:10 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_run_impl.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_run_yaml` | `cli-helper` | `cli-helper` | `medium` | 2 | 264 | funcs:18 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_run_yaml.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.agents_parallel_yaml_defaults` | `cli-helper` | `cli-helper` | `medium` | 4 | 57 | classes:1 | src/stackops/scripts/python/helpers/helpers_agents/agents_parallel_yaml_defaults.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_rich_output` | `cli-helper` | `cli-helper` | `medium` | 3 | 181 | funcs:12 | src/stackops/scripts/python/helpers/helpers_agents/agents_rich_output.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_run_context` | `cli` | `cli-module` | `high` | 3 | 364 | typer, funcs:17 | src/stackops/scripts/python/helpers/helpers_agents/agents_run_context.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.agents_run_impl` | `cli` | `cli-module` | `high` | 4 | 253 | typer, funcs:12 | src/stackops/scripts/python/helpers/helpers_agents/agents_run_impl.py |  |
@@ -882,9 +854,7 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_agents.agents_yaml_schemas` | `cli-helper` | `cli-helper` | `medium` | 5 | 29 | funcs:2 | src/stackops/scripts/python/helpers/helpers_agents/agents_yaml_schemas.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.browser_guides` | `package` | `package-marker` | `high` | 1 | 13 | - | src/stackops/scripts/python/helpers/helpers_agents/browser_guides/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.fire_agents_help_launch` | `cli-helper` | `cli-helper` | `medium` | 2 | 282 | funcs:7 | src/stackops/scripts/python/helpers/helpers_agents/fire_agents_help_launch.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.fire_agents_help_search` | `cli-helper` | `cli-helper` | `medium` | 0 | 82 | funcs:2 | src/stackops/scripts/python/helpers/helpers_agents/fire_agents_help_search.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.fire_agents_helper_types` | `cli-helper` | `cli-helper` | `medium` | 31 | 84 | classes:2 | src/stackops/scripts/python/helpers/helpers_agents/fire_agents_helper_types.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.fire_agents_load_balancer` | `cli-helper` | `cli-helper` | `medium` | 0 | 37 | funcs:1 | src/stackops/scripts/python/helpers/helpers_agents/fire_agents_load_balancer.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.mcp_catalog` | `cli-helper` | `cli-helper` | `medium` | 2 | 351 | funcs:17 | src/stackops/scripts/python/helpers/helpers_agents/mcp_catalog.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.mcp_install` | `cli-helper` | `cli-helper` | `medium` | 3 | 638 | funcs:33 | src/stackops/scripts/python/helpers/helpers_agents/mcp_install.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.mcp_types` | `cli-helper` | `cli-helper` | `medium` | 4 | 47 | classes:5 | src/stackops/scripts/python/helpers/helpers_agents/mcp_types.py |  |
@@ -916,7 +886,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_agents.privacy.configs.qwen.qwen_privacy` | `cli-helper` | `cli-helper` | `medium` | 2 | 24 | funcs:1 | src/stackops/scripts/python/helpers/helpers_agents/privacy/configs/qwen/qwen_privacy.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.privacy.privacy` | `cli-helper` | `cli-helper` | `medium` | 0 | 29 | __main__, __all__ | src/stackops/scripts/python/helpers/helpers_agents/privacy/privacy.py |  |
 | `stackops.scripts.python.helpers.helpers_agents.reasoning_capabilities` | `cli-helper` | `cli-helper` | `medium` | 19 | 92 | classes:1, funcs:6 | src/stackops/scripts/python/helpers/helpers_agents/reasoning_capabilities.py |  |
-| `stackops.scripts.python.helpers.helpers_agents.templates` | `package` | `package-marker` | `high` | 1 | 4 | - | src/stackops/scripts/python/helpers/helpers_agents/templates/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/scripts/python/helpers/helpers_cloud/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_copy` | `cli-helper` | `cli-helper` | `medium` | 2 | 453 | main, classes:1, funcs:12 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_copy.py |  |
 | `stackops.scripts.python.helpers.helpers_cloud.cloud_helpers` | `cli-helper` | `cli-helper` | `medium` | 1 | 46 | funcs:8 | src/stackops/scripts/python/helpers/helpers_cloud/cloud_helpers.py |  |
@@ -1213,7 +1182,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.utils.schemas.agents` | `package` | `package-marker` | `high` | 1 | 3 | - | src/stackops/utils/schemas/agents/__init__.py |  |
 | `stackops.utils.schemas.config` | `package` | `package-marker` | `high` | 1 | 15 | __all__ | src/stackops/utils/schemas/config/__init__.py |  |
 | `stackops.utils.schemas.config.config_types` | `api` | `python-api-candidate` | `medium` | 3 | 17 | - | src/stackops/utils/schemas/config/config_types.py |  |
-| `stackops.utils.schemas.fire_agents.fire_agents_input` | `api` | `python-api-candidate` | `medium` | 0 | 64 | classes:6 | src/stackops/utils/schemas/fire_agents/fire_agents_input.py |  |
 | `stackops.utils.schemas.installer` | `package` | `package-marker` | `high` | 3 | 3 | api-doc | src/stackops/utils/schemas/installer/__init__.py |  |
 | `stackops.utils.schemas.installer.installer_types` | `api` | `python-api` | `high` | 33 | 144 | api-doc, classes:6, funcs:2 | src/stackops/utils/schemas/installer/installer_types.py |  |
 | `stackops.utils.schemas.layouts` | `package` | `package-marker` | `high` | 1 | 3 | - | src/stackops/utils/schemas/layouts/__init__.py |  |

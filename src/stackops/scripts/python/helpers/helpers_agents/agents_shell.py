@@ -57,11 +57,6 @@ def get_agent_launcher_glob(*, is_windows: bool | None = None) -> str:
     return f"*_cmd.{extension}"
 
 
-def get_recreate_script_filename(*, is_windows: bool | None = None) -> str:
-    extension = "ps1" if _resolve_is_windows(is_windows=is_windows) else "sh"
-    return f"recreate_layout.{extension}"
-
-
 def get_script_runner_command(*, script_path: Path, is_windows: bool | None = None) -> str:
     resolved_is_windows = _resolve_is_windows(is_windows=is_windows)
     if resolved_is_windows:

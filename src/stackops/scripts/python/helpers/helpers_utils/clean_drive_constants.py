@@ -20,7 +20,7 @@ STACKOPS_SCRATCH_ENTRIES: dict[str, str] = {
 STACKOPS_TEMP_PATTERNS: tuple[str, ...] = (
     "stackops-browser-profiles/*/*", "stackops-python-api-graph-*", "stackops-serve-directory-*", "stackops-yazi-preview-*",
     "stackops-dmg-*", "stackops-openshell-*", "stackops-sshd-*", "stackops-zellij-*", "stackops_bulk_install_*",
-    "stackops_agent_impl_interactive", "run_shell_script_*", "seek_stdin_*", "inspect_repos_*", "agents_ask_*", "generic_instructions.md",
+    "run_shell_script_*", "seek_stdin_*", "inspect_repos_*", "agents_ask_*", "generic_instructions.md",
 )
 CK_INDEX_MARKER = ".lock"
 GREPAI_OLLAMA_MODEL = "nomic-embed-text"

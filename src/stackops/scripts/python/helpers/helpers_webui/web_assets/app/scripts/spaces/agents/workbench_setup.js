@@ -9,7 +9,6 @@ import { createResetPanel } from "./workbench_reset.js";
 
 const KINDS = [
   { id: "prompts", title: "Saved prompts", body: "Instructions you reuse, ready to hand to any agent." },
-  { id: "parallel", title: "Parallel workflows", body: "Jobs that are split across several agents." },
   { id: "mcp", title: "Tool servers", body: "Extra tools an agent can be connected to." },
 ];
 const PLACES = [
@@ -20,7 +19,7 @@ const PLACES = [
 const VERDICTS = { ready: ["Ready", "good", "check"], missing: ["Not created", "", null], absent: ["No project here", "", null], broken: ["Needs fixing", "bad", "alert"] };
 const ACTIONS = [
   { path: "agents init", blurb: "Add the instructions and settings your agents look for to a project folder." },
-  { path: "agents config init", blurb: "Start a list of saved prompts, parallel workflows or tool servers." },
+  { path: "agents config init", blurb: "Start a list of saved prompts or tool servers." },
   { path: "agents config validate", blurb: "Make sure a list is written correctly before an agent relies on it." },
   { path: "agents reset", blurb: "Remove what has been added to your agents. It only shows the plan, and removes nothing until you switch Apply on.", caution: "Permanent, no backup" },
 ];

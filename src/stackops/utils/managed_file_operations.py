@@ -149,7 +149,7 @@ def validate_managed_file(*, kind: ManagedFileKind, data_path: Path) -> None:
                 from stackops.secrets.loader import load_secrets_file
 
                 load_secrets_file(secrets_path=data_path)
-            case "prompts" | "parallel" | "mcp":
+            case "prompts" | "mcp":
                 from stackops.utils.managed_agent_files import validate_agent_managed_file
 
                 validate_agent_managed_file(kind=kind, data_path=data_path)

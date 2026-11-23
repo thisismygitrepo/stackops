@@ -36,7 +36,8 @@ export function createMachineSpace(context) {
   });
 
   const startup = createLivePanel({
-    title: "Starts automatically", path: "utils machine autostart", extra: ["--json"],
+    // Matching by name or source is left to the table's own filter box, which is already on the page.
+    title: "Starts automatically", path: "utils machine autostart", extra: ["--json"], locked: ["name", "source"], surface: { show_all: "Include system services" },
     render: (data, { setCount }) => {
       const items = Array.isArray(data) ? data : [];
       setCount(items.length ? plural(items.length, "program") : "");

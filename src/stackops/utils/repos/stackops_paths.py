@@ -8,12 +8,11 @@ from stackops.utils.repos.project import resolve_project_root
 REPO_STACKOPS_DIRECTORY_NAME: Final[str] = ".stackops"
 REPO_STACKOPS_AGENTS_DIRECTORY_NAME: Final[str] = "agents"
 REPO_PROMPTS_YAML_FILE_NAME: Final[str] = "prompts.yaml"
-REPO_PARALLEL_YAML_FILE_NAME: Final[str] = "parallel.yaml"
 REPO_MCP_JSON_FILE_NAME: Final[str] = "mcp.json"
 REPO_SCRIPTS_DIRECTORY_NAME: Final[str] = "scripts"
 WORKSPACE_SOURCE_LABEL: Final[str] = "workspace"
 
-RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "parallel_yaml", "mcp_json", "scripts", "secrets_json", "layout_yaml"]
+RepoStackopsPathKind: TypeAlias = Literal["prompts_yaml", "mcp_json", "scripts", "secrets_json", "layout_yaml"]
 
 
 def _stackops_path(*, project_root: Path, path_kind: RepoStackopsPathKind) -> Path:
@@ -22,8 +21,6 @@ def _stackops_path(*, project_root: Path, path_kind: RepoStackopsPathKind) -> Pa
     match path_kind:
         case "prompts_yaml":
             return agents_root / REPO_PROMPTS_YAML_FILE_NAME
-        case "parallel_yaml":
-            return agents_root / REPO_PARALLEL_YAML_FILE_NAME
         case "mcp_json":
             return stackops_root / REPO_MCP_JSON_FILE_NAME
         case "scripts":

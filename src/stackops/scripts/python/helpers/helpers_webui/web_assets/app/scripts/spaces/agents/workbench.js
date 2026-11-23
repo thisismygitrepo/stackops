@@ -5,7 +5,7 @@ import { createBrainArea } from "./workbench_brain.js";
 import { createBrowserArea } from "./workbench_browser.js";
 import { createComputerArea } from "./workbench_computer.js";
 import { createLocalArea } from "./workbench_local.js";
-import { createParallelArea } from "./workbench_parallel.js";
+import { createLoopsArea } from "./workbench_loops.js";
 import { createSetupArea } from "./workbench_setup.js";
 
 const AREAS = [
@@ -13,23 +13,22 @@ const AREAS = [
   { id: "desktop", label: "Desktop control", caption: "Use of this computer", glyph: "monitor", hue: 262, create: createComputerArea },
   { id: "models", label: "Local models", caption: "AI on this machine", glyph: "server", hue: 160, create: createLocalArea },
   { id: "second-brain", label: "Second Brain", caption: "Ask and remember", glyph: "book", hue: 330, create: createBrainArea },
-  { id: "parallel", label: "Parallel runs", caption: "Many agents, one job", glyph: "lanes", hue: 32, create: createParallelArea },
+  { id: "loops", label: "Loops", caption: "Agents working in rounds", glyph: "lanes", hue: 32, create: createLoopsArea },
   { id: "setup", label: "Setup and cleanup", caption: "Prepare, start fresh", glyph: "wrench", hue: 290, create: createSetupArea },
 ];
 
-// Each area is built and loaded the first time it is shown. The address is #/agents/workbench/<area>.
-export function createWorkbenchSection(context) {
+// The strip of areas stays on the Agents page whichever section is open. Each area is built and loaded the first time it is shown. The address is #/agents/<area>.
+export function createWorkbench(context) {
   const built = new Map();
   const tabs = new Map(
     AREAS.map((area) => {
       const status = h("span", { class: "wb-tab-status", text: area.caption });
-      const tab = h("a", { class: "wb-tab", href: `#/agents/workbench/${area.id}` }, glyphTile(area.glyph, area.hue, 32), h("span", { class: "wb-tab-text" }, h("strong", { text: area.label }), status));
+      const tab = h("a", { class: "wb-tab", href: `#/agents/${area.id}` }, glyphTile(area.glyph, area.hue, 32), h("span", { class: "wb-tab-text" }, h("strong", { text: area.label }), status));
       return [area.id, { tab, status }];
     }),
   );
-  const stage = h("div", { class: "wb-stage" });
-  const strip = h("nav", { class: "wb-tabs", "aria-label": "Workbench areas" }, [...tabs.values()].map(({ tab }) => tab));
-  const element = h("div", { class: "agents-section workbench" }, strip, stage);
+  const strip = h("nav", { class: "wb-tabs", "aria-label": "More for your agents" }, [...tabs.values()].map(({ tab }) => tab));
+  const element = h("div", { class: "agents-section workbench", hidden: true });
   let current = null;
 
   function build(area) {
@@ -41,27 +40,32 @@ export function createWorkbenchSection(context) {
     // `failStatus` is for the panel an area takes its status from: when that panel does not load, the strip says so instead of keeping the last good status.
     const made = area.create(context, { setStatus, failStatus: () => setStatus("Couldn't check", "warn") });
     built.set(area.id, made);
-    stage.append(made.element);
+    element.append(made.element);
     return made;
   }
 
   return {
+    strip,
     element,
+    // Shows the area the address names, and says whether it named one.
     show(route) {
-      const asked = AREAS.find((candidate) => candidate.id === route[0]);
-      const area = asked ?? AREAS.find((candidate) => candidate.id === current) ?? AREAS[0];
-      // Coming back through the section switch lands on the area that was open, and the address says so.
-      if (!asked && current) history.replaceState(null, "", `#/agents/workbench/${area.id}`);
-      const shown = built.get(area.id) ?? build(area);
-      for (const [id, made] of built) made.element.hidden = id !== area.id;
+      const area = AREAS.find((candidate) => candidate.id === route[0]);
+      element.hidden = !area;
       for (const [id, { tab }] of tabs) {
-        if (id === area.id) tab.setAttribute("aria-current", "page");
+        if (id === area?.id) tab.setAttribute("aria-current", "page");
         else tab.removeAttribute("aria-current");
       }
+      if (!area) {
+        current = null;
+        return false;
+      }
+      const shown = built.get(area.id) ?? build(area);
+      for (const [id, made] of built) made.element.hidden = id !== area.id;
       if (current !== area.id) replay(shown.element, "wb-in");
       if (current !== null && current !== area.id) strip.scrollIntoView({ block: "nearest" });
       current = area.id;
       shown.show(route.slice(1));
+      return true;
     },
   };
 }

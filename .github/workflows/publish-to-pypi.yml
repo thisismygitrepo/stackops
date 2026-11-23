@@ -174,7 +174,6 @@ jobs:
 
         for module_name in (
             "stackops.utils.options_utils.textual_options_form",
-            "stackops.scripts.python.helpers.helpers_agents.agent_impl_interactive.main",
         ):
             importlib.import_module(module_name)
         print("Installed wheel checks passed")

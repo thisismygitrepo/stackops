@@ -9,12 +9,15 @@ import { formatBytes, plural } from "../words.js";
 import { COLLECT_WORDS, foundGroups, managedGroups } from "./dotfiles_groups.js";
 
 const IN_SYNC = "Configured";
+// On neither side: not on this machine and not in the dotfiles folder. A file for something that is not used here, so it stays out of the way unless it is asked for.
+const UNUSED = "Missing both paths";
 
 export function createDotfilesSpace({ activity, tools }) {
   // What the person chose is kept here, outside the panel's render, so it survives a refresh: the panel reloads when a sync ends, which is
   // exactly when the group that was open is the one to look at.
   let scope = "user";
   let typed = "";
+  let showUnused = false;
   const opened = { user: new Set(), library: new Set(), found: new Set() };
 
   async function collect(group) {
@@ -23,39 +26,70 @@ export function createDotfilesSpace({ activity, tools }) {
   }
 
   const panel = createLivePanel({
-    // The switches left out pick which sections the answer holds; the page needs all of them, so each one alone showed a false empty state.
-    title: "What is managed", path: "devops config dotfiles status", extra: ["--json"], locked: ["mappers", "sync", "radar", "storage", "expand"],
+    // No Options: the command's switches pick which sections the answer holds and the page needs all of them, and its group choice is what the search box here does.
+    title: "What is managed", path: "devops config dotfiles status", extra: ["--json"], tunable: false,
     actions: [editButton(activity, { title: "your dotfiles list", kind: "dotfiles" }, { label: "Edit my list", small: true })],
     render: (data, { setCount }) => {
       const everything = [...data.sync.user, ...data.sync.library];
       const synced = everything.filter((entry) => entry.status === IN_SYNC).length;
+      const unused = everything.filter((entry) => entry.status === UNUSED).length;
       const found = data.radar.filter((plan) => Object.hasOwn(COLLECT_WORDS, plan.verdict));
-      setCount(`${plural(everything.length, "file")} · ${synced} in sync`);
-      const tiles = [
-        [stat({ glyph: "check", hue: 155, label: "In sync" }), synced, `of ${everything.length} managed files`],
-        [stat({ glyph: "alert", hue: 30, label: "Need attention" }), everything.length - synced, "differ or are missing"],
-        [stat({ glyph: "plus", hue: 252, label: "Ready to collect" }), found.length, "listed under Found here"],
-        [stat({ glyph: "folder", hue: 200, label: "Stored" }), formatBytes(data.storage.dotfiles_root_footprint?.size_bytes ?? 0), `${(data.storage.dotfiles_root_footprint?.files ?? 0).toLocaleString()} files kept safe`],
-      ];
+      const listed = (entries) => (showUnused ? entries : entries.filter((entry) => entry.status !== UNUSED));
+      const inSync = stat({ glyph: "check", hue: 155, label: "In sync" });
+      const attention = stat({ glyph: "alert", hue: 30, label: "Need attention" });
+      const collectable = stat({ glyph: "plus", hue: 252, label: "Ready to collect" });
+      const stored = stat({ glyph: "folder", hue: 200, label: "Stored" });
       const holder = h("div", { class: "session-list" });
       const paint = () => {
+        unusedSwitch.hidden = scope === "found";
         const term = typed.trim().toLowerCase();
         const matches = (...words) => words.join(" ").toLowerCase().includes(term);
+        const matched = scope === "found" ? found.filter((plan) => matches(plan.group, plan.name)) : data.sync[scope].filter((entry) => matches(entry.program, entry.file_name, entry.status));
         const groups =
           scope === "found"
-            ? foundGroups(found.filter((plan) => matches(plan.group, plan.name)), collect, opened.found)
-            : managedGroups(data.sync[scope].filter((entry) => matches(entry.program, entry.file_name, entry.status)), (direction, group) => tools.open("devops config dotfiles sync", { preset: { direction, which: group, source: scope } }), opened[scope]);
+            ? foundGroups(matched, collect, opened.found)
+            : managedGroups(listed(matched), (direction, group) => tools.open("devops config dotfiles sync", { preset: { direction, which: group, source: scope } }), opened[scope]);
         if (groups.length) return holder.replaceChildren(...groups);
-        const body = term ? "No group, file, or status matches that filter." : scope === "found" ? "Every settings file StackOps recognises on this machine is already on a list." : "No files of this kind are managed.";
+        const body = matched.length
+          ? `${plural(matched.length, "file")} here ${matched.length === 1 ? "is" : "are"} neither on this machine nor in your dotfiles folder. Turn on Show unused to see ${matched.length === 1 ? "it" : "them"}.`
+          : term
+            ? "No group, file, or status matches that search."
+            : scope === "found"
+              ? "Every settings file StackOps recognises on this machine is already on a list."
+              : "No files of this kind are managed.";
         holder.replaceChildren(notice({ glyph: "folder", title: "Nothing here", body }));
       };
-      const picker = segmented([["user", `Yours · ${data.sync.user.length}`], ["library", `Built in · ${data.sync.library.length}`], ["found", `Found here · ${found.length}`]], (value) => {
+      const picker = segmented([["user", ""], ["library", ""], ["found", ""]], (value) => {
         scope = value;
         picker.set(scope);
         paint();
       });
+      const unusedSwitch = h(
+        "button",
+        {
+          class: "mini-toggle", type: "button", role: "switch", title: "Also list files that are neither on this machine nor in your dotfiles folder",
+          onclick: () => {
+            showUnused = !showUnused;
+            count();
+            paint();
+          },
+        },
+        h("i", { class: "switch" }),
+        h("span", { text: `Show unused · ${unused}` }),
+      );
+      // The numbers describe what is listed, so a file on neither side is counted only while it is shown, and never as one that needs attention.
+      const count = () => {
+        const total = everything.length - (showUnused ? 0 : unused);
+        setCount(`${plural(total, "file")} · ${synced} in sync`);
+        picker.label([`Yours · ${listed(data.sync.user).length}`, `Built in · ${listed(data.sync.library).length}`, `Found here · ${found.length}`]);
+        unusedSwitch.setAttribute("aria-checked", String(showUnused));
+        requestAnimationFrame(() => {
+          inSync.set(synced, `of ${total} managed files`);
+          attention.set(everything.length - unused - synced, unused === 0 ? "differ or are missing" : showUnused ? `${unused} more are not used here` : `${unused} not used here are hidden`);
+        });
+      };
       const filter = searchInput({
-        placeholder: "Filter groups",
+        placeholder: "Search groups and files",
         oninput: (value) => {
           typed = value;
           paint();
@@ -63,9 +97,19 @@ export function createDotfilesSpace({ activity, tools }) {
       });
       filter.input.value = typed;
       picker.set(scope);
+      count();
       paint();
-      requestAnimationFrame(() => tiles.forEach(([tile, value, note]) => tile.set(value, note)));
-      return h("div", { class: "stack" }, rise(h("div", { class: "stats" }, tiles.map(([tile]) => tile.element))), h("div", { class: "table-bar" }, picker.element, filter.element), holder);
+      requestAnimationFrame(() => {
+        collectable.set(found.length, "listed under Found here");
+        stored.set(formatBytes(data.storage.dotfiles_root_footprint?.size_bytes ?? 0), `${(data.storage.dotfiles_root_footprint?.files ?? 0).toLocaleString()} files kept safe`);
+      });
+      return h(
+        "div",
+        { class: "stack" },
+        rise(h("div", { class: "stats" }, [inSync, attention, collectable, stored].map((tile) => tile.element))),
+        h("div", { class: "table-bar" }, picker.element, filter.element, h("span", { class: "spacer" }), unused > 0 && unusedSwitch),
+        holder,
+      );
     },
   });
 

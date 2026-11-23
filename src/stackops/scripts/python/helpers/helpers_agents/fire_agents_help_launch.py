@@ -119,9 +119,9 @@ def get_api_keys(provider: PROVIDER, *, silent_if_missing: bool = False) -> list
     return res
 
 
-def validate_parallel_agent_host(*, agent: AGENTS, host: HOST) -> None:
+def validate_agent_host(*, agent: AGENTS, host: HOST) -> None:
     if host == "docker" and agent not in ("codex", "copilot", "cortex", "crush", "deepseek", "maki", "pi", "prime-agent"):
-        raise ValueError(f"""Parallel launches for '{agent}' do not support --host docker. Use --host local.""")
+        raise ValueError(f"""Launches for '{agent}' do not support the docker host. Use the local host.""")
 
 
 def prep_agent_launch(
@@ -140,7 +140,7 @@ def prep_agent_launch(
     job_name: str,
     stagger_max: float = DEFAULT_STAGGER_MAX,
 ) -> None:
-    validate_parallel_agent_host(agent=agent, host=machine)
+    validate_agent_host(agent=agent, host=machine)
     if not isfinite(stagger_max) or stagger_max < 0:
         raise ValueError("stagger_max must be a finite number greater than or equal to 0")
 

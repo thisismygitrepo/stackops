@@ -145,6 +145,12 @@
 .view-head + .panel { margin-top: 0; }
 .panel-head { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 10px 14px 6px 22px; }
 .panel-head h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+/* A panel's own choices, shown in its head rather than behind Options. */
+.panel-head:has(.panel-quick:not([hidden])) { flex-wrap: wrap; row-gap: 6px; }
+.panel-quick { display: flex; align-items: center; gap: 12px; margin-right: 4px; }
+.panel-quick .segmented button { height: 26px; padding: 0 11px; font-size: 12px; }
+.panel-quick .segmented-thumb { height: 26px; }
+.panel-quick .search-input { width: 200px; height: 32px; }
 .count { font-size: 12.5px; color: var(--ink-faint); }
 .panel-body { padding: 8px 22px 22px; transition: opacity 0.25s; }
 .panel.loading .panel-body { opacity: 0.55; }
@@ -153,7 +159,8 @@
 .tune-panel { display: grid; gap: 14px; width: 340px; max-width: calc(100vw - 48px); }
 .tune-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .tune-head h3 { font-size: 15px; font-weight: 700; }
-.table-bar { display: flex; align-items: center; gap: 12px; }
+.table-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.table-bar .segmented { flex: none; }
 
 .result, .value-block { display: grid; gap: 14px; min-width: 0; }
 .output { padding: 16px; overflow: auto; font: 12.5px/1.5 var(--mono); color: var(--ink-soft); white-space: pre; background: var(--well); border-radius: 16px; }
@@ -183,3 +190,9 @@
 .fold summary svg { transition: transform 0.3s var(--spring); }
 .fold[open] > summary svg { transform: rotate(90deg); }
 .fold > :not(summary) { margin: 0 14px 14px; animation: fade-in 0.3s; }
+/* A group of one beside the folds: the same outline, with the room a fold's arrow takes left empty so the names line up. */
+.fold-single { display: flex; align-items: center; gap: 8px; padding: 10px 14px 10px 35px; font-size: 13px; border: 1px solid var(--line); border-radius: 14px; }
+.fold-single > :not(.spacer, .single-paths) { flex: none; }
+.fold-single strong { font-weight: 650; }
+.fold-single .single-paths { display: flex; flex: 0 1 auto; align-items: center; gap: 2px; min-width: 0; margin-left: 6px; color: var(--ink-faint); }
+.fold-single .copy-chip { flex: 0 1 auto; min-width: 0; margin-left: 0; }

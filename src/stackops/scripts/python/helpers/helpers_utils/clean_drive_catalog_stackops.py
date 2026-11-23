@@ -51,7 +51,6 @@ STACKOPS_TARGETS: tuple[CleanTarget, ...] = (
                 *(PathGlob("home", f"""tmp_results/{directory}/{entries}""") for directory, entries in STACKOPS_SCRATCH_ENTRIES.items()),
                 PathGlob("home", ".cache/stackops/*/*"), PathGlob("home", "data/browsers-profiles/*/*/.tmp/*"),
                 *(PathGlob("temp", pattern) for pattern in STACKOPS_TEMP_PATTERNS),
-                PathGlob("filesystem_root", "tmp/stackops_agent_impl_interactive"),
             ),
             excluded_globs=(), min_age_days=STALE_TEMP_DAYS, requires_root=False,
         ) for platform in ALL_PLATFORMS},

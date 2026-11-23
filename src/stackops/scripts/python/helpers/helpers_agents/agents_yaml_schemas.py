@@ -7,11 +7,10 @@ from stackops.utils.path_reference import get_path_reference_path
 from stackops.utils.schemas.yaml_schema import JsonObject, ensure_yaml_schema_exists
 
 
-type StackopsYamlSchemaKind = Literal["prompts", "parallel"]
+type StackopsYamlSchemaKind = Literal["prompts"]
 
 _SCHEMA_PATH_REFERENCES: Final[dict[StackopsYamlSchemaKind, str]] = {
     "prompts": agents_schema_assets.PROMPTS_YAML_SCHEMA_PATH_REFERENCE,
-    "parallel": agents_schema_assets.PARALLEL_YAML_SCHEMA_PATH_REFERENCE,
 }
 
 

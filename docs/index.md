@@ -40,7 +40,7 @@ Coordinate selected packages, configuration, repositories, data, terminal layout
 * Synchronize configured dotfile mappings, with explicit copy, symlink, and conflict options.
 * Manage repository groups and transfer data through existing cloud and SSH tools.
 * Launch, inspect, export, and trace terminal layouts and sessions.
-* Configure supported coding-agent resources and run prompt or parallel workflows.
+* Configure supported coding-agent resources and run prompts.
 
 Use a focused command such as `terminal`, `agents`, or `cloud`, or explore them through `stackops`. Installer and backend availability varies by platform. Start with one workflow and the tools it requires.
 

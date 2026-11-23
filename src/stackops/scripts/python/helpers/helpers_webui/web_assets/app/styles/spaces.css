@@ -163,6 +163,8 @@
   .tray { left: calc(50% + 38px); width: calc(100vw - 110px); }
   .filter-row { margin: 0 -16px 6px -14px; padding: 6px 16px 12px 14px; }
   .mini-toggle span, .session-counts, .meter { display: none; }
+  .fold-single { flex-wrap: wrap; }
+  .fold-single .single-paths { order: 1; flex-basis: 100%; margin-left: 0; }
 }
 
 /* Apps: the catalog button beside the title, the actions beside the result count, bundle chips, and the pills in an app's sheet. */
