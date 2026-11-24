@@ -1,11 +1,15 @@
 from starlette.routing import Route
 
+from stackops.scripts.python.helpers.helpers_webui.dotfiles_routes import dotfiles_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_routes import machine_autostart_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_devices_routes import machine_devices_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_mount_routes import machine_mount_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_processes_routes import machine_processes_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_update_routes import machine_update_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_windows_routes import machine_windows_routes
+from stackops.scripts.python.helpers.helpers_webui.network_routes import network_routes
+from stackops.scripts.python.helpers.helpers_webui.security_routes import security_routes
+from stackops.scripts.python.helpers.helpers_webui.settings_routes import settings_routes
 from stackops.scripts.python.helpers.helpers_webui.terminal_ghostty_routes import terminal_ghostty_routes
 from stackops.scripts.python.helpers.helpers_webui.terminal_multiplexer_routes import terminal_multiplexer_routes
 from stackops.scripts.python.helpers.helpers_webui.terminal_shell_profile_routes import terminal_shell_profile_routes
@@ -28,4 +32,8 @@ def feature_routes() -> list[Route]:
         *machine_mount_routes(),
         *machine_windows_routes(),
         *machine_update_routes(),
+        *settings_routes(),
+        *dotfiles_routes(),
+        *network_routes(),
+        *security_routes(),
     ]

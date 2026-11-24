@@ -1,10 +1,11 @@
-import { h, toast } from "/assets/scripts/dom.js";
+import { h, icon, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { partLoaders } from "../features.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
 import { confirmAction } from "../overlays.js";
-import { createView, editButton, toolButton, toolCard } from "../space_kit.js";
-import { notice, searchInput, segmented, stat } from "../widgets.js";
+import { createParts, editButton, toolButton, viewHead } from "../space_kit.js";
+import { emojiTile, notice, searchInput, segmented, stat } from "../widgets.js";
 import { formatBytes, plural } from "../words.js";
 import { COLLECT_WORDS, foundGroups, managedGroups } from "./dotfiles_groups.js";
 
@@ -12,7 +13,16 @@ const IN_SYNC = "Configured";
 // On neither side: not on this machine and not in the dotfiles folder. A file for something that is not used here, so it stays out of the way unless it is asked for.
 const UNUSED = "Missing both paths";
 
-export function createDotfilesSpace({ activity, tools }) {
+// The cards at the foot of the page. Each opens a view of its own (feature_lists/dotfiles.js): two pages under this one and a side sheet.
+const MORE_TOOLS = [
+  { path: "devops config dotfiles export", title: "Move to a new machine", blurb: "Pack the whole folder into one protected archive to carry, share or send." },
+  { path: "devops config dotfiles import", title: "Bring settings from another machine", blurb: "See what an archive from the other machine would change here, then put it in place." },
+  { path: "devops config dotfiles register", title: "Add one file", blurb: "Keep one more settings file in your dotfiles folder and on your list." },
+];
+
+// Views that swap in place: the overview at #/dotfiles and the ones features.js lists for this page.
+export function createDotfilesSpace(context) {
+  const { activity, tools } = context;
   // What the person chose is kept here, outside the panel's render, so it survives a refresh: the panel reloads when a sync ends, which is
   // exactly when the group that was open is the one to look at.
   let scope = "user";
@@ -99,10 +109,13 @@ export function createDotfilesSpace({ activity, tools }) {
       picker.set(scope);
       count();
       paint();
+      const footprint = data.storage.dotfiles_root_footprint;
       requestAnimationFrame(() => {
         collectable.set(found.length, "listed under Found here");
-        stored.set(formatBytes(data.storage.dotfiles_root_footprint?.size_bytes ?? 0), `${(data.storage.dotfiles_root_footprint?.files ?? 0).toLocaleString()} files kept safe`);
+        stored.set(formatBytes(footprint?.size_bytes ?? 0), `${(footprint?.files ?? 0).toLocaleString()} files kept safe`);
       });
+      // The first card says how much there is to move, once that is known.
+      if (footprint?.size_bytes > 0) moreBlurbs.get("devops config dotfiles export")?.replaceChildren(`${formatBytes(footprint.size_bytes)} in one protected archive to carry, share or send.`);
       return h(
         "div",
         { class: "stack" },
@@ -113,24 +126,26 @@ export function createDotfilesSpace({ activity, tools }) {
     },
   });
 
-  const element = createView(
-    {
+  const offered = MORE_TOOLS.filter(({ path }) => state.nodes.has(path));
+  const moreBlurbs = new Map(offered.map(({ path, blurb }) => [path, h("span", { text: blurb })]));
+  const moreCards = offered.map(({ path, title }) =>
+    h("button", { class: "tool-card lit", type: "button", onclick: () => tools.open(path) }, emojiTile(state.nodes.get(path).icon || "✨", path, 40), h("span", { class: "tool-card-text" }, h("strong", { text: title }), moreBlurbs.get(path)), icon("arrow", 14)),
+  );
+  const overview = h(
+    "div",
+    {},
+    viewHead({
       title: "Dotfiles", lede: "Your settings files, kept in one safe place and applied wherever you work.",
       actions: [
         toolButton(tools, "devops config dotfiles collect", { label: "Collect", glyph: "plus" }),
         toolButton(tools, "devops config dotfiles sync", { label: "Save from this machine", glyph: "up", preset: { direction: "up" } }),
         toolButton(tools, "devops config dotfiles sync", { label: "Apply to this machine", glyph: "download", tone: "primary", preset: { direction: "down" } }),
       ],
-    },
+    }),
     panel.element,
-    h(
-      "div",
-      { class: "tool-grid" },
-      [["devops config dotfiles export", "Move to a new machine"], ["devops config dotfiles import", "Bring settings from another machine"], ["devops config dotfiles register", "Add one file"]]
-        .filter(([path]) => state.nodes.has(path))
-        .map(([path, label]) => toolCard(tools, state.nodes.get(path), label)),
-    ),
+    h("div", { class: "tool-grid" }, moreCards),
   );
+  const element = h("section", { class: "view", hidden: true }, overview);
+  return { element, show: createParts({ element, built: { "": { element: overview, show: () => panel.ensure() } }, loaders: partLoaders("dotfiles"), context }) };
 
-  return { element, show: () => panel.ensure() };
 }

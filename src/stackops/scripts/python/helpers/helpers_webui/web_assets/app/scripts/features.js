@@ -1,3 +1,8 @@
+import { SETTINGS_FEATURES } from "./feature_lists/settings.js";
+import { DOTFILES_FEATURES } from "./feature_lists/dotfiles.js";
+import { NETWORK_FEATURES } from "./feature_lists/network.js";
+import { SECURITY_FEATURES } from "./feature_lists/security.js";
+import { VAULT_FEATURES } from "./feature_lists/vault.js";
 import { openFind } from "./find_sheet.js";
 
 // Tools that have a view built for them in place of the form made from their options, by command path. Wherever such a tool is opened (a card,
@@ -19,6 +24,12 @@ const FEATURES = [
   { path: "utils machine mount", space: "machine", part: "mount", load: () => import("./spaces/machine/mount.js") },
   { path: "utils machine window", space: "machine", part: "windows", load: () => import("./spaces/machine/windows.js") },
   { path: "devops self update", space: "machine", part: "update", load: () => import("./spaces/machine/update.js") },
+  // One list per page, each kept by itself in feature_lists/.
+  ...SETTINGS_FEATURES,
+  ...DOTFILES_FEATURES,
+  ...NETWORK_FEATURES,
+  ...SECURITY_FEATURES,
+  ...VAULT_FEATURES,
 ];
 
 export function createGuides(context) {

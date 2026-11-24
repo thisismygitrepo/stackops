@@ -1,0 +1,151 @@
+/* The Dotfiles page's own views: Move to a new machine, Bring settings from another machine (spaces/dotfiles/), and the Add one file sheet. */
+.dotfiles-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
+.dotfiles-back svg { transition: transform 0.3s var(--spring); }
+.dotfiles-back:hover { color: var(--violet); }
+.dotfiles-back:hover svg { transform: translateX(-3px); }
+.dotfiles-stamp { align-self: center; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); }
+.dotfiles-part > div > .notice { background: var(--panel); }
+
+.dotfiles-columns { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr); align-items: start; gap: 18px; }
+.dotfiles-columns.solo { grid-template-columns: minmax(0, 1fr); }
+.dotfiles-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; }
+.dotfiles-card { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; padding: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
+.dotfiles-card > .notice { border: 0; padding: 26px 12px; }
+.dotfiles-plan { position: sticky; top: 4px; max-height: calc(100vh - 90px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.dotfiles-step-title { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.dotfiles-plan .dotfiles-step-title:not(:first-child) { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+.dotfiles-step { display: inline-grid; flex: none; place-items: center; width: 22px; height: 22px; font-size: 12px; font-weight: 700; line-height: 1; color: #fff; background: var(--brand); border-radius: 50%; }
+.dotfiles-card code, .dotfiles-sheet code { padding: 1px 5px; font-size: 0.92em; background: var(--well); border-radius: 5px; }
+
+.dotfiles-total { font-size: 13.5px; color: var(--ink-soft); }
+.dotfiles-total strong { font-size: 22px; font-weight: 750; letter-spacing: -0.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.dotfiles-bar { display: flex; gap: 3px; height: 14px; overflow: hidden; border-radius: 999px; }
+.dotfiles-bar i { flex: 0 0 0; min-width: 4px; background: hsl(var(--hue) 70% 58%); border-radius: 3px; transform-origin: left; animation: grow 0.7s var(--smooth) backwards; }
+.dotfiles-bar i.removed, .dotfiles-fate.removed { --hue: 345; }
+.dotfiles-bar i.replaced, .dotfiles-fate.replaced { --hue: 35; }
+.dotfiles-bar i.new, .dotfiles-fate.new { --hue: 155; }
+.dotfiles-bar i.same, .dotfiles-fate.same { --hue: 230; }
+.dotfiles-bar i.same { background: var(--line-strong); }
+.dotfiles-parts { display: grid; gap: 7px; font-size: 13px; }
+.dotfiles-parts li { display: grid; grid-template-columns: 10px minmax(0, 1.4fr) 82px minmax(40px, 1fr) 68px; align-items: center; gap: 10px; }
+.dotfiles-parts strong { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.dotfiles-parts .num { text-align: right; color: var(--ink-soft); }
+.dotfiles-dot { width: 10px; height: 10px; background: hsl(var(--hue) 70% 58%); border-radius: 50%; }
+.dotfiles-part-meter { height: 6px; overflow: hidden; background: var(--well); border-radius: 999px; }
+.dotfiles-part-meter i { display: block; height: 100%; background: hsl(var(--hue) 70% 58%); border-radius: 999px; }
+.dotfiles-remarks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 4px; }
+.dotfiles-remarks .btn { margin-top: 8px; }
+.dotfiles-examples { display: flex; flex-wrap: wrap; align-items: center; justify-self: stretch; gap: 2px 10px; min-width: 0; margin-top: 4px; font-size: 12px; }
+.dotfiles-examples .copy-chip { flex: 0 1 auto; margin-left: -8px; }
+
+.dotfiles-ways { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.dotfiles-way { display: flex; align-items: flex-start; gap: 12px; padding: 12px 13px; background: var(--well); border: 1px solid transparent; border-radius: 15px; transition: border-color 0.2s, background 0.2s; }
+.dotfiles-way:hover:not(:disabled) { border-color: var(--line-strong); }
+.dotfiles-way[aria-checked="true"] { background: var(--brand-wash); border-color: color-mix(in srgb, var(--violet) 45%, transparent); }
+.dotfiles-way-glyph { display: grid; flex: none; place-items: center; width: 34px; height: 34px; color: var(--violet); background: var(--violet-wash); border-radius: 11px; }
+.dotfiles-way[aria-checked="true"] .dotfiles-way-glyph { color: #fff; background: var(--brand); }
+.dotfiles-way-text { display: grid; gap: 2px; min-width: 0; }
+.dotfiles-way-text strong { font-size: 13.5px; font-weight: 650; }
+.dotfiles-way-text span { font-size: 12.5px; color: var(--ink-soft); }
+.dotfiles-block { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: -2px 0 2px; padding: 0 4px; font-size: 12.5px; color: var(--warn); }
+.dotfiles-passwords { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.dotfiles-place { display: flex; align-items: center; min-height: 24px; padding-left: 8px; font-size: 13px; }
+.dotfiles-plan .mini-toggle { justify-self: start; }
+.dotfiles-go { display: grid; gap: 8px; margin-top: 6px; }
+.dotfiles-go .btn { height: 44px; font-size: 14.5px; border-radius: 14px; }
+.dotfiles-problem { font-size: 12.5px; color: var(--warn); }
+.dotfiles-problem:empty { display: none; }
+
+.dotfiles-steps { display: grid; gap: 14px; counter-reset: dotfiles-step; }
+.dotfiles-steps li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 11px; counter-increment: dotfiles-step; }
+.dotfiles-steps li::before { content: counter(dotfiles-step); display: grid; place-items: center; width: 24px; height: 24px; font-size: 12px; font-weight: 700; color: var(--violet); background: var(--violet-wash); border-radius: 50%; }
+.dotfiles-steps li > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-width: 0; }
+.dotfiles-steps strong { font-size: 13.5px; font-weight: 650; }
+.dotfiles-steps p { font-size: 13px; color: var(--ink-soft); }
+.dotfiles-command { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 10px 7px 16px; background: var(--well); border-radius: 11px; }
+.dotfiles-command .copy-chip { color: var(--ink); }
+.dotfiles-command .copy-chip span { white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.dotfiles-command .copy-chip svg { flex: none; opacity: 0.6; }
+
+.dotfiles-banner { --tone: var(--violet); display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px; margin-bottom: 18px; padding: 16px 18px; background: var(--panel-solid); border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--line)); border-radius: 22px; box-shadow: var(--shadow); animation: swap-in 0.38s var(--smooth); }
+.dotfiles-banner.good { --tone: var(--good); }
+.dotfiles-banner.bad { --tone: var(--bad); }
+.dotfiles-banner-mark { display: grid; flex: none; place-items: center; width: 38px; height: 38px; color: var(--tone); background: color-mix(in srgb, var(--tone) 14%, transparent); border-radius: 13px; }
+.dotfiles-banner-text { display: grid; flex: 1 1 260px; grid-template-columns: minmax(0, 1fr); gap: 5px; min-width: 0; }
+.dotfiles-banner-text strong { font-size: 17px; font-weight: 750; letter-spacing: -0.02em; }
+.dotfiles-banner-text p { font-size: 13.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.dotfiles-banner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.dotfiles-pane { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.dotfiles-archives { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.dotfiles-archive { display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: center; gap: 2px 10px; padding: 10px 12px; color: var(--ink-faint); background: var(--well); border: 1px solid transparent; border-radius: 13px; transition: border-color 0.2s, background 0.2s; }
+.dotfiles-archive:hover { border-color: var(--line-strong); }
+.dotfiles-archive[aria-checked="true"] { color: var(--violet); background: var(--brand-wash); border-color: color-mix(in srgb, var(--violet) 45%, transparent); }
+.dotfiles-archive strong { overflow: hidden; font: 600 12.5px var(--mono); color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.dotfiles-archive .dim { grid-column: 2; font-size: 12px; }
+.dotfiles-drop { display: flex; align-items: center; gap: 12px; padding: 13px 14px; color: var(--ink-faint); border: 1px dashed var(--line-strong); border-radius: 14px; transition: border-color 0.2s, background 0.2s, color 0.2s; }
+.dotfiles-drop:hover, .dotfiles-drop.over { color: var(--violet); background: var(--violet-wash); border-color: var(--violet); }
+.dotfiles-drop.busy { opacity: 0.6; pointer-events: none; }
+.dotfiles-drop > span { display: grid; gap: 1px; min-width: 0; }
+.dotfiles-drop strong { font-size: 13px; font-weight: 650; color: var(--ink); }
+.dotfiles-drop span span { font-size: 12px; color: var(--ink-faint); }
+
+.dotfiles-idle { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 8px; padding: 26px 12px 14px; text-align: center; }
+.dotfiles-idle > .ring { width: 30px; height: 30px; margin-bottom: 8px; color: var(--violet); border-width: 3px; }
+.dotfiles-idle-glyph { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 6px; color: var(--violet); background: var(--violet-wash); border-radius: 19px; animation: float 3.6s ease-in-out infinite; }
+.dotfiles-idle h2 { font-size: 18px; font-weight: 750; letter-spacing: -0.02em; }
+.dotfiles-idle > p { max-width: 46ch; font-size: 13.5px; color: var(--ink-soft); }
+.dotfiles-idle .dotfiles-steps { justify-self: stretch; max-width: 460px; margin: 12px auto 0; padding: 14px 16px; text-align: left; background: var(--well); border-radius: 16px; }
+.dotfiles-idle .dotfiles-steps li { align-items: center; }
+.dotfiles-idle .dotfiles-steps p { color: var(--ink); }
+
+.dotfiles-fates { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.dotfiles-fate { display: grid; grid-template-columns: 10px auto minmax(0, 1fr); align-items: center; gap: 2px 8px; padding: 11px 13px; background: var(--well); border: 1px solid transparent; border-radius: 15px; transition: border-color 0.2s, background 0.2s; }
+.dotfiles-fate:hover:not(:disabled) { border-color: var(--line-strong); }
+.dotfiles-fate[aria-pressed="true"] { background: color-mix(in srgb, hsl(var(--hue) 70% 58%) 14%, var(--panel-solid)); border-color: hsl(var(--hue) 70% 58%); }
+.dotfiles-fate.same .dotfiles-dot { background: var(--line-strong); }
+.dotfiles-fate strong { font-size: 20px; font-weight: 750; letter-spacing: -0.03em; }
+.dotfiles-fate span { overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.dotfiles-fate small { grid-column: 1 / -1; font-size: 11.5px; color: var(--ink-faint); }
+.dotfiles-rows { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 14px; }
+.dotfiles-rows > .field-hint { padding: 14px; }
+.dotfiles-row { display: grid; grid-template-columns: 78px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 14px; font-size: 13px; }
+.dotfiles-row + .dotfiles-row { border-top: 1px solid var(--line); }
+.dotfiles-row .pill { justify-self: start; }
+.dotfiles-row-path { overflow: hidden; font: 12.5px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.dotfiles-card > .btn.ghost { justify-self: center; }
+.dotfiles-remarks a.btn { justify-self: start; }
+
+.dotfiles-sheet { gap: 18px; }
+.dotfiles-sheet-head { display: flex; align-items: flex-start; gap: 14px; padding-right: 36px; }
+.dotfiles-sheet-head h2 { font-size: 22px; font-weight: 750; letter-spacing: -0.025em; }
+.dotfiles-sheet-head p { font-size: 13.5px; color: var(--ink-soft); }
+.dotfiles-sheet .dotfiles-banner { margin-bottom: 0; }
+.dotfiles-status { font-size: 12.5px; color: var(--ink-faint); overflow-wrap: anywhere; }
+.dotfiles-status.good { color: var(--good); }
+.dotfiles-status.warn { color: var(--warn); }
+.dotfiles-status.bad { color: var(--bad); }
+.dotfiles-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: start; gap: 14px; }
+.dotfiles-sheet .dotfiles-remarks:empty { display: none; }
+.dotfiles-outcome { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px; background: var(--brand-wash); border: 1px solid color-mix(in srgb, var(--violet) 30%, transparent); border-radius: 18px; }
+.dotfiles-outcome.stops { background: color-mix(in srgb, var(--warn) 8%, var(--panel-solid)); border-color: color-mix(in srgb, var(--warn) 35%, var(--line)); }
+.dotfiles-outcome h3 { font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-faint); }
+.dotfiles-outcome > p { font-size: 14px; }
+.dotfiles-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-left: 8px; color: var(--ink-faint); }
+.dotfiles-flow .copy-chip { color: var(--ink); }
+.dotfiles-entry { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; gap: 4px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--violet) 22%, transparent); }
+.dotfiles-entry .copy-chip { margin-left: 0; }
+.dotfiles-entry pre { justify-self: stretch; margin-top: 4px; padding: 12px 14px; overflow-x: auto; font: 12.5px/1.55 var(--mono); background: var(--panel-solid); border: 1px solid var(--line); border-radius: 12px; }
+.sheet-foot .dotfiles-problem { max-width: 46ch; text-align: right; }
+
+@media (max-width: 1100px) {
+  .dotfiles-columns { grid-template-columns: minmax(0, 1fr); }
+  .dotfiles-plan { position: static; max-height: none; }
+}
+@media (max-width: 560px) {
+  .dotfiles-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .dotfiles-row .pill { grid-column: 1 / -1; }
+  .dotfiles-parts li { grid-template-columns: 10px minmax(0, 1fr) 68px; }
+  .dotfiles-parts li > .dim, .dotfiles-part-meter { display: none; }
+  .dotfiles-card { padding: 16px; border-radius: 20px; }
+}

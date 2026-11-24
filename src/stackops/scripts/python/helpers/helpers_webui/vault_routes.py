@@ -2,6 +2,8 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
+from stackops.scripts.python.helpers.helpers_webui.vault_bitwarden_routes import vault_bitwarden_routes
+from stackops.scripts.python.helpers.helpers_webui.vault_file_routes import vault_file_routes
 from stackops.scripts.python.helpers.helpers_webui.vault_form import VaultProblem
 from stackops.scripts.python.helpers.helpers_webui.vault_store import delete_vault_login, read_vault_login, save_vault_login
 from stackops.scripts.python.helpers.helpers_webui.vault_views import read_vault
@@ -9,6 +11,7 @@ from stackops.scripts.python.helpers.helpers_webui.vault_views import read_vault
 
 # What the Vault page reads and changes. A login is named by the file it is in and its place there, together with the version of the file the
 # page was shown. `base` is the folder the page works in, which decides where a project's own vault file is.
+# The views of the vault file itself and of Bitwarden keep their routes in modules of their own, under /api/vault/file/ and /api/vault/bitwarden/.
 def vault_routes(working_directory: str) -> list[Route]:
     def problem(found: VaultProblem) -> JSONResponse:
         return JSONResponse({"error": found.message}, status_code=found.status)
@@ -62,4 +65,6 @@ def vault_routes(working_directory: str) -> list[Route]:
         Route("/api/vault/login", read_login, methods=["GET"]),
         Route("/api/vault/login", save_login, methods=["PUT"]),
         Route("/api/vault/login", delete_login, methods=["DELETE"]),
+        *vault_file_routes(working_directory=working_directory),
+        *vault_bitwarden_routes(),
     ]

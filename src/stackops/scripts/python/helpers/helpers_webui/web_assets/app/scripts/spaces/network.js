@@ -1,18 +1,21 @@
-import { h } from "/assets/scripts/dom.js";
+import { h, icon } from "/assets/scripts/dom.js";
+import { request } from "/assets/scripts/state.js";
+import { staleKeeper } from "../data.js";
+import { partLoaders } from "../features.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
-import { createView, toolButton, toolGrid } from "../space_kit.js";
+import { createParts, linkCard, toolButton, toolGrid, viewHead } from "../space_kit.js";
 import { copyChip, glyphTile, notice, pill, sectionHead } from "../widgets.js";
 import { plural } from "../words.js";
+import { openChecks, passedPills, summaryText } from "./network/ssh/checks.js";
+import { ACCESS_CARDS, API, GLANCE_WORDS, HASHES } from "./network/words.js";
 
 const SHARE_TOOLS = ["devops network share-server", "devops network share-terminal", "devops network send", "devops network receive", "devops network share-temp-file", "devops network vscode-share"];
-const ACCESS_TOOLS = [
-  "devops network ssh install-server", "devops network ssh add-key", "devops network ssh map-port", "devops network device connect-wifi",
-  "devops network cloudflare connect-warp", "devops network cloudflare tunnel-status", "devops network cloudflare run-tunnel",
-];
-const CHECK_PILLS = { error: ["Problem", "bad"], unknown: ["Not confirmed", "warn"] };
 
-export function createNetworkSpace({ tools }) {
+// Views that swap in place: the overview at #/network, and the ones features.js lists for this page (SSH access, port forwards, Wi-Fi,
+// WARP and Cloudflare tunnels), each at an address of its own under it.
+export function createNetworkSpace(context) {
+  const { tools } = context;
   const address = (label, hue, glyph, value, note) =>
     h("article", { class: "address-card lit" }, glyphTile(glyph, hue, 42), h("span", { class: "stat-label", text: label }), value ? copyChip(value) : h("strong", { class: "dim", text: "Unavailable" }), h("span", { class: "dim", text: note }));
 
@@ -45,51 +48,56 @@ export function createNetworkSpace({ tools }) {
     },
   });
 
-  // The SSH check only reads. Its suggestions, some of them `sudo` commands, are offered to copy and never run from here.
+  // The SSH check only reads. The SSH page shows the same checks as steps, with the keys and the setup beside them.
   const access = createLivePanel({
     title: "Remote access", path: "devops network ssh debug", extra: ["--json"], tunable: false,
+    actions: [h("a", { class: "btn small ghost", href: HASHES.ssh, title: "Whose keys are allowed, and how to switch SSH on" }, icon("key", 14), h("span", { text: "Keys and setup" }))],
     render: ({ checks, summary }, { setCount }) => {
-      const fine = checks.filter((check) => check.status === "ok");
-      const open = checks.filter((check) => check.status !== "ok").sort((left, right) => (right.status === "error") - (left.status === "error"));
-      setCount(summary.ready ? "ready for SSH connections" : [summary.error_count > 0 && plural(summary.error_count, "problem"), summary.unknown_count > 0 && `${summary.unknown_count} not confirmed`].filter(Boolean).join(" · "));
-      return h(
-        "div",
-        { class: "stack" },
-        fine.length > 0 && h("div", { class: "project-facts" }, fine.map((check) => pill(check.label, "good"))),
-        open.length > 0 &&
-          rise(
-            h(
-              "ul",
-              { class: "session-list" },
-              open.map((check) =>
-                h(
-                  "li",
-                  { class: "session-row check-row" },
-                  h("div", { class: "session-text" }, h("strong", { text: check.label }), h("span", { text: check.message }), check.manual_advice.map((advice) => h("span", { class: "dim", text: advice })), check.command_suggestions.map((command) => copyChip(command))),
-                  pill(...CHECK_PILLS[check.status]),
-                ),
-              ),
-            ),
-          ),
-      );
+      const fine = passedPills(checks);
+      setCount(summaryText(summary));
+      return h("div", { class: "stack" }, fine.length > 0 && h("div", { class: "project-facts" }, fine), openChecks(checks));
     },
   });
 
-  const element = createView(
-    {
+  // Each card says in a few words how its subject stands, from one quick reading of this machine. A reading that fails leaves the cards
+  // as plain links, which they are without it.
+  const stands = new Map();
+  const cards = h(
+    "div",
+    { class: "tool-grid" },
+    ACCESS_CARDS.map((card) => {
+      const element = linkCard(card);
+      stands.set(card.id, element.querySelector(".tool-card-text").appendChild(h("em", { class: "network-glance" })));
+      return element;
+    }),
+  );
+  const glance = staleKeeper(cards, async () => {
+    const answer = await request("GET", `${API}/glance`).catch(() => null);
+    if (answer === null) return glance.spoil();
+    for (const [id, stand] of stands) {
+      const { text, tone } = GLANCE_WORDS[id](answer);
+      stand.textContent = text;
+      stand.className = `network-glance ${tone}`;
+    }
+  });
+
+  const overview = h(
+    "div",
+    {},
+    viewHead({
       title: "Network", lede: "Where this machine lives on the network, and quick ways to share with others.",
       actions: [toolButton(tools, "devops network share-server", { label: "Share a folder", glyph: "share", tone: "primary" })],
-    },
+    }),
     panel.element,
     h("section", { class: "block" }, sectionHead("Share"), toolGrid(tools, SHARE_TOOLS)),
     access.element,
-    h("section", { class: "block" }, sectionHead("Set up and connect"), toolGrid(tools, ACCESS_TOOLS)),
+    h("section", { class: "block" }, sectionHead("Set up and connect"), cards),
   );
-  return {
-    element,
-    show: () => {
-      panel.ensure();
-      access.ensure();
-    },
+  const show = () => {
+    panel.ensure();
+    access.ensure();
+    glance.ensure();
   };
+  const element = h("section", { class: "view", hidden: true }, overview);
+  return { element, show: createParts({ element, built: { "": { element: overview, show } }, loaders: partLoaders("network"), context }) };
 }

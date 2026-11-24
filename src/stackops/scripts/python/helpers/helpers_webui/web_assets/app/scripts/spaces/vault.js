@@ -1,26 +1,30 @@
 import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
 import { markStale } from "../data.js";
+import { partLoaders } from "../features.js";
 import { createPanel } from "../live_panel.js";
 import { rise } from "../motion.js";
 import { confirmAction } from "../overlays.js";
-import { createView, editButton, toolGrid } from "../space_kit.js";
-import { button, callout, notice, searchInput, sectionHead, segmented } from "../widgets.js";
+import { createParts, editButton, viewHead } from "../space_kit.js";
+import { button, callout, notice, searchInput, segmented } from "../widgets.js";
 import { plural } from "../words.js";
 import { addLogin, openLoginEditor } from "./vault/login_editor.js";
 import { loginRow } from "./vault/login_list.js";
 import { createLoginView } from "./vault/login_view.js";
+import { createToolSections } from "./vault/overview_tools.js";
+import { listRequest } from "./vault/tools_kit.js";
 import { EVERYWHERE, REVEALS, haystackOf, keyOf, placeLabel, valueCount } from "./vault/words.js";
 
-const FILE_TOOLS = ["devops vault validate", "devops vault stats", "devops vault subset", "devops vault init"];
-const BITWARDEN_TOOLS = ["devops vault bitwarden login-and-unlock", "devops vault bitwarden search", "devops vault bitwarden sync", "devops vault bitwarden clean-cache"];
 const STEP_KEYS = { ArrowDown: 1, ArrowUp: -1 };
 
 // The secrets StackOps keeps: a list of logins on one side, the chosen one in full on the other. The layout and its class names are the saved
 // prompts' (agents_prompts.css); what is the vault's own is in vault.css.
 // The page reads and changes the vault files through the server's /api/vault, not through the CLI: no command lists values with their file and
 // place, and one that printed them would put every secret in a command's output.
-export function createVaultSpace({ activity, tools }) {
+// Under the list sit the tool cards (vault/overview_tools.js). Their views that are pages of their own, the vault file's and Bitwarden's, swap
+// in at #/vault/file and #/vault/bitwarden (feature_lists/vault.js).
+export function createVaultSpace(context) {
+  const { activity, tools } = context;
   // Kept outside the panel's render, so a refresh leaves the page as it was. How much is shown is not remembered: every start of the app begins hidden.
   let reveal = "hidden";
   let term = "";
@@ -33,6 +37,7 @@ export function createVaultSpace({ activity, tools }) {
   const blank = h("div", { class: "prompt-blank" });
   const places = h("div", { class: "prompt-places" });
   const panes = h("div", { class: "prompt-panes", "data-pane": "list" });
+  const toolSections = createToolSections({ tools });
   const view = createLoginView({ activity, onEdit: edit, onDelete: remove, onBack: () => (panes.dataset.pane = "list") });
   panes.append(list, view.element, blank);
   const search = searchInput({
@@ -134,6 +139,7 @@ export function createVaultSpace({ activity, tools }) {
       };
       const filled = data.sources.filter((source) => source.logins.length > 0);
       setCount(vault.logins.length > 0 ? `${plural(vault.logins.length, "login")} · ${plural(vault.logins.reduce((total, login) => total + valueCount(login), 0), "value")}` : "");
+      toolSections.paintFiles(data.sources);
       if (!filled.some((source) => source.name === place)) place = EVERYWHERE;
       // A choice of place is only offered when the logins come from more than one.
       placePicker =
@@ -167,23 +173,38 @@ export function createVaultSpace({ activity, tools }) {
   });
   panel.element.classList.add("prompts-panel");
 
-  const element = createView(
-    {
+  const overview = h(
+    "div",
+    {},
+    viewHead({
       title: "Vault", lede: "The logins, keys and tokens StackOps keeps for you, ready to load into a terminal or a program.",
       actions: [button({ label: "Add a login", glyph: "plus", tone: "primary", onclick: add })],
-    },
+    }),
     panel.element,
-    h("section", { class: "block" }, sectionHead("Check and share the vault file"), toolGrid(tools, FILE_TOOLS)),
-    h("section", { class: "block" }, sectionHead("Bitwarden"), toolGrid(tools, BITWARDEN_TOOLS)),
+    toolSections.elements,
   );
+  const element = h("section", { class: "view", hidden: true }, overview);
 
-  return {
-    element,
-    show() {
-      panes.dataset.pane = "list";
-      panel.ensure();
-      revealPicker.set(reveal);
-      placePicker?.set(place);
-    },
-  };
+  // What a tool's view asked the list to show on the way here: a search word, or one login.
+  function takeRequest() {
+    if (listRequest.term === null && listRequest.key === null) return;
+    term = (listRequest.term ?? "").toLowerCase();
+    search.input.value = listRequest.term ?? "";
+    place = EVERYWHERE;
+    if (listRequest.key) selected = listRequest.key;
+    Object.assign(listRequest, { term: null, key: null });
+    if (vault.logins.length > 0) paint();
+    if (selected && shownLogins().some((login) => keyOf(login) === selected)) panes.dataset.pane = "reader";
+  }
+
+  function showOverview() {
+    panes.dataset.pane = "list";
+    takeRequest();
+    panel.ensure();
+    toolSections.readBitwarden();
+    revealPicker.set(reveal);
+    placePicker?.set(place);
+  }
+
+  return { element, show: createParts({ element, built: { "": { element: overview, show: showOverview } }, loaders: partLoaders("vault"), context }) };
 }

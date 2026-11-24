@@ -28,6 +28,11 @@ APP_STYLESHEETS: Final[tuple[str, ...]] = (
     "/assets/app/styles/machine_mount.css",
     "/assets/app/styles/machine_windows.css",
     "/assets/app/styles/machine_update.css",
+    "/assets/app/styles/settings.css",
+    "/assets/app/styles/dotfiles.css",
+    "/assets/app/styles/network.css",
+    "/assets/app/styles/security_tools.css",
+    "/assets/app/styles/vault_tools.css",
 )
 DEVELOPER_STYLESHEETS: Final[tuple[str, ...]] = (
     "/assets/styles/base.css",

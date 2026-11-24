@@ -1,0 +1,179 @@
+/* The sheets of the Security page's tools: install from a scan, export a scan, upload, download, encrypt and decrypt. Every name starts with "sec-". */
+
+/* The cards on the page: one line about this machine under each description. */
+.sec-card-fact { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 5px; font-size: 12px; font-weight: 600; color: var(--ink-faint); }
+.sec-card-fact i { flex: none; width: 7px; height: 7px; background: var(--line-strong); border-radius: 50%; }
+.sec-card-fact span { display: block; overflow: hidden; font-size: 12px; color: inherit; text-overflow: ellipsis; white-space: nowrap; }
+.sec-card-fact.good { color: var(--good); }
+.sec-card-fact.good i { background: var(--good); }
+.sec-card-fact.warn { color: var(--warn); }
+.sec-card-fact.warn i { background: var(--warn); }
+
+/* What every sheet shares: titled parts, a line of status under a box, a picked file, a run on its way, and how it ended. */
+.sec-tool { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.sec-tool-part { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.sec-tool-part > h2 { font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-faint); }
+.sec-tool-holder { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.sec-tool-holder:empty { display: none; }
+.sec-tool-holder > .skeleton { margin: 0; }
+.sec-tool-hint { font-size: 12.5px; color: var(--ink-faint); }
+.sec-tool-hint.bad { color: var(--bad); }
+.sec-tool-line { font-size: 13.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.sec-tool-line strong { font-weight: 650; color: var(--ink); }
+.sec-path { padding: 1px 6px; font-size: 12px; color: var(--ink); background: var(--well); border-radius: 6px; overflow-wrap: anywhere; }
+.sec-tool-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 12.5px; color: var(--ink-soft); }
+.sec-tool-status > svg, .sec-tool-status > .ring { flex: none; }
+.sec-tool-status > span { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.sec-tool-status > .ring { width: 13px; height: 13px; color: var(--violet); }
+.sec-tool-status.good { color: var(--good); }
+.sec-tool-status.warn { color: var(--warn); }
+.sec-tool-status.bad { color: var(--bad); }
+.sec-tool-wait { flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink-faint); text-align: right; overflow-wrap: anywhere; }
+
+.sec-file { display: flex; align-items: center; gap: 13px; padding: 12px 14px; background: var(--well); border-radius: 16px; }
+.sec-file-glyph { display: grid; flex: none; place-items: center; width: 40px; height: 40px; color: var(--violet); background: var(--violet-wash); border-radius: 12px; }
+.sec-file-text { display: grid; flex: 1; gap: 1px; min-width: 0; font-size: 12.5px; color: var(--ink-soft); }
+.sec-file-text strong { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 14.5px; font-weight: 650; color: var(--ink); }
+.sec-file-text strong > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.sec-file-text > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sec-meter { display: flex; height: 8px; overflow: hidden; background: var(--well); border-radius: 999px; }
+.sec-meter.thin { flex: 0 0 90px; height: 6px; }
+.sec-meter i { width: calc(var(--share) * 100%); transform-origin: left; animation: grow 0.8s var(--smooth) backwards; }
+.sec-meter .go { background: var(--brand); }
+.sec-meter .wait { background: var(--line-strong); }
+.sec-meter .full { background: var(--bad); }
+
+.sec-run { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 14px 16px; background: var(--brand-wash); border: 1px solid color-mix(in srgb, var(--violet) 30%, transparent); border-radius: 18px; }
+.sec-run > .ring { flex: none; width: 20px; height: 20px; color: var(--violet); }
+.sec-run-text { display: grid; flex: 1 1 220px; gap: 3px; min-width: 0; }
+.sec-run-text strong { font-weight: 650; overflow-wrap: anywhere; }
+.sec-run-note { font-size: 12.5px; color: var(--ink-soft); }
+.sec-run-meter { display: flex; height: 6px; margin-top: 4px; overflow: hidden; background: var(--line); border-radius: 999px; }
+.sec-run-meter i { width: calc(var(--share) * 100%); background: var(--brand); transition: width 0.5s var(--smooth); }
+.sec-run-clock { font-size: 12.5px; color: var(--ink-soft); }
+.sec-run-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.sec-outcome { --tone: var(--good); display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 14px; padding: 16px; background: color-mix(in srgb, var(--tone) 8%, var(--panel-solid)); border: 1px solid color-mix(in srgb, var(--tone) 32%, var(--line)); border-radius: 18px; animation: pop-in 0.4s var(--smooth); }
+.sec-outcome.bad { --tone: var(--bad); }
+.sec-outcome-mark { display: grid; flex: none; place-items: center; width: 36px; height: 36px; color: var(--tone); background: color-mix(in srgb, var(--tone) 17%, transparent); border-radius: 12px; }
+.sec-outcome-text { display: grid; flex: 1 1 260px; gap: 8px; min-width: 0; }
+.sec-outcome-text h3 { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.sec-outcome-text > p { font-size: 13.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.sec-outcome-text .sec-file { background: var(--panel-solid); border: 1px solid var(--line); }
+.sec-outcome-path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.sec-outcome-path .copy-chip { margin-left: 0; padding: 5px 10px; font-size: 12.5px; color: var(--ink); text-align: left; background: var(--panel-solid); border: 1px solid var(--line); }
+.sec-outcome-path .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.sec-outcome-path .copy-chip svg { flex: none; opacity: 0.55; }
+.sec-outcome-path .link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; }
+.sec-outcome-said { display: grid; gap: 4px; padding-left: 16px; font-size: 12.5px; color: var(--ink-soft); list-style: disc; }
+.sec-outcome-actions { display: flex; flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+/* A round mark for one choice out of several, and a square one for a choice that can be ticked. */
+.sec-dot { position: relative; flex: none; width: 18px; height: 18px; background: var(--panel-solid); border: 1.5px solid var(--line-strong); border-radius: 50%; transition: border-color 0.2s, box-shadow 0.2s; }
+.sec-dot::after { content: ""; position: absolute; inset: 3.5px; background: var(--violet); border-radius: 50%; transform: scale(0); transition: transform 0.3s var(--spring); }
+[aria-pressed="true"] > .sec-dot { border-color: var(--violet); }
+[aria-pressed="true"] > .sec-dot::after { transform: scale(1); }
+.sec-tick { display: grid; flex: none; place-items: center; width: 19px; height: 19px; color: transparent; background: var(--panel-solid); border: 1.5px solid var(--line-strong); border-radius: 6px; transition: background 0.2s, border-color 0.2s, color 0.2s; }
+[aria-checked="true"] > .sec-tick { color: #fff; background: var(--violet); border-color: var(--violet); }
+.sec-tick.off { color: var(--ink-faint); background: var(--well); border-color: transparent; }
+
+/* The saved scans to choose one from. */
+.sec-runs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.sec-runs-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.sec-runs-bar .search-input { flex: 1 1 200px; width: auto; height: 34px; }
+.sec-runs-bar .segmented button { height: 26px; padding: 0 10px; font-size: 12px; }
+.sec-runs-bar .segmented-thumb { height: 26px; }
+.sec-runs-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; max-height: 268px; padding: 4px; overflow-y: auto; border: 1px solid var(--line); border-radius: 16px; }
+.sec-runs-row, .sec-runs-chosen { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 12px; }
+.sec-runs-row { transition: background 0.2s, border-color 0.2s; }
+.sec-runs-row:hover { background: var(--well); }
+.sec-runs-row[aria-pressed="true"] { background: var(--brand-wash); border-color: color-mix(in srgb, var(--violet) 32%, transparent); }
+.sec-runs-chosen { padding: 10px 12px; background: var(--well); border-radius: 16px; }
+.sec-runs-text { display: grid; flex: 1 1 200px; min-width: 0; }
+.sec-runs-text strong { overflow: hidden; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.sec-runs-text span { overflow: hidden; font-size: 12.5px; color: var(--ink-soft); text-overflow: ellipsis; white-space: nowrap; }
+.sec-runs-note { flex: none; font-size: 12px; font-weight: 600; color: var(--ink-faint); }
+.sec-runs-note.fits { color: var(--violet); }
+.sec-runs-none { padding: 16px; font-size: 13px; color: var(--ink-faint); text-align: center; }
+
+/* Install from a scan: what would be installed, as a bar, four counts and a list to tick. */
+.sec-install-plan { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.sec-install-summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.sec-install-summary > .notice { padding: 26px 20px; }
+.sec-install-counts { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--ink-soft); }
+.sec-install-counts strong { margin-right: 3px; font-size: 16px; font-weight: 750; color: var(--ink); font-variant-numeric: tabular-nums; }
+.sec-install-where { font-size: 13px; color: var(--ink-soft); }
+.sec-install-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.sec-install-bar .search-input { flex: 0 1 200px; height: 34px; }
+.sec-install-picks { display: flex; flex-wrap: wrap; gap: 4px; margin: -4px 0; }
+.sec-install-picks:empty { display: none; }
+.sec-install-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.sec-install-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; width: 100%; min-height: 52px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 14px; transition: background 0.2s, border-color 0.2s; }
+button.sec-install-row:hover { border-color: var(--line-strong); }
+button.sec-install-row[aria-checked="true"] { background: var(--brand-wash); border-color: color-mix(in srgb, var(--violet) 30%, transparent); }
+.sec-install-row.skipped { background: var(--well); border-color: transparent; }
+.sec-install-row.skipped .avatar { opacity: 0.45; filter: grayscale(1); }
+.sec-install-text { display: grid; flex: 1 1 220px; min-width: 0; }
+.sec-install-text strong { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 650; }
+.sec-install-text strong > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sec-install-text > span { overflow: hidden; font-size: 12.5px; color: var(--ink-soft); text-overflow: ellipsis; white-space: nowrap; }
+.sec-install-row.skipped .sec-install-text > span { white-space: normal; }
+
+/* Export a scan: the four files with their sizes. */
+.sec-export-files { display: grid; border: 1px solid var(--line); border-radius: 16px; }
+.sec-export-files li { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 14px; }
+.sec-export-files li + li { border-top: 1px solid var(--line); }
+.sec-export-glyph { display: grid; flex: none; place-items: center; width: 30px; height: 30px; color: var(--violet); background: var(--violet-wash); border-radius: 9px; }
+.sec-export-text { display: grid; flex: 1; min-width: 0; }
+.sec-export-text strong { font: 600 13px var(--mono); }
+.sec-export-text span { overflow: hidden; font-size: 12.5px; color: var(--ink-soft); text-overflow: ellipsis; white-space: nowrap; }
+.sec-export-size { flex: 0 0 64px; font-size: 12.5px; color: var(--ink-soft); text-align: right; }
+
+/* Upload: the cloud a file goes to, and the folders it lands in. */
+.sec-cloud > .skeleton { margin: 0; }
+.sec-cloud > .notice { padding: 28px 22px; }
+.sec-cloud-card { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 14px; background: var(--well); border-radius: 16px; }
+.sec-cloud-text { display: grid; flex: 1 1 220px; gap: 2px; min-width: 0; font-size: 12.5px; color: var(--ink-soft); }
+.sec-cloud-text strong { overflow: hidden; font-size: 14.5px; font-weight: 650; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.sec-cloud-space { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 18px; margin-top: 3px; }
+.sec-cloud-space .sec-meter { flex: 0 1 160px; }
+.sec-cloud-detail { min-width: 0; font-size: 12.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.sec-cloud-detail.bad { color: var(--bad); }
+.sec-cloud-command { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; gap: 4px; margin-top: 10px; padding: 10px 14px; text-align: left; border: 1px solid var(--line); border-radius: 14px; }
+.sec-cloud-command > span { font-size: 12px; font-weight: 600; color: var(--ink-faint); }
+.sec-cloud-command .copy-chip { margin-left: 0; font-size: 12.5px; color: var(--ink); }
+.sec-cloud-command .copy-chip svg { opacity: 0.55; }
+.sec-landing { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 2px; padding: 12px 14px; font: 12px var(--mono); color: var(--ink-soft); background: var(--well); border-radius: 16px; }
+.sec-landing li { max-width: 100%; padding: 3px 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 8px; }
+.sec-landing .sep { padding: 3px 0; color: var(--ink-faint); }
+.sec-landing .cloud { font-weight: 650; color: var(--ink); }
+.sec-landing .cloud::after { content: ":"; }
+.sec-landing .print { color: var(--violet); background: var(--violet-wash); }
+.sec-landing .file { font-weight: 650; color: var(--ink); }
+
+/* Encrypt and decrypt: the two halves, the password boxes, and the keys to choose from. */
+.sec-lock-mode { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: -6px; }
+.sec-lock-gpg { font-size: 12.5px; color: var(--ink-faint); }
+.sec-secret { display: grid; grid-template-columns: minmax(0, 1fr) 32px; align-items: center; gap: 8px 6px; max-width: 460px; }
+.sec-secret .text-input:last-child { grid-column: 1; }
+.sec-tool .field .combo.pick-only { max-width: 280px; }
+.sec-keys-box { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.sec-keys-box .search-input { width: auto; height: 34px; }
+.sec-keys { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; max-height: 260px; padding: 4px; overflow-y: auto; border: 1px solid var(--line); border-radius: 16px; }
+.sec-keys-row { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 9px 10px; border: 1px solid transparent; border-radius: 12px; transition: background 0.2s, border-color 0.2s; }
+.sec-keys-row > .sec-dot { margin-top: 2px; }
+.sec-keys-row:hover:not(:disabled) { background: var(--well); }
+.sec-keys-row[aria-pressed="true"] { background: var(--brand-wash); border-color: color-mix(in srgb, var(--violet) 32%, transparent); }
+.sec-keys-text { display: grid; flex: 1; gap: 1px; min-width: 0; font-size: 12.5px; color: var(--ink-soft); }
+.sec-keys-text strong { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13.5px; font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.sec-keys-text > span { overflow-wrap: anywhere; }
+.sec-tool .toggle-row { width: 100%; text-align: left; }
+.sec-tool .toggle-row strong { font-weight: 650; }
+.sec-toggle-note { font-size: 12.5px; color: var(--ink-soft); }
+
+@media (max-width: 860px) {
+  .sec-meter.thin, .sec-runs-note { display: none; }
+  .sec-tool-wait { flex-basis: 100%; text-align: left; }
+  .sec-outcome-actions { justify-content: flex-start; }
+}

@@ -18,6 +18,7 @@ import { createReportsSpace } from "./spaces/reports.js";
 import { createScriptsSpace } from "./spaces/scripts.js";
 import { createSecuritySpace } from "./spaces/security.js";
 import { createSessionsSpace } from "./spaces/sessions.js";
+import { createSettingsSpace } from "./spaces/settings.js";
 import { createToolboxSpace } from "./spaces/toolbox.js";
 import { createVaultSpace } from "./spaces/vault.js";
 import { createSpotlight } from "./spotlight.js";
@@ -60,6 +61,7 @@ async function start() {
     machine: createMachineSpace(context),
     security: createSecuritySpace(context),
     vault: createVaultSpace(context),
+    settings: createSettingsSpace(context),
     reports: createReportsSpace(context),
     tools: createToolboxSpace(context),
   });
