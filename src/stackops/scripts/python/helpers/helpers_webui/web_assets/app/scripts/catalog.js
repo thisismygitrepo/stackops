@@ -30,7 +30,7 @@ export const TOOL_TITLES = {
   utils: "Utilities", "utils machine": "Machine", "utils file": "Files", "utils pyproject": "Python projects", fire: "Launch", seek: "Find in files",
   "devops software install": "Install apps", "devops software uninstall": "Delete apps", "devops self update": "Update StackOps", "devops self status": "Machine status",
   "devops network show-address": "Network addresses", "devops network share-server": "Share a folder", "devops network share-terminal": "Share this terminal",
-  "utils machine clean-drive": "Free up disk space", "utils machine kill-process": "Stop a process", "utils machine autostart": "Startup programs",
+  "utils machine clean-drive": "Free up disk space", "utils machine kill-process": "Processes", "utils machine autostart": "Startup programs",
   "utils machine specs": "Machine specs", "agents run-prompt": "Run a prompt", "agents run-interactive": "Start a chat", "agents add-skill": "Add a skill",
   "agents add-mcp": "Add an MCP server", "agents doctor": "Agent health check", "terminal run": "Launch a layout", "terminal summary": "Running sessions", "terminal list": "Saved layouts",
   "devops network send": "Send files", "devops network receive": "Receive files", "devops network share-temp-file": "Share a temporary link",
@@ -47,6 +47,7 @@ export const TOOL_TITLES = {
   "devops data validate": "Check the backup list", cloud: "Cloud storage", "cloud sync": "Keep a folder in sync", "cloud copy": "Upload or download",
   "cloud mount": "Mount cloud storage", "cloud transfer": "Move files between machines",
   "devops config terminal": "Terminal look", "devops config setup": "Guided setup", "terminal kill": "End a session", "terminal attach": "Open a session", "terminal export": "Save sessions as layouts", "devops config terminal config-shell": "Shell profile",
+  "devops config setup multiplexer": "Default multiplexer", "devops config terminal starship-theme": "Starship prompt",
   "agents browser": "Browser automation", "agents browser launch": "Open a browser", "agents browser batch-launch": "Open saved profiles",
   "agents browser close": "Close a browser", "agents browser batch-close": "Close saved profiles", "agents browser status": "Open browsers",
   "agents browser declutter": "Slim down a profile", "agents browser replicate": "Copy a profile", "agents browser install": "Set up browser tools",
@@ -67,6 +68,21 @@ export const TOOL_TITLES = {
   "devops vault bitwarden login-and-unlock": "Unlock Bitwarden", "devops vault bitwarden sync": "Sync Bitwarden", "devops vault bitwarden clean-cache": "Clear the Bitwarden cache",
   "devops vault bitwarden export-session": "Hand the Bitwarden session to a terminal",
   "devops scripts run": "Run a script or a command", "devops scripts list": "Saved scripts", "devops scripts path": "Where scripts are kept", "devops scripts edit": "Edit a script",
+};
+
+// What a tool's card and search entry say about it, for the tools whose view does more than their command's one-line help says (features.js).
+export const TOOL_BLURBS = {
+  "devops config setup multiplexer": "Choose where sessions start and where agents are looked for: tmux, Zellij, TUIOS, Herdr or AoE.",
+  "devops config terminal config-shell": "See which shells load StackOps' setup, and set one up.",
+  "devops config terminal starship-theme": "See which prompt look is in use and choose another, in a terminal or by name.",
+  "devops config terminal wezterm-theme": "See which theme WezTerm uses, and choose another in a terminal or by name.",
+  "devops config terminal ghostty-theme": "See which theme Ghostty uses and change it, in its own picker or by name.",
+  "utils machine kill-process": "See what is running and what uses the most CPU and memory, and stop what you do not need.",
+  "utils machine autostart": "See what starts with this computer and at sign-in, what is running now, and turn off what you do not need.",
+  "utils machine list-devices": "Every disk and volume on this computer, how full each one is, and a way to mount, unmount or eject it.",
+  "utils machine mount": "Pick a disk, say where it should appear, and mount it.",
+  "utils machine window": "See every open window by app and screen. Bring one to the front, minimize it or close it.",
+  "devops self update": "See what is installed, what is newer, and update in one click.",
 };
 
 // Options that only make sense on a command line: output formats, alternate renderers, and file overrides the app already picks for you.
@@ -157,7 +173,10 @@ export const ESSENTIAL_FLAGS = {
 // Runs a page only starts behind its own confirmation: the words the command begins with, then any switch it must also carry, wherever that sits.
 // Activity offers no "Run again" for these, because that would repeat them without asking. Left out on purpose, as repeating them is harmless:
 // collecting dotfiles (refuses once done), saving a session over a layout (only shown when it failed), installing from a link (same source again).
-export const CONFIRMED_RUNS = ["utils machine clean-drive", "terminal kill", "devops data sync down", "agents status --btw", "devops repos action --push", "devops security scan"];
+export const CONFIRMED_RUNS = [
+  "utils machine clean-drive", "terminal kill", "devops data sync down", "agents status --btw", "devops repos action --push", "devops security scan",
+  "devops config terminal config-shell", "devops config copy-assets", "devops self update --dev", "devops self update --sync-configs",
+];
 
 // Names for the installer's bundles (`devops software install <name> --group`), whose own names are abbreviations.
 export const BUNDLE_TITLES = {

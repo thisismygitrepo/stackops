@@ -1,0 +1,89 @@
+import platform
+from collections.abc import Callable
+from dataclasses import asdict
+from typing import cast
+
+from starlette.concurrency import run_in_threadpool
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
+from starlette.routing import Route
+
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_actions import remove_launch_agent, turn_off, turn_on
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_constants import GONE_MESSAGE
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_detail import read_startup_detail
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_login_items import remove_login_item, restore_login_item
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_model import ProblemReason, RemovedLoginItem, StartupProblem
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_read import read_startup
+
+PROBLEM_STATUS: dict[ProblemReason, int] = {"unsupported": 501, "failed": 409, "unknown_entry": 404, "refused": 403}
+LAUNCHD_ACTIONS: dict[str, Callable[[str], StartupProblem | None]] = {"turn-off": turn_off, "turn-on": turn_on, "remove": remove_launch_agent}
+
+
+def _refusal(problem: StartupProblem) -> JSONResponse:
+    return JSONResponse({"error": problem.message}, status_code=PROBLEM_STATUS[problem.reason])
+
+
+# What the Startup programs page reads and does. The list is what `utils machine autostart` lists, read through the command's own helpers,
+# with more about each entry than the command prints. A system it cannot be read on answers with `unavailable` and the reason, which the
+# page shows in place of the list. Turning an entry off, back on, or removing it has no command, so it is done here, on macOS, and only
+# for what belongs to the person: their own launch agents and login items. A login item taken off the list is remembered until this
+# server stops, so the page can put it back.
+def machine_autostart_routes() -> list[Route]:
+    taken_off: dict[str, RemovedLoginItem] = {}
+
+    def read(_request: Request) -> JSONResponse:
+        picture = read_startup()
+        match picture:
+            case StartupProblem(reason="failed"):
+                return JSONResponse({"error": picture.message}, status_code=500)
+            case StartupProblem():
+                return JSONResponse({"unavailable": asdict(picture)})
+            case _:
+                return JSONResponse(picture)
+
+    def detail(request: Request) -> JSONResponse:
+        result = read_startup_detail(request.query_params.get("id", ""))
+        match result:
+            case StartupProblem():
+                return _refusal(result)
+            case _:
+                return JSONResponse(result)
+
+    def change(action: str, identifier: str) -> StartupProblem | None:
+        if platform.system() != "Darwin":
+            return StartupProblem(reason="unsupported", message="Startup programs can only be changed from here on macOS.")
+        if identifier.startswith("launchd:") and action in LAUNCHD_ACTIONS:
+            return LAUNCHD_ACTIONS[action](identifier)
+        if identifier.startswith("login:") and action == "remove":
+            removed = remove_login_item(identifier)
+            match removed:
+                case StartupProblem():
+                    return removed
+                case _:
+                    taken_off[identifier] = removed
+                    return None
+        if identifier.startswith("login:") and action == "put-back":
+            item = taken_off.get(identifier)
+            if item is None:
+                return StartupProblem(reason="unknown_entry", message=GONE_MESSAGE)
+            problem = restore_login_item(item)
+            if problem is None:
+                del taken_off[identifier]
+            return problem
+        return StartupProblem(reason="refused", message="That cannot be done to this entry.")
+
+    async def act(request: Request) -> Response:
+        if request.headers.get("content-type") != "application/json":
+            return JSONResponse({"error": "Send the entry as application/json."}, status_code=415)
+        body = await request.json()
+        identifier = cast(dict[str, object], body).get("id") if isinstance(body, dict) else None
+        if not isinstance(identifier, str):
+            return JSONResponse({"error": "Name the entry to change."}, status_code=400)
+        problem = await run_in_threadpool(change, request.path_params["action"], identifier)
+        return _refusal(problem) if problem is not None else Response(status_code=204)
+
+    return [
+        Route("/api/machine/autostart", read),
+        Route("/api/machine/autostart/detail", detail),
+        Route("/api/machine/autostart/{action}", act, methods=["POST"]),
+    ]

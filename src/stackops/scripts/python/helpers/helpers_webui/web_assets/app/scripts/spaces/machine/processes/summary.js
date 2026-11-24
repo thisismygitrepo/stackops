@@ -3,7 +3,7 @@ import { countUp } from "../../../motion.js";
 import { formatBytes } from "../../../words.js";
 import { FLAGS, topGroups } from "./model.js";
 import { createTrend } from "./trend.js";
-import { REFRESH_MILLISECONDS, cpuText, memoryText, processCount } from "./words.js";
+import { cpuText, memoryText, processCount } from "./words.js";
 
 const TOP_COUNT = 4;
 const TREND_LIMIT = 40;
@@ -111,7 +111,7 @@ export function createSummary({ onReveal, onFilter }) {
     cpuNote.textContent = machine.cpu === null ? "Measuring" : `of ${machine.cores} cores`;
     cpuGauge.set(machine.cpu ?? 0);
     cpuTrend.paint(history.map((reading) => reading.value));
-    cpuTop.paint(model, machine.cpu === null ? `The first figures take ${Math.round(REFRESH_MILLISECONDS / 1000)} seconds.` : "Nothing is working hard right now.");
+    cpuTop.paint(model, machine.cpu === null ? "The first figures take a moment." : "Nothing is working hard right now.");
     memoryFigure.textContent = formatBytes(machine.memory_used);
     memoryNote.textContent = `of ${formatBytes(machine.memory_total)} in use`;
     memoryGauge.set((machine.memory_used / machine.memory_total) * 100);

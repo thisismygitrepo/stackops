@@ -1,18 +1,19 @@
-import { h, icon, toast } from "/assets/scripts/dom.js";
+import { h, toast } from "/assets/scripts/dom.js";
 import { recall, remember } from "../../../memory.js";
 import { replay } from "../../../motion.js";
 import { button, notice, skeleton } from "../../../widgets.js";
-import { readProcesses, stopProcesses } from "./api.js";
+import { readProcesses } from "./api.js";
 import { confirmStop } from "./confirm.js";
 import { openDetail } from "./detail.js";
-import { createLive } from "./live.js";
-import { ancestors, buildModel, isNarrowed, keyOf, listRows, tally, treeRows } from "./model.js";
+import { createHead } from "./head.js";
+import { ancestors, buildModel, isNarrowed, listRows, tally, treeRows } from "./model.js";
 import { createOutcome, createTray } from "./outcome.js";
 import { createProblem } from "./problem.js";
+import { carryOut } from "./stopping.js";
 import { createSummary } from "./summary.js";
 import { COLUMNS, createTable } from "./table.js";
 import { createToolbar } from "./toolbar.js";
-import { REFRESH_MILLISECONDS, TOOL_PATH, givenFilters } from "./words.js";
+import { REFRESH_MILLISECONDS, givenFilters } from "./words.js";
 
 const MEMORY_ID = "machine processes";
 const ROW_STEP = 100;
@@ -40,7 +41,7 @@ export function createProcessesPage({ tools }) {
   const keep = () => remember(MEMORY_ID, new Map([["scope", filters.scope], ["mode", view.mode], ["column", sort.column], ["descending", sort.descending ? "yes" : "no"]]));
   const chosen = () => [...picked].map((key) => state.model.byKey.get(key)).filter(Boolean);
   const paintTray = () => tray.paint({ processes: state.model ? chosen() : [], busy: state.stopping });
-  const paintLive = () => live.paint({ paused: state.paused, failing: state.failure !== null, ended: state.ended, readAt: state.model?.taken_at ?? 0, loading: state.loading });
+  const paintHead = () => head.paint({ paused: state.paused, failing: state.failure !== null, ended: state.ended, readAt: state.model?.taken_at ?? 0, loading: state.loading });
 
   function changed() {
     state.limit = ROW_STEP;
@@ -69,7 +70,8 @@ export function createProcessesPage({ tools }) {
     stop,
     reveal,
   };
-  const live = createLive({
+  const head = createHead({
+    tools,
     onRefresh: () => load(true),
     onToggle() {
       state.paused = !state.paused;
@@ -119,29 +121,20 @@ export function createProcessesPage({ tools }) {
   const problem = createProblem({ tools, onRetry: () => load(true) });
   const waiting = h("div", { class: "procs-waiting" }, skeleton(8, "row"));
   const empty = h("div", { class: "procs-empty" });
-  const element = h(
-    "div",
-    { class: "procs" },
-    h(
-      "header",
-      { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "procs-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: "Processes" }), h("p", { text: "Everything running on this machine, read again every few seconds. Find what is slowing it down and stop it." })),
-      h("div", { class: "view-actions" }, live.elements, button({ label: "All options", glyph: "sliders", title: "The plain form, with every option of the command behind this page", onclick: () => tools.open(TOOL_PATH, { plain: true }) })),
-    ),
-    problem.element, waiting, summary.element, outcome.element, toolbar.element, table.element, empty, tray.element,
-  );
+  const element = h("div", { class: "procs" }, head.element, problem.element, waiting, summary.element, outcome.element, toolbar.element, table.element, empty, tray.element);
 
   function paint() {
     const { model } = state;
-    paintLive();
+    paintHead();
     problem.paint({ listed: model !== null, failure: state.failure, ended: state.ended });
     waiting.hidden = model !== null || state.failure !== null;
     for (const part of [summary.element, toolbar.element, table.element, empty]) part.hidden = model === null;
     paintTray();
     if (!model) return;
     const grouped = view.mode === "tree";
-    const figures = (field) => (grouped ? model.roots.map((process) => process[`group${field}`] ?? 0) : model.processes.map((process) => process[field.toLowerCase()] ?? 0));
-    state.scales = { cpu: Math.max(100, ...figures("Cpu")), memory: Math.max(1, ...figures("Memory")) };
+    // The bars are measured against the largest amount on the page: the largest group in the tree, the largest process in the list.
+    const largest = (own, group) => Math.max(...(grouped ? model.roots.map((process) => process[group] ?? 0) : model.processes.map((process) => process[own] ?? 0)));
+    state.scales = { cpu: Math.max(100, largest("cpu", "groupCpu")), memory: Math.max(1, largest("memory", "groupMemory")) };
     summary.paint(model);
     const result = grouped ? treeRows(model, filters, sort, open, closed) : listRows(model, filters, sort);
     state.rows = result.rows;
@@ -156,7 +149,7 @@ export function createProcessesPage({ tools }) {
     if (state.loading || state.ended) return;
     state.loading = true;
     state.asked = Date.now();
-    paintLive();
+    paintHead();
     try {
       state.model = buildModel(await readProcesses(fresh));
       state.failure = null;
@@ -178,19 +171,16 @@ export function createProcessesPage({ tools }) {
     if (state.stopping || state.ended || processes.length === 0) return;
     const answer = await confirmStop({ processes, force });
     if (!answer) return;
-    const named = new Map(answer.processes.map((process) => [process.key, process]));
-    const hosts = answer.processes.filter((process) => process.role === "server" || process.role === "server_parent").map((process) => process.key);
     state.stopping = true;
     paintTray();
     try {
-      const { results } = await stopProcesses(answer.processes, answer.force);
-      for (const result of results) if (result.outcome !== "still_running") picked.delete(keyOf(result));
-      outcome.show({ force: answer.force, entries: results.map((result) => ({ key: keyOf(result), name: named.get(keyOf(result)).name, pid: result.pid, outcome: result.outcome, error: result.error })) });
-      state.ended = results.some((result) => hosts.includes(keyOf(result)) && (result.outcome === "stopped" || result.outcome === "still_running"));
+      const done = await carryOut(answer);
+      // One that did not quit when asked stays selected, so forcing it is one press away.
+      for (const entry of done.entries) if (entry.outcome !== "still_running") picked.delete(entry.key);
+      if (done.entries.length > 0) outcome.show({ force: answer.force, entries: done.entries });
+      state.ended = done.ended;
     } catch (error) {
-      // Stopping StackOps, or what it runs inside, cuts the answer off. That is the stop working, not failing.
-      state.ended = hosts.length > 0;
-      if (!state.ended) toast(error.message);
+      toast(error.message);
     }
     state.stopping = false;
     if (state.ended) paint();

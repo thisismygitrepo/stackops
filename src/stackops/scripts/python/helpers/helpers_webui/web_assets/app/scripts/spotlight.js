@@ -4,7 +4,7 @@ import { QUICK_TASKS, REPORTS, SPACES } from "./catalog.js";
 import { software } from "./data.js";
 import { closeAll, openDialog } from "./overlays.js";
 import { avatar, emojiTile, glyphTile, highlight } from "./widgets.js";
-import { friendlyText, fullTitleOf, plainText, trailOf } from "./words.js";
+import { blurbOf, fullTitleOf, plainText, trailOf } from "./words.js";
 
 const GROUP_LIMIT = 7;
 const GROUP_ORDER = ["Recent", "Suggested", "Pages", "Apps", "Tools", "Collections", "Reports"];
@@ -23,7 +23,7 @@ export function createSpotlight({ tools }) {
         group: node.kind === "command" ? "Tools" : "Collections",
         // The parent is part of the title: a third of the tools share a one-word name (Validate, Status, Edit) with tools elsewhere.
         title: fullTitleOf(node),
-        hint: [trailOf(node), friendlyText(node.summary)].filter(Boolean).join(" — "),
+        hint: [trailOf(node), blurbOf(node)].filter(Boolean).join(" — "),
         words: node.path,
         lead: () => emojiTile(node.icon || (node.kind === "command" ? "✨" : "🗂️"), node.path, 34),
         go: () => (GUIDED_TOOLS[node.path] ? (location.hash = GUIDED_TOOLS[node.path]) : node.kind === "command" ? tools.open(node.path) : (location.hash = `#/tools/${node.path.split(" ").map(encodeURIComponent).join("/")}`)),

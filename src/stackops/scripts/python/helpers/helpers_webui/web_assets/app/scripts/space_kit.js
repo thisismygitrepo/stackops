@@ -2,7 +2,7 @@ import { h, icon, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { replay } from "./motion.js";
 import { button, emojiTile } from "./widgets.js";
-import { friendlyText, titleOf } from "./words.js";
+import { blurbOf, titleOf } from "./words.js";
 
 const FILE_EDITORS = { script: ["devops", "scripts", "edit"], file: ["utils", "file", "edit"] };
 
@@ -65,13 +65,13 @@ export function createParts({ element, built, loaders, context }) {
 
 export function toolButton(tools, path, { label, glyph, tone, preset = {} } = {}) {
   const node = state.nodes.get(path);
-  return node && button({ label: label ?? titleOf(node), glyph, tone, title: friendlyText(node.summary), onclick: () => tools.open(path, { preset }) });
+  return node && button({ label: label ?? titleOf(node), glyph, tone, title: blurbOf(node), onclick: () => tools.open(path, { preset }) });
 }
 
 const cardParts = (emoji, name, title, blurb) => [emojiTile(emoji, name, 40), h("span", { class: "tool-card-text" }, h("strong", { text: title }), h("span", { text: blurb })), icon("arrow", 14)];
 
 export function toolCard(tools, node, label) {
-  return h("button", { class: "tool-card lit", type: "button", onclick: () => tools.open(node.path) }, cardParts(node.icon || "✨", node.path, label ?? titleOf(node), friendlyText(node.summary)));
+  return h("button", { class: "tool-card lit", type: "button", onclick: () => tools.open(node.path) }, cardParts(node.icon || "✨", node.path, label ?? titleOf(node), blurbOf(node)));
 }
 
 // The same card for somewhere to go instead of a tool to open. `name` only picks the tile's colour.

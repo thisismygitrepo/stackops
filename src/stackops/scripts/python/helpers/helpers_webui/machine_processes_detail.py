@@ -4,7 +4,7 @@ from typing import Final, Literal, TypedDict
 
 import psutil
 
-from stackops.scripts.python.helpers.helpers_webui.machine_processes_scan import attempt
+from stackops.scripts.python.helpers.helpers_webui.machine_processes_rows import attempt
 
 OPEN_FILE_LIMIT: Final[int] = 200
 LOCAL_ADDRESSES: Final[frozenset[str]] = frozenset({"::1", "localhost"})

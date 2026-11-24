@@ -70,12 +70,12 @@ export function createToolbar({ filters, view, onChange }) {
     givenShown = filters.given;
     givenRow.hidden = filters.given.length === 0;
     givenRow.replaceChildren(
-      h("span", { class: "dim", text: "Opened for" }),
+      h("span", { class: "dim", text: "Showing only" }),
       ...filters.given.map((condition) =>
         h(
           "button",
           {
-            class: "chip-button procs-given-chip", type: "button", "aria-pressed": "true", title: "Take this filter off",
+            class: "chip-button", type: "button", "aria-pressed": "true", title: "Take this filter off",
             onclick: () => {
               filters.given = filters.given.filter((other) => other !== condition);
               onChange();

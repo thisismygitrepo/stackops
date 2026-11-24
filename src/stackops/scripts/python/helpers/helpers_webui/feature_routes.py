@@ -1,5 +1,6 @@
 from starlette.routing import Route
 
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_routes import machine_autostart_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_devices_routes import machine_devices_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_mount_routes import machine_mount_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_processes_routes import machine_processes_routes
@@ -22,6 +23,7 @@ def feature_routes() -> list[Route]:
         *terminal_wezterm_routes(),
         *terminal_ghostty_routes(),
         *machine_processes_routes(),
+        *machine_autostart_routes(),
         *machine_devices_routes(),
         *machine_mount_routes(),
         *machine_windows_routes(),

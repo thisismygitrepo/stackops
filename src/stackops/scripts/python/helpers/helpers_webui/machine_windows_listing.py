@@ -9,19 +9,22 @@ from pathlib import Path
 
 import psutil
 
-from stackops.scripts.python.helpers.helpers_webui.machine_windows_constants import MINIMIZE_NEEDS_XDOTOOL
+from stackops.scripts.python.helpers.helpers_webui.machine_windows_constants import HELPER_WARNING_PREFIX, MINIMIZE_NEEDS_XDOTOOL
 from stackops.scripts.python.helpers.helpers_webui.machine_windows_models import WindowsProblem, WindowsUnavailable, WindowsView, WindowView
 from stackops.scripts.python.helpers.helpers_window.window_models import WindowEntry
 
 
-_READING = threading.Lock()
+# One thread at a time talks to the desktop. Every request runs on a thread of its own, and neither the system's window calls nor swapping the
+# console out, as `collect_open_windows` does, is safe from two of them at once. Whoever goes on to use the windows it collected holds this
+# for as long as that takes.
+DESKTOP = threading.RLock()
 _WARNINGS_SHOWN: set[str] = set()
 
 
 # The same choice of helper the `window` command makes for the system it runs on.
 # The helper warns on the console about every app it could not read, each time it is asked. The page asks every few seconds, so the same lines
-# would bury everything else the server prints: each line is passed on the first time it is seen and held back after that. The console is
-# swapped for the whole process while the helper runs, so the lock lets one reading at a time do it.
+# would bury everything else the server prints: each warning is passed on the first time it is seen and held back after that. Anything else
+# that reached the console meanwhile is passed on as it is.
 def collect_open_windows() -> list[WindowEntry]:
     if sys.platform == "darwin":
         from stackops.scripts.python.helpers.helpers_window.window_macos import collect_windows
@@ -31,13 +34,15 @@ def collect_open_windows() -> list[WindowEntry]:
         from stackops.scripts.python.helpers.helpers_window.window_windows import collect_windows
     else:
         raise RuntimeError(f"""Window management is not supported on {sys.platform}.""")
-    warnings = io.StringIO()
+    console = io.StringIO()
     try:
-        with _READING, contextlib.redirect_stderr(warnings):
+        with DESKTOP, contextlib.redirect_stderr(console):
             return collect_windows()
     finally:
-        for line in warnings.getvalue().splitlines():
-            if line not in _WARNINGS_SHOWN:
+        for line in console.getvalue().splitlines():
+            if not line.startswith(HELPER_WARNING_PREFIX):
+                print(line, file=sys.stderr)
+            elif line not in _WARNINGS_SHOWN:
                 _WARNINGS_SHOWN.add(line)
                 print(line, file=sys.stderr)
 
@@ -65,11 +70,12 @@ def read_windows() -> WindowsView | WindowsUnavailable | WindowsProblem:
             return {"available": False, "reason": "permission", "launcher": launcher_app()}
     blocked = {"minimize": MINIMIZE_NEEDS_XDOTOOL} if sys.platform == "linux" and shutil.which("xdotool") is None else {}
     try:
-        entries = collect_open_windows()
-        if sys.platform == "darwin":
-            from stackops.scripts.python.helpers.helpers_webui.machine_windows_macos import describe_macos_windows, read_macos_screens
+        with DESKTOP:
+            entries = collect_open_windows()
+            if sys.platform == "darwin":
+                from stackops.scripts.python.helpers.helpers_webui.machine_windows_macos import describe_macos_windows, read_macos_screens
 
-            return {"available": True, "windows": describe_macos_windows(entries), "screens": read_macos_screens(), "blocked": blocked}
+                return {"available": True, "windows": describe_macos_windows(entries), "screens": read_macos_screens(), "blocked": blocked}
     except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
         return WindowsProblem(status=502, message=str(error))
     windows: list[WindowView] = [

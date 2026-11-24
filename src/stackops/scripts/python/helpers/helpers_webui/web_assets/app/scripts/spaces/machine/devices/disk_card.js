@@ -40,7 +40,7 @@ export function diskCard(group, rows, options) {
   const slots = slotsOf(disk);
   const free = freeOn(disk);
   const health = HEALTH[disk.health];
-  const eject = disk.can_eject && (view.busy.has(disk.id) ? h("span", { class: "devices-busy" }, h("i", { class: "ring" })) : button({ label: "Eject", glyph: "up", small: true, title: disk.place === "image" ? "Close this disk image" : "Unmount everything on it so it can be unplugged", onclick: () => handlers.eject(group) }));
+  const eject = disk.can_eject && (view.busy.has(disk.id) ? h("span", { class: "devices-busy" }, h("i", { class: "ring" })) : button({ label: "Eject", glyph: "eject", small: true, title: disk.place === "image" ? "Close this disk image" : "Unmount everything on it so it can be unplugged", onclick: () => handlers.eject(group) }));
   const head = h(
     "header",
     { class: "devices-disk-head" },

@@ -46,7 +46,7 @@ export function createRow(view) {
   const element = h(
     "tr",
     { class: "procs-row" },
-    h("td", { class: "procs-tick" }, check),
+    h("td", { class: "procs-tick" }, h("label", {}, check)),
     h("td", { class: "procs-name" }, h("div", { class: "procs-name-line" }, twist, name, size, role)),
     id, user, cpu.cell, memory.cell, h("td", { class: "procs-status" }, state), started, ports, h("td", { class: "procs-command" }, command), h("td", { class: "procs-act" }, stop),
   );
@@ -57,7 +57,7 @@ export function createRow(view) {
   name.addEventListener("click", () => view.onOpen(shown.process));
   stop.addEventListener("click", () => view.onStop(shown.process));
   element.addEventListener("click", (event) => {
-    if (event.target instanceof Element && !event.target.closest("button, input")) view.onOpen(shown.process);
+    if (event.target instanceof Element && !event.target.closest("button, input, label")) view.onOpen(shown.process);
   });
 
   function update(item) {

@@ -104,7 +104,7 @@ export function createTray({ onClear, onStop }) {
       const memory = processes.reduce((sum, process) => sum + (process.memory ?? 0), 0);
       const cpu = processes.reduce((sum, process) => sum + (process.cpu ?? 0), 0);
       title.textContent = busy ? "Stopping" : `${processCount(processes.length)} selected`;
-      note.textContent = busy ? "Waiting to see them go." : `Together they use ${memoryText(memory)} of memory and ${cpuText(cpu)} CPU.`;
+      note.textContent = busy ? "Waiting to see them go." : `${processes.length === 1 ? "It uses" : "Together they use"} ${memoryText(memory)} of memory and ${cpuText(cpu)} CPU.`;
       for (const control of [clear, quit, force]) control.disabled = busy;
     },
   };

@@ -47,7 +47,7 @@ export function createTable(view) {
   const element = h(
     "div",
     { class: "procs-list" },
-    h("div", { class: "procs-scroll" }, h("table", { class: "procs-table" }, h("thead", {}, h("tr", {}, h("th", { class: "procs-tick" }, pickAll), heads, h("th", { class: "procs-act" }))), body)),
+    h("div", { class: "procs-scroll" }, h("table", { class: "procs-table" }, h("thead", {}, h("tr", {}, h("th", { class: "procs-tick" }, h("label", {}, pickAll)), heads, h("th", { class: "procs-act" }))), body)),
     more,
   );
   let shown = [];

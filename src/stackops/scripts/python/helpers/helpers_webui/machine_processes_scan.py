@@ -1,50 +1,23 @@
-import getpass
 import os
-import socket
 import subprocess
 import sys
 import threading
 import time
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Final, Literal, TypedDict
+from typing import Final, TypedDict
 
 import psutil
+
+from stackops.scripts.python.helpers.helpers_webui.machine_processes_rows import ProcessRow, read_row
 
 # Two pages asking at nearly the same moment share one reading, so each processor figure still covers a real stretch of time.
 SNAPSHOT_REUSE_SECONDS: Final[float] = 1.0
 # Processor use is what a process did since the reading before. Past this gap that says nothing about now, so the figures are left out once.
 CPU_WINDOW_SECONDS: Final[float] = 20.0
-SYSTEM_FOLDERS: Final[dict[str, tuple[str, ...]]] = {
-    "darwin": ("/system/library/", "/system/iossupport/", "/usr/libexec/", "/usr/sbin/", "/sbin/", "/library/apple/"),
-    "linux": ("/usr/lib/systemd/", "/lib/systemd/"),
-    "win32": ("c:\\windows\\",),
-}
-# Accounts below this number belong to the system, not to a person.
-SYSTEM_ACCOUNT_LIMIT: Final[dict[str, int]] = {"darwin": 500, "linux": 1000}
-SYSTEM_ACCOUNT_NAMES: Final[frozenset[str]] = frozenset({"system", "local service", "network service"})
 FOREIGN_FIGURES_COMMAND: Final[tuple[str, ...]] = ("/bin/ps", "-o", "pid=,pcpu=,rss=,command=", "-p")
 FOREIGN_FIGURES_SECONDS: Final[float] = 5.0
 
-type ProcessRole = Literal["", "system", "server", "server_child", "server_parent"]
 type ProcessKey = tuple[int, float]
-
-
-class ProcessRow(TypedDict):
-    pid: int
-    started: float
-    parent: int
-    name: str
-    user: str
-    status: str
-    mine: bool
-    role: ProcessRole
-    readable: bool
-    cpu: float | None
-    memory: int | None
-    threads: int | None
-    command: str
-    ports: list[int]
 
 
 class MachineLoad(TypedDict):
@@ -56,12 +29,12 @@ class MachineLoad(TypedDict):
 
 class ProcessSnapshot(TypedDict):
     taken_at: float
-    user: str
     privileged: bool
     machine: MachineLoad
     processes: list[ProcessRow]
 
 
+# What one reading leaves for the next: when it was taken, which processes it measured, and the reading itself for a page that asks a moment later.
 @dataclass(slots=True)
 class ScanMemory:
     lock: threading.Lock
@@ -81,72 +54,6 @@ def runs_privileged() -> bool:
 
         return ctypes.windll.shell32.IsUserAnAdmin() != 0
     return os.geteuid() == 0
-
-
-def attempt[Value](read: Callable[[], Value]) -> Value | None:
-    try:
-        return read()
-    except psutil.Error:
-        return None
-
-
-# The ports a process waits on: a TCP socket that accepts connections, or a UDP socket bound to a port and not tied to one remote address.
-def waiting_ports(process: psutil.Process) -> list[int]:
-    return sorted(
-        {
-            connection.laddr.port
-            for connection in process.net_connections(kind="inet")
-            if connection.laddr and connection.laddr.port > 0 and (connection.status == psutil.CONN_LISTEN or (connection.type == socket.SOCK_DGRAM and not connection.raddr))
-        }
-    )
-
-
-def account_of(process: psutil.Process, account_names: dict[int, str]) -> tuple[str, bool, bool]:
-    if not psutil.POSIX:
-        name = process.username()
-        bare = name.rpartition("\\")[2].casefold()
-        return name, bare == getpass.getuser().casefold(), bare in SYSTEM_ACCOUNT_NAMES
-    account = process.uids().real
-    if account not in account_names:
-        # psutil asks the account database on every call, which is the slowest part of a reading; an account's name does not change while the server runs.
-        account_names[account] = process.username()
-    return account_names[account], account == os.getuid(), account < SYSTEM_ACCOUNT_LIMIT.get(sys.platform, 0)
-
-
-def read_row(process: psutil.Process, account_names: dict[int, str]) -> ProcessRow | None:
-    try:
-        with process.oneshot():
-            # Asked first on purpose: it is the call that notices a process ID handed to a new process since the last reading.
-            parent = process.ppid()
-            started = process.create_time()
-            name = process.name()
-            status = process.status()
-            user, mine, system_account = account_of(process=process, account_names=account_names)
-            resident = attempt(lambda: process.memory_info().rss)
-            cpu = attempt(process.cpu_percent)
-            threads = attempt(process.num_threads)
-            arguments = attempt(process.cmdline)
-            program = attempt(process.exe)
-            ports = attempt(lambda: waiting_ports(process)) if resident is not None else None
-    except psutil.NoSuchProcess:
-        return None
-    system_program = program is not None and program.casefold().startswith(SYSTEM_FOLDERS.get(sys.platform, ()))
-    return {
-        "pid": process.pid,
-        "started": started,
-        "parent": parent,
-        "name": name,
-        "user": user,
-        "status": status,
-        "mine": mine,
-        "role": "system" if system_account or system_program or process.pid <= 1 else "",
-        "readable": resident is not None,
-        "cpu": cpu,
-        "memory": resident,
-        "threads": threads,
-        "command": " ".join(arguments) if arguments else "",
-        "ports": ports or [],
-    }
 
 
 # macOS lets only a process's owner or an administrator read its processor use, memory and command, which leaves out the system's own
@@ -215,7 +122,6 @@ def read_processes(memory: ScanMemory, fresh: bool) -> ProcessSnapshot:
         virtual = psutil.virtual_memory()
         snapshot: ProcessSnapshot = {
             "taken_at": time.time(),
-            "user": getpass.getuser(),
             "privileged": runs_privileged(),
             "machine": {"cores": psutil.cpu_count() or 1, "cpu": machine_cpu if measurable else None, "memory_total": virtual.total, "memory_used": virtual.total - virtual.available},
             "processes": rows,

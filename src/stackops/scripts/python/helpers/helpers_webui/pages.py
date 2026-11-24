@@ -23,6 +23,7 @@ APP_STYLESHEETS: Final[tuple[str, ...]] = (
     "/assets/app/styles/terminal_wezterm.css",
     "/assets/app/styles/terminal_ghostty.css",
     "/assets/app/styles/machine_processes.css",
+    "/assets/app/styles/machine_autostart.css",
     "/assets/app/styles/machine_devices.css",
     "/assets/app/styles/machine_mount.css",
     "/assets/app/styles/machine_windows.css",

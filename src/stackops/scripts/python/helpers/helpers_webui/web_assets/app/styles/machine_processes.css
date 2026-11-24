@@ -88,7 +88,9 @@
 .procs-table th[aria-sort="ascending"] button svg, .procs-table th[aria-sort="descending"] button svg { opacity: 1; }
 .procs-table th[aria-sort="ascending"] button svg { transform: rotate(180deg); }
 .procs-table td { height: 44px; padding: 5px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: 1px solid var(--line); }
-.procs-table .procs-tick { width: 44px; padding-right: 0; padding-left: 16px; overflow: visible; }
+.procs-table .procs-tick { width: 44px; padding: 0; overflow: visible; }
+/* The whole cell ticks the box, so a near miss does not open the process instead. */
+.procs-tick label { display: grid; place-items: center; height: 100%; min-height: 40px; padding-left: 8px; cursor: pointer; }
 .procs-table .procs-act { width: 46px; padding-left: 0; text-align: center; }
 .procs-col-name { width: 232px; }
 .procs-col-pid { width: 74px; }

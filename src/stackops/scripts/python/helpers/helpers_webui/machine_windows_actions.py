@@ -3,7 +3,7 @@ import sys
 from typing import cast
 
 from stackops.scripts.python.helpers.helpers_webui.machine_windows_constants import ACCESSIBILITY_REFUSAL, ACTION_BATCH_LIMIT
-from stackops.scripts.python.helpers.helpers_webui.machine_windows_listing import collect_open_windows
+from stackops.scripts.python.helpers.helpers_webui.machine_windows_listing import DESKTOP, collect_open_windows
 from stackops.scripts.python.helpers.helpers_webui.machine_windows_models import ActionReport, ActionResult, WindowsProblem
 
 
@@ -22,22 +22,23 @@ def apply_window_action(body: object) -> ActionReport | WindowsProblem:
             pass
         case _:
             return WindowsProblem(status=400, message="`action` must be minimize, maximize, unminimize, focus or close.")
-    try:
-        entries = {entry.id: entry for entry in collect_open_windows()}
-    except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
-        return WindowsProblem(status=502, message=str(error))
     results: list[ActionResult] = []
-    for window_id in ids:
-        entry = entries.get(window_id)
-        if entry is None:
-            results.append({"id": window_id, "status": "gone", "reason": ""})
-            continue
+    with DESKTOP:
         try:
-            entry.apply_action(action)
+            entries = {entry.id: entry for entry in collect_open_windows()}
         except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
-            results.append({"id": window_id, "status": "failed", "reason": _plain_reason(error)})
-        else:
-            results.append({"id": window_id, "status": "done", "reason": ""})
+            return WindowsProblem(status=502, message=str(error))
+        for window_id in ids:
+            entry = entries.get(window_id)
+            if entry is None:
+                results.append({"id": window_id, "status": "gone", "reason": ""})
+                continue
+            try:
+                entry.apply_action(action)
+            except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
+                results.append({"id": window_id, "status": "failed", "reason": _plain_reason(error)})
+            else:
+                results.append({"id": window_id, "status": "done", "reason": ""})
     return {"results": results}
 
 

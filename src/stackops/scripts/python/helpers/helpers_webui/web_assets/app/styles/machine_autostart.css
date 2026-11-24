@@ -1,0 +1,141 @@
+/* Startup programs (#/machine/autostart). The three hues tell the ways of starting apart in the picture of when things start: right away, on a
+   timer, when needed. Their order is what keeps neighbours apart for colour-blind readers, in light and in dark, so never reorder them. */
+.autostart { --autostart-1: #2a78d6; --autostart-2: #eb6834; --autostart-3: #1baf7a; }
+@media (prefers-color-scheme: dark) {
+  .autostart { --autostart-1: #3987e5; --autostart-2: #d95926; --autostart-3: #199e70; }
+}
+.autostart [data-slot="1"] { --hue: var(--autostart-1); }
+.autostart [data-slot="2"] { --hue: var(--autostart-2); }
+.autostart [data-slot="3"] { --hue: var(--autostart-3); }
+
+.autostart-stamp { align-self: center; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); }
+.autostart-waiting { display: grid; }
+.autostart-pop { animation: pop-in 0.4s var(--spring); }
+
+/* The picture: four cards, every count in them a way to narrow the list. */
+.autostart-cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-bottom: 18px; }
+.autostart-card { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 16px 18px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.autostart-headline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.autostart-figure { font-size: 34px; font-weight: 750; letter-spacing: -0.035em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.autostart-headline span { font-size: 13px; color: var(--ink-soft); }
+.autostart-facts { display: grid; gap: 1px; }
+.autostart-fact { display: flex; align-items: center; gap: 8px; padding: 5px 8px; margin: 0 -8px; font-size: 13px; color: var(--ink-soft); border-radius: 10px; transition: background 0.2s, color 0.2s; }
+.autostart-fact span { flex: 1; min-width: 0; }
+.autostart-fact svg:last-child { opacity: 0; transition: opacity 0.2s, transform 0.3s var(--spring); }
+.autostart-fact:hover { color: var(--ink); background: var(--well); }
+.autostart-fact:hover svg:last-child { opacity: 0.7; transform: translateX(2px); }
+.autostart-fact[data-tone="good"] svg:first-child { color: var(--good); }
+.autostart-fact[data-tone="warn"] svg:first-child { color: var(--warn); }
+.autostart-system-link { justify-self: start; font-size: 12.5px; text-align: left; }
+:is(.autostart-fact, .autostart-meter, .autostart-key, .autostart-lane-head)[aria-pressed="true"] { color: var(--ink); font-weight: 650; background: var(--brand-wash); }
+
+.autostart-lane { display: grid; gap: 6px; }
+.autostart-lane + .autostart-lane { margin-top: 4px; }
+.autostart-lane-head { display: flex; align-items: center; gap: 7px; padding: 3px 8px; margin: 0 -8px; font-size: 13px; font-weight: 600; color: var(--ink-soft); border-radius: 9px; transition: background 0.2s, color 0.2s; }
+.autostart-lane-head span { flex: 1; min-width: 0; }
+.autostart-lane-head:hover { color: var(--ink); background: var(--well); }
+.autostart-lane-none { font-size: 12.5px; }
+/* The two bars are measured against the longer one. A stretch keeps room for its count, so a single entry is still a mark with a number under it. */
+.autostart-lane-bar { display: flex; gap: 2px; width: max(calc(var(--share) * 100%), 84px); transition: width 0.6s var(--smooth); }
+.autostart-segment { display: grid; flex: var(--part) 1 0; gap: 3px; min-width: 26px; font-size: 11.5px; color: var(--ink-soft); text-align: left; transition: opacity 0.25s; }
+.autostart-segment i { display: block; height: 12px; background: var(--hue); border-radius: 4px; transform-origin: left bottom; transition: transform 0.25s var(--smooth), filter 0.2s; }
+.autostart-segment:hover i, .autostart-segment:focus-visible i { transform: scaleY(1.35); filter: saturate(1.15) brightness(1.06); }
+.autostart-segment.dimmed { opacity: 0.28; }
+.autostart-segment[aria-pressed="true"] span { font-weight: 700; color: var(--ink); }
+.autostart-card.rise :is(.autostart-segment, .autostart-track) i { animation: grow 0.7s var(--smooth) backwards; animation-delay: calc(var(--i, 0) * 38ms + 120ms); transform-origin: left bottom; }
+.autostart-legend { display: flex; flex-wrap: wrap; gap: 2px 4px; margin: 2px -7px 0; }
+.autostart-key { display: inline-flex; align-items: center; gap: 6px; padding: 3px 7px; font-size: 12px; color: var(--ink-soft); border-radius: 8px; transition: background 0.2s, color 0.2s; }
+.autostart-key i { width: 10px; height: 10px; background: var(--hue); border-radius: 3px; }
+.autostart-key b { font-weight: 600; color: var(--ink-faint); }
+.autostart-key:hover { color: var(--ink); background: var(--well); }
+
+.autostart-meters { display: grid; gap: 1px; }
+.autostart-meter { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 8px; width: calc(100% + 16px); padding: 5px 8px 7px; margin: 0 -8px; font-size: 13px; color: var(--ink-soft); border-radius: 10px; transition: background 0.2s, color 0.2s; }
+.autostart-meter:hover { color: var(--ink); background: var(--well); }
+.autostart-meter-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.autostart-meter-name em { margin-left: 6px; font-size: 11.5px; font-style: normal; color: var(--ink-faint); }
+.autostart-meter b { font-weight: 650; color: var(--ink); }
+.autostart-track { flex: 0 0 100%; height: 6px; overflow: hidden; background: var(--well); border-radius: 999px; }
+.autostart-track i { display: block; width: calc(var(--share) * 100%); min-width: 4px; height: 100%; background: var(--violet); border-radius: 999px; transition: width 0.6s var(--smooth); }
+.autostart-meter.aside b, .autostart-meter.aside .autostart-meter-name { color: var(--ink-faint); }
+.autostart-meter.aside .autostart-track i { background: var(--line-strong); }
+.autostart-kind-mark { display: grid; flex: none; place-items: center; width: 22px; height: 22px; color: hsl(var(--hue) 72% 56%); background: hsl(var(--hue) 85% 60% / 0.16); border-radius: 7px; }
+
+.autostart-outcome { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; margin-bottom: 14px; font-size: 13.5px; background: color-mix(in srgb, var(--good) 9%, var(--panel-solid)); border: 1px solid color-mix(in srgb, var(--good) 32%, transparent); border-radius: 14px; }
+.autostart-outcome > svg { color: var(--good); }
+.autostart-outcome > span:first-of-type { min-width: 0; overflow-wrap: anywhere; }
+
+.autostart-tools { display: grid; gap: 10px; margin-bottom: 16px; }
+.autostart-tools-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; min-width: 0; }
+.autostart-tools .search-input { flex: 1 1 260px; width: auto; max-width: 420px; }
+.autostart-tools .segmented { flex: none; }
+/* The switch keeps its words in a narrow window, where the shared rule drops them: without them nothing says what it switches. */
+.autostart-tools .mini-toggle span { display: inline; }
+.autostart-pick { display: inline-flex; align-items: center; gap: 9px; min-width: 0; font-size: 12.5px; color: var(--ink-faint); }
+.autostart-narrowed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; }
+.autostart-chip { height: 28px; }
+.autostart-notes { display: grid; gap: 8px; margin-bottom: 14px; }
+.autostart-notes:empty { display: none; }
+
+.autostart-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.autostart-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.autostart-group h3 { display: flex; align-items: center; gap: 8px; padding-left: 4px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.autostart-group h3 b { padding: 1px 7px; font-size: 11px; letter-spacing: 0; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
+.autostart-rows { overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }
+.autostart-row { display: flex; align-items: center; gap: 12px; min-height: 58px; padding-right: 12px; transition: background 0.2s; }
+.autostart-row + .autostart-row { border-top: 1px solid var(--line); }
+.autostart-row:hover { background: var(--brand-wash); }
+.autostart-row-main { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; padding: 10px 0 10px 12px; }
+.autostart-row-text { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.autostart-row-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.autostart-row-title strong { overflow: hidden; font-size: 14px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.autostart-row-title em { flex: none; font-size: 12px; font-style: normal; color: var(--ink-faint); }
+.autostart-row-line { display: flex; align-items: baseline; gap: 9px; min-width: 0; font-size: 12.5px; color: var(--ink-soft); }
+.autostart-row-line span { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.autostart-row-line code { flex: 0 1000 auto; min-width: 0; overflow: hidden; font-size: 11.5px; color: var(--ink-faint); text-overflow: ellipsis; white-space: nowrap; }
+.autostart-row.off .autostart-row-main { opacity: 0.55; }
+.autostart-state { display: inline-flex; flex: none; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; color: var(--ink-faint); }
+.autostart-state i { width: 8px; height: 8px; background: var(--line-strong); border-radius: 50%; }
+.autostart-state[data-tone="good"] { color: var(--ink-soft); }
+.autostart-state[data-tone="good"] i { background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 20%, transparent); }
+.autostart-state[data-tone="warn"] { color: var(--warn); }
+.autostart-state[data-tone="warn"] i { background: var(--warn); }
+.autostart-switch { display: grid; flex: none; place-items: center; width: 46px; height: 32px; border-radius: 10px; }
+.autostart-lock, .autostart-busy { display: grid; flex: none; place-items: center; width: 46px; height: 32px; color: var(--ink-faint); }
+.autostart-lock { cursor: help; opacity: 0.6; }
+.autostart-busy { color: var(--violet); }
+.autostart-row > .icon-btn { margin: 0 7px; }
+.autostart-more { justify-self: center; padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--violet); border-radius: 999px; transition: background 0.2s; }
+.autostart-more:hover { background: var(--violet-wash); }
+
+/* The detail of one entry, in a side sheet. */
+.autostart-sheet-head { display: flex; align-items: center; gap: 14px; min-width: 0; padding-right: 36px; }
+.autostart-sheet-head > div { display: grid; flex: 1; gap: 2px; min-width: 0; justify-items: start; }
+.autostart-sheet-head h2 { font-size: 22px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.2; overflow-wrap: anywhere; }
+.autostart-sheet-head .copy-chip { margin-left: -8px; }
+.autostart-sheet-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.autostart-sheet-lede { font-size: 15px; color: var(--ink-soft); }
+.autostart-sheet .copy-chip { text-align: left; }
+.autostart-sheet .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.autostart-sheet .copy-chip svg { flex: none; opacity: 0.4; }
+.autostart-code { display: block; padding: 8px 10px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-soft); background: var(--well); border-radius: 10px; }
+.autostart-starts { display: grid; gap: 4px; }
+.autostart-starts li { position: relative; padding-left: 14px; }
+.autostart-starts li::before { content: ""; position: absolute; top: 0.62em; left: 2px; width: 5px; height: 5px; background: var(--violet); border-radius: 50%; }
+.autostart-now { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.autostart-chips { display: grid; gap: 2px; justify-items: start; }
+.autostart-locked { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--ink-soft); }
+.autostart-locked svg { flex: none; margin-top: 3px; color: var(--ink-faint); }
+
+@media (max-width: 1240px) {
+  .autostart-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* In a narrow window the cards sit side by side and are swiped through, so the list stays one screen away. */
+@media (max-width: 700px) {
+  .autostart-cards { display: flex; gap: 10px; padding-bottom: 6px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .autostart-card { flex: 0 0 84%; scroll-snap-align: start; }
+  .autostart-state span, .autostart-row-title em, .autostart-row-line code { display: none; }
+  .autostart-row { gap: 6px; padding-right: 4px; }
+  .autostart-tools .search-input { max-width: none; }
+  .autostart-pick > span { display: none; }
+}

@@ -10,3 +10,5 @@ ACTION_BATCH_LIMIT: Final[int] = 500
 # What the page says in place of a macOS Accessibility error number.
 ACCESSIBILITY_REFUSAL: Final[str] = "The window does not allow that, or its app is not answering."
 MINIMIZE_NEEDS_XDOTOOL: Final[str] = "Minimizing needs the xdotool program, which is not installed on this machine."
+# How the window helpers start a line they print about an app they could not read.
+HELPER_WARNING_PREFIX: Final[str] = "Warning: "

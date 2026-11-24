@@ -1,5 +1,5 @@
 import { lineage } from "/assets/scripts/state.js";
-import { TOOL_TITLES, WORDS } from "./catalog.js";
+import { TOOL_BLURBS, TOOL_TITLES, WORDS } from "./catalog.js";
 
 export function humanize(name) {
   const words = name.replace(/^-+/, "").split(/[-_\s]+/).filter(Boolean).map((word) => WORDS[word.toLowerCase()] ?? word.toLowerCase());
@@ -21,6 +21,7 @@ export function friendlyText(text) {
 }
 
 export const titleOf = (node) => TOOL_TITLES[node.path] ?? humanize(node.name);
+export const blurbOf = (node) => TOOL_BLURBS[node.path] ?? friendlyText(node.summary);
 export function fullTitleOf(node) {
   const parent = lineage(node).at(-2);
   return TOOL_TITLES[node.path] || !parent ? titleOf(node) : `${titleOf(node)} · ${titleOf(parent)}`;
