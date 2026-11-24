@@ -117,6 +117,13 @@ def _build_tab_pane_commands(
 ) -> list[str]:
     window_target = shell_quote(f"{session_name}:{tab['tabName']}")
     submit_key = "Enter" if os.name == "nt" else "C-m"
+    match tab.get("arrangement", DEFAULT_TAB_ARRANGEMENT):
+        case "columns":
+            tmux_layout = "even-horizontal"
+        case "rows":
+            tmux_layout = "even-vertical"
+        case "grid":
+            tmux_layout = "tiled"
     commands: list[str] = []
     for pane_index, pane in enumerate(tab["panes"]):
         if pane_index > 0:
@@ -131,15 +138,9 @@ def _build_tab_pane_commands(
                 exit_mode=exit_mode,
             )
         commands.append(f"tmux send-keys -t {window_target} {shell_quote(actual_command)} {submit_key}")
+        if pane_index > 0:
+            commands.append(f"tmux select-layout -t {window_target} {tmux_layout}")
     if len(tab["panes"]) > 1:
-        match tab.get("arrangement", DEFAULT_TAB_ARRANGEMENT):
-            case "columns":
-                tmux_layout = "even-horizontal"
-            case "rows":
-                tmux_layout = "even-vertical"
-            case "grid":
-                tmux_layout = "tiled"
-        commands.append(f"tmux select-layout -t {window_target} {tmux_layout}")
         first_pane_target = shell_quote(f"{session_name}:{tab['tabName']}.{{top-left}}")
         commands.append(f"tmux select-pane -t {first_pane_target}")
     return commands
