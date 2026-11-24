@@ -3,9 +3,9 @@ import { formatBytes, humanize } from "../../../words.js";
 export const PROCESSES_HASH = "#/machine/processes";
 export const TOOL_PATH = "utils machine kill-process";
 export const REFRESH_MILLISECONDS = 3000;
-// What counts as heavy: a quarter of one processor core, and one gigabyte of memory. The quick filters and the warm bars both go by these.
-export const HEAVY_CPU = 25;
-export const HEAVY_MEMORY = 1024 ** 3;
+// What counts as heavy: a tenth of one processor core, and 500 MB of memory. The quick filters and the warm bars both go by these.
+export const HEAVY_CPU = 10;
+export const HEAVY_MEMORY = 500 * 1024 ** 2;
 
 // The words for a process's state as the system reports it. One that is not listed is shown under its own name.
 const STATUSES = {

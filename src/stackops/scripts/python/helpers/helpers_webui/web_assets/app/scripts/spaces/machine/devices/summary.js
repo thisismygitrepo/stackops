@@ -20,7 +20,7 @@ export function createDeviceSummary() {
     const counts = countsOf(picture);
     free.set(counts.free === null ? "—" : size(counts.free), counts.internal ? `of ${size(counts.room)} on ${plural(counts.internal, "internal disk")}` : "No internal disk was found");
     plugged.set(counts.plugged.length, counts.plugged.length ? named(counts.plugged.map(diskName)) : "No external disk or disk image");
-    waiting.set(counts.waiting, counts.waiting ? "Press Mount on one to use it" : "Everything is mounted");
+    waiting.set(counts.waiting, counts.waiting ? "Press Mount on one to use it" : counts.mounted ? "Everything is mounted" : "Nothing to mount");
     shares.set(counts.shares.length, counts.shares.length ? named(counts.shares.map(volumeName)) : "None connected");
   }
 

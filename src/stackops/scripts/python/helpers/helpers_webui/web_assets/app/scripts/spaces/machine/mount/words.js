@@ -4,8 +4,6 @@ export const MOUNT_HASH = "#/machine/mount";
 export const MOUNT_PATH = "utils machine mount";
 export const MOUNT_TOOL = MOUNT_PATH.split(" ");
 
-export const SYSTEM_NAMES = { Darwin: "macOS", Linux: "Linux", Windows: "Windows" };
-
 // The three states a device can be in, in the order the list settles into: what can be mounted comes first.
 export const STATES = {
   ready: { label: "Not mounted", group: "Ready to mount", tone: "accent", hue: 252 },
@@ -13,6 +11,10 @@ export const STATES = {
   blocked: { label: "Cannot be mounted", group: "Cannot be mounted here", tone: "", hue: 228 },
 };
 export const STATE_ORDER = Object.keys(STATES);
+// A device that could be mounted if something were put right first: a program installed, StackOps started as administrator. Its row says what.
+// It is listed apart from the ones that can never be mounted here, and ahead of them.
+export const STUCK = { label: "Needs something first", group: "Needs something first", tone: "warn" };
+export const isStuck = (device) => device.block === "no_way";
 export const SORTS = [["state", "Ready first"], ["size", "Biggest first"], ["disk", "By disk"]];
 
 // File systems by the names the system tools give them, lower case. One that is not here is shown as the tool wrote it.
@@ -27,7 +29,7 @@ export const fileSystemName = (device) => FILE_SYSTEMS[device.file_system.toLowe
 export const sizeText = (device) => device.size.replace(/^([\d.,]+)([KMGTP])$/, "$1 $2B");
 
 const UNREADABLE = { Darwin: "macOS finds no file system on it that it can read.", Linux: "No file system was found on it.", Windows: "Windows cannot read what is on it." };
-const SYSTEM_PART = { Darwin: "A startup partition (EFI). It belongs to the system and is left alone here.", Windows: "Windows keeps this part for itself. It is left alone here." };
+const SYSTEM_PART = { Darwin: "The EFI part of the disk, which a computer starts from. It belongs to the system and is left alone here.", Windows: "Windows keeps this part for itself. It is left alone here." };
 const BLOCKS = {
   apfs_container: (device) => `Holds ${plural(device.inside, "APFS volume")}. macOS mounts those itself. If one is not mounted, Disk Utility can mount it.`,
   apfs_store: () => "The storage behind an APFS container. There is nothing on it to mount directly.",
@@ -43,7 +45,7 @@ const BLOCKS = {
     if (whys.includes("not_elevated")) return "Giving it a drive letter takes administrator rights. Close StackOps, open a terminal as administrator, and start it from there.";
     if (device.encryption === "bitlocker") return "Encrypted with BitLocker. Mounting it takes dislocker or udisksctl, and neither can be used on this machine. Install one of them, then refresh.";
     if (device.encryption === "luks") return "Encrypted with LUKS. Mounting it takes udisksctl, which is not installed. Install the udisks2 package, then refresh.";
-    return "Mounting takes administrator rights, and this machine has no sudo.";
+    return "Mounting takes administrator rights, and the sudo program that asks for them is not installed.";
   },
 };
 export const blockText = (device, system) => BLOCKS[device.block](device, system);
@@ -62,7 +64,7 @@ export const WAY_BLOCKS = {
   not_bitlocker: () => "Only for BitLocker devices.",
   encrypted: () => "This device is encrypted, so the standard way cannot open it.",
   not_elevated: () => "StackOps has to be started as administrator.",
-  no_sudo: () => "Takes administrator rights, and this machine has no sudo.",
+  no_sudo: () => "Takes administrator rights, and the sudo program that asks for them is not installed.",
 };
 
 // What the person is told before mounting: what the Activity panel will ask for, or that it asks for nothing. `lock` marks a line about a prompt.
@@ -92,4 +94,5 @@ export const PLACES = {
   is_folder: { tone: "bad", stops: true, text: "That is a folder. Choose the key file inside it." },
 };
 
-export const READ_ONLY_OFF = { Darwin: "Not available on macOS. StackOps always mounts for reading and writing here.", Windows: "Not available on Windows.", Linux: "Not available for this device." };
+// Only Linux can mount read-only: there the command passes the choice on, and on the other two systems it has no effect.
+export const READ_ONLY_OFF = { Darwin: "Not available on macOS. StackOps always mounts for reading and writing here.", Windows: "Not available on Windows. A drive letter always gives full access." };

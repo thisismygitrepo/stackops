@@ -3,21 +3,24 @@ import { button, glyphTile, pathChip } from "../../../widgets.js";
 import { formPreset, planOf, startingChoice, titleOf } from "./model.js";
 import { createMore } from "./plan_more.js";
 import { createWhere } from "./plan_place.js";
-import { MOUNT_PATH, READ_ONLY_OFF, STATES, asksLine, fileSystemName, sizeText } from "./words.js";
+import { MOUNT_PATH, READ_ONLY_OFF, STATES, asksLine, fileSystemName, isStuck, sizeText } from "./words.js";
 
 const STEPS = ["Choose a device from the list", "Say where it should appear", "Mount it"];
 const NAME_LIMIT = 22;
 
 // What the card shows while no device is chosen: the three steps, under a line that says where things stand.
-function idle({ picture, note, onRefresh }) {
+function idle({ picture, note }) {
   const waiting = picture ? picture.devices.filter((device) => device.state === "ready").length : 0;
+  const stuck = picture ? picture.devices.filter(isStuck).length : 0;
   const lead = !picture
     ? ["Looking for devices…", "Reading what is attached to this machine."]
     : note
       ? [note.title, note.body]
       : waiting > 0
         ? ["Choose a device", "Pick one from the list. The choices for it show up here."]
-        : ["Nothing to mount right now", "Plug a device in or attach a disk image, then refresh."];
+        : stuck > 0
+          ? ["Nothing can be mounted yet", `${stuck === 1 ? "One device needs" : `${stuck} devices need`} something first. The list says what.`]
+          : ["No device chosen", "Once something can be mounted, choose it in the list. The choices for it show up here."];
   return h(
     "div",
     { class: "mount-idle" },
@@ -25,7 +28,6 @@ function idle({ picture, note, onRefresh }) {
     h("h2", { text: lead[0] }),
     h("p", { text: lead[1] }),
     h("ol", { class: "mount-steps" }, STEPS.map((text, index) => h("li", {}, h("b", { class: "mount-step", text: String(index + 1) }), h("span", { text })))),
-    picture && waiting === 0 && button({ label: "Refresh", glyph: "refresh", small: true, onclick: onRefresh }),
   );
 }
 
@@ -94,7 +96,7 @@ function build({ picture, device, preset, tools, onMount }) {
 
 // The card beside the list. It keeps a device's choices while the list is read again, and starts over when another device is chosen, when the
 // device itself changed, or when the view is opened with values for it.
-export function createPlanCard({ tools, onMount, onRefresh }) {
+export function createPlanCard({ tools, onMount }) {
   const element = h("aside", { class: "mount-card mount-plan" });
   let built = null;
   return {
@@ -102,7 +104,7 @@ export function createPlanCard({ tools, onMount, onRefresh }) {
     show({ picture, device, preset, note, busy }) {
       if (!device) {
         built = null;
-        element.replaceChildren(idle({ picture, note, onRefresh }));
+        element.replaceChildren(idle({ picture, note }));
         return;
       }
       const signature = JSON.stringify([picture.system, picture.elevated, picture.letters, device]);

@@ -1,6 +1,6 @@
 import { h, icon, shellQuote } from "/assets/scripts/dom.js";
 import { openSheet } from "../../../overlays.js";
-import { button, callout, copyChip, glyphTile, keyValue, notice, pathChip, pill, skeleton } from "../../../widgets.js";
+import { button, callout, copyText, glyphTile, keyValue, notice, pathChip, pill, skeleton } from "../../../widgets.js";
 import { hueOf, plural } from "../../../words.js";
 import { readDetail } from "./api.js";
 import { ancestors } from "./model.js";
@@ -9,7 +9,7 @@ import { HEAVY_CPU, HEAVY_MEMORY, LOCKS, ROLES, ageText, cpuText, memoryText, pr
 const REACH = { local: "this machine only", network: "open to the network" };
 const UNREAD = {
   ended: "It has ended, so there is nothing more to read.",
-  foreign: "It belongs to another account. Its command, folder and files can only be read when StackOps runs as an administrator.",
+  foreign: "It belongs to another account. Its folder, ports and files can only be read when StackOps runs as an administrator.",
 };
 
 function figure(label) {
@@ -19,19 +19,35 @@ function figure(label) {
   return { value, bar, note, element: h("div", { class: "procs-detail-figure" }, h("span", { class: "overline", text: label }), value, bar, note) };
 }
 
-function relative(process, onShow) {
+// A line for a process this one came from or started. One it started stands for everything under it, as a closed branch of the tree does.
+function relative(process, grouped, onShow) {
   const cpu = h("span", { class: "num" });
   const memory = h("span", { class: "num" });
-  const element = h("li", {}, h("button", { type: "button", onclick: () => onShow(process.key) }, h("strong", { text: process.name }), h("span", { class: "dim", text: `ID ${process.pid}` }), h("span", { class: "spacer" }), cpu, memory, icon("arrow", 13)));
-  return { element, cpu, memory };
+  const size = grouped && process.groupSize > 0 && h("b", { class: "procs-size", text: String(process.groupSize + 1), title: `${process.name} and the ${processCount(process.groupSize)} it started` });
+  const element = h("li", {}, h("button", { type: "button", onclick: () => onShow(process.key) }, h("strong", { text: process.name }), size, h("span", { class: "dim", text: `ID ${process.pid}` }), h("span", { class: "spacer" }), cpu, memory, icon("arrow", 13)));
+  return { element, cpu, memory, grouped };
 }
 
-function restOf(detail, lock) {
-  const command = detail.arguments.map(shellQuote).join(" ");
+function copyButton(text) {
+  const copy = button({
+    label: "Copy", glyph: "copy", small: true,
+    onclick: async () => {
+      if (!(await copyText(text, "Select the command and copy it by hand."))) return;
+      copy.replaceChildren(icon("check", 14), h("span", { text: "Copied" }));
+      setTimeout(() => copy.replaceChildren(icon("copy", 14), h("span", { text: "Copy" })), 1200);
+    },
+  });
+  return copy;
+}
+
+// `process` is the line the list has for it, which on macOS carries the command of a process that only its owner can otherwise read.
+function restOf(detail, process) {
+  const { lock } = process;
+  const command = detail.arguments.length > 0 ? detail.arguments.map(shellQuote).join(" ") : process.command;
   const sockets = detail.waiting.map((socket) => h("li", {}, h("strong", { class: "num", text: String(socket.port) }), h("span", { class: "dim", text: `${socket.protocol} · ${REACH[socket.reach] ?? `on ${socket.address}`}` })));
   return [
     lock in UNREAD && !detail.readable && h("p", { class: "procs-aside", text: UNREAD[lock] }),
-    command && h("section", {}, h("h3", { text: "Command" }), h("pre", { class: "procs-command-block", text: command }), copyChip(command, "Copy the command")),
+    command && h("section", {}, h("h3", { text: "Command" }), h("pre", { class: "procs-command-block", text: command }), copyButton(command)),
     keyValue([
       ["Program", detail.program && pathChip(detail.program)],
       ["Folder", detail.folder && pathChip(detail.folder)],
@@ -109,16 +125,16 @@ export function openDetail({ process, page }) {
     const chain = found ? ancestors(found) : [];
     const started = found ? [...found.children].sort((left, right) => (right.groupMemory ?? 0) - (left.groupMemory ?? 0)) : [];
     // The lines are only made again when the relatives changed. Their figures are filled in at every reading.
-    const signature = [...chain, null, ...started].map((item) => item?.key ?? "|").join(" ");
+    const signature = [...chain.map((item) => item.key), "|", ...started.map((item) => `${item.key}/${item.groupSize}`)].join(" ");
     if (signature !== relatives.signature) {
-      relatives = { signature, rows: [...chain, ...started].map((item) => ({ key: item.key, ...relative(item, show) })) };
+      relatives = { signature, rows: [...chain.map((item) => ({ key: item.key, ...relative(item, false, show) })), ...started.map((item) => ({ key: item.key, ...relative(item, true, show) }))] };
       parents.replaceChildren(...relatives.rows.slice(0, chain.length).map((row) => row.element));
       children.replaceChildren(...relatives.rows.slice(chain.length).map((row) => row.element));
     }
     for (const row of relatives.rows) {
       const item = page.model().byKey.get(row.key);
-      row.cpu.textContent = cpuText(item.groupCpu);
-      row.memory.textContent = memoryText(item.groupMemory);
+      row.cpu.textContent = cpuText(row.grouped ? item.groupCpu : item.cpu);
+      row.memory.textContent = memoryText(row.grouped ? item.groupMemory : item.memory);
     }
     parentsBlock.hidden = chain.length === 0;
     childrenBlock.hidden = started.length === 0;
@@ -139,7 +155,7 @@ export function openDetail({ process, page }) {
     sheet.body.scrollTo(0, 0);
     try {
       const detail = await readDetail(known);
-      if (mine === ticket) rest.replaceChildren(...restOf(detail, known.lock).filter(Boolean));
+      if (mine === ticket) rest.replaceChildren(...restOf(detail, known).filter(Boolean));
     } catch (error) {
       if (mine !== ticket) return;
       // A process that ended before it could be read is already said to have ended, above.

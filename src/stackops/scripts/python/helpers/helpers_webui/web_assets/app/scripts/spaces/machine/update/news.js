@@ -14,6 +14,7 @@ export function createNews({ onRetry }) {
   const list = h("div", { class: "machine-update-news-body" }, skeleton(3, "row"));
   const element = h("section", { class: "machine-update-card machine-update-news" }, h("header", { class: "machine-update-card-head" }, h("h2", { text: "What is new" }), count), list);
   const retry = () => button({ label: "Check again", glyph: "refresh", small: true, onclick: onRetry });
+  let shown = "";
 
   function commitRow(commit) {
     return h(
@@ -28,7 +29,11 @@ export function createNews({ onRetry }) {
     return h("li", {}, h("i", { class: "machine-update-dot" }), h("div", {}, outside(`${page}/${release.version}/`, release.version), h("p", {}, "Came out ", stamp(release.released_at))));
   }
 
+  // Drawn again only when what it lists changed: the list rises into place, and doing that on every visit made it jump.
   function paint({ state, latest }) {
+    const now = JSON.stringify([state.route, state.checkout?.problem, state.checkout?.head?.sha, latest && { ...latest, checked_at: 0 }]);
+    if (now === shown) return;
+    shown = now;
     count.textContent = "";
     if (state.route === "checkout" && state.checkout.problem !== "") {
       list.replaceChildren(notice({ glyph: "folder", title: "Nothing to compare", body: "The source folder has to be readable before the page can say what is new for it." }));

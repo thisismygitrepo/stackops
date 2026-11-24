@@ -115,7 +115,7 @@ export function createActivity({ openReport }) {
       onDrop: () => {
         if (!tasks.has(task.id)) return;
         task.terminal.dispose();
-        Object.assign(task, { terminal: null, fit: null, socket: null, type: null });
+        Object.assign(task, { terminal: null, fit: null, socket: null, sendKeys: null });
         if (task.id === activeId) editorBar.paint(task);
         if (task.summary.exit_code !== null) task.pane.replaceChildren(h("p", { class: "console-error", text: "This task's output is no longer kept: only the most recent finished tasks are. Reload the page to see what is." }));
         else if ((task.drops += 1) <= 5) setTimeout(() => tasks.has(task.id) && connect(task), 2000 * task.drops);
@@ -144,7 +144,7 @@ export function createActivity({ openReport }) {
     const done = new Promise((resolve) => (settle = resolve));
     const task = {
       id: summary.id, summary, title, emoji, quiet, pane, chip, tab, done, settle, editor: editorOf(summary.arguments), closing: null, linked: false, focusWanted: false, drops: 0,
-      terminal: null, fit: null, socket: null, type: null,
+      terminal: null, fit: null, socket: null, sendKeys: null,
     };
     closer.addEventListener("click", async () => {
       // Removing a run that is still going stops it on the server, so that takes a yes first. An editor is closed instead, which asks about

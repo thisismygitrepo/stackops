@@ -1,0 +1,122 @@
+/* Storage devices (#/machine/devices). The six hues tell the volumes of one disk apart in its bar. Their order is what keeps neighbours apart
+   for colour-blind readers, in light and in dark, so add to the end and never reorder. System parts and anything past six wear the quiet grey. */
+.devices {
+  --devices-1: #6250d6; --devices-2: #1baf7a; --devices-3: #eb6834; --devices-4: #2a78d6; --devices-5: #eda100; --devices-6: #e87ba4;
+  --devices-quiet: #9a9db5; --devices-track: rgba(18, 20, 43, 0.08); --devices-meter: var(--violet); --devices-warn: #fab219;
+}
+@media (prefers-color-scheme: dark) {
+  .devices {
+    --devices-1: #9085e9; --devices-2: #199e70; --devices-3: #d95926; --devices-4: #3987e5; --devices-5: #c98500; --devices-6: #d55181;
+    --devices-quiet: #6f7391; --devices-track: rgba(255, 255, 255, 0.1);
+  }
+}
+.devices [data-slot="1"] { --hue: var(--devices-1); }
+.devices [data-slot="2"] { --hue: var(--devices-2); }
+.devices [data-slot="3"] { --hue: var(--devices-3); }
+.devices [data-slot="4"] { --hue: var(--devices-4); }
+.devices [data-slot="5"] { --hue: var(--devices-5); }
+.devices [data-slot="6"] { --hue: var(--devices-6); }
+.devices [data-slot="quiet"] { --hue: var(--devices-quiet); }
+
+.devices-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
+.devices-back svg { transition: transform 0.3s var(--spring); }
+.devices-back:hover { color: var(--violet); }
+.devices-back:hover svg { transform: translateX(-3px); }
+.devices-stamp { align-self: center; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); }
+.devices-stats { margin-bottom: 22px; }
+.devices-tools { display: grid; gap: 10px; margin-bottom: 14px; }
+.devices-tools > div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
+.devices-tools .segmented { flex: none; }
+.devices-tools .search-input { width: 230px; }
+/* The switch keeps its words in a narrow window, where the shared rule drops them: without them nothing says what it switches. */
+.devices-tools .mini-toggle span { display: inline; }
+.devices-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.devices-loading { display: grid; gap: 14px; }
+.devices .pill { gap: 5px; }
+
+.devices-disk { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
+.devices-disk-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 18px 18px 14px 22px; }
+.devices-disk-text { flex: 1 1 260px; min-width: 0; }
+.devices-disk-text h2 { overflow: hidden; font-size: 17px; font-weight: 700; letter-spacing: -0.02em; text-overflow: ellipsis; white-space: nowrap; }
+.devices-disk-text p { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; margin-top: 5px; font-size: 13px; }
+.devices-disk-text .copy-chip { flex: 0 1 auto; min-width: 0; margin-left: 0; }
+.devices-disk-sum { display: grid; flex: none; justify-items: end; white-space: nowrap; }
+.devices-disk-sum strong { font-size: 18px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.3; }
+.devices-disk-sum span { font-size: 12px; color: var(--ink-faint); }
+.devices-busy { display: grid; flex: none; place-items: center; width: 30px; height: 30px; color: var(--violet); }
+
+/* The disk from end to end. A stretch is 10px tall and takes the pointer over a taller area, so a thin one can still be pointed at. */
+.devices-map { padding: 2px 22px 14px; }
+.devices-bar { display: flex; gap: 2px; height: 10px; }
+.devices-stretch { position: relative; flex: var(--part) 1 0; min-width: 3px; background: var(--hue); border-radius: 3px; transition: transform 0.25s var(--smooth), filter 0.2s; }
+.devices-stretch:first-child { border-top-left-radius: 999px; border-bottom-left-radius: 999px; }
+.devices-stretch:last-child { border-top-right-radius: 999px; border-bottom-right-radius: 999px; }
+.devices-stretch::after { content: ""; position: absolute; inset: -8px 0; }
+.devices-stretch.room { background: color-mix(in srgb, var(--hue) 26%, transparent); }
+.devices-stretch.free { background: var(--devices-track); }
+.devices-stretch.blank { background: none; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.devices-stretch:hover, .devices-stretch:focus-visible, .devices-stretch.devices-pointed { transform: scaleY(1.6); filter: saturate(1.15) brightness(1.06); }
+.devices-disk.rise .devices-stretch { animation: devices-fill 0.7s var(--smooth) backwards; transform-origin: left; }
+.devices-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 9px; font-size: 12px; color: var(--ink-faint); }
+.devices-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.devices-legend b { font-weight: 650; color: var(--ink-soft); }
+.devices-key { width: 10px; height: 10px; border-radius: 3px; }
+.devices-key.parts { background: var(--devices-quiet); }
+.devices-key.free { background: var(--devices-track); }
+.devices-key.blank { box-shadow: inset 0 0 0 1px var(--line-strong); }
+@keyframes devices-fill { from { transform: scaleX(0); } }
+.devices-tip { position: fixed; z-index: 60; display: grid; gap: 1px; max-width: 300px; padding: 8px 12px; font-size: 12.5px; color: var(--ink-soft); pointer-events: none; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow-pop); }
+.devices-tip strong { font-size: 14.5px; font-weight: 700; color: var(--ink); }
+
+/* The volumes of a disk: a name, where it is mounted, a bar and a figure per row, with the bars of all rows in line. */
+.devices-rows { display: grid; gap: 2px; padding: 0 10px 10px; }
+.devices-rows:empty { padding-bottom: 0; }
+.devices-row { border: 1px solid transparent; border-radius: 16px; transition: background 0.2s, border-color 0.2s; }
+.devices-row:hover { background: var(--well); }
+.devices-row.devices-pointed { background: var(--brand-wash); }
+.devices-row.open { background: var(--well); border-color: var(--line); }
+.devices-main { display: grid; grid-template-columns: 16px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.25fr) 150px; align-items: center; gap: 6px 14px; min-height: 62px; padding: 8px 8px 8px 12px; cursor: pointer; }
+.devices-dot { justify-self: center; width: 10px; height: 10px; background: var(--hue); border-radius: 50%; }
+.devices-glyph { display: grid; place-items: center; color: var(--ink-faint); }
+.devices-name { display: grid; gap: 3px; min-width: 0; }
+.devices-name strong { overflow: hidden; font-size: 14.5px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.devices-row.helper .devices-name strong { font-weight: 600; color: var(--ink-soft); }
+.devices-kind { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; font-size: 12.5px; color: var(--ink-soft); }
+.devices-kind .pill { height: 20px; padding: 0 8px; font-size: 11px; }
+.devices-where { min-width: 0; }
+.devices-where .copy-chip { margin-left: 0; }
+.devices-usage { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.devices-meter { display: flex; flex: 1 1 60px; gap: 2px; height: 8px; min-width: 40px; overflow: hidden; background: color-mix(in srgb, var(--devices-meter) 15%, transparent); border-radius: 999px; }
+.devices-meter i { flex: none; width: calc(var(--share) * 100%); min-width: 2px; background: var(--devices-meter); }
+.devices-meter .others { background: color-mix(in srgb, var(--devices-meter) 46%, transparent); }
+.devices-disk.rise .devices-meter i { animation: devices-fill 0.9s var(--smooth) backwards; transform-origin: left; }
+.devices-usage.warn { --devices-meter: var(--devices-warn); }
+.devices-usage.bad { --devices-meter: var(--bad); }
+.devices-figure { display: grid; flex: 0 0 112px; justify-items: end; margin-left: auto; line-height: 1.35; text-align: right; white-space: nowrap; }
+.devices-figure strong { font-size: 13.5px; font-weight: 650; }
+.devices-figure span { font-size: 12px; }
+.devices-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.devices-toggle svg { transition: transform 0.35s var(--spring); }
+.devices-toggle[aria-expanded="true"] { color: var(--violet); background: var(--violet-wash); }
+.devices-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.devices-detail { display: grid; gap: 14px; margin: 0 12px 12px 42px; padding: 16px 18px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 14px; animation: devices-open 0.3s var(--smooth); }
+.devices-detail .facts { font-size: 13px; }
+.devices-detail .copy-chip { margin-left: -8px; text-align: left; }
+.devices-detail .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.devices-more { display: flex; flex-wrap: wrap; gap: 8px; }
+.devices-more:empty { display: none; }
+@keyframes devices-open { from { opacity: 0; transform: translateY(-6px); } }
+.devices-fold { display: flex; align-items: center; gap: 14px; width: calc(100% - 20px); margin: 0 10px 10px; padding: 11px 12px; font-size: 13px; color: var(--ink-soft); border-radius: 14px; transition: background 0.2s, color 0.2s; }
+.devices-fold .devices-dot { flex: none; margin: 0 3px; }
+.devices-fold span { flex: 1; min-width: 0; }
+.devices-fold em { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-style: normal; font-weight: 650; color: var(--violet); }
+.devices-fold:hover, .devices-fold.devices-pointed { color: var(--ink); background: var(--well); }
+
+@media (max-width: 980px) {
+  .devices-main { grid-template-columns: 16px minmax(0, 1fr) auto; }
+  .devices-actions { grid-row: 1; grid-column: 3; }
+  .devices-where, .devices-usage { grid-column: 2 / -1; }
+  .devices-where .copy-chip { margin-left: -8px; }
+  .devices-detail { margin-left: 12px; }
+  .devices-stamp { display: none; }
+}

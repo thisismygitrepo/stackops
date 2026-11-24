@@ -4,12 +4,11 @@ import { CLEANUP_HASH } from "../disk_cleanup_words.js";
 import { partLoaders } from "../features.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
-import { dataTable } from "../result_view.js";
 import { createParts, linkCard, toolButton, toolGrid, viewHead } from "../space_kit.js";
 import { button, glyphTile, notice, sectionHead } from "../widgets.js";
-import { plural } from "../words.js";
 
-const CARE_TOOLS = ["utils machine kill-process", "utils machine list-devices", "utils machine mount", "utils machine window", "devops self update"];
+// Each opens a page of its own (features.js). What starts automatically is one of them and not a list on this page: it runs to dozens of rows.
+const CARE_TOOLS = ["utils machine kill-process", "utils machine autostart", "utils machine list-devices", "utils machine mount", "utils machine window", "devops self update"];
 
 // Views that swap in place: the overview at #/machine, the disk cleanup at #/machine/cleanup, and the ones features.js lists for this page.
 export function createMachineSpace(context) {
@@ -36,17 +35,6 @@ export function createMachineSpace(context) {
     },
   });
 
-  const startup = createLivePanel({
-    // Matching by name or source is left to the table's own filter box, which is already on the page.
-    title: "Starts automatically", path: "utils machine autostart", extra: ["--json"], locked: ["name", "source"], surface: { show_all: "Include system services" },
-    render: (data, { setCount }) => {
-      const items = Array.isArray(data) ? data : [];
-      setCount(items.length ? plural(items.length, "program") : "");
-      if (items.length === 0) return notice({ glyph: "bolt", title: "Nothing starts on its own", body: "No services or programs are set to start automatically." });
-      return dataTable(items.map((item) => ({ name: item.name, what_it_does: item.description, category: item.category, scope: item.scope, source: item.source, built_in: item.stock })));
-    },
-  });
-
   const careGrid = toolGrid(tools, CARE_TOOLS);
   careGrid.prepend(linkCard({ href: CLEANUP_HASH, emoji: "🧹", name: "utils machine clean-drive", title: "Free up disk space", blurb: "See what is taking up room, choose what goes, and clean it." }));
   const overview = h(
@@ -58,13 +46,8 @@ export function createMachineSpace(context) {
     }),
     specs.element,
     h("section", { class: "block" }, sectionHead("Look after it"), careGrid),
-    startup.element,
   );
   const cleanup = createDiskCleanup(context);
   const element = h("section", { class: "view", hidden: true }, overview, cleanup.element);
-  const showOverview = () => {
-    specs.ensure();
-    startup.ensure();
-  };
-  return { element, show: createParts({ element, built: { "": { element: overview, show: showOverview }, cleanup }, loaders: partLoaders("machine"), context }) };
+  return { element, show: createParts({ element, built: { "": { element: overview, show: () => specs.ensure() }, cleanup }, loaders: partLoaders("machine"), context }) };
 }

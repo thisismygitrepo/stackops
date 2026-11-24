@@ -97,7 +97,7 @@ export function createRow(view) {
     if (portsShown !== process.ports.join(",")) {
       portsShown = process.ports.join(",");
       ports.replaceChildren(...process.ports.slice(0, PORT_LIMIT).map((port) => h("span", { class: "procs-port", text: String(port) })), ...(process.ports.length > PORT_LIMIT ? [h("small", { class: "dim", text: `+${process.ports.length - PORT_LIMIT}` })] : []));
-      ports.title = process.ports.length > PORT_LIMIT ? `Listening on ${process.ports.join(", ")}` : "";
+      ports.title = process.ports.length > 0 ? `Listening on ${process.ports.join(", ")}` : "";
     }
     put(command, process.command);
     const lock = LOCKS[process.lock] ?? "";

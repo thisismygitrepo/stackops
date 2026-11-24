@@ -37,7 +37,7 @@ export function createWindowsToolbar(view) {
       view.changed();
     },
   });
-  const element = h("div", { class: "windows-tools" }, chipRow, h("span", { class: "spacer" }), appPick.element, orderPick.element, search.element);
+  const element = h("div", { class: "windows-tools" }, chipRow, h("div", { class: "windows-tools-side" }, appPick.element, orderPick.element, search.element));
 
   function paint(model) {
     const choices = filterChoices(model);

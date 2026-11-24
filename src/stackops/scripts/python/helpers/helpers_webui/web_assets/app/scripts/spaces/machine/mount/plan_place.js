@@ -11,7 +11,7 @@ export function createWhere({ picture, device, choice, changed }) {
   const { system } = picture;
   let field = null;
   const fieldHolder = h("div");
-  const usual = h("p", { class: "mount-where-note" }, device.name ? ["macOS chooses the place. It is usually ", h("code", { text: `/Volumes/${device.name}` }), "."] : ["macOS chooses the place, a folder under ", h("code", { text: "/Volumes" }), "."]);
+  const usual = h("p", { class: "mount-where-note" }, device.name ? ["macOS chooses the place, which is usually ", h("code", { text: `/Volumes/${device.name}` })] : ["macOS chooses the place, a folder under ", h("code", { text: "/Volumes" })]);
   const systemChooses = h("p", { class: "mount-where-note", text: "The system chooses the place, under /run/media or /media. The list shows it once the device is mounted." });
   const mode =
     system === "Darwin" &&

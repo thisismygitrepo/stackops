@@ -85,15 +85,16 @@ def apply_scheme(body: object) -> WeztermState | WeztermProblem:
     if not isinstance(name, str) or name not in schemes_list:
         return WeztermProblem(status=400, message=f"""{name} is not one of the themes this tool can apply.""")
     state = read_state()
+    file_name = Path(state["path"]).name
     match state["file"]:
         case "missing":
-            return WeztermProblem(status=409, message=f"""There is no settings file at {state["path"]} to save the theme in.""")
+            return WeztermProblem(status=409, message=f"""There is no {file_name} to save the theme in.""")
         case "unreadable":
-            return WeztermProblem(status=409, message=f"""{state["path"]} could not be read: {state["detail"]}""")
+            return WeztermProblem(status=409, message=f"""{file_name} could not be read: {state["detail"]}""")
         case "no_line":
-            return WeztermProblem(status=409, message=f"""{state["path"]} has no line that sets the colour scheme.""")
+            return WeztermProblem(status=409, message=f"""{file_name} has no line that sets the colour scheme.""")
         case "line_off":
-            return WeztermProblem(status=409, message=f"""The line that sets the colour scheme is switched off in {state["path"]}.""")
+            return WeztermProblem(status=409, message=f"""The line that sets the colour scheme is switched off in {file_name}.""")
         case "ready":
             pass
     try:

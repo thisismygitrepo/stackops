@@ -21,7 +21,7 @@ export function obstacle(now) {
 // What the settings file says about the theme in use: the answer, and a remark to go beside it.
 export function inUse(now) {
   if (now.file === "unreadable") return { text: "Not known", note: "" };
-  if (now.file !== "ready") return { text: "None set", note: "WezTerm uses its own colours." };
+  if (now.file !== "ready") return { text: "None set", note: now.installed ? "WezTerm uses its own colours." : "" };
   if (now.current === null) return { text: `Chosen by code in ${fileName(now.path)}`, note: "" };
   return { text: now.current, note: now.names.includes(now.current) ? "" : "Not one of the themes listed here." };
 }
@@ -43,7 +43,8 @@ export function remarks(now, actions) {
   const file = fileName(now.path);
   return [
     !now.installed && {
-      tone: "warn", title: "WezTerm is not installed on this machine", text: "A theme picked by name is still saved, and shows once WezTerm is installed.",
+      tone: "warn", title: "WezTerm is not installed on this machine",
+      text: `The picker has no window to show themes on.${now.file === "ready" ? " A theme picked by name is still saved, and shows once WezTerm is installed." : ""}`,
       action: { label: "Install WezTerm", glyph: "download", onclick: actions.install },
     },
     now.file === "missing" && {

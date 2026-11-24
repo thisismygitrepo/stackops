@@ -23,7 +23,7 @@
 .dialog.small { width: min(420px, 100%); margin-top: 10vh; }
 .dialog.small .dialog-body { display: grid; gap: 10px; padding: 26px; }
 .dialog.small h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
-.dialog.small p { color: var(--ink-soft); }
+.dialog.small p { overflow-wrap: anywhere; color: var(--ink-soft); }
 .dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 @keyframes dialog-in { from { opacity: 0; transform: translateY(-14px) scale(0.95); } }
 @keyframes dialog-out { to { opacity: 0; transform: translateY(-8px) scale(0.97); } }

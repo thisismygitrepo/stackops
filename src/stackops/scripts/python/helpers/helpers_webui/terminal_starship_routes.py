@@ -23,7 +23,8 @@ type StarshipSettingsKind = Literal["standard", "preset", "own", "unreadable"]
 # What the Starship sheet shows before anything is chosen. `settings_path` is the file Starship reads. The command can write another one: picking
 # by name follows XDG_CONFIG_HOME, which Starship ignores, and the picker always writes the file in the home folder, whatever STARSHIP_CONFIG says.
 # `by_name_elsewhere` and `picker_elsewhere` hold that other file, and are empty when the write lands in the file Starship reads.
-# `picker_tool` is the program the picker shows its list with, empty when none is installed. Only `installed` is filled in when Starship is missing.
+# `picker_tool` is the program the picker shows its list with, empty when none is installed. When Starship is missing, `version`, `kind` and
+# `preset` say nothing.
 class StarshipState(TypedDict):
     installed: bool
     version: str

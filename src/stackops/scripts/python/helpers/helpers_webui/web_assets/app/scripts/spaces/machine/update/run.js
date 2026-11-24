@@ -45,18 +45,19 @@ export function confirmUpdate({ state, effects, options }) {
   dialog.body.append(
     h("header", { class: "machine-update-confirm-head" }, glyphTile("alert", 350, 46), h("div", {}, h("h2", { text: publishes ? "Commit, push, then update?" : "Replace your app settings?" }), h("p", { text: "This is what the update does besides installing the new version. It starts as soon as you confirm." }))),
     h("div", { class: "machine-update-confirm-parts" }, parts),
-    publishes && h("label", { class: "machine-update-ack" }, agree, h("span", { text: "I want these changes committed and pushed." })),
+    ...(publishes ? [h("label", { class: "machine-update-ack" }, agree, h("span", { text: "I want these changes committed and pushed." }))] : []),
     h("div", { class: "dialog-actions" }, button({ label: "Go back", onclick: () => dialog.close(false) }), go),
   );
   return dialog.closed.then((answer) => answer === true);
 }
 
+// What a finished run changed, from this machine as it was read before and after. Empty when it could not be read afterwards.
 function changeLine(run, state) {
-  const now = snapshot(state);
+  if (!run.after) return "";
   const head = state.checkout?.head;
-  if (now.version !== run.before.version) return `StackOps went from ${run.before.version} to ${now.version}.`;
-  if (now.head !== run.before.head && head) return `The source folder moved on to "${head.title}", commit ${shortId(head.sha)}.`;
-  return state.route === "checkout" ? "No new commits came in. The tool was still built again from the source folder." : `StackOps was already at ${now.version}. uv and the packages StackOps uses were still brought up to date.`;
+  if (run.after.version !== run.before.version) return `StackOps went from ${run.before.version} to ${run.after.version}. `;
+  if (run.after.head !== run.before.head && head) return `The source folder moved on to "${head.title}", commit ${shortId(head.sha)}. `;
+  return state.route === "checkout" ? "No new commits came in. The tool was still built again from the source folder. " : `StackOps was already at ${run.after.version}. uv and the packages StackOps uses were still brought up to date. `;
 }
 
 const banner = (tone, mark, ...content) => h("section", { class: `machine-update-banner ${tone}` }, mark, ...content);
@@ -76,9 +77,9 @@ export function runBanner({ run, state, onReveal, onDismiss }) {
   const dismiss = iconButton("close", "Dismiss", onDismiss);
   const finished = h("small", { class: "dim", text: `Finished at ${formatClock(run.finishedAt)}` });
   if (run.exitCode === 0) {
-    return banner("good", h("span", { class: "task-mark done" }, icon("check", 22)), text("Updated. Now restart the web UI", h("p", { text: `${changeLine(run, state)} ${RESTART_LEDE}` }), restartSteps(state), finished), reveal("Show what happened"), dismiss);
+    return banner("good", h("span", { class: "task-mark done" }, icon("check", 22)), text("Updated. Now restart the web UI", h("p", { text: `${changeLine(run, state)}${RESTART_LEDE}` }), restartSteps(state), finished), reveal("Show what happened"), dismiss);
   }
   const title = run.stopped ? "The update was stopped" : "The update stopped with a problem";
   const body = run.stopped ? "Whatever had finished by then stays done. The page shows where things stand now." : "The steps after the one that failed did not run. The console shows which step it was and what it said.";
-  return banner("bad", h("span", { class: `task-mark ${run.stopped ? "stopped" : "failed"}` }, icon(run.stopped ? "stop" : "alert", 22)), text(title, h("p", { text: body }), finished), reveal("Show what happened"), dismiss);
+  return banner(run.stopped ? "" : "bad", h("span", { class: `task-mark ${run.stopped ? "stopped" : "failed"}` }, icon(run.stopped ? "stop" : "alert", 22)), text(title, h("p", { text: body }), finished), reveal("Show what happened"), dismiss);
 }

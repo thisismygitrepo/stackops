@@ -8,7 +8,7 @@
 .ghostty-theme-part { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .ghostty-theme-part .section-head { margin-bottom: 0; }
 .ghostty-theme-part > p { font-size: 13.5px; color: var(--ink-soft); }
-.ghostty-theme-part > p.dim { color: var(--ink-faint); }
+.ghostty-theme-pick-holder > p { font-size: 13.5px; }
 /* The command is shown whole, on as many lines as it needs, and its copy mark is always in view: this is the thing to take away from the sheet. */
 .ghostty-theme-command { padding: 6px; background: var(--well); border-radius: 14px; }
 .ghostty-theme-command .copy-chip { justify-content: space-between; gap: 12px; width: 100%; margin: 0; padding: 7px 10px; font-size: 12.5px; color: var(--ink); text-align: left; }

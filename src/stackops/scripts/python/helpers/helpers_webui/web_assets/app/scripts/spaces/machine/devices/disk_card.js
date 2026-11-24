@@ -66,8 +66,8 @@ export function diskCard(group, rows, options) {
   const hiddenParts = !view.parts && view.term.trim() === "" && group.volumes.some((volume) => volume.helper);
   const element = card(disk.id, head, [spaceMap(disk, point), rowList(rows, options, slots), hiddenParts && partsFold(group, options)]);
   function point(key) {
-    for (const lit of element.querySelectorAll(".lit")) lit.classList.remove("lit");
-    if (key) for (const match of element.querySelectorAll(`[data-key="${CSS.escape(key)}"]`)) match.classList.add("lit");
+    for (const pointed of element.querySelectorAll(".devices-pointed")) pointed.classList.remove("devices-pointed");
+    if (key) for (const match of element.querySelectorAll(`[data-key="${CSS.escape(key)}"]`)) match.classList.add("devices-pointed");
   }
   element.addEventListener("pointerover", (event) => {
     const row = event.target.closest(".devices-row, .devices-fold");

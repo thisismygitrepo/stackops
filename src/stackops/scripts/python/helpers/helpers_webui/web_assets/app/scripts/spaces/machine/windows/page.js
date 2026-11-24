@@ -14,7 +14,7 @@ import { createWindowsTray } from "./tray.js";
 import { createWatcher } from "./watch.js";
 import { MEMORY_ID, WINDOWS_PATH } from "./words.js";
 
-// Open windows: the summary and the map, the filters, the list, and the bar for what is ticked. `takePreset` hands over, once, what the page
+// The Windows page: the summary and the map, the filters, the list, and the bar for what is ticked. `takePreset` hands over, once, what the page
 // was opened with.
 export function createWindowsPage({ tools }, takePreset) {
   let model = null;
@@ -77,7 +77,7 @@ export function createWindowsPage({ tools }, takePreset) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "windows-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: "Open windows" }), h("p", { text: "Every window on this computer, by app and by screen. Bring one forward, put it away, or close what you are done with." })),
+      h("div", { class: "view-title" }, h("a", { class: "windows-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: "Manage windows" }), h("p", { text: "Every window on this computer, by app and by screen. Bring one forward, put it away, or close what you are done with." })),
       h("div", { class: "view-actions" }, stamp, button({ label: "All options", glyph: "sliders", title: "Open this tool's plain form, which has every option of the command", onclick: openPlain }), refreshButton),
     ),
     stateHolder, troubleHolder, hero.element, toolbar.element, list.element, tray.element,
@@ -105,14 +105,16 @@ export function createWindowsPage({ tools }, takePreset) {
   // as it was leaves the page, the pointer and the keyboard's focus alone.
   function paint(changed) {
     const ready = state.kind === "ready";
-    for (const part of [hero.element, toolbar.element, list.element]) part.hidden = !ready;
+    list.element.hidden = !ready;
+    // With nothing open there is nothing to count, filter or draw: the list's own note stands alone.
+    for (const part of [hero.element, toolbar.element]) part.hidden = !ready || model.windows.length === 0;
     const stateKey = ready ? "" : JSON.stringify(state);
     if (stateKey !== shownState) {
       shownState = stateKey;
       stateHolder.replaceChildren(...(ready ? [] : [stateView(state, { onOpenSettings: openSettings, onCheck: refresh, onPlain: openPlain })]));
     }
     troubleHolder.replaceChildren(...(ready && trouble ? [h("p", { class: "windows-trouble" }, icon("alert", 15), h("span", { text: `This list has stopped updating. ${trouble}` }))] : []));
-    stamp.hidden = checkedAt === 0;
+    stamp.hidden = !(ready || (state.kind === "unavailable" && !settled()));
     stamp.replaceChildren(h("i", { class: `windows-dot${trouble ? " stale" : ""}` }), h("span", { text: trouble ? "Not updating" : `Checked at ${formatClock(checkedAt / 1000)}` }));
     if (!ready || !changed) return sync();
     hero.paint(model);

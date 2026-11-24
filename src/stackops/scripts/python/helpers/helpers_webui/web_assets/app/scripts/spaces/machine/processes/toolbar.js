@@ -4,8 +4,8 @@ import { isNarrowed } from "./model.js";
 import { statusOf } from "./words.js";
 
 const FLAG_CHIPS = [
-  ["cpu", "Heavy on CPU", "Using a quarter of a processor core or more"],
-  ["memory", "Heavy on memory", "Using 1 GB of memory or more"],
+  ["cpu", "Heavy on CPU", "Using a tenth of a processor core or more"],
+  ["memory", "Heavy on memory", "Using 500 MB of memory or more"],
   ["ports", "Listening on a port", "Waiting for connections on a network port"],
   ["apps", "Apps and tools", "Leaves out the parts of the operating system"],
 ];
@@ -19,7 +19,7 @@ function chip(label, title, onclick) {
 // Whose processes, which ones, and how they are laid out. `filters` and `view` are the page's own; a control changes them and calls `onChange`.
 // The chips are made once and their counts filled in at every reading, so a chip is never replaced while it is being pressed.
 export function createToolbar({ filters, view, onChange }) {
-  const scopePick = segmented([["mine", "Mine"], ["all", "Everyone's"]], (scope) => {
+  const scopePick = segmented([["all", "Everyone's"], ["mine", "Mine"]], (scope) => {
     filters.scope = scope;
     onChange();
   });
@@ -46,13 +46,15 @@ export function createToolbar({ filters, view, onChange }) {
   const statusChips = new Map();
   const statusRow = h("div", { class: "chip-row" });
   const givenRow = h("div", { class: "procs-given", hidden: true });
-  const clear = h("button", { class: "link procs-clear", type: "button", text: "Clear filters", onclick: () => reset() });
+  const found = h("span", { class: "dim" });
+  const clear = h("button", { class: "link", type: "button", text: "Clear filters", onclick: () => reset() });
+  const narrowed = h("span", { class: "procs-narrowed" }, found, clear);
   const element = h(
     "div",
     { class: "procs-tools" },
     h("div", { class: "procs-tools-row" }, scopePick.element, modePick.element, h("span", { class: "spacer" }), search.element),
     givenRow,
-    h("div", { class: "procs-tools-row" }, h("div", { class: "chip-row" }, flagChips.map((item) => item.element)), h("i", { class: "procs-divider" }), statusRow, clear),
+    h("div", { class: "procs-tools-row procs-chips" }, h("div", { class: "chip-row" }, flagChips.map((item) => item.element)), statusRow, narrowed),
   );
   let givenShown = null;
 
@@ -86,9 +88,9 @@ export function createToolbar({ filters, view, onChange }) {
     );
   }
 
-  function paint(counts) {
+  function paint(counts, matched) {
     scopePick.set(filters.scope);
-    scopePick.label([`Mine · ${counts.mine.toLocaleString()}`, `Everyone's · ${counts.all.toLocaleString()}`]);
+    scopePick.label([`Everyone's · ${counts.all.toLocaleString()}`, `Mine · ${counts.mine.toLocaleString()}`]);
     modePick.set(view.mode);
     if (search.input.value.trim() !== filters.term) search.input.value = filters.term;
     for (const { flag, element: button, count } of flagChips) {
@@ -121,7 +123,8 @@ export function createToolbar({ filters, view, onChange }) {
     }
     // Only when a state came into the list: putting the chips in order moves them, and a chip must not move while it is being pressed.
     if (changed) statusRow.append(...[...listed.keys()].map((status) => statusChips.get(status).element));
-    clear.hidden = !isNarrowed(filters);
+    narrowed.hidden = !isNarrowed(filters);
+    found.textContent = `${matched.toLocaleString()} ${matched === 1 ? "fits" : "fit"}`;
     paintGiven();
   }
 

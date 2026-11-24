@@ -52,6 +52,29 @@
 }
 .folder-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; }
 .folder-chip:hover, .folder-chip.open { color: var(--ink); border-color: var(--violet); }
+.machine-chip {
+  display: flex; flex: none; align-items: center; gap: 7px; max-width: 22vw; height: 38px; padding: 0 12px; font-size: 13px; font-weight: 600; color: var(--ink-soft); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px; transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.machine-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.machine-chip:hover, .machine-chip.open { color: var(--ink); border-color: var(--violet); }
+/* A page that shows another machine says so in colour, so that a task is not started on the wrong one. */
+.machine-chip.away, .machine-chip.away:hover { color: var(--violet); background: var(--violet-wash); border-color: color-mix(in srgb, var(--violet) 50%, transparent); }
+.machine-panel { width: 380px; }
+.machine-panel .search-input { width: auto; }
+.machine-list { display: grid; gap: 2px; margin: -4px -8px; }
+.machine-row { display: flex; align-items: center; gap: 4px; }
+.machine-open { display: flex; flex: 1; align-items: center; gap: 11px; min-width: 0; min-height: 46px; padding: 6px 8px; color: var(--ink-soft); border-radius: 12px; transition: background 0.2s, color 0.2s; }
+button.machine-open:hover:not(:disabled) { color: var(--ink); background: var(--well); }
+/* The machine being opened stays as it is while the others dim. */
+.machine-open.busy:disabled { cursor: progress; opacity: 1; }
+.machine-open .ring { flex: none; color: var(--violet); }
+.machine-text { display: grid; flex: 1; min-width: 0; }
+.machine-text strong, .machine-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.machine-text strong { font-size: 13.5px; color: var(--ink); }
+.machine-text span { font-size: 12px; color: var(--ink-faint); }
+.machine-note, .machine-problem { margin: 0 8px 8px 35px; font-size: 12.5px; overflow-wrap: anywhere; }
+.machine-problem { color: var(--bad); }
 .activity-pill {
   position: relative; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; font-size: 13px; font-weight: 600; color: var(--ink-soft); background: var(--panel);
   border: 1px solid var(--line); border-radius: 12px; transition: border-color 0.2s, color 0.2s, box-shadow 0.3s;

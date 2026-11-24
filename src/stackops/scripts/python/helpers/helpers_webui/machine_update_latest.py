@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from itertools import takewhile
 from time import time
 from typing import Literal, TypedDict, cast
+from urllib.parse import quote
 from xml.etree import ElementTree
 
 import requests
@@ -100,6 +101,7 @@ def fetch_index() -> IndexAnswer | LookupProblem:
     return IndexAnswer(fetched_at=time(), version=str(document["info"]["version"]), releases=tuple(releases))
 
 
+# `repository` and `branch` arrive already written for an address (see `latest_commits`).
 def fetch_branch(repository: str, branch: str) -> BranchAnswer | LookupProblem:
     with ThreadPoolExecutor(max_workers=2) as pool:
         feed_call = pool.submit(fetch, GITHUB_FEED_URL.format(repository=repository, branch=branch))
@@ -168,6 +170,8 @@ def latest_release(installed_version: str, fresh: bool, answers: dict[str, Index
 # The newest commits of the branch the checkout follows, against the commits the checkout already has. Nothing is fetched into the checkout:
 # GitHub's public pages are read, and `history` is the checkout's own record.
 def latest_commits(repository: str, branch: str, history: frozenset[str], fresh: bool, answers: dict[str, IndexAnswer | BranchAnswer]) -> LatestView:
+    # Both come from the checkout's own git settings. A branch name may hold characters that mean something else in an address, such as "#".
+    repository, branch = quote(repository, safe="/"), quote(branch, safe="/")
     page = GITHUB_HISTORY_PAGE.format(repository=repository, branch=branch)
     key = f"""{repository}@{branch}"""
     known = answers.get(key)

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal, TypedDict
 
 from stackops.scripts.python.helpers.helpers_webui.machine_update_checkout import CheckoutView, read_checkout, read_local_history
@@ -18,13 +19,15 @@ class UpdateMemory:
 
 # What is installed and what an update would do, from this machine alone. `route` is the update command's own choice: with a source checkout in
 # its usual place it pulls that and reinstalls from it, otherwise it installs the newest release from the package index. `installed` is the uv
-# tool the update reinstalls, or the copy this server runs from where there is no such tool. `served_from` is the environment this server runs
+# tool the update reinstalls, or the copy this server runs from where there is no such tool. `same_source` says the update installs from where
+# that copy came from; when it does not, the update changes where StackOps comes from. `served_from` is the environment this server runs
 # from. `restart_needed` says the installed files are newer than this server, which goes on running what it loaded when it started.
 class UpdateState(TypedDict):
     route: Literal["checkout", "index"]
     python: str
     commit_message: str
     installed: InstallView | None
+    same_source: bool
     served_from: str
     served_by_installed: bool
     started_at: float
@@ -44,11 +47,18 @@ def read_update_state(memory: UpdateMemory) -> UpdateState:
     installed = None if environment is None else read_install(environment=environment)
     served_by_installed = environment is not None and environment == running
     root = developer_repo_root()
+    if installed is None:
+        same_source = False
+    elif root is None:
+        same_source = installed["source"] == "index"
+    else:
+        same_source = installed["source"] == "checkout" and Path(installed["origin"]).resolve() == root.resolve()
     return {
         "route": "index" if root is None else "checkout",
         "python": STACKOPS_PYTHON_VERSION,
         "commit_message": AUTO_COMMIT_MESSAGE,
         "installed": installed,
+        "same_source": same_source,
         "served_from": "" if running is None else str(running),
         "served_by_installed": served_by_installed,
         "started_at": memory.started_at,

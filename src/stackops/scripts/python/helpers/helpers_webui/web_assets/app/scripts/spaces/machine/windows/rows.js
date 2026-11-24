@@ -16,7 +16,7 @@ function miniature(entry, screen) {
   const spot = `left:${share((x - screen.x) / screen.width)};top:${share((y - screen.y) / screen.height)};right:${share(1 - (x + width - screen.x) / screen.width)};bottom:${share(1 - (y + height - screen.y) / screen.height)}`;
   return h(
     "span",
-    { class: `windows-mini${entry.showing ? "" : " away"}`, title: `Where it sits on ${screen.name.toLowerCase()}` },
+    { class: `windows-mini${entry.showing ? "" : " away"}`, title: entry.showing ? "Its place on its screen" : "Where on its screen it comes back to" },
     h("i", { style: `width:${Math.round(screen.width * scale)}px;height:${Math.round(screen.height * scale)}px` }, h("b", { style: `${spot};--hue:${hueOf(entry.app)}` })),
   );
 }
@@ -25,7 +25,7 @@ function statePills(entry) {
   const described = (text, tone, title) => Object.assign(pill(text, tone), { title });
   return [
     entry.minimized && described("Minimized", "", "Put away. Restore brings it back."),
-    entry.hidden && !entry.minimized && described("Hidden", "", "Its app is hidden as a whole. Bring to front shows it again."),
+    entry.hidden && !entry.minimized && described("Hidden", "", "Its app is hidden as a whole, with every window it has."),
     entry.full_screen && described("Full screen", "accent", "It fills a screen of its own."),
     entry.stray && described("Off screen", "warn", "It lies outside every screen. Maximize brings it back into view."),
   ];
@@ -54,7 +54,7 @@ export function windowRow(entry, { model, view, flat }) {
     { class: "windows-main" },
     box,
     model.located && miniature(entry, screen),
-    h("div", { class: "windows-text" }, h("strong", { class: entry.title.trim() ? "" : "untitled" }, highlight(titleOf(entry), view.term)), h("span", {}, flat && h("em", { class: "windows-kind" }, highlight(entry.app, view.term)), facts)),
+    h("div", { class: "windows-text" }, h("strong", { class: entry.title.trim() ? "" : "untitled" }, highlight(titleOf(entry), view.term)), h("span", {}, flat && h("em", { class: "windows-kind" }, highlight(entry.app, view.term)), facts && h("span", { text: facts }))),
     h("div", { class: "windows-pills" }, statePills(entry)),
     h("div", { class: "windows-actions" }, buttons),
   );

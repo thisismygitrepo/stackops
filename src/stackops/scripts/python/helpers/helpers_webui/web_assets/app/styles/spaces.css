@@ -131,6 +131,10 @@
 .interface .copy-chip { margin-left: 0; }
 
 .space-part.swap { animation: part-in 0.38s var(--smooth) backwards; }
+.part-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
+.part-back svg { transition: transform 0.3s var(--spring); }
+.part-back:hover { color: var(--violet); }
+.part-back:hover svg { transform: translateX(-3px); }
 @keyframes part-in { from { opacity: 0; transform: translateY(12px); } }
 .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 14px; }
 .block .tool-grid { margin-top: 0; }

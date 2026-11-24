@@ -11,7 +11,7 @@ export function createMore({ picture, device, choice, changed, openForm }) {
     const row = h(
       "button",
       {
-        class: "mount-way", type: "button", role: "radio", disabled: !way.usable,
+        class: "mount-way", type: "button", disabled: !way.usable,
         onclick: () => {
           choice.backend = way.backend === device.backend ? "" : way.backend;
           changed();
@@ -33,7 +33,7 @@ export function createMore({ picture, device, choice, changed, openForm }) {
     h(
       "div",
       { class: "fields" },
-      h("div", { class: "field" }, h("span", { class: "field-label" }, h("span", { text: "How it is mounted" })), h("div", { class: "mount-ways", role: "radiogroup", "aria-label": "How it is mounted" }, ways.map((item) => item.row))),
+      h("div", { class: "field" }, h("span", { class: "field-label" }, h("span", { text: "How it is mounted" })), h("div", { class: "mount-ways" }, ways.map((item) => item.row))),
       h("div", { class: "field" }, h("span", { class: "field-label" }, h("span", { text: "Key file" })), keyHolder, keyOff),
       h("p", { class: "mount-where-note" }, "Anything else the command can do is in ", h("button", { class: "link", type: "button", text: "its own form", onclick: openForm }), "."),
     ),
@@ -49,7 +49,7 @@ export function createMore({ picture, device, choice, changed, openForm }) {
   setOpen(choice.backend !== "" || choice.keyFile !== "");
 
   function paint(plan) {
-    for (const { way, row } of ways) row.setAttribute("aria-checked", String(way === plan.way));
+    for (const { way, row } of ways) row.setAttribute("aria-pressed", String(way === plan.way));
     keyHolder.hidden = !plan.way.takes_key;
     keyOff.hidden = plan.way.takes_key;
     if (!plan.way.takes_key || keyField) return;

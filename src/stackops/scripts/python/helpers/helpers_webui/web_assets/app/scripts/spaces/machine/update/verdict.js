@@ -31,6 +31,16 @@ export function blockerOf(state, latest, options) {
 
 // A remark that does not stop the update but that the person should have read before starting it.
 export function cautionOf(state, latest, options) {
+  // The update always works on uv's tool. A copy installed some other way is not that tool, and stays as it is.
+  if (state.installed === null) return "StackOps runs here from its source files. The update installs it as a uv tool and leaves these files alone.";
+  if (!state.installed.uv_tool) return `This copy is not one of uv's tools. The update installs StackOps as a uv tool next to it, and this copy stays at ${state.installed.version}.`;
+  // The command decides where to install from by whether a source folder is in its usual place, not by where the tool came from last time.
+  if (!state.same_source) {
+    const before = state.installed.source === "index" ? "PyPI" : home(state.installed.origin);
+    return state.route === "checkout"
+      ? `The tool was installed from ${before}. A source folder exists at ${home(state.checkout.path)}, so the update installs from that folder in its place.`
+      : `The tool was installed from ${before}. The update puts the newest release from PyPI in its place.`;
+  }
   if (state.route !== "checkout" || state.checkout.problem !== "" || options.developer) return "";
   if (dirtyCount(state.checkout) > 0 && incomingCount(state.checkout, latest) > 0) return "You have changes that are not committed. If a waiting commit touches the same files, the pull stops and nothing is updated.";
   return "";
@@ -62,9 +72,9 @@ function releaseVerdict(state, latest) {
     return { tone: "accent", pill: "Update available", title: `Version ${latest.version} is out`, detail: `You have ${mine}.${between} The newest came out ${when(latest.released_at)}.`, target: latest.version, available: true };
   }
   if (latest.standing === "ahead") {
-    return { tone: "", pill: "Ahead", title: "You are ahead of the newest release", detail: `You have ${mine} and the newest release is ${latest.version}. An update would not bring a newer StackOps.`, target: "", available: false };
+    return { tone: "", pill: "Ahead", title: "You are ahead of the newest release", detail: `You have ${mine} and the newest release is ${latest.version}. An update would not bring a newer StackOps.`, target: "", available: false, settled: true };
   }
-  if (latest.standing === "current") return { tone: "good", pill: "Up to date", title: "You have the newest release", detail: `${latest.version} came out ${when(latest.released_at)}. Nothing newer has been published.`, target: "", available: false };
+  if (latest.standing === "current") return { tone: "good", pill: "Up to date", title: "You have the newest release", detail: `${latest.version} came out ${when(latest.released_at)}, and nothing newer is out.`, target: "", available: false, settled: true };
   return { tone: "", pill: "Cannot compare", title: `The newest release is ${latest.version}`, detail: "The version installed here could not be read, so the page cannot say which is newer.", target: "", available: false };
 }
 
@@ -82,14 +92,19 @@ function commitVerdict(state, latest) {
     };
   }
   const own = checkout.ahead > 0 ? ` ${plural(checkout.ahead, "commit")} of yours ${checkout.ahead === 1 ? "is" : "are"} not pushed yet.` : "";
-  return { tone: "good", pill: "Up to date", title: "Your source folder has everything GitHub has", detail: `Nothing new on ${checkout.online_branch} since the commit you are on.${own}`, target: "", available: false };
+  return { tone: "good", pill: "Up to date", title: "Your source folder has everything GitHub has", detail: `Nothing new on ${checkout.online_branch} since the commit you are on.${own}`, target: "", available: false, settled: true };
 }
 
 // What the top of the page says: how this machine stands against the newest version there is. `latest` is null while the network is still asked.
+// `available` says there is something to get, and `settled` that there is known to be nothing.
 export function verdictOf(state, latest) {
-  if (state.route === "checkout" && state.checkout.problem !== "") return { tone: "", pill: "Not checked", title: "The source folder could not be read", detail: "See below for what is wrong with it.", target: "", available: false };
+  const { checkout } = state;
+  // A source folder that is on no branch, or on one that follows nothing, has nothing to be compared with.
+  if (state.route === "checkout" && (checkout.problem !== "" || checkout.branch === "" || checkout.upstream === "")) {
+    return { tone: "", pill: "Not checked", title: "The source folder is not ready for an update", detail: "What is in the way is under this, with what to do about it.", target: "", available: false };
+  }
   if (latest === null) {
-    const asking = state.route === "index" ? "Asking PyPI which release is the newest." : "Asking GitHub which commits your source folder does not have yet.";
+    const asking = state.route === "index" ? "Asking PyPI which release is the newest." : checkout.online ? "Asking GitHub which commits your source folder does not have yet." : "Reading what your source folder knows about the branch it follows.";
     return { tone: "", pill: "Checking", title: "Looking for a newer version", detail: asking, target: "", available: false, busy: true };
   }
   return state.route === "index" ? releaseVerdict(state, latest) : commitVerdict(state, latest);

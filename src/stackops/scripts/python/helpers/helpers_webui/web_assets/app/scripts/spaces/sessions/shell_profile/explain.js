@@ -22,11 +22,13 @@ export function explainSection(shell, folders) {
       { class: "shellprof-does-list" },
       missing.length === 0
         ? item("check", 150, `Leaves ${profiles} alone`, several ? "Both files already have their line, so neither is touched." : "The line is already in it, so the file is not touched.", shell.files.map((file) => copyChip(file.line)))
-        : item(
-            "pencil", 252, `Adds one line to ${missing.map((file) => shortPath(file.path)).join(" and ")}`,
-            `The line goes at the end of the file${missing.some((file) => !file.exists) ? ", which is created first if it is not there" : ""}. Your own lines stay as they are.`,
-            missing.map((file) => copyChip(file.line)),
-          ),
+        : shell.files.some((file) => file.old_line_present)
+          ? item("pencil", 252, `Swaps the old line in ${profiles}`, "The line that loaded the older setup file is replaced by this one, where it stands. A copy of the file as it was is kept beside it.", missing.map((file) => copyChip(file.line)))
+          : item(
+              "pencil", 252, `Adds one line to ${missing.map((file) => shortPath(file.path)).join(" and ")}`,
+              `The line goes at the end of the file${missing.some((file) => !file.exists) ? ", which is created first if it is not there" : ""}. Your own lines stay as they are.`,
+              missing.map((file) => copyChip(file.line)),
+            ),
       item(
         "sliders", 200, settings.exists ? "Replaces StackOps' settings folder" : "Puts StackOps' settings in place",
         settings.exists ? "A fresh copy of the settings StackOps ships takes the place of the whole folder. Anything you changed inside it is lost." : "The settings StackOps ships are copied here. The setup file the line loads is one of them.",

@@ -3,6 +3,7 @@ import { api, setSetting, state } from "/assets/scripts/state.js";
 import { SPACES, VIEW_KEY } from "./catalog.js";
 import { createCombo } from "./combo.js";
 import { markStale } from "./data.js";
+import { createMachineChip } from "./other_machines.js";
 import { openPopover } from "./overlays.js";
 import { button } from "./widgets.js";
 
@@ -69,7 +70,8 @@ export function createShell({ openSearch, activity }) {
     h("span", { text: "Search apps, tools, and pages" }),
     h("kbd", { text: navigator.platform.startsWith("Mac") ? "⌘K" : "Ctrl K" }),
   );
-  const topbar = h("header", { class: "topbar" }, searchButton, h("span", { class: "spacer" }), folderButton, activity.indicator);
+  // The machine comes before the folder: the folder is one of that machine's.
+  const topbar = h("header", { class: "topbar" }, searchButton, h("span", { class: "spacer" }), createMachineChip(), folderButton, activity.indicator);
 
   function setActive(spaceId) {
     for (const [id, item] of items) item.setAttribute("aria-current", String(id === spaceId));

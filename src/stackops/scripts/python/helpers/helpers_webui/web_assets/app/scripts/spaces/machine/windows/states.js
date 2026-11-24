@@ -9,8 +9,6 @@ const UNSUPPORTED = {
   unsupported_system: { title: "Not available on this system", body: "Listing and moving windows works on macOS, on Windows, and on Linux with an X11 desktop." },
 };
 
-export const loadingBlock = () => h("div", { class: "windows-loading" }, skeleton(1, "card"), skeleton(5, "row"));
-
 // macOS keeps this permission per app and gives no way to ask for it from here, so the page says where it is and which app to switch on.
 // `launcher` is the app this StackOps was started from when the server could tell, or empty. The page goes on checking while this is shown.
 function permissionPanel({ launcher, onOpenSettings, onCheck }) {
@@ -41,7 +39,7 @@ function permissionPanel({ launcher, onOpenSettings, onCheck }) {
 // What the page shows in place of the list while there is none: the first load, a machine that cannot list its windows, or a failure.
 // `missing` is a server from before this page existed, which only a restart cures.
 export function stateView(state, { onOpenSettings, onCheck, onPlain }) {
-  if (state.kind === "loading") return loadingBlock();
+  if (state.kind === "loading") return h("div", { class: "windows-loading" }, skeleton(1, "card"), skeleton(5, "row"));
   if (state.kind === "unavailable" && state.reason === "permission") return permissionPanel({ launcher: state.launcher, onOpenSettings, onCheck });
   if (state.kind === "unavailable") return notice({ glyph: "monitor", ...UNSUPPORTED[state.reason] });
   if (state.missing) {

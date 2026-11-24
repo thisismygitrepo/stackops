@@ -63,8 +63,9 @@ export function open({ activity, tools }, { preset = {} }) {
     const before = status.theme;
     let receipt;
     try {
-      receipt = (await capture([...TOOL_TOKENS, `--theme=${name}`, "--json"])).json;
-      if (!receipt?.applied) throw new Error("The command did not confirm the change.");
+      const answer = await capture([...TOOL_TOKENS, `--theme=${name}`, "--json"]);
+      if (!answer.json?.applied) throw new Error(answer.notes || "The command did not confirm the change.");
+      receipt = answer.json;
     } catch (error) {
       applying = false;
       if (alive) say("bad", h("p", {}, h("strong", { text: name }), ` was not set. ${friendlyText(error.message)}`));
@@ -77,7 +78,8 @@ export function open({ activity, tools }, { preset = {} }) {
     statusHolder.replaceChildren(statusView(status));
     picks.mark(inUse());
     const took = !status.theme || sameAs(status.theme, name);
-    const changed = before && !sameAs(before, name);
+    // What it was before, and the way back to it, only make sense once Ghostty reports the new theme.
+    const changed = took && before && !sameAs(before, name);
     const undo = changed && isSingle(before) && names.includes(before.light) && button({ label: `Put ${before.light} back`, small: true, onclick: () => apply(before.light) });
     say(
       took ? "good" : "warn",
@@ -93,9 +95,12 @@ export function open({ activity, tools }, { preset = {} }) {
   async function loadNames(fresh) {
     pickHolder.replaceChildren(...skeleton(4, "row"));
     try {
-      names = (await query([...TOOL_TOKENS, "--list", "--json"], fresh)).json.themes;
+      // The command can end without an error code when Ghostty itself fails, so an answer without the list counts as a failure too.
+      const answer = await query([...TOOL_TOKENS, "--list", "--json"], fresh);
+      if (!Array.isArray(answer.json?.themes)) throw new Error(answer.notes || "Ghostty gave no list of themes.");
+      names = answer.json.themes;
     } catch (error) {
-      if (alive) pickHolder.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The list of themes did not load", body: friendlyText(error.message), action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => loadNames(true) }) }));
+      if (alive) pickHolder.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The list of themes did not load", body: friendlyText(error.message), action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => load(true) }) }));
       return;
     }
     if (!alive) return;
@@ -104,13 +109,15 @@ export function open({ activity, tools }, { preset = {} }) {
     pickHolder.replaceChildren(picks.element);
   }
 
-  async function load() {
+  // `fresh` runs the command's list again where an earlier answer is still remembered.
+  async function load(fresh) {
     statusHolder.replaceChildren(...skeleton(1, "row"));
     try {
       status = await request("GET", STATUS_ADDRESS);
     } catch (error) {
       if (!alive) return;
-      statusHolder.replaceChildren(statusFailure(error, load));
+      statusHolder.replaceChildren(statusFailure(error, () => load(fresh)));
+      pickerButton.disabled = true;
       reason.textContent = "Could not check for Ghostty.";
       pickHolder.replaceChildren(h("p", { class: "dim", text: "The names show here once StackOps can check for Ghostty." }));
       return;
@@ -120,7 +127,7 @@ export function open({ activity, tools }, { preset = {} }) {
     statusHolder.replaceChildren(statusView(status));
     pickerButton.disabled = !ready;
     reason.textContent = ready ? "" : NOT_READY[status.state].reason;
-    if (ready) loadNames(false);
+    if (ready) loadNames(fresh);
     else pickHolder.replaceChildren(h("p", { class: "dim", text: NOT_READY[status.state].names }));
   }
 
@@ -150,5 +157,5 @@ export function open({ activity, tools }, { preset = {} }) {
     reason,
     pickerButton,
   );
-  load();
+  load(false);
 }

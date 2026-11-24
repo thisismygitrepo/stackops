@@ -9,6 +9,7 @@ PARTITION_ROLES: dict[str, VolumeRole] = {"System": "startup", "Reserved": "rese
 
 # Built on the list the mount command itself reads, which names every partition by its disk and its number. That list carries each size as
 # rounded text ("476.3 GB"), so the bytes here are that text read back: right to within a tenth of a unit, which is enough to draw a disk.
+# It gives a format only for a partition that has a drive letter; the others are marked "unknown", which the page words as such.
 def read_windows_disks(mounted: list[Mounted]) -> list[StorageDisk]:
     entries = [entry for entry in list_devices() if entry.disk_number is not None]
     by_point = {part.mount_point.upper(): part for part in mounted}
@@ -26,7 +27,7 @@ def read_windows_disks(mounted: list[Mounted]) -> list[StorageDisk]:
             regions.append(StorageRegion(id=entry.key, size=size))
             volumes.append(
                 plain_volume(
-                    identifier=entry.key, device=entry.device_path, name=entry.label or "", role=role, file_system=(entry.fs_type or "").lower(), region=entry.key, size=size,
+                    identifier=entry.key, device=entry.device_path, name=entry.label or "", role=role, file_system=(entry.fs_type or "unknown").lower(), region=entry.key, size=size,
                     mounted=by_point.get(f"""{letter}:\\""") if letter != "" else None, encrypted=False, locked=False, helper=role in HELPER_ROLES and letter == "",
                     in_use=False, mount_query=entry.key,
                 )

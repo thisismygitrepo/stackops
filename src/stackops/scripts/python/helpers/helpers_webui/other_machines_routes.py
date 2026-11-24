@@ -10,8 +10,8 @@ from stackops.scripts.python.helpers.helpers_webui.other_machines_links import L
 from stackops.scripts.python.helpers.helpers_webui.other_machines_marker import MachineSummary, OpenedFrom
 
 
-# One machine of the SSH config as the page lists it. `there` is who answered on it while its web UI is open from here, and `problem` is how a
-# connection that ended on its own ended, told once.
+# One machine of the SSH config as the page lists it. `there` is who answered on it while its web UI is open from here, and `problem` is how
+# its last connection ended, if it ended on its own.
 class MachineRow(TypedDict):
     name: str
     address: str
@@ -23,7 +23,6 @@ class MachineRow(TypedDict):
 # goes to that port, so everything it shows and runs is that machine's. `links` holds the machines open from this server.
 def other_machines_routes(links: dict[str, MachineLink], here: MachineSummary, opened_from: OpenedFrom | None, on_loopback: bool) -> list[Route]:
     locks: dict[str, asyncio.Lock] = {}
-    endings: dict[str, str] = {}
     # Why this server opens no machines, if it does not. A tunnel made on a machine that was itself opened from another one would end there,
     # out of reach of the person's browser, and so would one made by a server that is used from another device.
     if opened_from is not None:
@@ -33,19 +32,23 @@ def other_machines_routes(links: dict[str, MachineLink], here: MachineSummary, o
     else:
         closed = None
 
+    # Reading the list changes nothing, as no GET here does (`access_guard.py`). So a connection that ended on its own stays in `links` and is
+    # reported as ended until the machine is opened again or disconnected.
     async def list_machines(_request: Request) -> JSONResponse:
-        for name, link in list(links.items()):
-            if link.session.exit_code is not None:
-                del links[name]
-                endings[name] = f"""The connection to {name} ended. {read_last_words(link.session.output)}""".rstrip()
         hosts: list[SshHost] = [] if closed is not None else await asyncio.to_thread(read_ssh_hosts)
         listed = {host["name"] for host in hosts}
         # A machine that is open stays listed after its name leaves the SSH config, so that it can still be disconnected.
         hosts.extend({"name": name, "address": ""} for name in links if name not in listed)
-        rows: list[MachineRow] = [
-            {"name": host["name"], "address": host["address"], "there": links[host["name"]].there if host["name"] in links else None, "problem": endings.pop(host["name"], None)}
-            for host in hosts
-        ]
+        rows: list[MachineRow] = []
+        for host in hosts:
+            link = links.get(host["name"])
+            if link is None:
+                rows.append({"name": host["name"], "address": host["address"], "there": None, "problem": None})
+            elif link.session.exit_code is None:
+                rows.append({"name": host["name"], "address": host["address"], "there": link.there, "problem": None})
+            else:
+                ending = f"""The connection to {host["name"]} ended. {read_last_words(link.session.output)}""".rstrip()
+                rows.append({"name": host["name"], "address": host["address"], "there": None, "problem": ending})
         return JSONResponse({"here": here, "closed": closed, "machines": rows})
 
     async def read_name(request: Request) -> str | JSONResponse:

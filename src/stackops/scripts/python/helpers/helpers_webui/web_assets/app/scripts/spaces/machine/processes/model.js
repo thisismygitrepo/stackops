@@ -105,8 +105,8 @@ export function listRows(model, filters, sort) {
 }
 
 // Each process under the one that started it. A process that does not fit the filters is kept, dimmed, when something under it does.
-// While the list is narrowed every branch that leads to a match is open; otherwise a branch is open when the person opened it.
-export function treeRows(model, filters, sort, open) {
+// While the list is narrowed every branch that leads to a match is open unless the person closed it; otherwise a branch is open when they opened it.
+export function treeRows(model, filters, sort, open, closed) {
   const fits = matcher(filters);
   const matched = new Set(model.processes.filter(fits));
   const kept = new Set();
@@ -121,7 +121,7 @@ export function treeRows(model, filters, sort, open) {
   const rows = [];
   const walk = (process, depth) => {
     const inside = process.children.filter((child) => kept.has(child)).sort(compare);
-    const expanded = inside.length > 0 && (openAll || open.has(process.key));
+    const expanded = inside.length > 0 && (openAll ? !closed.has(process.key) : open.has(process.key));
     rows.push({ process, depth, inside: inside.length, expanded, context: !matched.has(process) });
     if (expanded) for (const child of inside) walk(child, depth + 1);
   };

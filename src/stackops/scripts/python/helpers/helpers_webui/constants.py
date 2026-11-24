@@ -110,7 +110,18 @@ MACHINE_PROBLEM_LINES: Final[int] = 3
 MACHINE_TERMINAL_ROWS: Final[int] = 24
 MACHINE_TERMINAL_COLUMNS: Final[int] = 200
 # SSH signs in without a prompt or fails: this server has no terminal to ask in. The keep-alive ends a tunnel whose machine went away.
-MACHINE_SSH_OPTIONS: Final[tuple[str, ...]] = ("BatchMode=yes", "ExitOnForwardFailure=yes", "ConnectTimeout=10", "ServerAliveInterval=15", "ServerAliveCountMax=3")
+# Three options undo what a person's SSH config may set for a host, each of which would break the connection made here: a shared connection
+# would keep the tunnel open after this one ends, a preset remote command refuses the one given here, and a forward of their own whose port
+# is in use would end the connection. Whether the forward made here works is checked by asking the other machine through it.
+MACHINE_SSH_OPTIONS: Final[tuple[str, ...]] = (
+    "BatchMode=yes",
+    "ConnectTimeout=10",
+    "ServerAliveInterval=15",
+    "ServerAliveCountMax=3",
+    "ControlPath=none",
+    "RemoteCommand=none",
+    "ExitOnForwardFailure=no",
+)
 # A command over SSH gets a bare PATH, without what the shell profile adds; these are where `stackops` and `uv` are installed.
 MACHINE_REMOTE_PATH: Final[str] = "$HOME/.local/bin:$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 # Tells a web UI which machine and address it was opened from. Its page then offers the way back and no other machines.

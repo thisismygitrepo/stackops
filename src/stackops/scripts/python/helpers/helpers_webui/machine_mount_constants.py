@@ -15,8 +15,9 @@ MACOS_SYSTEM_CONTENTS: Final[frozenset[str]] = frozenset({"EFI"})
 LINUX_SWAP_MOUNT: Final[str] = "[SWAP]"
 LINUX_SWAP_FILE_SYSTEM: Final[str] = "swap"
 LINUX_LUKS_FILE_SYSTEM: Final[str] = "crypto_LUKS"
-# The kind `lsblk` gives the opened content of an unlocked part.
+# The kind `lsblk` gives the opened content of an unlocked part, and the columns that say which part it belongs to and where it is mounted.
 LINUX_UNLOCKED_KIND: Final[str] = "crypt"
+LINUX_UNLOCKED_COLUMNS: Final[str] = "NAME,TYPE,MOUNTPOINT,PKNAME"
 LINUX_MEMBER_FILE_SYSTEMS: Final[frozenset[str]] = frozenset({"LVM2_member", "linux_raid_member", "zfs_member", "bcache", "ddf_raid_member", "isw_raid_member"})
 # The command itself looks for this word in the file system's name to tell a BitLocker part.
 BITLOCKER_MARK: Final[str] = "bitlocker"

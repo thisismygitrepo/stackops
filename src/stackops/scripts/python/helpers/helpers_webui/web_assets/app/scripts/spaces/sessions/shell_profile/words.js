@@ -4,6 +4,8 @@ import { state } from "/assets/scripts/state.js";
 export const PAGE_HASH = "#/sessions/shell-profile";
 export const TOOL_PATH = "devops config terminal config-shell";
 export const STATE_ADDRESS = "/api/terminal/shell-profile/state";
+// The command that copies StackOps' settings and scripts into place and touches no profile.
+export const COPY_TOOL = ["devops", "config", "copy-assets", "all"];
 
 // Each shell's name, the sign its prompt ends in, a colour, and the catalog app that installs it where there is one.
 export const SHELLS = {
@@ -33,7 +35,7 @@ export function standingOf(shell) {
 // The label and colour of each standing, and whether a setup run is what moves it on.
 export const STANDINGS = {
   ready: { label: "Set up", tone: "good", due: false },
-  behind: { label: "Setup file differs", tone: "warn", due: true },
+  behind: { label: "Setup differs", tone: "warn", due: true },
   broken: { label: "Broken", tone: "bad", due: true },
   partial: { label: "Half set up", tone: "warn", due: true },
   old: { label: "Old line", tone: "warn", due: true },
@@ -52,15 +54,16 @@ export function standingText(shell, standing) {
   const names = profileNames(shell);
   const many = names.length > 1;
   const profile = names.join(" and ");
-  // A shell the command does not act on is not told what setting it up would do; the note under its name says what to do instead.
+  // What moves a shell on: a setup run where the command acts on it, and copying StackOps' files where its line is put in by hand.
+  const fix = shell.route === "manual" ? "Copying StackOps' files" : "A setup run";
   const sentences = {
     ready: `Every new ${name} terminal loads StackOps' setup.`,
-    behind: `It works, but ${many ? "the setup files in place are not the ones" : "the setup file in place is not the one"} this version of StackOps ships. A setup run replaces ${many ? "them" : "it"}.`,
+    behind: `It works, but ${many ? "the setup files in place are not the ones" : "the setup file in place is not the one"} this version of StackOps ships. ${fix} replaces ${many ? "them" : "it"}.`,
     broken: many
-      ? `${profile} have their lines, but the files they load are missing, so every new ${name} terminal prints an error. A setup run puts them back.`
-      : `${profile} has the line, but the file it loads is missing, so every new ${name} terminal prints an error. A setup run puts the file back.`,
+      ? `${profile} have their lines, but the files they load are missing, so every new ${name} terminal prints an error. ${fix} puts them back.`
+      : `${profile} has the line, but the file it loads is missing, so every new ${name} terminal prints an error. ${fix} puts the file back.`,
     partial: "One of its two files has the line and the other does not. Setting up adds the missing one.",
-    old: `${profile} still loads the setup file of an older StackOps, which is gone. A setup run swaps that line for the current one.`,
+    old: `${profile} still loads the setup file of an older StackOps, which is gone. ${fix} swaps that line for the current one.`,
     absent: `${profile} ${many ? "have" : "has"} no StackOps line, so ${name} terminals open without what StackOps adds.`,
     unstarted: many
       ? `Neither ${names.join(" nor ")} exists yet. Setting up creates them.`
@@ -74,13 +77,13 @@ export function standingText(shell, standing) {
   return sentences[standing];
 }
 
-// Why a shell that is not the login shell has no Set up button, and what to do instead.
-export function manualText(shell, login) {
+// Why a shell that is not the login shell has no Set up button, and what to do instead. `loginName` is what the login shell is called.
+export function manualText(shell, loginName) {
   const file = shortPath(shell.files[0].path);
-  const where = login ? `Set up acts on the shell you sign in with, which is ${SHELLS[login.id].name}.` : "Set up acts on the shell you sign in with.";
-  const how = shell.files[0].line_present ? `The line in ${file} was put there by hand.` : `To use it in ${SHELLS[shell.id].name} as well, paste the line into ${file} yourself.`;
-  const files = shell.setup_in_place ? "" : login ? ` The file it loads arrives once ${SHELLS[login.id].name} is set up.` : " The file it loads is not on this computer yet.";
-  return `${where} ${how}${files}`;
+  const how = shell.files[0].line_present ? `The line in ${file} was put there by hand.` : `To use StackOps in ${SHELLS[shell.id].name} as well, paste the line into ${file} yourself.`;
+  // A shell that already has its line says what is wrong with the file under its name, so the note only speaks of it before that.
+  const files = shell.setup_in_place || shell.files[0].line_present ? "" : " The file it loads is not on this computer yet. Copy StackOps' files puts it there.";
+  return `Set up only acts on the shell you sign in with, which is ${loginName}. ${how}${files}`;
 }
 
 // What each part of the setup does, by the key the server gives it. A part the page has no words for is left out.

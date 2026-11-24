@@ -53,6 +53,7 @@ const FORMATS = {
   virtiofs: ["Shared from the host", "A folder the computer running this virtual machine shares with it."],
   vboxsf: ["Shared from the host", "A folder the computer running this virtual machine shares with it."],
   "9p": ["Shared from the host", "A folder the computer running this virtual machine shares with it."],
+  unknown: ["Format not known yet", "Windows names the format of a volume once it has a drive letter."],
 };
 const UNREADABLE = ["No readable format", "This computer cannot read what is on it. It may be blank, or made by another system."];
 export const formatOf = (volume) => (volume.file_system === "" ? UNREADABLE : (FORMATS[volume.file_system] ?? [volume.file_system.toUpperCase(), ""]));

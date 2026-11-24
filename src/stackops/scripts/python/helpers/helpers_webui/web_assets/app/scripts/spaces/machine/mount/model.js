@@ -1,6 +1,7 @@
-import { MOUNT_TOOL, PLACES, fileSystemName, sizeText } from "./words.js";
+import { MOUNT_TOOL, PLACES, fileSystemName, isStuck, sizeText } from "./words.js";
 
-const STATE_RANK = { ready: 0, mounted: 1, blocked: 2 };
+// The order the list settles into: what can be mounted, what could be once something is put right, what is mounted, and the rest.
+const rankOf = (device) => (device.state === "ready" ? 0 : isStuck(device) ? 1 : device.state === "mounted" ? 2 : 3);
 
 export const titleOf = (device) => device.name || device.key;
 
@@ -19,7 +20,7 @@ const searchText = (device) => [device.name, device.key, device.path, fileSystem
 export function arrange(devices, { filter, sort, term }) {
   const place = new Map(devices.map((device, index) => [device, index]));
   const orders = {
-    state: (left, right) => STATE_RANK[left.state] - STATE_RANK[right.state] || (left.state === "ready" ? bytesOf(right) - bytesOf(left) : 0) || place.get(left) - place.get(right),
+    state: (left, right) => rankOf(left) - rankOf(right) || (left.state === "ready" ? bytesOf(right) - bytesOf(left) : 0) || place.get(left) - place.get(right),
     size: (left, right) => bytesOf(right) - bytesOf(left) || place.get(left) - place.get(right),
     disk: (left, right) => place.get(left) - place.get(right),
   };
@@ -80,23 +81,25 @@ export function planOf(picture, device, choice) {
   }
   const withKey = way.takes_key && choice.keyFile.trim() !== "";
   if (withKey) problems.push(hindrance(choice.keyFile, choice.keyCheck, "", "Checking the key file…"));
+  const keyFile = withKey ? (choice.keyCheck?.path ?? "") : "";
   const readOnly = choice.readOnly && way.read_only;
   return {
-    way, place, withKey, readOnly,
+    way, place, withKey, keyFile, readOnly,
     problems: problems.filter(Boolean),
+    // A key file stands in for the device's own password, and with one the command asks nothing of the account either.
     asks: withKey ? way.asks.filter((ask) => ask === "admin") : way.asks,
     arguments: [
       ...MOUNT_TOOL, "--device", device.path,
       ...(place.argument ? ["--mount-point", place.argument] : []),
       ...(way.backend === "mount" ? [] : ["--backend", way.backend]),
       ...(readOnly ? ["--read-only"] : []),
-      ...(withKey && choice.keyCheck?.path ? ["--key-file", choice.keyCheck.path] : []),
+      ...(keyFile ? ["--key-file", keyFile] : []),
     ],
   };
 }
 
 // The same choices by the command's parameter names, for its own form. A switch that is on is "on" there.
 export function formPreset(device, plan) {
-  const values = { device_query: device.path, mount_point: plan.place.argument, backend: plan.way.backend === "mount" ? "" : plan.way.backend, read_only: plan.readOnly ? "on" : "", key_file: plan.arguments.includes("--key-file") ? plan.arguments.at(-1) : "" };
+  const values = { device_query: device.path, mount_point: plan.place.argument, backend: plan.way.backend === "mount" ? "" : plan.way.backend, read_only: plan.readOnly ? "on" : "", key_file: plan.keyFile };
   return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== ""));
 }

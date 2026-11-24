@@ -37,7 +37,10 @@ export function createScreenMap(view) {
       return `left:${share((x - left) / width)};top:${share((y - top) / height)};width:${share(Math.max(right - x, 0) / width)};height:${share(Math.max(bottom - y, 0) / height)}`;
     };
     const several = model.screens.length > 1;
-    const screens = model.screens.map((screen) => h("div", { class: "windows-screen", style: place(screen) }, h("span", { class: "windows-screen-tag", text: several ? `${screen.name} · ${sizeText(screen)}` : sizeText(screen) })));
+    const screens = model.screens.map((screen) => {
+      const tag = several ? `${screen.name} · ${sizeText(screen)}` : sizeText(screen);
+      return h("div", { class: "windows-screen", style: place(screen) }, h("span", { class: "windows-screen-tag", title: tag, text: tag }));
+    });
     const panes = model.windows
       .filter((entry) => entry.showing && entry.screen !== null)
       .sort((first, second) => second.area - first.area)
@@ -47,7 +50,7 @@ export function createScreenMap(view) {
     const away = model.windows.filter((entry) => !entry.showing);
     shelf.hidden = away.length === 0;
     shelf.replaceChildren(
-      h("span", { text: away.every((entry) => entry.minimized) ? "Minimized" : "Minimized or hidden" }),
+      h("span", { text: away.every((entry) => entry.minimized) ? "Minimized" : away.some((entry) => entry.minimized) ? "Minimized or hidden" : "Hidden" }),
       ...away.map((entry) => mark(entry, h("button", { class: "windows-chip", type: "button", style: `--hue:${hueOf(entry.app)}`, title: `${entry.app} · ${titleOf(entry)}`, "aria-label": `${entry.app}, ${titleOf(entry)}`, text: initialsOf(entry.app) }))),
     );
     sync();

@@ -19,7 +19,7 @@ const LOSS = {
 // is called once the settings file holds the new preset.
 export function createByName({ tokens, found, shown, wanted, onApplied }) {
   const holder = h("div", { class: "starship-pick" }, skeleton(1, "row"));
-  const problem = h("p", { class: "starship-reason", hidden: true });
+  const problem = h("p", { class: "starship-reason bad", hidden: true });
   const elsewhere = found.by_name_elsewhere;
 
   async function build() {
@@ -61,7 +61,7 @@ export function createByName({ tokens, found, shown, wanted, onApplied }) {
       suggest: async (term) => names.filter((name) => name.includes(term.trim().toLowerCase())).map((name) => ({ value: name, trail: name === found.preset && pill("In use", "good") })),
       onInput: sync, onPick: () => sync(),
     });
-    const applyButton = button({ label: "Apply", glyph: "check", tone: "primary", title: elsewhere ? "Starship would not read the file this writes" : "Replaces the settings file with this preset", onclick: apply });
+    const applyButton = button({ label: "Apply", glyph: "check", title: elsewhere ? "Starship would not read the file this writes" : "Replaces the settings file with this preset", onclick: apply });
     // The list takes Enter for itself while a suggestion is marked; once the box holds a preset's name, Enter applies it.
     combo.input.addEventListener("keydown", (event) => event.key === "Enter" && !event.defaultPrevented && apply());
     sync();

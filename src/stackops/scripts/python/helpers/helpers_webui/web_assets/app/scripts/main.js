@@ -1,5 +1,5 @@
 import { h, toast } from "/assets/scripts/dom.js";
-import { api, initState } from "/assets/scripts/state.js";
+import { api, initState, state } from "/assets/scripts/state.js";
 import { createActivity } from "./activity.js";
 import { SPACES } from "./catalog.js";
 import { createGuides } from "./features.js";
@@ -84,7 +84,8 @@ async function start() {
     }
     shown = route.space;
     shell.setActive(route.space);
-    document.title = `${SPACES.find((candidate) => candidate.id === route.space).title} · StackOps`;
+    // A tab that shows another machine says which, so tabs of several machines can be told apart.
+    document.title = `${SPACES.find((candidate) => candidate.id === route.space).title} · StackOps${state.boot.opened_from ? ` on ${state.boot.opened_from.machine}` : ""}`;
   };
   window.addEventListener("hashchange", render);
   window.addEventListener("resize", () => shell.setActive(shown));

@@ -10,6 +10,8 @@ import { runMount } from "./mount/run.js";
 import { MOUNT_HASH, MOUNT_PATH, blockText } from "./mount/words.js";
 
 const MACHINE_HASH = "#/machine";
+// Up to this width the card sits under the list (machine_mount.css), so choosing a device has to bring it into view.
+const STACKED_LAYOUT = "(max-width: 1100px)";
 
 // What the view was opened with and from where, kept until the page takes them: `open` can run before the page is made.
 let asked = null;
@@ -47,11 +49,10 @@ export function createPart({ activity, tools }) {
       picked = device.path;
       note = null;
       paint();
-      // In a narrow window the card sits under the list, out of sight.
-      plan.element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      if (matchMedia(STACKED_LAYOUT).matches) plan.element.scrollIntoView({ block: "nearest", behavior: "smooth" });
     },
   });
-  const plan = createPlanCard({ tools, onMount: mount, onRefresh: reload });
+  const plan = createPlanCard({ tools, onMount: mount });
   const backLabel = h("span");
   const back = h("a", { class: "mount-back" }, icon("back", 14), backLabel);
   const stamp = h("span", { class: "mount-stamp" });
@@ -77,9 +78,10 @@ export function createPart({ activity, tools }) {
   function takeAsked() {
     const given = asked;
     asked = null;
-    if (!given || Object.keys(given).length === 0) return;
-    preset = given;
+    if (!given) return;
     note = null;
+    if (Object.keys(given).length === 0) return;
+    preset = given;
     list.showAll();
     const query = typeof given.device_query === "string" ? given.device_query.trim() : "";
     if (query === "") return;
@@ -177,14 +179,13 @@ export function createPart({ activity, tools }) {
 
   // Every finished task asks the pages to read again. A mount of this page's own reads the list itself when it ends, so that signal is let pass.
   const keeper = staleKeeper(element, () => (run?.phase === "mounting" ? picture : read()));
+  // Devices come and go outside the app, so every visit reads them again. The list from the last visit stays up meanwhile, and what the view
+  // was opened with is applied to the fresh one.
   arrive = () => {
     fresh = true;
     back.href = origin;
     backLabel.textContent = origin === MACHINE_HASH ? "Machine" : "Back";
-    // Devices that are still current are not read again; what the view was opened with is applied to them as they stand.
-    if (keeper.ensure() !== false || !picture) return;
-    settle();
-    paint();
+    keeper.load();
   };
   paint();
   return { element, show: () => arrive() };

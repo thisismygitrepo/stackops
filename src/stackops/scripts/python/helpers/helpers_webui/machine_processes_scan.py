@@ -1,6 +1,7 @@
 import getpass
 import os
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -22,6 +23,8 @@ SYSTEM_FOLDERS: Final[dict[str, tuple[str, ...]]] = {
 # Accounts below this number belong to the system, not to a person.
 SYSTEM_ACCOUNT_LIMIT: Final[dict[str, int]] = {"darwin": 500, "linux": 1000}
 SYSTEM_ACCOUNT_NAMES: Final[frozenset[str]] = frozenset({"system", "local service", "network service"})
+FOREIGN_FIGURES_COMMAND: Final[tuple[str, ...]] = ("/bin/ps", "-o", "pid=,pcpu=,rss=,command=", "-p")
+FOREIGN_FIGURES_SECONDS: Final[float] = 5.0
 
 type ProcessRole = Literal["", "system", "server", "server_child", "server_parent"]
 type ProcessKey = tuple[int, float]
@@ -146,6 +149,23 @@ def read_row(process: psutil.Process, account_names: dict[int, str]) -> ProcessR
     }
 
 
+# macOS lets only a process's owner or an administrator read its processor use, memory and command, which leaves out the system's own
+# processes, often the busiest ones. `ps` is installed with the right to read them for everyone, so on macOS it fills those three in.
+# Its processor figure is an average over the last few seconds, as the others are. Elsewhere psutil reads every process and this adds nothing.
+def read_foreign_figures(pids: list[int]) -> dict[int, tuple[float, int, str]]:
+    if sys.platform != "darwin" or len(pids) == 0:
+        return {}
+    listed = subprocess.run(
+        [*FOREIGN_FIGURES_COMMAND, ",".join(str(pid) for pid in pids)], capture_output=True, text=True, timeout=FOREIGN_FIGURES_SECONDS, check=False, env={"LC_ALL": "C"}
+    )
+    figures: dict[int, tuple[float, int, str]] = {}
+    for line in listed.stdout.splitlines():
+        fields = line.split(None, 3)
+        if len(fields) == 4:
+            figures[int(fields[0])] = (float(fields[1]), int(fields[2]) * 1024, fields[3])
+    return figures
+
+
 # The server itself, what it runs inside (stopping that takes the server with it) and what it started.
 def mark_server_family(rows: list[ProcessRow]) -> None:
     by_pid = {row["pid"]: row for row in rows}
@@ -186,6 +206,11 @@ def read_processes(memory: ScanMemory, fresh: bool) -> ProcessSnapshot:
         for row in rows:
             if not measurable or (row["pid"], row["started"]) not in memory.measured:
                 row["cpu"] = None
+        foreign = [row for row in rows if not row["readable"] and row["status"] != psutil.STATUS_ZOMBIE]
+        figures = read_foreign_figures([row["pid"] for row in foreign])
+        for row in foreign:
+            if row["pid"] in figures:
+                row["cpu"], row["memory"], row["command"] = figures[row["pid"]]
         mark_server_family(rows)
         virtual = psutil.virtual_memory()
         snapshot: ProcessSnapshot = {

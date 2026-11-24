@@ -63,8 +63,8 @@ function linkProvider(terminal) {
 }
 
 // Shows one run live inside `pane` and forwards typing to it. Both views use it. `echo` keeps the run's opening line, its command; `fitNow` sizes
-// the console to its pane; `onSummary` gets the run's final state; `onDrop` is called when the connection ends before that. The `type` it returns
-// sends keys to the run as if they were typed, for a control that presses them for the person, and says whether they went out.
+// the console to its pane; `onSummary` gets the run's final state; `onDrop` is called when the connection ends before that. The `sendKeys` it
+// returns hands keys to the run as if they were typed, for a control that presses them for the person, and says whether they went out.
 export async function openConsole({ pane, runId, echo, fitNow, onSummary, onDrop }) {
   let library;
   try {
@@ -102,8 +102,8 @@ export async function openConsole({ pane, runId, echo, fitNow, onSummary, onDrop
     socket.close();
   });
   socket.addEventListener("close", () => ended || onDrop());
-  const type = (data) => !ended && send({ type: "input", data });
-  terminal.onData(type);
+  const sendKeys = (data) => !ended && send({ type: "input", data });
+  terminal.onData(sendKeys);
   terminal.onResize(({ rows, cols }) => send({ type: "resize", rows, columns: cols }));
-  return { terminal, fit, socket, type };
+  return { terminal, fit, socket, sendKeys };
 }

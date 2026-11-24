@@ -4,10 +4,10 @@ import { plural } from "../../../words.js";
 import { SHELLS, STANDINGS, fileName, loginLabel, manualText, shortPath, standingOf, standingText } from "./words.js";
 
 // A shell's badge: the sign its prompt ends in.
-export const shellTile = (shell, size) => h("span", { class: "tile shellprof-sign", style: `--hue:${SHELLS[shell.id].hue};--size:${size}px`, text: SHELLS[shell.id].sign });
+const shellTile = (shell, size) => h("span", { class: "tile shellprof-sign", style: `--hue:${SHELLS[shell.id].hue};--size:${size}px`, text: SHELLS[shell.id].sign });
 
 // How many parts of the setup have a program to run them. A part that needs no program always counts.
-export const readyExtras = (shell) => shell.extras.filter((extra) => extra.programs.length === 0 || extra.programs.some((program) => program.installed)).length;
+const readyExtras = (shell) => shell.extras.filter((extra) => extra.programs.length === 0 || extra.programs.some((program) => program.installed)).length;
 
 const fact = (tone, glyph, text) => h("span", { class: `shellprof-fact ${tone}` }, icon(glyph, 13), h("span", { text }));
 
@@ -63,15 +63,16 @@ function chain(shell) {
         { class: "shellprof-step-text" },
         h("span", { class: "overline", text: "A terminal" }),
         h("strong", { text: plural(shell.aliases.length, "short command") }),
-        ready === shell.extras.length ? fact("good", "check", `All ${shell.extras.length} extras have their program`) : fact("warn", "alert", `${ready} of ${shell.extras.length} extras have their program`),
+        ready === shell.extras.length ? fact("good", "check", `All ${shell.extras.length} extras are ready`) : fact("warn", "alert", `${ready} of ${shell.extras.length} extras are ready`),
       ),
     ),
   );
 }
 
 // One shell that can be set up on this machine: where it stands, the chain from its profile to what a terminal gets, and what can be done.
-// `actions` is `{ setUp(shell), openFile(file), busy }`; `login` is the login shell, for a shell that the command does not act on.
-export function shellCard(shell, { featured, login, actions }) {
+// `actions` is `{ setUp(shell), copyFiles(shell), openFile(file), busy }`; `loginName` is what the login shell is called, for a shell the
+// command does not act on.
+export function shellCard(shell, { featured, loginName, actions }) {
   const standing = standingOf(shell);
   const { label, tone, due } = STANDINGS[standing];
   const manual = shell.route === "manual";
@@ -79,6 +80,10 @@ export function shellCard(shell, { featured, login, actions }) {
   if (setUp) setUp.disabled = actions.busy;
   // A shell the command does not act on gets its line by hand, so the line is one press away from the clipboard.
   const copyLine = manual && !shell.files[0].line_present && button({ label: "Copy the line", glyph: "copy", onclick: () => copied(copyLine, shell.files[0].line) });
+  const copyFiles =
+    manual && (!shell.setup_in_place || !shell.setup_current || standing === "old") &&
+    button({ label: "Copy StackOps' files", glyph: "download", title: "Puts a fresh copy of StackOps' settings and scripts in place, and adds no line to a profile", onclick: () => actions.copyFiles(shell) });
+  if (copyFiles) copyFiles.disabled = actions.busy;
   const openers = shell.files.map((file) =>
     button({ label: shell.files.length > 1 ? `Open ${fileName(file.path)}` : "Open in editor", glyph: "pencil", title: `Opens ${shortPath(file.path)} in a text editor inside the activity panel`, onclick: () => actions.openFile(file) }),
   );
@@ -95,9 +100,9 @@ export function shellCard(shell, { featured, login, actions }) {
         h("h2", {}, h("span", { text: SHELLS[shell.id].name }), shell.login && pill(loginLabel(), "accent"), pill(label, tone)),
         h("p", { text: standingText(shell, standing) }),
       ),
-      h("div", { class: "shellprof-actions" }, setUp, copyLine, openers),
+      h("div", { class: "shellprof-actions" }, setUp, copyLine, copyFiles, openers),
     ),
-    manual && h("p", { class: "shellprof-manual" }, icon("info", 15), h("span", { text: manualText(shell, login) })),
+    manual && h("p", { class: "shellprof-manual" }, icon("info", 15), h("span", { text: manualText(shell, loginName) })),
     chain(shell),
     h(
       "footer",

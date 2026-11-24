@@ -26,7 +26,7 @@ export function buildModel(payload) {
       return { ...entry, area, screen, showing, stray: showing && area > 0 && screens.length > 0 && screen === null };
     })
     .sort(byId);
-  return { windows, screens, blocked: payload.blocked, located: screens.length > 0 && windows.some((entry) => entry.frame) };
+  return { windows, screens, blocked: payload.blocked, located: screens.length > 0 };
 }
 
 // The choices in the filter row, each with how many windows it holds. One screen, or none the system tells of, gives "On screen"; two or more

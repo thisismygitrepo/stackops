@@ -2,7 +2,6 @@ import json
 from dataclasses import dataclass
 from typing import cast
 
-from stackops.scripts.python.helpers.helpers_devops.mount_helpers.commands import ensure_ok, run_command
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
 from stackops.scripts.python.helpers.helpers_webui.machine_mount_constants import (
     BITLOCKER_MARK,
@@ -26,6 +25,7 @@ class LinuxTools:
 
 # Where the opened content of each unlocked part is mounted, by the part's name, and empty for one that is unlocked with nothing of it mounted
 # directly (a volume group inside it, say). The command's own list keeps disks and parts only, so it shows such a part as not mounted.
+# `lsblk_json` is what `lsblk -J` prints with the columns in LINUX_UNLOCKED_COLUMNS.
 def find_unlocked_places(lsblk_json: str) -> dict[str, str]:
     places: dict[str, str] = {}
     waiting = cast(dict[str, object], json.loads(lsblk_json)).get("blockdevices")
@@ -41,10 +41,6 @@ def find_unlocked_places(lsblk_json: str) -> dict[str, str]:
         if isinstance(children, list):
             stack.extend(cast(list[object], children))
     return places
-
-
-def read_unlocked_places() -> dict[str, str]:
-    return find_unlocked_places(lsblk_json=ensure_ok(run_command(["lsblk", "-J", "-o", "NAME,TYPE,MOUNTPOINT,PKNAME"]), "lsblk"))
 
 
 # The standard way runs `sudo mount`, and so does dislocker, which is for BitLocker parts only. udisksctl needs no administrator: it unlocks an

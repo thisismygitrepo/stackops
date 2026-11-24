@@ -54,7 +54,7 @@ function left(task) {
 
 // Presses the keys that save and then close, and says whether the editor closed. It stays open when it could not write the file.
 async function saveAndClose(task) {
-  if (!task.type?.(EDITORS[task.editor].saveAndClose)) {
+  if (!task.sendKeys?.(EDITORS[task.editor].saveAndClose)) {
     toast(UNREACHABLE);
     return false;
   }
@@ -84,7 +84,7 @@ async function attemptClose(task) {
   const keys = EDITORS[task.editor];
   const stop = () => api.stopRun(task.id).catch((error) => toast(error.message));
   // An editor that is not on screen (still starting, or already gone) or is out of reach cannot be asked, so the person is.
-  if (!onScreen(task) || !task.type?.(keys.close)) {
+  if (!onScreen(task) || !task.sendKeys?.(keys.close)) {
     const why = task.terminal && !onScreen(task) ? "is not on screen" : "cannot be reached";
     const sure = await confirmAction({
       title: "Stop the editor?", body: `The editor ${why} right now, so it cannot be asked to save. Stopping it loses any change that is not saved.`, confirm: "Stop the editor", tone: "danger",
@@ -99,11 +99,12 @@ async function attemptClose(task) {
     return false;
   }
   const answer = await askAboutUnsaved();
-  if (!running(task)) return true;
+  // A slow editor can have closed while the question was up, and then there is nothing left to type into.
+  if (!running(task) || (task.terminal && !onScreen(task))) return true;
   if (answer === "save") return saveAndClose(task);
   if (answer === "discard") {
     // The person has agreed to lose the changes, so an editor that does not take the keys is stopped.
-    if (!(task.type?.(keys.discard) && (await left(task)))) await stop();
+    if (!(task.sendKeys?.(keys.discard) && (await left(task)))) await stop();
     return true;
   }
   task.terminal?.focus();
@@ -125,7 +126,7 @@ export function createEditorBar() {
   let watch = null;
   // Each button with what its tooltip says while it can be pressed.
   const controls = [
-    [button({ label: "Save", glyph: "check", small: true, onclick: () => (shown.type?.(EDITORS.hx.save) ? shown.terminal.focus() : toast(UNREACHABLE)) }), "Writes the file and keeps the editor open. By hand: Esc, then :w and Enter."],
+    [button({ label: "Save", glyph: "check", small: true, onclick: () => (shown.sendKeys?.(EDITORS.hx.save) ? shown.terminal.focus() : toast(UNREACHABLE)) }), "Writes the file and keeps the editor open. By hand: Esc, then :w and Enter."],
     [button({ label: "Save and close", small: true, tone: "primary", onclick: () => saveAndClose(shown) }), "Writes the file and closes the editor. By hand: Esc, then :wq and Enter."],
   ];
   const key = (text) => h("kbd", { text });

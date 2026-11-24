@@ -57,7 +57,7 @@ export function open({ activity, tools }, { preset = {} }) {
       ),
       blocked
         ? h("p", { class: "starship-reason" }, icon("alert", 15), h("span", { text: blocked }))
-        : h("p", { class: "starship-hint", text: `The same picker, in the activity panel. Enter applies the highlighted preset${found.kind === "own" ? " and replaces your own settings" : ""}. Escape leaves everything as it is.` }),
+        : h("p", { class: "starship-hint", text: `The same picker, in the activity panel. The panel has a font of its own, so symbols that need a Nerd Font show as boxes there. Enter applies the highlighted preset${found.kind === "own" ? " and replaces your own settings" : ""}. Escape leaves everything as it is.` }),
     );
   }
 

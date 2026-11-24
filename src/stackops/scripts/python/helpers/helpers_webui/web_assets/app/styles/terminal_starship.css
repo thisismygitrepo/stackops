@@ -1,19 +1,23 @@
-.starship-content { display: grid; gap: 22px; min-width: 0; }
+/* Each grid holds its column to the sheet's width: left to size itself, the column grows to fit the command, which has no place to break. */
+.starship-content { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+.starship-content .copy-chip { text-align: left; }
+.starship-content .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
 .starship-state { padding: 16px 18px; background: var(--well); border-radius: 16px; }
 .starship-fact { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 9px; min-width: 0; }
 .starship-fact strong { font-weight: 650; }
 .starship-fact small { flex: 1 1 100%; font-size: 12.5px; color: var(--ink-faint); overflow-wrap: anywhere; }
-.starship-section { display: grid; gap: 11px; min-width: 0; }
+.starship-section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 11px; }
 .starship-section .section-head { margin-bottom: 0; }
 .starship-section > p { font-size: 13.5px; color: var(--ink-soft); }
 .starship-section .link svg { margin-left: 4px; vertical-align: -1px; }
-.starship-command { display: grid; gap: 4px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 14px; }
+.starship-command { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 14px; }
 .starship-command > span { font-size: 11.5px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
 .starship-command .copy-chip { justify-self: start; font-size: 12.5px; color: var(--ink); }
 .starship-command .copy-chip svg { opacity: 0.55; }
 .starship-run { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .starship-section > .starship-hint { font-size: 12.5px; color: var(--ink-faint); }
 .starship-section > .starship-reason { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--warn); overflow-wrap: anywhere; }
+.starship-section > .starship-reason.bad { color: var(--bad); }
 .starship-reason svg { margin-top: 2px; }
 .starship-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .starship-pick .combo { flex: 1 1 220px; min-width: 0; }

@@ -22,21 +22,22 @@ export const ACTIONS = {
 export const titleOf = (entry) => entry.title.trim() || "Untitled window";
 export const sizeText = (frame) => `${Math.round(frame.width).toLocaleString()} × ${Math.round(frame.height).toLocaleString()}`;
 
-// A window's title, cut to fit a sentence.
-export function nameOf(entry) {
-  const title = titleOf(entry);
-  return title.length > NAME_LIMIT ? `${title.slice(0, NAME_LIMIT - 1)}…` : title;
+// A window as a sentence names it: its title in quotes, cut to fit, or its app when it has no title. `first` is for the start of a sentence.
+function nameOf(entry, first) {
+  const title = entry.title.trim();
+  if (!title) return `${first ? "An" : "an"} untitled ${entry.app} window`;
+  return `"${title.length > NAME_LIMIT ? `${title.slice(0, NAME_LIMIT - 1)}…` : title}"`;
 }
 
 // What to say after an action, as [message, tone] pairs. Windows that did as asked are passed over: the list shows it.
 export function outcomeNotes(action, targets, results) {
-  const named = (result) => nameOf(targets.find((entry) => entry.id === result.id));
+  const named = (result, first) => nameOf(targets.find((entry) => entry.id === result.id), first);
   const failed = results.filter((result) => result.status === "failed");
   const gone = results.filter((result) => result.status === "gone");
   const notes = [];
-  if (failed.length === 1) notes.push([`Could not ${ACTIONS[action].verb} "${named(failed[0])}". ${failed[0].reason}`, "error"]);
+  if (failed.length === 1) notes.push([`Could not ${ACTIONS[action].verb} ${named(failed[0], false)}. ${failed[0].reason}`, "error"]);
   if (failed.length > 1) notes.push([`${failed.length} of ${results.length} windows could not be ${ACTIONS[action].done}. ${failed[0].reason}`, "error"]);
-  if (gone.length === 1) notes.push([`"${named(gone[0])}" was already closed.`, "info"]);
+  if (gone.length === 1) notes.push([`${named(gone[0], true)} was already closed.`, "info"]);
   if (gone.length > 1) notes.push([`${gone.length} windows were already closed.`, "info"]);
   return notes;
 }
@@ -46,5 +47,5 @@ export function stillOpenNote(entries) {
   if (entries.length === 0) return "";
   const apps = [...new Set(entries.map((entry) => entry.app))];
   const who = apps.length === 1 ? apps[0] : "Their apps";
-  return `${entries.length === 1 ? `"${nameOf(entries[0])}" is` : `${entries.length} windows are`} still open. ${who} may be asking what to do with unsaved changes.`;
+  return `${entries.length === 1 ? `${nameOf(entries[0], true)} is` : `${entries.length} windows are`} still open. ${who} may be asking what to do with unsaved changes.`;
 }

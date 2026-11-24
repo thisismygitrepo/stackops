@@ -1,12 +1,12 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { countUp } from "../../../motion.js";
 import { formatBytes } from "../../../words.js";
-import { topGroups } from "./model.js";
+import { FLAGS, topGroups } from "./model.js";
 import { createTrend } from "./trend.js";
 import { REFRESH_MILLISECONDS, cpuText, memoryText, processCount } from "./words.js";
 
 const TOP_COUNT = 4;
-const TREND_LIMIT = 60;
+const TREND_LIMIT = 40;
 // A few ended processes waiting to be collected are normal. This many is worth a sentence.
 const ENDED_NOTICE = 20;
 const LEVELS = { cpu: [70, 90], memory: [80, 92] };
@@ -78,8 +78,14 @@ export function createSummary({ onReveal, onFilter }) {
   const memoryTop = topList({ field: "groupMemory", format: memoryText, onReveal });
   const countFigure = h("strong", { class: "procs-figure", text: "—" });
   const countNote = h("span", { class: "procs-figure-note" });
-  const listening = factLine("plug", () => onFilter({ scope: "all", flags: ["ports"], status: "" }));
-  const ended = factLine("clock", () => onFilter({ scope: "all", flags: [], status: "zombie" }));
+  // What stands out in the list, each line a way to see just those.
+  const facts = [
+    { ...factLine("bolt", () => onFilter({ scope: "all", flags: ["cpu"], status: "" })), count: (processes) => processes.filter(FLAGS.cpu).length, words: "heavy on CPU" },
+    { ...factLine("layers", () => onFilter({ scope: "all", flags: ["memory"], status: "" })), count: (processes) => processes.filter(FLAGS.memory).length, words: "heavy on memory" },
+    { ...factLine("plug", () => onFilter({ scope: "all", flags: ["ports"], status: "" })), count: (processes) => processes.filter(FLAGS.ports).length, words: "listening on a port" },
+    { ...factLine("clock", () => onFilter({ scope: "all", flags: [], status: "stopped" })), count: (processes) => processes.filter((process) => process.status === "stopped").length, words: "paused" },
+    { ...factLine("check", () => onFilter({ scope: "all", flags: [], status: "zombie" })), count: (processes) => processes.filter((process) => process.status === "zombie").length, words: "ended, still listed" },
+  ];
   const starter = h("button", { class: "link", type: "button" });
   const starterTail = h("span");
   const endedNote = h("p", { class: "procs-aside" }, "An ended process stays listed until the program that started it collects it. It uses no memory and no CPU. ", starter, starterTail);
@@ -94,7 +100,7 @@ export function createSummary({ onReveal, onFilter }) {
     { class: "procs-cards" },
     card("CPU", h("div", { class: "procs-headline" }, cpuFigure, cpuNote, h("span", { class: "spacer" }), cpuTrend.element), cpuGauge.element, h("h3", { text: "Using the most" }), cpuTop.element),
     card("Memory", h("div", { class: "procs-headline" }, memoryFigure, memoryNote), memoryGauge.element, h("h3", { text: "Using the most" }), memoryTop.element),
-    card("Processes", h("div", { class: "procs-headline" }, countFigure, countNote), h("div", { class: "procs-facts" }, listening.element, ended.element), endedNote, hidden),
+    card("Processes", h("div", { class: "procs-headline" }, countFigure, countNote), h("div", { class: "procs-facts" }, facts.map((fact) => fact.element)), endedNote, hidden),
   );
 
   function paint(model) {
@@ -113,12 +119,12 @@ export function createSummary({ onReveal, onFilter }) {
     countUp(countFigure, processes.length);
     countNote.textContent = `${processes.filter((process) => process.mine).length.toLocaleString()} yours`;
 
-    const waiting = processes.filter((process) => process.ports.length > 0).length;
-    listening.element.hidden = waiting === 0;
-    listening.text.textContent = `${waiting.toLocaleString()} listening on a port`;
+    for (const fact of facts) {
+      const count = fact.count(processes);
+      fact.element.hidden = count === 0;
+      fact.text.textContent = `${count.toLocaleString()} ${fact.words}`;
+    }
     const gone = processes.filter((process) => process.status === "zombie");
-    ended.element.hidden = gone.length === 0;
-    ended.text.textContent = `${gone.length.toLocaleString()} ended, still listed`;
     const starters = new Map();
     for (const process of gone) starters.set(process.parent, (starters.get(process.parent) ?? 0) + 1);
     const [parentPid, started] = [...starters].sort((left, right) => right[1] - left[1])[0] ?? [0, 0];
@@ -127,9 +133,9 @@ export function createSummary({ onReveal, onFilter }) {
     starter.hidden = starterTail.hidden = !endedParent;
     starter.textContent = endedParent ? `${endedParent.name}, ID ${endedParent.pid},` : "";
     starterTail.textContent = ` started ${started === gone.length ? "all" : started.toLocaleString()} of them.`;
-    const unread = processes.filter((process) => !process.readable && process.status !== "zombie").length;
+    const unread = processes.filter((process) => process.memory === null && process.status !== "zombie").length;
     hidden.hidden = unread === 0;
-    hidden.textContent = `${unread.toLocaleString()} belong to the system or another account. Their CPU and memory cannot be read unless StackOps runs as an administrator.`;
+    hidden.textContent = `${unread === 1 ? "One process belongs" : `${unread.toLocaleString()} processes belong`} to the system or another account. ${unread === 1 ? "Its" : "Their"} CPU and memory cannot be read unless StackOps runs as an administrator.`;
   }
 
   return { element, paint };

@@ -8,6 +8,8 @@ const HUE_SLOTS = 6;
 const SLIVER = 0.005;
 
 export const isMounted = (volume) => volume.mount_point !== "";
+// Whether the mount tool can take this volume: it has to be able to name it, and there has to be a format on it to mount.
+export const handsOver = (volume) => Boolean(volume.mount_query) && volume.file_system !== "";
 
 // The picture as groups of rows: each disk with its volumes, then the shares as one group of their own.
 export function groupsOf(picture) {

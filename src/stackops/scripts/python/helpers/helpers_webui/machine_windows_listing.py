@@ -1,7 +1,10 @@
+import contextlib
+import io
 import os
 import shutil
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 import psutil
@@ -11,7 +14,14 @@ from stackops.scripts.python.helpers.helpers_webui.machine_windows_models import
 from stackops.scripts.python.helpers.helpers_window.window_models import WindowEntry
 
 
+_READING = threading.Lock()
+_WARNINGS_SHOWN: set[str] = set()
+
+
 # The same choice of helper the `window` command makes for the system it runs on.
+# The helper warns on the console about every app it could not read, each time it is asked. The page asks every few seconds, so the same lines
+# would bury everything else the server prints: each line is passed on the first time it is seen and held back after that. The console is
+# swapped for the whole process while the helper runs, so the lock lets one reading at a time do it.
 def collect_open_windows() -> list[WindowEntry]:
     if sys.platform == "darwin":
         from stackops.scripts.python.helpers.helpers_window.window_macos import collect_windows
@@ -21,7 +31,15 @@ def collect_open_windows() -> list[WindowEntry]:
         from stackops.scripts.python.helpers.helpers_window.window_windows import collect_windows
     else:
         raise RuntimeError(f"""Window management is not supported on {sys.platform}.""")
-    return collect_windows()
+    warnings = io.StringIO()
+    try:
+        with _READING, contextlib.redirect_stderr(warnings):
+            return collect_windows()
+    finally:
+        for line in warnings.getvalue().splitlines():
+            if line not in _WARNINGS_SHOWN:
+                _WARNINGS_SHOWN.add(line)
+                print(line, file=sys.stderr)
 
 
 # On Windows the CLI names a window's app by its process number; the page groups by the program's name instead.

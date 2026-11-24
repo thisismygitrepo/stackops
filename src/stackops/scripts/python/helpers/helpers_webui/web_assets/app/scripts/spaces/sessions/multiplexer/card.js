@@ -22,8 +22,8 @@ export function multiplexerCard({ item, capabilities, holds, marked, platform, o
   });
   const works = capabilities.map((id) => {
     const on = item.works_with.includes(id);
-    const { label, what } = CAPABILITIES[id] ?? { label: id, what: "" };
-    return h("li", { class: on ? "on" : "off", title: `${what} ${on ? "Works" : "Does not work"} with ${title}.`.trim() }, icon(on ? "check" : "close", 12), h("span", { text: label }), h("span", { class: "mux-unseen", text: on ? ", works" : ", does not work" }));
+    const { label, what } = CAPABILITIES[id];
+    return h("li", { class: on ? "on" : "off", title: `${what} ${on ? "Works" : "Does not work"} with ${title}.` }, icon(on ? "check" : "close", 12), h("span", { text: label }), h("span", { class: "mux-unseen", text: on ? ", works" : ", does not work" }));
   });
   const element = h(
     "article",

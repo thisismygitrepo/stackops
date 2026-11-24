@@ -67,11 +67,12 @@ def storage_mark(mounted: list[Mounted]) -> str:
     return hashlib.sha256(seen.encode(encoding="utf-8")).hexdigest()[:16]
 
 
+# What is mounted from another computer or by a program, and is no disk of this machine: a disk that a program mounts is listed with its disk.
 # A share whose server went away keeps its mount, and asking how full it is then waits for minutes. Each share is asked on a thread of its own
 # and the ones that have not answered in time are shown as not answering. The threads are daemons, so one that never returns does not hold
 # the server open when it stops.
 def read_shares(mounted: list[Mounted]) -> list[StorageVolume]:
-    remote = [part for part in mounted if part.remote]
+    remote = [part for part in mounted if part.remote and not part.device.startswith("/dev/")]
     answers: dict[str, Usage | None] = {}
 
     def ask(point: str) -> None:

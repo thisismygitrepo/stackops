@@ -17,6 +17,7 @@ const SETTINGS_GROUP = "wezterminal";
 export function open({ activity, tools }, { preset }) {
   const node = app.nodes.get(TOOL_PATH);
   const sheet = openSheet({ label: "WezTerm theme" });
+  sheet.panel.classList.add("wezterm-theme-sheet");
   const standing = h("div", { class: "wezterm-theme-standing" });
   const issues = h("div", { class: "wezterm-theme-issues" });
   const count = h("span", { class: "count" });

@@ -25,6 +25,8 @@
 .machine-update-checking { gap: 7px; }
 .machine-update-checking .ring { width: 11px; height: 11px; border-width: 1.5px; }
 .machine-update-figure { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 52px; font-weight: 780; letter-spacing: -0.045em; line-height: 1.1; }
+/* The arrow stays with the version it points at when the two do not fit on one line. */
+.machine-update-to { display: inline-flex; align-items: center; gap: 14px; white-space: nowrap; }
 .machine-update-figure svg { color: var(--ink-faint); }
 .machine-update-target { color: transparent; background: linear-gradient(110deg, #6a5cff, #1ea7fd 55%, #12c99b); -webkit-background-clip: text; background-clip: text; }
 .machine-update-hero-text h2 { font-size: 21px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.25; }
@@ -34,6 +36,7 @@
 .machine-update-act { display: grid; justify-items: end; gap: 8px; max-width: 250px; }
 .machine-update-act .btn { height: 46px; padding: 0 22px; font-size: 15px; border-radius: 15px; }
 .machine-update-act-note { font-size: 12.5px; text-align: right; color: var(--ink-faint); }
+.machine-update-act-note.risky { font-weight: 600; color: var(--bad); }
 .machine-update-reason { display: flex; grid-column: 1 / -1; align-items: flex-start; gap: 12px; padding: 14px 16px; background: color-mix(in srgb, var(--warn) 9%, var(--panel-solid)); border: 1px solid color-mix(in srgb, var(--warn) 34%, var(--line)); border-radius: 16px; }
 .machine-update-reason > svg { margin-top: 2px; color: var(--warn); }
 .machine-update-reason > div { display: grid; justify-items: start; gap: 3px; min-width: 0; }
@@ -161,6 +164,7 @@
   .machine-update-grid[data-route="checkout"] { grid-template-areas: "news" "folder" "plan" "install"; }
   .machine-update-grid[data-route="index"] { grid-template-areas: "news" "install" "plan"; }
   .machine-update-grid[data-route="checkout"] .machine-update-install .facts { grid-template-columns: max-content minmax(0, 1fr); }
+  .machine-update-figure { font-size: 44px; }
 }
 @media (max-width: 760px) {
   .machine-update-hero { grid-template-columns: minmax(0, 1fr); padding: 22px 20px; }

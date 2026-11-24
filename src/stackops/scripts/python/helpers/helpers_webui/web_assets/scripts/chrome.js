@@ -78,6 +78,8 @@ export function createRail({ openPalette }) {
       icon("sparkle", 14),
       h("span", { text: "Switch to app view" }),
     ),
+    // On a page that shows another machine, the way back to the machine it was opened from (the app view's machine button has the rest).
+    boot.opened_from && h("a", { class: "rail-switch", href: boot.opened_from.address, title: `This page shows ${boot.opened_from.machine}, opened from ${boot.opened_from.name}` }, icon("back", 14), h("span", { text: `Back to ${boot.opened_from.name}` })),
     h("div", { class: "rail-foot" }, icon("terminal", 14), h("span", { text: `${boot.user}@${boot.host} · ${boot.platform}` })),
   );
 

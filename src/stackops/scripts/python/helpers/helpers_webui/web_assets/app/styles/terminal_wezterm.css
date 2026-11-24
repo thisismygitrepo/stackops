@@ -1,3 +1,5 @@
+/* The list's buttons scroll under the sheet's close button, which is see-through elsewhere. */
+.wezterm-theme-sheet .sheet-close { background: var(--panel-solid); }
 .wezterm-theme-content { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
 .wezterm-theme-standing { padding: 14px 16px; background: var(--well); border-radius: 16px; }
 .wezterm-theme-standing .copy-chip { text-align: left; }

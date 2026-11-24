@@ -7,7 +7,7 @@ import { createActions } from "./shell_profile/actions.js";
 import { explainSection } from "./shell_profile/explain.js";
 import { createGives } from "./shell_profile/gives.js";
 import { blockedRow, shellCard } from "./shell_profile/shell_card.js";
-import { PAGE_HASH, STATE_ADDRESS, TOOL_PATH } from "./shell_profile/words.js";
+import { PAGE_HASH, SHELLS, STATE_ADDRESS, TOOL_PATH } from "./shell_profile/words.js";
 
 // Whoever opens the tool with Nushell picked lands on that shell's card.
 export function open(_context, { preset }) {
@@ -37,7 +37,8 @@ export function createPart({ activity, tools }) {
     const others = usable.filter((shell) => shell !== login);
     // The shell a setup run acts on: the login shell where the command reaches it, and Nushell otherwise.
     const target = usable.find((shell) => shell.login && shell.route !== "manual") ?? usable.find((shell) => shell.route !== "manual");
-    const cardOf = (shell) => shellCard(shell, { featured: shell === login, login, actions: { setUp: actions.setUp, openFile: actions.openFile, busy: actions.busy() } });
+    const loginName = login ? SHELLS[login.id].name : next.login_shell;
+    const cardOf = (shell) => shellCard(shell, { featured: shell === login, loginName, actions: { setUp: actions.setUp, copyFiles: actions.copyFiles, openFile: actions.openFile, busy: actions.busy() } });
     body.replaceChildren(
       ...[
         !login && next.login_shell && callout({ tone: "warn", title: `You sign in with ${next.login_shell}`, text: `StackOps has no setup for ${next.login_shell}, so nothing here changes the terminals that start in it. The shells below can still load StackOps' setup.` }),
@@ -70,7 +71,9 @@ export function createPart({ activity, tools }) {
         if (mine !== ticket) return latest;
         keeper.spoil();
         bannerHolder.replaceChildren();
-        body.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "This didn't load", body: error.message, action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load() }) }));
+        // A server started before this page existed has no answer for it. That clears up with a restart, so the notice says that and not "404".
+        const reason = error.status === 404 ? "The StackOps server that is running is older than this page. Restart it, then open this page again." : error.message;
+        body.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "This didn't load", body: reason, action: button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load() }) }));
         return false;
       }
       if (mine !== ticket) return latest;

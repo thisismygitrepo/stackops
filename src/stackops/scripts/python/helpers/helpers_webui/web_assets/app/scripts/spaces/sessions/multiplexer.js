@@ -79,7 +79,9 @@ export function createPart({ activity, tools }) {
     // The server answers 422 when the settings file is there and does not pass the check every StackOps command gives it.
     const unreadable = error.status === 422;
     const actions = h("div", { class: "dialog-actions" }, button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load() }), unreadable && editButton(activity, SETTINGS, { label: "Edit the settings file", small: true }));
-    failure.replaceChildren(notice({ glyph: "alert", tone: "bad", title: unreadable ? "The StackOps settings file cannot be read" : "This didn't load", body: error.message, action: actions }));
+    // Any other failure is most often a server started before this page's routes existed, which only a restart brings in.
+    const body = unreadable ? error.message : `${error.message.replace(/[.\s]*$/, "")}. If StackOps was just updated, restart it and open this page again.`;
+    failure.replaceChildren(notice({ glyph: "alert", tone: "bad", title: unreadable ? "The StackOps settings file cannot be read" : "This didn't load", body, action: actions }));
     defaults.hidden = listing.hidden = true;
   }
 
@@ -163,7 +165,7 @@ export function createPart({ activity, tools }) {
       marked = proposed;
       proposed = {};
       if (overview && changed) paint();
-      // Not strictly once: a page that is still loading marks the button when its cards arrive, without moving the keyboard there.
+      // A page that is still loading marks the button when its cards arrive, and leaves the keyboard where it is.
       element.querySelector(".mux-pick.suggested")?.focus();
       keeper.ensure();
     },

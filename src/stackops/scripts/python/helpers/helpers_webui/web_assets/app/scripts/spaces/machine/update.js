@@ -34,6 +34,7 @@ function createUpdatePage({ activity, tools }, preset) {
   let run = null;
   let starting = false;
   let ticket = 0;
+  let bannerShown = "";
 
   const hero = createHero({ onUpdate: update });
   const news = createNews({ onRetry: () => load(true) });
@@ -65,7 +66,7 @@ function createUpdatePage({ activity, tools }, preset) {
   function paintChoices() {
     if (state === null) return;
     plan.paint({ state, effects });
-    hero.paint({ state, verdict: verdictOf(state, latest), blocker: blockerOf(state, latest, options), caution: cautionOf(state, latest, options), busy: starting || run?.phase === "running" });
+    hero.paint({ state, verdict: verdictOf(state, latest), blocker: blockerOf(state, latest, options), caution: cautionOf(state, latest, options), options, busy: starting || run?.phase === "running" });
   }
 
   function paint() {
@@ -81,6 +82,10 @@ function createUpdatePage({ activity, tools }, preset) {
     paintChoices();
     news.paint({ state, latest });
     facts.paint({ state, latest });
+    // The banner is only drawn again when what it says changed, so it does not replay its entrance each time a lookup arrives.
+    const bannerNow = JSON.stringify([run, state.restart_needed, state.restart_command]);
+    if (bannerNow === bannerShown) return;
+    bannerShown = bannerNow;
     const banner = runBanner({
       run, state,
       onReveal: () => activity.reveal(run.id),
@@ -96,9 +101,10 @@ function createUpdatePage({ activity, tools }, preset) {
   // cannot even be asked is shown the way a network that is down is, with what the server said.
   async function load(fresh) {
     const mine = (ticket += 1);
+    let next;
     element.classList.add("loading");
     try {
-      const next = await readState();
+      next = await readState();
       if (mine !== ticket) return;
       state = next;
       failure = "";
@@ -119,7 +125,7 @@ function createUpdatePage({ activity, tools }, preset) {
         paintChoices();
       }, () => {});
     }
-    const answer = await readLatest(fresh).catch((error) => ({ source: state.route === "index" ? "index" : "github", trouble: "server", problem: error.message, version: "", released_at: "", page: "", standing: "unknown", releases: [], commits: [], more: false }));
+    const answer = await readLatest(fresh).catch((error) => ({ source: next.route === "index" ? "index" : "github", trouble: "server", problem: error.message, version: "", released_at: "", page: "", standing: "unknown", releases: [], commits: [], more: false }));
     if (mine !== ticket) return;
     latest = answer;
     element.classList.remove("loading");
@@ -142,10 +148,14 @@ function createUpdatePage({ activity, tools }, preset) {
       starting = false;
       paint();
       const outcome = await task.done;
-      run = { ...run, phase: "done", exitCode: outcome.exit_code, stopped: Boolean(outcome.stopped), finishedAt: outcome.finished_at ?? Date.now() / 1000 };
-      // The banner says what changed, so it waits for this machine to be read again.
-      await load(false);
+      // The banner says what changed, so this machine is read again first; a read that fails leaves the comparison out.
+      const after = await readState().catch(() => null);
+      if (after) state = after;
+      run = { ...run, phase: "done", after: after && snapshot(after), exitCode: outcome.exit_code, stopped: Boolean(outcome.stopped), finishedAt: outcome.finished_at ?? Date.now() / 1000 };
+      paint();
       if (!element.closest("[hidden]")) element.closest(".stage")?.scrollTo({ top: 0, behavior: "smooth" });
+      // What is new is asked again as well, without waiting for it: the answer from before the update no longer holds.
+      load(false);
     } catch (error) {
       toast(error.message);
     } finally {

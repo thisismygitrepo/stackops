@@ -1,7 +1,7 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { CLEANUP_HASH } from "../../../disk_cleanup_words.js";
 import { button, copyChip, iconButton, keyValue, pathChip, pill } from "../../../widgets.js";
-import { fullness, isMounted, pressureOf, sharingOf } from "./model.js";
+import { fullness, handsOver, isMounted, pressureOf, sharingOf } from "./model.js";
 import { PLACES, formatOf, roleOf, size, spaceSentence, volumeName, whyNoMount } from "./words.js";
 
 const PRESSURE = { bad: "Almost full", warn: "Getting full" };
@@ -15,7 +15,7 @@ function usage(volume, pressure) {
     "div",
     { class: `devices-usage ${pressure}` },
     h("span", { class: "devices-meter", title }, h("i", { class: "own", style: `--share:${full.own}` }), full.others > 0 && h("i", { class: "others", style: `--share:${full.others}` })),
-    h("span", { class: "devices-figure" }, h("strong", { class: "num", text: `${size(volume.free)} free` }), h("span", { class: "dim", text: `of ${size(volume.size)}` })),
+    h("span", { class: "devices-figure" }, h("strong", { class: "num", text: `${size(volume.used)} used` }), h("span", { class: "dim", text: `${size(volume.free)} free` })),
   );
 }
 
@@ -26,7 +26,7 @@ function rowAction(volume, { busy, platform, handlers }) {
   if (isMounted(volume)) return volume.actions.includes("unmount") && button({ label: "Unmount", small: true, title: "Take it out of use without unplugging the disk", onclick: () => handlers.unmount(volume) });
   if (volume.helper) return null;
   if (volume.actions.includes("mount")) return button({ label: "Mount", glyph: "plug", tone: "primary", small: true, title: "Make its files reachable", onclick: () => handlers.mount(volume) });
-  if (volume.mount_query) return button({ label: "Mount…", glyph: "plug", tone: "primary", small: true, title: "Choose where and how to mount it", onclick: () => handlers.handOver(volume) });
+  if (handsOver(volume)) return button({ label: "Mount…", glyph: "plug", tone: "primary", small: true, title: "Choose where and how to mount it", onclick: () => handlers.handOver(volume) });
   const blocked = button({ label: "Mount", glyph: "plug", small: true, title: whyNoMount(volume, platform) });
   blocked.disabled = true;
   return blocked;
@@ -35,7 +35,7 @@ function rowAction(volume, { busy, platform, handlers }) {
 function detail({ volume, group }, { platform, handlers }) {
   const [formatName, formatNote] = formatOf(volume);
   const [, roleNote] = roleOf(volume);
-  const blocked = !isMounted(volume) && !volume.helper && !volume.actions.includes("mount") && !volume.mount_query;
+  const blocked = !isMounted(volume) && !volume.helper && !volume.actions.includes("mount") && !handsOver(volume);
   return h(
     "div",
     { class: "devices-detail" },
@@ -53,7 +53,7 @@ function detail({ volume, group }, { platform, handlers }) {
     h(
       "div",
       { class: "devices-more" },
-      !isMounted(volume) && volume.actions.includes("mount") && volume.mount_query && button({ label: "Mount somewhere else", glyph: "folder", small: true, title: "Choose the folder it is mounted in", onclick: () => handlers.handOver(volume) }),
+      !isMounted(volume) && volume.actions.includes("mount") && handsOver(volume) && button({ label: "Mount somewhere else", glyph: "folder", small: true, title: "Choose the folder it is mounted in", onclick: () => handlers.handOver(volume) }),
       volume.home && button({ label: "Free up space", glyph: "trash", small: true, onclick: () => (location.hash = CLEANUP_HASH) }),
     ),
   );

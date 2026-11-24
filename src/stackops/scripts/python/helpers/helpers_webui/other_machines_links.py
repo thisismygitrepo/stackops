@@ -116,6 +116,8 @@ def ask_machine(name: str, tunnel_port: int, remote_port: int, token: str) -> Ma
         return LinkProblem(reason="failed", message=f"""The web UI on {name} started, but answered this machine with status {error.code}.""")
     except OSError as error:
         return LinkProblem(reason="failed", message=f"""The web UI on {name} started, but did not answer through the SSH tunnel: {error}""")
+    except ValueError:
+        return LinkProblem(reason="failed", message=f"""The SSH tunnel to {name} did not lead to its web UI. Something else on this machine answers on port {tunnel_port}.""")
     return answer["here"]
 
 
@@ -126,29 +128,36 @@ async def open_on_ports(name: str, ssh: str, environment: dict[str, str], marker
     session, token_found = start_session(
         argv=[ssh, "-tt", *options, "-L", f"""127.0.0.1:{tunnel_port}:127.0.0.1:{remote_port}""", "--", name, remote_command], environment=environment
     )
+    link: MachineLink | None = None
     try:
-        token = await asyncio.wait_for(asyncio.shield(token_found), timeout=MACHINE_CONNECT_SECONDS)
-    except TimeoutError:
-        session.handle.stop(True)
-        return LinkProblem(
-            reason="failed", message=f"""{name} did not start its web UI within {MACHINE_CONNECT_SECONDS:.0f} seconds. {read_last_words(session.output)}""".rstrip()
-        )
-    if token is None:
-        said = read_last_words(session.output)
-        if "Cannot listen on" in said:
-            return LinkProblem(reason="port_taken", message=f"""{name} has no free port for its web UI among the {MACHINE_PORT_ATTEMPTS} kept for it. It said: {said}""")
-        if session.exit_code != 255:
-            return LinkProblem(reason="failed", message=f"""{name} did not start its web UI (exit code {session.exit_code}). It said: {said}""")
-        asks = "Permission denied" in said or "Host key verification failed" in said
-        hint = f""" The page cannot answer SSH's questions (a password, a key passphrase, a new host key), so `ssh {name}` has to work in a terminal without asking any.""" if asks else ""
-        return LinkProblem(reason="failed", message=f"""SSH could not connect to {name}. It said: {said}{hint}""")
-    there = await asyncio.to_thread(ask_machine, name=name, tunnel_port=tunnel_port, remote_port=remote_port, token=token)
-    match there:
-        case LinkProblem():
+        try:
+            token = await asyncio.wait_for(asyncio.shield(token_found), timeout=MACHINE_CONNECT_SECONDS)
+        except TimeoutError:
+            return LinkProblem(
+                reason="failed", message=f"""{name} did not start its web UI within {MACHINE_CONNECT_SECONDS:.0f} seconds. {read_last_words(session.output)}""".rstrip()
+            )
+        if token is None:
+            said = read_last_words(session.output)
+            if "Cannot listen on" in said:
+                return LinkProblem(reason="port_taken", message=f"""{name} has no free port for its web UI among the {MACHINE_PORT_ATTEMPTS} kept for it. It said: {said}""")
+            if session.exit_code != 255:
+                return LinkProblem(reason="failed", message=f"""{name} did not start its web UI and stopped with exit code {session.exit_code}. It said: {said}""")
+            asks = "Permission denied" in said or "Host key verification failed" in said
+            hint = f""" The page cannot type a password or a key passphrase, or accept a new host key. Make `ssh {name}` work in a terminal without questions first.""" if asks else ""
+            return LinkProblem(reason="failed", message=f"""SSH could not connect to {name}. It said: {said}{hint}""")
+        there = await asyncio.to_thread(ask_machine, name=name, tunnel_port=tunnel_port, remote_port=remote_port, token=token)
+        match there:
+            case LinkProblem():
+                return there
+            case _:
+                # What is kept from here on is what was said after the web UI came up: the words a connection that ends later ends with.
+                session.output.clear()
+                link = MachineLink(name=name, address=f"""http://127.0.0.1:{tunnel_port}/""", token=token, there=there, session=session)
+                return link
+    finally:
+        # However this ends without a machine to show, a cancelled request included, SSH and the web UI it started do not stay behind.
+        if link is None and session.exit_code is None:
             session.handle.stop(False)
-            return there
-        case _:
-            return MachineLink(name=name, address=f"""http://127.0.0.1:{tunnel_port}/""", token=token, there=there, session=session)
 
 
 async def open_link(links: dict[str, MachineLink], name: str, here_name: str, home_address: str) -> MachineLink | LinkProblem:

@@ -4,7 +4,7 @@ import { button, notice, searchInput, segmented, skeleton } from "../../../widge
 import { plural } from "../../../words.js";
 import { deviceRow } from "./device_row.js";
 import { arrange } from "./model.js";
-import { SORTS, STATES, STATE_ORDER } from "./words.js";
+import { SORTS, STATES, STATE_ORDER, STUCK, isStuck } from "./words.js";
 
 // The first step: every device the command lists, with filters by state, a search and three orders. `render({ picture, picked })` draws it.
 export function createDeviceList({ onPick, onRefresh }) {
@@ -44,21 +44,23 @@ export function createDeviceList({ onPick, onRefresh }) {
     paint();
   }
 
-  const rows = (devices) => h("ul", { class: "mount-rows", role: "radiogroup", "aria-label": "Devices" }, devices.map((device) => deviceRow({ device, picture: shown.picture, picked: device.path === shown.picked, term, onPick })));
-  const group = (id, devices) => h("section", { class: "mount-group" }, h("h3", {}, STATES[id].group, h("b", { text: String(devices.length) })), rows(devices));
+  const rows = (devices) => h("ul", { class: "mount-rows" }, devices.map((device) => deviceRow({ device, picture: shown.picture, picked: device.path === shown.picked, term, onPick })));
+  const group = (title, devices) => devices.length > 0 && h("section", { class: "mount-group" }, h("h3", {}, title, h("b", { text: String(devices.length) })), rows(devices));
 
   function grouped(listed, all) {
     const of = (id) => listed.filter((device) => device.state === id);
     const [ready, mounted, blocked] = STATE_ORDER.map(of);
-    const waiting = all.some((device) => device.state === "ready");
+    const stuck = blocked.filter(isStuck);
+    const never = blocked.filter((device) => !isStuck(device));
+    const waiting = all.some((device) => device.state === "ready" || isStuck(device));
     const idle =
       !waiting && term === "" && filter !== "mounted" && filter !== "blocked" &&
       notice({ glyph: "plug", title: "Nothing is waiting to be mounted", body: "Everything attached is mounted already or cannot be mounted here. Plug a device in, then refresh.", action: button({ label: "Refresh", glyph: "refresh", small: true, onclick: onRefresh }) });
-    const open = filter === "blocked" || term !== "" || !(folded ?? (ready.length > 0 || mounted.length > 0));
+    const open = filter === "blocked" || term !== "" || !(folded ?? (ready.length > 0 || mounted.length > 0 || stuck.length > 0));
     // The click is heard before the fold moves, so what it reads is the state being left.
-    const summary = h("summary", { onclick: () => (folded = quiet.open) }, icon("chevron", 14), h("span", { text: STATES.blocked.group }), h("b", { text: String(blocked.length) }));
-    const quiet = blocked.length > 0 && h("details", { class: "fold mount-quiet", open }, summary, rows(blocked));
-    return [idle, ready.length > 0 && group("ready", ready), mounted.length > 0 && group("mounted", mounted), quiet];
+    const summary = h("summary", { onclick: () => (folded = quiet.open) }, icon("chevron", 14), h("span", { text: STATES.blocked.group }), h("b", { text: String(never.length) }));
+    const quiet = h("details", { class: "fold mount-quiet", open }, summary, rows(never));
+    return [idle, group(STATES.ready.group, ready), group(STUCK.group, stuck), group(STATES.mounted.group, mounted), never.length > 0 && quiet];
   }
 
   function paint() {

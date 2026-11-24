@@ -24,24 +24,26 @@
 .windows-fact { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; font-size: 12.5px; white-space: nowrap; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
 .windows-fact b { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
 
-/* The map keeps the desktop's own proportions and stops growing at --cap high, so one tall display does not take the page. */
-.windows-map { display: grid; justify-items: center; gap: 12px; min-width: 0; padding-top: 9px; }
+/* The map keeps the desktop's own proportions and stops growing at --cap high, so one tall display does not take the page. A display's name
+   sits on its bottom edge, at the right: a window's own name is at its top left, and a display under this one is rarely as far right. */
+.windows-map { display: grid; justify-items: center; gap: 20px; min-width: 0; }
 .windows-desk { --cap: 270px; position: relative; width: min(100%, calc(var(--cap) * var(--ratio, 1.6))); aspect-ratio: var(--ratio, 1.6); }
 .windows-screen { position: absolute; background: var(--panel-solid); border: 1.5px solid var(--line-strong); border-radius: 9px; box-shadow: inset 0 0 0 3px var(--well); }
 .windows-screen-tag {
-  position: absolute; top: 0; left: 9px; z-index: 3; max-width: calc(100% - 18px); padding: 0 8px; overflow: hidden; font-size: 10.5px; font-weight: 650; line-height: 17px; text-overflow: ellipsis; white-space: nowrap;
-  color: var(--ink-soft); background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 999px; transform: translateY(-50%);
+  position: absolute; right: 9px; bottom: 0; z-index: 3; max-width: calc(100% - 18px); padding: 0 8px; overflow: hidden; font-size: 10.5px; font-weight: 650; line-height: 17px; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--ink-soft); background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 999px; transform: translateY(50%);
 }
 .windows-pane {
-  position: absolute; z-index: 1; display: grid; place-items: center; min-width: 4px; min-height: 4px; overflow: hidden; container-type: size; color: var(--ink);
+  position: absolute; z-index: 1; display: grid; place-items: start; min-width: 4px; min-height: 4px; overflow: hidden; container-type: size; color: var(--ink);
   background: hsl(var(--hue) 78% 60% / 0.3); border: 1px solid hsl(var(--hue) 62% 52% / 0.9); border-radius: 4px; transition: background 0.2s, box-shadow 0.2s, opacity 0.25s;
 }
-.windows-pane span { display: none; max-width: 100%; padding: 0 5px; overflow: hidden; font-size: 10.5px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.windows-pane span { display: none; max-width: 100%; padding: 2px 6px; overflow: hidden; font-size: 10.5px; font-weight: 650; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
 @container (min-width: 58px) and (min-height: 20px) {
   .windows-pane span { display: block; }
 }
-.windows-pane:hover, .windows-pane.lit-up { z-index: 2; background: hsl(var(--hue) 78% 60% / 0.58); box-shadow: 0 0 0 2px hsl(var(--hue) 70% 56% / 0.55); }
-.windows-pane.picked { z-index: 2; background: hsl(var(--hue) 78% 60% / 0.5); border-color: var(--violet); box-shadow: 0 0 0 2px var(--violet); }
+/* Nothing here lifts a window above the ones drawn over it: a big window raised under the pointer would cover the small ones inside it. */
+.windows-pane:hover, .windows-pane.lit-up { background: hsl(var(--hue) 78% 60% / 0.58); box-shadow: 0 0 0 2px hsl(var(--hue) 70% 56% / 0.55); }
+.windows-pane.picked { background: hsl(var(--hue) 78% 60% / 0.5); border-color: var(--violet); box-shadow: 0 0 0 2px var(--violet); }
 .windows-pane.faded, .windows-chip.faded { opacity: 0.2; }
 .windows-shelf { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--ink-faint); }
 .windows-shelf span { margin-right: 3px; }
@@ -53,8 +55,11 @@
 .windows-chip.picked { box-shadow: 0 0 0 2px var(--panel-solid), 0 0 0 4px var(--violet); }
 
 .windows-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 22px 0 4px; }
+/* The pick of an app, the order and the search stay together: when the row is too narrow they move under the filters as one. */
+.windows-tools-side { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
 .windows-tools .segmented { flex: none; }
-.windows-tools .combo { flex: 0 1 210px; height: 38px; background: var(--panel); border-color: var(--line); }
+.windows-tools .combo { flex: 0 1 170px; min-width: 0; height: 38px; background: var(--panel); border-color: var(--line); }
+.windows-tools .search-input { flex: 0 1 200px; }
 .windows-group { margin-top: 14px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
 .windows-group-head { display: flex; align-items: center; gap: 13px; padding: 14px 16px 8px 22px; }
 .windows-group-text { flex: 1; min-width: 0; }
@@ -91,7 +96,7 @@
 .windows-text > span { overflow: hidden; font-size: 12.5px; color: var(--ink-soft); text-overflow: ellipsis; white-space: nowrap; }
 .windows-text > span:empty { display: none; }
 .windows-kind { font-style: normal; font-weight: 650; color: var(--ink-faint); }
-.windows-kind:not(:last-child)::after { content: " · "; font-weight: 400; }
+.windows-kind + span::before { content: " · "; }
 .windows-pills { display: flex; flex: none; gap: 6px; }
 .windows-pills:empty { display: none; }
 .windows-pills .pill { cursor: help; }
@@ -132,6 +137,7 @@
 @media (max-width: 860px) {
   .windows-actions { flex-basis: 100%; margin-left: 94px; }
   .windows-stamp, .windows-tray-text span { display: none; }
+  .windows-tools-side { justify-content: flex-start; }
   .windows-tools .search-input { flex: 1 1 200px; }
   .windows-permission { flex-direction: column; padding: 22px; }
 }

@@ -1,3 +1,6 @@
+import re
+from pathlib import Path
+
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.commands import ensure_ok, run_command
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.device_entry import DeviceEntry
 from stackops.scripts.python.helpers.helpers_devops.mount_helpers.macos import mount_macos
@@ -5,13 +8,17 @@ from stackops.scripts.python.helpers.helpers_webui.machine_devices_model import 
 from stackops.scripts.python.helpers.helpers_webui.machine_devices_read import read_storage
 
 GONE = "It is no longer there. It may have been unplugged or ejected already."
+# How macOS names the program that kept a volume from being unmounted: its process number, then the path of the program.
+HOLDER = re.compile(r"dissented by PID (\d+) \(([^)]*)\)")
 
 
 def _failure(error: RuntimeError, name: str) -> StorageProblem:
     said = " ".join(str(error).split())
-    if "dissented" in said:
-        return StorageProblem(reason="failed", message=f"""{name} is still in use, so macOS left it as it is. Close the files and programs that use it, then try again. ({said})""")
-    return StorageProblem(reason="failed", message=said)
+    holder = HOLDER.search(said)
+    if holder is None:
+        return StorageProblem(reason="failed", message=said)
+    program = Path(holder.group(2)).name
+    return StorageProblem(reason="failed", message=f"""{name} is in use by {program} (process {holder.group(1)}), so macOS left it mounted. Close it there, then try again.""")
 
 
 # What is asked for is looked up in a fresh read and only done when that read offers it. So a request can name nothing but a device this

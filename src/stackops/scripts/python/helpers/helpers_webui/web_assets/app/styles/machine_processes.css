@@ -1,0 +1,214 @@
+/* The Processes page (scripts/spaces/machine/processes). Every class of its own starts with procs-. */
+/* The fill of a bar that marks a heavy amount. The shared warning colour is made for text and reads as brown in a bar on a light page. */
+:root { --procs-warm: #e08a00; }
+@media (prefers-color-scheme: dark) {
+  :root { --procs-warm: #f5b84a; }
+}
+.procs-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
+.procs-back svg { transition: transform 0.3s var(--spring); }
+.procs-back:hover { color: var(--violet); }
+.procs-back:hover svg { transform: translateX(-3px); }
+.procs-live { display: inline-flex; align-items: center; align-self: center; gap: 7px; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); }
+.procs-live strong { font-weight: 650; color: var(--ink-soft); }
+.procs-live i { width: 8px; height: 8px; background: var(--good); border-radius: 50%; animation: procs-beat 2.4s ease-out infinite; }
+.procs-live[data-state="paused"] i { background: var(--ink-faint); animation: none; }
+.procs-live[data-state="failing"] i, .procs-live[data-state="ended"] i { background: var(--bad); animation: none; }
+.procs-refresh.busy svg { animation: spin 0.9s linear infinite; }
+.procs-problem:not(:empty), .procs-outcome-holder:not(:empty) { margin-bottom: 16px; }
+.procs-outcome-holder:not(:empty) { margin-top: 16px; }
+.procs-problem .health-callout .btn { margin-top: 8px; }
+.procs-aside { font-size: 12.5px; color: var(--ink-soft); }
+.procs-aside .link { font-weight: 650; }
+@keyframes procs-beat { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 7px transparent; } }
+@keyframes procs-flash { 0%, 45% { background: var(--violet-wash); } }
+@keyframes procs-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* One thin bar for every amount on the page: the track is a faint step of the fill's own colour, and a heavy amount turns the bar warm. */
+.procs-bar { --tone: var(--violet); position: relative; display: block; height: 4px; overflow: hidden; background: color-mix(in srgb, var(--tone) 15%, transparent); border-radius: 999px; }
+.procs-bar::after { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--share, 0) * 100%); background: linear-gradient(90deg, #6a5cff, #1ea7fd); border-radius: 999px; transition: width 0.5s var(--smooth); }
+.heavy > .procs-bar { --tone: var(--procs-warm); }
+.heavy > .procs-bar::after { background: var(--procs-warm); }
+.procs-check { flex: none; width: 18px; height: 18px; margin: 0; vertical-align: middle; cursor: pointer; background: var(--panel-solid); border: 1.5px solid var(--line-strong); border-radius: 6px; -webkit-appearance: none; appearance: none; transition: transform 0.25s var(--spring), border-color 0.2s, box-shadow 0.2s; }
+.procs-check:hover:not(:disabled) { border-color: var(--violet); box-shadow: var(--ring); }
+.procs-check:active:not(:disabled) { transform: scale(0.86); }
+.procs-check:checked, .procs-check:indeterminate { border-color: transparent; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 13px no-repeat, var(--brand); }
+.procs-check:indeterminate { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E") center / 13px no-repeat, var(--brand); }
+.procs-check:disabled { cursor: not-allowed; opacity: 0.35; }
+
+.procs-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.procs-card { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 20px 22px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); animation: procs-in 0.4s var(--smooth) backwards; }
+.procs-card:nth-child(2) { animation-delay: 50ms; }
+.procs-card:nth-child(3) { animation-delay: 100ms; }
+.procs-headline { display: flex; align-items: baseline; gap: 9px; min-height: 40px; }
+.procs-figure { font-size: 34px; font-weight: 750; letter-spacing: -0.035em; line-height: 1.15; }
+.procs-figure-note { font-size: 13px; color: var(--ink-soft); }
+.procs-card h3 { margin-top: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.procs-gauge { --tone: var(--violet); height: 8px; overflow: hidden; background: color-mix(in srgb, var(--tone) 16%, transparent); border-radius: 999px; }
+.procs-gauge i { display: block; width: calc(var(--share, 0) * 100%); height: 100%; background: linear-gradient(90deg, #6a5cff, #1ea7fd); border-radius: 999px; transition: width 0.6s var(--smooth); }
+.procs-gauge[data-level="warn"] { --tone: var(--procs-warm); }
+.procs-gauge[data-level="bad"] { --tone: var(--bad); }
+.procs-gauge[data-level="warn"] i, .procs-gauge[data-level="bad"] i { background: var(--tone); }
+.procs-trend { flex: none; align-self: center; width: 132px; height: 34px; overflow: visible; }
+.procs-trend-line { fill: none; stroke: var(--violet); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.procs-trend-area { fill: var(--violet); opacity: 0.1; }
+.procs-trend-dot { fill: var(--violet); stroke: var(--panel-solid); stroke-width: 2; }
+.procs-top, .procs-facts { display: grid; gap: 1px; margin: 0 -8px; }
+.procs-facts { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); column-gap: 14px; }
+.procs-top-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 8px; width: 100%; padding: 6px 8px; border-radius: 10px; transition: background 0.2s; }
+.procs-top-row:hover, .procs-fact:hover { background: var(--well); }
+.procs-top-name { overflow: hidden; font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.procs-top-row b, .procs-size { min-width: 18px; padding: 0 5px; font-size: 11px; font-weight: 650; line-height: 18px; text-align: center; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
+.procs-top-row .num { font-size: 13px; color: var(--ink-soft); }
+.procs-top-row .procs-bar { grid-column: 1 / -1; }
+.procs-top-empty { padding: 6px 8px; font-size: 13px; }
+.procs-fact { display: flex; align-items: center; gap: 9px; padding: 7px 8px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); border-radius: 10px; transition: background 0.2s, color 0.2s; }
+.procs-fact span { flex: 1; }
+.procs-fact:hover { color: var(--ink); }
+.procs-fact > svg:last-child { color: var(--ink-faint); transition: transform 0.3s var(--spring), color 0.2s; }
+.procs-fact:hover > svg:last-child { color: var(--violet); transform: translateX(3px); }
+
+.procs-tools { display: grid; gap: 10px; margin: 22px 0 12px; }
+.procs-tools-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.procs-tools .segmented { flex: none; }
+.procs-tools .search-input { width: 330px; }
+.procs-chips { column-gap: 22px; }
+.procs-narrowed { display: inline-flex; gap: 12px; margin-left: auto; font-size: 13px; }
+.procs-narrowed .link { font-weight: 600; }
+.procs-given { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; font-size: 13px; }
+
+.procs-list { container: procs-list / inline-size; display: grid; justify-items: center; gap: 10px; }
+.procs-scroll { justify-self: stretch; overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+.procs-table { width: 100%; font-size: 13px; table-layout: fixed; border-collapse: collapse; }
+.procs-table th { padding: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-align: left; text-transform: uppercase; white-space: nowrap; color: var(--ink-faint); background: var(--well); }
+.procs-table th button { display: inline-flex; align-items: center; gap: 5px; letter-spacing: inherit; text-transform: inherit; transition: color 0.2s; }
+.procs-table th button:hover { color: var(--ink); }
+.procs-table th button svg { opacity: 0; transition: opacity 0.2s, transform 0.35s var(--spring); }
+.procs-table th button:hover svg { opacity: 0.6; }
+.procs-table th[aria-sort="ascending"] button, .procs-table th[aria-sort="descending"] button { color: var(--violet); }
+.procs-table th[aria-sort="ascending"] button svg, .procs-table th[aria-sort="descending"] button svg { opacity: 1; }
+.procs-table th[aria-sort="ascending"] button svg { transform: rotate(180deg); }
+.procs-table td { height: 44px; padding: 5px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: 1px solid var(--line); }
+.procs-table .procs-tick { width: 44px; padding-right: 0; padding-left: 16px; overflow: visible; }
+.procs-table .procs-act { width: 46px; padding-left: 0; text-align: center; }
+.procs-col-name { width: 232px; }
+.procs-col-pid { width: 74px; }
+.procs-col-user { width: 96px; }
+.procs-col-cpu, .procs-col-memory { width: 104px; text-align: right !important; }
+.procs-col-status { width: 116px; }
+.procs-col-started { width: 104px; }
+.procs-col-ports { width: 148px; }
+.procs-row { cursor: pointer; transition: background 0.2s; }
+.procs-row:hover { background: var(--well); }
+.procs-row.picked { background: var(--brand-wash); }
+.procs-row.procs-flash { animation: procs-flash 1.8s var(--smooth); }
+.procs-row.context > td:not(.procs-tick, .procs-act), .procs-row.ended > td:not(.procs-tick, .procs-act) { opacity: 0.55; }
+.procs-name-line { display: flex; align-items: center; gap: 6px; min-width: 0; padding-left: calc(var(--depth, 0) * 16px); }
+.procs-open { min-width: 0; overflow: hidden; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; transition: color 0.2s; }
+.procs-open:hover { color: var(--violet); }
+.procs-twist { display: grid; flex: none; place-items: center; width: 20px; height: 20px; margin-left: -4px; color: var(--ink-faint); border-radius: 6px; transition: background 0.2s, color 0.2s; }
+.procs-twist:hover { color: var(--ink); background: var(--line); }
+.procs-twist svg { transition: transform 0.3s var(--spring); }
+.procs-twist[aria-expanded="true"] svg { transform: rotate(90deg); }
+.procs-twist.leaf { visibility: hidden; }
+.procs-size, .procs-role { flex: none; }
+.pill.procs-role { height: 19px; padding: 0 7px; font-size: 10.5px; }
+.procs-id, .procs-user, .procs-started { color: var(--ink-soft); }
+.procs-measure { text-align: right; }
+.procs-measure .num { display: block; }
+.procs-measure .procs-bar { margin-top: 4px; }
+.procs-state { display: inline-flex; align-items: center; gap: 7px; color: var(--ink-soft); }
+.procs-state i { flex: none; width: 7px; height: 7px; background: var(--ink-faint); border-radius: 50%; opacity: 0.55; }
+.procs-state[data-tone="busy"] i { background: var(--good); opacity: 1; }
+.procs-state[data-tone="held"] i { background: var(--warn); opacity: 1; }
+.procs-state[data-tone="ended"] i { background: none; box-shadow: inset 0 0 0 1.5px var(--ink-faint); opacity: 1; }
+.procs-port { display: inline-flex; align-items: center; height: 20px; margin-right: 4px; padding: 0 6px; font: 11.5px var(--mono); color: var(--ink-soft); background: var(--well); border-radius: 999px; }
+.procs-command code { font-size: 12px; color: var(--ink-faint); }
+.procs-act .icon-btn { width: 28px; height: 28px; opacity: 0.35; }
+.procs-row:hover .procs-act .icon-btn:not(:disabled), .procs-act .icon-btn:focus-visible { opacity: 1; }
+.procs-act .icon-btn:disabled { opacity: 0.18; }
+.procs-note-row td { height: auto; padding: 0 10px 9px 54px; white-space: normal; border-top: 0; }
+.procs-note { --tone: var(--violet); display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 5px 6px 5px 10px; font-size: 12.5px; color: var(--ink-soft); background: color-mix(in srgb, var(--tone) 10%, transparent); border-radius: 11px; }
+.procs-note.warn { --tone: var(--warn); }
+.procs-note.bad { --tone: var(--bad); padding-right: 10px; }
+.procs-note > svg { color: var(--tone); }
+.procs-empty > .notice, .procs-waiting { margin-top: 4px; }
+@container procs-list (max-width: 1210px) {
+  .procs-col-command, .procs-command { display: none; }
+  .procs-col-name { width: auto; }
+}
+@container procs-list (max-width: 1040px) { .procs-col-started, .procs-started { display: none; } }
+@container procs-list (max-width: 940px) { .procs-col-user, .procs-user { display: none; } }
+@container procs-list (max-width: 840px) { .procs-col-ports, .procs-ports { display: none; } }
+@container procs-list (max-width: 720px) { .procs-col-status, .procs-status { display: none; } }
+@container procs-list (max-width: 600px) { .procs-col-pid, .procs-id { display: none; } }
+
+.procs-banner { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 22px; box-shadow: var(--shadow); animation: procs-in 0.38s var(--smooth); }
+.procs-banner.good { border-color: color-mix(in srgb, var(--good) 50%, transparent); }
+.procs-banner.warn { border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+.procs-banner-text { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.procs-banner-text h2 { font-size: 19px; font-weight: 750; letter-spacing: -0.02em; }
+.procs-banner-text p { font-size: 13.5px; color: var(--ink-soft); }
+.procs-banner-text small { font-size: 12px; }
+.procs-outcome { display: flex; flex-wrap: wrap; gap: 6px; margin: 7px 0 3px; }
+.procs-outcome li { display: inline-flex; align-items: center; gap: 7px; min-height: 27px; padding: 2px 11px; font-size: 12.5px; background: var(--well); border-radius: 999px; }
+.procs-outcome li b { font-weight: 650; color: var(--ink-soft); }
+.procs-outcome li svg { color: var(--ink-faint); }
+.procs-outcome .good svg { color: var(--good); }
+.procs-outcome .warn svg { color: var(--warn); }
+.procs-outcome .bad svg { color: var(--bad); }
+.procs-tray-text { display: grid; min-width: 0; }
+.procs-tray-text strong { font-size: 14.5px; font-weight: 700; }
+.procs-tray-text span { overflow: hidden; font-size: 12.5px; color: var(--ink-soft); text-overflow: ellipsis; white-space: nowrap; }
+
+.dialog.procs-confirm { display: flex; flex-direction: column; width: min(600px, 100%); max-height: 84vh; margin-top: -5vh; }
+.dialog.procs-confirm .dialog-body { display: flex; flex-direction: column; gap: 14px; min-height: 0; padding: 26px; }
+.dialog.procs-confirm .dialog-actions { margin-top: 0; }
+.dialog.procs-confirm .segmented { align-self: flex-start; }
+.procs-confirm-head { display: flex; align-items: flex-start; gap: 14px; }
+.procs-confirm-head h2 { font-size: 21px; font-weight: 750; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.procs-confirm-head p { margin-top: 2px; color: var(--ink-soft); }
+.procs-confirm-list { display: grid; flex: 0 1 auto; gap: 2px; min-height: 58px; padding: 6px; overflow-y: auto; border: 1px solid var(--line); border-radius: 16px; }
+.procs-confirm-list li { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto auto; align-items: center; gap: 3px 10px; padding: 8px 10px; border-radius: 10px; }
+.procs-confirm-list li:nth-child(odd) { background: var(--well); }
+.procs-confirm-list li strong { overflow: hidden; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.procs-confirm-list li > .dim { overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.procs-confirm-list li p { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-soft); }
+.procs-family, .procs-ack { display: flex; align-items: center; gap: 11px; padding: 10px 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; background: var(--well); border-radius: 13px; }
+.procs-ack { background: color-mix(in srgb, var(--bad) 11%, transparent); }
+
+.procs-detail-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.procs-detail-warnings { display: grid; gap: 8px; }
+.procs-detail-warnings:empty, .procs-detail-rest:empty { display: none; }
+.procs-detail-figures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.procs-detail-figure { display: grid; gap: 6px; padding: 14px 16px; background: var(--well); border-radius: 16px; }
+.procs-detail-figure strong { font-size: 24px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.15; }
+.procs-detail-figure small { min-height: 18px; font-size: 12px; }
+.procs-detail-rest { display: grid; gap: 18px; min-width: 0; }
+.procs-detail h3 { margin-bottom: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.procs-detail .copy-chip { text-align: left; }
+.procs-detail .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.procs-command-block { max-height: 220px; margin-bottom: 6px; padding: 12px 14px; overflow: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-soft); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--well); border-radius: 14px; }
+.procs-sockets, .procs-relatives, .procs-files { display: grid; gap: 2px; }
+.procs-sockets li { display: flex; align-items: baseline; gap: 10px; padding: 5px 10px; font-size: 13px; border-radius: 8px; }
+.procs-sockets li:nth-child(odd), .procs-files li:nth-child(odd) { background: var(--well); }
+.procs-files li { padding: 3px 10px 3px 18px; border-radius: 8px; }
+.procs-relatives button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; font-size: 13px; border-radius: 10px; transition: background 0.2s; }
+.procs-relatives button:hover { background: var(--well); }
+.procs-relatives strong { overflow: hidden; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.procs-relatives .num { flex: none; width: 70px; color: var(--ink-soft); text-align: right; }
+.procs-relatives svg { color: var(--ink-faint); }
+ol.procs-relatives li + li { margin-left: 16px; }
+ol.procs-relatives li + li + li { margin-left: 32px; }
+ol.procs-relatives li + li + li + li { margin-left: 48px; }
+
+@media (max-width: 1100px) {
+  .procs-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .procs-card:nth-child(3) { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .procs-cards { grid-template-columns: minmax(0, 1fr); }
+  .procs-card:nth-child(3) { grid-column: auto; }
+  .procs-tools .search-input { flex: 1 1 100%; width: auto; }
+  .procs-tray-text span { display: none; }
+  .procs-detail-figures { grid-template-columns: minmax(0, 1fr); }
+}

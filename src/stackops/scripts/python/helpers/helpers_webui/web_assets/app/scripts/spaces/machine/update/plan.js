@@ -48,7 +48,7 @@ export function createPlan({ options, onChange }) {
     const names = found.present.slice(0, NAMES_SHOWN);
     rows.settings.facts.replaceChildren(
       remark(options.settings ? "warn" : "", options.settings ? "alert" : "info", `It covers ${plural(found.programs, "program")}. ${found.present.length === 0 ? "None of them has settings on this machine yet, so nothing of yours is lost." : `${found.present.length} of them ${found.present.length === 1 ? "has" : "have"} settings on this machine now, which is what goes.`}`),
-      names.length > 0 && h("div", { class: "machine-update-names" }, names.map((name) => h("span", { text: name })), found.present.length > names.length && h("span", { class: "more", text: `and ${found.present.length - names.length} more` })),
+      ...(names.length > 0 ? [h("div", { class: "machine-update-names" }, names.map((name) => h("span", { text: name })), found.present.length > names.length && h("span", { class: "more", text: `and ${found.present.length - names.length} more` }))] : []),
     );
   }
 
@@ -61,7 +61,13 @@ export function createPlan({ options, onChange }) {
       return;
     }
     const { checkout } = state;
-    const stopped = checkout.branch === "" ? "No branch is checked out, so there is nothing to push." : checkout.origin === "" ? "The folder has no remote called origin to push to." : "";
+    // It commits before it pulls, so where the pull or the push is sure to fail it would leave a commit behind and update nothing.
+    const stopped =
+      checkout.branch === "" ? "No branch is checked out, so there is nothing to push."
+      : checkout.unfinished ? `A ${checkout.unfinished} is waiting to be finished in that folder.`
+      : checkout.upstream === "" ? `The branch ${checkout.branch} follows nothing, so there is nowhere to pull from.`
+      : checkout.origin === "" ? "The folder has no remote called origin to push to."
+      : "";
     if (stopped) options.developer = false;
     row.toggle.disabled = stopped !== "";
     row.hint.textContent = `Before anything else, this commits every change in ${home(checkout.path)}, pulls, and pushes${checkout.origin ? ` to ${remoteName(checkout.origin)}` : ""}. It is for a source folder you publish from.`;

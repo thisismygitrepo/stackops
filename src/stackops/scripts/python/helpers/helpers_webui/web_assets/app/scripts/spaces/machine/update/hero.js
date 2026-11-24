@@ -21,21 +21,24 @@ export function createHero({ onUpdate }) {
     reason,
   );
 
-  function paint({ state, verdict, blocker, caution: remark, busy }) {
+  function paint({ state, verdict, blocker, caution: remark, options, busy }) {
     const version = state.installed?.version ?? state.started_version;
     element.dataset.tone = blocker ? "warn" : verdict.tone;
     overline.textContent = state.installed ? "Installed on this machine" : "Running on this machine";
     mark.replaceChildren(verdict.busy ? h("span", { class: "pill machine-update-checking" }, h("i", { class: "ring" }), verdict.pill) : pill(verdict.pill, verdict.tone));
-    figure.replaceChildren(h("span", { text: version }), ...(verdict.target ? [icon("arrow", 26), h("span", { class: "machine-update-target", text: verdict.target })] : []));
+    figure.replaceChildren(h("span", { text: version }), ...(verdict.target ? [h("span", { class: "machine-update-to" }, icon("arrow", 26), h("span", { class: "machine-update-target", text: verdict.target }))] : []));
     title.textContent = verdict.title;
     detail.textContent = verdict.detail;
     caution.hidden = !remark || Boolean(blocker);
     caution.replaceChildren(icon("alert", 15), h("span", { text: remark }));
     go.disabled = Boolean(blocker) || busy;
     go.className = `btn ${verdict.available && !blocker ? "primary" : "plain"}`;
-    go.querySelector("span").textContent = busy ? "Updating" : verdict.target ? `Update to ${verdict.target}` : verdict.available || verdict.busy ? "Update StackOps" : "Update anyway";
+    go.querySelector("span").textContent = busy ? "Updating" : verdict.target ? `Update to ${verdict.target}` : verdict.settled ? "Update anyway" : "Update StackOps";
+    // What the choices further down add to the one click, said next to the button so it is not missed up here.
+    const extras = [options.developer && "commits and pushes your changes first", options.settings && "replaces your app settings"].filter(Boolean);
     note.hidden = Boolean(blocker);
-    note.textContent = verdict.available || verdict.busy ? "It runs in the Activity panel, where you can watch it." : "Runs the same steps. It still brings uv and the packages StackOps uses up to date.";
+    note.classList.toggle("risky", extras.length > 0);
+    note.textContent = extras.length > 0 ? `With your choices it also ${extras.join(" and ")}. It asks before it starts.` : verdict.settled ? "Runs the same steps. It still brings uv and the packages StackOps uses up to date." : "It runs in the Activity panel, where you can watch it.";
     reason.hidden = !blocker;
     reason.replaceChildren(...(blocker ? [icon("alert", 18), h("div", {}, h("strong", { text: blocker.title }), h("p", { text: blocker.body }), blocker.command && copyChip(blocker.command))] : []));
   }
