@@ -1,0 +1,107 @@
+.shellprof-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
+.shellprof-back svg { transition: transform 0.3s var(--spring); }
+.shellprof-back:hover { color: var(--violet); }
+.shellprof-back:hover svg { transform: translateX(-3px); }
+.shellprof-body { display: grid; grid-template-columns: minmax(0, 1fr); }
+.shellprof-body > .notice, .shellprof-body > .health-callout { margin-bottom: 14px; }
+.shellprof-body > .skeleton.card { height: 250px; margin-bottom: 14px; border-radius: 26px; }
+/* Lines and paths are shown whole here: they are what the person copies, so they wrap where they would otherwise be cut short, and their copy mark always shows. */
+.shellprof .copy-chip { text-align: left; }
+.shellprof .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.shellprof .copy-chip svg { flex: none; opacity: 0.4; }
+
+.shellprof-card { position: relative; padding: 20px 22px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
+.shellprof-card.featured { padding: 26px 28px; border-radius: 28px; }
+.shellprof-card.featured::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(560px 220px at 0% 0%, rgba(106, 92, 255, 0.15), transparent 70%), radial-gradient(460px 220px at 100% 100%, rgba(18, 201, 155, 0.11), transparent 70%); }
+.shellprof-card > * { position: relative; }
+.shellprof-card.good { border-color: color-mix(in srgb, var(--good) 30%, transparent); }
+.shellprof-card.warn { border-color: color-mix(in srgb, var(--warn) 34%, transparent); }
+.shellprof-card.bad { border-color: color-mix(in srgb, var(--bad) 36%, transparent); }
+.shellprof-spot { animation: shellprof-spot 1.6s var(--smooth); }
+@keyframes shellprof-spot { 0%, 55% { border-color: var(--violet); box-shadow: 0 0 0 5px var(--violet-wash), var(--shadow); } }
+.shellprof-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 16px; }
+.shellprof-sign { font: 700 calc(var(--size) * 0.42) var(--mono); letter-spacing: -0.04em; }
+.shellprof-title { display: grid; flex: 1 1 320px; gap: 4px; min-width: 0; }
+.shellprof-title h2, .shellprof-title h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 9px; font-size: 19px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.2; }
+.shellprof-card.featured .shellprof-title h2 { font-size: 26px; letter-spacing: -0.03em; }
+.shellprof-title h3 { font-size: 15.5px; font-weight: 700; }
+.shellprof-title p { max-width: 78ch; font-size: 13.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.shellprof-card.featured .shellprof-title p { font-size: 15px; }
+.shellprof-actions { display: flex; flex: none; flex-wrap: wrap; gap: 8px; }
+.shellprof-manual { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; padding: 11px 14px; font-size: 13.5px; color: var(--ink-soft); background: var(--well); border-radius: 14px; }
+.shellprof-manual svg { margin-top: 3px; color: var(--violet); }
+
+/* The chain from a shell's profile, through the file its line loads, to what a terminal gets. An arrow is lit when that link holds. */
+.shellprof-chain { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; margin-top: 18px; }
+.shellprof-step { display: flex; align-items: flex-start; gap: 13px; min-width: 0; padding: 14px 16px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 18px; }
+.shellprof-step-text { display: grid; flex: 1; justify-items: start; gap: 3px; min-width: 0; }
+.shellprof-step-text strong { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.shellprof-arrow { display: grid; align-content: center; justify-items: center; gap: 1px; width: 46px; color: var(--ink-faint); opacity: 0.6; }
+.shellprof-arrow em { font-size: 11px; font-style: normal; font-weight: 650; }
+.shellprof-arrow.on { color: var(--violet); opacity: 1; }
+.shellprof-fact { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--ink-faint); }
+.shellprof-fact.good { color: var(--good); }
+.shellprof-fact.warn { color: var(--warn); }
+.shellprof-fact.bad { color: var(--bad); }
+.shellprof-link { display: flex; flex-wrap: wrap; align-items: center; gap: 0 5px; max-width: 100%; font-size: 12.5px; }
+.shellprof-link .copy-chip { margin-left: -4px; }
+.shellprof-sheet { display: grid; flex: none; align-content: center; gap: 5px; width: 40px; height: 50px; padding: 0 8px; background: var(--well); border: 1.5px solid var(--line-strong); border-radius: 7px 13px 7px 7px; }
+.shellprof-sheet i { height: 3px; background: var(--line-strong); border-radius: 2px; }
+.shellprof-sheet i:nth-child(2) { width: 68%; }
+.shellprof-sheet i:nth-child(3) { width: 86%; }
+.shellprof-sheet .mine { height: 5px; background: var(--brand); }
+.shellprof-sheet:not(.has-line) .mine { height: 7px; background: none; border: 1.5px dashed var(--violet); }
+.shellprof-sheet.no-file { background: none; border-style: dashed; }
+.shellprof-sheet.no-file i:not(.mine) { opacity: 0.4; }
+.shellprof-foot { display: flex; flex-wrap: wrap; gap: 12px 40px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.shellprof-foot > div { display: grid; justify-items: start; gap: 3px; min-width: 0; }
+
+.shellprof-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.shellprof-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 13px 16px; border: 1px dashed var(--line-strong); border-radius: 18px; }
+.shellprof-row .shellprof-sign { filter: grayscale(1); opacity: 0.55; }
+.shellprof-row .shellprof-title h3 { color: var(--ink-soft); }
+.shellprof-row .shellprof-title p { font-size: 13px; color: var(--ink-faint); }
+
+.shellprof-banner { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 14px; margin-bottom: 18px; padding: 16px 18px; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 22px; box-shadow: var(--shadow); }
+.shellprof-banner.fresh { animation: swap-in 0.38s var(--smooth); }
+.shellprof-banner.working { align-items: center; border-color: color-mix(in srgb, var(--violet) 45%, transparent); }
+.shellprof-banner.good { border-color: color-mix(in srgb, var(--good) 50%, transparent); }
+.shellprof-banner.warn { border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.shellprof-banner-text { display: grid; flex: 1 1 260px; justify-items: start; gap: 3px; min-width: 0; }
+.shellprof-banner-text h2 { font-size: 19px; font-weight: 750; letter-spacing: -0.02em; }
+.shellprof-banner-text p { font-size: 13.5px; color: var(--ink-soft); }
+
+.shellprof-does-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.shellprof-does, .shellprof-extra { display: flex; align-items: flex-start; gap: 13px; min-width: 0; padding: 15px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }
+.shellprof-does > div, .shellprof-extra-text { display: grid; flex: 1; justify-items: start; gap: 3px; min-width: 0; }
+.shellprof-does strong, .shellprof-extra strong { font-size: 14.5px; font-weight: 650; }
+.shellprof-does p, .shellprof-extra p { font-size: 13px; color: var(--ink-soft); }
+.shellprof-gives .section-head { min-height: 36px; }
+.shellprof-gives-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; gap: 14px; }
+.shellprof-extras { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.shellprof-extra-state { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 5px; }
+/* A terminal is dark in both themes, like the console in the activity panel. */
+.shellprof-term { overflow: hidden; color: #eceeff; background: #0b0c16; border-radius: 18px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), var(--shadow); }
+.shellprof-term-bar { display: flex; align-items: center; gap: 13px; padding: 10px 15px; font-size: 12.5px; font-weight: 600; color: #a3a8cf; background: #171a30; }
+.shellprof-dots { display: flex; gap: 7px; }
+.shellprof-dots i { width: 11px; height: 11px; background: #3a3e63; border-radius: 50%; }
+.shellprof-term-body { display: grid; gap: 5px; padding: 14px 18px 18px; font: 12.5px/1.5 var(--mono); }
+.shellprof-term-body li { display: grid; grid-template-columns: 12px 22px minmax(78px, max-content) minmax(0, 1fr); align-items: baseline; gap: 9px; }
+.shellprof-term-body .shellprof-term-note { display: block; margin-bottom: 3px; color: #6c7197; }
+.shellprof-term-body b { font-weight: 400; color: var(--mint); }
+.shellprof-term-body strong { font-weight: 700; color: #fff; }
+.shellprof-term-body code { color: #a3a8cf; }
+.shellprof-term-body em { overflow: hidden; font: normal 12px var(--sans); color: #6c7197; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 980px) {
+  .shellprof-chain { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .shellprof-arrow { display: flex; align-items: center; justify-content: center; gap: 7px; width: auto; height: 22px; }
+  .shellprof-arrow svg { transform: rotate(90deg); }
+  .shellprof-gives-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .shellprof-card, .shellprof-card.featured { padding: 18px 16px; }
+  .shellprof-card.featured .shellprof-title h2 { font-size: 22px; }
+  .shellprof-term-body em { display: none; }
+  .shellprof-term-body li { grid-template-columns: 12px 22px minmax(0, 1fr); }
+}
