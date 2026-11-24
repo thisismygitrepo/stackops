@@ -50,7 +50,7 @@ WEB_ASSETS_ROOT = Path(__file__).with_name("web_assets")
 REPORT_NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]+\.html")
 
 
-def create_app(token: str, cookie_name: str, stackops_executable: str, working_directory: str, on_loopback: bool, opened_from: OpenedFrom | None) -> ASGIApp:
+def create_app(token: str, cookie_name: str, stackops_executable: str, working_directory: str, opened_from: OpenedFrom | None) -> ASGIApp:
     # On Windows the registry can map .js to text/plain, and a browser refuses to run a module served that way. A no-op on macOS and Linux.
     mimetypes.add_type("text/javascript", ".js")
     mimetypes.add_type("text/css", ".css")
@@ -238,7 +238,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             *vault_routes(working_directory=working_directory),
             *scripts_routes(working_directory=working_directory),
             *feature_routes(),
-            *other_machines_routes(links=machine_links, here=here, opened_from=opened_from, on_loopback=on_loopback),
+            *other_machines_routes(links=machine_links, here=here, opened_from=opened_from),
             Route("/api/runs", list_runs, methods=["GET"]),
             Route("/api/runs", create_run, methods=["POST"]),
             Route("/api/runs/{run_id}/stop", stop_run_endpoint, methods=["POST"]),

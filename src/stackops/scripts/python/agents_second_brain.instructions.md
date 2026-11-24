@@ -17,6 +17,12 @@ The session ID is the agent's current session ID so the user can follow up on th
 # Specialized agents, skills, connectors, and other resources:
 They live under `~/code/agents`. For a matching task, use the relevant project and read its local `AGENTS.md`, `SKILL.md`, or `README.md` before starting. When it comes to outlook, confluence or slack, please never every use standard browser/chrome skills, always make sure to use the specialized connections instead of using generic browser-use or computer-use capability if that's under your disposal.
 
+# Secrets policy
+Secrets (passwords, API keys, tokens) live in the StackOps vault. Use them through `devops vault` without ever exposing their values: not in chat, command output, logs, files, or command-line arguments (those show in `ps`).
+* **Find (names only):** `devops vault search <terms> -s user` lists login and secret names and env var key names, never values. Narrow it with the exact selectors `-n <login>`, `-N <secret>`, `-t <tag>`, `-k <KEY>`.
+* **Use:** `devops vault load <terms> -s user -c 'PROGRAM ARGS'` runs the program with the secret's keys set as env vars. The `-c` string is parsed without a shell, so wrap it in `bash -c '...'` to reference `"$KEY"`, and pass the value on stdin or through the env. For example, sudo: `devops vault load <terms> -s user -c "bash -c 'printf \"%s\n\" \"\$KEY\" | sudo -S -p \"\" <cmd>'"`. Plain `load` without `-c` needs the StackOps shell wrapper in the user's terminal and fails in agent shells.
+* **Avoid options that print values:** `search --json` (it prints whole login entries, every secret in them) and `--preview-secrets`/`-P`. When a tool needs a secrets file, `devops vault subset <out.json> -n <login>` writes a smaller one; keep it outside the repo, mode 600, and delete it after.
+* To check a value, compare it and print only true or false. Before asking the user for a password (e.g. for sudo), look for it in the vault. Add, rotate, or delete vault entries only when asked.
 
 # Caveat
 * Do not directly open, read, search, list, or modify anything under `~/dotfiles`, including through symlinks or helper scripts used to inspect its contents.

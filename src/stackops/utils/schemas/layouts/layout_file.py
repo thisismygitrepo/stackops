@@ -55,7 +55,11 @@ def read_layouts_file(path: Path) -> LayoutsFile:
                 if not isinstance(pane, dict):
                     raise ValueError(f"""Invalid pane in {pane_location}: expected a mapping.""")
                 for field in ("paneName", "startDir", "command"):
-                    field_value = pane.get(field)
+                    if field not in pane:
+                        raise ValueError(f"""Invalid pane in {pane_location}: missing '{field}'; the pane has keys {list(pane)}. A stray '- ' before a key starts a new pane.""")
+                    field_value = pane[field]
+                    if field_value is None:
+                        raise ValueError(f"""Invalid pane in {pane_location}: '{field}' is null. YAML reads a bare ~ or an empty value as null; quote it, e.g. {field}: '~'.""")
                     if not isinstance(field_value, str):
                         raise ValueError(f"""Invalid pane in {pane_location}: '{field}' must be a string, got {field_value!r}.""")
                 pane_name = cast(str, pane["paneName"])

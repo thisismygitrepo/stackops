@@ -1,10 +1,13 @@
 import asyncio
+import ipaddress
 from typing import TypedDict, cast
+from urllib.parse import urlsplit
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
+from stackops.scripts.python.helpers.helpers_webui.constants import LOOPBACK_HOSTS
 from stackops.scripts.python.helpers.helpers_webui.other_machines_hosts import SshHost, read_ssh_hosts
 from stackops.scripts.python.helpers.helpers_webui.other_machines_links import LinkProblem, MachineLink, close_link, open_link, read_last_words
 from stackops.scripts.python.helpers.helpers_webui.other_machines_marker import MachineSummary, OpenedFrom
@@ -21,20 +24,24 @@ class MachineRow(TypedDict):
 
 # The machine switcher at the top of the app view. Opening a machine starts its own web UI over SSH and forwards a port to it; the page then
 # goes to that port, so everything it shows and runs is that machine's. `links` holds the machines open from this server.
-def other_machines_routes(links: dict[str, MachineLink], here: MachineSummary, opened_from: OpenedFrom | None, on_loopback: bool) -> list[Route]:
+def other_machines_routes(links: dict[str, MachineLink], here: MachineSummary, opened_from: OpenedFrom | None) -> list[Route]:
     locks: dict[str, asyncio.Lock] = {}
-    # Why this server opens no machines, if it does not. A tunnel made on a machine that was itself opened from another one would end there,
-    # out of reach of the person's browser, and so would one made by a server that is used from another device.
-    if opened_from is not None:
-        closed: str | None = f"""This page shows {here["name"]}, opened from {opened_from["name"]}. Go back there to open another machine."""
-    elif not on_loopback:
-        closed = "This server listens on the network, where a browser cannot reach the tunnel to another machine. Start it without --host to switch machines here."
-    else:
-        closed = None
+
+    # Why this server opens no machine for the browser that asks, if it does not. A tunnel ends on this machine's loopback, so only a browser on
+    # this machine reaches it: not one on another device, nor one behind a proxy on this machine, whose Host is then not a loopback name. A tunnel
+    # made on a machine that was itself opened from another one would end there, out of reach of the person's browser too.
+    def closed_for(request: Request) -> str | None:
+        if opened_from is not None:
+            return f"""This page shows {here["name"]}, opened from {opened_from["name"]}. Go back there to open another machine."""
+        from_loopback = request.client is not None and ipaddress.ip_address(request.client.host).is_loopback
+        if not from_loopback or urlsplit(f"""http://{request.headers.get("host", "")}""").hostname not in LOOPBACK_HOSTS:
+            return f"""This page is open through the network, where a browser cannot reach the tunnel to another machine. Open it at localhost on {here["name"]} to switch machines."""
+        return None
 
     # Reading the list changes nothing, as no GET here does (`access_guard.py`). So a connection that ended on its own stays in `links` and is
     # reported as ended until the machine is opened again or disconnected.
-    async def list_machines(_request: Request) -> JSONResponse:
+    async def list_machines(request: Request) -> JSONResponse:
+        closed = closed_for(request)
         hosts: list[SshHost] = [] if closed is not None else await asyncio.to_thread(read_ssh_hosts)
         listed = {host["name"] for host in hosts}
         # A machine that is open stays listed after its name leaves the SSH config, so that it can still be disconnected.
@@ -64,6 +71,7 @@ def other_machines_routes(links: dict[str, MachineLink], here: MachineSummary, o
         name = await read_name(request)
         if isinstance(name, JSONResponse):
             return name
+        closed = closed_for(request)
         if closed is not None:
             return JSONResponse({"error": closed}, status_code=409)
         # Only a name the SSH config lists is handed to SSH, never text as it came from the page.

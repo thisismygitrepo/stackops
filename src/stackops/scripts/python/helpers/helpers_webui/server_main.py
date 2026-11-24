@@ -7,7 +7,7 @@ def run_server(host: str, port: int | None, open_browser: bool, stackops_executa
     from rich.console import Console
     from rich.panel import Panel
 
-    from stackops.scripts.python.helpers.helpers_webui.constants import DEFAULT_PORT, GRACEFUL_SHUTDOWN_SECONDS, LOOPBACK_HOSTS, PORT_PROBE_SECONDS, TOKEN_COOKIE_PREFIX
+    from stackops.scripts.python.helpers.helpers_webui.constants import DEFAULT_PORT, GRACEFUL_SHUTDOWN_SECONDS, PORT_PROBE_SECONDS, TOKEN_COOKIE_PREFIX
     from stackops.scripts.python.helpers.helpers_webui.other_machines_marker import read_opened_from
     from stackops.scripts.python.helpers.helpers_webui.server_app import create_app
     from stackops.utils.network.address import select_lan_ipv4
@@ -54,7 +54,6 @@ def run_server(host: str, port: int | None, open_browser: bool, stackops_executa
         cookie_name=f"""{TOKEN_COOKIE_PREFIX}_{bound_port}""",
         stackops_executable=stackops_executable,
         working_directory=working_directory,
-        on_loopback=host in LOOPBACK_HOSTS,
         opened_from=read_opened_from(),
     )
     if open_browser:
