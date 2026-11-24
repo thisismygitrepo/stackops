@@ -73,7 +73,7 @@ button.machine-open:hover:not(:disabled) { color: var(--ink); background: var(--
 .machine-text strong, .machine-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .machine-text strong { font-size: 13.5px; color: var(--ink); }
 .machine-text span { font-size: 12px; color: var(--ink-faint); }
-.machine-note, .machine-problem { margin: 0 8px 8px 35px; font-size: 12.5px; overflow-wrap: anywhere; }
+.machine-note, .machine-problem, .machine-offer { margin: 0 8px 8px 35px; font-size: 12.5px; overflow-wrap: anywhere; }
 .machine-problem { color: var(--bad); }
 .activity-pill {
   position: relative; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; font-size: 13px; font-weight: 600; color: var(--ink-soft); background: var(--panel);

@@ -1,12 +1,17 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { request, state } from "/assets/scripts/state.js";
 import { confirmAction, openPopover } from "./overlays.js";
-import { iconButton, pill, searchInput } from "./widgets.js";
+import { button, iconButton, pill, searchInput } from "./widgets.js";
 
 // The machines opened from this browser before, latest first. They lead the list.
 const USED_KEY = "stackops-webui-machines-used";
 // A list this long gets a box to find a machine in.
 const FILTER_FROM = 8;
+// What the server offers to run on a machine that cannot be opened yet (`other_machines_prepare.py`), before it opens it.
+const STEPS = {
+  install: { label: "Install StackOps", glyph: "download", title: "Installs uv where it is missing and StackOps with it, over SSH, then opens the machine", note: "Installing StackOps there over SSH, then opening it. This can take a few minutes…" },
+  update: { label: "Update StackOps", glyph: "refresh", title: "Runs devops self update there over SSH, then opens the machine", note: "Updating StackOps there over SSH, then opening it. This can take a few minutes…" },
+};
 
 // The capsule at the top right that names the machine the page shows. On this machine's own page it lists the machines of the SSH config and
 // opens one: the server starts that machine's web UI over SSH and the tab goes to it, so every page is that machine's. A page opened that way
@@ -51,21 +56,27 @@ function showMachines(chip) {
   openPopover(chip, h("div", { class: "tune-panel machine-panel" }, h("div", { class: "tune-head" }, h("h3", { text: "Machines" })), note, find.element, list));
   const used = JSON.parse(localStorage.getItem(USED_KEY) ?? "[]");
   const problems = new Map();
+  const offers = new Map();
   let answer = null;
   let opening = null;
+  let preparing = null;
 
-  const open = async (machine) => {
+  // `step` is null for a plain connection, or the step the server offered for this machine.
+  const open = async (machine, step) => {
     opening = machine.name;
+    preparing = step;
     problems.delete(machine.name);
+    offers.delete(machine.name);
     draw();
     try {
-      const { address } = await request("POST", "/api/other-machines/connect", { name: machine.name });
+      const { address } = await request("POST", `/api/other-machines/${step ?? "connect"}`, { name: machine.name });
       localStorage.setItem(USED_KEY, JSON.stringify([machine.name, ...used.filter((name) => name !== machine.name)]));
       // The address carries that machine's access token. Its server takes the token and sends the tab on to its first page.
       location.href = address;
     } catch (error) {
       opening = null;
       problems.set(machine.name, error.message);
+      if (error.payload?.offer) offers.set(machine.name, error.payload.offer);
       draw();
     }
   };
@@ -80,6 +91,7 @@ function showMachines(chip) {
   const row = (machine) => {
     const busy = opening === machine.name;
     const problem = problems.get(machine.name) ?? machine.problem;
+    const step = opening === null ? offers.get(machine.name) : undefined;
     const detail = machine.there ? `${machine.there.user}@${machine.there.name} · ${machine.there.platform}` : machine.address !== machine.name ? machine.address : "";
     return h(
       "div",
@@ -89,15 +101,16 @@ function showMachines(chip) {
         { class: "machine-row" },
         h(
           "button",
-          { class: `machine-open${busy ? " busy" : ""}`, type: "button", disabled: opening !== null, title: machine.there ? `Go to ${machine.name}` : `Start StackOps on ${machine.name} over SSH and show it in this tab`, onclick: () => open(machine) },
+          { class: `machine-open${busy ? " busy" : ""}`, type: "button", disabled: opening !== null, title: machine.there ? `Go to ${machine.name}` : `Start StackOps on ${machine.name} over SSH and show it in this tab`, onclick: () => open(machine, null) },
           icon("server", 16),
           h("span", { class: "machine-text" }, h("strong", { text: machine.name }), detail && h("span", { text: detail })),
           busy ? h("i", { class: "ring" }) : machine.there ? pill("Connected", "good") : icon("chevron", 15),
         ),
         machine.there && opening === null && iconButton("power", `Disconnect ${machine.name}`, () => disconnect(machine)),
       ),
-      busy && !machine.there && h("p", { class: "machine-note", text: "Signing in over SSH and starting StackOps there…" }),
+      busy && !machine.there && h("p", { class: "machine-note", text: preparing ? STEPS[preparing].note : "Signing in over SSH and starting StackOps there…" }),
       problem && h("p", { class: "machine-problem", text: problem }),
+      step && h("div", { class: "machine-offer" }, button({ label: `${STEPS[step].label} on ${machine.name}`, glyph: STEPS[step].glyph, small: true, title: STEPS[step].title, onclick: () => open(machine, step) })),
     );
   };
 

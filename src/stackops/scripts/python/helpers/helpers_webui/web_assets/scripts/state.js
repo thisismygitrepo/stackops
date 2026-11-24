@@ -54,7 +54,8 @@ export function parseRoute() {
 const connectionGone = () => state.boot?.opened_from && `The connection to ${state.boot.opened_from.machine} is gone. Go back to ${state.boot.opened_from.name} and open ${state.boot.opened_from.machine} again.`;
 
 // Every failure is thrown with a sentence fit to show as it is, and nothing is shown from here: the caller decides where it appears, once.
-// An answer that is not OK also carries `status`, its HTTP status number. A call cancelled through `signal` rejects with the browser's AbortError.
+// An answer that is not OK also carries `status`, its HTTP status number, and `payload`, what the server sent with it. A call cancelled through
+// `signal` rejects with the browser's AbortError.
 // Exported for a view that keeps its server calls with itself (app/scripts/features.js); the calls every page shares are in `api` below.
 export async function request(method, path, body, signal) {
   const response = await fetch(path, {
@@ -71,7 +72,7 @@ export async function request(method, path, body, signal) {
   signal?.throwIfAborted();
   if (response.ok) return payload;
   const message = response.status === 401 ? connectionGone() || "This session's access expired because the server restarted. Open the new link it printed." : (payload?.error ?? `${method} ${path} failed with status ${response.status}.`);
-  throw Object.assign(new Error(message), { status: response.status });
+  throw Object.assign(new Error(message), { status: response.status, payload });
 }
 
 export const api = {

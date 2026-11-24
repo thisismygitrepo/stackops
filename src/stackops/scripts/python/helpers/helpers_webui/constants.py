@@ -1,5 +1,7 @@
 from typing import Final, Literal
 
+from stackops.utils.constants import STACKOPS_PYTHON_VERSION
+
 # Fixed sets of keywords a command takes as text and checks after it starts (`field_choice_keywords.py`).
 type KeywordChoiceSource = Literal["config_agents", "mcp_agents", "doctor_agent", "doctor_resources", "reset_resources", "agent_states", "type_check_tools"]
 type FieldChoiceSource = (
@@ -91,7 +93,8 @@ SHUTDOWN_JOIN_SECONDS: Final[float] = 2.0
 GRACEFUL_SHUTDOWN_SECONDS: Final[int] = 3
 
 # Other machines, opened from the page: SSH starts that machine's own web UI and forwards one port to it (`other_machines_links.py`).
-# Switching is offered only by a server that listens on these: on any other address the forwarded ports would be out of the browser's reach.
+# Switching is offered only to a browser on this machine that reached the server at one of these names: the forwarded ports listen on this
+# machine's loopback, out of reach of any other browser.
 LOOPBACK_HOSTS: Final[frozenset[str]] = frozenset({"127.0.0.1", "::1", "localhost"})
 # Each machine gets one slot, found from its name: the port its tunnel listens on here and the port its web UI listens on there. A server's
 # sign-in cookie is named after its own port and a browser shares cookies across the ports of one host, so two servers on the same port number
@@ -106,6 +109,12 @@ MACHINE_CONNECT_SECONDS: Final[float] = 60.0
 MACHINE_CHECK_SECONDS: Final[float] = 15.0
 MACHINE_OUTPUT_KEPT_BYTES: Final[int] = 16384
 MACHINE_PROBLEM_LINES: Final[int] = 3
+# What the page runs on another machine over SSH before it connects again (`other_machines_prepare.py`): StackOps installed where `stackops` is
+# missing, with uv first where that is missing too, and updated where it is too old to be opened. Each goes inside single quotes through two
+# shells, so neither may hold one. Both fetch packages, and the update also reinstalls and copies assets.
+MACHINE_INSTALL_COMMAND: Final[str] = f"""command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh && uv tool install --upgrade --python {STACKOPS_PYTHON_VERSION} stackops"""
+MACHINE_UPDATE_COMMAND: Final[str] = "devops self update"
+MACHINE_PREPARE_SECONDS: Final[float] = 600.0
 # The terminal SSH runs in. Wide, so that nothing the other machine prints is wrapped before it is read here.
 MACHINE_TERMINAL_ROWS: Final[int] = 24
 MACHINE_TERMINAL_COLUMNS: Final[int] = 200

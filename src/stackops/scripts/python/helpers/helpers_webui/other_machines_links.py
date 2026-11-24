@@ -60,7 +60,7 @@ class MachineLink:
 
 @dataclass(frozen=True)
 class LinkProblem:
-    reason: Literal["port_taken", "failed"]
+    reason: Literal["port_taken", "missing", "outdated", "failed"]
     message: str
 
 
@@ -112,7 +112,7 @@ def ask_machine(name: str, tunnel_port: int, remote_port: int, token: str) -> Ma
             answer: dict[str, MachineSummary] = json.loads(response.read())
     except urllib.error.HTTPError as error:
         if error.code == 404:
-            return LinkProblem(reason="failed", message=f"""StackOps on {name} is older than this one and cannot be opened from another machine yet. Update it there, then connect again.""")
+            return LinkProblem(reason="outdated", message=f"""StackOps on {name} is older than this one and cannot be opened from another machine yet.""")
         return LinkProblem(reason="failed", message=f"""The web UI on {name} started, but answered this machine with status {error.code}.""")
     except OSError as error:
         return LinkProblem(reason="failed", message=f"""The web UI on {name} started, but did not answer through the SSH tunnel: {error}""")
@@ -140,6 +140,9 @@ async def open_on_ports(name: str, ssh: str, environment: dict[str, str], marker
             said = read_last_words(session.output)
             if "Cannot listen on" in said:
                 return LinkProblem(reason="port_taken", message=f"""{name} has no free port for its web UI among the {MACHINE_PORT_ATTEMPTS} kept for it. It said: {said}""")
+            # The shell there could not find `stackops`: the exit code of a command that is not found.
+            if session.exit_code == 127:
+                return LinkProblem(reason="missing", message=f"""StackOps is not installed on {name}, or not where an SSH command there looks for it.""")
             if session.exit_code != 255:
                 return LinkProblem(reason="failed", message=f"""{name} did not start its web UI and stopped with exit code {session.exit_code}. It said: {said}""")
             asks = "Permission denied" in said or "Host key verification failed" in said
@@ -160,14 +163,23 @@ async def open_on_ports(name: str, ssh: str, environment: dict[str, str], marker
             session.handle.stop(False)
 
 
-async def open_link(links: dict[str, MachineLink], name: str, here_name: str, home_address: str) -> MachineLink | LinkProblem:
-    existing = links.get(name)
-    if existing is not None and existing.session.exit_code is None:
-        return existing
+# The `ssh` command and the environment it runs in, the same as a task started from the page gets.
+def find_ssh() -> tuple[str, dict[str, str]] | LinkProblem:
     environment = build_run_environment(interactive=False)
     ssh = shutil.which("ssh", path=environment["PATH"])
     if ssh is None:
         return LinkProblem(reason="failed", message="This machine has no `ssh` command to reach other machines with.")
+    return ssh, environment
+
+
+async def open_link(links: dict[str, MachineLink], name: str, here_name: str, home_address: str) -> MachineLink | LinkProblem:
+    existing = links.get(name)
+    if existing is not None and existing.session.exit_code is None:
+        return existing
+    found = find_ssh()
+    if isinstance(found, LinkProblem):
+        return found
+    ssh, environment = found
     opened_from: OpenedFrom = {"name": here_name, "address": home_address, "machine": name}
     # Letters, digits, - and _ only, so the text needs no quoting on its way through two shells.
     marker = base64.urlsafe_b64encode(json.dumps(opened_from).encode()).decode().rstrip("=")

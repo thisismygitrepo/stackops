@@ -1,5 +1,6 @@
 import asyncio
 import ipaddress
+from collections.abc import Awaitable, Callable
 from typing import TypedDict, cast
 from urllib.parse import urlsplit
 
@@ -11,6 +12,7 @@ from stackops.scripts.python.helpers.helpers_webui.constants import LOOPBACK_HOS
 from stackops.scripts.python.helpers.helpers_webui.other_machines_hosts import SshHost, read_ssh_hosts
 from stackops.scripts.python.helpers.helpers_webui.other_machines_links import LinkProblem, MachineLink, close_link, open_link, read_last_words
 from stackops.scripts.python.helpers.helpers_webui.other_machines_marker import MachineSummary, OpenedFrom
+from stackops.scripts.python.helpers.helpers_webui.other_machines_prepare import MachineStep, prepare_machine
 
 
 # One machine of the SSH config as the page lists it. `there` is who answered on it while its web UI is open from here, and `problem` is how
@@ -20,6 +22,24 @@ class MachineRow(TypedDict):
     address: str
     there: MachineSummary | None
     problem: str | None
+
+
+# Why a machine did not open, and the step the page offers to take on it before it connects again, if one would help.
+class LinkRefusal(TypedDict):
+    error: str
+    offer: MachineStep | None
+
+
+def link_answer(result: MachineLink | LinkProblem) -> JSONResponse:
+    match result:
+        case MachineLink():
+            return JSONResponse({"address": f"""{result.address}?token={result.token}"""})
+        case LinkProblem(reason="missing"):
+            return JSONResponse(LinkRefusal(error=result.message, offer="install"), status_code=502)
+        case LinkProblem(reason="outdated"):
+            return JSONResponse(LinkRefusal(error=result.message, offer="update"), status_code=502)
+        case LinkProblem():
+            return JSONResponse(LinkRefusal(error=result.message, offer=None), status_code=502)
 
 
 # The machine switcher at the top of the app view. Opening a machine starts its own web UI over SSH and forwards a port to it; the page then
@@ -67,7 +87,7 @@ def other_machines_routes(links: dict[str, MachineLink], here: MachineSummary, o
             return JSONResponse({"error": "`name` must be the machine's name in the SSH config."}, status_code=400)
         return name
 
-    async def connect(request: Request) -> JSONResponse:
+    async def openable_name(request: Request) -> str | JSONResponse:
         name = await read_name(request)
         if isinstance(name, JSONResponse):
             return name
@@ -77,15 +97,39 @@ def other_machines_routes(links: dict[str, MachineLink], here: MachineSummary, o
         # Only a name the SSH config lists is handed to SSH, never text as it came from the page.
         if name not in links and name not in {host["name"] for host in await asyncio.to_thread(read_ssh_hosts)}:
             return JSONResponse({"error": f"""The SSH config has no machine named {name}."""}, status_code=404)
+        return name
+
+    # The address this server has in the browser that asked: where the other machine's page sends the person back.
+    async def open_for(request: Request, name: str) -> MachineLink | LinkProblem:
+        return await open_link(links=links, name=name, here_name=here["name"], home_address=f"""http://{request.headers.get("host", "")}/""")
+
+    async def connect(request: Request) -> JSONResponse:
+        name = await openable_name(request)
+        if isinstance(name, JSONResponse):
+            return name
         # One at a time for each machine, so a second press joins the connection the first one is making.
         async with locks.setdefault(name, asyncio.Lock()):
-            # The address this server has in the browser that asked: where the other machine's page sends the person back.
-            result = await open_link(links=links, name=name, here_name=here["name"], home_address=f"""http://{request.headers.get("host", "")}/""")
-        match result:
-            case LinkProblem():
-                return JSONResponse({"error": result.message}, status_code=502)
-            case MachineLink():
-                return JSONResponse({"address": f"""{result.address}?token={result.token}"""})
+            result = await open_for(request=request, name=name)
+        return link_answer(result)
+
+    # Takes the step on the machine, then opens it. A machine the step did not make openable is not offered the same step again.
+    def prepare_route(step: MachineStep) -> Callable[[Request], Awaitable[JSONResponse]]:
+        async def prepare(request: Request) -> JSONResponse:
+            name = await openable_name(request)
+            if isinstance(name, JSONResponse):
+                return name
+            async with locks.setdefault(name, asyncio.Lock()):
+                problem = await prepare_machine(name=name, step=step)
+                result = problem if problem is not None else await open_for(request=request, name=name)
+            match result:
+                case LinkProblem(reason="missing"):
+                    return JSONResponse(LinkRefusal(error=f"""StackOps is installed on {name}, yet an SSH command there still does not find `stackops`.""", offer=None), status_code=502)
+                case LinkProblem(reason="outdated"):
+                    return JSONResponse(LinkRefusal(error=f"""{name} now has the newest StackOps it can get, and that is still too old to be opened from another machine.""", offer=None), status_code=502)
+                case _:
+                    return link_answer(result)
+
+        return prepare
 
     async def disconnect(request: Request) -> Response:
         name = await read_name(request)
@@ -99,5 +143,7 @@ def other_machines_routes(links: dict[str, MachineLink], here: MachineSummary, o
     return [
         Route("/api/other-machines", list_machines, methods=["GET"]),
         Route("/api/other-machines/connect", connect, methods=["POST"]),
+        Route("/api/other-machines/install", prepare_route(step="install"), methods=["POST"]),
+        Route("/api/other-machines/update", prepare_route(step="update"), methods=["POST"]),
         Route("/api/other-machines/disconnect", disconnect, methods=["POST"]),
     ]
