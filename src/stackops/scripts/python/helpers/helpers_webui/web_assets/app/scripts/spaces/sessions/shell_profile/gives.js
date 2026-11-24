@@ -68,7 +68,12 @@ export function createGives({ install }) {
     const extras = shell.extras.filter((extra) => EXTRAS[extra.key]);
     element.replaceChildren(
       sectionHead(`What a terminal gains in ${labelOf(group)}`, h("span", { class: "spacer" }), picker?.element),
-      h("div", { class: "shellprof-gives-grid" }, shell.aliases.length > 0 && terminal(shell, labelOf(group)), h("ul", { class: "shellprof-extras" }, extras.map((extra) => extraRow(extra, install)))),
+      h(
+        "div",
+        { class: "shellprof-gives-grid" },
+        shell.aliases.length > 0 && h("div", { class: "shellprof-gives-part" }, h("span", { class: "overline", text: "Short commands" }), terminal(shell, labelOf(group))),
+        h("div", { class: "shellprof-gives-part" }, h("span", { class: "overline", text: "Extras" }), h("ul", { class: "shellprof-extras" }, extras.map((extra) => extraRow(extra, install)))),
+      ),
     );
   }
 

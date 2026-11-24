@@ -21,6 +21,9 @@ from stackops.scripts.python.helpers.helpers_webui.capture import CaptureResult,
 from stackops.scripts.python.helpers.helpers_webui.catalog import ParameterSpec, load_command_parameters, load_command_tree
 from stackops.scripts.python.helpers.helpers_webui.feature_routes import feature_routes
 from stackops.scripts.python.helpers.helpers_webui.field_choices import read_field_choices
+from stackops.scripts.python.helpers.helpers_webui.other_machines_links import MachineLink, close_links
+from stackops.scripts.python.helpers.helpers_webui.other_machines_marker import MachineSummary, OpenedFrom
+from stackops.scripts.python.helpers.helpers_webui.other_machines_routes import other_machines_routes
 from stackops.scripts.python.helpers.helpers_webui.pages import APP_PAGE, DEVELOPER_PAGE
 from stackops.scripts.python.helpers.helpers_webui.run_requests import (
     CaptureRequest,
@@ -47,7 +50,7 @@ WEB_ASSETS_ROOT = Path(__file__).with_name("web_assets")
 REPORT_NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]+\.html")
 
 
-def create_app(token: str, cookie_name: str, stackops_executable: str, working_directory: str) -> ASGIApp:
+def create_app(token: str, cookie_name: str, stackops_executable: str, working_directory: str, on_loopback: bool, opened_from: OpenedFrom | None) -> ASGIApp:
     # On Windows the registry can map .js to text/plain, and a browser refuses to run a module served that way. A no-op on macOS and Linux.
     mimetypes.add_type("text/javascript", ".js")
     mimetypes.add_type("text/css", ".css")
@@ -57,14 +60,18 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
     release_cache: dict[str, LatestRelease] = {}
     installers_by_name: dict[str, InstallerData] = {}
     system_name = platform.system()
+    machine_links: dict[str, MachineLink] = {}
+    here: MachineSummary = {"name": socket.gethostname().partition(".")[0], "user": getpass.getuser(), "platform": "macOS" if system_name == "Darwin" else system_name}
     bootstrap_payload = {
         "version": get_stackops_version(),
-        "user": getpass.getuser(),
+        "user": here["user"],
         "host": socket.gethostname(),
-        "platform": "macOS" if system_name == "Darwin" else system_name,
+        "platform": here["platform"],
         "home": str(Path.home()),
         "working_directory": working_directory,
         "tree": tree,
+        # Set on a web UI that another machine's page started over SSH (`other_machines_links.py`): the page then says so and offers the way back.
+        "opened_from": opened_from,
     }
 
     async def index(_request: Request) -> HTMLResponse:
@@ -212,6 +219,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
     async def lifespan(_app: Starlette) -> AsyncGenerator[None]:
         yield
         await shutdown_runs(registry)
+        await close_links(machine_links)
 
     app = Starlette(
         routes=[
@@ -230,6 +238,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             *vault_routes(working_directory=working_directory),
             *scripts_routes(working_directory=working_directory),
             *feature_routes(),
+            *other_machines_routes(links=machine_links, here=here, opened_from=opened_from, on_loopback=on_loopback),
             Route("/api/runs", list_runs, methods=["GET"]),
             Route("/api/runs", create_run, methods=["POST"]),
             Route("/api/runs/{run_id}/stop", stop_run_endpoint, methods=["POST"]),

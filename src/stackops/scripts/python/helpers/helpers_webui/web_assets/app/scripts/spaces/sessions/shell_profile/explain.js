@@ -38,7 +38,7 @@ export function explainSection(shell, folders) {
         pathChip(scripts.path),
       ),
       item(
-        "refresh", 30, "Reaches open terminals only when asked",
+        "refresh", 30, "Leaves open terminals as they are",
         `A terminal reads its profile when it starts, so one that is already open carries on as before. Open a new one${shell.reload_command ? ", or run this in the open one." : "."}`,
         shell.reload_command && copyChip(shell.reload_command),
       ),

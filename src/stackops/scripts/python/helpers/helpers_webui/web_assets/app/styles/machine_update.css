@@ -1,0 +1,180 @@
+/* Update StackOps, the page at #/machine/update (scripts/spaces/machine/update.js). */
+.machine-update-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
+.machine-update-back svg { transition: transform 0.3s var(--spring); }
+.machine-update-back:hover { color: var(--violet); }
+.machine-update-back:hover svg { transform: translateX(-3px); }
+.machine-update code, .machine-update-confirm code { padding: 1px 5px; font-size: 0.92em; background: var(--well); border-radius: 5px; }
+.machine-update kbd { font-size: 11.5px; }
+.machine-update.loading .view-actions .btn:first-child svg { animation: spin 0.9s linear infinite; }
+.machine-update-waiting .skeleton.card { height: 190px; margin-bottom: 18px; border-radius: 28px; }
+.machine-update-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.machine-update-body > div:empty { display: none; }
+
+/* The top: the version here, the verdict, and the button. The reason the button is off, when it is, runs across the full width under them. */
+.machine-update-hero {
+  --tone: var(--line); position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 22px 34px; padding: 28px 30px 28px 34px; overflow: hidden;
+  background: var(--panel); border: 1px solid color-mix(in srgb, var(--tone) 55%, var(--line)); border-radius: 28px; box-shadow: var(--shadow);
+}
+.machine-update-hero::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(560px 240px at 0% 0%, rgba(106, 92, 255, 0.16), transparent 70%), radial-gradient(460px 240px at 100% 100%, rgba(30, 167, 253, 0.12), transparent 70%); }
+.machine-update-hero > * { position: relative; }
+.machine-update-hero[data-tone="good"] { --tone: var(--good); }
+.machine-update-hero[data-tone="accent"] { --tone: var(--violet); }
+.machine-update-hero[data-tone="warn"] { --tone: var(--warn); }
+.machine-update-hero-text { display: grid; justify-items: start; gap: 6px; min-width: 0; }
+.machine-update-hero-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.machine-update-checking { gap: 7px; }
+.machine-update-checking .ring { width: 11px; height: 11px; border-width: 1.5px; }
+.machine-update-figure { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 52px; font-weight: 780; letter-spacing: -0.045em; line-height: 1.1; }
+.machine-update-figure svg { color: var(--ink-faint); }
+.machine-update-target { color: transparent; background: linear-gradient(110deg, #6a5cff, #1ea7fd 55%, #12c99b); -webkit-background-clip: text; background-clip: text; }
+.machine-update-hero-text h2 { font-size: 21px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.25; }
+.machine-update-hero-text > p { max-width: 68ch; color: var(--ink-soft); overflow-wrap: anywhere; }
+.machine-update-caution { display: flex; align-items: flex-start; gap: 8px; margin-top: 4px; font-size: 13px; }
+.machine-update-caution svg { margin-top: 2px; color: var(--warn); }
+.machine-update-act { display: grid; justify-items: end; gap: 8px; max-width: 250px; }
+.machine-update-act .btn { height: 46px; padding: 0 22px; font-size: 15px; border-radius: 15px; }
+.machine-update-act-note { font-size: 12.5px; text-align: right; color: var(--ink-faint); }
+.machine-update-reason { display: flex; grid-column: 1 / -1; align-items: flex-start; gap: 12px; padding: 14px 16px; background: color-mix(in srgb, var(--warn) 9%, var(--panel-solid)); border: 1px solid color-mix(in srgb, var(--warn) 34%, var(--line)); border-radius: 16px; }
+.machine-update-reason > svg { margin-top: 2px; color: var(--warn); }
+.machine-update-reason > div { display: grid; justify-items: start; gap: 3px; min-width: 0; }
+.machine-update-reason strong { font-weight: 700; }
+.machine-update-reason p { max-width: 82ch; font-size: 13.5px; color: var(--ink-soft); }
+.machine-update-reason .copy-chip { margin: 4px 0 0; padding: 4px 9px; color: var(--ink); background: var(--well); }
+.machine-update-reason .copy-chip svg { opacity: 0.5; }
+
+/* What a run is doing or did, above everything else. */
+.machine-update-banner { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 22px; box-shadow: var(--shadow); animation: swap-in 0.38s var(--smooth); }
+.machine-update-banner.working { align-items: center; border-color: color-mix(in srgb, var(--violet) 45%, transparent); }
+.machine-update-banner.good { border-color: color-mix(in srgb, var(--good) 50%, transparent); }
+.machine-update-banner.bad { border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.machine-update-banner.warn { border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+.machine-update-banner > .btn, .machine-update-banner > .icon-btn { flex: none; }
+.machine-update-banner-text { display: grid; flex: 1; gap: 5px; min-width: 0; }
+.machine-update-banner-text h2 { font-size: 19px; font-weight: 750; letter-spacing: -0.02em; }
+.machine-update-banner-text p { max-width: 86ch; font-size: 13.5px; color: var(--ink-soft); }
+.machine-update-banner-text small { font-size: 12px; }
+.machine-update-restart { display: grid; gap: 5px; margin: 4px 0 2px; padding-left: 20px; font-size: 13.5px; list-style: decimal; }
+.machine-update-restart li::marker { font-weight: 700; color: var(--ink-faint); }
+.machine-update-restart .copy-chip { margin: 0 2px; padding: 3px 9px; vertical-align: middle; color: var(--ink); background: var(--well); }
+.machine-update-restart .copy-chip svg { opacity: 0.5; }
+
+/* The cards under the top: what is new, how it is installed, the source folder, and what the update does. */
+.machine-update-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; }
+.machine-update-grid[data-route="checkout"] { grid-template-areas: "news folder" "plan plan" "install install"; }
+.machine-update-grid[data-route="index"] { grid-template-areas: "news install" "plan plan"; }
+.machine-update-news { grid-area: news; }
+.machine-update-folder { grid-area: folder; }
+.machine-update-plan { grid-area: plan; }
+.machine-update-install { grid-area: install; }
+/* Under everything else the install's facts have the full width, so they run in two columns of pairs. */
+.machine-update-grid[data-route="checkout"] .machine-update-install .facts { grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); }
+.machine-update-card { padding: 18px 22px 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
+.machine-update-card-head { display: flex; align-items: center; gap: 10px; min-height: 34px; margin-bottom: 12px; }
+.machine-update-card-head h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.machine-update-card .facts dd { display: grid; justify-items: start; }
+.machine-update-card .copy-chip { margin-left: 0; padding-left: 0; text-align: left; }
+.machine-update-card .copy-chip:hover { padding-left: 8px; margin-left: -8px; }
+.machine-update-card .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.machine-update-lines { display: grid; justify-items: start; gap: 2px; min-width: 0; }
+.machine-update-lines small { font-size: 12.5px; }
+.machine-update-checkout { display: grid; gap: 16px; }
+.machine-update-tallies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.machine-update-tally { --tone: var(--ink-faint); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 8px; padding: 10px 12px; color: var(--ink-soft); background: var(--well); border: 1px solid transparent; border-radius: 14px; }
+.machine-update-tally.warn { --tone: var(--warn); }
+.machine-update-tally.accent { --tone: var(--violet); }
+.machine-update-tally.warn, .machine-update-tally.accent { background: color-mix(in srgb, var(--tone) 9%, transparent); border-color: color-mix(in srgb, var(--tone) 28%, transparent); }
+.machine-update-tally svg { color: var(--tone); }
+.machine-update-tally strong { font-size: 22px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.2; color: var(--ink); }
+.machine-update-tally span { grid-column: 1 / -1; font-size: 12px; }
+
+.machine-update-timeline { position: relative; display: grid; gap: 2px; max-height: 430px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.machine-update-timeline li { position: relative; display: flex; align-items: flex-start; gap: 12px; padding: 7px 8px 7px 4px; border-radius: 12px; transition: background 0.2s; }
+.machine-update-timeline li:hover { background: var(--well); }
+/* Each entry draws the line down to the next one, so the line is as long as the list however tall its entries are, and scrolls with it. */
+.machine-update-timeline li:not(:last-child)::before { content: ""; position: absolute; top: 24px; bottom: -14px; left: 9px; width: 2px; background: var(--line-strong); border-radius: 2px; }
+.machine-update-dot { position: relative; flex: none; width: 12px; height: 12px; margin-top: 5px; background: var(--panel-solid); border: 3px solid var(--violet); border-radius: 50%; }
+.machine-update-timeline li > div { display: grid; gap: 1px; min-width: 0; }
+.machine-update-timeline .link { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.machine-update-timeline .link:hover { color: var(--violet); }
+.machine-update-timeline p { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 9px; font-size: 12.5px; color: var(--ink-soft); }
+.machine-update-more { margin-top: 12px; font-size: 12.5px; color: var(--ink-faint); }
+.machine-update-more .link, .machine-update-news .notice .link { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+.machine-update-news .notice { padding: 28px 20px; }
+
+.machine-update-plan-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 18px 30px; }
+.machine-update-plan-body h3 { margin-bottom: 10px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.machine-update-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.machine-update-options h3 { margin-bottom: 0; }
+.machine-update-option { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
+.machine-update-option .toggle-row { width: 100%; }
+.machine-update-option .toggle-row > div { display: grid; gap: 3px; min-width: 0; }
+.machine-update-option-facts { display: grid; gap: 7px; padding: 0 14px; }
+.machine-update-option-facts:empty { display: none; }
+.machine-update-remark { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--ink-soft); }
+.machine-update-remark svg { margin-top: 2px; color: var(--ink-faint); }
+.machine-update-remark.warn svg { color: var(--warn); }
+.machine-update-remark .pill { height: 19px; margin-right: 2px; padding: 0 7px; font-size: 11px; }
+.machine-update-names { display: flex; flex-wrap: wrap; gap: 5px; }
+.machine-update-names span { padding: 1px 8px; font: 12px var(--mono); color: var(--ink-soft); background: var(--well); border-radius: 7px; }
+.machine-update-names .more { font-family: var(--sans); background: none; }
+.machine-update-consequence { display: grid; gap: 6px; padding: 11px 13px; font-size: 12.5px; color: var(--ink-soft); background: var(--well); border: 1px solid transparent; border-radius: 13px; }
+.machine-update-consequence strong { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.machine-update-consequence ol { display: grid; gap: 4px; padding-left: 18px; list-style: decimal; }
+.machine-update-consequence.on { color: var(--ink); background: color-mix(in srgb, var(--bad) 9%, transparent); border-color: color-mix(in srgb, var(--bad) 38%, transparent); }
+.machine-update-consequence.on strong { color: var(--bad); }
+
+/* The steps in the order they run, joined by a line. The risky ones carry their colour, and the last one is the person's own. */
+.machine-update-steps { position: relative; display: grid; gap: 4px; }
+.machine-update-steps > li:not(:last-child)::before { content: ""; position: absolute; top: 36px; bottom: -8px; left: 13px; width: 2px; background: var(--line-strong); border-radius: 2px; }
+.machine-update-steps > li { --tone: var(--violet); position: relative; display: flex; align-items: flex-start; gap: 12px; padding: 6px 0; animation: fade-in 0.3s; }
+.machine-update-steps > li.warn { --tone: var(--warn); }
+.machine-update-steps > li.bad { --tone: var(--bad); }
+.machine-update-steps > li.you { --tone: var(--mint); }
+.machine-update-steps > li > i { display: grid; flex: none; place-items: center; width: 28px; height: 28px; font-size: 12.5px; font-style: normal; font-weight: 700; color: var(--tone); background: color-mix(in srgb, var(--tone) 16%, var(--panel-solid)); border-radius: 50%; }
+.machine-update-steps > li > div { display: grid; gap: 2px; min-width: 0; padding-top: 3px; }
+.machine-update-steps strong { font-weight: 650; }
+.machine-update-steps > li.warn strong, .machine-update-steps > li.bad strong { color: var(--tone); }
+.machine-update-steps p { font-size: 12.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.machine-update-steps .machine-update-restart { font-size: 12.5px; color: var(--ink-soft); }
+
+/* The last stop before an update that deletes settings or publishes commits. */
+.dialog.machine-update-confirm { display: flex; flex-direction: column; width: min(600px, 100%); max-height: 84vh; margin-top: -5vh; }
+.dialog.machine-update-confirm .dialog-body { display: flex; flex-direction: column; gap: 16px; min-height: 0; padding: 26px; }
+.dialog.machine-update-confirm .dialog-actions { margin-top: 0; }
+.machine-update-confirm-head { display: flex; align-items: flex-start; gap: 14px; }
+.machine-update-confirm-head h2 { font-size: 21px; font-weight: 750; letter-spacing: -0.025em; }
+.machine-update-confirm-head p { margin-top: 2px; color: var(--ink-soft); }
+.machine-update-confirm-parts { display: grid; flex: 0 1 auto; gap: 10px; min-height: 80px; overflow-y: auto; }
+.machine-update-confirm-parts section { display: grid; gap: 8px; padding: 13px 15px; font-size: 13.5px; border: 1px solid var(--line); border-radius: 16px; }
+.machine-update-confirm-parts h3 { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; overflow-wrap: anywhere; }
+.machine-update-confirm-parts h3 svg { color: var(--ink-faint); }
+.machine-update-confirm-parts ol { display: grid; gap: 5px; padding-left: 20px; color: var(--ink-soft); list-style: decimal; }
+.machine-update-confirm-parts p { color: var(--ink-soft); }
+.machine-update-files { display: grid; gap: 1px; padding: 8px 10px; font: 12px var(--mono); color: var(--ink-soft); background: var(--well); border-radius: 10px; }
+.machine-update-files li { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.machine-update-files .more { font-family: var(--sans); color: var(--ink-faint); }
+.machine-update-ack { display: flex; align-items: center; gap: 11px; padding: 11px 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; background: color-mix(in srgb, var(--bad) 11%, transparent); border-radius: 13px; }
+.machine-update-ack input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--bad); cursor: pointer; }
+
+@media (max-width: 1060px) {
+  .machine-update-grid, .machine-update-plan-body { grid-template-columns: minmax(0, 1fr); }
+  .machine-update-grid[data-route="checkout"] { grid-template-areas: "news" "folder" "plan" "install"; }
+  .machine-update-grid[data-route="index"] { grid-template-areas: "news" "install" "plan"; }
+  .machine-update-grid[data-route="checkout"] .machine-update-install .facts { grid-template-columns: max-content minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .machine-update-hero { grid-template-columns: minmax(0, 1fr); padding: 22px 20px; }
+  .machine-update-figure { font-size: 40px; }
+  .machine-update-act { justify-items: start; max-width: none; }
+  .machine-update-act-note { text-align: left; }
+  .machine-update-card { padding: 16px 16px 18px; }
+  .machine-update-banner { flex-wrap: wrap; }
+  .machine-update-banner-text { flex-basis: calc(100% - 62px); }
+}
+@media (max-width: 520px) {
+  .machine-update-tallies { grid-template-columns: minmax(0, 1fr); }
+  .machine-update-tally { grid-template-columns: auto auto minmax(0, 1fr); }
+  .machine-update-tally span { grid-column: auto; }
+  .machine-update-card .facts { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
+  .machine-update-card .facts dd { margin-bottom: 9px; }
+}

@@ -44,18 +44,30 @@ export const STANDINGS = {
   other_system: { label: "Not on this system", tone: "", due: false },
 };
 
+// A shell's profile files as a sentence names them: the path of a single file, and the bare names of two that share a folder.
+export const profileNames = (shell) => shell.files.map((file) => (shell.files.length > 1 ? fileName(file.path) : shortPath(file.path)));
+
 export function standingText(shell, standing) {
   const { name } = SHELLS[shell.id];
-  const profile = shell.files.map((file) => shortPath(file.path)).join(" and ");
+  const names = profileNames(shell);
+  const many = names.length > 1;
+  const profile = names.join(" and ");
+  // A shell the command does not act on is not told what setting it up would do; the note under its name says what to do instead.
   const sentences = {
     ready: `Every new ${name} terminal loads StackOps' setup.`,
-    behind: "It works, but the setup file in place is not the one this version of StackOps ships. Setting up again replaces it.",
-    broken: `${profile} has the line, but the file it loads is missing, so every new terminal prints an error. Setting up again puts the file back.`,
+    behind: `It works, but ${many ? "the setup files in place are not the ones" : "the setup file in place is not the one"} this version of StackOps ships. A setup run replaces ${many ? "them" : "it"}.`,
+    broken: many
+      ? `${profile} have their lines, but the files they load are missing, so every new ${name} terminal prints an error. A setup run puts them back.`
+      : `${profile} has the line, but the file it loads is missing, so every new ${name} terminal prints an error. A setup run puts the file back.`,
     partial: "One of its two files has the line and the other does not. Setting up adds the missing one.",
-    old: `${profile} still loads the setup file of an older StackOps, which is gone. Setting up swaps that line for the current one.`,
-    absent: `${profile} has no StackOps line, so ${name} terminals open without what StackOps adds.`,
-    unstarted: `There is no ${profile} yet. Setting up creates it.`,
-    unreadable: shell.files.find((file) => file.problem)?.problem,
+    old: `${profile} still loads the setup file of an older StackOps, which is gone. A setup run swaps that line for the current one.`,
+    absent: `${profile} ${many ? "have" : "has"} no StackOps line, so ${name} terminals open without what StackOps adds.`,
+    unstarted: many
+      ? `Neither ${names.join(" nor ")} exists yet. Setting up creates them.`
+      : shell.route === "manual"
+        ? `There is no ${profile} yet, so ${name} terminals open without what StackOps adds.`
+        : `There is no ${profile} yet. Setting up creates it.`,
+    unreadable: shell.files.filter((file) => file.problem).map((file) => `${shortPath(file.path)} could not be read. ${file.problem}`).join(" "),
     not_installed: `${name} is not installed on this computer.`,
     other_system: shell.id === "pwsh" ? "StackOps sets up PowerShell on Windows only." : "StackOps sets up zsh and bash on macOS and Linux only.",
   };

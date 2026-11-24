@@ -1,0 +1,34 @@
+.wezterm-theme-content { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+.wezterm-theme-standing { padding: 14px 16px; background: var(--well); border-radius: 16px; }
+.wezterm-theme-standing .copy-chip { text-align: left; }
+.wezterm-theme-standing .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.wezterm-theme-issues { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.wezterm-theme-issues:empty { display: none; }
+/* The shared remark sizes its text column to its widest line, so a long path or snippet would push the words past the edge. */
+.wezterm-theme-issues .callout-text { grid-template-columns: minmax(0, 1fr); }
+.wezterm-theme-issues .copy-chip { margin-top: 4px; text-align: left; }
+.wezterm-theme-issues .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.wezterm-theme-issues .copy-chip svg { flex: none; opacity: 0.5; }
+.wezterm-theme-issues .btn { margin-top: 8px; }
+.wezterm-theme-way { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.wezterm-theme-way .section-head { margin-bottom: 0; }
+.wezterm-theme-way > p { color: var(--ink-soft); }
+.wezterm-theme-way > p.dim { font-size: 13px; color: var(--ink-faint); }
+.wezterm-theme-start { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+/* The command is something to copy, so it looks like a box of its own here and its copy sign always shows. */
+.wezterm-theme-start .copy-chip { flex: 1 1 100%; justify-content: space-between; min-height: 38px; margin: 0; padding: 0 12px; color: var(--ink); background: var(--well); border-radius: 12px; }
+.wezterm-theme-start .copy-chip svg { flex: none; opacity: 0.55; }
+.wezterm-theme-why { flex: 1 1 200px; font-size: 12.5px; color: var(--warn); }
+.wezterm-theme-find { display: flex; align-items: center; gap: 12px; }
+.wezterm-theme-find .search-input { flex: 1; width: auto; min-width: 0; background: var(--panel-solid); border-color: var(--line-strong); }
+.wezterm-theme-find .count { flex: none; }
+.wezterm-theme-names { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; }
+.wezterm-theme-name { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 5px 8px 5px 14px; transition: background 0.2s; }
+.wezterm-theme-name + .wezterm-theme-name { border-top: 1px solid var(--line); }
+.wezterm-theme-name:hover { background: var(--well); }
+.wezterm-theme-name > span:first-child { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.wezterm-theme-name .pill { margin-right: 6px; }
+.wezterm-theme-name[aria-current="true"], .wezterm-theme-name[aria-current="true"]:hover { background: var(--brand-wash); }
+.wezterm-theme-none { padding: 22px 16px; text-align: center; color: var(--ink-faint); }
+.wezterm-theme-said { flex: 1; min-width: 0; font-size: 12.5px; text-align: right; color: var(--good); overflow-wrap: anywhere; }
+.wezterm-theme-said.bad { color: var(--bad); }

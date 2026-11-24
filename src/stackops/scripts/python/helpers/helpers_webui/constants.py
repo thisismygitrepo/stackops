@@ -90,6 +90,38 @@ SHUTDOWN_JOIN_SECONDS: Final[float] = 2.0
 # How long a stopping server waits for requests in flight before it cancels them; a cancelled capture kills its command.
 GRACEFUL_SHUTDOWN_SECONDS: Final[int] = 3
 
+# Other machines, opened from the page: SSH starts that machine's own web UI and forwards one port to it (`other_machines_links.py`).
+# Switching is offered only by a server that listens on these: on any other address the forwarded ports would be out of the browser's reach.
+LOOPBACK_HOSTS: Final[frozenset[str]] = frozenset({"127.0.0.1", "::1", "localhost"})
+# Each machine gets one slot, found from its name: the port its tunnel listens on here and the port its web UI listens on there. A server's
+# sign-in cookie is named after its own port and a browser shares cookies across the ports of one host, so two servers on the same port number
+# would sign each other out. The two ranges differ so that a host sharing this machine's loopback (this machine, a WSL distribution) still
+# opens, and both lie under the ports systems hand out on their own.
+MACHINE_TUNNEL_PORT_BASE: Final[int] = 28420
+MACHINE_REMOTE_PORT_BASE: Final[int] = 29420
+MACHINE_PORT_SLOTS: Final[int] = 500
+MACHINE_PORT_ATTEMPTS: Final[int] = 4
+# The first start on a machine can spend a while fetching the server's two packages.
+MACHINE_CONNECT_SECONDS: Final[float] = 60.0
+MACHINE_CHECK_SECONDS: Final[float] = 15.0
+MACHINE_OUTPUT_KEPT_BYTES: Final[int] = 16384
+MACHINE_PROBLEM_LINES: Final[int] = 3
+# The terminal SSH runs in. Wide, so that nothing the other machine prints is wrapped before it is read here.
+MACHINE_TERMINAL_ROWS: Final[int] = 24
+MACHINE_TERMINAL_COLUMNS: Final[int] = 200
+# SSH signs in without a prompt or fails: this server has no terminal to ask in. The keep-alive ends a tunnel whose machine went away.
+MACHINE_SSH_OPTIONS: Final[tuple[str, ...]] = ("BatchMode=yes", "ExitOnForwardFailure=yes", "ConnectTimeout=10", "ServerAliveInterval=15", "ServerAliveCountMax=3")
+# A command over SSH gets a bare PATH, without what the shell profile adds; these are where `stackops` and `uv` are installed.
+MACHINE_REMOTE_PATH: Final[str] = "$HOME/.local/bin:$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+# Tells a web UI which machine and address it was opened from. Its page then offers the way back and no other machines.
+MACHINE_OPENED_FROM_VARIABLE: Final[str] = "STACKOPS_WEBUI_OPENED_FROM"
+# The only kind of name the page offers and SSH is given: no pattern, no option, no user or port.
+MACHINE_NAME_PATTERN: Final[str] = r"[A-Za-z0-9][A-Za-z0-9._-]*"
+MACHINE_HOME_ADDRESS_PATTERN: Final[str] = r"http://[A-Za-z0-9.\[\]:-]+/"
+# Entries of the SSH config that are there for git, not to work on: those with `User git` and these hosts.
+SSH_GIT_HOSTS: Final[tuple[str, ...]] = ("github.com", "gitlab.com", "bitbucket.org", "ssh.dev.azure.com")
+SSH_CONFIG_INCLUDE_DEPTH: Final[int] = 8
+
 CAPTURE_TIMEOUT_SECONDS: Final[float] = 90.0
 CAPTURE_OUTPUT_COLUMNS: Final[int] = 118
 # The largest file the app view opens to read or edit in the browser.

@@ -1,4 +1,4 @@
-import { formatBytes, humanize, plural } from "../../../words.js";
+import { formatBytes, humanize } from "../../../words.js";
 
 export const PROCESSES_HASH = "#/machine/processes";
 export const TOOL_PATH = "utils machine kill-process";
@@ -50,7 +50,7 @@ export const OUTCOMES = {
 
 export const cpuText = (value) => (value === null || value === undefined ? "—" : `${value < 9.95 ? value.toFixed(1) : Math.round(value).toLocaleString()}%`);
 export const memoryText = (bytes) => (bytes === null || bytes === undefined ? "—" : formatBytes(bytes));
-export const countText = (count, word = "process") => (word === "process" ? `${count.toLocaleString()} process${count === 1 ? "" : "es"}` : plural(count, word));
+export const processCount = (count) => `${count.toLocaleString()} process${count === 1 ? "" : "es"}`;
 
 // How long ago a process started, short enough for a column.
 export function ageText(started, now) {
@@ -67,7 +67,7 @@ export const startedText = (started) => new Date(started * 1000).toLocaleString(
 // The filters another view can open this page with, by the command's parameter names. Each one is shown as a chip that can be taken off again.
 // They match the way the command does: a command by any part of it, a size or a share as a minimum, everything else exactly.
 const GIVEN = {
-  command: (text) => ({ label: `Command has “${text}”`, test: (process) => process.command.toLowerCase().includes(text.toLowerCase()) }),
+  command: (text) => ({ label: `Command has "${text}"`, test: (process) => process.command.toLowerCase().includes(text.toLowerCase()) }),
   name: (text) => ({ label: `Named ${text}`, test: (process) => process.name === text }),
   username: (text) => ({ label: `Owned by ${text}`, test: (process) => process.user === text }),
   status: (text) => ({ label: statusOf(text).label, test: (process) => process.status === text }),

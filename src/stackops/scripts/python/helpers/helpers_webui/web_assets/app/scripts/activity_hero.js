@@ -1,5 +1,6 @@
 import { formatDuration, h, icon, tildify, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { closeEditor } from "./activity_editor.js";
 import { CONFIRMED_RUNS } from "./catalog.js";
 import { consoleText } from "./console_session.js";
 import { button, notice, outputActions } from "./widgets.js";
@@ -42,8 +43,10 @@ export function createHero({ openReport, runAgain }) {
         outputActions(() => consoleText(task.terminal), task.title),
         // Several reports are told apart by their file names: a long task is credited with every report written while it ran (see `_finish_run`).
         summary.reports.map((name) => button({ label: summary.reports.length === 1 ? "View report" : name.replace(/\.html$/, "").replaceAll("_", " "), glyph: "report", small: true, onclick: () => openReport({ title: task.title, blurb: "", file: name }) })),
-        status === "running" && button({ label: "Stop", glyph: "stop", small: true, tone: "danger", onclick: () => api.stopRun(task.id).catch((error) => toast(error.message)) }),
-        repeatable && button({ label: "Run again", glyph: "refresh", small: true, onclick: () => runAgain(task) }),
+        // Stop ends a run where it stands. An editor would lose what is unsaved that way, so it gets a button that closes it the editor's own way.
+        status === "running" && !task.editor && button({ label: "Stop", glyph: "stop", small: true, tone: "danger", onclick: () => api.stopRun(task.id).catch((error) => toast(error.message)) }),
+        status === "running" && task.editor && button({ label: "Close editor", glyph: "close", small: true, title: "Closes the editor. If something is not saved, you are asked what to do with it.", onclick: () => closeEditor(task) }),
+        repeatable && button({ label: task.editor ? "Open again" : "Run again", glyph: "refresh", small: true, onclick: () => runAgain(task) }),
       ),
     );
   }

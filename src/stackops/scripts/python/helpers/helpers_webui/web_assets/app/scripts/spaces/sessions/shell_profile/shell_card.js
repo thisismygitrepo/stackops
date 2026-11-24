@@ -1,5 +1,5 @@
 import { h, icon } from "/assets/scripts/dom.js";
-import { button, copyChip, glyphTile, pathChip, pill } from "../../../widgets.js";
+import { button, copyChip, copyText, glyphTile, pathChip, pill } from "../../../widgets.js";
 import { plural } from "../../../words.js";
 import { SHELLS, STANDINGS, fileName, loginLabel, manualText, shortPath, standingOf, standingText } from "./words.js";
 
@@ -16,6 +16,13 @@ function fileFact(file) {
   if (file.line_present) return fact("good", "check", "Has StackOps' line");
   if (file.old_line_present) return fact("warn", "alert", "Has an old StackOps line");
   return file.exists ? fact("", "close", "No StackOps line") : fact("", "plus", "Not created yet");
+}
+
+async function copied(control, text) {
+  if (!(await copyText(text, "Select the line under the card and copy it by hand."))) return;
+  const label = control.querySelector("span");
+  label.textContent = "Copied";
+  setTimeout(() => (label.textContent = "Copy the line"), 1400);
 }
 
 // A small drawing of the profile: the person's own lines, which are never read, and the one line StackOps adds at the end.
@@ -37,7 +44,7 @@ function chain(shell) {
       "div",
       { class: "shellprof-step" },
       sheet(shell),
-      h("div", { class: "shellprof-step-text" }, h("span", { class: "overline", text: shell.files.length > 1 ? "Its profile files" : "Its profile" }), shell.files.map((file) => [pathChip(file.path), fileFact(file), file.link_target && h("span", { class: "shellprof-link dim" }, "A link to ", pathChip(file.link_target))])),
+      h("div", { class: "shellprof-step-text" }, h("span", { class: "overline", text: shell.files.length > 1 ? "Its profile files" : "Its profile" }), shell.files.flatMap((file) => [pathChip(file.path), fileFact(file), file.link_target && h("span", { class: "shellprof-link dim" }, "A link to ", pathChip(file.link_target))])),
     ),
     arrow("loads", linked),
     h(
@@ -70,6 +77,8 @@ export function shellCard(shell, { featured, login, actions }) {
   const manual = shell.route === "manual";
   const setUp = !manual && standing !== "unreadable" && button({ label: due ? "Set up" : "Set up again", glyph: due ? "play" : "refresh", tone: due ? "primary" : "plain", title: due ? undefined : "Puts a fresh copy of StackOps' settings and scripts in place", onclick: () => actions.setUp(shell) });
   if (setUp) setUp.disabled = actions.busy;
+  // A shell the command does not act on gets its line by hand, so the line is one press away from the clipboard.
+  const copyLine = manual && !shell.files[0].line_present && button({ label: "Copy the line", glyph: "copy", onclick: () => copied(copyLine, shell.files[0].line) });
   const openers = shell.files.map((file) =>
     button({ label: shell.files.length > 1 ? `Open ${fileName(file.path)}` : "Open in editor", glyph: "pencil", title: `Opens ${shortPath(file.path)} in a text editor inside the activity panel`, onclick: () => actions.openFile(file) }),
   );
@@ -86,7 +95,7 @@ export function shellCard(shell, { featured, login, actions }) {
         h("h2", {}, h("span", { text: SHELLS[shell.id].name }), shell.login && pill(loginLabel(), "accent"), pill(label, tone)),
         h("p", { text: standingText(shell, standing) }),
       ),
-      h("div", { class: "shellprof-actions" }, setUp, openers),
+      h("div", { class: "shellprof-actions" }, setUp, copyLine, openers),
     ),
     manual && h("p", { class: "shellprof-manual" }, icon("info", 15), h("span", { text: manualText(shell, login) })),
     chain(shell),

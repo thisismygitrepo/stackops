@@ -16,9 +16,15 @@ export function createCombo({ value = "", placeholder = "", glyph, label, sugges
   let active = -1;
   let ticket = 0;
   let shown = false;
+  let frame = 0;
+  // Where the box was when the list was last put under it, so a frame in which nothing moved writes nothing.
+  let placedFor = "";
 
   function place() {
     const box = element.getBoundingClientRect();
+    const spot = [box.left, box.top, box.width, box.height, window.innerHeight].join();
+    if (spot === placedFor) return;
+    placedFor = spot;
     const below = window.innerHeight - box.bottom;
     const above = below < 220 && box.top > below;
     list.classList.toggle("above", above);
@@ -29,25 +35,32 @@ export function createCombo({ value = "", placeholder = "", glyph, label, sugges
     list.style.maxHeight = `${Math.min(LIST_MAX_HEIGHT, (above ? box.top : below) - 16)}px`;
   }
 
+  // The list hangs off the body, so nothing moves it along with its box, and the box does move: the popover or dialog it sits in is still
+  // growing into place when the list opens, the page scrolls, the window changes size. So the list is put under the box again on every frame
+  // while it is open, which costs one measurement when nothing moved. A box taken off the page takes its list with it.
+  function follow() {
+    if (!element.isConnected) return hide();
+    place();
+    frame = requestAnimationFrame(follow);
+  }
+
   function show() {
     if (shown) return;
     shown = true;
     document.body.append(list);
-    place();
     element.classList.add("open");
     input.setAttribute("aria-expanded", "true");
-    window.addEventListener("scroll", place, true);
-    window.addEventListener("resize", place);
+    placedFor = "";
+    follow();
   }
 
   function hide() {
     if (!shown) return;
     shown = false;
+    cancelAnimationFrame(frame);
     list.remove();
     element.classList.remove("open");
     input.setAttribute("aria-expanded", "false");
-    window.removeEventListener("scroll", place, true);
-    window.removeEventListener("resize", place);
   }
 
   function mark() {
@@ -95,7 +108,6 @@ export function createCombo({ value = "", placeholder = "", glyph, label, sugges
         : [h("p", { class: "combo-empty", text: emptyText })]),
     );
     show();
-    place();
     mark();
   }
 

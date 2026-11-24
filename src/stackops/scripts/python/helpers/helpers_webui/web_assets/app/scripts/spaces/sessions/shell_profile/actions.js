@@ -2,7 +2,7 @@ import { h, icon, toast } from "/assets/scripts/dom.js";
 import { confirmAction } from "../../../overlays.js";
 import { editFile } from "../../../space_kit.js";
 import { button, copyChip, iconButton } from "../../../widgets.js";
-import { SHELLS, STANDINGS, TOOL_PATH, shortPath, standingOf, standingText } from "./words.js";
+import { SHELLS, STANDINGS, TOOL_PATH, profileNames, shortPath, standingOf, standingText } from "./words.js";
 
 // What the page can do: set a shell up as a task the person watches, with a banner that says how it went; install a missing program; open a
 // profile in the editor. `read()` gives the state the page last showed, `reload()` reads it again and resolves once that is on the page, and
@@ -12,9 +12,10 @@ export function createActions({ activity, read, reload, onChange }) {
   let starting = false;
 
   const linesText = (shell) => {
-    const missing = shell.files.filter((file) => !file.line_present).map((file) => shortPath(file.path));
-    const all = shell.files.map((file) => shortPath(file.path)).join(" and ");
-    return missing.length === 0 ? `${all} already ${shell.files.length > 1 ? "have their lines and stay as they are" : "has its line and stays as it is"}.` : `It also adds one line to ${missing.join(" and ")}.`;
+    const names = profileNames(shell);
+    const missing = names.filter((_, index) => !shell.files[index].line_present);
+    if (missing.length === 0) return `${names.join(" and ")} already ${names.length > 1 ? "have their lines and stay as they are" : "has its line and stays as it is"}.`;
+    return `It also adds one line${missing.length > 1 ? " each" : ""} to ${missing.join(" and ")}.`;
   };
 
   async function setUp(shell) {
@@ -42,7 +43,7 @@ export function createActions({ activity, read, reload, onChange }) {
       return;
     }
     starting = false;
-    run = { id: task.id, shellId: shell.id, phase: "running", exitCode: null, stopped: false, painted: "" };
+    run = { id: task.id, name, phase: "running", painted: "" };
     onChange();
     const outcome = await task.done;
     // The banner only says how it went once the page shows what the run left behind, so the two never disagree.
@@ -53,14 +54,20 @@ export function createActions({ activity, read, reload, onChange }) {
       run = null;
       return;
     }
-    run = { ...run, phase: "done", exitCode: outcome.exit_code, stopped: Boolean(outcome.stopped) };
+    // How it went is settled here, from what the run left behind. It is not judged again later: a profile also changes without this run.
+    const after = read().shells.find((candidate) => candidate.id === shell.id);
+    const standing = after ? standingOf(after) : "not_installed";
+    const good = outcome.exit_code === 0 && standing === "ready";
+    run = {
+      ...run, phase: "done", good, command: good ? after.reload_command : "",
+      title: good ? `${name} is set up` : outcome.exit_code === 0 ? `The run finished, but ${name} is not set up` : outcome.stopped ? `Setting up ${name} was stopped` : `Setting up ${name} did not finish`,
+      text: good ? "Open a new terminal to see it. A terminal that is already open picks it up when you run this in it." : outcome.exit_code === 0 && after ? standingText(after, standing) : "The activity panel shows how far it got.",
+    };
     onChange();
   }
 
   function banner() {
     if (!run) return null;
-    const shell = read().shells.find((candidate) => candidate.id === run.shellId);
-    const { name } = SHELLS[run.shellId];
     const reveal = (label) => button({ label, glyph: "terminal", small: true, onclick: () => activity.reveal(run.id) });
     const dismiss = iconButton("close", "Dismiss", () => {
       run = null;
@@ -74,20 +81,16 @@ export function createActions({ activity, read, reload, onChange }) {
         "section",
         { class: `shellprof-banner working${fresh}` },
         h("span", { class: "task-mark" }, h("i", { class: "ring" })),
-        h("div", { class: "shellprof-banner-text" }, h("h2", { text: `Setting up ${name}…` }), h("p", { text: "It runs in the activity panel." })),
+        h("div", { class: "shellprof-banner-text" }, h("h2", { text: `Setting up ${run.name}…` }), h("p", { text: "It runs in the activity panel." })),
         reveal("Show progress"),
         dismiss,
       );
     }
-    const standing = standingOf(shell);
-    const good = run.exitCode === 0 && !STANDINGS[standing].due;
-    const title = good ? `${name} is set up` : run.exitCode === 0 ? `The run finished, but ${name} is not set up` : run.stopped ? `Setting up ${name} was stopped` : `Setting up ${name} did not finish`;
-    const text = good ? "Open a new terminal to see it. A terminal that is already open picks it up when you run this in it." : run.exitCode === 0 ? standingText(shell, standing) : "The activity panel shows how far it got.";
     return h(
       "section",
-      { class: `shellprof-banner ${good ? "good" : "warn"}${fresh}` },
-      h("span", { class: `task-mark ${good ? "done" : "failed"}` }, icon(good ? "check" : "alert", 22)),
-      h("div", { class: "shellprof-banner-text" }, h("h2", { text: title }), h("p", { text }), good && shell.reload_command && copyChip(shell.reload_command)),
+      { class: `shellprof-banner ${run.good ? "good" : "warn"}${fresh}` },
+      h("span", { class: `task-mark ${run.good ? "done" : "failed"}` }, icon(run.good ? "check" : "alert", 22)),
+      h("div", { class: "shellprof-banner-text" }, h("h2", { text: run.title }), h("p", { text: run.text }), run.command && copyChip(run.command)),
       reveal("Show what happened"),
       dismiss,
     );

@@ -80,8 +80,10 @@ def _profile_file(path: Path, line: str, loads: Path) -> ProfileFile:
     if exists:
         try:
             lines = [text.strip() for text in path.read_text(encoding="utf-8").splitlines()]
-        except (OSError, UnicodeDecodeError) as error:
-            problem = str(error)
+        except UnicodeDecodeError:
+            problem = "It is not plain text."
+        except OSError as error:
+            problem = f"""{error.strerror or error}."""
     return {
         "path": str(path), "exists": exists, "link_target": str(path.resolve()) if path.is_symlink() else "", "problem": problem,
         "line": line, "line_present": line in lines, "old_line_present": any(text in STALE_HOOKS for text in lines), "loads": str(loads),

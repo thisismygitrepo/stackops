@@ -1,0 +1,54 @@
+/* The Ghostty theme sheet (spaces/sessions/ghostty_theme.js). */
+.ghostty-theme-status .facts { align-items: center; padding: 14px 16px; background: var(--well); border-radius: 14px; }
+.ghostty-theme-status .notice { padding: 28px 22px; }
+.ghostty-theme-install { display: grid; justify-items: center; margin-top: 10px; }
+.ghostty-theme-install .btn { margin-top: 0; }
+.ghostty-theme-install .skeleton { width: 152px; height: 38px; border-radius: 12px; }
+
+.ghostty-theme-part { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.ghostty-theme-part .section-head { margin-bottom: 0; }
+.ghostty-theme-part > p { font-size: 13.5px; color: var(--ink-soft); }
+.ghostty-theme-part > p.dim { color: var(--ink-faint); }
+/* The command is shown whole, on as many lines as it needs, and its copy mark is always in view: this is the thing to take away from the sheet. */
+.ghostty-theme-command { padding: 6px; background: var(--well); border-radius: 14px; }
+.ghostty-theme-command .copy-chip { justify-content: space-between; gap: 12px; width: 100%; margin: 0; padding: 7px 10px; font-size: 12.5px; color: var(--ink); text-align: left; }
+.ghostty-theme-command .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.ghostty-theme-command .copy-chip svg { flex: none; opacity: 0.55; }
+.ghostty-theme-part > .ghostty-theme-note { padding: 12px 14px; font-size: 13px; background: var(--brand-wash); border-radius: 14px; }
+.ghostty-theme-keys { white-space: nowrap; }
+.ghostty-theme-keys kbd { margin: 0 1.5px; font-size: 12px; color: var(--ink); background: var(--panel-solid); }
+
+.ghostty-theme-pick-holder, .ghostty-theme-pick { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.ghostty-theme-pick-holder .skeleton.row { height: 36px; margin-bottom: 0; }
+.ghostty-theme-bar { display: flex; align-items: center; gap: 12px; }
+.ghostty-theme-bar .search-input { flex: 1; width: auto; min-width: 0; }
+.ghostty-theme-bar .count { flex: none; }
+.ghostty-theme-names { max-height: 304px; padding: 4px; overflow-y: auto; border: 1px solid var(--line); border-radius: 14px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; transition: opacity 0.2s; }
+.ghostty-theme-names.busy { pointer-events: none; opacity: 0.55; }
+.ghostty-theme-row { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 4px 0 10px; border-radius: 10px; }
+.ghostty-theme-row:hover { background: var(--well); }
+.ghostty-theme-row.current { background: color-mix(in srgb, var(--good) 10%, transparent); }
+.ghostty-theme-name { flex: 1; min-width: 0; overflow: hidden; font-size: 13.5px; text-overflow: ellipsis; white-space: nowrap; }
+.ghostty-theme-row.current .ghostty-theme-name { font-weight: 650; }
+.ghostty-theme-tail { display: flex; flex: none; }
+.ghostty-theme-tail .pill { margin-right: 6px; }
+.ghostty-theme-tail .btn { height: 28px; }
+.ghostty-theme-row:hover .btn, .ghostty-theme-tail .btn:focus-visible { color: var(--violet); background: var(--violet-wash); }
+.ghostty-theme-empty { padding: 22px 10px; font-size: 13px; text-align: center; }
+
+.ghostty-theme-outcome { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; font-size: 13.5px; background: var(--well); border-left: 3px solid var(--good); border-radius: 14px; animation: pop-in 0.3s var(--smooth); }
+.ghostty-theme-outcome > svg { margin-top: 2px; color: var(--good); }
+.ghostty-theme-outcome.warn { border-left-color: var(--warn); }
+.ghostty-theme-outcome.warn > svg { color: var(--warn); }
+.ghostty-theme-outcome.bad { border-left-color: var(--bad); }
+.ghostty-theme-outcome.bad > svg { color: var(--bad); }
+.ghostty-theme-outcome > div { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr); gap: 5px; justify-items: start; min-width: 0; }
+.ghostty-theme-outcome p { overflow-wrap: anywhere; }
+.ghostty-theme-outcome p.dim { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; max-width: 100%; font-size: 12.5px; }
+.ghostty-theme-outcome .copy-chip { min-width: 0; margin-left: 0; padding: 0 4px; text-align: left; }
+.ghostty-theme-outcome .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
+.ghostty-theme-outcome .btn { margin-top: 3px; white-space: normal; height: auto; min-height: 30px; text-align: left; }
+
+/* Why the picker cannot start, beside the button it greys out. */
+.ghostty-theme-reason { flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink-faint); text-align: right; overflow-wrap: anywhere; }
+.ghostty-theme-reason.bad { color: var(--bad); }

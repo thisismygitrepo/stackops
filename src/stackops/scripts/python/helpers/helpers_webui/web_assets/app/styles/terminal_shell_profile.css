@@ -6,7 +6,7 @@
 .shellprof-body > .notice, .shellprof-body > .health-callout { margin-bottom: 14px; }
 .shellprof-body > .skeleton.card { height: 250px; margin-bottom: 14px; border-radius: 26px; }
 /* Lines and paths are shown whole here: they are what the person copies, so they wrap where they would otherwise be cut short, and their copy mark always shows. */
-.shellprof .copy-chip { text-align: left; }
+.shellprof .copy-chip { max-width: calc(100% + 8px); text-align: left; }
 .shellprof .copy-chip span { white-space: normal; overflow-wrap: anywhere; }
 .shellprof .copy-chip svg { flex: none; opacity: 0.4; }
 
@@ -71,13 +71,14 @@
 .shellprof-banner-text h2 { font-size: 19px; font-weight: 750; letter-spacing: -0.02em; }
 .shellprof-banner-text p { font-size: 13.5px; color: var(--ink-soft); }
 
-.shellprof-does-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.shellprof-does-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 12px; }
 .shellprof-does, .shellprof-extra { display: flex; align-items: flex-start; gap: 13px; min-width: 0; padding: 15px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }
 .shellprof-does > div, .shellprof-extra-text { display: grid; flex: 1; justify-items: start; gap: 3px; min-width: 0; }
 .shellprof-does strong, .shellprof-extra strong { font-size: 14.5px; font-weight: 650; }
 .shellprof-does p, .shellprof-extra p { font-size: 13px; color: var(--ink-soft); }
 .shellprof-gives .section-head { min-height: 36px; }
 .shellprof-gives-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; gap: 14px; }
+.shellprof-gives-part { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .shellprof-extras { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .shellprof-extra-state { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 5px; }
 /* A terminal is dark in both themes, like the console in the activity panel. */

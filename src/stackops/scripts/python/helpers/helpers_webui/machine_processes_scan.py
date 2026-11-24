@@ -172,10 +172,11 @@ def mark_server_family(rows: list[ProcessRow]) -> None:
         waiting.extend(children.get(pid, []))
 
 
-def read_processes(memory: ScanMemory) -> ProcessSnapshot:
+# `fresh` asks for a new reading even when the last one is a moment old: after something was stopped, that one still lists it.
+def read_processes(memory: ScanMemory, fresh: bool) -> ProcessSnapshot:
     with memory.lock:
         now = time.monotonic()
-        if memory.snapshot is not None and now - memory.taken_at < SNAPSHOT_REUSE_SECONDS:
+        if not fresh and memory.snapshot is not None and now - memory.taken_at < SNAPSHOT_REUSE_SECONDS:
             return memory.snapshot
         measurable = memory.snapshot is not None and now - memory.taken_at <= CPU_WINDOW_SECONDS
         machine_cpu = psutil.cpu_percent(interval=None)

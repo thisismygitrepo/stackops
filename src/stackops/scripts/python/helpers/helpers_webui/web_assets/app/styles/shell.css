@@ -102,6 +102,11 @@
 .task-text p { font-size: 13px; color: var(--ink-soft); }
 .task-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .task-actions .icon-btn:hover { background: var(--line); }
+/* The strip a running editor gets between its header and its console, and the question it asks when it is closed with unsaved work. */
+.editor-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: -4px 18px 12px; padding: 8px 10px 8px 14px; font-size: 13px; color: var(--ink-soft); background: var(--well); border-radius: 14px; }
+.editor-bar p { flex: 1; min-width: 240px; }
+.editor-bar kbd { margin: 0 1px; }
+.dialog.small.editor-ask { width: min(540px, 100%); }
 .task-consoles { position: relative; flex: 1; min-height: 0; margin: 0 18px 18px; overflow: hidden; background: #0b0c16; border-radius: 18px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); }
 .task-consoles:empty { display: none; }
 .console { position: absolute; inset: 12px 6px 8px 14px; visibility: hidden; }

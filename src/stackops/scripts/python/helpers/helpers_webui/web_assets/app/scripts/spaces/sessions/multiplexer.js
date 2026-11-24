@@ -50,9 +50,11 @@ export function createPart({ activity, tools }) {
     if (overview.session.name === name) tiles[0].setRunning(running.get(name));
   }
 
+  // The cards are made anew each time, so the keyboard's place is noted first and given back: the same button if it is still there, or its card.
   function paint() {
     const { multiplexers, capabilities } = overview;
     const rank = (item) => RANKS[standingOf(item, platform).id];
+    const held = grid.contains(document.activeElement) ? { name: document.activeElement.closest(".mux-card").dataset.name, label: document.activeElement.textContent } : null;
     tiles = ROLE_IDS.map((role) => defaultTile({ role, chosen: overview[role], item: multiplexers.find((item) => item.name === overview[role].name), platform, onKeep: pick }));
     defaults.replaceChildren(...tiles.map((tile) => tile.element));
     cards.clear();
@@ -60,6 +62,10 @@ export function createPart({ activity, tools }) {
       cards.set(item.name, multiplexerCard({ item, capabilities, holds: ROLE_IDS.filter((role) => overview[role].name === item.name), marked, platform, onPick: pick }));
     }
     grid.replaceChildren(...[...cards.values()].map((card) => card.element));
+    if (held) {
+      const card = cards.get(held.name).element;
+      ([...card.querySelectorAll(".mux-pick:enabled")].find((control) => control.textContent === held.label) ?? card).focus({ preventScroll: true });
+    }
     for (const name of running.keys()) paintRunning(name);
     count.textContent = `${multiplexers.filter(isReady).length} of ${multiplexers.length} ready to use`;
     const first = multiplexers.find((item) => item.name === overview.session.fallback && item.supported && item.in_catalog) ?? multiplexers.find((item) => item.supported && item.in_catalog);
@@ -130,7 +136,9 @@ export function createPart({ activity, tools }) {
     // Sessions already running in the multiplexer that was the default stay there, out of the Sessions page's sight, so the message says so.
     const left = role === "session" && before !== name ? (running.get(before)?.count ?? 0) : 0;
     const kept = left > 0 ? ` The ${plural(left, "session")} in ${wordsOf(before).title} ${left === 1 ? "keeps" : "keep"} running there.` : "";
-    toast(`${ROLES[role].saved(wordsOf(name).title)}${kept}`, "info");
+    // Keeping the built-in default changes nothing but who chose it.
+    const told = before === name ? `${wordsOf(name).title} is now your choice for ${ROLES[role].label.toLowerCase()}.` : ROLES[role].saved(wordsOf(name).title);
+    toast(`${told}${kept}`, "info");
     markStale();
   }
 

@@ -1,5 +1,6 @@
 import { debounce, h, icon, toast } from "/assets/scripts/dom.js";
 import { api, emit, state } from "/assets/scripts/state.js";
+import { closeEditor, createEditorBar, editorOf } from "./activity_editor.js";
 import { createHero, statusOf } from "./activity_hero.js";
 import { openConsole } from "./console_session.js";
 import { markStale } from "./data.js";
@@ -25,6 +26,7 @@ export function createActivity({ openReport }) {
     openReport,
     runAgain: (task) => start({ title: task.title, emoji: task.emoji, arguments: task.summary.arguments, interactive: task.summary.interactive, reveal: true, workingDirectory: task.summary.working_directory }).catch((error) => toast(error.message)),
   });
+  const editorBar = createEditorBar();
   const consoles = h("div", { class: "task-consoles" });
   const sizeButton = iconButton("expand", "Fill the window", () => setMode(element.dataset.mode === "max" ? "open" : "max"));
   const clearButton = iconButton("trash", "Clear finished tasks", () => remove(...visible().filter((task) => task.summary.exit_code !== null).map((task) => task.id)));
@@ -34,6 +36,7 @@ export function createActivity({ openReport }) {
     h("header", { class: "activity-head" }, h("h2", { text: "Activity" }), h("span", { class: "spacer" }), clearButton, sizeButton, iconButton("close", "Hide activity", () => setMode("closed"))),
     chips,
     hero.element,
+    editorBar.element,
     consoles,
   );
   const pillGlyph = h("span", { class: "activity-glyph" });
@@ -72,6 +75,7 @@ export function createActivity({ openReport }) {
     indicator.classList.toggle("busy", running > 0);
     indicator.dataset.count = shown.length ? String(shown.length) : "";
     hero.paint(tasks.get(activeId));
+    editorBar.paint(tasks.get(activeId));
   }
 
   function activate(id) {
@@ -111,7 +115,8 @@ export function createActivity({ openReport }) {
       onDrop: () => {
         if (!tasks.has(task.id)) return;
         task.terminal.dispose();
-        Object.assign(task, { terminal: null, fit: null, socket: null });
+        Object.assign(task, { terminal: null, fit: null, socket: null, type: null });
+        if (task.id === activeId) editorBar.paint(task);
         if (task.summary.exit_code !== null) task.pane.replaceChildren(h("p", { class: "console-error", text: "This task's output is no longer kept: only the most recent finished tasks are. Reload the page to see what is." }));
         else if ((task.drops += 1) <= 5) setTimeout(() => tasks.has(task.id) && connect(task), 2000 * task.drops);
         else {
@@ -124,6 +129,7 @@ export function createActivity({ openReport }) {
     Object.assign(task, session);
     // A connection that delivers anything was a good one, so the next drop starts counting from one again.
     session.socket.addEventListener("message", () => (task.drops = 0), { once: true });
+    if (task.id === activeId) editorBar.paint(task);
     if (task.id === activeId && fit(task) && task.focusWanted) task.terminal.focus();
     task.focusWanted = false;
   }
@@ -136,11 +142,18 @@ export function createActivity({ openReport }) {
     const chip = h("div", { class: "task-chip", role: "presentation" }, tab, closer);
     let settle;
     const done = new Promise((resolve) => (settle = resolve));
-    const task = { id: summary.id, summary, title, emoji, quiet, pane, chip, tab, done, settle, linked: false, focusWanted: false, drops: 0, terminal: null, fit: null, socket: null };
+    const task = {
+      id: summary.id, summary, title, emoji, quiet, pane, chip, tab, done, settle, editor: editorOf(summary.arguments), closing: null, linked: false, focusWanted: false, drops: 0,
+      terminal: null, fit: null, socket: null, type: null,
+    };
     closer.addEventListener("click", async () => {
-      // Removing a run that is still going stops it on the server, so that takes a yes first.
-      const sure = task.summary.exit_code !== null || (await confirmAction({ title: `Stop “${title}”?`, body: "It is still running. Removing it stops it.", confirm: "Stop and remove", tone: "danger" }));
-      if (sure) remove(task.id);
+      // Removing a run that is still going stops it on the server, so that takes a yes first. An editor is closed instead, which asks about
+      // unsaved work only when there is some, and it is removed once its run has ended, so the check of the file and the page refresh still happen.
+      if (task.summary.exit_code === null && task.editor) {
+        if (!(await closeEditor(task))) return;
+        await task.done;
+      } else if (task.summary.exit_code === null && !(await confirmAction({ title: `Stop “${title}”?`, body: "It is still running. Removing it stops it.", confirm: "Stop and remove", tone: "danger" }))) return;
+      remove(task.id);
     });
     tasks.set(task.id, task);
     chips.append(chip);

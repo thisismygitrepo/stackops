@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+from functools import partial
 from pathlib import Path
 from typing import Literal, TypedDict
 
@@ -50,19 +51,20 @@ def read_starship_state() -> StarshipState:
     if starship is None:
         return state
 
-    def ask(*arguments: str) -> str:
-        return subprocess.run([starship, *arguments], check=True, capture_output=True, encoding="utf-8", timeout=STARSHIP_ANSWER_TIMEOUT_SECONDS).stdout
-
+    ask = partial(subprocess.run, check=True, capture_output=True, encoding="utf-8", timeout=STARSHIP_ANSWER_TIMEOUT_SECONDS)
     state["installed"] = True
-    state["version"] = ask("--version").split("\n")[0].removeprefix("starship").strip()
+    state["version"] = ask([starship, "--version"]).stdout.split("\n")[0].removeprefix("starship").strip()
     try:
         text = settings.read_text(encoding="utf-8") if settings.is_file() else ""
-    except (OSError, UnicodeDecodeError) as error:
-        return {**state, "kind": "unreadable", "problem": str(error)}
+    except OSError as error:
+        return {**state, "kind": "unreadable", "problem": error.strerror or str(error)}
+    except UnicodeDecodeError:
+        return {**state, "kind": "unreadable", "problem": "It does not hold text"}
     if text.strip() == "":
         return state
+    names = dict.fromkeys(line.strip() for line in ask([starship, "preset", "--list"]).stdout.splitlines() if line.strip() != "")
     # The comparison stays on this side: the page is told which preset the file equals, never what the file says.
-    in_use = next((name for name in dict.fromkeys(line.strip() for line in ask("preset", "--list").splitlines()) if name != "" and ask("preset", name) == text), "")
+    in_use = next((name for name in names if ask([starship, "preset", name]).stdout == text), "")
     return {**state, "kind": "preset" if in_use != "" else "own", "preset": in_use}
 
 

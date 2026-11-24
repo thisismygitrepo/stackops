@@ -27,7 +27,7 @@ export function multiplexerCard({ item, capabilities, holds, marked, platform, o
   });
   const element = h(
     "article",
-    { class: `mux-card lit ${standing.id}${holds.length ? " current" : ""}`, tabindex: "-1" },
+    { class: `mux-card lit ${standing.id}${holds.length ? " current" : ""}`, "data-name": item.name, tabindex: "-1" },
     h(
       "header",
       {},

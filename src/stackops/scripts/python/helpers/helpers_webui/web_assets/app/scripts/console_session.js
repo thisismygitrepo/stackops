@@ -63,7 +63,8 @@ function linkProvider(terminal) {
 }
 
 // Shows one run live inside `pane` and forwards typing to it. Both views use it. `echo` keeps the run's opening line, its command; `fitNow` sizes
-// the console to its pane; `onSummary` gets the run's final state; `onDrop` is called when the connection ends before that.
+// the console to its pane; `onSummary` gets the run's final state; `onDrop` is called when the connection ends before that. The `type` it returns
+// sends keys to the run as if they were typed, for a control that presses them for the person, and says whether they went out.
 export async function openConsole({ pane, runId, echo, fitNow, onSummary, onDrop }) {
   let library;
   try {
@@ -82,7 +83,7 @@ export async function openConsole({ pane, runId, echo, fitNow, onSummary, onDrop
   terminal.open(pane);
   const socket = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/runs/${runId}`);
   socket.binaryType = "arraybuffer";
-  const send = (message) => socket.readyState === WebSocket.OPEN && socket.send(JSON.stringify(message));
+  const send = (message) => socket.readyState === WebSocket.OPEN && (socket.send(JSON.stringify(message)), true);
   let first = true;
   let ended = false;
   socket.addEventListener("open", () => fitNow() && send({ type: "resize", rows: terminal.rows, columns: terminal.cols }));
@@ -101,7 +102,8 @@ export async function openConsole({ pane, runId, echo, fitNow, onSummary, onDrop
     socket.close();
   });
   socket.addEventListener("close", () => ended || onDrop());
-  terminal.onData((data) => send({ type: "input", data }));
+  const type = (data) => !ended && send({ type: "input", data });
+  terminal.onData(type);
   terminal.onResize(({ rows, cols }) => send({ type: "resize", rows, columns: cols }));
-  return { terminal, fit, socket };
+  return { terminal, fit, socket, type };
 }

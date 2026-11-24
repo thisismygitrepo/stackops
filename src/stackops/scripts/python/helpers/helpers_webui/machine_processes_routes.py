@@ -14,8 +14,8 @@ from stackops.scripts.python.helpers.helpers_webui.machine_processes_stop import
 def machine_processes_routes() -> list[Route]:
     memory = new_scan_memory()
 
-    def read_list(_request: Request) -> JSONResponse:
-        return JSONResponse(read_processes(memory=memory))
+    def read_list(request: Request) -> JSONResponse:
+        return JSONResponse(read_processes(memory=memory, fresh=request.query_params.get("fresh") == "1"))
 
     def read_detail(request: Request) -> JSONResponse:
         try:

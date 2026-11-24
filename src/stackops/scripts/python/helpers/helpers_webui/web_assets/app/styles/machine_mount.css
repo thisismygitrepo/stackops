@@ -1,0 +1,121 @@
+.mount-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
+.mount-back svg { transition: transform 0.3s var(--spring); }
+.mount-back:hover { color: var(--violet); }
+.mount-back:hover svg { transform: translateX(-3px); }
+.mount-stamp { align-self: center; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); }
+.mount code { padding: 1px 5px; font-size: 0.92em; background: var(--well); border-radius: 5px; }
+.mount > .notice { background: var(--panel); }
+
+.mount-columns { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(340px, 1fr); align-items: start; gap: 18px; }
+.mount-card { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
+.mount-card-head { display: flex; align-items: center; gap: 10px; padding: 18px 20px 2px; }
+.mount-card-head h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.mount-step { display: inline-grid; flex: none; place-items: center; width: 22px; height: 22px; font-size: 12px; font-weight: 700; line-height: 1; color: #fff; background: var(--brand); border-radius: 50%; }
+.mount-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 20px 4px; }
+.mount-tools .segmented { flex: none; }
+.mount-tools .search-input { width: 190px; }
+.mount-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 10px 10px 12px; }
+.mount-list > .notice { margin: 2px 10px 4px; }
+.mount-list > .skeleton { margin: 0 10px; }
+.mount-group h3 { display: flex; align-items: center; gap: 8px; padding: 2px 12px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.mount-group h3 b { padding: 1px 7px; font-size: 11px; letter-spacing: 0; color: var(--ink-soft); background: var(--well); border-radius: 999px; }
+.mount-quiet { margin: 0 2px; }
+.mount-quiet summary { padding: 11px 14px; color: var(--ink-soft); }
+.mount-quiet > .mount-rows { margin: 0 4px 6px; }
+
+.mount-rows { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.mount-row { border: 1px solid transparent; border-radius: 16px; transition: background 0.2s, border-color 0.2s; }
+.mount-row-main { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 13px; width: 100%; min-height: 62px; padding: 9px 12px; border-radius: 15px; }
+.mount-row.ready:hover { background: var(--well); }
+.mount-row.picked, .mount-row.picked:hover { background: var(--brand-wash); border-color: color-mix(in srgb, var(--violet) 32%, transparent); }
+.mount-dot { position: relative; flex: none; width: 20px; height: 20px; background: var(--panel-solid); border: 1.5px solid var(--line-strong); border-radius: 50%; transition: border-color 0.2s, box-shadow 0.2s; }
+.mount-dot::after { content: ""; position: absolute; inset: -1.5px; background: var(--brand); border-radius: 50%; opacity: 0; transition: opacity 0.2s; }
+.mount-dot::before { content: ""; position: absolute; inset: 4.5px; z-index: 1; background: #fff; border-radius: 50%; transform: scale(0); transition: transform 0.35s var(--spring); }
+[aria-checked="true"] > .mount-dot::after { opacity: 1; }
+[aria-checked="true"] > .mount-dot::before { transform: scale(1); }
+.mount-row.ready:hover .mount-dot, .mount-way:hover:not(:disabled) .mount-dot { border-color: var(--violet); box-shadow: var(--ring); }
+.mount-row:not(.ready) .mount-dot { visibility: hidden; }
+.mount-text { display: grid; flex: 1 1 190px; min-width: 0; }
+.mount-text strong { overflow: hidden; font-size: 14.5px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.mount-text span { overflow: hidden; font-size: 12.5px; color: var(--ink-soft); text-overflow: ellipsis; white-space: nowrap; }
+.mount-text small { margin-top: 2px; font-size: 12.5px; line-height: 1.4; color: var(--ink-faint); }
+.mount-row.blocked .tile { filter: grayscale(1); opacity: 0.75; }
+.mount-row.blocked .mount-text strong, .mount-row.blocked .mount-size { color: var(--ink-soft); }
+.mount-map { display: flex; flex: 0 0 84px; gap: 2px; height: 8px; }
+.mount-map i { min-width: 3px; background: var(--line-strong); border-radius: 2px; }
+.mount-map i:first-child { border-top-left-radius: 999px; border-bottom-left-radius: 999px; }
+.mount-map i:last-child { border-top-right-radius: 999px; border-bottom-right-radius: 999px; }
+.mount-map .own { background: var(--brand); }
+.mount-row.mounted .mount-map .own { background: var(--mint); }
+.mount-row.blocked .mount-map .own { background: var(--ink-faint); }
+.mount-size { flex: 0 0 76px; font-size: 14px; font-weight: 700; text-align: right; white-space: nowrap; }
+.mount-state { display: grid; flex: 0 0 172px; justify-items: end; gap: 3px; min-width: 0; }
+.mount-state .copy-chip { margin: 0 -8px 0 0; }
+
+.mount-plan { position: sticky; top: 4px; }
+.mount-plan-head { display: flex; align-items: flex-start; gap: 14px; padding: 20px 20px 16px; }
+.mount-plan-head .tile { animation: pop-in 0.45s var(--spring); }
+.mount-plan-head > div { display: grid; justify-items: start; min-width: 0; }
+.mount-plan-head h2 { max-width: 100%; overflow: hidden; font-size: 20px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.mount-plan-head p { font-size: 13px; color: var(--ink-soft); }
+.mount-plan-part { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px 20px 18px; border-top: 1px solid var(--line); }
+.mount-plan-part h3 { display: flex; align-items: center; gap: 9px; font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; }
+.mount-where { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; justify-items: start; }
+.mount-where > div:not(.segmented, .chip-row) { justify-self: stretch; }
+.mount-where-note { font-size: 13px; color: var(--ink-soft); }
+.mount-place { display: grid; gap: 6px; }
+.mount-place-status { font-size: 12.5px; color: var(--ink-faint); }
+.mount-place-status.good { color: var(--good); }
+.mount-place-status.warn { color: var(--warn); }
+.mount-place-status.bad { color: var(--bad); }
+.mount-read-only { width: 100%; }
+.mount-read-only:disabled, .mount-way:disabled { opacity: 1; }
+.mount-read-only:disabled:hover { border-color: transparent; }
+.mount-read-only:disabled .field-label, .mount-read-only:disabled .switch, .mount-way:disabled .mount-dot, .mount-way:disabled strong { opacity: 0.45; }
+.mount-ways { display: grid; gap: 6px; }
+.mount-way { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; background: var(--well); border: 1px solid transparent; border-radius: 14px; transition: border-color 0.2s, background 0.2s; }
+.mount-way:hover:not(:disabled) { border-color: var(--line-strong); }
+.mount-way[aria-checked="true"] { background: var(--brand-wash); border-color: color-mix(in srgb, var(--violet) 40%, transparent); }
+.mount-way-text { display: grid; flex: 1; min-width: 0; }
+.mount-way-text strong { font-size: 13.5px; font-weight: 650; }
+.mount-way-text span { font-size: 12.5px; color: var(--ink-soft); }
+.mount-ask { display: flex; align-items: flex-start; gap: 9px; padding: 11px 13px; font-size: 13px; color: var(--ink-soft); background: var(--well); border-radius: 13px; }
+.mount-ask svg { margin-top: 2px; color: var(--good); }
+.mount-ask.lock { color: var(--ink); background: var(--violet-wash); }
+.mount-ask.lock svg { color: var(--violet); }
+.mount-plan-part > .btn { height: 44px; font-size: 14.5px; border-radius: 14px; }
+.mount-problem { font-size: 12.5px; color: var(--warn); }
+.mount-problem:empty { display: none; }
+
+.mount-idle { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 6px; padding: 34px 24px 26px; text-align: center; }
+.mount-idle-glyph { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 6px; color: var(--violet); background: var(--violet-wash); border-radius: 19px; animation: float 3.6s ease-in-out infinite; }
+.mount-idle h2 { font-size: 18px; font-weight: 750; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.mount-idle > p { max-width: 42ch; font-size: 13.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.mount-idle > .btn { margin-top: 6px; }
+.mount-steps { display: grid; gap: 9px; justify-self: stretch; margin: 16px 0 4px; padding: 14px 16px; text-align: left; background: var(--well); border-radius: 16px; }
+.mount-steps li { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-soft); }
+.mount-steps .mount-step { color: var(--ink-soft); background: var(--line-strong); }
+
+.mount-banner { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; padding: 16px 18px; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 22px; box-shadow: var(--shadow); animation: mount-in 0.38s var(--smooth); }
+.mount-banner.working { align-items: center; border-color: color-mix(in srgb, var(--violet) 45%, transparent); }
+.mount-banner.good { border-color: color-mix(in srgb, var(--good) 50%, transparent); }
+.mount-banner.warn { border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.mount-banner-text { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.mount-banner-text h2 { font-size: 19px; font-weight: 750; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.mount-banner-text p { font-size: 13.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.mount-banner-place { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+.mount-banner-place .copy-chip { margin-left: 0; font-size: 13px; color: var(--ink); }
+.mount-banner-text small { font-size: 12px; }
+@keyframes mount-in { from { opacity: 0; transform: translateY(-8px); } }
+
+@media (max-width: 1100px) {
+  .mount-columns { grid-template-columns: minmax(0, 1fr); }
+  .mount-plan { position: static; }
+}
+@media (max-width: 860px) {
+  .mount-stamp, .mount-map { display: none; }
+  .mount-tools .search-input { flex: 1 1 100%; }
+  .mount-state { flex: 1 1 100%; grid-auto-flow: column; align-items: center; justify-content: start; gap: 8px; padding-left: 84px; }
+  .mount-state .copy-chip { margin: 0; }
+  .mount-banner { flex-wrap: wrap; }
+}
