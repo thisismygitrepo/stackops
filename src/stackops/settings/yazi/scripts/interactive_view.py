@@ -1,6 +1,8 @@
 from collections.abc import Sequence
 import os
 from pathlib import Path
+import platform
+import subprocess
 import sys
 from typing import Final, Literal, NoReturn, cast
 
@@ -124,7 +126,19 @@ def build_command(target_path: Path, mode: ViewerMode = "auto", database_backend
 def exec_command(command: Command) -> NoReturn:
     executable = command[0]
     remaining_arguments = tuple(command[1:])
-    os.execlp(executable, executable, *remaining_arguments)
+    if platform.system().lower() != "windows":
+        os.execlp(executable, executable, *remaining_arguments)
+    # Windows cannot replace a running process: os.exec* starts the command as a separate process and ends
+    # this one straight away. Whoever started this script then moves on while the command is still starting:
+    # Yazi takes the terminal back, and `uv run` deletes the temporary environment that holds sys.executable
+    # and stackops, so the browser server fails with "No module named 'stackops'". Wait for the command.
+    process = subprocess.Popen(command)
+    while True:
+        try:
+            exit_code = process.wait()
+        except KeyboardInterrupt:
+            continue  # Ctrl+C reaches the command as well; it decides when to stop.
+        raise SystemExit(exit_code)
 
 
 def main(arguments: Sequence[str]) -> int:
