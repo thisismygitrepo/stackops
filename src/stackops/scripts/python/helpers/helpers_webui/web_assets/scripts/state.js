@@ -52,7 +52,8 @@ export function parseRoute() {
 
 // Every failure is thrown with a sentence fit to show as it is, and nothing is shown from here: the caller decides where it appears, once.
 // An answer that is not OK also carries `status`, its HTTP status number. A call cancelled through `signal` rejects with the browser's AbortError.
-async function request(method, path, body, signal) {
+// Exported for a view that keeps its server calls with itself (app/scripts/features.js); the calls every page shares are in `api` below.
+export async function request(method, path, body, signal) {
   const response = await fetch(path, {
     method,
     signal,

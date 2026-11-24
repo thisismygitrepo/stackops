@@ -130,6 +130,8 @@
 .interface { display: inline-flex; align-items: center; gap: 10px; }
 .interface .copy-chip { margin-left: 0; }
 
+.space-part.swap { animation: part-in 0.38s var(--smooth) backwards; }
+@keyframes part-in { from { opacity: 0; transform: translateY(12px); } }
 .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 14px; }
 .block .tool-grid { margin-top: 0; }
 .tool-card { display: flex; align-items: center; gap: 13px; padding: 13px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }

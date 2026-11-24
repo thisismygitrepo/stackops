@@ -17,6 +17,16 @@ APP_STYLESHEETS: Final[tuple[str, ...]] = (
     "/assets/app/styles/security.css",
     "/assets/app/styles/vault.css",
     "/assets/app/styles/scripts.css",
+    "/assets/app/styles/terminal_multiplexer.css",
+    "/assets/app/styles/terminal_shell_profile.css",
+    "/assets/app/styles/terminal_starship.css",
+    "/assets/app/styles/terminal_wezterm.css",
+    "/assets/app/styles/terminal_ghostty.css",
+    "/assets/app/styles/machine_processes.css",
+    "/assets/app/styles/machine_devices.css",
+    "/assets/app/styles/machine_mount.css",
+    "/assets/app/styles/machine_windows.css",
+    "/assets/app/styles/machine_update.css",
 )
 DEVELOPER_STYLESHEETS: Final[tuple[str, ...]] = (
     "/assets/styles/base.css",

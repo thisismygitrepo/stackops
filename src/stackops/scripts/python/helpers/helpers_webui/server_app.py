@@ -19,6 +19,7 @@ from starlette.websockets import WebSocket
 from stackops.scripts.python.helpers.helpers_webui.access_guard import guard_access
 from stackops.scripts.python.helpers.helpers_webui.capture import CaptureResult, CaptureTimeout, capture_command
 from stackops.scripts.python.helpers.helpers_webui.catalog import ParameterSpec, load_command_parameters, load_command_tree
+from stackops.scripts.python.helpers.helpers_webui.feature_routes import feature_routes
 from stackops.scripts.python.helpers.helpers_webui.field_choices import read_field_choices
 from stackops.scripts.python.helpers.helpers_webui.pages import APP_PAGE, DEVELOPER_PAGE
 from stackops.scripts.python.helpers.helpers_webui.run_requests import (
@@ -228,6 +229,7 @@ def create_app(token: str, cookie_name: str, stackops_executable: str, working_d
             Route("/api/file", save_file, methods=["PUT"]),
             *vault_routes(working_directory=working_directory),
             *scripts_routes(working_directory=working_directory),
+            *feature_routes(),
             Route("/api/runs", list_runs, methods=["GET"]),
             Route("/api/runs", create_run, methods=["POST"]),
             Route("/api/runs/{run_id}/stop", stop_run_endpoint, methods=["POST"]),

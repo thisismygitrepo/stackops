@@ -1,5 +1,6 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { replay } from "./motion.js";
 import { button, emojiTile } from "./widgets.js";
 import { friendlyText, titleOf } from "./words.js";
 
@@ -23,6 +24,43 @@ export function viewHead({ title, lede, actions }) {
 
 export function createView({ title, lede, actions = [] }, ...content) {
   return h("section", { class: "view", hidden: true }, viewHead({ title, lede, actions }), ...content);
+}
+
+// A page's further views, each at an address of its own under the page's (`#/machine/cleanup`) and shown in place of its overview. `built` holds
+// the views made with the page, the overview under ""; `loaders` holds the ones fetched and made on their first visit (features.js). A view is
+// `{ element, show(rest) }`, as a page is. Returns the page's `show(route)`. An address that names no view shows the overview.
+export function createParts({ element, built, loaders, context }) {
+  const parts = new Map(Object.entries(built));
+  for (const [name, part] of parts) {
+    part.element.classList.add("space-part");
+    part.element.hidden = name !== "";
+  }
+  let asked = 0;
+  let shown = null;
+  return async function show(route) {
+    const name = parts.has(route[0]) || Object.hasOwn(loaders, route[0] ?? "") ? route[0] : "";
+    const mine = (asked += 1);
+    if (!parts.has(name)) {
+      const part = (await loaders[name]()).createPart(context);
+      // Two visits can be waiting for the same view at once; the first one back keeps its copy.
+      if (!parts.has(name)) {
+        part.element.classList.add("space-part");
+        part.element.hidden = true;
+        element.append(part.element);
+        parts.set(name, part);
+      }
+      // The page moved on to another address while this view was on its way.
+      if (mine !== asked) return;
+    }
+    const part = parts.get(name);
+    for (const other of parts.values()) other.element.hidden = other !== part;
+    if (shown && shown !== part) {
+      replay(part.element, "swap");
+      element.closest(".stage")?.scrollTo(0, 0);
+    }
+    shown = part;
+    part.show(route.slice(1));
+  };
 }
 
 export function toolButton(tools, path, { label, glyph, tone, preset = {} } = {}) {

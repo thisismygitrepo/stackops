@@ -20,14 +20,15 @@ const EXTRA_ARGUMENTS = {
 };
 
 // The one place any tool opens: read-only tools show their result straight away, the rest wait for the button.
-// `guides` maps a command path to a function that opens a purpose-built sheet in place of the generic one.
+// `guides` maps a command path to a function that opens a purpose-built view in place of the generic sheet; it is handed `{ preset }`.
 export function createToolSheet({ activity, openReport, guides = {} }) {
   // `title` renames the sheet for a caller that uses a tool for something narrower than its name says, such as editing through "Add a backup".
-  async function open(path, { preset = {}, title: givenTitle } = {}) {
+  // `plain` asks for the generic sheet even where a purpose-built view stands in for it: that view's way to offer every option the command has.
+  async function open(path, { preset = {}, title: givenTitle, plain = false } = {}) {
     const node = state.nodes.get(path);
     if (!node || node.kind !== "command") return toast(`There is no tool at “${path}”.`);
     noteOpened(path);
-    if (guides[path]) return guides[path]();
+    if (guides[path] && !plain) return guides[path]({ preset });
     const title = givenTitle ?? titleOf(node);
     const pathTokens = path.split(" ");
     const sheet = openSheet({ label: title, wide: true });

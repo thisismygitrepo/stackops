@@ -1,9 +1,10 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { query } from "../data.js";
+import { partLoaders } from "../features.js";
 import { openLayoutView, tabMap } from "../layout_view.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
-import { createView, editButton, editFile, toolButton, toolGrid } from "../space_kit.js";
+import { createParts, editButton, editFile, toolButton, toolGrid, viewHead } from "../space_kit.js";
 import { button, notice, pill, sectionHead } from "../widgets.js";
 import { plural } from "../words.js";
 import { createRunningPanel } from "./sessions_running.js";
@@ -12,7 +13,9 @@ const PREVIEW_TABS = 8;
 const MY_LAYOUTS = { title: "your layouts", kind: "layouts" };
 const TERMINAL_TOOLS = ["devops config setup multiplexer", "devops config terminal config-shell", "devops config terminal starship-theme", "devops config terminal wezterm-theme", "devops config terminal ghostty-theme"];
 
-export function createSessionsSpace({ activity, tools }) {
+// Views that swap in place: the overview at #/sessions, and the ones features.js lists for this page.
+export function createSessionsSpace(context) {
+  const { activity, tools } = context;
   // The selector, not the name: a name can be in your layouts and in a project's at once, and only the selector tells them apart.
   const launch = (layout) =>
     activity.start({ title: `Launch ${layout.name}`, emoji: "🏃", arguments: ["terminal", "run", "--choose-layouts", layout.selector], interactive: true, reveal: true }).catch((error) => toast(error.message));
@@ -64,20 +67,21 @@ export function createSessionsSpace({ activity, tools }) {
   // Filled in to land in your layouts file, which "Saved layouts" reads; left alone, the command writes a file into the working folder.
   const saveAll = async () => tools.open("terminal export", { preset: { all_sessions: "on", output_path: (await query(["terminal", "path"])).json.user.path, merge: "on" } });
 
-  const element = createView(
-    {
+  const overview = h(
+    "div",
+    {},
+    viewHead({
       title: "Sessions", lede: "Start a saved workspace, or see what is already running.",
       actions: [button({ label: "Save current as layout", glyph: "plus", title: "Save every running session as a layout of the same name", onclick: saveAll }), toolButton(tools, "terminal run", { label: "Launch with options", glyph: "sliders" })],
-    },
+    }),
     layouts.element,
     running.element,
     h("section", { class: "block" }, sectionHead("Terminal setup"), toolGrid(tools, TERMINAL_TOOLS)),
   );
-  return {
-    element,
-    show() {
-      layouts.ensure();
-      running.ensure();
-    },
+  const element = h("section", { class: "view", hidden: true }, overview);
+  const showOverview = () => {
+    layouts.ensure();
+    running.ensure();
   };
+  return { element, show: createParts({ element, built: { "": { element: overview, show: showOverview } }, loaders: partLoaders("sessions"), context }) };
 }

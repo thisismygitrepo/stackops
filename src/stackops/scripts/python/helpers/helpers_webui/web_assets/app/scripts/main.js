@@ -2,7 +2,7 @@ import { h, toast } from "/assets/scripts/dom.js";
 import { api, initState } from "/assets/scripts/state.js";
 import { createActivity } from "./activity.js";
 import { SPACES } from "./catalog.js";
-import { openFind } from "./find_sheet.js";
+import { createGuides } from "./features.js";
 import { installPointerEffects, replay } from "./motion.js";
 import { closeAll } from "./overlays.js";
 import { createShell } from "./shell.js";
@@ -41,9 +41,12 @@ async function start() {
   const spaces = {};
   const openReport = (report) => spaces.reports.openAdHoc(report);
   const activity = createActivity({ openReport });
-  const tools = createToolSheet({ activity, openReport, guides: { seek: () => openFind({ activity }) } });
+  // Filled in once `context` exists: a purpose-built view is handed the same things a page is, the tool sheet among them.
+  const guides = {};
+  const tools = createToolSheet({ activity, openReport, guides });
   const spotlight = createSpotlight({ tools });
   const context = { activity, tools, openReport, openSearch: spotlight.open };
+  Object.assign(guides, createGuides(context));
   Object.assign(spaces, {
     home: createHomeSpace(context),
     apps: createAppsSpace(context),

@@ -1,16 +1,17 @@
 import { h } from "/assets/scripts/dom.js";
 import { createDiskCleanup } from "../disk_cleanup.js";
 import { CLEANUP_HASH } from "../disk_cleanup_words.js";
+import { partLoaders } from "../features.js";
 import { createLivePanel } from "../live_panel.js";
-import { replay, rise } from "../motion.js";
+import { rise } from "../motion.js";
 import { dataTable } from "../result_view.js";
-import { linkCard, toolButton, toolGrid, viewHead } from "../space_kit.js";
+import { createParts, linkCard, toolButton, toolGrid, viewHead } from "../space_kit.js";
 import { button, glyphTile, notice, sectionHead } from "../widgets.js";
 import { plural } from "../words.js";
 
 const CARE_TOOLS = ["utils machine kill-process", "utils machine list-devices", "utils machine mount", "utils machine window", "devops self update"];
 
-// Two views that swap in place: the overview at #/machine and the disk cleanup at #/machine/cleanup.
+// Views that swap in place: the overview at #/machine, the disk cleanup at #/machine/cleanup, and the ones features.js lists for this page.
 export function createMachineSpace(context) {
   const { tools } = context;
   const fact = (label, value, glyph, hue) => h("article", { class: "spec-card lit" }, glyphTile(glyph, hue, 38), h("span", { class: "stat-label", text: label }), h("strong", { text: value || "—" }));
@@ -50,7 +51,7 @@ export function createMachineSpace(context) {
   careGrid.prepend(linkCard({ href: CLEANUP_HASH, emoji: "🧹", name: "utils machine clean-drive", title: "Free up disk space", blurb: "See what is taking up room, choose what goes, and clean it." }));
   const overview = h(
     "div",
-    { class: "machine-part" },
+    {},
     viewHead({
       title: "Machine", lede: "What this computer is, what runs on it, and how to keep it tidy.",
       actions: [toolButton(tools, "utils machine kill-process", { label: "Stop a process", glyph: "stop" }), button({ label: "Free up disk space", glyph: "trash", tone: "primary", onclick: () => (location.hash = CLEANUP_HASH) })],
@@ -60,25 +61,10 @@ export function createMachineSpace(context) {
     startup.element,
   );
   const cleanup = createDiskCleanup(context);
-  cleanup.element.classList.add("machine-part");
   const element = h("section", { class: "view", hidden: true }, overview, cleanup.element);
-  let shown = null;
-
-  return {
-    element,
-    show(route) {
-      const part = route[0] === "cleanup" ? cleanup.element : overview;
-      overview.hidden = part !== overview;
-      cleanup.element.hidden = part !== cleanup.element;
-      if (shown && shown !== part) {
-        replay(part, "swap");
-        element.closest(".stage")?.scrollTo(0, 0);
-      }
-      shown = part;
-      if (part === overview) {
-        specs.ensure();
-        startup.ensure();
-      } else cleanup.show();
-    },
+  const showOverview = () => {
+    specs.ensure();
+    startup.ensure();
   };
+  return { element, show: createParts({ element, built: { "": { element: overview, show: showOverview }, cleanup }, loaders: partLoaders("machine"), context }) };
 }
