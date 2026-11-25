@@ -1,0 +1,96 @@
+/* OneDrive (#/tools/cloud/onedrive). Fetched with the page on its first visit (spaces/cloud/onedrive.js), so it is not in the list in pages.py.
+   The six hues tell the kinds of file apart. They are the six of the Storage devices page (machine_devices.css), in the same order: that order
+   is what keeps neighbours apart for colour-blind readers, in light and in dark, so a kind is added at the end and none is moved. "Other" and
+   anything past six wear the quiet grey. Three of them are faint on a light page, which is why every use has its kind's name beside it. */
+.onedrive {
+  --od-document: #6250d6; --od-picture: #1baf7a; --od-video: #eb6834; --od-audio: #2a78d6; --od-archive: #eda100; --od-code: #e87ba4; --od-other: #9a9db5;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  .onedrive { --od-document: #9085e9; --od-picture: #199e70; --od-video: #d95926; --od-audio: #3987e5; --od-archive: #c98500; --od-code: #d55181; --od-other: #6f7391; }
+}
+.onedrive [data-kind="document"] { --hue: var(--od-document); }
+.onedrive [data-kind="picture"] { --hue: var(--od-picture); }
+.onedrive [data-kind="video"] { --hue: var(--od-video); }
+.onedrive [data-kind="audio"] { --hue: var(--od-audio); }
+.onedrive [data-kind="archive"] { --hue: var(--od-archive); }
+.onedrive [data-kind="code"] { --hue: var(--od-code); }
+.onedrive [data-kind="other"] { --hue: var(--od-other); }
+.onedrive [data-kind="folder"] { --hue: var(--violet); }
+
+.od-accounts-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.od-accounts { display: flex; flex-wrap: wrap; gap: 8px; }
+.od-account {
+  display: flex; align-items: center; gap: 9px; height: 44px; padding: 0 12px 0 8px; color: var(--ink-soft); background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.25s, background 0.2s;
+}
+.od-account:hover { color: var(--ink); border-color: var(--violet); }
+.od-account[aria-selected="true"] { color: var(--ink); background: var(--panel-solid); border-color: var(--violet); box-shadow: var(--ring); }
+.od-account-name { font-weight: 650; }
+.od-kept { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12.5px; }
+.od-kept .copy-chip { margin-left: 0; }
+.od-empty .skeleton.row:last-child { margin-bottom: 0; }
+
+.od-drive { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.od-storage { display: grid; gap: 12px; padding: 16px 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+.od-storage .skeleton.row { height: 62px; margin: 0; }
+.od-storage-who { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.od-storage-who strong { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.od-storage-who .pill svg { margin-right: 4px; }
+.od-meter { height: 10px; overflow: hidden; background: var(--well); border-radius: 999px; }
+.od-meter i { display: block; min-width: 5px; height: 100%; background: var(--brand); border-radius: 999px; transform-origin: left; animation: grow 0.8s var(--smooth); }
+.od-meter-words { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+.od-meter-words strong { color: var(--ink); }
+.od-storage-problem { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13.5px; color: var(--ink-soft); }
+.od-storage-problem > svg { flex: none; color: var(--bad); }
+.od-storage-problem > span { flex: 1 1 260px; overflow-wrap: anywhere; }
+
+.od-files.panel { margin-top: 0; }
+.od-files .panel-head { flex-wrap: wrap; row-gap: 8px; }
+.od-files .od-drive-search { width: 240px; height: 34px; }
+.od-path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 34px; font-size: 13.5px; color: var(--ink-faint); }
+/* The folders above the one on show are the way back, so each is a button. */
+.od-path a { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; font-weight: 600; color: var(--ink-soft); background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 10px; transition: border-color 0.2s, color 0.2s; }
+.od-path a:hover { color: var(--ink); border-color: var(--violet); }
+.od-path a svg { color: var(--violet); }
+.od-path-here { padding: 0 6px; font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.od-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 12px 0; }
+.od-tools .search-input { flex: none; width: 220px; height: 34px; }
+.od-swatch { flex: none; width: 9px; height: 9px; background: var(--hue); border-radius: 3px; }
+.chip-button[aria-pressed="true"] .od-swatch { box-shadow: 0 0 0 1.5px #fff; }
+.od-share { display: grid; gap: 6px; margin-bottom: 14px; }
+.od-share-label { font-size: 12.5px; color: var(--ink-soft); }
+/* One bar, a part for each kind, as wide as what that kind weighs. The gap between parts is the page showing through. */
+.od-share-bar { display: flex; gap: 2px; height: 10px; }
+.od-share-bar i { flex: 1 1 0; min-width: 5px; background: var(--hue); border-radius: 2px; }
+.od-share-bar i:first-child { border-top-left-radius: 5px; border-bottom-left-radius: 5px; }
+.od-share-bar i:last-child { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
+
+.od-table td.od-name { max-width: 460px; }
+.od-mark { display: inline-grid; place-items: center; width: 28px; height: 28px; margin-right: 10px; vertical-align: middle; color: var(--hue, var(--ink-faint)); background: color-mix(in srgb, var(--hue, var(--ink-faint)) 15%, transparent); border-radius: 9px; }
+.od-name a { font-weight: 650; }
+.od-name a:hover, .od-where:hover { color: var(--violet); text-decoration: underline; text-underline-offset: 3px; }
+.od-row { transition: background 0.2s; }
+.od-row:hover { background: var(--brand-wash); }
+.od-table .od-acts { width: 1%; text-align: right; white-space: nowrap; }
+.od-table td.od-acts { padding-top: 4px; padding-bottom: 4px; overflow: visible; }
+.od-acts .icon-btn { width: 30px; height: 30px; vertical-align: middle; }
+.od-more { display: flex; justify-content: center; margin-top: 12px; }
+.od-transfers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+
+.od-signin-card { display: grid; gap: 14px; padding: 22px 24px; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+.od-signin-card h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+.od-steps { display: grid; gap: 12px; counter-reset: step; }
+.od-steps li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; counter-increment: step; }
+.od-steps li::before { content: counter(step); display: grid; flex: none; place-items: center; width: 26px; height: 26px; font-size: 12.5px; font-weight: 700; color: var(--violet); background: var(--violet-wash); border-radius: 50%; }
+.od-code { padding: 6px 14px; font: 700 22px/1.2 var(--mono); letter-spacing: 0.12em; background: var(--well); border: 1px dashed var(--line-strong); border-radius: 12px; user-select: all; }
+.od-signin-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 14px; font-size: 13px; color: var(--ink-soft); border-top: 1px solid var(--line); }
+.od-signin-foot .ring { flex: none; color: var(--violet); }
+
+.od-problem { font-size: 13px; color: var(--bad); overflow-wrap: anywhere; }
+.od-out { display: inline-flex; align-items: center; gap: 5px; justify-self: start; font-size: 13px; }
+.dialog.od-dialog { width: min(520px, 100%); }
+.od-every { font-size: 13px; }
+.od-every summary { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; margin-left: -10px; color: var(--ink-soft); cursor: pointer; border-radius: 10px; transition: background 0.2s, color 0.2s; }
+.od-every summary:hover { color: var(--ink); background: var(--well); }
+.od-every p { margin: 6px 0 10px; }

@@ -103,95 +103,103 @@ function challengeIn(text) {
 }
 
 // Signing an account in, shown in place of its files: an offer, then Microsoft's code and the page to enter it on, then the wait. The command
-// runs as a task kept out of the Activity panel; "Show the console" brings it there. `onDone(account)` is called when the sign-in is saved.
+// runs as a task kept out of the Activity panel; "Show the console" brings it there. One sign-in runs at a time. `onDone(account)` is called
+// when a sign-in is saved.
 export function createSignIn({ activity, onDone }) {
   const element = h("section", { class: "od-signin", hidden: true });
+  // The account whose sign-in the page shows, the sign-in on its way, and how the last one ended when it did not work.
+  let viewed = null;
   let current = null;
+  let last = null;
 
-  function offer(account, reason = "") {
-    element.replaceChildren(
-      notice({
-        glyph: "key", title: `Sign in to use ${account}`,
-        body: reason || "Microsoft shows you a short code and a page to enter it on. Your password is typed there, never here.",
-        action: button({ label: "Sign in with Microsoft", glyph: "key", tone: "primary", onclick: () => start(account) }),
-      }),
-    );
-  }
+  const offer = (account, words) =>
+    notice({
+      glyph: "key", title: `Sign in to use ${account}`,
+      body: words || "Microsoft shows you a short code and a page to enter it on. Your password is typed there, never here.",
+      action: button({ label: "Sign in with Microsoft", glyph: "key", tone: "primary", onclick: () => start(account) }),
+    });
 
-  function failed(account, reason, run) {
-    element.replaceChildren(
-      notice({
-        glyph: "alert", tone: "bad", title: "The sign-in did not go through", body: reason || "The command stopped without saying why.",
-        action: h("div", { class: "dialog-actions" }, run && button({ label: "Show the console", glyph: "terminal", small: true, tone: "ghost", onclick: run.show }), button({ label: "Try again", glyph: "refresh", small: true, onclick: () => start(account) })),
-      }),
-    );
-  }
+  const failed = ({ account, reason, run }) =>
+    notice({
+      glyph: "alert", tone: "bad", title: "The sign-in did not go through", body: reason || "The command stopped without saying why.",
+      action: h("div", { class: "dialog-actions" }, run && button({ label: "Show the console", glyph: "terminal", small: true, tone: "ghost", onclick: run.show }), button({ label: "Try again", glyph: "refresh", small: true, onclick: () => start(account) })),
+    });
 
-  function waiting(account, run, challenge) {
+  function waiting({ account, run, challenge }) {
     const page = challenge && safeLink(challenge.verification_uri);
-    const copy = button({ label: "Copy", glyph: "copy", small: true, onclick: async () => (await copyText(challenge.user_code, "Type the code by hand.")) && toast("Code copied.", "info") });
     const minutes = challenge && Number.isFinite(challenge.expires_in) ? Math.max(1, Math.round(challenge.expires_in / 60)) : null;
-    element.replaceChildren(
+    return h(
+      "div",
+      { class: "od-signin-card", role: "status" },
+      h("h2", { text: `Signing in ${account}` }),
+      challenge
+        ? h(
+            "ol",
+            { class: "od-steps" },
+            h("li", {}, h("span", { text: "Open Microsoft's sign-in page" }), page ? h("a", { class: "btn primary small", href: page, target: "_blank", rel: "noopener" }, h("span", { text: "Open the page" }), icon("external", 14)) : h("code", { text: String(challenge.verification_uri) })),
+            h("li", {}, h("span", { text: "Enter this code there" }), h("strong", { class: "od-code", text: challenge.user_code }), button({ label: "Copy", glyph: "copy", small: true, onclick: async () => (await copyText(challenge.user_code, "Type the code by hand.")) && toast("Code copied.", "info") })),
+            h("li", {}, h("span", { text: "Sign in and allow access. This page moves on by itself." })),
+          )
+        : h("p", { class: "dim", text: "Asking Microsoft for a code…" }),
       h(
         "div",
-        { class: "od-signin-card", role: "status" },
-        h("h2", { text: `Signing in ${account}` }),
-        challenge
-          ? h(
-              "ol",
-              { class: "od-steps" },
-              h("li", {}, h("span", { text: "Open Microsoft's sign-in page" }), page ? h("a", { class: "btn primary small", href: page, target: "_blank", rel: "noopener" }, h("span", { text: "Open the page" }), icon("external", 14)) : h("code", { text: String(challenge.verification_uri) })),
-              h("li", {}, h("span", { text: "Enter this code there" }), h("strong", { class: "od-code", text: challenge.user_code }), copy),
-              h("li", {}, h("span", { text: "Sign in and allow access. This page moves on by itself." })),
-            )
-          : h("p", { class: "dim", text: "Asking Microsoft for a code…" }),
-        h(
-          "div",
-          { class: "od-signin-foot" },
-          h("i", { class: "ring" }),
-          h("span", { text: challenge ? `Waiting for you to finish there${minutes ? `. The code works for about ${minutes} minutes.` : "."}` : "One moment." }),
-          h("span", { class: "spacer" }),
-          button({ label: "Show the console", glyph: "terminal", small: true, tone: "ghost", onclick: run.show }),
-          button({ label: "Cancel", glyph: "stop", small: true, onclick: run.stop }),
-        ),
+        { class: "od-signin-foot" },
+        h("i", { class: "ring" }),
+        h("span", { text: challenge ? `Waiting for you to finish there${minutes ? `. The code works for about ${minutes} minutes.` : "."}` : "One moment." }),
+        h("span", { class: "spacer" }),
+        run && button({ label: "Show the console", glyph: "terminal", small: true, tone: "ghost", onclick: run.show }),
+        run && button({ label: "Cancel", glyph: "stop", small: true, onclick: run.stop }),
       ),
     );
   }
 
+  function paint() {
+    if (viewed === null) return;
+    if (current && current.account === viewed) return element.replaceChildren(waiting(current));
+    if (current) {
+      return element.replaceChildren(
+        notice({ glyph: "clock", title: `${current.account} is signing in`, body: "One sign-in runs at a time. Finish that one on Microsoft's site, or cancel it.", action: current.run && button({ label: "Cancel that sign-in", glyph: "stop", small: true, onclick: current.run.stop }) }),
+      );
+    }
+    const ended = last && last.account === viewed ? last : null;
+    element.replaceChildren(ended && !ended.cancelled ? failed(ended) : offer(viewed, ended ? "The sign-in was cancelled. Nothing was changed." : ""));
+  }
+
   async function start(account) {
     if (current) return;
-    element.replaceChildren(h("div", { class: "od-signin-card", role: "status" }, h("h2", { text: `Signing in ${account}` }), h("p", { class: "dim", text: "Starting…" })));
-    let run;
+    const mine = (current = { account, run: null, challenge: null });
+    last = null;
+    paint();
     try {
-      run = await startInTurn(() => startWatched(activity, { title: `Sign in to OneDrive · ${account}`, emoji: "🔑", arguments: signInArguments(account) }));
+      mine.run = await startInTurn(() => startWatched(activity, { title: `Sign in to OneDrive · ${account}`, emoji: "🔑", arguments: signInArguments(account) }));
     } catch (error) {
-      return failed(account, error.message, null);
+      current = null;
+      last = { account, reason: error.message, run: null, cancelled: false };
+      return paint();
     }
-    current = run;
-    waiting(account, run, null);
+    paint();
     const watch = setInterval(() => {
-      const challenge = challengeIn(run.text());
-      if (!challenge) return;
+      mine.challenge = challengeIn(mine.run.text());
+      if (!mine.challenge) return;
       clearInterval(watch);
-      waiting(account, run, challenge);
+      paint();
     }, CODE_POLL_MILLISECONDS);
-    const end = await run.ended;
+    const end = await mine.run.ended;
     clearInterval(watch);
     current = null;
     if (end.ok) return onDone(account);
-    if (end.stopped) return offer(account, "The sign-in was cancelled. Nothing was changed.");
-    failed(account, failureIn(end.text), run);
+    last = { account, reason: failureIn(end.text), run: mine.run, cancelled: end.stopped };
+    paint();
   }
 
   return {
     element,
-    // What to show for `account` now: the sign-in on its way if it is this account's, or the offer.
-    show(account, reason) {
+    show(account) {
+      viewed = account;
       element.hidden = false;
-      if (!current) offer(account, reason);
+      paint();
     },
     hide: () => (element.hidden = true),
     start,
-    busy: () => current !== null,
   };
 }

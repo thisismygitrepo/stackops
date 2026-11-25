@@ -14,10 +14,16 @@ function inTurn(work) {
   return mine;
 }
 
+// A command's failure reads "Error: …". The word is dropped: where the page shows a failure it already says that something went wrong.
 function ask(runArguments, signal) {
-  return inTurn(() => {
+  return inTurn(async () => {
     signal?.throwIfAborted();
-    return capture([...GROUP, ...runArguments], signal);
+    try {
+      return await capture([...GROUP, ...runArguments], signal);
+    } catch (error) {
+      if (error.name !== "AbortError") error.message = error.message.replace(/^error:\s*/i, "");
+      throw error;
+    }
   });
 }
 

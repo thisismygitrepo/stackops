@@ -1,3 +1,4 @@
+import { CLOUD_COLLECTIONS, CLOUD_FEATURES } from "./feature_lists/cloud.js";
 import { SETTINGS_FEATURES } from "./feature_lists/settings.js";
 import { DOTFILES_FEATURES } from "./feature_lists/dotfiles.js";
 import { NETWORK_FEATURES } from "./feature_lists/network.js";
@@ -30,6 +31,7 @@ const FEATURES = [
   ...NETWORK_FEATURES,
   ...SECURITY_FEATURES,
   ...VAULT_FEATURES,
+  ...CLOUD_FEATURES,
 ];
 
 export function createGuides(context) {
@@ -37,6 +39,9 @@ export function createGuides(context) {
   for (const feature of FEATURES) guides[feature.path] = async (given) => (await feature.load()).open(context, given);
   return guides;
 }
+
+// A Toolbox collection that has a page of its own in place of its tool cards: what fetches that page, or nothing for a collection without one.
+export const collectionLoader = (path) => CLOUD_COLLECTIONS[path];
 
 // The pages of their own that belong to one space, by the word in their address.
 export const partLoaders = (space) => Object.fromEntries(FEATURES.filter((feature) => feature.space === space).map((feature) => [feature.part, feature.load]));
