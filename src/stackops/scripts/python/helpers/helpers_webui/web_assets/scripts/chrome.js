@@ -1,4 +1,5 @@
 import { VIEW_KEY } from "/assets/app/scripts/catalog.js";
+import { createThemeButton } from "./theme_button.js";
 import { debounce, h, icon, tildify, toast } from "./dom.js";
 import { api, lineage, nodeHash, on, setSetting, state } from "./state.js";
 
@@ -61,7 +62,7 @@ export function createRail({ openPalette }) {
   const element = h(
     "aside",
     { class: "rail" },
-    h("div", { class: "rail-brand" }, h("img", { src: "/assets/favicon.svg", alt: "" }), h("strong", { text: "StackOps" }), h("span", { class: "chip", text: `v${boot.version}` })),
+    h("div", { class: "rail-brand" }, h("img", { src: "/assets/favicon.svg", alt: "" }), h("strong", { text: "StackOps" }), h("span", { class: "chip", text: `v${boot.version}` }), createThemeButton("rail-theme", 15)),
     h("button", { class: "rail-search", onclick: openPalette }, icon("search", 14), h("span", { text: "Search commands" }), h("kbd", { text: navigator.platform.startsWith("Mac") ? "⌘K" : "Ctrl K" })),
     h("nav", { class: "rail-nav", "aria-label": "Views" }, Object.values(links)),
     h("div", { class: "rail-label" }, h("span", { text: "Commands" }), h("a", { href: "#/c", text: `${boot.tree.leaves} total` })),

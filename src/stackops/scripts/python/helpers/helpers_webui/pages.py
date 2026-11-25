@@ -42,6 +42,11 @@ DEVELOPER_STYLESHEETS: Final[tuple[str, ...]] = (
 )
 
 
+# Applies the light or dark choice. It is a script of its own, ahead of the page's: it imports nothing, so it runs as soon as the stylesheets are in,
+# while the page's script first waits for everything it imports. Without it a page is drawn in the system's look and then changes.
+THEME_SCRIPT: Final[str] = "/assets/scripts/theme.js"
+
+
 def render_page(stylesheets: tuple[str, ...], script: str, boot_note: str) -> str:
     stylesheet_links = "\n".join(f"""<link rel="stylesheet" href="{stylesheet}">""" for stylesheet in stylesheets)
     return f"""<!doctype html>
@@ -55,6 +60,7 @@ def render_page(stylesheets: tuple[str, ...], script: str, boot_note: str) -> st
 </head>
 <body>
 <div id="app"><p class="boot-note">{boot_note}</p></div>
+<script type="module" src="{THEME_SCRIPT}"></script>
 <script type="module" src="{script}"></script>
 </body>
 </html>

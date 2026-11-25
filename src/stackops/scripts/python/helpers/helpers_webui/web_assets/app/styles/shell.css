@@ -44,6 +44,13 @@
   display: flex; flex: 0 1 480px; align-items: center; gap: 10px; min-width: 0; height: 44px; padding: 0 12px 0 16px; color: var(--ink-faint); background: var(--panel); border: 1px solid var(--line);
   border-radius: 15px; transition: border-color 0.25s, box-shadow 0.25s, color 0.25s, transform 0.25s var(--spring);
 }
+.theme-toggle {
+  display: grid; flex: none; place-items: center; width: 44px; height: 44px; color: var(--ink-soft); background: var(--panel); border: 1px solid var(--line); border-radius: 15px;
+  transition: border-color 0.25s, color 0.25s, transform 0.25s var(--spring);
+}
+.theme-toggle:hover { color: var(--ink); border-color: var(--violet); transform: translateY(-1px); }
+.theme-toggle svg { transition: transform 0.5s var(--spring); }
+.theme-toggle:hover svg { transform: rotate(20deg); }
 .search-pill span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search-pill:hover { color: var(--ink-soft); border-color: var(--violet); box-shadow: 0 0 0 4px rgba(106, 92, 255, 0.12), var(--shadow); transform: translateY(-1px); }
 .folder-chip {

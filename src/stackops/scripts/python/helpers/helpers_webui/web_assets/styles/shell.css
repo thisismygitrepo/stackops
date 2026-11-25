@@ -8,6 +8,8 @@
 .rail-brand img { width: 26px; height: 26px; }
 .rail-brand strong { font-size: 15px; letter-spacing: -0.01em; }
 .rail-brand .chip { margin-left: auto; font-family: var(--mono); font-size: 11px; }
+.rail-theme { display: grid; flex: none; place-items: center; width: 28px; height: 28px; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 6px; transition: color 0.12s, border-color 0.12s, background 0.12s; }
+.rail-theme:hover { color: var(--text); background: var(--raised); border-color: var(--border-strong); }
 .rail-search {
   display: flex; align-items: center; gap: 8px; height: 32px; margin: 0 12px 10px; padding: 0 10px; color: var(--text-muted);
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); transition: border-color 0.12s, color 0.12s;

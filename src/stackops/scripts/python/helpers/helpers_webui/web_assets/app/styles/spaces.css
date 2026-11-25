@@ -18,6 +18,11 @@
 .orbit-ring { position: absolute; border: 1.5px solid color-mix(in srgb, var(--tone) 34%, transparent); border-radius: 50%; }
 .orbit-spin { position: absolute; inset: 0; animation: spin var(--turn) linear infinite var(--way); }
 .orbit-chip { position: absolute; display: grid; place-items: center; width: 30px; height: 30px; margin: -15px; color: var(--tone); background: var(--panel-solid); border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent); border-radius: 10px; box-shadow: var(--shadow); animation: spin var(--turn) linear infinite var(--counter); }
+/* The orbit turns on every machine. A system set to reduce motion (Windows with its animation effects off, as over Remote Desktop; a Linux desktop with animations off) stops
+   every animation through the rule at the end of base.css, and the home page then looked different from one machine to the next. A slow turn in one corner is kept. */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-spin, .orbit-chip { animation-duration: var(--turn) !important; animation-iteration-count: infinite !important; }
+}
 .orbit-core { position: absolute; top: 50%; left: 50%; width: 56px; height: 56px; margin: -28px; border-radius: 17px; box-shadow: var(--glow); }
 @keyframes sheen { to { background-position: -300% 0; } }
 

@@ -1,5 +1,6 @@
 import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { api, setSetting, state } from "/assets/scripts/state.js";
+import { createThemeButton } from "/assets/scripts/theme_button.js";
 import { SPACES, VIEW_KEY } from "./catalog.js";
 import { createCombo } from "./combo.js";
 import { markStale } from "./data.js";
@@ -71,7 +72,7 @@ export function createShell({ openSearch, activity }) {
     h("kbd", { text: navigator.platform.startsWith("Mac") ? "⌘K" : "Ctrl K" }),
   );
   // The machine comes before the folder: the folder is one of that machine's.
-  const topbar = h("header", { class: "topbar" }, searchButton, h("span", { class: "spacer" }), createMachineChip(), folderButton, activity.indicator);
+  const topbar = h("header", { class: "topbar" }, createThemeButton("theme-toggle", 19), searchButton, h("span", { class: "spacer" }), createMachineChip(), folderButton, activity.indicator);
 
   function setActive(spaceId) {
     for (const [id, item] of items) item.setAttribute("aria-current", String(id === spaceId));

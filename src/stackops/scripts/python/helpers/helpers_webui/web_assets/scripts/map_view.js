@@ -1,6 +1,7 @@
 import { h, icon } from "./dom.js";
 import { SERIES } from "./presets.js";
 import { nodeHash, state } from "./state.js";
+import { currentTheme, onThemeChange } from "./theme.js";
 
 const ROOT_ID = "stackops";
 const NEUTRAL_FILL = { light: "#c3c2b7", dark: "#52514e" };
@@ -25,7 +26,6 @@ function loadChartLibrary() {
 
 export function createMapView() {
   const { tree } = state.boot;
-  const darkScheme = matchMedia("(prefers-color-scheme: dark)");
   const plot = h("div");
   const plotHolder = h("div", { class: "map-plot" }, plot);
   const side = h("aside", { class: "map-side" });
@@ -79,7 +79,7 @@ export function createMapView() {
   }
 
   async function draw() {
-    const scheme = darkScheme.matches ? "dark" : "light";
+    const scheme = currentTheme();
     const styles = getComputedStyle(document.documentElement);
     const token = (name) => styles.getPropertyValue(name).trim();
     const inkOf = (fill) => (DARK_INK_FILLS.has(fill) ? "#0b0b0b" : "#ffffff");
@@ -161,10 +161,10 @@ export function createMapView() {
     side,
   );
   describe(tree);
-  darkScheme.addEventListener("change", () => !element.hidden && draw());
+  onThemeChange(() => !element.hidden && draw());
 
   function show() {
-    if (drawn !== (darkScheme.matches ? "dark" : "light")) draw();
+    if (drawn !== currentTheme()) draw();
     return [{ label: "Command map" }];
   }
 
