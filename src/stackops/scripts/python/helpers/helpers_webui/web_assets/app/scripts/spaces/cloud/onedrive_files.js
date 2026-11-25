@@ -5,6 +5,7 @@ import { listFolder, searchDrive, searchWords } from "./onedrive_api.js";
 import { KINDS, addressOf, folderOf, isFolder, joinPath, kindOf, kindWord, safeLink } from "./onedrive_words.js";
 
 const ROW_LIMIT = 300;
+const FOCUS_PAUSE_MILLISECONDS = 350;
 const COLUMNS = [["name", "Name"], ["kind", "Kind"], ["size", "Size"], ["modified", "Changed"]];
 // A column starts in the order that is asked for most: names from A, sizes from the largest, changes from the newest.
 const STARTS_DESCENDING = new Set(["size", "modified"]);
@@ -106,7 +107,7 @@ export function createFiles({ onUpload, onDownload, onDelete, onSignIn, onListed
       h(
         "div",
         { class: "od-share-bar", role: "img", "aria-label": `Size by kind: ${sized.map((entry) => `${entry.label} ${formatBytes(entry.bytes)}`).join(", ")}` },
-        sized.map((entry) => h("i", { "data-kind": entry.id, style: `flex-grow:${entry.bytes}`, title: `${entry.label}: ${formatBytes(entry.bytes)}, ${Math.round((entry.bytes / total) * 100)}% of the files here` })),
+        sized.map((entry) => h("i", { "data-kind": entry.id, style: `flex-grow:${entry.bytes}`, title: `${entry.label}: ${formatBytes(entry.bytes)}, ${entry.bytes / total < 0.01 ? "under 1" : Math.round((entry.bytes / total) * 100)}% of the files here` })),
       ),
     );
   }
@@ -286,7 +287,8 @@ export function createFiles({ onUpload, onDownload, onDelete, onSignIn, onListed
     element,
     open,
     search,
-    focusSearch: () => drive.input.focus(),
+    // After a pause: the search window that led here hands the focus back to the page as it closes, and that must not undo this.
+    focusSearch: () => setTimeout(() => drive.input.focus(), FOCUS_PAUSE_MILLISECONDS),
     // After a change to `where` of `name`: what is kept of it is dropped, and it is asked for again if it is the folder on show.
     changed(name, where) {
       kept.delete(keyOf(name, where));
