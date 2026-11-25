@@ -26,23 +26,9 @@
 .orbit-core { position: absolute; top: 50%; left: 50%; width: 56px; height: 56px; margin: -28px; border-radius: 17px; box-shadow: var(--glow); }
 @keyframes sheen { to { background-position: -300% 0; } }
 
-.task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-.task-card { display: grid; align-content: start; justify-items: start; gap: 3px; padding: 18px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; }
-.task-card .tile { margin-bottom: 10px; transition: transform 0.45s var(--spring); }
-.task-card:hover .tile { transform: scale(1.12) rotate(-6deg); }
-.task-card strong { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
-.task-card > span:not(.tile) { font-size: 13px; color: var(--ink-soft); }
-.task-go { position: absolute !important; top: 18px; right: 18px; display: grid; place-items: center; width: 28px; height: 28px; color: hsl(var(--hue) 72% 56%); border-radius: 50%; opacity: 0; transform: translateX(-8px); transition: opacity 0.25s, transform 0.35s var(--spring); }
-.task-card:hover .task-go { opacity: 1; transform: none; }
-.run-list, .session-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.run-row, .session-row { display: flex; align-items: center; gap: 13px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; transition: transform 0.25s var(--spring), border-color 0.2s; }
-.run-row { width: 100%; cursor: pointer; }
-.run-row:hover, .session-row:hover { border-color: var(--line-strong); transform: translateX(4px); }
-.run-row strong { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.run-state { font-size: 12.5px; font-weight: 600; color: var(--good); }
-.run-state.running { color: var(--violet); }
-.run-state.stopped { color: var(--ink-soft); }
-.run-state.failed { color: var(--bad); }
+.session-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.session-row { display: flex; align-items: center; gap: 13px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; transition: transform 0.25s var(--spring), border-color 0.2s; }
+.session-row:hover { border-color: var(--line-strong); transform: translateX(4px); }
 
 .store-hero { display: grid; gap: 8px; margin: 10px 0 18px; }
 .store-search { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }

@@ -4,7 +4,7 @@ import { backLink, editButton } from "../../space_kit.js";
 import { button, callout, emojiTile, notice, skeleton } from "../../widgets.js";
 import { reasonOf, setup } from "./model.js";
 import { createAgentPicker, describeStep } from "./setup/steps.js";
-import { HASH, SETUP_HASH, STEPS, WIZARD_PATH, WIZARD_TITLE, stepsDone } from "./words.js";
+import { BACK_LABEL, HASH, SETUP_HASH, STEPS, WIZARD_PATH, WIZARD_TITLE, stepsDone } from "./words.js";
 
 const MARKS = { true: "Set up", false: "Not set up", null: "Cannot be read" };
 // The step whoever opened the tool asked for, and what they filled in, until the page shows them.
@@ -18,7 +18,7 @@ export function open(_context, { preset, step }) {
   else location.hash = address;
 }
 
-// Settings › Guided setup, at #/settings/setup: the eight things `devops config setup` asks about, as a list of steps that says what is set
+// Home › Guided setup, at #/home/setup: the eight things `devops config setup` asks about, as a list of steps that says what is set
 // and what is not, each with its own way to set it. A page and not a sheet: it is a checklist to come back to.
 export function createPart({ activity, tools }) {
   let spot = "";
@@ -98,7 +98,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, backLink(HASH, "Settings"), h("h1", { text: "Guided setup" }), h("p", { text: "Eight things StackOps asks about once. See which are set, and set the rest one at a time." })),
+      h("div", { class: "view-title" }, backLink(HASH, BACK_LABEL), h("h1", { text: "Guided setup" }), h("p", { text: "Eight things StackOps asks about once. See which are set, and set the rest one at a time." })),
       h("div", { class: "view-actions" }, button({ label: WIZARD_TITLE, glyph: "sparkle", title: "One guided run for a new machine, in the activity panel", onclick: () => tools.open(WIZARD_PATH) }), again),
     ),
     hero,

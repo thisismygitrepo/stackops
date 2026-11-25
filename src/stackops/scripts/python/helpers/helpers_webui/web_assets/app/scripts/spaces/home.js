@@ -1,23 +1,25 @@
-import { formatClock, formatDuration, h, icon } from "/assets/scripts/dom.js";
-import { on, state } from "/assets/scripts/state.js";
-import { statusOf } from "../activity_hero.js";
-import { QUICK_TASKS } from "../catalog.js";
+import { h, icon } from "/assets/scripts/dom.js";
+import { state } from "/assets/scripts/state.js";
 import { query, software, staleKeeper } from "../data.js";
+import { partLoaders } from "../features.js";
 import { createHeroOrbit } from "../hero_orbit.js";
 import { rise } from "../motion.js";
-import { glyphTile, notice, pill, sectionHead, stat } from "../widgets.js";
+import { createParts } from "../space_kit.js";
+import { pill, stat } from "../widgets.js";
 import { greeting } from "../words.js";
+import { createOverview } from "./settings/overview.js";
 
 // The parts of the CLI's health check the four counts do not already cover, and the page that deals with each.
 // A design choice: managed settings are left out, since that part alone takes several seconds and Dotfiles shows it.
 const HEALTH = [["shell", "Shell profile", "#/reports/status"], ["ssh", "SSH", "#/network"], ["backup", "Backups", "#/data"]];
 const HEALTH_TONES = { ready: "good", attention: "warn", error: "bad" };
-const RUN_WORDS = { running: "Running", done: "Finished", stopped: "Stopped", failed: "Had a problem" };
 
-export function createHomeSpace({ activity, tools, openSearch }) {
+// Home, at #/: how this machine stands, then its StackOps settings (settings/overview.js). The settings tools have no page of their own, so
+// the views the Settings feature list names (feature_lists/settings.js) swap in here, each at an address under #/home: the settings files,
+// the guided setup, the setup scripts and the packaged files.
+export function createHomeSpace(context) {
   const { boot } = state;
   const name = boot.user.charAt(0).toUpperCase() + boot.user.slice(1);
-  const recent = h("div", { class: "recent" });
   const stats = {
     apps: stat({ glyph: "apps", hue: 252, label: "Apps installed", href: "#/apps" }),
     projects: stat({ glyph: "branch", hue: 150, label: "Projects", href: "#/projects" }),
@@ -28,21 +30,11 @@ export function createHomeSpace({ activity, tools, openSearch }) {
     const mark = pill("Checking…");
     return { key, mark, element: h("a", { href }, h("span", { text: label }), mark) };
   });
+  const settings = createOverview(context);
 
-  const tasks =QUICK_TASKS.filter((task) => !task.tool || state.nodes.has(task.tool)).map((task) =>
-    h(
-      "button",
-      { class: "task-card lit", type: "button", style: `--hue:${task.tint}`, onclick: () => (task.tool ? tools.open(task.tool, { preset: task.preset ?? {} }) : (location.hash = task.hash)) },
-      glyphTile(task.glyph, task.tint, 42),
-      h("strong", { text: task.title }),
-      h("span", { text: task.blurb }),
-      h("i", { class: "task-go" }, icon("arrow", 14)),
-    ),
-  );
-
-  const element = h(
-    "section",
-    { class: "view home", hidden: true },
+  const front = h(
+    "div",
+    { class: "home" },
     h(
       "header",
       { class: "hero" },
@@ -52,7 +44,7 @@ export function createHomeSpace({ activity, tools, openSearch }) {
       h("p", { text: "Your machine, apps, projects, and agents — one click away." }),
       h(
         "button",
-        { class: "hero-search", type: "button", onclick: () => openSearch() },
+        { class: "hero-search", type: "button", onclick: () => context.openSearch() },
         icon("search", 20),
         h("span", { text: "What do you want to do?" }),
         h("kbd", { text: navigator.platform.startsWith("Mac") ? "⌘K" : "Ctrl K" }),
@@ -60,9 +52,9 @@ export function createHomeSpace({ activity, tools, openSearch }) {
     ),
     rise(h("div", { class: "stats" }, Object.values(stats).map((item) => item.element))),
     h("div", { class: "home-health" }, health.map((item) => item.element)),
-    h("section", { class: "block" }, sectionHead("Jump in"), rise(h("div", { class: "task-grid" }, tasks))),
-    h("section", { class: "block" }, sectionHead("Recent activity"), recent),
+    settings.element,
   );
+  const element = h("section", { class: "view", hidden: true }, front);
 
   function loadStats() {
     // A design choice: a count that did not load marks the page stale again, so the next visit asks once more. Only the commands that failed run
@@ -98,38 +90,14 @@ export function createHomeSpace({ activity, tools, openSearch }) {
     });
   }
 
-  function showRecent() {
-    const runs = activity.runs().sort((left, right) => right.started_at - left.started_at).slice(0, 6);
-    if (runs.length === 0) {
-      recent.replaceChildren(notice({ glyph: "clock", title: "Nothing yet", body: "The things you start will be listed here." }));
-      return;
-    }
-    recent.replaceChildren(
-      rise(
-        h(
-          "ul",
-          { class: "run-list" },
-          runs.map((run) =>
-            h(
-              "li",
-              {},
-              h(
-                "button",
-                { class: "run-row", type: "button", onclick: () => activity.reveal(run.id) },
-                run.tile,
-                h("strong", { text: run.title }),
-                h("span", { class: `run-state ${statusOf(run)}`, text: RUN_WORDS[statusOf(run)] }),
-                h("span", { class: "dim", text: `${formatClock(run.started_at)} · ${run.finished_at === null ? "in progress" : formatDuration(run.finished_at - run.started_at)}` }),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  on("runs", showRecent);
-  const keeper = staleKeeper(element, loadStats);
-  showRecent();
-  return { element, show: keeper.ensure };
+  // The counts are kept against the overview, not the page: while one of the settings views is shown they wait for the next visit.
+  const keeper = staleKeeper(front, loadStats);
+  const overview = {
+    element: front,
+    show() {
+      keeper.ensure();
+      settings.show();
+    },
+  };
+  return { element, show: createParts({ element, built: { "": overview }, loaders: partLoaders("home"), context }) };
 }

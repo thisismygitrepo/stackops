@@ -8,7 +8,7 @@ import { button, notice, pathChip, searchInput, sectionHead, segmented, skeleton
 import { openExample } from "./example_sheet.js";
 import { fileCard } from "./files/card.js";
 import { createFile, files, reasonOf, recheck } from "./model.js";
-import { FILES, FILES_HASH, FILE_ACTIONS, FILE_TOOLS, HASH, needsAttention, standingOf } from "./words.js";
+import { BACK_LABEL, FILES, FILES_HASH, FILE_ACTIONS, FILE_TOOLS, HASH, needsAttention, standingOf } from "./words.js";
 
 const FILTERS = [["all", "All"], ["here", "On this machine"], ["missing", "Not created"], ["attention", "Need attention"]];
 const PASSES = {
@@ -29,7 +29,7 @@ export function open(_context, { preset, action }) {
   else location.hash = address;
 }
 
-// Settings › Settings files, at #/settings/files: every file the CLI manages, as a card that says where it is, whether it is there and whether
+// Home › Settings files, at #/home/files: every file the CLI manages, as a card that says where it is, whether it is there and whether
 // it passes its check, with the one-click ways to create, edit, check and export. A page and not a sheet: eleven cards to compare and filter.
 export function createPart({ activity, tools }) {
   let filter = "all";
@@ -184,7 +184,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, backLink(HASH, "Settings"), h("h1", { text: "Settings files" }), h("p", { text: "Every file StackOps reads its settings from: where it is, whether it is there, and whether it passes its check." })),
+      h("div", { class: "view-title" }, backLink(HASH, BACK_LABEL), h("h1", { text: "Settings files" }), h("p", { text: "Every file StackOps reads its settings from: where it is, whether it is there, and whether it passes its check." })),
       h("div", { class: "view-actions" }, options, again),
     ),
     body,

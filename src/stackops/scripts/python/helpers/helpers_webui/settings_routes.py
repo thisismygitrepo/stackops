@@ -19,7 +19,7 @@ from stackops.scripts.python.helpers.helpers_webui.settings_files import (
 from stackops.scripts.python.helpers.helpers_webui.settings_setup import read_setup_state
 
 
-# What the Settings page's purpose-built views read and change, all under /api/settings/. The page says which folder it works in (`base`),
+# What the purpose-built settings views on the Home page read and change, all under /api/settings/. The page says which folder it works in (`base`),
 # because two of the files belong to the project that folder is part of. One file is named by its `kind` and, for the kinds that have both a
 # project's file and the person's own, its `scope`. The list of files answers at once; whether a file passes its check takes half a second
 # and is asked for one file at a time. Edits, exports and the guided steps go through the CLI as runs.

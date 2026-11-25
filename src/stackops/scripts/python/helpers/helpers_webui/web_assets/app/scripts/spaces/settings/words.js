@@ -1,9 +1,11 @@
 export const API = "/api/settings";
-export const HASH = "#/settings";
-export const FILES_HASH = "#/settings/files";
-export const SETUP_HASH = "#/settings/setup";
-export const SCRIPTS_HASH = "#/settings/scripts";
-export const ASSETS_HASH = "#/settings/assets";
+// Settings has no page of its own: its overview is a block on Home, and its views are Home's, each at an address under it.
+export const HASH = "#/";
+export const BACK_LABEL = "Home";
+export const FILES_HASH = "#/home/files";
+export const SETUP_HASH = "#/home/setup";
+export const SCRIPTS_HASH = "#/home/scripts";
+export const ASSETS_HASH = "#/home/assets";
 export const WIZARD_PATH = "devops config interactive";
 export const WIZARD_TITLE = "Set up this machine";
 

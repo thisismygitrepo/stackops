@@ -1,16 +1,9 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { rise } from "../../motion.js";
-import { linkCard, viewHead } from "../../space_kit.js";
 import { button, emojiTile, sectionHead, skeleton } from "../../widgets.js";
 import { plural } from "../../words.js";
 import { assets, files, reasonOf, setup } from "./model.js";
 import { ASSETS_HASH, ASSET_SETS, FILES, FILES_HASH, SCRIPTS, SCRIPTS_HASH, SETUP_HASH, STEPS, WIZARD_PATH, WIZARD_TITLE, needsAttention, standingOf, stepsDone } from "./words.js";
-
-const ELSEWHERE = [
-  { href: "#/dotfiles", emoji: "📂", name: "devops config dotfiles", title: "Dotfiles", blurb: "Sync, collect and move the settings files of your tools." },
-  { href: "#/sessions", emoji: "🐚", name: "devops config terminal", title: "Terminal setup", blurb: "Shell profile, multiplexer and themes, at the foot of Sessions." },
-  { href: "#/tools/devops/config", emoji: "🧰", name: "devops config", title: "Every settings tool", blurb: "The whole group as plain forms, in the Toolbox." },
-];
 
 // A card that says where one part of Settings stands and opens that part. `visual` is drawn anew with each reading.
 function capsule({ href, onclick, emoji, name, title }) {
@@ -20,7 +13,8 @@ function capsule({ href, onclick, emoji, name, title }) {
   return { line, visual, element: h(href ? "a" : "button", properties, h("header", {}, emojiTile(emoji, name, 42), h("strong", { text: title }), icon("arrow", 15)), visual, line) };
 }
 
-// Settings, at #/settings: where the settings files, the guided setup and the packaged files stand, each on a card that opens its own view.
+// The Settings block of Home: where the settings files, the guided setup and the packaged files stand, each on a card that opens its own view.
+// It has no page to itself, so it is a section under a heading, and Home shows it with the rest of its overview.
 export function createOverview({ tools }) {
   const filesLine = h("p", { text: "Reading this machine…" });
   const filesMap = h("div", { class: "settings-ov-map" }, skeleton(11, "row"));
@@ -45,15 +39,14 @@ export function createOverview({ tools }) {
   wizard.visual.append(h("ul", { class: "settings-ov-chips" }, ["Apps", "Shell profile", "Settings", "Projects", "Data"].map((word) => h("li", { text: word }))));
   wizard.line.textContent = "One guided run for a new machine. You tick what you want in a checklist.";
 
-  const again = button({ label: "Check again", glyph: "refresh", title: "Read the files on this machine and check each one again", onclick: () => [files, setup, assets].forEach((reading) => reading.reload()) });
+  const again = button({ label: "Check again", glyph: "refresh", small: true, title: "Read the files on this machine and check each one again", onclick: () => [files, setup, assets].forEach((reading) => reading.reload()) });
   again.classList.add("settings-again");
   const element = h(
-    "div",
-    { class: "settings-ov" },
-    viewHead({ title: "Settings", lede: "The files that tell StackOps how to work on this machine, and the ways to set them up.", actions: [again] }),
+    "section",
+    { class: "block settings-ov" },
+    sectionHead("Settings", h("span", { class: "spacer" }), again),
     filesBoard,
     rise(h("div", { class: "settings-ov-grid" }, steps.element, packaged.element, scripts.element, wizard.element)),
-    h("section", { class: "block" }, sectionHead("Kept on other pages"), h("div", { class: "tool-grid" }, ELSEWHERE.map(linkCard))),
   );
   const unread = (target, error) => (target.textContent = `This could not be read. ${reasonOf(error)}`);
   const spin = () => element.classList.toggle("loading", [files, setup, assets].some((reading) => reading.reading.loading));

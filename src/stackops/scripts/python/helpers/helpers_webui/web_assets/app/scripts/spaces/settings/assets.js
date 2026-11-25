@@ -7,7 +7,7 @@ import { button, emojiTile, notice, pathChip, searchInput, sectionHead, segmente
 import { plural } from "../../words.js";
 import { PARTS, countsLine, differsBy, folderRow, standingBar, totalOf } from "./assets/rows.js";
 import { assets, reasonOf } from "./model.js";
-import { ASSETS_HASH, ASSET_SETS, HASH } from "./words.js";
+import { ASSETS_HASH, ASSET_SETS, BACK_LABEL, HASH } from "./words.js";
 
 const TOOL_PATH = "devops config copy-assets";
 const FILTERS = [["all", "All folders"], ["changed", "Changed here"], ["missing", "Not copied"], ["extra", "Only here"]];
@@ -18,7 +18,7 @@ export function open() {
   location.hash = ASSETS_HASH;
 }
 
-// Settings › Packaged files, at #/settings/assets: what `devops config copy-assets` would copy, held against the copies on this machine, so
+// Home › Packaged files, at #/home/assets: what `devops config copy-assets` would copy, held against the copies on this machine, so
 // what a copy overwrites or removes is on the page before it runs. A page and not a sheet: thirty-odd folders to filter and open.
 export function createPart({ activity, tools }) {
   let filter = "all";
@@ -139,7 +139,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, backLink(HASH, "Settings"), h("h1", { text: "Packaged files" }), h("p", { text: "The scripts and ready-made settings StackOps ships, held against the copies on this machine. See what a copy would change before you make one." })),
+      h("div", { class: "view-title" }, backLink(HASH, BACK_LABEL), h("h1", { text: "Packaged files" }), h("p", { text: "The scripts and ready-made settings StackOps ships, held against the copies on this machine. See what a copy would change before you make one." })),
       h("div", { class: "view-actions" }, button({ label: "All options", glyph: "sliders", title: "The command's own form, which can also copy both at once", onclick: () => tools.open(TOOL_PATH, { plain: true }) }), again),
     ),
     lead,

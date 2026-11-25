@@ -6,7 +6,7 @@ import { backLink } from "../../space_kit.js";
 import { button, callout, copyChip, emojiTile, notice, outputActions, segmented, skeleton } from "../../widgets.js";
 import { plural } from "../../words.js";
 import { explainScript } from "./scripts/explain.js";
-import { HASH, SCRIPTS, SCRIPTS_HASH, WIZARD_PATH } from "./words.js";
+import { BACK_LABEL, HASH, SCRIPTS, SCRIPTS_HASH, WIZARD_PATH } from "./words.js";
 
 const TOOL_PATH = "devops config init-script";
 const COMMAND = TOOL_PATH.split(" ");
@@ -36,7 +36,7 @@ function effects(facts, tools) {
   return rows.length > 0 ? h("ul", { class: "settings-script-effects" }, rows) : h("p", { class: "dim", text: "Nothing in this script was recognised. Its text below is what it does." });
 }
 
-// Settings › Setup scripts, at #/settings/scripts: the three scripts `devops config init-script` prints, each with what it would do and its
+// Home › Setup scripts, at #/home/scripts: the three scripts `devops config init-script` prints, each with what it would do and its
 // whole text, before anything runs. A page and not a sheet: the text is long and is there to be read. Each script is read through the CLI.
 export function createPart({ activity, tools }) {
   let chosen = SCRIPTS[0].id;
@@ -108,7 +108,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, backLink(HASH, "Settings"), h("h1", { text: "Setup scripts" }), h("p", { text: "Three scripts StackOps ships for a new terminal or a new machine. Read what each would do. Nothing runs until you say so." })),
+      h("div", { class: "view-title" }, backLink(HASH, BACK_LABEL), h("h1", { text: "Setup scripts" }), h("p", { text: "Three scripts StackOps ships for a new terminal or a new machine. Read what each would do. Nothing runs until you say so." })),
       h("div", { class: "view-actions" }, button({ label: "All options", glyph: "sliders", title: "The command's own form", onclick: () => tools.open(TOOL_PATH, { plain: true, preset: { which: chosen } }) })),
     ),
     h("div", { class: "table-bar" }, picker.element),

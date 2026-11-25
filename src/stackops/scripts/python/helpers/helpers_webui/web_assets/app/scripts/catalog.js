@@ -13,7 +13,6 @@ export const SPACES = [
   { id: "machine", hash: "#/machine", label: "Machine", glyph: "cpu", title: "Machine" },
   { id: "security", hash: "#/security", label: "Security", glyph: "shield", title: "Security" },
   { id: "vault", hash: "#/vault", label: "Vault", glyph: "key", title: "Vault" },
-  { id: "settings", hash: "#/settings", label: "Settings", glyph: "sliders", title: "Settings" },
   { id: "reports", hash: "#/reports", label: "Reports", glyph: "chart", title: "Reports" },
   { id: "tools", hash: "#/tools", label: "Toolbox", glyph: "cube", title: "Toolbox" },
 ];
